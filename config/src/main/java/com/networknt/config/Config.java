@@ -4,12 +4,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.ServiceLoader;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.owasp.encoder.Encode;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 
@@ -19,9 +17,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * A injectable singleton config that has default implementation
- * based on FileSystem xml/json/properties. It can be extended to
+ * based on FileSystem json files. It can be extended to
  * other sources (database, distributed cache etc.) by providing
  * another jar in the classpath to replace the default implementation.
+ *
+ * Config files are loaded in the following sequence:
+ * 1. resources/config folder for the default
+ * 2. externalized directory specified by undertow-server-config-dir
+ *
+ * In docker, the config files should be in volume and any update will
+ * be picked up the next day morning.
+ *
  *
  */
 public abstract class Config {
@@ -54,7 +60,9 @@ public abstract class Config {
 
         static final XLogger logger = XLoggerFactory.getXLogger(Config.class);
 
-        static final String EXTERNAL_PROPERTY_DIR = System.getProperty("undertow-server-config-dir", "");
+        static final String EXTERNALIZED_PROPERTY_DIR = System.getProperty("undertow-server-config-dir", "");
+
+        private long cacheExpirationTime = 0L;
 
         private static final Config DEFAULT = initialize();
 
@@ -80,15 +88,9 @@ public abstract class Config {
             configCache.clear();
         }
 
-        /**
-         * Get String by the name of the file.
-         *
-         * @param filename
-         * @return String
-         */
         @Override
         public String getStringFromFile(String filename) {
-            //checkCacheExpiration();
+            checkCacheExpiration();
             String content = (String)configCache.get(filename);
             if(content == null) {
                 synchronized (FileConfigImpl.class) {
@@ -102,30 +104,14 @@ public abstract class Config {
             return content;
         }
 
-        /**
-         * Get InputStream by the name of the file. This can be used to load keystore
-         * from absolute path in the config.
-         *
-         * Note 1: The caller is responsible for closing the InputStream.
-         * Note 2: There is no cache for InputStream and it is one off access.
-         *
-         * @param filename String
-         * @return InputStream
-         */
         @Override
         public InputStream getInputStreamFromFile(String filename) {
             return getConfigStream(filename);
         }
 
-        /**
-         * Get Object by the name of the config and class in JSON format.
-         *
-         * @param configName
-         * @return
-         */
         @Override
         public Object getJsonObjectConfig(String configName, Class clazz) {
-            //checkCacheExpiration();
+            checkCacheExpiration();
             Object config = (Object)configCache.get(configName);
             if(config == null) {
                 synchronized (FileConfigImpl.class) {
@@ -139,15 +125,9 @@ public abstract class Config {
             return config;
         }
 
-        /**
-         * Get JsonNode by the name of the config in JSON format.
-         *
-         * @param configName
-         * @return
-         */
         @Override
         public JsonNode getJsonNodeConfig(String configName) {
-            //checkCacheExpiration();
+            checkCacheExpiration();
             JsonNode config = (JsonNode)configCache.get(configName);
             if(config == null) {
                 synchronized (FileConfigImpl.class) {
@@ -161,15 +141,9 @@ public abstract class Config {
             return config;
         }
 
-        /**
-         * Get map by the name of the config in JSON format.
-         *
-         * @param configName
-         * @return
-         */
         @Override
         public Map<String, Object> getJsonMapConfig(String configName) {
-            //checkCacheExpiration();
+            checkCacheExpiration();
             Map<String, Object> config = (Map<String, Object>)configCache.get(configName);
             if(config == null) {
                 synchronized (FileConfigImpl.class) {
@@ -183,12 +157,6 @@ public abstract class Config {
             return config;
         }
 
-        /**
-         * Get map by the name of the config in JSON format.
-         *
-         * @param configName
-         * @return
-         */
         @Override
         public Map<String, Object> getJsonMapConfigNoCache(String configName) {
             return loadJsonMapConfig(configName);
@@ -290,11 +258,39 @@ public abstract class Config {
 
             InputStream inStream = null;
             try{
-            	inStream = new FileInputStream(EXTERNAL_PROPERTY_DIR + "/" + configFilename);
+            	inStream = new FileInputStream(EXTERNALIZED_PROPERTY_DIR + "/" + configFilename);
             } catch (FileNotFoundException ex){
-                logger.error("Unable to load config " + configFilename);
+                logger.info("Unable to load config from externalized folder for " + Encode.forJava(configFilename + " in " + EXTERNALIZED_PROPERTY_DIR));
             }
+            if(inStream != null) {
+                logger.info("Config loaded from externalized folder for " + Encode.forJava(configFilename + " in " + EXTERNALIZED_PROPERTY_DIR));
+                return inStream;
+            }
+            inStream = getClass().getClassLoader().getResourceAsStream("config/" + configFilename);
+            if(inStream != null) {
+                logger.info("Config loaded from default folder for " + Encode.forJava(configFilename));
+                return inStream;
+            }
+            logger.error("Unable to load config " + Encode.forJava(configFilename));
             return inStream;
+        }
+
+        private static long getNextMidNightTime() {
+            Calendar cal = new GregorianCalendar();
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            cal.add(Calendar.DAY_OF_MONTH, 1);
+            return cal.getTimeInMillis();
+        }
+
+        private void checkCacheExpiration() {
+            if(System.currentTimeMillis() > cacheExpirationTime) {
+                clear();
+                logger.info("daily config cache refresh");
+                cacheExpirationTime = getNextMidNightTime();
+            }
         }
 
     }

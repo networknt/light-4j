@@ -10,6 +10,7 @@ import com.jayway.jsonpath.spi.mapper.MappingProvider;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
+import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.PathTemplateHandler;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
@@ -45,11 +46,14 @@ public class Server {
 
         ServerConfig config = (ServerConfig) Config.getInstance().getJsonObjectConfig(configName, ServerConfig.class);
 
-        PathTemplateHandler handler = Handlers.pathTemplate();
+        HttpHandler handler = null;
 
-        final ServiceLoader<HandlerProvider> handlerLoader = ServiceLoader.load(HandlerProvider.class);
-        for (final HandlerProvider provider : handlerLoader) {
-            provider.register(handler);
+        final ServiceLoader<HandlerProvider> handlerLoaders = ServiceLoader.load(HandlerProvider.class);
+        for (final HandlerProvider provider : handlerLoaders) {
+            if(provider.getHandler() instanceof HttpHandler) {
+                handler = provider.getHandler();
+                break;
+            }
         }
 
         Undertow.builder()
@@ -63,7 +67,7 @@ public class Server {
                 .setServerOption(UndertowOptions.ALWAYS_SET_DATE, true)
                 .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, false)
                 .setHandler(Handlers.header(handler,
-                        Headers.SERVER_STRING, "U-tow"))
+                        Headers.SERVER_STRING, "Undertow"))
                 .setWorkerThreads(200)
                 .build()
                 .start();

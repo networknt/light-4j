@@ -1,7 +1,7 @@
 package com.networknt.server;
 
-import io.undertow.server.handlers.PathTemplateHandler;
+import io.undertow.server.HttpHandler;
 
 public interface HandlerProvider {
-    public void register(PathTemplateHandler pathTemplateHandler);
+    HttpHandler getHandler();
 }

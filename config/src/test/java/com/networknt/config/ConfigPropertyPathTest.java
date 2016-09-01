@@ -13,29 +13,27 @@ public class ConfigPropertyPathTest extends TestCase {
 
     public void setUp() throws Exception {
         super.setUp();
-        // Add a system property here.
         System.setProperty("undertow-server-config-dir", homeDir);
 
         Config config = Config.getInstance();
 
-        // write a config file into the user home directory.
+        // write a config file
         Map<String, Object> map = new HashMap<String, Object>();
-        map.put("key", "externalized config");
+        map.put("value", "default config");
         config.getMapper().writeValue(new File(homeDir + "/test.json"), map);
     }
 
     public void tearDown() throws Exception {
-        // Remove the test.json from home directory
         File test = new File(homeDir + "/test.json");
         test.delete();
     }
 
     @Test
-    public void testGetConfigFromPropertyPath() throws Exception {
+    public void testGetConfig() throws Exception {
         Config config  = Config.getInstance();
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test");
-        Assert.assertEquals("externalized config", configMap.get("key"));
+        Assert.assertEquals("default config", configMap.get("value"));
     }
 
 }
