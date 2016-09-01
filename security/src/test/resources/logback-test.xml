@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    TODO create logger for audit only.
+    http://stackoverflow.com/questions/2488558/logback-to-log-different-messages-to-two-files
+    <turboFilter class="ch.qos.logback.classic.turbo.MarkerFilter">
+        <Marker>PROFILER</Marker>
+        <!--<OnMatch>DENY</OnMatch>-->
+        <OnMatch>NEUTRAL</OnMatch>
+    </turboFilter>
+
+    <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+    <!-- encoders are assigned the type
+         ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5marker %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="log" class="ch.qos.logback.core.FileAppender">
+        <File>target/test.log</File>
+        <Append>false</Append>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %class{36}:%L %M - %msg%n</Pattern>
+        </layout>
+    </appender>
+
+    <!--audit log-->
+    <appender name="audit" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>target/audit.log</file> <!-- logfile location -->
+        <encoder>
+            <pattern>%-5level [%thread] %date{ISO8601} %F:%L - %msg%n</pattern> <!-- the layout pattern used to format log entries -->
+            <immediateFlush>true</immediateFlush>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>target/audit.log.%i.zip</fileNamePattern>
+            <minIndex>1</minIndex>
+            <maxIndex>5</maxIndex> <!-- max number of archived logs that are kept -->
+        </rollingPolicy>
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <maxFileSize>200MB</maxFileSize> <!-- The size of the logfile that triggers a switch to a new logfile, and the current one archived -->
+        </triggeringPolicy>
+    </appender>
+
+    <root level="trace">
+        <appender-ref ref="stdout" />
+    </root>
+
+    <logger name="com.networknt" level="trace">
+        <appender-ref ref="log"/>
+    </logger>
+
+    <logger name="Audit" level="trace" additivity="false">
+        <appender-ref ref="audit"/>
+    </logger>
+
+</configuration>

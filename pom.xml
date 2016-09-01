@@ -33,6 +33,7 @@
 	<modules>
         <module>config</module>
         <module>utility</module>
+		<module>security</module>
         <module>server</module>
 	</modules>
 
@@ -49,11 +50,16 @@
                 <artifactId>utility</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            <dependency>
-                <groupId>com.networknt</groupId>
-                <artifactId>server</artifactId>
-                <version>${project.version}</version>
-            </dependency>
+			<dependency>
+				<groupId>com.networknt</groupId>
+				<artifactId>security</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.networknt</groupId>
+				<artifactId>server</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 			<!-- External dependencies -->
 
 			<dependency>

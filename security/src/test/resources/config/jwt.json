@@ -1,0 +1,7 @@
+{
+  "description": "JWT token generator configuration",
+  "issuer": "urn:com:networknt:oauth2:v1",
+  "audience": "urn:com.networknt",
+  "expiredInMinutes": 10,
+  "version": "1.0"
+}

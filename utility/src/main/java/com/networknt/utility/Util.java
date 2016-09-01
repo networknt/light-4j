@@ -5,7 +5,7 @@ import org.apache.commons.codec.binary.Base64;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
-public class ApiUtil {
+public class Util {
 
 	/**
 	 * Generate UUID across the entire app and it is used for correlationId.
