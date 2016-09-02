@@ -6,6 +6,33 @@
 	<packaging>pom</packaging>
 	<name>Parent POM</name>
 	<description>Java Undertow Framework Components</description>
+    <url>https://github.com/networknt/undertow-server</url>
+
+    <developers>
+        <developer>
+            <id>stevehu</id>
+            <name>Steve Hu</name>
+            <email>stevehu@gmail.com</email>
+        </developer>
+    </developers>
+    <issueManagement>
+        <system>github</system>
+        <url>https://github.com/networknt/undertow-server/issues</url>
+    </issueManagement>
+
+    <licenses>
+        <license>
+            <name>Apache License Version 2.0</name>
+            <url>http://repository.jboss.org/licenses/apache-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git://github.com:networknt/undertow-server.git</connection>
+        <developerConnection>scm:git://github.com:networknt/undertow-server.git</developerConnection>
+        <url>https://github.com:networknt/undertow-server.git</url>
+    </scm>
 
 	<properties>
 		<java.version>1.8</java.version>
@@ -26,7 +53,6 @@
 		<version.jsonpath>2.2.0</version.jsonpath>
 		<version.httpclient>4.5.2</version.httpclient>
 		<version.httpasyncclient>4.1.2</version.httpasyncclient>
-		<nexus.server>http://nexus.com:8080</nexus.server>
 		<argLine>-Xmx512m -XX:MaxPermSize=256m</argLine>
 	</properties>
 
@@ -162,17 +188,15 @@
 	</dependencyManagement>
 
 	<distributionManagement>
-		<repository>
-			<id>Nexus</id>
-			<name>Internal Releases</name>
-			<url>${nexus.server}/nexus/content/repositories/Java-Releases/</url>
-		</repository>
-		<snapshotRepository>
-			<id>Nexus</id>
-			<name>Internal Snapshots</name>
-			<url>${nexus.server}/nexus/content/repositories/Java-Snapshots/</url>
-		</snapshotRepository>
-	</distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 
 	<build>
 		<sourceDirectory>${basedir}/src/main/java</sourceDirectory>
@@ -197,6 +221,17 @@
 		</testResources>
 
 		<plugins>
+			<plugin>
+				<groupId>org.sonatype.plugins</groupId>
+				<artifactId>nexus-staging-maven-plugin</artifactId>
+				<version>1.6.7</version>
+				<extensions>true</extensions>
+				<configuration>
+					<serverId>ossrh</serverId>
+					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+					<autoReleaseAfterClose>true</autoReleaseAfterClose>
+				</configuration>
+			</plugin>
 
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -207,7 +242,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
-				<version>3.0.0</version>
+				<version>3.0.1</version>
 				<executions>
 					<execution>
 						<id>attach-sources</id>
@@ -217,7 +252,33 @@
 					</execution>
 				</executions>
 			</plugin>
-
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.10.4</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.5</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -276,7 +337,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-report-plugin</artifactId>
-				<version>2.14</version>
+				<version>2.19.1</version>
 			</plugin>
 		</plugins>
 	</reporting>
