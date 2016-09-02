@@ -49,6 +49,31 @@ For production, there is another way to start the server and will be documented 
 To run/debug from IDE, you need to configure a Java application with main class "com.networknt.server.Server" and
 working directory is your project folder. There is no contain and you are working on just a standalone Java application.
 
+Regarding to hwo to access the server you just started, please refer to the README from
+[undertow-server-demo](https://github.com/networknt/undertow-server-demo)
+
+
+## Configuration
+
+Almost every server component has a configuration file in JSON format and a default config file is located in resources/config.
+
+This allows all components can be used out of the box but that might not be ideal for you. If you want to change the config, you
+can create a folder in file system and use a system properties to point to that folder for your config.
+
+For example, create a folder in /home/steve/config and put all updated config files there. In order to let your server to lookup
+that folder for config, you need to pass in -Dundertow-server-config-dir=/home/steve/config when you start the server. Another way
+to do that is to put JAVA_TOOL_OPTIONS in .bashrc file
+
+export JAVA_TOOL_OPTIONS='-Dundertow-server-config-dir=/home/steve/config'
+
+One example you want to update config is to turn off OAuth2 JWT token verification on the server so that you can test your
+endpoints without putting token in the request header. In this case, you need to copy security.json from security module to
+/home/steve/config folder and update enableVerifyJwt to false.
+
+Note that you have to restart your terminal if you add JAVA_TOOL_OPTIONS to .bashrc and restart your IDE from the new terminal
+window.
+
+## 
 
 
 
