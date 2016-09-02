@@ -31,10 +31,12 @@ import java.util.Map;
  */
 public class JwtHelper {
     static final XLogger logger = XLoggerFactory.getXLogger(JwtHelper.class);
-    static final String JWT_CONFIG = "jwt";
-    static final String SECURITY_CONFIG = "security";
-    static final String JWT_CERTIFICATE = "certificate";
-    static final String JwT_CLOCK_SKEW_IN_SECONDS = "clockSkewInSeconds";
+    public static final String JWT_CONFIG = "jwt";
+    public static final String SECURITY_CONFIG = "security";
+    public static final String JWT_CERTIFICATE = "certificate";
+    public static final String JwT_CLOCK_SKEW_IN_SECONDS = "clockSkewInSeconds";
+    public static final String ENABLE_VERIFY_JWT = "enableVerifyJwt";
+
     static List<X509Certificate> certificates;
     static Map<String, Object> securityConfig = (Map)Config.getInstance().getJsonMapConfig(SECURITY_CONFIG);
     static Map<String, Object> jwtConfig = (Map)securityConfig.get(JWT_CONFIG);

@@ -1,5 +1,6 @@
 package com.networknt.server;
 
+import com.jayway.jsonpath.internal.filter.ValueNode;
 import com.networknt.config.Config;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.Option;
@@ -7,6 +8,8 @@ import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
 import com.jayway.jsonpath.spi.json.JsonProvider;
 import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 import com.jayway.jsonpath.spi.mapper.MappingProvider;
+import com.networknt.security.JwtHelper;
+import com.networknt.security.JwtVerifyHandler;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
@@ -35,8 +38,6 @@ public class Server {
         logger.info("server starts");
         // init JsonPath
         configJsonPath();
-        // init handler
-        initHandler();
         // add shutdown hook here.
         addDaemonShutdownHook();
         start();
@@ -53,6 +54,16 @@ public class Server {
             if(provider.getHandler() instanceof HttpHandler) {
                 handler = provider.getHandler();
                 break;
+            }
+        }
+
+        // check if jwt token verification is enabled
+        Object object = Config.getInstance().getJsonMapConfig(JwtHelper.SECURITY_CONFIG).get(JwtHelper.ENABLE_VERIFY_JWT);
+        if(object != null) {
+            boolean enableVerifyJwt = (Boolean)object;
+            if(enableVerifyJwt) {
+                JwtVerifyHandler jwtVerifyHandler = new JwtVerifyHandler(handler);
+                handler = jwtVerifyHandler;
             }
         }
 
@@ -115,7 +126,4 @@ public class Server {
         });
     }
 
-    static void initHandler() {
-        // using reflection to find the
-    }
 }
