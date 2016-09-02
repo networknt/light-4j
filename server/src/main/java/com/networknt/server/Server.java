@@ -14,7 +14,6 @@ import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.server.HttpHandler;
-import io.undertow.server.handlers.PathTemplateHandler;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +31,6 @@ public class Server {
     static protected boolean shutdownRequested = false;
     static Undertow server = null;
     static String configName = "server";
-    public static PathTemplateHandler handler;
 
     public static void main(final String[] args) {
         logger.info("server starts");
