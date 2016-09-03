@@ -33,27 +33,20 @@ public class JwtVerifyHandler implements HttpHandler {
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         HeaderMap headerMap = exchange.getRequestHeaders();
         String authorization = headerMap.getFirst(Headers.AUTHORIZATION);
-        if(authorization != null) {
-            String[] parts = authorization.split(" ");
-            if (parts.length == 2) {
-                String scheme = parts[0];
-                String credentials = parts[1];
-                Pattern pattern = Pattern.compile("^Bearer$", Pattern.CASE_INSENSITIVE);
-                if (pattern.matcher(scheme).matches()) {
-                    try {
-                        JwtClaims claims = JwtHelper.verifyJwt(credentials);
-                        // put claims into request header so that scope can be verified per endpoint.
-                        headerMap.add(new HttpString(Constants.CLIENT_ID), claims.getStringClaimValue(Constants.CLIENT_ID));
-                        headerMap.add(new HttpString(Constants.USER_ID), claims.getStringClaimValue(Constants.USER_ID));
-                        headerMap.add(new HttpString(Constants.SCOPE), claims.getStringListClaimValue(Constants.SCOPE).toString());
-                        next.handleRequest(exchange);
-                    } catch (Exception e) {
-                        // only log it and unauthorized is returned.
-                        logger.error("Exception: ", e);
-                        exchange.setStatusCode(StatusCodes.UNAUTHORIZED);
-                        exchange.endExchange();
-                    }
-                }
+        String jwt = JwtHelper.getJwtFromAuthorization(authorization);
+        if(jwt != null) {
+            try {
+                JwtClaims claims = JwtHelper.verifyJwt(jwt);
+                // put claims into request header so that scope can be verified per endpoint.
+                headerMap.add(new HttpString(Constants.CLIENT_ID), claims.getStringClaimValue(Constants.CLIENT_ID));
+                headerMap.add(new HttpString(Constants.USER_ID), claims.getStringClaimValue(Constants.USER_ID));
+                headerMap.add(new HttpString(Constants.SCOPE), claims.getStringListClaimValue(Constants.SCOPE).toString());
+                next.handleRequest(exchange);
+            } catch (Exception e) {
+                // only log it and unauthorized is returned.
+                logger.error("Exception: ", e);
+                exchange.setStatusCode(StatusCodes.UNAUTHORIZED);
+                exchange.endExchange();
             }
         } else {
             exchange.setStatusCode(StatusCodes.UNAUTHORIZED);

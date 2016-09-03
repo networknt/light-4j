@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Created by steve on 01/09/16.
@@ -141,6 +142,22 @@ public class JwtHelper {
         }
     }
 
+    public static String getJwtFromAuthorization(String authorization) {
+        String jwt = null;
+        if(authorization != null) {
+            String[] parts = authorization.split(" ");
+            if (parts.length == 2) {
+                String scheme = parts[0];
+                String credentials = parts[1];
+                Pattern pattern = Pattern.compile("^Bearer$", Pattern.CASE_INSENSITIVE);
+                if (pattern.matcher(scheme).matches()) {
+                    jwt = credentials;
+                }
+            }
+        }
+        return jwt;
+    }
+
     public static JwtClaims verifyJwt(String jwt) throws InvalidJwtException {
         JwtClaims claims = null;
         for(X509Certificate certificate: certificates) {
@@ -162,4 +179,5 @@ public class JwtHelper {
         }
         return claims;
     }
+
 }
