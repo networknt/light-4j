@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.regex.Pattern;
 
 public class ClientTest {
@@ -169,6 +169,115 @@ public class ClientTest {
         }
     }
 
+    private void callApiSyncMultiThread(final int threadCount) throws InterruptedException, ExecutionException {
+        Callable<String> task = new Callable<String>() {
+            @Override
+            public String call() throws Exception {
+                return callApiSync();
+            }
+        };
+        List<Callable<String>> tasks = Collections.nCopies(threadCount, task);
+        long start = System.currentTimeMillis();
+        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+        List<Future<String>> futures = executorService.invokeAll(tasks);
+        List<String> resultList = new ArrayList<String>(futures.size());
+        // Check for exceptions
+        for (Future<String> future : futures) {
+            // Throws an exception if an exception was thrown by the task.
+            resultList.add(future.get());
+        }
+        long last = (System.currentTimeMillis() - start);
+        System.out.println("resultList = " + resultList + " response time = " + last);
+    }
+
+    @Test
+    public void testSyncAboutToExpire() throws InterruptedException, ExecutionException {
+        for(int i = 0; i < 10; i++) {
+            callApiSyncMultiThread(4);
+            logger.info("called times: " + i);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ie) {
+                ;
+            }
+        }
+    }
+
+    @Test
+    public void testSyncExpired() throws InterruptedException, ExecutionException {
+        for(int i = 0; i < 10; i++) {
+            callApiSyncMultiThread(4);
+            logger.info("called times: " + i);
+            try {
+                Thread.sleep(6000);
+            } catch (InterruptedException ie) {
+                ;
+            }
+        }
+    }
+
+    @Test
+    public void testMixed() throws InterruptedException, ExecutionException {
+        for(int i = 0; i < 10; i++) {
+            callApiSyncMultiThread(4
+            );
+            logger.info("called times: " + i);
+            try {
+                int sleepTime = randInt(1, 6) * 1000;
+                if (sleepTime > 3000) {
+                    sleepTime = 6000;
+                } else {
+                    sleepTime = 1000;
+                }
+                Thread.sleep(sleepTime);
+            } catch (InterruptedException ie) {
+                ;
+            }
+        }
+    }
+
+    private void callApiAsyncMultiThread(final int threadCount) throws InterruptedException, ExecutionException {
+        Callable<String> task = new Callable<String>() {
+            @Override
+            public String call() throws Exception {
+                return callApiAsync();
+            }
+        };
+        List<Callable<String>> tasks = Collections.nCopies(threadCount, task);
+        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+        List<Future<String>> futures = executorService.invokeAll(tasks);
+        List<String> resultList = new ArrayList<String>(futures.size());
+        for (Future<String> future : futures) {
+            resultList.add(future.get());
+        }
+        System.out.println("resultList = " + resultList);
+    }
+
+    @Test
+    public void testAsyncAboutToExpire() throws InterruptedException, ExecutionException {
+        for(int i = 0; i < 10; i++) {
+            callApiAsyncMultiThread(4);
+            logger.info("called times: " + i);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ie) {
+                ;
+            }
+        }
+    }
+
+    @Test
+    public void testAsyncExpired() throws InterruptedException, ExecutionException {
+        for(int i = 0; i < 10; i++) {
+            callApiAsyncMultiThread(4);
+            logger.info("called times: " + i);
+            try {
+                Thread.sleep(6000);
+            } catch (InterruptedException ie) {
+                ;
+            }
+        }
+    }
 
     private static int randInt(int min, int max) {
         Random rand = new Random();
