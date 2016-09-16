@@ -25,7 +25,35 @@ And here you go.
 
 ## Getting Started
 
-The easy way to start your API project is to copy from [undertow-server-demo](https://github.com/networknt/undertow-server-demo)
+There are two ways to start your project:
+
+### Swagger code generator
+If you have swagger yaml spec, then you can use swagger-codege to generate a working project. This is the recommended
+way to start your REST API project. Here are the steps:
+
+```
+clone https://github.com/networknt/swagger-codegen
+cd swagger-codegen
+mvn clean install -DskipTests
+java -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i http://petstore.swagger.io/v2/swagger.json -l undertow -o samples/server/petstore/mypetstore
+cd samples/server/petstore/mypetstore
+mvn install exec:exec
+
+```
+Please replace the input spec and output folder accordingly.
+
+The server is up and running on port 8080 by default and OAuth JWT verification is off by default.
+
+User your browser/postman to access your endpoints and you will have a message returned.
+
+
+### Starting from demo or example project
+
+The other way to start your project is to copy from [undertow-server-demo](https://github.com/networknt/undertow-server-demo)
+or project from [undertow-server-example](https://github.com/networknt/undertow-server-example)
+
+Example repository contains all sort of examples for different type of servers that are not REST APIs with
+swagger spec.
 
 The server is using SPI to find root handler in your project so you have to create one class that implements com.networknt.server.HandlerProvider
 DemoHandlerProvider is an example. It basically create a HttpHandler and add all your routes to it. For every endpoints, you can
