@@ -8,30 +8,18 @@
         <relativePath>..</relativePath>
     </parent>
 
-    <artifactId>server</artifactId>
+    <artifactId>mask</artifactId>
     <packaging>jar</packaging>
-    <description>A server modules of framework.</description>
+    <description>A utility that mask sensitive info in string or json before log it.</description>
 
 	<dependencies>
 		<dependency>
 			<groupId>com.networknt</groupId>
+			<artifactId>utility</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.networknt</groupId>
 			<artifactId>config</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.networknt</groupId>
-			<artifactId>security</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.networknt</groupId>
-			<artifactId>audit</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.networknt</groupId>
-			<artifactId>info</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>io.undertow</groupId>
-			<artifactId>undertow-core</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
@@ -46,9 +34,22 @@
             <artifactId>slf4j-ext</artifactId>
         </dependency>
 		<dependency>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.owasp.encoder</groupId>
+			<artifactId>encoder</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>com.jayway.jsonpath</groupId>
 			<artifactId>json-path</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>commons-lang</groupId>
+			<artifactId>commons-lang</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>

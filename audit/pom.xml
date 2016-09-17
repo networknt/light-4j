@@ -8,9 +8,9 @@
         <relativePath>..</relativePath>
     </parent>
 
-    <artifactId>server</artifactId>
+    <artifactId>audit</artifactId>
     <packaging>jar</packaging>
-    <description>A server modules of framework.</description>
+    <description>A audit logger module that dump request and response based on configuration</description>
 
 	<dependencies>
 		<dependency>
@@ -19,15 +19,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.networknt</groupId>
-			<artifactId>security</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.networknt</groupId>
-			<artifactId>audit</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.networknt</groupId>
-			<artifactId>info</artifactId>
+			<artifactId>utility</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>io.undertow</groupId>
@@ -46,9 +38,32 @@
             <artifactId>slf4j-ext</artifactId>
         </dependency>
 		<dependency>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.owasp.encoder</groupId>
+			<artifactId>encoder</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>com.jayway.jsonpath</groupId>
 			<artifactId>json-path</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>commons-lang</groupId>
+			<artifactId>commons-lang</artifactId>
+		</dependency>
+        <dependency>
+            <groupId>org.bitbucket.b_c</groupId>
+            <artifactId>jose4j</artifactId>
+            <version>${version.jose4j}</version>
+        </dependency>
+		<dependency>
+			<groupId>org.owasp.encoder</groupId>
+			<artifactId>encoder</artifactId>
+		</dependency>
+
+
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>

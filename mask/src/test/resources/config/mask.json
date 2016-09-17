@@ -1,0 +1,39 @@
+{
+  "description": "mask configuration for different type of inputs",
+  "string": {
+    "uri": {
+      "password=[^&]*":"password=******",
+      "number=\\d{1,16}":"number=----------------",
+      "sin=\\d{1,9}":"sin=masked"
+    }
+  },
+  "regex": {
+    "queryParameter" :{
+      "accountNo": "(.*)"
+    },
+    "requestHeader" : {
+      "header1": "(.*)",
+      "header2": "(.*)"
+    },
+    "responseHeader" : {
+      "header3": "(.*)"
+    }
+  },
+  "json" : {
+    "requestBody" : {
+      "$.product[*].item[*].name" :"(.*)"
+    },
+    "responseBody" : {
+      "$.product[*].item[*].name" :"(.*)",
+      "$.product[*].item[*].name[0]" : "(.*)"
+    },
+    "test1" : {
+      "$.contact.phone": "(.*)",
+      "$.password": "(.*)"
+    },
+    "test2" : {
+      "$.list" : "(.*)",
+      "$.password": "(.*)"
+    }
+  }
+}

@@ -27,8 +27,6 @@ public class JwtVerifyHandler implements HttpHandler {
         this.next = next;
     }
 
-    public JwtVerifyHandler() {}
-
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         HeaderMap headerMap = exchange.getRequestHeaders();

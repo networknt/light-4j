@@ -74,6 +74,9 @@
         <module>utility</module>
         <module>security</module>
         <module>client</module>
+        <module>audit</module>
+        <module>info</module>
+        <module>validator</module>
         <module>server</module>
     </modules>
 
@@ -98,6 +101,21 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>client</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>audit</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>info</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>validator</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

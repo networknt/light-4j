@@ -1,0 +1,4 @@
+{
+  "description": "Validate request against swagger spec during runtime",
+  "enableSwaggerValidator": true
+}

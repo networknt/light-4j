@@ -1,6 +1,8 @@
 package com.networknt.server;
 
-import com.jayway.jsonpath.internal.filter.ValueNode;
+import com.networknt.info.FullAuditHandler;
+import com.networknt.info.ServerInfoHandler;
+import com.networknt.info.SimpleAuditHandler;
 import com.networknt.config.Config;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.Option;
@@ -10,6 +12,7 @@ import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 import com.jayway.jsonpath.spi.mapper.MappingProvider;
 import com.networknt.security.JwtHelper;
 import com.networknt.security.JwtVerifyHandler;
+import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
@@ -47,6 +50,7 @@ public class Server {
 
         HttpHandler handler = null;
 
+        // API routing handler or others handler implemented by application developer.
         final ServiceLoader<HandlerProvider> handlerLoaders = ServiceLoader.load(HandlerProvider.class);
         for (final HandlerProvider provider : handlerLoaders) {
             if(provider.getHandler() instanceof HttpHandler) {
@@ -55,14 +59,38 @@ public class Server {
             }
         }
 
+        // check if server info handler needs to be installed
+        Object object = Config.getInstance().getJsonMapConfig(ServerInfoHandler.ENABLE_SERVER_INFO);
+        if(object != null && (Boolean)object == true) {
+            ServerInfoHandler serverInfoHandler = new ServerInfoHandler(handler);
+            handler = serverInfoHandler;
+            ModuleRegistry.registerModule(ServerInfoHandler.class.getName(),
+                    Config.getInstance().getJsonMapConfigNoCache(ServerInfoHandler.CONFIG_NAME), null);
+        }
+
+        // check if simple audit log handler needs to be installed.
+        object = Config.getInstance().getJsonMapConfig(SimpleAuditHandler.ENABLE_SIMPLE_AUDIT);
+        if(object != null && (Boolean)object == true) {
+            SimpleAuditHandler simpleAuditHandler = new SimpleAuditHandler(handler);
+            handler = simpleAuditHandler;
+            ModuleRegistry.registerModule(SimpleAuditHandler.class.getName(), SimpleAuditHandler.config, null);
+        }
+
+        // check if full audit log handler needs to be installed.
+        object = Config.getInstance().getJsonMapConfig(FullAuditHandler.ENABLE_FULL_AUDIT);
+        if(object != null && (Boolean)object == true) {
+            FullAuditHandler fullAuditHandler = new FullAuditHandler(handler);
+            handler = fullAuditHandler;
+            ModuleRegistry.registerModule(FullAuditHandler.class.getName(), FullAuditHandler.config, null);
+        }
+
         // check if jwt token verification is enabled
-        Object object = Config.getInstance().getJsonMapConfig(JwtHelper.SECURITY_CONFIG).get(JwtHelper.ENABLE_VERIFY_JWT);
-        if(object != null) {
-            boolean enableVerifyJwt = (Boolean)object;
-            if(enableVerifyJwt) {
-                JwtVerifyHandler jwtVerifyHandler = new JwtVerifyHandler(handler);
-                handler = jwtVerifyHandler;
-            }
+        object = Config.getInstance().getJsonMapConfig(JwtHelper.SECURITY_CONFIG).get(JwtHelper.ENABLE_VERIFY_JWT);
+        if(object != null && (Boolean)object == true) {
+            JwtVerifyHandler jwtVerifyHandler = new JwtVerifyHandler(handler);
+            handler = jwtVerifyHandler;
+            ModuleRegistry.registerModule(JwtVerifyHandler.class.getName(),
+                    Config.getInstance().getJsonMapConfigNoCache(JwtHelper.SECURITY_CONFIG), null);
         }
 
         Undertow.builder()
