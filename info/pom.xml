@@ -58,10 +58,6 @@
             <artifactId>jose4j</artifactId>
             <version>${version.jose4j}</version>
         </dependency>
-		<dependency>
-			<groupId>org.owasp.encoder</groupId>
-			<artifactId>encoder</artifactId>
-		</dependency>
 
 
 		<dependency>
