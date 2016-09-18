@@ -30,6 +30,10 @@
 			<artifactId>info</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>com.networknt</groupId>
+			<artifactId>validator</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>io.undertow</groupId>
 			<artifactId>undertow-core</artifactId>
 		</dependency>

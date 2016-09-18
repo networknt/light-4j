@@ -20,6 +20,7 @@ import org.apache.http.util.EntityUtils;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.NumericDate;
 import org.jose4j.jwt.consumer.InvalidJwtException;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,6 +53,7 @@ public class ClientTest {
         }
     }
 
+    @After
     public void tearDown() throws Exception {
         if(server != null) {
             server.stop();
@@ -190,9 +192,9 @@ public class ClientTest {
         System.out.println("resultList = " + resultList + " response time = " + last);
     }
 
-    @Test
+    //@Test
     public void testSyncAboutToExpire() throws InterruptedException, ExecutionException {
-        for(int i = 0; i < 1; i++) {
+        for(int i = 0; i < 10; i++) {
             callApiSyncMultiThread(4);
             logger.info("called times: " + i);
             try {
@@ -203,9 +205,9 @@ public class ClientTest {
         }
     }
 
-    @Test
+    //@Test
     public void testSyncExpired() throws InterruptedException, ExecutionException {
-        for(int i = 0; i < 1; i++) {
+        for(int i = 0; i < 10; i++) {
             callApiSyncMultiThread(4);
             logger.info("called times: " + i);
             try {
@@ -216,9 +218,9 @@ public class ClientTest {
         }
     }
 
-    @Test
+    //@Test
     public void testMixed() throws InterruptedException, ExecutionException {
-        for(int i = 0; i < 1; i++) {
+        for(int i = 0; i < 10; i++) {
             callApiSyncMultiThread(4
             );
             logger.info("called times: " + i);
@@ -253,9 +255,9 @@ public class ClientTest {
         System.out.println("resultList = " + resultList);
     }
 
-    @Test
+    //@Test
     public void testAsyncAboutToExpire() throws InterruptedException, ExecutionException {
-        for(int i = 0; i < 1; i++) {
+        for(int i = 0; i < 10; i++) {
             callApiAsyncMultiThread(4);
             logger.info("called times: " + i);
             try {
@@ -266,9 +268,9 @@ public class ClientTest {
         }
     }
 
-    @Test
+    //@Test
     public void testAsyncExpired() throws InterruptedException, ExecutionException {
-        for(int i = 0; i < 1; i++) {
+        for(int i = 0; i < 10; i++) {
             callApiAsyncMultiThread(4);
             logger.info("called times: " + i);
             try {

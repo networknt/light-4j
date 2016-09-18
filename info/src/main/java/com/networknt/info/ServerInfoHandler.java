@@ -34,11 +34,7 @@ public class ServerInfoHandler implements HttpHandler {
 
     static final Logger logger = LoggerFactory.getLogger(ServerInfoHandler.class);
 
-    private final HttpHandler next;
-
-    public ServerInfoHandler(final HttpHandler next) {
-        this.next = next;
-    }
+    public ServerInfoHandler(){}
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {

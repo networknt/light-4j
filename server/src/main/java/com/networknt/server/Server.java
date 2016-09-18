@@ -1,6 +1,7 @@
 package com.networknt.server;
 
 import com.networknt.info.FullAuditHandler;
+import com.networknt.info.ServerInfoConfig;
 import com.networknt.info.ServerInfoHandler;
 import com.networknt.info.SimpleAuditHandler;
 import com.networknt.config.Config;
@@ -11,13 +12,18 @@ import com.jayway.jsonpath.spi.json.JsonProvider;
 import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 import com.jayway.jsonpath.spi.mapper.MappingProvider;
 import com.networknt.security.JwtHelper;
+import com.networknt.security.JwtMockHandler;
 import com.networknt.security.JwtVerifyHandler;
 import com.networknt.utility.ModuleRegistry;
+import com.networknt.validator.ValidatorConfig;
+import com.networknt.validator.ValidatorHandler;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.server.HttpHandler;
+import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
+import io.undertow.util.Methods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.Options;
@@ -37,14 +43,15 @@ public class Server {
 
     public static void main(final String[] args) {
         logger.info("server starts");
-        // init JsonPath
-        configJsonPath();
-        // add shutdown hook here.
-        addDaemonShutdownHook();
         start();
     }
 
     static public void start() {
+
+        // init JsonPath
+        configJsonPath();
+        // add shutdown hook here.
+        addDaemonShutdownHook();
 
         ServerConfig config = (ServerConfig) Config.getInstance().getJsonObjectConfig(configName, ServerConfig.class);
 
@@ -55,21 +62,43 @@ public class Server {
         for (final HandlerProvider provider : handlerLoaders) {
             if(provider.getHandler() instanceof HttpHandler) {
                 handler = provider.getHandler();
-                break;
+                //break;
+            }
+        }
+
+        // check if mock jwt handler needs to be installed for testing.
+        Object object = Config.getInstance().getJsonMapConfig(JwtHelper.SECURITY_CONFIG).get(JwtMockHandler.ENABLE_MOCK_JWT);
+        if(object != null && (Boolean)object == true) {
+            JwtMockHandler jwtMockHandler = new JwtMockHandler();
+            if(handler instanceof RoutingHandler) {
+                ((RoutingHandler) handler).add(Methods.POST, "/oauth/token", jwtMockHandler);
+                ModuleRegistry.registerModule(JwtMockHandler.class.getName(),
+                        Config.getInstance().getJsonMapConfigNoCache(JwtHelper.SECURITY_CONFIG), null);
             }
         }
 
         // check if server info handler needs to be installed
-        Object object = Config.getInstance().getJsonMapConfig(ServerInfoHandler.ENABLE_SERVER_INFO);
-        if(object != null && (Boolean)object == true) {
-            ServerInfoHandler serverInfoHandler = new ServerInfoHandler(handler);
-            handler = serverInfoHandler;
-            ModuleRegistry.registerModule(ServerInfoHandler.class.getName(),
-                    Config.getInstance().getJsonMapConfigNoCache(ServerInfoHandler.CONFIG_NAME), null);
+        // TODO move this into the gnerator so that it can be protected by scope.
+        ServerInfoConfig serverInfoConfig = (ServerInfoConfig)Config.getInstance().getJsonObjectConfig(ServerInfoHandler.CONFIG_NAME, ServerInfoConfig.class);
+        if(serverInfoConfig.isEnableServerInfo()) {
+            ServerInfoHandler serverInfoHandler = new ServerInfoHandler();
+            if(handler instanceof RoutingHandler) {
+                ((RoutingHandler)handler).add(Methods.GET, "/server/info", serverInfoHandler);
+                ModuleRegistry.registerModule(ServerInfoHandler.class.getName(),
+                        Config.getInstance().getJsonMapConfigNoCache(ServerInfoHandler.CONFIG_NAME), null);
+            }
+        }
+
+        // check if validator needs to be installed.
+        ValidatorConfig validatorConfig = (ValidatorConfig)Config.getInstance().getJsonObjectConfig(ValidatorHandler.CONFIG_NAME, ValidatorConfig.class);
+        if(validatorConfig.isEnableValidator()) {
+            ValidatorHandler validatorHandler = new ValidatorHandler(handler);
+            handler = validatorHandler;
+            ModuleRegistry.registerModule(ValidatorHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(ValidatorHandler.CONFIG_NAME), null);
         }
 
         // check if simple audit log handler needs to be installed.
-        object = Config.getInstance().getJsonMapConfig(SimpleAuditHandler.ENABLE_SIMPLE_AUDIT);
+        object = Config.getInstance().getJsonMapConfig(SimpleAuditHandler.CONFIG_NAME).get(SimpleAuditHandler.ENABLE_SIMPLE_AUDIT);
         if(object != null && (Boolean)object == true) {
             SimpleAuditHandler simpleAuditHandler = new SimpleAuditHandler(handler);
             handler = simpleAuditHandler;
@@ -77,7 +106,7 @@ public class Server {
         }
 
         // check if full audit log handler needs to be installed.
-        object = Config.getInstance().getJsonMapConfig(FullAuditHandler.ENABLE_FULL_AUDIT);
+        object = Config.getInstance().getJsonMapConfig(FullAuditHandler.CONFIG_NAME).get(FullAuditHandler.ENABLE_FULL_AUDIT);
         if(object != null && (Boolean)object == true) {
             FullAuditHandler fullAuditHandler = new FullAuditHandler(handler);
             handler = fullAuditHandler;
@@ -93,7 +122,7 @@ public class Server {
                     Config.getInstance().getJsonMapConfigNoCache(JwtHelper.SECURITY_CONFIG), null);
         }
 
-        Undertow.builder()
+        server = Undertow.builder()
                 .addHttpListener(
                         config.getPort(),
                         config.getIp())
@@ -106,9 +135,8 @@ public class Server {
                 .setHandler(Handlers.header(handler,
                         Headers.SERVER_STRING, "Undertow"))
                 .setWorkerThreads(200)
-                .build()
-                .start();
-
+                .build();
+        server.start();
     }
 
     static public void stop() {
