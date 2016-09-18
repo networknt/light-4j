@@ -71,11 +71,6 @@
 
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>server</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
             <artifactId>client</artifactId>
             <scope>test</scope>
         </dependency>
