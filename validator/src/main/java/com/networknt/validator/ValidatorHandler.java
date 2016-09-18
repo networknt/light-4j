@@ -63,7 +63,7 @@ public class ValidatorHandler implements HttpHandler {
         final Optional<NormalisedPath> maybeApiPath = findMatchingApiPath(requestPath);
         if (!maybeApiPath.isPresent()) {
             validationReport.add(messages.get("validation.request.path.missing", exchange.getRequestURI()));
-            exchange.setStatusCode(StatusCodes.BAD_REQUEST);
+            exchange.setStatusCode(StatusCodes.NOT_FOUND);
             exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(validationReport));
             return;
         }
@@ -76,12 +76,18 @@ public class ValidatorHandler implements HttpHandler {
         if (operation == null) {
             validationReport.add(messages.get("validation.request.operation.notAllowed",
                     exchange.getRequestMethod(), swaggerPathString.original()));
-            exchange.setStatusCode(StatusCodes.BAD_REQUEST);
+            exchange.setStatusCode(StatusCodes.METHOD_NOT_ALLOWED);
             exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(validationReport));
             return;
         }
 
         final SwaggerOperation swaggerOperation = new SwaggerOperation(swaggerPathString, swaggerPath, httpMethod, operation);
+
+        if(exchange.isInIoThread()) {
+            exchange.dispatch(this);
+            return;
+        }
+        exchange.startBlocking();
 
         validationReport.merge(requestValidator.validateRequest(requestPath, exchange, swaggerOperation));
         if(validationReport.hasErrors()) {

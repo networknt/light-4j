@@ -2,6 +2,10 @@ package com.networknt.validator;
 
 import com.networknt.client.Client;
 import com.networknt.security.JwtMockHandler;
+import com.networknt.security.SwaggerHelper;
+import io.swagger.models.Operation;
+import io.swagger.models.Path;
+import io.swagger.models.Swagger;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
@@ -21,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Created by steve on 01/09/16.
@@ -41,6 +46,13 @@ public class ValidatorHandlerTest {
             ValidatorHandler validatorHandler = new ValidatorHandler(handler);
             handler = validatorHandler;
             // TODO inject operation of /oauth/token to swagger in order to by pass validator
+            Swagger swagger = SwaggerHelper.swagger;
+            Path path = new Path();
+            Operation post = new Operation();
+            path.set("post", post);
+            Map<String, Path> paths = swagger.getPaths();
+            paths.put("/oauth/token", path);
+            swagger.setPaths(paths);
 
             server = Undertow.builder()
                     .addHttpListener(8080, "localhost")

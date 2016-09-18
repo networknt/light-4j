@@ -78,8 +78,6 @@ public class RequestValidator {
         requireNonNull(exchange, "An exchange is required");
         requireNonNull(swaggerOperation, "An swagger operation is required");
 
-        //exchange.startBlocking();
-
         return validatePathParameters(requestPath, swaggerOperation)
                 .merge(validateRequestBody(Optional.ofNullable(new Scanner(exchange.getInputStream(),"UTF-8").useDelimiter("\\A").next()), swaggerOperation))
                 .merge(validateQueryParameters(exchange, swaggerOperation));
