@@ -14,9 +14,13 @@ import com.jayway.jsonpath.spi.mapper.MappingProvider;
 import com.networknt.security.JwtHelper;
 import com.networknt.security.JwtMockHandler;
 import com.networknt.security.JwtVerifyHandler;
+import com.networknt.security.SwaggerHelper;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.validator.ValidatorConfig;
 import com.networknt.validator.ValidatorHandler;
+import io.swagger.models.Operation;
+import io.swagger.models.Path;
+import io.swagger.models.Swagger;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
@@ -29,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import org.xnio.Options;
 
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
 
@@ -66,24 +71,21 @@ public class Server {
             }
         }
 
-        // check if mock jwt handler needs to be installed for testing.
-        Object object = Config.getInstance().getJsonMapConfig(JwtHelper.SECURITY_CONFIG).get(JwtMockHandler.ENABLE_MOCK_JWT);
-        if(object != null && (Boolean)object == true) {
-            JwtMockHandler jwtMockHandler = new JwtMockHandler();
-            if(handler instanceof RoutingHandler) {
-                ((RoutingHandler) handler).add(Methods.POST, "/oauth/token", jwtMockHandler);
-                ModuleRegistry.registerModule(JwtMockHandler.class.getName(),
-                        Config.getInstance().getJsonMapConfigNoCache(JwtHelper.SECURITY_CONFIG), null);
-            }
-        }
-
         // check if server info handler needs to be installed
-        // TODO move this into the gnerator so that it can be protected by scope.
         ServerInfoConfig serverInfoConfig = (ServerInfoConfig)Config.getInstance().getJsonObjectConfig(ServerInfoHandler.CONFIG_NAME, ServerInfoConfig.class);
         if(serverInfoConfig.isEnableServerInfo()) {
             ServerInfoHandler serverInfoHandler = new ServerInfoHandler();
             if(handler instanceof RoutingHandler) {
                 ((RoutingHandler)handler).add(Methods.GET, "/server/info", serverInfoHandler);
+                // inject this endpoint to swagger dynamically.
+                // TODO add security to protect it.
+                Swagger swagger = SwaggerHelper.swagger;
+                Path path = new Path();
+                Operation get = new Operation();
+                path.set("get", get);
+                Map<String, Path> paths = swagger.getPaths();
+                paths.put("/server/info", path);
+                swagger.setPaths(paths);
                 ModuleRegistry.registerModule(ServerInfoHandler.class.getName(),
                         Config.getInstance().getJsonMapConfigNoCache(ServerInfoHandler.CONFIG_NAME), null);
             }
@@ -98,7 +100,7 @@ public class Server {
         }
 
         // check if simple audit log handler needs to be installed.
-        object = Config.getInstance().getJsonMapConfig(SimpleAuditHandler.CONFIG_NAME).get(SimpleAuditHandler.ENABLE_SIMPLE_AUDIT);
+        Object object = Config.getInstance().getJsonMapConfig(SimpleAuditHandler.CONFIG_NAME).get(SimpleAuditHandler.ENABLE_SIMPLE_AUDIT);
         if(object != null && (Boolean)object == true) {
             SimpleAuditHandler simpleAuditHandler = new SimpleAuditHandler(handler);
             handler = simpleAuditHandler;
