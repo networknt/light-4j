@@ -1,6 +1,7 @@
 {
   "description": "security configuration",
   "enableVerifyJwt": true,
+  "enableVerifyScope": true,
   "jwt": {
     "certificate": [
       "oauth/primary.crt"
@@ -8,6 +9,5 @@
     "clockSkewInSeconds": 60
   },
   "logJwtToken": true,
-  "logClientUserScope": false,
-  "enableVerifyScope": true
+  "logClientUserScope": false
 }

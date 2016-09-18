@@ -192,7 +192,7 @@ public class ClientTest {
 
     @Test
     public void testSyncAboutToExpire() throws InterruptedException, ExecutionException {
-        for(int i = 0; i < 10; i++) {
+        for(int i = 0; i < 1; i++) {
             callApiSyncMultiThread(4);
             logger.info("called times: " + i);
             try {
@@ -205,7 +205,7 @@ public class ClientTest {
 
     @Test
     public void testSyncExpired() throws InterruptedException, ExecutionException {
-        for(int i = 0; i < 10; i++) {
+        for(int i = 0; i < 1; i++) {
             callApiSyncMultiThread(4);
             logger.info("called times: " + i);
             try {
@@ -218,7 +218,7 @@ public class ClientTest {
 
     @Test
     public void testMixed() throws InterruptedException, ExecutionException {
-        for(int i = 0; i < 10; i++) {
+        for(int i = 0; i < 1; i++) {
             callApiSyncMultiThread(4
             );
             logger.info("called times: " + i);
@@ -255,7 +255,7 @@ public class ClientTest {
 
     @Test
     public void testAsyncAboutToExpire() throws InterruptedException, ExecutionException {
-        for(int i = 0; i < 10; i++) {
+        for(int i = 0; i < 1; i++) {
             callApiAsyncMultiThread(4);
             logger.info("called times: " + i);
             try {
@@ -268,7 +268,7 @@ public class ClientTest {
 
     @Test
     public void testAsyncExpired() throws InterruptedException, ExecutionException {
-        for(int i = 0; i < 10; i++) {
+        for(int i = 0; i < 1; i++) {
             callApiAsyncMultiThread(4);
             logger.info("called times: " + i);
             try {

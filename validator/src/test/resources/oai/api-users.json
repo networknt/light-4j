@@ -1,0 +1,232 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Users",
+    "version": "1.0.0"
+  },
+  "tags": [{
+    "name": "user",
+    "description": "Operations related to Users"
+  }],
+  "paths": {
+    "/users": {
+      "get": {
+        "tags": ["user"],
+        "summary": "Get all users",
+        "operationId": "get all users",
+        "produces": [
+          "application/json"
+        ],
+        "security": [{
+          "basic": ["read_users"]
+        }],
+        "parameters": [{
+          "name": "maxCount",
+          "in": "query",
+          "description": "The maximum number of results to return",
+          "required": false,
+          "type": "integer",
+          "format": "int32",
+          "minimum": 1
+        }, {
+          "name": "filter",
+          "in": "query",
+          "description": "The IDs include in the results",
+          "required": false,
+          "type": "array",
+          "collectionFormat": "csv",
+          "maxItems": 10,
+          "items": {
+            "type": "number",
+            "format": "int32"
+          }
+        }],
+        "responses": {
+          "200": {
+            "description": "Users response",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/User"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "default": {
+            "description": "Error response",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["user"],
+        "summary": "Create a new user",
+        "operationId": "create new user",
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "security": [{
+          "basic": ["create_user"]
+        }],
+        "parameters": [{
+          "name": "user",
+          "in": "body",
+          "description": "The new user details to create",
+          "required": true,
+          "schema": {
+            "$ref": "#/definitions/NewUser"
+          }
+        }],
+        "responses": {
+          "200": {
+            "description": "User response",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "tags": ["user"],
+        "summary": "Get a single user",
+        "operationId": "get user by ID",
+        "produces": [
+          "application/json"
+        ],
+        "security": [{
+          "basic": ["read_users"]
+        }],
+        "parameters": [{
+          "name": "id",
+          "in": "path",
+          "description": "The ID of the user to get",
+          "required": true,
+          "type": "integer",
+          "format": "int32"
+        }],
+        "responses": {
+          "200": {
+            "description": "User response",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          "400": {
+            "description": "Invalid ID format",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Unauthenticated access",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No user with the given ID",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/healthcheck": {
+      "get": {
+        "summary": "Healthcheck endpoint for the service",
+        "operationId": "healthcheck",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [{
+          "name": "type",
+          "in": "query",
+          "description": "What type of healthcheck to perform",
+          "required": true,
+          "type": "string",
+          "enum": ["deep", "shallow"]
+        }],
+        "responses": {
+          "200": {
+            "description": "Everything is ok"
+          },
+          "500": {
+            "description": "Healthcheck failed"
+          }
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "basic": {
+      "x-authorize": "auth.js",
+      "type": "basic",
+      "scopes": {
+        "read_users": "Read users",
+        "create_user": "Create user"
+      }
+    }
+  },
+  "definitions": {
+    "User": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "email"
+      ]
+    },
+    "NewUser": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "email"
+      ]
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "message"
+      ]
+    }
+  }
+}
