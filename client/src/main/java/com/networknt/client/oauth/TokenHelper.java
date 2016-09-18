@@ -48,7 +48,7 @@ public class TokenHelper {
 
         try {
             CloseableHttpClient client = Client.getInstance().getSyncClient();
-            httpPost.setEntity(getEntity(tokenRequest));
+            //httpPost.setEntity(getEntity(tokenRequest));
             HttpResponse response = client.execute(httpPost);
             tokenResponse = handleResponse(response);
 

@@ -16,11 +16,11 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.apache.http.util.EntityUtils;
+import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,16 +62,16 @@ public class ValidatorHandlerTest {
         }
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterClass
+    public static void tearDown() throws Exception {
         if(server != null) {
-            server.stop();
-            System.out.println("The server is stopped.");
             try {
                 Thread.sleep(100);
             } catch (InterruptedException ie) {
-                ;
+
             }
+            server.stop();
+            logger.info("The server is stopped.");
         }
     }
 
@@ -244,4 +244,59 @@ public class ValidatorHandlerTest {
             e.printStackTrace();
         }
     }
+
+    @Test
+    public void testInvalidMethod() throws Exception {
+        String url = "http://localhost:8080/pet";
+        CloseableHttpClient client = Client.getInstance().getSyncClient();
+        HttpGet httpGet = new HttpGet(url);
+        ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
+            @Override
+            public String handleResponse(final HttpResponse response) throws ClientProtocolException, IOException {
+                int status = response.getStatusLine().getStatusCode();
+                Assert.assertEquals(405, status);
+                return null;
+            }
+        };
+        String responseBody = null;
+        try {
+            Client.getInstance().addAuthorizationWithScopeToken(httpGet, "Bearer token");
+            responseBody = client.execute(httpGet, responseHandler);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testInvalidPost() throws Exception {
+        String url = "http://localhost:8080/pet";
+        CloseableHttpClient client = Client.getInstance().getSyncClient();
+        HttpPost httpPost = new HttpPost(url);
+        StringEntity entity = new StringEntity("{\"name\":\"Pinky\", \"photoUrl\": \"http://www.photo.com/1.jpg\"}");
+        httpPost.setEntity(entity);
+        Client.getInstance().addAuthorizationWithScopeToken(httpPost, "Bearer token");
+        HttpResponse response = client.execute(httpPost);
+        Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+        String body = EntityUtils.toString(response.getEntity());
+        logger.debug("response body = " + body);
+        Assert.assertNotEquals("addPet", body);
+
+    }
+
+    @Test
+    public void testValidPost() throws Exception {
+        String url = "http://localhost:8080/pet";
+        CloseableHttpClient client = Client.getInstance().getSyncClient();
+        HttpPost httpPost = new HttpPost(url);
+        StringEntity entity = new StringEntity("{\"id\":0,\"category\":{\"id\":0,\"name\":\"string\"},\"name\":\"doggie\",\"photoUrls\":[\"string\"],\"tags\":[{\"id\":0,\"name\":\"string\"}],\"status\":\"available\"}");
+        httpPost.setEntity(entity);
+        Client.getInstance().addAuthorizationWithScopeToken(httpPost, "Bearer token");
+        HttpResponse response = client.execute(httpPost);
+        Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+        String body = EntityUtils.toString(response.getEntity());
+        logger.debug("response body = " + body);
+        Assert.assertEquals("addPet", body);
+
+    }
+
 }

@@ -35,10 +35,9 @@ public class MutableValidationReport implements ValidationReport {
     public ValidationReport merge(final ValidationReport other) {
         requireNonNull(other, "A validation report is required");
 
-        final MutableValidationReport result = new MutableValidationReport();
-        result.messages.addAll(this.getMessages());
-        result.messages.addAll(other.getMessages());
-        return result;
+        this.messages.addAll(this.getMessages());
+        this.messages.addAll(other.getMessages());
+        return this;
     }
 
     @Override

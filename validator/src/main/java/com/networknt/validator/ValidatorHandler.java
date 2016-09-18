@@ -4,12 +4,14 @@ import com.networknt.config.Config;
 import com.networknt.security.SwaggerHelper;
 import com.networknt.validator.report.MessageResolver;
 import com.networknt.validator.report.MutableValidationReport;
+import com.networknt.validator.report.ValidationReport;
 import io.swagger.models.HttpMethod;
 import io.swagger.models.Operation;
 import io.swagger.models.Path;
 import io.undertow.server.ExchangeCompletionListener;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.util.AttachmentKey;
 import io.undertow.util.StatusCodes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +37,7 @@ public class ValidatorHandler implements HttpHandler {
     public static final String ENABLE_VALIDATOR = "enableValidator";
     static final String ENABLE_RESPONSE_VALIDATOR = "enableResponseValidator";
 
+    static final AttachmentKey<String> REQUEST_BODY = AttachmentKey.create(String.class);
     static final Logger logger = LoggerFactory.getLogger(ValidatorHandler.class);
 
     private final HttpHandler next;
@@ -89,10 +92,12 @@ public class ValidatorHandler implements HttpHandler {
         }
         exchange.startBlocking();
 
-        validationReport.merge(requestValidator.validateRequest(requestPath, exchange, swaggerOperation));
+        ValidationReport report = requestValidator.validateRequest(requestPath, exchange, swaggerOperation);
+        validationReport.merge(report);
         if(validationReport.hasErrors()) {
             exchange.setStatusCode(StatusCodes.BAD_REQUEST);
             exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(validationReport));
+            return;
         }
 
         if(config.enableResponseValidator) {

@@ -89,9 +89,12 @@ public class SchemaValidator {
         Set<ValidationMessage> processingReport = null;
         try {
             final JsonNode schemaObject = Json.mapper().readTree(Json.pretty(schema));
+
+            /*
             if (schemaObject instanceof ObjectNode) {
                 ((ObjectNode)schemaObject).set(ADDITIONAL_PROPERTIES_FIELD, BooleanNode.getFalse());
             }
+            */
 
             if (api != null) {
                 if (this.definitions == null) {
@@ -99,11 +102,13 @@ public class SchemaValidator {
 
                     // Explicitly disable additionalProperties
                     // Calling code can choose what level to emit this failure at using validation.schema.additionalProperties
+                    /*
                     this.definitions.forEach(n -> {
                         if (!n.has(ADDITIONAL_PROPERTIES_FIELD)) {
                             ((ObjectNode)n).set(ADDITIONAL_PROPERTIES_FIELD, BooleanNode.getFalse());
                         }
                     });
+                    */
                 }
                 ((ObjectNode)schemaObject).set(DEFINITIONS_FIELD, this.definitions);
             }
