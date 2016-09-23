@@ -19,13 +19,12 @@ package com.networknt.client;
 import com.networknt.config.Config;
 import com.networknt.security.JwtHelper;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ExpiredTokenException;
+import com.networknt.status.ExpiredTokenException;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
-import junit.framework.TestCase;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -48,7 +47,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.regex.Pattern;
 
 public class ClientTest {
     static final Logger logger = LoggerFactory.getLogger(ClientTest.class);

@@ -26,7 +26,7 @@ public class StatusTest {
 
     @Test
     public void tsetConstructor() {
-        Status status = new Status("ERR1001");
+        Status status = new Status("ERR10001");
         Assert.assertEquals(401, status.getStatusCode());
     }
 }

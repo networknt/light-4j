@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
-package com.networknt.security;
+package com.networknt.utility.path;
 
 import com.networknt.config.Config;
 import io.swagger.models.Swagger;
+import io.swagger.models.auth.SecuritySchemeDefinition;
 import io.swagger.parser.SwaggerParser;
 import io.swagger.parser.util.SwaggerDeserializationResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
+import java.util.Optional;
 
 import static java.lang.String.format;
 
@@ -37,6 +41,7 @@ public class SwaggerHelper {
     static final Logger logger = LoggerFactory.getLogger(SwaggerHelper.class);
 
     public static Swagger swagger;
+    public static String oauth2Name;
 
     static {
         final SwaggerDeserializationResult swaggerParseResult = new SwaggerParser().readWithInfo(Config.getInstance().getStringFromFile(SWAGGER_CONFIG));
@@ -45,5 +50,40 @@ public class SwaggerHelper {
         if (swagger == null) {
             logger.error("Unable to load swagger.json");
         }
+        oauth2Name = getOAuth2Name();
     }
+
+    public static Optional<NormalisedPath> findMatchingApiPath(final NormalisedPath requestPath) {
+        return SwaggerHelper.swagger.getPaths().keySet()
+                .stream()
+                .map(p -> (NormalisedPath) new ApiNormalisedPath(p))
+                .filter(p -> pathMatches(requestPath, p))
+                .findFirst();
+    }
+
+    private static String getOAuth2Name() {
+        String name = null;
+        Map<String, SecuritySchemeDefinition> defMap = swagger.getSecurityDefinitions();
+        for(Map.Entry<String, SecuritySchemeDefinition> entry : defMap.entrySet()) {
+            if(entry.getValue().getType().equals("oauth2")) {
+                name = entry.getKey();
+                break;
+            }
+        }
+        return name;
+    }
+
+    private static boolean pathMatches(final NormalisedPath requestPath, final NormalisedPath apiPath) {
+        if (requestPath.parts().size() != apiPath.parts().size()) {
+            return false;
+        }
+        for (int i = 0; i < requestPath.parts().size(); i++) {
+            if (requestPath.part(i).equalsIgnoreCase(apiPath.part(i)) || apiPath.isParam(i)) {
+                continue;
+            }
+            return false;
+        }
+        return true;
+    }
+
 }

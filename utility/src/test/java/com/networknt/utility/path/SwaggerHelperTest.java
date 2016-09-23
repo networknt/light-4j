@@ -14,28 +14,17 @@
  * limitations under the License.
  */
 
-package com.networknt.utility;
+package com.networknt.utility.path;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
- * Created by steve on 02/09/16.
+ * Created by steve on 23/09/16.
  */
-public class ClientException extends Exception {
-    private static final long serialVersionUID = 1L;
-
-    public ClientException() {
-        super();
+public class SwaggerHelperTest {
+    @Test
+    public void testOAuth2Name() {
+        Assert.assertEquals("petstore_auth", SwaggerHelper.oauth2Name);
     }
-
-    public ClientException(String message) {
-        super(message);
-    }
-
-    public ClientException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public ClientException(Throwable cause) {
-        super(cause);
-    }
-
 }

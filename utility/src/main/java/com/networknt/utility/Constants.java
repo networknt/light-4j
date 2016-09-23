@@ -26,7 +26,7 @@ public class Constants {
     public static final String SCOPE = "scope";
     public static final String ENDPOINT = "endpoint";
 
-    public static final String SCOPE_TOKEN = "scope_token";
+    public static final String SCOPE_TOKEN = "X-Scope-Token";
     public static final String AUTHORIZATION = "Authorization";
 
     public static final String AUDIT_LOGGER = "Audit";

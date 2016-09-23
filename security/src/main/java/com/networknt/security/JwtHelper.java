@@ -17,7 +17,7 @@
 package com.networknt.security;
 
 import com.networknt.config.Config;
-import com.networknt.utility.ExpiredTokenException;
+import com.networknt.status.ExpiredTokenException;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;

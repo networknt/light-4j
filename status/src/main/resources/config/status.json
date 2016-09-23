@@ -1,20 +1,63 @@
 {
-  "ERR1000": {
+  "ERR10000": {
     "statusCode": 401,
-    "code": "ERR1000",
-    "message": "INVALID_JWT_TOKEN",
-    "description": "Incorrect signature or malformed token"
+    "code": "ERR10000",
+    "message": "INVALID_AUTH_TOKEN",
+    "description": "Incorrect signature or malformed token in authorization header"
   },
-  "ERR1001": {
+  "ERR10001": {
     "statusCode": 401,
-    "code": "ERR1001",
-    "message": "JWT_TOKEN_EXPIRED",
-    "description": "Jwt token expired"
+    "code": "ERR10001",
+    "message": "AUTH_TOKEN_EXPIRED",
+    "description": "Jwt token in authorization header expired"
   },
-  "ERR1002": {
+  "ERR10002": {
     "statusCode": 401,
-    "code": "ERR1002",
-    "message": "MISSING_JWT_TOKEN",
-    "description": "No Authorization header or no bearer token"
+    "code": "ERR10002",
+    "message": "MISSING_AUTH_TOKEN",
+    "description": "No Authorization header or the token is not bearer type"
+  },
+  "ERR10003": {
+    "statusCode": 401,
+    "code": "ERR10003",
+    "message": "INVALID_SCOPE_TOKEN",
+    "description": "Incorrect signature or malformed token in X-Scope-Token header"
+  },
+  "ERR10004": {
+    "statusCode": 401,
+    "code": "ERR10004",
+    "message": "SCOPE_TOKEN_EXPIRED",
+    "description": "Jwt token in X-Scope-Token expired"
+  },
+  "ERR10005": {
+    "statusCode": 403,
+    "code": "ERR10005",
+    "message": "AUTH_TOKEN_SCOPE_MISMATCH",
+    "description": "Scopes in authorization token and spec scopes are not matched"
+  },
+  "ERR10006": {
+    "statusCode": 403,
+    "code": "ERR10006",
+    "message": "SCOPE_TOKEN_SCOPE_MISMATCH",
+    "description": "Scopes in scope token and spec scopes are not matched"
+  },
+  "ERR10007": {
+    "statusCode": 404,
+    "code": "ERR10007",
+    "message": "INVALID_REQUEST_PATH",
+    "description": "Request path cannot be found in the spec."
+  },
+  "ERR10008": {
+    "statusCode": 405,
+    "code": "ERR10008",
+    "message": "METHOD_NOT_ALLOWED",
+    "description": "Request method cannot be found in the spec."
+  },
+  "ERR10009": {
+    "statusCode": 408,
+    "code": "ERR10009",
+    "message": "CLIENT_CREDENTIALS_TOKEN_NOT_AVAILABLE",
+    "description": "Could not get client credentials token in client module"
   }
+
 }

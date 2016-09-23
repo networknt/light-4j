@@ -21,8 +21,10 @@ import com.networknt.client.oauth.TokenHelper;
 import com.networknt.client.oauth.TokenRequest;
 import com.networknt.client.oauth.TokenResponse;
 import com.networknt.config.Config;
+import com.networknt.status.ApiException;
+import com.networknt.status.ClientException;
+import com.networknt.status.Status;
 import com.networknt.utility.*;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.http.*;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.Registry;
@@ -61,7 +63,6 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.*;
@@ -105,6 +106,8 @@ public class Client {
     static final String TOKEN_RENEW_BEFORE_EXPIRED = "tokenRenewBeforeExpired";
     static final String EXPIRED_REFRESH_RETRY_DELAY = "expiredRefreshRetryDelay";
     static final String EARLY_REFRESH_RETRY_DELAY = "earlyRefreshRetryDelay";
+
+    static final String STATUS_CLIENT_CREDENTIALS_TOKEN_NOT_AVAILABLE = "ERR10009";
 
     static Map<String, Object> config;
     static Map<String, Object> oauthConfig;
@@ -240,7 +243,7 @@ public class Client {
                         } else {
                             logger.trace("Circuit breaker is tripped and not timeout yet!");
                             // reject all waiting requests by thrown an exception.
-                            throw new ApiException(new ErrorResponse(408, "Client credentials token is not available"));
+                            throw new ApiException(new Status(STATUS_CLIENT_CREDENTIALS_TOKEN_NOT_AVAILABLE));
                         }
                     }
                 }

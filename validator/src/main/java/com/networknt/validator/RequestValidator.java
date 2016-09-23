@@ -16,14 +16,13 @@
 
 package com.networknt.validator;
 
+import com.networknt.utility.path.NormalisedPath;
 import com.networknt.validator.parameter.ParameterValidators;
 import com.networknt.validator.report.MessageResolver;
 import com.networknt.validator.report.ValidationReport;
 import io.swagger.models.parameters.BodyParameter;
 import io.swagger.models.parameters.Parameter;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.AttachmentKey;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

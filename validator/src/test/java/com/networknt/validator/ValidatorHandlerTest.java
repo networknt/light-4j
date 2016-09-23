@@ -18,7 +18,7 @@ package com.networknt.validator;
 
 import com.networknt.client.Client;
 import com.networknt.security.JwtMockHandler;
-import com.networknt.security.SwaggerHelper;
+import com.networknt.utility.path.SwaggerHelper;
 import io.swagger.models.Operation;
 import io.swagger.models.Path;
 import io.swagger.models.Swagger;

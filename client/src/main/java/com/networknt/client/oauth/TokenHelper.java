@@ -17,12 +17,9 @@
 package com.networknt.client.oauth;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Client;
 import com.networknt.config.Config;
-import com.networknt.utility.ApiException;
-import com.networknt.utility.ClientException;
+import com.networknt.status.ClientException;
 import com.networknt.utility.Constants;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;

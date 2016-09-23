@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.networknt.validator;
+package com.networknt.utility.path;
 
 import java.util.List;
 

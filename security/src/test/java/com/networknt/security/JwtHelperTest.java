@@ -62,8 +62,8 @@ public class JwtHelperTest {
         JwtClaims claims = JwtHelper.getDefaultJwtClaims();
         claims.setClaim("user_id", "steve");
         claims.setClaim("user_type", "EMPLOYEE");
-        claims.setClaim("client_id", "aaaaaaaa-1234-1234-1234-bbbbbbbb");
-        List<String> scope = Arrays.asList("api.r", "api.w");
+        claims.setClaim("client_id", "f7d42348-c647-4efb-a52d-4c5787421e72");
+        List<String> scope = Arrays.asList("write:pets", "read:pets");
         claims.setStringListClaim("scope", scope); // multi-valued claims work too and will end up as a JSON array
         return claims;
     }

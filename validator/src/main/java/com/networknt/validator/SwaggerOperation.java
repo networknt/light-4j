@@ -16,6 +16,7 @@
 
 package com.networknt.validator;
 
+import com.networknt.utility.path.NormalisedPath;
 import io.swagger.models.HttpMethod;
 import io.swagger.models.Operation;
 import io.swagger.models.Path;
