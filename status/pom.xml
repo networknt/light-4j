@@ -24,9 +24,9 @@
         <relativePath>..</relativePath>
     </parent>
 
-    <artifactId>security</artifactId>
+    <artifactId>status</artifactId>
     <packaging>jar</packaging>
-    <description>A security module that contains all handlers to protect your server</description>
+    <description>A http status response that is sent to the consumer if an error occurs.</description>
 
 	<dependencies>
 		<dependency>
@@ -36,14 +36,6 @@
 		<dependency>
 			<groupId>com.networknt</groupId>
 			<artifactId>utility</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.networknt</groupId>
-			<artifactId>status</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>io.undertow</groupId>
-			<artifactId>undertow-core</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
@@ -73,16 +65,6 @@
 			<groupId>commons-lang</groupId>
 			<artifactId>commons-lang</artifactId>
 		</dependency>
-        <dependency>
-            <groupId>org.bitbucket.b_c</groupId>
-            <artifactId>jose4j</artifactId>
-            <version>${version.jose4j}</version>
-        </dependency>
-		<dependency>
-			<groupId>io.swagger</groupId>
-			<artifactId>swagger-parser</artifactId>
-		</dependency>
-
 
 		<dependency>
 			<groupId>ch.qos.logback</groupId>

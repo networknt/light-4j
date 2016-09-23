@@ -96,6 +96,7 @@
         <module>audit</module>
         <module>info</module>
         <module>validator</module>
+        <module>status</module>
         <module>server</module>
     </modules>
 
@@ -135,6 +136,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>validator</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>status</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

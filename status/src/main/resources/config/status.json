@@ -1,0 +1,20 @@
+{
+  "ERR1000": {
+    "statusCode": 401,
+    "code": "ERR1000",
+    "message": "INVALID_JWT_TOKEN",
+    "description": "Incorrect signature or malformed token"
+  },
+  "ERR1001": {
+    "statusCode": 401,
+    "code": "ERR1001",
+    "message": "JWT_TOKEN_EXPIRED",
+    "description": "Jwt token expired"
+  },
+  "ERR1002": {
+    "statusCode": 401,
+    "code": "ERR1002",
+    "message": "MISSING_JWT_TOKEN",
+    "description": "No Authorization header or no bearer token"
+  }
+}

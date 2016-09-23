@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
-- Jwt token scope verification based on swgger spec in validator
+- Jwt token scope verification based on swgger spec in security
+- Status module to standardize error response
 
 ### Changed
 - Update the jwt.json and secuirty.json to support multiple certificates and kid to pick up the right certificate
