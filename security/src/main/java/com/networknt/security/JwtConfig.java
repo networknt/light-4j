@@ -26,7 +26,7 @@ public class JwtConfig {
     String audience;
     String version;
     int expiredInMinutes;
-
+    Key key;
     @JsonIgnore
     String description;
 
@@ -71,5 +71,55 @@ public class JwtConfig {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Key getKey() {
+        return key;
+    }
+
+    public void setKey(Key key) {
+        this.key = key;
+    }
+
+    public class Key {
+        String kid;
+        String filename;
+        String password;
+        String keyName;
+
+        public Key() {
+        }
+
+        public String getKid() {
+            return kid;
+        }
+
+        public void setKid(String kid) {
+            this.kid = kid;
+        }
+
+        public String getFilename() {
+            return filename;
+        }
+
+        public void setFilename(String filename) {
+            this.filename = filename;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
+
+        public String getKeyName() {
+            return keyName;
+        }
+
+        public void setKeyName(String keyName) {
+            this.keyName = keyName;
+        }
     }
 }

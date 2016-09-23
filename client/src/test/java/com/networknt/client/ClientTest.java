@@ -19,6 +19,7 @@ package com.networknt.client;
 import com.networknt.config.Config;
 import com.networknt.security.JwtHelper;
 import com.networknt.utility.Constants;
+import com.networknt.utility.ExpiredTokenException;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
@@ -310,6 +311,8 @@ public class ClientTest {
             try {
                 JwtHelper.verifyJwt(jwt);
             } catch(InvalidJwtException e) {
+                e.printStackTrace();
+            } catch(ExpiredTokenException e) {
                 expired = true;
             }
         }

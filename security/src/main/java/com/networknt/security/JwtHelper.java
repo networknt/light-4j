@@ -17,14 +17,17 @@
 package com.networknt.security;
 
 import com.networknt.config.Config;
+import com.networknt.utility.ExpiredTokenException;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
+import org.jose4j.jwt.NumericDate;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.jwt.consumer.JwtContext;
+import org.jose4j.jwx.JsonWebStructure;
 import org.jose4j.keys.resolvers.X509VerificationKeyResolver;
 import org.owasp.encoder.Encode;
 import org.slf4j.ext.XLogger;
@@ -49,18 +52,27 @@ import java.util.regex.Pattern;
 public class JwtHelper {
     static final XLogger logger = XLoggerFactory.getXLogger(JwtHelper.class);
     public static final String JWT_CONFIG = "jwt";
+    public static final String KEY = "key";
+    public static final String FILENAME = "filename";
+    public static final String PASSWORD = "password";
+    public static final String KEY_NAME = "keyName";
+    public static final String KID = "kid";
     public static final String SECURITY_CONFIG = "security";
     public static final String JWT_CERTIFICATE = "certificate";
     public static final String JwT_CLOCK_SKEW_IN_SECONDS = "clockSkewInSeconds";
     public static final String ENABLE_VERIFY_JWT = "enableVerifyJwt";
 
-    static List<X509Certificate> certificates;
+    static Map<String, X509Certificate> certMap;
+
     static Map<String, Object> securityConfig = (Map)Config.getInstance().getJsonMapConfig(SECURITY_CONFIG);
-    static Map<String, Object> jwtConfig = (Map)securityConfig.get(JWT_CONFIG);
+    static Map<String, Object> securityJwtConfig = (Map)securityConfig.get(JWT_CONFIG);
+    static JwtConfig jwtConfig = (JwtConfig) Config.getInstance().getJsonObjectConfig(JWT_CONFIG, JwtConfig.class);
 
     public static String getJwt(JwtClaims claims) throws Exception {
         String jwt = null;
-        RSAPrivateKey privateKey = (RSAPrivateKey) getPrivateKey("/config/oauth/primary.jks", "password", "selfsigned");
+        RSAPrivateKey privateKey = (RSAPrivateKey) getPrivateKey(
+                jwtConfig.getKey().getFilename(), jwtConfig.getKey().getPassword(), jwtConfig.getKey().getKeyName());
+
         // A JWT is a JWS and/or a JWE with JSON claims as the payload.
         // In this example it is a JWS nested inside a JWE
         // So we first create a JsonWebSignature object.
@@ -71,6 +83,7 @@ public class JwtHelper {
 
         // The JWT is signed using the sender's private key
         jws.setKey(privateKey);
+        jws.setKeyIdHeaderValue(jwtConfig.getKey().getKid());
 
         // Set the signature algorithm on the JWT/JWS that will integrity protect the claims
         jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.RSA_USING_SHA256);
@@ -147,14 +160,16 @@ public class JwtHelper {
     }
 
     static {
-        certificates = new ArrayList<X509Certificate>();
-        List<String> files = (List<String>)jwtConfig.get(JWT_CERTIFICATE);
-        try {
-            for (String file : files) {
-                certificates.add(readCertificate(file));
+        certMap = new HashMap<String, X509Certificate>();
+        Map<String, Object> keyMap = (Map<String, Object>) securityJwtConfig.get(JwtHelper.JWT_CERTIFICATE);
+        for(String kid: keyMap.keySet()) {
+            X509Certificate cert = null;
+            try {
+                cert = JwtHelper.readCertificate((String)keyMap.get(kid));
+            } catch (Exception e) {
+                logger.error("Exception:", e);
             }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
+            certMap.put(kid, cert);
         }
     }
 
@@ -174,26 +189,44 @@ public class JwtHelper {
         return jwt;
     }
 
-    public static JwtClaims verifyJwt(String jwt) throws InvalidJwtException {
+    public static JwtClaims verifyJwt(String jwt) throws InvalidJwtException, ExpiredTokenException {
         JwtClaims claims = null;
-        for(X509Certificate certificate: certificates) {
-            X509VerificationKeyResolver x509VerificationKeyResolver = new X509VerificationKeyResolver(
-                    certificate);
-            x509VerificationKeyResolver.setTryAllOnNoThumbHeader(true);
+        JwtConsumer consumer = new JwtConsumerBuilder()
+                .setSkipAllValidators()
+                .setDisableRequireSignature()
+                .setSkipSignatureVerification()
+                .build();
 
-            JwtConsumer jwtConsumer = new JwtConsumerBuilder()
-                    .setRequireExpirationTime()
-                    .setAllowedClockSkewInSeconds(
-                            (Integer) jwtConfig.get(JwT_CLOCK_SKEW_IN_SECONDS))
-                    .setSkipDefaultAudienceValidation()
-                    .setVerificationKeyResolver(x509VerificationKeyResolver)
-                    .build();
+        JwtContext jwtContext = consumer.process(jwt);
+        JwtClaims jwtClaims = jwtContext.getJwtClaims();
+        JsonWebStructure structure = jwtContext.getJoseObjects().get(0);
+        String kid = structure.getKeyIdHeaderValue();
 
-            // Validate the JWT and process it to the Claims
-            JwtContext jwtContext = jwtConsumer.process(jwt);
-            claims = jwtContext.getJwtClaims();
+        int secondsOfAllowedClockSkew = 30;
+        try {
+            if ((NumericDate.now().getValue() - secondsOfAllowedClockSkew) >= jwtClaims.getExpirationTime().getValue())
+            {
+                logger.info("jwt token is expired!");
+                throw new ExpiredTokenException("Token is expired");
+            }
+        } catch (MalformedClaimException e) {
+            logger.error("MalformedClaimException:", e);
+            throw new InvalidJwtException("MalformedClaimException", e);
         }
+
+        X509VerificationKeyResolver x509VerificationKeyResolver = new X509VerificationKeyResolver(certMap.get(kid));
+        x509VerificationKeyResolver.setTryAllOnNoThumbHeader(true);
+        consumer = new JwtConsumerBuilder()
+                .setRequireExpirationTime()
+                .setAllowedClockSkewInSeconds(
+                        (Integer) securityJwtConfig.get(JwT_CLOCK_SKEW_IN_SECONDS))
+                .setSkipDefaultAudienceValidation()
+                .setVerificationKeyResolver(x509VerificationKeyResolver)
+                .build();
+
+        // Validate the JWT and process it to the Claims
+        jwtContext = consumer.process(jwt);
+        claims = jwtContext.getJwtClaims();
         return claims;
     }
-
 }

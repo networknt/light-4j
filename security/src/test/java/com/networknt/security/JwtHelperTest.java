@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,16 +36,18 @@ public class JwtHelperTest {
     public void testReadCertificate() {
         Map<String, Object> securityConfig = (Map<String, Object>) Config.getInstance().getJsonMapConfig(JwtHelper.SECURITY_CONFIG);
         Map<String, Object> jwtConfig = (Map<String, Object>)securityConfig.get(JwtHelper.JWT_CONFIG);
-        List<String> files = (List<String>) jwtConfig.get(JwtHelper.JWT_CERTIFICATE);
-        String primaryCert = files.get(0);
-        Assert.assertEquals("oauth/primary.crt", primaryCert);
-        X509Certificate cert = null;
-        try {
-            cert = JwtHelper.readCertificate(primaryCert);
-        } catch (Exception e) {
-            e.printStackTrace();
+        Map<String, Object> keyMap = (Map<String, Object>) jwtConfig.get(JwtHelper.JWT_CERTIFICATE);
+        Map<String, X509Certificate> certMap = new HashMap<String, X509Certificate>();
+        for(String kid: keyMap.keySet()) {
+            X509Certificate cert = null;
+            try {
+                cert = JwtHelper.readCertificate((String)keyMap.get(kid));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            certMap.put(kid, cert);
         }
-        Assert.assertNotNull(cert);
+        Assert.assertEquals(2, certMap.size());
     }
 
     @Test
