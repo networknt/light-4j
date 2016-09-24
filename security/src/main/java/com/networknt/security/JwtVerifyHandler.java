@@ -87,7 +87,7 @@ public class JwtVerifyHandler implements HttpHandler {
                     if (!maybeApiPath.isPresent()) {
                         Status status = new Status(STATUS_INVALID_REQUEST_PATH);
                         exchange.setStatusCode(status.getStatusCode());
-                        exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(status));
+                        exchange.getResponseSender().send(status.toString());
                     }
 
                     final NormalisedPath swaggerPathString = maybeApiPath.get();
@@ -99,7 +99,7 @@ public class JwtVerifyHandler implements HttpHandler {
                     if (operation == null) {
                         Status status = new Status(STATUS_METHOD_NOT_ALLOWED);
                         exchange.setStatusCode(status.getStatusCode());
-                        exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(status));
+                        exchange.getResponseSender().send(status.toString());
                     }
 
                     // is there a scope token
@@ -115,11 +115,11 @@ public class JwtVerifyHandler implements HttpHandler {
                             logger.error("InvalidJwtException", e);
                             Status status = new Status(STATUS_INVALID_SCOPE_TOKEN);
                             exchange.setStatusCode(status.getStatusCode());
-                            exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(status));
+                            exchange.getResponseSender().send(status.toString());
                         } catch (ExpiredTokenException e) {
                             Status status = new Status(STATUS_SCOPE_TOKEN_EXPIRED);
                             exchange.setStatusCode(status.getStatusCode());
-                            exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(status));
+                            exchange.getResponseSender().send(status.toString());
                         }
                     }
 
@@ -139,7 +139,7 @@ public class JwtVerifyHandler implements HttpHandler {
                             }
                             Status status = new Status(STATUS_SCOPE_TOKEN_SCOPE_MISMATCH);
                             exchange.setStatusCode(status.getStatusCode());
-                            exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(status));
+                            exchange.getResponseSender().send(status.toString());
                         }
                     } else {
                         // no scope token, verify scope from auth token.
@@ -150,7 +150,7 @@ public class JwtVerifyHandler implements HttpHandler {
                             logger.error("MalformedClaimException", e);
                             Status status = new Status(STATUS_INVALID_AUTH_TOKEN);
                             exchange.setStatusCode(status.getStatusCode());
-                            exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(status));
+                            exchange.getResponseSender().send(status.toString());
                         }
                         if (!matchedScopes(primaryScopes, specScopes)) {
                             if(logger.isDebugEnabled()) {
@@ -158,7 +158,7 @@ public class JwtVerifyHandler implements HttpHandler {
                             }
                             Status status = new Status(STATUS_AUTH_TOKEN_SCOPE_MISMATCH);
                             exchange.setStatusCode(status.getStatusCode());
-                            exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(status));
+                            exchange.getResponseSender().send(status.toString());
                         }
                     }
                 }
@@ -168,16 +168,16 @@ public class JwtVerifyHandler implements HttpHandler {
                 logger.error("Exception: ", e);
                 Status status = new Status(STATUS_INVALID_AUTH_TOKEN);
                 exchange.setStatusCode(status.getStatusCode());
-                exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(status));
+                exchange.getResponseSender().send(status.toString());
             } catch (ExpiredTokenException e) {
                 Status status = new Status(STATUS_AUTH_TOKEN_EXPIRED);
                 exchange.setStatusCode(status.getStatusCode());
-                exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(status));
+                exchange.getResponseSender().send(status.toString());
             }
         } else {
             Status status = new Status(STATUS_MISSING_AUTH_TOKEN);
             exchange.setStatusCode(status.getStatusCode());
-            exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(status));
+            exchange.getResponseSender().send(status.toString());
         }
     }
 

@@ -87,7 +87,7 @@ public class ValidatorHandler implements HttpHandler {
         if (!maybeApiPath.isPresent()) {
             Status status = new Status(STATUS_INVALID_REQUEST_PATH);
             exchange.setStatusCode(status.getStatusCode());
-            exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(status));
+            exchange.getResponseSender().send(status.toString());
             return;
         }
 
@@ -100,7 +100,7 @@ public class ValidatorHandler implements HttpHandler {
         if (operation == null) {
             Status status = new Status(STATUS_METHOD_NOT_ALLOWED);
             exchange.setStatusCode(status.getStatusCode());
-            exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(status));
+            exchange.getResponseSender().send(status.toString());
             return;
         }
 

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 for jwt verification. Also, expired token will throw ExpiredJwtException now.
 - Move request uri matching and swagger.json to utility
 - Move exceptions to status from utility
+- Instead of using Jackson ObjectMapper to serialize Status object, using toString now. 10 times faster
 
 
 ## 0.1.1 - 2016-09-19

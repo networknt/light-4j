@@ -16,8 +16,12 @@
 
 package com.networknt.status;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.config.Config;
 import org.junit.Assert;
 import org.junit.Test;
+import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 
 /**
  * Created by steve on 23/09/16.
@@ -28,5 +32,48 @@ public class StatusTest {
     public void tsetConstructor() {
         Status status = new Status("ERR10001");
         Assert.assertEquals(401, status.getStatusCode());
+    }
+
+    @Test
+    public void testToString() {
+        Status status = new Status("ERR10001");
+        System.out.println(status);
+        Assert.assertEquals("{\"statusCode\":401,\"code\":\"ERR10001\",\"message\":\"AUTH_TOKEN_EXPIRED\",\"description\":\"Jwt token in authorization header expired\"}", status.toString());
+    }
+
+    @Test
+    public void testToStringPerf() {
+        long start = System.currentTimeMillis();
+        Status status = new Status("ERR10001");
+        String s = null;
+        for(int i = 0; i < 1000000; i++) {
+            s = status.toString();
+        }
+        System.out.println("ToString Perf " + (System.currentTimeMillis() - start));
+    }
+
+    /*
+    @Test
+    public void testToStringAppendPerf() {
+        long start = System.currentTimeMillis();
+        Status status = new Status("ERR10001");
+        String s = null;
+        for(int i = 0; i < 1000000; i++) {
+            s = status.toStringAppend();
+        }
+        System.out.println("ToStringAppend Perf " + (System.currentTimeMillis() - start));
+    }
+    */
+
+    @Test
+    public void testJacksonPerf() throws JsonProcessingException {
+        ObjectMapper mapper = Config.getInstance().getMapper();
+        long start = System.currentTimeMillis();
+        Status status = new Status("ERR10001");
+        String s = null;
+        for(int i = 0; i < 1000000; i++) {
+            s = mapper.writeValueAsString(status);
+        }
+        System.out.println("Jackson Perf " + (System.currentTimeMillis() - start));
     }
 }

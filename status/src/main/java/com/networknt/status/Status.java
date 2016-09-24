@@ -94,4 +94,28 @@ public class Status {
     public void setDescription(String description) {
         this.description = description;
     }
+
+    @Override
+    public String toString() {
+        return "{\"statusCode\":" + statusCode
+                + ",\"code\":\"" + code
+                + "\",\"message\":\""
+                + message + "\",\"description\":\""
+                + description + "\"}";
+    }
+
+    /*
+    public String toStringAppend() {
+        StringBuilder builder = new StringBuilder("{\"statusCode\":");
+        return builder.append(statusCode)
+                .append(",\"code\":\"")
+                .append(code)
+                .append("\",\"message\":\"")
+                .append(message)
+                .append("\",\"description\":\"")
+                .append(description)
+                .append("\"}").toString();
+    }
+    */
+
 }
