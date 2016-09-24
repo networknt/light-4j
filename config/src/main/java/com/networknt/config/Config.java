@@ -276,18 +276,36 @@ public abstract class Config {
             try{
             	inStream = new FileInputStream(EXTERNALIZED_PROPERTY_DIR + "/" + configFilename);
             } catch (FileNotFoundException ex){
-                logger.info("Unable to load config from externalized folder for " + Encode.forJava(configFilename + " in " + EXTERNALIZED_PROPERTY_DIR));
+                if(logger.isInfoEnabled()) {
+                    logger.info("Unable to load config from externalized folder for " + Encode.forJava(configFilename + " in " + EXTERNALIZED_PROPERTY_DIR));
+                }
             }
             if(inStream != null) {
-                logger.info("Config loaded from externalized folder for " + Encode.forJava(configFilename + " in " + EXTERNALIZED_PROPERTY_DIR));
+                if(logger.isInfoEnabled()) {
+                    logger.info("Config loaded from externalized folder for " + Encode.forJava(configFilename + " in " + EXTERNALIZED_PROPERTY_DIR));
+                }
+                return inStream;
+            }
+            if(logger.isInfoEnabled()) {
+                logger.info("Trying to load config from classpath directory for file " + Encode.forJava(configFilename));
+            }
+            inStream = getClass().getClassLoader().getResourceAsStream(configFilename);
+            if(inStream != null) {
+                if(logger.isInfoEnabled()) {
+                    logger.info("config loaded from classpath for " + Encode.forJava(configFilename));
+                }
                 return inStream;
             }
             inStream = getClass().getClassLoader().getResourceAsStream("config/" + configFilename);
             if(inStream != null) {
-                logger.info("Config loaded from default folder for " + Encode.forJava(configFilename));
+                if(logger.isInfoEnabled()) {
+                    logger.info("Config loaded from default folder for " + Encode.forJava(configFilename));
+                }
                 return inStream;
             }
-            logger.error("Unable to load config " + Encode.forJava(configFilename));
+            if(logger.isInfoEnabled()) {
+                logger.error("Unable to load config " + Encode.forJava(configFilename));
+            }
             return inStream;
         }
 
