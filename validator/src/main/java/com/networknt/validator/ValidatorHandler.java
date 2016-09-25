@@ -51,24 +51,20 @@ import static java.util.Objects.requireNonNull;
  */
 public class ValidatorHandler implements HttpHandler {
     public static final String CONFIG_NAME = "validator";
-    public static final String ENABLE_VALIDATOR = "enableValidator";
-    static final String ENABLE_RESPONSE_VALIDATOR = "enableResponseValidator";
 
     static final String STATUS_INVALID_REQUEST_PATH = "ERR10007";
     static final String STATUS_METHOD_NOT_ALLOWED = "ERR10008";
 
+    // request body will be parse during validation and it is attached to the exchange
     static final AttachmentKey<String> REQUEST_BODY = AttachmentKey.create(String.class);
     static final Logger logger = LoggerFactory.getLogger(ValidatorHandler.class);
 
     private final HttpHandler next;
 
-    static final MessageResolver messages = new MessageResolver();
-
     RequestValidator requestValidator;
     ResponseValidator responseValidator;
 
     public ValidatorHandler(final HttpHandler next) {
-
         MessageResolver messages = new MessageResolver();
         final SchemaValidator schemaValidator = new SchemaValidator(SwaggerHelper.swagger, messages);
         this.requestValidator = new RequestValidator(schemaValidator, messages);
