@@ -18,7 +18,6 @@ package com.networknt.validator;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.networknt.config.Config;
 import com.networknt.schema.JsonSchema;
@@ -44,7 +43,6 @@ import static java.util.Objects.requireNonNull;
  * Supports validation of properties and request/response bodies, and supports schema references.
  */
 public class SchemaValidator {
-    private static final String ADDITIONAL_PROPERTIES_FIELD = "additionalProperties";
     private static final String DEFINITIONS_FIELD = "definitions";
 
     private final Swagger api;
@@ -106,25 +104,9 @@ public class SchemaValidator {
         try {
             final JsonNode schemaObject = Json.mapper().readTree(Json.pretty(schema));
 
-            /*
-            if (schemaObject instanceof ObjectNode) {
-                ((ObjectNode)schemaObject).set(ADDITIONAL_PROPERTIES_FIELD, BooleanNode.getFalse());
-            }
-            */
-
             if (api != null) {
                 if (this.definitions == null) {
                     this.definitions = Json.mapper().readTree(Json.pretty(api.getDefinitions()));
-
-                    // Explicitly disable additionalProperties
-                    // Calling code can choose what level to emit this failure at using validation.schema.additionalProperties
-                    /*
-                    this.definitions.forEach(n -> {
-                        if (!n.has(ADDITIONAL_PROPERTIES_FIELD)) {
-                            ((ObjectNode)n).set(ADDITIONAL_PROPERTIES_FIELD, BooleanNode.getFalse());
-                        }
-                    });
-                    */
                 }
                 ((ObjectNode)schemaObject).set(DEFINITIONS_FIELD, this.definitions);
             }
