@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
+
+### Changed
+
+
+## 0.1.2 - 2016-09-27
+### Added
 - Jwt token scope verification based on swagger spec in security
 - Status module to standardize error response
 - Config can be loaded from classpath directly so that test case can inject different combination of configs.
