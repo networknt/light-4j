@@ -154,7 +154,7 @@ public class RequestValidator {
 
         final Collection<String> queryParameterValues = exchange.getQueryParameters().get(queryParameter.getName());
 
-        if (queryParameterValues.isEmpty() && queryParameter.getRequired()) {
+        if ((queryParameterValues == null || queryParameterValues.isEmpty()) && queryParameter.getRequired()) {
             return ValidationReport.singleton(
                     messages.get("validation.request.parameter.query.missing",
                             queryParameter.getName(), swaggerOperation.getPathString().original())

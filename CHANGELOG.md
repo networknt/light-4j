@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 ### Changed
+- Fix a NPE in request validator if query parameter is missing
 
 
 ## 0.1.2 - 2016-09-27
