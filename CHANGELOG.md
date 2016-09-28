@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - Fix a NPE in request validator if query parameter is missing
+- Do not validate query parameter if there is none.
+- Handle the case that security defintion is empty.
 
 
 ## 0.1.2 - 2016-09-27

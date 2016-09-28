@@ -64,10 +64,12 @@ public class SwaggerHelper {
     private static String getOAuth2Name() {
         String name = null;
         Map<String, SecuritySchemeDefinition> defMap = swagger.getSecurityDefinitions();
-        for(Map.Entry<String, SecuritySchemeDefinition> entry : defMap.entrySet()) {
-            if(entry.getValue().getType().equals("oauth2")) {
-                name = entry.getKey();
-                break;
+        if(defMap != null) {
+            for(Map.Entry<String, SecuritySchemeDefinition> entry : defMap.entrySet()) {
+                if(entry.getValue().getType().equals("oauth2")) {
+                    name = entry.getKey();
+                    break;
+                }
             }
         }
         return name;

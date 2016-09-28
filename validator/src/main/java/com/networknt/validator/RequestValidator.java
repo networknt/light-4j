@@ -17,6 +17,7 @@
 package com.networknt.validator;
 
 import com.networknt.utility.path.NormalisedPath;
+import com.networknt.validator.parameter.ParameterValidator;
 import com.networknt.validator.parameter.ParameterValidators;
 import com.networknt.validator.report.MessageResolver;
 import com.networknt.validator.report.ValidationReport;
@@ -154,17 +155,20 @@ public class RequestValidator {
 
         final Collection<String> queryParameterValues = exchange.getQueryParameters().get(queryParameter.getName());
 
-        if ((queryParameterValues == null || queryParameterValues.isEmpty()) && queryParameter.getRequired()) {
-            return ValidationReport.singleton(
-                    messages.get("validation.request.parameter.query.missing",
-                            queryParameter.getName(), swaggerOperation.getPathString().original())
-            );
+        if ((queryParameterValues == null || queryParameterValues.isEmpty())) {
+            if(queryParameter.getRequired()) {
+                return ValidationReport.singleton(
+                        messages.get("validation.request.parameter.query.missing",
+                                queryParameter.getName(), swaggerOperation.getPathString().original())
+                );
+            }
+        } else {
+            return queryParameterValues
+                    .stream()
+                    .map((v) -> parameterValidators.validate(v, queryParameter))
+                    .reduce(ValidationReport.empty(), ValidationReport::merge);
         }
-
-        return queryParameterValues
-                .stream()
-                .map((v) -> parameterValidators.validate(v, queryParameter))
-                .reduce(ValidationReport.empty(), ValidationReport::merge);
+        return ValidationReport.EMPTY_REPORT;
     }
 
 }
