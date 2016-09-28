@@ -58,6 +58,14 @@ public class JwtHelperTest {
         System.out.println("***LongLived JWT***: " + jwt);
     }
 
+    @Test
+    public void normalJwt() throws Exception {
+        JwtClaims claims = getTestClaims();
+        claims.setExpirationTimeMinutesInTheFuture(10);
+        String jwt = JwtHelper.getJwt(claims);
+        System.out.println("***JWT***: " + jwt);
+    }
+
     private JwtClaims getTestClaims() {
         JwtClaims claims = JwtHelper.getDefaultJwtClaims();
         claims.setClaim("user_id", "steve");
