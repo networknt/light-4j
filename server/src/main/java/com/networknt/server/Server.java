@@ -16,6 +16,8 @@
 
 package com.networknt.server;
 
+import com.networknt.exception.ExceptionConfig;
+import com.networknt.exception.ExceptionHandler;
 import com.networknt.info.FullAuditHandler;
 import com.networknt.info.ServerInfoConfig;
 import com.networknt.info.ServerInfoHandler;
@@ -137,6 +139,15 @@ public class Server {
             handler = jwtVerifyHandler;
             ModuleRegistry.registerModule(JwtVerifyHandler.class.getName(),
                     Config.getInstance().getJsonMapConfigNoCache(JwtHelper.SECURITY_CONFIG), null);
+        }
+
+        // check if exception handler is enabled
+        ExceptionConfig exceptionConfig = (ExceptionConfig)Config.getInstance().getJsonObjectConfig(ExceptionHandler.CONFIG_NAME, ExceptionConfig.class);
+        if(exceptionConfig.isEnableExceptionHandler()) {
+            ExceptionHandler exceptionHandler = new ExceptionHandler(handler);
+            handler = exceptionHandler;
+            ModuleRegistry.registerModule(ExceptionHandler.class.getName(),
+                    Config.getInstance().getJsonMapConfigNoCache(ExceptionHandler.CONFIG_NAME), null);
         }
 
         server = Undertow.builder()

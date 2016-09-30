@@ -28,6 +28,8 @@ import org.slf4j.LoggerFactory;
 public class ExceptionHandler implements HttpHandler {
     static final Logger logger = LoggerFactory.getLogger(ExceptionHandler.class);
 
+    public static final String CONFIG_NAME = "exception";
+
     static final String STATUS_RUNTIME_EXCEPTION = "ERR10010";
     static final String STATUS_UNCAUGHT_EXCEPTION = "ERR10011";
 

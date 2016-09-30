@@ -77,6 +77,11 @@ public class ExceptionHandlerTest {
 
     static RoutingHandler getTestHandler() {
         RoutingHandler handler = Handlers.routing()
+                .add(Methods.GET, "/normal", new HttpHandler() {
+                    public void handleRequest(HttpServerExchange exchange) throws Exception {
+                        exchange.getResponseSender().send("normal");
+                    }
+                })
                 .add(Methods.GET, "/runtime", new HttpHandler() {
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
                         int i = 1/0;
@@ -94,6 +99,25 @@ public class ExceptionHandlerTest {
                     }
                 });
         return handler;
+    }
+
+    @Test
+    public void testNormal() throws Exception {
+        String url = "http://localhost:8080/normal";
+        CloseableHttpClient client = HttpClients.createDefault();
+        HttpGet httpGet = new HttpGet(url);
+        try {
+            CloseableHttpResponse response = client.execute(httpGet);
+            int statusCode = response.getStatusLine().getStatusCode();
+            Assert.assertEquals(200, statusCode);
+            if(statusCode == 200) {
+                String s = IOUtils.toString(response.getEntity().getContent(), "utf8");
+                Assert.assertNotNull(s);
+                Assert.assertEquals("normal", s);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
