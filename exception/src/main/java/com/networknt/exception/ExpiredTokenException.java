@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.networknt.status;
+package com.networknt.exception;
 
 /**
  * Created by steve on 22/09/16.

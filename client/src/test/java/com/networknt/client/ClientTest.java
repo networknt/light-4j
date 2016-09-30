@@ -19,7 +19,7 @@ package com.networknt.client;
 import com.networknt.config.Config;
 import com.networknt.security.JwtHelper;
 import com.networknt.utility.Constants;
-import com.networknt.status.ExpiredTokenException;
+import com.networknt.exception.ExpiredTokenException;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;

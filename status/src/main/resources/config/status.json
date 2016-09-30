@@ -58,6 +58,18 @@
     "code": "ERR10009",
     "message": "CLIENT_CREDENTIALS_TOKEN_NOT_AVAILABLE",
     "description": "Could not get client credentials token in client module"
+  },
+  "ERR10010": {
+    "statusCode": 500,
+    "code": "ERR10010",
+    "message": "RUNTIME_EXCEPTION",
+    "description": "Unexpected runtime exception"
+  },
+  "ERR10011": {
+    "statusCode": 400,
+    "code": "ERR10011",
+    "message": "UNCAUGHT_EXCEPTION",
+    "description": "Uncaught exception"
   }
 
 }

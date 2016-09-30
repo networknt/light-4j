@@ -24,9 +24,9 @@
         <relativePath>..</relativePath>
     </parent>
 
-    <artifactId>security</artifactId>
+    <artifactId>exception</artifactId>
     <packaging>jar</packaging>
-    <description>A security module that contains all handlers to protect your server</description>
+    <description>A server exception handler for both runtime exceptions and ApiException if they are not handled in the handler chain</description>
 
 	<dependencies>
 		<dependency>
@@ -40,14 +40,6 @@
 		<dependency>
 			<groupId>com.networknt</groupId>
 			<artifactId>status</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.networknt</groupId>
-			<artifactId>exception</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>io.undertow</groupId>
-			<artifactId>undertow-core</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
@@ -77,13 +69,16 @@
 			<groupId>commons-lang</groupId>
 			<artifactId>commons-lang</artifactId>
 		</dependency>
-        <dependency>
-            <groupId>org.bitbucket.b_c</groupId>
-            <artifactId>jose4j</artifactId>
-            <version>${version.jose4j}</version>
-        </dependency>
+		<dependency>
+			<groupId>io.undertow</groupId>
+			<artifactId>undertow-core</artifactId>
+		</dependency>
 
-
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
