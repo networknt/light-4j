@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+
+## 0.1.4 - 2016-09-29
+### Added
+- A generic exception handler for runtime exception, ApiException and uncaught exception
+
+### Changed
+- Move checked exceptions to exception module from status
+
 ## 0.1.3 - 2016-09-28
 ### Added
 
