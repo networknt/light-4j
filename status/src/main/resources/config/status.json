@@ -70,6 +70,12 @@
     "code": "ERR10011",
     "message": "UNCAUGHT_EXCEPTION",
     "description": "Uncaught exception"
+  },
+  "ERR10012": {
+    "statusCode": 400,
+    "code": "ERR10012",
+    "message": "MISSING_SWAGGER_OPERATION",
+    "description": "SwaggerHandler or JwtVerifyHandler needs to be enabled"
   }
 
 }

@@ -16,6 +16,8 @@
 
 package com.networknt.server;
 
+import com.networknt.body.BodyConfig;
+import com.networknt.body.BodyHandler;
 import com.networknt.exception.ExceptionConfig;
 import com.networknt.exception.ExceptionHandler;
 import com.networknt.info.FullAuditHandler;
@@ -31,10 +33,12 @@ import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 import com.jayway.jsonpath.spi.mapper.MappingProvider;
 import com.networknt.security.JwtHelper;
 import com.networknt.security.JwtVerifyHandler;
-import com.networknt.utility.path.SwaggerHelper;
+import com.networknt.swagger.SwaggerHandler;
+import com.networknt.swagger.SwaggerHelper;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.validator.ValidatorConfig;
 import com.networknt.validator.ValidatorHandler;
+import io.swagger.config.SwaggerConfig;
 import io.swagger.models.Operation;
 import io.swagger.models.Path;
 import io.swagger.models.Swagger;
@@ -132,6 +136,15 @@ public class Server {
             ModuleRegistry.registerModule(FullAuditHandler.class.getName(), FullAuditHandler.config, null);
         }
 
+        // check if body handler is enabled
+        BodyConfig bodyConfig = (BodyConfig)Config.getInstance().getJsonObjectConfig(BodyHandler.CONFIG_NAME, BodyConfig.class);
+        if(bodyConfig.isEnableBodyHandler()) {
+            BodyHandler bodyHandler = new BodyHandler(handler);
+            handler = bodyHandler;
+            ModuleRegistry.registerModule(BodyHandler.class.getName(),
+                    Config.getInstance().getJsonMapConfigNoCache(BodyHandler.CONFIG_NAME), null);
+        }
+
         // check if jwt token verification is enabled
         object = Config.getInstance().getJsonMapConfig(JwtHelper.SECURITY_CONFIG).get(JwtHelper.ENABLE_VERIFY_JWT);
         if(object != null && (Boolean)object == true) {
@@ -140,6 +153,12 @@ public class Server {
             ModuleRegistry.registerModule(JwtVerifyHandler.class.getName(),
                     Config.getInstance().getJsonMapConfigNoCache(JwtHelper.SECURITY_CONFIG), null);
         }
+
+        // enable swagger handler by default, this requires swagger.json in the config folder always.
+        SwaggerHandler swaggerHandler = new SwaggerHandler(handler);
+        handler = swaggerHandler;
+        ModuleRegistry.registerModule(SwaggerHandler.class.getName(),
+                Config.getInstance().getJsonMapConfigNoCache(SwaggerHandler.CONFIG_NAME), null);
 
         // check if exception handler is enabled
         ExceptionConfig exceptionConfig = (ExceptionConfig)Config.getInstance().getJsonObjectConfig(ExceptionHandler.CONFIG_NAME, ExceptionConfig.class);

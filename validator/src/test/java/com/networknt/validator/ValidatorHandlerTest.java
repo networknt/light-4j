@@ -16,9 +16,11 @@
 
 package com.networknt.validator;
 
+import com.networknt.body.BodyHandler;
 import com.networknt.client.Client;
 import com.networknt.security.JwtMockHandler;
-import com.networknt.utility.path.SwaggerHelper;
+import com.networknt.swagger.SwaggerHandler;
+import com.networknt.swagger.SwaggerHelper;
 import io.swagger.models.Operation;
 import io.swagger.models.Path;
 import io.swagger.models.Swagger;
@@ -61,7 +63,11 @@ public class ValidatorHandlerTest {
             ((RoutingHandler)handler).add(Methods.POST, "/oauth/token", new JwtMockHandler());
             ValidatorHandler validatorHandler = new ValidatorHandler(handler);
             handler = validatorHandler;
-            // TODO inject operation of /oauth/token to swagger in order to by pass validator
+            BodyHandler bodyHandler = new BodyHandler(handler);
+            handler = bodyHandler;
+            SwaggerHandler swaggerHandler = new SwaggerHandler(handler);
+            handler = swaggerHandler;
+            // inject operation of /oauth/token to swagger in order to by pass validator
             Swagger swagger = SwaggerHelper.swagger;
             Path path = new Path();
             Operation post = new Operation();

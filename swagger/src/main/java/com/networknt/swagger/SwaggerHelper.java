@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.networknt.utility.path;
+package com.networknt.swagger;
 
 import com.networknt.config.Config;
 import io.swagger.models.Swagger;

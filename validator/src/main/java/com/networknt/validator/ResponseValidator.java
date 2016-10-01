@@ -16,13 +16,11 @@
 
 package com.networknt.validator;
 
+import com.networknt.swagger.SwaggerOperation;
 import com.networknt.validator.report.MessageResolver;
 import com.networknt.validator.report.MutableValidationReport;
 import com.networknt.validator.report.ValidationReport;
 import io.undertow.server.HttpServerExchange;
-
-import java.util.Optional;
-import java.util.Scanner;
 
 import static java.util.Objects.requireNonNull;
 

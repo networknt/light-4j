@@ -24,9 +24,9 @@
         <relativePath>..</relativePath>
     </parent>
 
-    <artifactId>server</artifactId>
+    <artifactId>body</artifactId>
     <packaging>jar</packaging>
-    <description>A server modules of framework.</description>
+    <description>A body parser handler that parses the body based on content type</description>
 
 	<dependencies>
 		<dependency>
@@ -35,35 +35,15 @@
 		</dependency>
 		<dependency>
 			<groupId>com.networknt</groupId>
-			<artifactId>security</artifactId>
+			<artifactId>utility</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.networknt</groupId>
-			<artifactId>audit</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.networknt</groupId>
-			<artifactId>info</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.networknt</groupId>
-			<artifactId>validator</artifactId>
+			<artifactId>status</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.networknt</groupId>
 			<artifactId>exception</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.networknt</groupId>
-			<artifactId>body</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.networknt</groupId>
-			<artifactId>swagger</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>io.undertow</groupId>
-			<artifactId>undertow-core</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
@@ -78,8 +58,30 @@
             <artifactId>slf4j-ext</artifactId>
         </dependency>
 		<dependency>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.owasp.encoder</groupId>
+			<artifactId>encoder</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>com.jayway.jsonpath</groupId>
 			<artifactId>json-path</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>commons-lang</groupId>
+			<artifactId>commons-lang</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.undertow</groupId>
+			<artifactId>undertow-core</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>

@@ -98,6 +98,8 @@
         <module>validator</module>
         <module>status</module>
         <module>exception</module>
+        <module>swagger</module>
+        <module>body</module>
         <module>server</module>
     </modules>
 
@@ -147,6 +149,16 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>exception</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>swagger</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>body</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

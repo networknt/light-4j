@@ -18,15 +18,10 @@ package com.networknt.validator;
 
 import com.networknt.config.Config;
 import com.networknt.status.Status;
-import com.networknt.utility.path.ApiNormalisedPath;
-import com.networknt.utility.path.SwaggerHelper;
-import com.networknt.utility.path.NormalisedPath;
+import com.networknt.swagger.*;
 import com.networknt.validator.report.MessageResolver;
 import com.networknt.validator.report.MutableValidationReport;
 import com.networknt.validator.report.ValidationReport;
-import io.swagger.models.HttpMethod;
-import io.swagger.models.Operation;
-import io.swagger.models.Path;
 import io.undertow.server.ExchangeCompletionListener;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -35,12 +30,6 @@ import io.undertow.util.StatusCodes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Optional;
-
-import static java.util.Arrays.asList;
-import static java.util.Collections.unmodifiableList;
-import static java.util.Objects.requireNonNull;
 
 /**
  * This is a swagger validator handler that validate request and response based on the spec. In
@@ -52,11 +41,8 @@ import static java.util.Objects.requireNonNull;
 public class ValidatorHandler implements HttpHandler {
     public static final String CONFIG_NAME = "validator";
 
-    static final String STATUS_INVALID_REQUEST_PATH = "ERR10007";
-    static final String STATUS_METHOD_NOT_ALLOWED = "ERR10008";
+    static final String STATUS_MISSING_SWAGGER_OPERATION = "ERR10012";
 
-    // request body will be parse during validation and it is attached to the exchange
-    static final AttachmentKey<String> REQUEST_BODY = AttachmentKey.create(String.class);
     static final Logger logger = LoggerFactory.getLogger(ValidatorHandler.class);
 
     private final HttpHandler next;
@@ -75,38 +61,16 @@ public class ValidatorHandler implements HttpHandler {
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         ValidatorConfig config = (ValidatorConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ValidatorConfig.class);
-
         final MutableValidationReport validationReport = new MutableValidationReport();
         final NormalisedPath requestPath = new ApiNormalisedPath(exchange.getRequestURI());
 
-        final Optional<NormalisedPath> maybeApiPath = SwaggerHelper.findMatchingApiPath(requestPath);
-        if (!maybeApiPath.isPresent()) {
-            Status status = new Status(STATUS_INVALID_REQUEST_PATH);
+        SwaggerOperation swaggerOperation = exchange.getAttachment(SwaggerHandler.SWAGGER_OPERATION);
+        if(swaggerOperation == null) {
+            Status status = new Status(STATUS_MISSING_SWAGGER_OPERATION);
             exchange.setStatusCode(status.getStatusCode());
             exchange.getResponseSender().send(status.toString());
             return;
         }
-
-        final NormalisedPath swaggerPathString = maybeApiPath.get();
-        final Path swaggerPath = SwaggerHelper.swagger.getPath(swaggerPathString.original());
-
-        final HttpMethod httpMethod = HttpMethod.valueOf(exchange.getRequestMethod().toString());
-        final Operation operation = swaggerPath.getOperationMap().get(httpMethod);
-
-        if (operation == null) {
-            Status status = new Status(STATUS_METHOD_NOT_ALLOWED);
-            exchange.setStatusCode(status.getStatusCode());
-            exchange.getResponseSender().send(status.toString());
-            return;
-        }
-
-        final SwaggerOperation swaggerOperation = new SwaggerOperation(swaggerPathString, swaggerPath, httpMethod, operation);
-
-        if(exchange.isInIoThread()) {
-            exchange.dispatch(this);
-            return;
-        }
-        exchange.startBlocking();
 
         ValidationReport report = requestValidator.validateRequest(requestPath, exchange, swaggerOperation);
         validationReport.merge(report);

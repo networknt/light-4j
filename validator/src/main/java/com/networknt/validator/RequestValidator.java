@@ -16,8 +16,9 @@
 
 package com.networknt.validator;
 
-import com.networknt.utility.path.NormalisedPath;
-import com.networknt.validator.parameter.ParameterValidator;
+import com.networknt.body.BodyHandler;
+import com.networknt.swagger.NormalisedPath;
+import com.networknt.swagger.SwaggerOperation;
 import com.networknt.validator.parameter.ParameterValidators;
 import com.networknt.validator.report.MessageResolver;
 import com.networknt.validator.report.ValidationReport;
@@ -66,19 +67,8 @@ public class RequestValidator {
         requireNonNull(requestPath, "A request path is required");
         requireNonNull(exchange, "An exchange is required");
         requireNonNull(swaggerOperation, "An swagger operation is required");
-        InputStream is = exchange.getInputStream();
-        String body = null;
-        if(is != null) {
-            try {
-                if(is.available() != -1) {
-                    body = new Scanner(is,"UTF-8").useDelimiter("\\A").next();
-                    exchange.putAttachment(ValidatorHandler.REQUEST_BODY, body);
-                }
-            } catch (IOException e) {
-                logger.error("IOException: ", e);
-            }
-        }
 
+        String body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
         return validatePathParameters(requestPath, swaggerOperation)
                 .merge(validateRequestBody(Optional.ofNullable(body), swaggerOperation))
                 .merge(validateQueryParameters(exchange, swaggerOperation));

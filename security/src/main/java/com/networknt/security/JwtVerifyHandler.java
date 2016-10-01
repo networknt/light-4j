@@ -18,11 +18,9 @@ package com.networknt.security;
 
 import com.networknt.config.Config;
 import com.networknt.status.Status;
+import com.networknt.swagger.*;
 import com.networknt.utility.Constants;
 import com.networknt.exception.ExpiredTokenException;
-import com.networknt.utility.path.ApiNormalisedPath;
-import com.networknt.utility.path.NormalisedPath;
-import com.networknt.utility.path.SwaggerHelper;
 import io.swagger.models.*;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -80,25 +78,32 @@ public class JwtVerifyHandler implements HttpHandler {
                 headerMap.add(new HttpString(Constants.USER_ID), claims.getStringClaimValue(Constants.USER_ID));
                 headerMap.add(new HttpString(Constants.SCOPE), claims.getStringListClaimValue(Constants.SCOPE).toString());
                 if(config != null && (Boolean)config.get(ENABLE_VERIFY_SCOPE)) {
+                    Operation operation = null;
+                    SwaggerOperation swaggerOperation = exchange.getAttachment(SwaggerHandler.SWAGGER_OPERATION);
+                    if(swaggerOperation == null) {
+                        final NormalisedPath requestPath = new ApiNormalisedPath(exchange.getRequestURI());
+                        final Optional<NormalisedPath> maybeApiPath = SwaggerHelper.findMatchingApiPath(requestPath);
+                        if (!maybeApiPath.isPresent()) {
+                            Status status = new Status(STATUS_INVALID_REQUEST_PATH);
+                            exchange.setStatusCode(status.getStatusCode());
+                            exchange.getResponseSender().send(status.toString());
+                        }
 
-                    final NormalisedPath requestPath = new ApiNormalisedPath(exchange.getRequestURI());
-                    final Optional<NormalisedPath> maybeApiPath = SwaggerHelper.findMatchingApiPath(requestPath);
-                    if (!maybeApiPath.isPresent()) {
-                        Status status = new Status(STATUS_INVALID_REQUEST_PATH);
-                        exchange.setStatusCode(status.getStatusCode());
-                        exchange.getResponseSender().send(status.toString());
-                    }
+                        final NormalisedPath swaggerPathString = maybeApiPath.get();
+                        final Path swaggerPath = SwaggerHelper.swagger.getPath(swaggerPathString.original());
 
-                    final NormalisedPath swaggerPathString = maybeApiPath.get();
-                    final Path swaggerPath = SwaggerHelper.swagger.getPath(swaggerPathString.original());
+                        final HttpMethod httpMethod = HttpMethod.valueOf(exchange.getRequestMethod().toString());
+                        operation = swaggerPath.getOperationMap().get(httpMethod);
 
-                    final HttpMethod httpMethod = HttpMethod.valueOf(exchange.getRequestMethod().toString());
-                    final Operation operation = swaggerPath.getOperationMap().get(httpMethod);
-
-                    if (operation == null) {
-                        Status status = new Status(STATUS_METHOD_NOT_ALLOWED);
-                        exchange.setStatusCode(status.getStatusCode());
-                        exchange.getResponseSender().send(status.toString());
+                        if (operation == null) {
+                            Status status = new Status(STATUS_METHOD_NOT_ALLOWED);
+                            exchange.setStatusCode(status.getStatusCode());
+                            exchange.getResponseSender().send(status.toString());
+                        }
+                        swaggerOperation = new SwaggerOperation(swaggerPathString, swaggerPath, httpMethod, operation);
+                        exchange.putAttachment(SwaggerHandler.SWAGGER_OPERATION, swaggerOperation);
+                    } else {
+                        operation = swaggerOperation.getOperation();
                     }
 
                     // is there a scope token

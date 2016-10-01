@@ -36,11 +36,15 @@
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>utility</artifactId>
+            <artifactId>swagger</artifactId>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>body</artifactId>
         </dependency>
         <dependency>
             <groupId>io.undertow</groupId>
