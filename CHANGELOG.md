@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
+
+### Changed
+
+## 0.1.5 - 2016-10-01
+### Added
 - A body parser handler to parse body into String and attached to the exchange
 - A swagger handler to identify operation based on request uri and method and attach to the exchange
 
