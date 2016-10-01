@@ -20,10 +20,7 @@ import com.networknt.body.BodyConfig;
 import com.networknt.body.BodyHandler;
 import com.networknt.exception.ExceptionConfig;
 import com.networknt.exception.ExceptionHandler;
-import com.networknt.info.FullAuditHandler;
-import com.networknt.info.ServerInfoConfig;
-import com.networknt.info.ServerInfoHandler;
-import com.networknt.info.SimpleAuditHandler;
+import com.networknt.info.*;
 import com.networknt.config.Config;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.Option;
@@ -34,21 +31,14 @@ import com.jayway.jsonpath.spi.mapper.MappingProvider;
 import com.networknt.security.JwtHelper;
 import com.networknt.security.JwtVerifyHandler;
 import com.networknt.swagger.SwaggerHandler;
-import com.networknt.swagger.SwaggerHelper;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.validator.ValidatorConfig;
 import com.networknt.validator.ValidatorHandler;
-import io.swagger.config.SwaggerConfig;
-import io.swagger.models.Operation;
-import io.swagger.models.Path;
-import io.swagger.models.Swagger;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.server.HttpHandler;
-import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
-import io.undertow.util.Methods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.Options;
@@ -91,26 +81,19 @@ public class Server {
                 //break;
             }
         }
+        if(handler == null) {
+            logger.warn("No route handler provider available in the classpath");
+            return;
+        }
 
         // check if server info handler needs to be installed
+        // TODO move to swagger specification
+        /*
         ServerInfoConfig serverInfoConfig = (ServerInfoConfig)Config.getInstance().getJsonObjectConfig(ServerInfoHandler.CONFIG_NAME, ServerInfoConfig.class);
         if(serverInfoConfig.isEnableServerInfo()) {
-            ServerInfoHandler serverInfoHandler = new ServerInfoHandler();
-            if(handler instanceof RoutingHandler) {
-                ((RoutingHandler)handler).add(Methods.GET, "/server/info", serverInfoHandler);
-                // inject this endpoint to swagger dynamically.
-                // TODO add security to protect it.
-                Swagger swagger = SwaggerHelper.swagger;
-                Path path = new Path();
-                Operation get = new Operation();
-                path.set("get", get);
-                Map<String, Path> paths = swagger.getPaths();
-                paths.put("/server/info", path);
-                swagger.setPaths(paths);
-                ModuleRegistry.registerModule(ServerInfoHandler.class.getName(),
-                        Config.getInstance().getJsonMapConfigNoCache(ServerInfoHandler.CONFIG_NAME), null);
-            }
+            ServerInfoHelper.inject(handler);
         }
+        */
 
         // check if validator needs to be installed.
         ValidatorConfig validatorConfig = (ValidatorConfig)Config.getInstance().getJsonObjectConfig(ValidatorHandler.CONFIG_NAME, ValidatorConfig.class);

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Move swagger related classes from utility to swagger module
 - Update security module to leverage swagger handler attachment
 - Update validator module to leverage swagger handler and body handler attachments
+- Server Info handler is not injected in server but is included into swagger specification
 
 ## 0.1.4 - 2016-09-29
 ### Added

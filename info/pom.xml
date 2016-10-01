@@ -38,6 +38,10 @@
 			<artifactId>utility</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>com.networknt</groupId>
+			<artifactId>swagger</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>io.undertow</groupId>
 			<artifactId>undertow-core</artifactId>
 		</dependency>
@@ -75,7 +79,11 @@
             <version>${version.jose4j}</version>
         </dependency>
 
-
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>

@@ -17,8 +17,10 @@
 package com.networknt.info;
 
 import com.networknt.config.Config;
+import com.networknt.status.Status;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
+import com.sun.corba.se.spi.activation.Server;
 import com.sun.net.httpserver.HttpExchange;
 import io.undertow.server.ExchangeCompletionListener;
 import io.undertow.server.HandlerWrapper;
@@ -46,7 +48,8 @@ import java.util.Properties;
  */
 public class ServerInfoHandler implements HttpHandler {
     public static final String CONFIG_NAME = "info";
-    public static final String ENABLE_SERVER_INFO = "enableServerInfo";
+
+    static final String STATUS_SERVER_INFO_DISABLED = "ERR10013";
 
     static final Logger logger = LoggerFactory.getLogger(ServerInfoHandler.class);
 
@@ -54,12 +57,19 @@ public class ServerInfoHandler implements HttpHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        Map<String, Object> infoMap = new LinkedHashMap<>();
-        infoMap.put("environment", getEnvironment(exchange));
-        infoMap.put("specification", Config.getInstance().getJsonMapConfigNoCache("swagger"));
-        infoMap.put("component", ModuleRegistry.getRegistry());
-        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-        exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(infoMap));
+        ServerInfoConfig config = (ServerInfoConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServerInfoConfig.class);
+        if(config.isEnableServerInfo()) {
+            Map<String, Object> infoMap = new LinkedHashMap<>();
+            infoMap.put("environment", getEnvironment(exchange));
+            infoMap.put("specification", Config.getInstance().getJsonMapConfigNoCache("swagger"));
+            infoMap.put("component", ModuleRegistry.getRegistry());
+            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+            exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(infoMap));
+        } else {
+            Status status = new Status(STATUS_SERVER_INFO_DISABLED);
+            exchange.setStatusCode(status.getStatusCode());
+            exchange.getResponseSender().send(status.toString());
+        }
     }
 
     public Map<String, Object> getEnvironment(HttpServerExchange exchange) {

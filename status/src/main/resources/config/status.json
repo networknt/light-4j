@@ -76,6 +76,12 @@
     "code": "ERR10012",
     "message": "MISSING_SWAGGER_OPERATION",
     "description": "SwaggerHandler or JwtVerifyHandler needs to be enabled"
+  },
+  "ERR10013": {
+    "statusCode": 404,
+    "code": "ERR10013",
+    "message": "SERVER_INFO_DISABLED",
+    "description": "Server info handler is disabled in info.json"
   }
 
 }
