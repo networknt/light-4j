@@ -100,6 +100,7 @@
         <module>exception</module>
         <module>swagger</module>
         <module>body</module>
+        <module>mask</module>
         <module>server</module>
     </modules>
 
@@ -159,6 +160,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>body</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>mask</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
