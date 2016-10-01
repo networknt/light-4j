@@ -21,7 +21,7 @@ import com.networknt.utility.Constants;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.*;
+import io.undertow.util.HeaderValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +31,7 @@ import java.util.Map;
 
 /**
  * Handler that dumps request and response to a log based on the audit.json config
- *
+ * <p>
  * Created by steve on 01/09/16.
  */
 public class FullAuditHandler implements HttpHandler {
@@ -54,7 +54,7 @@ public class FullAuditHandler implements HttpHandler {
 
     static {
         config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
-        Map<String, Object> fullMap = (Map<String, Object>)config.get(FULL);
+        Map<String, Object> fullMap = (Map<String, Object>) config.get(FULL);
     }
 
 
@@ -74,11 +74,11 @@ public class FullAuditHandler implements HttpHandler {
 
     private void dumpRequest(Map<String, Object> result, HttpServerExchange exchange, Object configObject) {
         Map<String, Object> requestMap = new LinkedHashMap<>();
-        if(configObject instanceof Boolean) {
-            if((Boolean)configObject) {
+        if (configObject instanceof Boolean) {
+            if ((Boolean) configObject) {
 
             }
-        } else if(configObject instanceof List<?>) {
+        } else if (configObject instanceof List<?>) {
 
         }
     }
@@ -93,13 +93,13 @@ public class FullAuditHandler implements HttpHandler {
                     }
                 }
             }
-        } else if(configObject instanceof List<?>) {
+        } else if (configObject instanceof List<?>) {
             // configObject is a list of header names
-            List headerList = (List<String>)configObject;
+            List headerList = (List<String>) configObject;
             for (HeaderValues header : exchange.getRequestHeaders()) {
                 for (String value : header) {
                     String name = header.getHeaderName().toString();
-                    if(headerList.contains(name)) {
+                    if (headerList.contains(name)) {
                         headerMap.put(header.getHeaderName().toString(), value);
                     }
                 }
@@ -107,7 +107,7 @@ public class FullAuditHandler implements HttpHandler {
         } else {
             logger.error("Header configuration is incorrect.");
         }
-        if(headerMap.size() > 0) {
+        if (headerMap.size() > 0) {
             result.put(HEADERS, headerMap);
         }
     }
