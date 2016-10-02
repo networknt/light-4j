@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
+
+### Changed
+
+## 0.1.6 - 2016-10-02
+### Added
 - Add header parameter validation against swagger specification
 
 ### Changed
