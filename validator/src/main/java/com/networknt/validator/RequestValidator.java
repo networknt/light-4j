@@ -24,6 +24,7 @@ import com.networknt.validator.parameter.ParameterValidators;
 import io.swagger.models.parameters.BodyParameter;
 import io.swagger.models.parameters.Parameter;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.util.HeaderValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,6 +69,9 @@ public class RequestValidator {
         if(status != null) return status;
 
         status = validateQueryParameters(exchange, swaggerOperation);
+        if(status != null) return status;
+
+        status = validateHeader(exchange, swaggerOperation);
         if(status != null) return status;
 
         String body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
@@ -155,6 +159,46 @@ public class RequestValidator {
             Optional<Status> optional = queryParameterValues
                     .stream()
                     .map((v) -> parameterValidators.validate(v, queryParameter))
+                    .filter(s -> s != null)
+                    .findFirst();
+            if(optional.isPresent()) {
+                return optional.get();
+            }
+        }
+        return null;
+    }
+
+    private Status validateHeader(final HttpServerExchange exchange,
+                                  final SwaggerOperation swaggerOperation) {
+        Optional<Status> optional = swaggerOperation
+                .getOperation()
+                .getParameters()
+                .stream()
+                .filter(p -> p.getIn().equalsIgnoreCase("header"))
+                .map(p -> validateHeader(exchange, swaggerOperation, p))
+                .filter(s -> s != null)
+                .findFirst();
+        if(optional.isPresent()) {
+            return optional.get();
+        } else {
+            return null;
+        }
+    }
+
+    private Status validateHeader(final HttpServerExchange exchange,
+                                  final SwaggerOperation swaggerOperation,
+                                  final Parameter headerParameter) {
+
+        final HeaderValues headerValues = exchange.getRequestHeaders().get(headerParameter.getName());
+        if ((headerValues == null || headerValues.isEmpty())) {
+            if(headerParameter.getRequired()) {
+                return new Status("ERR11017", headerParameter.getName(), swaggerOperation.getPathString().original());
+            }
+        } else {
+
+            Optional<Status> optional = headerValues
+                    .stream()
+                    .map((v) -> parameterValidators.validate(v, headerParameter))
                     .filter(s -> s != null)
                     .findFirst();
             if(optional.isPresent()) {

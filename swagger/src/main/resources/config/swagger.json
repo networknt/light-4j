@@ -355,7 +355,7 @@
           {
             "name": "api_key",
             "in": "header",
-            "required": false,
+            "required": true,
             "type": "string"
           },
           {

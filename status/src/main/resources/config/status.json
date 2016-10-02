@@ -184,5 +184,12 @@
     "code": "ERR11016",
     "message": "VALIDATOR_RESPONSE_BODY_MISSING",
     "description": "%s on path '%s' defines a response schema but no response body found."
+  },
+  "ERR11017": {
+    "statusCode": 400,
+    "code": "ERR11017",
+    "message": "VALIDATOR_REQUEST_PARAMETER_HEADER_MISSING",
+    "description": "Header parameter '%s' is required on path '%s' but not found in request."
   }
+
 }

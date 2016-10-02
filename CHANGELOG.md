@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
+- Add header parameter validation against swagger specification
 
 ### Changed
 - Refactor validator to fail fast while error occurs

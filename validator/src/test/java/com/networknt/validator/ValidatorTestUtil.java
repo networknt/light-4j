@@ -35,47 +35,7 @@ public class ValidatorTestUtil {
 
     private static final Logger log = LoggerFactory.getLogger(ValidatorTestUtil.class);
 
-
-    /**
-     * Load a response JSON file with the given name.
-     *
-     * @param responseName The name of the response to load
-     *
-     * @return The response JSON as a String, or <code>null</code> if it cannot be loaded
-     */
-    public static String loadResponse(final String responseName) {
-        return loadResource("/responses/" + responseName + ".json");
-    }
-
-    /**
-     * Load a request JSON file with the given name.
-     *
-     * @param requestName The name of the request to load
-     *
-     * @return The response JSON as a String, or <code>null</code> if it cannot be loaded
-     */
-    public static String loadRequest(final String requestName) {
-        return loadResource("/requests/" + requestName + ".json");
-    }
-
-    private static String loadResource(final String path) {
-        try {
-            final InputStream stream = ValidatorTestUtil.class.getResourceAsStream(path);
-            final BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-            final StringBuilder builder = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                builder.append(line).append('\n');
-            }
-            return builder.toString();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
     // Int parameters
-
     public static SerializableParameter intParam() {
         return intParam(true, null, null);
     }

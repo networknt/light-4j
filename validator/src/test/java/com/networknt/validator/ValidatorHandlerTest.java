@@ -18,7 +18,9 @@ package com.networknt.validator;
 
 import com.networknt.body.BodyHandler;
 import com.networknt.client.Client;
+import com.networknt.config.Config;
 import com.networknt.security.JwtMockHandler;
+import com.networknt.status.Status;
 import com.networknt.swagger.SwaggerHandler;
 import com.networknt.swagger.SwaggerHelper;
 import io.swagger.models.Operation;
@@ -33,6 +35,7 @@ import io.undertow.util.Methods;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
@@ -332,6 +335,38 @@ public class ValidatorHandlerTest {
         String body = EntityUtils.toString(response.getEntity());
         logger.debug("response body = " + body);
         Assert.assertEquals("getPetById", body);
+    }
+
+    @Test
+    public void testDeleteWithoutHeader() throws Exception {
+        String url = "http://localhost:8080/v2/pet/111";
+        CloseableHttpClient client = Client.getInstance().getSyncClient();
+        HttpDelete httpDelete = new HttpDelete(url);
+        Client.getInstance().addAuthorizationWithScopeToken(httpDelete, "Bearer token");
+        HttpResponse response = client.execute(httpDelete);
+        int statusCode = response.getStatusLine().getStatusCode();
+        Assert.assertEquals(400, statusCode);
+        if(statusCode == 400) {
+            Status status = Config.getInstance().getMapper().readValue(response.getEntity().getContent(), Status.class);
+            Assert.assertNotNull(status);
+            Assert.assertEquals("ERR11017", status.getCode());
+        }
+    }
+
+    @Test
+    public void testDeleteWithHeader() throws Exception {
+        String url = "http://localhost:8080/v2/pet/111";
+        CloseableHttpClient client = Client.getInstance().getSyncClient();
+        HttpDelete httpDelete = new HttpDelete(url);
+        Client.getInstance().addAuthorizationWithScopeToken(httpDelete, "Bearer token");
+        httpDelete.setHeader("api_key", "key");
+        HttpResponse response = client.execute(httpDelete);
+        int statusCode = response.getStatusLine().getStatusCode();
+        Assert.assertEquals(200, statusCode);
+        if(statusCode == 200) {
+            String body = EntityUtils.toString(response.getEntity());
+            Assert.assertEquals("deletePet", body);
+        }
     }
 
 }
