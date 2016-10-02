@@ -321,4 +321,17 @@ public class ValidatorHandlerTest {
 
     }
 
+    @Test
+    public void testGetParam() throws Exception {
+        String url = "http://localhost:8080/v2/pet/111";
+        CloseableHttpClient client = Client.getInstance().getSyncClient();
+        HttpGet httpGet = new HttpGet(url);
+        Client.getInstance().addAuthorizationWithScopeToken(httpGet, "Bearer token");
+        HttpResponse response = client.execute(httpGet);
+        Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+        String body = EntityUtils.toString(response.getEntity());
+        logger.debug("response body = " + body);
+        Assert.assertEquals("getPetById", body);
+    }
+
 }

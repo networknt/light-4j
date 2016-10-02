@@ -16,7 +16,7 @@
 
 package com.networknt.validator.parameter;
 
-import com.networknt.validator.report.ValidationReport;
+import com.networknt.status.Status;
 import io.swagger.models.parameters.Parameter;
 
 public interface ParameterValidator {
@@ -25,5 +25,5 @@ public interface ParameterValidator {
 
     boolean supports(Parameter p);
 
-    ValidationReport validate(String value, Parameter p);
+    Status validate(String value, Parameter p);
 }

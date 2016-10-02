@@ -16,10 +16,8 @@
 
 package com.networknt.validator;
 
+import com.networknt.status.Status;
 import com.networknt.swagger.SwaggerOperation;
-import com.networknt.validator.report.MessageResolver;
-import com.networknt.validator.report.MutableValidationReport;
-import com.networknt.validator.report.ValidationReport;
 import io.undertow.server.HttpServerExchange;
 
 import static java.util.Objects.requireNonNull;
@@ -29,17 +27,14 @@ import static java.util.Objects.requireNonNull;
  */
 public class ResponseValidator {
     private final SchemaValidator schemaValidator;
-    private final MessageResolver messages;
 
     /**
      * Construct a new response validator with the given schema validator.
      *
      * @param schemaValidator The schema validator to use when validating response bodies
-     * @param messages The message resolver to use
      */
-    public ResponseValidator(final SchemaValidator schemaValidator, final MessageResolver messages) {
+    public ResponseValidator(final SchemaValidator schemaValidator) {
         this.schemaValidator = requireNonNull(schemaValidator, "A schema validator is required");
-        this.messages = requireNonNull(messages, "A message resolver is required");
     }
 
     /**
@@ -48,9 +43,9 @@ public class ResponseValidator {
      * @param exchange The exchange to validate
      * @param swaggerOperation The API operation to validate the response against
      *
-     * @return A validation report containing validation errors
+     * @return A status containing validation error
      */
-    public ValidationReport validateResponse(final HttpServerExchange exchange, final SwaggerOperation swaggerOperation) {
+    public Status validateResponse(final HttpServerExchange exchange, final SwaggerOperation swaggerOperation) {
         requireNonNull(exchange, "An exchange is required");
         requireNonNull(swaggerOperation, "A swagger operation is required");
 
@@ -59,27 +54,19 @@ public class ResponseValidator {
             swaggerResponse = swaggerOperation.getOperation().getResponses().get("default"); // try the default response
         }
 
-        final MutableValidationReport validationReport = new MutableValidationReport();
         if (swaggerResponse == null) {
-            return validationReport.add(
-                    messages.get("validation.response.status.unknown",
-                            exchange.getStatusCode(), swaggerOperation.getPathString().original())
-            );
+            return new Status("ERR11015", exchange.getStatusCode(), swaggerOperation.getPathString().original());
         }
 
         if (swaggerResponse.getSchema() == null) {
-            return validationReport;
+            return null;
         }
         String body = exchange.getOutputStream().toString();
 
         if (body == null || body.length() == 0) {
-            return validationReport.add(
-                    messages.get("validation.response.body.missing",
-                            swaggerOperation.getMethod(), swaggerOperation.getPathString().original())
-            );
+            return new Status("ERR11016", swaggerOperation.getMethod(), swaggerOperation.getPathString().original());
         }
-
-        return validationReport.merge(schemaValidator.validate(body, swaggerResponse.getSchema()));
+        return schemaValidator.validate(body, swaggerResponse.getSchema());
     }
 
 }

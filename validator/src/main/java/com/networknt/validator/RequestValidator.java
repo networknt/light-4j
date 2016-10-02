@@ -17,11 +17,10 @@
 package com.networknt.validator;
 
 import com.networknt.body.BodyHandler;
+import com.networknt.status.Status;
 import com.networknt.swagger.NormalisedPath;
 import com.networknt.swagger.SwaggerOperation;
 import com.networknt.validator.parameter.ParameterValidators;
-import com.networknt.validator.report.MessageResolver;
-import com.networknt.validator.report.ValidationReport;
 import io.swagger.models.parameters.BodyParameter;
 import io.swagger.models.parameters.Parameter;
 import io.undertow.server.HttpServerExchange;
@@ -43,18 +42,15 @@ public class RequestValidator {
 
     private final SchemaValidator schemaValidator;
     private final ParameterValidators parameterValidators;
-    private final MessageResolver messages;
 
     /**
      * Construct a new request validator with the given schema validator.
      *
      * @param schemaValidator The schema validator to use when validating request bodies
-     * @param messages The message resolver to use
      */
-    public RequestValidator(final SchemaValidator schemaValidator, final MessageResolver messages) {
+    public RequestValidator(final SchemaValidator schemaValidator) {
         this.schemaValidator = requireNonNull(schemaValidator, "A schema validator is required");
-        this.parameterValidators = new ParameterValidators(schemaValidator, messages);
-        this.messages = requireNonNull(messages, "A message resolver is required");
+        this.parameterValidators = new ParameterValidators(schemaValidator);
     }
 
     /**
@@ -63,50 +59,48 @@ public class RequestValidator {
      * @param exchange The HttpServerExchange to validate
      * @return A validation report containing validation errors
      */
-    public ValidationReport validateRequest(final NormalisedPath requestPath, HttpServerExchange exchange, SwaggerOperation swaggerOperation) {
+    public Status validateRequest(final NormalisedPath requestPath, HttpServerExchange exchange, SwaggerOperation swaggerOperation) {
         requireNonNull(requestPath, "A request path is required");
         requireNonNull(exchange, "An exchange is required");
         requireNonNull(swaggerOperation, "An swagger operation is required");
 
+        Status status = validatePathParameters(requestPath, swaggerOperation);
+        if(status != null) return status;
+
+        status = validateQueryParameters(exchange, swaggerOperation);
+        if(status != null) return status;
+
         String body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
-        return validatePathParameters(requestPath, swaggerOperation)
-                .merge(validateRequestBody(Optional.ofNullable(body), swaggerOperation))
-                .merge(validateQueryParameters(exchange, swaggerOperation));
+        status = validateRequestBody(Optional.ofNullable(body), swaggerOperation);
+
+        return status;
     }
 
-    private ValidationReport validateRequestBody(final Optional<String> requestBody,
+    private Status validateRequestBody(final Optional<String> requestBody,
                                                  final SwaggerOperation swaggerOperation) {
         final Optional<Parameter> bodyParameter = swaggerOperation.getOperation().getParameters()
                 .stream().filter(p -> p.getIn().equalsIgnoreCase("body")).findFirst();
 
         if (requestBody.isPresent() && !requestBody.get().isEmpty() && !bodyParameter.isPresent()) {
-            return ValidationReport.singleton(
-                    messages.get("validation.request.body.unexpected",
-                            swaggerOperation.getMethod(), swaggerOperation.getPathString().original())
-            );
+            return new Status("ERR11013", swaggerOperation.getMethod(), swaggerOperation.getPathString().original());
         }
 
         if (!bodyParameter.isPresent()) {
-            return ValidationReport.empty();
+            return null;
         }
 
         if (!requestBody.isPresent() || requestBody.get().isEmpty()) {
             if (bodyParameter.get().getRequired()) {
-                return ValidationReport.singleton(
-                        messages.get("validation.request.body.missing",
-                                swaggerOperation.getMethod(), swaggerOperation.getPathString().original())
-                );
+                return new Status("ERR11014", swaggerOperation.getMethod(), swaggerOperation.getPathString().original());
             }
-            return ValidationReport.empty();
+            return null;
         }
-
         return schemaValidator.validate(requestBody.get(), ((BodyParameter)bodyParameter.get()).getSchema());
     }
 
-    private ValidationReport validatePathParameters(final NormalisedPath requestPath,
-                                                    final SwaggerOperation swaggerOperation) {
-
-        ValidationReport validationReport = ValidationReport.empty();
+    private Status validatePathParameters(final NormalisedPath requestPath,
+                                          final SwaggerOperation swaggerOperation) {
+        Status status = null;
         for (int i = 0; i < swaggerOperation.getPathString().parts().size(); i++) {
             if (!swaggerOperation.getPathString().isParam(i)) {
                 continue;
@@ -122,43 +116,51 @@ public class RequestValidator {
                     .findFirst();
 
             if (parameter.isPresent()) {
-                validationReport = validationReport.merge(parameterValidators.validate(paramValue, parameter.get()));
+                status = parameterValidators.validate(paramValue, parameter.get());
             }
         }
-        return validationReport;
+        return status;
     }
 
-    private ValidationReport validateQueryParameters(final HttpServerExchange exchange,
-                                                     final SwaggerOperation swaggerOperation) {
-        return swaggerOperation
+    private Status validateQueryParameters(final HttpServerExchange exchange,
+                                           final SwaggerOperation swaggerOperation) {
+        Optional<Status> optional = swaggerOperation
                 .getOperation()
                 .getParameters()
                 .stream()
                 .filter(p -> p.getIn().equalsIgnoreCase("QUERY"))
                 .map(p -> validateQueryParameter(exchange, swaggerOperation, p))
-                .reduce(ValidationReport.empty(), ValidationReport::merge);
+                .filter(s -> s != null)
+                .findFirst();
+        if(optional.isPresent()) {
+            return optional.get();
+        } else {
+            return null;
+        }
     }
 
-    private ValidationReport validateQueryParameter(final HttpServerExchange exchange,
-                                                    final SwaggerOperation swaggerOperation,
-                                                    final Parameter queryParameter) {
+
+    private Status validateQueryParameter(final HttpServerExchange exchange,
+                                          final SwaggerOperation swaggerOperation,
+                                          final Parameter queryParameter) {
 
         final Collection<String> queryParameterValues = exchange.getQueryParameters().get(queryParameter.getName());
 
         if ((queryParameterValues == null || queryParameterValues.isEmpty())) {
             if(queryParameter.getRequired()) {
-                return ValidationReport.singleton(
-                        messages.get("validation.request.parameter.query.missing",
-                                queryParameter.getName(), swaggerOperation.getPathString().original())
-                );
+                return new Status("ERR11000", queryParameter.getName(), swaggerOperation.getPathString().original());
             }
         } else {
-            return queryParameterValues
+
+            Optional<Status> optional = queryParameterValues
                     .stream()
                     .map((v) -> parameterValidators.validate(v, queryParameter))
-                    .reduce(ValidationReport.empty(), ValidationReport::merge);
+                    .filter(s -> s != null)
+                    .findFirst();
+            if(optional.isPresent()) {
+                return optional.get();
+            }
         }
-        return ValidationReport.EMPTY_REPORT;
+        return null;
     }
-
 }

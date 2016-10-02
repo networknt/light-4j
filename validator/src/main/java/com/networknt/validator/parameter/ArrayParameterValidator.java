@@ -16,18 +16,12 @@
 
 package com.networknt.validator.parameter;
 
-import com.networknt.validator.report.MessageResolver;
-import com.networknt.validator.report.MutableValidationReport;
-import com.networknt.validator.report.ValidationReport;
+import com.networknt.status.Status;
 import com.networknt.validator.SchemaValidator;
 import io.swagger.models.parameters.Parameter;
 import io.swagger.models.parameters.SerializableParameter;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static java.util.Objects.requireNonNull;
 
@@ -67,10 +61,8 @@ public class ArrayParameterValidator extends BaseParameterValidator {
         }
     }
 
-    public ArrayParameterValidator(final SchemaValidator schemaValidator,
-                                   final MessageResolver messages) {
-        super(messages);
-        this.schemaValidator = schemaValidator == null ? new SchemaValidator(messages) : schemaValidator;
+    public ArrayParameterValidator(final SchemaValidator schemaValidator) {
+        this.schemaValidator = schemaValidator == null ? new SchemaValidator() : schemaValidator;
     }
 
     @Override
@@ -79,99 +71,87 @@ public class ArrayParameterValidator extends BaseParameterValidator {
     }
 
     @Override
-    public ValidationReport validate(final String value, final Parameter p) {
-        final MutableValidationReport report = new MutableValidationReport();
+    public Status validate(final String value, final Parameter p) {
 
         if (!supports(p)) {
-            return report;
+            return null;
         }
 
         final SerializableParameter parameter = (SerializableParameter)p;
 
         if (parameter.getRequired() && (value == null || value.trim().isEmpty())) {
-            return report.add(messages.get("validation.request.parameter.missing", parameter.getName()));
+            return new Status("ERR11001", parameter.getName());
         }
 
         if (value == null || value.trim().isEmpty()) {
-            return report;
+            return null;
         }
 
-        doValidate(value, parameter, report);
-        return report;
+        return doValidate(value, parameter);
     }
 
-    public ValidationReport validate(final Collection<String> values, final Parameter p) {
-        final MutableValidationReport report = new MutableValidationReport();
+    public Status validate(final Collection<String> values, final Parameter p) {
         if (p == null) {
-            return report;
+            return null;
         }
 
         final SerializableParameter parameter = (SerializableParameter)p;
         if (parameter.getRequired() && (values == null || values.isEmpty())) {
-            return report.add(messages.get("validation.request.parameter.missing", parameter.getName()));
+            return new Status("ERR11001", parameter.getName());
         }
 
         if (values == null) {
-            return report;
+            return null;
         }
 
         if (!parameter.getCollectionFormat().equalsIgnoreCase(CollectionFormat.MULTI.name())) {
-            return report.add(messages.get("validation.request.parameter.collection.invalidFormat",
-                    p.getName(), parameter.getCollectionFormat(), "multi")
-            );
+            return new Status("ERR11005", p.getName(), parameter.getCollectionFormat(), "multi");
         }
 
-        doValidate(values, parameter, report);
-        return report;
+        return doValidate(values, parameter);
     }
 
     @Override
-    protected void doValidate(final String value,
-                              final SerializableParameter parameter,
-                              final MutableValidationReport validationReport) {
-
-        doValidate(CollectionFormat.from(parameter).split(value),
-                parameter,
-                validationReport);
-
+    protected Status doValidate(final String value, final SerializableParameter parameter) {
+        return doValidate(CollectionFormat.from(parameter).split(value), parameter);
     }
 
-    private void doValidate(final Collection<String> values,
-                            final SerializableParameter parameter,
-                            final MutableValidationReport validationReport) {
+    private Status doValidate(final Collection<String> values,
+                            final SerializableParameter parameter) {
 
         if (parameter.getMaxItems() != null && values.size() > parameter.getMaxItems()) {
-            validationReport.add(messages.get("validation.request.parameter.collection.tooManyItems",
-                    parameter.getName(), parameter.getMaxItems(), values.size())
-            );
+            return new Status("ERR11006", parameter.getName(), parameter.getMaxItems(), values.size());
         }
 
         if (parameter.getMinItems() != null && values.size() < parameter.getMinItems()) {
-            validationReport.add(messages.get("validation.request.parameter.collection.tooFewItems",
-                    parameter.getName(), parameter.getMinItems(), values.size())
-            );
+            return new Status("ERR11007", parameter.getName(), parameter.getMinItems(), values.size());
         }
 
         if (Boolean.TRUE.equals(parameter.isUniqueItems()) &&
                 values.stream().distinct().count() != values.size()) {
-            validationReport.add(messages.get("validation.request.parameter.collection.duplicateItems",
-                    parameter.getName())
-            );
+            return new Status("ERR11008", parameter.getName());
         }
 
         if (parameter.getEnum() != null && !parameter.getEnum().isEmpty()) {
             final Set<String> enumValues = new HashSet<>(parameter.getEnum());
-            values.stream()
+            Optional<String> value =
+                values.stream()
                     .filter(v -> !enumValues.contains(v))
-                    .forEach(v -> {
-                        validationReport.add(messages.get("validation.request.parameter.enum.invalid",
-                                v, parameter.getName(), parameter.getEnum())
-                        );
-                    });
-            return;
+                    .findFirst();
+            if(value.isPresent()) {
+                return new Status("ERR11009", value.get(), parameter.getName(), parameter.getEnum());
+            }
         }
 
-        values.forEach(v ->
-                validationReport.addAll(schemaValidator.validate(v, parameter.getItems())));
+        Optional<Status> optional =
+                values.stream()
+                .map(v -> schemaValidator.validate(v, parameter.getItems()))
+                .filter(s -> s != null)
+                .findFirst();
+        if(optional.isPresent()) {
+            return optional.get();
+        } else {
+            return null;
+        }
     }
 }

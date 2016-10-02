@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 ### Changed
+- Refactor validator to fail fast while error occurs
+- All validator returns Status object instead
+
 
 ## 0.1.5 - 2016-10-01
 ### Added

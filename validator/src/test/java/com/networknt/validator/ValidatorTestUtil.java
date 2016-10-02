@@ -16,8 +16,6 @@
 
 package com.networknt.validator;
 
-import com.networknt.validator.report.ValidationReport;
-import com.networknt.validator.report.ValidationReportFormatter;
 import io.swagger.models.parameters.SerializableParameter;
 import io.swagger.models.properties.IntegerProperty;
 import io.swagger.models.properties.Property;
@@ -28,15 +26,8 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.List;
 
-import static java.lang.String.format;
 import static java.util.Arrays.asList;
-import static java.util.stream.Collectors.toList;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.collection.IsEmptyCollection.empty;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -44,28 +35,6 @@ public class ValidatorTestUtil {
 
     private static final Logger log = LoggerFactory.getLogger(ValidatorTestUtil.class);
 
-    /**
-     * Assert that validation has failed.
-     */
-    public static void assertFail(ValidationReport report, String... expectedKeys) {
-        log.trace(ValidationReportFormatter.format(report));
-        assertThat(report.getMessages(), is(not(empty())));
-
-        final List<String> foundKeys = report.getMessages().stream().map(ValidationReport.Message::getKey).collect(toList());
-
-        for (String key : expectedKeys) {
-            assertThat(format("Expected message key '%s' but not found. Found <%s>.", key, foundKeys.toString()),
-                    foundKeys.contains(key), is(true));
-        }
-
-    }
-
-    /**
-     * Assert that validation has passed.
-     */
-    public static void assertPass(ValidationReport report) {
-        assertThat(report.getMessages(), is(empty()));
-    }
 
     /**
      * Load a response JSON file with the given name.
@@ -187,6 +156,7 @@ public class ValidatorTestUtil {
 
     public static SerializableParameter enumeratedArrayParam(final boolean required,
                                                              final String collectionFormat,
+                                                             final Property items,
                                                              final String... enumValues) {
         final SerializableParameter result = mock(SerializableParameter.class);
         when(result.getName()).thenReturn("Test Parameter");
@@ -196,6 +166,7 @@ public class ValidatorTestUtil {
         when(result.getMaxItems()).thenReturn(null);
         when(result.getMinItems()).thenReturn(null);
         when(result.getEnum()).thenReturn(asList(enumValues));
+        when(result.getItems()).thenReturn(items);
         return result;
     }
 

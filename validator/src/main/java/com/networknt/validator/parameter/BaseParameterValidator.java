@@ -16,21 +16,14 @@
 
 package com.networknt.validator.parameter;
 
-import com.networknt.validator.report.MessageResolver;
-import com.networknt.validator.report.MutableValidationReport;
-import com.networknt.validator.report.ValidationReport;
+import com.networknt.status.Status;
 import io.swagger.models.parameters.Parameter;
 import io.swagger.models.parameters.SerializableParameter;
 
-
-import static java.util.Objects.requireNonNull;
-
 abstract class BaseParameterValidator implements ParameterValidator {
 
-    protected final MessageResolver messages;
+    protected BaseParameterValidator() {
 
-    protected BaseParameterValidator(final MessageResolver messages) {
-        this.messages = requireNonNull(messages, "A message resolver is required");
     }
 
     @Override
@@ -41,32 +34,26 @@ abstract class BaseParameterValidator implements ParameterValidator {
     }
 
     @Override
-    public ValidationReport validate(final String value, final Parameter p) {
-        final MutableValidationReport report = new MutableValidationReport();
+    public Status validate(final String value, final Parameter p) {
 
         if (!supports(p)) {
-            return report;
+            return null;
         }
 
         final SerializableParameter parameter = (SerializableParameter)p;
 
         if (parameter.getRequired() && (value == null || value.trim().isEmpty())) {
-            return report.add(messages.get("validation.request.parameter.missing", p.getName()));
+            return new Status("ERR11001", p.getName());
         }
 
         if (value == null || value.trim().isEmpty()) {
-            return report;
+            return null;
         }
 
         if (!matchesEnumIfDefined(value, parameter)) {
-            return report.add(
-                    messages.get("validation.request.parameter.enum.invalid",
-                            value, parameter.getName(), parameter.getEnum())
-            );
+            return new Status("ERR11002", value, parameter.getName(), parameter.getEnum());
         }
-
-        doValidate(value, parameter, report);
-        return report;
+        return doValidate(value, parameter);
     }
 
     private boolean matchesEnumIfDefined(final String value, final SerializableParameter parameter) {
@@ -80,10 +67,9 @@ abstract class BaseParameterValidator implements ParameterValidator {
      *
      * @param value The value being validated
      * @param parameter The parameter the value is being validated against
-     * @param validationReport The report to accumulate validation errors
+     * @return Status The status object or null if there is no error
      */
-    protected abstract void doValidate(
+    protected abstract Status doValidate(
             String value,
-            SerializableParameter parameter,
-            MutableValidationReport validationReport);
+            SerializableParameter parameter);
 }

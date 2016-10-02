@@ -19,14 +19,9 @@ package com.networknt.validator;
 import com.networknt.config.Config;
 import com.networknt.status.Status;
 import com.networknt.swagger.*;
-import com.networknt.validator.report.MessageResolver;
-import com.networknt.validator.report.MutableValidationReport;
-import com.networknt.validator.report.ValidationReport;
 import io.undertow.server.ExchangeCompletionListener;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.AttachmentKey;
-import io.undertow.util.StatusCodes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,17 +46,15 @@ public class ValidatorHandler implements HttpHandler {
     ResponseValidator responseValidator;
 
     public ValidatorHandler(final HttpHandler next) {
-        MessageResolver messages = new MessageResolver();
-        final SchemaValidator schemaValidator = new SchemaValidator(SwaggerHelper.swagger, messages);
-        this.requestValidator = new RequestValidator(schemaValidator, messages);
-        this.responseValidator = new ResponseValidator(schemaValidator, messages);
+        final SchemaValidator schemaValidator = new SchemaValidator(SwaggerHelper.swagger);
+        this.requestValidator = new RequestValidator(schemaValidator);
+        this.responseValidator = new ResponseValidator(schemaValidator);
         this.next = next;
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         ValidatorConfig config = (ValidatorConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ValidatorConfig.class);
-        final MutableValidationReport validationReport = new MutableValidationReport();
         final NormalisedPath requestPath = new ApiNormalisedPath(exchange.getRequestURI());
 
         SwaggerOperation swaggerOperation = exchange.getAttachment(SwaggerHandler.SWAGGER_OPERATION);
@@ -72,11 +65,10 @@ public class ValidatorHandler implements HttpHandler {
             return;
         }
 
-        ValidationReport report = requestValidator.validateRequest(requestPath, exchange, swaggerOperation);
-        validationReport.merge(report);
-        if(validationReport.hasErrors()) {
-            exchange.setStatusCode(StatusCodes.BAD_REQUEST);
-            exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(validationReport));
+        Status status = requestValidator.validateRequest(requestPath, exchange, swaggerOperation);
+        if(status != null) {
+            exchange.setStatusCode(status.getStatusCode());
+            exchange.getResponseSender().send(status.toString());
             return;
         }
 
@@ -84,9 +76,9 @@ public class ValidatorHandler implements HttpHandler {
             exchange.addExchangeCompleteListener(new ExchangeCompletionListener() {
                 @Override
                 public void exchangeEvent(final HttpServerExchange exchange, final NextListener nextListener) {
-                    validationReport.merge(responseValidator.validateResponse(exchange, swaggerOperation));
-                    if(validationReport.hasErrors()) {
-                        logger.error("Response error" + validationReport);
+                    Status status = responseValidator.validateResponse(exchange, swaggerOperation);
+                    if(status != null) {
+                        logger.error("Response error", status);
                     }
                     nextListener.proceed();
                 }

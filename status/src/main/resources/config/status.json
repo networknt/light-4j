@@ -82,6 +82,107 @@
     "code": "ERR10013",
     "message": "SERVER_INFO_DISABLED",
     "description": "Server info handler is disabled in info.json"
+  },
+  "ERR11000": {
+    "statusCode": 400,
+    "code": "ERR11000",
+    "message": "VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING",
+    "description": "Query parameter '%s' is required on path '%s' but not found in request."
+  },
+  "ERR11001": {
+    "statusCode": 400,
+    "code": "ERR11001",
+    "message": "VALIDATOR_REQUEST_PARAMETER_MISSING",
+    "description": "Parameter '%s' is required but is missing."
+  },
+  "ERR11002": {
+    "statusCode": 400,
+    "code": "ERR11002",
+    "message": "VALIDATOR_REQUEST_PARAMETER_ENUM_INVALID",
+    "description": "Value '%s' for parameter '%s' is not allowed. Allowed values are <%s>."
+  },
+  "ERR11003": {
+    "statusCode": 400,
+    "code": "ERR11003",
+    "message": "VALIDATOR_SCHEMA_INVALID_JSON",
+    "description": "Unable to parse JSON - %s"
+  },
+  "ERR11004": {
+    "statusCode": 400,
+    "code": "ERR11004",
+    "message": "VALIDATOR_SCHEMA",
+    "description": "Schema Validation Error - %s"
+  },
+  "ERR11005": {
+    "statusCode": 400,
+    "code": "ERR11005",
+    "message": "VALIDATOR_REQUEST_PARAMETER_COLLECTION_INVALID_FORMAT",
+    "description": "Parameter '%s' expected collection format of '%s' but '%s' was used instead."
+  },
+  "ERR11006": {
+    "statusCode": 400,
+    "code": "ERR11006",
+    "message": "VALIDATOR_REQUEST_PARAMETER_COLLECTION_TOO_MANY_ITEMS",
+    "description": "Parameter '%s' accepts a maximum of %d items. Found %d."
+  },
+  "ERR11007": {
+    "statusCode": 400,
+    "code": "ERR11007",
+    "message": "VALIDATOR_REQUEST_PARAMETER_COLLECTION_TOO_FEW_ITEMS",
+    "description": "Parameter '%s' accepts a minimum of %d items. Found %d."
+  },
+  "ERR11008": {
+    "statusCode": 400,
+    "code": "ERR11008",
+    "message": "VALIDATOR_REQUEST_PARAMETER_COLLECTION_DUPLICATE_ITEMS",
+    "description": "Parameter '%s' does not allow duplicate values."
+  },
+  "ERR11009": {
+    "statusCode": 400,
+    "code": "ERR11009",
+    "message": "VALIDATOR_REQUEST_PARAMETER_ENUM_INVALID",
+    "description": "Value '%s' for parameter '%s' is not allowed. Allowed values are <%s>."
+  },
+  "ERR11010": {
+    "statusCode": 400,
+    "code": "ERR11010",
+    "message": "VALIDATOR_REQUEST_PARAMETER_INVALID_FORMAT",
+    "description": "Value '%s' for parameter '%s' does not match type '%s' with format '%s'."
+  },
+  "ERR11011": {
+    "statusCode": 400,
+    "code": "ERR11011",
+    "message": "VALIDATOR_REQUEST_PARAMETER_NUMBER_BELOW_MIN",
+    "description": "Value '%s' for parameter '%s' less than allowed min value %f."
+  },
+  "ERR11012": {
+    "statusCode": 400,
+    "code": "ERR11012",
+    "message": "VALIDATOR_REQUEST_PARAMETER_NUMBER_ABOVE_MAX",
+    "description": "Value '%s' for parameter '%s' greater than allowed max value %f."
+  },
+  "ERR11013": {
+    "statusCode": 400,
+    "code": "ERR11013",
+    "message": "VALIDATOR_REQUEST_BODY_UNEXPECTED",
+    "description": "No request body is expected for %s on path '%s'."
+  },
+  "ERR11014": {
+    "statusCode": 400,
+    "code": "ERR11014",
+    "message": "VALIDATOR_REQUEST_BODY_MISSING",
+    "description": "%s on path '%s' requires a request body. None found."
+  },
+  "ERR11015": {
+    "statusCode": 400,
+    "code": "ERR11015",
+    "message": "VALIDATOR_RESPONSE_STATUS_UNKNOWN",
+    "description": "Response status %d not defined for path '%s'."
+  },
+  "ERR11016": {
+    "statusCode": 400,
+    "code": "ERR11016",
+    "message": "VALIDATOR_RESPONSE_BODY_MISSING",
+    "description": "%s on path '%s' defines a response schema but no response body found."
   }
-
 }

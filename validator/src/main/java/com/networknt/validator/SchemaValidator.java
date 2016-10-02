@@ -23,10 +23,8 @@ import com.networknt.config.Config;
 import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.ValidationMessage;
+import com.networknt.status.Status;
 import com.networknt.utility.Util;
-import com.networknt.validator.report.MessageResolver;
-import com.networknt.validator.report.MutableValidationReport;
-import com.networknt.validator.report.ValidationReport;
 import io.swagger.models.Model;
 import io.swagger.models.Swagger;
 import io.swagger.models.properties.Property;
@@ -47,17 +45,15 @@ public class SchemaValidator {
 
     private final Swagger api;
     private JsonNode definitions;
-    private final MessageResolver messages;
 
     /**
      * Build a new validator with no API specification.
      * <p>
      * This will not perform any validation of $ref references that reference local definitions.
      *
-     * @param messages The message resolver to use
      */
-    public SchemaValidator(final MessageResolver messages) {
-        this(null, messages);
+    public SchemaValidator() {
+        this(null);
     }
 
     /**
@@ -65,11 +61,9 @@ public class SchemaValidator {
      *
      * @param api The API to build the validator for. If provided, is used to retrieve schema definitions
      *            for use in references.
-     * @param messages The message resolver to use.
      */
-    public SchemaValidator(final Swagger api, final MessageResolver messages) {
+    public SchemaValidator(final Swagger api) {
         this.api = api;
-        this.messages = requireNonNull(messages, "A message resolver is required");
     }
 
     /**
@@ -78,9 +72,9 @@ public class SchemaValidator {
      * @param value The value to validate
      * @param schema The property schema to validate the value against
      *
-     * @return A validation report containing accumulated validation errors
+     * @return A status containing error code and description
      */
-    public ValidationReport validate(final String value, final Property schema) {
+    public Status validate(final String value, final Property schema) {
         return doValidate(value, schema);
     }
 
@@ -90,16 +84,16 @@ public class SchemaValidator {
      * @param value The value to validate
      * @param schema The model schema to validate the value against
      *
-     * @return A validation report containing accumulated validation errors
+     * @return A status containing error code and description
      */
-    public ValidationReport validate(final String value, final Model schema) {
+    public Status validate(final String value, final Model schema) {
         return doValidate(value, schema);
     }
 
-    private ValidationReport doValidate(final String value, final Object schema) {
+    private Status doValidate(final String value, final Object schema) {
         requireNonNull(schema, "A schema is required");
 
-        final MutableValidationReport validationReport = new MutableValidationReport();
+        Status status = null;
         Set<ValidationMessage> processingReport = null;
         try {
             final JsonNode schemaObject = Json.mapper().readTree(Json.pretty(schema));
@@ -122,20 +116,17 @@ public class SchemaValidator {
             processingReport = jsonSchema.validate(content);
         }
         catch (JsonParseException e) {
-            validationReport.add(messages.get("validation.schema.invalidJson", e.getMessage()));
-            return validationReport;
+            return new Status("ERR11003", e.getMessage());
         }
         catch (Exception e) {
             e.printStackTrace();
         }
 
         if(processingReport != null && processingReport.size() > 0) {
-            processingReport.forEach(vm -> {
-                final String type = vm.getType();
-                validationReport.add(messages.create("validation.schema." + type, vm.getMessage()));
-            });
+            ValidationMessage vm = processingReport.iterator().next();
+            status = new Status("ERR11004", vm.getMessage());
         }
 
-        return validationReport;
+        return status;
     }
 }

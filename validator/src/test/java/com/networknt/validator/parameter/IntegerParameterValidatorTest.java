@@ -16,65 +16,76 @@
 
 package com.networknt.validator.parameter;
 
-import com.networknt.validator.report.MessageResolver;
+import com.networknt.status.Status;
+import org.junit.Assert;
 import org.junit.Test;
 
-import static com.networknt.validator.ValidatorTestUtil.assertFail;
-import static com.networknt.validator.ValidatorTestUtil.assertPass;
 import static com.networknt.validator.ValidatorTestUtil.intParam;
 
 public class IntegerParameterValidatorTest {
 
-    private IntegerParameterValidator classUnderTest = new IntegerParameterValidator(new MessageResolver());
+    private IntegerParameterValidator classUnderTest = new IntegerParameterValidator();
 
     @Test
     public void validate_withNullValue_shouldPass_whenNotRequired() {
-        assertPass(classUnderTest.validate(null, intParam(false)));
+        Assert.assertNull(classUnderTest.validate(null, intParam(false)));
     }
 
     @Test
     public void validate_withEmptyValue_shouldPass_whenNotRequired() {
-        assertPass(classUnderTest.validate("", intParam(false)));
+        Assert.assertNull(classUnderTest.validate("", intParam(false)));
     }
 
     @Test
     public void validate_withNullValue_shouldFail_whenRequired() {
-        assertFail(classUnderTest.validate(null, intParam(true)), "validation.request.parameter.missing");
+        Status status = classUnderTest.validate(null, intParam(true));
+        Assert.assertNotNull(status);
+        Assert.assertEquals("ERR11001", status.getCode()); // request parameter missing
     }
 
     @Test
     public void validate_withEmptyValue_shouldFail_whenRequired() {
-        assertFail(classUnderTest.validate("", intParam(true)), "validation.request.parameter.missing");
+        Status status = classUnderTest.validate("", intParam(true));
+        Assert.assertNotNull(status);
+        Assert.assertEquals("ERR11001", status.getCode()); // request parameter missing
     }
 
     @Test
     public void validate_withNonNumericValue_shouldFail() {
-        assertFail(classUnderTest.validate("123a", intParam()), "validation.request.parameter.invalidFormat");
+        Status status = classUnderTest.validate("123a", intParam(true));
+        Assert.assertNotNull(status);
+        Assert.assertEquals("ERR11010", status.getCode()); // request parameter invalid format
     }
 
     @Test
     public void validate_withNonIntegerValue_shouldFail() {
-        assertFail(classUnderTest.validate("123.1", intParam()), "validation.request.parameter.invalidFormat");
+        Status status = classUnderTest.validate("123.1", intParam(true));
+        Assert.assertNotNull(status);
+        Assert.assertEquals("ERR11010", status.getCode()); // request parameter invalid format
     }
 
     @Test
     public void validate_withIntegerValue_shouldPass() {
-        assertPass(classUnderTest.validate("123", intParam()));
+        Assert.assertNull(classUnderTest.validate("123", intParam()));
     }
 
     @Test
     public void validate_withValueGreaterThanMax_shouldFail_ifMaxSpecified() {
-        assertFail(classUnderTest.validate("2", intParam(null, 1.0)), "validation.request.parameter.number.aboveMax");
+        Status status = classUnderTest.validate("2", intParam(null, 1.0));
+        Assert.assertNotNull(status);
+        Assert.assertEquals("ERR11012", status.getCode()); // request parameter number above max
     }
 
     @Test
     public void validate_withValueLessThanMin_shouldFail_ifMinSpecified() {
-        assertFail(classUnderTest.validate("0", intParam(1.0, null)), "validation.request.parameter.number.belowMin");
+        Status status = classUnderTest.validate("0", intParam(1.0, null));
+        Assert.assertNotNull(status);
+        Assert.assertEquals("ERR11011", status.getCode()); // request parameter number below min
     }
 
     @Test
     public void validate_withValueInRange_shouldPass() {
-        assertPass(classUnderTest.validate("2", intParam(1.0, 3.0)));
+        Assert.assertNull(classUnderTest.validate("2", intParam(1.0, 3.0)));
     }
 
 }

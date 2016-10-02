@@ -16,47 +16,52 @@
 
 package com.networknt.validator.parameter;
 
-import com.networknt.validator.report.MessageResolver;
+import com.networknt.status.Status;
+import org.junit.Assert;
 import org.junit.Test;
 
-import static com.networknt.validator.ValidatorTestUtil.assertFail;
-import static com.networknt.validator.ValidatorTestUtil.assertPass;
 import static com.networknt.validator.ValidatorTestUtil.floatParam;
 import static com.networknt.validator.ValidatorTestUtil.intParam;
 import static com.networknt.validator.ValidatorTestUtil.stringParam;
 
 public class ParameterValidatorsTest {
 
-    private final ParameterValidators parameterValidators = new ParameterValidators(null, new MessageResolver());
+    private final ParameterValidators parameterValidators = new ParameterValidators(null);
 
     @Test
     public void validate_withInvalidIntegerParam_shouldFail() {
-        assertFail(parameterValidators.validate("1.0", intParam()), "validation.request.parameter.invalidFormat");
+        Status status = parameterValidators.validate("1.0", intParam());
+        Assert.assertNotNull(status);
+        Assert.assertEquals("ERR11010", status.getCode()); // request parameter invalid format
     }
 
     @Test
     public void validate_withValidIntegerParam_shouldPass() {
-        assertPass(parameterValidators.validate("10", intParam()));
+        Assert.assertNull(parameterValidators.validate("10", intParam()));
     }
 
     @Test
     public void validate_withInvalidNumberParam_shouldFail() {
-        assertFail(parameterValidators.validate("1.0a", floatParam()), "validation.request.parameter.invalidFormat");
+        Status status = parameterValidators.validate("1.0a", floatParam());
+        Assert.assertNotNull(status);
+        Assert.assertEquals("ERR11010", status.getCode()); // request parameter invalid format
     }
 
     @Test
     public void validate_withValidNumberParam_shouldPass() {
-        assertPass(parameterValidators.validate("1.0", floatParam()));
+        Assert.assertNull(parameterValidators.validate("1.0", floatParam()));
     }
 
     @Test
     public void validate_withInvalidStringParam_shouldFail() {
-        assertFail(parameterValidators.validate("", stringParam()), "validation.request.parameter.missing");
+        Status status = parameterValidators.validate("", stringParam());
+        Assert.assertNotNull(status);
+        Assert.assertEquals("ERR11001", status.getCode()); // request parameter missing
     }
 
     @Test
     public void validate_withValidStringParam_shouldPass() {
-        assertPass(parameterValidators.validate("a", stringParam()));
+        Assert.assertNull(parameterValidators.validate("a", stringParam()));
     }
 
 }

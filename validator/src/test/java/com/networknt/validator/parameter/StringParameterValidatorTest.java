@@ -16,35 +16,37 @@
 
 package com.networknt.validator.parameter;
 
-import com.networknt.validator.report.MessageResolver;
+import com.networknt.status.Status;
+import org.junit.Assert;
 import org.junit.Test;
 
-import static com.networknt.validator.ValidatorTestUtil.assertFail;
-import static com.networknt.validator.ValidatorTestUtil.assertPass;
 import static com.networknt.validator.ValidatorTestUtil.stringParam;
 
 public class StringParameterValidatorTest {
 
-    private StringParameterValidator classUnderTest = new StringParameterValidator(new MessageResolver());
+    private StringParameterValidator classUnderTest = new StringParameterValidator();
 
     @Test
     public void validate_withNullValue_shouldPass_whenNotRequired() {
-        assertPass(classUnderTest.validate(null, stringParam(false)));
+        Assert.assertNull(classUnderTest.validate(null, stringParam(false)));
     }
 
     @Test
     public void validate_withEmptyValue_shouldPass_whenNotRequired() {
-        assertPass(classUnderTest.validate("", stringParam(false)));
+        Assert.assertNull(classUnderTest.validate("", stringParam(false)));
     }
 
     @Test
     public void validate_withNullValue_shouldFail_whenRequired() {
-        assertFail(classUnderTest.validate(null, stringParam(true)), "validation.request.parameter.missing");
+        Status status = classUnderTest.validate(null, stringParam(true));
+        Assert.assertNotNull(status);
+        Assert.assertEquals("ERR11001", status.getCode()); // request parameter missing
     }
 
     @Test
     public void validate_withEmptyValue_shouldFail_whenRequired() {
-        assertFail(classUnderTest.validate("", stringParam(true)), "validation.request.parameter.missing");
+        Status status = classUnderTest.validate("", stringParam(true));
+        Assert.assertNotNull(status);
+        Assert.assertEquals("ERR11001", status.getCode()); // request parameter missing
     }
-
 }

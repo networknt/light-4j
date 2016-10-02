@@ -21,6 +21,8 @@ import com.networknt.utility.ModuleRegistry;
 
 import java.util.Map;
 
+import static java.lang.String.format;
+
 /**
  * For every status response, there is only one message returned. This means the server
  * will fail fast and won't return multiple message at all. Two benefits for this design:
@@ -46,13 +48,13 @@ public class Status {
     public Status() {
     }
 
-    public Status(String code) {
+    public Status(final String code, final Object... args) {
         this.code = code;
         Map<String, Object> map = (Map<String, Object>)config.get(code);
         if(map != null) {
             this.statusCode = (Integer)map.get("statusCode");
             this.message = (String)map.get("message");
-            this.description = (String)map.get("description");
+            this.description = format((String)map.get("description"), args);
         }
     }
 

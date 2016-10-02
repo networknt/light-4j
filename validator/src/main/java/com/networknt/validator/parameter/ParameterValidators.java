@@ -16,13 +16,13 @@
 
 package com.networknt.validator.parameter;
 
+import com.networknt.status.Status;
 import com.networknt.validator.SchemaValidator;
-import com.networknt.validator.report.MessageResolver;
-import com.networknt.validator.report.ValidationReport;
 import io.swagger.models.parameters.Parameter;
 import io.swagger.models.parameters.SerializableParameter;
 
 import java.util.List;
+import java.util.Optional;
 
 import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
@@ -30,7 +30,6 @@ import static java.util.Objects.requireNonNull;
 public final class ParameterValidators {
 
     private final ArrayParameterValidator arrayValidator;
-    private final MessageResolver messages;
     private final List<ParameterValidator> validators;
 
     /**
@@ -38,19 +37,17 @@ public final class ParameterValidators {
      * validator will be used and no <code>ref</code> validation will be performed.
      *
      * @param schemaValidator The schema validator to use. If not provided a default (empty) validator will be used.
-     * @param messages The message resolver to use.
      */
-    public ParameterValidators(final SchemaValidator schemaValidator, MessageResolver messages) {
-        this.arrayValidator = new ArrayParameterValidator(schemaValidator, messages);
-        this.messages = requireNonNull(messages);
+    public ParameterValidators(final SchemaValidator schemaValidator) {
+        this.arrayValidator = new ArrayParameterValidator(schemaValidator);
         this.validators = asList(
-                new StringParameterValidator(messages),
-                new NumberParameterValidator(messages),
-                new IntegerParameterValidator(messages)
+                new StringParameterValidator(),
+                new NumberParameterValidator(),
+                new IntegerParameterValidator()
         );
     }
 
-    public ValidationReport validate(final String value, final Parameter parameter) {
+    public Status validate(final String value, final Parameter parameter) {
         requireNonNull(parameter);
 
         if ((parameter instanceof SerializableParameter) &&
@@ -58,9 +55,17 @@ public final class ParameterValidators {
             return arrayValidator.validate(value, parameter);
         }
 
-        return validators.stream()
+
+        Optional<Status> optional = validators.stream()
                 .filter(v -> v.supports(parameter))
                 .map(v -> v.validate(value, parameter))
-                .reduce(ValidationReport.empty(), ValidationReport::merge);
+                .filter(s -> s != null)
+                .findFirst();
+        if(optional.isPresent()) {
+            return optional.get();
+        } else {
+            return null;
+        }
     }
+
 }
