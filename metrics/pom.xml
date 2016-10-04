@@ -25,9 +25,9 @@
         <relativePath>..</relativePath>
     </parent>
 
-    <artifactId>security</artifactId>
+    <artifactId>metrics</artifactId>
     <packaging>jar</packaging>
-    <description>A security module that contains all handlers to protect your server</description>
+    <description>A metrics handler to log statistic info on the server</description>
 
     <dependencies>
         <dependency>
@@ -36,23 +36,7 @@
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>utility</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
             <artifactId>handler</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>status</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>exception</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>swagger</artifactId>
         </dependency>
         <dependency>
             <groupId>io.undertow</groupId>

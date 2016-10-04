@@ -101,6 +101,8 @@
         <module>swagger</module>
         <module>body</module>
         <module>mask</module>
+        <module>handler</module>
+        <module>metrics</module>
         <module>server</module>
     </modules>
 
@@ -165,6 +167,16 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>mask</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>handler</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>metrics</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

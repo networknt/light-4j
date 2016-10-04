@@ -1,0 +1,4 @@
+{
+  "description": "Metrics handler configuration",
+  "enableMetricsHandler": true
+}

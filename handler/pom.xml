@@ -25,38 +25,14 @@
         <relativePath>..</relativePath>
     </parent>
 
-    <artifactId>security</artifactId>
+    <artifactId>handler</artifactId>
     <packaging>jar</packaging>
-    <description>A security module that contains all handlers to protect your server</description>
+    <description>A module defines interface or abstract classes for handlers.</description>
 
     <dependencies>
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>config</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>utility</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>handler</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>status</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>exception</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>swagger</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.undertow</groupId>
-            <artifactId>undertow-core</artifactId>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -87,11 +63,13 @@
             <artifactId>commons-lang</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.bitbucket.b_c</groupId>
-            <artifactId>jose4j</artifactId>
-            <version>${version.jose4j}</version>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-parser</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>io.undertow</groupId>
+            <artifactId>undertow-core</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>ch.qos.logback</groupId>

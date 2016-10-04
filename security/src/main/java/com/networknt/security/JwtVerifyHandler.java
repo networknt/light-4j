@@ -42,7 +42,7 @@ import java.util.Optional;
 /**
  * Created by steve on 01/09/16.
  */
-public class JwtVerifyHandler implements HttpHandler {
+public class JwtVerifyHandler extends AbstractSecurityHandler {
     static final Logger logger = LoggerFactory.getLogger(JwtVerifyHandler.class);
 
     static final String ENABLE_VERIFY_SCOPE = "enableVerifyScope";
@@ -59,10 +59,8 @@ public class JwtVerifyHandler implements HttpHandler {
 
     static final Map<String, Object> config = Config.getInstance().getJsonMapConfig(JwtHelper.SECURITY_CONFIG);
 
-    private volatile HttpHandler next;
-
     public JwtVerifyHandler(final HttpHandler next) {
-        this.next = next;
+        super(next);
     }
 
     @Override
@@ -185,16 +183,6 @@ public class JwtVerifyHandler implements HttpHandler {
         }
     }
 
-    public HttpHandler getNext() {
-        return next;
-    }
-
-    public JwtVerifyHandler setNext(final HttpHandler next) {
-        Handlers.handlerNotNull(next);
-        this.next = next;
-        return this;
-    }
-
     protected boolean matchedScopes(List<String> jwtScopes, List<String> specScopes) {
         boolean matched = false;
         if(specScopes != null && specScopes.size() > 0) {
@@ -210,6 +198,16 @@ public class JwtVerifyHandler implements HttpHandler {
             matched = true;
         }
         return matched;
+    }
+
+    @Override
+    public boolean isDefaultImpl() {
+        return true;
+    }
+
+    @Override
+    public String getHandlerType() {
+        return super.getHandlerType();
     }
 
 }
