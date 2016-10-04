@@ -16,24 +16,14 @@
 
 package com.networknt.server;
 
-import com.networknt.body.BodyConfig;
-import com.networknt.body.BodyHandler;
-import com.networknt.exception.ExceptionConfig;
-import com.networknt.exception.ExceptionHandler;
-import com.networknt.info.*;
-import com.networknt.config.Config;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.Option;
 import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
 import com.jayway.jsonpath.spi.json.JsonProvider;
 import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 import com.jayway.jsonpath.spi.mapper.MappingProvider;
-import com.networknt.security.JwtHelper;
-import com.networknt.security.JwtVerifyHandler;
-import com.networknt.swagger.SwaggerHandler;
-import com.networknt.utility.ModuleRegistry;
-import com.networknt.validator.ValidatorConfig;
-import com.networknt.validator.ValidatorHandler;
+import com.networknt.config.Config;
+import com.networknt.handler.MiddlewareHandler;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
@@ -44,7 +34,6 @@ import org.slf4j.LoggerFactory;
 import org.xnio.Options;
 
 import java.util.EnumSet;
-import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
 
@@ -76,14 +65,22 @@ public class Server {
         // API routing handler or others handler implemented by application developer.
         final ServiceLoader<HandlerProvider> handlerLoaders = ServiceLoader.load(HandlerProvider.class);
         for (final HandlerProvider provider : handlerLoaders) {
-            if(provider.getHandler() instanceof HttpHandler) {
+            if (provider.getHandler() instanceof HttpHandler) {
                 handler = provider.getHandler();
-                //break;
+                break;
             }
         }
-        if(handler == null) {
+        if (handler == null) {
             logger.warn("No route handler provider available in the classpath");
             return;
+        }
+
+        // Middleware Handlers plugged into the handler chain.
+        final ServiceLoader<MiddlewareHandler> middlewareLoaders = ServiceLoader.load(MiddlewareHandler.class);
+        logger.debug("found middlewareLoaders", middlewareLoaders);
+        for (final MiddlewareHandler middlewareHandler : middlewareLoaders) {
+            logger.info("Plugin: " + middlewareHandler.getClass().getName());
+            handler = middlewareHandler.setNext(handler);
         }
 
         // check if server info handler needs to be installed
@@ -95,6 +92,7 @@ public class Server {
         }
         */
 
+        /*
         // check if validator needs to be installed.
         ValidatorConfig validatorConfig = (ValidatorConfig)Config.getInstance().getJsonObjectConfig(ValidatorHandler.CONFIG_NAME, ValidatorConfig.class);
         if(validatorConfig.isEnableValidator()) {
@@ -151,6 +149,7 @@ public class Server {
             ModuleRegistry.registerModule(ExceptionHandler.class.getName(),
                     Config.getInstance().getJsonMapConfigNoCache(ExceptionHandler.CONFIG_NAME), null);
         }
+        */
 
         server = Undertow.builder()
                 .addHttpListener(
@@ -170,7 +169,7 @@ public class Server {
     }
 
     static public void stop() {
-        if(server != null) server.stop();
+        if (server != null) server.stop();
     }
 
     // implement shutdown hook here.

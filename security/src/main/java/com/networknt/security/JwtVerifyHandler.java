@@ -17,6 +17,7 @@
 package com.networknt.security;
 
 import com.networknt.config.Config;
+import com.networknt.handler.MiddlewareHandler;
 import com.networknt.status.Status;
 import com.networknt.swagger.*;
 import com.networknt.utility.Constants;
@@ -42,7 +43,7 @@ import java.util.Optional;
 /**
  * Created by steve on 01/09/16.
  */
-public class JwtVerifyHandler extends AbstractSecurityHandler {
+public class JwtVerifyHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(JwtVerifyHandler.class);
 
     static final String ENABLE_VERIFY_SCOPE = "enableVerifyScope";
@@ -59,9 +60,9 @@ public class JwtVerifyHandler extends AbstractSecurityHandler {
 
     static final Map<String, Object> config = Config.getInstance().getJsonMapConfig(JwtHelper.SECURITY_CONFIG);
 
-    public JwtVerifyHandler(final HttpHandler next) {
-        super(next);
-    }
+    private volatile HttpHandler next;
+
+    public JwtVerifyHandler() {}
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
@@ -201,13 +202,14 @@ public class JwtVerifyHandler extends AbstractSecurityHandler {
     }
 
     @Override
-    public boolean isDefaultImpl() {
-        return true;
+    public HttpHandler getNext() {
+        return next;
     }
 
     @Override
-    public String getHandlerType() {
-        return super.getHandlerType();
+    public MiddlewareHandler setNext(final HttpHandler next) {
+        Handlers.handlerNotNull(next);
+        this.next = next;
+        return this;
     }
-
 }

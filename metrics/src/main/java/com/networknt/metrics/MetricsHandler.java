@@ -17,6 +17,8 @@
 package com.networknt.metrics;
 
 import com.networknt.config.Config;
+import com.networknt.handler.MiddlewareHandler;
+import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
@@ -26,7 +28,7 @@ import java.util.Map;
 /**
  * Created by steve on 03/10/16.
  */
-public class MetricsHandler extends AbstractMetricsHandler {
+public class MetricsHandler implements MiddlewareHandler {
     public static final String CONFIG_NAME = "metrics";
 
     public static Map<String, Object> config;
@@ -37,8 +39,21 @@ public class MetricsHandler extends AbstractMetricsHandler {
         config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
     }
 
-    public MetricsHandler(final HttpHandler next) {
-        super(next);
+    private volatile HttpHandler next;
+
+    public MetricsHandler() {}
+
+    @Override
+    public HttpHandler getNext() {
+        return this.next;
+    }
+
+    @Override
+    public MiddlewareHandler setNext(final HttpHandler next) {
+        Handlers.handlerNotNull(next);
+        this.next = next;
+        return this;
+
     }
 
     @Override
@@ -47,13 +62,4 @@ public class MetricsHandler extends AbstractMetricsHandler {
         next.handleRequest(exchange);
     }
 
-    @Override
-    public boolean isDefaultImpl() {
-        return true;
-    }
-
-    @Override
-    public String getHandlerType() {
-        return super.getHandlerType();
-    }
 }

@@ -20,18 +20,10 @@ import io.undertow.server.HttpHandler;
 /**
  * Created by steve on 03/10/16.
  */
-public abstract class AbstractMiddlewareHandler implements HttpHandler {
-    protected volatile HttpHandler next;
+public interface MiddlewareHandler extends HttpHandler {
 
-    public abstract int getPriority();
-    public abstract String getHandlerType();
+    HttpHandler getNext();
 
-    public boolean isDefaultImpl() {
-        return false;
-    };
-
-    public AbstractMiddlewareHandler(final HttpHandler next) {
-        this.next = next;
-    };
+    MiddlewareHandler setNext(final HttpHandler next);
 
 }
