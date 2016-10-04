@@ -84,6 +84,8 @@ public class ServerInfoDisabledTest {
         // Remove the test.json from home directory
         File configFile = new File(homeDir + "/info.json");
         configFile.delete();
+        // this is very important as it impacts subsequent test case if it is not cleared.
+        Config.getInstance().clear();
     }
 
     static void addURL(URL url) throws Exception {
