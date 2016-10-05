@@ -127,7 +127,7 @@ public class SimpleAuditHandler implements MiddlewareHandler {
     }
 
     @Override
-    public boolean enabled() {
+    public boolean isEnabled() {
         Object object = config.get(ENABLE_SIMPLE_AUDIT);
         return object != null && (Boolean)object == true;
     }

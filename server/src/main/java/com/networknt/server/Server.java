@@ -80,7 +80,10 @@ public class Server {
         logger.debug("found middlewareLoaders", middlewareLoaders);
         for (final MiddlewareHandler middlewareHandler : middlewareLoaders) {
             logger.info("Plugin: " + middlewareHandler.getClass().getName());
-            handler = middlewareHandler.setNext(handler);
+            if(middlewareHandler.isEnabled()) {
+                handler = middlewareHandler.setNext(handler);
+                middlewareHandler.register();
+            }
         }
 
         // check if server info handler needs to be installed

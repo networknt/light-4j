@@ -215,7 +215,7 @@ public class JwtVerifyHandler implements MiddlewareHandler {
     }
 
     @Override
-    public boolean enabled() {
+    public boolean isEnabled() {
         Object object = config.get(JwtHelper.ENABLE_VERIFY_JWT);
         return object != null && (Boolean)object == true;
     }

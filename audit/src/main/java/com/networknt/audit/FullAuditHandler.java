@@ -83,7 +83,7 @@ public class FullAuditHandler implements MiddlewareHandler {
     }
 
     @Override
-    public boolean enabled() {
+    public boolean isEnabled() {
         Object object = config.get(ENABLE_FULL_AUDIT);
         return object != null && (Boolean)object == true;
     }

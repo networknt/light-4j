@@ -26,7 +26,7 @@ public interface MiddlewareHandler extends HttpHandler {
 
     MiddlewareHandler setNext(final HttpHandler next);
 
-    boolean enabled();
+    boolean isEnabled();
 
     void register();
 

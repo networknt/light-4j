@@ -94,7 +94,7 @@ public class BodyHandler implements MiddlewareHandler {
     }
 
     @Override
-    public boolean enabled() {
+    public boolean isEnabled() {
         return config.isEnabled();
     }
 

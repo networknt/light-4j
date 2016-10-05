@@ -100,7 +100,7 @@ public class SwaggerHandler implements MiddlewareHandler {
     }
 
     @Override
-    public boolean enabled() {
+    public boolean isEnabled() {
         return true;
     }
 
