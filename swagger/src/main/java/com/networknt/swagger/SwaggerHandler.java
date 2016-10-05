@@ -16,10 +16,12 @@
 
 package com.networknt.swagger;
 
+import com.networknt.handler.MiddlewareHandler;
 import com.networknt.status.Status;
 import io.swagger.models.HttpMethod;
 import io.swagger.models.Operation;
 import io.swagger.models.Path;
+import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
@@ -35,7 +37,7 @@ import java.util.Optional;
  *
  * Created by steve on 30/09/16.
  */
-public class SwaggerHandler implements HttpHandler {
+public class SwaggerHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(SwaggerHandler.class);
 
     public static final String CONFIG_NAME = "swagger";
@@ -47,8 +49,8 @@ public class SwaggerHandler implements HttpHandler {
 
     private volatile HttpHandler next;
 
-    public SwaggerHandler(final HttpHandler next) {
-        this.next = next;
+    public SwaggerHandler() {
+
     }
 
 
@@ -81,5 +83,17 @@ public class SwaggerHandler implements HttpHandler {
         exchange.putAttachment(SWAGGER_OPERATION, swaggerOperation);
 
         next.handleRequest(exchange);
+    }
+
+    @Override
+    public HttpHandler getNext() {
+        return next;
+    }
+
+    @Override
+    public MiddlewareHandler setNext(final HttpHandler next) {
+        Handlers.handlerNotNull(next);
+        this.next = next;
+        return this;
     }
 }

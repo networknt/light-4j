@@ -16,7 +16,9 @@
 
 package com.networknt.exception;
 
+import com.networknt.handler.MiddlewareHandler;
 import com.networknt.status.Status;
+import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
@@ -25,7 +27,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Created by steve on 29/09/16.
  */
-public class ExceptionHandler implements HttpHandler {
+public class ExceptionHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(ExceptionHandler.class);
 
     public static final String CONFIG_NAME = "exception";
@@ -35,10 +37,9 @@ public class ExceptionHandler implements HttpHandler {
 
     private volatile HttpHandler next;
 
-    public ExceptionHandler(final HttpHandler next) {
-        this.next = next;
-    }
+    public ExceptionHandler() {
 
+    }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
@@ -65,5 +66,17 @@ public class ExceptionHandler implements HttpHandler {
                 }
             }
         }
+    }
+
+    @Override
+    public HttpHandler getNext() {
+        return next;
+    }
+
+    @Override
+    public MiddlewareHandler setNext(final HttpHandler next) {
+        Handlers.handlerNotNull(next);
+        this.next = next;
+        return this;
     }
 }

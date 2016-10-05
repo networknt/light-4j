@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package com.networknt.info;
+package com.networknt.audit;
 
 import com.networknt.config.Config;
+import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.Constants;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -34,7 +35,7 @@ import java.util.Map;
  * <p>
  * Created by steve on 01/09/16.
  */
-public class FullAuditHandler implements HttpHandler {
+public class FullAuditHandler implements MiddlewareHandler {
     public static final String CONFIG_NAME = "audit";
     public static final String ENABLE_FULL_AUDIT = "enableFullAudit";
     static final String FULL = "full";
@@ -58,8 +59,8 @@ public class FullAuditHandler implements HttpHandler {
     }
 
 
-    public FullAuditHandler(final HttpHandler next) {
-        this.next = next;
+    public FullAuditHandler() {
+
     }
 
     @Override
@@ -68,8 +69,16 @@ public class FullAuditHandler implements HttpHandler {
         Map<String, Object> config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
     }
 
+    @Override
     public HttpHandler getNext() {
         return next;
+    }
+
+    @Override
+    public MiddlewareHandler setNext(final HttpHandler next) {
+        Handlers.handlerNotNull(next);
+        this.next = next;
+        return this;
     }
 
     private void dumpRequest(Map<String, Object> result, HttpServerExchange exchange, Object configObject) {
@@ -110,11 +119,5 @@ public class FullAuditHandler implements HttpHandler {
         if (headerMap.size() > 0) {
             result.put(HEADERS, headerMap);
         }
-    }
-
-    public FullAuditHandler setNext(final HttpHandler next) {
-        Handlers.handlerNotNull(next);
-        this.next = next;
-        return this;
     }
 }

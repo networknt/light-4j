@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.networknt.info;
+package com.networknt.audit;
 
 /**
  * Created by steve on 01/09/16.

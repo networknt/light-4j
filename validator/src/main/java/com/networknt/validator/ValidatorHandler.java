@@ -17,8 +17,10 @@
 package com.networknt.validator;
 
 import com.networknt.config.Config;
+import com.networknt.handler.MiddlewareHandler;
 import com.networknt.status.Status;
 import com.networknt.swagger.*;
+import io.undertow.Handlers;
 import io.undertow.server.ExchangeCompletionListener;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -33,23 +35,22 @@ import org.slf4j.LoggerFactory;
  *
  * Created by steve on 17/09/16.
  */
-public class ValidatorHandler implements HttpHandler {
+public class ValidatorHandler implements MiddlewareHandler {
     public static final String CONFIG_NAME = "validator";
 
     static final String STATUS_MISSING_SWAGGER_OPERATION = "ERR10012";
 
     static final Logger logger = LoggerFactory.getLogger(ValidatorHandler.class);
 
-    private final HttpHandler next;
+    private volatile HttpHandler next;
 
     RequestValidator requestValidator;
     ResponseValidator responseValidator;
 
-    public ValidatorHandler(final HttpHandler next) {
+    public ValidatorHandler() {
         final SchemaValidator schemaValidator = new SchemaValidator(SwaggerHelper.swagger);
         this.requestValidator = new RequestValidator(schemaValidator);
         this.responseValidator = new ResponseValidator(schemaValidator);
-        this.next = next;
     }
 
     @Override
@@ -87,4 +88,18 @@ public class ValidatorHandler implements HttpHandler {
 
         next.handleRequest(exchange);
     }
+
+    @Override
+    public HttpHandler getNext() {
+        return next;
+    }
+
+    @Override
+    public MiddlewareHandler setNext(final HttpHandler next) {
+        Handlers.handlerNotNull(next);
+        this.next = next;
+        return this;
+    }
+
+
 }

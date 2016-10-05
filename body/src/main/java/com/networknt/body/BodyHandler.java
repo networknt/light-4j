@@ -17,7 +17,9 @@
 package com.networknt.body;
 
 import com.networknt.exception.ApiException;
+import com.networknt.handler.MiddlewareHandler;
 import com.networknt.status.Status;
+import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
@@ -33,7 +35,7 @@ import java.util.Scanner;
  *
  * Created by steve on 29/09/16.
  */
-public class BodyHandler implements HttpHandler {
+public class BodyHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(BodyHandler.class);
 
     // request body will be parse during validation and it is attached to the exchange
@@ -43,8 +45,8 @@ public class BodyHandler implements HttpHandler {
 
     private volatile HttpHandler next;
 
-    public BodyHandler(final HttpHandler next) {
-        this.next = next;
+    public BodyHandler() {
+
     }
 
 
@@ -69,4 +71,17 @@ public class BodyHandler implements HttpHandler {
         }
         next.handleRequest(exchange);
     }
+
+    @Override
+    public HttpHandler getNext() {
+        return next;
+    }
+
+    @Override
+    public MiddlewareHandler setNext(final HttpHandler next) {
+        Handlers.handlerNotNull(next);
+        this.next = next;
+        return this;
+    }
+
 }

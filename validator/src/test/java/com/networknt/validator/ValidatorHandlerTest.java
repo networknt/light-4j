@@ -64,11 +64,14 @@ public class ValidatorHandlerTest {
 
             HttpHandler handler = getPetStoreHandler();
             ((RoutingHandler)handler).add(Methods.POST, "/oauth/token", new JwtMockHandler());
-            ValidatorHandler validatorHandler = new ValidatorHandler(handler);
+            ValidatorHandler validatorHandler = new ValidatorHandler();
+            validatorHandler.setNext(handler);
             handler = validatorHandler;
-            BodyHandler bodyHandler = new BodyHandler(handler);
+            BodyHandler bodyHandler = new BodyHandler();
+            bodyHandler.setNext(handler);
             handler = bodyHandler;
-            SwaggerHandler swaggerHandler = new SwaggerHandler(handler);
+            SwaggerHandler swaggerHandler = new SwaggerHandler();
+            swaggerHandler.setNext(handler);
             handler = swaggerHandler;
             // inject operation of /oauth/token to swagger in order to by pass validator
             Swagger swagger = SwaggerHelper.swagger;

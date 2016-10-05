@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package com.networknt.info;
+package com.networknt.audit;
 
 import com.networknt.config.Config;
+import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.Constants;
+import io.undertow.Handlers;
 import io.undertow.server.ExchangeCompletionListener;
-import io.undertow.server.HandlerWrapper;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
@@ -46,7 +47,7 @@ import java.util.Map;
  *
  * Created by steve on 17/09/16.
  */
-public class SimpleAuditHandler implements HttpHandler {
+public class SimpleAuditHandler implements MiddlewareHandler {
     public static final String CONFIG_NAME = "audit";
     public static final String ENABLE_SIMPLE_AUDIT = "enableSimpleAudit";
 
@@ -63,7 +64,7 @@ public class SimpleAuditHandler implements HttpHandler {
 
     static final Logger audit = LoggerFactory.getLogger(Constants.AUDIT_LOGGER);
 
-    private final HttpHandler next;
+    private volatile HttpHandler next;
 
     static {
         config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
@@ -79,8 +80,8 @@ public class SimpleAuditHandler implements HttpHandler {
         }
     }
 
-    public SimpleAuditHandler(final HttpHandler next) {
-        this.next = next;
+    public SimpleAuditHandler() {
+
     }
 
     @Override
@@ -112,10 +113,15 @@ public class SimpleAuditHandler implements HttpHandler {
         next.handleRequest(exchange);
     }
 
-    private static class Wrapper implements HandlerWrapper {
-        @Override
-        public HttpHandler wrap(HttpHandler handler) {
-            return new SimpleAuditHandler(handler);
-        }
+    @Override
+    public HttpHandler getNext() {
+        return next;
+    }
+
+    @Override
+    public MiddlewareHandler setNext(final HttpHandler next) {
+        Handlers.handlerNotNull(next);
+        this.next = next;
+        return this;
     }
 }

@@ -38,7 +38,7 @@
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>utility</artifactId>
+            <artifactId>handler</artifactId>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>

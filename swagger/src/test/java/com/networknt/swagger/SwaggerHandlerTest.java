@@ -51,7 +51,8 @@ public class SwaggerHandlerTest {
         if(server == null) {
             logger.info("starting server");
             HttpHandler handler = getTestHandler();
-            SwaggerHandler swaggerHandler = new SwaggerHandler(handler);
+            SwaggerHandler swaggerHandler = new SwaggerHandler();
+            swaggerHandler.setNext(handler);
             handler = swaggerHandler;
             server = Undertow.builder()
                     .addHttpListener(8080, "localhost")

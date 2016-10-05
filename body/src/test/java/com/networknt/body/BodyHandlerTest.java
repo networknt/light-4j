@@ -50,7 +50,8 @@ public class BodyHandlerTest {
         if(server == null) {
             logger.info("starting server");
             HttpHandler handler = getTestHandler();
-            BodyHandler bodyHandler = new BodyHandler(handler);
+            BodyHandler bodyHandler = new BodyHandler();
+            bodyHandler.setNext(handler);
             handler = bodyHandler;
             server = Undertow.builder()
                     .addHttpListener(8080, "localhost")

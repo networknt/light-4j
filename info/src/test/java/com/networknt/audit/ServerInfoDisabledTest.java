@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.networknt.info;
+package com.networknt.audit;
 
 import com.networknt.config.Config;
 import com.networknt.status.Status;
@@ -23,7 +23,6 @@ import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Methods;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;

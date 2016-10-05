@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.networknt.info;
+package com.networknt.audit;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 

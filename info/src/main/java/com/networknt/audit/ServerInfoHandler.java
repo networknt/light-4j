@@ -14,16 +14,11 @@
  * limitations under the License.
  */
 
-package com.networknt.info;
+package com.networknt.audit;
 
 import com.networknt.config.Config;
 import com.networknt.status.Status;
-import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
-import com.sun.corba.se.spi.activation.Server;
-import com.sun.net.httpserver.HttpExchange;
-import io.undertow.server.ExchangeCompletionListener;
-import io.undertow.server.HandlerWrapper;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
@@ -33,7 +28,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 

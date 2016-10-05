@@ -52,7 +52,8 @@ public class ExceptionHandlerTest {
         if(server == null) {
             logger.info("starting server");
             HttpHandler handler = getTestHandler();
-            ExceptionHandler exceptionHandler = new ExceptionHandler(handler);
+            ExceptionHandler exceptionHandler = new ExceptionHandler();
+            exceptionHandler.setNext(handler);
             handler = exceptionHandler;
             server = Undertow.builder()
                     .addHttpListener(8080, "localhost")
