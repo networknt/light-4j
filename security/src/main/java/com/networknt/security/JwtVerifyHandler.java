@@ -130,9 +130,11 @@ public class JwtVerifyHandler implements MiddlewareHandler {
                     // get scope defined in swagger spec for this endpoint.
                     List<String> specScopes = null;
                     List<Map<String, List<String>>> security = operation.getSecurity();
-                    for(Map<String, List<String>> requirement: security) {
-                        specScopes = requirement.get(SwaggerHelper.oauth2Name);
-                        if(specScopes != null) break;
+                    if(security != null) {
+                        for(Map<String, List<String>> requirement: security) {
+                            specScopes = requirement.get(SwaggerHelper.oauth2Name);
+                            if(specScopes != null) break;
+                        }
                     }
 
                     // validate scope
