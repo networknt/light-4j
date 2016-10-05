@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 0.1.7 - 2016-10-05
+### Added
+- Introduce MiddlewareHandler interface so that user can plug in more middleware or switch middleware
+
+### Changed
+- Fixed info test case to clear the injected config
+- All middleware handlers implement MiddlewareHandler interface so that they are loaded from SPI
+- Middleware handlers will be enabled by checking isEnable()
+- Update validator test case to remove oauth2 dependency
+- Fix the NPE issue if swagger specification does not have security defined
+- SwaggerHandler will only be enabled if swagger.json exists in config
+- Fix the token helper to get token from OAuth2 server
+
 ## 0.1.6 - 2016-10-02
 ### Added
 - Add header parameter validation against swagger specification
