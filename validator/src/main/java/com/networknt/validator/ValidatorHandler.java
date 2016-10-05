@@ -17,9 +17,12 @@
 package com.networknt.validator;
 
 import com.networknt.config.Config;
+import com.networknt.exception.ExceptionConfig;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.security.JwtHelper;
 import com.networknt.status.Status;
 import com.networknt.swagger.*;
+import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.ExchangeCompletionListener;
 import io.undertow.server.HttpHandler;
@@ -41,6 +44,11 @@ public class ValidatorHandler implements MiddlewareHandler {
     static final String STATUS_MISSING_SWAGGER_OPERATION = "ERR10012";
 
     static final Logger logger = LoggerFactory.getLogger(ValidatorHandler.class);
+
+    static ValidatorConfig config;
+    static {
+        config = (ValidatorConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ValidatorConfig.class);
+    }
 
     private volatile HttpHandler next;
 
@@ -99,6 +107,16 @@ public class ValidatorHandler implements MiddlewareHandler {
         Handlers.handlerNotNull(next);
         this.next = next;
         return this;
+    }
+
+    @Override
+    public boolean enabled() {
+        return config.isEnabled();
+    }
+
+    @Override
+    public void register() {
+        ModuleRegistry.registerModule(ValidatorHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
 

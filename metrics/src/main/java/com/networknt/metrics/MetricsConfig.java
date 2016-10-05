@@ -14,20 +14,36 @@
  * limitations under the License.
  */
 
-package com.networknt.handler;
-import io.undertow.server.HttpHandler;
+package com.networknt.metrics;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * Created by steve on 03/10/16.
+ * Created by steve on 04/10/16.
  */
-public interface MiddlewareHandler extends HttpHandler {
+public class MetricsConfig {
+    boolean enabled;
 
-    HttpHandler getNext();
+    @JsonIgnore
+    String description;
 
-    MiddlewareHandler setNext(final HttpHandler next);
+    public MetricsConfig() {
+    }
 
-    boolean enabled();
+    public boolean isEnabled() {
+        return enabled;
+    }
 
-    void register();
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
 }

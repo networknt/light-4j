@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * Created by steve on 17/09/16.
  */
 public class ValidatorConfig {
-    boolean enableValidator;
+    boolean enabled;
     boolean enableResponseValidator;
 
     @JsonIgnore
@@ -31,12 +31,12 @@ public class ValidatorConfig {
     public ValidatorConfig() {
     }
 
-    public boolean isEnableValidator() {
-        return enableValidator;
+    public boolean isEnabled() {
+        return enabled;
     }
 
-    public void setEnableValidator(boolean enableValidator) {
-        this.enableValidator = enableValidator;
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     public boolean isEnableResponseValidator() {

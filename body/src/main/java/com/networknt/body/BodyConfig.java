@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * Created by steve on 29/09/16.
  */
 public class BodyConfig {
-    boolean enableBodyHandler;
+    boolean enabled;
 
     @JsonIgnore
     String description;
@@ -30,12 +30,12 @@ public class BodyConfig {
     public BodyConfig() {
     }
 
-    public boolean isEnableBodyHandler() {
-        return enableBodyHandler;
+    public boolean isEnabled() {
+        return enabled;
     }
 
-    public void setEnableBodyHandler(boolean enableBodyHandler) {
-        this.enableBodyHandler = enableBodyHandler;
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     public String getDescription() {

@@ -1,4 +1,4 @@
 {
   "description": "Exception handler for runtime exception and ApiException if it is not handled by other handlers in the chain",
-  "enableExceptionHandler": true
+  "enabled": true
 }

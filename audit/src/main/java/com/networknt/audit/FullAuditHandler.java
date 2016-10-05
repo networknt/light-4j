@@ -19,6 +19,7 @@ package com.networknt.audit;
 import com.networknt.config.Config;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.Constants;
+import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -81,6 +82,17 @@ public class FullAuditHandler implements MiddlewareHandler {
         return this;
     }
 
+    @Override
+    public boolean enabled() {
+        Object object = config.get(ENABLE_FULL_AUDIT);
+        return object != null && (Boolean)object == true;
+    }
+
+    @Override
+    public void register() {
+        ModuleRegistry.registerModule(FullAuditHandler.class.getName(), config, null);
+    }
+
     private void dumpRequest(Map<String, Object> result, HttpServerExchange exchange, Object configObject) {
         Map<String, Object> requestMap = new LinkedHashMap<>();
         if (configObject instanceof Boolean) {
@@ -120,4 +132,6 @@ public class FullAuditHandler implements MiddlewareHandler {
             result.put(HEADERS, headerMap);
         }
     }
+
+
 }

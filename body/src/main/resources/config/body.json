@@ -1,4 +1,4 @@
 {
   "description": "Body parser handler",
-  "enableBodyHandler": true
+  "enabled": true
 }

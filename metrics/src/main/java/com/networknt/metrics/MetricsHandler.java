@@ -18,12 +18,12 @@ package com.networknt.metrics;
 
 import com.networknt.config.Config;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.Map;
 
 /**
  * Created by steve on 03/10/16.
@@ -31,12 +31,12 @@ import java.util.Map;
 public class MetricsHandler implements MiddlewareHandler {
     public static final String CONFIG_NAME = "metrics";
 
-    public static Map<String, Object> config;
+    public static MetricsConfig config;
 
     static final Logger logger = LoggerFactory.getLogger(MetricsHandler.class);
 
     static {
-        config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
+        config = (MetricsConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, MetricsConfig.class);
     }
 
     private volatile HttpHandler next;
@@ -60,6 +60,16 @@ public class MetricsHandler implements MiddlewareHandler {
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         logger.debug("in default metrics handler");
         next.handleRequest(exchange);
+    }
+
+    @Override
+    public boolean enabled() {
+        return config.isEnabled();
+    }
+
+    @Override
+    public void register() {
+        ModuleRegistry.registerModule(MetricsHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
 }

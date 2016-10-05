@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * Created by steve on 29/09/16.
  */
 public class ExceptionConfig {
-    boolean enableExceptionHandler;
+    boolean enabled;
 
     @JsonIgnore
     String description;
@@ -30,12 +30,12 @@ public class ExceptionConfig {
     public ExceptionConfig() {
     }
 
-    public boolean isEnableExceptionHandler() {
-        return enableExceptionHandler;
+    public boolean isEnabled() {
+        return enabled;
     }
 
-    public void setEnableExceptionHandler(boolean enableExceptionHandler) {
-        this.enableExceptionHandler = enableExceptionHandler;
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     public String getDescription() {

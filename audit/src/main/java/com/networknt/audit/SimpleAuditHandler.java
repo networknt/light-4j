@@ -19,6 +19,7 @@ package com.networknt.audit;
 import com.networknt.config.Config;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.Constants;
+import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.ExchangeCompletionListener;
 import io.undertow.server.HttpHandler;
@@ -123,5 +124,16 @@ public class SimpleAuditHandler implements MiddlewareHandler {
         Handlers.handlerNotNull(next);
         this.next = next;
         return this;
+    }
+
+    @Override
+    public boolean enabled() {
+        Object object = config.get(ENABLE_SIMPLE_AUDIT);
+        return object != null && (Boolean)object == true;
+    }
+
+    @Override
+    public void register() {
+        ModuleRegistry.registerModule(SimpleAuditHandler.class.getName(), config, null);
     }
 }

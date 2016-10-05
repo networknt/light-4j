@@ -16,9 +16,11 @@
 
 package com.networknt.body;
 
+import com.networknt.config.Config;
 import com.networknt.exception.ApiException;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.status.Status;
+import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -28,6 +30,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 /**
@@ -42,6 +46,11 @@ public class BodyHandler implements MiddlewareHandler {
     public static final AttachmentKey<String> REQUEST_BODY = AttachmentKey.create(String.class);
 
     public static final String CONFIG_NAME = "body";
+    public static BodyConfig config = null;
+    static {
+        config = (BodyConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, BodyConfig.class);
+    }
+
 
     private volatile HttpHandler next;
 
@@ -82,6 +91,16 @@ public class BodyHandler implements MiddlewareHandler {
         Handlers.handlerNotNull(next);
         this.next = next;
         return this;
+    }
+
+    @Override
+    public boolean enabled() {
+        return config.isEnabled();
+    }
+
+    @Override
+    public void register() {
+        ModuleRegistry.registerModule(BodyHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
 }

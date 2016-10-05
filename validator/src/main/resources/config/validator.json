@@ -1,5 +1,5 @@
 {
   "description": "Validate request/response against swagger spec during runtime",
-  "enableValidator": true,
+  "enabled": true,
   "enableResponseValidator": false
 }

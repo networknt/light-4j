@@ -16,8 +16,10 @@
 
 package com.networknt.exception;
 
+import com.networknt.config.Config;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.status.Status;
+import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -31,6 +33,10 @@ public class ExceptionHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(ExceptionHandler.class);
 
     public static final String CONFIG_NAME = "exception";
+    static ExceptionConfig config;
+    static {
+        config = (ExceptionConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ExceptionConfig.class);
+    }
 
     static final String STATUS_RUNTIME_EXCEPTION = "ERR10010";
     static final String STATUS_UNCAUGHT_EXCEPTION = "ERR10011";
@@ -79,4 +85,15 @@ public class ExceptionHandler implements MiddlewareHandler {
         this.next = next;
         return this;
     }
+
+    @Override
+    public boolean enabled() {
+        return config.isEnabled();
+    }
+
+    @Override
+    public void register() {
+        ModuleRegistry.registerModule(ExceptionHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+    }
+
 }

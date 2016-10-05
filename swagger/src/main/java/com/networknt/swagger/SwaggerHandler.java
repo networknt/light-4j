@@ -16,8 +16,10 @@
 
 package com.networknt.swagger;
 
+import com.networknt.config.Config;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.status.Status;
+import com.networknt.utility.ModuleRegistry;
 import io.swagger.models.HttpMethod;
 import io.swagger.models.Operation;
 import io.swagger.models.Path;
@@ -96,4 +98,15 @@ public class SwaggerHandler implements MiddlewareHandler {
         this.next = next;
         return this;
     }
+
+    @Override
+    public boolean enabled() {
+        return true;
+    }
+
+    @Override
+    public void register() {
+        ModuleRegistry.registerModule(SwaggerHandler.class.getName(), Config.getInstance().getJsonMapConfig(CONFIG_NAME), null);
+    }
+
 }

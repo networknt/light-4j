@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class ServerConfig {
     String ip;
     int port;
+    boolean enableSwaggerHandler;
+
     @JsonIgnore
     String description;
 
@@ -41,6 +43,14 @@ public class ServerConfig {
 
     public void setPort(int port) {
         this.port = port;
+    }
+
+    public boolean isEnableSwaggerHandler() {
+        return enableSwaggerHandler;
+    }
+
+    public void setEnableSwaggerHandler(boolean enableSwaggerHandler) {
+        this.enableSwaggerHandler = enableSwaggerHandler;
     }
 
     public String getDescription() {

@@ -22,6 +22,7 @@ import com.networknt.status.Status;
 import com.networknt.swagger.*;
 import com.networknt.utility.Constants;
 import com.networknt.exception.ExpiredTokenException;
+import com.networknt.utility.ModuleRegistry;
 import io.swagger.models.*;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -212,4 +213,16 @@ public class JwtVerifyHandler implements MiddlewareHandler {
         this.next = next;
         return this;
     }
+
+    @Override
+    public boolean enabled() {
+        Object object = config.get(JwtHelper.ENABLE_VERIFY_JWT);
+        return object != null && (Boolean)object == true;
+    }
+
+    @Override
+    public void register() {
+        ModuleRegistry.registerModule(JwtVerifyHandler.class.getName(), config, null);
+    }
+
 }
