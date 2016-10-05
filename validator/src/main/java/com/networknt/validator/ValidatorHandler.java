@@ -17,9 +17,7 @@
 package com.networknt.validator;
 
 import com.networknt.config.Config;
-import com.networknt.exception.ExceptionConfig;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.security.JwtHelper;
 import com.networknt.status.Status;
 import com.networknt.swagger.*;
 import com.networknt.utility.ModuleRegistry;
@@ -45,10 +43,7 @@ public class ValidatorHandler implements MiddlewareHandler {
 
     static final Logger logger = LoggerFactory.getLogger(ValidatorHandler.class);
 
-    static ValidatorConfig config;
-    static {
-        config = (ValidatorConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ValidatorConfig.class);
-    }
+    static ValidatorConfig config = (ValidatorConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ValidatorConfig.class);
 
     private volatile HttpHandler next;
 

@@ -101,7 +101,8 @@ public class SwaggerHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        // just check if swagger.json exists or not.
+        return (SwaggerHelper.swagger != null);
     }
 
     @Override
