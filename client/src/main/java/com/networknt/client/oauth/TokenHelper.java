@@ -24,10 +24,13 @@ import com.networknt.utility.Constants;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
 import org.apache.http.ParseException;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
@@ -35,7 +38,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -61,7 +66,7 @@ public class TokenHelper {
 
         try {
             CloseableHttpClient client = Client.getInstance().getSyncClient();
-            //httpPost.setEntity(getEntity(tokenRequest));
+            httpPost.setEntity(getEntity(tokenRequest));
             HttpResponse response = client.execute(httpPost);
             tokenResponse = handleResponse(response);
 
@@ -99,18 +104,17 @@ public class TokenHelper {
         return new String(Base64.decodeBase64(cred));
     }
 
-    private static StringEntity getEntity(TokenRequest request) throws JsonProcessingException, UnsupportedEncodingException {
-        Map<String, Object> map = new HashMap<String, Object>();
-
-        map.put(GRANT_TYPE, request.getGrantType());
+    private static UrlEncodedFormEntity getEntity(TokenRequest request) throws JsonProcessingException, UnsupportedEncodingException {
+        List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
+        urlParameters.add(new BasicNameValuePair(GRANT_TYPE, request.getGrantType()));
         if(TokenRequest.AUTHORIZATION_CODE.equals(request.getGrantType())) {
-            map.put(CODE, ((AuthorizationCodeRequest)request).getAuthCode());
-            map.put(TokenRequest.REDIRECT_URI, ((AuthorizationCodeRequest)request).getRedirectUri());
+            urlParameters.add(new BasicNameValuePair(CODE, ((AuthorizationCodeRequest)request).getAuthCode()));
+            urlParameters.add(new BasicNameValuePair(TokenRequest.REDIRECT_URI, ((AuthorizationCodeRequest)request).getRedirectUri()));
         }
         if(request.getScope() != null) {
-            map.put(TokenRequest.SCOPE, StringUtils.join(request.getScope(), " "));
+            urlParameters.add(new BasicNameValuePair(TokenRequest.SCOPE, StringUtils.join(request.getScope(), " ")));
         }
-        return new StringEntity(Config.getInstance().getMapper().writeValueAsString(map));
+        return new UrlEncodedFormEntity(urlParameters);
     }
 
     private static TokenResponse handleResponse(HttpResponse response) throws ClientException {
