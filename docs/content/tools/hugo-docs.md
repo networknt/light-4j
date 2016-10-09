@@ -1,6 +1,6 @@
 ---
 date: 2016-10-08T19:25:24-04:00
-title: How to use hugo for project documentation on github
+title: Hugo for project documentation on github
 ---
 
 ## Introduction
@@ -157,12 +157,17 @@ http://localhost:1313/<projectname>
 
 ## Deploy
 
-From docs folder run the following command to publish your site to gh-pages
+Get the deploy.sh
 
 ```
 # Fetch the deployment script into the root of your source tree, make it executable.
 wget https://github.com/X1011/git-directory-deploy/raw/master/deploy.sh && chmod +x deploy.sh
 
+```
+From docs folder run the following command to publish your site to gh-pages. This can be repeated every time you
+want to publish your site.
+
+```
 # For setting it up to build to a folder other than "dist", see the options in deploy.sh.
 # Build the site to /dist.
 hugo -d dist
