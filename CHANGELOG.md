@@ -4,8 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-
 ## [Unreleased]
+### Added
+
+### Changed
+
+
+## 0.1.8 - 2016-10-10
 ### Added
 - Add new Status code into status.json for OAuth2 server
 - Add docs folder for project documentation
