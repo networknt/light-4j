@@ -129,12 +129,12 @@ public class ClientTest {
         }
     }
 
-    //@Test
+    @Test
     public void testSingleSychClient() throws Exception {
         callApiSync();
     }
 
-    //@Test
+    @Test
     public void testSingleAsychClient() throws Exception {
         callApiAsync();
     }
@@ -240,7 +240,7 @@ public class ClientTest {
         }
     }
 
-    @Test
+    //@Test
     public void testMixed() throws InterruptedException, ExecutionException {
         for(int i = 0; i < 100; i++) {
             callApiSyncMultiThread(4
