@@ -39,8 +39,6 @@
     "expiredRefreshRetryDelay": 5000,
     "earlyRefreshRetryDelay": 30000,
     "server_url": "http://localhost:8888",
-    "timeout": 5000,
-    "ignoreSSLErrors": false,
     "authorization_code": {
       "uri": "/oauth2/token",
       "client_id": "3798d583-275c-47d7-bf46-a3c436846336",

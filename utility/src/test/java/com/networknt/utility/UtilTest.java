@@ -24,6 +24,8 @@ public class UtilTest {
     public void testGetUUID() {
         String id1 = Util.getUUID();
         String id2 = Util.getUUID();
+        System.out.println("uuid = " + id1);
+        System.out.println("uuid = " + id2);
         Assert.assertNotEquals(id1, id2);
     }
 }

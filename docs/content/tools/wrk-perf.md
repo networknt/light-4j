@@ -66,5 +66,44 @@ request = function()
 end
 ```
 
+### Debug
+
+If your wrk with pipeline.lua is not working or returning non 2XX or 3XX code, chances are you are using the wrong request
+path after --. The default in the previous command is / and it should be changed to something like /v1/data for APIs.
+
+In order to debug the pipeline.lua, use the following copy pipeline_debug.lua
+
+```
+init = function(args)
+   request_uri = args[1]
+   depth = tonumber(args[2]) or 1
+
+   local r = {}
+   for i=1,depth do
+     r[i] = wrk.format(nil, request_uri)
+   end
+   req = table.concat(r)
+end
+
+request = function()
+   return req
+end
+
+response = function (status, headers, body)
+  io.write("------------------------------\n")
+  io.write("Response with status: ".. status .."\n")
+  io.write("------------------------------\n")
+
+  io.write("[response] Body:\n")
+  io.write(body .. "\n")
+end
+```
+
 ## Example
 For some output examples, you can find at [undertow-server-example/performance](https://github.com/networknt/undertow-server-example/tree/master/performance)
+
+## Additional Info
+
+There are two other [tutorial 1](https://www.digitalocean.com/community/tutorials/how-to-benchmark-http-latency-with-wrk-on-ubuntu-14-04)
+and [tutorial 2](http://czerasz.com/2015/07/19/wrk-http-benchmarking-tool-example/) for wrk written by Michal Czeraszkiewicz
+

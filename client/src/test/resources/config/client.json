@@ -7,7 +7,7 @@
       "api.google.com": 20,
       "api.facebook.com": 10
     },
-    "timeout": 10000,
+    "timeout": 2000,
     "keepAlive": 15000
   },
   "async": {
@@ -22,7 +22,7 @@
       "connectTimeout": 10000,
       "soTimeout": 10000
     },
-    "timeout": 10000,
+    "timeout": 2000,
     "keepAlive": 15000
   },
   "tls": {
@@ -39,10 +39,8 @@
     "expiredRefreshRetryDelay": 5000,
     "earlyRefreshRetryDelay": 30000,
     "server_url": "http://localhost:8887",
-    "timeout": 5000,
-    "ignoreSSLErrors": false,
     "authorization_code": {
-      "uri": "/oauth/token",
+      "uri": "/oauth2/token",
       "client_id": "test_client",
       "client_secret": "test_secret",
       "redirect_uri": "https://localhost:8080/authorization_code",
@@ -52,7 +50,7 @@
       ]
     },
     "client_credentials": {
-      "uri": "/oauth/token",
+      "uri": "/oauth2/token",
       "client_id": "test_client",
       "client_secret": "test_secret",
       "scope": [

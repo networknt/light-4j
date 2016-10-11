@@ -119,8 +119,8 @@ public class Client {
     private String jwt;
     private long expire;
     private volatile boolean renewing = false;
-    private volatile long expiredRefreshRetryDelay;
-    private volatile long earlyRefreshRetryDelay;
+    private volatile long expiredRetryTimeout;
+    private volatile long earlyRetryTimeout;
 
     private final Object lock = new Object();
 
@@ -226,17 +226,18 @@ public class Client {
         long expiredRefreshRetryDelay = (Integer)oauthConfig.get(EXPIRED_REFRESH_RETRY_DELAY);
         long earlyRefreshRetryDelay = (Integer)oauthConfig.get(EARLY_REFRESH_RETRY_DELAY);
         boolean isInRenewWindow = expire - System.currentTimeMillis() < tokenRenewBeforeExpired;
+        logger.trace("isInRenewWindow = " + isInRenewWindow);
         if(isInRenewWindow) {
             if(expire <= System.currentTimeMillis()) {
                 logger.trace("In renew window and token is expired.");
                 // block other request here to prevent using expired token.
                 synchronized (Client.class) {
                     if(expire <= System.currentTimeMillis()) {
-                        logger.trace("Within the synch block, check if the current request need to renew token...");
-                        if(!renewing || System.currentTimeMillis() > expiredRefreshRetryDelay) {
+                        logger.trace("Within the synch block, check if the current request need to renew token");
+                        if(!renewing || System.currentTimeMillis() > expiredRetryTimeout) {
                             // if there is no other request is renewing or the renewing flag is true but renewTimeout is passed
                             renewing = true;
-                            expiredRefreshRetryDelay = System.currentTimeMillis() + expiredRefreshRetryDelay;
+                            expiredRetryTimeout = System.currentTimeMillis() + expiredRefreshRetryDelay;
                             logger.trace("Current request is renewing token synchronously as token is expired already");
                             getCCToken();
                             renewing = false;
@@ -252,9 +253,9 @@ public class Client {
                 logger.trace("In renew window but token is not expired yet.");
                 synchronized (Client.class) {
                     if(expire > System.currentTimeMillis()) {
-                        if(!renewing || System.currentTimeMillis() > earlyRefreshRetryDelay) {
+                        if(!renewing || System.currentTimeMillis() > earlyRetryTimeout) {
                             renewing = true;
-                            earlyRefreshRetryDelay = System.currentTimeMillis() + earlyRefreshRetryDelay;
+                            earlyRetryTimeout = System.currentTimeMillis() + earlyRefreshRetryDelay;
                             logger.trace("Retrieve token async is called while token is not expired yet");
 
                             ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
@@ -298,8 +299,10 @@ public class Client {
             connectionManager.setMaxPerRoute(new HttpRoute(new HttpHost(
                     route)), maxConnection);
         }
+        final int timeout = (Integer)httpClientMap.get(TIMEOUT);
         RequestConfig config = RequestConfig.custom()
-                .setConnectTimeout((Integer)httpClientMap.get(TIMEOUT))
+                .setConnectTimeout(timeout)
+                .setSocketTimeout(timeout)
                 .build();
         final long keepAliveMilliseconds = (Integer)httpClientMap.get(KEEP_ALIVE);
         return HttpClientBuilder.create()
@@ -322,7 +325,7 @@ public class Client {
                                 }
                             }
                         }
-                        logger.trace("Use keepAliveMilliseconds from config " + keepAliveMilliseconds);
+                        //logger.trace("Use keepAliveMilliseconds from config " + keepAliveMilliseconds);
                         return keepAliveMilliseconds;
                     }
                 })
@@ -345,8 +348,10 @@ public class Client {
             connectionManager.setMaxPerRoute(new HttpRoute(new HttpHost(
                     route)), maxConnection);
         }
+        final int timeout = (Integer) asyncHttpClientMap.get(TIMEOUT);
         RequestConfig config = RequestConfig.custom()
-                .setConnectTimeout((Integer) asyncHttpClientMap.get(TIMEOUT))
+                .setConnectTimeout(timeout)
+                .setSocketTimeout(timeout)
                 .build();
         final long keepAliveMilliseconds = (Integer)asyncHttpClientMap.get(KEEP_ALIVE);
 
@@ -371,7 +376,7 @@ public class Client {
                                 }
                             }
                         }
-                        logger.trace("Use keepAliveMilliseconds from config " + keepAliveMilliseconds);
+                        //logger.trace("Use keepAliveMilliseconds from config " + keepAliveMilliseconds);
                         return keepAliveMilliseconds;
                     }
                 })

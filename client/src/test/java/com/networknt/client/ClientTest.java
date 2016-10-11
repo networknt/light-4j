@@ -17,14 +17,18 @@
 package com.networknt.client;
 
 import com.networknt.config.Config;
+import com.networknt.exception.ApiException;
 import com.networknt.security.JwtHelper;
+import com.networknt.status.Status;
 import com.networknt.utility.Constants;
 import com.networknt.exception.ExpiredTokenException;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
+import io.undertow.util.Methods;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -36,13 +40,11 @@ import org.apache.http.util.EntityUtils;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.NumericDate;
 import org.jose4j.jwt.consumer.InvalidJwtException;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -61,16 +63,21 @@ public class ClientTest {
                     .addHttpListener(8887, "localhost")
                     .setHandler(Handlers.header(Handlers.path()
                                     .addPrefixPath("/api", new ApiHandler())
-                                    .addPrefixPath("/oauth/token", new OAuthHandler()),
+                                    .addPrefixPath("/oauth2/token", new OAuthHandler()),
                             Headers.SERVER_STRING, "U-tow"))
                     .build();
             server.start();
         }
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterClass
+    public static void tearDown() throws Exception {
         if(server != null) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ie) {
+                ;
+            }
             server.stop();
             System.out.println("The server is stopped.");
             try {
@@ -122,12 +129,12 @@ public class ClientTest {
         }
     }
 
-    @Test
+    //@Test
     public void testSingleSychClient() throws Exception {
         callApiSync();
     }
 
-    @Test
+    //@Test
     public void testSingleAsychClient() throws Exception {
         callApiAsync();
     }
@@ -209,7 +216,7 @@ public class ClientTest {
 
     //@Test
     public void testSyncAboutToExpire() throws InterruptedException, ExecutionException {
-        for(int i = 0; i < 10; i++) {
+        for(int i = 0; i < 100; i++) {
             callApiSyncMultiThread(4);
             logger.info("called times: " + i);
             try {
@@ -222,7 +229,7 @@ public class ClientTest {
 
     //@Test
     public void testSyncExpired() throws InterruptedException, ExecutionException {
-        for(int i = 0; i < 10; i++) {
+        for(int i = 0; i < 100; i++) {
             callApiSyncMultiThread(4);
             logger.info("called times: " + i);
             try {
@@ -233,9 +240,9 @@ public class ClientTest {
         }
     }
 
-    //@Test
+    @Test
     public void testMixed() throws InterruptedException, ExecutionException {
-        for(int i = 0; i < 10; i++) {
+        for(int i = 0; i < 100; i++) {
             callApiSyncMultiThread(4
             );
             logger.info("called times: " + i);

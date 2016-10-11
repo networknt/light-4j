@@ -83,6 +83,13 @@
     "message": "SERVER_INFO_DISABLED",
     "description": "Server info handler is disabled in info.json"
   },
+  "ERR10014": {
+    "statusCode": 400,
+    "code": "ERR10014",
+    "message": "GENERIC_EXCEPTION",
+    "description": "Generic Exception %s."
+  },
+
   "ERR11000": {
     "statusCode": 400,
     "code": "ERR11000",
@@ -190,6 +197,73 @@
     "code": "ERR11017",
     "message": "VALIDATOR_REQUEST_PARAMETER_HEADER_MISSING",
     "description": "Header parameter '%s' is required on path '%s' but not found in request."
+  },
+
+  "ERR12000": {
+    "statusCode": 400,
+    "code": "ERR12000",
+    "message": "UNABLE_TO_PARSE_FORM_DATA",
+    "description": "Unable to parse x-www-form-urlencoded form data."
+  },
+  "ERR12001": {
+    "statusCode": 400,
+    "code": "ERR12001",
+    "message": "UNSUPPORTED_GRANT_TYPE",
+    "description": "Unsupported grant type %s. Only authorization_code and client_credentials are supported."
+  },
+  "ERR12002": {
+    "statusCode": 401,
+    "code": "ERR12002",
+    "message": "MISSING_AUTHORIZATION_HEADER",
+    "description": "Missing authorization header. client credentials must be passed in as Authorization header."
+  },
+  "ERR12003": {
+    "statusCode": 401,
+    "code": "ERR12003",
+    "message": "INVALID_AUTHORIZATION_HEADER",
+    "description": "Invalid authorization header %s. Basic authentication with credentials is required."
+  },
+  "ERR12004": {
+    "statusCode": 401,
+    "code": "ERR12004",
+    "message": "INVALID_BASIC_CREDENTIALS",
+    "description": "Invalid Basic credentials %s."
+  },
+  "ERR12005": {
+    "statusCode": 400,
+    "code": "ERR12005",
+    "message": "JSON_PROCESSING_EXCEPTION",
+    "description": "Json Processing Excepiton %s."
+  },
+  "ERR12006": {
+    "statusCode": 404,
+    "code": "ERR12006",
+    "message": "CLIENT_ID_NOTFOUND",
+    "description": "Client Id not found %s."
+  },
+  "ERR12007": {
+    "statusCode": 401,
+    "code": "ERR12007",
+    "message": "UNAUTHORIZED_CLIENT",
+    "description": "Unauthorized client with wrong client secret."
+  },
+  "ERR12008": {
+    "statusCode": 401,
+    "code": "ERR12008",
+    "message": "INVALID_AUTHORIZATION_CODE",
+    "description": "Invalid Authorization Code %s."
+  },
+  "ERR12009": {
+    "statusCode": 401,
+    "code": "ERR12009",
+    "message": "INVALID_CODE_REQUEST",
+    "description": "Invalid authorization code request. responseType and client_id are required."
+  },
+  "ERR12010": {
+    "statusCode": 401,
+    "code": "ERR12010",
+    "message": "INVALID_RESPONSE_TYPE",
+    "description": "Invalid response type %s. Ony code is allowed."
   }
 
 }
