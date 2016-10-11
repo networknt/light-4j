@@ -4,10 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+
 ## [Unreleased]
 ### Added
+- Add new Status code into status.json for OAuth2 server
+- Add docs folder for project documentation
 
 ### Changed
+- Fix a bug in client to prevent calling oauth2 server multiple times if in renew window.
+- Add socket timeout for client
+- update client.json in test resource to simulate different errors.
 
 ## 0.1.7 - 2016-10-05
 ### Added
