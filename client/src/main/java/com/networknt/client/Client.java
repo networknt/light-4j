@@ -128,6 +128,7 @@ public class Client {
         List<String> masks = new ArrayList<String>();
         masks.add("trustPass");
         masks.add("keyPass");
+        masks.add("client_secret");
         ModuleRegistry.registerModule(Client.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), masks);
         config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
         if(config != null) {
