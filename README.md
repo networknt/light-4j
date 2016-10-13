@@ -1,5 +1,7 @@
 # Java Undertow Server
 
+[![Join the chat at https://gitter.im/networknt/undertow-server](https://badges.gitter.im/networknt/undertow-server.svg)](https://gitter.im/networknt/undertow-server?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 ## Introduction
 
 [Undertow](http://undertow.io/) is  one of the fastest Java HTTP servers available and JBoss WildFly is based on it.
