@@ -210,19 +210,31 @@ public class MetricRegistry implements MetricSet {
     }
 
     /**
+     * Removes all the metrics in registry.
+     */
+    public void removeAll() {
+        for(Iterator<Map.Entry<MetricName, Metric>> it = metrics.entrySet().iterator(); it.hasNext();) {
+            Map.Entry<MetricName, Metric> entry = it.next();
+            Metric metric = entry.getValue();
+            if(metric != null) {
+                onMetricRemoved(entry.getKey(), metric);
+            }
+            it.remove();
+        }
+    }
+
+
+    /**
      * Removes all metrics which match the given filter.
      *
      * @param filter a filter
-     * @return whether or not a metric was removed
      */
-    public boolean removeMatching(MetricFilter filter) {
-        boolean removed = false;
+    public void removeMatching(MetricFilter filter) {
         for (Map.Entry<MetricName, Metric> entry : metrics.entrySet()) {
             if (filter.matches(entry.getKey(), entry.getValue())) {
-                removed |= remove(entry.getKey());
+                remove(entry.getKey());
             }
         }
-        return removed;
     }
 
     /**
@@ -357,7 +369,7 @@ public class MetricRegistry implements MetricSet {
     }
 
     @SuppressWarnings("unchecked")
-    private <T extends Metric> T getOrAdd(MetricName name, MetricBuilder<T> builder) {
+    public <T extends Metric> T getOrAdd(MetricName name, MetricBuilder<T> builder) {
         final Metric metric = metrics.get(name);
         if (builder.isInstance(metric)) {
             return (T) metric;
@@ -451,7 +463,7 @@ public class MetricRegistry implements MetricSet {
     /**
      * A quick and easy way of capturing the notion of default metrics.
      */
-    private interface MetricBuilder<T extends Metric> {
+    public interface MetricBuilder<T extends Metric> {
         MetricBuilder<Counter> COUNTERS = new MetricBuilder<Counter>() {
             @Override
             public Counter newMetric() {

@@ -57,7 +57,7 @@ public class Timer implements Metered, Sampling {
      * {@link Clock}.
      */
     public Timer() {
-        this(new ExponentiallyDecayingReservoir());
+        this(new HdrHistogramResetOnSnapshotReservoir());
     }
 
     /**
