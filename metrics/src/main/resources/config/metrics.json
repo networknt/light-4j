@@ -1,10 +1,10 @@
 {
   "description": "Metrics handler configuration",
   "enabled": true,
-  "influxdbHost": "idbg.mgmt1.cloud.td.com",
-  "influxdbPort": 5672,
+  "influxdbHost": "localhost",
+  "influxdbPort": 8086,
   "influxdbName": "metrics",
   "influxdbUser": "admin",
   "influxdbPass": "admin",
-  "reportInMinutes": 5
+  "reportInMinutes": 1
 }

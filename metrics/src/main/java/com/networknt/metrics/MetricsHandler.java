@@ -19,18 +19,22 @@ package com.networknt.metrics;
 import com.networknt.config.Config;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.ModuleRegistry;
+import io.dropwizard.metrics.Clock;
 import io.dropwizard.metrics.MetricFilter;
 import io.dropwizard.metrics.MetricRegistry;
 import io.dropwizard.metrics.influxdb.InfluxDbHttpSender;
 import io.dropwizard.metrics.influxdb.InfluxDbReporter;
 import io.dropwizard.metrics.influxdb.InfluxDbSender;
 import io.undertow.Handlers;
+import io.undertow.server.ExchangeCompletionListener;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
+
+import static io.dropwizard.metrics.MetricRegistry.name;
 
 /**
  * Created by steve on 03/10/16.
@@ -86,6 +90,18 @@ public class MetricsHandler implements MiddlewareHandler {
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         logger.debug("in default metrics handler");
+        long startTime = Clock.defaultClock().getTick();
+
+        exchange.addExchangeCompleteListener(new ExchangeCompletionListener() {
+            @Override
+            public void exchangeEvent(HttpServerExchange exchange, ExchangeCompletionListener.NextListener nextListener) {
+                long time = Clock.defaultClock().getTick() - startTime;
+                registry.getOrAdd(name("response_time"), MetricRegistry.MetricBuilder.TIMERS).update(time, TimeUnit.NANOSECONDS);
+                nextListener.proceed();
+            }
+        });
+
+
         next.handleRequest(exchange);
     }
 
