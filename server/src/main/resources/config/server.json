@@ -1,6 +1,5 @@
 {
   "description": "server config",
   "ip": "localhost",
-  "port": 8080,
-  "enableSwaggerHandler": true
+  "port": 8080
 }
