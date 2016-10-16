@@ -77,7 +77,7 @@ public class JwtVerifyHandler implements MiddlewareHandler {
                 headerMap.add(new HttpString(Constants.CLIENT_ID), claims.getStringClaimValue(Constants.CLIENT_ID));
                 headerMap.add(new HttpString(Constants.USER_ID), claims.getStringClaimValue(Constants.USER_ID));
                 headerMap.add(new HttpString(Constants.SCOPE), claims.getStringListClaimValue(Constants.SCOPE).toString());
-                if(config != null && (Boolean)config.get(ENABLE_VERIFY_SCOPE)) {
+                if(config != null && (Boolean)config.get(ENABLE_VERIFY_SCOPE) && SwaggerHelper.swagger != null) {
                     Operation operation = null;
                     SwaggerOperation swaggerOperation = exchange.getAttachment(SwaggerHandler.SWAGGER_OPERATION);
                     if(swaggerOperation == null) {

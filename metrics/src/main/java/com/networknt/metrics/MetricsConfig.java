@@ -23,6 +23,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  */
 public class MetricsConfig {
     boolean enabled;
+    String influxdbHost;
+    int influxdbPort;
+    String influxdbName;
+    String influxdbUser;
+    String influxdbPass;
+    int reportInMinutes;
 
     @JsonIgnore
     String description;
@@ -36,6 +42,54 @@ public class MetricsConfig {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public String getInfluxdbHost() {
+        return influxdbHost;
+    }
+
+    public void setInfluxdbHost(String influxdbHost) {
+        this.influxdbHost = influxdbHost;
+    }
+
+    public int getInfluxdbPort() {
+        return influxdbPort;
+    }
+
+    public void setInfluxdbPort(int influxdbPort) {
+        this.influxdbPort = influxdbPort;
+    }
+
+    public int getReportInMinutes() {
+        return reportInMinutes;
+    }
+
+    public void setReportInMinutes(int reportInMinutes) {
+        this.reportInMinutes = reportInMinutes;
+    }
+
+    public String getInfluxdbName() {
+        return influxdbName;
+    }
+
+    public void setInfluxdbName(String influxdbName) {
+        this.influxdbName = influxdbName;
+    }
+
+    public String getInfluxdbUser() {
+        return influxdbUser;
+    }
+
+    public void setInfluxdbUser(String influxdbUser) {
+        this.influxdbUser = influxdbUser;
+    }
+
+    public String getInfluxdbPass() {
+        return influxdbPass;
+    }
+
+    public void setInfluxdbPass(String influxdbPass) {
+        this.influxdbPass = influxdbPass;
     }
 
     public String getDescription() {

@@ -49,8 +49,9 @@ public class SwaggerHelper {
         swagger = swaggerParseResult.getSwagger();
         if (swagger == null) {
             logger.error("Unable to load swagger.json");
+        } else {
+            oauth2Name = getOAuth2Name();
         }
-        oauth2Name = getOAuth2Name();
     }
 
     public static Optional<NormalisedPath> findMatchingApiPath(final NormalisedPath requestPath) {

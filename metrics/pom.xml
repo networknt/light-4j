@@ -108,6 +108,11 @@
             <artifactId>assertj-core</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>security</artifactId>
+            <scope>test</scope>
+        </dependency>
 
     </dependencies>
 
