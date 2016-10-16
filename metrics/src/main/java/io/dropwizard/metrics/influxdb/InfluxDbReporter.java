@@ -1,10 +1,6 @@
 package io.dropwizard.metrics.influxdb;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -123,7 +119,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
     public void report(final SortedMap<MetricName, Gauge> gauges, final SortedMap<MetricName, Counter> counters,
                        final SortedMap<MetricName, Histogram> histograms, final SortedMap<MetricName, Meter> meters, final SortedMap<MetricName, Timer> timers) {
         final long now = System.currentTimeMillis();
-
+        System.out.println("InfluxDbReporter report is called.");
         try {
             influxDb.flush();
 
@@ -160,6 +156,10 @@ public final class InfluxDbReporter extends ScheduledReporter {
             return;
         }
         final Snapshot snapshot = timer.getSnapshot();
+        influxDb.appendPoints(new InfluxDbPoint(name.getKey() + ".min", name.getTags(), now, format(convertDuration(snapshot.getMin()))));
+        influxDb.appendPoints(new InfluxDbPoint(name.getKey() + ".max", name.getTags(), now, format(convertDuration(snapshot.getMax()))));
+        influxDb.appendPoints(new InfluxDbPoint(name.getKey() + ".mean", name.getTags(), now, format(convertDuration(snapshot.getMean()))));
+        /*
         Map<String, Object> fields = new HashMap<>();
         fields.put("count", timer.getCount());
         fields.put("min", convertDuration(snapshot.getMin()));
@@ -181,8 +181,9 @@ public final class InfluxDbReporter extends ScheduledReporter {
         influxDb.appendPoints(new InfluxDbPoint(
                 name.getKey(),
                 name.getTags(),
-                String.valueOf(now),
+                now,
                 fields));
+        */
     }
 
     private void reportHistogram(MetricName name, Histogram histogram, long now) {
@@ -190,6 +191,11 @@ public final class InfluxDbReporter extends ScheduledReporter {
             return;
         }
         final Snapshot snapshot = histogram.getSnapshot();
+        influxDb.appendPoints(new InfluxDbPoint(name.getKey() + ".count", name.getTags(), now, format(histogram.getCount())));
+        influxDb.appendPoints(new InfluxDbPoint(name.getKey() + ".min", name.getTags(), now, format(snapshot.getMin())));
+        influxDb.appendPoints(new InfluxDbPoint(name.getKey() + ".max", name.getTags(), now, format(snapshot.getMax())));
+        influxDb.appendPoints(new InfluxDbPoint(name.getKey() + ".mean", name.getTags(), now, format(snapshot.getMean())));
+        /*
         Map<String, Object> fields = new HashMap<>();
         fields.put("count", histogram.getCount());
         fields.put("min", snapshot.getMin());
@@ -209,9 +215,13 @@ public final class InfluxDbReporter extends ScheduledReporter {
                 name.getTags(),
                 String.valueOf(now),
                 fields));
+        */
     }
 
     private void reportCounter(MetricName name, Counter counter, long now) {
+        influxDb.appendPoints(new InfluxDbPoint(name.getKey() + ".count", name.getTags(), now, format(counter.getCount())));
+
+        /*
         Map<String, Object> fields = new HashMap<>();
         fields.put("count", counter.getCount());
         influxDb.appendPoints(new InfluxDbPoint(
@@ -219,9 +229,15 @@ public final class InfluxDbReporter extends ScheduledReporter {
                 name.getTags(),
                 String.valueOf(now),
                 fields));
+        */
     }
 
     private void reportGauge(MetricName name, Gauge<?> gauge, long now) {
+        final String value = format(gauge.getValue());
+        if(value != null) {
+            influxDb.appendPoints(new InfluxDbPoint(name.getKey(), name.getTags(), now, value));
+        }
+        /*
         Map<String, Object> fields = new HashMap<>();
         fields.put("value", gauge.getValue());
         influxDb.appendPoints(new InfluxDbPoint(
@@ -229,12 +245,15 @@ public final class InfluxDbReporter extends ScheduledReporter {
                 name.getTags(),
                 String.valueOf(now),
                 fields));
+        */
     }
 
     private void reportMeter(MetricName name, Metered meter, long now) {
         if (canSkipMetric(name, meter)) {
             return;
         }
+        influxDb.appendPoints(new InfluxDbPoint(name.getKey() + ".count", name.getTags(), now, format(meter.getCount())));
+        /*
         Map<String, Object> fields = new HashMap<>();
         fields.put("count", meter.getCount());
         fields.put("one-minute", convertRate(meter.getOneMinuteRate()));
@@ -246,6 +265,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
                 name.getTags(),
                 String.valueOf(now),
                 fields));
+        */
     }
 
     private boolean canSkipMetric(MetricName name, Counting counting) {
@@ -266,6 +286,32 @@ public final class InfluxDbReporter extends ScheduledReporter {
             return 0;
         }
         return count - previous;
+    }
+
+    private String format(Object o) {
+        if (o instanceof Float) {
+            return format(((Float) o).doubleValue());
+        } else if (o instanceof Double) {
+            return format(((Double) o).doubleValue());
+        } else if (o instanceof Byte) {
+            return format(((Byte) o).longValue());
+        } else if (o instanceof Short) {
+            return format(((Short) o).longValue());
+        } else if (o instanceof Integer) {
+            return format(((Integer) o).longValue());
+        } else if (o instanceof Long) {
+            return format(((Long) o).longValue());
+        }
+        return null;
+    }
+    private String format(long n) {
+        return Long.toString(n);
+    }
+
+    private String format(double v) {
+        // the Carbon plaintext format is pretty underspecified, but it seems like it just wants
+        // US-formatted digits
+        return String.format(Locale.US, "%2.2f", v);
     }
 
 }

@@ -1,9 +1,6 @@
 package io.dropwizard.metrics.influxdb.data;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -11,17 +8,14 @@ import java.util.concurrent.TimeUnit;
  */
 public class InfluxDbWriteObject {
 
-    private String database;
-
     private String precision;
 
     private Set<InfluxDbPoint> points;
 
     private Map<String, String> tags = Collections.emptyMap();
 
-    public InfluxDbWriteObject(final String database, final TimeUnit timeUnit) {
+    public InfluxDbWriteObject(final TimeUnit timeUnit) {
         this.points = new HashSet<>();
-        this.database = database;
         this.precision = toTimePrecision(timeUnit);
     }
 
@@ -43,14 +37,6 @@ public class InfluxDbWriteObject {
                 throw new IllegalArgumentException(
                         "time precision should be HOURS OR MINUTES OR SECONDS or MILLISECONDS or MICROSECONDS OR NANOSECONDS");
         }
-    }
-
-    public String getDatabase() {
-        return database;
-    }
-
-    public void setDatabase(String database) {
-        this.database = database;
     }
 
     public String getPrecision() {
@@ -75,5 +61,15 @@ public class InfluxDbWriteObject {
 
     public void setTags(Map<String, String> tags) {
         this.tags = Collections.unmodifiableMap(tags);
+    }
+
+    public String getBody() {
+        StringJoiner joiner = new StringJoiner("\n");
+        Iterator it = points.iterator();
+        while(it.hasNext()) {
+            InfluxDbPoint point = (InfluxDbPoint)it.next();
+            joiner.add(point.toString());
+        }
+        return joiner.toString();
     }
 }

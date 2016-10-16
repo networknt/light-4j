@@ -2,7 +2,6 @@ package io.dropwizard.metrics.influxdb;
 
 import io.dropwizard.metrics.influxdb.data.InfluxDbPoint;
 import io.dropwizard.metrics.influxdb.data.InfluxDbWriteObject;
-import io.dropwizard.metrics.influxdb.utils.InfluxDbWriteObjectSerializer;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -34,7 +33,6 @@ public class InfluxDbHttpSender implements InfluxDbSender {
     private final String username;
     private final String password;
     private final InfluxDbWriteObject influxDbWriteObject;
-    private final InfluxDbWriteObjectSerializer influxDbWriteObjectSerializer;
 
     /**
      * Creates a new http sender given connection details.
@@ -63,12 +61,11 @@ public class InfluxDbHttpSender implements InfluxDbSender {
      */
     public InfluxDbHttpSender(final String hostname, final int port, final String database, final String username, final String password,
                               final TimeUnit timePrecision) throws Exception {
-        this.url = new URL("http", hostname, port, "/write");
+        this.url = new URL("http", hostname, port, "/write?db=" + database);
         this.closeableHttpClient = HttpClients.createDefault();
         this.username = username;
         this.password = password;
-        this.influxDbWriteObject = new InfluxDbWriteObject(database, timePrecision);
-        this.influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer();
+        this.influxDbWriteObject = new InfluxDbWriteObject(timePrecision);
     }
 
     @Override
@@ -113,10 +110,10 @@ public class InfluxDbHttpSender implements InfluxDbSender {
 
     @Override
     public int writeData() throws Exception {
-        final String json = influxDbWriteObjectSerializer.getJsonString(influxDbWriteObject);
-
+        final String body = influxDbWriteObject.getBody();
+        System.out.println("body = " + body);
         HttpPost httpPost = new HttpPost(this.url.toURI());
-        httpPost.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
+        httpPost.setEntity(new StringEntity(body, ContentType.APPLICATION_JSON));
 
         httpPost.setConfig(getRequestConfig());
 
@@ -129,9 +126,14 @@ public class InfluxDbHttpSender implements InfluxDbSender {
                 int statusCode = httpResponse.getStatusLine().getStatusCode();
                 EntityUtils.consumeQuietly(httpResponse.getEntity());
                 if (statusCode >= 200 && statusCode < 300) {
+                    System.out.println("writeData successfully.");
                     return statusCode;
                 }
                 else {
+                    System.out.println("Server returned HTTP response code: " + statusCode
+                            + "for URL: " + url
+                            + " with content :'"
+                            + httpResponse.getStatusLine().getReasonPhrase() + "'");
                     throw new ClientProtocolException("Server returned HTTP response code: " + statusCode
                                                           + "for URL: " + url
                                                           + " with content :'"

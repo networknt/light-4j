@@ -1,7 +1,9 @@
 package io.dropwizard.metrics.influxdb.data;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.StringJoiner;
 
 /**
  * This class is a bean that holds time series data of a point. A point co relates to a metric.
@@ -9,27 +11,20 @@ import java.util.Map;
 public class InfluxDbPoint {
     private String measurement;
     private Map<String, String> tags = Collections.emptyMap();
-    private String timestamp;
-    private Map<String, Object> fields = Collections.emptyMap();
+    private long timestamp;
+    private String value;
 
-    public InfluxDbPoint(final String measurement, final String timestamp, final Map<String, Object> fields) {
+    public InfluxDbPoint(final String measurement, final long timestamp, final String value) {
         this.measurement = measurement;
         this.timestamp = timestamp;
-        if (fields != null) {
-            this.fields = Collections.unmodifiableMap(fields);
-        }
-
+        this.value = value;
     }
 
-    public InfluxDbPoint(String measurement, Map<String, String> tags, String timestamp, Map<String, Object> fields) {
+    public InfluxDbPoint(final String measurement, final Map<String, String> tags, final long timestamp, final String value) {
         this.measurement = measurement;
-        if (tags != null) {
-            this.tags = Collections.unmodifiableMap(tags);
-        }
         this.timestamp = timestamp;
-        if (fields != null) {
-            this.fields = Collections.unmodifiableMap(fields);
-        }
+        this.value = value;
+        this.tags = tags;
     }
 
     public String getMeasurement() {
@@ -45,26 +40,46 @@ public class InfluxDbPoint {
     }
 
     public void setTags(Map<String, String> tags) {
-        if (tags != null) {
-            this.tags = Collections.unmodifiableMap(tags);
-        }
+        this.tags = tags;
     }
 
-    public String getTimestamp() {
+    public long getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(String timestamp) {
+    public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
     }
 
-    public Map<String, Object> getFields() {
-        return fields;
+    public String getValue() {
+        return value;
     }
 
-    public void setFields(Map<String, Object> fields) {
-        if (fields != null) {
-            this.fields = Collections.unmodifiableMap(fields);
+    public void setValue(String value) {
+        this.value = value;
+    }
+
+    @Override
+    public String toString() {
+        String t = map2String(tags);
+        return measurement +
+                (t.length() > 0? "," + t : "") +
+                " value=" + value +
+                " " + timestamp;
+    }
+
+    static public String map2String(final Map<String, String> tags) {
+        if(tags != null && !tags.isEmpty()) {
+            StringJoiner joined = new StringJoiner(",");
+            Iterator it = tags.entrySet().iterator();
+            while(it.hasNext()) {
+                Map.Entry pair = (Map.Entry)it.next();
+                joined.add(pair.getKey() + "=" + pair.getValue());
+            }
+            return joined.toString();
+        } else {
+            return "";
         }
     }
+
 }
