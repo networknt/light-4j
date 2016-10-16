@@ -42,5 +42,5 @@ together to have a total solution for containerized microservices.
 
 [undertow-oauth2](https://github.com/networknt/undertow-portal) to control API access
 
-[undertow-portal](https://github.com/networknt/undertow-oauth2) to manage client and API
+[undertow-portal](https://github.com/networknt/undertow-oauth2) to manage clients and APIs
 

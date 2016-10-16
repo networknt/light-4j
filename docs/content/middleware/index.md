@@ -10,38 +10,51 @@ swagger code generation and runtime request validation.
 
 It contains the following components:
 
-* server - a framework on top of undertow http core that support plugins to 
+* [server](https://networknt.github.io/undertow-server/middleware/server/) - a framework on top of undertow http core that support plugins to 
 performance different middleware handling.
 
-* security - oauth2 jwt token verification and mock token generation. Also, 
+* [security](https://networknt.github.io/undertow-server/middleware/security/) - oauth2 jwt token verification and mock token generation. Also, 
 there is an testing OAuth2 server released [here](https://github.com/networknt/undertow-server-oauth2)
 
-* [config](https://github.com/networknt/undertow-server/wiki/Config) - A module 
+* [config](https://networknt.github.io/undertow-server/middleware/config/) - A module 
 that supports externalized configuration for standalone application and docker 
 container.
 
-* utility - utility classes that are shared between modules.
+* [utility](https://networknt.github.io/undertow-server/middleware/utility/) - utility classes that are shared between modules.
 
-* client - wrapper of apache HttpClient and HttpAsyncClient. support automatically 
+* [client](https://networknt.github.io/undertow-server/middleware/client/) - wrapper of apache HttpClient and HttpAsyncClient. support automatically 
 cache and renew client credentials jwt token
 
-* validator - validate request based on the swagger.json for uri parameters, 
+* [validator](https://networknt.github.io/undertow-server/middleware/validator/) - validate request based on the swagger.json for uri parameters, 
 query parameters and body which is based on [json-schema-validator](https://github.com/networknt/json-schema-validator)
 
-* audit - dump most important info about request and response into audit.log in 
+* [audit](https://networknt.github.io/undertow-server/middleware/audit/) - dump most important info about request and response into audit.log in 
 JSON format. Also, there is a full audit handler to dump everything regarding to 
 request and response.
 
-* [info](https://github.com/networknt/undertow-server/wiki/Info) - a handler that 
+* [info](https://networknt.github.io/undertow-server/middleware/info/) - a handler that 
 injects an endpoint /server/info that can out all plugged in component on the 
 server and configuration of each component.
 
-* mask - used to mask sensitive info before logging to audit.log or server.log
+* [mask](https://networknt.github.io/undertow-server/middleware/mask/) - used to mask sensitive info before logging to audit.log or server.log
 
-* status - used to model error http response and assist production monitoring 
+* [status](https://networknt.github.io/undertow-server/middleware/status/) - used to model error http response and assist production monitoring 
 with unique error code.
 
-* swagger-codegen - a [generator](https://github.com/networknt/swagger-codegen) 
-that generates the routing handlers and running API application with swagger spec. 
+* [body](https://networknt.github.io/undertow-server/middleware/body/) A body parser middleware that is
+responsible for parsing the content of the request based on Content-Type in the request header. 
 
-# Getting started
+* [exception](https://networknt.github.io/undertow-server/middleware/exception/) A generic exception
+handler that handles runtime exception, ApiException and other checked exception if they are not handled
+properly in the handler chain.
+
+* [metrics](https://networknt.github.io/undertow-server/middleware/metrics/) A module that collect
+API runtime info based on clientId and API name. The metrics info is sent to InfluxDB and accessible
+from Grafana Dashboard.
+
+* [swagger](https://networknt.github.io/undertow-server/middleware/swagger/) This is a middleware
+that load swagger at runtime and parse it based on the request uri and method and attached the 
+swagger data related to the current endpoint into the exchange for subsequent handlers to use.
+
+* [swagger-codegen](https://github.com/networknt/swagger-codegen) - a code generator
+that generates the routing handlers and running API application based on swagger specification. 
