@@ -101,9 +101,12 @@ public class JwtVerifyHandler implements MiddlewareHandler {
                             exchange.getResponseSender().send(status.toString());
                         }
                         swaggerOperation = new SwaggerOperation(swaggerPathString, swaggerPath, httpMethod, operation);
+                        swaggerOperation.setEndpoint(swaggerPathString.normalised() + "@" + httpMethod);
+                        swaggerOperation.setClientId(claims.getStringClaimValue(Constants.CLIENT_ID));
                         exchange.putAttachment(SwaggerHandler.SWAGGER_OPERATION, swaggerOperation);
                     } else {
                         operation = swaggerOperation.getOperation();
+                        swaggerOperation.setClientId(claims.getStringClaimValue(Constants.CLIENT_ID));
                     }
 
                     // is there a scope token

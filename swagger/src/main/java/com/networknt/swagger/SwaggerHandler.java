@@ -82,6 +82,7 @@ public class SwaggerHandler implements MiddlewareHandler {
         }
 
         final SwaggerOperation swaggerOperation = new SwaggerOperation(swaggerPathString, swaggerPath, httpMethod, operation);
+        swaggerOperation.setEndpoint(swaggerPathString.normalised() + "@" + httpMethod);
         exchange.putAttachment(SWAGGER_OPERATION, swaggerOperation);
 
         next.handleRequest(exchange);

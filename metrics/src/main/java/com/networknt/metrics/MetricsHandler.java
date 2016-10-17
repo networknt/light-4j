@@ -18,9 +18,14 @@ package com.networknt.metrics;
 
 import com.networknt.config.Config;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.status.Status;
+import com.networknt.swagger.SwaggerHandler;
+import com.networknt.swagger.SwaggerHelper;
+import com.networknt.swagger.SwaggerOperation;
 import com.networknt.utility.ModuleRegistry;
 import io.dropwizard.metrics.Clock;
 import io.dropwizard.metrics.MetricFilter;
+import io.dropwizard.metrics.MetricName;
 import io.dropwizard.metrics.MetricRegistry;
 import io.dropwizard.metrics.influxdb.InfluxDbHttpSender;
 import io.dropwizard.metrics.influxdb.InfluxDbReporter;
@@ -32,6 +37,8 @@ import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static io.dropwizard.metrics.MetricRegistry.name;
@@ -69,9 +76,11 @@ public class MetricsHandler implements MiddlewareHandler {
     }
 
     private volatile HttpHandler next;
+    Map<String, String> commonTags = new HashMap<String, String>();
 
     public MetricsHandler() {
-
+        commonTags.put("apiName", SwaggerHelper.swagger.getInfo().getTitle().replaceAll(" ", "_").toLowerCase());
+        // TODO add env, containerId, version etc.
     }
 
     @Override
@@ -90,17 +99,27 @@ public class MetricsHandler implements MiddlewareHandler {
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         logger.debug("in default metrics handler");
+
         long startTime = Clock.defaultClock().getTick();
 
         exchange.addExchangeCompleteListener(new ExchangeCompletionListener() {
             @Override
             public void exchangeEvent(HttpServerExchange exchange, ExchangeCompletionListener.NextListener nextListener) {
-                long time = Clock.defaultClock().getTick() - startTime;
-                registry.getOrAdd(name("response_time"), MetricRegistry.MetricBuilder.TIMERS).update(time, TimeUnit.NANOSECONDS);
+                SwaggerOperation swaggerOperation = exchange.getAttachment(SwaggerHandler.SWAGGER_OPERATION);
+                if(swaggerOperation != null) {
+                    Map<String, String> tags = new HashMap<String, String>();
+                    tags.put("endpoint", swaggerOperation.getEndpoint());
+                    tags.put("clientId", swaggerOperation.getClientId());
+
+                    long time = Clock.defaultClock().getTick() - startTime;
+                    MetricName metricName = new MetricName("response_time");
+                    metricName = metricName.tagged(commonTags);
+                    metricName = metricName.tagged(tags);
+                    registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.TIMERS).update(time, TimeUnit.NANOSECONDS);
+                }
                 nextListener.proceed();
             }
         });
-
 
         next.handleRequest(exchange);
     }
