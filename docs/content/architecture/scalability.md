@@ -14,6 +14,14 @@ It introduced the scale cube as following.
 
 ![scale_cube](/images/app_scale.png)
 
+The Scale Cube consists of an X, Y and Z axes – each addressing a 
+different approach to scale a service. The lowest left point of the 
+cube (coordinates X=0, Y=0 and Z=0) represents the worst case 
+monolithic service or product identified above: a product wherein 
+all functions exist within a single code base on a single server making 
+use of that server’s finite resources of memory, cpu speed, network 
+ports, mass storage, etc.
+
 In this model, scaling an application by running clones behind a load 
 balancer is known as X-axis scaling. The other two kinds of scaling are 
 Y-axis scaling and Z-axis scaling. The microservice architecture is an 
