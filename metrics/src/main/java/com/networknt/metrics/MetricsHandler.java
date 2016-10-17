@@ -84,11 +84,11 @@ public class MetricsHandler implements MiddlewareHandler {
         commonTags.put("apiName", SwaggerHelper.swagger.getInfo().getTitle().replaceAll(" ", "_").toLowerCase());
         InetAddress inetAddress = Util.getInetAddress();
         commonTags.put("ipAddress", inetAddress.getHostAddress());
-        commonTags.put("hostname", inetAddress.getHostName());
+        commonTags.put("hostname", inetAddress.getHostName()); // will be container id if in docker.
         commonTags.put("version", Util.getJarVersion());
 
         //commonTags.put("frameworkVersion", Util.getFrameworkVersion());
-        // TODO add env, containerId, version etc.
+        // TODO need to find a way to get env to put into the metrics.
     }
 
     @Override
