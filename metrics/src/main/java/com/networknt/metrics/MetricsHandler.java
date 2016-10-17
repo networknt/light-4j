@@ -23,6 +23,7 @@ import com.networknt.swagger.SwaggerHandler;
 import com.networknt.swagger.SwaggerHelper;
 import com.networknt.swagger.SwaggerOperation;
 import com.networknt.utility.ModuleRegistry;
+import com.networknt.utility.Util;
 import io.dropwizard.metrics.Clock;
 import io.dropwizard.metrics.MetricFilter;
 import io.dropwizard.metrics.MetricName;
@@ -37,6 +38,7 @@ import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -80,6 +82,12 @@ public class MetricsHandler implements MiddlewareHandler {
 
     public MetricsHandler() {
         commonTags.put("apiName", SwaggerHelper.swagger.getInfo().getTitle().replaceAll(" ", "_").toLowerCase());
+        InetAddress inetAddress = Util.getInetAddress();
+        commonTags.put("ipAddress", inetAddress.getHostAddress());
+        commonTags.put("hostname", inetAddress.getHostName());
+        commonTags.put("version", Util.getJarVersion());
+
+        //commonTags.put("frameworkVersion", Util.getFrameworkVersion());
         // TODO add env, containerId, version etc.
     }
 
@@ -116,6 +124,7 @@ public class MetricsHandler implements MiddlewareHandler {
                     metricName = metricName.tagged(commonTags);
                     metricName = metricName.tagged(tags);
                     registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.TIMERS).update(time, TimeUnit.NANOSECONDS);
+                    incCounterForStatusCode(exchange.getStatusCode(), commonTags, tags);
                 }
                 nextListener.proceed();
             }
@@ -132,6 +141,24 @@ public class MetricsHandler implements MiddlewareHandler {
     @Override
     public void register() {
         ModuleRegistry.registerModule(MetricsHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+    }
+
+    private void incCounterForStatusCode(int statusCode, Map<String, String> commonTags, Map<String, String> tags) {
+        MetricName metricName = new MetricName("request").tagged(commonTags).tagged(tags);
+        registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.COUNTERS).inc();
+        if(statusCode >= 200 && statusCode < 400) {
+            metricName = new MetricName("success").tagged(commonTags).tagged(tags);
+            registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.COUNTERS).inc();
+        } else if(statusCode == 401 || statusCode == 403) {
+            metricName = new MetricName("auth_error").tagged(commonTags).tagged(tags);
+            registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.COUNTERS).inc();
+        } else if(statusCode >= 400 && statusCode < 500) {
+            metricName = new MetricName("request_error").tagged(commonTags).tagged(tags);
+            registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.COUNTERS).inc();
+        } else if(statusCode >= 500) {
+            metricName = new MetricName("server_error").tagged(commonTags).tagged(tags);
+            registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.COUNTERS).inc();
+        }
     }
 
 }

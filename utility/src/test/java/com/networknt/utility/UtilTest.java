@@ -28,4 +28,10 @@ public class UtilTest {
         System.out.println("uuid = " + id2);
         Assert.assertNotEquals(id1, id2);
     }
+
+    @Test
+    public void testGetJarVersion() {
+        String ver = Util.getJarVersion();
+        System.out.println("ver =" + ver);
+    }
 }

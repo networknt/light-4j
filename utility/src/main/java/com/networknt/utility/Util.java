@@ -17,11 +17,17 @@
 package com.networknt.utility;
 
 import org.apache.commons.codec.binary.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
 public class Util {
+    static final Logger logger = LoggerFactory.getLogger(Util.class);
 
     /**
      * Generate UUID across the entire app and it is used for correlationId.
@@ -54,6 +60,44 @@ public class Util {
             result = result + "\"";
         }
         return result;
+    }
+
+    /**
+     * Get InetAddress
+     * @return The InetAddress object
+     */
+    public static InetAddress getInetAddress() {
+        InetAddress inetAddress = null;
+        try {
+            inetAddress = InetAddress.getLocalHost();
+        } catch (IOException ioe) {
+            logger.error("Error in getting InetAddress", ioe);
+        }
+        return inetAddress;
+    }
+
+    public static String getJarVersion() {
+        String path = Util.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        //String path = "/Users/stevehu/project/undertow-server-example/petstore/target/swagger-undertow-server-1.0.0.jar";
+        logger.debug("path = " + path);
+        String ver = null;
+        if(path.endsWith(".jar")) {
+            int endIndex = path.indexOf(".jar");
+            int startIndex = path.lastIndexOf("/");
+            String jarName = path.substring(startIndex + 1, endIndex);
+            ver = jarName.substring(jarName.lastIndexOf("-") + 1);
+        }
+        return ver;
+    }
+
+    public static String getFrameworkVersion() {
+        // this doesn't work.
+        // TODO make it work.
+        Class clazz = Util.class;
+        URL location = clazz.getResource('/' + clazz.getName().replace('.', '/') + ".class");
+        System.out.println("location = " + location);
+        //location = jar:file:/Users/stevehu/project/undertow-server-example/petstore/target/swagger-undertow-server-1.0.0.jar!/com/networknt/utility/Util.class
+        return location.toString();
     }
 
 }

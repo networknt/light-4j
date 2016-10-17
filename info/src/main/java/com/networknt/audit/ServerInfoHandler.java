@@ -19,6 +19,7 @@ package com.networknt.audit;
 import com.networknt.config.Config;
 import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
+import com.networknt.utility.Util;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
@@ -54,6 +55,7 @@ public class ServerInfoHandler implements HttpHandler {
         ServerInfoConfig config = (ServerInfoConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServerInfoConfig.class);
         if(config.isEnableServerInfo()) {
             Map<String, Object> infoMap = new LinkedHashMap<>();
+            infoMap.put("deployment", getDeployment());
             infoMap.put("environment", getEnvironment(exchange));
             infoMap.put("specification", Config.getInstance().getJsonMapConfigNoCache("swagger"));
             infoMap.put("component", ModuleRegistry.getRegistry());
@@ -64,6 +66,14 @@ public class ServerInfoHandler implements HttpHandler {
             exchange.setStatusCode(status.getStatusCode());
             exchange.getResponseSender().send(status.toString());
         }
+    }
+
+    public Map<String, Object> getDeployment() {
+        Map<String, Object> deploymentMap = new LinkedHashMap<>();
+        deploymentMap.put("apiVersion", Util.getJarVersion());
+        // TODO make it work.
+        //deploymentMap.put("frameworkVersion", Util.getFrameworkVersion());
+        return deploymentMap;
     }
 
     public Map<String, Object> getEnvironment(HttpServerExchange exchange) {
@@ -78,13 +88,9 @@ public class ServerInfoHandler implements HttpHandler {
         Map<String, Object> hostMap = new LinkedHashMap<>();
         String ip = "unknown";
         String hostname = "unknown";
-        try {
-            InetAddress inetAddress = InetAddress.getLocalHost();
-            ip = inetAddress.getHostAddress();
-            hostname = inetAddress.getHostName();
-        } catch (IOException ioe) {
-            logger.error("Error in getting IP Address and Hostname", ioe);
-        }
+        InetAddress inetAddress = Util.getInetAddress();
+        ip = inetAddress.getHostAddress();
+        hostname = inetAddress.getHostName();
         hostMap.put("ip", ip);
         hostMap.put("hostname", hostname);
         hostMap.put("dns", exchange.getSourceAddress().getHostName());
