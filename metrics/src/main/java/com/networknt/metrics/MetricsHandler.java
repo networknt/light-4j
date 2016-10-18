@@ -61,7 +61,7 @@ public class MetricsHandler implements MiddlewareHandler {
         // initialize reporter and start the report scheduler.
         try {
             InfluxDbSender influxDb =
-                    new InfluxDbHttpSender(config.influxdbHost, config.influxdbPort,
+                    new InfluxDbHttpSender(config.influxdbProtocol, config.influxdbHost, config.influxdbPort,
                             config.influxdbName, config.influxdbUser, config.influxdbPass);
             InfluxDbReporter reporter = InfluxDbReporter
                     .forRegistry(registry)

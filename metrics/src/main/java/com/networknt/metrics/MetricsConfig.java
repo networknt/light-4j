@@ -23,6 +23,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  */
 public class MetricsConfig {
     boolean enabled;
+
+    String influxdbProtocol;
     String influxdbHost;
     int influxdbPort;
     String influxdbName;
@@ -46,6 +48,14 @@ public class MetricsConfig {
 
     public String getInfluxdbHost() {
         return influxdbHost;
+    }
+
+    public String getInfluxdbProtocol() {
+        return influxdbProtocol;
+    }
+
+    public void setInfluxdbProtocol(String influxdbProtocol) {
+        this.influxdbProtocol = influxdbProtocol;
     }
 
     public void setInfluxdbHost(String influxdbHost) {

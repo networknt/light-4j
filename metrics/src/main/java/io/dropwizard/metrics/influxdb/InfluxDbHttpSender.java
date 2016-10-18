@@ -20,6 +20,7 @@ import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -37,6 +38,7 @@ public class InfluxDbHttpSender implements InfluxDbSender {
     /**
      * Creates a new http sender given connection details.
      *
+     * @param protocol   the influxDb protocol
      * @param hostname   the influxDb hostname
      * @param port       the influxDb http port
      * @param database   the influxDb database to write to
@@ -44,13 +46,14 @@ public class InfluxDbHttpSender implements InfluxDbSender {
      * @param password   the password used to connect to influxDb
      * @throws Exception exception while creating the influxDb sender(MalformedURLException)
      */
-    public InfluxDbHttpSender(final String hostname, final int port, final String database, final String username, final String password) throws Exception {
-        this(hostname, port, database, username, password, TimeUnit.MILLISECONDS);
+    public InfluxDbHttpSender(final String protocol, final String hostname, final int port, final String database, final String username, final String password) throws Exception {
+        this(protocol, hostname, port, database, username, password, TimeUnit.MILLISECONDS);
     }
 
     /**
      * Creates a new http sender given connection details.
      *
+     * @param protocol   the influxDb protocol
      * @param hostname      the influxDb hostname
      * @param port          the influxDb http port
      * @param database      the influxDb database to write to
@@ -59,9 +62,13 @@ public class InfluxDbHttpSender implements InfluxDbSender {
      * @param timePrecision the time precision of the metrics
      * @throws Exception exception while creating the influxDb sender(MalformedURLException)
      */
-    public InfluxDbHttpSender(final String hostname, final int port, final String database, final String username, final String password,
+    public InfluxDbHttpSender(final String protocol, final String hostname, final int port, final String database, final String username, final String password,
                               final TimeUnit timePrecision) throws Exception {
-        this.url = new URL("http", hostname, port, "/write?db=" + database);
+        String endpoint = new URL(protocol, hostname, port, "/write").toString();
+        String queryDb = String.format("db=%s", URLEncoder.encode(database, "UTF-8"));
+        String queryPrecision = String.format("precision=%s", TimeUtils.toTimePrecision(timePrecision));
+        this.url = new URL(endpoint + "?" + queryDb + "&" + queryPrecision);
+
         this.closeableHttpClient = HttpClients.createDefault();
         this.username = username;
         this.password = password;
