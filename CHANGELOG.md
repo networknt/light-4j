@@ -6,12 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
+
+### Changed
+
+## 0.1.9 - 2016-10-17
+### Added
 - Add metrics with Influx DB and Grafana combination.
 
 ### Changed
 - Move swagger.json from swagger module resources to test resources so that petstore specification won't be included in API project by default.
 - Security scope verification will check swagger object before enabling it.
 - Validator test now has petstore swagger.json in test resources.
+- Update docs
 
 ## 0.1.8 - 2016-10-10
 ### Added
