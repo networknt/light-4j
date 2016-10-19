@@ -53,10 +53,14 @@ public class Server {
 
     static public void start() {
 
-        // init JsonPath
-        configJsonPath();
         // add shutdown hook here.
         addDaemonShutdownHook();
+
+        // add startup hooks here.
+        final ServiceLoader<StartupHookProvider> startupLoaders = ServiceLoader.load(StartupHookProvider.class);
+        for (final StartupHookProvider provider : startupLoaders) {
+            provider.onStartup();
+        }
 
         ServerConfig config = (ServerConfig) Config.getInstance().getJsonObjectConfig(configName, ServerConfig.class);
 
@@ -109,6 +113,10 @@ public class Server {
 
     // implement shutdown hook here.
     static public void shutdown() {
+        final ServiceLoader<ShutdownHookProvider> shutdownLoaders = ServiceLoader.load(ShutdownHookProvider.class);
+        for (final ShutdownHookProvider provider : shutdownLoaders) {
+            provider.onShutdown();
+        }
         stop();
         logger.info("Cleaning up before server shutdown");
     }
@@ -120,28 +128,4 @@ public class Server {
             }
         });
     }
-
-    static void configJsonPath() {
-        Configuration.setDefaults(new Configuration.Defaults() {
-
-            private final JsonProvider jsonProvider = new JacksonJsonProvider();
-            private final MappingProvider mappingProvider = new JacksonMappingProvider();
-
-            @Override
-            public JsonProvider jsonProvider() {
-                return jsonProvider;
-            }
-
-            @Override
-            public MappingProvider mappingProvider() {
-                return mappingProvider;
-            }
-
-            @Override
-            public Set<Option> options() {
-                return EnumSet.noneOf(Option.class);
-            }
-        });
-    }
-
 }
