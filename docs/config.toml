@@ -1,6 +1,6 @@
 baseurl = "https://networknt.github.io/light-java/"
 languageCode = "en-us"
-title = "Undertow Server - The fastest Java API Framework"
+title = "Light Java - The fastest Java API Framework"
 theme = "hugo-material-docs"
 metadataformat = "yaml"
 canonifyurls = true
@@ -10,7 +10,7 @@ googleAnalytics = ""
 [params]
 	# General information
 	author = "Steve Hu"
-	description = "Undertow Server Docs"
+	description = "Light Java Docs"
 	copyright = "Released under the MIT license"
 
 	# Repository

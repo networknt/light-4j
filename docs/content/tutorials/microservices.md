@@ -119,13 +119,13 @@ swagger, light-java-example and swagger-codegen are in the same working
 directory.
 
 ```
-java -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i ../swagger/api_a/swagger.yaml -l undertow -o ../light-java-example/api_a
+java -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i ../swagger/api_a/swagger.yaml -l light-java -o ../light-java-example/api_a
 
 ```
 Here is the generator output.
 
 ```
-steve@joy:~/networknt/swagger-codegen$ java -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i ../swagger/api_a/swagger.yaml -l undertow -o ../light-java-example/api_a
+steve@joy:~/networknt/swagger-codegen$ java -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i ../swagger/api_a/swagger.yaml -l light-java -o ../light-java-example/api_a
 Picked up JAVA_TOOL_OPTIONS: -Dconfig.dir=/home/steve/config
 [main] INFO io.swagger.parser.Swagger20Parser - reading from ../swagger/api_a/swagger.yaml
 swaggerio.swagger.models.Swagger@cb84fa41
@@ -171,9 +171,9 @@ Follow the above steps to generate other APIs. Make sure you are in swagger_code
 directory.
 
 ```
-java -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i ../swagger/api_b/swagger.yaml -l undertow -o ../light-java-example/api_b
-java -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i ../swagger/api_c/swagger.yaml -l undertow -o ../light-java-example/api_c
-java -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i ../swagger/api_d/swagger.yaml -l undertow -o ../light-java-example/api_d
+java -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i ../swagger/api_b/swagger.yaml -l light-java -o ../light-java-example/api_b
+java -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i ../swagger/api_c/swagger.yaml -l light-java -o ../light-java-example/api_c
+java -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i ../swagger/api_d/swagger.yaml -l light-java -o ../light-java-example/api_d
 
 ```
 
@@ -703,8 +703,8 @@ build it locally this time.
 Go to your working directory and clone the project and start it.
 
 ```
-git clone git@github.com:networknt/undertow-oauth2.git
-cd undertow-oauth2
+git clone git@github.com:networknt/light-oauth2.git
+cd light-oauth2
 mvn clean package exec:exec
 ```
 
