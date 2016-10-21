@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.0.0 - 2016-10-21
+
+### Added
+
+### Changed
+- Add startup and shutdown hook providers for API to initialize resource and release resource
+- Rename project to light-java
+
 ## 0.1.9 - 2016-10-17
 ### Added
 - Add metrics with Influx DB and Grafana combination.
