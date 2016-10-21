@@ -8,5 +8,5 @@ title: Getting Started
 The easiest way to start your API project is from OpenAPI specification and here is a video to
 show you how to generate a project from swagger spec.
 
-[undertow-server-getting-started](https://youtu.be/xSJhF1LcE0Q)
+[light-java-getting-started](https://youtu.be/xSJhF1LcE0Q)
 
