@@ -24,5 +24,5 @@ Now the server is up and running in the debug mode. You can debug into the frame
 code or set a break point in framework code. To pick up the framework class to debug, 
 click External Libraries on the Project tree and click the class name. Idea will
 automatically decompile the class. You can import the soruce code of that particular
-version of framework source code from [Release](https://github.com/networknt/undertow-server/releases)
+version of framework source code from [Release](https://github.com/networknt/light-java/releases)
 

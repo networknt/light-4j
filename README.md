@@ -1,11 +1,11 @@
 A fast and configurable microservices framework for docker containers on the cloud.
 
 [Website](https://www.networknt.com) |
-[Developer Chat](https://gitter.im/networknt/undertow-server) |
-[Documentation](https://networknt.github.io/undertow-server) |
+[Developer Chat](https://gitter.im/networknt/light-java) |
+[Documentation](https://networknt.github.io/light-java) |
 [Contribution Guide](CONTRIBUTING.md) |
 
-[![Build Status](https://travis-ci.org/networknt/undertow-server.svg?branch=master)](https://travis-ci.org/networknt/undertow-server)
+[![Build Status](https://travis-ci.org/networknt/light-java.svg?branch=master)](https://travis-ci.org/networknt/light-java)
 
 
 [Undertow](http://undertow.io/) is  one of the fastest Java HTTP servers available and JBoss WildFly is based on it.
@@ -18,7 +18,7 @@ a simple Hello World server got 1.45 million requests per second on my I5 4 CPU 
 Although it is fast, reliable and widely used but the programming style is a little strange for traditional
 JEE developers as it uses handler chain for request processing. Of course, you can use servlet contain on top of it
 but you are losing the performance edge. Here is the
-[performance test](https://github.com/networknt/undertow-server-example/tree/master/performance) between Sprint Boot
+[performance test](https://github.com/networknt/light-java-example/tree/master/performance) between Sprint Boot
 embedded Undertow and Undertow Server with all middleware turned off.
 
 In order to make use this server more efficiently, I have built a framework
@@ -38,7 +38,7 @@ There are two ways to start your project:
 
 ### Swagger code generator
 If you have swagger yaml specification, then you can use
-[swagger-codegen](https://networknt.github.io/undertow-server/tools/swagger-codegen/) to generate a working project.
+[swagger-codegen](https://networknt.github.io/light-java/tools/swagger-codegen/) to generate a working project.
 This is the recommended way to start your REST API project. Here are the steps:
 
 ```
@@ -61,14 +61,14 @@ User your browser/postman to access your endpoints and you will have a message r
 ### Starting from example project
 
 The other way to start your project is to copy from
-[petstore](https://github.com/networknt/undertow-server-example/tree/master/petstore) project in undertow-server-example.
+[petstore](https://github.com/networknt/light-java-example/tree/master/petstore) project in light-java-example.
 
 
 ```
 mvn clean install exec:exec
 ```
 
-[To run/debug from IDE](https://networknt.github.io/undertow-server/tutorials/debug/), you need to configure a Java
+[To run/debug from IDE](https://networknt.github.io/light-java/tutorials/debug/), you need to configure a Java
 application with main class "com.networknt.server.Server" and working directory is your project folder. There is no
 contain and you are working on just a standalone Java application.
 

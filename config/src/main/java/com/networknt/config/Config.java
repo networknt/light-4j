@@ -39,7 +39,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  *
  * Config files are loaded in the following sequence:
  * 1. resources/config folder for the default
- * 2. externalized directory specified by undertow-server-config-dir
+ * 2. externalized directory specified by light-java-config-dir
  *
  * In docker, the config files should be in volume and any update will
  * be picked up the next day morning.
@@ -76,7 +76,7 @@ public abstract class Config {
 
         static final XLogger logger = XLoggerFactory.getXLogger(Config.class);
 
-        static final String EXTERNALIZED_PROPERTY_DIR = System.getProperty("undertow-server-config-dir", "");
+        static final String EXTERNALIZED_PROPERTY_DIR = System.getProperty("light-java-config-dir", "");
 
         private long cacheExpirationTime = 0L;
 

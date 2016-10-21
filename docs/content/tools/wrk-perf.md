@@ -6,7 +6,7 @@ title: wrk performance test
 ## Introduction
 
 For most API frameworks in Java, the server can only handle up to ten thousands request per second and Apache JMeter
-or Apache Bench will do the job. However, when we are talking about millions requests per second undertow-server
+or Apache Bench will do the job. However, when we are talking about millions requests per second light-java
 handles, they won't work as these tools will use up all the cpu resources. For high performance testing,
 [wrk](https://github.com/wg/wrk) is the best as it can send tens of millions requests per seconds on a
 commodity hardware.
@@ -100,7 +100,7 @@ end
 ```
 
 ## Example
-For some output examples, you can find at [undertow-server-example/performance](https://github.com/networknt/undertow-server-example/tree/master/performance)
+For some output examples, you can find at [light-java-example/performance](https://github.com/networknt/light-java-example/tree/master/performance)
 
 ## Additional Info
 

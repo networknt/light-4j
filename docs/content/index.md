@@ -17,7 +17,7 @@ a simple Hello World server got 1.2 million requests per second on my I5 4 CPU d
 it with Go 1.6
 
 In addition, I have performance comparison with the most popular REST API framework Spring
-Boot in [undertow-server-example](https://github.com/networknt/undertow-server-example/tree/master/performance)
+Boot in [light-java-example](https://github.com/networknt/light-java-example/tree/master/performance)
 
 
 Although it is fast, reliable and widely used but the programming style is a little
@@ -38,9 +38,9 @@ simple framework that just supports REST API build for backend only.
 And this is how undertow framework was born. The framework contains three part that work
 together to have a total solution for containerized microservices.
 
-[undertow-server](https://github.com/networknt/undertow-server) to build API
+[light-java](https://github.com/networknt/light-java) to build API
 
-[undertow-oauth2](https://github.com/networknt/undertow-portal) to control API access
+[light-oauth2](https://github.com/networknt/light-portal) to control API access
 
-[undertow-portal](https://github.com/networknt/undertow-oauth2) to manage clients and APIs
+[light-portal](https://github.com/networknt/light-oauth2) to manage clients and APIs
 

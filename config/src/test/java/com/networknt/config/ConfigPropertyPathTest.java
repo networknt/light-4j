@@ -29,7 +29,7 @@ public class ConfigPropertyPathTest extends TestCase {
 
     public void setUp() throws Exception {
         super.setUp();
-        System.setProperty("undertow-server-config-dir", homeDir);
+        System.setProperty("light-java-config-dir", homeDir);
 
         Config config = Config.getInstance();
 

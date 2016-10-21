@@ -108,14 +108,14 @@ config copies in test cases into class path for unit testing.
 
 For official runtime environment, config files should be externalized to a 
 separate folder outside of the package by a system property 
-"undertow-server-config-dir". You can start the server with 
-a "-Dundertow-server-config-dir=/config" option and put all your files 
+"light-java-config-dir". You can start the server with
+a "-Dlight-java-config-dir=/config" option and put all your files
 into /config. Once in docker image, it can be mapped to a host volume 
 with -v /etc/undertow:/config in docker run command.
 
 Given above explanation, the loading sequence is:
 
-1. System property "undertow-server-config-dir" specified directory
+1. System property "light-java-config-dir" specified directory
 2. Class Path
 3. Application resources/config folder
 4. Module resources/config folder
