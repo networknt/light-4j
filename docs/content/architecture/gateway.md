@@ -64,16 +64,16 @@ and act like a mini gateway embedded. Along with container orchestration tools l
 Kubernetes or Docker Swarm, the traditional gateway is replaced. As there is no remote 
 calls between API to gateway, all the cross cutting concerns are addressed in the same
 request/response chain. This gives you the best performance for your APIs. Here
-is an [tutorial](https://networknt.github.io/undertow-server/tutorials/microservices/) 
+is an [tutorial](https://networknt.github.io/light-java/tutorials/microservices/) 
 which implements the above diagram and source code for four APIs can
-be found [here](https://github.com/networknt/undertow-server-example)
+be found [here](https://github.com/networknt/light-java-example)
 
 Our framework is built on top of Undertow http core server which is very light 
 and serves 1.4 million "Hello World" requests on my desktop with average response
 time 2ms. Is it 44 times faster then the most popular REST container Sprint Boot.
 
 The performance test code can be found in 
-[here](https://github.com/networknt/undertow-server-example/tree/master/performance)
+[here](https://github.com/networknt/light-java-example/tree/master/performance)
 
 
 In the above diagram, OAuth2 server is an independent entity and you might ask

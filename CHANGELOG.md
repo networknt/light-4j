@@ -12,10 +12,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## 1.0.0 - 2016-10-21
 
 ### Added
+- Add startup hook provider to allow API project to initialize resource, loading spring app context etc.
+- Add shutdown hook provider to allow API project to release connection pools or other resources.
+- Add Dockerfile to the root of generated API project.
 
 ### Changed
-- Add startup and shutdown hook providers for API to initialize resource and release resource
 - Rename project to light-java
+- JsonPath configuration is done in a startup hook provider now.
 
 ## 0.1.9 - 2016-10-17
 ### Added
