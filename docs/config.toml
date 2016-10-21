@@ -1,4 +1,4 @@
-baseurl = "https://networknt.github.io/undertow-server/"
+baseurl = "https://networknt.github.io/light-java/"
 languageCode = "en-us"
 title = "Undertow Server - The fastest Java API Framework"
 theme = "hugo-material-docs"
@@ -15,7 +15,7 @@ googleAnalytics = ""
 
 	# Repository
 	provider = "GitHub"
-	repo_url = "https://github.com/networknt/undertow-server"
+	repo_url = "https://github.com/networknt/light-java"
 
 	version = "0.1.7"
 	logo = "images/logo.png"
@@ -83,7 +83,7 @@ googleAnalytics = ""
 
 [[menu.main]]
 	name   = "Issues & Help"
-	url    = "https://github.com/networknt/undertow-server/issues"
+	url    = "https://github.com/networknt/light-java/issues"
 	weight = 60
 
 [[menu.main]]

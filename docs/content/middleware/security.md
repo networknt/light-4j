@@ -20,11 +20,11 @@ the token signing certificate is available at resource server. Due to security
 concerns, there should be two pair of private key and public key certificate 
 available at any time in case the primary key is compromised. 
 
-# undertow-server-oauth2 server
+# light-oauth2 server
 
 By default, the framework contains two pairs of public key certificates issued 
 by our own oauth2 server which can be installed from docker. For more info, 
-please refer to https://github.com/networknt/undertow-server-oauth2
+please refer to https://github.com/networknt/light-oauth2
 
 # Kid
 

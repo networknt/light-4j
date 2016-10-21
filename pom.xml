@@ -18,12 +18,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.networknt</groupId>
-    <artifactId>undertow</artifactId>
+    <artifactId>light-java</artifactId>
     <version>0.1.9</version>
     <packaging>pom</packaging>
     <name>Parent POM</name>
     <description>Java Undertow Framework Components</description>
-    <url>https://github.com/networknt/undertow-server</url>
+    <url>https://github.com/networknt/light-java</url>
 
     <developers>
         <developer>
@@ -35,7 +35,7 @@
 
     <issueManagement>
         <system>github</system>
-        <url>https://github.com/networknt/undertow-server/issues</url>
+        <url>https://github.com/networknt/light-java/issues</url>
     </issueManagement>
 
     <licenses>
@@ -47,9 +47,9 @@
     </licenses>
 
     <scm>
-        <connection>scm:git://github.com:networknt/undertow-server.git</connection>
-        <developerConnection>scm:git://github.com:networknt/undertow-server.git</developerConnection>
-        <url>https://github.com:networknt/undertow-server.git</url>
+        <connection>scm:git://github.com:networknt/light-java.git</connection>
+        <developerConnection>scm:git://github.com:networknt/light-java.git</developerConnection>
+        <url>https://github.com:networknt/light-java.git</url>
     </scm>
 
     <distributionManagement>
