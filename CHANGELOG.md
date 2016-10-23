@@ -6,8 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
+- Sanitizer middleware to handle cross site scripting on header and body of request.
 
 ### Changed
+- Update body middleware so that it checks content type and parse the application/json to list or map.
+- Update Validator middleware to handle body as object or string
 
 ## 1.0.0 - 2016-10-21
 
