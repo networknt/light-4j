@@ -68,7 +68,7 @@ googleAnalytics = ""
 
 [[menu.main]]
 	name   = "Other Components"
-	url    = "other-components/"
+	url    = "other/"
 	weight = 30
 
 [[menu.main]]

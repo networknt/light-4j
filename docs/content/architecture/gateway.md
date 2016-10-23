@@ -22,14 +22,14 @@ Here is a picture of their typical solution in the beginning.
 After awhile, they realized that for every request from client, there are two
 calls from client and api to oauth2 server and remote calls are too heavy.
 
-Then the solution for gateway vendor is to move oauth2 server inside the
+Then the solution for gateway vendors is to move oauth2 server inside the
 gateway so that there is no remote calls for security. Here is an updated 
 gateway.
 
 ![ms_oauth2_in_gateway](/images/ms_oauth2_in_gateway.png)
 
 With increasing volume, the monolithic gateway becomes bottleneck and the only
-solutions is to horizontally scaling. That means you have a cluster of gateway
+solutions is horizontal scaling. That means you have a cluster of gateway
 instances and gateway becomes a single point of failure. If any component fails
 in gateway, all your APIs are not accessible.
 
@@ -52,7 +52,7 @@ authenticate/authorize the request. Clearly, the centralized gateway design is
 against the decentralized principle of microservices architecture.
 
 In my framework, the solution is to move all the cross cutting concerns to the
-API framework and APIs are built on top of the framework. In another world, a
+API framework and APIs are built on top of the framework. In another word, a
 distributed gateway. Here is a diagram to show you client calls API A and API A
 calls API B and API C and API B calls API D. 
 
