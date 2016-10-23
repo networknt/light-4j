@@ -24,7 +24,10 @@ import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.RoutingHandler;
+import io.undertow.util.Headers;
+import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
+import junit.framework.AssertionFailedError;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -35,6 +38,8 @@ import org.apache.http.impl.client.HttpClients;
 import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 
 /**
@@ -78,7 +83,7 @@ public class BodyHandlerTest {
         RoutingHandler handler = Handlers.routing()
                 .add(Methods.GET, "/get", new HttpHandler() {
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        String body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
+                        Object body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
                         if(body == null) {
                             exchange.getResponseSender().send("nobody");
                         } else {
@@ -88,12 +93,15 @@ public class BodyHandlerTest {
                 })
                 .add(Methods.POST, "/post", new HttpHandler() {
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        String body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
+                        Object body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
                         if(body == null) {
                             exchange.getResponseSender().send("nobody");
                         } else {
-                            Assert.assertEquals("post", body);
-                            exchange.getResponseSender().send("body");
+                            if(body instanceof List) {
+                                exchange.getResponseSender().send("list");
+                            } else {
+                                exchange.getResponseSender().send("map");
+                            }
                         }
                     }
                 });
@@ -120,12 +128,35 @@ public class BodyHandlerTest {
     }
 
     @Test
-    public void testPost() throws Exception {
+    public void testPostNonJson() throws Exception {
         String url = "http://localhost:8080/post";
         CloseableHttpClient client = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost(url);
+        httpPost.setHeader(Headers.CONTENT_TYPE.toString(), "application/json");
         try {
             StringEntity stringEntity = new StringEntity("post");
+            httpPost.setEntity(stringEntity);
+            CloseableHttpResponse response = client.execute(httpPost);
+            int statusCode = response.getStatusLine().getStatusCode();
+            Assert.assertEquals(400, statusCode);
+            if(statusCode == 400) {
+                Status status = Config.getInstance().getMapper().readValue(response.getEntity().getContent(), Status.class);
+                Assert.assertNotNull(status);
+                Assert.assertEquals("ERR10015", status.getCode());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testPostJsonList() throws Exception {
+        String url = "http://localhost:8080/post";
+        CloseableHttpClient client = HttpClients.createDefault();
+        HttpPost httpPost = new HttpPost(url);
+        httpPost.setHeader(Headers.CONTENT_TYPE.toString(), "application/json");
+        try {
+            StringEntity stringEntity = new StringEntity("[{\"key\":\"value\"}]");
             httpPost.setEntity(stringEntity);
             CloseableHttpResponse response = client.execute(httpPost);
             int statusCode = response.getStatusLine().getStatusCode();
@@ -133,7 +164,50 @@ public class BodyHandlerTest {
             if(statusCode == 200) {
                 String s = IOUtils.toString(response.getEntity().getContent(), "utf8");
                 Assert.assertNotNull(s);
-                Assert.assertEquals("body", s);
+                Assert.assertEquals("list", s);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testPostJsonMap() throws Exception {
+        String url = "http://localhost:8080/post";
+        CloseableHttpClient client = HttpClients.createDefault();
+        HttpPost httpPost = new HttpPost(url);
+        httpPost.setHeader(Headers.CONTENT_TYPE.toString(), "application/json");
+        try {
+            StringEntity stringEntity = new StringEntity("{\"key\":\"value\"}");
+            httpPost.setEntity(stringEntity);
+            CloseableHttpResponse response = client.execute(httpPost);
+            int statusCode = response.getStatusLine().getStatusCode();
+            Assert.assertEquals(200, statusCode);
+            if(statusCode == 200) {
+                String s = IOUtils.toString(response.getEntity().getContent(), "utf8");
+                Assert.assertNotNull(s);
+                Assert.assertEquals("map", s);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testPostJsonMapWithoutContentTypeHeader() throws Exception {
+        String url = "http://localhost:8080/post";
+        CloseableHttpClient client = HttpClients.createDefault();
+        HttpPost httpPost = new HttpPost(url);
+        try {
+            StringEntity stringEntity = new StringEntity("{\"key\":\"value\"}");
+            httpPost.setEntity(stringEntity);
+            CloseableHttpResponse response = client.execute(httpPost);
+            int statusCode = response.getStatusLine().getStatusCode();
+            Assert.assertEquals(200, statusCode);
+            if(statusCode == 200) {
+                String s = IOUtils.toString(response.getEntity().getContent(), "utf8");
+                Assert.assertNotNull(s);
+                Assert.assertEquals("nobody", s);
             }
         } catch (Exception e) {
             e.printStackTrace();

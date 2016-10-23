@@ -106,6 +106,7 @@
         <module>mask</module>
         <module>handler</module>
         <module>metrics</module>
+        <module>sanitizer</module>
         <module>server</module>
     </modules>
 
@@ -180,6 +181,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>metrics</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>sanitizer</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

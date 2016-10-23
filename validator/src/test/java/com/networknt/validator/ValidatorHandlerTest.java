@@ -31,6 +31,7 @@ import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.RoutingHandler;
+import io.undertow.util.Headers;
 import io.undertow.util.Methods;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -67,9 +68,11 @@ public class ValidatorHandlerTest {
             ValidatorHandler validatorHandler = new ValidatorHandler();
             validatorHandler.setNext(handler);
             handler = validatorHandler;
+
             BodyHandler bodyHandler = new BodyHandler();
             bodyHandler.setNext(handler);
             handler = bodyHandler;
+
             SwaggerHandler swaggerHandler = new SwaggerHandler();
             swaggerHandler.setNext(handler);
             handler = swaggerHandler;
@@ -290,6 +293,8 @@ public class ValidatorHandlerTest {
         String url = "http://localhost:8080/v2/pet";
         CloseableHttpClient client = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost(url);
+        httpPost.setHeader(Headers.CONTENT_TYPE.toString(), "application/json");
+
         StringEntity entity = new StringEntity("{\"name\":\"Pinky\", \"photoUrl\": \"http://www.photo.com/1.jpg\"}");
         httpPost.setEntity(entity);
         HttpResponse response = client.execute(httpPost);
@@ -305,6 +310,7 @@ public class ValidatorHandlerTest {
         String url = "http://localhost:8080/v2/pet";
         CloseableHttpClient client = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost(url);
+        httpPost.setHeader(Headers.CONTENT_TYPE.toString(), "application/json");
         StringEntity entity = new StringEntity("{\"id\":0,\"category\":{\"id\":0,\"name\":\"string\"},\"name\":\"doggie\",\"photoUrls\":[\"string\"],\"tags\":[{\"id\":0,\"name\":\"string\"}],\"status\":\"available\"}");
         httpPost.setEntity(entity);
         HttpResponse response = client.execute(httpPost);

@@ -40,6 +40,10 @@ import static java.util.Objects.requireNonNull;
 public class RequestValidator {
 
     static final Logger logger = LoggerFactory.getLogger(RequestValidator.class);
+    static final String VALIDATOR_REQUEST_BODY_UNEXPECTED = "ERR11013";
+    static final String VALIDATOR_REQUEST_BODY_MISSING = "ERR11014";
+    static final String VALIDATOR_REQUEST_PARAMETER_HEADER_MISSING = "ERR11017";
+    static final String VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING = "ERR11000";
 
     private final SchemaValidator schemaValidator;
     private final ParameterValidators parameterValidators;
@@ -74,32 +78,32 @@ public class RequestValidator {
         status = validateHeader(exchange, swaggerOperation);
         if(status != null) return status;
 
-        String body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
-        status = validateRequestBody(Optional.ofNullable(body), swaggerOperation);
+        Object body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
+        status = validateRequestBody(body, swaggerOperation);
 
         return status;
     }
 
-    private Status validateRequestBody(final Optional<String> requestBody,
+    private Status validateRequestBody(Object requestBody,
                                                  final SwaggerOperation swaggerOperation) {
         final Optional<Parameter> bodyParameter = swaggerOperation.getOperation().getParameters()
                 .stream().filter(p -> p.getIn().equalsIgnoreCase("body")).findFirst();
 
-        if (requestBody.isPresent() && !requestBody.get().isEmpty() && !bodyParameter.isPresent()) {
-            return new Status("ERR11013", swaggerOperation.getMethod(), swaggerOperation.getPathString().original());
+        if (requestBody != null && !bodyParameter.isPresent()) {
+            return new Status(VALIDATOR_REQUEST_BODY_UNEXPECTED, swaggerOperation.getMethod(), swaggerOperation.getPathString().original());
         }
 
         if (!bodyParameter.isPresent()) {
             return null;
         }
 
-        if (!requestBody.isPresent() || requestBody.get().isEmpty()) {
+        if (requestBody == null) {
             if (bodyParameter.get().getRequired()) {
-                return new Status("ERR11014", swaggerOperation.getMethod(), swaggerOperation.getPathString().original());
+                return new Status(VALIDATOR_REQUEST_BODY_MISSING, swaggerOperation.getMethod(), swaggerOperation.getPathString().original());
             }
             return null;
         }
-        return schemaValidator.validate(requestBody.get(), ((BodyParameter)bodyParameter.get()).getSchema());
+        return schemaValidator.validate(requestBody, ((BodyParameter)bodyParameter.get()).getSchema());
     }
 
     private Status validatePathParameters(final NormalisedPath requestPath,
@@ -152,7 +156,7 @@ public class RequestValidator {
 
         if ((queryParameterValues == null || queryParameterValues.isEmpty())) {
             if(queryParameter.getRequired()) {
-                return new Status("ERR11000", queryParameter.getName(), swaggerOperation.getPathString().original());
+                return new Status(VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING, queryParameter.getName(), swaggerOperation.getPathString().original());
             }
         } else {
 
@@ -192,7 +196,7 @@ public class RequestValidator {
         final HeaderValues headerValues = exchange.getRequestHeaders().get(headerParameter.getName());
         if ((headerValues == null || headerValues.isEmpty())) {
             if(headerParameter.getRequired()) {
-                return new Status("ERR11017", headerParameter.getName(), swaggerOperation.getPathString().original());
+                return new Status(VALIDATOR_REQUEST_PARAMETER_HEADER_MISSING, headerParameter.getName(), swaggerOperation.getPathString().original());
             }
         } else {
 

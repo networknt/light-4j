@@ -42,6 +42,8 @@ import static java.util.Objects.requireNonNull;
  */
 public class SchemaValidator {
     private static final String DEFINITIONS_FIELD = "definitions";
+    static final String VALIDATOR_SCHEMA_INVALID_JSON = "ERR11003";
+    static final String VALIDATOR_SCHEMA = "ERR11004";
 
     private final Swagger api;
     private JsonNode definitions;
@@ -64,6 +66,65 @@ public class SchemaValidator {
      */
     public SchemaValidator(final Swagger api) {
         this.api = api;
+    }
+
+    /**
+     * Validate the given value against the given property schema.
+     *
+     * @param value The value to validate
+     * @param schema The property schema to validate the value against
+     *
+     * @return A status containing error code and description
+     */
+    public Status validate(final Object value, final Property schema) {
+        return doValidate(value, schema);
+    }
+
+    /**
+     * Validate the given value against the given model schema.
+     *
+     * @param value The value to validate
+     * @param schema The model schema to validate the value against
+     *
+     * @return A status containing error code and description
+     */
+    public Status validate(final Object value, final Model schema) {
+        return doValidate(value, schema);
+    }
+
+    private Status doValidate(final Object value, final Object schema) {
+        requireNonNull(schema, "A schema is required");
+
+        Status status = null;
+        Set<ValidationMessage> processingReport = null;
+        try {
+            final JsonNode schemaObject = Json.mapper().readTree(Json.pretty(schema));
+
+            if (api != null) {
+                if (this.definitions == null) {
+                    this.definitions = Json.mapper().readTree(Json.pretty(api.getDefinitions()));
+                }
+                ((ObjectNode)schemaObject).set(DEFINITIONS_FIELD, this.definitions);
+            }
+
+            JsonSchema jsonSchema = new JsonSchemaFactory(Config.getInstance().getMapper()).getSchema(schemaObject);
+
+            final JsonNode content = Json.mapper().valueToTree(value);
+            processingReport = jsonSchema.validate(content);
+        }
+        catch (JsonParseException e) {
+            return new Status(VALIDATOR_SCHEMA_INVALID_JSON, e.getMessage());
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if(processingReport != null && processingReport.size() > 0) {
+            ValidationMessage vm = processingReport.iterator().next();
+            status = new Status(VALIDATOR_SCHEMA, vm.getMessage());
+        }
+
+        return status;
     }
 
     /**
@@ -116,7 +177,7 @@ public class SchemaValidator {
             processingReport = jsonSchema.validate(content);
         }
         catch (JsonParseException e) {
-            return new Status("ERR11003", e.getMessage());
+            return new Status(VALIDATOR_SCHEMA_INVALID_JSON, e.getMessage());
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -124,7 +185,7 @@ public class SchemaValidator {
 
         if(processingReport != null && processingReport.size() > 0) {
             ValidationMessage vm = processingReport.iterator().next();
-            status = new Status("ERR11004", vm.getMessage());
+            status = new Status(VALIDATOR_SCHEMA, vm.getMessage());
         }
 
         return status;

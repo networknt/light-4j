@@ -89,6 +89,12 @@
     "message": "GENERIC_EXCEPTION",
     "description": "Generic Exception %s."
   },
+  "ERR10015": {
+    "statusCode": 400,
+    "code": "ERR10015",
+    "message": "CONTENT_TYPE_MISMATCH",
+    "description": "Content type in header %s doesn't match the body."
+  },
 
   "ERR11000": {
     "statusCode": 400,
