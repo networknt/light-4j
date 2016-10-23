@@ -1,14 +1,15 @@
 ---
-date: 2016-10-12T19:04:51-04:00
+date: 2016-10-23T13:23:59-04:00
 title: info
 ---
+
 
 ## Introduction
 
 Almost every module in light-java has a configuration file that can be
-externalized with default can be in the module itself or the API implementation 
-config folder. In order to give an overview of the server runtime, system 
-properties, specification as well as configurations for each enabled modules, 
+externalized with default can be in the module itself or the API implementation
+config folder. In order to give an overview of the server runtime, system
+properties, specification as well as configurations for each enabled modules,
 there is a special handler that can be included in your swagger specification.
 
 ## Configuration
@@ -21,28 +22,28 @@ info.json
 }
 ```
 
-Unlike other modules, server info handler is not plugin into the handler chain 
-during server start up. It should be part of the swagger specification and 
-route to this handler in the routing handler. If enableServerInfo is false, 
-then an error message will returned with ERR10013 - SERVER_INFO_DISABLED. 
+Unlike other modules, server info handler is not plugin into the handler chain
+during server start up. It should be part of the swagger specification and
+route to this handler in the routing handler. If enableServerInfo is false,
+then an error message will returned with ERR10013 - SERVER_INFO_DISABLED.
 
 ## Swagger
 
-Along with other endpoints/paths defined in the swagger specification, an 
-extra endpoint should be added with special oauth2 scope for this handler. 
-It is recommended to use /basePath/server/info so that some automatic tool 
-or API portal server can access to it in a standard way. 
+Along with other endpoints/paths defined in the swagger specification, an
+extra endpoint should be added with special oauth2 scope for this handler.
+It is recommended to use /basePath/server/info so that some automatic tool
+or API portal server can access to it in a standard way.
 
 ## Extension
 
-For other contributed modules or API application specific modules, please 
-following the following guideline to register your module 
+For other contributed modules or API application specific modules, please
+following the following guideline to register your module
 in /basePath/server/info endpoint.
 
-For handlers, it is registered when injecting into the handler chain during 
-server start up. 
-For other utilities, it should have a static block to register itself during 
-server start up. 
+For handlers, it is registered when injecting into the handler chain during
+server start up.
+For other utilities, it should have a static block to register itself during
+server start up.
 
 Here is the example code to register module and its config.
 
@@ -52,10 +53,10 @@ ModuleRegistry.registerModule(ValidatorHandler.class.getName(), Config.getInstan
 
 ## Mask sensitive data in config
 
-When module registers itself, it provide the configuration in JSON format for 
-the module. Some components have sensitive info in their configuration, for 
-example, db password, client secret etc. The third parameter in registerModule 
-is a list of keys in the configuration file that need to be masked. 
+When module registers itself, it provide the configuration in JSON format for
+the module. Some components have sensitive info in their configuration, for
+example, db password, client secret etc. The third parameter in registerModule
+is a list of keys in the configuration file that need to be masked.
 
 Here is an example.
 
@@ -69,7 +70,7 @@ ModuleRegistry.registerModule(Client.class.getName(), Config.getInstance().getJs
 
 ## Output
 
-Here is the output from undertow swagger-codegen petstore specification. 
+Here is the output from undertow swagger-codegen petstore specification.
 
 ```
 {
