@@ -101,7 +101,7 @@ public class Server {
                 .setServerOption(UndertowOptions.ALWAYS_SET_DATE, true)
                 .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, false)
                 .setHandler(Handlers.header(handler,
-                        Headers.SERVER_STRING, "Undertow"))
+                        Headers.SERVER_STRING, "Light"))
                 .setWorkerThreads(200)
                 .build();
         server.start();

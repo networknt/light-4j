@@ -42,7 +42,7 @@ Assume that you have just built your swagger-codegen and you are in the swagger-
 folder now you can generate petstore API in your home directory with the following command.
 
 ```
-java -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i http://petstore.swagger.io/v2/swagger.json -l undertow -o ~/petstore
+java -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i http://petstore.swagger.io/v2/swagger.json -l light-java -o ~/petstore
 
 ```
 
@@ -66,8 +66,8 @@ specify the location of the swagger.json and the output folder of the generated 
 
 ```shell
 # set as system properties
-swagger.codegen.undertow.apipackage = package for the handlers
-swagger.codegen.undertow.modelpackage = package for the models
+swagger.codegen.light.apipackage = package for the handlers
+swagger.codegen.light.modelpackage = package for the models
 
 # set in the path
 path_to_specification_file = local path or url of swagger.json
@@ -77,12 +77,12 @@ output_folder = output folder for generated artifacts
 General Command
 
 ```shell
-java -Dswagger.codegen.undertow.apipackage=<api_package_name> -Dswagger.codegen.undertow.modelpackage=<model_package_name> -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i <path_to_specification_file> -l undertow -o <output_folder>
+java -Dswagger.codegen.light.apipackage=<api_package_name> -Dswagger.codegen.light.modelpackage=<model_package_name> -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i <path_to_specification_file> -l light-java -o <output_folder>
 ```
 
 Example
 ```shell
-java -Dswagger.codegen.undertow.apipackage=com.networknt.handler -Dswagger.codegen.undertow.modelpackage=com.networknt.model -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i ~/networknt/swagger/api_a/swagger.json -l undertow -o ~/projectc/generated
+java -Dswagger.codegen.light.apipackage=com.networknt.handler -Dswagger.codegen.light.modelpackage=com.networknt.model -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i ~/networknt/swagger/api_a/swagger.json -l light-java -o ~/projectc/generated
 ```
 
 
