@@ -5,8 +5,6 @@ type: index
 weight: 0
 ---
 
-## Introduction
-
 [Undertow](http://undertow.io/) is  one of the fastest Java HTTP servers available and
 JBoss WildFly is based on it.
 

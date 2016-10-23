@@ -1,6 +1,6 @@
 ---
 date: 2016-10-12T19:13:19-04:00
-title: validator
+title: Validator
 ---
 
 The framework encourages design driven implementation so swagger specification 
