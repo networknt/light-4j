@@ -13,6 +13,8 @@ of you have probably struggled at this, too. Getting to market quickly seems to 
 up a bit of safety. Or, conversely, making sure the system is safe, reliable, and resilient 
 means slowing down the pace of feature and bug-fix releases. And “at scale” is just a dream.
 
+The three principals of the microservices architecture style.
+
 * Microservices are ideal for big systems
 * Microservice architecture is goal-oriented not solution-oriented
 * Microservices are focused on replaceability
@@ -29,26 +31,38 @@ microservice applications share some important characteristics:
 
 
 When you build software in this way, the cost of controlling and managing output increases 
-significantly. In a microservice architec‐ ture, the services tend to get simpler, but the 
+significantly. In a microservice architecture, the services tend to get simpler, but the 
 architecture tends to get more complex. That complexity is often managed with tooling, 
 automation, and process.
 
+When you first begin learning about microservice architecture it’s easy to get caught up in 
+the tangible parts of the solution. You don’t have to look hard to find people who are excited 
+about Docker, continuous delivery, or service discovery. All of these things can help you to 
+build a system that sounds like the microservice systems we’ve been discussing. But 
+microservices can’t be achieved by focusing on a particular set of patterns, process, or tools. 
+Instead, you’ll need to stay focused on the goal itself—a system that can make change easier.
+
+More specifically, the real value of microservices is realized when we focus on two key 
+aspects—speed and safety. Every single decision you make about your software development ends 
+up as a trade-off that impacts these two ideals. Finding an effective balance between them at 
+scale is what we call the microservices way.
 
 * The Speed of Change
 * The Safety of Change
 * At Scale
 * In Harmony
 
-the original intent of the microservice architecture con‐ cept—to replace complex monolithic 
+The original intent of the microservice architecture concept—to replace complex monolithic 
 applications with software systems made of replaceable components. 
 
 
+Over the years, there are so many stories that big companies built their system in a microservices way. 
 There are common goals and benefits that emerge from these implementation stories. The goal 
 of improving software delivery speed as functional scope grows is realized through greater 
-agility, higher composability, improved comprehensibility, independ‐ ent service deployability, 
+agility, higher composability, improved comprehensibility, independent service deployability, 
 organizational alignment, and polyglotism. The goal of maintaining software system safety as 
 scale increases is achieved through higher availability and resiliency, better efficiency, 
-independent manageability and replacea‐ bility of components, increased runtime scalability, 
+independent manageability and replaceability of components, increased runtime scalability, 
 and more simplified testability.
 
 ### Speed
@@ -65,15 +79,9 @@ and more simplified testability.
 * Independent manageability contributes to improved efficiency, and also reduces the need for scheduled downtime.
 * Replaceability of components reduces the technical debt that can lead to aging, unreliable environments.
 * Stronger resilience and higher availability ensure a good customer experience.
-* Better runtime scalability allows the software system to grow or shrink with the
-business.
+* Better runtime scalability allows the software system to grow or shrink with the business.
 * Improved testability allows the business to mitigate implementation risks.
 
 
 # History
 
-# Distributed Gateway
-
-# Distributed Auth
-
-# 

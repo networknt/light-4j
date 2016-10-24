@@ -27,13 +27,14 @@ consultant☺
 
 In 2003, Rod Johnson released Spring Framework and it allows IoC and POJO for 
 development without EJBs. The productivity increment is huge and a lot of 
-developers jumped onto it and thrown J2EE EJBs out of the  window. The application
-server vendors saw this and in JEE5, they provide some features to make developer 
+developers jumped onto it and thrown J2EE EJBs out of the window. The application
+server vendors saw this and in JEE5, they provided some features to make developer 
 more productive and less painful. Unfortunately, today’s [Spring Framework is so 
-bloated]() like JEE containers and it still based on JEE servlet container which was
-designed over ten years ago and without considering multiple cores and NIO.
+bloated](https://networknt.github.io/light-java/architecture/spring-is-bloated/) 
+like JEE containers and it still based on JEE servlet container which was
+designed over ten years ago without considering multiple cores and NIO.
 
-During this period of time, PHP was flying. It uses less memory and resource and 
+During this period of time, PHP was flying. It used less memory and resource and 
 was well supported by hosting companies. Some CMS platform built on PHP like 
 WordPress, Drupal etc. drove a lot of open source developers into PHP. Although 
 PHP is the most popular language these days, it has its shortcomings. It is slow 
@@ -53,9 +54,9 @@ on a single $8000 dell server using the same test case Google claimed to serve
 1 million requests with a cluster. It is lightweight with the core coming under 
 1Mb and a simple embedded server uses less than 4Mb of heap space. 
 
-With the new Undertow Core, we've built Undertow Framework which is aiming containerized
+With the new Undertow Core, we've built Light Java Framework which is aiming containerized
 microserivces. It supports design driven approach from OpenAPI specification to 
-generate code and drive security and validation during runtime. 
+generate code and drives security and validation during runtime. 
 
 ## JEE vendors
 
@@ -65,18 +66,18 @@ dollars to big organizations. Now it is hard to sell these servers as JBoss is g
 market share quickly and Oracle is [dropping JEE support](https://developers.slashdot.org/story/16/07/02/1639241/oracle-may-have-stopped-funding-and-developing-java-ee)
 
 With microservices gainning traction, the application servers are hard to sell as these
-servers are used to host monolithic applications which is hard to management. I used to
+servers are used to host monolithic applications which is hard to manage. I used to
 work on an application that have hundreds of EJBs and it took 45 minutes to build and deploy
-on WebLogic to test a single line change. 
+on WebLogic to test a single line of change. 
  
   
 ## JEE customers
 
-From vendors's perspective, it is not worth to buy these applications as all the promises
+From customer's perspective, it is not worth buying these applications as all the promises
 of JEE are not true. You build an application for WebSphere cannot be deployed on WebLogic
 and you have to spend money to upgrade your application to newer version of the application
 server as the old version is not supported anymore. And these upgrade cost millions of
-dollars plug the cost of the new application servers.
+dollars plus the cost of the new application servers.
  
 Some smart people start to ask questions. Why we need to deploy our application to these
 monster servers? Why we need to package our application as ear or war instead of just a 
@@ -99,7 +100,7 @@ web services as microservices in this [article](http://techbeacon.com/dangers-mi
   
 Microservices are not Web Services on enterprise service buses (ESBs). And it is not
 the traditional service-oriented architecture (SOA), while it inherits some of the 
-basic principles of SOA, it's fundamentally a different set of practices—because the 
+basic principles of SOA, it's fundamentally a different set of practices because the 
 entire environment has completely transformed.
 
 The environment for microservices architecture, in contrast, is the borderless 
@@ -113,4 +114,18 @@ Microservices don't require containers (or vice versa), but they're easily
 containerizable by design. Furthermore, if you're implementing containers, 
 it's difficult and typically unwise to put any new executable code other than 
 microservices in them.
+
+## Conclusion
+
+As application development style has been changing over the recent years, microservices
+are getting more and more popular. Big corporations are breaking their big applications
+up to smaller pieces that can be individually deployed and replaced. These smaller
+services are deployed within docker containers on the cloud. I myself have been working
+on this area for my clients for the last couple of years and devoted my time to build
+an open source microservices framework [Light Java](https://github.com/networknt/light-java)
+which provides all cross cutting concerns for microservices running in containers. It
+supports design driven approach and developers will only focus on the domain business
+logic in generated handlers. All the rest will be handled by the Framework and DevOps flow.
+
+
 
