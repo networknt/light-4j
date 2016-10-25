@@ -98,6 +98,7 @@
         <module>client</module>
         <module>audit</module>
         <module>info</module>
+        <module>health</module>
         <module>validator</module>
         <module>status</module>
         <module>exception</module>
@@ -141,6 +142,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>info</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>health</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

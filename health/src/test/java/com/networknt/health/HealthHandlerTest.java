@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.networknt.audit;
+package com.networknt.health;
 
 import io.undertow.Handlers;
 import io.undertow.Undertow;
@@ -36,8 +36,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Created by steve on 01/09/16.
  */
-public class ServerInfoHandlerTest {
-    static final Logger logger = LoggerFactory.getLogger(ServerInfoHandlerTest.class);
+public class HealthHandlerTest {
+    static final Logger logger = LoggerFactory.getLogger(HealthHandlerTest.class);
 
     static Undertow server = null;
 
@@ -68,12 +68,12 @@ public class ServerInfoHandlerTest {
     }
 
     static RoutingHandler getTestHandler() {
-        return Handlers.routing().add(Methods.GET, "/server/info", new ServerInfoHandler());
+        return Handlers.routing().add(Methods.GET, "/server/health", new HealthHandler());
     }
 
     @Test
-    public void testServerInfo() throws Exception {
-        String url = "http://localhost:8080/server/info";
+    public void testHealth() throws Exception {
+        String url = "http://localhost:8080/server/health";
         CloseableHttpClient client = HttpClients.createDefault();
         HttpGet httpGet = new HttpGet(url);
         try {
@@ -83,11 +83,10 @@ public class ServerInfoHandlerTest {
             if(statusCode == 200) {
                 String s = IOUtils.toString(response.getEntity().getContent(), "utf8");
                 Assert.assertNotNull(s);
-                logger.debug(s);
+                Assert.assertEquals("OK", s);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
 }

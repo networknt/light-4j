@@ -9,6 +9,10 @@ Note: If this is the first time you hear about OAuth2 or you want to get familia
 the grant types we are using, please read this 
 [article](https://github.com/networknt/undertow-oauth2/wiki/OAuth2-Introduction) first.
 
+Everyone’s excited about microservices, but actual implementation is sparse. Perhaps the
+reason is that people are unclear on how these services talk to one another; especially 
+tricky is access management throughout a sea of independent services.
+
 While designing microserivces, big monolithic application is breaking down to smaller
 services that can be independently deployed or replaced. The final application will have
 more http calls than a single application, how can we protect these calls between services?
