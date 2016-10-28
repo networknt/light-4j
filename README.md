@@ -1,6 +1,5 @@
 A fast and configurable microservices framework for docker containers on the cloud.
 
-[Website](https://www.networknt.com) |
 [Developer Chat](https://gitter.im/networknt/light-java) |
 [Documentation](https://networknt.github.io/light-java) |
 [Contribution Guide](CONTRIBUTING.md) |
@@ -8,7 +7,8 @@ A fast and configurable microservices framework for docker containers on the clo
 [![Build Status](https://travis-ci.org/networknt/light-java.svg?branch=master)](https://travis-ci.org/networknt/light-java)
 
 
-[Undertow](http://undertow.io/) is  one of the fastest Java HTTP servers available and JBoss WildFly is based on it.
+[Undertow](http://undertow.io/) is  one of the fastest Java HTTP servers available 
+and JBoss WildFly is based on it. 
 
 Performance comparison with others can be found
 at [www.techempower.com](https://www.techempower.com/benchmarks/#section=data-r12&hw=peak&test=plaintext) and
@@ -37,7 +37,7 @@ are call Undertow Framework.
 There are two ways to start your project:
 
 ### Swagger code generator
-If you have swagger yaml specification, then you can use
+If you have OpenAPI/Swagger specification, then you can use
 [swagger-codegen](https://networknt.github.io/light-java/tools/swagger-codegen/) to generate a working project.
 This is the recommended way to start your REST API project. Here are the steps:
 
@@ -45,7 +45,7 @@ This is the recommended way to start your REST API project. Here are the steps:
 clone https://github.com/networknt/swagger-codegen
 cd swagger-codegen
 mvn clean install -DskipTests
-java -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i http://petstore.swagger.io/v2/swagger.json -l undertow -o samples/server/petstore/mypetstore
+java -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i http://petstore.swagger.io/v2/swagger.json -l light-java -o samples/server/petstore/mypetstore
 cd samples/server/petstore/mypetstore
 mvn install exec:exec
 
@@ -57,27 +57,34 @@ The server is up and running on port 8080 by default and OAuth JWT verification 
 
 User your browser/postman to access your endpoints and you will have a message returned.
 
+Here is a video to show you the steps to use generator to start your project.
+
+https://www.youtube.com/watch?v=xSJhF1LcE0Q
+
 
 ### Starting from example project
 
 The other way to start your project is to copy from
-[petstore](https://github.com/networknt/light-java-example/tree/master/petstore) project in light-java-example.
+[petstore](https://github.com/networknt/light-java-example/tree/master/petstore) project in 
+light-java-example.
 
 
 ```
 mvn clean install exec:exec
 ```
 
-[To run/debug from IDE](https://networknt.github.io/light-java/tutorials/debug/), you need to configure a Java
-application with main class "com.networknt.server.Server" and working directory is your project folder. There is no
-contain and you are working on just a standalone Java application.
+[To run/debug from IDE](https://networknt.github.io/light-java/tutorials/debug/), you need to 
+configure a Java application with main class "com.networknt.server.Server" and working 
+directory is your project folder. There is no container and you are working on just a standalone
+Java application.
 
 
 ## Start Server
 
 ### In IDE
 create a Java application that main class is com.networknt.server.Server and working
-directory is your project root folder. You can debug your server just like a single POJO application.
+directory is your project root folder. You can debug your server just like a single 
+POJO application.
 
 ### From Maven
 
