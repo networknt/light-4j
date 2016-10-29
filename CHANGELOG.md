@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Update body middleware so that it checks content type and parse the application/json to list or map.
 - Update Validator middleware to handle body as object or string
 - Move info to package info instead of audit
+- Upgrade undertow to 1.4.4-Final to address patch issue.
+- Update default server.json to bind to 0.0.0.0 instead of localhost for docker
 
 ## 1.0.0 - 2016-10-21
 

@@ -75,7 +75,7 @@ Here is an exmaple of server.json
 ```
 {
   "description": "server config",
-  "ip": "localhost",
+  "ip": "0.0.0.0",
   "port": 8080
 }
 
