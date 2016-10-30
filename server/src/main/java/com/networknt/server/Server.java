@@ -16,12 +16,6 @@
 
 package com.networknt.server;
 
-import com.jayway.jsonpath.Configuration;
-import com.jayway.jsonpath.Option;
-import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
-import com.jayway.jsonpath.spi.json.JsonProvider;
-import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
-import com.jayway.jsonpath.spi.mapper.MappingProvider;
 import com.networknt.config.Config;
 import com.networknt.handler.MiddlewareHandler;
 import io.undertow.Handlers;
@@ -33,9 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.Options;
 
-import java.util.EnumSet;
 import java.util.ServiceLoader;
-import java.util.Set;
 
 
 public class Server {
