@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
+
+### Changed
+
+## 1.0.1 - 2016-10-30
+### Added
 - Sanitizer middleware to handle cross site scripting on header and body of request.
 - Health endpoint to indicate if the server is alive by sending OK.
 
