@@ -87,6 +87,7 @@ public class JwtVerifyHandler implements MiddlewareHandler {
                             Status status = new Status(STATUS_INVALID_REQUEST_PATH);
                             exchange.setStatusCode(status.getStatusCode());
                             exchange.getResponseSender().send(status.toString());
+                            return;
                         }
 
                         final NormalisedPath swaggerPathString = maybeApiPath.get();
@@ -99,6 +100,7 @@ public class JwtVerifyHandler implements MiddlewareHandler {
                             Status status = new Status(STATUS_METHOD_NOT_ALLOWED);
                             exchange.setStatusCode(status.getStatusCode());
                             exchange.getResponseSender().send(status.toString());
+                            return;
                         }
                         swaggerOperation = new SwaggerOperation(swaggerPathString, swaggerPath, httpMethod, operation);
                         swaggerOperation.setEndpoint(swaggerPathString.normalised() + "@" + httpMethod);
@@ -123,10 +125,12 @@ public class JwtVerifyHandler implements MiddlewareHandler {
                             Status status = new Status(STATUS_INVALID_SCOPE_TOKEN);
                             exchange.setStatusCode(status.getStatusCode());
                             exchange.getResponseSender().send(status.toString());
+                            return;
                         } catch (ExpiredTokenException e) {
                             Status status = new Status(STATUS_SCOPE_TOKEN_EXPIRED);
                             exchange.setStatusCode(status.getStatusCode());
                             exchange.getResponseSender().send(status.toString());
+                            return;
                         }
                     }
 
@@ -149,6 +153,7 @@ public class JwtVerifyHandler implements MiddlewareHandler {
                             Status status = new Status(STATUS_SCOPE_TOKEN_SCOPE_MISMATCH);
                             exchange.setStatusCode(status.getStatusCode());
                             exchange.getResponseSender().send(status.toString());
+                            return;
                         }
                     } else {
                         // no scope token, verify scope from auth token.
@@ -160,6 +165,7 @@ public class JwtVerifyHandler implements MiddlewareHandler {
                             Status status = new Status(STATUS_INVALID_AUTH_TOKEN);
                             exchange.setStatusCode(status.getStatusCode());
                             exchange.getResponseSender().send(status.toString());
+                            return;
                         }
                         if (!matchedScopes(primaryScopes, specScopes)) {
                             if(logger.isDebugEnabled()) {
@@ -168,6 +174,7 @@ public class JwtVerifyHandler implements MiddlewareHandler {
                             Status status = new Status(STATUS_AUTH_TOKEN_SCOPE_MISMATCH);
                             exchange.setStatusCode(status.getStatusCode());
                             exchange.getResponseSender().send(status.toString());
+                            return;
                         }
                     }
                 }
@@ -178,15 +185,18 @@ public class JwtVerifyHandler implements MiddlewareHandler {
                 Status status = new Status(STATUS_INVALID_AUTH_TOKEN);
                 exchange.setStatusCode(status.getStatusCode());
                 exchange.getResponseSender().send(status.toString());
+                return;
             } catch (ExpiredTokenException e) {
                 Status status = new Status(STATUS_AUTH_TOKEN_EXPIRED);
                 exchange.setStatusCode(status.getStatusCode());
                 exchange.getResponseSender().send(status.toString());
+                return;
             }
         } else {
             Status status = new Status(STATUS_MISSING_AUTH_TOKEN);
             exchange.setStatusCode(status.getStatusCode());
             exchange.getResponseSender().send(status.toString());
+            return;
         }
     }
 
