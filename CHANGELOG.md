@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 ### Changed
+
+## 1.0.2 - 2016-11-03
+### Added
+
+### Changed
 - Upgrade to json-schema-form 0.1.3
 - Fixes #2 exchange completed already issue.
 
