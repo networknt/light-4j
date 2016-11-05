@@ -5,36 +5,40 @@ type: index
 weight: 0
 ---
 
-[Undertow](http://undertow.io/) is  one of the fastest Java HTTP servers available and
-JBoss WildFly is based on it.
+## Why this framework
 
-Performance comparison with others can be found
-at [www.techempower.com](https://www.techempower.com/benchmarks/#section=data-r12&hw=peak&test=plaintext) and
-a simple Hello World server got 1.2 million requests per second on my I5 4 CPU desktop.
-[Here](https://www.networknt.com/blog/All/CeHJjNRjRiS1dH1qqme2LQ) is a blog that compares
-it with Go 1.6
+### Fast and small memory footprint to lower production cost.
 
-In addition, I have performance comparison with the most popular REST API framework Spring
-Boot in [light-java-example](https://github.com/networknt/light-java-example/tree/master/performance)
+It is 44 times faster than the most popular microservices platform Spring Boot embedded 
+Tomcat and use only 1/5 of memory. Here is the [benchmark](https://github.com/networknt/light-java-example/tree/master/performance) 
+results compare with Spring Boot, Nodejs and Golang.
 
+### Provide middleware components to address cross cutting concerns.
+* Plugin architecture for startup/shutdown hooks and middleware components
+* Distributed OAuth2 JWT security verification as part of the framework
+* Request and response validation against OpenAPI specification at runtime
+* Metrics collected in influxdb and viewed from Grafana Dashboard for both services and clients
+* Global exception handling for runtime exception, api exception and other checked exception
+* Mask sensitive data like credit card, sin number etc. before logging
+* Sanitize cross site scripting for request header and body
+* Audit to dump important info or entire request and response.
+* Body parser to support different content types
+* Standardized response code and messages from configuration file
+* Externalized configuration for all modules for dockerized environment 
 
-Although it is fast, reliable and widely used but the programming style is a little
-strange for traditional JEE developers as it uses handler chain for request processing.
-Of course, you can use servlet contain on top of it but you are losing the performance
-edge by a big margin.
+### Design/Test driven development to increase productivity
+Design OpenAPI specification and generate the service from it. The specification is also part
+of the framework to drive security verification and request validation.
 
-In order to make use this server more efficiently, I have built a framework called
-[Light](https://github.com/networknt/light) that is based on it with event sourcing
-and graph database. The framework is used to host both my sites
-[www.networknt.com](www.networknt.com)
-and [www.edibleforestgarden.ca](www.edibleforestgarden.ca) on a single ip address.
+Unit/End-to-End tests to enable test driven approach for quality product.
 
-The light framework is complex and has both backend and frontend with blog, news,
-forum and e-commerce built-in. Some developers/users asked me if I could provide a
-simple framework that just supports REST API build for backend only.
+Debugging within IDE just like standalone application for better developer productivity
 
-And this is how undertow framework was born. The framework contains three part that work
-together to have a total solution for containerized microservices.
+### Built-in DevOps flow to support continuous integration to production
+
+Dockerfile and DevOps supporting files are generated to support dockerization
+
+### OAuth2 server, portal and light Java to form ecosystem
 
 [light-java](https://github.com/networknt/light-java) to build API
 
