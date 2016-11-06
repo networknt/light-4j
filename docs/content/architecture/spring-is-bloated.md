@@ -1,8 +1,8 @@
 ---
 date: 2016-10-09T08:15:27-04:00
-title: spring is bloated
+title: Spring is bloated
 ---
-## Introduction
+#
 
 Over the years, Spring seemed to be the replacement of JEE servers with IoC
 container and light weight servlet container as its foundation. Especially

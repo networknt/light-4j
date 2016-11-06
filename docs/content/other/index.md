@@ -3,7 +3,6 @@ date: 2016-10-23T13:22:33-04:00
 title: Other Component
 ---
 
-# Introduction
 
 light-java is a Java API framework based on undertow http core that supports
 swagger code generation and runtime request validation and security verification.

@@ -1,9 +1,9 @@
 ---
 date: 2016-10-20T14:33:53-04:00
-title: gateway
+title: Gateway
 ---
 
-# Introduction
+#
 
 When your organization is thinking about breaking up the big monolithic
 application to adopt microservices architecture, chances are there are

@@ -3,7 +3,6 @@ date: 2016-10-29T17:22:16-04:00
 title: plugin
 ---
 
-# Introduction
 
 In the framework design, we have adopted the same principal of microservices architecture to break
 down the entire framework into smaller pieces so that each can be customized and replaced if 

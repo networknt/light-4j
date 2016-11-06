@@ -1,10 +1,10 @@
 ---
 date: 2016-10-11T12:32:21-04:00
 draft: true
-title: scalability
+title: Scalability
 ---
 
-## Introduction
+##
 
 One of the benefits utilizing microservices architecture is to make sure
 your application is easily scaling. When we talk about scalability, one 

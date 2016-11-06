@@ -1,9 +1,9 @@
 ---
 date: 2016-10-09T08:14:57-04:00
-title: jee is dead
+title: JEE is dead
 ---
 
-## History
+##
 
 When Java was out, big players like IBM, BEA, Oracle etc. saw a great opportunity
 to make money as it is a great language for web programming. But how can you make
