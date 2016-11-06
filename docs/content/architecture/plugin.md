@@ -136,32 +136,8 @@ completed without an error.
 
 There are dependencies between middleware handlers so the sequence to plug them in is very important.
 
-Here is the configuration for the built in middleware handlers.
-
-```
-# This file is generated and should not be changed unless you want to plug in more handlers into the handler chain
-# for cross cutting concerns. In most cases, you should replace some of the default handlers with your own implementation
-# Please note: the sequence of these handlers are very important.
-
-#Validator Validate request based on swagger specification (depending on Swagger and Body)
-com.networknt.validator.ValidatorHandler
-#Sanitizer Encode cross site scripting
-com.networknt.sanitizer.SanitizerHandler
-#SimpleAudit Log important info about the request into audit log
-com.networknt.audit.SimpleAuditHandler
-#Body Parse body based on content type in the header.
-com.networknt.body.BodyHandler
-#Security JWT token verification and scope verification (depending on SwaggerHandler)
-com.networknt.security.JwtVerifyHandler
-#Swagger Parsing swagger specification based on request uri and method.
-com.networknt.swagger.SwaggerHandler
-#Metrics In order to calculate response time accurately, this needs to be the second.
-com.networknt.metrics.MetricsHandler
-#Exception Global exception handler that needs to be called first.
-com.networknt.exception.ExceptionHandler
-
-
-```
+For default plugins generated from [swagger-codegen](https://networknt.github.io/light-java/tools/swagger-codegen/),
+please refer to [Server](https://networknt.github.io/light-java/other/server/)
 
 # Diagram
 

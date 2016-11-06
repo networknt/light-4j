@@ -108,6 +108,7 @@
         <module>handler</module>
         <module>metrics</module>
         <module>sanitizer</module>
+        <module>traceability</module>
         <module>server</module>
     </modules>
 
@@ -192,6 +193,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>sanitizer</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>traceability</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
