@@ -25,6 +25,7 @@ import com.networknt.exception.ApiException;
 import com.networknt.exception.ClientException;
 import com.networknt.status.Status;
 import com.networknt.utility.*;
+import io.undertow.server.HttpServerExchange;
 import org.apache.http.*;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.Registry;
@@ -173,10 +174,12 @@ public class Client {
     /**
      * Add Authorization Code grant token the caller app gets from OAuth2 server.
      *
+     * This is the method called from client like web server
+     *
      * @param request
      * @param token
      */
-    public void addAuthorization(HttpRequest request, String token) {
+    public void addAuthToken(HttpRequest request, String token) {
         if(!token.startsWith("Bearer ")) {
             if(token.toUpperCase().startsWith("BEARER ")) {
                 // other cases of Bearer
@@ -189,24 +192,92 @@ public class Client {
     }
 
     /**
+     * Add Authorization Code grant token the caller app gets from OAuth2 server and add traceabilityId
+     *
+     * This is the method called from client like web server that want to have traceabilityId pass through.
+     *
+     * @param request
+     * @param token,
+     * @param traceabilityId
+     */
+    public void addAuthTokenTrace(HttpRequest request, String token, String traceabilityId) {
+        if(!token.startsWith("Bearer ")) {
+            if(token.toUpperCase().startsWith("BEARER ")) {
+                // other cases of Bearer
+                token = "Bearer " + token.substring(7);
+            } else {
+                token = "Bearer " + token;
+            }
+        }
+        request.addHeader(Constants.AUTHORIZATION, token);
+        request.addHeader(Constants.TRACEABILITY_ID, traceabilityId);
+    }
+
+    /**
      * Add Client Credentials token cached in the client for standalone application
+     *
+     * This is the method called from standalone application like enterprise scheduler for batch jobs
+     * or mobile apps.
      *
      * @param request
      */
-    public void addAuthorization(HttpRequest request) throws ClientException, ApiException {
+    public void addCcToken(HttpRequest request) throws ClientException, ApiException {
         checkCCTokenExpired();
         request.addHeader(Constants.AUTHORIZATION, "Bearer " + jwt);
     }
 
     /**
+     * Add Client Credentials token cached in the client for standalone application
+     *
+     * This is the method called from standalone application like enterprise scheduler for batch jobs
+     * or mobile apps.
+     *
+     * @param request
+     * @param traceabilityId
+     */
+    public void addCcTokenTrace(HttpRequest request, String traceabilityId) throws ClientException, ApiException {
+        checkCCTokenExpired();
+        request.addHeader(Constants.AUTHORIZATION, "Bearer " + jwt);
+        request.addHeader(Constants.TRACEABILITY_ID, traceabilityId);
+    }
+
+    /**
      * Support API to API calls with scope token. The token is the original token from consumer and
      * the client credentials token of caller API is added from cache.
+     *
+     * This method is used in API to API call
+     *
      * @param request
-     * @param token
+     * @param exchange
      * @throws ClientException
      */
-    public void addAuthorizationWithScopeToken(HttpRequest request, String token) throws ClientException, ApiException {
-        addAuthorization(request, token);
+    public void propagateHeaders(HttpRequest request, final HttpServerExchange exchange) throws ClientException, ApiException {
+        String tid = exchange.getRequestHeaders().getFirst(Constants.TRACEABILITY_ID);
+        String token = exchange.getRequestHeaders().getFirst(Constants.AUTHORIZATION);
+        String cid = exchange.getRequestHeaders().getFirst(Constants.CORRELATION_ID);
+        populateHeader(request, token, cid, tid);
+    }
+
+    /**
+     * Support API to API calls with scope token. The token is the original token from consumer and
+     * the client credentials token of caller API is added from cache. authToken, correlationId and
+     * traceabilityId are passed in as strings.
+     *
+     * This method is used in API to API call
+     *
+     * @param request
+     * @param authToken
+     * @param correlationId
+     * @param traceabilityId
+     * @throws ClientException
+     */
+    public void populateHeader(HttpRequest request, String authToken, String correlationId, String traceabilityId) throws ClientException, ApiException {
+        if(traceabilityId != null) {
+            addAuthTokenTrace(request, authToken, traceabilityId);
+        } else {
+            addAuthToken(request, authToken);
+        }
+        request.addHeader(Constants.CORRELATION_ID, correlationId);
         checkCCTokenExpired();
         request.addHeader(Constants.SCOPE_TOKEN, "Bearer " + jwt);
     }

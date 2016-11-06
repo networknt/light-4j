@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.networknt.audit;
+package com.networknt.dump;
 
 import com.networknt.config.Config;
 import com.networknt.handler.MiddlewareHandler;
@@ -32,14 +32,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Handler that dumps request and response to a log based on the audit.json config
+ * Handler that dumps request and response to a log based on the dump.json config
  * <p>
  * Created by steve on 01/09/16.
  */
-public class FullAuditHandler implements MiddlewareHandler {
-    public static final String CONFIG_NAME = "audit";
-    public static final String ENABLE_FULL_AUDIT = "enableFullAudit";
-    static final String FULL = "full";
+public class DumpHandler implements MiddlewareHandler {
+    public static final String CONFIG_NAME = "dump";
+    public static final String ENABLED = "enabled";
     static final String REQUEST = "request";
     static final String RESPONSE = "response";
     static final String HEADERS = "headers";
@@ -47,7 +46,7 @@ public class FullAuditHandler implements MiddlewareHandler {
     static final String QUERY_PARAMETERS = "queryParameters";
 
     static final Logger audit = LoggerFactory.getLogger(Constants.AUDIT_LOGGER);
-    static final Logger logger = LoggerFactory.getLogger(FullAuditHandler.class);
+    static final Logger logger = LoggerFactory.getLogger(DumpHandler.class);
 
     public static Map<String, Object> config;
 
@@ -56,11 +55,10 @@ public class FullAuditHandler implements MiddlewareHandler {
 
     static {
         config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
-        Map<String, Object> fullMap = (Map<String, Object>) config.get(FULL);
     }
 
 
-    public FullAuditHandler() {
+    public DumpHandler() {
 
     }
 
@@ -84,13 +82,13 @@ public class FullAuditHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        Object object = config.get(ENABLE_FULL_AUDIT);
+        Object object = config.get(ENABLED);
         return object != null && (Boolean)object == true;
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(FullAuditHandler.class.getName(), config, null);
+        ModuleRegistry.registerModule(DumpHandler.class.getName(), config, null);
     }
 
     private void dumpRequest(Map<String, Object> result, HttpServerExchange exchange, Object configObject) {

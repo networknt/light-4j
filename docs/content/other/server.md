@@ -34,7 +34,7 @@ com.networknt.validator.ValidatorHandler
 #Sanitizer Encode cross site scripting
 com.networknt.sanitizer.SanitizerHandler
 #SimpleAudit Log important info about the request into audit log
-com.networknt.audit.SimpleAuditHandler
+com.networknt.audit.AuditHandler
 #Body Parse body based on content type in the header.
 com.networknt.body.BodyHandler
 #Security JWT token verification and scope verification (depending on SwaggerHandler)

@@ -161,7 +161,7 @@ public class ClientTest {
         };
         String responseBody = null;
         try {
-            Client.getInstance().addAuthorizationWithScopeToken(httpGet, "Bearer token");
+            Client.getInstance().populateHeader(httpGet, "Bearer token", "cid", "tid");
             responseBody = client.execute(httpGet, responseHandler);
             Assert.assertEquals("{\"message\":\"OK!\"}", responseBody);
             logger.debug("message = " + responseBody);
@@ -177,7 +177,7 @@ public class ClientTest {
         CloseableHttpAsyncClient client = Client.getInstance().getAsyncClient();
         HttpGet httpGet = new HttpGet(url);
         try {
-            Client.getInstance().addAuthorizationWithScopeToken(httpGet, "Bearer token");
+            Client.getInstance().populateHeader(httpGet, "Bearer token", "cid", "tid");
             Future<HttpResponse> future = client.execute(httpGet, null);
             HttpResponse response = future.get();
             int status = response.getStatusLine().getStatusCode();

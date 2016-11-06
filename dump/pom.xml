@@ -25,27 +25,26 @@
         <relativePath>..</relativePath>
     </parent>
 
-    <artifactId>client</artifactId>
+    <artifactId>dump</artifactId>
     <packaging>jar</packaging>
-    <description>A client module that is used by API consumer to call an API or from an API calling another API.
-    </description>
+    <description>A logger module that dump full request and response for debugging</description>
 
     <dependencies>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>utility</artifactId>
-        </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>config</artifactId>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>status</artifactId>
+            <artifactId>utility</artifactId>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>exception</artifactId>
+            <artifactId>handler</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.undertow</groupId>
+            <artifactId>undertow-core</artifactId>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -72,31 +71,16 @@
             <artifactId>json-path</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpasyncclient</artifactId>
-        </dependency>
-        <dependency>
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
         </dependency>
         <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.undertow</groupId>
-            <artifactId>undertow-core</artifactId>
+            <groupId>org.bitbucket.b_c</groupId>
+            <artifactId>jose4j</artifactId>
+            <version>${version.jose4j}</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>security</artifactId>
-            <scope>test</scope>
-        </dependency>
+
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
@@ -112,7 +96,6 @@
             <artifactId>mockito-core</artifactId>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
 </project>

@@ -97,6 +97,7 @@
         <module>security</module>
         <module>client</module>
         <module>audit</module>
+        <module>dump</module>
         <module>info</module>
         <module>health</module>
         <module>validator</module>
@@ -109,6 +110,7 @@
         <module>metrics</module>
         <module>sanitizer</module>
         <module>traceability</module>
+        <module>correlation</module>
         <module>server</module>
     </modules>
 
@@ -138,6 +140,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>audit</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>dump</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -198,6 +205,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>traceability</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>correlation</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

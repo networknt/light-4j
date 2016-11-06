@@ -48,15 +48,14 @@ import java.util.Map;
  *
  * Created by steve on 17/09/16.
  */
-public class SimpleAuditHandler implements MiddlewareHandler {
+public class AuditHandler implements MiddlewareHandler {
     public static final String CONFIG_NAME = "audit";
-    public static final String ENABLE_SIMPLE_AUDIT = "enableSimpleAudit";
 
-    static final String SIMPLE = "simple";
+    public static final String ENABLED = "enabled";
     static final String HEADERS = "headers";
     static final String STATUS_CODE = "statusCode";
     static final String RESPONSE_TIME = "responseTime";
-    static final String TIMESTAMPT = "timestamp";
+    static final String TIMESTAMP = "timestamp";
 
     public static Map<String, Object> config;
     private static List<String> headerList;
@@ -69,19 +68,18 @@ public class SimpleAuditHandler implements MiddlewareHandler {
 
     static {
         config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
-        Map<String, Object> simpleMap = (Map<String, Object>)config.get(SIMPLE);
-        headerList = (List<String>)simpleMap.get(HEADERS);
-        Object object = simpleMap.get(STATUS_CODE);
+        headerList = (List<String>)config.get(HEADERS);
+        Object object = config.get(STATUS_CODE);
         if(object != null && (Boolean)object == true) {
             statusCode = true;
         }
-        object = simpleMap.get(RESPONSE_TIME);
+        object = config.get(RESPONSE_TIME);
         if(object != null && (Boolean)object == true) {
             responseTime = true;
         }
     }
 
-    public SimpleAuditHandler() {
+    public AuditHandler() {
 
     }
 
@@ -89,7 +87,7 @@ public class SimpleAuditHandler implements MiddlewareHandler {
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         final long start = System.currentTimeMillis();
         Map<String, Object> auditMap = new LinkedHashMap<>();
-        auditMap.put(TIMESTAMPT, System.currentTimeMillis());
+        auditMap.put(TIMESTAMP, System.currentTimeMillis());
         // dump headers according to config
         if(headerList != null && headerList.size() > 0) {
             for(String name: headerList) {
@@ -128,12 +126,12 @@ public class SimpleAuditHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        Object object = config.get(ENABLE_SIMPLE_AUDIT);
+        Object object = config.get(ENABLED);
         return object != null && (Boolean)object == true;
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(SimpleAuditHandler.class.getName(), config, null);
+        ModuleRegistry.registerModule(AuditHandler.class.getName(), config, null);
     }
 }

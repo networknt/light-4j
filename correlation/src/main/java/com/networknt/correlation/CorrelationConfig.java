@@ -14,11 +14,36 @@
  * limitations under the License.
  */
 
-package com.networknt.audit;
+package com.networknt.correlation;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * Created by steve on 01/09/16.
+ * Created by steve on 29/09/16.
  */
-public class AuditHandlerTest {
+public class CorrelationConfig {
+    boolean enabled;
+
+    @JsonIgnore
+    String description;
+
+    public CorrelationConfig() {
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
 }

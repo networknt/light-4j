@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package com.networknt.audit;
+package com.networknt.dump;
 
 /**
  * Created by steve on 01/09/16.
  */
-public class AuditHandlerTest {
-
+public class DumpHandlerTest {
 }

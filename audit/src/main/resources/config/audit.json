@@ -1,36 +1,14 @@
 {
-  "description": "controls how audit info should be logged. FullAudit is not recommended on produciton if performance is important",
-  "enableFullAudit": false,
-  "enableSimpleAudit": true,
-  "full" : {
-    "enableMask": true,
-    "request": {
-      "headers": [
-        "contentType",
-        "characterEncoding"
-      ],
-      "cookies": true,
-      "queryParameters": true,
-      "body": true
-    },
-    "response": {
-      "headers": true,
-      "cookies": true,
-      "body": true,
-      "statusCode": true,
-      "contentLength": true
-    }
-  },
-  "simple": {
-    "statusCode": true,
-    "responseTime": true,
-    "headers": [
-      "correlationId",
-      "traceabilityId",
-      "clientId",
-      "userId",
-      "scopeClientId",
-      "endpoint"
-    ]
-  }
+  "description": "controls how audit info should be logged",
+  "enabled": true,
+  "statusCode": true,
+  "responseTime": true,
+  "headers": [
+    "X-Correlation-Id",
+    "X-Traceability-Id",
+    "clientId",
+    "userId",
+    "scopeClientId",
+    "endpoint"
+  ]
 }
