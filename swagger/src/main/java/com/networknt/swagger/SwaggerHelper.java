@@ -55,11 +55,15 @@ public class SwaggerHelper {
     }
 
     public static Optional<NormalisedPath> findMatchingApiPath(final NormalisedPath requestPath) {
-        return SwaggerHelper.swagger.getPaths().keySet()
-                .stream()
-                .map(p -> (NormalisedPath) new ApiNormalisedPath(p))
-                .filter(p -> pathMatches(requestPath, p))
-                .findFirst();
+        if(SwaggerHelper.swagger != null) {
+            return SwaggerHelper.swagger.getPaths().keySet()
+                    .stream()
+                    .map(p -> (NormalisedPath) new ApiNormalisedPath(p))
+                    .filter(p -> pathMatches(requestPath, p))
+                    .findFirst();
+        } else {
+            return Optional.empty();
+        }
     }
 
     private static String getOAuth2Name() {

@@ -6,9 +6,9 @@
   "headers": [
     "X-Correlation-Id",
     "X-Traceability-Id",
-    "clientId",
-    "userId",
-    "scopeClientId",
+    "client_id",
+    "user_id",
+    "scope_client_id",
     "endpoint"
   ]
 }

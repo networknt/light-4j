@@ -19,6 +19,7 @@ package com.networknt.swagger;
 import com.networknt.config.Config;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.status.Status;
+import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import io.swagger.models.HttpMethod;
 import io.swagger.models.Operation;
@@ -27,6 +28,7 @@ import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
+import io.undertow.util.HttpString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,7 +84,9 @@ public class SwaggerHandler implements MiddlewareHandler {
         }
 
         final SwaggerOperation swaggerOperation = new SwaggerOperation(swaggerPathString, swaggerPath, httpMethod, operation);
-        swaggerOperation.setEndpoint(swaggerPathString.normalised() + "@" + httpMethod);
+        String endpoint = swaggerPathString.normalised() + "@" + httpMethod.toString().toLowerCase();
+        swaggerOperation.setEndpoint(endpoint);
+        exchange.getRequestHeaders().add(new HttpString(Constants.ENDPOINT), endpoint);
         exchange.putAttachment(SWAGGER_OPERATION, swaggerOperation);
 
         next.handleRequest(exchange);
