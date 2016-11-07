@@ -6,8 +6,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
+- Traceability handler to set traceabilityId to the response header from request header
+- Correlation handler to generate correlationId if it doesn't exist in the request header
+- Create dump handler but not implemented yet
 
 ### Changed
+- Update Client to support traceabilityId and correlationId propagation
+- Refactor Audit to split full dump out.
+- Refactor Audit handler to output into audit log
+- Update Swagger Handler to add endpoint into the request header for audit log
+- Update JwtVerifyHandler to put scope_client_id into the request header
+
 
 ## 1.0.2 - 2016-11-03
 ### Added
