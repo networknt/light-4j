@@ -104,7 +104,7 @@ POJO application.
 
 mvn exec:exec
 
-### Copmmand Line
+### Command Line
 
 ```
 java -jar target/demo-0.1.0.jar
