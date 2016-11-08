@@ -56,7 +56,7 @@ If you have OpenAPI/Swagger specification, then you can use
 This is the recommended way to start your REST API project. Here are the steps:
 
 ```
-clone https://github.com/networknt/swagger-codegen
+git clone https://github.com/networknt/swagger-codegen
 cd swagger-codegen
 mvn clean install -DskipTests
 java -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i http://petstore.swagger.io/v2/swagger.json -l light-java -o samples/server/petstore/mypetstore
@@ -104,7 +104,7 @@ POJO application.
 
 mvn exec:exec
 
-### Copmmand Line
+### Command Line
 
 ```
 java -jar target/demo-0.1.0.jar

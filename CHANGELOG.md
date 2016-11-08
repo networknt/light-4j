@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
+
+### Changed
+
+## 1.1.0 - 2016-11-06
+### Added
 - Traceability handler to set traceabilityId to the response header from request header
 - Correlation handler to generate correlationId if it doesn't exist in the request header
 - Create dump handler but not implemented yet
