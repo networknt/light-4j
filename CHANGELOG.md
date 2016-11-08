@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
+- Add a method to get framework version from /META-INFO/maven/com.networknt/info/pom.properties
 
 ### Changed
 
