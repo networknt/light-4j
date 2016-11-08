@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -71,8 +72,7 @@ public class ServerInfoHandler implements HttpHandler {
     public Map<String, Object> getDeployment() {
         Map<String, Object> deploymentMap = new LinkedHashMap<>();
         deploymentMap.put("apiVersion", Util.getJarVersion());
-        // TODO make it work.
-        //deploymentMap.put("frameworkVersion", Util.getFrameworkVersion());
+        deploymentMap.put("frameworkVersion", getFrameworkVersion());
         return deploymentMap;
     }
 
@@ -116,5 +116,22 @@ public class ServerInfoHandler implements HttpHandler {
         systemMap.put("osVersion", properties.getProperty("os.version"));
         systemMap.put("userTimezone", properties.getProperty("user.timezone"));
         return systemMap;
+    }
+
+    public String getFrameworkVersion() {
+        String version = null;
+        String path = "META-INF/maven/com.networknt/info/pom.properties";
+        InputStream in = ClassLoader.getSystemResourceAsStream(path);
+        try {
+            Properties prop = new Properties();
+            prop.load(in);
+            version = prop.getProperty("version");
+        } catch (Exception e) {
+            //logger.error("Exception:", e);
+        } finally {
+            try { in.close(); }
+            catch (Exception ex){}
+        }
+        return version;
     }
 }
