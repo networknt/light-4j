@@ -3,8 +3,6 @@ date: 2016-10-09T08:14:57-04:00
 title: JEE is dead
 ---
 
-##
-
 When Java was out, big players like IBM, BEA, Oracle etc. saw a great opportunity
 to make money as it is a great language for web programming. But how can you make
 big money around a programming language? The answer is to build servers on top 
@@ -68,8 +66,7 @@ market share quickly and Oracle is [dropping JEE support](https://developers.sla
 With microservices gainning traction, the application servers are hard to sell as these
 servers are used to host monolithic applications which is hard to manage. I used to
 work on an application that have hundreds of EJBs and it took 45 minutes to build and deploy
-on WebLogic to test a single line of change. 
- 
+on WebLogic to test a single line of change.  
   
 ## JEE customers
 
@@ -86,18 +83,68 @@ independently.
 
 ## Microservices
 
-The answer for these questions is microservices. Wikipedia defines microservices as 
+The answer for these questions are microservices. Wikipedia defines microservices as 
 "...a software architecture style in which complex applications are composed of small, 
 independent processes communicating with each other using language-agnostic APIs. 
 These services are small, highly decoupled and focus on doing a small task, 
 facilitating a modular approach to system-building."
 
+Microservice Architecture make applications easier to build by breaking down application
+into services. The services are composable. Each service can be deployed and developed 
+separately. The services can be composed into an application. The services have the 
+possibility of being used in other applications more readily. This can speed up 
+development as services can define an interface and then the services can be developed 
+concurrently.
+
+Another reason services make sense is resilience and scalability. Instead of depending 
+on a single server and a single deployment, services can be spread around multiple 
+machines, data centers or availability zones. If a service fails, you can start up 
+another. Since the application is decomposed into microservices (small services), 
+you can more efficiently scale it by spinning up more instances of the heaviest used 
+services.
+
+If you have lived through COM, DCOM, CORBA, EJBs, OSGi, J2EE, SOAP, SOA etc. then you 
+know the idea of services and components is not a new thing. The issue with enterprise 
+components is they assume the use of hardware servers which are large monoliths and 
+you want to run a lot of things on the same server. We have EJBs, WAR files and EAR 
+files, and all sorts of nifty components and archives because server acquisition was 
+a lot more difficult. Well turns out in recent years, that makes no sense. Operating 
+systems and servers are ephemeral, virtualized resources and can be shipped like a 
+component. We have EC2, OpenStack, Vagrant and Docker. The world changed. Microservice 
+Architecture just recognize this trend so you are not developing like you did when the 
+hardware, cloud orchestration, multi-cores, and virtualization did not exist.
+
+Don’t use an EAR file or a WAR file when you start a new project.  Now you can run a 
+JVM in a Docker image which is just a process pretending to be an OS running in an OS 
+that could be running in the cloud which is running inside of a virtual machine which 
+is running in Linux server that you don’t own that you share with people who you don’t 
+know. Got a busy season? Well then, spin up 100 more server instances for a few weeks 
+or hours. This is why you run Java microservices as standalone processes and not running 
+inside of a Java EE container, not even a servlet container. 
+ 
+Microservice generally provide an API endpoint over HTTP/JSON. This allows easy 
+integration with not only services you build, but any software (open-source or from 
+vendor) that provides an HTTP/JSON interface. This makes the services consumable and 
+composable in ways that just make sense. A prime example of this is EC2, S3 and other 
+services from Amazon (and others). The very infrastructure you deploy on can become 
+part of the application and is programmable. 
+
+When you design your application to use microservices, you are designing it to be 
+modular, programmable and composable. This allows you to replace microservices with 
+other microservices. You can rewrite or improve parts of your larger application 
+without disruption. When everything has a programmable API, communications between 
+application microservices becomes easier. (Never trust a microservice that does not 
+publish access to with curl). 
+
+  
+While microservices are getting popular, a lot vendors are trying to re-brand their 
+JEE based web services to microservices in order to sell their obsolete product. 
+[API Gateway](https://networknt.github.io/light-java/architecture/gateway/) is one of them.
 
 Jason Bloomberg, president of Intellyx, talks about the distinction between a typical 
 web service and a microservice, arguing against the tendency to try to simply rebrand 
 web services as microservices in this [article](http://techbeacon.com/dangers-microservices-washing-get-value-strip-away-hype)
 
-  
 Microservices are not Web Services on enterprise service buses (ESBs). And it is not
 the traditional service-oriented architecture (SOA), while it inherits some of the 
 basic principles of SOA, it's fundamentally a different set of practices because the 
@@ -114,6 +161,16 @@ Microservices don't require containers (or vice versa), but they're easily
 containerizable by design. Furthermore, if you're implementing containers, 
 it's difficult and typically unwise to put any new executable code other than 
 microservices in them.
+
+Docker and other container technologies are viewed by some as a integral to microservice 
+architecture and some confuse and conflate containers with microservices. Containers are 
+minimalist OS pieces to run your microservice on. Docker provides ease of development and 
+enables easier integration testing. 
+
+Containers are just an enabler to microservices and you can do microservice development 
+without containers. And you can use Docker to deploy monolithic application. Microservices 
+and containers like Docker go well together. However, Microservices are a lot more than 
+containers! 
 
 ## Conclusion
 

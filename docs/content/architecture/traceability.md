@@ -5,7 +5,7 @@ title: traceability
 
 # 
 
-For microservices architecture, it is very important to trace request from one servcie to 
+For microservices architecture, it is very important to trace request from one service to 
 another in the entire call tree in order to have big picture if something happens or have
 an audit log that is aggregated by database or Splunk.   
 
@@ -39,3 +39,12 @@ Hers is an example to set JWT tokens, traceabilityId and correlationId
 ```
 
 ```
+
+# Recommended Log Analysis Tool
+
+[ELK/Logstash (Open Source)](https://www.elastic.co/products/logstash)
+
+[Graylog (Open Source with commercial version)](https://github.com/Graylog2/graylog2-server)
+
+[Splunk (Commercial)](https://www.splunk.com/)
+
