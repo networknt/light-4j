@@ -1,31 +1,66 @@
 ---
 date: 2016-10-09T08:01:56-04:00
-title: microservices
+title: Microservices
 ---
 
 ## Introduction
 
-These days light weight container like Docker is getting traction, more and more API services are developed for
-docker container and deployed to the cloud. In this environment, traditional heavy weight containers like
-JEE and Spring are losing ground as it doesn't make sense to have a heavy weight container wrapped with a light
-weight docker container. Docker and container orchestration tools like Kubenetes or Docker Swarm are replacing
-all the functionalities JEE provides without hogging resources.
+These days light weight container like Docker is getting traction, more and more 
+API services are developed for docker container and deployed to the cloud. In this
+environment, traditional heavy weight containers like Java EE and Spring are 
+losing ground as it doesn't make sense to have a heavy weight container wrapped 
+with a light weight docker container. Docker and container orchestration tools 
+like Kubernetes or Docker Swarm are replacing all the functionalities Java EE 
+provides without hogging resources.
 
 
-Another clear trend is standalone Gateway is phasing out in the cloud
-environment with docker containers as most of the traditional gateway
-features are replaced by container orchestration tool and docker container
-management tool. In addition, some of the cross cutting concerns gateway
-provided are addressed in API framework.
+Another clear trend is standalone Gateway is phasing out in the cloud environment 
+with docker containers as most of the traditional gateway features are replaced 
+by container orchestration tool and docker container management tools. In addition, 
+some of the cross cutting concerns gateway provided are addressed in API framework.
+
+## Prepare workspace
+
+All specifications and code of the services are on github.com but we are going to
+redo it again by following the steps in the tutorial. Let's first create a
+workspace. I have created a directory named networknt under /home/steve.
+
+Checkout related projects.
+
+```
+cd networknt
+git clone git@github.com:networknt/swagger-codegen.git
+git clone git@github.com:networknt/light-java-example.git
+git clone git@github.com:networknt/swagger.git
+git clone git@github.com:networknt/light-oauth2.git
+
+```
+
+As we are going to regenerate API A, B, C and D, let's rename these folders from
+light-java-example.
+
+```
+cd light-java-example
+mv api_a api_a.bak
+mv api_b api_b.bak
+mv api_c api_c.bak
+mv api_d api_d.bak
+cd ..
+
+```
 
 ## Specifications
 
-Undertow Server Framework encourage Design Driven API building and [OpenAPI
-Specification](https://github.com/OAI/OpenAPI-Specification) is the central
-piece to drive the runtime for security and validation. Also, the
-specification can be used to scaffold a running server project the first time
-so that developers can focus their efforts on the domain business logic
-implementation without worrying about how each components wired together.
+Light Java Microservices Framework encourages Design Driven API building and 
+[OpenAPI Specification](https://github.com/OAI/OpenAPI-Specification) is the central
+piece to drive the runtime for security and validation. Also, the specification 
+can be used to scaffold a running server project the first time so that developers 
+can focus their efforts on the domain business logic implementation without 
+worrying about how each components wired together.
+
+During the service implementation phase, specification might be changed and you can
+regenerate the service codebase again without overwrite your handlers and test
+cases for handlers. 
 
 To create swagger specification, the best tool is
 [swagger-editor](http://swagger.io/swagger-editor/) and I have an
@@ -40,10 +75,12 @@ to fulfill its request.
 
 ```
 API A -> API B -> API D
-         -> API C
+      -> API C
 ```
 
-Here is the API A swagger.yaml and others can be found [here](https://github.com/networknt/swagger)
+Here is the API A swagger.yaml and others can be found at
+[https://github.com/networknt/swagger](https://github.com/networknt/swagger) or light-oauth2
+folder in your workspace. 
 
 ```
 swagger: '2.0'
@@ -95,21 +132,24 @@ securityDefinitions:
       api_a.r: read access
 ```
 
+As defined in the specification, API A will return a list of stings and it requires
+scope api_a.r or scope api_a.w to access the endpoint /data.
+
+
 ## Swagger-Codegen
 
 Now we have four API swagger.yaml files available. Let's use swagger-codegen
-to start four projects in light-java-example. In normal API build, you
+to start four projects in light-java-example. In normal API build, you 
 should create a repo for each API.
 
-#### Clone and build Undertow Server Generator
+#### Build Light Java Generator
 
 As [swagger-codegen](https://github.com/swagger-api/swagger-codegen) doesn't
 support Java 8, I have forked it [here](https://github.com/networknt/swagger-codegen)
 
 ```
-git clone git@github.com:networknt/swagger-codegen.git
 cd swagger-codegen
-mvn clean install
+mvn clean install -DskipTests
 ```
 
 #### Generate first project

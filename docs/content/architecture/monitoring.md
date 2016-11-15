@@ -9,6 +9,7 @@ but mostly it was hands off. When we move to microservices architecture, things
 are changing.  
 
 ## User Experience and Microservices Monitoring
+
 With Microservices which are released more often, you can try new features and
 see how they impact user usage patterns. With this feedback, you can improve 
 your application. It is not uncommon to employ A/B testing and multi-variant 
@@ -18,6 +19,7 @@ monitoring microservices runtime stats is required to know your application
 users. You want to know what your users like and dislike and react. 
 
 ## Debugging and Microservices Monitoring 
+
 Runtime statistics and metrics are critical for distributed systems. Since 
 microservices architecture use a lot of remote calls. Monitoring microservices 
 metrics can include request per second, available memory, #threads, #connections, 
@@ -27,7 +29,8 @@ Working with distributed systems without reactive monitoring is crazy. Reactive
 monitoring allows you to react to failure conditions and ramp of services for 
 higher loads.
 
-## Circuit Breaker and Microservices Monitoring 
+## Circuit Breaker and Microservices Monitoring
+ 
 You can employ the Circuit Breaker pattern to prevent a catastrophic cascade, 
 and reactive microservices monitoring can be the trigger. Downstream services 
 can be registered in a service discovery so that you can mark nodes as unhealthy 
@@ -36,11 +39,13 @@ a deprecated version of the data or service, but the key is to avoid cascading
 failure. You don't want your services falling over like dominoes.
 
 ## Cloud Orchestration and Microservices Monitoring 
+
 Reactive microservices monitoring would enable you to detect heavy load, and 
 spin up new instances with the cloud orchestration platform of your choice 
 (EC2, CloudStack, OpenStack, Rackspace, boto, etc.). 
 
 ## Public Microservices and Microservices Monitoring
+
 Microservices monitoring of runtime statistics can be used to rate limiting 
 a partners Application ID. You don't want partners to consume all of your 
 well-tuned, high-performant microservices resources. It is okay to trust your 
@@ -63,8 +68,6 @@ nights and tears. Monitor microservices that you publish, and limit access to th
 The reactive manifesto is a good tutor for the types of monitoring you will want 
 to do and states that your system should react to change instead of just fail. 
 
-
-
 ## Microservices Framework and Microservices Monitoring
 
 Light-Java a mircoservices framework that comes with a runtime metrics which can 
@@ -75,7 +78,6 @@ be used for Microservices Monitoring.
 * Rate limiting can be enabled at client_id level or ip address/user level.
 * Kubernetes monitors load of each pods and can start new instances on demand.
 * TraceabilityId and CorrelationId in logs that can be traced with tools like Logstash, GrayLog and Splunk.
-
 
 ## Reactive Microservices Monitoring
 
@@ -94,5 +96,28 @@ like Kubernetes can also spin up new nodes/pods. With big data, data science,
 and microservices, monitoring microservices runtime stats is required to know your application 
 users, know your partners, know what your system will do under load, etc. 
 
+## Microservice Logging
+
+Every instance of the service will have a unique identifier which most commonly will be
+the docker container name or the hostname if not deployed in docker container. The code
+to retrieve docker container name and hostname is the same. 
+
+Along with docker container name, traceabilityId and correlationId will be logged as
+context info for each logging statement. And once log files are aggregated together in
+ELK, users can trace a particular transaction based on the traceabilityId or correlationId.
+
+As microservices might be deployed across multiple geo-regions, the timestamp logged must
+be UTC time so that logs can be easily ordered in the ELK. 
+
+
+
+## Microservice Alerting
+
+Logstash has features to send out alert when certain error code is spotted in the log files.
+
+The framework has a component called status and it has all the errors defined in a JSON
+file which can be externalized. All the error code will be in a format ERRXXXXX and
+certain error code can be setup in the alert to send out email or communicate to support
+team with other channels.
 
 
