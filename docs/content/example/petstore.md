@@ -167,7 +167,7 @@ docker build -t networknt/petstore .
 Let's start the docker container.
 
 ```
-docker run -d -p 8080:8080 networknt/petstore
+docker run -d -p 8080:8080 networknt/example_petstore
 ```
 
 In another terminal, run the curl to access the server.
@@ -198,6 +198,15 @@ docker images
 docker tag 9f0b9fe29c44 networknt/example_petstore:latest
 docker push networknt/example_petstore
 
+```
+
+The example_petstore can be found at https://hub.docker.com/u/networknt/dashboard/
+
+And the following command can pull and run the docker image on your local if you have
+docker installed.
+
+```
+docker run -d -p 8080:8080 networknt/example_petstore
 ```
 
 
