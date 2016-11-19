@@ -161,13 +161,13 @@ When petstore is generated, a default Dockerfile is there ready for any customiz
 just use it to create a docker image and start a docker container.
 
 ```
-docker build -t networknt/petstore .
+docker build -t networknt/example-petstore .
 ```
 
 Let's start the docker container.
 
 ```
-docker run -d -p 8080:8080 networknt/example_petstore
+docker run -d -p 8080:8080 networknt/example-petstore
 ```
 
 In another terminal, run the curl to access the server.
@@ -195,8 +195,8 @@ an account on docker hub. For me, I am going to push it to networknt/petstore.
 
 ```
 docker images
-docker tag 9f0b9fe29c44 networknt/example_petstore:latest
-docker push networknt/example_petstore
+docker tag 9f0b9fe29c44 networknt/example-petstore:latest
+docker push networknt/example-petstore
 
 ```
 
@@ -206,7 +206,7 @@ And the following command can pull and run the docker image on your local if you
 docker installed.
 
 ```
-docker run -d -p 8080:8080 networknt/example_petstore
+docker run -d -p 8080:8080 networknt/example-petstore
 ```
 
 
