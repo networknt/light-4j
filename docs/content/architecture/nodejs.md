@@ -28,6 +28,14 @@ shutdown the server. Not ideal but it reduce the risk to certain level. Due to
 this reason, Nodejs API platform is only recommended for readonly API in the
 bank. 
 
+Node server crashes under load (cpu 90% or up). We found this during out loaded
+test with Winston logger enabled and the server always dead without any response
+after a while. The reason is these callbacks don't have enough cpu time to
+complete and there are piling up in memory until you run out of memory, the server
+won't shutdown in this situation but simply won't respond. The solution for
+us is to monitor the cpu usage and starting more containers when it is in 
+heavy load. 
+
 ## Callback Hell
 
 This is know issue for Javascript. Although promise helps a lot, it is still a
@@ -66,7 +74,7 @@ In the above order API, the order has to be routed to an exchange through MQ Que
 but node didn't support it 2 years ago. Also, a lot of existing backend
 systems and databases are not supported even today. I have worked with Strongloop
 and IBM teams for three months to make IBM DB2 
-drive(https://github.com/ibmdb/node-ibm_db/issues/35) worked on production without
+drive(https://github.com/ibmdb/node-ibm_db) worked on production without
 memory leak. 
 
 ## Insufficient of Module and Version Management
@@ -92,7 +100,11 @@ often migrated from frontend without any enterprise level experience. Some of mo
 10 line of the code but will depending on 8 other modules. Write a small express application
 in nodejs and take a look at how many modules in node_modules folder. Is you application
 using them all? I guess less than 5 percent of the code in node_modules are in the 
-execution path and the rest of them are just wasting your hard drive space. 
+execution path and the rest of them are just wasting your hard drive space.
+ 
+TJ mentioned the same reason in his farewell article regarding to the quality of the node
+modules. Javascript sets the bar very low and it attracts a lot of low level developers.
+Remember Visual Basic was the most popular language on Microsoft platform?
 
 ## Stability of the Platform
 
@@ -103,7 +115,7 @@ once it was prouduction ready and then before that Nodejs and IO.js were merged 
 was out. Before Nodejs 4 was production ready, they've moved to Nodejs 5 and now on Nodejs 6.
 
 We are having big issue with Nodejs 0.10.39 as https module is not performing with API to 
-API calls and the issue was resolved in 0.12.x. So our recommenedation for Nodejs API 
+API calls and the issue was resolved in 0.12.x. So our recommendation for Nodejs API 
 framework added another condition upon only readonly API - The API must not call another
 API in https. All APIs that calling another API with https must be implemented in Java 
 framework.
@@ -150,4 +162,5 @@ getting slower and slower.
 
 I work on both Nodejs and Java so my opinion is not biased but to point out the facts on
 Nodejs platform. I am not saying Java is better as I know there are a lot of issues with
-Java. I hope these points will help you in choosing your next application platform. 
+Java. I just hope these points will help you in choosing your next application platform. 
+

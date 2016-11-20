@@ -212,7 +212,118 @@ docker run -d -p 8080:8080 networknt/example-petstore
 
 # Metric
 
+In order to use oauth2(light-oauth2), metrics(Influxdb and Grafana) and 
+logging(Elasticsearch, Logstash and Kibana), please clone the light-docker repo.
 
+Make sure you are in your working directory. For me it is ~/networknt
+
+```
+git clone git@github.com:networknt/light-docker.git
+```
+
+Now let's start all services defined in docker-compose.yml
+
+```
+docker-compose up --build
+```
+
+First let's make sure that Influxdb and Grafana can be accessed.
+
+```
+http://localhost:8083/
+```
+Make sure Influxdb admin page is shown up and metrics database is created.
+
+```
+http://localhost:3000/
+```
+
+Make sure Grafana dashboard is up and you can login with admin/admin.
+
+Once both Influxdb and Grafana are up and running, let's stop the example-petstore
+container by issuing "docker ps" on another terminal to find out the container_id of
+example-petstore. Note: there are several docker containers running so double check
+you have picked the right container_id.
+
+Now run the following command to stop the example-petstore
+
+```
+docker stop [container_id of example-petstore]
+```
+
+In the next step, we are going to start the same container with externalized metrics
+config so that the server can connect to the Influxdb container to report the metrics.
+
+Let's create a folder under /tmp and name it petstore. Within /tmp/petstore, create
+another folder called config. Now create metrics.json in /tmp/petstore/config folder.
+
+```
+{
+  "description": "Metrics handler configuration",
+  "enabled": true,
+  "influxdbProtocol": "http",
+  "influxdbHost": "influxdb",
+  "influxdbPort": 8086,
+  "influxdbName": "metrics",
+  "influxdbUser": "root",
+  "influxdbPass": "root",
+  "reportInMinutes": 1
+}
+```
+
+Please note that the above configuration is only for testing. 
+
+Now start the container and linked to Influxdb. 
+
+```
+docker run -d -p 8080:8080 -v /tmp/petstore/config:/config --network=lightdocker_light networknt/example-petstore
+```
+Access the one endpint several with curl command and wait for one minute.
+
+```
+curl -H "Authorization: Bearer eyJraWQiOiIxMDAiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJ1cm46Y29tOm5ldHdvcmtudDpvYXV0aDI6djEiLCJhdWQiOiJ1cm46Y29tLm5ldHdvcmtudCIsImV4cCI6MTc5NDg3MzA1MiwianRpIjoiSjFKdmR1bFFRMUF6cjhTNlJueHEwQSIsImlhdCI6MTQ3OTUxMzA1MiwibmJmIjoxNDc5NTEyOTMyLCJ2ZXJzaW9uIjoiMS4wIiwidXNlcl9pZCI6InN0ZXZlIiwidXNlcl90eXBlIjoiRU1QTE9ZRUUiLCJjbGllbnRfaWQiOiJmN2Q0MjM0OC1jNjQ3LTRlZmItYTUyZC00YzU3ODc0MjFlNzIiLCJzY29wZSI6WyJ3cml0ZTpwZXRzIiwicmVhZDpwZXRzIl19.gUcM-JxNBH7rtoRUlxmaK6P4xZdEOueEqIBNddAAx4SyWSy2sV7d7MjAog6k7bInXzV0PWOZZ-JdgTTSn6jTb4K3Je49BcGz1BRwzTslJIOwmvqyziF3lcg6aF5iWOTjmVEF0zXwMJtMc_IcF9FAA8iQi2s5l0DYgkMrjkQ3fBhWnopgfkzjbCuZU2mHDSQ6DJmomWpnE9hDxBp_lGjsQ73HWNNKN-XmBEzH-nz-K5-2wm_hiCq3d0BXm57VxuL7dxpnIwhOIMAYR04PvYHyz2S-Nu9dw6apenfyKe8-ydVt7KHnnWWmk1ErlFzCHmsDigJz0ku0QX59lM7xY5i4qA" localhost:8080/v2/pet/111
+```
+
+Go to http://localhost:8083/ and select metrics database and select "SHOW MEASUREMENTS". 
+You will find several measurements created. Some of them are for api view and some of them
+are for client view. 
+
+You can connect Grafana to Influxdb and create dashboards on Grafana to visualize
+the metrics. 
 
 # Logging
+
+Logging is very important in microservices architecture as logs must be aggregated in
+order to trace all the activities of a particular request from consumer. We are using
+ELK stack for logging. In the above step, Elasticsearch, Logstash and Kibana are all
+started in the same docker-compose.yml.
+
+In order for the example-petstore container to forward log files to ELK, we need to
+set up log driver on the application container to forward logs to Logstash.
+ 
+
+Here is the command line to start the example-petstore
+ 
+```
+export LOGSTASH_ADDRESS=$(docker inspect --format '{{ .NetworkSettings.Networks.lightdocker_light.IPAddress }}' lightdocker_logstash_1)
+docker run -d -p 8080:8080 -v /tmp/petstore/config:/config --network=lightdocker_light --log-driver=gelf --log-opt gelf-address=udp://$LOGSTASH_ADDRESS:12201 --log-opt tag="petstore" --log-opt env=dev networknt/example-petstore
+
+```
+
+Now you example-petstore is up and running and all logs have sent to the Logstash and 
+then ElasticSearch. Let's go to the Kibana to see if our logs can be viewed there.
+
+```
+http://localhost:5601/
+```
+
+Just select the default template and you can see the logs there.
+
+# Summary
+
+This conclude the petstore example on the dev environment; however, the steps are not for
+production as there are a lot of security issues need to be addressed and containers
+won't be managed by docker-compose on production. Kubernetes or Docker Swarm will be utilized
+likely. This is out of the scope for this tutorial for now. 
+
 
