@@ -42,7 +42,7 @@ Dockerfile and DevOps supporting files are generated to support dockerization
 
 [light-java](https://github.com/networknt/light-java) to build API
 
-[light-oauth2](https://github.com/networknt/light-portal) to control API access
+[light-oauth2](https://github.com/networknt/light-oauth2) to control API access
 
-[light-portal](https://github.com/networknt/light-oauth2) to manage clients and APIs
+[light-portal](https://github.com/networknt/light-portal) to manage clients and APIs
 
