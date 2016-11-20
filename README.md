@@ -13,7 +13,7 @@ A fast and configurable REST microservices framework for docker containers on th
 
 It is 44 times faster than the most popular microservices platform Spring Boot embedded 
 Tomcat and use only 1/5 of memory. Here is the [benchmark](https://github.com/networknt/light-java-example/tree/master/performance) 
-results compare with Spring Boot, Nodejs and Golang.
+results compare with Spring Boot and other microservices frameworks.
 
 ### Provide middleware components to address cross cutting concerns.
 * Plugin architecture for startup/shutdown hooks and middleware components
@@ -28,11 +28,11 @@ results compare with Spring Boot, Nodejs and Golang.
 * Standardized response code and messages from configuration file
 * Externalized configuration for all modules for dockerized environment 
 
-### Design/Test driven development to increase productivity
+### Design and Test driven development to increase productivity
 Design OpenAPI specification and generate the service from it. The specification is also part
 of the framework to drive security verification and request validation.
 
-Unit/End-to-End tests to enable test driven approach for quality product.
+Unit/End-to-End test stubs are generated to enable test driven approach for quality product.
 
 Debugging within IDE just like standalone application for better developer productivity
 
@@ -42,7 +42,7 @@ Dockerfile and DevOps supporting files are generated to support dockerization
 
 ### OAuth2 server, portal and services to form ecosystem
 
-[OAuth2 server](https://github.com/networknt/light-oauth2) and [Portal](https://github.com/networknt/light-portal)
+[OAuth2 Server](https://github.com/networknt/light-oauth2) and [Portal](https://github.com/networknt/light-portal)
 are working in progress for future production monitoring and management.
 
 
@@ -69,23 +69,40 @@ Please replace the input spec and output folder accordingly.
 
 The server is up and running on port 8080 by default and OAuth JWT verification is off by default.
 
-User your browser/postman to access your endpoints and you will have a message returned.
+Use your browser/postman to access server endpoints and you will have a generated 
+example message returned if the endpoint has a response body.
 
-Here is a video to show you the steps to use generator to start your project.
+Here is a [step by step tutorial](https://networknt.github.io/light-java/example/petstore/) for [example-petstore](https://github.com/networknt/light-java-example/tree/master/petstore) 
+
+And here is a video to show you the steps for above tutorial.
 
 https://www.youtube.com/watch?v=xSJhF1LcE0Q
+
+
+Petstore is a single API, for microservices that involves multiple APIs or services,
+please follow [microservices tutorial](https://networknt.github.io/light-java/tutorials/microservices/)
 
 
 ### Starting from example project
 
 The other way to start your project is to copy from
 [petstore](https://github.com/networknt/light-java-example/tree/master/petstore) project in 
-light-java-example.
+[light-java-example](https://github.com/networknt/light-java-example).
 
 
 ```
+git clone git@github.com:networknt/light-java-example.git
+cd light-java-example/petstore
 mvn clean install exec:exec
 ```
+In another terminal, issue the curl command like this to verify the server is
+working. 
+
+```
+curl localhost:8080/v2/pet/111
+```
+
+## Debugging
 
 [To run/debug from IDE](https://networknt.github.io/light-java/tutorials/debug/), you need to 
 configure a Java application with main class "com.networknt.server.Server" and working 
