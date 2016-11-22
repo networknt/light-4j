@@ -8,18 +8,56 @@ title: petstore
 [Petstore](https://github.com/networknt/light-java-example/tree/master/petstore) 
 is a generated API project based on OpenAPI specification found [here](http://petstore.swagger.io/v2/swagger.json).
 
+
+# Prepare Environment
+
+You need to have Java JDK 8 (I prefer OpenJDK but Oracle JDK will do), Maven, Git and 
+Docker installed before starting this tutorial.
+ 
+Assuming above software packages are installed, let's create a workspace and clone the 
+projects we need for the tutorial.
+
+```
+cd ~
+mkdir workspace
+cd workspace
+git clone git@github.com:networknt/swagger-codegen.git
+git clone git@github.com:networknt/light-java-example.git
+git clone git@github.com:networknt/light-oauth2.git
+git clone git@github.com:networknt/light-docker.git 
+```
+
+We are going to re-generate petstore project in light-java-example. So let's rename
+the directory to petstore.bak
+
+```
+cd light-java-example
+mv petstore petstore.bak
+cd ..
+```
+
+Now let's build the swagger-codegen to make it ready to generate petstore project.
+
+```
+cd swagger-codegen
+mvn install -DskipTests
+```
+
+
+# Generate project
+
 This project will be updated constantly when a new version of Light-Java framework 
 is released or any updates in [swagger-codegen](https://github.com/networknt/swagger-codegen).
 
 Here is the command line to generate this project from swagger-codegen directory. It
 assumes that you have light-java-example cloned in the same working directory and 
-petstore directory is removed. If you keep the existing petstore, it will generate
-other files but not handlers and test cases for handlers by default. When you have
-new endpoints defined in the specification, then new handlers and handler test cases
-will be generated. 
+petstore directory is removed or renamed. If you keep the existing petstore, it will 
+generate other files but not handlers and test cases for handlers by default. When 
+you have new endpoints defined in the specification, then new handlers and handler 
+test cases will be generated. 
 
 ```
-java -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i http://petstore.swagger.io/v2/swagger.json -l light-java -o ~/networknt/light-java-example/petstore
+java -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i http://petstore.swagger.io/v2/swagger.json -l light-java -o ~/workspace/light-java-example/petstore
 
 ```
 
@@ -38,8 +76,8 @@ Now the server will be started and listens to port 8080.
 # Test
 
 The best tool to test REST API is [Postman](https://chrome.google.com/webstore/detail/postman/fhbjgbiflinjbdggehcddcbncdddomop?hl=en)
-It is very easy to set headers and other parameters and save the configuration for future
-recall.
+It is very easy to set headers and other parameters and save the configuration for 
+future usage.
 
 Some people like curl command line and it works as well. Here is one example to access
 one of the endpoint petstore serves. 
@@ -74,7 +112,7 @@ schema with a independent library [json-schema-validator](https://github.com/net
 # Enable secrity
 
 By default, the generated API has security turned off. You an turn on the JWT 
-verification by updating src/main/resources/config/security.json
+verification by updating src/main/resources/config/security.json in petstore project.
 
 Here is the default security.json
 
@@ -146,7 +184,7 @@ token that can be found at [https://github.com/networknt/light-oauth2](https://g
 Let's use that token in curl.
 
 ```
-curl -H "Authorization: Bearer eyJraWQiOiIxMDAiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJ1cm46Y29tOm5ldHdvcmtudDpvYXV0aDI6djEiLCJhdWQiOiJ1cm46Y29tLm5ldHdvcmtudCIsImV4cCI6MTc5NDg3MzA1MiwianRpIjoiSjFKdmR1bFFRMUF6cjhTNlJueHEwQSIsImlhdCI6MTQ3OTUxMzA1MiwibmJmIjoxNDc5NTEyOTMyLCJ2ZXJzaW9uIjoiMS4wIiwidXNlcl9pZCI6InN0ZXZlIiwidXNlcl90eXBlIjoiRU1QTE9ZRUUiLCJjbGllbnRfaWQiOiJmN2Q0MjM0OC1jNjQ3LTRlZmItYTUyZC00YzU3ODc0MjFlNzIiLCJzY29wZSI6WyJ3cml0ZTpwZXRzIiwicmVhZDpwZXRzIl19.gUcM-JxNBH7rtoRUlxmaK6P4xZdEOueEqIBNddAAx4SyWSy2sV7d7MjAog6k7bInXzV0PWOZZ-JdgTTSn6jTb4K3Je49BcGz1BRwzTslJIOwmvqyziF3lcg6aF5iWOTjmVEF0zXwMJtMc_IcF9FAA8iQi2s5l0DYgkMrjkQ3fBhWnopgfkzjbCuZU2mHDSQ6DJmomWpnE9hDxBp_lGjsQ73HWNNKN-XmBEzH-nz-K5-2wm_hiCq3d0BXm57VxuL7dxpnIwhOIMAYR04PvYHyz2S-Nu9dw6apenfyKe8-ydVt7KHnnWWmk1ErlFzCHmsDigJz0ku0QX59lM7xY5i4qA" localhost:8080/v2/pet/111`
+curl -H "Authorization: Bearer eyJraWQiOiIxMDAiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJ1cm46Y29tOm5ldHdvcmtudDpvYXV0aDI6djEiLCJhdWQiOiJ1cm46Y29tLm5ldHdvcmtudCIsImV4cCI6MTc5NDg3MzA1MiwianRpIjoiSjFKdmR1bFFRMUF6cjhTNlJueHEwQSIsImlhdCI6MTQ3OTUxMzA1MiwibmJmIjoxNDc5NTEyOTMyLCJ2ZXJzaW9uIjoiMS4wIiwidXNlcl9pZCI6InN0ZXZlIiwidXNlcl90eXBlIjoiRU1QTE9ZRUUiLCJjbGllbnRfaWQiOiJmN2Q0MjM0OC1jNjQ3LTRlZmItYTUyZC00YzU3ODc0MjFlNzIiLCJzY29wZSI6WyJ3cml0ZTpwZXRzIiwicmVhZDpwZXRzIl19.gUcM-JxNBH7rtoRUlxmaK6P4xZdEOueEqIBNddAAx4SyWSy2sV7d7MjAog6k7bInXzV0PWOZZ-JdgTTSn6jTb4K3Je49BcGz1BRwzTslJIOwmvqyziF3lcg6aF5iWOTjmVEF0zXwMJtMc_IcF9FAA8iQi2s5l0DYgkMrjkQ3fBhWnopgfkzjbCuZU2mHDSQ6DJmomWpnE9hDxBp_lGjsQ73HWNNKN-XmBEzH-nz-K5-2wm_hiCq3d0BXm57VxuL7dxpnIwhOIMAYR04PvYHyz2S-Nu9dw6apenfyKe8-ydVt7KHnnWWmk1ErlFzCHmsDigJz0ku0QX59lM7xY5i4qA" localhost:8080/v2/pet/111
 ```
 
 And we have the result:
@@ -157,8 +195,9 @@ And we have the result:
 
 # Docker
 
-When petstore is generated, a default Dockerfile is there ready for any customization. Let's
-just use it to create a docker image and start a docker container.
+When petstore is generated, a default Dockerfile is there ready for any customization. 
+Let's just use it to create a docker image and start a docker container. Make sure you
+are in light-java-example/petstore folder.
 
 ```
 docker build -t networknt/example-petstore .
@@ -191,7 +230,9 @@ docker stop ad86cc533270
 ```
 
 The next step, let's push the docker image to docker hub. This assumes that you have
-an account on docker hub. For me, I am going to push it to networknt/petstore.
+an account on docker hub. For me, I am going to push it to networknt/example-petstore.
+
+Please skip this step if you don't have a docker hub account yet.
 
 ```
 docker images
@@ -200,7 +241,7 @@ docker push networknt/example-petstore
 
 ```
 
-The example_petstore can be found at https://hub.docker.com/u/networknt/dashboard/
+The example-petstore can be found at https://hub.docker.com/u/networknt/dashboard/
 
 And the following command can pull and run the docker image on your local if you have
 docker installed.
@@ -213,17 +254,13 @@ docker run -d -p 8080:8080 networknt/example-petstore
 # Metric
 
 In order to use oauth2(light-oauth2), metrics(Influxdb and Grafana) and 
-logging(Elasticsearch, Logstash and Kibana), please clone the light-docker repo.
+logging(Elasticsearch, Logstash and Kibana), we've cloned the light-docker repo.
 
-Make sure you are in your working directory. For me it is ~/networknt
-
-```
-git clone git@github.com:networknt/light-docker.git
-```
 
 Now let's start all services defined in docker-compose.yml
 
 ```
+cd ~/workspace/light-docker
 docker-compose up --build
 ```
 
