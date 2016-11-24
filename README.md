@@ -76,8 +76,7 @@ Here is a [step by step tutorial](https://networknt.github.io/light-java/example
 
 And here is a video to show you the steps for above tutorial.
 
-https://www.youtube.com/watch?v=xSJhF1LcE0Q
-
+https://youtu.be/hYXz1lR6NKU
 
 Petstore is a single API, for microservices that involves multiple APIs or services,
 please follow [microservices tutorial](https://networknt.github.io/light-java/tutorials/microservices/)
