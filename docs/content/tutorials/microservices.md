@@ -33,6 +33,7 @@ git clone git@github.com:networknt/swagger-codegen.git
 git clone git@github.com:networknt/light-java-example.git
 git clone git@github.com:networknt/swagger.git
 git clone git@github.com:networknt/light-oauth2.git
+git clone git@github.com:networknt/light-docker.git
 
 ```
 
