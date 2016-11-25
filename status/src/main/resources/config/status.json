@@ -95,6 +95,12 @@
     "message": "CONTENT_TYPE_MISMATCH",
     "description": "Content type in header %s doesn't match the body."
   },
+  "ERR10016": {
+    "statusCode": 400,
+    "code": "ERR10016",
+    "message": "MISSING_HANDlER",
+    "description": "Could not find handler for the uri %s and method %s."
+  },
 
   "ERR11000": {
     "statusCode": 400,
