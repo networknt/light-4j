@@ -10,9 +10,15 @@ is a video to show you how to generate a project from swagger spec.
 
 [light-java-getting-started](https://youtu.be/xSJhF1LcE0Q)
 
+And here is the [step to step tutorial](https://networknt.github.io/light-java/example/petstore/) 
+for [example-petstore](https://github.com/networknt/light-java-example/tree/master/petstore)
+
+
 ## Start from one of the example project
 
-You can find many example projects at a separate repo [light-java-example](https://github.com/networknt/light-java-example)
+This is not recommended but if you don't have OpenAPI specification or
+your service has very special requirement that cannot be generated, you 
+can find many example projects at a separate repo [light-java-example](https://github.com/networknt/light-java-example)
 and start by copying one of them.
 
 ## Building microservices? 

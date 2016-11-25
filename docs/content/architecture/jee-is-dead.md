@@ -42,7 +42,8 @@ In 2009, Ryan Dahl introduced Node.js that supports asynchronous, non-blocking
 and event-driven I/O. This increase the response rate dramatically as the server 
 threads are well utilized and the throughput of a single server can be comparable 
 to a cluster of JEE servers. Node.js is a very good design but it has its 
-limitations. It is hard to scale and hard to integrate with existing legacy systems.
+[limitations](https://networknt.github.io/light-java/architecture/nodejs/). 
+It is hard to scale and hard to integrate with existing legacy systems.
 
 
 In 2014, a new player Undertow came in town and it is Java based non-blocking web 
