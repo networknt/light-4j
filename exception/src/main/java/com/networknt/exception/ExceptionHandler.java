@@ -25,6 +25,7 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 /**
  * Created by steve on 29/09/16.
@@ -71,6 +72,10 @@ public class ExceptionHandler implements MiddlewareHandler {
                     }
                 }
             }
+        } finally {
+            // at last, clean the MDC. Most likely, correlationId in side.
+            //logger.debug("Clear MDC");
+            MDC.clear();
         }
     }
 

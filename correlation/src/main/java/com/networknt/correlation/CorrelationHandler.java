@@ -27,6 +27,7 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HttpString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 /**
  * This is a handler that checks if X-Correlation-Id exists in request header and put it into
@@ -58,10 +59,13 @@ public class CorrelationHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        String cid = exchange.getRequestHeaders().getFirst(Constants.CORRELATION_ID);
-        if(cid == null) {
-            exchange.getRequestHeaders().put(new HttpString(Constants.CORRELATION_ID), Util.getUUID());
+        String cId = exchange.getRequestHeaders().getFirst(Constants.CORRELATION_ID);
+        if(cId == null) {
+            cId = Util.getUUID();
+            exchange.getRequestHeaders().put(new HttpString(Constants.CORRELATION_ID), cId);
         }
+        MDC.put("cId", cId);
+        //logger.debug("Init cId:" + cId);
         next.handleRequest(exchange);
     }
 
