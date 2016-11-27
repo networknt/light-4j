@@ -6,9 +6,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
-- Add a method to get framework version from /META-INFO/maven/com.networknt/info/pom.properties
 
 ### Changed
+
+
+## 1.1.1 - 2016-11-26
+### Added
+- Add a method to get framework version from /META-INFO/maven/com.networknt/info/pom.properties
+- Add a missing handler error code in status.json
+- Add MDC for correlation id in logging
+- Add service module which is a singleton service factory
+
+### Changed
+- Disable metrics by default in metrics module so that it won't try to report to influxdb
 
 ## 1.1.0 - 2016-11-06
 ### Added
