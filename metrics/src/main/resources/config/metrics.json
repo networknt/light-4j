@@ -1,6 +1,6 @@
 {
   "description": "Metrics handler configuration",
-  "enabled": true,
+  "enabled": false,
   "influxdbProtocol": "http",
   "influxdbHost": "localhost",
   "influxdbPort": 8086,
