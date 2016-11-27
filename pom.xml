@@ -111,6 +111,7 @@
         <module>sanitizer</module>
         <module>traceability</module>
         <module>correlation</module>
+        <module>service</module>
         <module>server</module>
     </modules>
 
@@ -210,6 +211,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>correlation</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>service</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
