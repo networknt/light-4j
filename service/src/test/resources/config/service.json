@@ -3,6 +3,7 @@
   "singletons": [
     "com.networknt.service.A:com.networknt.service.AImpl",
     "com.networknt.service.B:com.networknt.service.BTestImpl",
+    "com.networknt.service.C:com.networknt.service.CImpl",
     "com.networknt.service.Processor:com.networknt.service.ProcessorAImpl,com.networknt.service.ProcessorBImpl,com.networknt.service.ProcessorCImpl"
   ]
 }

@@ -16,6 +16,9 @@ public class SingletonServiceFactoryTest {
 
         B b = (B)SingletonServiceFactory.getBean(B.class);
         Assert.assertEquals("b test", b.b());
+
+        C c = (C)SingletonServiceFactory.getBean(C.class);
+        Assert.assertEquals("a realb test", c.c());
     }
 
     @Test
