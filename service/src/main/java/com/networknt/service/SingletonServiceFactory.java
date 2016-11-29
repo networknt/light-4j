@@ -30,21 +30,39 @@ public class SingletonServiceFactory {
             if(singletons != null && singletons.size() > 0) {
                 for(String singleton: singletons) {
                     int p = singleton.indexOf(':');
-                    String interfaceName = singleton.substring(0, p);
-                    Class interfaceClass = Class.forName(interfaceName);
+                    String interfaceNames = singleton.substring(0, p);
+                    List<Class> interfaceClasses = new ArrayList();
+                    if(interfaceNames.contains(",")) {
+                        String[] interfaces = interfaceNames.split(",");
+                        for(int i = 0; i < interfaces.length; i++) {
+                            interfaceClasses.add(Class.forName(interfaces[i]));
+                        }
+                    } else {
+                        interfaceClasses.add(Class.forName(interfaceNames));
+                    }
 
                     String implNames = singleton.substring(p + 1);
                     if(implNames.contains(",")) {
                         String[] impls = implNames.split(",");
-                        Object array = Array.newInstance(interfaceClass, impls.length);
+                        List<Object> arrays = new ArrayList();
+                        for(Class c: interfaceClasses) {
+                            arrays.add(Array.newInstance(c, impls.length));
+                        }
                         for(int i = 0; i < impls.length; i++) {
                             Class implClass = Class.forName(impls[i]);
-                            Array.set(array, i, construct(implClass));
+                            for(int j = 0; j < arrays.size(); j++) {
+                                Array.set(arrays.get(j), i, construct(implClass));
+                            }
                         }
-                        serviceMap.put(interfaceClass, array);
+                        for(int i = 0; i < interfaceClasses.size(); i++) {
+                            serviceMap.put(interfaceClasses.get(i), arrays.get(i));
+                        }
                     } else {
                         Class implClass = Class.forName(implNames);
-                        serviceMap.put(interfaceClass, construct(implClass));
+                        Object obj = construct(implClass);
+                        for(Class c: interfaceClasses) {
+                            serviceMap.put(c, obj);  // all interfaces share the same impl
+                        }
                     }
                 }
             }

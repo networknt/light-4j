@@ -2,6 +2,7 @@ package com.networknt.service;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.xml.sax.SAXNotRecognizedException;
 
 import java.util.Arrays;
 
@@ -27,4 +28,20 @@ public class SingletonServiceFactoryTest {
         //Processor[] processors = (Processor[])object;
         Arrays.stream((Processor[])object).forEach(processor -> System.out.println(processor.process()));
     }
+
+    @Test
+    public void testMultipleInterfaceOneBean() {
+        Object object1 = SingletonServiceFactory.getBean(D1.class);
+        Object object2 = SingletonServiceFactory.getBean(D2.class);
+        Assert.assertEquals(object1, object2);
+    }
+
+    @Test
+    public void testMultipleToMultiple() {
+        Object e = SingletonServiceFactory.getBean(E.class);
+        Arrays.stream((E[])e).forEach(o -> System.out.println(o.e()));
+        Object f = SingletonServiceFactory.getBean(F.class);
+        Arrays.stream((F[])f).forEach(o -> System.out.println(o.f()));
+    }
+
 }
