@@ -29,6 +29,9 @@ public class SingletonServiceFactory {
         try {
             if(singletons != null && singletons.size() > 0) {
                 for(String singleton: singletons) {
+                    // remove white spaces
+                    singleton = singleton.replaceAll("\\s+","");
+
                     int p = singleton.indexOf(':');
                     String interfaceNames = singleton.substring(0, p);
                     List<Class> interfaceClasses = new ArrayList();
@@ -101,12 +104,6 @@ public class SingletonServiceFactory {
             } else {
                 instance = clazz.newInstance();
             }
-            /*
-            Type[] gpType = ctor.getGenericParameterTypes();
-            for (int j = 0; j < gpType.length; j++) {
-                System.out.println("gpType = " + gpType[j]);
-            }
-            */
         }
         return instance;
 
