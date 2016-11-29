@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.1.2 - 2016-11-28
+### Added
+
+### Changed
+- Add support to one interface to map multiple implementations in singleton service factory
+- Add support to multiple interfaces to map multiple implementations in singleton service factory
 
 ## 1.1.1 - 2016-11-26
 ### Added
