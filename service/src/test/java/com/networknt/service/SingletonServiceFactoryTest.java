@@ -51,4 +51,13 @@ public class SingletonServiceFactoryTest {
         Assert.assertEquals(23, g.getAge());
 
     }
+
+    //@Test
+    public void testMultipleWithProperties() {
+        Object j = SingletonServiceFactory.getBean(J.class);
+        Arrays.stream((J[])j).forEach(o -> System.out.println(o.getJack()));
+        Object k = SingletonServiceFactory.getBean(K.class);
+        Arrays.stream((K[])k).forEach(o -> System.out.println(o.getKing()));
+
+    }
 }

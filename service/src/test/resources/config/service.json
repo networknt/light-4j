@@ -22,6 +22,12 @@
       "com.networknt.service.G": [
         {"com.networknt.service.GImpl": {"name": "Sky Walker", "age": 23}}
       ]
+    },
+    {
+      "com.networknt.service.J,com.networknt.service.K": [
+        {"com.networknt.service.JK1Impl": {"jack": "Jack1", "king": "King1"}},
+        {"com.networknt.service.JK2Impl": {"jack": "Jack2", "king": "King2"}}
+      ]
     }
   ]
 }

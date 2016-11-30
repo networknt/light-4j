@@ -8,8 +8,6 @@ import java.beans.Introspector;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
-import java.security.Provider;
 import java.util.*;
 
 /**
@@ -99,8 +97,39 @@ public class SingletonServiceFactory {
                     Array.set(arrays.get(j), i, construct(implClass));
                 }
             } else {
-                // map of impl class and properties
+                // TODO map of impl class and properties.
+                /*
+                Map<String, Map<String, Object>> map = (Map<String, Map<String, Object>>)object;
+                // construct it using default construct and call all set methods with values defined in the properties
+                Iterator it = map.entrySet().iterator();
+                while(it.hasNext()) {
+                    Map.Entry<String, Map<String, Object>> pair = (Map.Entry) it.next();
+                    String key = pair.getKey();
+                    Map<String, Object> properties = pair.getValue();
+                    Class implClass = Class.forName(key);
+                    Object obj = construct(implClass);
 
+                    Method[] allMethods = implClass.getMethods();
+                    for(Method method : allMethods) {
+
+                        if(method.getName().startsWith("set")) {
+                            Object [] o = new Object [1];
+                            String propertyName = Introspector.decapitalize(method.getName().substring(3));
+                            Object v = properties.get(propertyName);
+                            if(v == null) {
+                                // it is not primitive type, so find the object in service map.
+                                Class<?>[] pType  = method.getParameterTypes();
+                                v = serviceMap.get(pType[0]);
+                            }
+                            o[0] = v;
+                            method.invoke(obj, o);
+                        }
+                    }
+                    for(Class c: interfaceClasses) {
+                        serviceMap.put(c, obj);  // all interfaces share the same impl
+                    }
+                }
+                */
             }
         }
         for(int i = 0; i < interfaceClasses.size(); i++) {
