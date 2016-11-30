@@ -44,4 +44,11 @@ public class SingletonServiceFactoryTest {
         Arrays.stream((F[])f).forEach(o -> System.out.println(o.f()));
     }
 
+    @Test
+    public void testSingleWithProperties() {
+        G g = (G)SingletonServiceFactory.getBean(G.class);
+        Assert.assertEquals("Sky Walker", g.getName());
+        Assert.assertEquals(23, g.getAge());
+
+    }
 }

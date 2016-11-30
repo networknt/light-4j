@@ -1,11 +1,27 @@
 {
   "description": "singleton service factory configuration",
   "singletons": [
-    "com.networknt.service.A:com.networknt.service.AImpl",
-    "com.networknt.service.B:com.networknt.service.BTestImpl",
-    "com.networknt.service.C:com.networknt.service.CImpl",
-    "com.networknt.service.Processor:com.networknt.service.ProcessorAImpl,com.networknt.service.ProcessorBImpl,com.networknt.service.ProcessorCImpl",
-    "com.networknt.service.D1,com.networknt.service.D2:com.networknt.service.DImpl",
-    "com.networknt.service.E, com.networknt.service.F:com.networknt.service.EF1Impl, com.networknt.service.EF2Impl"
+    {"com.networknt.service.A" : ["com.networknt.service.AImpl"]},
+    {"com.networknt.service.B" : ["com.networknt.service.BTestImpl"]},
+    {"com.networknt.service.C" : ["com.networknt.service.CImpl"]},
+    {
+      "com.networknt.service.Processor": [
+        "com.networknt.service.ProcessorAImpl",
+        "com.networknt.service.ProcessorBImpl",
+        "com.networknt.service.ProcessorCImpl"
+      ]
+    },
+    {"com.networknt.service.D1,com.networknt.service.D2":["com.networknt.service.DImpl"]},
+    {
+      "com.networknt.service.E,com.networknt.service.F": [
+        "com.networknt.service.EF1Impl",
+        "com.networknt.service.EF2Impl"
+      ]
+    },
+    {
+      "com.networknt.service.G": [
+        {"com.networknt.service.GImpl": {"name": "Sky Walker", "age": 23}}
+      ]
+    }
   ]
 }
