@@ -23,6 +23,7 @@ public class SingletonServiceFactory {
         ServiceConfig serviceConfig =
                 (ServiceConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServiceConfig.class);
         List<Map<String, List<Object>>> singletons = serviceConfig.getSingletons();
+        //logger.debug("singletons " + singletons);
         try {
             if(singletons != null && singletons.size() > 0) {
                 for(Map<String, List<Object>> singleton: singletons) {
@@ -51,12 +52,15 @@ public class SingletonServiceFactory {
         } else {
             // map of impl class and properties.
             Map<String, Map<String, Object>> map = (Map<String, Map<String, Object>>)object;
+            //logger.debug("map = " + map);
             // construct it using default construct and call all set methods with values defined in the properties
             Iterator it = map.entrySet().iterator();
             if (it.hasNext()) {
                 Map.Entry<String, Map<String, Object>> pair = (Map.Entry) it.next();
                 String key = pair.getKey();
                 Map<String, Object> properties = pair.getValue();
+                //logger.debug("key=" + key);
+                //logger.debug("properties = " + properties);
                 Class implClass = Class.forName(key);
                 Object obj = construct(implClass);
 
@@ -64,6 +68,7 @@ public class SingletonServiceFactory {
                 for(Method method : allMethods) {
 
                     if(method.getName().startsWith("set")) {
+                        //logger.debug("method name " + method.getName());
                         Object [] o = new Object [1];
                         String propertyName = Introspector.decapitalize(method.getName().substring(3));
                         Object v = properties.get(propertyName);
@@ -72,8 +77,10 @@ public class SingletonServiceFactory {
                             Class<?>[] pType  = method.getParameterTypes();
                             v = serviceMap.get(pType[0]);
                         }
-                        o[0] = v;
-                        method.invoke(obj, o);
+                        if(v != null) {
+                            o[0] = v;
+                            method.invoke(obj, o);
+                        }
                     }
                 }
                 for(Class c: interfaceClasses) {
