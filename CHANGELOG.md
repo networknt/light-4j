@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.1.3 - 2016-11-28
+### Added
+
+### Changed
+- Service config changed to JSON format so that properties can be injected 
+
 ## 1.1.2 - 2016-11-28
 ### Added
 
