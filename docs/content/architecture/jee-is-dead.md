@@ -1,13 +1,13 @@
 ---
 date: 2016-10-09T08:14:57-04:00
-title: JEE is dead
+title: Microservices - The final nail in the coffin for Java EE
 ---
 
 When Java was out, big players like IBM, BEA, Oracle etc. saw a great opportunity
 to make money as it is a great language for web programming. But how can you make
 big money around a programming language? The answer is to build servers on top 
 of it and make it complicated so big corporations will pay big bucks for it. That 
-is why we have JEE specs, JSRs, Weblogic, Websphere and other servers.
+is why we have Java EE specs, JSRs, Weblogic, Websphere and other servers.
 
 Large packages are deployed on these servers that are run so slow and used too 
 much memory. Development and Debugging within a container was a nightmare for 
@@ -20,17 +20,17 @@ Servlet container.
 
 For a long time, Java was used within enterprises and big corporations as only 
 they can afford million-dollar application servers and well paid enterprise level 
-developers. I myself have been riding the train since beginning as a JEE 
+developers. I myself have been riding the train since beginning as a Java EE 
 consultant☺
 
 In 2003, Rod Johnson released Spring Framework and it allows IoC and POJO for 
 development without EJBs. The productivity increment is huge and a lot of 
 developers jumped onto it and thrown J2EE EJBs out of the window. The application
-server vendors saw this and in JEE5, they provided some features to make developer 
-more productive and less painful. Unfortunately, today’s [Spring Framework is so 
+server vendors saw this and in Java EE 5, they provided some features to make 
+developer's life easier and less painfull, today’s [Spring Framework is so 
 bloated](https://networknt.github.io/light-java/architecture/spring-is-bloated/) 
-like JEE containers and it still based on JEE servlet container which was
-designed over ten years ago without considering multiple cores and NIO.
+like Java EE containers and it still based on Java EE servlet container which was
+designed in 90's without considering multiple cores and NIO.
 
 During this period of time, PHP was flying. It used less memory and resource and 
 was well supported by hosting companies. Some CMS platform built on PHP like 
@@ -41,7 +41,7 @@ and hard to make it scalable.
 In 2009, Ryan Dahl introduced Node.js that supports asynchronous, non-blocking 
 and event-driven I/O. This increase the response rate dramatically as the server 
 threads are well utilized and the throughput of a single server can be comparable 
-to a cluster of JEE servers. Node.js is a very good design but it has its 
+to a cluster of Java EE servers. Node.js is a very good design but it has its 
 [limitations](https://networknt.github.io/light-java/architecture/nodejs/). 
 It is hard to scale and hard to integrate with existing legacy systems.
 
@@ -53,26 +53,33 @@ on a single $8000 dell server using the same test case Google claimed to serve
 1 million requests with a cluster. It is lightweight with the core coming under 
 1Mb and a simple embedded server uses less than 4Mb of heap space. 
 
-With the new Undertow Core, we've built Light Java Framework which is aiming containerized
-microserivces. It supports design driven approach from OpenAPI specification to 
-generate code and drives security and validation during runtime. 
+With the new Undertow Core, we've built [Light Java Framework](https://github.com/networknt/light-java) 
+which is aiming containerized microserivces. It supports design driven approach 
+from OpenAPI specification to generate code and drives security and validation 
+during runtime. 
 
-## JEE vendors
+## Java EE vendors
 
-Years ago, JEE vendors like Oracle and IBM spent billions dollars to develop their 
+Years ago, Java EE vendors like Oracle and IBM spent billions dollars to develop their 
 application servers and these servers (WebLogic and WebSphere) will be sold for millions
 dollars to big organizations. Now it is hard to sell these servers as JBoss is grabbing
-market share quickly and Oracle is [dropping JEE support](https://developers.slashdot.org/story/16/07/02/1639241/oracle-may-have-stopped-funding-and-developing-java-ee)
+market share quickly and Oracle is [dropping Java EE support](https://developers.slashdot.org/story/16/07/02/1639241/oracle-may-have-stopped-funding-and-developing-java-ee)
 
 With microservices gainning traction, the application servers are hard to sell as these
-servers are used to host monolithic applications which is hard to manage. I used to
-work on an application that have hundreds of EJBs and it took 45 minutes to build and deploy
-on WebLogic to test a single line of change.  
+servers are used to host monolithic applications. It doesn't make sense to host a service
+with only 200 lines of code on WebSphere which has several millions lines of code. 
+99 percent of CPU and memory will be wasted on the Java EE server and your service will be
+slow as a snail. This forces them to rebrand and make changes on their platform to allow 
+user to build microservices but the result is not promising. I have tested JBoss WildFly
+Swarm in my [benchmarks](https://github.com/networknt/light-java-example/tree/master/performance)
+and it is at the bottom. WebLogic Multitenant and WebSphere Liberty will be much worse as
+they are significant bigger than WildFly Swarm.
   
-## JEE customers
+  
+## Java EE customers
 
 From customer's perspective, it is not worth buying these applications as all the promises
-of JEE are not true. You build an application for WebSphere cannot be deployed on WebLogic
+of Java EE are not true. You build an application for WebSphere cannot be deployed on WebLogic
 and you have to spend money to upgrade your application to newer version of the application
 server as the old version is not supported anymore. And these upgrade cost millions of
 dollars plus the cost of the new application servers.
@@ -104,7 +111,7 @@ another. Since the application is decomposed into microservices (small services)
 you can more efficiently scale it by spinning up more instances of the heaviest used 
 services.
 
-If you have lived through COM, DCOM, CORBA, EJBs, OSGi, J2EE, SOAP, SOA etc. then you 
+If you have lived through COM, DCOM, CORBA, EJBs, OSGi, SOAP, SOA etc. then you 
 know the idea of services and components is not a new thing. The issue with enterprise 
 components is they assume the use of hardware servers which are large monoliths and 
 you want to run a lot of things on the same server. We have EJBs, WAR files and EAR 
@@ -139,8 +146,10 @@ publish access to with curl).
 
   
 While microservices are getting popular, a lot vendors are trying to re-brand their 
-JEE based web services to microservices in order to sell their obsolete product. 
-[API Gateway](https://networknt.github.io/light-java/architecture/gateway/) is one of them.
+Java EE based web services to microservices in order to sell their obsolete product. 
+[API Gateway](https://networknt.github.io/light-java/architecture/gateway/) is one of 
+them. These gateways are designed for Web Services but not Microservices. 
+
 
 Jason Bloomberg, president of Intellyx, talks about the distinction between a typical 
 web service and a microservice, arguing against the tendency to try to simply rebrand 
@@ -184,6 +193,8 @@ an open source microservices framework [Light Java](https://github.com/networknt
 which provides all cross cutting concerns for microservices running in containers. It
 supports design driven approach and developers will only focus on the domain business
 logic in generated handlers. All the rest will be handled by the Framework and DevOps flow.
+So far, it is the fastest microservices framework available. 
+
 
 
 
