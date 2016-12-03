@@ -4,14 +4,11 @@ import com.networknt.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.beans.Introspector;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Type;
-import java.security.Provider;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Method;
+import java.util.*;
 
 /**
  * Created by stevehu on 2016-11-26.
@@ -25,52 +22,144 @@ public class SingletonServiceFactory {
     static {
         ServiceConfig serviceConfig =
                 (ServiceConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServiceConfig.class);
-        List<String> singletons = serviceConfig.getSingletons();
+        List<Map<String, List<Object>>> singletons = serviceConfig.getSingletons();
+        //logger.debug("singletons " + singletons);
         try {
             if(singletons != null && singletons.size() > 0) {
-                for(String singleton: singletons) {
-                    // remove white spaces
-                    singleton = singleton.replaceAll("\\s+","");
-
-                    int p = singleton.indexOf(':');
-                    String interfaceNames = singleton.substring(0, p);
-                    List<Class> interfaceClasses = new ArrayList();
-                    if(interfaceNames.contains(",")) {
-                        String[] interfaces = interfaceNames.split(",");
-                        for(int i = 0; i < interfaces.length; i++) {
-                            interfaceClasses.add(Class.forName(interfaces[i]));
-                        }
-                    } else {
-                        interfaceClasses.add(Class.forName(interfaceNames));
-                    }
-
-                    String implNames = singleton.substring(p + 1);
-                    if(implNames.contains(",")) {
-                        String[] impls = implNames.split(",");
-                        List<Object> arrays = new ArrayList();
-                        for(Class c: interfaceClasses) {
-                            arrays.add(Array.newInstance(c, impls.length));
-                        }
-                        for(int i = 0; i < impls.length; i++) {
-                            Class implClass = Class.forName(impls[i]);
-                            for(int j = 0; j < arrays.size(); j++) {
-                                Array.set(arrays.get(j), i, construct(implClass));
-                            }
-                        }
-                        for(int i = 0; i < interfaceClasses.size(); i++) {
-                            serviceMap.put(interfaceClasses.get(i), arrays.get(i));
-                        }
-                    } else {
-                        Class implClass = Class.forName(implNames);
-                        Object obj = construct(implClass);
-                        for(Class c: interfaceClasses) {
-                            serviceMap.put(c, obj);  // all interfaces share the same impl
-                        }
+                for(Map<String, List<Object>> singleton: singletons) {
+                    Iterator it = singleton.entrySet().iterator();
+                    if (it.hasNext()) {
+                        Map.Entry<String, List<Object>> pair = (Map.Entry)it.next();
+                        String key = pair.getKey();
+                        List<Object> value = pair.getValue();
+                        handleSingleton(key, value);
                     }
                 }
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
+        }
+    }
+
+    public static void handleSingleImpl(List<Class> interfaceClasses, List<Object> value) throws ClassNotFoundException, Exception {
+        Object object = value.get(0);
+        if(object instanceof String) {
+            Class implClass = Class.forName((String)object);
+            Object obj = construct(implClass);
+            for(Class c: interfaceClasses) {
+                serviceMap.put(c, obj);  // all interfaces share the same impl
+            }
+        } else {
+            // map of impl class and properties.
+            Map<String, Map<String, Object>> map = (Map<String, Map<String, Object>>)object;
+            //logger.debug("map = " + map);
+            // construct it using default construct and call all set methods with values defined in the properties
+            Iterator it = map.entrySet().iterator();
+            if (it.hasNext()) {
+                Map.Entry<String, Map<String, Object>> pair = (Map.Entry) it.next();
+                String key = pair.getKey();
+                Map<String, Object> properties = pair.getValue();
+                //logger.debug("key=" + key);
+                //logger.debug("properties = " + properties);
+                Class implClass = Class.forName(key);
+                Object obj = construct(implClass);
+
+                Method[] allMethods = implClass.getMethods();
+                for(Method method : allMethods) {
+
+                    if(method.getName().startsWith("set")) {
+                        //logger.debug("method name " + method.getName());
+                        Object [] o = new Object [1];
+                        String propertyName = Introspector.decapitalize(method.getName().substring(3));
+                        Object v = properties.get(propertyName);
+                        if(v == null) {
+                            // it is not primitive type, so find the object in service map.
+                            Class<?>[] pType  = method.getParameterTypes();
+                            v = serviceMap.get(pType[0]);
+                        }
+                        if(v != null) {
+                            o[0] = v;
+                            method.invoke(obj, o);
+                        }
+                    }
+                }
+                for(Class c: interfaceClasses) {
+                    serviceMap.put(c, obj);  // all interfaces share the same impl
+                }
+            }
+        }
+    }
+
+    public static void handleMultipleImpl(List<Class> interfaceClasses, List<Object> value) throws ClassNotFoundException, Exception {
+
+        List<Object> arrays = new ArrayList();
+        for(Class c: interfaceClasses) {
+            arrays.add(Array.newInstance(c, value.size()));
+        }
+        for(int i = 0; i < value.size(); i++) {
+            Object object = value.get(i);
+            if(object instanceof String) {
+                Class implClass = Class.forName((String)value.get(i));
+                for(int j = 0; j < arrays.size(); j++) {
+                    Array.set(arrays.get(j), i, construct(implClass));
+                }
+            } else {
+                // TODO map of impl class and properties.
+                /*
+                Map<String, Map<String, Object>> map = (Map<String, Map<String, Object>>)object;
+                // construct it using default construct and call all set methods with values defined in the properties
+                Iterator it = map.entrySet().iterator();
+                while(it.hasNext()) {
+                    Map.Entry<String, Map<String, Object>> pair = (Map.Entry) it.next();
+                    String key = pair.getKey();
+                    Map<String, Object> properties = pair.getValue();
+                    Class implClass = Class.forName(key);
+                    Object obj = construct(implClass);
+
+                    Method[] allMethods = implClass.getMethods();
+                    for(Method method : allMethods) {
+
+                        if(method.getName().startsWith("set")) {
+                            Object [] o = new Object [1];
+                            String propertyName = Introspector.decapitalize(method.getName().substring(3));
+                            Object v = properties.get(propertyName);
+                            if(v == null) {
+                                // it is not primitive type, so find the object in service map.
+                                Class<?>[] pType  = method.getParameterTypes();
+                                v = serviceMap.get(pType[0]);
+                            }
+                            o[0] = v;
+                            method.invoke(obj, o);
+                        }
+                    }
+                    for(Class c: interfaceClasses) {
+                        serviceMap.put(c, obj);  // all interfaces share the same impl
+                    }
+                }
+                */
+            }
+        }
+        for(int i = 0; i < interfaceClasses.size(); i++) {
+            serviceMap.put(interfaceClasses.get(i), arrays.get(i));
+        }
+
+    }
+    public static void handleSingleton(String key, List<Object> value) throws Exception {
+
+        List<Class> interfaceClasses = new ArrayList();
+        if(key.contains(",")) {
+            String[] interfaces = key.split(",");
+            for(int i = 0; i < interfaces.length; i++) {
+                interfaceClasses.add(Class.forName(interfaces[i]));
+            }
+        } else {
+            interfaceClasses.add(Class.forName(key));
+        }
+        // the value can be a list of implementation class names or a map.
+        if(value != null && value.size() == 1) {
+            handleSingleImpl(interfaceClasses, value);
+        } else {
+            handleMultipleImpl(interfaceClasses, value);
         }
     }
 

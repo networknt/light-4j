@@ -1,13 +1,14 @@
 package com.networknt.service;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by stevehu on 2016-11-26.
  */
 public class ServiceConfig {
     String description;
-    List<String> singletons;
+    List<Map<String, List<Object>>> singletons;
 
     public ServiceConfig() {
     }
@@ -20,11 +21,11 @@ public class ServiceConfig {
         this.description = description;
     }
 
-    public List<String> getSingletons() {
+    public List<Map<String, List<Object>>> getSingletons() {
         return singletons;
     }
 
-    public void setSingletons(List<String> singletons) {
+    public void setSingletons(List<Map<String, List<Object>>> singletons) {
         this.singletons = singletons;
     }
 }

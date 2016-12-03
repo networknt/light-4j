@@ -5,6 +5,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by stevehu on 2016-11-26.
@@ -15,7 +16,7 @@ public class ServiceConfigTest {
     public void testServiceConfig() {
 
         ServiceConfig serviceConfig = (ServiceConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServiceConfig.class);
-        List<String> singleton = serviceConfig.getSingletons();
-        Assert.assertTrue(singleton.size() > 0);
+        List<Map<String, List<Object>>> singletons = serviceConfig.getSingletons();
+        Assert.assertTrue(singletons.size() > 0);
     }
 }
