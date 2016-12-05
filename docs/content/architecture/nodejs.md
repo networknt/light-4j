@@ -1,13 +1,13 @@
 ---
 date: 2016-11-18T14:41:29-05:00
-title: nodejs
+title: Nodejs Pitfalls
 ---
 
-When talking about microservices, a lot of Nodejs developers will say that Node is
-a better platform than Java and other languages to build microservices. The arguments 
-are: 
+When talking about microservices, a lot of Nodejs developers will say that 
+Node is a better platform than Java and other languages to build microservices. 
+The arguments are: 
 
-* Nodejs is faster than Java.
+* Nodejs is faster than Java at runtime.
 * Nodejs development is more productive than Java.
 
 These claims are proved to be false already as I've been working on both 
@@ -22,7 +22,7 @@ and all the in-flight transactions will be lost and you don't know what is
 the state of each in-flight request. This is the biggest problem faced and
 I have worked with several core Nodejs developers trying to mitigate the risk.
 
-The end result is to capture that in the server.js and then wait for in-flight
+The end result is to capture it in the server.js and then wait for in-flight
 to complete as many as possible in a unknown state of the server and then
 shutdown the server. Not ideal but it reduce the risk to certain level. Due to
 this reason, Nodejs API platform is only recommended for readonly API in the
@@ -46,17 +46,17 @@ big issue with Node platform.
 
 Nodejs is easy to get into and very fast to build small Hello World application;
 however, building complex enterprise level application with thousands of line of
-code is not possible. When I look at my own code wrote one year ago, I couldn't
+code is very hard. When I look at my own code wrote one year ago, I couldn't
 reason about what that piece code does. I have to put some debug info and run it
 to figure out how the code works. Callback Hell is one of the causes. For 
 enterprise applications, easy to understand and maintain is very important and I 
-feel sorry for the bank employees who are taking over my work.
+feel sorry for the bank employees who have taken over my work.
 
 ## Debugging
 
 Javascript as a platform doesn't have a good runtime debugging tool that you can inspect
-variables during runtime easily. There are some tools but one of them works as 
-good as other languages. I use a customized logger built by my self and put a lot
+variables during runtime easily. There are some tools but none of them works as 
+good as other languages. I use a customized logger built by myself and put a lot
 of logging statement in order to debug my code and I've seen so many js developers
 just use console.log:)
 
@@ -66,7 +66,7 @@ No transaction support on the platform makes it not enterprise ready. Let's say
 you are building a stock order API, once the server receives the request, it needs
 to save the order in backend database and route the order to an exchange for execution.
 what if the communication to Exchange is down? There is no way that the local
-database update can be rollback. 
+database update can be rolled back. 
 
 ## Lack of Connectivity to Backend System
 
@@ -102,17 +102,17 @@ in nodejs and take a look at how many modules in node_modules folder. Is you app
 using them all? I guess less than 5 percent of the code in node_modules are in the 
 execution path and the rest of them are just wasting your hard drive space.
  
-TJ mentioned the same reason in his farewell article regarding to the quality of the node
-modules. Javascript sets the bar very low and it attracts a lot of low level developers.
-Remember Visual Basic was the most popular language on Microsoft platform?
+A legendary Node developer TJ mentioned the same reason in his farewell article
+regarding to modules. Javascript sets the bar very low and it attracts a lot of low level 
+developers. Remember Visual Basic was the most popular language on Microsoft platform?
 
 ## Stability of the Platform
 
-For one back I worked last year, they are still using Nodejs 0.10.39 as that was the only
+For one bank I worked last year, they are still using Nodejs 0.10.39 as that was the only
 production ready version. Both Strongloop and Joyent told us to stay on that version and as
 I understand, other customers are on the same version. We were told to upgrade to 0.12.x
-once it was prouduction ready and then before that Nodejs and IO.js were merged and Nodejs 4
-was out. Before Nodejs 4 was production ready, they've moved to Nodejs 5 and now on Nodejs 6.
+once it was prouduction ready and then Nodejs and IO.js were merged and Nodejs 4 was out. 
+Before Nodejs 4 was production ready, they've moved to Nodejs 5 and now on Nodejs 6.
 
 We are having big issue with Nodejs 0.10.39 as https module is not performing with API to 
 API calls and the issue was resolved in 0.12.x. So our recommendation for Nodejs API 
@@ -121,16 +121,17 @@ API in https. All APIs that calling another API with https must be implemented i
 framework.
 
 
-## Talents abandon the ship
+## Talents abandoned the ship
 
 As you might know, TJ who is the developer of express - most popular nodejs framework left
 Nodejs to GO. Here is his [farewell](https://medium.com/@tjholowaychuk/farewell-node-js-4ba9e7f3e52b#.5brqa9has)
-There are other heavy weight Nodejs developers left and that might make you think what is going on.
+There are other heavy weight Nodejs developers left and that might make you think what 
+is going on.
 
 
 ## Existing Customers are stuck or leaving
 
-There are some early adopter of Nodejs and all of the are trapped with old version of Nodejs
+There are some early adopters of Nodejs and all of them are trapped with old version of Nodejs
 and they are so afraid to upgrade to the new version as memory leak will be hard to 
 resolve - refer to my production hell.
 
@@ -142,10 +143,11 @@ in Java in 2016.
 
 ## Memory Footprint is high on multiple core platform
 
-For one work, it uses less memory than Java, but on a multi-core system, you have to start
+For one worker, it uses less memory than Java, but on a multi-core system, you have to start
 workers per cpu core in order to utilize the resource to its full potential. These workers
 are independent and there is no shared memory, they allocate heap independently. If you start
-four or eight workers, it uses more memory than Java that have only one instance multi-threaded.
+four or eight workers, it uses more memory than Java which has only one instance multi-threaded
+with shared heap memory.
 
 
 ## Much slower than New Java platforms
@@ -161,6 +163,10 @@ getting slower and slower.
 ## Summary
 
 I work on both Nodejs and Java so my opinion is not biased but to point out the facts on
-Nodejs platform. I am not saying Java is better as I know there are a lot of issues with
-Java. I just hope these points will help you in choosing your next application platform. 
+Nodejs platform. No doubt you can build rock solid Nodejs application with a group of senior
+developers but it is very hard to find that level of developers. I am not saying Java is 
+better as I know there are a lot of issues with Java. I just hope these points will help 
+you in choosing your next application platform. 
+
+
 
