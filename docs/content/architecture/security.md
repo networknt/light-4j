@@ -3,7 +3,6 @@ date: 2016-10-20T14:34:09-04:00
 title: Security
 ---
 
-# 
 
 Note: If this is the first time you hear about OAuth2 or you want to get familiar with
 the grant types we are using, please read this 
