@@ -1,6 +1,6 @@
 ---
 date: 2016-11-12T20:55:44-05:00
-title: Integration
+title: Integration Patterns
 ---
 
 While working with my clients to transform monolithic Java EE applications to 
@@ -14,12 +14,13 @@ EE applications running on Weblogic/Websphere that they've invested efforts
 for a decade or longer. You cannot image that they can rewrite everything and
 switch to microservices overnight. 
 
-I have been working the following four different approaches over the list 5 
+I have been working the following four different approaches over the last 5 
 years and I will give my recommendations based on my experience. Please be
 aware that this is just a generic recommendation and it cannot be applied
 to all use cases. 
 
 # API Gateway
+
 
 Most commercial API gateways offer the XML to JSON and JSON to XML 
 transformation feature and this was good selling point to in early days. They

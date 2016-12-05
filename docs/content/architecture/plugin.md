@@ -1,6 +1,6 @@
 ---
 date: 2016-10-29T17:22:16-04:00
-title: plugin
+title: Plugin Architecture
 ---
 
 
@@ -9,13 +9,17 @@ down the entire framework into smaller pieces so that each can be customized and
 necessary. The only difference is that all the modules in the framework are wired in request/response
 chain for best performance. 
 
+![component](/images/light_java_component.png)
+
 There are four type of components that can be wired in at different stage of the server start up. The
 following is the loading sequence.
 
-* Shutdown Hook Providers
 * Startup Hook Providers
+* Shutdown Hook Providers
 * Handler Provider
 * Middleware Handlers
+
+![startup_sequence](/images/startup_sequence.png)
 
 # Plugin implementation
 
