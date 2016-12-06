@@ -31,4 +31,8 @@ public class Constants {
 
     // Logger
     public static final String AUDIT_LOGGER = "Audit";
+
+    // Switcher
+    public static final String REGISTRY_HEARTBEAT_SWITCHER = "RegistryHeartBeat";
+
 }

@@ -112,6 +112,9 @@
         <module>traceability</module>
         <module>correlation</module>
         <module>service</module>
+        <module>switcher</module>
+        <module>discovery</module>
+        <module>registry</module>
         <module>server</module>
     </modules>
 
@@ -216,6 +219,21 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>service</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>switcher</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>discovery</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>registry</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
