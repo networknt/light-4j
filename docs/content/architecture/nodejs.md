@@ -89,6 +89,27 @@ it is very hard to update one or two immediate dependent modules as there is no 
 update sub dependencies. Another way is to check in node_modules into git and packaged it
 into docker container. Now we always package node_modules into docker image.
 
+## Windows Un-Friendly
+
+while trying to check in node_modules folder into git on Windows platform, most cases
+you will get an error as some files are buried too deep in the directory and Windows 
+has limitation on path length. This issue has been partially fixed in later version
+of Node as npm tries to flatten all the dependencies.
+
+Some of the modules depending on C/C++ that cannot be compiled on Windows. It causes
+issues for teams that use different platforms for development. 
+
+Given Windows is not case sensitive on file names, application developed on Windows
+usually cannot be executed on Linux the first time.
+
+## Long Running process hogs CPU
+
+This is not a problem of Nodejs but mistake of developers. I have seen too many this
+kind of mistakes and I want to highlight it here. As node is using event loop
+to dispatch tasks/callbacks, if any callback designed wrongly and doesn't give up CPU
+for a period of time, the entire system will suffer. If you have to process thousands
+of records loaded from database, process them in 100 blocks. There are so many articles
+talking about this topic. 
 
 ## Public Module Quality
 
