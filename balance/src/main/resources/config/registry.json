@@ -1,0 +1,7 @@
+{
+  "description": "Service registry configurtion",
+  "registry": [
+    "http://localhost:8890",
+    "http://localhost:8891"
+  ]
+}

@@ -16,67 +16,57 @@ import java.util.concurrent.ConcurrentHashMap;
 public abstract class AbstractDiscovery implements DiscoveryService {
     static Logger logger = LoggerFactory.getLogger(AbstractDiscovery.class);
 
-    private ConcurrentHashMap<URL, Map<String, List<URL>>> subscribedCategoryResponses =
-            new ConcurrentHashMap<URL, Map<String, List<URL>>>();
+    private ConcurrentHashMap<String, List<URL>> serviceMap =
+            new ConcurrentHashMap<String, List<URL>>();
 
     private URL registryUrl;
 
-    public AbstractDiscovery(URL registryUrl) {
-        this.registryUrl = registryUrl;
+    public AbstractDiscovery() {
+
     }
 
     @Override
-    public void subscribe(URL url, Notifier notifier) {
-        if (url == null || notifier == null) {
-            logger.error("Subscribe with malformed param, url:{}, listener:{}", url, notifier);
+    public void subscribe(String serviceName, Notifier notifier) {
+        if (serviceName == null || notifier == null) {
+            logger.error("Subscribe with malformed param, serviceName:{}, listener:{}", serviceName, notifier);
             return;
         }
-        logger.info("Listener ({}) will subscribe to url ({}) in Registry [{}]", notifier, url, registryUrl);
-        doSubscribe(url, notifier);
+        logger.info("Listener ({}) will subscribe to serviceName ({}) in Registry [{}]", notifier, serviceName, registryUrl);
+        doSubscribe(serviceName, notifier);
     }
 
     @Override
-    public void unsubscribe(URL url, Notifier notifier) {
-        if (url == null || notifier == null) {
-            logger.error("Unsubscribe with malformed param, url:{}, listener:{}", url, notifier);
+    public void unsubscribe(String serviceName, Notifier notifier) {
+        if (serviceName == null || notifier == null) {
+            logger.error("Unsubscribe with malformed param, serviceName:{}, listener:{}", serviceName, notifier);
             return;
         }
-        logger.info("Listener ({}) will unsubscribe from url ({}) in Registry [{}]", notifier, url, registryUrl);
-        doUnsubscribe(url, notifier);
+        logger.info("Listener ({}) will unsubscribe from serviceName ({}) in Registry [{}]", notifier, serviceName, registryUrl);
+        doUnsubscribe(serviceName, notifier);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public List<URL> discover(URL url) {
-        if (url == null) {
-            logger.warn("Discover with malformed param, url is null");
+    public List<URL> discover(String serviceName) {
+        if (serviceName == null) {
+            logger.warn("Discover with malformed param, serviceName is null");
             return Collections.emptyList();
         }
 
-        List<URL> results = new ArrayList<URL>();
-
-        Map<String, List<URL>> categoryUrls = subscribedCategoryResponses.get(url);
-        if (categoryUrls != null && categoryUrls.size() > 0) {
-            for (List<URL> urls : categoryUrls.values()) {
-                for (URL tempUrl : urls) {
-                    results.add(tempUrl);
-                }
-            }
-        } else {
-            List<URL> urlsDiscovered = doDiscover(url);
-            if (urlsDiscovered != null) {
-                for (URL u : urlsDiscovered) {
-                    results.add(u);
-                }
+        List<URL> services = serviceMap.get(serviceName);
+        if (services == null || services.size() == 0) {
+            services = doDiscover(serviceName);
+            if (services != null) {
+                serviceMap.put(serviceName, services);
             }
         }
-        return results;
+        return services;
     }
 
-    protected abstract void doSubscribe(URL url, Notifier notifier);
+    protected abstract void doSubscribe(String serviceName, Notifier notifier);
 
-    protected abstract void doUnsubscribe(URL url, Notifier notifier);
+    protected abstract void doUnsubscribe(String serviceName, Notifier notifier);
 
-    protected abstract List<URL> doDiscover(URL url);
+    protected abstract List<URL> doDiscover(String serviceName);
 
 }

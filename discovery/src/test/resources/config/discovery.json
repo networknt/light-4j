@@ -1,0 +1,14 @@
+{
+  "description": "service discovery from local or centralized registry, zookeeper, consul",
+  "serviceType": "local",
+  "registry" : [
+    "http://localhost:8890",
+    "http://localhost:8891"
+  ],
+  "serviceMap": {
+    "A": ["http://localhost:8081/v1"],
+    "B": ["http://localhost:8082/v1"],
+    "C": ["http://localhost:8083/v1"],
+    "D": ["http://localhost:8084/v1", "http://localhost:8085/v1"]
+  }
+}

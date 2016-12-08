@@ -115,6 +115,7 @@
         <module>switcher</module>
         <module>discovery</module>
         <module>registry</module>
+        <module>balance</module>
         <module>server</module>
     </modules>
 
@@ -234,6 +235,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>registry</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>balance</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

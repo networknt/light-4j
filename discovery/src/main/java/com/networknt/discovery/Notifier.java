@@ -7,5 +7,5 @@ import java.util.List;
  * Created by stevehu on 2016-12-04.
  */
 public interface Notifier {
-    void notify(URL url, List<URL> urls);
+    void notify(String serviceName, List<URL> urls);
 }

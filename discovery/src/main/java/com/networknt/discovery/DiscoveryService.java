@@ -8,9 +8,9 @@ import java.util.List;
  */
 public interface DiscoveryService {
 
-    void subscribe(URL url, Notifier notifier);
+    void subscribe(String serviceName, Notifier notifier);
 
-    void unsubscribe(URL url, Notifier notifier);
+    void unsubscribe(String serviceName, Notifier notifier);
 
-    List<URL> discover(URL url);
+    List<URL> discover(String serviceName);
 }
