@@ -134,7 +134,6 @@ public class Mask {
             value = ctx.read(jsonPath);
             if (!(value instanceof String || value instanceof Integer || value instanceof List<?>)) {
                 logger.error("The value specified by path {} cannot be masked", jsonPath);
-                return;
             } else {
                 if (!(value instanceof List<?>)) {
                     ctx.set(jsonPath, replaceWithMask(value.toString(), MASK_REPLACEMENT_CHAR.charAt(0), entry.getValue().asText()));

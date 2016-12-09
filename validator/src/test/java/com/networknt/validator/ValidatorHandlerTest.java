@@ -17,15 +17,9 @@
 package com.networknt.validator;
 
 import com.networknt.body.BodyHandler;
-import com.networknt.client.Client;
 import com.networknt.config.Config;
-import com.networknt.security.JwtMockHandler;
 import com.networknt.status.Status;
 import com.networknt.swagger.SwaggerHandler;
-import com.networknt.swagger.SwaggerHelper;
-import io.swagger.models.Operation;
-import io.swagger.models.Path;
-import io.swagger.models.Swagger;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
@@ -48,7 +42,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * Created by steve on 01/09/16.

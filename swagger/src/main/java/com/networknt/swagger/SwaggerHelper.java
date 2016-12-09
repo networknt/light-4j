@@ -27,8 +27,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.Optional;
 
-import static java.lang.String.format;
-
 /**
  * This class load and cache swagger.json in a static block so that it can be
  * shared by security for scope validation and validator for schema validation

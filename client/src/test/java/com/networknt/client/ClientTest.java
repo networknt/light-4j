@@ -17,18 +17,14 @@
 package com.networknt.client;
 
 import com.networknt.config.Config;
-import com.networknt.exception.ApiException;
 import com.networknt.security.JwtHelper;
-import com.networknt.status.Status;
 import com.networknt.utility.Constants;
 import com.networknt.exception.ExpiredTokenException;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
-import io.undertow.util.Methods;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -44,7 +40,6 @@ import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;

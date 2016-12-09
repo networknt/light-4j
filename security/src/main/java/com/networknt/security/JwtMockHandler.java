@@ -16,7 +16,6 @@
 
 package com.networknt.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.config.Config;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;

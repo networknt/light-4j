@@ -1,7 +1,6 @@
 package com.networknt.registry;
 
 import java.net.URL;
-import java.util.List;
 
 /**
  * Created by stevehu on 2016-12-04.

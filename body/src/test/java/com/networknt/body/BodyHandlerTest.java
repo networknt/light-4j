@@ -17,7 +17,6 @@
 package com.networknt.body;
 
 import com.networknt.config.Config;
-import com.networknt.exception.ApiException;
 import com.networknt.status.Status;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
@@ -25,9 +24,7 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
-import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
-import junit.framework.AssertionFailedError;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;

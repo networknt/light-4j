@@ -36,9 +36,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.util.Scanner;
-
 /**
  * Created by steve on 01/09/16.
  */

@@ -16,8 +16,6 @@
 
 package com.networknt.traceability;
 
-import com.networknt.config.Config;
-import com.networknt.status.Status;
 import com.networknt.utility.Constants;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
@@ -37,8 +35,6 @@ import org.apache.http.impl.client.HttpClients;
 import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
 
 
 /**

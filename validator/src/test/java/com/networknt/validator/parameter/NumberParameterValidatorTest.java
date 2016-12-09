@@ -20,7 +20,6 @@ import com.networknt.status.Status;
 import org.junit.Assert;
 import org.junit.Test;
 import static com.networknt.validator.ValidatorTestUtil.floatParam;
-import static com.networknt.validator.ValidatorTestUtil.intParam;
 
 public class NumberParameterValidatorTest {
 

@@ -16,21 +16,10 @@
 
 package com.networknt.health;
 
-import com.networknt.config.Config;
-import com.networknt.status.Status;
-import com.networknt.utility.ModuleRegistry;
-import com.networknt.utility.Util;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.net.InetAddress;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Properties;
 
 /**
  * This is a server health handler that output OK to indicate the server is alive.

@@ -1,6 +1,5 @@
 package io.dropwizard.metrics.influxdb;
 
-import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.SortedMap;

@@ -18,7 +18,6 @@ package com.networknt.metrics;
 
 import com.networknt.config.Config;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.status.Status;
 import com.networknt.swagger.SwaggerHandler;
 import com.networknt.swagger.SwaggerHelper;
 import com.networknt.swagger.SwaggerOperation;
@@ -42,8 +41,6 @@ import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
-import static io.dropwizard.metrics.MetricRegistry.name;
 
 /**
  * Created by steve on 03/10/16.

@@ -2,7 +2,6 @@ package com.networknt.service;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.xml.sax.SAXNotRecognizedException;
 
 import java.util.Arrays;
 
