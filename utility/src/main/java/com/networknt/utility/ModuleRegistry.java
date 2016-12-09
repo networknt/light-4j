@@ -26,15 +26,15 @@ import java.util.Map;
  */
 public class ModuleRegistry {
 
-    private static List<Map<String, Object>> registry = new LinkedList<Map<String, Object>>();
+    private static List<Map<String, Object>> registry = new LinkedList<>();
 
     public static void registerModule(String moduleName, Map<String, Object> config, List<String> masks) {
-        Map<String, Object> moduleMap = new LinkedHashMap<String, Object>();
+        Map<String, Object> moduleMap = new LinkedHashMap<>();
         moduleMap.put("moduleName", moduleName);
         if(config != null) {
             if(masks != null && masks.size() > 0) {
-                for(int i = 0; i < masks.size(); i++) {
-                    maskNode(config, masks.get(i));
+                for (String mask : masks) {
+                    maskNode(config, mask);
                 }
             }
             moduleMap.put("config", config);

@@ -76,15 +76,12 @@ public class ValidatorHandler implements MiddlewareHandler {
         }
 
         if(config.enableResponseValidator) {
-            exchange.addExchangeCompleteListener(new ExchangeCompletionListener() {
-                @Override
-                public void exchangeEvent(final HttpServerExchange exchange, final NextListener nextListener) {
-                    Status status = responseValidator.validateResponse(exchange, swaggerOperation);
-                    if(status != null) {
-                        logger.error("Response error", status);
-                    }
-                    nextListener.proceed();
+            exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
+                Status status1 = responseValidator.validateResponse(exchange1, swaggerOperation);
+                if(status1 != null) {
+                    logger.error("Response error", status1);
                 }
+                nextListener.proceed();
             });
         }
 

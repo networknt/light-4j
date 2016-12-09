@@ -83,7 +83,7 @@ public abstract class Config {
         private static final Config DEFAULT = initialize();
 
         // Memory cache of all the configuration object. Each config will be loaded on the first time is is accessed.
-        final Map<String, Object> configCache = new ConcurrentHashMap<String, Object>(10, 0.9f, 1);
+        final Map<String, Object> configCache = new ConcurrentHashMap<>(10, 0.9f, 1);
 
         // An instance of Jackson ObjectMapper that can be used anywhere else for Json.
         final ObjectMapper mapper = new ObjectMapper();

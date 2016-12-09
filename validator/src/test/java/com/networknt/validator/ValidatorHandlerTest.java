@@ -95,144 +95,64 @@ public class ValidatorHandlerTest {
         return Handlers.routing()
 
 
-                .add(Methods.POST, "/v2/pet", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("addPet");
-                    }
-                })
+                .add(Methods.POST, "/v2/pet", exchange -> exchange.getResponseSender().send("addPet"))
 
 
-                .add(Methods.DELETE, "/v2/pet/{petId}", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("deletePet");
-                    }
-                })
+                .add(Methods.DELETE, "/v2/pet/{petId}", exchange -> exchange.getResponseSender().send("deletePet"))
 
 
-                .add(Methods.GET, "/v2/pet/findByStatus", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("findPetsByStatus");
-                    }
-                })
+                .add(Methods.GET, "/v2/pet/findByStatus", exchange -> exchange.getResponseSender().send("findPetsByStatus"))
 
 
-                .add(Methods.GET, "/v2/pet/findByTags", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("findPetsByTags");
-                    }
-                })
+                .add(Methods.GET, "/v2/pet/findByTags", exchange -> exchange.getResponseSender().send("findPetsByTags"))
 
 
-                .add(Methods.GET, "/v2/pet/{petId}", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("getPetById");
-                    }
-                })
+                .add(Methods.GET, "/v2/pet/{petId}", exchange -> exchange.getResponseSender().send("getPetById"))
 
 
-                .add(Methods.PUT, "/v2/pet", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("updatePet");
-                    }
-                })
+                .add(Methods.PUT, "/v2/pet", exchange -> exchange.getResponseSender().send("updatePet"))
 
 
-                .add(Methods.POST, "/v2/pet/{petId}", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("updatePetWithForm");
-                    }
-                })
+                .add(Methods.POST, "/v2/pet/{petId}", exchange -> exchange.getResponseSender().send("updatePetWithForm"))
 
 
-                .add(Methods.POST, "/v2/pet/{petId}/uploadImage", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("uploadFile");
-                    }
-                })
+                .add(Methods.POST, "/v2/pet/{petId}/uploadImage", exchange -> exchange.getResponseSender().send("uploadFile"))
 
 
-                .add(Methods.DELETE, "/v2/store/order/{orderId}", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("deleteOrder");
-                    }
-                })
+                .add(Methods.DELETE, "/v2/store/order/{orderId}", exchange -> exchange.getResponseSender().send("deleteOrder"))
 
 
-                .add(Methods.GET, "/v2/store/inventory", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("getInventory");
-                    }
-                })
+                .add(Methods.GET, "/v2/store/inventory", exchange -> exchange.getResponseSender().send("getInventory"))
 
 
-                .add(Methods.GET, "/v2/store/order/{orderId}", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("getOrderById");
-                    }
-                })
+                .add(Methods.GET, "/v2/store/order/{orderId}", exchange -> exchange.getResponseSender().send("getOrderById"))
 
 
-                .add(Methods.POST, "/v2/store/order", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("placeOrder");
-                    }
-                })
+                .add(Methods.POST, "/v2/store/order", exchange -> exchange.getResponseSender().send("placeOrder"))
 
 
-                .add(Methods.POST, "/v2/user", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("createUser");
-                    }
-                })
+                .add(Methods.POST, "/v2/user", exchange -> exchange.getResponseSender().send("createUser"))
 
 
-                .add(Methods.POST, "/v2/user/createWithArray", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("createUsersWithArrayInput");
-                    }
-                })
+                .add(Methods.POST, "/v2/user/createWithArray", exchange -> exchange.getResponseSender().send("createUsersWithArrayInput"))
 
 
-                .add(Methods.POST, "/v2/user/createWithList", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("createUsersWithListInput");
-                    }
-                })
+                .add(Methods.POST, "/v2/user/createWithList", exchange -> exchange.getResponseSender().send("createUsersWithListInput"))
 
 
-                .add(Methods.DELETE, "/v2/user/{username}", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("deleteUser");
-                    }
-                })
+                .add(Methods.DELETE, "/v2/user/{username}", exchange -> exchange.getResponseSender().send("deleteUser"))
 
 
-                .add(Methods.GET, "/v2/user/{username}", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("getUserByName");
-                    }
-                })
+                .add(Methods.GET, "/v2/user/{username}", exchange -> exchange.getResponseSender().send("getUserByName"))
 
 
-                .add(Methods.GET, "/v2/user/login", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("loginUser");
-                    }
-                })
+                .add(Methods.GET, "/v2/user/login", exchange -> exchange.getResponseSender().send("loginUser"))
 
 
-                .add(Methods.GET, "/v2/user/logout", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("logoutUser");
-                    }
-                })
+                .add(Methods.GET, "/v2/user/logout", exchange -> exchange.getResponseSender().send("logoutUser"))
 
 
-                .add(Methods.PUT, "/v2/user/{username}", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("updateUser");
-                    }
-                });
+                .add(Methods.PUT, "/v2/user/{username}", exchange -> exchange.getResponseSender().send("updateUser"));
     }
 
     @Test
@@ -240,14 +160,10 @@ public class ValidatorHandlerTest {
         String url = "http://localhost:8080/api";
         CloseableHttpClient client = HttpClients.createDefault();
         HttpGet httpGet = new HttpGet(url);
-        ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
-            @Override
-            public String handleResponse(final HttpResponse response) throws ClientProtocolException, IOException {
-                int status = response.getStatusLine().getStatusCode();
-                Assert.assertEquals(404, status);
-                return null;
-            }
-
+        ResponseHandler<String> responseHandler = response -> {
+            int status = response.getStatusLine().getStatusCode();
+            Assert.assertEquals(404, status);
+            return null;
         };
         String responseBody = null;
         try {
@@ -262,13 +178,10 @@ public class ValidatorHandlerTest {
         String url = "http://localhost:8080/v2/pet";
         CloseableHttpClient client = HttpClients.createDefault();
         HttpGet httpGet = new HttpGet(url);
-        ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
-            @Override
-            public String handleResponse(final HttpResponse response) throws ClientProtocolException, IOException {
-                int status = response.getStatusLine().getStatusCode();
-                Assert.assertEquals(405, status);
-                return null;
-            }
+        ResponseHandler<String> responseHandler = response -> {
+            int status = response.getStatusLine().getStatusCode();
+            Assert.assertEquals(405, status);
+            return null;
         };
         String responseBody = null;
         try {

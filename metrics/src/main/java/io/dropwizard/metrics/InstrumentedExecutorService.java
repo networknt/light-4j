@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * An {@link ExecutorService} that monitors the number of tasks submitted, running,
@@ -98,7 +100,7 @@ public class InstrumentedExecutorService implements ExecutorService {
     public <T> Future<T> submit(Callable<T> task) {
         submitted.mark();
         try {
-            return delegate.submit(new InstrumentedCallable<T>(task));
+            return delegate.submit(new InstrumentedCallable<>(task));
         } catch (RejectedExecutionException e) {
             rejected.mark();
             throw e;
@@ -166,10 +168,8 @@ public class InstrumentedExecutorService implements ExecutorService {
     }
 
     private <T> Collection<? extends Callable<T>> instrument(Collection<? extends Callable<T>> tasks) {
-        final List<InstrumentedCallable<T>> instrumented = new ArrayList<InstrumentedCallable<T>>(tasks.size());
-        for (Callable<T> task : tasks) {
-            instrumented.add(new InstrumentedCallable<T>(task));
-        }
+        final List<InstrumentedCallable<T>> instrumented = new ArrayList<>(tasks.size());
+        instrumented.addAll(tasks.stream().map((Function<Callable<T>, InstrumentedCallable<T>>) InstrumentedCallable::new).collect(Collectors.toList()));
         return instrumented;
     }
 

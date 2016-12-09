@@ -37,7 +37,7 @@ public class JwtHelperTest {
         Map<String, Object> securityConfig = Config.getInstance().getJsonMapConfig(JwtHelper.SECURITY_CONFIG);
         Map<String, Object> jwtConfig = (Map<String, Object>)securityConfig.get(JwtHelper.JWT_CONFIG);
         Map<String, Object> keyMap = (Map<String, Object>) jwtConfig.get(JwtHelper.JWT_CERTIFICATE);
-        Map<String, X509Certificate> certMap = new HashMap<String, X509Certificate>();
+        Map<String, X509Certificate> certMap = new HashMap<>();
         for(String kid: keyMap.keySet()) {
             X509Certificate cert = null;
             try {

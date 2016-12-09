@@ -74,36 +74,28 @@ public class SanitizerHandlerTest {
 
     static RoutingHandler getTestHandler() {
         return Handlers.routing()
-                .add(Methods.GET, "/parameter", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        Map<String, Deque<String>> parameter = exchange.getQueryParameters();
-                        if(parameter != null) {
-                            exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(parameter));
-                        }
+                .add(Methods.GET, "/parameter", exchange -> {
+                    Map<String, Deque<String>> parameter = exchange.getQueryParameters();
+                    if(parameter != null) {
+                        exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(parameter));
                     }
                 })
-                .add(Methods.GET, "/header", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        HeaderMap headerMap = exchange.getRequestHeaders();
-                        if(headerMap != null) {
-                            exchange.getResponseSender().send(headerMap.toString());
-                        }
+                .add(Methods.GET, "/header", exchange -> {
+                    HeaderMap headerMap = exchange.getRequestHeaders();
+                    if(headerMap != null) {
+                        exchange.getResponseSender().send(headerMap.toString());
                     }
                 })
-                .add(Methods.POST, "/body", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        Object body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
-                        if(body != null) {
-                            exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(body));
-                        }
+                .add(Methods.POST, "/body", exchange -> {
+                    Object body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
+                    if(body != null) {
+                        exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(body));
                     }
                 })
-                .add(Methods.POST, "/header", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        HeaderMap headerMap = exchange.getRequestHeaders();
-                        if(headerMap != null) {
-                            exchange.getResponseSender().send(headerMap.toString());
-                        }
+                .add(Methods.POST, "/header", exchange -> {
+                    HeaderMap headerMap = exchange.getRequestHeaders();
+                    if(headerMap != null) {
+                        exchange.getResponseSender().send(headerMap.toString());
                     }
                 });
     }

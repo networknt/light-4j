@@ -9,6 +9,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by stevehu on 2016-11-26.
@@ -92,16 +93,13 @@ public class SingletonServiceFactory {
 
     public static void handleMultipleImpl(List<Class> interfaceClasses, List<Object> value) throws ClassNotFoundException, Exception {
 
-        List<Object> arrays = new ArrayList();
-        for(Class c: interfaceClasses) {
-            arrays.add(Array.newInstance(c, value.size()));
-        }
+        List<Object> arrays = interfaceClasses.stream().map(c -> Array.newInstance(c, value.size())).collect(Collectors.toList());
         for(int i = 0; i < value.size(); i++) {
             Object object = value.get(i);
             if(object instanceof String) {
                 Class implClass = Class.forName((String)value.get(i));
-                for(int j = 0; j < arrays.size(); j++) {
-                    Array.set(arrays.get(j), i, construct(implClass));
+                for (Object array : arrays) {
+                    Array.set(array, i, construct(implClass));
                 }
             } else {
                 // TODO map of impl class and properties.
@@ -149,8 +147,8 @@ public class SingletonServiceFactory {
         List<Class> interfaceClasses = new ArrayList();
         if(key.contains(",")) {
             String[] interfaces = key.split(",");
-            for(int i = 0; i < interfaces.length; i++) {
-                interfaceClasses.add(Class.forName(interfaces[i]));
+            for (String anInterface : interfaces) {
+                interfaceClasses.add(Class.forName(anInterface));
             }
         } else {
             interfaceClasses.add(Class.forName(key));

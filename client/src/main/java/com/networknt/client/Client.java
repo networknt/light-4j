@@ -126,7 +126,7 @@ public class Client {
     private final Object lock = new Object();
 
     static {
-        List<String> masks = new ArrayList<String>();
+        List<String> masks = new ArrayList<>();
         masks.add("trustPass");
         masks.add("keyPass");
         masks.add("client_secret");
@@ -332,17 +332,14 @@ public class Client {
 
                             ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
-                            executor.schedule(new Runnable() {
-                                @Override
-                                public void run() {
-                                    try {
-                                        getCCToken();
-                                        renewing = false;
-                                        logger.trace("Async get token is completed.");
-                                    } catch (Exception e) {
-                                        logger.error("Async retrieve token error", e);
-                                        // swallow the exception here as it is on a best effort basis.
-                                    }
+                            executor.schedule(() -> {
+                                try {
+                                    getCCToken();
+                                    renewing = false;
+                                    logger.trace("Async get token is completed.");
+                                } catch (Exception e) {
+                                    logger.error("Async retrieve token error", e);
+                                    // swallow the exception here as it is on a best effort basis.
                                 }
                             }, 50, TimeUnit.MILLISECONDS);
                             executor.shutdown();
@@ -379,27 +376,24 @@ public class Client {
         final long keepAliveMilliseconds = (Integer)httpClientMap.get(KEEP_ALIVE);
         return HttpClientBuilder.create()
                 .setConnectionManager(connectionManager)
-                .setKeepAliveStrategy(new ConnectionKeepAliveStrategy() {
-                    @Override
-                    public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
-                        HeaderElementIterator it = new BasicHeaderElementIterator
-                                (response.headerIterator(HTTP.CONN_KEEP_ALIVE));
-                        while (it.hasNext()) {
-                            HeaderElement he = it.nextElement();
-                            String param = he.getName();
-                            String value = he.getValue();
-                            if (value != null && param.equalsIgnoreCase
-                                    ("timeout")) {
-                                try {
-                                    logger.trace("Use server timeout for keepAliveMilliseconds");
-                                    return Long.parseLong(value) * 1000;
-                                } catch (NumberFormatException ignore) {
-                                }
+                .setKeepAliveStrategy((response, context) -> {
+                    HeaderElementIterator it1 = new BasicHeaderElementIterator
+                            (response.headerIterator(HTTP.CONN_KEEP_ALIVE));
+                    while (it1.hasNext()) {
+                        HeaderElement he = it1.nextElement();
+                        String param = he.getName();
+                        String value = he.getValue();
+                        if (value != null && param.equalsIgnoreCase
+                                ("timeout")) {
+                            try {
+                                logger.trace("Use server timeout for keepAliveMilliseconds");
+                                return Long.parseLong(value) * 1000;
+                            } catch (NumberFormatException ignore) {
                             }
                         }
-                        //logger.trace("Use keepAliveMilliseconds from config " + keepAliveMilliseconds);
-                        return keepAliveMilliseconds;
                     }
+                    //logger.trace("Use keepAliveMilliseconds from config " + keepAliveMilliseconds);
+                    return keepAliveMilliseconds;
                 })
                .setDefaultRequestConfig(config)
                .build();
@@ -430,27 +424,24 @@ public class Client {
         return HttpAsyncClientBuilder
                 .create()
                 .setConnectionManager(connectionManager)
-                .setKeepAliveStrategy(new ConnectionKeepAliveStrategy() {
-                    @Override
-                    public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
-                        HeaderElementIterator it = new BasicHeaderElementIterator
-                                (response.headerIterator(HTTP.CONN_KEEP_ALIVE));
-                        while (it.hasNext()) {
-                            HeaderElement he = it.nextElement();
-                            String param = he.getName();
-                            String value = he.getValue();
-                            if (value != null && param.equalsIgnoreCase
-                                    ("timeout")) {
-                                try {
-                                    logger.trace("Use server timeout for keepAliveMilliseconds");
-                                    return Long.parseLong(value) * 1000;
-                                } catch (NumberFormatException ignore) {
-                                }
+                .setKeepAliveStrategy((response, context) -> {
+                    HeaderElementIterator it1 = new BasicHeaderElementIterator
+                            (response.headerIterator(HTTP.CONN_KEEP_ALIVE));
+                    while (it1.hasNext()) {
+                        HeaderElement he = it1.nextElement();
+                        String param = he.getName();
+                        String value = he.getValue();
+                        if (value != null && param.equalsIgnoreCase
+                                ("timeout")) {
+                            try {
+                                logger.trace("Use server timeout for keepAliveMilliseconds");
+                                return Long.parseLong(value) * 1000;
+                            } catch (NumberFormatException ignore) {
                             }
                         }
-                        //logger.trace("Use keepAliveMilliseconds from config " + keepAliveMilliseconds);
-                        return keepAliveMilliseconds;
                     }
+                    //logger.trace("Use keepAliveMilliseconds from config " + keepAliveMilliseconds);
+                    return keepAliveMilliseconds;
                 })
                 .setDefaultRequestConfig(config)
                 .build();

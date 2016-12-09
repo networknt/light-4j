@@ -85,11 +85,7 @@ public class MetricsHandlerTest {
 
     static RoutingHandler getTestHandler() {
         return Handlers.routing()
-                .add(Methods.GET, "/v2/pet/{petId}", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("test");
-                    }
-                });
+                .add(Methods.GET, "/v2/pet/{petId}", exchange -> exchange.getResponseSender().send("test"));
     }
 
     @Test

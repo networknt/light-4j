@@ -75,7 +75,7 @@ public class MetricsHandler implements MiddlewareHandler {
     }
 
     private volatile HttpHandler next;
-    Map<String, String> commonTags = new HashMap<String, String>();
+    Map<String, String> commonTags = new HashMap<>();
 
     public MetricsHandler() {
         commonTags.put("apiName", SwaggerHelper.swagger.getInfo().getTitle().replaceAll(" ", "_").toLowerCase());
@@ -107,24 +107,21 @@ public class MetricsHandler implements MiddlewareHandler {
 
         long startTime = Clock.defaultClock().getTick();
 
-        exchange.addExchangeCompleteListener(new ExchangeCompletionListener() {
-            @Override
-            public void exchangeEvent(HttpServerExchange exchange, ExchangeCompletionListener.NextListener nextListener) {
-                SwaggerOperation swaggerOperation = exchange.getAttachment(SwaggerHandler.SWAGGER_OPERATION);
-                if(swaggerOperation != null) {
-                    Map<String, String> tags = new HashMap<String, String>();
-                    tags.put("endpoint", swaggerOperation.getEndpoint());
-                    tags.put("clientId", swaggerOperation.getClientId());
+        exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
+            SwaggerOperation swaggerOperation = exchange1.getAttachment(SwaggerHandler.SWAGGER_OPERATION);
+            if(swaggerOperation != null) {
+                Map<String, String> tags = new HashMap<String, String>();
+                tags.put("endpoint", swaggerOperation.getEndpoint());
+                tags.put("clientId", swaggerOperation.getClientId());
 
-                    long time = Clock.defaultClock().getTick() - startTime;
-                    MetricName metricName = new MetricName("response_time");
-                    metricName = metricName.tagged(commonTags);
-                    metricName = metricName.tagged(tags);
-                    registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.TIMERS).update(time, TimeUnit.NANOSECONDS);
-                    incCounterForStatusCode(exchange.getStatusCode(), commonTags, tags);
-                }
-                nextListener.proceed();
+                long time = Clock.defaultClock().getTick() - startTime;
+                MetricName metricName = new MetricName("response_time");
+                metricName = metricName.tagged(commonTags);
+                metricName = metricName.tagged(tags);
+                registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.TIMERS).update(time, TimeUnit.NANOSECONDS);
+                incCounterForStatusCode(exchange1.getStatusCode(), commonTags, tags);
             }
+            nextListener.proceed();
         });
 
         next.handleRequest(exchange);

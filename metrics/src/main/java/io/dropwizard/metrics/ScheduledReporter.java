@@ -108,14 +108,11 @@ public abstract class ScheduledReporter implements Closeable, Reporter {
      * @param unit   the unit for {@code period}
      */
     public void start(long period, TimeUnit unit) {
-        executor.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    report();
-                } catch (RuntimeException ex) {
-                    LOG.error("RuntimeException thrown from {}#report. Exception was suppressed.", ScheduledReporter.this.getClass().getSimpleName(), ex);
-                }
+        executor.scheduleAtFixedRate(() -> {
+            try {
+                report();
+            } catch (RuntimeException ex) {
+                LOG.error("RuntimeException thrown from {}#report. Exception was suppressed.", ScheduledReporter.this.getClass().getSimpleName(), ex);
             }
         }, period, period, unit);
     }

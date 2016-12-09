@@ -64,7 +64,7 @@ public class MetricRegistry implements MetricSet {
      * Creates a new {@link MetricRegistry}.
      */
     public MetricRegistry() {
-        this(new ConcurrentHashMap<MetricName, Metric>());
+        this(new ConcurrentHashMap<>());
     }
 
     /**
@@ -74,7 +74,7 @@ public class MetricRegistry implements MetricSet {
      */
     protected MetricRegistry(ConcurrentMap<MetricName, Metric> metricsMap) {
         this.metrics = metricsMap;
-        this.listeners = new CopyOnWriteArrayList<MetricRegistryListener>();
+        this.listeners = new CopyOnWriteArrayList<>();
     }
 
     /**
@@ -228,11 +228,9 @@ public class MetricRegistry implements MetricSet {
      * @param filter a filter
      */
     public void removeMatching(MetricFilter filter) {
-        for (Map.Entry<MetricName, Metric> entry : metrics.entrySet()) {
-            if (filter.matches(entry.getKey(), entry.getValue())) {
-                remove(entry.getKey());
-            }
-        }
+        metrics.entrySet().stream().filter(entry -> filter.matches(entry.getKey(), entry.getValue())).forEachOrdered(entry -> {
+            remove(entry.getKey());
+        });
     }
 
     /**
@@ -266,7 +264,7 @@ public class MetricRegistry implements MetricSet {
      * @return the names of all the metrics
      */
     public SortedSet<MetricName> getNames() {
-        return Collections.unmodifiableSortedSet(new TreeSet<MetricName>(metrics.keySet()));
+        return Collections.unmodifiableSortedSet(new TreeSet<>(metrics.keySet()));
     }
 
     /**
@@ -386,13 +384,11 @@ public class MetricRegistry implements MetricSet {
 
     @SuppressWarnings("unchecked")
     private <T extends Metric> SortedMap<MetricName, T> getMetrics(Class<T> klass, MetricFilter filter) {
-        final TreeMap<MetricName, T> timers = new TreeMap<MetricName, T>();
-        for (Map.Entry<MetricName, Metric> entry : metrics.entrySet()) {
-            if (klass.isInstance(entry.getValue()) && filter.matches(entry.getKey(),
-                                                                     entry.getValue())) {
-                timers.put(entry.getKey(), (T) entry.getValue());
-            }
-        }
+        final TreeMap<MetricName, T> timers = new TreeMap<>();
+        metrics.entrySet().stream().filter(entry -> klass.isInstance(entry.getValue()) && filter.matches(entry.getKey(),
+                entry.getValue())).forEachOrdered(entry -> {
+            timers.put(entry.getKey(), (T) entry.getValue());
+        });
         return Collections.unmodifiableSortedMap(timers);
     }
 

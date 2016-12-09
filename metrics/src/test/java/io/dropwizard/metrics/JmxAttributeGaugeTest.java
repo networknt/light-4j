@@ -19,7 +19,7 @@ public class JmxAttributeGaugeTest {
 
     private static final MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
 
-    private static final List<ObjectName> registeredMBeans = new ArrayList<ObjectName>();
+    private static final List<ObjectName> registeredMBeans = new ArrayList<>();
 
     public interface JmxTestMBean {
         Long getValue();

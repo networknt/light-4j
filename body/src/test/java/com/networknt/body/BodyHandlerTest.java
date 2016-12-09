@@ -78,27 +78,23 @@ public class BodyHandlerTest {
 
     static RoutingHandler getTestHandler() {
         return Handlers.routing()
-                .add(Methods.GET, "/get", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        Object body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
-                        if(body == null) {
-                            exchange.getResponseSender().send("nobody");
-                        } else {
-                            exchange.getResponseSender().send("body");
-                        }
+                .add(Methods.GET, "/get", exchange -> {
+                    Object body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
+                    if(body == null) {
+                        exchange.getResponseSender().send("nobody");
+                    } else {
+                        exchange.getResponseSender().send("body");
                     }
                 })
-                .add(Methods.POST, "/post", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        Object body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
-                        if(body == null) {
-                            exchange.getResponseSender().send("nobody");
+                .add(Methods.POST, "/post", exchange -> {
+                    Object body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
+                    if(body == null) {
+                        exchange.getResponseSender().send("nobody");
+                    } else {
+                        if(body instanceof List) {
+                            exchange.getResponseSender().send("list");
                         } else {
-                            if(body instanceof List) {
-                                exchange.getResponseSender().send("list");
-                            } else {
-                                exchange.getResponseSender().send("map");
-                            }
+                            exchange.getResponseSender().send("map");
                         }
                     }
                 });

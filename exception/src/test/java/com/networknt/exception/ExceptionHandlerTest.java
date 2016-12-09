@@ -75,27 +75,16 @@ public class ExceptionHandlerTest {
 
     static RoutingHandler getTestHandler() {
         return Handlers.routing()
-                .add(Methods.GET, "/normal", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("normal");
-                    }
+                .add(Methods.GET, "/normal", exchange -> exchange.getResponseSender().send("normal"))
+                .add(Methods.GET, "/runtime", exchange -> {
+                    int i = 1/0;
                 })
-                .add(Methods.GET, "/runtime", new HttpHandler() {
-                    @SuppressWarnings("NumericOverflow")
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        int i = 1/0;
-                    }
+                .add(Methods.GET, "/api", exchange -> {
+                    Status error = new Status("ERR10001");
+                    throw new ApiException(error);
                 })
-                .add(Methods.GET, "/api", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        Status error = new Status("ERR10001");
-                        throw new ApiException(error);
-                    }
-                })
-                .add(Methods.GET, "/uncaught", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        String content = new Scanner(new File("djfkjoiwejjhh9032d")).useDelimiter("\\Z").next();
-                    }
+                .add(Methods.GET, "/uncaught", exchange -> {
+                    String content = new Scanner(new File("djfkjoiwejjhh9032d")).useDelimiter("\\Z").next();
                 });
     }
 

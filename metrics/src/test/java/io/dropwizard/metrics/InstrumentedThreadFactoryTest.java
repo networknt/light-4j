@@ -43,17 +43,14 @@ public class InstrumentedThreadFactoryTest {
          * We have to do this to guarantee that the thread pool has 10 LIVE threads
          * before we check the 'created' Meter.
          */
-        Runnable fastOne = new Runnable() {
-            @Override
-            public void run() {
-                synchronized (lock) {
-                    latch.countDown();
+        Runnable fastOne = () -> {
+            synchronized (lock) {
+                latch.countDown();
 
-                    try {
-                        lock.wait();
-                    } catch (InterruptedException e) {
-                        interrupted.incrementAndGet();
-                    }
+                try {
+                    lock.wait();
+                } catch (InterruptedException e) {
+                    interrupted.incrementAndGet();
                 }
             }
         };

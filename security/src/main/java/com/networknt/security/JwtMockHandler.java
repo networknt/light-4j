@@ -45,7 +45,7 @@ public class JwtMockHandler implements HttpHandler {
         exchange.getResponseHeaders().put(
                 Headers.CONTENT_TYPE, "application/json");
 
-        Map<String, Object> resMap = new HashMap<String, Object>();
+        Map<String, Object> resMap = new HashMap<>();
         resMap.put("access_token", JwtHelper.getJwt(mockClaims()));
         resMap.put("token_type", "bearer");
         resMap.put("expires_in", 600);

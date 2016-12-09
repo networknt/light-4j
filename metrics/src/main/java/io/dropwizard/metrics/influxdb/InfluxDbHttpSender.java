@@ -77,7 +77,7 @@ public class InfluxDbHttpSender implements InfluxDbSender {
 
     @Override
     public void flush() {
-        influxDbWriteObject.setPoints(new HashSet<InfluxDbPoint>());
+        influxDbWriteObject.setPoints(new HashSet<>());
     }
 
     @Override
@@ -124,30 +124,24 @@ public class InfluxDbHttpSender implements InfluxDbSender {
 
         httpPost.setConfig(getRequestConfig());
 
-        return closeableHttpClient.execute(httpPost, new ResponseHandler<Integer>()
-        {
-            @Override
-            public Integer handleResponse(HttpResponse httpResponse)
-                throws ClientProtocolException, IOException
-            {
-                int statusCode = httpResponse.getStatusLine().getStatusCode();
-                EntityUtils.consumeQuietly(httpResponse.getEntity());
-                if (statusCode >= 200 && statusCode < 300) {
-                    System.out.println("writeData successfully.");
-                    return statusCode;
-                }
-                else {
-                    System.out.println("Server returned HTTP response code: " + statusCode
-                            + "for URL: " + url
-                            + " with content :'"
-                            + httpResponse.getStatusLine().getReasonPhrase() + "'");
-                    throw new ClientProtocolException("Server returned HTTP response code: " + statusCode
-                                                          + "for URL: " + url
-                                                          + " with content :'"
-                                                          + httpResponse.getStatusLine().getReasonPhrase() + "'" );
-                }
-
+        return closeableHttpClient.execute(httpPost, httpResponse -> {
+            int statusCode = httpResponse.getStatusLine().getStatusCode();
+            EntityUtils.consumeQuietly(httpResponse.getEntity());
+            if (statusCode >= 200 && statusCode < 300) {
+                System.out.println("writeData successfully.");
+                return statusCode;
             }
+            else {
+                System.out.println("Server returned HTTP response code: " + statusCode
+                        + "for URL: " + url
+                        + " with content :'"
+                        + httpResponse.getStatusLine().getReasonPhrase() + "'");
+                throw new ClientProtocolException("Server returned HTTP response code: " + statusCode
+                                                      + "for URL: " + url
+                                                      + " with content :'"
+                                                      + httpResponse.getStatusLine().getReasonPhrase() + "'" );
+            }
+
         }, getHttpClientContext());
     }
 

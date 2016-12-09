@@ -72,17 +72,13 @@ public class CorrelationHandlerTest {
 
     static RoutingHandler getTestHandler() {
         return Handlers.routing()
-                .add(Methods.GET, "/with", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        String cid = exchange.getRequestHeaders().getFirst(Constants.CORRELATION_ID);
-                        exchange.getResponseSender().send(cid);
-                    }
+                .add(Methods.GET, "/with", exchange -> {
+                    String cid = exchange.getRequestHeaders().getFirst(Constants.CORRELATION_ID);
+                    exchange.getResponseSender().send(cid);
                 })
-                .add(Methods.GET, "/without", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        String cid = exchange.getRequestHeaders().getFirst(Constants.CORRELATION_ID);
-                        exchange.getResponseSender().send(cid);
-                    }
+                .add(Methods.GET, "/without", exchange -> {
+                    String cid = exchange.getRequestHeaders().getFirst(Constants.CORRELATION_ID);
+                    exchange.getResponseSender().send(cid);
                 });
     }
 

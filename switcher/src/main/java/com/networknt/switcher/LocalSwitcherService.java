@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class LocalSwitcherService implements SwitcherService {
 
-    private static ConcurrentMap<String, Switcher> switchers = new ConcurrentHashMap<String, Switcher>();
+    private static ConcurrentMap<String, Switcher> switchers = new ConcurrentHashMap<>();
 
     final private Map<String, List<SwitcherListener>> listenerMap = new ConcurrentHashMap();
 
@@ -41,7 +41,7 @@ public class LocalSwitcherService implements SwitcherService {
 
     @Override
     public List<Switcher> getAllSwitchers() {
-        return new ArrayList<Switcher>(switchers.values());
+        return new ArrayList<>(switchers.values());
     }
 
     private void putSwitcher(Switcher switcher) {

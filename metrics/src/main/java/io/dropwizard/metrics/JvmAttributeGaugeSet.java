@@ -30,33 +30,18 @@ public class JvmAttributeGaugeSet implements MetricSet {
 
     @Override
     public Map<MetricName, Metric> getMetrics() {
-        final Map<MetricName, Metric> gauges = new HashMap<MetricName, Metric>();
+        final Map<MetricName, Metric> gauges = new HashMap<>();
 
-        gauges.put(MetricName.build("name"), new Gauge<String>() {
-            @Override
-            public String getValue() {
-                return runtime.getName();
-            }
-        });
+        gauges.put(MetricName.build("name"), (Gauge<String>) () -> runtime.getName());
 
-        gauges.put(MetricName.build("vendor"), new Gauge<String>() {
-            @Override
-            public String getValue() {
-                return String.format(Locale.US,
-                                     "%s %s %s (%s)",
-                                     runtime.getVmVendor(),
-                                     runtime.getVmName(),
-                                     runtime.getVmVersion(),
-                                     runtime.getSpecVersion());
-            }
-        });
+        gauges.put(MetricName.build("vendor"), (Gauge<String>) () -> String.format(Locale.US,
+                             "%s %s %s (%s)",
+                             runtime.getVmVendor(),
+                             runtime.getVmName(),
+                             runtime.getVmVersion(),
+                             runtime.getSpecVersion()));
 
-        gauges.put(MetricName.build("uptime"), new Gauge<Long>() {
-            @Override
-            public Long getValue() {
-                return runtime.getUptime();
-            }
-        });
+        gauges.put(MetricName.build("uptime"), (Gauge<Long>) () -> runtime.getUptime());
 
         return Collections.unmodifiableMap(gauges);
     }

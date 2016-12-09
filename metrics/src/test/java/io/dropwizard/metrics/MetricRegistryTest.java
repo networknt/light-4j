@@ -262,14 +262,11 @@ public class MetricRegistryTest {
 
     @Test
     public void registersMultipleMetrics() throws Exception {
-        final MetricSet metrics = new MetricSet() {
-            @Override
-            public Map<MetricName, Metric> getMetrics() {
-                final Map<MetricName, Metric> metrics = new HashMap<MetricName, Metric>();
-                metrics.put(GAUGE2, gauge);
-                metrics.put(COUNTER2, counter);
-                return metrics;
-            }
+        final MetricSet metrics = () -> {
+            final Map<MetricName, Metric> metrics1 = new HashMap<MetricName, Metric>();
+            metrics1.put(GAUGE2, gauge);
+            metrics1.put(COUNTER2, counter);
+            return metrics1;
         };
 
         registry.registerAll(metrics);
@@ -283,14 +280,11 @@ public class MetricRegistryTest {
         final MetricName myCounter = MetricName.build("my.counter");
         final MetricName myGauge = MetricName.build("my.gauge");
 
-        final MetricSet metrics = new MetricSet() {
-            @Override
-            public Map<MetricName, Metric> getMetrics() {
-                final Map<MetricName, Metric> metrics = new HashMap<MetricName, Metric>();
-                metrics.put(GAUGE, gauge);
-                metrics.put(COUNTER, counter);
-                return metrics;
-            }
+        final MetricSet metrics = () -> {
+            final Map<MetricName, Metric> metrics1 = new HashMap<MetricName, Metric>();
+            metrics1.put(GAUGE, gauge);
+            metrics1.put(COUNTER, counter);
+            return metrics1;
         };
 
         registry.register("my", metrics);
@@ -301,23 +295,17 @@ public class MetricRegistryTest {
 
     @Test
     public void registersRecursiveMetricSets() throws Exception {
-        final MetricSet inner = new MetricSet() {
-            @Override
-            public Map<MetricName, Metric> getMetrics() {
-                final Map<MetricName, Metric> metrics = new HashMap<MetricName, Metric>();
-                metrics.put(GAUGE, gauge);
-                return metrics;
-            }
+        final MetricSet inner = () -> {
+            final Map<MetricName, Metric> metrics = new HashMap<MetricName, Metric>();
+            metrics.put(GAUGE, gauge);
+            return metrics;
         };
 
-        final MetricSet outer = new MetricSet() {
-            @Override
-            public Map<MetricName, Metric> getMetrics() {
-                final Map<MetricName, Metric> metrics = new HashMap<MetricName, Metric>();
-                metrics.put(MetricName.build("inner"), inner);
-                metrics.put(COUNTER, counter);
-                return metrics;
-            }
+        final MetricSet outer = () -> {
+            final Map<MetricName, Metric> metrics = new HashMap<MetricName, Metric>();
+            metrics.put(MetricName.build("inner"), inner);
+            metrics.put(COUNTER, counter);
+            return metrics;
         };
 
         registry.register("my", outer);
@@ -376,12 +364,7 @@ public class MetricRegistryTest {
 
     @Test
     public void concatenatesClassesWithoutCanonicalNamesWithStrings() throws Exception {
-        final Gauge<String> g = new Gauge<String>() {
-            @Override
-            public String getValue() {
-                return null;
-            }
-        };
+        final Gauge<String> g = () -> null;
 
         assertThat(name(g.getClass(), "one", "two"))
                 .isEqualTo(MetricName.build(g.getClass().getName() + ".one.two"));
@@ -400,12 +383,7 @@ public class MetricRegistryTest {
         assertThat(registry.getNames())
                 .contains(timer1, timer2, histogram1);
 
-        registry.removeMatching(new MetricFilter() {
-            @Override
-            public boolean matches(MetricName name, Metric metric) {
-                return name.getKey().endsWith("1");
-            }
-        });
+        registry.removeMatching((name, metric) -> name.getKey().endsWith("1"));
 
         assertThat(registry.getNames())
                 .doesNotContain(timer1, histogram1);

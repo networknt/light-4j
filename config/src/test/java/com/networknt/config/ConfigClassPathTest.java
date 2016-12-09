@@ -41,7 +41,7 @@ public class ConfigClassPathTest extends TestCase {
         config = Config.getInstance();
 
         // write a config file into the user home directory.
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
         map.put("value", "classpath");
         config.getMapper().writeValue(new File(homeDir + "/test.json"), map);
 

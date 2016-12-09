@@ -76,16 +76,8 @@ public class TraceabilityHandlerTest {
 
     static RoutingHandler getTestHandler() {
         return Handlers.routing()
-                .add(Methods.GET, "/get", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("get");
-                    }
-                })
-                .add(Methods.POST, "/post", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("post");
-                    }
-                });
+                .add(Methods.GET, "/get", exchange -> exchange.getResponseSender().send("get"))
+                .add(Methods.POST, "/post", exchange -> exchange.getResponseSender().send("post"));
     }
 
     @Test

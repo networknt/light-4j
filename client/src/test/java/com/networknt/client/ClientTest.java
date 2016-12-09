@@ -111,7 +111,7 @@ public class ClientTest {
                 e.printStackTrace();
             }
             // create a token that expired in 5 seconds.
-            Map<String, Object> map = new HashMap<String, Object>();
+            Map<String, Object> map = new HashMap<>();
             String token = getJwt(5);
             map.put("access_token", token);
             map.put("token_type", "Bearer");
@@ -137,20 +137,15 @@ public class ClientTest {
         String url = "http://localhost:8887/api";
         CloseableHttpClient client = Client.getInstance().getSyncClient();
         HttpGet httpGet = new HttpGet(url);
-        ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
-            @Override
-            public String handleResponse(
-                    final HttpResponse response) throws ClientProtocolException, IOException {
-                int status = response.getStatusLine().getStatusCode();
-                Assert.assertEquals(200, status);
-                if (status >= 200 && status < 300) {
-                    HttpEntity entity = response.getEntity();
-                    return entity != null ? EntityUtils.toString(entity) : null;
-                } else {
-                    throw new ClientProtocolException("Unexpected response status: " + status);
-                }
+        ResponseHandler<String> responseHandler = response -> {
+            int status = response.getStatusLine().getStatusCode();
+            Assert.assertEquals(200, status);
+            if (status >= 200 && status < 300) {
+                HttpEntity entity = response.getEntity();
+                return entity != null ? EntityUtils.toString(entity) : null;
+            } else {
+                throw new ClientProtocolException("Unexpected response status: " + status);
             }
-
         };
         String responseBody;
         try {
@@ -187,17 +182,12 @@ public class ClientTest {
     }
 
     private void callApiSyncMultiThread(final int threadCount) throws InterruptedException, ExecutionException {
-        Callable<String> task = new Callable<String>() {
-            @Override
-            public String call() throws Exception {
-                return callApiSync();
-            }
-        };
+        Callable<String> task = () -> callApiSync();
         List<Callable<String>> tasks = Collections.nCopies(threadCount, task);
         long start = System.currentTimeMillis();
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
         List<Future<String>> futures = executorService.invokeAll(tasks);
-        List<String> resultList = new ArrayList<String>(futures.size());
+        List<String> resultList = new ArrayList<>(futures.size());
         // Check for exceptions
         for (Future<String> future : futures) {
             // Throws an exception if an exception was thrown by the task.
@@ -251,16 +241,11 @@ public class ClientTest {
     }
 
     private void callApiAsyncMultiThread(final int threadCount) throws InterruptedException, ExecutionException {
-        Callable<String> task = new Callable<String>() {
-            @Override
-            public String call() throws Exception {
-                return callApiAsync();
-            }
-        };
+        Callable<String> task = () -> callApiAsync();
         List<Callable<String>> tasks = Collections.nCopies(threadCount, task);
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
         List<Future<String>> futures = executorService.invokeAll(tasks);
-        List<String> resultList = new ArrayList<String>(futures.size());
+        List<String> resultList = new ArrayList<>(futures.size());
         for (Future<String> future : futures) {
             resultList.add(future.get());
         }

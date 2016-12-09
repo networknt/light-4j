@@ -34,7 +34,7 @@ public class ConfigPropertyPathTest extends TestCase {
         Config config = Config.getInstance();
 
         // write a config file
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
         map.put("value", "default config");
         config.getMapper().writeValue(new File(homeDir + "/test.json"), map);
     }

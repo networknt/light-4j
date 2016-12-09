@@ -13,12 +13,12 @@ import java.util.Map;
 public class InfluxDbPointTest {
     @Test
     public void testMap2StringEmpty() {
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<>();
         Assert.assertEquals("", InfluxDbPoint.map2String(map));
     }
     @Test
     public void testMap2String() {
-        Map<String, String> map = new LinkedHashMap<String, String>();
+        Map<String, String> map = new LinkedHashMap<>();
         map.put("key1", "value1");
         map.put("key2", "value2");
         map.put("key3", "value3");
@@ -26,7 +26,7 @@ public class InfluxDbPointTest {
     }
     @Test
     public void testToString() {
-        Map<String, String> tags = new LinkedHashMap<String, String>();
+        Map<String, String> tags = new LinkedHashMap<>();
         tags.put("key1", "value1");
         tags.put("key2", "value2");
         tags.put("key3", "value3");

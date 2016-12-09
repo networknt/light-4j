@@ -51,7 +51,7 @@ public class ServerInfoDisabledTest {
     public static void setUp() throws Exception {
         // inject in memory constructed info.json to homeDir as classpath
         Config.getInstance().clear();
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
         map.put("description", "server info config");
         map.put("enableServerInfo", false);
         Config.getInstance().getMapper().writeValue(new File(homeDir + "/info.json"), map);

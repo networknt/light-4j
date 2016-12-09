@@ -158,7 +158,7 @@ public class JwtHelper {
     }
 
     static {
-        certMap = new HashMap<String, X509Certificate>();
+        certMap = new HashMap<>();
         Map<String, Object> keyMap = (Map<String, Object>) securityJwtConfig.get(JwtHelper.JWT_CERTIFICATE);
         for(String kid: keyMap.keySet()) {
             X509Certificate cert = null;

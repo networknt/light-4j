@@ -58,12 +58,7 @@ public class TimerTest {
 
     @Test
     public void timesCallableInstances() throws Exception {
-        final String value = timer.time(new Callable<String>() {
-            @Override
-            public String call() throws Exception {
-                return "one";
-            }
-        });
+        final String value = timer.time(() -> "one");
 
         assertThat(timer.getCount())
                 .isEqualTo(1);
@@ -77,12 +72,7 @@ public class TimerTest {
     @Test
     public void timesRunnableInstances() throws Exception {
         final boolean[] called = {false};
-        timer.time(new Runnable() {
-            @Override
-            public void run() {
-                called[0] = true;
-            }
-        });
+        timer.time((Runnable) () -> called[0] = true);
 
         assertThat(timer.getCount())
                 .isEqualTo(1);

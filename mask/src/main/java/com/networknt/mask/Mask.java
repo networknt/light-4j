@@ -184,8 +184,7 @@ public class Mask {
         Configuration conf = Configuration.builder().options(Option.AS_PATH_LIST).build();
         DocumentContext context = JsonPath.using(conf).parse(ctx.jsonString());
         List<String> pathList = context.read(jsonPath);
-        for (Iterator iterator = pathList.iterator(); iterator.hasNext(); ) {
-            String path = (String) iterator.next();
+        for (String path : pathList) {
             Object value = ctx.read(path);
             ctx.set(path, replaceWithMask(value.toString(), MASK_REPLACEMENT_CHAR.charAt(0), expression));
         }

@@ -77,26 +77,16 @@ public class SwaggerHandlerTest {
 
     static RoutingHandler getTestHandler() {
         return Handlers.routing()
-                .add(Methods.GET, "/get", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("get");
+                .add(Methods.GET, "/get", exchange -> exchange.getResponseSender().send("get"))
+                .add(Methods.POST, "/v2/pet", exchange -> {
+                    SwaggerOperation swaggerOperation = exchange.getAttachment(SwaggerHandler.SWAGGER_OPERATION);
+                    if(swaggerOperation != null) {
+                        exchange.getResponseSender().send("withOperation");
+                    } else {
+                        exchange.getResponseSender().send("withoutOperation");
                     }
                 })
-                .add(Methods.POST, "/v2/pet", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        SwaggerOperation swaggerOperation = exchange.getAttachment(SwaggerHandler.SWAGGER_OPERATION);
-                        if(swaggerOperation != null) {
-                            exchange.getResponseSender().send("withOperation");
-                        } else {
-                            exchange.getResponseSender().send("withoutOperation");
-                        }
-                    }
-                })
-                .add(Methods.GET, "/v2/pet", new HttpHandler() {
-                    public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("get");
-                    }
-                });
+                .add(Methods.GET, "/v2/pet", exchange -> exchange.getResponseSender().send("get"));
     }
 
     @Test

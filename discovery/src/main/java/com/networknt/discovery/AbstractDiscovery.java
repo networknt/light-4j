@@ -15,7 +15,7 @@ public abstract class AbstractDiscovery implements DiscoveryService {
     static final Logger logger = LoggerFactory.getLogger(AbstractDiscovery.class);
 
     private final ConcurrentHashMap<String, List<URL>> serviceMap =
-            new ConcurrentHashMap<String, List<URL>>();
+            new ConcurrentHashMap<>();
 
     private URL registryUrl;
 

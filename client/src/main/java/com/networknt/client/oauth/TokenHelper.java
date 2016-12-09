@@ -102,7 +102,7 @@ public class TokenHelper {
     }
 
     private static UrlEncodedFormEntity getEntity(TokenRequest request) throws JsonProcessingException, UnsupportedEncodingException {
-        List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
+        List<NameValuePair> urlParameters = new ArrayList<>();
         urlParameters.add(new BasicNameValuePair(GRANT_TYPE, request.getGrantType()));
         if(TokenRequest.AUTHORIZATION_CODE.equals(request.getGrantType())) {
             urlParameters.add(new BasicNameValuePair(CODE, ((AuthorizationCodeRequest)request).getAuthCode()));
@@ -127,10 +127,7 @@ public class TokenHelper {
                         Encode.forJava(EntityUtils.toString(response.getEntity())));
                 throw new ClientException("Error in token retrieval, status code = " + statusCode);
             }
-        } catch (ParseException e) {
-            logger.error("Error in token retrieval", e);
-            throw new ClientException("Error in token retrieval", e);
-        } catch (IOException e) {
+        } catch (ParseException | IOException e) {
             logger.error("Error in token retrieval", e);
             throw new ClientException("Error in token retrieval", e);
         } catch (RuntimeException e) {
