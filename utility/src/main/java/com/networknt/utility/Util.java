@@ -50,7 +50,7 @@ public class Util {
      */
     public static String quote(final String value) {
         if (value == null) {
-            return value;
+            return null;
         }
         String result = value;
         if (!result.startsWith("\"")) {

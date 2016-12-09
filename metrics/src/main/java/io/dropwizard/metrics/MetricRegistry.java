@@ -52,9 +52,7 @@ public class MetricRegistry implements MetricSet {
         final String[] parts = new String[length + 1];
         parts[0] = name;
 
-        for (int i = 0; i < length; i++) {
-            parts[i+1] = names[i];
-        }
+        System.arraycopy(names, 0, parts, 1, length);
 
         return MetricName.build(parts);
     }

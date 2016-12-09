@@ -61,7 +61,7 @@ public class Server {
         // API routing handler or others handler implemented by application developer.
         final ServiceLoader<HandlerProvider> handlerLoaders = ServiceLoader.load(HandlerProvider.class);
         for (final HandlerProvider provider : handlerLoaders) {
-            if (provider.getHandler() instanceof HttpHandler) {
+            if (provider.getHandler() != null) {
                 handler = provider.getHandler();
                 break;
             }

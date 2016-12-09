@@ -32,7 +32,7 @@ public class LocalSwitcherService implements SwitcherService {
 
     private static ConcurrentMap<String, Switcher> switchers = new ConcurrentHashMap<String, Switcher>();
 
-    private Map<String, List<SwitcherListener>> listenerMap = new ConcurrentHashMap();
+    final private Map<String, List<SwitcherListener>> listenerMap = new ConcurrentHashMap();
 
     @Override
     public Switcher getSwitcher(String name) {

@@ -91,7 +91,7 @@ public abstract class Config {
         private static Config initialize() {
             Iterator<Config> it = null;
             it = ServiceLoader.load(Config.class).iterator();
-            return it != null && it.hasNext() ? it.next() : new FileConfigImpl();
+            return it.hasNext() ? it.next() : new FileConfigImpl();
         }
 
         // Return instance of Jackson Object Mapper
@@ -306,7 +306,7 @@ public abstract class Config {
             if(logger.isInfoEnabled()) {
                 logger.error("Unable to load config " + Encode.forJava(configFilename));
             }
-            return inStream;
+            return null;
         }
 
         private static long getNextMidNightTime() {
