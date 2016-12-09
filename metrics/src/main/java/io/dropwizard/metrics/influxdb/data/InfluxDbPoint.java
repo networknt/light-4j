@@ -71,9 +71,8 @@ public class InfluxDbPoint {
     static public String map2String(final Map<String, String> tags) {
         if(tags != null && !tags.isEmpty()) {
             StringJoiner joined = new StringJoiner(",");
-            Iterator it = tags.entrySet().iterator();
-            while(it.hasNext()) {
-                Map.Entry pair = (Map.Entry)it.next();
+            for (Object o : tags.entrySet()) {
+                Map.Entry pair = (Map.Entry) o;
                 joined.add(pair.getKey() + "=" + pair.getValue());
             }
             return joined.toString();

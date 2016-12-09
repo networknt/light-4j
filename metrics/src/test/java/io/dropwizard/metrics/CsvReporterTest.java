@@ -196,8 +196,7 @@ public class CsvReporterTest {
 
     private String fileContents(String filename) throws IOException {
         final StringBuilder builder = new StringBuilder();
-        final FileInputStream input = new FileInputStream(new File(dataDirectory, filename));
-        try {
+        try (FileInputStream input = new FileInputStream(new File(dataDirectory, filename))) {
             final InputStreamReader reader = new InputStreamReader(input);
             final BufferedReader bufferedReader = new BufferedReader(reader);
             final CharBuffer buf = CharBuffer.allocate(1024);
@@ -206,8 +205,6 @@ public class CsvReporterTest {
                 builder.append(buf);
                 buf.clear();
             }
-        } finally {
-            input.close();
         }
         return builder.toString();
     }

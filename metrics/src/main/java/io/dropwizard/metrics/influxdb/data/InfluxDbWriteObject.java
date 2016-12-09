@@ -65,9 +65,7 @@ public class InfluxDbWriteObject {
 
     public String getBody() {
         StringJoiner joiner = new StringJoiner("\n");
-        Iterator it = points.iterator();
-        while(it.hasNext()) {
-            InfluxDbPoint point = (InfluxDbPoint)it.next();
+        for (Object point : points) {
             joiner.add(point.toString());
         }
         return joiner.toString();

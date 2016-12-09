@@ -359,10 +359,8 @@ public class Client {
         connectionManager.setDefaultMaxPerRoute((Integer) httpClientMap.get(MAX_CONNECTION_PER_ROUTE));
         // Now handle all the specific route defined.
         Map<String, Object> routeMap = (Map<String, Object>)httpClientMap.get(ROUTES);
-        Iterator<String> it = routeMap.keySet().iterator();
-        while (it.hasNext()) {
-            String route = it.next();
-            Integer maxConnection = (Integer)routeMap.get(route);
+        for (String route : routeMap.keySet()) {
+            Integer maxConnection = (Integer) routeMap.get(route);
             connectionManager.setMaxPerRoute(new HttpRoute(new HttpHost(
                     route)), maxConnection);
         }
@@ -405,10 +403,8 @@ public class Client {
         connectionManager.setDefaultMaxPerRoute((Integer) asyncHttpClientMap.get(MAX_CONNECTION_PER_ROUTE));
         // Now handle all the specific route defined.
         Map<String, Object> routeMap = (Map<String, Object>)asyncHttpClientMap.get(ROUTES);
-        Iterator<String> it = routeMap.keySet().iterator();
-        while (it.hasNext()) {
-            String route = it.next();
-            Integer maxConnection = (Integer)routeMap.get(route);
+        for (String route : routeMap.keySet()) {
+            Integer maxConnection = (Integer) routeMap.get(route);
             connectionManager.setMaxPerRoute(new HttpRoute(new HttpHost(
                     route)), maxConnection);
         }

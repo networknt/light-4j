@@ -41,12 +41,10 @@ public class SanitizerHandler implements MiddlewareHandler {
         if(config.isSanitizeHeader()) {
             HeaderMap headerMap = exchange.getRequestHeaders();
             if(headerMap != null) {
-                Iterator<HeaderValues> itMap = headerMap.iterator();
-                while(itMap.hasNext()) {
-                    HeaderValues values = itMap.next();
-                    if(values != null) {
+                for (HeaderValues values : headerMap) {
+                    if (values != null) {
                         ListIterator<String> itValues = values.listIterator();
-                        while(itValues.hasNext()) {
+                        while (itValues.hasNext()) {
                             String value = Encode.forJavaScriptSource(itValues.next());
                             itValues.set(value);
                         }

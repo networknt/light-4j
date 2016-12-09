@@ -62,11 +62,8 @@ public class ConfigDefaultTest extends TestCase {
     }
 
     public void testGetInputStream() throws Exception {
-        InputStream is = config.getInputStreamFromFile("test.json");
-        try {
+        try (InputStream is = config.getInputStreamFromFile("test.json")) {
             Assert.assertNotNull(is);
-        } finally {
-            is.close();
         }
     }
 
