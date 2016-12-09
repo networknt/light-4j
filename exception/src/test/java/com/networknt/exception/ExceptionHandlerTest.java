@@ -72,7 +72,7 @@ public class ExceptionHandlerTest {
         }
     }
 
-    @SuppressWarnings("NumericOverflow")
+    @SuppressWarnings("ConstantOverflow")
     static RoutingHandler getTestHandler() {
         return Handlers.routing()
                 .add(Methods.GET, "/normal", exchange -> exchange.getResponseSender().send("normal"))
