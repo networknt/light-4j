@@ -149,12 +149,12 @@ public class ArrayParameterValidatorTest {
     }
 
     @Test
-    public void validate_withEnumValues_whouldPass_whenAllValuesMatchEnum() {
+    public void validate_withEnumValues_shouldPass_whenAllValuesMatchEnum() {
         Assert.assertNull(classUnderTest.validate("1,2,1", enumeratedArrayParam(true, "csv", new IntegerProperty(), "1", "2", "3")));
     }
 
     @Test
-    public void validate_withEnumValues_whouldFail_whenValueDoesntMatchEnum() {
+    public void validate_withEnumValues_shouldFail_whenValueDoesntMatchEnum() {
         Status status = classUnderTest.validate("1,2,1,4", enumeratedArrayParam(true, "csv", new IntegerProperty(), "1", "2", "bob"));
         Assert.assertNotNull(status);
         Assert.assertEquals("ERR11009", status.getCode()); // request parameter collection duplicate items

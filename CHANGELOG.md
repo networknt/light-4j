@@ -143,7 +143,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - Fix a NPE in request validator if query parameter is missing
 - Do not validate query parameter if there is none.
-- Handle the case that security defintion is empty.
+- Handle the case that security definition is empty.
 
 
 ## 0.1.2 - 2016-09-27
@@ -153,7 +153,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Config can be loaded from classpath directly so that test case can inject different combination of configs.
 
 ### Changed
-- Update the jwt.json and secuirty.json to support multiple certificates and kid to pick up the right certificate
+- Update the jwt.json and security.json to support multiple certificates and kid to pick up the right certificate
 for jwt verification. Also, expired token will throw ExpiredJwtException now.
 - Move request uri matching and swagger.json to utility
 - Move exceptions to status from utility
@@ -174,7 +174,7 @@ for jwt verification. Also, expired token will throw ExpiredJwtException now.
 ### Added
 - Server
 - Config
-- Utilit
+- Utility
 - Security
 
 

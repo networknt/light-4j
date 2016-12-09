@@ -14,7 +14,7 @@ Optional, it can log response status and response time.
 Dump every thing from request and response. This is mainly a development tool 
 and may be used on production for some of the APIs without performance concerns.
 
-# Customized Hanlder
+# Customized Handler
 For some users that need special audit logic or other channel to redirect the audit
 to, they can create their own audit handler and replace the default audit handler in
 /src/main/resources/META-INF/services/com.networknt.handler.MiddlewareHandler

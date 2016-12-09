@@ -247,7 +247,7 @@ public class Client {
      *
      * @param request the http request
      * @param exchange the http server exchange
-     * @throws ClientException clent exception
+     * @throws ClientException client exception
      */
     public void propagateHeaders(HttpRequest request, final HttpServerExchange exchange) throws ClientException, ApiException {
         String tid = exchange.getRequestHeaders().getFirst(Constants.TRACEABILITY_ID);

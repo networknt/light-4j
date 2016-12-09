@@ -35,7 +35,7 @@ import org.slf4j.MDC;
  *
  * The correlation-id is set by the first API/service and it will be passed to all services. Every logging
  * statement in the server should have correlationId logged so that this id can link all the logs across
- * services in Splunk or other logging aggregation application.
+ * services in ELK or other logging aggregation application.
  *
  * Dependencies: SimpleAuditHandler, Client
  *

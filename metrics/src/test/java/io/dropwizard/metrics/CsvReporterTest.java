@@ -168,7 +168,7 @@ public class CsvReporterTest {
     @Test
     public void testCsvFileProviderIsUsed() {
         CsvFileProvider fileProvider = mock(CsvFileProvider.class);
-        when(fileProvider.getFile(dataDirectory, MetricName.build("gauge"))).thenReturn(new File(dataDirectory, "guage.csv"));
+        when(fileProvider.getFile(dataDirectory, MetricName.build("gauge"))).thenReturn(new File(dataDirectory, "gauge.csv"));
 
         CsvReporter reporter = CsvReporter.forRegistry(registry)
                 .withCsvFileProvider(fileProvider)
