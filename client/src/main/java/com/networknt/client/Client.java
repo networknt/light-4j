@@ -174,8 +174,8 @@ public class Client {
      *
      * This is the method called from client like web server
      *
-     * @param request
-     * @param token
+     * @param request the http request
+     * @param token the bearer token
      */
     public void addAuthToken(HttpRequest request, String token) {
         if(!token.startsWith("Bearer ")) {
@@ -194,9 +194,9 @@ public class Client {
      *
      * This is the method called from client like web server that want to have traceabilityId pass through.
      *
-     * @param request
-     * @param token,
-     * @param traceabilityId
+     * @param request the http request
+     * @param token the bearer token
+     * @param traceabilityId the traceability id
      */
     public void addAuthTokenTrace(HttpRequest request, String token, String traceabilityId) {
         if(!token.startsWith("Bearer ")) {
@@ -217,7 +217,7 @@ public class Client {
      * This is the method called from standalone application like enterprise scheduler for batch jobs
      * or mobile apps.
      *
-     * @param request
+     * @param request the http request
      */
     public void addCcToken(HttpRequest request) throws ClientException, ApiException {
         checkCCTokenExpired();
@@ -230,8 +230,8 @@ public class Client {
      * This is the method called from standalone application like enterprise scheduler for batch jobs
      * or mobile apps.
      *
-     * @param request
-     * @param traceabilityId
+     * @param request the http request
+     * @param traceabilityId the traceability id
      */
     public void addCcTokenTrace(HttpRequest request, String traceabilityId) throws ClientException, ApiException {
         checkCCTokenExpired();
@@ -245,9 +245,9 @@ public class Client {
      *
      * This method is used in API to API call
      *
-     * @param request
-     * @param exchange
-     * @throws ClientException
+     * @param request the http request
+     * @param exchange the http server exchange
+     * @throws ClientException clent exception
      */
     public void propagateHeaders(HttpRequest request, final HttpServerExchange exchange) throws ClientException, ApiException {
         String tid = exchange.getRequestHeaders().getFirst(Constants.TRACEABILITY_ID);
@@ -263,11 +263,11 @@ public class Client {
      *
      * This method is used in API to API call
      *
-     * @param request
-     * @param authToken
-     * @param correlationId
-     * @param traceabilityId
-     * @throws ClientException
+     * @param request the http request
+     * @param authToken the authorization token
+     * @param correlationId the correlation id
+     * @param traceabilityId the traceability id
+     * @throws ClientException client exception
      */
     public void populateHeader(HttpRequest request, String authToken, String correlationId, String traceabilityId) throws ClientException, ApiException {
         if(traceabilityId != null) {

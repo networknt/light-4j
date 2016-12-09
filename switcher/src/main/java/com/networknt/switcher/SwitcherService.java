@@ -29,7 +29,7 @@ public interface SwitcherService {
     /**
      * 获取接口降级开关
      * 
-     * @param name
+     * @param name name of the switcher
      * @return Switcher
      */
     Switcher getSwitcher(String name);

@@ -44,7 +44,7 @@ public class RoundRobinLoadBalance implements LoadBalance {
 
     /**
      * return positive int value of originValue
-     * @param originValue
+     * @param originValue original value
      * @return positive int
      */
     public static int getPositive(int originValue){
