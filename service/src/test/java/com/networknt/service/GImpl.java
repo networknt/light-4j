@@ -1,7 +1,7 @@
 package com.networknt.service;
 
 /**
- * Created by stevehu on 2016-11-29.
+ * Created by steve on 2016-11-29.
  */
 public class GImpl implements G {
     String name;

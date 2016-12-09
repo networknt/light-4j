@@ -1,5 +1,6 @@
 package io.dropwizard.metrics;
 
+import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -229,7 +230,7 @@ public class MetricName implements Comparable<MetricName> {
     }
 
     @Override
-    public int compareTo(MetricName o) {
+    public int compareTo(@Nonnull MetricName o) {
         if (o == null)
             return -1;
 

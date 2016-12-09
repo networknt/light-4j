@@ -8,7 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Created by stevehu on 2016-10-16.
+ * Created by steve on 2016-10-16.
  */
 public class InfluxDbPointTest {
     @Test

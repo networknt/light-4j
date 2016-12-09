@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by stevehu on 2016-12-06.
+ * Created by steve on 2016-12-06.
  * Registration info is defined in the configuration and static. Usually, it only used on local testing.
  */
 public class LocalDiscoveryService extends AbstractDiscovery {

@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Created by stevehu on 2016-12-07.
+ * Created by steve on 2016-12-07.
  */
 public class RoundRobinLoadBalance implements LoadBalance {
     static Logger logger = LoggerFactory.getLogger(RoundRobinLoadBalance.class);

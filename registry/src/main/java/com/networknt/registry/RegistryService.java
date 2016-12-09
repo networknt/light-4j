@@ -3,7 +3,7 @@ package com.networknt.registry;
 import java.net.URL;
 
 /**
- * Created by stevehu on 2016-12-04.
+ * Created by steve on 2016-12-04.
  */
 public interface RegistryService {
 

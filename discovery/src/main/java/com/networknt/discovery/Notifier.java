@@ -4,7 +4,7 @@ import java.net.URL;
 import java.util.List;
 
 /**
- * Created by stevehu on 2016-12-04.
+ * Created by steve on 2016-12-04.
  */
 public interface Notifier {
     void notify(String serviceName, List<URL> urls);

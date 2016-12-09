@@ -1,5 +1,6 @@
 package io.dropwizard.metrics;
 
+import javax.annotation.Nonnull;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -45,7 +46,7 @@ public class InstrumentedThreadFactory implements ThreadFactory {
      * {@inheritDoc}
      */
     @Override
-    public Thread newThread(Runnable runnable) {
+    public Thread newThread(@Nonnull Runnable runnable) {
         Runnable wrappedRunnable = new InstrumentedRunnable(runnable);
         Thread thread = delegate.newThread(wrappedRunnable);
         created.mark();

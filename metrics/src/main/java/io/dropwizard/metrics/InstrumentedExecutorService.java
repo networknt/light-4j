@@ -1,5 +1,6 @@
 package io.dropwizard.metrics;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -55,7 +56,7 @@ public class InstrumentedExecutorService implements ExecutorService {
      * {@inheritDoc}
      */
     @Override
-    public void execute(Runnable runnable) {
+    public void execute(@Nonnull Runnable runnable) {
         submitted.mark();
         try {
             delegate.execute(new InstrumentedRunnable(runnable));
@@ -68,8 +69,9 @@ public class InstrumentedExecutorService implements ExecutorService {
     /**
      * {@inheritDoc}
      */
+    @Nonnull
     @Override
-    public Future<?> submit(Runnable runnable) {
+    public Future<?> submit(@Nonnull Runnable runnable) {
         submitted.mark();
         try {
             return delegate.submit(new InstrumentedRunnable(runnable));
@@ -82,8 +84,9 @@ public class InstrumentedExecutorService implements ExecutorService {
     /**
      * {@inheritDoc}
      */
+    @Nonnull
     @Override
-    public <T> Future<T> submit(Runnable runnable, T result) {
+    public <T> Future<T> submit(@Nonnull Runnable runnable, T result) {
         submitted.mark();
         try {
             return delegate.submit(new InstrumentedRunnable(runnable), result);
@@ -96,8 +99,9 @@ public class InstrumentedExecutorService implements ExecutorService {
     /**
      * {@inheritDoc}
      */
+    @Nonnull
     @Override
-    public <T> Future<T> submit(Callable<T> task) {
+    public <T> Future<T> submit(@Nonnull Callable<T> task) {
         submitted.mark();
         try {
             return delegate.submit(new InstrumentedCallable<>(task));
@@ -110,8 +114,9 @@ public class InstrumentedExecutorService implements ExecutorService {
     /**
      * {@inheritDoc}
      */
+    @Nonnull
     @Override
-    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks) throws InterruptedException {
+    public <T> List<Future<T>> invokeAll(@Nonnull Collection<? extends Callable<T>> tasks) throws InterruptedException {
         submitted.mark(tasks.size());
         Collection<? extends Callable<T>> instrumented = instrument(tasks);
         try {
@@ -125,8 +130,9 @@ public class InstrumentedExecutorService implements ExecutorService {
     /**
      * {@inheritDoc}
      */
+    @Nonnull
     @Override
-    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException {
+    public <T> List<Future<T>> invokeAll(@Nonnull Collection<? extends Callable<T>> tasks, long timeout, @Nonnull TimeUnit unit) throws InterruptedException {
         submitted.mark(tasks.size());
         Collection<? extends Callable<T>> instrumented = instrument(tasks);
         try {
@@ -140,8 +146,9 @@ public class InstrumentedExecutorService implements ExecutorService {
     /**
      * {@inheritDoc}
      */
+    @Nonnull
     @Override
-    public <T> T invokeAny(Collection<? extends Callable<T>> tasks) throws ExecutionException, InterruptedException {
+    public <T> T invokeAny(@Nonnull Collection<? extends Callable<T>> tasks) throws ExecutionException, InterruptedException {
         submitted.mark(tasks.size());
         Collection<? extends Callable<T>> instrumented = instrument(tasks);
         try {
@@ -156,7 +163,7 @@ public class InstrumentedExecutorService implements ExecutorService {
      * {@inheritDoc}
      */
     @Override
-    public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
+    public <T> T invokeAny(@Nonnull Collection<? extends Callable<T>> tasks, long timeout, @Nonnull TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
         submitted.mark(tasks.size());
         Collection<? extends Callable<T>> instrumented = instrument(tasks);
         try {
@@ -178,6 +185,7 @@ public class InstrumentedExecutorService implements ExecutorService {
         delegate.shutdown();
     }
 
+    @Nonnull
     @Override
     public List<Runnable> shutdownNow() {
         return delegate.shutdownNow();
@@ -194,7 +202,7 @@ public class InstrumentedExecutorService implements ExecutorService {
     }
 
     @Override
-    public boolean awaitTermination(long l, TimeUnit timeUnit) throws InterruptedException {
+    public boolean awaitTermination(long l, @Nonnull TimeUnit timeUnit) throws InterruptedException {
         return delegate.awaitTermination(l, timeUnit);
     }
 

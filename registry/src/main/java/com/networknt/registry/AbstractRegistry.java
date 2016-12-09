@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.net.URL;
 
 /**
- * Created by stevehu on 2016-12-04.
+ * Created by steve on 2016-12-04.
  */
 public abstract class AbstractRegistry implements RegistryService {
 

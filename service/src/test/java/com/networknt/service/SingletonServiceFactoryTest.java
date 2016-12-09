@@ -6,7 +6,7 @@ import org.junit.Test;
 import java.util.Arrays;
 
 /**
- * Created by stevehu on 2016-11-26.
+ * Created by steve on 2016-11-26.
  */
 public class SingletonServiceFactoryTest {
     @Test

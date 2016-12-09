@@ -6,7 +6,7 @@ import java.net.URL;
 import java.util.List;
 
 /**
- * Created by stevehu on 2016-12-07.
+ * Created by steve on 2016-12-07.
  */
 public class LocalDiscoveryServiceTest {
     @Test

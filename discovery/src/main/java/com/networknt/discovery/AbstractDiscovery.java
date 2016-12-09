@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Created by stevehu on 2016-12-04.
+ * Created by steve on 2016-12-04.
  */
 public abstract class AbstractDiscovery implements DiscoveryService {
     static final Logger logger = LoggerFactory.getLogger(AbstractDiscovery.class);

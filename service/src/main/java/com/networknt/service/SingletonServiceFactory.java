@@ -12,7 +12,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Created by stevehu on 2016-11-26.
+ * Created by steve on 2016-11-26.
  */
 public class SingletonServiceFactory {
     static String CONFIG_NAME = "service";

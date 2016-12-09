@@ -1,5 +1,6 @@
 package io.dropwizard.metrics;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -63,8 +64,9 @@ public class InstrumentedScheduledExecutorService implements ScheduledExecutorSe
     /**
      * {@inheritDoc}
      */
+    @Nonnull
     @Override
-    public ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
+    public ScheduledFuture<?> schedule(@Nonnull Runnable command, long delay, @Nonnull TimeUnit unit) {
         scheduledOnce.mark();
         return delegate.schedule(new InstrumentedRunnable(command), delay, unit);
     }
@@ -72,8 +74,9 @@ public class InstrumentedScheduledExecutorService implements ScheduledExecutorSe
     /**
      * {@inheritDoc}
      */
+    @Nonnull
     @Override
-    public <V> ScheduledFuture<V> schedule(Callable<V> callable, long delay, TimeUnit unit) {
+    public <V> ScheduledFuture<V> schedule(@Nonnull Callable<V> callable, long delay, @Nonnull TimeUnit unit) {
         scheduledOnce.mark();
         return delegate.schedule(new InstrumentedCallable<>(callable), delay, unit);
     }
@@ -81,8 +84,9 @@ public class InstrumentedScheduledExecutorService implements ScheduledExecutorSe
     /**
      * {@inheritDoc}
      */
+    @Nonnull
     @Override
-    public ScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit) {
+    public ScheduledFuture<?> scheduleAtFixedRate(@Nonnull Runnable command, long initialDelay, long period, @Nonnull TimeUnit unit) {
         scheduledRepetitively.mark();
         return delegate.scheduleAtFixedRate(new InstrumentedPeriodicRunnable(command, period, unit), initialDelay, period, unit);
     }
@@ -90,8 +94,9 @@ public class InstrumentedScheduledExecutorService implements ScheduledExecutorSe
     /**
      * {@inheritDoc}
      */
+    @Nonnull
     @Override
-    public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command, long initialDelay, long delay, TimeUnit unit) {
+    public ScheduledFuture<?> scheduleWithFixedDelay(@Nonnull Runnable command, long initialDelay, long delay, @Nonnull TimeUnit unit) {
         scheduledRepetitively.mark();
         return delegate.scheduleAtFixedRate(new InstrumentedRunnable(command), initialDelay, delay, unit);
     }
@@ -107,6 +112,7 @@ public class InstrumentedScheduledExecutorService implements ScheduledExecutorSe
     /**
      * {@inheritDoc}
      */
+    @Nonnull
     @Override
     public List<Runnable> shutdownNow() {
         return delegate.shutdownNow();
@@ -132,15 +138,16 @@ public class InstrumentedScheduledExecutorService implements ScheduledExecutorSe
      * {@inheritDoc}
      */
     @Override
-    public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+    public boolean awaitTermination(long timeout, @Nonnull TimeUnit unit) throws InterruptedException {
         return delegate.awaitTermination(timeout, unit);
     }
 
     /**
      * {@inheritDoc}
      */
+    @Nonnull
     @Override
-    public <T> Future<T> submit(Callable<T> task) {
+    public <T> Future<T> submit(@Nonnull Callable<T> task) {
         submitted.mark();
         return delegate.submit(new InstrumentedCallable<>(task));
     }
@@ -148,8 +155,9 @@ public class InstrumentedScheduledExecutorService implements ScheduledExecutorSe
     /**
      * {@inheritDoc}
      */
+    @Nonnull
     @Override
-    public <T> Future<T> submit(Runnable task, T result) {
+    public <T> Future<T> submit(@Nonnull Runnable task, T result) {
         submitted.mark();
         return delegate.submit(new InstrumentedRunnable(task), result);
     }
@@ -157,8 +165,9 @@ public class InstrumentedScheduledExecutorService implements ScheduledExecutorSe
     /**
      * {@inheritDoc}
      */
+    @Nonnull
     @Override
-    public Future<?> submit(Runnable task) {
+    public Future<?> submit(@Nonnull Runnable task) {
         submitted.mark();
         return delegate.submit(new InstrumentedRunnable(task));
     }
@@ -166,8 +175,9 @@ public class InstrumentedScheduledExecutorService implements ScheduledExecutorSe
     /**
      * {@inheritDoc}
      */
+    @Nonnull
     @Override
-    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks) throws InterruptedException {
+    public <T> List<Future<T>> invokeAll(@Nonnull Collection<? extends Callable<T>> tasks) throws InterruptedException {
         submitted.mark(tasks.size());
         Collection<? extends Callable<T>> instrumented = instrument(tasks);
         return delegate.invokeAll(instrumented);
@@ -176,8 +186,9 @@ public class InstrumentedScheduledExecutorService implements ScheduledExecutorSe
     /**
      * {@inheritDoc}
      */
+    @Nonnull
     @Override
-    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException {
+    public <T> List<Future<T>> invokeAll(@Nonnull Collection<? extends Callable<T>> tasks, long timeout, @Nonnull TimeUnit unit) throws InterruptedException {
         submitted.mark(tasks.size());
         Collection<? extends Callable<T>> instrumented = instrument(tasks);
         return delegate.invokeAll(instrumented, timeout, unit);
@@ -186,8 +197,9 @@ public class InstrumentedScheduledExecutorService implements ScheduledExecutorSe
     /**
      * {@inheritDoc}
      */
+    @Nonnull
     @Override
-    public <T> T invokeAny(Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
+    public <T> T invokeAny(@Nonnull Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
         submitted.mark(tasks.size());
         Collection<? extends Callable<T>> instrumented = instrument(tasks);
         return delegate.invokeAny(instrumented);
@@ -197,7 +209,7 @@ public class InstrumentedScheduledExecutorService implements ScheduledExecutorSe
      * {@inheritDoc}
      */
     @Override
-    public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    public <T> T invokeAny(@Nonnull Collection<? extends Callable<T>> tasks, long timeout, @Nonnull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         submitted.mark(tasks.size());
         Collection<? extends Callable<T>> instrumented = instrument(tasks);
         return delegate.invokeAny(instrumented, timeout, unit);
@@ -215,7 +227,7 @@ public class InstrumentedScheduledExecutorService implements ScheduledExecutorSe
      * {@inheritDoc}
      */
     @Override
-    public void execute(Runnable command) {
+    public void execute(@Nonnull Runnable command) {
         submitted.mark();
         delegate.execute(new InstrumentedRunnable(command));
     }

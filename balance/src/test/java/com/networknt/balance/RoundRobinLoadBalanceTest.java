@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by stevehu on 2016-12-07.
+ * Created by steve on 2016-12-07.
  */
 public class RoundRobinLoadBalanceTest {
     LoadBalance loadBalance = new RoundRobinLoadBalance();
