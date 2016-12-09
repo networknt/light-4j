@@ -19,7 +19,6 @@ package com.networknt.config;
 import com.fasterxml.jackson.databind.JsonNode;
 import junit.framework.TestCase;
 import org.junit.Assert;
-import org.junit.Test;
 
 import java.io.InputStream;
 import java.util.Map;

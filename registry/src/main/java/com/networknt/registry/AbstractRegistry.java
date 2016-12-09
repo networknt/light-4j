@@ -1,6 +1,5 @@
 package com.networknt.registry;
 
-import com.networknt.switcher.SwitcherListener;
 import com.networknt.switcher.SwitcherUtil;
 import com.networknt.utility.Constants;
 import org.slf4j.Logger;

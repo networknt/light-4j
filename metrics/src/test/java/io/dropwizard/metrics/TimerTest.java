@@ -7,7 +7,6 @@ import io.dropwizard.metrics.Reservoir;
 import io.dropwizard.metrics.Snapshot;
 import io.dropwizard.metrics.Timer;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;

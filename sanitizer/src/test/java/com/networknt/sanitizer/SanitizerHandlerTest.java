@@ -6,7 +6,6 @@ import com.networknt.config.Config;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
-import io.undertow.server.HttpServerExchange;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.HeaderMap;
 import io.undertow.util.Headers;

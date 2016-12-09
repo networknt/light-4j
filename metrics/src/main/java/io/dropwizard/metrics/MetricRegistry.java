@@ -228,9 +228,7 @@ public class MetricRegistry implements MetricSet {
      * @param filter a filter
      */
     public void removeMatching(MetricFilter filter) {
-        metrics.entrySet().stream().filter(entry -> filter.matches(entry.getKey(), entry.getValue())).forEachOrdered(entry -> {
-            remove(entry.getKey());
-        });
+        metrics.entrySet().stream().filter(entry -> filter.matches(entry.getKey(), entry.getValue())).forEachOrdered(entry -> remove(entry.getKey()));
     }
 
     /**
@@ -386,9 +384,7 @@ public class MetricRegistry implements MetricSet {
     private <T extends Metric> SortedMap<MetricName, T> getMetrics(Class<T> klass, MetricFilter filter) {
         final TreeMap<MetricName, T> timers = new TreeMap<>();
         metrics.entrySet().stream().filter(entry -> klass.isInstance(entry.getValue()) && filter.matches(entry.getKey(),
-                entry.getValue())).forEachOrdered(entry -> {
-            timers.put(entry.getKey(), (T) entry.getValue());
-        });
+                entry.getValue())).forEachOrdered(entry -> timers.put(entry.getKey(), (T) entry.getValue()));
         return Collections.unmodifiableSortedMap(timers);
     }
 

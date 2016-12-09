@@ -213,11 +213,11 @@ public class CsvReporterTest {
     }
 
     private <T> SortedMap<MetricName, T> map() {
-        return new TreeMap<MetricName, T>();
+        return new TreeMap<>();
     }
 
     private <T> SortedMap<MetricName, T> map(String name, T metric) {
-        final TreeMap<MetricName, T> map = new TreeMap<MetricName, T>();
+        final TreeMap<MetricName, T> map = new TreeMap<>();
         map.put(MetricName.build(name), metric);
         return map;
     }

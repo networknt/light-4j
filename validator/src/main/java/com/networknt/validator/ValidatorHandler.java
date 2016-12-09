@@ -22,7 +22,6 @@ import com.networknt.status.Status;
 import com.networknt.swagger.*;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
-import io.undertow.server.ExchangeCompletionListener;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;

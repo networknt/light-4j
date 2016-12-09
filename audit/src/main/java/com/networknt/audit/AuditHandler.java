@@ -21,7 +21,6 @@ import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
-import io.undertow.server.ExchangeCompletionListener;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
@@ -100,7 +99,7 @@ public class AuditHandler implements MiddlewareHandler {
                     auditMap.put(STATUS_CODE, exchange1.getStatusCode());
                 }
                 if(responseTime) {
-                    auditMap.put(RESPONSE_TIME, new Long(System.currentTimeMillis() - start));
+                    auditMap.put(RESPONSE_TIME, System.currentTimeMillis() - start);
                 }
                 nextListener.proceed();
             });

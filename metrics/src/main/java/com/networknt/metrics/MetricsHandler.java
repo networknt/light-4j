@@ -31,7 +31,6 @@ import io.dropwizard.metrics.influxdb.InfluxDbHttpSender;
 import io.dropwizard.metrics.influxdb.InfluxDbReporter;
 import io.dropwizard.metrics.influxdb.InfluxDbSender;
 import io.undertow.Handlers;
-import io.undertow.server.ExchangeCompletionListener;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
@@ -110,7 +109,7 @@ public class MetricsHandler implements MiddlewareHandler {
         exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
             SwaggerOperation swaggerOperation = exchange1.getAttachment(SwaggerHandler.SWAGGER_OPERATION);
             if(swaggerOperation != null) {
-                Map<String, String> tags = new HashMap<String, String>();
+                Map<String, String> tags = new HashMap<>();
                 tags.put("endpoint", swaggerOperation.getEndpoint());
                 tags.put("clientId", swaggerOperation.getClientId());
 

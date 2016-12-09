@@ -10,7 +10,6 @@ import io.dropwizard.metrics.Gauge;
 import io.dropwizard.metrics.Histogram;
 import io.dropwizard.metrics.Meter;
 import io.dropwizard.metrics.Metric;
-import io.dropwizard.metrics.MetricFilter;
 import io.dropwizard.metrics.MetricName;
 import io.dropwizard.metrics.MetricRegistry;
 import io.dropwizard.metrics.MetricRegistryListener;
@@ -263,7 +262,7 @@ public class MetricRegistryTest {
     @Test
     public void registersMultipleMetrics() throws Exception {
         final MetricSet metrics = () -> {
-            final Map<MetricName, Metric> metrics1 = new HashMap<MetricName, Metric>();
+            final Map<MetricName, Metric> metrics1 = new HashMap<>();
             metrics1.put(GAUGE2, gauge);
             metrics1.put(COUNTER2, counter);
             return metrics1;
@@ -281,7 +280,7 @@ public class MetricRegistryTest {
         final MetricName myGauge = MetricName.build("my.gauge");
 
         final MetricSet metrics = () -> {
-            final Map<MetricName, Metric> metrics1 = new HashMap<MetricName, Metric>();
+            final Map<MetricName, Metric> metrics1 = new HashMap<>();
             metrics1.put(GAUGE, gauge);
             metrics1.put(COUNTER, counter);
             return metrics1;
@@ -296,13 +295,13 @@ public class MetricRegistryTest {
     @Test
     public void registersRecursiveMetricSets() throws Exception {
         final MetricSet inner = () -> {
-            final Map<MetricName, Metric> metrics = new HashMap<MetricName, Metric>();
+            final Map<MetricName, Metric> metrics = new HashMap<>();
             metrics.put(GAUGE, gauge);
             return metrics;
         };
 
         final MetricSet outer = () -> {
-            final Map<MetricName, Metric> metrics = new HashMap<MetricName, Metric>();
+            final Map<MetricName, Metric> metrics = new HashMap<>();
             metrics.put(MetricName.build("inner"), inner);
             metrics.put(COUNTER, counter);
             return metrics;

@@ -127,10 +127,7 @@ public class TokenHelper {
                         Encode.forJava(EntityUtils.toString(response.getEntity())));
                 throw new ClientException("Error in token retrieval, status code = " + statusCode);
             }
-        } catch (ParseException | IOException e) {
-            logger.error("Error in token retrieval", e);
-            throw new ClientException("Error in token retrieval", e);
-        } catch (RuntimeException e) {
+        } catch (IOException | RuntimeException e) {
             logger.error("Error in token retrieval", e);
             throw new ClientException("Error in token retrieval", e);
         }

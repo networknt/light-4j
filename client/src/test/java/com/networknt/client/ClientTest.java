@@ -40,7 +40,6 @@ import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
@@ -182,7 +181,7 @@ public class ClientTest {
     }
 
     private void callApiSyncMultiThread(final int threadCount) throws InterruptedException, ExecutionException {
-        Callable<String> task = () -> callApiSync();
+        Callable<String> task = this::callApiSync;
         List<Callable<String>> tasks = Collections.nCopies(threadCount, task);
         long start = System.currentTimeMillis();
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
@@ -241,7 +240,7 @@ public class ClientTest {
     }
 
     private void callApiAsyncMultiThread(final int threadCount) throws InterruptedException, ExecutionException {
-        Callable<String> task = () -> callApiAsync();
+        Callable<String> task = this::callApiAsync;
         List<Callable<String>> tasks = Collections.nCopies(threadCount, task);
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
         List<Future<String>> futures = executorService.invokeAll(tasks);

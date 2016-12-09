@@ -32,7 +32,7 @@ public class JvmAttributeGaugeSet implements MetricSet {
     public Map<MetricName, Metric> getMetrics() {
         final Map<MetricName, Metric> gauges = new HashMap<>();
 
-        gauges.put(MetricName.build("name"), (Gauge<String>) () -> runtime.getName());
+        gauges.put(MetricName.build("name"), (Gauge<String>) runtime::getName);
 
         gauges.put(MetricName.build("vendor"), (Gauge<String>) () -> String.format(Locale.US,
                              "%s %s %s (%s)",
@@ -41,7 +41,7 @@ public class JvmAttributeGaugeSet implements MetricSet {
                              runtime.getVmVersion(),
                              runtime.getSpecVersion()));
 
-        gauges.put(MetricName.build("uptime"), (Gauge<Long>) () -> runtime.getUptime());
+        gauges.put(MetricName.build("uptime"), (Gauge<Long>) runtime::getUptime);
 
         return Collections.unmodifiableMap(gauges);
     }
