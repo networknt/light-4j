@@ -56,7 +56,7 @@ public class ServerInfoDisabledTest {
         map.put("enableServerInfo", false);
         Config.getInstance().getMapper().writeValue(new File(homeDir + "/info.json"), map);
         // Add home directory to the classpath of the system class loader.
-        addURL(new File(homeDir).toURL());
+        addURL(new File(homeDir).toURI().toURL());
 
         if(server == null) {
             logger.info("starting server");
@@ -92,9 +92,9 @@ public class ServerInfoDisabledTest {
                 = (URLClassLoader) ClassLoader.getSystemClassLoader();
         Class clazz = URLClassLoader.class;
         // Use reflection
-        Method method = clazz.getDeclaredMethod("addURL", new Class[]{URL.class});
+        Method method = clazz.getDeclaredMethod("addURL", URL.class);
         method.setAccessible(true);
-        method.invoke(classLoader, new Object[]{url});
+        method.invoke(classLoader, url);
     }
 
     static RoutingHandler getTestHandler() {

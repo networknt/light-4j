@@ -185,18 +185,15 @@ public class JwtVerifyHandler implements MiddlewareHandler {
                 Status status = new Status(STATUS_INVALID_AUTH_TOKEN);
                 exchange.setStatusCode(status.getStatusCode());
                 exchange.getResponseSender().send(status.toString());
-                return;
             } catch (ExpiredTokenException e) {
                 Status status = new Status(STATUS_AUTH_TOKEN_EXPIRED);
                 exchange.setStatusCode(status.getStatusCode());
                 exchange.getResponseSender().send(status.toString());
-                return;
             }
         } else {
             Status status = new Status(STATUS_MISSING_AUTH_TOKEN);
             exchange.setStatusCode(status.getStatusCode());
             exchange.getResponseSender().send(status.toString());
-            return;
         }
     }
 
@@ -232,7 +229,7 @@ public class JwtVerifyHandler implements MiddlewareHandler {
     @Override
     public boolean isEnabled() {
         Object object = config.get(JwtHelper.ENABLE_VERIFY_JWT);
-        return object != null && (Boolean)object == true;
+        return object != null && (Boolean) object;
     }
 
     @Override

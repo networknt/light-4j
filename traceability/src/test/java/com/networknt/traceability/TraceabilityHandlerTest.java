@@ -79,7 +79,7 @@ public class TraceabilityHandlerTest {
     }
 
     static RoutingHandler getTestHandler() {
-        RoutingHandler handler = Handlers.routing()
+        return Handlers.routing()
                 .add(Methods.GET, "/get", new HttpHandler() {
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
                         exchange.getResponseSender().send("get");
@@ -90,7 +90,6 @@ public class TraceabilityHandlerTest {
                         exchange.getResponseSender().send("post");
                     }
                 });
-        return handler;
     }
 
     @Test

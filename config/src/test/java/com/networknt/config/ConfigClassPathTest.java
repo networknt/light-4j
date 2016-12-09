@@ -46,7 +46,7 @@ public class ConfigClassPathTest extends TestCase {
         config.getMapper().writeValue(new File(homeDir + "/test.json"), map);
 
         // Add home directory to the classpath of the system class loader.
-        addURL(new File(homeDir).toURL());
+        addURL(new File(homeDir).toURI().toURL());
     }
 
     public void tearDown() throws Exception {
@@ -68,8 +68,8 @@ public class ConfigClassPathTest extends TestCase {
         Class clazz= URLClassLoader.class;
 
         // Use reflection
-        Method method= clazz.getDeclaredMethod("addURL", new Class[] { URL.class });
+        Method method= clazz.getDeclaredMethod("addURL", URL.class);
         method.setAccessible(true);
-        method.invoke(classLoader, new Object[]{url});
+        method.invoke(classLoader, url);
     }
 }

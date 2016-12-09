@@ -224,10 +224,8 @@ public class MetricName implements Comparable<MetricName> {
         } else if (!key.equals(other.key))
             return false;
 
-        if (!tags.equals(other.tags))
-            return false;
+        return tags.equals(other.tags);
 
-        return true;
     }
 
     @Override

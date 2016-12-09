@@ -124,7 +124,7 @@ public class InfluxDbHttpSender implements InfluxDbSender {
 
         httpPost.setConfig(getRequestConfig());
 
-        Integer responseCode = closeableHttpClient.execute(httpPost, new ResponseHandler<Integer>()
+        return closeableHttpClient.execute(httpPost, new ResponseHandler<Integer>()
         {
             @Override
             public Integer handleResponse(HttpResponse httpResponse)
@@ -149,8 +149,6 @@ public class InfluxDbHttpSender implements InfluxDbSender {
 
             }
         }, getHttpClientContext());
-
-        return responseCode;
     }
 
     @Override

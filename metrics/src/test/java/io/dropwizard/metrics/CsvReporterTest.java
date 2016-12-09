@@ -45,10 +45,10 @@ public class CsvReporterTest {
         when(gauge.getValue()).thenReturn(1);
 
         reporter.report(map("gauge", gauge),
-                        this.<Counter>map(),
-                        this.<Histogram>map(),
-                        this.<Meter>map(),
-                        this.<Timer>map());
+                        this.map(),
+                        this.map(),
+                        this.map(),
+                        this.map());
 
         assertThat(fileContents("gauge.csv"))
                 .isEqualTo(csv(
@@ -62,11 +62,11 @@ public class CsvReporterTest {
         final Counter counter = mock(Counter.class);
         when(counter.getCount()).thenReturn(100L);
 
-        reporter.report(this.<Gauge>map(),
+        reporter.report(this.map(),
                         map("test.counter", counter),
-                        this.<Histogram>map(),
-                        this.<Meter>map(),
-                        this.<Timer>map());
+                        this.map(),
+                        this.map(),
+                        this.map());
 
         assertThat(fileContents("test.counter.csv"))
                 .isEqualTo(csv(
@@ -94,11 +94,11 @@ public class CsvReporterTest {
 
         when(histogram.getSnapshot()).thenReturn(snapshot);
 
-        reporter.report(this.<Gauge>map(),
-                        this.<Counter>map(),
+        reporter.report(this.map(),
+                        this.map(),
                         map("test.histogram", histogram),
-                        this.<Meter>map(),
-                        this.<Timer>map());
+                        this.map(),
+                        this.map());
 
         assertThat(fileContents("test.histogram.csv"))
                 .isEqualTo(csv(
@@ -116,11 +116,11 @@ public class CsvReporterTest {
         when(meter.getFiveMinuteRate()).thenReturn(4.0);
         when(meter.getFifteenMinuteRate()).thenReturn(5.0);
 
-        reporter.report(this.<Gauge>map(),
-                        this.<Counter>map(),
-                        this.<Histogram>map(),
+        reporter.report(this.map(),
+                        this.map(),
+                        this.map(),
                         map("test.meter", meter),
-                        this.<Timer>map());
+                        this.map());
 
         assertThat(fileContents("test.meter.csv"))
                 .isEqualTo(csv(
@@ -152,10 +152,10 @@ public class CsvReporterTest {
 
         when(timer.getSnapshot()).thenReturn(snapshot);
 
-        reporter.report(this.<Gauge>map(),
-                        this.<Counter>map(),
-                        this.<Histogram>map(),
-                        this.<Meter>map(),
+        reporter.report(this.map(),
+                        this.map(),
+                        this.map(),
+                        this.map(),
                         map("test.another.timer", timer));
 
         assertThat(fileContents("test.another.timer.csv"))
@@ -178,10 +178,10 @@ public class CsvReporterTest {
         when(gauge.getValue()).thenReturn(1);
 
         reporter.report(map("gauge", gauge),
-                this.<Counter>map(),
-                this.<Histogram>map(),
-                this.<Meter>map(),
-                this.<Timer>map());
+                this.map(),
+                this.map(),
+                this.map(),
+                this.map());
 
         verify(fileProvider).getFile(dataDirectory, MetricName.build("gauge"));
     }

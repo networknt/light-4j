@@ -70,11 +70,11 @@ public class AuditHandler implements MiddlewareHandler {
         config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
         headerList = (List<String>)config.get(HEADERS);
         Object object = config.get(STATUS_CODE);
-        if(object != null && (Boolean)object == true) {
+        if(object != null && (Boolean) object) {
             statusCode = true;
         }
         object = config.get(RESPONSE_TIME);
-        if(object != null && (Boolean)object == true) {
+        if(object != null && (Boolean) object) {
             responseTime = true;
         }
     }
@@ -127,7 +127,7 @@ public class AuditHandler implements MiddlewareHandler {
     @Override
     public boolean isEnabled() {
         Object object = config.get(ENABLED);
-        return object != null && (Boolean)object == true;
+        return object != null && (Boolean) object;
     }
 
     @Override

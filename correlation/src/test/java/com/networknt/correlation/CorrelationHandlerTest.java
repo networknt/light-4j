@@ -75,7 +75,7 @@ public class CorrelationHandlerTest {
     }
 
     static RoutingHandler getTestHandler() {
-        RoutingHandler handler = Handlers.routing()
+        return Handlers.routing()
                 .add(Methods.GET, "/with", new HttpHandler() {
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
                         String cid = exchange.getRequestHeaders().getFirst(Constants.CORRELATION_ID);
@@ -88,7 +88,6 @@ public class CorrelationHandlerTest {
                         exchange.getResponseSender().send(cid);
                     }
                 });
-        return handler;
     }
 
     @Test

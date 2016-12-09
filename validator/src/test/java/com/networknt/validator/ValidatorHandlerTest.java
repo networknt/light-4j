@@ -99,7 +99,7 @@ public class ValidatorHandlerTest {
     }
 
     RoutingHandler getPetStoreHandler() {
-        RoutingHandler handler = Handlers.routing()
+        return Handlers.routing()
 
 
                 .add(Methods.POST, "/v2/pet", new HttpHandler() {
@@ -239,10 +239,7 @@ public class ValidatorHandlerTest {
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
                         exchange.getResponseSender().send("updateUser");
                     }
-                })
-
-                ;
-        return handler;
+                });
     }
 
     @Test

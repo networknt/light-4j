@@ -76,14 +76,12 @@ public class ClientTest {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException ie) {
-                ;
             }
             server.stop();
             System.out.println("The server is stopped.");
             try {
                 Thread.sleep(100);
             } catch (InterruptedException ie) {
-                ;
             }
         }
     }
@@ -222,7 +220,6 @@ public class ClientTest {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ie) {
-                ;
             }
         }
     }
@@ -235,7 +232,6 @@ public class ClientTest {
             try {
                 Thread.sleep(6000);
             } catch (InterruptedException ie) {
-                ;
             }
         }
     }
@@ -255,7 +251,6 @@ public class ClientTest {
                 }
                 Thread.sleep(sleepTime);
             } catch (InterruptedException ie) {
-                ;
             }
         }
     }
@@ -285,7 +280,6 @@ public class ClientTest {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ie) {
-                ;
             }
         }
     }
@@ -298,15 +292,13 @@ public class ClientTest {
             try {
                 Thread.sleep(6000);
             } catch (InterruptedException ie) {
-                ;
             }
         }
     }
 
     private static int randInt(int min, int max) {
         Random rand = new Random();
-        int randomNum = rand.nextInt((max-min) + 1) + min;
-        return randomNum;
+        return rand.nextInt((max-min) + 1) + min;
     }
 
     private boolean isTokenExpired(String authorization) {

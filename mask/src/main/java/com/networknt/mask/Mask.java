@@ -87,7 +87,6 @@ public class Mask {
      * @return String Masked result
      */
     public static String maskRegex(String input, String key, String name) {
-        String output = input;
         Map<String, Object> regexConfig = (Map<String, Object>) config.get(MASK_TYPE_REGEX);
         if (regexConfig != null) {
             Map<String, Object> keyConfig = (Map<String, Object>) regexConfig.get(key);
@@ -98,7 +97,7 @@ public class Mask {
                 }
             }
         }
-        return output;
+        return input;
     }
 
     /**
@@ -108,7 +107,6 @@ public class Mask {
      * @return String Masked result
      */
     public static String maskJson(String input, String key) {
-        String output = input;
         DocumentContext ctx = JsonPath.parse(input);
         Map<String, Object> jsonConfig = (Map<String, Object>) config.get(MASK_TYPE_JSON);
         if (jsonConfig != null) {
@@ -123,10 +121,10 @@ public class Mask {
                 return ctx.jsonString();
             } else {
                 logger.warn("mask.json doesn't contain the key {} ", Encode.forJava(key));
-                return output;
+                return input;
             }
         }
-        return output;
+        return input;
     }
 
     private static void applyMask(Map.Entry<String, JsonNode> entry, DocumentContext ctx) {
@@ -147,7 +145,6 @@ public class Mask {
         } catch (PathNotFoundException e) {
             logger.warn("JsonPath {} could not be found.", jsonPath);
         }
-        return;
     }
 
 

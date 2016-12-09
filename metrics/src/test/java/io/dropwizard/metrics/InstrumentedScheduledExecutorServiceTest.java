@@ -238,7 +238,6 @@ public class InstrumentedScheduledExecutorServiceTest {
                     Thread.currentThread().interrupt();
                 }
 
-                return;
             }
         }, 10L, 10L, TimeUnit.MILLISECONDS);
 

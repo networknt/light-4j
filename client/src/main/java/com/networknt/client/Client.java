@@ -515,7 +515,7 @@ public class Client {
             // first check if javax.net.ssl.trustStore system properties is set. It is only necessary if the server
             // certificate doesn't have the entire chain.
             Boolean loadTrustStore = (Boolean) tlsMap.get(LOAD_TRUST_STORE);
-            if (loadTrustStore != null && loadTrustStore == true) {
+            if (loadTrustStore != null && loadTrustStore) {
                 String trustStoreName = System.getProperty(TRUST_STORE_PROPERTY);
                 String trustStorePass = System.getProperty(TRUST_STORE_PASSWORD_PROPERTY);
                 if(trustStoreName != null && trustStorePass != null) {
@@ -549,7 +549,7 @@ public class Client {
 
             // load key store for client certificate if two way ssl is used.
             Boolean loadKeyStore = (Boolean) tlsMap.get(LOAD_KEY_STORE);
-            if (loadKeyStore != null && loadKeyStore == true) {
+            if (loadKeyStore != null && loadKeyStore) {
                 String keyStoreName = (String)tlsMap.get(KEY_STORE);
                 String keyStorePass = (String)tlsMap.get(KEY_PASS);
                 KeyStore keyStore = null;
@@ -585,7 +585,7 @@ public class Client {
         HostnameVerifier verifier = null;
         if(tlsMap != null) {
             Boolean verifyHostname = (Boolean) tlsMap.get(VERIFY_HOSTNAME);
-            if (verifyHostname != null && verifyHostname == false) {
+            if (verifyHostname != null && !verifyHostname) {
                 verifier = new NoopHostnameVerifier();
             } else {
                 verifier = new DefaultHostnameVerifier();

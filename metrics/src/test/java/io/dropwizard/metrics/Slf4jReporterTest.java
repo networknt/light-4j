@@ -48,12 +48,12 @@ public class Slf4jReporterTest {
     public void reportsGaugeValuesAtError() throws Exception {
         when(logger.isErrorEnabled(marker)).thenReturn(true);
         errorReporter.report(map("gauge", gauge("value")),
-                this.<Counter>map(),
-                this.<Histogram>map(),
-                this.<Meter>map(),
-                this.<Timer>map());
+                this.map(),
+                this.map(),
+                this.map(),
+                this.map());
 
-        verify(logger).error(marker, "type={}, name={}, value={}", new Object[]{"GAUGE", "gauge", "value"});
+        verify(logger).error(marker, "type={}, name={}, value={}", "GAUGE", "gauge", "value");
     }
 
     @Test
@@ -62,13 +62,13 @@ public class Slf4jReporterTest {
         when(counter.getCount()).thenReturn(100L);
         when(logger.isErrorEnabled(marker)).thenReturn(true);
 
-        errorReporter.report(this.<Gauge>map(),
+        errorReporter.report(this.map(),
                 map("test.counter", counter),
-                this.<Histogram>map(),
-                this.<Meter>map(),
-                this.<Timer>map());
+                this.map(),
+                this.map(),
+                this.map());
 
-        verify(logger).error(marker, "type={}, name={}, count={}", new Object[]{"COUNTER", "test.counter", 100L});
+        verify(logger).error(marker, "type={}, name={}, count={}", "COUNTER", "test.counter", 100L);
     }
 
     @Test
@@ -91,11 +91,11 @@ public class Slf4jReporterTest {
         when(histogram.getSnapshot()).thenReturn(snapshot);
         when(logger.isErrorEnabled(marker)).thenReturn(true);
 
-        errorReporter.report(this.<Gauge>map(),
-                this.<Counter>map(),
+        errorReporter.report(this.map(),
+                this.map(),
                 map("test.histogram", histogram),
-                this.<Meter>map(),
-                this.<Timer>map());
+                this.map(),
+                this.map());
 
         verify(logger).error(marker,
                 "type={}, name={}, count={}, min={}, max={}, mean={}, stddev={}, median={}, p75={}, p95={}, p98={}, p99={}, p999={}",
@@ -124,11 +124,11 @@ public class Slf4jReporterTest {
         when(meter.getFifteenMinuteRate()).thenReturn(5.0);
         when(logger.isErrorEnabled(marker)).thenReturn(true);
 
-        errorReporter.report(this.<Gauge>map(),
-                this.<Counter>map(),
-                this.<Histogram>map(),
+        errorReporter.report(this.map(),
+                this.map(),
+                this.map(),
                 map("test.meter", meter),
-                this.<Timer>map());
+                this.map());
 
         verify(logger).error(marker,
                 "type={}, name={}, count={}, mean_rate={}, m1={}, m5={}, m15={}, rate_unit={}",
@@ -169,10 +169,10 @@ public class Slf4jReporterTest {
 
         when(logger.isErrorEnabled(marker)).thenReturn(true);
 
-        errorReporter.report(this.<Gauge>map(),
-                this.<Counter>map(),
-                this.<Histogram>map(),
-                this.<Meter>map(),
+        errorReporter.report(this.map(),
+                this.map(),
+                this.map(),
+                this.map(),
                 map("test.another.timer", timer));
 
         verify(logger).error(marker,
@@ -202,12 +202,12 @@ public class Slf4jReporterTest {
     public void reportsGaugeValues() throws Exception {
         when(logger.isInfoEnabled(marker)).thenReturn(true);
         infoReporter.report(map("gauge", gauge("value")),
-                this.<Counter>map(),
-                this.<Histogram>map(),
-                this.<Meter>map(),
-                this.<Timer>map());
+                this.map(),
+                this.map(),
+                this.map(),
+                this.map());
 
-        verify(logger).info(marker, "type={}, name={}, value={}", new Object[]{"GAUGE", "prefix.gauge", "value"});
+        verify(logger).info(marker, "type={}, name={}, value={}", "GAUGE", "prefix.gauge", "value");
     }
 
     @Test
@@ -216,13 +216,13 @@ public class Slf4jReporterTest {
         when(counter.getCount()).thenReturn(100L);
         when(logger.isInfoEnabled(marker)).thenReturn(true);
 
-        infoReporter.report(this.<Gauge>map(),
+        infoReporter.report(this.map(),
                 map("test.counter", counter),
-                this.<Histogram>map(),
-                this.<Meter>map(),
-                this.<Timer>map());
+                this.map(),
+                this.map(),
+                this.map());
 
-        verify(logger).info(marker, "type={}, name={}, count={}", new Object[]{"COUNTER", "prefix.test.counter", 100L});
+        verify(logger).info(marker, "type={}, name={}, count={}", "COUNTER", "prefix.test.counter", 100L);
     }
 
     @Test
@@ -245,11 +245,11 @@ public class Slf4jReporterTest {
         when(histogram.getSnapshot()).thenReturn(snapshot);
         when(logger.isInfoEnabled(marker)).thenReturn(true);
 
-        infoReporter.report(this.<Gauge>map(),
-                this.<Counter>map(),
+        infoReporter.report(this.map(),
+                this.map(),
                 map("test.histogram", histogram),
-                this.<Meter>map(),
-                this.<Timer>map());
+                this.map(),
+                this.map());
 
         verify(logger).info(marker,
                 "type={}, name={}, count={}, min={}, max={}, mean={}, stddev={}, median={}, p75={}, p95={}, p98={}, p99={}, p999={}",
@@ -278,11 +278,11 @@ public class Slf4jReporterTest {
         when(meter.getFifteenMinuteRate()).thenReturn(5.0);
         when(logger.isInfoEnabled(marker)).thenReturn(true);
 
-        infoReporter.report(this.<Gauge>map(),
-                this.<Counter>map(),
-                this.<Histogram>map(),
+        infoReporter.report(this.map(),
+                this.map(),
+                this.map(),
                 map("test.meter", meter),
-                this.<Timer>map());
+                this.map());
 
         verify(logger).info(marker,
                 "type={}, name={}, count={}, mean_rate={}, m1={}, m5={}, m15={}, rate_unit={}",
@@ -322,10 +322,10 @@ public class Slf4jReporterTest {
         when(timer.getSnapshot()).thenReturn(snapshot);
         when(logger.isInfoEnabled(marker)).thenReturn(true);
 
-        infoReporter.report(this.<Gauge>map(),
-                this.<Counter>map(),
-                this.<Histogram>map(),
-                this.<Meter>map(),
+        infoReporter.report(this.map(),
+                this.map(),
+                this.map(),
+                this.map(),
                 map("test.another.timer", timer));
 
         verify(logger).info(marker,

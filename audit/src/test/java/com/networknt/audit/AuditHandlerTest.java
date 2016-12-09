@@ -92,13 +92,12 @@ public class AuditHandlerTest {
     }
 
     static RoutingHandler getTestHandler() {
-        RoutingHandler handler = Handlers.routing()
+        return Handlers.routing()
                 .add(Methods.POST, "/pet", new HttpHandler() {
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
                         exchange.getResponseSender().send("OK");
                     }
                 });
-        return handler;
     }
 
     @Test

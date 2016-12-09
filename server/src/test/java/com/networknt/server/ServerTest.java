@@ -35,7 +35,7 @@ public class ServerTest {
     public static void setUp() {
         if (server == null) {
             logger.info("starting server");
-            server.start();
+            Server.start();
         }
     }
 
@@ -47,7 +47,7 @@ public class ServerTest {
             } catch (InterruptedException ie) {
 
             }
-            server.stop();
+            Server.stop();
             logger.info("The server is stopped.");
         }
     }
@@ -56,7 +56,6 @@ public class ServerTest {
     public void testServer() {
         // server cannot be started as there is no spi routing handler provider
         Assert.assertNull(server);
-        return;
     }
 
 }

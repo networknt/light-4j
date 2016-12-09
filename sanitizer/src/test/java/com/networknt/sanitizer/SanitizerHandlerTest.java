@@ -75,7 +75,7 @@ public class SanitizerHandlerTest {
     }
 
     static RoutingHandler getTestHandler() {
-        RoutingHandler handler = Handlers.routing()
+        return Handlers.routing()
                 .add(Methods.GET, "/parameter", new HttpHandler() {
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
                         Map<String, Deque<String>> parameter = exchange.getQueryParameters();
@@ -108,7 +108,6 @@ public class SanitizerHandlerTest {
                         }
                     }
                 });
-        return handler;
     }
 
     /*

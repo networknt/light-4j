@@ -80,7 +80,7 @@ public class BodyHandlerTest {
     }
 
     static RoutingHandler getTestHandler() {
-        RoutingHandler handler = Handlers.routing()
+        return Handlers.routing()
                 .add(Methods.GET, "/get", new HttpHandler() {
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
                         Object body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
@@ -105,7 +105,6 @@ public class BodyHandlerTest {
                         }
                     }
                 });
-        return handler;
     }
 
     @Test

@@ -77,7 +77,7 @@ public class ExceptionHandlerTest {
     }
 
     static RoutingHandler getTestHandler() {
-        RoutingHandler handler = Handlers.routing()
+        return Handlers.routing()
                 .add(Methods.GET, "/normal", new HttpHandler() {
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
                         exchange.getResponseSender().send("normal");
@@ -99,7 +99,6 @@ public class ExceptionHandlerTest {
                         String content = new Scanner(new File("djfkjoiwejjhh9032d")).useDelimiter("\\Z").next();
                     }
                 });
-        return handler;
     }
 
     @Test

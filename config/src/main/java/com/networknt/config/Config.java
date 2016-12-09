@@ -128,10 +128,10 @@ public abstract class Config {
         @Override
         public Object getJsonObjectConfig(String configName, Class clazz) {
             checkCacheExpiration();
-            Object config = (Object)configCache.get(configName);
+            Object config = configCache.get(configName);
             if(config == null) {
                 synchronized (FileConfigImpl.class) {
-                    config = (Object)configCache.get(configName);
+                    config = configCache.get(configName);
                     if(config == null) {
                         config = loadJsonObjectConfig(configName, clazz);
                         if(config != null) configCache.put(configName, config);

@@ -83,7 +83,7 @@ public class DumpHandler implements MiddlewareHandler {
     @Override
     public boolean isEnabled() {
         Object object = config.get(ENABLED);
-        return object != null && (Boolean)object == true;
+        return object != null && (Boolean) object;
     }
 
     @Override

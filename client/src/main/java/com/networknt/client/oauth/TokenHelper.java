@@ -122,7 +122,7 @@ public class TokenHelper {
         int statusCode = response.getStatusLine().getStatusCode();
         try {
             if (statusCode == HTTP_OK) {
-                tokenResponse = (TokenResponse) Config.getInstance().getMapper()
+                tokenResponse = Config.getInstance().getMapper()
                         .readValue(response.getEntity().getContent(),
                                 TokenResponse.class);
             } else {
