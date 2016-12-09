@@ -29,7 +29,6 @@ import org.junit.Test;
  */
 public class LocalSwitcherServiceTest extends TestCase {
 
-    @Test
     public void testProtocolSwitcher() {
 
         String protocolSwitcher = "HeartBeatSwitcher";

@@ -38,35 +38,30 @@ public class ConfigDefaultTest extends TestCase {
         super.tearDown();
     }
 
-    @Test
     public void testGetStringFromFile() throws Exception {
         config.clear();
         String content = config.getStringFromFile("test.json");
         Assert.assertNotNull(content);
     }
 
-    @Test
     public void testGetJsonMapConfig() throws Exception {
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test");
         Assert.assertEquals("default config", configMap.get("value"));
     }
 
-    @Test
     public void testGetJsonNodeConfig() throws Exception {
         config.clear();
         JsonNode node = config.getJsonNodeConfig("test");
         Assert.assertEquals("default config", node.get("value").textValue());
     }
 
-    @Test
     public void testGetJsonObjectConfig() throws Exception {
         config.clear();
         TestConfig tc = (TestConfig)config.getJsonObjectConfig("test", TestConfig.class);
         Assert.assertEquals("default config", tc.getValue());
     }
 
-    @Test
     public void testGetInputStream() throws Exception {
         InputStream is = config.getInputStreamFromFile("test.json");
         try {

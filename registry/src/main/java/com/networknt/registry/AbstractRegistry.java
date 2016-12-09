@@ -21,15 +21,12 @@ public abstract class AbstractRegistry implements RegistryService {
         // where to get serviceName and registryUrl? from config file which one?
 
         this.registryUrl = registryUrl;
-        SwitcherUtil.registerSwitcherListener(Constants.REGISTRY_HEARTBEAT_SWITCHER, new SwitcherListener() {
-            @Override
-            public void onValueChanged(String key, Boolean value) {
-                if (key != null && value != null) {
-                    if (value) {
-                        available(serviceName, null);
-                    } else {
-                        unavailable(serviceName, null);
-                    }
+        SwitcherUtil.registerSwitcherListener(Constants.REGISTRY_HEARTBEAT_SWITCHER, (key, value) -> {
+            if (key != null && value != null) {
+                if (value) {
+                    available(serviceName, null);
+                } else {
+                    unavailable(serviceName, null);
                 }
             }
         });

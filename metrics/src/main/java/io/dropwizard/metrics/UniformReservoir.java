@@ -66,6 +66,7 @@ public class UniformReservoir implements Reservoir {
      * @param n the bound
      * @return a value select randomly from the range {@code [0..n)}.
      */
+    @SuppressWarnings("NumericOverflow")
     private static long nextLong(long n) {
         long bits, val;
         do {

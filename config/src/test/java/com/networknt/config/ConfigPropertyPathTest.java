@@ -44,7 +44,6 @@ public class ConfigPropertyPathTest extends TestCase {
         test.delete();
     }
 
-    @Test
     public void testGetConfig() throws Exception {
         Config config  = Config.getInstance();
         config.clear();

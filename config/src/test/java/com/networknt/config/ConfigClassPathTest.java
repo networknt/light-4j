@@ -55,7 +55,6 @@ public class ConfigClassPathTest extends TestCase {
         test.delete();
     }
 
-    @Test
     public void testGetConfigFromClassPath() throws Exception {
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test");

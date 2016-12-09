@@ -95,17 +95,14 @@ public class AuditHandler implements MiddlewareHandler {
             }
         }
         if(statusCode || responseTime) {
-            exchange.addExchangeCompleteListener(new ExchangeCompletionListener() {
-                @Override
-                public void exchangeEvent(final HttpServerExchange exchange, final NextListener nextListener) {
-                    if(statusCode) {
-                        auditMap.put(STATUS_CODE, exchange.getStatusCode());
-                    }
-                    if(responseTime) {
-                        auditMap.put(RESPONSE_TIME, new Long(System.currentTimeMillis() - start));
-                    }
-                    nextListener.proceed();
+            exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
+                if(statusCode) {
+                    auditMap.put(STATUS_CODE, exchange1.getStatusCode());
                 }
+                if(responseTime) {
+                    auditMap.put(RESPONSE_TIME, new Long(System.currentTimeMillis() - start));
+                }
+                nextListener.proceed();
             });
         }
         audit.info(Config.getInstance().getMapper().writeValueAsString(auditMap));
