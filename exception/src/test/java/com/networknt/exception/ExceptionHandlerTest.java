@@ -81,6 +81,7 @@ public class ExceptionHandlerTest {
                     }
                 })
                 .add(Methods.GET, "/runtime", new HttpHandler() {
+                    @SuppressWarnings("NumericOverflow")
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
                         int i = 1/0;
                     }

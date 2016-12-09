@@ -34,7 +34,7 @@ public class InstrumentedExecutorsTest {
         final ExecutorService executorService = InstrumentedExecutors.newFixedThreadPool(2, registry, "xs");
         executorService.submit(new NoopRunnable());
 
-        assertThat(registry.meter("xs.submitted").getCount()).isEqualTo(1l);
+        assertThat(registry.meter("xs.submitted").getCount()).isEqualTo(1L);
 
         final Field delegateField = InstrumentedExecutorService.class.getDeclaredField("delegate");
         delegateField.setAccessible(true);
@@ -61,7 +61,7 @@ public class InstrumentedExecutorsTest {
         final ExecutorService executorService = InstrumentedExecutors.newFixedThreadPool(2, defaultThreadFactory, registry, "xs");
         executorService.submit(new NoopRunnable());
 
-        assertThat(registry.meter("xs.submitted").getCount()).isEqualTo(1l);
+        assertThat(registry.meter("xs.submitted").getCount()).isEqualTo(1L);
 
         final Field delegateField = InstrumentedExecutorService.class.getDeclaredField("delegate");
         delegateField.setAccessible(true);
@@ -76,7 +76,7 @@ public class InstrumentedExecutorsTest {
         final ExecutorService executorService = InstrumentedExecutors.newSingleThreadExecutor(registry, "xs");
         executorService.submit(new NoopRunnable());
 
-        assertThat(registry.meter("xs.submitted").getCount()).isEqualTo(1l);
+        assertThat(registry.meter("xs.submitted").getCount()).isEqualTo(1L);
     }
 
     @Test
@@ -90,7 +90,7 @@ public class InstrumentedExecutorsTest {
         final ExecutorService executorService = InstrumentedExecutors.newSingleThreadExecutor(defaultThreadFactory, registry, "xs");
         executorService.submit(new NoopRunnable());
 
-        assertThat(registry.meter("xs.submitted").getCount()).isEqualTo(1l);
+        assertThat(registry.meter("xs.submitted").getCount()).isEqualTo(1L);
     }
 
     @Test
@@ -99,7 +99,7 @@ public class InstrumentedExecutorsTest {
         executorService.submit(new NoopRunnable());
         executorService.submit(new NoopRunnable());
 
-        assertThat(registry.meter("xs.submitted").getCount()).isEqualTo(2l);
+        assertThat(registry.meter("xs.submitted").getCount()).isEqualTo(2L);
 
         final Field delegateField = InstrumentedExecutorService.class.getDeclaredField("delegate");
         delegateField.setAccessible(true);
@@ -128,7 +128,7 @@ public class InstrumentedExecutorsTest {
         executorService.submit(new NoopRunnable());
         executorService.submit(new NoopRunnable());
 
-        assertThat(registry.meter("xs.submitted").getCount()).isEqualTo(2l);
+        assertThat(registry.meter("xs.submitted").getCount()).isEqualTo(2L);
 
         final Field delegateField = InstrumentedExecutorService.class.getDeclaredField("delegate");
         delegateField.setAccessible(true);
@@ -149,7 +149,7 @@ public class InstrumentedExecutorsTest {
         final ScheduledExecutorService executorService = InstrumentedExecutors.newSingleThreadScheduledExecutor(registry, "xs");
         executorService.schedule(new NoopRunnable(), 0, TimeUnit.SECONDS);
 
-        assertThat(registry.meter("xs.scheduled.once").getCount()).isEqualTo(1l);
+        assertThat(registry.meter("xs.scheduled.once").getCount()).isEqualTo(1L);
     }
 
     @Test
@@ -157,7 +157,7 @@ public class InstrumentedExecutorsTest {
         final ScheduledExecutorService executorService = InstrumentedExecutors.newScheduledThreadPool(2, registry, "xs");
         executorService.schedule(new NoopRunnable(), 0, TimeUnit.SECONDS);
 
-        assertThat(registry.meter("xs.scheduled.once").getCount()).isEqualTo(1l);
+        assertThat(registry.meter("xs.scheduled.once").getCount()).isEqualTo(1L);
 
         final Field delegateField = InstrumentedScheduledExecutorService.class.getDeclaredField("delegate");
         delegateField.setAccessible(true);
@@ -182,7 +182,7 @@ public class InstrumentedExecutorsTest {
         final ScheduledExecutorService executorService = InstrumentedExecutors.newScheduledThreadPool(2, defaultThreadFactory, registry, "xs");
         executorService.schedule(new NoopRunnable(), 0, TimeUnit.SECONDS);
 
-        assertThat(registry.meter("xs.scheduled.once").getCount()).isEqualTo(1l);
+        assertThat(registry.meter("xs.scheduled.once").getCount()).isEqualTo(1L);
 
         final Field delegateField = InstrumentedScheduledExecutorService.class.getDeclaredField("delegate");
         delegateField.setAccessible(true);
@@ -207,7 +207,7 @@ public class InstrumentedExecutorsTest {
         final ThreadFactory threadFactory = InstrumentedExecutors.defaultThreadFactory(registry, "tf");
         threadFactory.newThread(new NoopRunnable());
 
-        assertThat(registry.meter("tf.created").getCount()).isEqualTo(1l);
+        assertThat(registry.meter("tf.created").getCount()).isEqualTo(1L);
 
         final Field delegateField = InstrumentedThreadFactory.class.getDeclaredField("delegate");
         delegateField.setAccessible(true);
@@ -231,7 +231,7 @@ public class InstrumentedExecutorsTest {
         final ThreadFactory threadFactory = InstrumentedExecutors.privilegedThreadFactory(registry, "tf");
         threadFactory.newThread(new NoopRunnable());
 
-        assertThat(registry.meter("tf.created").getCount()).isEqualTo(1l);
+        assertThat(registry.meter("tf.created").getCount()).isEqualTo(1L);
 
         final Field delegateField = InstrumentedThreadFactory.class.getDeclaredField("delegate");
         delegateField.setAccessible(true);
