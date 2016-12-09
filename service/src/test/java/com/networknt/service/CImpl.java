@@ -4,8 +4,8 @@ package com.networknt.service;
  * Created by stevehu on 2016-11-27.
  */
 public class CImpl implements C {
-    A a;
-    B b;
+    final A a;
+    final B b;
 
     public CImpl(A a, B b) {
         this.a = a;

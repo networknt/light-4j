@@ -48,15 +48,10 @@ public class DumpHandler implements MiddlewareHandler {
     static final Logger audit = LoggerFactory.getLogger(Constants.AUDIT_LOGGER);
     static final Logger logger = LoggerFactory.getLogger(DumpHandler.class);
 
-    public static Map<String, Object> config;
-
+    public static Map<String, Object> config =
+            Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
 
     private volatile HttpHandler next;
-
-    static {
-        config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
-    }
-
 
     public DumpHandler() {
 

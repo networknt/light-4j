@@ -57,8 +57,8 @@ public class AuditHandler implements MiddlewareHandler {
     static final String RESPONSE_TIME = "responseTime";
     static final String TIMESTAMP = "timestamp";
 
-    public static Map<String, Object> config;
-    private static List<String> headerList;
+    public static final Map<String, Object> config;
+    private static final List<String> headerList;
     private static boolean statusCode = false;
     private static boolean responseTime = false;
 

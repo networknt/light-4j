@@ -55,7 +55,7 @@ public class TokenHelper {
 
     public static TokenResponse getToken(TokenRequest tokenRequest) throws ClientException {
         String url = tokenRequest.getServerUrl() + tokenRequest.getUri();
-        TokenResponse tokenResponse = null;
+        TokenResponse tokenResponse;
 
         HttpPost httpPost = new HttpPost(url);
         httpPost.addHeader(Constants.AUTHORIZATION,
@@ -85,13 +85,13 @@ public class TokenHelper {
     }
 
     public static String encodeCredentials(String clientId, String clientSecret) {
-        String cred = "";
+        String cred;
         if(clientSecret != null) {
             cred = clientId + ":" + clientSecret;
         } else {
             cred = clientId;
         }
-        String encodedValue = null;
+        String encodedValue;
         byte[] encodedBytes = Base64.encodeBase64(cred.getBytes());
         encodedValue = new String(encodedBytes);
         return encodedValue;
@@ -115,7 +115,7 @@ public class TokenHelper {
     }
 
     private static TokenResponse handleResponse(HttpResponse response) throws ClientException {
-        TokenResponse tokenResponse = null;
+        TokenResponse tokenResponse;
         int statusCode = response.getStatusLine().getStatusCode();
         try {
             if (statusCode == HTTP_OK) {

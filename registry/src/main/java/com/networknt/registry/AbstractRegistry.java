@@ -13,9 +13,9 @@ import java.net.URL;
  */
 public abstract class AbstractRegistry implements RegistryService {
 
-    static Logger logger = LoggerFactory.getLogger(AbstractRegistry.class);
+    static final Logger logger = LoggerFactory.getLogger(AbstractRegistry.class);
 
-    private URL registryUrl;
+    private final URL registryUrl;
 
     public AbstractRegistry(String serviceName, URL registryUrl) {
         // where to get serviceName and registryUrl? from config file which one?

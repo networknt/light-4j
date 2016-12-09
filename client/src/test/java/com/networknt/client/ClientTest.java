@@ -152,7 +152,7 @@ public class ClientTest {
             }
 
         };
-        String responseBody = null;
+        String responseBody;
         try {
             Client.getInstance().populateHeader(httpGet, "Bearer token", "cid", "tid");
             responseBody = client.execute(httpGet, responseHandler);

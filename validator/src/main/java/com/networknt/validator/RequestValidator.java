@@ -96,7 +96,7 @@ public class RequestValidator {
         }
 
         if (requestBody == null) {
-            if (bodyParameter.get().getRequired()) {
+            if (bodyParameter.isPresent() && bodyParameter.get().getRequired()) {
                 return new Status(VALIDATOR_REQUEST_BODY_MISSING, swaggerOperation.getMethod(), swaggerOperation.getPathString().original());
             }
             return null;

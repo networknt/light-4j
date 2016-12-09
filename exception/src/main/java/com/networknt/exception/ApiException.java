@@ -23,7 +23,7 @@ import com.networknt.status.Status;
  */
 public class ApiException extends Exception {
     private static final long serialVersionUID = 1L;
-    private Status status;
+    private final Status status;
 
     public Status getStatus() {
         return status;

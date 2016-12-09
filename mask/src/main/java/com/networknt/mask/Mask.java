@@ -152,7 +152,7 @@ public class Mask {
             return stringToBeMasked;
         }
         String replacementString = "";
-        String padGroup = "";
+        String padGroup;
         if (!StringUtils.isEmpty(regex)) {
             try {
                 Pattern pattern = patternCache.get(regex);
@@ -162,7 +162,7 @@ public class Mask {
                 }
                 Matcher matcher = pattern.matcher(stringToBeMasked);
                 if (matcher.matches()) {
-                    String currentGroup = "";
+                    String currentGroup;
                     for (int i = 0; i < matcher.groupCount(); i++) {
                         currentGroup = matcher.group(i + 1);
                         padGroup = StringUtils.rightPad("", currentGroup.length(), maskingChar);

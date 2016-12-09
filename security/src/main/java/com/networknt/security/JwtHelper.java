@@ -67,7 +67,7 @@ public class JwtHelper {
     static JwtConfig jwtConfig = (JwtConfig) Config.getInstance().getJsonObjectConfig(JWT_CONFIG, JwtConfig.class);
 
     public static String getJwt(JwtClaims claims) throws Exception {
-        String jwt = null;
+        String jwt;
         RSAPrivateKey privateKey = (RSAPrivateKey) getPrivateKey(
                 jwtConfig.getKey().getFilename(), jwtConfig.getKey().getPassword(), jwtConfig.getKey().getKeyName());
 
@@ -188,7 +188,7 @@ public class JwtHelper {
     }
 
     public static JwtClaims verifyJwt(String jwt) throws InvalidJwtException, ExpiredTokenException {
-        JwtClaims claims = null;
+        JwtClaims claims;
         JwtConsumer consumer = new JwtConsumerBuilder()
                 .setSkipAllValidators()
                 .setDisableRequireSignature()

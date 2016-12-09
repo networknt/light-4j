@@ -52,11 +52,7 @@ public class BodyHandler implements MiddlewareHandler {
 
     public static final String CONFIG_NAME = "body";
 
-
-    public static BodyConfig config = null;
-    static {
-        config = (BodyConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, BodyConfig.class);
-    }
+    public static final BodyConfig config = (BodyConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, BodyConfig.class);
 
     private volatile HttpHandler next;
 
@@ -78,7 +74,7 @@ public class BodyHandler implements MiddlewareHandler {
             if(is != null) {
                 try {
                     if(is.available() != -1) {
-                        Object body = null;
+                        Object body;
                         String s = new Scanner(is,"UTF-8").useDelimiter("\\A").next();
                         s = s.trim();
                         if(s.startsWith("{")) {

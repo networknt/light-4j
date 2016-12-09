@@ -12,9 +12,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by stevehu on 2016-12-04.
  */
 public abstract class AbstractDiscovery implements DiscoveryService {
-    static Logger logger = LoggerFactory.getLogger(AbstractDiscovery.class);
+    static final Logger logger = LoggerFactory.getLogger(AbstractDiscovery.class);
 
-    private ConcurrentHashMap<String, List<URL>> serviceMap =
+    private final ConcurrentHashMap<String, List<URL>> serviceMap =
             new ConcurrentHashMap<String, List<URL>>();
 
     private URL registryUrl;

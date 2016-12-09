@@ -33,7 +33,7 @@ import java.util.Map;
 public class ConfigClassPathTest extends TestCase {
 
     Config config = null;
-    String homeDir = System.getProperty("user.home");
+    final String homeDir = System.getProperty("user.home");
 
     public void setUp() throws Exception {
         super.setUp();

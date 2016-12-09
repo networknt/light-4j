@@ -27,7 +27,7 @@ import static java.util.Collections.emptyList;
 
 public class ArrayParameterValidatorTest {
 
-    private ArrayParameterValidator classUnderTest = new ArrayParameterValidator(null);
+    private final ArrayParameterValidator classUnderTest = new ArrayParameterValidator(null);
 
     @Test
     public void validate_withValidCsvFormat_shouldPass() {

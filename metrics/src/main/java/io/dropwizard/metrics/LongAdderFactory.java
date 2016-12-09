@@ -36,7 +36,7 @@ final class LongAdderFactory {
     }
 
     private static boolean isClassLoaded(String className, boolean canInitialize) {
-        Class<?> clazz = null;
+        Class<?> clazz;
         try {
             clazz = LongAdderFactory.class.getClassLoader().loadClass(className);
         } catch (ClassNotFoundException e) {

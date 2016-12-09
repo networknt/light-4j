@@ -24,7 +24,7 @@ import static com.networknt.validator.ValidatorTestUtil.intParam;
 
 public class IntegerParameterValidatorTest {
 
-    private IntegerParameterValidator classUnderTest = new IntegerParameterValidator();
+    private final IntegerParameterValidator classUnderTest = new IntegerParameterValidator();
 
     @Test
     public void validate_withNullValue_shouldPass_whenNotRequired() {

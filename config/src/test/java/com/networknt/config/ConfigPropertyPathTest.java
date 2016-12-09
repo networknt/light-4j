@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ConfigPropertyPathTest extends TestCase {
-    String homeDir = System.getProperty("user.home");
+    final String homeDir = System.getProperty("user.home");
 
     public void setUp() throws Exception {
         super.setUp();

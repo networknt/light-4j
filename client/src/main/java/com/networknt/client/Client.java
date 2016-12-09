@@ -458,7 +458,7 @@ public class Client {
 
     private Registry<SchemeIOSessionStrategy> asyncRegistry() throws ClientException {
         // Allow TLSv1 protocol only
-        Registry<SchemeIOSessionStrategy> registry = null;
+        Registry<SchemeIOSessionStrategy> registry;
         try {
             SSLIOSessionStrategy sslSessionStrategy = new SSLIOSessionStrategy (
                     sslContext(),
@@ -496,7 +496,7 @@ public class Client {
         builder.setConnectTimeout(connectTimeout == null? DEFAULT_REACTOR_CONNECT_TIMEOUT: connectTimeout);
         Integer soTimeout = (Integer)reactorMap.get(REACTOR_SO_TIMEOUT);
         builder.setSoTimeout(soTimeout == null? DEFAULT_REACTOR_SO_TIMEOUT: soTimeout);
-        ConnectingIOReactor reactor = null;
+        ConnectingIOReactor reactor;
         try {
             reactor = new DefaultConnectingIOReactor(builder.build());
         } catch (IOReactorException e) {
@@ -526,7 +526,7 @@ public class Client {
                     logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
                 }
 
-                KeyStore trustStore = null;
+                KeyStore trustStore;
                 if(trustStoreName != null && trustStorePass != null) {
                     InputStream trustStream = Config.getInstance().getInputStreamFromFile(trustStoreName);
                     if(trustStream != null) {
@@ -552,7 +552,7 @@ public class Client {
             if (loadKeyStore != null && loadKeyStore) {
                 String keyStoreName = (String)tlsMap.get(KEY_STORE);
                 String keyStorePass = (String)tlsMap.get(KEY_PASS);
-                KeyStore keyStore = null;
+                KeyStore keyStore;
                 if(keyStoreName != null && keyStorePass != null) {
                     InputStream keyStream = Config.getInstance().getInputStreamFromFile(keyStoreName);
                     if(keyStream != null) {
@@ -595,7 +595,7 @@ public class Client {
     }
 
     private Registry<ConnectionSocketFactory> registry() throws ClientException {
-        Registry<ConnectionSocketFactory> registry = null;
+        Registry<ConnectionSocketFactory> registry;
         try {
             // Allow TLSv1 protocol only
             SSLConnectionSocketFactory sslFactory = new SSLConnectionSocketFactory(

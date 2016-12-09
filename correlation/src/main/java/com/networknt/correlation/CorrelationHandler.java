@@ -46,10 +46,8 @@ public class CorrelationHandler implements MiddlewareHandler {
 
     public static final String CONFIG_NAME = "correlation";
 
-    public static CorrelationConfig config = null;
-    static {
-        config = (CorrelationConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, CorrelationConfig.class);
-    }
+    public static CorrelationConfig config =
+            (CorrelationConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, CorrelationConfig.class);
 
     private volatile HttpHandler next;
 

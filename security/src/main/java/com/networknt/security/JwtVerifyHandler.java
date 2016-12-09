@@ -78,7 +78,7 @@ public class JwtVerifyHandler implements MiddlewareHandler {
                 headerMap.add(new HttpString(Constants.USER_ID), claims.getStringClaimValue(Constants.USER_ID));
                 headerMap.add(new HttpString(Constants.SCOPE), claims.getStringListClaimValue(Constants.SCOPE).toString());
                 if(config != null && (Boolean)config.get(ENABLE_VERIFY_SCOPE) && SwaggerHelper.swagger != null) {
-                    Operation operation = null;
+                    Operation operation;
                     SwaggerOperation swaggerOperation = exchange.getAttachment(SwaggerHandler.SWAGGER_OPERATION);
                     if(swaggerOperation == null) {
                         final NormalisedPath requestPath = new ApiNormalisedPath(exchange.getRequestURI());
@@ -157,7 +157,7 @@ public class JwtVerifyHandler implements MiddlewareHandler {
                         }
                     } else {
                         // no scope token, verify scope from auth token.
-                        List<String> primaryScopes = null;
+                        List<String> primaryScopes;
                         try {
                             primaryScopes = claims.getStringListClaimValue("scope");
                         } catch (MalformedClaimException e) {
