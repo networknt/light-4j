@@ -70,13 +70,13 @@ public class ClientTest {
         if(server != null) {
             try {
                 Thread.sleep(100);
-            } catch (InterruptedException ie) {
+            } catch (InterruptedException ignored) {
             }
             server.stop();
             System.out.println("The server is stopped.");
             try {
                 Thread.sleep(100);
-            } catch (InterruptedException ie) {
+            } catch (InterruptedException ignored) {
             }
         }
     }
@@ -204,7 +204,7 @@ public class ClientTest {
             logger.info("called times: " + i);
             try {
                 Thread.sleep(1000);
-            } catch (InterruptedException ie) {
+            } catch (InterruptedException ignored) {
             }
         }
     }
@@ -216,7 +216,7 @@ public class ClientTest {
             logger.info("called times: " + i);
             try {
                 Thread.sleep(6000);
-            } catch (InterruptedException ie) {
+            } catch (InterruptedException ignored) {
             }
         }
     }
@@ -235,7 +235,7 @@ public class ClientTest {
                     sleepTime = 1000;
                 }
                 Thread.sleep(sleepTime);
-            } catch (InterruptedException ie) {
+            } catch (InterruptedException ignored) {
             }
         }
     }
@@ -259,7 +259,7 @@ public class ClientTest {
             logger.info("called times: " + i);
             try {
                 Thread.sleep(1000);
-            } catch (InterruptedException ie) {
+            } catch (InterruptedException ignored) {
             }
         }
     }
@@ -271,7 +271,7 @@ public class ClientTest {
             logger.info("called times: " + i);
             try {
                 Thread.sleep(6000);
-            } catch (InterruptedException ie) {
+            } catch (InterruptedException ignored) {
             }
         }
     }

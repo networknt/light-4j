@@ -248,7 +248,7 @@ public class JmxReporterTest {
         try {
             getAttributes("gauge", "Value");
             failBecauseExceptionWasNotThrown(InstanceNotFoundException.class);
-        } catch (InstanceNotFoundException e) {
+        } catch (InstanceNotFoundException ignored) {
 
         }
     }

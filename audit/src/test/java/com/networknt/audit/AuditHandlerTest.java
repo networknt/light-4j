@@ -82,7 +82,7 @@ public class AuditHandlerTest {
         if(server != null) {
             try {
                 Thread.sleep(100);
-            } catch (InterruptedException ie) {
+            } catch (InterruptedException ignored) {
 
             }
             server.stop();

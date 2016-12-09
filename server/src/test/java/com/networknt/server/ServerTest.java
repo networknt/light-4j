@@ -44,7 +44,7 @@ public class ServerTest {
         if (server != null) {
             try {
                 Thread.sleep(100);
-            } catch (InterruptedException ie) {
+            } catch (InterruptedException ignored) {
 
             }
             Server.stop();

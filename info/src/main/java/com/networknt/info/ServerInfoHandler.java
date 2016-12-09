@@ -129,7 +129,7 @@ public class ServerInfoHandler implements HttpHandler {
             //logger.error("Exception:", e);
         } finally {
             try { in.close(); }
-            catch (Exception ex){}
+            catch (Exception ignored){}
         }
         return version;
     }
