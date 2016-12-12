@@ -42,7 +42,7 @@ public class SingletonServiceFactory {
         }
     }
 
-    public static void handleSingleImpl(List<Class> interfaceClasses, List<Object> value) throws ClassNotFoundException, Exception {
+    public static void handleSingleImpl(List<Class> interfaceClasses, List<Object> value) throws Exception {
         Object object = value.get(0);
         if(object instanceof String) {
             Class implClass = Class.forName((String)object);
@@ -91,7 +91,7 @@ public class SingletonServiceFactory {
         }
     }
 
-    public static void handleMultipleImpl(List<Class> interfaceClasses, List<Object> value) throws ClassNotFoundException, Exception {
+    public static void handleMultipleImpl(List<Class> interfaceClasses, List<Object> value) throws Exception {
 
         List<Object> arrays = interfaceClasses.stream().map(c -> Array.newInstance(c, value.size())).collect(Collectors.toList());
         for(int i = 0; i < value.size(); i++) {

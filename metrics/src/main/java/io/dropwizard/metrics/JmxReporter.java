@@ -501,7 +501,7 @@ public class JmxReporter implements Reporter, Closeable {
             this.objectNameFactory = objectNameFactory;
         }
 
-        private void registerMBean(Object mBean, ObjectName objectName) throws InstanceAlreadyExistsException, JMException {
+        private void registerMBean(Object mBean, ObjectName objectName) throws JMException {
             ObjectInstance objectInstance = mBeanServer.registerMBean(mBean, objectName);
             if (objectInstance != null) {
                 // the websphere mbeanserver rewrites the objectname to include
