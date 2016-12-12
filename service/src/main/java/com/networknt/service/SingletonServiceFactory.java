@@ -19,7 +19,7 @@ public class SingletonServiceFactory {
     static Logger logger = LoggerFactory.getLogger(SingletonServiceFactory.class);
 
     private static Map<Class, Object> serviceMap = new HashMap<>();
-
+    // map is statically loaded to make sure there is only one instance per jvm
     static {
         ServiceConfig serviceConfig =
                 (ServiceConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServiceConfig.class);
@@ -32,6 +32,7 @@ public class SingletonServiceFactory {
                     if (it.hasNext()) {
                         Map.Entry<String, List<Object>> pair = (Map.Entry)it.next();
                         String key = pair.getKey();
+                        key = key.replaceAll("\\s+","");
                         List<Object> value = pair.getValue();
                         handleSingleton(key, value);
                     }

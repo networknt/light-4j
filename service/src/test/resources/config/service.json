@@ -11,7 +11,7 @@
         "com.networknt.service.ProcessorCImpl"
       ]
     },
-    {"com.networknt.service.D1,com.networknt.service.D2":["com.networknt.service.DImpl"]},
+    {"com.networknt.service.D1, com.networknt.service.D2":["com.networknt.service.DImpl"]},
     {
       "com.networknt.service.E,com.networknt.service.F": [
         "com.networknt.service.EF1Impl",
