@@ -44,6 +44,7 @@ public class SingletonServiceFactory {
     }
 
     public static void handleSingleImpl(List<Class> interfaceClasses, List<Object> value) throws Exception {
+        // only one object should be defined in value. TODO throws exception if number of object is not correct.
         Object object = value.get(0);
         if(object instanceof String) {
             Class implClass = Class.forName((String)object);
@@ -143,6 +144,13 @@ public class SingletonServiceFactory {
         }
 
     }
+
+    /**
+     * For each singleton definition, create object and push it into the service map
+     * @param key String interface or multiple interface separated by ","
+     * @param value List of implementations of interface(s) defined in the key
+     * @throws Exception exception thrown from the object creation
+     */
     public static void handleSingleton(String key, List<Object> value) throws Exception {
 
         List<Class> interfaceClasses = new ArrayList();
@@ -166,6 +174,9 @@ public class SingletonServiceFactory {
         // find out how many constructors this class has.
         Object instance  = null;
         Constructor[] allConstructors = clazz.getDeclaredConstructors();
+        // iterate all constructors of this class and try each non-default one with parameters from service map
+        // also flag if there is default constructor without argument.
+        boolean hasDefaultConstructor = false;
         for (Constructor ctor : allConstructors) {
             Class<?>[] pType  = ctor.getParameterTypes();
             if(pType.length > 0) {
@@ -184,17 +195,27 @@ public class SingletonServiceFactory {
                 }
                 if(!beanFound) {
                     // could not find all parameters, try another constructor.
-                    break;
+                    continue;
                 } else {
                     // this constructor parameters are found.
                     instance = ctor.newInstance(params);
+                    break;
                 }
             } else {
-                instance = clazz.newInstance();
+                hasDefaultConstructor = true;
+                continue;
             }
         }
-        return instance;
-
+        if(instance != null) {
+            return instance;
+        } else {
+            if(hasDefaultConstructor) {
+                return clazz.newInstance();
+            } else {
+                // error that no instance can be created.
+                throw new Exception("No instance can be created for class " + clazz);
+            }
+        }
     }
 
     public static Object getBean(Class interfaceClass) {
