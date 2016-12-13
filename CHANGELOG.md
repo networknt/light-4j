@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.1.4 - 2016-12-12
+### Added
+- Switcher is a module to control on/off of certain component during runtime
+- Discovery is a module used by Client to discover services by names from Consul or ZooKeeper
+- Registry is a module used by Server to register itself to Consul or ZooKeeper during server startup 
+
+### Changed
+- Update service module to support spaces in interface key part.
+- Integrate Google Error-prone for static source code scan
+- Fixed some many warnings from Intellij Idea Inspect
+
 ## 1.1.3 - 2016-12-03
 ### Added
 
