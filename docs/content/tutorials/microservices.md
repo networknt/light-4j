@@ -10,14 +10,19 @@ API services are developed for docker container and deployed to the cloud. In th
 environment, traditional heavy weight containers like Java EE and Spring are 
 losing ground as it doesn't make sense to have a heavy weight container wrapped 
 with a light weight docker container. Docker and container orchestration tools 
-like Kubernetes or Docker Swarm are replacing all the functionalities Java EE 
+like Kubernetes and Docker Swarm are replacing all the functionalities Java EE 
 provides without hogging resources.
+
+There is an [article](https://www.gartner.com/doc/reprints?id=1-3N8E378&ct=161205&st=sb) 
+published by Gartner indicates that both Java EE and .NET are declining and will
+be replaced very soon. 
 
 
 Another clear trend is standalone Gateway is phasing out in the cloud environment 
 with docker containers as most of the traditional gateway features are replaced 
 by container orchestration tool and docker container management tools. In addition, 
-some of the cross cutting concerns gateway provided are addressed in API framework.
+some of the cross cutting concerns gateway provided are addressed in API frameworks
+like Light-Java.
 
 ## Prepare workspace
 
@@ -57,7 +62,7 @@ Light Java Microservices Framework encourages Design Driven API building and
 piece to drive the runtime for security and validation. Also, the specification 
 can be used to scaffold a running server project the first time so that developers 
 can focus their efforts on the domain business logic implementation without 
-worrying about how each components wired together.
+worrying about how each component wired together.
 
 During the service implementation phase, specification might be changed and you can
 regenerate the service codebase again without overwriting your handlers and test
@@ -232,7 +237,8 @@ java -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i
 ```
 
 Now you have four APIs generated from four OpenAPI specifications. Let's check
-them in.
+them in. Note that you might not have write access to this repo, so you can ignore
+this step. 
 
 ```
 cd ../light-java-example
@@ -307,7 +313,7 @@ public class DataGetHandler implements HttpHandler {
 
 ```
 
-Let's update it to an array of strings that indicate the response comes from API D. 
+Let's update it to an array of strings that indicates the response comes from API D. 
 
 
 ```
@@ -382,7 +388,7 @@ public class DataGetHandler implements HttpHandler {
 
 ```
 
-Restart API C server and the endpoint /v1/data will return
+Restart API C server and test the endpoint /v1/data
 
 ```
 cd api_c
@@ -474,75 +480,72 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.client.Client;
 import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
-import com.networknt.server.HandlerProvider;
-import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.Methods;
+import io.undertow.util.HttpString;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
+public class DataGetHandler implements HttpHandler {
 
-public class PathHandlerProvider implements HandlerProvider {
+    static String CONFIG_NAME = "api_a";
+    static String apibUrl = (String)Config.getInstance().getJsonMapConfig(CONFIG_NAME).get("api_b_endpoint");
+    static String apicUrl = (String)Config.getInstance().getJsonMapConfig(CONFIG_NAME).get("api_c_endpoint");
 
-    public HttpHandler getHandler() {
-        HttpHandler handler = Handlers.routing()
-
-
-            .add(Methods.GET, "/v1/data", new HttpHandler() {
-                        public void handleRequest(HttpServerExchange exchange) throws Exception {
-                            List<String> list = new ArrayList<String>();
-                            final HttpGet[] requests = new HttpGet[] {
-                                    new HttpGet("http://localhost:8081/v1/data"),
-                                    new HttpGet("http://localhost:8082/v1/data"),
-                            };
-                            try {
-                                CloseableHttpAsyncClient client = Client.getInstance().getAsyncClient();
-                                final CountDownLatch latch = new CountDownLatch(requests.length);
-                                for (final HttpGet request: requests) {
-                                    client.execute(request, new FutureCallback<HttpResponse>() {
-                                        @Override
-                                        public void completed(final HttpResponse response) {
-                                            latch.countDown();
-                                            try {
-                                                List<String> apiList = (List<String>) Config.getInstance().getMapper().readValue(response.getEntity().getContent(),
-                                                        new TypeReference<List<String>>(){});
-                                                list.addAll(apiList);
-                                            } catch (IOException e) {
-
-                                            }
-                                        }
-
-                                        @Override
-                                        public void failed(final Exception ex) {
-                                            latch.countDown();
-                                        }
-
-                                        @Override
-                                        public void cancelled() {
-                                            latch.countDown();
-                                        }
-                                    });
-                                }
-                                latch.await();
-                            } catch (ClientException e) {
-                                throw new Exception("ClientException:", e);
-                            }
-                            // now add API A specific messages
-                            list.add("API A: Message 1");
-                            list.add("API A: Message 2");
-                            exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(list));
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
+        List<String> list = new Vector<String>();
+        final HttpGet[] requests = new HttpGet[] {
+                new HttpGet(apibUrl),
+                new HttpGet(apicUrl),
+        };
+        try {
+            CloseableHttpAsyncClient client = Client.getInstance().getAsyncClient();
+            final CountDownLatch latch = new CountDownLatch(requests.length);
+            for (final HttpGet request: requests) {
+                Client.getInstance().propagateHeaders(request, exchange);
+                client.execute(request, new FutureCallback<HttpResponse>() {
+                    @Override
+                    public void completed(final HttpResponse response) {
+                        try {
+                            List<String> apiList = (List<String>) Config.getInstance().getMapper().readValue(response.getEntity().getContent(),
+                                    new TypeReference<List<String>>(){});
+                            list.addAll(apiList);
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
-                    })
+                        latch.countDown();
+                    }
 
-        ;
-        return handler;
+                    @Override
+                    public void failed(final Exception ex) {
+                        ex.printStackTrace();
+                        latch.countDown();
+                    }
+
+                    @Override
+                    public void cancelled() {
+                        System.out.println("cancelled");
+                        latch.countDown();
+                    }
+                });
+            }
+            latch.await();
+        } catch (ClientException e) {
+            e.printStackTrace();
+            throw new Exception("ClientException:", e);
+        }
+        // now add API A specific messages
+        list.add("API A: Message 1");
+        list.add("API A: Message 2");
+        exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(list));
     }
 }
 
@@ -875,9 +878,9 @@ This is what looks like in API A client.json
       "redirect_uri": "https://localhost:8080/authorization_code",
       "scope": [
         "api_b.r",
-        "api_b_w",
+        "api_b.w",
         "api_c.r",
-        "api_c_w"
+        "api_c.w"
       ]
     },
     "client_credentials": {
@@ -886,9 +889,9 @@ This is what looks like in API A client.json
       "client_secret": "GXkHy-1aSPyo4pst8WBWbg",
       "scope": [
         "api_b.r",
-        "api_b_w",
+        "api_b.w",
         "api_c.r",
-        "api_c_w"
+        "api_c.w"
       ]
     }
   }
@@ -948,7 +951,7 @@ And this is what looks like in API B client.json
       "redirect_uri": "https://localhost:8080/authorization_code",
       "scope": [
         "api_d.r",
-        "api_d_w"
+        "api_d.w"
       ]
     },
     "client_credentials": {
@@ -957,7 +960,7 @@ And this is what looks like in API B client.json
       "client_secret": "tcahI1dvT1OsxXxg-IB_-w",
       "scope": [
         "api_d.r",
-        "api_d_w"
+        "api_d.w"
       ]
     }
   }
