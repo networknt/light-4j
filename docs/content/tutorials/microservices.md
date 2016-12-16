@@ -756,8 +756,9 @@ APIs except API A. For API A we want to enableVerifyJwt to true but
 enableVerifyScope to false so that we can use a long lived token to test from
 curl without getting new tokens each time.
 
-Open security.json and update enableVerifyJwt and enableVerifyScope to true. The
-following is what looks like for API B, C and D.
+Open src/main/resources/config/security.json in api_b/api_c/api_d folder and 
+update enableVerifyJwt and enableVerifyScope to true. The following is what 
+looks like for API B, C and D.
 
 ```
 {
@@ -776,7 +777,7 @@ following is what looks like for API B, C and D.
   "logClientUserScope": false
 }
 ```
-This is what looks like for API A
+This is what looks like for API A src/main/resources/config/security.json
 
 ```
 {
@@ -825,7 +826,7 @@ API B client
 ```
 
 Now let's create client.json on both API A and API B to reflect the above info.
-This is what looks like in API A client.json
+This is what looks like in API A src/main/resources/config/client.json
 
 ```
 {

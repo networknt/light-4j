@@ -39,7 +39,7 @@ import java.util.Scanner;
  * This is a handler that parses the body into a Map if the input content type is JSON.
  * For other content type, don't parse it. In order to trigger this middleware, the content type
  * must be set in header for post, put and patch.
- *
+ * <p>
  * Created by steve on 29/09/16.
  */
 public class BodyHandler implements MiddlewareHandler {
@@ -52,7 +52,7 @@ public class BodyHandler implements MiddlewareHandler {
 
     public static final String CONFIG_NAME = "body";
 
-    public static final BodyConfig config = (BodyConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, BodyConfig.class);
+    public static final BodyConfig config = (BodyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, BodyConfig.class);
 
     private volatile HttpHandler next;
 
@@ -64,24 +64,26 @@ public class BodyHandler implements MiddlewareHandler {
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         // parse the body to map if content type is application/json
         String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
-        if(contentType != null && contentType.startsWith("application/json")) {
-            if(exchange.isInIoThread()) {
+        if (contentType != null && contentType.startsWith("application/json")) {
+            if (exchange.isInIoThread()) {
                 exchange.dispatch(this);
                 return;
             }
             exchange.startBlocking();
             InputStream is = exchange.getInputStream();
-            if(is != null) {
+            if (is != null) {
                 try {
-                    if(is.available() != -1) {
+                    if (is.available() != -1) {
                         Object body;
-                        String s = new Scanner(is,"UTF-8").useDelimiter("\\A").next();
+                        String s = new Scanner(is, "UTF-8").useDelimiter("\\A").next();
                         s = s.trim();
-                        if(s.startsWith("{")) {
-                            body = Config.getInstance().getMapper().readValue(s, new TypeReference<HashMap<String, Object>>() {});
-                        } else if(s.startsWith("[")) {
-                            body = Config.getInstance().getMapper().readValue(s, new TypeReference<List<HashMap<String, Object>>>() {});
-                       } else {
+                        if (s.startsWith("{")) {
+                            body = Config.getInstance().getMapper().readValue(s, new TypeReference<HashMap<String, Object>>() {
+                            });
+                        } else if (s.startsWith("[")) {
+                            body = Config.getInstance().getMapper().readValue(s, new TypeReference<List<HashMap<String, Object>>>() {
+                            });
+                        } else {
                             // error here. The content type in head doesn't match the body.
                             Status status = new Status(CONTENT_TYPE_MISMATCH, contentType);
                             exchange.setStatusCode(status.getStatusCode());
