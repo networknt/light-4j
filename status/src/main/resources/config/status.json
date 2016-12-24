@@ -247,12 +247,6 @@
     "message": "JSON_PROCESSING_EXCEPTION",
     "description": "Json Processing Excepiton %s."
   },
-  "ERR12006": {
-    "statusCode": 404,
-    "code": "ERR12006",
-    "message": "CLIENT_ID_NOTFOUND",
-    "description": "Client Id not found %s."
-  },
   "ERR12007": {
     "statusCode": 401,
     "code": "ERR12007",
@@ -276,6 +270,42 @@
     "code": "ERR12010",
     "message": "INVALID_RESPONSE_TYPE",
     "description": "Invalid response type %s. Ony code is allowed."
+  },
+  "ERR12011": {
+    "statusCode": 400,
+    "code": "ERR12011",
+    "message": "PASSWORD_OR_PASSWORDCONFIRM_EMPTY",
+    "description": "Password %s or PasswordConfirm %s is empty."
+  },
+  "ERR12012": {
+    "statusCode": 400,
+    "code": "ERR12012",
+    "message": "PASSWORD_PASSWORDCONFIRM_NOT_MATCH",
+    "description": "Password %s and PasswordConfirm %s are not matched."
+  },
+  "ERR12013": {
+    "statusCode": 404,
+    "code": "ERR12013",
+    "message": "USER_NOT_FOUND",
+    "description": "User %s is not found."
+  },
+  "ERR12014": {
+    "statusCode": 404,
+    "code": "ERR12014",
+    "message": "CLIENT_NOT_FOUND",
+    "description": "Client %s is not found."
+  },
+  "ERR12015": {
+    "statusCode": 404,
+    "code": "ERR12015",
+    "message": "SERVICE_NOT_FOUND",
+    "description": "Service %s is not found."
+  },
+  "ERR12016": {
+    "statusCode": 401,
+    "code": "ERR12016",
+    "message": "INCORRECT_PASSWORD",
+    "description": "Incorrect password."
   }
 
 }
