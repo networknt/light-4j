@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.1.5 - 2016-12-24
+### Added
+- Add HashUtil for password used in OAuth2 server light-oauth2
+- Add Status code for OAuth2 server
+
+### Changed
+
 ## 1.1.4 - 2016-12-12
 ### Added
 - Switcher is a module to control on/off of certain component during runtime
