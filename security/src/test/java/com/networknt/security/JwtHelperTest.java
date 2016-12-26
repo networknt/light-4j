@@ -51,34 +51,42 @@ public class JwtHelperTest {
     }
 
     @Test
-    public void longLivedJwt() throws Exception {
-        JwtClaims claims = getTestClaims();
+    public void longLivedATMP1000Jwt() throws Exception {
+        JwtClaims claims = getTestClaims("eric", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("ATMP1000.w", "ATMP1000.r"));
         claims.setExpirationTimeMinutesInTheFuture(5256000);
         String jwt = JwtHelper.getJwt(claims);
-        System.out.println("***LongLived JWT***: " + jwt);
+        System.out.println("***LongLived ATMP1000 JWT***: " + jwt);
+    }
+
+
+    @Test
+    public void longLivedPetStoreJwt() throws Exception {
+        JwtClaims claims = getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"));
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtHelper.getJwt(claims);
+        System.out.println("***LongLived PetStore JWT***: " + jwt);
     }
 
     @Test
-    public void normalJwt() throws Exception {
-        JwtClaims claims = getTestClaims();
+    public void normalPetStoreJwt() throws Exception {
+        JwtClaims claims = getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"));
         claims.setExpirationTimeMinutesInTheFuture(10);
         String jwt = JwtHelper.getJwt(claims);
         System.out.println("***JWT***: " + jwt);
     }
 
-    private JwtClaims getTestClaims() {
+    private JwtClaims getTestClaims(String userId, String userType, String clientId, List<String> scope) {
         JwtClaims claims = JwtHelper.getDefaultJwtClaims();
-        claims.setClaim("user_id", "steve");
-        claims.setClaim("user_type", "EMPLOYEE");
-        claims.setClaim("client_id", "f7d42348-c647-4efb-a52d-4c5787421e72");
-        List<String> scope = Arrays.asList("write:pets", "read:pets");
+        claims.setClaim("user_id", userId);
+        claims.setClaim("user_type", userType);
+        claims.setClaim("client_id", clientId);
         claims.setStringListClaim("scope", scope); // multi-valued claims work too and will end up as a JSON array
         return claims;
     }
 
     @Test
     public void testVerifyJwt() throws Exception {
-        JwtClaims claims = getTestClaims();
+        JwtClaims claims = getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"));
         String jwt = JwtHelper.getJwt(claims);
         claims = null;
         Assert.assertNotNull(jwt);

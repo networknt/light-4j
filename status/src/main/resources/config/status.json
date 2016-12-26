@@ -45,7 +45,7 @@
     "statusCode": 404,
     "code": "ERR10007",
     "message": "INVALID_REQUEST_PATH",
-    "description": "Request path cannot be found in the spec."
+    "description": "Request path %s cannot be found in the spec."
   },
   "ERR10008": {
     "statusCode": 405,
@@ -100,6 +100,12 @@
     "code": "ERR10016",
     "message": "MISSING_HANDlER",
     "description": "Could not find handler for the uri %s and method %s."
+  },
+  "ERR10017": {
+    "statusCode": 400,
+    "code": "ERR10017",
+    "message": "SQL_EXCEPTION",
+    "description": "Sql Exception %s."
   },
 
   "ERR11000": {
@@ -265,12 +271,6 @@
     "message": "INVALID_CODE_REQUEST",
     "description": "Invalid authorization code request. responseType and client_id are required."
   },
-  "ERR12010": {
-    "statusCode": 401,
-    "code": "ERR12010",
-    "message": "INVALID_RESPONSE_TYPE",
-    "description": "Invalid response type %s. Ony code is allowed."
-  },
   "ERR12011": {
     "statusCode": 400,
     "code": "ERR12011",
@@ -306,6 +306,12 @@
     "code": "ERR12016",
     "message": "INCORRECT_PASSWORD",
     "description": "Incorrect password."
-  }
+  },
+  "ERR12017": {
+    "statusCode": 404,
+    "code": "ERR12017",
+    "message": "KEY_NOT_FOUND",
+    "description": "Public key certificate keyId %s is not found."
+  },
 
 }

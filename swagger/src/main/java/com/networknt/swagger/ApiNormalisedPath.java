@@ -16,6 +16,10 @@
 
 package com.networknt.swagger;
 
+import io.swagger.annotations.Api;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -26,13 +30,16 @@ import static java.util.Objects.requireNonNull;
  * Created by steve on 23/09/16.
  */
 public class ApiNormalisedPath implements NormalisedPath {
+    Logger logger = LoggerFactory.getLogger(ApiNormalisedPath.class);
     private final List<String> pathParts;
     private final String original;
     private final String normalised;
 
     public ApiNormalisedPath(final String path) {
+        if (logger.isDebugEnabled()) logger.debug("path =" + path);
         this.original = requireNonNull(path, "A path is required");
         this.normalised = normalise(path);
+        if (logger.isDebugEnabled()) logger.debug("normalised = " + this.normalised);
         this.pathParts = unmodifiableList(asList(normalised.split("/")));
     }
 
