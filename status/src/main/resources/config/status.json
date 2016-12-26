@@ -312,6 +312,6 @@
     "code": "ERR12017",
     "message": "KEY_NOT_FOUND",
     "description": "Public key certificate keyId %s is not found."
-  },
+  }
 
 }
