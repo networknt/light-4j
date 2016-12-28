@@ -312,6 +312,24 @@
     "code": "ERR12017",
     "message": "KEY_NOT_FOUND",
     "description": "Public key certificate keyId %s is not found."
+  },
+  "ERR12018": {
+    "statusCode": 400,
+    "code": "ERR12018",
+    "message": "SERVICE_ID_EXISTS",
+    "description": "Service id %s exists."
+  },
+  "ERR12019": {
+    "statusCode": 400,
+    "code": "ERR12019",
+    "message": "CLIENT_ID_EXISTS",
+    "description": "Client id %s exists."
+  },
+  "ERR12020": {
+    "statusCode": 400,
+    "code": "ERR12020",
+    "message": "USER_ID_EXISTS",
+    "description": "User id %s exists."
   }
 
 }
