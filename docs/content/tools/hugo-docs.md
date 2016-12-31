@@ -5,11 +5,11 @@ title: Hugo for project documentation on github
 
 ## Introduction
 
-**This tutorial is written for Linux and Mac; however, it should be hard to follow it by Windows users.**
+**This tutorial is written for Linux and Mac; however, it should not be hard to follow by Windows users.**
 
-For most open source developers, they would ues github.com to manage their projects and then have a README.md
-for documentation. For some bigger project they might have wiki for additional documents and linked them to
-README.md.
+For most open source developers, they would ues github.com to manage their projects and 
+then have a README.md for documentation. For some bigger projects they might have wiki 
+for additional documents and linked them to README.md.
 
 Here I will introduce another way to manage documents in gh-pages with [Hugo](https://gohugo.io/) static site
 generator.
@@ -33,7 +33,7 @@ To verify that Hugo is installed successful.
 hugo version
 ```
 
-For Mac, the easiest way to use Homebrew.
+For Mac, the easiest way is to use Homebrew.
 
 ```
 brew update && brew install hugo
@@ -59,13 +59,14 @@ Now if you type hugo followed by a few TABs, you will see the commands that Hugo
 
 ## Create gh-pages branch
 
-GitHub Pages will serve up a website for any repository that has a branch called gh-pages with a valid index.html
-file at that branch’s root.
+GitHub Pages will serve up a website for any repository that has a branch called gh-pages 
+with a valid index.html file at that branch’s root.
 
 1. Create an orphaned gh-pages branch
 
-To set up a Project Pages site, you need to create a new "orphan" branch (a branch that has no common history with
- an existing branch) in your repository. The safest way to do this is to start with a fresh clone:
+To set up a Project Pages site, you need to create a new "orphan" branch (a branch that 
+has no common history with an existing branch) in your repository. The safest way to do 
+this is to start with a fresh clone:
 
 ```
 git clone github.com/user/repository.git
@@ -109,8 +110,9 @@ Create a new docs site
 hugo new site docs
 ```
 
-Now you have a docs directory in your project root folder and some empty sub directories under docs. By default, git
-will not commit empty directories to the repository. To work around it, we can include .gitkeep file in each of these
+Now you have a docs directory in your project root folder and some empty sub 
+directories under docs. By default, git will not commit empty directories to the 
+repository. To work around it, we can include .gitkeep file in each of these
 directories.
 
 ```
@@ -164,8 +166,8 @@ Get the deploy.sh
 wget https://github.com/X1011/git-directory-deploy/raw/master/deploy.sh && chmod +x deploy.sh
 
 ```
-From docs folder run the following command to publish your site to gh-pages. This can be repeated every time you
-want to publish your site.
+From docs folder run the following command to publish your site to gh-pages. This 
+can be repeated every time you want to publish your site.
 
 ```
 # For setting it up to build to a folder other than "dist", see the options in deploy.sh.
