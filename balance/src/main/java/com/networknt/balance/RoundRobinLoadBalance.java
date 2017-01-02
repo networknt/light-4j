@@ -26,7 +26,7 @@ public class RoundRobinLoadBalance implements LoadBalance {
         return url;
     }
 
-    private URL doSelect(List<URL> urls) {
+    protected URL doSelect(List<URL> urls) {
         int index = getNextPositive();
         for (int i = 0; i < urls.size(); i++) {
             URL url = urls.get((i + index) % urls.size());
