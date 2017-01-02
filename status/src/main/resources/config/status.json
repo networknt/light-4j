@@ -330,6 +330,11 @@
     "code": "ERR12020",
     "message": "USER_ID_EXISTS",
     "description": "User id %s exists."
+  },
+  "ERR12021": {
+    "statusCode": 400,
+    "code": "ERR12021",
+    "message": "EMAIL_EXISTS",
+    "description": "Email %s exists."
   }
-
 }
