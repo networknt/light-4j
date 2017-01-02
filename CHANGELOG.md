@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.1.6 - 2017-01-01
+### Added
+- Add error status for OAuth2 server
+- Add local first load balancer (Thanks @ddobrin)
+
+### Changed
+- Remove duplicated plugin
+- Update JwtHelper to support JWT token generation with parameters
+
 ## 1.1.5 - 2016-12-24
 ### Added
 - Add HashUtil for password used in OAuth2 server light-oauth2
