@@ -20,4 +20,12 @@ public class HashUtilTest {
         Assert.assertTrue(HashUtil.validatePassword(password, hashedPass));
     }
 
+    @Test
+    public void testClientSecretHash() throws Exception {
+        String secret = "f6h1FTI8Q3-7UScPZDzfXA";
+        String hashedPass = HashUtil.generateStorngPasswordHash(secret);
+        System.out.println("hashedSecret = " + hashedPass);
+        Assert.assertTrue(HashUtil.validatePassword(secret, hashedPass));
+    }
+
 }
