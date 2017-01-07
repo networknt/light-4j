@@ -17,7 +17,7 @@ googleAnalytics = ""
 	provider = "GitHub"
 	repo_url = "https://github.com/networknt/light-java"
 
-	version = "1.1.3"
+	version = "1.1.6"
 	logo = "images/logo.png"
 	favicon = ""
 
@@ -70,6 +70,11 @@ googleAnalytics = ""
 	name   = "Other Components"
 	url    = "other/"
 	weight = 30
+
+[[menu.main]]
+	name   = "DevOps"
+	url    = "devops/"
+	weight = 35
 
 [[menu.main]]
 	name   = "Tutorials"
