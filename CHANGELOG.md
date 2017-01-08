@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.1.7 - 2017-01-09
+### Added
+- Add error status for OAuth2 server
+
+### Changed
+- Update JwtHelper to throw JoseException instead of Exception
+
 ## 1.1.6 - 2017-01-01
 ### Added
 - Add error status for OAuth2 server

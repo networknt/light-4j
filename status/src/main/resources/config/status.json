@@ -336,5 +336,36 @@
     "code": "ERR12021",
     "message": "EMAIL_EXISTS",
     "description": "Email %s exists."
+  },
+  "ERR12022": {
+    "statusCode": 400,
+    "code": "ERR12022",
+    "message": "USERNAME_REQUIRED",
+    "description": "Username is required for password grant type."
+  },
+  "ERR12023": {
+    "statusCode": 400,
+    "code": "ERR12023",
+    "message": "PASSWORD_REQUIRED",
+    "description": "Password is required for password grant type."
+  },
+  "ERR12024": {
+    "statusCode": 400,
+    "code": "ERR12024",
+    "message": "NOT_TRUSTED_CLIENT",
+    "description": "Password grant type is allowed only for trusted client type."
+  },
+  "ERR12025": {
+    "statusCode": 400,
+    "code": "ERR12025",
+    "message": "MISSING_REDIRECT_URI",
+    "description": "Missing redirect_uri in authorization code token service as redirect_uri %s is passed in code service."
+  },
+  "ERR12026": {
+    "statusCode": 400,
+    "code": "ERR12026",
+    "message": "MISMATCH_REDIRECT_URI",
+    "description": "redirect_uri %s from token service is not identical as redirect_uri %s from code service."
   }
+
 }
