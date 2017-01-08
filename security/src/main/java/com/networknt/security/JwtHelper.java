@@ -29,6 +29,7 @@ import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.jwt.consumer.JwtContext;
 import org.jose4j.jwx.JsonWebStructure;
 import org.jose4j.keys.resolvers.X509VerificationKeyResolver;
+import org.jose4j.lang.JoseException;
 import org.owasp.encoder.Encode;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
@@ -36,6 +37,7 @@ import org.slf4j.ext.XLoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -66,7 +68,7 @@ public class JwtHelper {
     static Map<String, Object> securityJwtConfig = (Map)securityConfig.get(JWT_CONFIG);
     static JwtConfig jwtConfig = (JwtConfig) Config.getInstance().getJsonObjectConfig(JWT_CONFIG, JwtConfig.class);
 
-    public static String getJwt(JwtClaims claims) throws Exception {
+    public static String getJwt(JwtClaims claims) throws JoseException {
         String jwt;
         RSAPrivateKey privateKey = (RSAPrivateKey) getPrivateKey(
                 jwtConfig.getKey().getFilename(), jwtConfig.getKey().getPassword(), jwtConfig.getKey().getKeyName());
