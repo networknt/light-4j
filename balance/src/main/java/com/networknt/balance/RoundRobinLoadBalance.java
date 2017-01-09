@@ -15,6 +15,7 @@ public class RoundRobinLoadBalance implements LoadBalance {
 
     private AtomicInteger idx = new AtomicInteger(0);
 
+    @Override
     public URL select(List<URL> urls) {
         URL url = null;
         if (urls.size() > 1) {

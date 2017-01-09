@@ -12,6 +12,7 @@ public class CImpl implements C {
         this.b = b;
     }
 
+    @Override
     public String c() {
         return a.a() + b.b();
     }

@@ -210,7 +210,7 @@ public class SingletonServiceFactory {
             return instance;
         } else {
             if(hasDefaultConstructor) {
-                return clazz.newInstance();
+                return clazz.getConstructor().newInstance();
             } else {
                 // error that no instance can be created.
                 throw new Exception("No instance can be created for class " + clazz);

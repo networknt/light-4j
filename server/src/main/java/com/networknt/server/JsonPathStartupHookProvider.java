@@ -16,6 +16,7 @@ import java.util.Set;
  * Created by steve on 2016-10-19.
  */
 public class JsonPathStartupHookProvider implements StartupHookProvider {
+    @Override
     public void onStartup() {
         configJsonPath();
     }

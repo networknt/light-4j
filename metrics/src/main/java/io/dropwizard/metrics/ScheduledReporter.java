@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
  * metrics periodically).
  *
  * @see ConsoleReporter
- * @see CsvReporter
  * @see Slf4jReporter
  */
 public abstract class ScheduledReporter implements Closeable, Reporter {
@@ -85,6 +84,8 @@ public abstract class ScheduledReporter implements Closeable, Reporter {
      * @param registry the {@link io.dropwizard.metrics.MetricRegistry} containing the metrics this
      *                 reporter will report
      * @param filter   the filter for which metrics to report
+     * @param rateUnit the rate unit
+     * @param durationUnit the duration unit
      * @param executor the executor to use while scheduling reporting of metrics.
      */
     protected ScheduledReporter(MetricRegistry registry,

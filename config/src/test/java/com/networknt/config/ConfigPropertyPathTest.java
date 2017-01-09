@@ -26,6 +26,7 @@ import java.util.Map;
 public class ConfigPropertyPathTest extends TestCase {
     final String homeDir = System.getProperty("user.home");
 
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         System.setProperty("light-java-config-dir", homeDir);
@@ -38,6 +39,7 @@ public class ConfigPropertyPathTest extends TestCase {
         config.getMapper().writeValue(new File(homeDir + "/test.json"), map);
     }
 
+    @Override
     public void tearDown() throws Exception {
         File test = new File(homeDir + "/test.json");
         test.delete();

@@ -33,19 +33,21 @@ public interface NormalisedPath {
 
     /**
      * @return The path part at the given index
+     * @param index position of part
      * @throws IndexOutOfBoundsException if the provided index is not a valid index
      */
     String part(int index);
 
     /**
      * @return Whether the path part at the given index is a path param (e.g. "/my/{param}/")
+     * @param index position of part
      * @throws IndexOutOfBoundsException if the provided index is not a valid index
      */
     boolean isParam(int index);
 
     /**
-     * @return The parameter name of the path part at the given index, or <code>null</code> if the given
-     * part is not a parameter.
+     * @return The parameter name of the path part at the given index, or <code>null</code>
+     * @param index position of part
      * @throws IndexOutOfBoundsException if the provided index is not a valid index
      */
     String paramName(int index);

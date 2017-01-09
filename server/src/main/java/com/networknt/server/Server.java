@@ -115,6 +115,7 @@ public class Server {
 
     static protected void addDaemonShutdownHook() {
         Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
             public void run() {
                 Server.shutdown();
             }

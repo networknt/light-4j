@@ -110,8 +110,8 @@ public class Client {
 
     static Map<String, Object> config;
     static Map<String, Object> oauthConfig;
-    private CloseableHttpClient httpClient = null;
-    private CloseableHttpAsyncClient httpAsyncClient = null;
+    private volatile CloseableHttpClient httpClient = null;
+    private volatile CloseableHttpAsyncClient httpAsyncClient = null;
 
 
     // Cached jwt token for this client.
@@ -218,6 +218,8 @@ public class Client {
      * or mobile apps.
      *
      * @param request the http request
+     * @throws ClientException client exception
+     * @throws ApiException api exception
      */
     public void addCcToken(HttpRequest request) throws ClientException, ApiException {
         checkCCTokenExpired();
@@ -232,6 +234,8 @@ public class Client {
      *
      * @param request the http request
      * @param traceabilityId the traceability id
+     * @throws ClientException client exception
+     * @throws ApiException api exception
      */
     public void addCcTokenTrace(HttpRequest request, String traceabilityId) throws ClientException, ApiException {
         checkCCTokenExpired();
@@ -248,6 +252,7 @@ public class Client {
      * @param request the http request
      * @param exchange the http server exchange
      * @throws ClientException client exception
+     * @throws ApiException api exception
      */
     public void propagateHeaders(HttpRequest request, final HttpServerExchange exchange) throws ClientException, ApiException {
         String tid = exchange.getRequestHeaders().getFirst(Constants.TRACEABILITY_ID);
@@ -268,6 +273,7 @@ public class Client {
      * @param correlationId the correlation id
      * @param traceabilityId the traceability id
      * @throws ClientException client exception
+     * @throws ApiException api exception 
      */
     public void populateHeader(HttpRequest request, String authToken, String correlationId, String traceabilityId) throws ClientException, ApiException {
         if(traceabilityId != null) {

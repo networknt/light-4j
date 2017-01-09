@@ -34,6 +34,7 @@ public class ConfigClassPathTest extends TestCase {
     Config config = null;
     final String homeDir = System.getProperty("user.home");
 
+    @Override
     public void setUp() throws Exception {
         super.setUp();
 
@@ -48,6 +49,7 @@ public class ConfigClassPathTest extends TestCase {
         addURL(new File(homeDir).toURI().toURL());
     }
 
+    @Override
     public void tearDown() throws Exception {
         // Remove the test.json from home directory
         File test = new File(homeDir + "/test.json");

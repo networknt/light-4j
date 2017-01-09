@@ -28,11 +28,14 @@ import java.util.Map;
  */
 public class ConfigDefaultTest extends TestCase {
     Config config = null;
+
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         config = Config.getInstance();
     }
 
+    @Override
     public void tearDown() throws Exception {
         super.tearDown();
     }

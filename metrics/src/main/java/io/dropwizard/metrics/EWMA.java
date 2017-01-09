@@ -83,7 +83,7 @@ public class EWMA {
     /**
      * Mark the passage of time and decay the current rate accordingly.
      */
-    public void tick() {
+    public synchronized void tick() {
         final long count = uncounted.sumThenReset();
         final double instantRate = count / interval;
         if (initialized) {

@@ -24,7 +24,7 @@ public class LocalFirstLoadBalance extends RoundRobinLoadBalance {
         // get hostname for this IP address
         hostname = inetAddress.getHostName();
     }
-    
+    @Override
     protected URL doSelect(List<URL> urls) {
     	// search for a URL in the same host first
     	for(URL url : urls){

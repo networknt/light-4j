@@ -81,7 +81,7 @@ public class JwtConfig {
         this.key = key;
     }
 
-    public class Key {
+    public static class Key {
         String kid;
         String filename;
         String password;

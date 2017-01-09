@@ -100,6 +100,7 @@ public abstract class Config {
             return mapper;
         }
 
+        @Override
         public void clear() {
             configCache.clear();
         }

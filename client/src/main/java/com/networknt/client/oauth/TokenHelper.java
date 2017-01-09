@@ -39,6 +39,8 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
  * Created by steve on 02/09/16.
  */
@@ -91,13 +93,13 @@ public class TokenHelper {
             cred = clientId;
         }
         String encodedValue;
-        byte[] encodedBytes = Base64.encodeBase64(cred.getBytes());
-        encodedValue = new String(encodedBytes);
+        byte[] encodedBytes = Base64.encodeBase64(cred.getBytes(UTF_8));
+        encodedValue = new String(encodedBytes, UTF_8);
         return encodedValue;
     }
 
     public static String decodeCredentials(String cred) {
-        return new String(Base64.decodeBase64(cred));
+        return new String(Base64.decodeBase64(cred), UTF_8);
     }
 
     private static UrlEncodedFormEntity getEntity(TokenRequest request) throws JsonProcessingException, UnsupportedEncodingException {

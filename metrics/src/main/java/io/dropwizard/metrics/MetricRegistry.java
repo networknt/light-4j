@@ -23,6 +23,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class MetricRegistry implements MetricSet {
 
     /**
+     * @param klass klass
+     * @param names names
+     * @return MetricName
      * @see #name(String, String...)
      */
     public static MetricName name(Class<?> klass, String... names) {
@@ -71,6 +74,7 @@ public class MetricRegistry implements MetricSet {
      * Creates a {@link MetricRegistry} with a custom {@link ConcurrentMap} implementation for use
      * inside the registry. Call as the super-constructor to create a {@link MetricRegistry} with
      * space- or time-bounded metric lifecycles, for example.
+     * @param metricsMap metricsMap
      */
     protected MetricRegistry(ConcurrentMap<MetricName, Metric> metricsMap) {
         this.metrics = metricsMap;
@@ -78,6 +82,9 @@ public class MetricRegistry implements MetricSet {
     }
 
     /**
+     * @param name name
+     * @param metric metric
+     * @return {@code metric}
      * @see #register(MetricName, Metric)
      */
     @SuppressWarnings("unchecked")
@@ -121,6 +128,8 @@ public class MetricRegistry implements MetricSet {
     }
 
     /**
+     * @param name name
+     * @return Counter counter
      * @see #counter(MetricName)
      */
     public Counter counter(String name) {
@@ -139,6 +148,8 @@ public class MetricRegistry implements MetricSet {
     }
 
     /**
+     * @param name name
+     * @return Histogram Histogram
      * @see #histogram(MetricName)
      */
     public Histogram histogram(String name) {
@@ -157,6 +168,8 @@ public class MetricRegistry implements MetricSet {
     }
 
     /**
+     * @param name name
+     * @return Meter Meter
      * @see #meter(MetricName)
      */
     public Meter meter(String name) {
@@ -175,6 +188,8 @@ public class MetricRegistry implements MetricSet {
     }
 
     /**
+     * @param name name
+     * @return Timer Timer
      * @see #timer(MetricName)
      */
     public Timer timer(String name) {

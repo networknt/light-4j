@@ -45,7 +45,7 @@ final class LongAdderFactory {
 
         if (canInitialize) {
             try {
-                clazz.newInstance();
+                clazz.getConstructor().newInstance();
             } catch (Throwable t) {
                 LOG.info("Unable to instantiate class {}", className, t);
                 return false;

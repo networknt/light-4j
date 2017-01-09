@@ -56,6 +56,7 @@ class UnsafeLongAdderImpl extends UnsafeStriped64 implements LongAdder, Serializ
      *
      * @param x the value to add
      */
+    @Override
     public void add(long x) {
         Cell[] as;
         long b, v;
@@ -75,6 +76,7 @@ class UnsafeLongAdderImpl extends UnsafeStriped64 implements LongAdder, Serializ
     /**
      * Equivalent to {@code add(1)}.
      */
+    @Override
     public void increment() {
         add(1L);
     }
@@ -82,6 +84,7 @@ class UnsafeLongAdderImpl extends UnsafeStriped64 implements LongAdder, Serializ
     /**
      * Equivalent to {@code add(-1)}.
      */
+    @Override
     public void decrement() {
         add(-1L);
     }
@@ -93,6 +96,7 @@ class UnsafeLongAdderImpl extends UnsafeStriped64 implements LongAdder, Serializ
      *
      * @return the sum
      */
+    @Override
     public long sum() {
         long sum = base;
         Cell[] as = cells;
@@ -113,6 +117,7 @@ class UnsafeLongAdderImpl extends UnsafeStriped64 implements LongAdder, Serializ
      * method is intrinsically racy, it should only be used when it is known that no threads are
      * concurrently updating.
      */
+    @Override
     public void reset() {
         internalReset(0L);
     }
@@ -125,6 +130,7 @@ class UnsafeLongAdderImpl extends UnsafeStriped64 implements LongAdder, Serializ
      *
      * @return the sum
      */
+    @Override
     public long sumThenReset() {
         long sum = base;
         Cell[] as = cells;

@@ -14,6 +14,8 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.UUID;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
  * Created by stevehu on 2016-12-23.
  */
@@ -70,7 +72,7 @@ public class HashUtil {
             MessageDigest digest = MessageDigest.getInstance("MD5");
 
             //Update input string in message digest
-            digest.update(input.getBytes(), 0, input.length());
+            digest.update(input.getBytes(UTF_8), 0, input.length());
 
             //Converts message digest value in base 16 (hex)
             md5 = new BigInteger(1, digest.digest()).toString(16);
@@ -104,7 +106,7 @@ public class HashUtil {
     {
         int iterations = 1000;
         char[] chars = password.toCharArray();
-        byte[] salt = getSalt().getBytes();
+        byte[] salt = getSalt().getBytes(UTF_8);
 
         PBEKeySpec spec = new PBEKeySpec(chars, salt, iterations, 64 * 8);
         SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");

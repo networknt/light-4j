@@ -41,6 +41,7 @@ public class JwtMockHandler implements HttpHandler {
 
     public JwtMockHandler() {}
 
+    @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         exchange.getResponseHeaders().put(
                 Headers.CONTENT_TYPE, "application/json");
