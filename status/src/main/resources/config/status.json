@@ -107,6 +107,108 @@
     "message": "SQL_EXCEPTION",
     "description": "Sql Exception %s."
   },
+  "ERR10018": {
+    "statusCode": 500,
+    "code": "ERR10018",
+    "message": "CREATE_REGISTRY_ERROR",
+    "description": "Failed to create registry for url %s"
+  },
+  "ERR10019": {
+    "statusCode": 500,
+    "code": "ERR10019",
+    "message": "PARSE_DIRECT_URL_ERROR",
+    "description": "parse direct url error, invalid direct registry address %s, address should be ip1:port1,ip2:port2 ..."
+  },
+  "ERR10020": {
+    "statusCode": 500,
+    "code": "ERR10020",
+    "message": "REGISTER_ERROR",
+    "description": "[%s] fails to register %s to %s"
+  },
+  "ERR10021": {
+    "statusCode": 500,
+    "code": "ERR10021",
+    "message": "UNREGISTER_ERROR",
+    "description": "[%s] fails to unregister %s to %s"
+  },
+  "ERR10022": {
+    "statusCode": 500,
+    "code": "ERR10022",
+    "message": "SUBSCRIBE_ERROR",
+    "description": "[%s] fails to subscribe %s to %s"
+  },
+  "ERR10023": {
+    "statusCode": 500,
+    "code": "ERR10023",
+    "message": "UNSUBSCRIBE_ERROR",
+    "description": "[%s] fails to unsubscribe %s to %s"
+  },
+  "ERR10024": {
+    "statusCode": 500,
+    "code": "ERR10024",
+    "message": "REGISTRY_IS_NULL",
+    "description": "Registry must not be null"
+  },
+  "ERR10025": {
+    "statusCode": 500,
+    "code": "ERR10025",
+    "message": "WEIGHT_OUT_OF_RANGE",
+    "description": "Weight must be integer between 1 and 100 but the actual value is %s"
+  },
+  "ERR10026": {
+    "statusCode": 500,
+    "code": "ERR10026",
+    "message": "GET_NODETYPEPATH_ERROR",
+    "description": "Failed to get nodeTypePath, url: %s type: %s"
+  },
+  "ERR10027": {
+    "statusCode": 500,
+    "code": "ERR10027",
+    "message": "SUBSCRIBE_ZOOKEEPER_SERVICE_ERROR",
+    "description": "Failed to subscribe service %s to zookeeper(%s), cause: %s"
+  },
+  "ERR10028": {
+    "statusCode": 500,
+    "code": "ERR10028",
+    "message": "SUBSCRIBE_ZOOKEEPER_COMMAND_ERROR",
+    "description": "Failed to subscribe command %s to zookeeper(%s), cause: %s"
+  },
+  "ERR10029": {
+    "statusCode": 500,
+    "code": "ERR10029",
+    "message": "UNSUBSCRIBE_ZOOKEEPER_SERVICE_ERROR",
+    "description": "Failed to unsubscribe service %s to zookeeper(%s), cause: %s"
+  },
+  "ERR10030": {
+    "statusCode": 500,
+    "code": "ERR10030",
+    "message": "UNSUBSCRIBE_ZOOKEEPER_COMMAND_ERROR",
+    "description": "Failed to unsubscribe command %s to zookeeper(%s), cause: %s"
+  },
+  "ERR10031": {
+    "statusCode": 500,
+    "code": "ERR10031",
+    "message": "DISCOVER_ZOOKEEPER_SERVICE_ERROR",
+    "description": "Failed to discover service %s from zookeeper(%s), cause: %s"
+  },
+  "ERR10032": {
+    "statusCode": 500,
+    "code": "ERR10032",
+    "message": "DISCOVER_ZOOKEEPER_COMMAND_ERROR",
+    "description": "Failed to discover command %s from zookeeper(%s), cause: %s"
+  },
+  "ERR10033": {
+    "statusCode": 500,
+    "code": "ERR10033",
+    "message": "REGISTER_ZOOKEEPER_ERROR",
+    "description": "Failed to register %s to zookeeper(%s), cause: %s"
+  },
+  "ERR10034": {
+    "statusCode": 500,
+    "code": "ERR10034",
+    "message": "UNREGISTER_ZOOKEEPER_ERROR",
+    "description": "Failed to unregister %s to zookeeper(%s), cause: %s"
+  },
 
   "ERR11000": {
     "statusCode": 400,
@@ -366,6 +468,24 @@
     "code": "ERR12026",
     "message": "MISMATCH_REDIRECT_URI",
     "description": "redirect_uri %s from token service is not identical as redirect_uri %s from code service."
+  },
+  "ERR12027": {
+    "statusCode": 400,
+    "code": "ERR12027",
+    "message": "MISMATCH_SCOPE",
+    "description": "scope %s does not match previous scope or defined scope for client %s."
+  },
+  "ERR12028": {
+    "statusCode": 400,
+    "code": "ERR12028",
+    "message": "MISMATCH_CLIENT_ID",
+    "description": "client_id %s does not match previous client_id %s in refresh_token request."
+  },
+  "ERR12029": {
+    "statusCode": 404,
+    "code": "ERR12029",
+    "message": "REFRESH_TOKEN_NOT_FOUND",
+    "description": "Refresh token %s is not found."
   }
 
 }
