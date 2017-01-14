@@ -77,6 +77,11 @@ googleAnalytics = ""
 	weight = 35
 
 [[menu.main]]
+	name   = "Benchmarks"
+	url    = "benchmarks/"
+	weight = 38
+
+[[menu.main]]
 	name   = "Tutorials"
 	url    = "tutorials/"
 	weight = 40
