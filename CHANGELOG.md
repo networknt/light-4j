@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.1.7 - 2017-01-14
+### Added
+- Add error status for OAuth2 server
+
+### Changed
+- Fix warnings reported from google error-prone
+
 ## 1.1.7 - 2017-01-09
 ### Added
 - Add error status for OAuth2 server
