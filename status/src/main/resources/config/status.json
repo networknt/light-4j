@@ -486,6 +486,12 @@
     "code": "ERR12029",
     "message": "REFRESH_TOKEN_NOT_FOUND",
     "description": "Refresh token %s is not found."
+  },
+  "ERR12030": {
+    "statusCode": 400,
+    "code": "ERR12030",
+    "message": "INVALID_KEY_ID",
+    "description": "Invalid key id %s."
   }
 
 }
