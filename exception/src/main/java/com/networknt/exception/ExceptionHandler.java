@@ -23,6 +23,7 @@ import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.server.protocol.framed.FrameHeaderData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -55,9 +56,16 @@ public class ExceptionHandler implements MiddlewareHandler {
             if(exchange.isResponseChannelAvailable()) {
                 //handle exceptions
                 if(e instanceof RuntimeException) {
-                    Status status = new Status(STATUS_RUNTIME_EXCEPTION);
-                    exchange.setStatusCode(status.getStatusCode());
-                    exchange.getResponseSender().send(status.toString());
+                    // check if it is FrameworkException which is subclass of RuntimeException.
+                    if(e instanceof FrameworkException) {
+                        FrameworkException fe = (FrameworkException)e;
+                        exchange.setStatusCode(fe.getStatus().getStatusCode());
+                        exchange.getResponseSender().send(fe.getStatus().toString());
+                    } else {
+                        Status status = new Status(STATUS_RUNTIME_EXCEPTION);
+                        exchange.setStatusCode(status.getStatusCode());
+                        exchange.getResponseSender().send(status.toString());
+                    }
                 } else {
                     if(e instanceof ApiException) {
                         ApiException ae = (ApiException)e;

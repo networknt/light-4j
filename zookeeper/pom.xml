@@ -25,9 +25,9 @@
         <relativePath>..</relativePath>
     </parent>
 
-    <artifactId>registry</artifactId>
+    <artifactId>zookeeper</artifactId>
     <packaging>jar</packaging>
-    <description>A registry and discovery module that register the services and discover them from centralized registry.</description>
+    <description>A zookeeper module for service registry and discovery.</description>
 
     <dependencies>
         <dependency>
@@ -40,19 +40,7 @@
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>status</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>exception</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>switcher</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
+            <artifactId>registry</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -61,6 +49,18 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-ext</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.owasp.encoder</groupId>
+            <artifactId>encoder</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.zookeeper</groupId>
+            <artifactId>zookeeper</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.101tec</groupId>
+            <artifactId>zkclient</artifactId>
         </dependency>
 
         <dependency>
@@ -78,6 +78,12 @@
             <artifactId>mockito-core</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
 </project>

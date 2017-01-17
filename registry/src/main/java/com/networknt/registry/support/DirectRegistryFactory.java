@@ -13,17 +13,20 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
+package com.networknt.registry.support;
 
-package com.networknt.registry;
+import com.networknt.registry.Registry;
+import com.networknt.registry.URL;
 
 /**
- * 
- * To create registry
- *
- * @author fishermen
- * @version V1.0 created at: 2013-5-28
+ * Created by axb on 16/6/12.
  */
-public interface RegistryFactory {
+public class DirectRegistryFactory extends AbstractRegistryFactory {
 
-    Registry getRegistry(URL url);
+    @Override
+    protected Registry createRegistry(URL url) {
+        return new DirectRegistry(url);
+    }
+
+
 }

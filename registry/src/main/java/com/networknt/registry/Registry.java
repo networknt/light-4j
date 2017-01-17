@@ -18,12 +18,12 @@ package com.networknt.registry;
 
 /**
  * 
- * To create registry
+ * Used to register and discover.
  *
  * @author fishermen
  * @version V1.0 created at: 2013-5-28
  */
-public interface RegistryFactory {
+public interface Registry extends RegistryService, DiscoveryService {
 
-    Registry getRegistry(URL url);
+    URL getUrl();
 }

@@ -13,17 +13,23 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
 package com.networknt.registry;
+
+import java.util.List;
 
 /**
  * 
- * To create registry
+ * Discovery service.
  *
  * @author fishermen
- * @version V1.0 created at: 2013-5-28
+ * @version V1.0 created at: 2013-5-16
  */
-public interface RegistryFactory {
 
-    Registry getRegistry(URL url);
+public interface DiscoveryService {
+
+    void subscribe(URL url, NotifyListener listener);
+
+    void unsubscribe(URL url, NotifyListener listener);
+
+    List<URL> discover(URL url);
 }

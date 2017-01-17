@@ -273,7 +273,7 @@ public class Client {
      * @param correlationId the correlation id
      * @param traceabilityId the traceability id
      * @throws ClientException client exception
-     * @throws ApiException api exception 
+     * @throws ApiException api exception
      */
     public void populateHeader(HttpRequest request, String authToken, String correlationId, String traceabilityId) throws ClientException, ApiException {
         if(traceabilityId != null) {

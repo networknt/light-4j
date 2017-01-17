@@ -14,16 +14,14 @@
  *    limitations under the License.
  */
 
-package com.networknt.registry;
+package com.networknt.registry.support.command;
 
-/**
- * 
- * To create registry
- *
- * @author fishermen
- * @version V1.0 created at: 2013-5-28
- */
-public interface RegistryFactory {
+import java.util.List;
 
-    Registry getRegistry(URL url);
+import com.networknt.registry.URL;
+
+public interface ServiceListener {
+
+    void notifyService(URL refUrl, URL registryUrl, List<URL> urls);
+
 }

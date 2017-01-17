@@ -30,15 +30,12 @@ public class ApiException extends Exception {
     }
 
     public ApiException(Status status) {
+        super(status.toString());
         this.status = status;
     }
 
-    public ApiException(String code) {
-        this.status = new Status(code);
-    }
-
     public ApiException(Status status, Throwable cause) {
-        super(cause);
+        super(status.toString(), cause);
         this.status = status;
     }
 }

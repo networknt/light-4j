@@ -13,17 +13,19 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
 package com.networknt.registry;
+
+import java.util.List;
 
 /**
  * 
- * To create registry
+ * Notify when service changed.
  *
  * @author fishermen
- * @version V1.0 created at: 2013-5-28
+ * @version V1.0 created at: 2013-5-16
  */
-public interface RegistryFactory {
 
-    Registry getRegistry(URL url);
+public interface NotifyListener {
+
+    void notify(URL registryUrl, List<URL> urls);
 }

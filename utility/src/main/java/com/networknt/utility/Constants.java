@@ -32,7 +32,34 @@ public class Constants {
     // Logger
     public static final String AUDIT_LOGGER = "Audit";
 
+    // Framework
+    public static final String FRAMEWORK_NAME = "light";
+    public static final String METHOD_CONFIG_PREFIX = "methodconfig.";
+
     // Switcher
     public static final String REGISTRY_HEARTBEAT_SWITCHER = "RegistryHeartBeat";
+
+    public static final int MILLS = 1;
+    public static final int SECOND_MILLS = 1000;
+    public static final int MINUTE_MILLS = 60 * SECOND_MILLS;
+
+    public static final String DEFAULT_VERSION = "1.0";
+    public static final String DEFAULT_VALUE = "default";
+    public static final int DEFAULT_INT_VALUE = 0;
+    public static final String DEFAULT_CHARACTER = "utf-8";
+
+    public static final String NODE_TYPE_SERVICE = "service";
+
+    public static final String PROTOCOL_SEPARATOR = "://";
+    public static final String PROTOCOL_LIGHT = "light";
+    public static final String PATH_SEPARATOR = "/";
+
+    public static final String REGISTRY_PROTOCOL_LOCAL = "local";
+    public static final String REGISTRY_PROTOCOL_DIRECT = "direct";
+    public static final String REGISTRY_PROTOCOL_ZOOKEEPER = "zookeeper";
+
+    public static final String ZOOKEEPER_REGISTRY_NAMESPACE = "/light";
+    public static final String ZOOKEEPER_REGISTRY_COMMAND = "/command";
+
 
 }

@@ -17,12 +17,16 @@
 package com.networknt.utility;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
@@ -99,5 +103,39 @@ public class Util {
         //location = jar:file:/Users/stevehu/project/light-java-example/petstore/target/swagger-light-server-1.0.0.jar!/com/networknt/utility/Util.class
         return location.toString();
     }
+
+    public static int parseInteger(String intStr) {
+        if (intStr == null) {
+            return Constants.DEFAULT_INT_VALUE;
+        }
+        try {
+            return Integer.parseInt(intStr);
+        } catch (NumberFormatException e) {
+            return Constants.DEFAULT_INT_VALUE;
+        }
+    }
+
+    public static String urlEncode(String value) {
+        if (StringUtils.isEmpty(value)) {
+            return "";
+        }
+        try {
+            return URLEncoder.encode(value, Constants.DEFAULT_CHARACTER);
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    public static String urlDecode(String value) {
+        if (StringUtils.isBlank(value)) {
+            return "";
+        }
+        try {
+            return URLDecoder.decode(value, Constants.DEFAULT_CHARACTER);
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
 
 }
