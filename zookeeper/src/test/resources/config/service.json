@@ -1,0 +1,37 @@
+{
+  "description": "singleton service factory configuration",
+  "singletons": [
+    {
+      "com.networknt.registry.URL": [
+        {
+          "com.networknt.registry.URLImpl": {
+            "protocol": "zookeeper",
+            "host": "127.0.0.1",
+            "port": 9000,
+            "path": "com.networknt.registry.RegistryService",
+            "parameters": {
+              "connectTimeout": "1000",
+              "registrySessionTimeout": "60000"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "com.networknt.zookeeper.client.ZooKeeperClient": [
+        {
+          "com.networknt.zookeeper.client.ZooKeeperClientImpl": {
+            "zkServers": "127.0.0.1:5000",
+            "sessionTimeout": 1000,
+            "connectionTimeout": 60000
+          }
+        }
+      ]
+    },
+    {
+      "com.networknt.registry.Registry" : [
+        "com.networknt.zookeeper.ZooKeeperRegistry"
+      ]
+    }
+  ]
+}

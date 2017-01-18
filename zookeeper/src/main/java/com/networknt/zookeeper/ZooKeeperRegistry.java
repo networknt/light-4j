@@ -24,11 +24,12 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.networknt.registry.URLImpl;
 import com.networknt.status.Status;
+import com.networknt.zookeeper.client.ZooKeeperClient;
 import org.I0Itec.zkclient.IZkChildListener;
 import org.I0Itec.zkclient.IZkDataListener;
 import org.I0Itec.zkclient.IZkStateListener;
-import org.I0Itec.zkclient.ZkClient;
 import org.apache.zookeeper.Watcher;
 
 import com.networknt.utility.Constants;
@@ -41,8 +42,8 @@ import com.networknt.utility.ConcurrentHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ZookeeperRegistry extends CommandFailbackRegistry {
-    private static final Logger logger = LoggerFactory.getLogger(ZookeeperRegistry.class);
+public class ZooKeeperRegistry extends CommandFailbackRegistry {
+    private static final Logger logger = LoggerFactory.getLogger(ZooKeeperRegistry.class);
     private static final String SUBSCRIBE_ZOOKEEPER_SERVICE_ERROR = "ERR10027";
     private static final String SUBSCRIBE_ZOOKEEPER_COMMAND_ERROR = "ERR10028";
     private static final String UNSUBSCRIBE_ZOOKEEPER_SERVICE_ERROR = "ERR10029";
@@ -52,16 +53,16 @@ public class ZookeeperRegistry extends CommandFailbackRegistry {
     private static final String REGISTER_ZOOKEEPER_ERROR = "ERR10033";
     private static final String UNREGISTER_ZOOKEEPER_ERROR = "ERR10034";
 
-    private ZkClient zkClient;
+    private ZooKeeperClient client;
     private Set<URL> availableServices = new ConcurrentHashSet<URL>();
     private ConcurrentHashMap<URL, ConcurrentHashMap<ServiceListener, IZkChildListener>> serviceListeners = new ConcurrentHashMap<URL, ConcurrentHashMap<ServiceListener, IZkChildListener>>();
     private ConcurrentHashMap<URL, ConcurrentHashMap<CommandListener, IZkDataListener>> commandListeners = new ConcurrentHashMap<URL, ConcurrentHashMap<CommandListener, IZkDataListener>>();
     private final ReentrantLock clientLock = new ReentrantLock();
     private final ReentrantLock serverLock = new ReentrantLock();
     
-    public ZookeeperRegistry(URL url, ZkClient client) {
+    public ZooKeeperRegistry(URL url, ZooKeeperClient client) {
         super(url);
-        this.zkClient = client;
+        this.client = client;
         IZkStateListener zkStateListener = new IZkStateListener() {
             @Override
             public void handleStateChanged(Watcher.Event.KeeperState state) throws Exception {
@@ -75,7 +76,7 @@ public class ZookeeperRegistry extends CommandFailbackRegistry {
                 reconnectClient();
             }
         };
-        zkClient.subscribeStateChanges(zkStateListener);
+        client.subscribeStateChanges(zkStateListener);
     }
 
     public ConcurrentHashMap<URL, ConcurrentHashMap<ServiceListener, IZkChildListener>> getServiceListeners() {
@@ -101,7 +102,7 @@ public class ZookeeperRegistry extends CommandFailbackRegistry {
                     @Override
                     public void handleChildChange(String parentPath, List<String> currentChilds) {
                         serviceListener.notifyService(url, getUrl(), nodeChildsToUrls(parentPath, currentChilds));
-                        if(logger.isInfoEnabled()) logger.info(String.format("[ZookeeperRegistry] service list change: path=%s, currentChilds=%s", parentPath, currentChilds.toString()));
+                        if(logger.isInfoEnabled()) logger.info(String.format("[ZooKeeperRegistry] service list change: path=%s, currentChilds=%s", parentPath, currentChilds.toString()));
                     }
                 });
                 zkChildListener = childChangeListeners.get(serviceListener);
@@ -112,8 +113,8 @@ public class ZookeeperRegistry extends CommandFailbackRegistry {
             createNode(url, ZkNodeType.CLIENT);
 
             String serverTypePath = ZkUtils.toNodeTypePath(url, ZkNodeType.AVAILABLE_SERVER);
-            zkClient.subscribeChildChanges(serverTypePath, zkChildListener);
-            if(logger.isInfoEnabled()) logger.info(String.format("[ZookeeperRegistry] subscribe service: path=%s, info=%s", ZkUtils.toNodePath(url, ZkNodeType.AVAILABLE_SERVER), url.toFullStr()));
+            client.subscribeChildChanges(serverTypePath, zkChildListener);
+            if(logger.isInfoEnabled()) logger.info(String.format("[ZooKeeperRegistry] subscribe service: path=%s, info=%s", ZkUtils.toNodePath(url, ZkNodeType.AVAILABLE_SERVER), url.toFullStr()));
         } catch (Throwable e) {
             throw new FrameworkException(new Status(SUBSCRIBE_ZOOKEEPER_SERVICE_ERROR, url, getUrl(), e.getMessage()), e);
         } finally {
@@ -136,21 +137,21 @@ public class ZookeeperRegistry extends CommandFailbackRegistry {
                     @Override
                     public void handleDataChange(String dataPath, Object data) throws Exception {
                         commandListener.notifyCommand(url, (String) data);
-                        if(logger.isInfoEnabled()) logger.info(String.format("[ZookeeperRegistry] command data change: path=%s, command=%s", dataPath, (String) data));
+                        if(logger.isInfoEnabled()) logger.info(String.format("[ZooKeeperRegistry] command data change: path=%s, command=%s", dataPath, (String) data));
                     }
 
                     @Override
                     public void handleDataDeleted(String dataPath) throws Exception {
                         commandListener.notifyCommand(url, null);
-                        if(logger.isInfoEnabled()) logger.info(String.format("[ZookeeperRegistry] command deleted: path=%s", dataPath));
+                        if(logger.isInfoEnabled()) logger.info(String.format("[ZooKeeperRegistry] command deleted: path=%s", dataPath));
                     }
                 });
                 zkDataListener = dataChangeListeners.get(commandListener);
             }
 
             String commandPath = ZkUtils.toCommandPath(url);
-            zkClient.subscribeDataChanges(commandPath, zkDataListener);
-            if(logger.isInfoEnabled()) logger.info(String.format("[ZookeeperRegistry] subscribe command: path=%s, info=%s", commandPath, url.toFullStr()));
+            client.subscribeDataChanges(commandPath, zkDataListener);
+            if(logger.isInfoEnabled()) logger.info(String.format("[ZooKeeperRegistry] subscribe command: path=%s, info=%s", commandPath, url.toFullStr()));
         } catch (Throwable e) {
             throw new FrameworkException(new Status(SUBSCRIBE_ZOOKEEPER_COMMAND_ERROR, url, getUrl(), e.getMessage()), e);
         } finally {
@@ -166,7 +167,7 @@ public class ZookeeperRegistry extends CommandFailbackRegistry {
             if (childChangeListeners != null) {
                 IZkChildListener zkChildListener = childChangeListeners.get(serviceListener);
                 if (zkChildListener != null) {
-                    zkClient.unsubscribeChildChanges(ZkUtils.toNodeTypePath(url, ZkNodeType.CLIENT), zkChildListener);
+                    client.unsubscribeChildChanges(ZkUtils.toNodeTypePath(url, ZkNodeType.CLIENT), zkChildListener);
                     childChangeListeners.remove(serviceListener);
                 }
             }
@@ -185,7 +186,7 @@ public class ZookeeperRegistry extends CommandFailbackRegistry {
             if (dataChangeListeners != null) {
                 IZkDataListener zkDataListener = dataChangeListeners.get(commandListener);
                 if (zkDataListener != null) {
-                    zkClient.unsubscribeDataChanges(ZkUtils.toCommandPath(url), zkDataListener);
+                    client.unsubscribeDataChanges(ZkUtils.toCommandPath(url), zkDataListener);
                     dataChangeListeners.remove(commandListener);
                 }
             }
@@ -201,8 +202,8 @@ public class ZookeeperRegistry extends CommandFailbackRegistry {
         try {
             String parentPath = ZkUtils.toNodeTypePath(url, ZkNodeType.AVAILABLE_SERVER);
             List<String> currentChilds = new ArrayList<String>();
-            if (zkClient.exists(parentPath)) {
-                currentChilds = zkClient.getChildren(parentPath);
+            if (client.exists(parentPath)) {
+                currentChilds = client.getChildren(parentPath);
             }
             return nodeChildsToUrls(parentPath, currentChilds);
         } catch (Throwable e) {
@@ -215,8 +216,8 @@ public class ZookeeperRegistry extends CommandFailbackRegistry {
         try {
             String commandPath = ZkUtils.toCommandPath(url);
             String command = "";
-            if (zkClient.exists(commandPath)) {
-                command = zkClient.readData(commandPath);
+            if (client.exists(commandPath)) {
+                command = client.readData(commandPath);
             }
             return command;
         } catch (Throwable e) {
@@ -300,12 +301,12 @@ public class ZookeeperRegistry extends CommandFailbackRegistry {
         if (currentChilds != null) {
             for (String node : currentChilds) {
                 String nodePath = parentPath + Constants.PATH_SEPARATOR + node;
-                String data = zkClient.readData(nodePath, true);
+                String data = client.readData(nodePath, true);
                 try {
-                    URL url = URL.valueOf(data);
+                    URL url = URLImpl.valueOf(data);
                     urls.add(url);
                 } catch (Exception e) {
-                    if(logger.isInfoEnabled()) logger.warn(String.format("Found malformed urls from ZookeeperRegistry, path=%s", nodePath), e);
+                    if(logger.isInfoEnabled()) logger.warn(String.format("Found malformed urls from ZooKeeperRegistry, path=%s", nodePath), e);
                 }
             }
         }
@@ -314,16 +315,16 @@ public class ZookeeperRegistry extends CommandFailbackRegistry {
 
     private void createNode(URL url, ZkNodeType nodeType) {
         String nodeTypePath = ZkUtils.toNodeTypePath(url, nodeType);
-        if (!zkClient.exists(nodeTypePath)) {
-            zkClient.createPersistent(nodeTypePath, true);
+        if (!client.exists(nodeTypePath)) {
+            client.createPersistent(nodeTypePath, true);
         }
-        zkClient.createEphemeral(ZkUtils.toNodePath(url, nodeType), url.toFullStr());
+        client.createEphemeral(ZkUtils.toNodePath(url, nodeType), url.toFullStr());
     }
 
     private void removeNode(URL url, ZkNodeType nodeType) {
         String nodePath = ZkUtils.toNodePath(url, nodeType);
-        if (zkClient.exists(nodePath)) {
-            zkClient.delete(nodePath);
+        if (client.exists(nodePath)) {
+            client.delete(nodePath);
         }
     }
     

@@ -1,10 +1,13 @@
 package com.networknt.zookeeper;
 
+import com.networknt.registry.Registry;
 import com.networknt.registry.URL;
+import com.networknt.registry.URLImpl;
 import com.networknt.registry.support.command.CommandListener;
 import com.networknt.registry.support.command.ServiceListener;
+import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.Constants;
-import org.I0Itec.zkclient.ZkClient;
+import com.networknt.zookeeper.client.ZooKeeperClient;
 import org.apache.curator.test.InstanceSpec;
 import org.apache.curator.test.TestingServer;
 import org.junit.After;
@@ -12,17 +15,16 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 
 /**
  * Created by stevehu on 2017-01-11.
  */
-public class ZookeeperRegistryTest {
-    private ZookeeperRegistry registry;
+public class ZooKeeperRegistryTest {
+    private ZooKeeperRegistry registry;
     private URL serviceUrl, clientUrl;
-    private ZkClient zkClient;
+    private ZooKeeperClient client;
     private String service = "com.networknt.light.demoService";
     private TestingServer zookeeper;
 
@@ -30,29 +32,24 @@ public class ZookeeperRegistryTest {
     public void setUp() throws Exception
     {
         int port = 9000;
-        URL zkUrl = new URL("zookeeper", "127.0.0.1", port, "com.networknt.registry.RegistryService");
-        clientUrl = new URL(Constants.PROTOCOL_LIGHT, "127.0.0.1", 0, service);
+        clientUrl = new URLImpl(Constants.PROTOCOL_LIGHT, "127.0.0.1", 0, service);
         clientUrl.addParameter("group", "aaa");
 
-        serviceUrl = new URL(Constants.PROTOCOL_LIGHT, "127.0.0.1", 8001, service);
+        serviceUrl = new URLImpl(Constants.PROTOCOL_LIGHT, "127.0.0.1", 8001, service);
         serviceUrl.addParameter("group", "aaa");
 
-        InstanceSpec spec = new InstanceSpec(null, port, -1, -1, true, 1,-1, -1,new HashMap<String, Object>());
+        InstanceSpec spec = new InstanceSpec(null, port, -1, -1, true, 1,-1, -1,new HashMap<>());
         zookeeper = new TestingServer(spec, true);
 
-        zkClient = new ZkClient("127.0.0.1:" + port, 5000);
-        registry = new ZookeeperRegistry(zkUrl, zkClient);
+        client = (ZooKeeperClient)SingletonServiceFactory.getBean(ZooKeeperClient.class);
+        registry = (ZooKeeperRegistry)SingletonServiceFactory.getBean(Registry.class);
+        System.out.println("client = " + client + " registry = " + registry);
     }
 
     @After
     public void tearDown() throws Exception
     {
         zookeeper.stop();
-    }
-
-    @Test
-    public void testVoid() {
-
     }
 
     @Test
@@ -94,13 +91,13 @@ public class ZookeeperRegistryTest {
         Assert.assertTrue(containsCommandListener(clientUrl, commandListener));
 
         String commandPath = ZkUtils.toCommandPath(clientUrl);
-        if (!zkClient.exists(commandPath)) {
-            zkClient.createPersistent(commandPath, true);
+        if (!client.exists(commandPath)) {
+            client.createPersistent(commandPath, true);
         }
-        zkClient.writeData(commandPath, command);
+        client.writeData(commandPath, command);
         Thread.sleep(2000);
 
-        zkClient.delete(commandPath);
+        client.delete(commandPath);
 
         registry.unsubscribeCommand(clientUrl, commandListener);
         Assert.assertFalse(containsCommandListener(clientUrl, commandListener));
@@ -128,10 +125,10 @@ public class ZookeeperRegistryTest {
 
         String command = "{\"index\":0,\"mergeGroups\":[\"aaa:1\",\"bbb:1\"],\"pattern\":\"*\",\"routeRules\":[]}\n";
         String commandPath = ZkUtils.toCommandPath(clientUrl);
-        if (!zkClient.exists(commandPath)) {
-            zkClient.createPersistent(commandPath, true);
+        if (!client.exists(commandPath)) {
+            client.createPersistent(commandPath, true);
         }
-        zkClient.writeData(commandPath, command);
+        client.writeData(commandPath, command);
         result = registry.discoverCommand(clientUrl);
         Assert.assertTrue(result.equals(command));
     }
@@ -144,25 +141,25 @@ public class ZookeeperRegistryTest {
         String availablePath = ZkUtils.toNodeTypePath(serviceUrl, ZkNodeType.AVAILABLE_SERVER);
 
         registry.doRegister(serviceUrl);
-        unavailable = zkClient.getChildren(unavailablePath);
+        unavailable = client.getChildren(unavailablePath);
         Assert.assertTrue(unavailable.contains(node));
 
         registry.doAvailable(serviceUrl);
-        unavailable = zkClient.getChildren(unavailablePath);
+        unavailable = client.getChildren(unavailablePath);
         Assert.assertFalse(unavailable.contains(node));
-        available = zkClient.getChildren(availablePath);
+        available = client.getChildren(availablePath);
         Assert.assertTrue(available.contains(node));
 
         registry.doUnavailable(serviceUrl);
-        unavailable = zkClient.getChildren(unavailablePath);
+        unavailable = client.getChildren(unavailablePath);
         Assert.assertTrue(unavailable.contains(node));
-        available = zkClient.getChildren(availablePath);
+        available = client.getChildren(availablePath);
         Assert.assertFalse(available.contains(node));
 
         registry.doUnregister(serviceUrl);
-        unavailable = zkClient.getChildren(unavailablePath);
+        unavailable = client.getChildren(unavailablePath);
         Assert.assertFalse(unavailable.contains(node));
-        available = zkClient.getChildren(availablePath);
+        available = client.getChildren(availablePath);
         Assert.assertFalse(available.contains(node));
     }
 
