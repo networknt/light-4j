@@ -1,5 +1,6 @@
 package com.networknt.consul;
 
+import com.networknt.registry.URLImpl;
 import com.networknt.registry.URLParamType;
 import com.networknt.registry.support.command.CommandListener;
 import com.networknt.registry.support.command.ServiceListener;
@@ -23,7 +24,7 @@ public class ConsulRegistryTest {
     @Before
     public void setUp() throws Exception {
         client = new MockConsulClient("localhost", 8500);
-        registerUrl = new URL("light", "localhost", 8500, "");
+        registerUrl = new URLImpl("light", "localhost", 8500, "");
         registerUrl.addParameter(URLParamType.registrySessionTimeout.getName(), "" + interval);
         registry = new ConsulRegistry(registerUrl, client);
 

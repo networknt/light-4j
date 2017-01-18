@@ -28,6 +28,22 @@
         {"com.networknt.service.JK1Impl": {"jack": "Jack1", "king": "King1"}},
         {"com.networknt.service.JK2Impl": {"jack": "Jack2", "king": "King2"}}
       ]
+    },
+    {
+      "com.networknt.service.L": [
+        {
+          "com.networknt.service.LImpl": {
+            "protocol": "https",
+            "host": "localhost",
+            "port": 8080,
+            "parameters": {
+              "key1": "value1",
+              "key2": "value2"
+            }
+          }
+        }
+      ]
     }
+
   ]
 }

@@ -1,6 +1,7 @@
 package com.networknt.consul;
 
 import com.networknt.registry.URL;
+import com.networknt.registry.URLImpl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,7 +33,7 @@ public class ConsulUtilsTest {
         testHost = "127.0.0.1";
         testPort = 8888;
         testProtocol = "light";
-        url = new URL(testProtocol, testHost, testPort, testPath);
+        url = new URLImpl(testProtocol, testHost, testPort, testPath);
         testServiceId = testHost + ":" + testPort + "-" + testPath;
         testServiceTag = ConsulConstants.CONSUL_TAG_LIGHT_PROTOCOL + ":" + testProtocol;
     }

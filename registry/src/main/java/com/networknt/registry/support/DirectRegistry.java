@@ -15,6 +15,7 @@
  */
 package com.networknt.registry.support;
 
+import com.networknt.registry.URLImpl;
 import com.networknt.status.Status;
 import com.networknt.utility.Constants;
 import com.networknt.exception.FrameworkException;
@@ -22,7 +23,9 @@ import com.networknt.registry.NotifyListener;
 import com.networknt.registry.URL;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -31,41 +34,27 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DirectRegistry extends AbstractRegistry {
     private final static String PARSE_DIRECT_URL_ERROR = "ERR10019";
     private ConcurrentHashMap<URL, Object> subscribeUrls = new ConcurrentHashMap();
-    private List<URL> directUrls = new ArrayList<>();
+    private Map<String, List<URL>> directUrls = new HashMap();
 
     public DirectRegistry(URL url) {
         super(url);
-        String address = url.getParameter("address");
-        if (address.contains(",")) {
+        for (Map.Entry<String, String> entry : url.getParameters().entrySet())
+        {
+            List<URL> urls = new ArrayList<>();
             try {
-                String[] directUrlArray = address.split(",");
-                for (String directUrl : directUrlArray) {
-                    parseDirectUrl(directUrl);
+                if(entry.getValue().contains(",")) {
+                    String[] directUrlArray = entry.getValue().split(",");
+                    for (String directUrl : directUrlArray) {
+                        urls.add(URLImpl.valueOf(directUrl));
+                    }
+                } else {
+                    urls.add(URLImpl.valueOf(entry.getValue()));
                 }
             } catch (Exception e) {
-                throw new FrameworkException(new Status(PARSE_DIRECT_URL_ERROR));
+                throw new FrameworkException(new Status(PARSE_DIRECT_URL_ERROR, url.toString()));
             }
-        } else {
-            registerDirectUrl(url.getHost(), url.getPort());
+            directUrls.put(entry.getKey(), urls);
         }
-    }
-
-    private void parseDirectUrl(String directUrl) {
-        String[] ipAndPort = directUrl.split(":");
-        String ip = ipAndPort[0];
-        Integer port = Integer.parseInt(ipAndPort[1]);
-        if (port < 0 || port > 65535) {
-            throw new RuntimeException();
-        }
-        registerDirectUrl(ip, port);
-    }
-
-    private void registerDirectUrl(String ip, Integer port) {
-        URL url = new URL(Constants.REGISTRY_PROTOCOL_DIRECT,ip,port,"");
-        directUrls.add(url);
-    }
-
-    private void parseIpAndPort(String directUrl) {
     }
 
     @Override
@@ -96,15 +85,8 @@ public class DirectRegistry extends AbstractRegistry {
     }
 
     private List<URL> createSubscribeUrl(URL subscribeUrl) {
-        URL url = this.getUrl();
-        List result = new ArrayList(directUrls.size());
-        for (URL directUrl : directUrls) {
-            URL tmp = subscribeUrl.createCopy();
-            tmp.setHost(directUrl.getHost());
-            tmp.setPort(directUrl.getPort());
-            result.add(tmp);
-        }
-        return result;
+        String serviceId = subscribeUrl.getProtocol() + "-" + subscribeUrl.getPath();
+        return directUrls.get(serviceId);
     }
 
     @Override

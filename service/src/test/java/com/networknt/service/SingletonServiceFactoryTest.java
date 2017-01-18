@@ -59,4 +59,10 @@ public class SingletonServiceFactoryTest {
         Arrays.stream((K[])k).forEach(o -> System.out.println(o.getKing()));
 
     }
+
+    @Test
+    public void testMap() {
+        Object l = SingletonServiceFactory.getBean(L.class);
+        System.out.println("l = " + l);
+    }
 }

@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
+import com.networknt.registry.URLImpl;
 import com.networknt.status.Status;
 import org.apache.commons.lang3.StringUtils;
 
@@ -291,7 +292,7 @@ public class CommandServiceManager implements CommandListener, ServiceListener {
 
         if (weights.size() > 1) {
             // construct a rule url with all groups and added as first
-            URL ruleUrl = new URL("rule", url.getHost(), url.getPort(), url.getPath());
+            URL ruleUrl = new URLImpl("rule", url.getHost(), url.getPort(), url.getPath());
             StringBuilder weightsBuilder = new StringBuilder(64);
             for (Map.Entry<String, Integer> entry : weights.entrySet()) {
                 weightsBuilder.append(entry.getKey()).append(':').append(entry.getValue()).append(',');

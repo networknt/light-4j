@@ -1,0 +1,26 @@
+{
+  "description": "singleton service factory configuration",
+  "singletons": [
+    {
+      "com.networknt.registry.URL": [
+        {
+          "com.networknt.registry.URLImpl": {
+            "protocol": "https",
+            "host": "localhost",
+            "port": 8080,
+            "path": "direct",
+            "parameters": {
+              "light-code": "http://192.168.1.100:6881,http://192.168.1.101:6881",
+              "light-token": "http://192.168.1.100:6882"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "com.networknt.registry.Registry" : [
+        "com.networknt.registry.support.DirectRegistry"
+      ]
+    }
+  ]
+}

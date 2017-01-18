@@ -48,6 +48,10 @@
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
+            <artifactId>service</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
             <artifactId>switcher</artifactId>
         </dependency>
         <dependency>

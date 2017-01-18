@@ -184,7 +184,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
     protected List<URL> discoverService(URL url) {
         String service = ConsulUtils.getUrlClusterInfo(url);
         String group = url.getGroup();
-        List<URL> serviceUrls = new ArrayList<URL>();
+        List<URL> serviceUrls = new ArrayList<>();
         ConcurrentHashMap<String, List<URL>> serviceMap = serviceCache.get(group);
         if (serviceMap == null) {
             synchronized (group.intern()) {

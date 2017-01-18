@@ -1,5 +1,6 @@
 package com.networknt.consul;
 
+import com.networknt.registry.URLImpl;
 import com.networknt.registry.URLParamType;
 import com.networknt.registry.URL;
 
@@ -46,7 +47,7 @@ public class MockUtils {
         Map<String, String> params = new HashMap<>();
         params.put(URLParamType.group.getName(), group);
         params.put(URLParamType.protocol.getName(), protocol);
-        URL url = new URL(protocol, address, port, path, params);
+        URL url = new URLImpl(protocol, address, port, path, params);
         return url;
     }
 

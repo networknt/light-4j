@@ -1,5 +1,6 @@
 package com.networknt.consul;
 
+import com.networknt.registry.URLImpl;
 import com.networknt.utility.Constants;
 import com.networknt.registry.URLParamType;
 import com.networknt.registry.URL;
@@ -62,7 +63,7 @@ public class ConsulUtils {
         for (String tag : service.getTags()) {
             if (tag.startsWith(ConsulConstants.CONSUL_TAG_LIGHT_URL)) {
                 String encodeUrl = tag.substring(tag.indexOf("_") + 1);
-                url = URL.valueOf(Util.urlDecode(encodeUrl));
+                url = URLImpl.valueOf(Util.urlDecode(encodeUrl));
             }
         }
         if (url == null) {
@@ -71,7 +72,7 @@ public class ConsulUtils {
             params.put(URLParamType.group.getName(), group);
             params.put(URLParamType.nodeType.getName(), Constants.NODE_TYPE_SERVICE);
             String protocol = ConsulUtils.getProtocolFromTag(service.getTags().get(0));
-            url = new URL(protocol, service.getAddress(), service.getPort(),
+            url = new URLImpl(protocol, service.getAddress(), service.getPort(),
                     ConsulUtils.getPathFromServiceId(service.getId()), params);
         }
         return url;
