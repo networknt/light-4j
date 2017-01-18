@@ -19,13 +19,19 @@ import java.util.List;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public class ConsulEcwidClient extends ConsulClient {
+public class ConsulEcwidClient implements ConsulClient {
 	private static final Logger logger = LoggerFactory.getLogger(ConsulEcwidClient.class);
 
 	public static com.ecwid.consul.v1.ConsulClient client;
 
+	String host;
+
+	int port;
+
 	public ConsulEcwidClient(String host, int port) {
-		super(host, port);
+		this.host = host;
+		this.port = port;
+
 		client = new com.ecwid.consul.v1.ConsulClient(host + ":" + port);
 		if(logger.isInfoEnabled()) logger.info("ConsulEcwidClient init finish. client host:" + host
 				+ ", port:" + port);

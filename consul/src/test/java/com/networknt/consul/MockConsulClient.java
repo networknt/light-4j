@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author zhanglei28
  * @Description MockConsulClient
  */
-public class MockConsulClient extends ConsulClient {
+public class MockConsulClient implements ConsulClient {
     // save mock service heart beat
     private ConcurrentHashMap<String, AtomicLong> checkPassTimesMap = new ConcurrentHashMap<String, AtomicLong>();
 
@@ -26,9 +26,18 @@ public class MockConsulClient extends ConsulClient {
     private int mockServiceNum = 10;
     private long mockIndex = 10;
 
-    public MockConsulClient(String host, int port) {
-        super(host, port);
+    String host;
+    int port;
+
+    public MockConsulClient() {
+
     }
+
+    public MockConsulClient(String host, int port) {
+        this.host = host;
+        this.port = port;
+    }
+
 
     @Override
     public void checkPass(String serviceid) {

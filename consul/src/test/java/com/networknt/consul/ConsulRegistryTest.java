@@ -1,32 +1,32 @@
 package com.networknt.consul;
 
+import com.networknt.consul.client.ConsulClient;
+import com.networknt.registry.Registry;
 import com.networknt.registry.URLImpl;
 import com.networknt.registry.URLParamType;
 import com.networknt.registry.support.command.CommandListener;
 import com.networknt.registry.support.command.ServiceListener;
 import com.networknt.registry.URL;
+import com.networknt.service.SingletonServiceFactory;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.logging.ConsoleHandler;
 
 public class ConsulRegistryTest {
     private MockConsulClient client;
     private ConsulRegistry registry;
-    private URL registerUrl;
     private URL serviceUrl, serviceUrl2, clientUrl, clientUrl2;
     private String serviceid, serviceid2;
-    private long interval = 1000;
     private long sleepTime;
 
     @Before
     public void setUp() throws Exception {
-        client = new MockConsulClient("localhost", 8500);
-        registerUrl = new URLImpl("light", "localhost", 8500, "");
-        registerUrl.addParameter(URLParamType.registrySessionTimeout.getName(), "" + interval);
-        registry = new ConsulRegistry(registerUrl, client);
+        client = (MockConsulClient)SingletonServiceFactory.getBean(ConsulClient.class);
+        registry = (ConsulRegistry)SingletonServiceFactory.getBean(Registry.class);
 
         serviceUrl = MockUtils.getMockUrl(8001);
         serviceUrl2 = MockUtils.getMockUrl(8002);
@@ -41,6 +41,7 @@ public class ConsulRegistryTest {
     @After
     public void tearDown() throws Exception {
         registry = null;
+        client = null;
     }
 
     @Test

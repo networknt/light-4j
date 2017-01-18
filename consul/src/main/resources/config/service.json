@@ -7,11 +7,8 @@
           "com.networknt.registry.URLImpl": {
             "protocol": "light",
             "host": "localhost",
-            "port": 8500,
-            "path": "",
-            "parameters": {
-              "registrySessionTimeout": "1000"
-            }
+            "port": 8080,
+            "path": "consul"
           }
         }
       ]
@@ -19,9 +16,12 @@
     {
       "com.networknt.consul.client.ConsulClient": [
         {
-          "com.networknt.consul.MockConsulClient": {
+          "com.networknt.consul.client.ConsulEcwidClient": {
             "host": "localhost",
-            "port": 8500
+            "port": 8500,
+            "parameters": {
+              "registrySessionTimeout": "1000"
+            }
           }
         }
       ]
