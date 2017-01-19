@@ -62,7 +62,16 @@ public class SingletonServiceFactoryTest {
 
     @Test
     public void testMap() {
-        Object l = SingletonServiceFactory.getBean(L.class);
-        System.out.println("l = " + l);
+        LImpl l = (LImpl)SingletonServiceFactory.getBean(L.class);
+        Assert.assertEquals("https", l.getProtocol());
+        Assert.assertEquals(8080, l.getPort());
+        Assert.assertEquals(2, l.getParameters().size());
     }
+
+    @Test
+    public void testConstructorWithParameters() {
+        MImpl m = (MImpl)SingletonServiceFactory.getBean(M.class);
+        Assert.assertEquals(5, m.getValue());
+    }
+
 }

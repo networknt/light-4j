@@ -61,30 +61,38 @@ public class SingletonServiceFactory {
             if (it.hasNext()) {
                 Map.Entry<String, Map<String, Object>> pair = (Map.Entry) it.next();
                 String key = pair.getKey();
-                Map<String, Object> properties = pair.getValue();
-                //logger.debug("key=" + key);
-                //logger.debug("properties = " + properties);
                 Class implClass = Class.forName(key);
-                Object obj = construct(implClass);
+                Object mapOrList = pair.getValue();
+                // at this moment, pair.getValue() has two scenarios,
+                // 1. map that can be used to set properties after construct the object with reflection.
+                // 2. list that can be used by matched constructor to create the instance.
+                Object obj = null;
+                if(mapOrList instanceof Map) {
+                    obj = construct(implClass);
 
-                Method[] allMethods = implClass.getMethods();
-                for(Method method : allMethods) {
+                    Method[] allMethods = implClass.getMethods();
+                    for(Method method : allMethods) {
 
-                    if(method.getName().startsWith("set")) {
-                        //logger.debug("method name " + method.getName());
-                        Object [] o = new Object [1];
-                        String propertyName = Introspector.decapitalize(method.getName().substring(3));
-                        Object v = properties.get(propertyName);
-                        if(v == null) {
-                            // it is not primitive type, so find the object in service map.
-                            Class<?>[] pType  = method.getParameterTypes();
-                            v = serviceMap.get(pType[0]);
-                        }
-                        if(v != null) {
-                            o[0] = v;
-                            method.invoke(obj, o);
+                        if(method.getName().startsWith("set")) {
+                            //logger.debug("method name " + method.getName());
+                            Object [] o = new Object [1];
+                            String propertyName = Introspector.decapitalize(method.getName().substring(3));
+                            Object v = ((Map)mapOrList).get(propertyName);
+                            if(v == null) {
+                                // it is not primitive type, so find the object in service map.
+                                Class<?>[] pType  = method.getParameterTypes();
+                                v = serviceMap.get(pType[0]);
+                            }
+                            if(v != null) {
+                                o[0] = v;
+                                method.invoke(obj, o);
+                            }
                         }
                     }
+                } else if(mapOrList instanceof List){
+                    obj = constructWithParameters(implClass, (List)mapOrList);
+                } else {
+                    throw new RuntimeException("Only Map or List is allowed for implementation parameters " + mapOrList);
                 }
                 for(Class c: interfaceClasses) {
                     serviceMap.put(c, obj);  // all interfaces share the same impl
@@ -200,6 +208,65 @@ public class SingletonServiceFactory {
                     // this constructor parameters are found.
                     instance = ctor.newInstance(params);
                     break;
+                }
+            } else {
+                hasDefaultConstructor = true;
+                continue;
+            }
+        }
+        if(instance != null) {
+            return instance;
+        } else {
+            if(hasDefaultConstructor) {
+                return clazz.getConstructor().newInstance();
+            } else {
+                // error that no instance can be created.
+                throw new Exception("No instance can be created for class " + clazz);
+            }
+        }
+    }
+
+    public static Object constructWithParameters(Class clazz, List parameters) throws Exception {
+        // find out how many constructors this class has and match the one with the same sequence of
+        // parameters.
+        Object instance  = null;
+        Constructor[] allConstructors = clazz.getDeclaredConstructors();
+        // iterate all constructors of this class and try each non-default one with parameters
+        // from parameter list also flag if there is default constructor without argument.
+        boolean hasDefaultConstructor = false;
+        for (Constructor ctor : allConstructors) {
+            Class<?>[] pType  = ctor.getParameterTypes();
+            if(pType.length > 0) {
+                if(pType.length != parameters.size()) {
+                    continue;
+                } else {
+                    // number of parameters is matched. Make sure that each parameter type is matched.
+                    boolean matched = true;
+                    Object[] params = new Object[pType.length];
+                    for (int j = 0; j < pType.length; j++) {
+                        //System.out.println("pType = " + pType[j]);
+                        Map<String, Object> parameter = (Map)parameters.get(j);
+                        Iterator it = parameter.entrySet().iterator();
+                        if (it.hasNext()) {  // there is only one object in each item.
+                            Map.Entry<String, Object> pair = (Map.Entry) it.next();
+                            String key = pair.getKey();
+                            Object value = pair.getValue();
+                            if(pType[j].getName().equals(key)) {
+                                params[j] = value;
+                            } else {
+                                matched = false;
+                                break;
+                            }
+                        }
+                    }
+                    if(!matched) {
+                        // could not find all parameters, try another constructor.
+                        continue;
+                    } else {
+                        // this constructor parameters are found.
+                        instance = ctor.newInstance(params);
+                        break;
+                    }
                 }
             } else {
                 hasDefaultConstructor = true;

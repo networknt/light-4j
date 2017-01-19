@@ -43,6 +43,17 @@
           }
         }
       ]
+    },
+    {
+      "com.networknt.service.M": [
+        {
+          "com.networknt.service.MImpl": [
+            {"java.lang.String":"Steve"},
+            {"int": 2},
+            {"int": 3}
+          ]
+        }
+      ]
     }
 
   ]
