@@ -20,10 +20,6 @@ public class ZooKeeperClientImpl implements ZooKeeperClient {
     private int sessionTimeout;
     private int connectionTimeout;
 
-    public ZooKeeperClientImpl() {
-
-    }
-
     public ZooKeeperClientImpl(String zkServers, int sessionTimeout, int connectionTimeout) {
         zkClient = new ZkClient(zkServers, sessionTimeout, connectionTimeout);
     }

@@ -20,11 +20,11 @@
     {
       "com.networknt.zookeeper.client.ZooKeeperClient": [
         {
-          "com.networknt.zookeeper.client.ZooKeeperClientImpl": {
-            "zkServers": "127.0.0.1:5000",
-            "sessionTimeout": 1000,
-            "connectionTimeout": 60000
-          }
+          "com.networknt.zookeeper.client.ZooKeeperClientImpl": [
+            {"java.lang.String": "127.0.0.1:9000"},
+            {"int": 1000},
+            {"int": 60000}
+          ]
         }
       ]
     },

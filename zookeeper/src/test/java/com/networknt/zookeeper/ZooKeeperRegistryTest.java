@@ -10,10 +10,7 @@ import com.networknt.utility.Constants;
 import com.networknt.zookeeper.client.ZooKeeperClient;
 import org.apache.curator.test.InstanceSpec;
 import org.apache.curator.test.TestingServer;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -22,14 +19,14 @@ import java.util.List;
  * Created by stevehu on 2017-01-11.
  */
 public class ZooKeeperRegistryTest {
-    private ZooKeeperRegistry registry;
-    private URL serviceUrl, clientUrl;
-    private ZooKeeperClient client;
-    private String service = "com.networknt.light.demoService";
-    private TestingServer zookeeper;
+    private static ZooKeeperRegistry registry;
+    private static URL serviceUrl, clientUrl;
+    private static ZooKeeperClient client;
+    private static String service = "com.networknt.light.demoService";
+    private static TestingServer zookeeper;
 
-    @Before
-    public void setUp() throws Exception
+    @BeforeClass
+    public static void setUp() throws Exception
     {
         int port = 9000;
         clientUrl = new URLImpl(Constants.PROTOCOL_LIGHT, "127.0.0.1", 0, service);
@@ -46,8 +43,8 @@ public class ZooKeeperRegistryTest {
         System.out.println("client = " + client + " registry = " + registry);
     }
 
-    @After
-    public void tearDown() throws Exception
+    @AfterClass
+    public static void tearDown() throws Exception
     {
         zookeeper.stop();
     }
