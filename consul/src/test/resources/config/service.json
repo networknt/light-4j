@@ -19,10 +19,10 @@
     {
       "com.networknt.consul.client.ConsulClient": [
         {
-          "com.networknt.consul.MockConsulClient": {
-            "host": "localhost",
-            "port": 8500
-          }
+          "com.networknt.consul.MockConsulClient": [
+            {"java.lang.String": "localhost"},
+            {"int": 8500}
+          ]
         }
       ]
     },

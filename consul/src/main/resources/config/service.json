@@ -16,13 +16,10 @@
     {
       "com.networknt.consul.client.ConsulClient": [
         {
-          "com.networknt.consul.client.ConsulEcwidClient": {
-            "host": "localhost",
-            "port": 8500,
-            "parameters": {
-              "registrySessionTimeout": "1000"
-            }
-          }
+          "com.networknt.consul.client.ConsulEcwidClient": [
+            {"java.lang.String": "localhost"},
+            {"int": 8500}
+          ]
         }
       ]
     },
@@ -33,3 +30,5 @@
     }
   ]
 }
+
+

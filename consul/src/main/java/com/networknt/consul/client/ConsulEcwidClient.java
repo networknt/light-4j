@@ -25,7 +25,6 @@ public class ConsulEcwidClient implements ConsulClient {
 	public static com.ecwid.consul.v1.ConsulClient client;
 
 	String host;
-
 	int port;
 
 	public ConsulEcwidClient(String host, int port) {

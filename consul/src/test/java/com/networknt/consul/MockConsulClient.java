@@ -29,10 +29,6 @@ public class MockConsulClient implements ConsulClient {
     String host;
     int port;
 
-    public MockConsulClient() {
-
-    }
-
     public MockConsulClient(String host, int port) {
         this.host = host;
         this.port = port;
