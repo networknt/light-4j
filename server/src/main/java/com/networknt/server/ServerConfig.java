@@ -21,7 +21,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class ServerConfig {
     String ip;
     int port;
-    boolean enableSwaggerHandler;
+    boolean enableRegistry;
+    String serviceId;
 
     @JsonIgnore
     String description;
@@ -45,12 +46,20 @@ public class ServerConfig {
         this.port = port;
     }
 
-    public boolean isEnableSwaggerHandler() {
-        return enableSwaggerHandler;
+    public boolean isEnableRegistry() {
+        return enableRegistry;
     }
 
-    public void setEnableSwaggerHandler(boolean enableSwaggerHandler) {
-        this.enableSwaggerHandler = enableSwaggerHandler;
+    public void setEnableRegistry(boolean enableRegistry) {
+        this.enableRegistry = enableRegistry;
+    }
+
+    public String getServiceId() {
+        return serviceId;
+    }
+
+    public void setServiceId(String serviceId) {
+        this.serviceId = serviceId;
     }
 
     public String getDescription() {

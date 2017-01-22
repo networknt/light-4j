@@ -18,6 +18,13 @@ package com.networknt.server;
 
 import com.networknt.config.Config;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.registry.Registry;
+import com.networknt.registry.URL;
+import com.networknt.registry.URLImpl;
+import com.networknt.service.SingletonServiceFactory;
+import com.networknt.switcher.SwitcherUtil;
+import com.networknt.utility.Constants;
+import com.networknt.utility.Util;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
@@ -27,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.Options;
 
+import java.net.InetAddress;
 import java.util.ServiceLoader;
 
 
@@ -37,6 +45,8 @@ public class Server {
     static protected boolean shutdownRequested = false;
     static Undertow server = null;
     static String configName = "server";
+    static URL serviceUrl;
+    static Registry registry;
 
     public static void main(final String[] args) {
         logger.info("server starts");
@@ -55,6 +65,15 @@ public class Server {
         }
 
         ServerConfig config = (ServerConfig) Config.getInstance().getJsonObjectConfig(configName, ServerConfig.class);
+
+        // assuming that registry is defined in service.json, otherwise won't start server.
+        registry = (Registry) SingletonServiceFactory.getBean(Registry.class);
+        if(registry == null) throw new RuntimeException("Could not find registry instance in service map");
+        InetAddress inetAddress = Util.getInetAddress();
+        String ipAddress = inetAddress.getHostAddress();
+        serviceUrl = new URLImpl("light", ipAddress, config.getPort(), config.getServiceId());
+        registry.register(serviceUrl);
+        if(logger.isInfoEnabled()) logger.info("register serviceUrl " + serviceUrl);
 
         HttpHandler handler = null;
 
@@ -97,6 +116,11 @@ public class Server {
                 .setWorkerThreads(200)
                 .build();
         server.start();
+        if(logger.isInfoEnabled()) logger.info("Server started on IP:" + config.getIp() + " Port:" + config.getPort());
+        // start heart beat if registry is enabled
+        SwitcherUtil.setSwitcherValue(Constants.REGISTRY_HEARTBEAT_SWITCHER, true);
+        if(logger.isInfoEnabled()) logger.info("Registry heart beat switcher is on");
+
     }
 
     static public void stop() {
@@ -105,6 +129,12 @@ public class Server {
 
     // implement shutdown hook here.
     static public void shutdown() {
+        // need to unregister the service
+        if(registry != null) {
+            registry.unregister(serviceUrl);
+            if(logger.isInfoEnabled()) logger.info("unregister serviceUrl " + serviceUrl);
+        }
+
         final ServiceLoader<ShutdownHookProvider> shutdownLoaders = ServiceLoader.load(ShutdownHookProvider.class);
         for (final ShutdownHookProvider provider : shutdownLoaders) {
             provider.onShutdown();
