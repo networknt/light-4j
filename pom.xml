@@ -19,7 +19,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.networknt</groupId>
     <artifactId>light-java</artifactId>
-    <version>1.1.8</version>
+    <version>1.2.0</version>
     <packaging>pom</packaging>
     <name>Parent POM</name>
     <description>Light Java Framework Components</description>
@@ -104,10 +104,8 @@
         <module>dump</module>
         <module>info</module>
         <module>health</module>
-        <module>validator</module>
         <module>status</module>
         <module>exception</module>
-        <module>swagger</module>
         <module>body</module>
         <module>mask</module>
         <module>handler</module>
@@ -170,22 +168,12 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
-                <artifactId>validator</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.networknt</groupId>
                 <artifactId>status</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>exception</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.networknt</groupId>
-                <artifactId>swagger</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

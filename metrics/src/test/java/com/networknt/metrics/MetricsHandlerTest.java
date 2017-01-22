@@ -16,8 +16,6 @@
 
 package com.networknt.metrics;
 
-import com.networknt.security.JwtVerifyHandler;
-import com.networknt.swagger.SwaggerHandler;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
@@ -48,14 +46,6 @@ public class MetricsHandlerTest {
         if(server == null) {
             logger.info("starting server");
             HttpHandler handler = getTestHandler();
-            // metrics handler depends on jwt handler for some key elements.
-            JwtVerifyHandler jwtVerifyHandler = new JwtVerifyHandler();
-            jwtVerifyHandler.setNext(handler);
-            handler = jwtVerifyHandler;
-
-            SwaggerHandler swaggerHandler = new SwaggerHandler();
-            swaggerHandler.setNext(handler);
-            handler = swaggerHandler;
 
             MetricsHandler metricsHandler = new MetricsHandler();
             metricsHandler.setNext(handler);

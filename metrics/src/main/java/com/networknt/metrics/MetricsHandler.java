@@ -16,11 +16,10 @@
 
 package com.networknt.metrics;
 
+import com.networknt.audit.AuditHandler;
 import com.networknt.config.Config;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.swagger.SwaggerHandler;
-import com.networknt.swagger.SwaggerHelper;
-import com.networknt.swagger.SwaggerOperation;
+import com.networknt.server.Server;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.Util;
 import io.dropwizard.metrics.Clock;
@@ -77,7 +76,7 @@ public class MetricsHandler implements MiddlewareHandler {
     Map<String, String> commonTags = new HashMap<>();
 
     public MetricsHandler() {
-        commonTags.put("apiName", SwaggerHelper.swagger.getInfo().getTitle().replaceAll(" ", "_").toLowerCase());
+        commonTags.put("apiName", Server.config.getServiceId());
         InetAddress inetAddress = Util.getInetAddress();
         commonTags.put("ipAddress", inetAddress.getHostAddress());
         commonTags.put("hostname", inetAddress.getHostName()); // will be container id if in docker.
@@ -107,11 +106,11 @@ public class MetricsHandler implements MiddlewareHandler {
         long startTime = Clock.defaultClock().getTick();
 
         exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
-            SwaggerOperation swaggerOperation = exchange1.getAttachment(SwaggerHandler.SWAGGER_OPERATION);
-            if(swaggerOperation != null) {
+            Map<String, Object> auditInfo = exchange1.getAttachment(AuditHandler.AUDIT_INFO);
+            if(auditInfo != null) {
                 Map<String, String> tags = new HashMap<>();
-                tags.put("endpoint", swaggerOperation.getEndpoint());
-                tags.put("clientId", swaggerOperation.getClientId());
+                tags.put("endpoint", (String)auditInfo.get("endpoint"));
+                tags.put("clientId", (String)auditInfo.get("client_id"));
 
                 long time = Clock.defaultClock().getTick() - startTime;
                 MetricName metricName = new MetricName("response_time");

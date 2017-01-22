@@ -23,6 +23,7 @@ import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.util.AttachmentKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,10 +33,13 @@ import java.util.Map;
 
 /**
  * This is a simple audit handler that dump most important info per request basis. The following
- * elements will be logged if it's available. This handle can be used on production for certain
- * applications that need audit on request. Turn off statusCode and responseTime can make it faster
+ * elements will be logged if it's available in auditInfo object attached to exchange. This object
+ * wil be populated by swagger-meta and swagger-security.
+ *
+ * Turn off statusCode and responseTime can make it faster
  *
  * timestamp
+ * serviceName (from server.json)
  * correlationId
  * traceabilityId (if available)
  * clientId
@@ -52,22 +56,27 @@ public class AuditHandler implements MiddlewareHandler {
 
     public static final String ENABLED = "enabled";
     static final String HEADERS = "headers";
+    static final String AUDIT = "audit";
     static final String STATUS_CODE = "statusCode";
     static final String RESPONSE_TIME = "responseTime";
     static final String TIMESTAMP = "timestamp";
 
     public static final Map<String, Object> config;
     private static final List<String> headerList;
+    private static final List<String> auditList;
+
     private static boolean statusCode = false;
     private static boolean responseTime = false;
 
     static final Logger audit = LoggerFactory.getLogger(Constants.AUDIT_LOGGER);
+    public static final AttachmentKey<Map> AUDIT_INFO = AttachmentKey.create(Map.class);
 
     private volatile HttpHandler next;
 
     static {
         config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
         headerList = (List<String>)config.get(HEADERS);
+        auditList = (List<String>)config.get(AUDIT);
         Object object = config.get(STATUS_CODE);
         if(object != null && (Boolean) object) {
             statusCode = true;
@@ -84,10 +93,19 @@ public class AuditHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        final long start = System.currentTimeMillis();
+        Map<String, Object> auditInfo = exchange.getAttachment(AuditHandler.AUDIT_INFO);
         Map<String, Object> auditMap = new LinkedHashMap<>();
+        final long start = System.currentTimeMillis();
         auditMap.put(TIMESTAMP, System.currentTimeMillis());
-        // dump headers according to config
+        // dump audit info fields according to config
+        if(auditInfo != null) {
+            if(auditList != null && auditList.size() > 0) {
+                for(String name: auditList) {
+                    auditMap.put(name, auditInfo.get(name));
+                }
+            }
+        }
+        // dump headers field according to config
         if(headerList != null && headerList.size() > 0) {
             for(String name: headerList) {
                 auditMap.put(name, exchange.getRequestHeaders().getFirst(name));

@@ -5,7 +5,10 @@
   "responseTime": true,
   "headers": [
     "X-Correlation-Id",
-    "X-Traceability-Id",
+    "X-Traceability-Id"
+  ],
+  "audit": [
+    "service_id",
     "client_id",
     "user_id",
     "scope_client_id",

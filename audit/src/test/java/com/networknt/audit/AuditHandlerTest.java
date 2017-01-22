@@ -17,8 +17,6 @@
 package com.networknt.audit;
 
 import com.networknt.correlation.CorrelationHandler;
-import com.networknt.security.JwtVerifyHandler;
-import com.networknt.swagger.SwaggerHandler;
 import com.networknt.utility.Constants;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
@@ -55,14 +53,6 @@ public class AuditHandlerTest {
             AuditHandler auditHandler = new AuditHandler();
             auditHandler.setNext(handler);
             handler = auditHandler;
-
-            JwtVerifyHandler jwtVerifyHandler = new JwtVerifyHandler();
-            jwtVerifyHandler.setNext(handler);
-            handler = jwtVerifyHandler;
-
-            SwaggerHandler swaggerHandler = new SwaggerHandler();
-            swaggerHandler.setNext(handler);
-            handler = swaggerHandler;
 
             CorrelationHandler correlationHandler = new CorrelationHandler();
             correlationHandler.setNext(handler);
