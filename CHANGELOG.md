@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.2.0 - 2017-01-22
+### Added
+- Add service registry and discovery
+- Add zookeeper support for resgistry and discovery
+- Add consul support for registry and discovery
+- Add direct registry for direct ip and port registry and discovery
+- Add Cors handler to support OAuth2 login page from another domain
+
+### Changed
+- Resolve Maven Eclipse errors
+- Enhanced service module to support parameterized constructor
+- Integrate server with registry
+- Spin off swagger, security and validator handlers to light-java-rest
+
 ## 1.1.7 - 2017-01-14
 ### Added
 - Add error status for OAuth2 server
