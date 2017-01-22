@@ -3,5 +3,5 @@
   "ip": "0.0.0.0",
   "port": 8080,
   "serviceId": "AACT0001",
-  "enableRegistry": true
+  "enableRegistry": false
 }
