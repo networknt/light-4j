@@ -121,6 +121,7 @@
         <module>balance</module>
         <module>consul</module>
         <module>zookeeper</module>
+        <module>cors</module>
         <module>server</module>
     </modules>
 
@@ -250,6 +251,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>zookeeper</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>cors</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
