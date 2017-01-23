@@ -27,7 +27,7 @@ In order to follow the steps below, please make sure you have the same working e
 # Create Database Demo Specification
 
 First let's build an OpenAPI specification with several endpoints to demo database
-access. You will need [swagger editor](tools/swagger-editor/)
+access. You will need [swagger editor](https://networknt.github.io/light-java/tools/swagger-editor/)
 to create a specification. 
 
 Here is the OpenAPI specification created and it can be found in 
