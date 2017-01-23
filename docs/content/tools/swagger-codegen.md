@@ -6,17 +6,17 @@ title: Swagger codegen to generate server stub skeleton
 ## Introduction
 
 Many API projects were done without specifications and API specifications were
-produced after APIs were on production. When using Undertow Framework, design driven
+produced after APIs were on production. When using Light-Java-Rest Framework, design driven
 is encouraged so swagger specification must be produced before the development is
 started. Please see [Development Flow]() for details.
 
-When Product Onwer starts the API, the first thing is find the swagger specification
-produced by data architect and generate a server skeleton with swagger codegen.
+When product owner starts the API, the first thing is find the swagger specification
+produced by data architect and generate a server skeleton with swagger-codegen.
  
 ## Installation
  
-#### Install locally 
-To install the tool locally, go to your working directory and run
+### Local 
+To install the swagger-codegen locally, go to your working directory and run
 
 ```
 git clone git@github.com:networknt/swagger-codegen.git
@@ -28,15 +28,7 @@ Now you have swagger-codegen built on your local and it is ready to be used. Thi
 version of swagger-codegen is a fork of official [swagger-codegen](https://github.com/swagger-api/swagger-codegen)
 as the official version doesn't support Java 8.
 
-#### Docker
-If you have docker installed, you can run the docker container of the swagger-codegen
-so that you don't need to install JDK8 and Maven on your local.
-
-```
-
-```
-
-## Usage
+#### Usage
 
 Assume that you have just built your swagger-codegen and you are in the swagger-codegen
 folder now you can generate petstore API in your home directory with the following command.
@@ -53,37 +45,89 @@ you can use:
 -i ~/project/swagger/api_a/swagger.json
 ```
 
-Note: For organizations with multiple APIs, some of the common yaml files will be created that can be 
-shared between APIs in specifications. In that case, you cannot use yaml file to generate the code as
-the tool doesn't know how to locate the external reference files. Please find [swagger-cli](/tools/swager-cli)
-to convert several yaml files into one Json file to feed the generator.
+
+### Docker
+If you have docker installed, you can run the docker container of the swagger-codegen
+so that you don't need to install JDK8 and Maven on your local.
+
+```
+docker run -it networknt/swagger-codegen config-help -l light-java
+```
+
+Above command will list all the config options for light-java language generator.
+
+#### Usage
+
+Mount a volume to `/swagger-api/out` for output.
+
+Example:
+
+```
+docker run -it -v ~/temp/swagger-generated:/swagger-api/out \
+    networknt/swagger-codegen generate \
+    -i /swagger-api/yaml/petstore-with-fake-endpoints-models-for-testing.yaml \
+    -l light-java \
+    -o /swagger-api/out/petstore
+```
+Your generated code will now be accessible under `~/temp/swagger-generated/petstore`.
 
 
 ## Customization
 
-The tool support customized apiPackage and modelPackage defined as System properties. You will also
-specify the location of the swagger.json and the output folder of the generated code.
+The tool support customized invokerPackage, apiPackage, modelPackage, artifactId and groupId defined in a json config file. 
+You will also specify the location of the swagger.json and the output folder of the generated code.
 
-```shell
-# set as system properties
-swagger.codegen.light.apipackage = package for the handlers
-swagger.codegen.light.modelpackage = package for the models
+Here is an example of config.json
 
-# set in the path
-path_to_specification_file = local path or url of swagger.json
-output_folder = output folder for generated artifacts
 ```
+{
+  "invokerPackage": "com.networknt.petstore",
+  "apiPackage":"com.networknt.petstore.handler",
+  "modelPackage":"com.networknt.petstore.model",
+  "artifactId": "petstore",
+  "groupId": "com.networknt"
+}
+```
+ 
 
 General Command
 
 ```shell
-java -Dswagger.codegen.light.apipackage=<api_package_name> -Dswagger.codegen.light.modelpackage=<model_package_name> -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i <path_to_specification_file> -l light-java -o <output_folder>
+java -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -c <path_to_config.json> -i <path_to_specification_file> -l light-java -o <output_folder>
 ```
 
 Example
 ```shell
-java -Dswagger.codegen.light.apipackage=com.networknt.handler -Dswagger.codegen.light.modelpackage=com.networknt.model -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i ~/networknt/swagger/api_a/swagger.json -l light-java -o ~/projectc/generated
+java -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -c ~/networknt/swagger/api_a/config.json -i ~/networknt/swagger/api_a/swagger.yaml -l light-java -o ~/networknt/generated
 ```
+
+Docker Command
+
+```
+docker run -it -v <path of swagger and config>:/swagger-api/swagger -v <path of generated project>:/swagger-api/out networknt/swagger-codegen generate -c /swagger-api/swagger/config.json -i /swagger-api/swagger/swagger.yaml -l light-java -o /swagger-api/out/api_a
+
+```
+
+Example
+
+```
+docker run -it -v ~/networknt/swagger/api_a:/swagger-api/swagger -v ~/networknt/generated:/swagger-api/out networknt/swagger-codegen generate -c /swagger-api/swagger/config.json -i /swagger-api/swagger/swagger.yaml -l light-java -o /swagger-api/out/api_a
+
+```
+Note: the generated code in Linux might be owned by root user, so you have to change the owner before compiling it.
+
+```
+sudo chown -R steve:steve generated
+```
+
+
+
+## Shared swagger files
+
+For organizations with multiple APIs, some of the common yaml files will be created that can be 
+shared between APIs in specifications. In that case, you cannot use yaml file to generate the code as
+the tool doesn't know how to locate the external reference files. Please find [swagger-cli](/tools/swager-cli)
+to convert several yaml files into one Json file to feed the generator.
 
 
 ## Test
