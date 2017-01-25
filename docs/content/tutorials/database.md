@@ -294,7 +294,41 @@ For database access, we are going to prepare three scripts for Oracle, Mysql and
 
 Oracle
 ```
-Working in progress
+DROP TABLE world CASCADE CONSTRAINTS;
+CREATE TABLE  world (
+  id int NOT NULL,
+  randomNumber int NOT NULL,
+  PRIMARY KEY  (id)
+);
+
+BEGIN
+FOR loop_counter IN 1..10000 LOOP
+INSERT INTO world (id, randomNumber)
+VALUES (loop_counter, dbms_random.value(1,10000)
+       );
+END LOOP;
+COMMIT;
+END;
+
+DROP TABLE fortune CASCADE CONSTRAINTS;
+CREATE TABLE fortune (
+  id int NOT NULL,
+  message varchar2(2048) NOT NULL,
+  PRIMARY KEY  (id)
+);
+
+INSERT INTO fortune (id, message) VALUES (1, 'fortune: No such file or directory');
+INSERT INTO fortune (id, message) VALUES (2, 'A computer scientist is someone who fixes things that aren''t broken.');
+INSERT INTO fortune (id, message) VALUES (3, 'After enough decimal places, nobody gives a damn.');
+INSERT INTO fortune (id, message) VALUES (4, 'A bad random number generator: 1, 1, 1, 1, 1, 4.33e+67, 1, 1, 1');
+INSERT INTO fortune (id, message) VALUES (5, 'A computer program does what you tell it to do, not what you want it to do.');
+INSERT INTO fortune (id, message) VALUES (6, 'Emacs is a nice operating system, but I prefer UNIX. — Tom Christaensen');
+INSERT INTO fortune (id, message) VALUES (7, 'Any program that runs right is obsolete.');
+INSERT INTO fortune (id, message) VALUES (8, 'A list is only as strong as its weakest link. — Donald Knuth');
+INSERT INTO fortune (id, message) VALUES (9, 'Feature: A bug with seniority.');
+INSERT INTO fortune (id, message) VALUES (10, 'Computers make very fast, very accurate mistakes.');
+INSERT INTO fortune (id, message) VALUES (11, '<script>alert("This should not be displayed in a browser alert box.");</script>');
+INSERT INTO fortune (id, message) VALUES (12, 'フレームワークのベンチマーク');
 ```
 
 Mysql
@@ -394,6 +428,8 @@ INSERT INTO fortune (id, message) VALUES (12, 'フレームワークのベンチ
 
 ```
 
+Above scripts can be found in https://github.com/networknt/light-java-example/tree/master/database/dbscript
+
 
 # Start Databases
 
@@ -405,7 +441,7 @@ use mysql and later on we can switch to Postgres and Oracle.
 Oracle Database
 
 ```
-working in progress
+docker run -v ~/networknt/light-java-example/database/dbscript/oracle:/docker-entrypoint-initdb.d -d -p 1522:1521 wnameless/oracle-xe-11g
 ```
 
  
@@ -465,7 +501,8 @@ Add the following service.json to ~/networknt/light-java-example/database/connec
 ```
 
 The service.json will make sure the a Hikari DataSource will be created during server startup 
-with the dependency injection module. 
+with the dependency injection module. You can find other database's service.json in 
+https://github.com/networknt/light-java-example/tree/master/database/dbscript
 
 In order to do that we need to add several jars into the dependency in pom.xml
 
@@ -906,6 +943,66 @@ curl http://localhost:8080/v1/updates?queries=10
 
 [{"id":6395,"randomNumber":938},{"id":4124,"randomNumber":4406},{"id":7694,"randomNumber":936},{"id":502,"randomNumber":5784},{"id":6992,"randomNumber":8037},{"id":3607,"randomNumber":3462},{"id":6910,"randomNumber":6195},{"id":7388,"randomNumber":9233},{"id":6235,"randomNumber":4825},{"id":4924,"randomNumber":1066}]
 ```
+
+# Switch to Postgres
+
+The first step is to start the postgres database in docker. The command
+has shown above. 
+
+To switch to Postgres database, you just need to replace server.json from 
+dbscript/postgres/config folder. First let's create a new folder from 
+updates and modify the service.json
+
+```
+cd ~/networknt/light-java-example/database
+cp -r updates postgres
+cp dbscript/postgres/config/service.json postgres/src/main/resources/config
+```
+
+Now let's build the server from postgres folder.
+
+```
+cd postgres
+mvn clean install exec:exec
+```
+
+Now you can test the server with curl to verify that the server is working with 
+Postgres database.
+
+```
+curl http://localhost:8080/v1/query
+```
+
+
+# Switch to Oracle
+
+The first step is to start Oracle database in docker. The command has
+shown above.
+
+To switch to Oracle database, you just need to replace server.json from
+dbscript/oracle/config folder. First let's create a new folder from
+updates and modify the service.json
+
+```
+cd ~/networknt/light-java-example/database
+cp -r updates oracle
+cp dbscript/oracle/config/service.json oracle/src/main/resources/config
+```
+
+Now let's build the server from postgres folder.
+
+```
+cd oracle
+mvn clean install exec:exec
+```
+
+Now you can test the server with curl to verify that the server is working with 
+Oracle database.
+
+```
+curl http://localhost:8080/v1/query
+```
+
 
 # Performance Test
 
