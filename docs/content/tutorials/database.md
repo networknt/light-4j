@@ -979,6 +979,21 @@ curl http://localhost:8080/v1/query
 The first step is to start Oracle database in docker. The command has
 shown above.
 
+Next we need to add a repo into pom.xml as Oracle client jar is not in
+maven central due to licensing issue. 
+
+```
+    <repositories>
+        <!-- Repository for ORACLE ojdbc6. -->
+        <repository>
+            <id>codelds</id>
+            <url>https://code.lds.org/nexus/content/groups/main-repo</url>
+        </repository>
+    </repositories>
+
+```
+
+
 To switch to Oracle database, you just need to replace server.json from
 dbscript/oracle/config folder. First let's create a new folder from
 updates and modify the service.json
@@ -1002,6 +1017,20 @@ Oracle database.
 ```
 curl http://localhost:8080/v1/query
 ```
+
+# End-to-End Test
+
+In this step, we are going to create some end-to-end test cases. As these tests
+are very important in ensuring the server you build works. They give us confidence
+on changing the code and support continuous integration to production.
+   
+Given our code is based on a light weight Http framework, all our tests will be
+using the real server. There is a TestServer.java in the generated code already
+and each handler will have a generated test case. The only thing we need to do
+is to add testing logic.
+
+
+
 
 
 # Performance Test
