@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.2.1 - 2017-01-25
+### Added
+
+### Changed
+- Clean up maven dependencies
+
+
 ## 1.2.0 - 2017-01-22
 ### Added
 - Add service registry and discovery
