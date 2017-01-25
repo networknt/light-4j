@@ -67,7 +67,7 @@
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <version.jackson>2.8.2</version.jackson>
-        <version.slf4j>1.7.21</version.slf4j>
+        <version.slf4j>1.7.22</version.slf4j>
         <version.jose4j>0.5.2</version.jose4j>
         <version.antlr4>4.5.3</version.antlr4>
         <version.commons-lang>2.6</version.commons-lang>
@@ -75,7 +75,7 @@
         <version.commons.codec>1.10</version.commons.codec>
         <version.encoder>1.2</version.encoder>
         <version.metrics>3.1.2</version.metrics>
-        <version.logback>1.1.7</version.logback>
+        <version.logback>1.1.9</version.logback>
         <version.junit>4.12</version.junit>
         <version.mockito>2.1.0-beta.124</version.mockito>
         <version.undertow>1.4.4.Final</version.undertow>
@@ -322,6 +322,12 @@
                 <groupId>com.jayway.jsonpath</groupId>
                 <artifactId>json-path</artifactId>
                 <version>${version.jsonpath}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>net.minidev</groupId>
+                        <artifactId>json-smart</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
@@ -357,11 +363,31 @@
                 <groupId>org.apache.zookeeper</groupId>
                 <artifactId>zookeeper</artifactId>
                 <version>${version.zookeeper}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.101tec</groupId>
                 <artifactId>zkclient</artifactId>
                 <version>${version.zkclient}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <!-- Test dependencies -->
