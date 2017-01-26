@@ -1,6 +1,5 @@
 ---
 date: 2016-10-11T12:32:21-04:00
-draft: true
 title: Scalability
 ---
 
