@@ -1,12 +1,12 @@
 package com.networknt.balance;
 
+import com.networknt.registry.URL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.networknt.utility.Util;
 
 import java.net.InetAddress;
-import java.net.URL;
 import java.util.List;
 
 /**

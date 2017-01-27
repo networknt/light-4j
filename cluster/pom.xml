@@ -25,9 +25,9 @@
         <relativePath>..</relativePath>
     </parent>
 
-    <artifactId>balance</artifactId>
+    <artifactId>cluster</artifactId>
     <packaging>jar</packaging>
-    <description>A client load balance module that helps to connect service clusters.</description>
+    <description>A cluster module for service discovery and load balance.</description>
 
     <dependencies>
         <dependency>
@@ -47,9 +47,10 @@
             <artifactId>registry</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
+            <groupId>com.networknt</groupId>
+            <artifactId>balance</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -57,6 +58,10 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-ext</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.owasp.encoder</groupId>
+            <artifactId>encoder</artifactId>
         </dependency>
 
         <dependency>

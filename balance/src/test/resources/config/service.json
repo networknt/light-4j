@@ -1,0 +1,10 @@
+{
+  "description": "singleton service factory configuration",
+  "singletons": [
+    {
+      "com.networknt.balance.LoadBalance" : [
+        "com.networknt.balance.RoundRobinLoadBalance"
+      ]
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 package com.networknt.balance;
 
-import java.net.URL;
+import com.networknt.registry.URL;
+
 import java.util.List;
 
 public interface LoadBalance {

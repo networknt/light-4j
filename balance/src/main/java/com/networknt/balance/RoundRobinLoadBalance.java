@@ -1,9 +1,9 @@
 package com.networknt.balance;
 
+import com.networknt.registry.URL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URL;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -12,6 +12,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class RoundRobinLoadBalance implements LoadBalance {
     static Logger logger = LoggerFactory.getLogger(RoundRobinLoadBalance.class);
+
+    public RoundRobinLoadBalance() {
+        if(logger.isInfoEnabled()) logger.info("A RoundRobinLoadBalance instance is started");
+    }
 
     private AtomicInteger idx = new AtomicInteger(0);
 
