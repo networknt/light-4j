@@ -16,5 +16,8 @@ public class LightClusterTest {
     public void testLightCluster() {
         String s = cluster.serviceToUrl("http", "code");
         Assert.assertEquals(s, "http://192.168.1.101:6881");
+
+        s = cluster.serviceToUrl("http", "code");
+        Assert.assertEquals(s, "http://192.168.1.100:6881");
     }
 }

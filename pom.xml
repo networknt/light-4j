@@ -120,6 +120,7 @@
         <module>consul</module>
         <module>zookeeper</module>
         <module>cors</module>
+        <module>cluster</module>
         <module>server</module>
     </modules>
 
