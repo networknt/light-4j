@@ -28,12 +28,12 @@ like Light-Java.
 
 All specifications and code of the services are on github.com but we are going to
 redo it again by following the steps in the tutorial. Let's first create a
-workspace. I have created a directory named networknt under /home/steve.
+workspace. I have created a directory named networknt under user directory.
 
 Checkout related projects.
 
 ```
-cd networknt
+cd ~/networknt
 git clone git@github.com:networknt/swagger-codegen.git
 git clone git@github.com:networknt/light-java-example.git
 git clone git@github.com:networknt/swagger.git
@@ -46,7 +46,7 @@ As we are going to regenerate API A, B, C and D, let's rename these folders from
 light-java-example.
 
 ```
-cd light-java-example
+cd ~/networknt/light-java-example
 mv api_a api_a.bak
 mv api_b api_b.bak
 mv api_c api_c.bak

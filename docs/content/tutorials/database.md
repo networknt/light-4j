@@ -24,6 +24,10 @@ In order to follow the steps below, please make sure you have the same working e
 * Install Java IDE (Intellij IDEA Community Edition is recommended)
 * Create a working directory under your user directory called networknt.
 
+```
+cd ~
+mkdir networknt
+```
 
 # Create Database Demo Specification
 
