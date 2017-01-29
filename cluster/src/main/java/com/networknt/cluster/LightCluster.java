@@ -24,9 +24,13 @@ public class LightCluster implements Cluster {
 
     @Override
     public String serviceToUrl(String protocol, String serviceId) {
+        if(logger.isDebugEnabled()) logger.debug("protocol = " + protocol + " serviceId = " + serviceId);
         URL subscribeUrl = URLImpl.valueOf("light://localhost/" + serviceId);
+        if(logger.isDebugEnabled()) logger.debug("subscribeUrl = " + subscribeUrl);
         List<URL> urls = registry.discover(subscribeUrl);
+        if(logger.isDebugEnabled()) logger.debug("discovered urls = " + urls);
         URL url = loadBalance.select(urls);
+        if(logger.isDebugEnabled()) logger.debug("final url after load balance = " + url);
         // construct a url in string
         return protocol + "://" + url.getHost() + ":" + url.getPort();
     }

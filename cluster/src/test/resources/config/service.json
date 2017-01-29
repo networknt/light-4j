@@ -10,8 +10,8 @@
             "port": 8080,
             "path": "direct",
             "parameters": {
-              "light-code": "http://192.168.1.100:6881,http://192.168.1.101:6881",
-              "light-token": "http://192.168.1.100:6882"
+              "light-com.networknt.apib-1.0.0": "http://localhost:7002,http://localhost:7005",
+              "light-com.networknt.apic-1.0.0": "http://localhost:7003"
             }
           }
         }
