@@ -37,8 +37,9 @@ public class ConsulEcwidClient implements ConsulClient {
 	}
 
 	@Override
-	public void checkPass(String serviceid) {
-		client.agentCheckPass("service:" + serviceid);
+	public void checkPass(String serviceId) {
+		if(logger.isDebugEnabled()) logger.debug("checkPass serviceId = " + serviceId);
+		client.agentCheckPass("service:" + serviceId);
 	}
 
 	@Override
@@ -134,8 +135,9 @@ public class ConsulEcwidClient implements ConsulClient {
 	}
 
 	@Override
-	public void checkFail(String serviceid) {
-		client.agentCheckFail("service:" + serviceid);
+	public void checkFail(String serviceId) {
+		if(logger.isDebugEnabled()) logger.debug("checkFail serviceId = " + serviceId);
+		client.agentCheckFail("service:" + serviceId);
 	}
 
 }

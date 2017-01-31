@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * consul heart beat manager. passing status service id is registered here，
- * and this class will set passing status for serviceid（in fact it is corresponding checkid of serviceid),
+ * and this class will set passing status for serviceId（in fact it is corresponding checkId of serviceId),
  * then the heart beat process is done.
  *
  * Switcher is used to enable heart beat or disable heart beat.
@@ -95,12 +95,12 @@ public class ConsulHeartbeatManager {
 	}
 
 	protected void processHeartbeat(boolean isPass) {
-		for (String serviceid : serviceIds) {
+		for (String serviceId : serviceIds) {
 			try {
-				jobExecutor.execute(new HeartbeatJob(serviceid, isPass));
+				jobExecutor.execute(new HeartbeatJob(serviceId, isPass));
 			} catch (RejectedExecutionException ree) {
-				logger.error("execute heartbeat job fail! serviceid:"
-						+ serviceid + " is rejected");
+				logger.error("execute heartbeat job fail! serviceId:"
+						+ serviceId + " is rejected");
 			}
 		}
 	}
@@ -139,12 +139,12 @@ public class ConsulHeartbeatManager {
 	}
 
 	class HeartbeatJob implements Runnable {
-		private String serviceid;
+		private String serviceId;
 		private boolean isPass;
 
-		public HeartbeatJob(String serviceid, boolean isPass) {
+		public HeartbeatJob(String serviceId, boolean isPass) {
 			super();
-			this.serviceid = serviceid;
+			this.serviceId = serviceId;
 			this.isPass = isPass;
 		}
 
@@ -152,14 +152,14 @@ public class ConsulHeartbeatManager {
 		public void run() {
 			try {
 				if (isPass) {
-					client.checkPass(serviceid);
+					client.checkPass(serviceId);
 				} else {
-					client.checkFail(serviceid);
+					client.checkFail(serviceId);
 				}
 			} catch (Exception e) {
 				logger.error(
-						"consul heartbeat-set check pass error!serviceid:"
-								+ serviceid, e);
+						"consul heartbeat-set check pass error!serviceId:"
+								+ serviceId, e);
 			}
 
 		}
