@@ -1079,19 +1079,317 @@ cd ~/networknt/light-java-example/discovery/api_d
 cp -r multiple consul
 ```
 
+
 ### API A
+
+In order to switch from direct registry to consul registry, we just need to update
+service.json configuration to inject the consul implementation to the registry interface.
+
+service.json
+
+```
+{
+  "description": "singleton service factory configuration",
+  "singletons": [
+    {
+      "com.networknt.registry.URL": [
+        {
+          "com.networknt.registry.URLImpl": {
+            "protocol": "light",
+            "host": "localhost",
+            "port": 8080,
+            "path": "consul",
+            "parameters": {
+              "registryRetryPeriod": "30000"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "com.networknt.consul.client.ConsulClient": [
+        {
+          "com.networknt.consul.client.ConsulEcwidClient": [
+            {"java.lang.String": "localhost"},
+            {"int": 8500}
+          ]
+        }
+      ]
+    },
+    {
+      "com.networknt.registry.Registry" : [
+        "com.networknt.consul.ConsulRegistry"
+      ]
+    }
+  ]
+}
+
+```
+
+Although in our case, there is no caller service for API A, we still need to register
+it to consul by enable it in server.json
+
+```
+{
+  "description": "server config",
+  "ip": "0.0.0.0",
+  "port": 7001,
+  "serviceId": "com.networknt.apia-1.0.0",
+  "enableRegistry": true
+}
+
+```
 
 
 ### API B
 
+Let's update service.json to inject consul registry instead of direct registry used in
+the previous step.
+
+service.json
+
+```
+{
+  "description": "singleton service factory configuration",
+  "singletons": [
+    {
+      "com.networknt.registry.URL": [
+        {
+          "com.networknt.registry.URLImpl": {
+            "protocol": "light",
+            "host": "localhost",
+            "port": 8080,
+            "path": "consul",
+            "parameters": {
+              "registryRetryPeriod": "30000"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "com.networknt.consul.client.ConsulClient": [
+        {
+          "com.networknt.consul.client.ConsulEcwidClient": [
+            {"java.lang.String": "localhost"},
+            {"int": 8500}
+          ]
+        }
+      ]
+    },
+    {
+      "com.networknt.registry.Registry" : [
+        "com.networknt.consul.ConsulRegistry"
+      ]
+    }
+  ]
+}
+```
+
+As API B will be called by API A, it needs to register itself to consul registry so
+that API A can discover it through the same consul registry. To do that you only need
+to enable server registry in config file.
+
+server.json
+
+```
+{
+  "description": "server config",
+  "ip": "0.0.0.0",
+  "port": 7002,
+  "serviceId": "com.networknt.apib-1.0.0",
+  "enableRegistry": true
+}
+
+```
 
 ### API C
+
+Although API C is not calling any other APIs, it needs to register itself to consul
+so that API A can discovery it from the same consul registry.
+
+service.json
+
+```
+{
+  "description": "singleton service factory configuration",
+  "singletons": [
+    {
+      "com.networknt.registry.URL": [
+        {
+          "com.networknt.registry.URLImpl": {
+            "protocol": "light",
+            "host": "localhost",
+            "port": 8080,
+            "path": "consul",
+            "parameters": {
+              "registryRetryPeriod": "30000"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "com.networknt.consul.client.ConsulClient": [
+        {
+          "com.networknt.consul.client.ConsulEcwidClient": [
+            {"java.lang.String": "localhost"},
+            {"int": 8500}
+          ]
+        }
+      ]
+    },
+    {
+      "com.networknt.registry.Registry" : [
+        "com.networknt.consul.ConsulRegistry"
+      ]
+    }
+  ]
+}
+```
+
+
+server.json
+
+```
+{
+  "description": "server config",
+  "ip": "0.0.0.0",
+  "port": 7003,
+  "serviceId": "com.networknt.apic-1.0.0",
+  "enableRegistry": true
+}
+
+```
+
+Also, in previous step, we didn't add extra dependencies for registry, load balance
+cluster and consul modules. Let's add them here in pom.xml
+
+```
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>registry</artifactId>
+            <version>${version.light-java}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>balance</artifactId>
+            <version>${version.light-java}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>cluster</artifactId>
+            <version>${version.light-java}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>consul</artifactId>
+            <version>${version.light-java}</version>
+        </dependency>
+
+```
 
 
 ### API D
 
+Although API D is not calling any other APIs, it needs to register itself to consul
+so that API B can discovery it from the same consul registry.
+
+service.json
+
+```
+{
+  "description": "singleton service factory configuration",
+  "singletons": [
+    {
+      "com.networknt.registry.URL": [
+        {
+          "com.networknt.registry.URLImpl": {
+            "protocol": "light",
+            "host": "localhost",
+            "port": 8080,
+            "path": "consul",
+            "parameters": {
+              "registryRetryPeriod": "30000"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "com.networknt.consul.client.ConsulClient": [
+        {
+          "com.networknt.consul.client.ConsulEcwidClient": [
+            {"java.lang.String": "localhost"},
+            {"int": 8500}
+          ]
+        }
+      ]
+    },
+    {
+      "com.networknt.registry.Registry" : [
+        "com.networknt.consul.ConsulRegistry"
+      ]
+    }
+  ]
+}
+```
+
+server.json
+
+```
+{
+  "description": "server config",
+  "ip": "0.0.0.0",
+  "port": 7004,
+  "serviceId": "com.networknt.apid-1.0.0",
+  "enableRegistry": true
+}
+
+```
+
+Also add extra dependencies to pom.xml to enable cluster.
+
+```
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>registry</artifactId>
+            <version>${version.light-java}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>balance</artifactId>
+            <version>${version.light-java}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>cluster</artifactId>
+            <version>${version.light-java}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>consul</artifactId>
+            <version>${version.light-java}</version>
+        </dependency>
+
+```
+
+
+### Start Consul
+
+Here we are starting consul server in docker to serve as a centralized registry. To make it
+simpler, the ACL in consul is disable by setting acl_default_policy=allow.
+
+```
+docker run -d -p 8400:8400 -p 8500:8500/tcp -p 8600:53/udp -e 'CONSUL_LOCAL_CONFIG={"acl_datacenter":"dc1","acl_default_policy":"allow","acl_down_policy":"extend-cache","acl_master_token":"the_one_ring","bootstrap_expect":1,"datacenter":"dc1","data_dir":"/usr/local/bin/consul.d/data","server":true}' consul agent -server -ui -bind=127.0.0.1 -client=0.0.0.0
+```
+
 
 ### Start Servers
+
+Now let's start five terminals to start servers. API D will start two instances with
+port number changed from 7004 to 7005 in between. 
+
 
 
 ### Test Servers

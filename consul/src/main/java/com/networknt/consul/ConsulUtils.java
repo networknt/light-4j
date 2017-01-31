@@ -95,7 +95,7 @@ public class ConsulUtils {
      * @return String service name
      */
     public static String convertGroupToServiceName(String group) {
-        return ConsulConstants.CONSUL_SERVICE_LIGHT_PRE + group;
+        return group;
     }
 
     /**
@@ -105,7 +105,7 @@ public class ConsulUtils {
      * @return group
      */
     public static String getGroupFromServiceName(String group) {
-        return group.substring(ConsulConstants.CONSUL_SERVICE_LIGHT_PRE.length());
+        return group;
     }
 
     /**
@@ -128,7 +128,7 @@ public class ConsulUtils {
      * @return path
      */
     public static String getPathFromServiceId(String serviceId) {
-        return serviceId.substring(serviceId.indexOf("-") + 1);
+        return serviceId.substring(serviceId.indexOf(":") + 1, serviceId.lastIndexOf(":"));
     }
 
     /**
@@ -143,7 +143,7 @@ public class ConsulUtils {
 
 
     public static String convertServiceId(String host, int port, String path) {
-        return host + ":" + port + "-" + path;
+        return host + ":" + path + ":" + port;
     }
 
 }

@@ -5,21 +5,40 @@
       "com.networknt.registry.URL": [
         {
           "com.networknt.registry.URLImpl": {
-            "protocol": "https",
+            "protocol": "http",
             "host": "localhost",
-            "port": 8080,
-            "path": "direct",
+            "port": 8500,
+            "path": "",
             "parameters": {
-              "light-code": "http://192.168.1.100:6881,http://192.168.1.101:6881",
-              "light-token": "http://192.168.1.100:6882"
+              "registryRetryPeriod": "30000"
             }
           }
         }
       ]
     },
     {
+      "com.networknt.consul.client.ConsulClient": [
+        {
+          "com.networknt.consul.client.ConsulEcwidClient": [
+            {"java.lang.String": "localhost"},
+            {"int": 8500}
+          ]
+        }
+      ]
+    },
+    {
       "com.networknt.registry.Registry" : [
-        "com.networknt.registry.support.DirectRegistry"
+        "com.networknt.consul.ConsulRegistry"
+      ]
+    },
+    {
+      "com.networknt.balance.LoadBalance" : [
+        "com.networknt.balance.RoundRobinLoadBalance"
+      ]
+    },
+    {
+      "com.networknt.cluster.Cluster" : [
+        "com.networknt.cluster.LightCluster"
       ]
     }
   ]

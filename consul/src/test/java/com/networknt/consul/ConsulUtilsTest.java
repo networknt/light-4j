@@ -27,14 +27,14 @@ public class ConsulUtilsTest {
 
     @Before
     public void setUp() throws Exception {
-        testGroup = "yf-rpc-core";
-        testServiceName = "light_yf-rpc-core";
-        testPath = "com.networknt.test.junit.TestService";
+        testGroup = "com.networknt.apia-1.0.0";
+        testServiceName = "com.networknt.apia-1.0.0";
+        testPath = "com.networknt.apia-1.0.0";
         testHost = "127.0.0.1";
         testPort = 8888;
         testProtocol = "light";
         url = new URLImpl(testProtocol, testHost, testPort, testPath);
-        testServiceId = testHost + ":" + testPort + "-" + testPath;
+        testServiceId = testHost + ":" + testPath + ":" + testPort;
         testServiceTag = ConsulConstants.CONSUL_TAG_LIGHT_PROTOCOL + ":" + testProtocol;
     }
 

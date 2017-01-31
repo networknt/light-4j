@@ -64,6 +64,14 @@
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
+            <artifactId>balance</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>cluster</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
             <artifactId>service</artifactId>
         </dependency>
         <dependency>

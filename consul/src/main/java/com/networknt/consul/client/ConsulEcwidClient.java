@@ -31,7 +31,7 @@ public class ConsulEcwidClient implements ConsulClient {
 		this.host = host;
 		this.port = port;
 
-		client = new com.ecwid.consul.v1.ConsulClient(host + ":" + port);
+		client = new com.ecwid.consul.v1.ConsulClient(host, port);
 		if(logger.isInfoEnabled()) logger.info("ConsulEcwidClient init finish. client host:" + host
 				+ ", port:" + port);
 	}
