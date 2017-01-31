@@ -115,11 +115,11 @@ public class ConsulEcwidClient implements ConsulClient {
 		newService.setName(service.getName());
 		newService.setPort(service.getPort());
 		newService.setTags(service.getTags());
-		/*
+
 		NewService.Check check = new NewService.Check();
 		check.setTtl(service.getTtl() + "s");
 		newService.setCheck(check);
-		*/
+
 		return newService;
 	}
 
