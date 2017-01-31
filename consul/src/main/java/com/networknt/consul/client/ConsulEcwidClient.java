@@ -82,7 +82,7 @@ public class ConsulEcwidClient implements ConsulClient {
 				}
 			}
 			if (!ConsulServcies.isEmpty()) {
-				newResponse = new ConsulResponse<List<ConsulService>>();
+				newResponse = new ConsulResponse<>();
 				newResponse.setValue(ConsulServcies);
 				newResponse.setConsulIndex(orgResponse.getConsulIndex());
 				newResponse.setConsulLastContact(orgResponse
