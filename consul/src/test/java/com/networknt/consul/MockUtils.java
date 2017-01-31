@@ -16,7 +16,7 @@ import java.util.Map;
 public class MockUtils {
     //  mock service info
     private static String path = "mockService";
-    private static String group = "mockGroup";
+    private static String group = "mockService";
     private static String address = "127.0.0.1";
     private static String protocol = "light";
 
@@ -45,8 +45,8 @@ public class MockUtils {
 
     public static URL getMockUrl(String address, int port) {
         Map<String, String> params = new HashMap<>();
-        params.put(URLParamType.group.getName(), group);
-        params.put(URLParamType.protocol.getName(), protocol);
+        //params.put(URLParamType.group.getName(), group);
+        //params.put(URLParamType.protocol.getName(), protocol);
         URL url = new URLImpl(protocol, address, port, path, params);
         return url;
     }
