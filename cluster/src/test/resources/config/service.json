@@ -10,8 +10,8 @@
             "port": 8080,
             "path": "direct",
             "parameters": {
-              "light-com.networknt.apib-1.0.0": "http://localhost:7002,http://localhost:7005",
-              "light-com.networknt.apic-1.0.0": "http://localhost:7003"
+              "com.networknt.apib-1.0.0": "http://localhost:7002,http://localhost:7005",
+              "com.networknt.apic-1.0.0": "http://localhost:7003"
             }
           }
         }

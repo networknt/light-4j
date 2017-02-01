@@ -45,10 +45,10 @@ public class DirectRegistry extends AbstractRegistry {
                 if(entry.getValue().contains(",")) {
                     String[] directUrlArray = entry.getValue().split(",");
                     for (String directUrl : directUrlArray) {
-                        urls.add(URLImpl.valueOf(directUrl));
+                        urls.add(URLImpl.valueOf(directUrl + "/" + entry.getKey()));
                     }
                 } else {
-                    urls.add(URLImpl.valueOf(entry.getValue()));
+                    urls.add(URLImpl.valueOf(entry.getValue() + "/" + entry.getKey()));
                 }
             } catch (Exception e) {
                 throw new FrameworkException(new Status(PARSE_DIRECT_URL_ERROR, url.toString()));
@@ -85,8 +85,8 @@ public class DirectRegistry extends AbstractRegistry {
     }
 
     private List<URL> createSubscribeUrl(URL subscribeUrl) {
-        String serviceId = subscribeUrl.getProtocol() + "-" + subscribeUrl.getPath();
-        return directUrls.get(serviceId);
+        String serviceName = subscribeUrl.getPath();
+        return directUrls.get(serviceName);
     }
 
     @Override

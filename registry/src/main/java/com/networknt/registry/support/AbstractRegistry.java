@@ -195,6 +195,7 @@ abstract class AbstractRegistry implements Registry {
         return urls;
     }
 
+    /*
     protected void notify(URL refUrl, NotifyListener listener, List<URL> urls) {
         if (listener == null || urls == null) {
             return;
@@ -209,6 +210,7 @@ abstract class AbstractRegistry implements Registry {
             }
             oneNodeTypeUrls.add(surl);
         }
+
         Map<String, List<URL>> curls = subscribedCategoryResponses.get(refUrl);
         if (curls == null) {
             subscribedCategoryResponses.putIfAbsent(refUrl, new ConcurrentHashMap<>());
@@ -221,6 +223,37 @@ abstract class AbstractRegistry implements Registry {
         }
 
         for (List<URL> us : nodeTypeUrlsInRs.values()) {
+            listener.notify(getUrl(), us);
+        }
+    }
+    */
+    protected void notify(URL refUrl, NotifyListener listener, List<URL> urls) {
+        if (listener == null || urls == null) {
+            return;
+        }
+        Map<String, List<URL>> serviceNameUrls = new HashMap<>();
+        for (URL surl : urls) {
+            String serviceName = surl.getPath();
+            List<URL> serviceUrlList = serviceNameUrls.get(serviceName);
+            if (serviceUrlList == null) {
+                serviceNameUrls.put(serviceName, new ArrayList<>());
+                serviceUrlList = serviceNameUrls.get(serviceName);
+            }
+            serviceUrlList.add(surl);
+        }
+
+        Map<String, List<URL>> curls = subscribedCategoryResponses.get(refUrl);
+        if (curls == null) {
+            subscribedCategoryResponses.putIfAbsent(refUrl, new ConcurrentHashMap<>());
+            curls = subscribedCategoryResponses.get(refUrl);
+        }
+
+        // refresh local urls cache
+        for (String serviceName : serviceNameUrls.keySet()) {
+            curls.put(serviceName, serviceNameUrls.get(serviceName));
+        }
+
+        for (List<URL> us : serviceNameUrls.values()) {
             listener.notify(getUrl(), us);
         }
     }
