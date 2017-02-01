@@ -1120,10 +1120,19 @@ service.json
       "com.networknt.registry.Registry" : [
         "com.networknt.consul.ConsulRegistry"
       ]
+    },
+    {
+      "com.networknt.balance.LoadBalance" : [
+        "com.networknt.balance.RoundRobinLoadBalance"
+      ]
+    },
+    {
+      "com.networknt.cluster.Cluster" : [
+        "com.networknt.cluster.LightCluster"
+      ]
     }
   ]
 }
-
 ```
 
 Although in our case, there is no caller service for API A, we still need to register
@@ -1180,6 +1189,16 @@ service.json
     {
       "com.networknt.registry.Registry" : [
         "com.networknt.consul.ConsulRegistry"
+      ]
+    },
+    {
+      "com.networknt.balance.LoadBalance" : [
+        "com.networknt.balance.RoundRobinLoadBalance"
+      ]
+    },
+    {
+      "com.networknt.cluster.Cluster" : [
+        "com.networknt.cluster.LightCluster"
       ]
     }
   ]
@@ -1242,6 +1261,16 @@ service.json
     {
       "com.networknt.registry.Registry" : [
         "com.networknt.consul.ConsulRegistry"
+      ]
+    },
+    {
+      "com.networknt.balance.LoadBalance" : [
+        "com.networknt.balance.RoundRobinLoadBalance"
+      ]
+    },
+    {
+      "com.networknt.cluster.Cluster" : [
+        "com.networknt.cluster.LightCluster"
       ]
     }
   ]
@@ -1329,6 +1358,16 @@ service.json
     {
       "com.networknt.registry.Registry" : [
         "com.networknt.consul.ConsulRegistry"
+      ]
+    },
+    {
+      "com.networknt.balance.LoadBalance" : [
+        "com.networknt.balance.RoundRobinLoadBalance"
+      ]
+    },
+    {
+      "com.networknt.cluster.Cluster" : [
+        "com.networknt.cluster.LightCluster"
       ]
     }
   ]
