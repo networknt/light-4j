@@ -123,10 +123,10 @@ public class ConsulRegistryTest {
         registry.subscribeCommand(clientUrl, commandListener);
         Assert.assertTrue(containsCommandListener(serviceUrl, clientUrl, commandListener));
 
-        client.setKVValue(clientUrl.getGroup(), command);
+        client.setKVValue(clientUrl.getPath(), command);
         Thread.sleep(2000);
 
-        client.removeKVValue(clientUrl.getGroup());
+        client.removeKVValue(clientUrl.getPath());
 
         registry.unsubscribeCommand(clientUrl, commandListener);
         Assert.assertFalse(containsCommandListener(serviceUrl, clientUrl, commandListener));
@@ -150,7 +150,7 @@ public class ConsulRegistryTest {
         Assert.assertTrue(result.equals(""));
 
         String command = "{\"index\":0,\"mergeGroups\":[\"aaa:1\",\"bbb:1\"],\"pattern\":\"*\",\"routeRules\":[]}\n";
-        client.setKVValue(clientUrl.getGroup(), command);
+        client.setKVValue(clientUrl.getPath(), command);
 
         result = registry.discoverCommand(clientUrl);
         Assert.assertTrue(result.equals(command));
@@ -162,8 +162,8 @@ public class ConsulRegistryTest {
     }
 
     private Boolean containsCommandListener(URL serviceUrl, URL clientUrl, CommandListener commandListener) {
-        String group = serviceUrl.getGroup();
-        return registry.getCommandListeners().get(group).get(clientUrl) == commandListener;
+        String serviceName = serviceUrl.getPath();
+        return registry.getCommandListeners().get(serviceName).get(clientUrl) == commandListener;
     }
 
 }

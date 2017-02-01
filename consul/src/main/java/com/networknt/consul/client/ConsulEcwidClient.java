@@ -96,12 +96,12 @@ public class ConsulEcwidClient implements ConsulClient {
 	}
 
     @Override
-    public String lookupCommand(String group) {
-        Response<GetValue> response = client.getKVValue(ConsulConstants.CONSUL_LIGHT_COMMAND + ConsulUtils.convertGroupToServiceName(group));
+    public String lookupCommand(String serviceName) {
+        Response<GetValue> response = client.getKVValue(ConsulConstants.CONSUL_LIGHT_COMMAND + serviceName);
         GetValue value = response.getValue();
         String command = "";
         if (value == null) {
-            if(logger.isInfoEnabled()) logger.info("no command in group: " + group);
+            if(logger.isInfoEnabled()) logger.info("no command in serviceName: " + serviceName);
         } else if (value.getValue() != null) {
             command = new String(Base64.decodeBase64(value.getValue()), UTF_8);
         }
