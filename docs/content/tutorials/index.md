@@ -16,3 +16,5 @@ The following tutorials will help users to get started and more will be added la
 * [How to do integration test](https://networknt.github.io/light-java/tutorials/integration-test/)
 
 * [How to debug the service](https://networknt.github.io/light-java/tutorials/debug/)
+
+* [How to register and discover services](https://networknt.github.io/light-java/tutorials/discovery/)
