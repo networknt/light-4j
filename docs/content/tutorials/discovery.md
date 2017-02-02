@@ -637,7 +637,7 @@ For discovery, some new modules should be included into the pom.xml.
 
 Also, we need service.json to inject several singleton implementations of
 Cluster, LoadBanlance, URL and Registry. Please note that the key in parameters
-is light-{serviceId} of your calling APIs
+is serviceId of your calling APIs
 
 
 ```
@@ -653,8 +653,8 @@ is light-{serviceId} of your calling APIs
             "port": 8080,
             "path": "direct",
             "parameters": {
-              "light-com.networknt.apib-1.0.0": "http://localhost:7002",
-              "light-com.networknt.apic-1.0.0": "http://localhost:7003"
+              "com.networknt.apib-1.0.0": "http://localhost:7002",
+              "com.networknt.apic-1.0.0": "http://localhost:7003"
             }
           }
         }
@@ -793,7 +793,7 @@ Inject interface implementations and define the API D url.
             "port": 8080,
             "path": "direct",
             "parameters": {
-              "light-com.networknt.apid-1.0.0": "http://localhost:7004"
+              "com.networknt.apid-1.0.0": "http://localhost:7004"
             }
           }
         }
@@ -1424,61 +1424,245 @@ docker run -d -p 8400:8400 -p 8500:8500/tcp -p 8600:53/udp -e 'CONSUL_LOCAL_CONF
 ```
 
 
-### Start Servers
+### Start four servers
 
-Now let's start five terminals to start servers. API D will start two instances with
-port number changed from 7004 to 7005 in between. 
+Now let's start four terminals to start servers.  
+
+API A
+
+```
+cd ~/networknt/light-java-example/discovery/api_a/consul
+mvn clean install exec:exec
+```
+
+API B
+
+```
+cd ~/networknt/light-java-example/discovery/api_b/consul
+mvn clean install exec:exec
+
+```
+
+API C
+
+```
+cd ~/networknt/light-java-example/discovery/api_c/consul
+mvn clean install exec:exec
+
+```
+
+API D
 
 
+And start the first instance that listen to 7004 as default
+
+```
+cd ~/networknt/light-java-example/discovery/api_d/consul
+mvn clean install exec:exec
+
+```
+
+### Test four servers
+
+```
+curl http://localhost:7001/v1/data
+```
+
+And the result will be
+
+```
+["API C: Message 1","API C: Message 2","API D: Message 1 from port 7004","API D: Message 2 from port 7004","API B: Message 1","API B: Message 2","API A: Message 1","API A: Message 2"]
+```
+ 
+### Start another API D
+ 
+Now let's start the second instance of API D. Before starting the serer, let's update
+server.json with port 7005.
+
+```
+{
+  "description": "server config",
+  "ip": "0.0.0.0",
+  "port": 7005,
+  "serviceId": "com.networknt.apid-1.0.0"
+}
+
+```
+
+And start the second instance
+
+```
+cd ~/networknt/light-java-example/discovery/api_d/consul
+mvn clean install exec:exec
+
+```
 
 ### Test Servers
 
+Wait 10 seconds, your API B cached API D service urls will be updated automatically
+with the new instance. Now you have to instance of API D to serve API B.
+
+```
+curl http://localhost:7001/v1/data
+```
+
+And the result can be the following alternatively.
+
+```
+["API C: Message 1","API C: Message 2","API D: Message 1 from port 7004","API D: Message 2 from port 7004","API B: Message 1","API B: Message 2","API A: Message 1","API A: Message 2"]
+```
+
+or 
+
+```
+["API C: Message 1","API C: Message 2","API D: Message 1 from port 7005","API D: Message 2 from port 7005","API B: Message 1","API B: Message 2","API A: Message 1","API A: Message 2"]
+```
+
+
+### Shutdown one API D
+
+Let's shutdown one instance of API D and wait for 10 seconds. Now when you call the same
+curl command, API D message will be always served by the same port which is the one still
+running.
 
 
 # Docker
 
+In this step, we are going to dockerize all the APIs and then use registrator for service
+registry. 
 
-#
-
-
-# API to API calls
-
-As we have four API projects created, we can now update them for API to API calls.
-
-Here is the call tree for these services.
-
-API A will call API B and API C to fulfill its request. API B will call API D
-to fulfill its request.
-
-```
-API A -> API B -> API D
-      -> API C
-```
-
-Before we change the code, let's copy the generated projects to new folders so
-that we can compare the changes.
+Now let's copy from consul to docker for each API.
+ 
 
 ```
 cd ~/networknt/light-java-example/discovery/api_a
-cp -r generated apitoapi
+cp -r consul consuldocker
 cd ~/networknt/light-java-example/discovery/api_b
-cp -r generated apitoapi
+cp -r consul consuldocker
 cd ~/networknt/light-java-example/discovery/api_c
-cp -r generated apitoapi
+cp -r consul consuldocker
 cd ~/networknt/light-java-example/discovery/api_d
-cp -r generated apitoapi
+cp -r consul consulcdocker
 ```
 
-Let's start update the code in apitoapi folders for each project. If you are
-using Intellij IDEA Community Edition, you need to open light-java-example
-repo and then import each project by right click pom.xml in each apitoapi folder.
+Before starting the services, let's start consul and registrator.
+
+Consul
+
+```
+docker run -d -p 8400:8400 -p 8500:8500/tcp -p 8600:53/udp -e 'CONSUL_LOCAL_CONFIG={"acl_datacenter":"dc1","acl_default_policy":"allow","acl_down_policy":"extend-cache","acl_master_token":"the_one_ring","bootstrap_expect":1,"datacenter":"dc1","data_dir":"/usr/local/bin/consul.d/data","server":true}' consul agent -server -ui -bind=127.0.0.1 -client=0.0.0.0
+```
+
+Regsitrator
+
+```
+docker run -d --name=registrator --net=host --volume=/var/run/docker.sock:/tmp/docker.sock gliderlabs/registrator:latest -ip 127.0.0.1 consul://localhost:8500
+```
+
 
 ### API A
 
+Since we are using registrator to register the service, we need to disable the application service registration.
+
+server.json
+
+```
+{
+  "description": "server config",
+  "ip": "0.0.0.0",
+  "port": 7001,
+  "serviceId": "com.networknt.apia-1.0.0",
+  "enableRegistry": false
+}
+```
+
+
+```
+cd ~/networknt/light-java-example/discovery/api_a/consuldocker
+mvn clean install
+docker build -t networknt/com.networknt.apia-1.0.0 .
+docker run -it -p 7001:7001 --net=host --name=com.networknt.apia-1.0.0 networknt/com.networknt.apia-1.0.0
+```
 
 ### API B
 
+server.json
+
+```
+{
+  "description": "server config",
+  "ip": "0.0.0.0",
+  "port": 7002,
+  "serviceId": "com.networknt.apib-1.0.0",
+  "enableRegistry": false
+}
+
+```
+
+```
+cd ~/networknt/light-java-example/discovery/api_b/consuldocker
+mvn clean install
+docker build -t networknt/com.networknt.apib-1.0.0 .
+docker run -it -p 7002:7002 --net=host --name=com.networknt.apib-1.0.0 networknt/com.networknt.apib-1.0.0
+
+```
+
 ### API C
 
+server.json
+
+```
+{
+  "description": "server config",
+  "ip": "0.0.0.0",
+  "port": 7003,
+  "serviceId": "com.networknt.apic-1.0.0",
+  "enableRegistry": false
+}
+
+```
+
+```
+cd ~/networknt/light-java-example/discovery/api_c/consuldocker
+mvn clean install
+docker build -t networknt/com.networknt.apic-1.0.0 .
+docker run -it -p 7003:7003 --net=host --name=com.networknt.apic-1.0.0 networknt/com.networknt.apic-1.0.0
+
+```
+
 ### API D
+
+server.json
+
+```
+{
+  "description": "server config",
+  "ip": "0.0.0.0",
+  "port": 7004,
+  "serviceId": "com.networknt.apid-1.0.0",
+  "enableRegistry": false
+}
+
+```
+
+```
+cd ~/networknt/light-java-example/discovery/api_d/consuldocker
+mvn clean install
+docker build -t networknt/com.networknt.apid-1.0.0 .
+docker run -it -p 7004:7004 --net=host --name=com.networknt.apid-1.0.0 networknt/com.networknt.apid-1.0.0
+
+```
+
+
+### Test Servers
+
+```
+curl http://localhost:7001/v1/data
+```
+
+And here is the result.
+
+```
+["API C: Message 1","API C: Message 2","API D: Message 1 from port 7004","API D: Message 2 from port 7004","API B: Message 1","API B: Message 2","API A: Message 1","API A: Message 2"]
+```
 

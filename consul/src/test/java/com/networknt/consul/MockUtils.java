@@ -18,7 +18,7 @@ public class MockUtils {
     private static String path = "mockService";
     private static String group = "mockService";
     private static String address = "127.0.0.1";
-    private static String protocol = "light";
+    private static String protocol = "http";
 
     public static ConsulService getMockService(int id) {
 

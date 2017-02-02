@@ -2,11 +2,6 @@ package com.networknt.consul;
 
 public class ConsulConstants {
 	/**
-	 * Light java rest prefix in consul service
-	 */
-	public static final String CONSUL_SERVICE_LIGHT_PRE = "light_";
-
-	/**
 	 * Light java protocol prefix in consul tag
 	 */
 	public static final String CONSUL_TAG_LIGHT_PROTOCOL = "protocol_";
@@ -21,10 +16,11 @@ public class ConsulConstants {
 	 */
 	public static final String CONSUL_LIGHT_COMMAND = "light/command/";
 
+
 	/**
-	 * Fefault consul agent host or ip
+	 * Default protocol
 	 */
-	public static String DEFAULT_HOST = "localhost";
+	public static final String DEFAULT_PROTOCOL = "http";
 
 	/**
 	 * Default consul agent port

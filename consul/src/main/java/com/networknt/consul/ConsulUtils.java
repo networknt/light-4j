@@ -59,19 +59,12 @@ public class ConsulUtils {
      */
     public static URL buildUrl(ConsulService service) {
         URL url = null;
-        for (String tag : service.getTags()) {
-            if (tag.startsWith(ConsulConstants.CONSUL_TAG_LIGHT_URL)) {
-                String encodeUrl = tag.substring(tag.indexOf("_") + 1);
-                url = URLImpl.valueOf(Util.urlDecode(encodeUrl));
-            }
-        }
         if (url == null) {
             Map<String, String> params = new HashMap<String, String>();
             //String group = service.getName();
             //params.put(URLParamType.group.getName(), group);
             //params.put(URLParamType.nodeType.getName(), Constants.NODE_TYPE_SERVICE);
-            String protocol = ConsulUtils.getProtocolFromTag(service.getTags().get(0));
-            url = new URLImpl(protocol, service.getAddress(), service.getPort(),
+            url = new URLImpl(ConsulConstants.DEFAULT_PROTOCOL, service.getAddress(), service.getPort(),
                     ConsulUtils.getPathFromServiceId(service.getId()), params);
         }
         return url;

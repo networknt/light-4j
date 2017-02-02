@@ -61,5 +61,4 @@ public class Constants {
     public static final String ZOOKEEPER_REGISTRY_NAMESPACE = "/light";
     public static final String ZOOKEEPER_REGISTRY_COMMAND = "/command";
 
-
 }
