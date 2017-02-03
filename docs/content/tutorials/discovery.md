@@ -1555,6 +1555,10 @@ docker run -d -p 8400:8400 -p 8500:8500/tcp -p 8600:53/udp -e 'CONSUL_LOCAL_CONF
 
 Regsitrator
 
+We use -ip 127.0.0.1 in the command line to make sure that ServiceAddress in
+consul is populated with ip and port. The latest version of regsitrator won't
+set default ip anymore.
+
 ```
 docker run -d --name=registrator --net=host --volume=/var/run/docker.sock:/tmp/docker.sock gliderlabs/registrator:latest -ip 127.0.0.1 consul://localhost:8500
 ```
