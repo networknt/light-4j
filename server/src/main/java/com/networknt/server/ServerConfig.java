@@ -20,7 +20,16 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class ServerConfig {
     String ip;
-    int port;
+    int httpPort;
+    boolean enableHttp;
+    int httpsPort;
+    boolean enableHttps;
+    String keystoreName;
+    String keystorePass;
+    String keyPass;
+    boolean enableTwoWayTls;
+    String truststoreName;
+    String truststorePass;
     boolean enableRegistry;
     String serviceId;
 
@@ -38,12 +47,84 @@ public class ServerConfig {
         this.ip = ip;
     }
 
-    public int getPort() {
-        return port;
+    public int getHttpPort() {
+        return httpPort;
     }
 
-    public void setPort(int port) {
-        this.port = port;
+    public void setHttpPort(int httpPort) {
+        this.httpPort = httpPort;
+    }
+
+    public boolean isEnableHttp() {
+        return enableHttp;
+    }
+
+    public void setEnableHttp(boolean enableHttp) {
+        this.enableHttp = enableHttp;
+    }
+
+    public int getHttpsPort() {
+        return httpsPort;
+    }
+
+    public void setHttpsPort(int httpsPort) {
+        this.httpsPort = httpsPort;
+    }
+
+    public boolean isEnableHttps() {
+        return enableHttps;
+    }
+
+    public void setEnableHttps(boolean enableHttps) {
+        this.enableHttps = enableHttps;
+    }
+
+    public String getKeystoreName() {
+        return keystoreName;
+    }
+
+    public void setKeystoreName(String keystoreName) {
+        this.keystoreName = keystoreName;
+    }
+
+    public String getTruststoreName() {
+        return truststoreName;
+    }
+
+    public void setTruststoreName(String truststoreName) {
+        this.truststoreName = truststoreName;
+    }
+
+    public String getKeystorePass() {
+        return keystorePass;
+    }
+
+    public void setKeystorePass(String keystorePass) {
+        this.keystorePass = keystorePass;
+    }
+
+    public String getKeyPass() {
+        return keyPass;
+    }
+
+    public void setKeyPass(String keyPass) {
+        this.keyPass = keyPass;
+    }
+
+    public boolean isEnableTwoWayTls() {
+        return enableTwoWayTls;
+    }
+
+    public void setEnableTwoWayTls(boolean enableTwoWayTls) {
+        this.enableTwoWayTls = enableTwoWayTls;
+    }
+
+    public String getTruststorePass() {
+        return truststorePass;
+    }
+
+    public void setTruststorePass(String truststorePass) {
+        this.truststorePass = truststorePass;
     }
 
     public boolean isEnableRegistry() {

@@ -1,0 +1,62 @@
+{
+  "description": "client configuration, all timing is milli-second",
+  "sync": {
+    "maxConnectionTotal": 100,
+    "maxConnectionPerRoute": 10,
+    "routes": {
+      "api.google.com": 20,
+      "api.facebook.com": 10
+    },
+    "timeout": 10000,
+    "keepAlive": 15000
+  },
+  "async": {
+    "maxConnectionTotal": 100,
+    "maxConnectionPerRoute": 10,
+    "routes": {
+      "api.google.com": 20,
+      "api.facebook.com": 10
+    },
+    "reactor": {
+      "ioThreadCount": 1,
+      "connectTimeout": 10000,
+      "soTimeout": 10000
+    },
+    "timeout": 10000,
+    "keepAlive": 15000
+  },
+  "tls": {
+    "verifyHostname": false,
+    "loadTrustStore": false,
+    "trustStore": "trust.keystore",
+    "trustPass": "password",
+    "loadKeyStore": false,
+    "keyStore": "key.jks",
+    "keyPass": "password"
+  },
+  "oauth": {
+    "tokenRenewBeforeExpired": 600000,
+    "expiredRefreshRetryDelay": 5000,
+    "earlyRefreshRetryDelay": 30000,
+    "server_url": "http://localhost:8888",
+    "authorization_code": {
+      "uri": "/oauth2/token",
+      "client_id": "3798d583-275c-47d7-bf46-a3c436846336",
+      "client_secret": "CeHJjNRjRiS1dH1qqme2LQ",
+      "redirect_uri": "https://localhost:8080/authorization_code",
+      "scope": [
+        "customer.r",
+        "customer.w"
+      ]
+    },
+    "client_credentials": {
+      "uri": "/oauth2/token",
+      "client_id": "6e9d1db3-2feb-4c1f-a5ad-9e93ae8ca59d",
+      "client_secret": "sQesTWAnTwaw-Nn0oK35GA",
+      "scope": [
+        "account.r",
+        "account.w"
+      ]
+    }
+  }
+}

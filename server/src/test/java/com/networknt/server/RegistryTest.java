@@ -26,7 +26,7 @@ import java.util.Map;
  * Created by steve on 29/01/17.
  */
 public class RegistryTest {
-    static final Logger logger = LoggerFactory.getLogger(ServerTest.class);
+    static final Logger logger = LoggerFactory.getLogger(RegistryTest.class);
     static final String homeDir = System.getProperty("user.home");
 
     static Server server = null;
@@ -38,11 +38,17 @@ public class RegistryTest {
         // write a config file into the user home directory
         Map<String, Object> map = new HashMap<String, Object>();
         map.put("description", "server config");
+        map.put("enableHttp", true);
         map.put("ip", "0.0.0.0");
-        map.put("port", 8080);
+        map.put("httpPort", 8080);
+        map.put("enableHttps", true);
+        map.put("httpsPort", 8443);
+        map.put("keystoreName", "tls/server.keystore");
+        map.put("keystorePass", "secret");
+        map.put("keyPass", "secret");
         map.put("serviceId", "com.networknt.apia-1.0.0");
         map.put("enableRegistry", true);
-        addURL(new File(homeDir).toURL());
+        addURL(new File(homeDir).toURI().toURL());
         config.getMapper().writeValue(new File(homeDir + "/server.json"), map);
 
         if (server == null) {

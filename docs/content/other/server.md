@@ -81,3 +81,20 @@ Here is an exmaple of server.json
 }
 
 ```
+
+## TLS Hostname Verification
+
+For testing, we can disable the hostname verification on the client for the certificate;
+however, it is recommended that on production, hostname verification should be turned on
+to eliminate man-in-the-middle attacks. 
+
+You have two options:
+
+* Buy certificates from a CA like VeriSign.
+* Setup a CA in your organization and use openssl to generate certificate.
+
+For more information
+
+http://stackoverflow.com/questions/29546834/trust-not-trusted-certificates-and-skip-hostname-verification/29547114#29547114
+https://www.owasp.org/index.php/Certificate_and_Public_Key_Pinning
+

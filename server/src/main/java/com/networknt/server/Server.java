@@ -34,7 +34,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.Options;
 
+import javax.net.ssl.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
 import java.util.ServiceLoader;
 
 
@@ -44,10 +53,15 @@ public class Server {
     static final String CONFIG_NAME = "server";
     public static ServerConfig config = (ServerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServerConfig.class);
 
+    public final static TrustManager[] TRUST_ALL_CERTS = new X509TrustManager[] { new DummyTrustManager() };
+
     static protected boolean shutdownRequested = false;
     static Undertow server = null;
-    static URL serviceUrl;
+    static URL serviceHttpUrl;
+    static URL serviceHttpsUrl;
     static Registry registry;
+
+    static SSLContext sslContext;
 
     public static void main(final String[] args) {
         logger.info("server starts");
@@ -65,15 +79,23 @@ public class Server {
             provider.onStartup();
         }
 
+        // application level service registry. only be used without docker container.
         if(config.enableRegistry) {
             // assuming that registry is defined in service.json, otherwise won't start server.
             registry = (Registry) SingletonServiceFactory.getBean(Registry.class);
             if(registry == null) throw new RuntimeException("Could not find registry instance in service map");
             InetAddress inetAddress = Util.getInetAddress();
             String ipAddress = inetAddress.getHostAddress();
-            serviceUrl = new URLImpl("light", ipAddress, config.getPort(), config.getServiceId());
-            registry.register(serviceUrl);
-            if(logger.isInfoEnabled()) logger.info("register serviceUrl " + serviceUrl);
+            if(config.enableHttp) {
+                serviceHttpUrl = new URLImpl("light", ipAddress, config.getHttpPort(), config.getServiceId());
+                registry.register(serviceHttpUrl);
+                if(logger.isInfoEnabled()) logger.info("register serviceHttpUrl " + serviceHttpUrl);
+            }
+            if(config.enableHttps) {
+                serviceHttpsUrl = new URLImpl("light", ipAddress, config.getHttpsPort(), config.getServiceId());
+                registry.register(serviceHttpsUrl);
+                if(logger.isInfoEnabled()) logger.info("register serviceHttpsUrl " + serviceHttpsUrl);
+            }
         }
 
         HttpHandler handler = null;
@@ -87,7 +109,7 @@ public class Server {
             }
         }
         if (handler == null) {
-            logger.warn("No route handler provider available in the classpath");
+            logger.error("Unable to start the server - no route handler provider available in the classpath");
             return;
         }
 
@@ -102,10 +124,17 @@ public class Server {
             }
         }
 
-        server = Undertow.builder()
-                .addHttpListener(
-                        config.getPort(),
-                        config.getIp())
+        Undertow.Builder builder = Undertow.builder();
+
+        if(config.enableHttp) {
+            builder.addHttpListener(config.getHttpPort(), config.getIp());
+        }
+        if(config.enableHttps) {
+            sslContext = createSSLContext();
+            builder.addHttpsListener(config.getHttpsPort(), config.getIp(), sslContext);
+        }
+
+        server = builder
                 .setBufferSize(1024 * 16)
                 .setIoThreads(Runtime.getRuntime().availableProcessors() * 2) //this seems slightly faster in some configurations
                 .setSocketOption(Options.BACKLOG, 10000)
@@ -117,7 +146,16 @@ public class Server {
                 .setWorkerThreads(200)
                 .build();
         server.start();
-        if(logger.isInfoEnabled()) logger.info("Server started on IP:" + config.getIp() + " Port:" + config.getPort());
+
+        if(logger.isInfoEnabled()) {
+            if(config.enableHttp) {
+                logger.info("Http Server started on ip:" + config.getIp() + " Port:" + config.getHttpPort());
+            }
+            if(config.enableHttps) {
+                logger.info("Https Server started on ip:" + config.getIp() + " Port:" + config.getHttpsPort());
+            }
+        }
+
         if(config.enableRegistry) {
             // start heart beat if registry is enabled
             SwitcherUtil.setSwitcherValue(Constants.REGISTRY_HEARTBEAT_SWITCHER, true);
@@ -133,9 +171,13 @@ public class Server {
     static public void shutdown() {
 
         // need to unregister the service
-        if(config.enableRegistry && registry != null) {
-            registry.unregister(serviceUrl);
-            if(logger.isInfoEnabled()) logger.info("unregister serviceUrl " + serviceUrl);
+        if(config.enableRegistry && registry != null && config.enableHttp) {
+            registry.unregister(serviceHttpUrl);
+            if(logger.isInfoEnabled()) logger.info("unregister serviceHttpUrl " + serviceHttpUrl);
+        }
+        if(config.enableRegistry && registry != null && config.enableHttps) {
+            registry.unregister(serviceHttpsUrl);
+            if(logger.isInfoEnabled()) logger.info("unregister serviceHttpsUrl " + serviceHttpsUrl);
         }
 
         final ServiceLoader<ShutdownHookProvider> shutdownLoaders = ServiceLoader.load(ShutdownHookProvider.class);
@@ -154,4 +196,84 @@ public class Server {
             }
         });
     }
+
+    private static KeyStore loadKeyStore() {
+        String name = config.getKeystoreName();
+        try (InputStream stream = Config.getInstance().getInputStreamFromFile(name)) {
+            KeyStore loadedKeystore = KeyStore.getInstance("JKS");
+            loadedKeystore.load(stream, config.getKeystorePass().toCharArray());
+            return loadedKeystore;
+        } catch (Exception e) {
+            logger.error("Unable to load keystore " + name, e);
+            throw new RuntimeException("Unable to load keystore " + name, e);
+        }
+    }
+
+    protected static KeyStore loadTrustStore() {
+        String name = config.getTruststoreName();
+        try (InputStream stream = Config.getInstance().getInputStreamFromFile(name)) {
+            KeyStore loadedKeystore = KeyStore.getInstance("JKS");
+            loadedKeystore.load(stream, config.getTruststorePass().toCharArray());
+            return loadedKeystore;
+        } catch (Exception e) {
+            logger.error("Unable to load truststore " + name, e);
+            throw new RuntimeException("Unable to load truststore " + name, e);
+        }
+    }
+
+    private static TrustManager[] buildTrustManagers(final KeyStore trustStore) {
+        TrustManager[] trustManagers = null;
+        if (trustStore == null) {
+            try {
+                TrustManagerFactory trustManagerFactory = TrustManagerFactory
+                        .getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                trustManagerFactory.init(trustStore);
+                trustManagers = trustManagerFactory.getTrustManagers();
+            }
+            catch (NoSuchAlgorithmException | KeyStoreException e) {
+                logger.error("Unable to initialise TrustManager[]", e);
+                throw new RuntimeException("Unable to initialise TrustManager[]", e);
+            }
+        }
+        else {
+            trustManagers = TRUST_ALL_CERTS;
+        }
+        return trustManagers;
+    }
+
+    private static KeyManager[] buildKeyManagers(final KeyStore keyStore, char[] keyPass) {
+        KeyManager[] keyManagers;
+        try {
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory
+                    .getDefaultAlgorithm());
+            keyManagerFactory.init(keyStore, keyPass);
+            keyManagers = keyManagerFactory.getKeyManagers();
+        }
+        catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
+            logger.error("Unable to initialise KeyManager[]", e);
+            throw new RuntimeException("Unable to initialise KeyManager[]", e);
+        }
+        return keyManagers;
+    }
+
+    private static SSLContext createSSLContext() throws RuntimeException {
+        try {
+            KeyManager[] keyManagers = buildKeyManagers(loadKeyStore(), config.getKeyPass().toCharArray());
+            TrustManager[] trustManagers;
+            if(config.isEnableTwoWayTls()) {
+                trustManagers = buildTrustManagers(loadTrustStore());
+            } else {
+                trustManagers = buildTrustManagers(null);
+            }
+
+            SSLContext sslContext;
+            sslContext = SSLContext.getInstance("TLSv1");
+            sslContext.init(keyManagers, trustManagers, null);
+            return sslContext;
+        } catch (Exception e) {
+            logger.error("Unable to create SSLContext", e);
+            throw new RuntimeException("Unable to create SSLContext", e);
+        }
+    }
+
 }
