@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+
+## 1.2.1 - 2017-02-03
+### Added
+- Add Cluster module to work with Client module for service discovery and load balance
+- Add Https support in server module. 
+
+### Changed
+- Update consul registry to make it simpler and streamline.
+- Update cluster to work with registrator and docker
+
+
 ## 1.2.1 - 2017-01-25
 ### Added
 
