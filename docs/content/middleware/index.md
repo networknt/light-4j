@@ -55,6 +55,8 @@ into the backend and return to the consumer for transaction tracing.
 Sharing (CORS) handler supports single page applications from another domain to access
  APIs/services.
  
-* [dump]() - A full request/response log handler to dump everything regarding to request 
-and response into log file for developers. 
+* [dump](https://networknt.github.io/light-java/middleware/dump/) - 
+A full request/response log handler to dump everything regarding to request and response 
+into log file for developers. 
+
 
