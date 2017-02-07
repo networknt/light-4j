@@ -1,6 +1,6 @@
 ---
 date: 2016-10-12T19:07:43-04:00
-title: security
+title: Security
 ---
 
 The current framework supports OAuth2 with JWT token but can be extended to 
@@ -14,22 +14,19 @@ please refer to https://github.com/networknt/light-oauth2
 
 # Kid
 
-Since there are two certificates available, the kid in the header of the JWT 
-token will decide which certificate will be used to verify the JWT signature. 
+Since services are deployed in the cloud without static IP, the traditional
+push certificates to each service is not working anymore. In this framework
+each service will pull certificate from OAuth2 server key service by a kid
+from JWT token if the key doesn't exist locally.  
 
 # JwtMockHandler
 
 This is a testing OAuth2 endpoints provider and it can be injected into the handler 
 chain for unit testing so that it won't depend on an instance of 
-undertow-oauth2. 
+light-oauth2. 
 
 # Long lived token
 
 To make integration test easier, a long lived token is provided by the oauth2 
-server and it can be found at https://github.com/networknt/undertow-oauth2
+server and it can be found at https://github.com/networknt/light-oauth2
 
-
-
-
-
- 
