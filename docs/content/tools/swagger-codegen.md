@@ -1,21 +1,42 @@
 ---
 date: 2016-10-08T22:14:59-04:00
-title: Swagger codegen to generate server stub skeleton
+title: Swagger Codegen
 ---
 
 ## Introduction
 
 Many API projects were done without specifications and API specifications were
-produced after APIs were on production. When using Light-Java-Rest Framework, design driven
-is encouraged so swagger specification must be produced before the development is
-started. Please see [Development Flow]() for details.
+produced after APIs were on production. When using Light-Java-Rest Framework, 
+design driven is encouraged so swagger specification must be produced before 
+the development is started. Please see [Development Flow](https://networknt.github.io/light-java/management/flow/) 
+for details.
 
-When product owner starts the API, the first thing is find the swagger specification
-produced by data architect and generate a server skeleton with swagger-codegen.
+When product owner starts an API/service, the first thing is to find the swagger
+specification produced by data architect and generate a server skeleton with 
+swagger-codegen.
  
-## Installation
- 
-### Local 
+## Specification
+
+All our specifications including OAuth2 and examples are in the following repo.
+https://github.com/networknt/swagger
+
+Each API/service will have a folder in this repo and it might have versions in
+each sub folders. 
+
+For each API/service, there are three files must be there:
+
+* swagger.yaml - the readable source file for [swagger-editor](https://networknt.github.io/light-java/tools/swagger-editor/)
+* swagger.json - the aggregated spec in json format processed by [swagger-cli](https://networknt.github.io/light-java/tools/swagger-cli/) 
+* config.json - the configuration file for swagger-codegen
+
+Here is one example of specification folder.
+
+https://github.com/networknt/swagger/tree/master/oauth2_client
+
+## Local Generation
+
+### Install
+
 To install the swagger-codegen locally, go to your working directory and run
 
 ```
@@ -26,9 +47,11 @@ mvn clean install -DskipTests
 
 Now you have swagger-codegen built on your local and it is ready to be used. This
 version of swagger-codegen is a fork of official [swagger-codegen](https://github.com/swagger-api/swagger-codegen)
-as the official version doesn't support Java 8.
+as the official version doesn't support Java 8 yet. 
 
-#### Usage
+
+
+### Usage
 
 Assume that you have just built your swagger-codegen and you are in the swagger-codegen
 folder now you can generate petstore API in your home directory with the following command.
@@ -38,15 +61,22 @@ java -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i
 
 ```
 
-Above command uses a swagger specification from the Internet. If you have swagger file in your local,
-you can use:
+Above command uses a swagger specification from the Internet with default configuration. 
+If you have swagger file in your local, you can use:
 
 ```
--i ~/project/swagger/api_a/swagger.json
+-i ~/networknt/swagger/oauth2_client/swagger.json
+```
+If you want to customized the generated code, you can use:
+
+```
+-c ~/networknt/swagger/oauth2_client/config.json
 ```
 
 
-### Docker
+## Docker Generation
+
+### Install
 If you have docker installed, you can run the docker container of the swagger-codegen
 so that you don't need to install JDK8 and Maven on your local.
 
@@ -56,7 +86,7 @@ docker run -it networknt/swagger-codegen config-help -l light-java
 
 Above command will list all the config options for light-java language generator.
 
-#### Usage
+### Usage
 
 Mount a volume to `/swagger-api/out` for output.
 
