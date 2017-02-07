@@ -3,8 +3,8 @@ date: 2016-10-12T18:48:58-04:00
 title: Audit
 ---
 
-There are two builtin audit handlers that write logs into audit.log that setup in the 
-logback appender. 
+There are two built-in audit handlers that write logs into audit.log that setup 
+in the logback appender. 
 
 # SimpleAuditHandler
 Only logs several fields from request header and the fields are configurable. 

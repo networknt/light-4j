@@ -42,9 +42,9 @@ import org.slf4j.MDC;
  * Created by steve on 05/11/16.
  */
 public class CorrelationHandler implements MiddlewareHandler {
-    static final Logger logger = LoggerFactory.getLogger(CorrelationHandler.class);
-
-    public static final String CONFIG_NAME = "correlation";
+    private static final Logger logger = LoggerFactory.getLogger(CorrelationHandler.class);
+    private static final String CID = "cId";
+    private static final String CONFIG_NAME = "correlation";
 
     public static CorrelationConfig config =
             (CorrelationConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, CorrelationConfig.class);
@@ -62,7 +62,7 @@ public class CorrelationHandler implements MiddlewareHandler {
             cId = Util.getUUID();
             exchange.getRequestHeaders().put(new HttpString(Constants.CORRELATION_ID), cId);
         }
-        MDC.put("cId", cId);
+        MDC.put(CID, cId);
         //logger.debug("Init cId:" + cId);
         next.handleRequest(exchange);
     }
