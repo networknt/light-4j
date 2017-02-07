@@ -54,7 +54,7 @@ public class CorsUtil {
      * @param exchange the current HttpExchange.
      * @param allowedOrigins list of sanitized allowed origins.
      * @return the first matching origin, null otherwise.
-     * @throws Exception
+     * @throws Exception the checked exception
      */
     public static String matchOrigin(HttpServerExchange exchange, Collection<String> allowedOrigins) throws Exception {
         HeaderMap headers = exchange.getRequestHeaders();

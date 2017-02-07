@@ -11,7 +11,7 @@ public class MImpl implements M {
         this.name = name;
         value = v1 + v2;
     }
-
+    @Override
     public int getValue() {
         return value;
     }

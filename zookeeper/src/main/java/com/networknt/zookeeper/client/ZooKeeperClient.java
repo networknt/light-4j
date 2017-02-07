@@ -27,8 +27,10 @@ public interface ZooKeeperClient {
 
     List<String> getChildren(String path);
 
+    @SuppressWarnings("TypeParameterUnusedInFormals")
     <T> T readData(String path);
 
+    @SuppressWarnings("TypeParameterUnusedInFormals")
     <T> T readData(String path, boolean returnNullIfPathNotExists);
 
     void writeData(String path, Object object);

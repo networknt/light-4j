@@ -53,7 +53,7 @@ public class LightCluster implements Cluster {
         return protocol + "://" + url.getHost() + ":" + url.getPort();
     }
 
-    class ClusterNotifyListener implements NotifyListener {
+    static class ClusterNotifyListener implements NotifyListener {
         @Override
         public void notify(URL registryUrl, List<URL> urls) {
             if(logger.isDebugEnabled()) logger.debug("notify is called in ClusterNotifyListener registryUrl = " + registryUrl + " urls = " + urls);

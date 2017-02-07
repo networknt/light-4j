@@ -84,11 +84,13 @@ public class ZooKeeperClientImpl implements ZooKeeperClient {
     }
 
     @Override
+    @SuppressWarnings("TypeParameterUnusedInFormals")
     public <T> T readData(String path) {
         return zkClient.readData(path);
     }
 
     @Override
+    @SuppressWarnings("TypeParameterUnusedInFormals")
     public <T> T readData(String path, boolean returnNullIfPathNotExists) {
         return zkClient.readData(path, returnNullIfPathNotExists);
     }
