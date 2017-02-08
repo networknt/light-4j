@@ -13,5 +13,7 @@ There are so many tools that help us to build microservices and here is a small 
 
 * [Swagger Editor](https://networknt.github.io/light-java/tools/swagger-editor/) is used to create and update swagger specifications.
 
+* [Swagger Codegen](https://networknt.github.io/light-java/tools/swagger-codegen/) is used to generate code from swagger specification.
+
 * [WRK](https://networknt.github.io/light-java/tools/wrk-perf/) is used as client for performance test.
 
