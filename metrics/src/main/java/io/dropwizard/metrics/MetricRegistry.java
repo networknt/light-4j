@@ -85,7 +85,6 @@ public class MetricRegistry implements MetricSet {
      * @param name name
      * @param metric metric
      * @return {@code metric}
-     * @exception IllegalAccessException illegal access exception
      * @see #register(MetricName, Metric)
      */
     @SuppressWarnings("unchecked")

@@ -65,6 +65,8 @@ public class Server {
 
     public static void main(final String[] args) {
         logger.info("server starts");
+        // setup system property to redirect logs to logback.
+        System.setProperty("org.jboss.logging.provider", "slf4j");
         start();
     }
 
