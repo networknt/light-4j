@@ -49,6 +49,15 @@ public class ExceptionHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        // dispatch here to make sure that all exceptions will be capture in this handler
+        // otherwise, some of the exceptions will be captured in Connectors class in Undertow
+        // As we've updated Server.java to redirect the logs to slf4j but still it make sense
+        // to handle the exception on our ExcpetionHandler.
+        if (exchange.isInIoThread()) {
+            exchange.dispatch(this);
+            return;
+        }
+
         try {
             next.handleRequest(exchange);
         } catch (Throwable e) {
