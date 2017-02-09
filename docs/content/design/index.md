@@ -1,0 +1,23 @@
+---
+date: 2017-02-09T10:57:47-05:00
+title: Design
+---
+
+light-java is aiming microservices and design of microservices is more art other
+than technique. When you break a business application to smaller pieces, there
+is a threshold. If it too fine-grained, then the performance will suffer, but
+if it is too coarse-grained, then the benefit of microservices will be diminishing.
+
+The big portion of design work for microservices is to functionally divide an
+application to multiple services and define the communication contract between
+these services with OpenAPI specifications.
+
+
+Here is a list of design decisions for microservices:
+
+* [How to convert existing RESTful web services to microservices](https://networknt.github.io/light-java/design/convtws/) 
+
+* [How to design microservices for brand new project/product](https://networknt.github.io/light-java/design/newprod/)
+
+* [How to replace monolithic Java EE application to microservices](https://networknt.github.io/light-java/design/monojee/)
+
