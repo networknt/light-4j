@@ -9,8 +9,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.2.3 - 2017-02-08
+### Added
 
-## 1.2.1 - 2017-02-03
+### Changed
+- Fixes some google error-prone warnings
+- Add a system property in Server.java to redirect Undertow logs to slf4j
+- Fixes ExceptionHandler to dispatch in the beginning to by pass Connectors in Undertow
+
+## 1.2.2 - 2017-02-03
 ### Added
 - Add Cluster module to work with Client module for service discovery and load balance
 - Add Https support in server module. 
