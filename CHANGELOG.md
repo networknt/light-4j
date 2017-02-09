@@ -14,8 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - Fixes some google error-prone warnings
-- Add a system property in Server.java to redirect Undertow logs to slf4j
-- Fixes ExceptionHandler to dispatch in the beginning to by pass Connectors in Undertow
+- Fixes #25 Add a system property in Server.java to redirect Undertow logs to slf4j
+- Fixes #25 ExceptionHandler to dispatch in the beginning to by pass Connectors in Undertow
 
 ## 1.2.2 - 2017-02-03
 ### Added
