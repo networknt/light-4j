@@ -10,7 +10,7 @@ weight: 0
 ### Fast and small memory footprint to lower production cost.
 
 It is 44 times faster than the most popular microservices platform Spring Boot embedded 
-Tomcat and use only 1/5 of memory. Here is the [benchmark](https://github.com/networknt/light-java-example/tree/master/performance) 
+Tomcat and use only 1/5 of memory. Here is the [benchmark](https://github.com/networknt/microservices-framework-benchmark) 
 results compare with Spring Boot, Nodejs and Golang.
 
 ### Provide middleware components to address cross cutting concerns.
