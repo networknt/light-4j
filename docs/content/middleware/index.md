@@ -59,4 +59,8 @@ Sharing (CORS) handler supports single page applications from another domain to 
 A full request/response log handler to dump everything regarding to request and response 
 into log file for developers. 
 
+* [limit](https://networknt.github.io/light-java/middleware/limit/) - 
+A rate limiting handler to limit number of concurrent requests on the server.
+Once the limit is reached, subsequent requests will be queued for later execution. The
+size of the queue is configurable. 
 
