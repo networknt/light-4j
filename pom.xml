@@ -121,6 +121,7 @@
         <module>zookeeper</module>
         <module>cors</module>
         <module>cluster</module>
+        <module>limit</module>
         <module>server</module>
     </modules>
 
@@ -250,6 +251,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>cluster</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>limit</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
