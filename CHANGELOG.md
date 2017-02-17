@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## [Unreleased]
+### Added
+- Fixes #27 Add rate limiting module
+
+### Changed
+- Upgrade to Undertow 1.4.10
+
 ## 1.2.3 - 2017-02-08
 ### Added
 
