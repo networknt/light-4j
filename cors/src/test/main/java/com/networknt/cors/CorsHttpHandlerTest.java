@@ -113,6 +113,7 @@ public class CorsHttpHandlerTest {
             CloseableHttpResponse response = client.execute(httpOptions);
             int statusCode = response.getStatusLine().getStatusCode();
             String body = IOUtils.toString(response.getEntity().getContent(), "utf8");
+            Header[] headers = response.getAllHeaders();
             Header header = response.getFirstHeader("Access-Control-Allow-Origin");
             Assert.assertEquals(200, statusCode);
             if(statusCode == 200) {
