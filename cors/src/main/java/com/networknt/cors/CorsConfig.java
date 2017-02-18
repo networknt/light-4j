@@ -10,6 +10,7 @@ import java.util.List;
 public class CorsConfig {
     boolean enabled;
     List allowedOrigins;
+    List allowedMethods;
 
     @JsonIgnore
     String description;
@@ -31,6 +32,14 @@ public class CorsConfig {
 
     public void setAllowedOrigins(List allowedOrigins) {
         this.allowedOrigins = allowedOrigins;
+    }
+
+    public List getAllowedMethods() {
+        return allowedMethods;
+    }
+
+    public void setAllowedMethods(List allowedMethods) {
+        this.allowedMethods = allowedMethods;
     }
 
     public String getDescription() {

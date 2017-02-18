@@ -6,7 +6,6 @@
   ],
   "allowedMethods": [
     "GET",
-    "POST",
-    "PUT"
+    "POST"
   ]
 }

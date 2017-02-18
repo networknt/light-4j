@@ -58,6 +58,7 @@ public class CorsHttpHandler implements MiddlewareHandler {
             (CorsConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, CorsConfig.class);
 
     private static final Collection<String> allowedOrigins = config.getAllowedOrigins();
+    private static final Collection<String> allowedMethods = config.getAllowedMethods();
 
     private volatile HttpHandler next;
     /** Default max age **/
@@ -93,12 +94,7 @@ public class CorsHttpHandler implements MiddlewareHandler {
                 exchange.getResponseHeaders().add(Headers.VARY, Headers.ORIGIN_STRING);
             }
         }
-        HeaderValues requestedMethods = headers.get(ACCESS_CONTROL_REQUEST_METHOD);
-        if (requestedMethods != null && !requestedMethods.isEmpty()) {
-            exchange.getResponseHeaders().addAll(ACCESS_CONTROL_ALLOW_METHODS, requestedMethods);
-        } else {
-            exchange.getResponseHeaders().addAll(ACCESS_CONTROL_ALLOW_METHODS, Arrays.asList(new String[]{Methods.GET_STRING, Methods.POST_STRING}));
-        }
+        exchange.getResponseHeaders().addAll(ACCESS_CONTROL_ALLOW_METHODS, allowedMethods);
         HeaderValues requestedHeaders = headers.get(ACCESS_CONTROL_REQUEST_HEADERS);
         if (requestedHeaders != null && !requestedHeaders.isEmpty()) {
             exchange.getResponseHeaders().addAll(ACCESS_CONTROL_ALLOW_HEADERS, requestedHeaders);
