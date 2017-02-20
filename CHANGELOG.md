@@ -9,12 +9,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
-## [Unreleased]
+## 1.2.4 - 2017-02-19
 ### Added
 - Fixes #27 Add rate limiting module
 
 ### Changed
 - Upgrade to Undertow 1.4.10
+- Fixes #26 Update CORS handler to support method level control 
 
 ## 1.2.3 - 2017-02-08
 ### Added
