@@ -15,6 +15,8 @@ these services with OpenAPI specifications.
 
 Here is a list of design decisions for microservices:
 
+* [Microservice Design Patterns](http://blog.arungupta.me/microservice-design-patterns/) 
+
 * [How to convert existing RESTful web services to microservices](https://networknt.github.io/light-java/design/convtws/) 
 
 * [How to design microservices for brand new project/product](https://networknt.github.io/light-java/design/newprod/)
