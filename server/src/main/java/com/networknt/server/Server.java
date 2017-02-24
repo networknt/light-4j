@@ -144,7 +144,7 @@ public class Server {
                 .setServerOption(UndertowOptions.ALWAYS_SET_DATE, true)
                 .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, false)
                 .setHandler(Handlers.header(handler,
-                        Headers.SERVER_STRING, "Light"))
+                        Headers.SERVER_STRING, "L"))
                 .setWorkerThreads(200)
                 .build();
         server.start();
