@@ -42,7 +42,7 @@ import java.util.Map;
  * Created by steve on 01/10/16.
  */
 public class ServerInfoDisabledTest {
-    static final Logger logger = LoggerFactory.getLogger(ServerInfoHandlerTest.class);
+    static final Logger logger = LoggerFactory.getLogger(ServerInfoGetHandlerTest.class);
 
     static Undertow server = null;
     static String homeDir = System.getProperty("user.home");
@@ -98,7 +98,7 @@ public class ServerInfoDisabledTest {
     }
 
     static RoutingHandler getTestHandler() {
-        return Handlers.routing().add(Methods.GET, "/v1/server/info", new ServerInfoHandler());
+        return Handlers.routing().add(Methods.GET, "/v1/server/info", new ServerInfoGetHandler());
     }
 
     @Test

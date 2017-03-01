@@ -36,8 +36,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Created by steve on 01/09/16.
  */
-public class ServerInfoHandlerTest {
-    static final Logger logger = LoggerFactory.getLogger(ServerInfoHandlerTest.class);
+public class ServerInfoGetHandlerTest {
+    static final Logger logger = LoggerFactory.getLogger(ServerInfoGetHandlerTest.class);
 
     static Undertow server = null;
 
@@ -68,7 +68,7 @@ public class ServerInfoHandlerTest {
     }
 
     static RoutingHandler getTestHandler() {
-        return Handlers.routing().add(Methods.GET, "/server/info", new ServerInfoHandler());
+        return Handlers.routing().add(Methods.GET, "/server/info", new ServerInfoGetHandler());
     }
 
     @Test

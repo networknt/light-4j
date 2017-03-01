@@ -41,14 +41,14 @@ import java.util.Properties;
  *
  * Created by steve on 17/09/16.
  */
-public class ServerInfoHandler implements HttpHandler {
+public class ServerInfoGetHandler implements HttpHandler {
     public static final String CONFIG_NAME = "info";
 
     static final String STATUS_SERVER_INFO_DISABLED = "ERR10013";
 
-    static final Logger logger = LoggerFactory.getLogger(ServerInfoHandler.class);
+    static final Logger logger = LoggerFactory.getLogger(ServerInfoGetHandler.class);
 
-    public ServerInfoHandler(){}
+    public ServerInfoGetHandler(){}
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
