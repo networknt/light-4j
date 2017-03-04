@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.2.5 - 2017-03-03
+### Added
+
+### Changed
+- Fixes #11 inject server info into swagger-codegen
+- Change server name to L to optimize performance
+
 ## 1.2.4 - 2017-02-19
 ### Added
 - Fixes #27 Add rate limiting module
