@@ -107,7 +107,6 @@ public class Client {
     static final String EARLY_REFRESH_RETRY_DELAY = "earlyRefreshRetryDelay";
 
     static final String STATUS_CLIENT_CREDENTIALS_TOKEN_NOT_AVAILABLE = "ERR10009";
-    static final String ORIGINAL_TOKEN_NOT_FOUND = "ERR10035";
 
     static Map<String, Object> config;
     static Map<String, Object> oauthConfig;
@@ -179,7 +178,7 @@ public class Client {
      * @param token the bearer token
      */
     public void addAuthToken(HttpRequest request, String token) {
-        if(!token.startsWith("Bearer ")) {
+        if(token != null && !token.startsWith("Bearer ")) {
             if(token.toUpperCase().startsWith("BEARER ")) {
                 // other cases of Bearer
                 token = "Bearer " + token.substring(7);
@@ -200,7 +199,7 @@ public class Client {
      * @param traceabilityId the traceability id
      */
     public void addAuthTokenTrace(HttpRequest request, String token, String traceabilityId) {
-        if(!token.startsWith("Bearer ")) {
+        if(token != null && !token.startsWith("Bearer ")) {
             if(token.toUpperCase().startsWith("BEARER ")) {
                 // other cases of Bearer
                 token = "Bearer " + token.substring(7);
@@ -258,9 +257,6 @@ public class Client {
     public void propagateHeaders(HttpRequest request, final HttpServerExchange exchange) throws ClientException, ApiException {
         String tid = exchange.getRequestHeaders().getFirst(Constants.TRACEABILITY_ID);
         String token = exchange.getRequestHeaders().getFirst(Constants.AUTHORIZATION);
-        if(token == null) {
-            throw new ApiException(new Status(ORIGINAL_TOKEN_NOT_FOUND));
-        }
         String cid = exchange.getRequestHeaders().getFirst(Constants.CORRELATION_ID);
         populateHeader(request, token, cid, tid);
     }
