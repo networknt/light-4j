@@ -209,6 +209,12 @@
     "message": "UNREGISTER_ZOOKEEPER_ERROR",
     "description": "Failed to unregister %s to zookeeper(%s), cause: %s"
   },
+  "ERR10035": {
+    "statusCode": 400,
+    "code": "ERR10035",
+    "message": "ORIGINAL_TOKEN_NOT_FOUND",
+    "description": "Original token cannot be found to call another API"
+  },
 
   "ERR11000": {
     "statusCode": 400,
