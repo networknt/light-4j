@@ -47,6 +47,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  *
  */
 public abstract class Config {
+    public static final String LIGHT_JAVA_CONFIG_DIR = "light-java-config-dir";
+
     protected Config() {
     }
 
@@ -76,7 +78,7 @@ public abstract class Config {
 
         static final XLogger logger = XLoggerFactory.getXLogger(Config.class);
 
-        static final String EXTERNALIZED_PROPERTY_DIR = System.getProperty("light-java-config-dir", "");
+        public final String EXTERNALIZED_PROPERTY_DIR = System.getProperty(LIGHT_JAVA_CONFIG_DIR, "");
 
         private long cacheExpirationTime = 0L;
 
