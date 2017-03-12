@@ -52,15 +52,33 @@ public class ConfigDefaultTest extends TestCase {
         Assert.assertEquals("default config", configMap.get("value"));
     }
 
-    public void testGetJsonNodeConfig() throws Exception {
-        config.clear();
-        JsonNode node = config.getJsonNodeConfig("test");
-        Assert.assertEquals("default config", node.get("value").textValue());
-    }
-
     public void testGetJsonObjectConfig() throws Exception {
         config.clear();
         TestConfig tc = (TestConfig)config.getJsonObjectConfig("test", TestConfig.class);
+        Assert.assertEquals("default config", tc.getValue());
+    }
+
+    public void test1GetJsonMapConfig() throws Exception {
+        config.clear();
+        Map<String, Object> configMap = config.getJsonMapConfig("test1");
+        Assert.assertEquals("default config", configMap.get("value"));
+    }
+
+    public void test1GetJsonObjectConfig() throws Exception {
+        config.clear();
+        TestConfig tc = (TestConfig)config.getJsonObjectConfig("test1", TestConfig.class);
+        Assert.assertEquals("default config", tc.getValue());
+    }
+
+    public void test2GetJsonMapConfig() throws Exception {
+        config.clear();
+        Map<String, Object> configMap = config.getJsonMapConfig("test2");
+        Assert.assertEquals("default config", configMap.get("value"));
+    }
+
+    public void test2GetJsonObjectConfig() throws Exception {
+        config.clear();
+        TestConfig tc = (TestConfig)config.getJsonObjectConfig("test2", TestConfig.class);
         Assert.assertEquals("default config", tc.getValue());
     }
 

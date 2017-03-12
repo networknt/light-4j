@@ -30,6 +30,7 @@ import org.slf4j.ext.XLoggerFactory;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.yaml.snakeyaml.Yaml;
 
 /**
  * A injectable singleton config that has default implementation
@@ -57,7 +58,7 @@ public abstract class Config {
 
     public abstract Map<String, Object> getJsonMapConfigNoCache(String configName);
 
-    public abstract JsonNode getJsonNodeConfig(String configName);
+    //public abstract JsonNode getJsonNodeConfig(String configName);
 
     public abstract Object getJsonObjectConfig(String configName, Class clazz);
 
@@ -75,6 +76,8 @@ public abstract class Config {
 
     private static final class FileConfigImpl extends Config {
         static final String CONFIG_EXT_JSON = ".json";
+        static final String CONFIG_EXT_YAML = ".yaml";
+        static final String CONFIG_EXT_YML = ".yml";
 
         static final XLogger logger = XLoggerFactory.getXLogger(Config.class);
 
@@ -89,6 +92,7 @@ public abstract class Config {
 
         // An instance of Jackson ObjectMapper that can be used anywhere else for Json.
         final ObjectMapper mapper = new ObjectMapper();
+        final Yaml yaml = new Yaml();
 
         private static Config initialize() {
             Iterator<Config> it;
@@ -136,23 +140,7 @@ public abstract class Config {
                 synchronized (FileConfigImpl.class) {
                     config = configCache.get(configName);
                     if(config == null) {
-                        config = loadJsonObjectConfig(configName, clazz);
-                        if(config != null) configCache.put(configName, config);
-                    }
-                }
-            }
-            return config;
-        }
-
-        @Override
-        public JsonNode getJsonNodeConfig(String configName) {
-            checkCacheExpiration();
-            JsonNode config = (JsonNode)configCache.get(configName);
-            if(config == null) {
-                synchronized (FileConfigImpl.class) {
-                    config = (JsonNode)configCache.get(configName);
-                    if(config == null) {
-                        config = loadJsonNodeConfig(configName);
+                        config = loadObjectConfig(configName, clazz);
                         if(config != null) configCache.put(configName, config);
                     }
                 }
@@ -168,7 +156,7 @@ public abstract class Config {
                 synchronized (FileConfigImpl.class) {
                     config = (Map<String, Object>)configCache.get(configName);
                     if(config == null) {
-                        config = loadJsonMapConfig(configName);
+                        config = loadMapConfig(configName);
                         if(config != null) configCache.put(configName, config);
                     }
                 }
@@ -178,7 +166,7 @@ public abstract class Config {
 
         @Override
         public Map<String, Object> getJsonMapConfigNoCache(String configName) {
-            return loadJsonMapConfig(configName);
+            return loadMapConfig(configName);
         }
 
         private String loadStringFromFile(String filename) {
@@ -203,72 +191,70 @@ public abstract class Config {
             return content;
         }
 
-        private Object loadJsonObjectConfig(String configName, Class clazz) {
+        private Object loadObjectConfig(String configName, Class clazz) {
             Object config = null;
-            String configFilename = configName + CONFIG_EXT_JSON;
-            InputStream inStream = null;
-            try {
-                inStream = getConfigStream(configFilename);
+
+            String ymlFilename = configName + CONFIG_EXT_YML;
+            try (InputStream inStream = getConfigStream(ymlFilename)) {
+                if(inStream != null) {
+                    config = yaml.loadAs(inStream, clazz);
+                }
+            } catch (IOException ioe) {
+                logger.error("IOException", ioe);
+            }
+            if(config != null) return config;
+
+            String yamlFilename = configName + CONFIG_EXT_YAML;
+            try (InputStream inStream = getConfigStream(yamlFilename)) {
+                if(inStream != null) {
+                    config = yaml.loadAs(inStream, clazz);
+                }
+            } catch (IOException ioe) {
+                logger.error("IOException", ioe);
+            }
+            if(config != null) return config;
+
+            String jsonFilename = configName + CONFIG_EXT_JSON;
+            try (InputStream inStream = getConfigStream(jsonFilename)) {
                 if(inStream != null) {
                     config = mapper.readValue(inStream, clazz);
                 }
             } catch (IOException ioe) {
-                logger.catching(ioe);
-            } finally {
-                if(inStream != null) {
-                    try {
-                        inStream.close();
-                    } catch(IOException ioe) {
-                        logger.catching(ioe);
-                    }
-                }
+                logger.error("IOException", ioe);
             }
             return config;
         }
 
+        private Map<String, Object> loadMapConfig(String configName) {
+            Map<String, Object> config = null;
 
-        private JsonNode loadJsonNodeConfig(String configName) {
-            JsonNode config = null;
-            String configFilename = configName + CONFIG_EXT_JSON;
-            InputStream inStream = null;
-            try {
-                inStream = getConfigStream(configFilename);
+            String ymlFilename = configName + CONFIG_EXT_YML;
+            try (InputStream inStream = getConfigStream(ymlFilename)) {
                 if(inStream != null) {
-                    config = mapper.readValue(inStream, JsonNode.class);
+                    config = (Map<String, Object>)yaml.load(inStream);
                 }
             } catch (IOException ioe) {
-                logger.catching(ioe);
-            } finally {
-                if(inStream != null) {
-                    try {
-                        inStream.close();
-                    } catch(IOException ioe) {
-                        logger.catching(ioe);
-                    }
-                }
+                logger.error("IOException", ioe);
             }
-            return config;
-        }
+            if(config != null) return config;
 
-        private Map<String, Object> loadJsonMapConfig(String configName) {
-            Map<String, Object> config = null;
+            String yamlFilename = configName + CONFIG_EXT_YAML;
+            try (InputStream inStream = getConfigStream(yamlFilename)) {
+                if(inStream != null) {
+                    config = (Map<String, Object>)yaml.load(inStream);
+                }
+            } catch (IOException ioe) {
+                logger.error("IOException", ioe);
+            }
+            if(config != null) return config;
+
             String configFilename = configName + CONFIG_EXT_JSON;
-            InputStream inStream = null;
-            try {
-                inStream = getConfigStream(configFilename);
+            try (InputStream inStream = getConfigStream(configFilename)){
                 if(inStream != null) {
                     config = mapper.readValue(inStream, new TypeReference<HashMap<String, Object>>() {});
                 }
             } catch (IOException ioe) {
-                logger.catching(ioe);
-            } finally {
-                if(inStream != null) {
-                    try {
-                        inStream.close();
-                    } catch(IOException ioe) {
-                        logger.catching(ioe);
-                    }
-                }
+                logger.error("IOException", ioe);
             }
             return config;
         }

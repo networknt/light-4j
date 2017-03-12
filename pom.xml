@@ -92,6 +92,7 @@
         <version.zookeeper>3.5.1-alpha</version.zookeeper>
         <version.zkclient>0.3</version.zkclient>
         <version.curator>3.2.1</version.curator>
+        <version.snakeyaml>1.18</version.snakeyaml>
         <argLine>-Xmx512m -XX:MaxPermSize=256m</argLine>
     </properties>
 
@@ -396,6 +397,11 @@
                         <artifactId>log4j</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+                <version>${version.snakeyaml}</version>
             </dependency>
 
             <!-- Test dependencies -->
