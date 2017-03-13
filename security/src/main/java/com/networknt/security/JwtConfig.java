@@ -16,8 +16,6 @@
 
 package com.networknt.security;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 /**
  * Created by steve on 01/09/16.
  */
@@ -27,8 +25,6 @@ public class JwtConfig {
     String version;
     int expiredInMinutes;
     Key key;
-    @JsonIgnore
-    String description;
 
     public JwtConfig() {
     }
@@ -63,14 +59,6 @@ public class JwtConfig {
 
     public void setExpiredInMinutes(int expiredInMinutes) {
         this.expiredInMinutes = expiredInMinutes;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     public Key getKey() {

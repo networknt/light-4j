@@ -1,12 +1,23 @@
+# Security configuration in light framework.
 ---
-description: security configuration
+# Enable JWT verification flag.
 enableVerifyJwt: true
+
+# Enable JWT scope verification. Only valid when enableVerifyJwt is true.
 enableVerifyScope: true
+
+# User for test only. should be always be false on official environment.
 enableMockJwt: false
+
+# JWT signature public certificates. kid and certificate path mappings.
 jwt:
   certificate:
     '100': oauth/primary.crt
     '101': oauth/secondary.crt
   clockSkewInSeconds: 60
+
+# Enable or disable JWT token logging
 logJwtToken: true
+
+# Enable or disable client_id, user_id and scope logging.
 logClientUserScope: false
