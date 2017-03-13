@@ -1,0 +1,10 @@
+---
+description: Metrics handler configuration
+enabled: false
+influxdbProtocol: http
+influxdbHost: localhost
+influxdbPort: 8086
+influxdbName: metrics
+influxdbUser: admin
+influxdbPass: admin
+reportInMinutes: 1

@@ -1,6 +1,0 @@
-{
-  "description": "Rate Limit Handler",
-  "enabled": true,
-  "concurrentRequest": 1,
-  "queueSize": 1
-}

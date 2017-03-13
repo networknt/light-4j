@@ -30,29 +30,46 @@ import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.server.HttpHandler;
 import io.undertow.util.Headers;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.Options;
 
 import javax.net.ssl.*;
+import java.io.BufferedInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
+import java.util.Enumeration;
+import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 
 public class Server {
 
     static final Logger logger = LoggerFactory.getLogger(Server.class);
-    static final String CONFIG_NAME = "server";
-    public static ServerConfig config = (ServerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServerConfig.class);
+    public static final String CONFIG_NAME = "server";
+    public static final String CONFIG_SECRET = "secret";
 
+    static final String DEFAULT_ENV = "dev";
+    static final String LIGHT_ENV = "light-env";
+    static final String LIGHT_CONFIG_SERVER_URI = "light-config-server-uri";
+
+    public static ServerConfig config = (ServerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServerConfig.class);
+    public static Map<String, Object> secret = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
     public final static TrustManager[] TRUST_ALL_CERTS = new X509TrustManager[] { new DummyTrustManager() };
 
     static protected boolean shutdownRequested = false;
@@ -65,8 +82,10 @@ public class Server {
 
     public static void main(final String[] args) {
         logger.info("server starts");
-        // setup system property to redirect logs to slf4j/logback.
+        // setup system property to redirect undertow logs to slf4j/logback.
         System.setProperty("org.jboss.logging.provider", "slf4j");
+        // load config files from light-config-server if possible.
+        loadConfig();
         start();
     }
 
@@ -203,7 +222,7 @@ public class Server {
         String name = config.getKeystoreName();
         try (InputStream stream = Config.getInstance().getInputStreamFromFile(name)) {
             KeyStore loadedKeystore = KeyStore.getInstance("JKS");
-            loadedKeystore.load(stream, config.getKeystorePass().toCharArray());
+            loadedKeystore.load(stream, ((String)secret.get("keystorePass")).toCharArray());
             return loadedKeystore;
         } catch (Exception e) {
             logger.error("Unable to load keystore " + name, e);
@@ -215,7 +234,7 @@ public class Server {
         String name = config.getTruststoreName();
         try (InputStream stream = Config.getInstance().getInputStreamFromFile(name)) {
             KeyStore loadedKeystore = KeyStore.getInstance("JKS");
-            loadedKeystore.load(stream, config.getTruststorePass().toCharArray());
+            loadedKeystore.load(stream, ((String)secret.get("truststorePass")).toCharArray());
             return loadedKeystore;
         } catch (Exception e) {
             logger.error("Unable to load truststore " + name, e);
@@ -260,7 +279,7 @@ public class Server {
 
     private static SSLContext createSSLContext() throws RuntimeException {
         try {
-            KeyManager[] keyManagers = buildKeyManagers(loadKeyStore(), config.getKeyPass().toCharArray());
+            KeyManager[] keyManagers = buildKeyManagers(loadKeyStore(), ((String)secret.get("keyPass")).toCharArray());
             TrustManager[] trustManagers;
             if(config.isEnableTwoWayTls()) {
                 trustManagers = buildTrustManagers(loadTrustStore());
@@ -278,4 +297,92 @@ public class Server {
         }
     }
 
+    private static void loadConfig() {
+        // if it is necessary to load config files from config server
+        // Here we expect at least env(dev/sit/uat/prod) and optional config server url
+        String env = System.getProperty(LIGHT_ENV);
+        if(env == null) {
+            logger.warn("Warning! No light-env has been passed in from command line. Default to dev");
+            env = DEFAULT_ENV;
+        }
+        String configUri = System.getProperty(LIGHT_CONFIG_SERVER_URI);
+        if(configUri != null) {
+            // try to get config files from the server.
+            String targetMergeDirectory = System.getProperty(Config.LIGHT_JAVA_CONFIG_DIR);
+            if(targetMergeDirectory == null) {
+                logger.warn("Warning! No light-java-config-dir has been passed in from command line.");
+                return;
+            }
+            String version = Util.getJarVersion();
+            String service = config.getServiceId();
+            configUri = configUri + "/v1/config/" + version + "/" + env + "/" + service;
+            String tempDir = System.getProperty("java.io.tmpdir");
+            String zipFile = tempDir + "/config.zip";
+            // /v1/config/1.2.4/dev/com.networknt.petstore-1.0.0
+            HttpClient httpClient = HttpClientBuilder.create().build();
+            HttpGet httpGet = new HttpGet(configUri);
+            try {
+                HttpResponse response = httpClient.execute(httpGet);
+                HttpEntity entity = response.getEntity();
+                if (entity != null) {
+                    FileOutputStream fos = new FileOutputStream(zipFile);
+                    entity.writeTo(fos);
+                    fos.close();
+                }
+                // unzip config.zip and merge files to externalized config folder.
+                unzipFile(zipFile, targetMergeDirectory);
+            } catch (IOException e) {
+                logger.error("IOException", e);
+            }
+        } else {
+            logger.info("light-config-server-uri is missing in the command line. Use local config files");
+        }
+    }
+
+    private static void mergeConfigFiles(String source, String target) {
+
+    }
+    private static void unzipFile(String path, String target) {
+        //Open the file
+        try(ZipFile file = new ZipFile(path))
+        {
+            FileSystem fileSystem = FileSystems.getDefault();
+            //Get file entries
+            Enumeration<? extends ZipEntry> entries = file.entries();
+
+            //We will unzip files in this folder
+            Files.createDirectory(fileSystem.getPath(target));
+
+            //Iterate over entries
+            while (entries.hasMoreElements())
+            {
+                ZipEntry entry = entries.nextElement();
+                //If directory then create a new directory in uncompressed folder
+                if (entry.isDirectory())
+                {
+                    System.out.println("Creating Directory:" + target + entry.getName());
+                    Files.createDirectories(fileSystem.getPath(target + entry.getName()));
+                }
+                //Else create the file
+                else
+                {
+                    InputStream is = file.getInputStream(entry);
+                    BufferedInputStream bis = new BufferedInputStream(is);
+                    String uncompressedFileName = target + entry.getName();
+                    Path uncompressedFilePath = fileSystem.getPath(uncompressedFileName);
+                    Files.createFile(uncompressedFilePath);
+                    FileOutputStream fileOutput = new FileOutputStream(uncompressedFileName);
+                    while (bis.available() > 0)
+                    {
+                        fileOutput.write(bis.read());
+                    }
+                    fileOutput.close();
+                    System.out.println("Written :" + entry.getName());
+                }
+            }
+        }
+        catch(IOException e) {
+            logger.error("IOException", e);
+        }
+    }
 }

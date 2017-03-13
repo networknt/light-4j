@@ -1,6 +1,0 @@
-{
-  "description": "Sanitize request for cross site scripting during runtime",
-  "enabled": true,
-  "sanitizeBody": true,
-  "sanitizeHeader": true
-}

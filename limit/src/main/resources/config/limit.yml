@@ -1,0 +1,5 @@
+---
+description: Rate Limit Handler
+enabled: false
+concurrentRequest: 1000
+queueSize: -1

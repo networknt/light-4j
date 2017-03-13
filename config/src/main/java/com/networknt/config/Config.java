@@ -68,6 +68,8 @@ public abstract class Config {
 
     public abstract ObjectMapper getMapper();
 
+    public abstract Yaml getYaml();
+
     public abstract void clear();
 
     public static Config getInstance() {
@@ -104,6 +106,11 @@ public abstract class Config {
         @Override
         public ObjectMapper getMapper() {
             return mapper;
+        }
+
+        @Override
+        public Yaml getYaml() {
+            return yaml;
         }
 
         @Override

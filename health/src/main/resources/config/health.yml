@@ -1,0 +1,3 @@
+---
+description: Server health endpoint that can output OK to indicate the server is alive
+enabled: true

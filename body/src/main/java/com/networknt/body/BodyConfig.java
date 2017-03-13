@@ -24,9 +24,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class BodyConfig {
     boolean enabled;
 
-    @JsonIgnore
-    String description;
-
     public BodyConfig() {
     }
 
@@ -37,13 +34,4 @@ public class BodyConfig {
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
 }

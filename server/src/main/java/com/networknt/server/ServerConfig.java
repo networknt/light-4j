@@ -16,8 +16,6 @@
 
 package com.networknt.server;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 public class ServerConfig {
     String ip;
     int httpPort;
@@ -25,16 +23,10 @@ public class ServerConfig {
     int httpsPort;
     boolean enableHttps;
     String keystoreName;
-    String keystorePass;
-    String keyPass;
     boolean enableTwoWayTls;
     String truststoreName;
-    String truststorePass;
     boolean enableRegistry;
     String serviceId;
-
-    @JsonIgnore
-    String description;
 
     public ServerConfig() {
     }
@@ -95,36 +87,12 @@ public class ServerConfig {
         this.truststoreName = truststoreName;
     }
 
-    public String getKeystorePass() {
-        return keystorePass;
-    }
-
-    public void setKeystorePass(String keystorePass) {
-        this.keystorePass = keystorePass;
-    }
-
-    public String getKeyPass() {
-        return keyPass;
-    }
-
-    public void setKeyPass(String keyPass) {
-        this.keyPass = keyPass;
-    }
-
     public boolean isEnableTwoWayTls() {
         return enableTwoWayTls;
     }
 
     public void setEnableTwoWayTls(boolean enableTwoWayTls) {
         this.enableTwoWayTls = enableTwoWayTls;
-    }
-
-    public String getTruststorePass() {
-        return truststorePass;
-    }
-
-    public void setTruststorePass(String truststorePass) {
-        this.truststorePass = truststorePass;
     }
 
     public boolean isEnableRegistry() {
@@ -141,13 +109,5 @@ public class ServerConfig {
 
     public void setServiceId(String serviceId) {
         this.serviceId = serviceId;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 }

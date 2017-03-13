@@ -1,0 +1,3 @@
+---
+description: Server info endpoint that can output environment and component along with configuration
+enableServerInfo: true

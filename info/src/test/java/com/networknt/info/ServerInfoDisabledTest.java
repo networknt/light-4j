@@ -23,6 +23,7 @@ import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Methods;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -32,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -54,7 +56,7 @@ public class ServerInfoDisabledTest {
         Map<String, Object> map = new HashMap<>();
         map.put("description", "server info config");
         map.put("enableServerInfo", false);
-        Config.getInstance().getMapper().writeValue(new File(homeDir + "/info.json"), map);
+        Config.getInstance().getYaml().dump(map, new PrintWriter(new File(homeDir + "/info.yml")));
         // Add home directory to the classpath of the system class loader.
         addURL(new File(homeDir).toURI().toURL());
 
@@ -81,7 +83,7 @@ public class ServerInfoDisabledTest {
             logger.info("The server is stopped.");
         }
         // Remove the test.json from home directory
-        File configFile = new File(homeDir + "/info.json");
+        File configFile = new File(homeDir + "/info.yml");
         configFile.delete();
         // this is very important as it impacts subsequent test case if it is not cleared.
         Config.getInstance().clear();
@@ -109,9 +111,10 @@ public class ServerInfoDisabledTest {
         try {
             CloseableHttpResponse response = client.execute(httpGet);
             int statusCode = response.getStatusLine().getStatusCode();
+            String body = IOUtils.toString(response.getEntity().getContent(), "utf8");
             Assert.assertEquals(404, statusCode);
             if(statusCode == 404) {
-                Status status = Config.getInstance().getMapper().readValue(response.getEntity().getContent(), Status.class);
+                Status status = Config.getInstance().getMapper().readValue(body, Status.class);
                 Assert.assertNotNull(status);
                 Assert.assertEquals("ERR10013", status.getCode());
             }
