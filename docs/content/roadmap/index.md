@@ -3,15 +3,17 @@ date: 2016-10-15T19:19:57-04:00
 title: Road Map
 ---
 
-The REST API framework is used by one of the big banks in Canada and is in a 
-process to be production ready. 
-
 The short term goal is to make sure the API framework production ready.
 
-The mid term goal is to support GRPC and GraphQL in the framework and 
-make undertow-oauth2 server production ready.
+# 1.3.0 Config server integration and yaml config format
 
-The long term goal is to build an API portal so that all APIs can be 
-managed by the portal/marketplace. We are also exploring the opportunities
-to host public APIs within our ecosystem.
+# 1.4.0 Switch to HTTP/2 for client and server
+
+# 1.5.0 Support Hybrid RPC implementation
+
+# 1.6.0 Make change in light-java to support light-java-graphql implementation
+
+# 1.7.0 Make change in light-java to support light-portal implementation
+
+# 1.8.0 Support API or Service Hosting
 
