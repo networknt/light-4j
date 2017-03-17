@@ -28,12 +28,12 @@ ERR10005:
   statusCode: 403
   code: ERR10005
   message: AUTH_TOKEN_SCOPE_MISMATCH
-  description: Scopes in authorization token and spec scopes are not matched
+  description: Scopes %s in authorization token and specification scopes %s are not matched
 ERR10006:
   statusCode: 403
   code: ERR10006
   message: SCOPE_TOKEN_SCOPE_MISMATCH
-  description: Scopes in scope token and spec scopes are not matched
+  description: Scopes %s in scope token and specification scopes %s are not matched
 ERR10007:
   statusCode: 404
   code: ERR10007

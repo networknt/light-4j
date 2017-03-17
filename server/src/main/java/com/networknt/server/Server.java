@@ -38,6 +38,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.xnio.Options;
 
 import javax.net.ssl.*;
@@ -158,12 +159,12 @@ public class Server {
         server = builder
                 .setBufferSize(1024 * 16)
                 .setIoThreads(Runtime.getRuntime().availableProcessors() * 2) //this seems slightly faster in some configurations
+                .setServerOption(UndertowOptions.ENABLE_HTTP2, true)
                 .setSocketOption(Options.BACKLOG, 10000)
                 .setServerOption(UndertowOptions.ALWAYS_SET_KEEP_ALIVE, false) //don't send a keep-alive header for HTTP/1.1 requests, as it is not required
                 .setServerOption(UndertowOptions.ALWAYS_SET_DATE, true)
                 .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, false)
-                .setHandler(Handlers.header(handler,
-                        Headers.SERVER_STRING, "L"))
+                .setHandler(Handlers.header(handler, Headers.SERVER_STRING, "L"))
                 .setWorkerThreads(200)
                 .build();
         server.start();
