@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.2.6 - 2017-03-17
+### Added
+- Fixes #33 to create a separate secret.yml for Kubernetes integration
+
+### Changed
+- Fixes #30 check if token is null and ignore it for API to API call
+- Define static LIGHT_JAVA_CONFIG_DIR to avoid hard-coded property name
+- Fixes #32 support yaml and yml config format
+- 
 ## 1.2.5 - 2017-03-03
 ### Added
 
