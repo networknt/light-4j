@@ -22,6 +22,7 @@ public class ServerConfig {
     boolean enableHttp;
     int httpsPort;
     boolean enableHttps;
+    boolean enableHttp2;
     String keystoreName;
     boolean enableTwoWayTls;
     String truststoreName;
@@ -109,5 +110,13 @@ public class ServerConfig {
 
     public void setServiceId(String serviceId) {
         this.serviceId = serviceId;
+    }
+
+    public boolean isEnableHttp2() {
+        return enableHttp2;
+    }
+
+    public void setEnableHttp2(boolean enableHttp2) {
+        this.enableHttp2 = enableHttp2;
     }
 }

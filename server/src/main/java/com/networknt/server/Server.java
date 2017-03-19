@@ -148,18 +148,23 @@ public class Server {
 
         Undertow.Builder builder = Undertow.builder();
 
-        if(config.enableHttp) {
-            builder.addHttpListener(config.getHttpPort(), config.getIp());
-        }
-        if(config.enableHttps) {
+        if(config.enableHttp2) {
             sslContext = createSSLContext();
             builder.addHttpsListener(config.getHttpsPort(), config.getIp(), sslContext);
+            builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true);
+        } else {
+            if(config.enableHttp) {
+                builder.addHttpListener(config.getHttpPort(), config.getIp());
+            }
+            if(config.enableHttps) {
+                sslContext = createSSLContext();
+                builder.addHttpsListener(config.getHttpsPort(), config.getIp(), sslContext);
+            }
         }
 
         server = builder
                 .setBufferSize(1024 * 16)
                 .setIoThreads(Runtime.getRuntime().availableProcessors() * 2) //this seems slightly faster in some configurations
-                .setServerOption(UndertowOptions.ENABLE_HTTP2, true)
                 .setSocketOption(Options.BACKLOG, 10000)
                 .setServerOption(UndertowOptions.ALWAYS_SET_KEEP_ALIVE, false) //don't send a keep-alive header for HTTP/1.1 requests, as it is not required
                 .setServerOption(UndertowOptions.ALWAYS_SET_DATE, true)

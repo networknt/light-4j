@@ -15,6 +15,10 @@ httpsPort: 8443
 # Enable HTTPS should be true on official environment.
 enableHttps: true
 
+# Http/2 is enabled. When Http2 is enable, enableHttps is true and enableHttp is false by default.
+# If you want to have http enabled, enableHttp2 must be false.
+enableHttp2: false
+
 # Keystore file name in config folder. KeystorePass is in secret.yml to access it.
 keystoreName: tls/server.keystore
 
