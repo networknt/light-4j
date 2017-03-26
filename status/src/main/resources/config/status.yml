@@ -279,6 +279,11 @@ ERR11501:
   code: ERR11501
   message: GRAHPQL_INVALID_METHOD
   description: Invalid GraphQL method '%s', only GET and POST are allowed.
+ERR11502:
+  statusCode: 400
+  code: ERR11502
+  message: GRAHPQL_MISSING_QUERY
+  description: Missing GraphQL query.
 
 
 ERR12000:
