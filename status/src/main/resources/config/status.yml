@@ -267,6 +267,20 @@ ERR11017:
   code: ERR11017
   message: VALIDATOR_REQUEST_PARAMETER_HEADER_MISSING
   description: Header parameter '%s' is required on path '%s' but not found in request.
+
+# GraphQL valdator errors 11500 - 11600
+ERR11500:
+  statusCode: 400
+  code: ERR11500
+  message: GRAHPQL_INVALID_PATH
+  description: Invalid GraphQL path '%s', must be %s.
+ERR11501:
+  statusCode: 405
+  code: ERR11501
+  message: GRAHPQL_INVALID_METHOD
+  description: Invalid GraphQL method '%s', only GET and POST are allowed.
+
+
 ERR12000:
   statusCode: 400
   code: ERR12000

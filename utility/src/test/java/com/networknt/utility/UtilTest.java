@@ -19,6 +19,9 @@ package com.networknt.utility;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class UtilTest {
     @Test
     public void testGetUUID() {
@@ -33,5 +36,18 @@ public class UtilTest {
     public void testGetJarVersion() {
         String ver = Util.getJarVersion();
         System.out.println("ver =" + ver);
+    }
+
+    @Test
+    public void testSubVariables() {
+        Map<String, String> variables = new HashMap<>();
+        variables.put("v1", "abc");
+        variables.put("v2", "def");
+
+        String text = "This is a test for ${v1} and ${v2}";
+        String expect = "This is a test for abc and def";
+
+        Assert.assertEquals(expect, Util.substituteVariables(text, variables));
+
     }
 }
