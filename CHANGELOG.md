@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.2.7 - 2017-03-28
+### Added
+- Fixes #38 add status codes and utilities for light-java-graphql
+
+### Changed
+- Fixes #34 enable HTTP/2 on server and make HTTP/2 configurable in server.yml
+- Fixes #36 upgrade to undertow 1.4.11
+
 ## 1.2.6 - 2017-03-17
 ### Added
 - Fixes #33 to create a separate secret.yml for Kubernetes integration
