@@ -51,6 +51,14 @@ public class JwtHelperTest {
     }
 
     @Test
+    public void longLivedAPIAJwt() throws Exception {
+        JwtClaims claims = getTestClaims("Steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("api_a.w", "api_b.w", "api_c.w", "api_d.w", "server.info.r"));
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtHelper.getJwt(claims);
+        System.out.println("***LongLived APIA JWT***: " + jwt);
+    }
+
+    @Test
     public void longLivedATMP1000Jwt() throws Exception {
         JwtClaims claims = getTestClaims("eric", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("ATMP1000.w", "ATMP1000.r"));
         claims.setExpirationTimeMinutesInTheFuture(5256000);
