@@ -1575,6 +1575,28 @@ And here is the result.
 
 At this moment, all four APIs are protected by JWT token and API B, C, D are projected by scope additionally. 
 
+We have went though the process to register clients and update client.yml with clientId
+and clientSecret for each services except API D. It is a good learning experience but the
+process is very slow and error prone. You can follow this on your own to learn interactions
+with OAuth2 services but for people who don't want to do it manually, I will put the these
+client registraion info into our database script so that it should work once the OAuth2
+services are up and running. 
+
+Above we've recorded all the output for each service registrations and I am going to add
+insert statements into light-docker/light-oauth2/mysql/create_mysql.sql
+
+Our OAuth2 servers support Oracle and Postgres as well and we are going to change these
+scripts in their corresponding folders.
+
+The other benefit to get these clients into the startup scirpt is to avoid redo it every
+time the server is restarted. 
+
+Here is the insert statements.
+
+```
+
+```
+
 
 ## Enable Metrics
 
