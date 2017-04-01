@@ -9,17 +9,18 @@ title: Hugo for project documentation on github
 
 For most open source developers, they would ues github.com to manage their projects and 
 then have a README.md for documentation. For some bigger projects they might have wiki 
-for additional documents and linked them to README.md.
+for additional documents and linked them from README.md.
 
-Here I will introduce another way to manage documents in gh-pages with [Hugo](https://gohugo.io/) static site
-generator.
+Here I will introduce another way to manage documents in gh-pages with [Hugo](https://gohugo.io/) 
+static site generator.
 
 ## Installation
 
 ### Hugo
+
 For Linux, download the binary from the [latest release](https://github.com/spf13/hugo/releases)
 
-I am using hugo_0.27-64bit.deb on ubuntu and install it with the following command.
+I am using hugo_0.17-64bit.deb on ubuntu and install it with the following command.
 
 
 ```
@@ -42,7 +43,8 @@ brew update && brew install hugo
 
 ### Pygments
 
-The Hugo executable has one optional external dependency for source code highlighting (Pygments). To install it
+The Hugo executable has one optional external dependency for source code highlighting (Pygments). 
+To install it
 
 ```
 pip install Pygments
@@ -94,8 +96,9 @@ git push origin gh-pages
 
 After push to gh-pages, your site will be available at the following url.
 
-https://<username>.github.io/<projectname>
-
+```
+https://<orgname>.github.io/<reponame>
+```
 
 ## Scaffold docs site
 
@@ -155,7 +158,10 @@ From docs folder
 hugo server
 ```
 4. Now you about.md can be accessed at
-http://localhost:1313/<projectname>
+
+```
+http://localhost:1313/<reponame>
+```
 
 ## Deploy
 
