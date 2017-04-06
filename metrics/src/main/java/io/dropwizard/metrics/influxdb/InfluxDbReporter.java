@@ -97,7 +97,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         }
     }
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(InfluxDbReporter.class);
+    private static final Logger logger = LoggerFactory.getLogger(InfluxDbReporter.class);
     private final InfluxDbSender influxDb;
     private final boolean skipIdleMetrics;
     private final Map<MetricName, Long> previousValues;
@@ -119,7 +119,6 @@ public final class InfluxDbReporter extends ScheduledReporter {
     public void report(final SortedMap<MetricName, Gauge> gauges, final SortedMap<MetricName, Counter> counters,
                        final SortedMap<MetricName, Histogram> histograms, final SortedMap<MetricName, Meter> meters, final SortedMap<MetricName, Timer> timers) {
         final long now = System.currentTimeMillis();
-        System.out.println("InfluxDbReporter report is called.");
         try {
             influxDb.flush();
 
@@ -153,7 +152,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
                 counter.dec(count);
             }
         } catch (Exception e) {
-            LOGGER.warn("Unable to report to InfluxDB. Discarding data.", e);
+            logger.error("Unable to report to InfluxDB. Discarding data.", e);
         }
     }
 
@@ -319,7 +318,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
             return -1;
         }
         if (count < previous) {
-            LOGGER.warn("Saw a non-monotonically increasing value for metric '{}'", name);
+            logger.warn("Saw a non-monotonically increasing value for metric '{}'", name);
             return 0;
         }
         return count - previous;

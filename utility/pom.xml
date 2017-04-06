@@ -58,10 +58,12 @@
             <groupId>com.jayway.jsonpath</groupId>
             <artifactId>json-path</artifactId>
         </dependency>
+        <!--
         <dependency>
             <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
+            <artifactId>commons-lang3</artifactId>
         </dependency>
+        -->
         <dependency>
             <groupId>io.swagger</groupId>
             <artifactId>swagger-parser</artifactId>

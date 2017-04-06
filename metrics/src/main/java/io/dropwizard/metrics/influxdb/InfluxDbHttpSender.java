@@ -15,6 +15,8 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URL;
 import java.net.URLEncoder;
@@ -26,6 +28,8 @@ import java.util.concurrent.TimeUnit;
  * An implementation of InfluxDbSender that writes to InfluxDb via http.
  */
 public class InfluxDbHttpSender implements InfluxDbSender {
+    private static final Logger logger = LoggerFactory.getLogger(InfluxDbReporter.class);
+
     private final CloseableHttpClient closeableHttpClient;
     private final URL url;
     private final String username;
@@ -69,6 +73,7 @@ public class InfluxDbHttpSender implements InfluxDbSender {
         this.closeableHttpClient = HttpClients.createDefault();
         this.username = username;
         this.password = password;
+        if(logger.isInfoEnabled()) logger.info("InfluxDbHttpSender is created with url = " + url + " username = " + username);
         this.influxDbWriteObject = new InfluxDbWriteObject(timePrecision);
     }
 
@@ -115,7 +120,6 @@ public class InfluxDbHttpSender implements InfluxDbSender {
     @Override
     public int writeData() throws Exception {
         final String body = influxDbWriteObject.getBody();
-        System.out.println("body = " + body);
         HttpPost httpPost = new HttpPost(this.url.toURI());
         httpPost.setEntity(new StringEntity(body, ContentType.APPLICATION_JSON));
 
@@ -125,11 +129,9 @@ public class InfluxDbHttpSender implements InfluxDbSender {
             int statusCode = httpResponse.getStatusLine().getStatusCode();
             EntityUtils.consumeQuietly(httpResponse.getEntity());
             if (statusCode >= 200 && statusCode < 300) {
-                System.out.println("writeData successfully.");
                 return statusCode;
-            }
-            else {
-                System.out.println("Server returned HTTP response code: " + statusCode
+            } else {
+                logger.error("Server returned HTTP response code: " + statusCode
                         + "for URL: " + url
                         + " with content :'"
                         + httpResponse.getStatusLine().getReasonPhrase() + "'");
