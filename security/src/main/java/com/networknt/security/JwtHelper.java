@@ -87,7 +87,7 @@ public class JwtHelper {
 
         // Set the signature algorithm on the JWT/JWS that will integrity protect the claims
         jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.RSA_USING_SHA256);
-
+        jws.setHeader(KID, jwtConfig.getKey().getKid());
         // Sign the JWS and produce the compact serialization, which will be the inner JWT/JWS
         // representation, which is a string consisting of three dot ('.') separated
         // base64url-encoded parts in the form Header.Payload.Signature
