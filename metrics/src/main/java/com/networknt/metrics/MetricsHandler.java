@@ -53,22 +53,26 @@ public class MetricsHandler implements MiddlewareHandler {
 
     static {
         config = (MetricsConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, MetricsConfig.class);
-        // initialize reporter and start the report scheduler.
-        try {
-            InfluxDbSender influxDb =
-                    new InfluxDbHttpSender(config.influxdbProtocol, config.influxdbHost, config.influxdbPort,
-                            config.influxdbName, config.influxdbUser, config.influxdbPass);
-            InfluxDbReporter reporter = InfluxDbReporter
-                    .forRegistry(registry)
-                    .convertRatesTo(TimeUnit.SECONDS)
-                    .convertDurationsTo(TimeUnit.MILLISECONDS)
-                    .filter(MetricFilter.ALL)
-                    .build(influxDb);
-            reporter.start(config.getReportInMinutes(), TimeUnit.MINUTES);
-        } catch (Exception e) {
-            // if there are any exception, chances are influxdb is not available. disable this handler.
-            logger.warn("metrics is disabled as it cannot connect to the influxdb");
-            config.setEnabled(false);
+        // initialize reporter and start the report scheduler if metrics is enabled
+        if(config.enabled) {
+            try {
+                InfluxDbSender influxDb =
+                        new InfluxDbHttpSender(config.influxdbProtocol, config.influxdbHost, config.influxdbPort,
+                                config.influxdbName, config.influxdbUser, config.influxdbPass);
+                InfluxDbReporter reporter = InfluxDbReporter
+                        .forRegistry(registry)
+                        .convertRatesTo(TimeUnit.SECONDS)
+                        .convertDurationsTo(TimeUnit.MILLISECONDS)
+                        .filter(MetricFilter.ALL)
+                        .build(influxDb);
+                reporter.start(config.getReportInMinutes(), TimeUnit.MINUTES);
+                logger.info("metrics is enabled and reporter is started");
+            } catch (Exception e) {
+                // if there are any exception, chances are influxdb is not available. disable this handler.
+                logger.error("metrics is disabled as it cannot connect to the influxdb", e);
+                // reset the enabled to false to make sure that server/info reports the right status.
+                config.setEnabled(false);
+            }
         }
     }
 
@@ -101,10 +105,7 @@ public class MetricsHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        logger.debug("in default metrics handler");
-
         long startTime = Clock.defaultClock().getTick();
-
         exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
             Map<String, Object> auditInfo = exchange1.getAttachment(AuditHandler.AUDIT_INFO);
             if(auditInfo != null) {
