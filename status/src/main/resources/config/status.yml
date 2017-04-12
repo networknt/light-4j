@@ -104,22 +104,22 @@ ERR10020:
   statusCode: 500
   code: ERR10020
   message: REGISTER_ERROR
-  description: [%s] fails to register %s to %s
+  description: Class %s fails to register %s to %s
 ERR10021:
   statusCode: 500
   code: ERR10021
   message: UNREGISTER_ERROR
-  description: [%s] fails to unregister %s to %s
+  description: Class %s fails to unregister %s to %s
 ERR10022:
   statusCode: 500
   code: ERR10022
   message: SUBSCRIBE_ERROR
-  description: [%s] fails to subscribe %s to %s
+  description: Class %s fails to subscribe %s to %s
 ERR10023:
   statusCode: 500
   code: ERR10023
   message: UNSUBSCRIBE_ERROR
-  description: [%s] fails to unsubscribe %s to %s
+  description: Class %s fails to unsubscribe %s to %s
 ERR10024:
   statusCode: 500
   code: ERR10024
@@ -134,47 +134,47 @@ ERR10026:
   statusCode: 500
   code: ERR10026
   message: GET_NODETYPEPATH_ERROR
-  description: Failed to get nodeTypePath, url: %s type: %s
+  description: Failed to get nodeTypePath, url %s type %s
 ERR10027:
   statusCode: 500
   code: ERR10027
   message: SUBSCRIBE_ZOOKEEPER_SERVICE_ERROR
-  description: Failed to subscribe service %s to zookeeper(%s), cause: %s
+  description: Failed to subscribe service %s to zookeeper(%s), cause %s
 ERR10028:
   statusCode: 500
   code: ERR10028
   message: SUBSCRIBE_ZOOKEEPER_COMMAND_ERROR
-  description: Failed to subscribe command %s to zookeeper(%s), cause: %s
+  description: Failed to subscribe command %s to zookeeper(%s), cause %s
 ERR10029:
   statusCode: 500
   code: ERR10029
   message: UNSUBSCRIBE_ZOOKEEPER_SERVICE_ERROR
-  description: Failed to unsubscribe service %s to zookeeper(%s), cause: %s
+  description: Failed to unsubscribe service %s to zookeeper(%s), cause %s
 ERR10030:
   statusCode: 500
   code: ERR10030
   message: UNSUBSCRIBE_ZOOKEEPER_COMMAND_ERROR
-  description: Failed to unsubscribe command %s to zookeeper(%s), cause: %s
+  description: Failed to unsubscribe command %s to zookeeper(%s), cause %s
 ERR10031:
   statusCode: 500
   code: ERR10031
   message: DISCOVER_ZOOKEEPER_SERVICE_ERROR
-  description: Failed to discover service %s from zookeeper(%s), cause: %s
+  description: Failed to discover service %s from zookeeper(%s), cause %s
 ERR10032:
   statusCode: 500
   code: ERR10032
   message: DISCOVER_ZOOKEEPER_COMMAND_ERROR
-  description: Failed to discover command %s from zookeeper(%s), cause: %s
+  description: Failed to discover command %s from zookeeper(%s), cause %s
 ERR10033:
   statusCode: 500
   code: ERR10033
   message: REGISTER_ZOOKEEPER_ERROR
-  description: Failed to register %s to zookeeper(%s), cause: %s
+  description: Failed to register %s to zookeeper(%s), cause %s
 ERR10034:
   statusCode: 500
   code: ERR10034
   message: UNREGISTER_ZOOKEEPER_ERROR
-  description: Failed to unregister %s to zookeeper(%s), cause: %s
+  description: Failed to unregister %s to zookeeper(%s), cause %s
 
 # 11000-11500 swagger-validator errors
 
@@ -252,7 +252,7 @@ ERR11014:
   statusCode: 400
   code: ERR11014
   message: VALIDATOR_REQUEST_BODY_MISSING
-  description: %s on path %s requires a request body. None found.
+  description: Method %s on path %s requires a request body. None found.
 ERR11015:
   statusCode: 400
   code: ERR11015
@@ -262,7 +262,7 @@ ERR11016:
   statusCode: 400
   code: ERR11016
   message: VALIDATOR_RESPONSE_BODY_MISSING
-  description: %s on path %s defines a response schema but no response body found.
+  description: Method %s on path %s defines a response schema but no response body found.
 ERR11017:
   statusCode: 400
   code: ERR11017

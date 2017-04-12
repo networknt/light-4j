@@ -44,7 +44,7 @@ public class StatusTest {
     public void testToStringWithArgs() {
         Status status = new Status("ERR11000", "parameter name", "original url");
         System.out.println(status);
-        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"description\":\"Query parameter 'parameter name' is required on path 'original url' but not found in request.\"}", status.toString());
+        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\"}", status.toString());
     }
 
     @Test
