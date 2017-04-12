@@ -1,4 +1,5 @@
 ---
+# 10000-11000 Framework validation errors
 ERR10000:
   statusCode: 401
   code: ERR10000
@@ -98,28 +99,27 @@ ERR10019:
   statusCode: 500
   code: ERR10019
   message: PARSE_DIRECT_URL_ERROR
-  description: parse direct url error, invalid direct registry address %s, address
-    should be ip1:port1,ip2:port2 ...
+  description: parse direct url error, invalid direct registry address %s, address should be ip1:port1,ip2:port2 ...
 ERR10020:
   statusCode: 500
   code: ERR10020
   message: REGISTER_ERROR
-  description: "[%s] fails to register %s to %s"
+  description: [%s] fails to register %s to %s
 ERR10021:
   statusCode: 500
   code: ERR10021
   message: UNREGISTER_ERROR
-  description: "[%s] fails to unregister %s to %s"
+  description: [%s] fails to unregister %s to %s
 ERR10022:
   statusCode: 500
   code: ERR10022
   message: SUBSCRIBE_ERROR
-  description: "[%s] fails to subscribe %s to %s"
+  description: [%s] fails to subscribe %s to %s
 ERR10023:
   statusCode: 500
   code: ERR10023
   message: UNSUBSCRIBE_ERROR
-  description: "[%s] fails to unsubscribe %s to %s"
+  description: [%s] fails to unsubscribe %s to %s
 ERR10024:
   statusCode: 500
   code: ERR10024
@@ -134,62 +134,65 @@ ERR10026:
   statusCode: 500
   code: ERR10026
   message: GET_NODETYPEPATH_ERROR
-  description: 'Failed to get nodeTypePath, url: %s type: %s'
+  description: Failed to get nodeTypePath, url: %s type: %s
 ERR10027:
   statusCode: 500
   code: ERR10027
   message: SUBSCRIBE_ZOOKEEPER_SERVICE_ERROR
-  description: 'Failed to subscribe service %s to zookeeper(%s), cause: %s'
+  description: Failed to subscribe service %s to zookeeper(%s), cause: %s
 ERR10028:
   statusCode: 500
   code: ERR10028
   message: SUBSCRIBE_ZOOKEEPER_COMMAND_ERROR
-  description: 'Failed to subscribe command %s to zookeeper(%s), cause: %s'
+  description: Failed to subscribe command %s to zookeeper(%s), cause: %s
 ERR10029:
   statusCode: 500
   code: ERR10029
   message: UNSUBSCRIBE_ZOOKEEPER_SERVICE_ERROR
-  description: 'Failed to unsubscribe service %s to zookeeper(%s), cause: %s'
+  description: Failed to unsubscribe service %s to zookeeper(%s), cause: %s
 ERR10030:
   statusCode: 500
   code: ERR10030
   message: UNSUBSCRIBE_ZOOKEEPER_COMMAND_ERROR
-  description: 'Failed to unsubscribe command %s to zookeeper(%s), cause: %s'
+  description: Failed to unsubscribe command %s to zookeeper(%s), cause: %s
 ERR10031:
   statusCode: 500
   code: ERR10031
   message: DISCOVER_ZOOKEEPER_SERVICE_ERROR
-  description: 'Failed to discover service %s from zookeeper(%s), cause: %s'
+  description: Failed to discover service %s from zookeeper(%s), cause: %s
 ERR10032:
   statusCode: 500
   code: ERR10032
   message: DISCOVER_ZOOKEEPER_COMMAND_ERROR
-  description: 'Failed to discover command %s from zookeeper(%s), cause: %s'
+  description: Failed to discover command %s from zookeeper(%s), cause: %s
 ERR10033:
   statusCode: 500
   code: ERR10033
   message: REGISTER_ZOOKEEPER_ERROR
-  description: 'Failed to register %s to zookeeper(%s), cause: %s'
+  description: Failed to register %s to zookeeper(%s), cause: %s
 ERR10034:
   statusCode: 500
   code: ERR10034
   message: UNREGISTER_ZOOKEEPER_ERROR
-  description: 'Failed to unregister %s to zookeeper(%s), cause: %s'
+  description: Failed to unregister %s to zookeeper(%s), cause: %s
+
+# 11000-11500 swagger-validator errors
+
 ERR11000:
   statusCode: 400
   code: ERR11000
   message: VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING
-  description: Query parameter '%s' is required on path '%s' but not found in request.
+  description: Query parameter %s is required on path %s but not found in request.
 ERR11001:
   statusCode: 400
   code: ERR11001
   message: VALIDATOR_REQUEST_PARAMETER_MISSING
-  description: Parameter '%s' is required but is missing.
+  description: Parameter %s is required but is missing.
 ERR11002:
   statusCode: 400
   code: ERR11002
   message: VALIDATOR_REQUEST_PARAMETER_ENUM_INVALID
-  description: Value '%s' for parameter '%s' is not allowed. Allowed values are <%s>.
+  description: Value %s for parameter %s is not allowed. Allowed values are <%s>.
 ERR11003:
   statusCode: 400
   code: ERR11003
@@ -204,87 +207,86 @@ ERR11005:
   statusCode: 400
   code: ERR11005
   message: VALIDATOR_REQUEST_PARAMETER_COLLECTION_INVALID_FORMAT
-  description: Parameter '%s' expected collection format of '%s' but '%s' was used
-    instead.
+  description: Parameter %s expected collection format of %s but %s was used instead.
 ERR11006:
   statusCode: 400
   code: ERR11006
   message: VALIDATOR_REQUEST_PARAMETER_COLLECTION_TOO_MANY_ITEMS
-  description: Parameter '%s' accepts a maximum of %d items. Found %d.
+  description: Parameter %s accepts a maximum of %d items. Found %d.
 ERR11007:
   statusCode: 400
   code: ERR11007
   message: VALIDATOR_REQUEST_PARAMETER_COLLECTION_TOO_FEW_ITEMS
-  description: Parameter '%s' accepts a minimum of %d items. Found %d.
+  description: Parameter %s accepts a minimum of %d items. Found %d.
 ERR11008:
   statusCode: 400
   code: ERR11008
   message: VALIDATOR_REQUEST_PARAMETER_COLLECTION_DUPLICATE_ITEMS
-  description: Parameter '%s' does not allow duplicate values.
+  description: Parameter %s does not allow duplicate values.
 ERR11009:
   statusCode: 400
   code: ERR11009
   message: VALIDATOR_REQUEST_PARAMETER_ENUM_INVALID
-  description: Value '%s' for parameter '%s' is not allowed. Allowed values are <%s>.
+  description: Value %s for parameter %s is not allowed. Allowed values are <%s>.
 ERR11010:
   statusCode: 400
   code: ERR11010
   message: VALIDATOR_REQUEST_PARAMETER_INVALID_FORMAT
-  description: Value '%s' for parameter '%s' does not match type '%s' with format
-    '%s'.
+  description: Value %s for parameter %s does not match type %s with format %s.
 ERR11011:
   statusCode: 400
   code: ERR11011
   message: VALIDATOR_REQUEST_PARAMETER_NUMBER_BELOW_MIN
-  description: Value '%s' for parameter '%s' less than allowed min value %f.
+  description: Value %s for parameter %s less than allowed min value %f.
 ERR11012:
   statusCode: 400
   code: ERR11012
   message: VALIDATOR_REQUEST_PARAMETER_NUMBER_ABOVE_MAX
-  description: Value '%s' for parameter '%s' greater than allowed max value %f.
+  description: Value %s for parameter %s greater than allowed max value %f.
 ERR11013:
   statusCode: 400
   code: ERR11013
   message: VALIDATOR_REQUEST_BODY_UNEXPECTED
-  description: No request body is expected for %s on path '%s'.
+  description: No request body is expected for %s on path %s.
 ERR11014:
   statusCode: 400
   code: ERR11014
   message: VALIDATOR_REQUEST_BODY_MISSING
-  description: "%s on path '%s' requires a request body. None found."
+  description: %s on path %s requires a request body. None found.
 ERR11015:
   statusCode: 400
   code: ERR11015
   message: VALIDATOR_RESPONSE_STATUS_UNKNOWN
-  description: Response status %d not defined for path '%s'.
+  description: Response status %d not defined for path %s.
 ERR11016:
   statusCode: 400
   code: ERR11016
   message: VALIDATOR_RESPONSE_BODY_MISSING
-  description: "%s on path '%s' defines a response schema but no response body found."
+  description: %s on path %s defines a response schema but no response body found.
 ERR11017:
   statusCode: 400
   code: ERR11017
   message: VALIDATOR_REQUEST_PARAMETER_HEADER_MISSING
-  description: Header parameter '%s' is required on path '%s' but not found in request.
+  description: Header parameter %s is required on path %s but not found in request.
 
 # GraphQL valdator errors 11500 - 11600
 ERR11500:
   statusCode: 400
   code: ERR11500
   message: GRAHPQL_INVALID_PATH
-  description: Invalid GraphQL path '%s', must be %s.
+  description: Invalid GraphQL path %s, must be %s.
 ERR11501:
   statusCode: 405
   code: ERR11501
   message: GRAHPQL_INVALID_METHOD
-  description: Invalid GraphQL method '%s', only GET and POST are allowed.
+  description: Invalid GraphQL method %s, only GET and POST are allowed.
 ERR11502:
   statusCode: 400
   code: ERR11502
   message: GRAHPQL_MISSING_QUERY
   description: Missing GraphQL query.
 
+# OAuth2 service error 12000-13000
 
 ERR12000:
   statusCode: 400
@@ -333,8 +335,7 @@ ERR12009:
   statusCode: 401
   code: ERR12009
   message: INVALID_CODE_REQUEST
-  description: Invalid authorization code request. responseType and client_id are
-    required.
+  description: Invalid authorization code request. responseType and client_id are required.
 ERR12011:
   statusCode: 400
   code: ERR12011
@@ -409,26 +410,22 @@ ERR12025:
   statusCode: 400
   code: ERR12025
   message: MISSING_REDIRECT_URI
-  description: Missing redirect_uri in authorization code token service as redirect_uri
-    %s is passed in code service.
+  description: Missing redirect_uri in authorization code token service as redirect_uri %s is passed in code service.
 ERR12026:
   statusCode: 400
   code: ERR12026
   message: MISMATCH_REDIRECT_URI
-  description: redirect_uri %s from token service is not identical as redirect_uri
-    %s from code service.
+  description: redirect_uri %s from token service is not identical as redirect_uri %s from code service.
 ERR12027:
   statusCode: 400
   code: ERR12027
   message: MISMATCH_SCOPE
-  description: scope %s does not match previous scope or defined scope for client
-    %s.
+  description: scope %s does not match previous scope or defined scope for client %s
 ERR12028:
   statusCode: 400
   code: ERR12028
   message: MISMATCH_CLIENT_ID
-  description: client_id %s does not match previous client_id %s in refresh_token
-    request.
+  description: client_id %s does not match previous client_id %s in refresh_token request.
 ERR12029:
   statusCode: 404
   code: ERR12029
@@ -439,3 +436,13 @@ ERR12030:
   code: ERR12030
   message: INVALID_KEY_ID
   description: Invalid key id %s.
+
+
+# 20000-29999 common error codes within your business domain.
+# It is highly recommended to have your error code shared within your organization or your line of business.
+# In that case, all your services can share the same status.yml which in org default config
+
+
+# 90000-99999 customize error code that cannot be found in common range.
+# Only use this section if you cannot make your error code into 20000-29999 range on time.
+# In this case, you have to overwrite your status.yml per service.
