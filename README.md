@@ -6,6 +6,9 @@ A fast and configurable REST microservices framework for docker containers on th
 
 [![Build Status](https://travis-ci.org/networknt/light-java.svg?branch=master)](https://travis-ci.org/networknt/light-java)
 
+## Why called Light Java
+
+Light means lightweight, lighting fast and shed light on how to program with modern Java SE.   
 
 ## Why this framework
 
