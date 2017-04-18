@@ -1,6 +1,6 @@
 ---
 date: 2016-10-23T13:20:22-04:00
-title: utility
+title: Utility
 ---
 
 This module contains some useful classes that shared by multiple modules within

@@ -1,6 +1,6 @@
 ---
 date: 2016-10-23T13:23:59-04:00
-title: info
+title: Server Info
 ---
 
 
@@ -10,21 +10,22 @@ Almost every module in light-java has a configuration file that can be
 externalized with default can be in the module itself or the API implementation
 config folder. In order to give an overview of the server runtime, system
 properties, specification as well as configurations for each enabled modules,
-there is a special handler that can be included in your swagger specification.
+there is a special handler that is injected in your swagger specification.
+Once this handler endpoint is called, it will output all the server info in
+a JSON format. 
+
 
 ## Configuration
 
-info.json
+info.yml
 ```
-{
-  "description": "Server info endpoint that can output environment and component along with configuration",
-  "enableServerInfo": true
-}
+description: Server info endpoint that can output environment and component along with configuration
+enableServerInfo: true
 ```
 
-Unlike other modules, server info handler is not plugin into the handler chain
-during server start up. It should be part of the swagger specification and
-route to this handler in the routing handler. If enableServerInfo is false,
+Unlike other modules, server info handler is not plugged in into the handler 
+chain during server start up. It should be part of the swagger specification 
+and route to this handler in the routing handler. If enableServerInfo is false,
 then an error message will returned with ERR10013 - SERVER_INFO_DISABLED.
 
 ## Swagger

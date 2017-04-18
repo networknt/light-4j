@@ -1,6 +1,6 @@
 ---
 date: 2016-10-23T13:20:51-04:00
-title: status
+title: Status
 ---
 
 In the scenario that error happens on the server, a Status object is designed
@@ -19,24 +19,21 @@ Here are the four fields in the Status object.
     String description;
 ```
 
-# Construct the object from status.json
-status.json is a configuration file that contains all the status error defined
+# Construct the object from status.yml
+status.yml is a configuration file that contains all the status error defined
 for the application and it has the structure like this.
 
 ```
-{
-  "ERR10000": {
-    "statusCode": 401,
-    "code": "ERR10000",
-    "message": "INVALID_AUTH_TOKEN",
-    "description": "Incorrect signature or malformed token in authorization header"
-  },
-  "ERR10001": {
-    "statusCode": 401,
-    "code": "ERR10001",
-    "message": "AUTH_TOKEN_EXPIRED",
-    "description": "Jwt token in authorization header expired"
-  },
+ERR10000:
+  statusCode: 401
+  code: ERR10000
+  message: INVALID_AUTH_TOKEN
+  description: Incorrect signature or malformed token in authorization header
+ERR10001:
+  statusCode: 401
+  code: ERR10001
+  message: AUTH_TOKEN_EXPIRED
+  description: Jwt token in authorization header expired
   .
   .
   .
@@ -53,8 +50,7 @@ To construct the object from this config
     Status status = new Status(STATUS_METHOD_NOT_ALLOWED);
 
 ```
-To construct the object with arguments to have a description with context
-information.
+To construct the object with arguments to have a description with context information.
 
 ```
    return new Status("ERR11000", queryParameter.getName(), swaggerOperation.getPathString().original());
@@ -85,7 +81,7 @@ teams, here is the rule
 
    * 11000-11999 validation
 
-   * 12000-12999 undertow-oauth2
+   * 12000-12999 light-oauth2
 
 20000-29999 common error codes within your business domain.
 90000-99999 customize error code that cannot be found in common range.

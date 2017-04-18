@@ -4,5 +4,5 @@ title: Service
 ---
 
 A light-weight and fast dependency injection framework without any third
-party dependencies.
+party dependencies. 
 
