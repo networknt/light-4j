@@ -1,5 +1,5 @@
 ---
-# 10000-11000 Framework validation errors
+# 10000-11000 Light Java Framework validation errors
 ERR10000:
   statusCode: 401
   code: ERR10000
@@ -176,8 +176,8 @@ ERR10034:
   message: UNREGISTER_ZOOKEEPER_ERROR
   description: Failed to unregister %s to zookeeper(%s), cause %s
 
-# 11000-11500 swagger-validator errors
 
+# 11000-11500 swagger-validator errors
 ERR11000:
   statusCode: 400
   code: ERR11000
@@ -269,7 +269,16 @@ ERR11017:
   message: VALIDATOR_REQUEST_PARAMETER_HEADER_MISSING
   description: Header parameter %s is required on path %s but not found in request.
 
-# GraphQL valdator errors 11500 - 11600
+# 11100-11199 Light Code Generator validation errors
+ERR11100:
+  statusCode: 400
+  code: ERR11100
+  message: INVALID_FRAMEWORK
+  description: Invalid framework %s.
+
+
+
+# 11500 - 11600 GraphQL valdator errors
 ERR11500:
   statusCode: 400
   code: ERR11500
