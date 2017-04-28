@@ -138,6 +138,33 @@ application, the login on OAuth2 is not necessary and a new authorization code w
 redirected back.
 
 
+# Fine-Grained Authorization
 
+Above authorization is based on the client_id and scope in the JWT token and it can be verified by 
+JwtVerifierHandler without any context information regarding to a specific API endpoint. And it can
+be applied blindly as a technical middleware handler at the framework level. For other fine-grained
+authorizations, they must be applied based on the context of the service. 
+
+### Role-Based 
+
+Role-Based Authorization must be specific to one or a group of services with a set of pre-defined
+roles. Normally the role can be embedded into the Id token and the mapping should be cached in the
+handler.
+
+### Attribute-Based
+ 
+For example, only Account manager can access an account. Or employee based on one geo location can
+access customer based on the same Geo location.
+
+### Rule-Based
+
+Teller can only transfer money less than $10,000.00 etc.
+
+
+# Request and Response Filter
+
+Sometimes, certain request fields need to be removed based on the clientId or other attributes so that
+the rule business handler can be done in a consistent way. Also, for certain client or user, the
+response might need to filter out some information before returning to the consume. 
 
 

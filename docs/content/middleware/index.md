@@ -5,8 +5,20 @@ title: Middleware Handlers
 
 # Introduction
 
-light-java is a Java API framework based on undertow http core that supports
-swagger code generation and runtime request validation.
+Light-Java is a Java API framework based on undertow http core which supports request and 
+response manipulations in HttpServerExchange. Unlike servlet filter, it is very easy to add
+middleware handlers in the request and response chain to address all the cross-cutting
+concerns.  
+
+There are two types of middleware handlers: technical and contextual. All the middleware 
+handlers provided by light-java are technical as we don't care about each individual service 
+but apply the handlers blindly. For example, we have body parse that parse the body into either 
+List or Map if content-type is application/json. We cannot parse the body into a POJO as we have 
+no knowledge about which POJO class to use. In order to parse it into POJO you can implement 
+your business logic with multiple handlers, one parse the request body into POJO and attached 
+to the exchange and the next handler does the real business logic. You can also inject other 
+handlers to do fine-grained authorization and request and response filtering and transformation, 
+
 
 It contains the following components:
 
