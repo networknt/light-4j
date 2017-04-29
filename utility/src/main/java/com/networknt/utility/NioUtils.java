@@ -1,11 +1,15 @@
 package com.networknt.utility;
 
+import com.networknt.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.DateFormat;
@@ -15,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static java.io.File.separator;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Created by steve on 26/04/17.
@@ -215,5 +220,16 @@ public class NioUtils {
                 }
             }
         }
+    }
+
+    public static void writeJson(Path path, Object model) throws IOException {
+        Config.getInstance().getMapper().writerWithDefaultPrettyPrinter().writeValue(new FileOutputStream(path.toFile()), model);
+    }
+
+    public static ByteBuffer toByteBuffer(String s) {
+        ByteBuffer buffer = ByteBuffer.allocateDirect(s.length());
+        buffer.put(s.getBytes(UTF_8));
+        buffer.flip();
+        return buffer;
     }
 }
