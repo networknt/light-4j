@@ -76,6 +76,14 @@ public class JwtHelperTest {
     }
 
     @Test
+    public void longLivedHelloWorldJwt() throws Exception {
+        JwtClaims claims = getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("world.r", "world.w", "server.info.r"));
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtHelper.getJwt(claims);
+        System.out.println("***LongLived HelloWorld JWT***: " + jwt);
+    }
+
+    @Test
     public void normalPetStoreJwt() throws Exception {
         JwtClaims claims = getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"));
         claims.setExpirationTimeMinutesInTheFuture(10);
