@@ -277,6 +277,12 @@ ERR11100:
   description: Invalid framework %s.
 
 
+# 11200 - 11299 light hybrid validation errors
+ERR11200:
+  statusCode: 400
+  code: ERR11200
+  message: HANDLER_NOT_FOUND
+  description: Handler for service %s cannot be found.
 
 # 11500 - 11600 GraphQL valdator errors
 ERR11500:
