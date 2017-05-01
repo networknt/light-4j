@@ -84,12 +84,21 @@ public class JwtHelperTest {
     }
 
     @Test
+    public void longLivedCodegenJwt() throws Exception {
+        JwtClaims claims = getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("codegen.r", "codegen.w", "server.info.r"));
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtHelper.getJwt(claims);
+        System.out.println("***LongLived Codegen JWT***: " + jwt);
+    }
+
+    @Test
     public void normalPetStoreJwt() throws Exception {
         JwtClaims claims = getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"));
         claims.setExpirationTimeMinutesInTheFuture(10);
         String jwt = JwtHelper.getJwt(claims);
         System.out.println("***JWT***: " + jwt);
     }
+
 
     private JwtClaims getTestClaims(String userId, String userType, String clientId, List<String> scope) {
         JwtClaims claims = JwtHelper.getDefaultJwtClaims();
