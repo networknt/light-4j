@@ -3,6 +3,8 @@ description: singleton service factory configuration
 singletons:
 - com.networknt.service.A:
   - com.networknt.service.AImpl
+- com.networknt.service.A:
+  - com.networknt.service.AImpl2
 - com.networknt.service.B:
   - com.networknt.service.BTestImpl
 - com.networknt.service.C:
