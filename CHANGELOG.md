@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.2.8 - 2017-05-02
+### Added
+- Fixes #42 upgrade dependencies
+- Fixes #43 add more debug info during metrics startup
+- Fixes #48 clean up status.xml and make comment on each segment
+
 ## 1.2.7 - 2017-03-28
 ### Added
 - Fixes #38 add status codes and utilities for light-java-graphql
