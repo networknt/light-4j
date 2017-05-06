@@ -1,9 +1,9 @@
 ---
 date: 2017-01-07T08:03:47-05:00
-title: Running Light-Java Application as Linux Service
+title: Running Light-4J Application as Linux Service
 ---
 
-Light-Java application can be easily started as Unix/Linux services using either init.d or systemd given it
+Light-4J application can be easily started as Unix/Linux services using either init.d or systemd given it
 is packaged as a fatjar. 
 
 ## Installation as an init.d service (System V)

@@ -314,9 +314,9 @@ public class Server {
         String configUri = System.getProperty(LIGHT_CONFIG_SERVER_URI);
         if(configUri != null) {
             // try to get config files from the server.
-            String targetMergeDirectory = System.getProperty(Config.LIGHT_JAVA_CONFIG_DIR);
+            String targetMergeDirectory = System.getProperty(Config.LIGHT_4J_CONFIG_DIR);
             if(targetMergeDirectory == null) {
-                logger.warn("Warning! No light-java-config-dir has been passed in from command line.");
+                logger.warn("Warning! No light-4j-config-dir has been passed in from command line.");
                 return;
             }
             String version = Util.getJarVersion();

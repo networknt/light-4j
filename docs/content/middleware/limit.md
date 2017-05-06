@@ -20,7 +20,7 @@ pom.xml in your project.
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>limit</artifactId>
-                <version>${version.light-java}</version>
+                <version>${version.light-4j}</version>
             </dependency>
 ```
 

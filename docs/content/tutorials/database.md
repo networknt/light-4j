@@ -32,7 +32,7 @@ mkdir networknt
 # Create Database Demo Specification
 
 First let's build an OpenAPI specification with several endpoints to demo database
-access. You will need [swagger editor](https://networknt.github.io/light-java/tools/swagger-editor/)
+access. You will need [swagger editor](https://networknt.github.io/light-4j/tools/swagger-editor/)
 to create a specification. 
 
 Here is the OpenAPI specification created and it can be found in 
@@ -43,7 +43,7 @@ swagger: '2.0'
 
 info:
   version: "1.0.0"
-  title: Light-Java-Rest Database Tutorial
+  title: Light-Rest-4J Database Tutorial
   description: A demo on how to connect, query and update Oracle/Mysql/Postgres. 
   contact:
     email: stevehu@gmail.com
@@ -170,14 +170,14 @@ cd swagger-codegen
 mvn clean install -DskipTests
 ```
 
-For this demo, I am going to generate the code into light-java-example/database/generated
+For this demo, I am going to generate the code into light-example-4j/database/generated
 folder so that users can check the code later on from this repo. 
 
-Let's checkout the light-java-example repo and backup the existing database project.
+Let's checkout the light-example-4j repo and backup the existing database project.
 
 ```
 cd ~/networknt
-git clone git@github.com:networknt/light-java-example.git
+git clone git@github.com:networknt/light-example-4j.git
 cd light-java-example
 mv database database.bak
 mkdir database
@@ -222,7 +222,7 @@ Now you can access the service with curl following the step below.
 
 ### Generate code with docker container
 
-Let's remove the generated folder from light-java-example/database folder and
+Let's remove the generated folder from light-example-4j/database folder and
 generate the project again with docker container.
 
 ```
@@ -433,7 +433,7 @@ INSERT INTO fortune (id, message) VALUES (12, 'フレームワークのベンチ
 
 ```
 
-Above scripts can be found in https://github.com/networknt/light-java-example/tree/master/database/dbscript
+Above scripts can be found in https://github.com/networknt/light-example-4j/tree/master/database/dbscript
 
 
 # Start Databases
@@ -476,7 +476,7 @@ cd ~/networknt/light-java-example/database
 cp -r generated connection
 ```
 
-Add the following service.json to ~/networknt/light-java-example/database/connection/src/main/resources/config
+Add the following service.json to ~/networknt/light-example-4j/database/connection/src/main/resources/config
 
 ```
 {
@@ -507,7 +507,7 @@ Add the following service.json to ~/networknt/light-java-example/database/connec
 
 The service.json will make sure the a Hikari DataSource will be created during server startup 
 with the dependency injection module. You can find other database's service.json in 
-https://github.com/networknt/light-java-example/tree/master/database/dbscript
+https://github.com/networknt/light-example-4j/tree/master/database/dbscript
 
 In order to do that we need to add several jars into the dependency in pom.xml
 

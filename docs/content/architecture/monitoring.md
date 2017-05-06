@@ -42,12 +42,12 @@ failure. You don't want your services falling over like dominoes.
 
 Reactive microservices monitoring would enable you to detect heavy load, and 
 spin up new instances with the cloud orchestration platform of your choice 
-(EC2, CloudStack, OpenStack, Rackspace, boto, etc.). 
+(Kubernetes, EC2, CloudStack, OpenStack, Rackspace etc.). 
 
 ## Public Microservices and Microservices Monitoring
 
 Microservices monitoring of runtime statistics can be used to rate limiting 
-a partners Application ID. You don't want partners to consume all of your 
+a partners Application Id/client Id. You don't want partners to consume all of your 
 well-tuned, high-performant microservices resources. It is okay to trust your 
 partners but use Microservices Monitoring to verify. 
 
@@ -65,12 +65,10 @@ lunacy and a recipe for disaster, unless you like failing when someone decides t
 hit your endpoints 10x more than you did the capacity planning for. Avoid long 
 nights and tears. Monitor microservices that you publish, and limit access to them.
 
-The reactive manifesto is a good tutor for the types of monitoring you will want 
-to do and states that your system should react to change instead of just fail. 
 
 ## Microservices Framework and Microservices Monitoring
 
-Light-Java a mircoservices framework that comes with a runtime metrics which can 
+Light-4J a mircoservices framework that comes with a runtime metrics which can 
 be used for Microservices Monitoring. 
 
 * You can query /server/health endpoint to detect if the service is available and healthy.
@@ -78,6 +76,7 @@ be used for Microservices Monitoring.
 * Rate limiting can be enabled at client_id level or ip address/user level.
 * Kubernetes monitors load of each pods and can start new instances on demand.
 * TraceabilityId and CorrelationId in logs that can be traced with tools like Logstash, GrayLog and Splunk.
+* Specifically designed error code can be monitored and send alert if some of them shown up in logs.
 
 ## Reactive Microservices Monitoring
 
@@ -89,8 +88,8 @@ monitoring in mind from the start. Make sure that the microservices lib that you
 monitoring of runtime statistics built in from the start. Make sure that is a core part of 
 the microservices library. Code Hale Statistics allow you to gather metrics in 
 a standard way. Tools like Influxdb and Grafana, Kibana help you understand the 
-data, and build dashboards. Light Java, the Java Microservices Framework, includes a metrics 
-middleware which feeds into CodeHale Metrics. Light Java also proivdes a rate limiting 
+data, and build dashboards. Light 4J, the Java Microservices Framework, includes a metrics 
+middleware which feeds into CodeHale Metrics. Light 4J also proivdes a rate limiting 
 middleware to limit access per client_id or IP address/user. The container orchestration tool
 like Kubernetes can also spin up new nodes/pods. With big data, data science, 
 and microservices, monitoring microservices runtime stats is required to know your application 
@@ -115,7 +114,7 @@ be UTC time so that logs can be easily ordered in the ELK.
 
 Logstash has features to send out alert when certain error code is spotted in the log files.
 
-The framework has a component called status and it has all the errors defined in a JSON
+The framework has a component called status and it has all the errors defined in a YMAL
 file which can be externalized. All the error code will be in a format ERRXXXXX and
 certain error code can be setup in the alert to send out email or communicate to support
 team with other channels.

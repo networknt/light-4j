@@ -5,7 +5,8 @@ title: Correlation Id
 
 This is a handler that checks if X-Correlation-Id exists in request header. If it doesn't exist
 it will generate a UUID and put it into the request header. During API to API calls, this header
-will be passed to the next API by Client module.
+will be passed to the next API by [Client](https://networknt.github.io/light-4j/other/client/) 
+module.
 
 # Generating
 
@@ -17,7 +18,7 @@ same request. The Id is an UUID and must be generated in the first service calle
 # Passing
 
 Since the first service generates the Id, it must be passed to other services somehow so that
-subsequent services can use it to log their messages. In our [client](https://networknt.github.io/light-java/other/client/)
+subsequent services can use it to log their messages. In our [client](https://networknt.github.io/light-4j/other/client/)
 module, it passes the correlationId from the current request header to the request to the next
 service.
 
@@ -49,6 +50,3 @@ In the generated logback.xml, the cId is part of the appender config as pattern 
     </appender>
 
 ```
-
-
-

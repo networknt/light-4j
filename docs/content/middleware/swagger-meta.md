@@ -5,17 +5,17 @@ title: Swagger Meta
 
 # Introduction
 
-This handler is part of the [light-java-rest](https://github.com/networknt/light-java-rest)
-which is built on top of light-java but focused on RESTful API only. 
+This handler is part of the [light-rest-4j](https://github.com/networknt/light-rest-4j)
+which is built on top of light-4j but focused on RESTful API only. 
 
 It is designed based on swagger specification so it is our best interest to utilize 
 the swagger.json to its full potential. Currently there are two components are using 
 the swagger specification during runtime.
 
-1. [swagger-security](https://networknt.github.io/light-java/middleware/swagger-security/) - 
+1. [swagger-security](https://networknt.github.io/light-4j/middleware/swagger-security/) - 
 Verify scope in the JWT token against scope defined in swagger specification if 
 scope verification is true. 
-2. [swagger-validator](https://networknt.github.io/light-java/middleware/swagger-validator/) - 
+2. [swagger-validator](https://networknt.github.io/light-4j/middleware/swagger-validator/) - 
 Validate request and response based on the definition in swagger specification for 
 the uri and method.
 

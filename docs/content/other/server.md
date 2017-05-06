@@ -149,7 +149,7 @@ enableTwoWayTls: false
 truststoreName: tls/server.truststore
 
 # Unique service identifier. Used in service registration and discovery etc.
-serviceId: io.swagger.swagger-light-java-1.0.0
+serviceId: io.swagger.swagger-light-4j-1.0.0
 
 # Flag to enable service registration. Only be true if running as standalone Java jar.
 enableRegistry: false
@@ -171,10 +171,10 @@ to docker container as environment variables.
 * light-env
 * light-config-server-uri
 
-Once the server starts, it will access the light-java-config server instance to
-get a zip file that contains config files for this particular service for this
-environment and this framework version. The zip file will be deflated automatically
-and put all file into /config folder which is specified by light-java-config-dir
+Once the server starts, it will access the [light-config-server](https://github.com/networknt/light-config-server) 
+instance to get a zip file that contains config files for this particular service for 
+this environment and this framework version. The zip file will be deflated automatically
+and put all file into /config folder which is specified by light-4j-config-dir
 system properties.
 
 

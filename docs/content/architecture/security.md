@@ -6,7 +6,7 @@ title: Security
 
 Note: If this is the first time you hear about OAuth2 or you want to get familiar with
 the grant types we are using, please read this 
-[article](https://github.com/networknt/undertow-oauth2/wiki/OAuth2-Introduction) first.
+[article](https://github.com/networknt/light-oauth2/wiki/OAuth2-Introduction) first.
 
 Everyone’s excited about microservices, but actual implementation is sparse. Perhaps the
 reason is that people are unclear on how these services talk to one another; especially 
@@ -122,7 +122,7 @@ server. So it is not necessary to get the new scope token for every API to API c
 retrieved and cached in memory until it is about to be expired then a new token will be retrieved.
 
 The entire token renew process is managed
-by [Client](https://networknt.github.io/light-java/other/client/) module provided in the light-java
+by [Client](https://networknt.github.io/light-4j/other/client/) module provided in the light-4j
 framework. This client module encapsulate a lot of features to help API to API calls.
 
 # Authorization Token Cache

@@ -85,7 +85,7 @@ public class Util {
 
     public static String getJarVersion() {
         String path = Util.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        //String path = "/Users/stevehu/project/light-java-example/petstore/target/swagger-light-server-1.0.0.jar";
+        //String path = "/Users/stevehu/project/light-example-4j/petstore/target/swagger-light-server-1.0.0.jar";
         logger.debug("path = " + path);
         String ver = null;
         if(path.endsWith(".jar")) {
@@ -103,7 +103,7 @@ public class Util {
         Class clazz = Util.class;
         URL location = clazz.getResource('/' + clazz.getName().replace('.', '/') + ".class");
         System.out.println("location = " + location);
-        //location = jar:file:/Users/stevehu/project/light-java-example/petstore/target/swagger-light-server-1.0.0.jar!/com/networknt/utility/Util.class
+        //location = jar:file:/Users/stevehu/project/light-example-4j/petstore/target/swagger-light-server-1.0.0.jar!/com/networknt/utility/Util.class
         return location.toString();
     }
 

@@ -1,6 +1,6 @@
-baseurl = "https://networknt.github.io/light-java/"
+baseurl = "https://networknt.github.io/light-4j/"
 languageCode = "en-us"
-title = "Light Java - One of the fastest Java API Framework"
+title = "Light 4J - A fast, lightweight Java microservices framework"
 theme = "hugo-material-docs"
 metadataformat = "yaml"
 canonifyurls = true
@@ -10,12 +10,12 @@ googleAnalytics = ""
 [params]
 	# General information
 	author = "Steve Hu"
-	description = "Light Java Docs"
+	description = "Light 4J Docs"
 	copyright = "Released under the MIT license"
 
 	# Repository
 	provider = "GitHub"
-	repo_url = "https://github.com/networknt/light-java"
+	repo_url = "https://github.com/networknt/light-4j"
 
 	version = "1.2.8"
 	logo = "images/logo.png"
@@ -103,7 +103,7 @@ googleAnalytics = ""
 
 [[menu.main]]
 	name   = "Issues & Help"
-	url    = "https://github.com/networknt/light-java/issues"
+	url    = "https://github.com/networknt/light-4j/issues"
 	weight = 60
 
 [[menu.main]]

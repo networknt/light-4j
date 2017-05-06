@@ -27,10 +27,10 @@ In 2003, Rod Johnson released Spring Framework and it allows IoC and POJO for
 development without EJBs. The productivity increment is huge and a lot of 
 developers jumped onto it and thrown J2EE EJBs out of the window. The application
 server vendors saw this and in Java EE 5, they provided some features to make 
-developer's life easier and less painfull, today’s [Spring Framework is so 
-bloated](https://networknt.github.io/light-java/architecture/spring-is-bloated/) 
+developer's life easier and less painful, today’s [Spring Framework is so 
+bloated](https://networknt.github.io/light-4j/architecture/spring-is-bloated/) 
 like Java EE containers and it still based on Java EE servlet container which was
-designed in 90's without considering multiple cores and NIO.
+designed in early 2000 without considering multiple cores and NIO.
 
 During this period of time, PHP was flying. It used less memory and resource and 
 was well supported by hosting companies. Some CMS platform built on PHP like 
@@ -42,21 +42,23 @@ In 2009, Ryan Dahl introduced Node.js that supports asynchronous, non-blocking
 and event-driven I/O. This increase the response rate dramatically as the server 
 threads are well utilized and the throughput of a single server can be comparable 
 to a cluster of Java EE servers. Node.js is a very good design but it has its 
-[limitations](https://networknt.github.io/light-java/architecture/nodejs/). 
+[limitations](https://networknt.github.io/light-4j/benchmarks/nodejs/). 
 It is hard to scale and hard to integrate with existing legacy systems.
 
 
 In 2014, a new player Undertow came in town and it is Java based non-blocking web 
 server. From techempower.com [test](https://www.techempower.com/benchmarks/#section=data-r12&hw=peak&test=plaintext), 
-it serves millions requests per second 
-on a single $8000 dell server using the same test case Google claimed to serve 
-1 million requests with a cluster. It is lightweight with the core coming under 
-1Mb and a simple embedded server uses less than 4Mb of heap space. 
+it serves millions requests per second on a single $8000 dell server using the same 
+test case Google claimed to serve 1 million requests with a cluster. It is lightweight 
+with the core coming under 1Mb and a simple embedded server uses less than 4Mb of 
+heap space. 
 
-With the new Undertow Core, we've built [Light Java Framework](https://github.com/networknt/light-java) 
+With the new Undertow Core, we've built [Light 4J Framework](https://github.com/networknt/light-4j) 
 which is aiming containerized microserivces. It supports design driven approach 
-from OpenAPI specification to generate code and drives security and validation 
-during runtime. 
+from OpenAPI specification for RESTful API, GraphQL IDL for GraphQL service and our
+home grown schema for Hybrid service with code generation and runtime model based
+validation and security.
+
 
 ## Java EE vendors
 
@@ -71,7 +73,7 @@ with only 200 lines of code on WebSphere which has several millions lines of cod
 99 percent of CPU and memory will be wasted on the Java EE server and your service will be
 slow as a snail. This forces them to rebrand and make changes on their platform to allow 
 user to build microservices but the result is not promising. I have tested JBoss WildFly
-Swarm in my [benchmarks](https://github.com/networknt/light-java-example/tree/master/performance)
+Swarm in my [benchmarks](https://github.com/networknt/microservices-framework-benchmark)
 and it is at the bottom. WebLogic Multitenant and WebSphere Liberty will be much worse as
 they are significant bigger than WildFly Swarm.
   
@@ -141,13 +143,12 @@ When you design your application to use microservices, you are designing it to b
 modular, programmable and composable. This allows you to replace microservices with 
 other microservices. You can rewrite or improve parts of your larger application 
 without disruption. When everything has a programmable API, communications between 
-application microservices becomes easier. (Never trust a microservice that does not 
-publish access to with curl). 
+application microservices becomes easier. 
 
   
 While microservices are getting popular, a lot vendors are trying to re-brand their 
 Java EE based web services to microservices in order to sell their obsolete product. 
-[API Gateway](https://networknt.github.io/light-java/architecture/gateway/) is one of 
+[API Gateway](https://networknt.github.io/light-4j/architecture/gateway/) is one of 
 them. These gateways are designed for Web Services but not Microservices. 
 
 
@@ -189,11 +190,11 @@ are getting more and more popular. Big corporations are breaking their big appli
 up to smaller pieces that can be individually deployed and replaced. These smaller
 services are deployed within docker containers on the cloud. I myself have been working
 on this area for my clients for the last couple of years and devoted my time to build
-an open source microservices framework [Light Java](https://github.com/networknt/light-java)
+an open source microservices framework [Light 4J](https://github.com/networknt/light-4j)
 which provides all cross cutting concerns for microservices running in containers. It
 supports design driven approach and developers will only focus on the domain business
 logic in generated handlers. All the rest will be handled by the Framework and DevOps flow.
-So far, it is the fastest microservices framework available. 
+So far, it is one of the fastest microservices framework available. 
 
 
 

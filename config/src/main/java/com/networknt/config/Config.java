@@ -40,7 +40,7 @@ import org.yaml.snakeyaml.Yaml;
  *
  * Config files are loaded in the following sequence:
  * 1. resources/config folder for the default
- * 2. externalized directory specified by light-java-config-dir
+ * 2. externalized directory specified by light-4j-config-dir
  *
  * In docker, the config files should be in volume and any update will
  * be picked up the next day morning.
@@ -48,7 +48,7 @@ import org.yaml.snakeyaml.Yaml;
  *
  */
 public abstract class Config {
-    public static final String LIGHT_JAVA_CONFIG_DIR = "light-java-config-dir";
+    public static final String LIGHT_4J_CONFIG_DIR = "light-4j-config-dir";
 
     protected Config() {
     }
@@ -83,7 +83,7 @@ public abstract class Config {
 
         static final XLogger logger = XLoggerFactory.getXLogger(Config.class);
 
-        public final String EXTERNALIZED_PROPERTY_DIR = System.getProperty(LIGHT_JAVA_CONFIG_DIR, "");
+        public final String EXTERNALIZED_PROPERTY_DIR = System.getProperty(LIGHT_4J_CONFIG_DIR, "");
 
         private long cacheExpirationTime = 0L;
 

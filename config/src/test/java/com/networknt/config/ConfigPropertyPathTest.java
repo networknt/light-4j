@@ -29,7 +29,7 @@ public class ConfigPropertyPathTest extends TestCase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        System.setProperty("light-java-config-dir", homeDir);
+        System.setProperty("light-4j-config-dir", homeDir);
 
         Config config = Config.getInstance();
 

@@ -1,8 +1,8 @@
 # How to contribute
 
-Third-party patches are essential for keeping Light Java great. We simply can't
+Third-party patches are essential for keeping Light 4J great. We simply can't
 access the huge number of platforms and myriad configurations for running
-Light Java. We want to keep it as easy as possible to contribute changes that
+Light 4J. We want to keep it as easy as possible to contribute changes that
 get things working in your environment. There are a few guidelines that we
 need contributors to follow so that we can have a chance of keeping on
 top of things.
@@ -10,12 +10,12 @@ top of things.
 ## Core vs Modules
 
 New functionality is typically directed toward middleware components to provide 
-a slimmer Framework Core, reducing its surface area, and to allow greater freedom for
-middleware developers and maintainers. 
+a slimmer Framework Core, reducing its surface area, and to allow greater freedom 
+for middleware developers and maintainers. 
  
 If you are unsure of whether your contribution should be implemented as a
 middleware component or part of Framework Core, you may visit
-[Gitter Chat](https://gitter.im/networknt/light-java) for advice.
+[Gitter Chat](https://gitter.im/networknt/light-4j) for advice.
 
 ## Getting Started
 
@@ -28,12 +28,11 @@ middleware component or part of Framework Core, you may visit
 ## Making Changes
 
 * Create a topic branch from where you want to base your work.
-  * This is usually the master branch.
-  * Only target release branches if you are certain your fix must be on that
+  * This is usually the develop branch.
+  * Only target master branch if you are certain your fix must be on that
     branch.
-  * To quickly create a topic branch based on master; `git checkout -b
-    fix/master/my_contribution master`. Please avoid working directly on the
-    `master` branch.
+  * To quickly create a topic branch based on develop; `git checkout -b
+    fix32 develop`. Please avoid working directly on the `master` branch.
 * Make commits of logical units.
 * Check for unnecessary whitespace with `git diff --check` before committing.
 * Make sure your commit messages are in the proper format.
@@ -63,5 +62,5 @@ Adding new examples or enhance examples won't need to create a new issue.
 
 * [General GitHub documentation](https://help.github.com/)
 * [GitHub pull request documentation](https://help.github.com/send-pull-requests/)
-* [Light Java Document](https://networknt.github.io/light-java/)
-* [Light Java Gitter](https://gitter.im/networknt/light-java)
+* [Light Java Document](https://networknt.github.io/light-4j/)
+* [Light Java Gitter](https://gitter.im/networknt/light-4j)

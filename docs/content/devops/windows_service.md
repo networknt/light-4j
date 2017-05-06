@@ -1,9 +1,9 @@
 ---
 date: 2017-01-07T08:03:33-05:00
-title: Running Light-Java Application as Windows Service
+title: Running Light-4J Application as Windows Service
 ---
 
-Light-Java is packaged as a fatjar and normally will be running in docker container
+Light-4J is packaged as a fatjar and normally will be running in docker container
 on production; however, it can be executed on Windows or Linux host machine or VM
 with the following command.
 
@@ -16,7 +16,7 @@ is restarted, the application will be restarted automatically.
 
 
 The following describes step-by-step how you can create a Windows service for your 
-Light-Java application or any Java application that can be packaged in a fatjar.
+Light-4J application or any Java application that can be packaged in a fatjar.
 
 There are two different options but the first option is more generic and popular.
 

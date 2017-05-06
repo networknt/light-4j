@@ -22,7 +22,7 @@ Another clear trend is standalone Gateway is phasing out in the cloud environmen
 with docker containers as most of the traditional gateway features are replaced 
 by container orchestration tool and docker container management tools. In addition, 
 some of the cross cutting concerns gateway provided are addressed in API frameworks
-like Light-Java.
+like Light-4J.
 
 
 This tutorial shows you how to build 4 services chained together one by one. And it will
@@ -49,7 +49,7 @@ git clone git@github.com:networknt/light-docker.git
 ```
 
 As we are going to regenerate API A, B, C and D, let's rename ms_chain folder from
-light-java-example.
+light-example-4j.
 
 ```
 cd ~/networknt/light-java-example
@@ -72,10 +72,10 @@ cases for handlers.
 
 To create swagger specification, the best tool is
 [swagger-editor](http://swagger.io/swagger-editor/) and I have an
-[article](https://networknt.github.io/light-java/tools/swagger-editor/)
+[article](https://networknt.github.io/light-4j/tools/swagger-editor/)
 in tools section to describe how to use it.
 
-By following the [instructions](https://networknt.github.io/light-java/tools/swagger-editor/)
+By following the [instructions](https://networknt.github.io/light-4j/tools/swagger-editor/)
 on how to use the editor, let's create four API specifications in swagger repo.
 
 API A will call API B, API B will call API C, API C will call API D
@@ -145,7 +145,7 @@ scope api_a.r or scope api_a.w to access the endpoint /data.
 ## Swagger-Codegen
 
 Now we have four API swagger.yaml files available. Let's use swagger-codegen
-to start four projects in light-java-example/ms_chain. In normal API build, you 
+to start four projects in light-example-4j/ms_chain. In normal API build, you 
 should create a repo for each API.
 
 #### Build Light Java Generator
@@ -163,7 +163,7 @@ mvn clean install -DskipTests
 #### Generate first project
 
 Now you have your swagger-codegen built, let's generate a project. Assume that
-swagger, light-java-example and swagger-codegen are in the same working
+swagger, light-example-4j and swagger-codegen are in the same working
 directory ~/networknt and you are in ~/networknt/swagger-codegen now.
 
 ```
@@ -209,7 +209,7 @@ swaggerio.swagger.models.Swagger@dc2e0c3c
 
 #### Build and run the mock API
 
-And now you have a new project created in light-java-example. Let's build
+And now you have a new project created in light-example-4j. Let's build
 it and run the test cases. If everything is OK, start the server.
 
 ```
@@ -380,7 +380,7 @@ In order to start all servers at the same time, let's update server.yml to user
 port 7004 instead of default 8080 for http and 7444 for https.
 
 The server.yml is located at
-~/networknt/light-java-example/ms_chain/api_d/apitoapi/src/main/resources/config
+~/networknt/light-example-4j/ms_chain/api_d/apitoapi/src/main/resources/config
 
 ```
 # Server configuration
@@ -446,7 +446,7 @@ certificate and we don't want to verify the domain.
 
 #### API C
 Let's leave API D running and update API C DataGetHandler in 
-~/networknt/light-java-example/ms_chain/api_c/apitoapi
+~/networknt/light-example-4j/ms_chain/api_c/apitoapi
 
 
 ```
@@ -808,7 +808,7 @@ C is calling D.
 
 Now let's see if these servers are performing with
 [wrk](https://github.com/wg/wrk). To learn how to use it, please see my
-article in tools [here](https://networknt.github.io/light-java/tools/wrk-perf/)
+article in tools [here](https://networknt.github.io/light-4j/tools/wrk-perf/)
 
 Assume you have wrk installed, run the following command.
 
