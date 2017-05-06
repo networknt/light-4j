@@ -6,7 +6,7 @@ title: Server Info
 
 ## Introduction
 
-Almost every module in light-java has a configuration file that can be
+Almost every module in light-4j has a configuration file that can be
 externalized with default can be in the module itself or the API implementation
 config folder. In order to give an overview of the server runtime, system
 properties, specification as well as configurations for each enabled modules,

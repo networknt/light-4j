@@ -101,7 +101,7 @@ In order to make sure that server start up won't be impacted by all modules to
 load config files, lazy loading is encouraged unless the module must be
 initialized during server start up.
 
-The server [info](https://networknt.github.io/light-java/other/info/) 
+The server [info](https://networknt.github.io/light-4j/other/info/) 
 module will output the config files in map format for each enabled module and 
 it creates another un-cached copy with getJsonMapConfigNoCache as some of the 
 config contains sensitive info that needs to be masked. For example, secret.yml.
@@ -110,7 +110,7 @@ config contains sensitive info that needs to be masked. For example, secret.yml.
 ## Loading sequence
 
 Each module should have a config file that named the same as the module name. And
-each application or service built on top of light-java framework should have a
+each application or service built on top of light-4j framework should have a
 config file named with application or service name if necessary. 
 
 For example, Security module as a config file named security.json and it is
@@ -126,14 +126,14 @@ config copies in test cases into class path for unit testing.
 
 For official runtime environment, config files should be externalized to a
 separate folder outside of the package by a system property
-"light-java-config-dir". You can start the server with
-a "-Dlight-java-config-dir=/config" option and put all your files
+"light-4j-config-dir". You can start the server with
+a "-Dlight-4j-config-dir=/config" option and put all your files
 into /config. Once in docker image, it can be mapped to a host volume
-with -v /etc/light-java:/config in docker run command.
+with -v /etc/light-4j:/config in docker run command.
 
 Given above explanation, the loading sequence is:
 
-1. System property "light-java-config-dir" specified directory
+1. System property "light-4j-config-dir" specified directory
 2. Class Path
 3. Application resources/config folder
 4. Module resources/config folder
@@ -146,7 +146,7 @@ different behaviours under different configuration, you need to manually
 manipuate config file in classpath in your test case in order to simulate
 different configurations. 
 
-For official deploy environment, externalized config in light-java-config-dir
+For official deploy environment, externalized config in light-4j-config-dir
 is recommended; however, not all config files need to be externalized. Only
 the ones that you might change from one environment to another or might be
 changed on production under certain conditions. 
@@ -177,8 +177,8 @@ you cannot use both as there is a priority in loading sequence:
 
 yml > yaml > json
 
-Note that all default config files for light-java and other framework built on
-top of light-java modules are using yml as config format except swagger.json
+Note that all default config files for light-4j and other framework built on
+top of light-4j modules are using yml as config format except swagger.json
 which is generated from swagger editor. If you want to overwrite the default
 config for one of the modules, you must use the {module name}.yml in your app
 config folder or externalized to config directory specified by system properties.

@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.3.0 - 2017-05-05
+### Added
+- Fixes #59 change project name to light-4j
+
 ## 1.2.8 - 2017-05-02
 ### Added
 - Fixes #42 upgrade dependencies
@@ -17,7 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## 1.2.7 - 2017-03-28
 ### Added
-- Fixes #38 add status codes and utilities for light-java-graphql
+- Fixes #38 add status codes and utilities for light-graphql-4j
 
 ### Changed
 - Fixes #34 enable HTTP/2 on server and make HTTP/2 configurable in server.yml
@@ -84,7 +88,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Resolve Maven Eclipse errors
 - Enhanced service module to support parameterized constructor
 - Integrate server with registry
-- Spin off swagger, security and validator handlers to light-java-rest
+- Spin off swagger, security and validator handlers to light-rest-4j
 
 ## 1.1.7 - 2017-01-14
 ### Added
@@ -192,7 +196,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Add Dockerfile to the root of generated API project.
 
 ### Changed
-- Rename project to light-java
+- Rename project to light-4j
 - JsonPath configuration is done in a startup hook provider now.
 
 ## 0.1.9 - 2016-10-17

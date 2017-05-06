@@ -27,7 +27,7 @@ right due to backward compatible requirement.
 
 I did a performance test between Spring Boot and My own Light Java Framework
 and Spring Boot is 44 times slower. The performance test code and result can be
-found [here](https://github.com/networknt/light-java-example/tree/master/performance)
+found [here](https://github.com/networknt/light-example-4j/tree/master/performance)
 
 The test result for Spring Boot was based on the embedded tomcat server and
 later on I have switched to Undertow servlet container for Spring Boot. The

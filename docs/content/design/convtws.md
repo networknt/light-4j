@@ -96,7 +96,7 @@ as service calls are over the network, there are a lot of things need to be
 handled like security, logging, metrics, auditing, service registry/discovery
 etc. This is why you need a framework to build microservices so that developers
 can only focus on the business logic of the service without worrying about
-cross-cutting concerns. The light-java/light-java-rest framework is designed
+cross-cutting concerns. The light-4j/light-rest-4j framework is designed
 just for that. 
 
 

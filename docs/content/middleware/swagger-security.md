@@ -3,8 +3,8 @@ date: 2016-10-12T19:07:43-04:00
 title: Swagger Security
 ---
 
-This handler is part of the [light-java-rest](https://github.com/networknt/light-java-rest)
-which is built on top of light-java but focused on RESTful API only.
+This handler is part of the [light-rest-4j](https://github.com/networknt/light-rest-4j)
+which is built on top of light-4j but focused on RESTful API only.
 
 It supports OAuth2 with JWT token distributed verification and can be extended to 
 other authentication and authorization approaches. 

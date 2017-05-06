@@ -176,7 +176,7 @@ with shared heap memory.
 As for speed, it is faster than WebSphere/WebLogic/JBoss but not in the same level as other
 new containerless Java frameworks and platforms. 
  
-Here is a [benchmarks](https://github.com/networknt/light-java-example/tree/master/performance) 
+Here is a [benchmarks](https://github.com/networknt/microservices-framework-benchmark) 
 that have both popular Java microservices frameworks and Nodejs/Express. The above performance
 result only focus on raw throughput and latency. While more code is added, Nodejs will be
 getting slower and slower. 

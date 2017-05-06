@@ -68,15 +68,18 @@ The onStartup() in your implementation will be called before server startup.
 
 There is only one handler provider that is needed to wire in API implementations. In most of the
 cases, it would be an instance of io.undertow.server.RoutingHandler just like the generated [petstore
-project](https://github.com/networknt/light-java-example/tree/master/petstore). However, it is not
+project](https://github.com/networknt/light-example-4j/tree/master/petstore). However, it is not
 limited and it can be several handlers chained together. One example is the 
-[webserver example](https://github.com/networknt/light-java-example/tree/master/webserver) and it
+[webserver example](https://github.com/networknt/light-example-4j/tree/master/webserver) and it
 has several handlers chained together to provide API routing as well as static website. The handler
-provide code can be found [here](https://github.com/networknt/light-java-example/blob/master/webserver/src/main/java/com/networknt/webserver/handler/WebServerHandlerProvider.java)
+provide code can be found [here](https://github.com/networknt/light-example-4j/blob/master/webserver/src/main/java/com/networknt/webserver/handler/WebServerHandlerProvider.java)
 
 If you have OpenAPI specification defined, this handler provider will be generated from 
-[swagger-codegen](https://github.com/networknt/swagger-codegen). [Here](https://github.com/networknt/light-java-example/blob/master/petstore/src/main/java/io/swagger/handler/PathHandlerProvider.java) 
+[light-codegen](https://github.com/networknt/light-codegen). [Here](https://github.com/networknt/light-example-4j/blob/master/petstore/src/main/java/io/swagger/handler/PathHandlerProvider.java) 
 is a generated petstore handler provider that has the mapping for all endpoints.
+
+The above is using light-rest-4j as example, for GraphQL and Hybrid, the handler provider will be
+different.
 
 Handler provider implements interface com.networknt.server.HandlerProvider
 
@@ -93,7 +96,7 @@ will be called in the request/response chain right after all middleware handlers
 
 # Middleware Handlers
 
-There are some [builtin middleware components](https://networknt.github.io/light-java/middleware/) 
+There are some [builtin middleware components](https://networknt.github.io/light-4j/middleware/) 
 in the framework to address common cross cutting concerns. There are implemented in a way we think
 the best to meet most of business requirements. In other words, there are opinionated. For product
 that built top of the framework, you can add/customize/replace existing middleware handlers. 
@@ -139,8 +142,8 @@ completed without an error.
 
 There are dependencies between middleware handlers so the sequence to plug them in is very important.
 
-For default plugins generated from [swagger-codegen](https://networknt.github.io/light-java/tools/swagger-codegen/),
-please refer to [Server](https://networknt.github.io/light-java/other/server/)
+For default plugins generated from [light-codegen](https://github.com/networknt/light-codegen),
+please refer to [Server](https://networknt.github.io/light-4j/other/server/)
 
 # Diagram
 

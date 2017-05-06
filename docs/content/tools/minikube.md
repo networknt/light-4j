@@ -3,7 +3,7 @@ date: 2017-03-18T20:37:48-04:00
 title: Minikube Installation
 ---
 
-As light-java API/service is aiming to deployed with Docker containers and
+As light-4j API/service is aiming to deployed with Docker containers and
 Kubernetes is the most popular container orchestration tool. It is very hard
 to setup multiple nodes cluster on laptop development environment but there
 is a minikube can be used on laptop to create one node cluster on your laptop.

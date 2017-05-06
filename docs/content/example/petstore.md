@@ -5,8 +5,8 @@ title: petstore
 
 # Introduction
 
-[Petstore](https://github.com/networknt/light-java-example/tree/master/petstore) 
-is a generated API project based on OpenAPI specification found [here](http://petstore.swagger.io/v2/swagger.json).
+[Petstore](https://github.com/networknt/light-example-4j/tree/master/petstore) 
+is a generated RESTful API project based on OpenAPI specification found [here](https://github.com/networknt/model-config/tree/master/rest/petstore).
 
 
 # Prepare Environment
@@ -21,44 +21,45 @@ projects we need for the tutorial.
 cd ~
 mkdir workspace
 cd workspace
-git clone git@github.com:networknt/swagger-codegen.git
-git clone git@github.com:networknt/light-java-example.git
+git clone git@github.com:networknt/light-codegen.git
+git clone git@github.com:networknt/light-example-4j.git
 git clone git@github.com:networknt/light-oauth2.git
-git clone git@github.com:networknt/light-docker.git 
+git clone git@github.com:networknt/light-docker.git
+git clone git@github.com:networknt/model-config.git
 ```
 
-We are going to re-generate petstore project in light-java-example. So let's rename
-the directory to petstore.bak
+We are going to re-generate petstore project in light-example-4j. So let's rename
+the existing directory in light-example-4j to petstore.bak
 
 ```
-cd light-java-example
+cd light-example-4j
 mv petstore petstore.bak
 cd ..
 ```
 
-Now let's build the swagger-codegen to make it ready to generate petstore project.
+Now let's build the light-codegen to make it ready to generate petstore project. There are
+ways to use light-codegen but here we just build and use the command line codgen-cli.
 
 ```
-cd swagger-codegen
+cd light-codegen
 mvn install -DskipTests
 ```
 
 
 # Generate project
 
-This project will be updated constantly when a new version of Light-Java framework 
-is released or any updates in [swagger-codegen](https://github.com/networknt/swagger-codegen).
+This project will be updated constantly when a new version of Light-4J framework 
+is released or any updates in [light-codegen](https://github.com/networknt/light-codegen).
 
-Here is the command line to generate this project from swagger-codegen directory. It
-assumes that you have light-java-example cloned in the same working directory and 
+Here is the command line to generate this project from model-config directory. It
+assumes that you have light-example-4j cloned in the same working directory and 
 petstore directory is removed or renamed. If you keep the existing petstore, it will 
 generate other files but not handlers and test cases for handlers by default. When 
-you have new endpoints defined in the specification, then new handlers and handler 
-test cases will be generated. 
+you have new endpoints defined in the specification, you'd better to generate to
+another directory and then merge two project together. 
 
 ```
-java -jar modules/swagger-codegen-cli/target/swagger-codegen-cli.jar generate -i http://petstore.swagger.io/v2/swagger.json -l light-java -o ~/workspace/light-java-example/petstore
-
+java -jar target/codegen-cli.jar -f light-rest-4j -o ~/workspace/light-example-4j/petstore -m ~/workspace/model-config/rest/petstore/swagger.json -c ~/workspace/model-config/rest/petstore/config.json
 ```
 
 # Build and Start
@@ -67,7 +68,7 @@ To build the generated server.
 
 ```
 cd ..
-cd light-java-example/petstore
+cd light-example-4j/petstore
 mvn install exec:exec
 ```
 
@@ -75,7 +76,7 @@ Now the server will be started and listens to port 8080.
 
 # Test
 
-The best tool to test REST API is [Postman](https://chrome.google.com/webstore/detail/postman/fhbjgbiflinjbdggehcddcbncdddomop?hl=en)
+The best tool to test RESTful API is [Postman](https://chrome.google.com/webstore/detail/postman/fhbjgbiflinjbdggehcddcbncdddomop?hl=en)
 It is very easy to set headers and other parameters and save the configuration for 
 future usage.
 
@@ -112,51 +113,65 @@ schema with a independent library [json-schema-validator](https://github.com/net
 # Enable secrity
 
 By default, the generated API has security turned off. You an turn on the JWT 
-verification by updating src/main/resources/config/security.json in petstore project.
+verification by updating src/main/resources/config/security.yml in petstore project.
 
-Here is the default security.json
+Here is the default security.yml
 
 ```
-{
-  "description": "security configuration",
-  "enableVerifyJwt": false,
-  "enableVerifyScope": true,
-  "enableMockJwt": false,
-  "jwt": {
-    "certificate": {
-      "100": "oauth/primary.crt",
-      "101": "oauth/secondary.crt"
-    },
-    "clockSkewInSeconds": 60
-  },
-  "logJwtToken": true,
-  "logClientUserScope": false
-}
+# Security configuration in light framework.
+---
+# Enable JWT verification flag.
+enableVerifyJwt: false
 
+# Enable JWT scope verification. Only valid when enableVerifyJwt is true.
+enableVerifyScope: true
+
+# User for test only. should be always be false on official environment.
+enableMockJwt: false
+
+# JWT signature public certificates. kid and certificate path mappings.
+jwt:
+  certificate:
+    '100': oauth/primary.crt
+    '101': oauth/secondary.crt
+  clockSkewInSeconds: 60
+
+# Enable or disable JWT token logging
+logJwtToken: true
+
+# Enable or disable client_id, user_id and scope logging.
+logClientUserScope: false
 ```
 
 And here is the updated security.json
 
 ```
-{
-  "description": "security configuration",
-  "enableVerifyJwt": true,
-  "enableVerifyScope": true,
-  "enableMockJwt": false,
-  "jwt": {
-    "certificate": {
-      "100": "oauth/primary.crt",
-      "101": "oauth/secondary.crt"
-    },
-    "clockSkewInSeconds": 60
-  },
-  "logJwtToken": true,
-  "logClientUserScope": false
-}
+# Security configuration in light framework.
+---
+# Enable JWT verification flag.
+enableVerifyJwt: true
 
+# Enable JWT scope verification. Only valid when enableVerifyJwt is true.
+enableVerifyScope: true
+
+# User for test only. should be always be false on official environment.
+enableMockJwt: false
+
+# JWT signature public certificates. kid and certificate path mappings.
+jwt:
+  certificate:
+    '100': oauth/primary.crt
+    '101': oauth/secondary.crt
+  clockSkewInSeconds: 60
+
+# Enable or disable JWT token logging
+logJwtToken: true
+
+# Enable or disable client_id, user_id and scope logging.
+logClientUserScope: false
 ```
 
-The updated security.json enabled JWT signature verification as well as scope
+The updated security.yml enabled JWT signature verification as well as scope
 verification. 
 
 Let's shutdown the server by issuing a CTRL+C on the terminal. And restart the server
@@ -197,7 +212,7 @@ And we have the result:
 
 When petstore is generated, a default Dockerfile is there ready for any customization. 
 Let's just use it to create a docker image and start a docker container. Make sure you
-are in light-java-example/petstore folder.
+are in light-example-4j/petstore folder.
 
 ```
 docker build -t networknt/example-petstore .
@@ -292,20 +307,18 @@ In the next step, we are going to start the same container with externalized met
 config so that the server can connect to the Influxdb container to report the metrics.
 
 Let's create a folder under /tmp and name it petstore. Within /tmp/petstore, create
-another folder called config. Now create metrics.json in /tmp/petstore/config folder.
+another folder called config. Now create metrics.yml in /tmp/petstore/config folder.
 
 ```
-{
-  "description": "Metrics handler configuration",
-  "enabled": true,
-  "influxdbProtocol": "http",
-  "influxdbHost": "influxdb",
-  "influxdbPort": 8086,
-  "influxdbName": "metrics",
-  "influxdbUser": "root",
-  "influxdbPass": "root",
-  "reportInMinutes": 1
-}
+description: Metrics handler configuration
+enabled: true
+influxdbProtocol: http
+influxdbHost: influxdb
+influxdbPort: 8086
+influxdbName: metrics
+influxdbUser: root
+influxdbPass: root
+reportInMinutes: 1
 ```
 
 Please note that the above configuration is only for testing. 
@@ -315,7 +328,7 @@ Now start the container and linked to Influxdb.
 ```
 docker run -d -p 8080:8080 -v /tmp/petstore/config:/config --network=lightdocker_light networknt/example-petstore
 ```
-Access the one endpint several with curl command and wait for one minute.
+Access the one endpoint several times with curl command and wait for one minute.
 
 ```
 curl -H "Authorization: Bearer eyJraWQiOiIxMDAiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJ1cm46Y29tOm5ldHdvcmtudDpvYXV0aDI6djEiLCJhdWQiOiJ1cm46Y29tLm5ldHdvcmtudCIsImV4cCI6MTc5NDg3MzA1MiwianRpIjoiSjFKdmR1bFFRMUF6cjhTNlJueHEwQSIsImlhdCI6MTQ3OTUxMzA1MiwibmJmIjoxNDc5NTEyOTMyLCJ2ZXJzaW9uIjoiMS4wIiwidXNlcl9pZCI6InN0ZXZlIiwidXNlcl90eXBlIjoiRU1QTE9ZRUUiLCJjbGllbnRfaWQiOiJmN2Q0MjM0OC1jNjQ3LTRlZmItYTUyZC00YzU3ODc0MjFlNzIiLCJzY29wZSI6WyJ3cml0ZTpwZXRzIiwicmVhZDpwZXRzIl19.gUcM-JxNBH7rtoRUlxmaK6P4xZdEOueEqIBNddAAx4SyWSy2sV7d7MjAog6k7bInXzV0PWOZZ-JdgTTSn6jTb4K3Je49BcGz1BRwzTslJIOwmvqyziF3lcg6aF5iWOTjmVEF0zXwMJtMc_IcF9FAA8iQi2s5l0DYgkMrjkQ3fBhWnopgfkzjbCuZU2mHDSQ6DJmomWpnE9hDxBp_lGjsQ73HWNNKN-XmBEzH-nz-K5-2wm_hiCq3d0BXm57VxuL7dxpnIwhOIMAYR04PvYHyz2S-Nu9dw6apenfyKe8-ydVt7KHnnWWmk1ErlFzCHmsDigJz0ku0QX59lM7xY5i4qA" localhost:8080/v2/pet/111
@@ -331,7 +344,7 @@ the metrics.
 # Logging
 
 Logging is very important in microservices architecture as logs must be aggregated in
-order to trace all the activities of a particular request from consumer. We are using
+order to trace all the activities of a particular request from a consumer. We are using
 ELK stack for logging. In the above step, Elasticsearch, Logstash and Kibana are all
 started in the same docker-compose.yml.
 

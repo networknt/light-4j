@@ -47,7 +47,7 @@ files for each API.
 
 # Code generation
 
-We are going to generate the code into light-java-example repo, so let's
+We are going to generate the code into light-example-4j repo, so let's
 clone this repo into our working directory.
 
 ```
@@ -129,7 +129,7 @@ cp -r generated static
 ```
 
 Let's start update the code in static folders for each project. If you are
-using Intellij IDEA Community Edition, you need to open light-java-example
+using Intellij IDEA Community Edition, you need to open light-example-4j
 repo and then import each project by right click pom.xml in each static folder.
 
 As indicated from the title, here we are going to hard code urls in API to API

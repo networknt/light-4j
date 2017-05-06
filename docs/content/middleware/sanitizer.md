@@ -7,20 +7,18 @@ title: sanitizer
 
 This is a middleware that addresses cross site scripting concerns. It encodes the header
 and body according to the configuration. As body encoding depends on
-[Body](https://networknt.github.io/light-java/middleware/body/) middleware, it has to be
+[Body](https://networknt.github.io/light-4j/middleware/body/) middleware, it has to be
 plugged into the request/response chain after Body.
 
 # Configuration
 
-Here is the default configuration sanitizer.json
+Here is the default configuration sanitizer.yml
 
 ```
-{
-  "description": "Sanitize request for cross site scripting during runtime",
-  "enabled": true,
-  "sanitizeBody": true,
-  "sanitizeHeader": true
-}
+description: Sanitize request for cross site scripting during runtime
+enabled: true
+sanitizeBody: true
+sanitizeHeader: true
 ```
 
 If enabled is false, this middleware won't be loaded during server startup. 

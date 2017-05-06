@@ -10,19 +10,19 @@ server needs to handle the pre-flight OPTIONS request to enable CORS.
 As CORS only used in above scenario, the handler is not wired in by default in
 swagger-codegen. 
 
-If you want to limit only several domains for CORS, you also need to create cors.json
+If you want to limit only several domains for CORS, you also need to create cors.yml
 in config folder.
 
-And here is an example of cors.json
+And here is an example of cors.yml
 
 ```
-{
-  "description": "Cors Http Handler",
-  "enabled": true,
-  "allowedOrigins": [
-    "http://localhost"
-  ]
-}
+description: Cors Http Handler
+enabled: true
+allowedOrigins:
+- http://localhost
+allowedMethods:
+- GET
+- POST
 ```
 
 To enable CORS support, you need to add cors module in pom.xml, you need to update 
@@ -32,7 +32,7 @@ pom.xml to add a dependency.
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>cors</artifactId>
-            <version>${version.light-java}</version>
+            <version>${version.light-4j}</version>
         </dependency>
 
 ```
@@ -74,7 +74,7 @@ com.networknt.exception.ExceptionHandler
 
 Now let's start the server
 ```
-cd ~/networknt/light-java-example/cors
+cd ~/networknt/light-example-4j/cors
 mvn clean install exec:exec
 ```
 
@@ -111,5 +111,5 @@ And the result
 
 The source code for the cors example can be found at
 
-https://github.com/networknt/light-java-example/tree/master/cors
+https://github.com/networknt/light-example-4j/tree/master/cors
 

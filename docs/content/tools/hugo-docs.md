@@ -128,7 +128,7 @@ find . -name .gitkeep
 ```
 ## Config
 
-Copy the content of [my config](https://raw.githubusercontent.com/networknt/light-java/master/docs/config.toml)
+Copy the content of [my config](https://raw.githubusercontent.com/networknt/light-4j/master/docs/config.toml)
 into config.toml under docs and update it accordingly
 
 ## Theme

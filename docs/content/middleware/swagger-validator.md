@@ -3,12 +3,12 @@ date: 2016-10-12T19:13:19-04:00
 title: Swagger Validator
 ---
 
-This handler is part of the [light-java-rest](https://github.com/networknt/light-java-rest)
-which is built on top of light-java but focused on RESTful API only. 
+This handler is part of the [light-rest-4j](https://github.com/networknt/light-rest-4j)
+which is built on top of light-4j but focused on RESTful API only. 
 
 It encourages design driven implementation so swagger specification should be 
-done before the implementation starts. With the swagger-codegen light-java 
-generator, the server stub can be generated and start running within minutes. 
+done before the implementation starts. With the [light-codegen](https://github.com/networknt/light-codegen) 
+light-4j generator, the server stub can be generated and start running within minutes. 
 However, we cannot rely on generator for validation as specification will be 
 changed along the life cycle of the API. This is why we have provided a validator 
 that works on top of the specification at runtime. In this way, the generator 
@@ -31,9 +31,9 @@ to the next step.
 # ValidatorHandler
 
 This is the entry point of the validator and it is injected during server 
-start up if validator.json enableValidator is true. By default, only 
+start up if validator.yml enableValidator is true. By default, only 
 RequestValidator will be called. However, ResponseValidator can be enabled 
-by setting enableResponseValidator to true in validator.json.
+by setting enableResponseValidator to true in validator.yml.
 
 # RequestValidator
 
@@ -67,6 +67,6 @@ will be called to validate the input against a json schema defined in draft v4.
 
 # Test
 
-In order to test validator, the test suite starts a light-java server and serves 
+In order to test validator, the test suite starts a light-4j server and serves 
 petstore api for testing. It is a demo on how to unit test your API during 
 development.
