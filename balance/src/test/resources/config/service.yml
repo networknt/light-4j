@@ -1,3 +1,4 @@
+# Default load balance is round robin and it can be replace with another implementation.
 ---
 description: singleton service factory configuration
 singletons:

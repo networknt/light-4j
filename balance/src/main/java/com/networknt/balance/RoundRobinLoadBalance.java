@@ -8,6 +8,17 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
+ * Round Robin Loadbalance will pick up a url from a list of urls one by one
+ * for each call. It will distributed the load equally to all urls in the list.
+ *
+ * This class has an instance variable called idx which is AtomicInteger and it
+ * increases for every select call to make sure all urls in the list will have
+ * an opportunity to be selected.
+ *
+ * The assumption for round robin is based on all service will have the same
+ * hardware/cloud resource configuration so that they can be treated as the
+ * same priority.
+ *
  * Created by steve on 2016-12-07.
  */
 public class RoundRobinLoadBalance implements LoadBalance {
@@ -19,8 +30,17 @@ public class RoundRobinLoadBalance implements LoadBalance {
 
     private AtomicInteger idx = new AtomicInteger(0);
 
+    /**
+     * Round robin requestKey is not used as it should be null, the url will
+     * be selected from the list base on an instance idx so every url has the
+     * same priority.
+     *
+     * @param urls List
+     * @param requestKey String
+     * @return
+     */
     @Override
-    public URL select(List<URL> urls) {
+    public URL select(List<URL> urls, String requestKey) {
         URL url = null;
         if (urls.size() > 1) {
             url = doSelect(urls);
@@ -47,13 +67,5 @@ public class RoundRobinLoadBalance implements LoadBalance {
         return getPositive(idx.incrementAndGet());
     }
 
-    /**
-     * return positive int value of originValue
-     * @param originValue original value
-     * @return positive int
-     */
-    public static int getPositive(int originValue){
-        return 0x7fffffff & originValue;
-    }
 
 }

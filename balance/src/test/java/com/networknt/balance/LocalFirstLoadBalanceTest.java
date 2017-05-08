@@ -23,7 +23,7 @@ public class LocalFirstLoadBalanceTest {
         urls.add(new URLImpl("http", "127.0.0.11", 8082, "v1", new HashMap<String, String>()));
         urls.add(new URLImpl("http", "127.0.0.12", 8083, "v1", new HashMap<String, String>()));
         urls.add(new URLImpl("http", "127.0.0.115", 8084, "v1", new HashMap<String, String>()));
-        URL url = loadBalance.select(urls);
+        URL url = loadBalance.select(urls, null);
         Assert.assertEquals(url, URLImpl.valueOf("http://127.0.0.1:8081/v1"));
     }
     
@@ -36,14 +36,14 @@ public class LocalFirstLoadBalanceTest {
         urls.add(new URLImpl("http", "127.0.0.10", 8084, "v1", new HashMap<String, String>()));
 
         // no local host URL available, go round-robin
-        URL url = loadBalance.select(urls);
+        URL url = loadBalance.select(urls, null);
         Assert.assertEquals(url, URLImpl.valueOf("http://127.0.0.10:8082/v1"));
     }
     
     @Test
     public void testSelectWithEmptyList() throws Exception {
         List<URL> urls = new ArrayList<>();
-        URL url = loadBalance.select(urls);
+        URL url = loadBalance.select(urls, null);
         Assert.assertNull(url);
     }
 }

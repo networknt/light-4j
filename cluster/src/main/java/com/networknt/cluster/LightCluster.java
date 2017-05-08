@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * This is the only concrete implementation of cluster interface.
+ *
  * Created by stevehu on 2017-01-27.
  */
 public class LightCluster implements Cluster {
@@ -30,8 +32,16 @@ public class LightCluster implements Cluster {
         if(logger.isInfoEnabled()) logger.info("A LightCluster instance is started");
     }
 
+    /**
+     * Implement serviceToUrl with client side service discovery.
+     *
+     * @param protocol String
+     * @param serviceName String
+     * @param requestKey String
+     * @return String
+     */
     @Override
-    public String serviceToUrl(String protocol, String serviceName) {
+    public String serviceToUrl(String protocol, String serviceName, String requestKey) {
         if(logger.isDebugEnabled()) logger.debug("protocol = " + protocol + " serviceName = " + serviceName);
         // lookup in serviceMap first, if not there, then subscribe and discover.
         List<URL> urls = serviceMap.get(serviceName);
@@ -47,7 +57,7 @@ public class LightCluster implements Cluster {
             urls = registry.discover(subscribeUrl);
             if(logger.isDebugEnabled()) logger.debug("discovered urls = " + urls);
         }
-        URL url = loadBalance.select(urls);
+        URL url = loadBalance.select(urls, requestKey);
         if(logger.isDebugEnabled()) logger.debug("final url after load balance = " + url);
         // construct a url in string
         return protocol + "://" + url.getHost() + ":" + url.getPort();
