@@ -62,5 +62,5 @@ Adding new examples or enhance examples won't need to create a new issue.
 
 * [General GitHub documentation](https://help.github.com/)
 * [GitHub pull request documentation](https://help.github.com/send-pull-requests/)
-* [Light Java Document](https://networknt.github.io/light-4j/)
-* [Light Java Gitter](https://gitter.im/networknt/light-4j)
+* [Light 4J Document](https://networknt.github.io/light-4j/)
+* [Light 4J Gitter](https://gitter.im/networknt/light-4j)

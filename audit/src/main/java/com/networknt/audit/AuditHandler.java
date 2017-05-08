@@ -16,6 +16,7 @@
 
 package com.networknt.audit;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.config.Config;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.Constants;
@@ -34,17 +35,31 @@ import java.util.Map;
 /**
  * This is a simple audit handler that dump most important info per request basis. The following
  * elements will be logged if it's available in auditInfo object attached to exchange. This object
- * wil be populated by swagger-meta and swagger-security.
+ * wil be populated by other upstream handlers like swagger-meta and swagger-security for
+ * light-rest-4j framework.
  *
- * Turn off statusCode and responseTime can make it faster
+ * This handler can be used on production but be aware that it will impact the overall performance.
+ * Turning off statusCode and responseTime can make it faster as these have to be captured on the
+ * response chain instead of request chain.
+ *
+ * For most business and majority of microservices, you don't need to enable this handler due to
+ * performance reason. The default audit log will be audit.log config in the default logback.xml;
+ * however, it can be changed to syslog or Kafka with customized appender.
+ *
+ * Majority of the fields in audit log are collected in request and response; however, to allow
+ * user to customize it, we have put an attachment into the exchange to allow other handlers to
+ * write important info into it. The audit.yml can control which fields should be included in the
+ * final log.
+ *
+ * By default, the following fields are included:
  *
  * timestamp
- * serviceName (from server.json)
+ * serviceId (from server.yml)
  * correlationId
  * traceabilityId (if available)
  * clientId
  * userId (if available)
- * scopeClientId (available if called by an API)
+ * scopeClientId (available if called by another API)
  * endpoint (uriPattern@method)
  * statusCode
  * responseTime
@@ -68,7 +83,10 @@ public class AuditHandler implements MiddlewareHandler {
     private static boolean statusCode = false;
     private static boolean responseTime = false;
 
+    // A customized logger appender defined in default logback.xml
     static final Logger audit = LoggerFactory.getLogger(Constants.AUDIT_LOGGER);
+
+    // The key to the audit info attachment in exchange. Allow other handlers to set values.
     public static final AttachmentKey<Map> AUDIT_INFO = AttachmentKey.create(Map.class);
 
     private volatile HttpHandler next;
@@ -119,10 +137,16 @@ public class AuditHandler implements MiddlewareHandler {
                 if(responseTime) {
                     auditMap.put(RESPONSE_TIME, System.currentTimeMillis() - start);
                 }
+                try {
+                    audit.info(Config.getInstance().getMapper().writeValueAsString(auditMap));
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
                 nextListener.proceed();
             });
+        } else {
+            audit.info(Config.getInstance().getMapper().writeValueAsString(auditMap));
         }
-        audit.info(Config.getInstance().getMapper().writeValueAsString(auditMap));
         next.handleRequest(exchange);
     }
 
