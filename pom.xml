@@ -86,7 +86,7 @@
         <version.assertj>2.1.0</version.assertj>
         <version.hdrhistogram>2.1.8</version.hdrhistogram>
         <version.jsr305>3.0.1</version.jsr305>
-        <version.json-schema-validator>0.1.5</version.json-schema-validator>
+        <version.json-schema-validator>0.1.7</version.json-schema-validator>
         <version.consul>1.2.1</version.consul>
         <version.zookeeper>3.5.2-alpha</version.zookeeper>
         <version.zkclient>0.3</version.zkclient>
