@@ -36,10 +36,14 @@ import java.util.List;
 import java.util.Scanner;
 
 /**
- * This is a handler that parses the body into a Map if the input content type is JSON.
+ * This is a handler that parses the body into a Map or List if the input content type is JSON.
  * For other content type, don't parse it. In order to trigger this middleware, the content type
  * must be set in header for post, put and patch.
- * <p>
+ *
+ * Currently, it is only used in light-rest-4j framework as subsequent handler will use the parsed
+ * body for further processing. Other frameworks like light-graphql-4j or light-hybrid-4j won't
+ * need this middleware handler.
+ *
  * Created by steve on 29/09/16.
  */
 public class BodyHandler implements MiddlewareHandler {
@@ -60,9 +64,16 @@ public class BodyHandler implements MiddlewareHandler {
 
     }
 
+    /**
+     * Check the header starts with application/json and parse it into map or list
+     * based on the first character "{" or "[". Ignore other content type values.
+     *
+     * @param exchange HttpServerExchange
+     * @throws Exception Exception
+     */
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        // parse the body to map if content type is application/json
+        // parse the body to map or list if content type is application/json
         String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
         if (contentType != null && contentType.startsWith("application/json")) {
             if (exchange.isInIoThread()) {
@@ -121,5 +132,4 @@ public class BodyHandler implements MiddlewareHandler {
     public void register() {
         ModuleRegistry.registerModule(BodyHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
-
 }
