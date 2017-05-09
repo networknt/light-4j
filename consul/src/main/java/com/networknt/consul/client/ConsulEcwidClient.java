@@ -27,6 +27,12 @@ public class ConsulEcwidClient implements ConsulClient {
 	String host;
 	int port;
 
+	/**
+	 * Construct ConsulEcwidClient with host and port.
+	 *
+	 * @param host
+	 * @param port
+	 */
 	public ConsulEcwidClient(String host, int port) {
 		this.host = host;
 		this.port = port;
