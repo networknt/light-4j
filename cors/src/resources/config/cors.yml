@@ -1,8 +1,11 @@
 ---
 description: Cors Http Handler
+# If cors is enabled or not
 enabled: true
+# Allowed origins, you can have multiple and with port
 allowedOrigins:
 - http://localhost
+# Allowed methods list.
 allowedMethods:
 - GET
 - POST
