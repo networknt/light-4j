@@ -7,8 +7,8 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 
 /**
- * To archive maximum scalability, microservices allow Y-Axis scale to break up big
- * monolithic application to small functional unit. However, for some of the heavy
+ * To obstain maximum scalability, microservices allow Y-Axis scale to break up big
+ * monolithic application to small functional units. However, for some of the heavy
  * load services, we can use data sharding for Z-Axis scale. This load balance is
  * designed for that.
  *

@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * The assumption for round robin is based on all service will have the same
  * hardware/cloud resource configuration so that they can be treated as the
- * same priority.
+ * same priority without any weight.
  *
  * Created by steve on 2016-12-07.
  */

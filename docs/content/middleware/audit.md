@@ -12,8 +12,6 @@ with audit.yml config file.
 There is another audit provided by the light-4j framework called DumpHandler in
 [dump](/middleware/dump/) module. 
 
-# AuditHandler
-
 ## Introduction 
 
 Only logs several fields from request header and the fields are configurable. 

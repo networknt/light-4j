@@ -11,10 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Local first load balance give local service high priority then remote services.
+ * Local first load balance give local service high priority than remote services.
  * If there is no local service available, then it will adapt round robin strategy.
  *
- * With all the service in the list of urls, find local services with IP, Chances are
+ * With all the services in the list of urls, find local services with IP, Chances are
  * we have multiple local service, then round robin will be used in this case. If
  * there is no local service, find the first remote service according to round robin.
  *
@@ -38,8 +38,8 @@ public class LocalFirstLoadBalance extends RoundRobinLoadBalance {
      * list to pick up one.
      *
      * Currently, this load balance is only used if you deploy the service as standalone
-     * java process on data center host. We need to find a way to identify two VMs or two
-     * docker containers sitting on the same physical machine in the future.
+     * java process on data center hosts. We need to find a way to identify two VMs or two
+     * docker containers sitting on the same physical machine in the future to improve it.
      *
      * It is also suitable if your services are built on top of light-hybrid-4j and want
      * to use the remote interface for service to service communication.
