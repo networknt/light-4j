@@ -50,3 +50,13 @@ In the generated logback.xml, the cId is part of the appender config as pattern 
     </appender>
 
 ```
+# Configuration
+
+The configuration for this module is very simple. Just enable it or not. Here is the default
+config in the module.
+
+```
+description: Correlation Handler
+enabled: true
+
+```

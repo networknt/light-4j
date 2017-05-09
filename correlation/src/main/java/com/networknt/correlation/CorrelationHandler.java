@@ -57,11 +57,14 @@ public class CorrelationHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        // check if the cid is in the request header
         String cId = exchange.getRequestHeaders().getFirst(Constants.CORRELATION_ID);
         if(cId == null) {
+            // if not, generate a UUID and put it into the request header
             cId = Util.getUUID();
             exchange.getRequestHeaders().put(new HttpString(Constants.CORRELATION_ID), cId);
         }
+        // Add the cId into MDC so that all log statement will have cId as part of it.
         MDC.put(CID, cId);
         //logger.debug("Init cId:" + cId);
         next.handleRequest(exchange);
