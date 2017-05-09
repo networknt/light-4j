@@ -22,17 +22,22 @@ When dockerizing our application, the external configuration can be mapped to a
 volume which can be updated and restarted the container to take effect.
 
 When Kubernetes is used for docker orchestration, config files can be managed by
-ConfigMap.
+ConfigMap and Secret
 
-Most config files are not senstive and it is recommended to manage them in git
+The reason we encourage every module has its own configuration file is to ease
+the management and facilitate individual module independence. Every module can
+be upgraded independently and change its config format without impact other
+modules. 
+
+Most config files are not sensitive and it is recommended to manage them in git
 so that all the changes can be tracked and audited. With proper access control
 to the organization/lob level of config repo, only certain users can update the
 config files per environment. 
 
 There is one separate config file secret.yml that contains all the secrets in
-the applicaton like database password, private key etc. Although this file can
+the application like database password, private key etc. Although this file can
 be checked into the git along with other config files, the content should be
-just placeholder and it needs to be updated during deployment. With Kubernets,
+just placeholders and it needs to be updated during deployment. With Kubernets,
 this file will be mapped to Secrets.
 
 
@@ -45,7 +50,6 @@ only when the server start, it will contact external light-config-sever to load
 (first time) or update local file system so that config files are cached. Except 
 first time start the server, the server can use the local cache to start if 
 config service is not available.
-
 
 
 ## Singleton
@@ -82,14 +86,14 @@ The following abstract methods are implemented in the default service provider.
 ## Usage
 
 It is encouraged to create a POJO for your config if the JSON structure is static.
-However, some of the config file have repeatable elements, a map is the only
-options to represent the data in this case.
+However, some of the config file have repeatable elements, a map or list is the 
+only options to represent the data in this case.
 
 The two methods return String and InputStream is for loading files such as text
 file with different format and X509 certificates etc.
 
-getMapper() is a convenient way to get ObjectMapper instead of create one which
-is too heavy.
+getMapper() is a convenient way to get Jackson ObjectMapper instead of create one 
+which is too heavy.
 
 
 ## Cache
@@ -113,7 +117,7 @@ Each module should have a config file that named the same as the module name. An
 each application or service built on top of light-4j framework should have a
 config file named with application or service name if necessary. 
 
-For example, Security module as a config file named security.json and it is
+For example, Security module as a config file named security.yml and it is
 reside in the module /src/main/resources/config folder by default.
 
 For application that uses Security module, it can override the default module
@@ -143,7 +147,7 @@ overwritten by putting a yml config in application/service resources/config
 folder. For unit test and end-to-end test, you can create another copy of
 yml config file under test/resources/config folder. If you need to test the
 different behaviours under different configuration, you need to manually
-manipuate config file in classpath in your test case in order to simulate
+manipulate config file in classpath in your test case in order to simulate
 different configurations. 
 
 For official deploy environment, externalized config in light-4j-config-dir
@@ -203,10 +207,12 @@ ValidatorConfig config = (ValidatorConfig)Config.getInstance().getJsonObjectConf
 With every module or application has its own config file, it is hard to manage
 these files for different version of framework, different deployment environment.
 
-In order to make it easier, we have provided a [config server](https://github.com/networknt/light-config-server) 
+In order to make it easier, we have provided a [light-config-server](https://github.com/networknt/light-config-server) 
 to manage config files in multiple git organizations. The default config files
 are provided by networknt organization in github. For companies to use
 the framework, they can have an overwritten default config repo for each version
 of framework for each environment. Also, each individual application or service
 can have its overwritten config files for a framework version on a specific env.
+
+For more information about light-config-server please check [README.md](https://github.com/networknt/light-config-server)
 

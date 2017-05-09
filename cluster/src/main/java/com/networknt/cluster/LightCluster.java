@@ -17,7 +17,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * This is the only concrete implementation of cluster interface.
+ * This is the only concrete implementation of cluster interface. It basically integrates
+ * service discovery, service registry and load balance together to provide a common way
+ * to convert a protocal, service id and request key to a url that can be addressed and
+ * invoked.
  *
  * Created by stevehu on 2017-01-27.
  */
