@@ -20,3 +20,13 @@ return something that indicate the server is still alive. Currently it returns "
 in the future, it will be enhanced to add more features.
 
 
+## Configuration
+
+Here is the default config for the module.
+
+```
+# Server health endpoint that can output OK to indicate the server is alive
+
+# true to enable this middleware handler.
+enabled: true
+```

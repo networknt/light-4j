@@ -1,3 +1,5 @@
 ---
-description: Server health endpoint that can output OK to indicate the server is alive
+# Server health endpoint that can output OK to indicate the server is alive
+
+# true to enable this middleware handler.
 enabled: true

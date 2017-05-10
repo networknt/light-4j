@@ -26,9 +26,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class HealthConfig {
     boolean enabled;
 
-    @JsonIgnore
-    String description;
-
     public HealthConfig() {
     }
 
@@ -40,11 +37,4 @@ public class HealthConfig {
         this.enabled = enabled;
     }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
 }
