@@ -17,7 +17,13 @@
 package com.networknt.exception;
 
 /**
- * Created by steve on 02/09/16.
+ * A checked exception to indicate something is wrong in the configuration
+ * file. Most config files will be loaded during server startup in a static
+ * block and there is no way an exception can be thrown. This is a special
+ * exception that need to be monitored in logs in order to capture config
+ * issue during development phase.
+ *
+ * @author Steve Hu
  */
 public class ConfigException extends Exception {
     private static final long serialVersionUID = 1L;

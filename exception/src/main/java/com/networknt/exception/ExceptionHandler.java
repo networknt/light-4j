@@ -29,7 +29,18 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 /**
- * Created by steve on 29/09/16.
+ * This is a middleware handler that should be put in the beginning of request/response
+ * chain. It wraps the entire chain so that any un-handled exceptions will finally reach
+ * here and to be handled gracefully. It is encouraged to handle exceptions in business
+ * handler because the context is clear and the exchange will be terminated at the right
+ * place.
+ *
+ * This handler is plugged in by default from light-codegen and it should be enabled on
+ * production as the last defence line. It also dispatch the request to worker thread
+ * pool from IO thread pool. Only turn this off if you understand the impact and have a
+ * very good reason to do so.
+ *
+ * @author Steve Hu
  */
 public class ExceptionHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(ExceptionHandler.class);

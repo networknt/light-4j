@@ -10,7 +10,7 @@ import com.networknt.status.Status;
  * The FrameworkException will be handled by ExceptionHandler before the
  * exchange ends and a meaningful status will be returned to the consumer.
  *
- * Created by stevehu on 2017-01-09.
+ * @author Steve Hu
  */
 public class FrameworkException extends RuntimeException {
     private static final long serialVersionUID = 1L;

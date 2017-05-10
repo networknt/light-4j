@@ -17,7 +17,9 @@
 package com.networknt.exception;
 
 /**
- * Created by steve on 02/09/16.
+ * This is a checked exception used by Client module.
+ *
+ * @author Steve Hu
  */
 public class ClientException extends Exception {
     private static final long serialVersionUID = 1L;

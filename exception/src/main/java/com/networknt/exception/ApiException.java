@@ -19,7 +19,15 @@ package com.networknt.exception;
 import com.networknt.status.Status;
 
 /**
- * Created by steve on 02/09/16.
+ * This is a checked exception that can wrap Status object to give consume a uniform
+ * response. It is recommended that the business handler to catch this exception and
+ * respond to the request; however, the ExceptionHandler in this module will capture
+ * it and translate into a meaningful error response.
+ *
+ * Note that ExceptionHandler is a middleware handler and it is plugged in by default
+ * and can be turned off via configuration.
+ *
+ * @author Steve Hu
  */
 public class ApiException extends Exception {
     private static final long serialVersionUID = 1L;

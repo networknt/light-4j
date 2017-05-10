@@ -17,7 +17,13 @@
 package com.networknt.exception;
 
 /**
- * Created by steve on 22/09/16.
+ * This is a checked exception used by JWT verification and it is thrown if
+ * the JWT token is expired. Used by Security module only to work around Jose4j
+ * only return InvalidTokenException without differentiating expiry or incorrect
+ * signature. The security module needs to respond differently to consumer in
+ * case of token expiry so that caller will try to renew the token reactively.
+ *
+ * @author Steve Hu
  */
 public class ExpiredTokenException extends Exception {
     private static final long serialVersionUID = 1L;

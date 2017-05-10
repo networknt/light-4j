@@ -19,7 +19,9 @@ package com.networknt.exception;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * Created by steve on 29/09/16.
+ * Config class for Exception module to control the behavior
+ *
+ * @author  Steve Hu
  */
 public class ExceptionConfig {
     boolean enabled;
