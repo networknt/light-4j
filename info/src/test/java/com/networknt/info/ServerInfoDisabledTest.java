@@ -54,7 +54,6 @@ public class ServerInfoDisabledTest {
         // inject in memory constructed info.json to homeDir as classpath
         Config.getInstance().clear();
         Map<String, Object> map = new HashMap<>();
-        map.put("description", "server info config");
         map.put("enableServerInfo", false);
         Config.getInstance().getYaml().dump(map, new PrintWriter(new File(homeDir + "/info.yml")));
         // Add home directory to the classpath of the system class loader.

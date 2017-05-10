@@ -34,12 +34,12 @@ import java.util.Properties;
 
 /**
  * This is a server info handler that output the runtime info about the server. For example, how many
- * components are installed and what is the cofiguration of each component. For handlers, it is registered
+ * components are installed and what is the configuration of each component. For handlers, it is registered
  * when injecting into the handler chain during server startup. For other utilities, it should have a
  * static block to register itself during server startup. Additional info is gathered from environment
  * variable and JVM.
  *
- * Created by steve on 17/09/16.
+ * @author Steve Hu
  */
 public class ServerInfoGetHandler implements HttpHandler {
     public static final String CONFIG_NAME = "info";

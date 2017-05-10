@@ -24,9 +24,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class ServerInfoConfig {
     boolean enableServerInfo;
 
-    @JsonIgnore
-    String description;
-
     public ServerInfoConfig() {
     }
 
@@ -38,11 +35,4 @@ public class ServerInfoConfig {
         this.enableServerInfo = enableServerInfo;
     }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
 }

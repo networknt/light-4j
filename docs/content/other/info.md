@@ -19,7 +19,9 @@ a JSON format.
 
 info.yml
 ```
-description: Server info endpoint that can output environment and component along with configuration
+# Server info endpoint that can output environment and component along with configuration
+
+# Indicate if the server info is enable or not.
 enableServerInfo: true
 ```
 
