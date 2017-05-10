@@ -19,7 +19,9 @@ package com.networknt.health;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * Created by steve on 18/09/16.
+ * Config class for Health Handler
+ *
+ * @author Steve Hu
  */
 public class HealthConfig {
     boolean enabled;
