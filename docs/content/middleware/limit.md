@@ -8,8 +8,8 @@ some public facing APIs, it might be a good idea to enable this handler to
 limit the concurrent request to certain level in order to avoid DDOS attacks.
 
 As this handler will impact the overall performance a little bit, it is not
-configured as default in the swagger-codegen. You must manually enable it
-in your API with the following steps.
+configured as default in the [light-codegen](https://github.com/networknt/light-codegen). 
+You must select the feature to true in your light-codegen config.
 
 ## Dependency
 
@@ -23,6 +23,8 @@ pom.xml in your project.
                 <version>${version.light-4j}</version>
             </dependency>
 ```
+Once it is enabled in the light-codegen config.json, this dependency will be added
+automatically by the generator.
 
 ## Service
 

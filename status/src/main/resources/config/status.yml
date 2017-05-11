@@ -275,6 +275,11 @@ ERR11100:
   code: ERR11100
   message: INVALID_FRAMEWORK
   description: Invalid framework %s.
+ERR11101:
+  statusCode: 400
+  code: ERR11101
+  message: MISSING_GENERATOR_ITEM
+  description: Missing generator item.
 
 
 # 11200 - 11299 light hybrid validation errors
