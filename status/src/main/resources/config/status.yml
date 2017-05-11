@@ -288,6 +288,11 @@ ERR11200:
   code: ERR11200
   message: HANDLER_NOT_FOUND
   description: Handler for service %s cannot be found.
+ERR11201:
+  statusCode: 400
+  code: ERR11201
+  message: REQUEST_BODY_EMPTY
+  description: Hybrid request body is empty.
 
 # 11500 - 11600 GraphQL valdator errors
 ERR11500:
