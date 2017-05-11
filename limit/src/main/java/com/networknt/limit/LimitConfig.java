@@ -19,15 +19,14 @@ package com.networknt.limit;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * Created by steve on 29/09/16.
+ * Config class for limit module
+ *
+ * @author Steve Hu
  */
 public class LimitConfig {
     boolean enabled;
     int concurrentRequest;
     int queueSize;
-
-    @JsonIgnore
-    String description;
 
     public LimitConfig() {
     }
@@ -54,14 +53,6 @@ public class LimitConfig {
 
     public void setQueueSize(int queueSize) {
         this.queueSize = queueSize;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
 }

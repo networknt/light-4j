@@ -1,5 +1,11 @@
 ---
-description: Rate Limit Handler
+# Rate Limit Handler Configuration
+
+# If this handler is enabled or not
 enabled: false
+
+# Maximum concurrent requests allowed, if this number is exceeded, request will be queued.
 concurrentRequest: 1000
+
+# Overflow request queue size. -1 means there is no limit on the queue size
 queueSize: -1

@@ -52,18 +52,19 @@ com.networknt.exception.ExceptionHandler
 Here is the configuration file for rate limiting.
 
 ```
-{
-  "description": "Rate Limit Handler",
-  "enabled": false,
-  "concurrentRequest": 1000,
-  "queueSize": -1
-}
+# Rate Limit Handler Configuration
+
+# If this handler is enabled or not
+enabled: false
+
+# Maximum concurrent requests allowed, if this number is exceeded, request will be queued.
+concurrentRequest: 1000
+
+# Overflow request queue size. -1 means there is no limit on the queue size
+queueSize: -1
 
 ```
 
 - enabled true to enable it and false to disable it.
 - concurrentRequest number of concurrent request to be limited.
 - queueSize -1 unlimited queue size which might use a lot of memory. > 1 integer will limit the requests to be queued and once queue is full, 513 will be returned for new requests. 
-
-
-

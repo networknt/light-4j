@@ -23,14 +23,12 @@ import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.RequestLimit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  A handler which limits the maximum number of concurrent requests.  Requests beyond the limit will
- * be blocked until the previous request is complete.
+ * be queued with limited size of queue. If the queue is full, then request will be dropped.
  *
- * Created by steve on 05/11/16.
+ * @author Steve Hu
  */
 public class LimitHandler implements MiddlewareHandler {
     private static final String CONFIG_NAME = "limit";
