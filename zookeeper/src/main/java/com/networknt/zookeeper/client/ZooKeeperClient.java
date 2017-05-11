@@ -9,7 +9,9 @@ import org.I0Itec.zkclient.exception.ZkInterruptedException;
 import java.util.List;
 
 /**
- * Created by stevehu on 2017-01-18.
+ * ZooKeeperClient interface
+ *
+ * @author Steve Hu
  */
 public interface ZooKeeperClient {
 

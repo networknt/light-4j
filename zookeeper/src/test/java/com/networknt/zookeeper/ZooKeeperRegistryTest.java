@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * Created by stevehu on 2017-01-11.
+ * @author Steve Hu
  */
 public class ZooKeeperRegistryTest {
     private static ZooKeeperRegistry registry;

@@ -71,7 +71,7 @@ public interface ConsulClient {
 
 ## Implementation
 
-The implemenation is based on ecwid Consul client which is an open source library
+The implementation is based on ecwid Consul client which is an open source library
 of Consul client.
 
 ## Configuration

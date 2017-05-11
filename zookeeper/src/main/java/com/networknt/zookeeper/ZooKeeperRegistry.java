@@ -42,6 +42,11 @@ import com.networknt.utility.ConcurrentHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * The ZooKeeper Registry implementation.
+ *
+ * @author Steve Hu
+ */
 public class ZooKeeperRegistry extends CommandFailbackRegistry {
     private static final Logger logger = LoggerFactory.getLogger(ZooKeeperRegistry.class);
     private static final String SUBSCRIBE_ZOOKEEPER_SERVICE_ERROR = "ERR10027";

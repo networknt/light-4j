@@ -5,6 +5,12 @@ import com.networknt.utility.Constants;
 import com.networknt.exception.FrameworkException;
 import com.networknt.registry.URL;
 
+/**
+ * ZooKeeper Utilities that contain some static method to help communicate with
+ * the server.
+ *
+ * @author Steve Hu
+ */
 public class ZkUtils {
     private static final String GET_NODETYPEPATH_ERROR = "ERR10026";
     public static String toGroupPath(URL url) {
