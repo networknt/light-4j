@@ -1,7 +1,9 @@
 package com.networknt.switcher;
 
 /**
- * Created by axb on 16/4/25.
+ * A listener interface to get notified if switcher state is changed.
+ *
+ * @author axb
  */
 public interface SwitcherListener {
 

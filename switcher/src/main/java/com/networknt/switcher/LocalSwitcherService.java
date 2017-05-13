@@ -24,8 +24,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
+ * Local switcher service implementation
+ *
  * @author maijunsheng
- * @version 创建时间：2013-6-14
  *
  */
 public class LocalSwitcherService implements SwitcherService {

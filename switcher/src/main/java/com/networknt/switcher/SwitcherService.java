@@ -19,15 +19,15 @@ package com.networknt.switcher;
 import java.util.List;
 
 /**
- * 
+ * The interface of switcher service.
+ *
  * @author maijunsheng
- * @version 创建时间：2013-6-14
  * @author zhanglei
  * 
  */
 public interface SwitcherService {
     /**
-     * 获取接口降级开关
+     * Get switcher by name
      * 
      * @param name name of the switcher
      * @return Switcher
@@ -35,14 +35,14 @@ public interface SwitcherService {
     Switcher getSwitcher(String name);
 
     /**
-     * 获取所有接口降级开关
+     * Get all switchers as a List
      * 
      * @return  List
      */
     List<Switcher> getAllSwitchers();
 
     /**
-     * 初始化开关。
+     * Initiate a value for a switcher
      *
      * @param switcherName switcher name
      * @param initialValue initial value
@@ -50,24 +50,24 @@ public interface SwitcherService {
     void initSwitcher(String switcherName, boolean initialValue);
 
     /**
-     * 检查开关是否开启。
+     * Check if a switcher is on or off
      * 
      * @param switcherName switcher name
-     * @return boolean true ：设置来开关，并且开关值为true false：未设置开关或开关为false
+     * @return boolean true ： switcher is on, false：switcher is off
      */
     boolean isOpen(String switcherName);
 
     /**
-     * 检查开关是否开启，如果开关不存在则将开关置默认值，并返回。
+     * Check if a switcher is on or off, it doesn't exist, set default value
      * 
      * @param switcherName switcher name
      * @param defaultValue default value
-     * @return boolean 开关存在时返回开关值，开关不存在时设置开关为默认值，并返回默认值。
+     * @return boolean If switcher exists, return the state, otherwise, set default value and return that value.
      */
     boolean isOpen(String switcherName, boolean defaultValue);
 
     /**
-     * 设置开关状态。
+     * Set switcher state
      * 
      * @param switcherName switcher name
      * @param value value to be set

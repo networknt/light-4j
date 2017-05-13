@@ -17,13 +17,14 @@
 package com.networknt.switcher;
 
 /**
+ * Switcher class has a name and an on/off switch
+ *
  * @author maijunsheng
- * @version 创建时间：2013-6-14
- * 
+ *
  */
 public class Switcher {
     private boolean on = true;
-    private String name; // 开关名
+    private String name; // name of the switch
 
     public Switcher(String name, boolean on) {
         this.name = name;
@@ -35,7 +36,7 @@ public class Switcher {
     }
 
     /**
-     * isOn: true，服务可用; isOn: false, 服务不可用
+     * isOn: true，service available; isOn: false, service un-available
      * 
      * @return boolean
      */

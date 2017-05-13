@@ -18,7 +18,7 @@ package com.networknt.switcher;
 
 
 /**
- * 静态开关工具类。一般全局开关使用此类。 可以替换switcherService为不同实现
+ * A static switcher utility. Normally it is used as global switcher.
  * 
  * @author zhanglei
  *
@@ -31,28 +31,28 @@ public class SwitcherUtil {
     }
 
     /**
-     * 检查开关是否开启。
+     * Check if switcher is on or off
      * 
      * @param switcherName switcher name
-     * @return boolean true ：设置了开关，并且开关值为true false：未设置开关或开关为false
+     * @return boolean true ：switcher is on and value is true, false：switcher is off and value is false
      */
     public static boolean isOpen(String switcherName) {
         return switcherService.isOpen(switcherName);
     }
 
     /**
-     * 检查开关是否开启，如果开关不存在则将开关置默认值，并返回。
+     * Check if switcher is on or off. If it doesn't exist, set default value and return the default value
      * 
      * @param switcherName switcher name
      * @param defaultValue default value
-     * @return boolean 开关存在时返回开关值，开关不存在时设置开关为默认值，并返回默认值。
+     * @return boolean If switcher exists, return the state, otherwise, set default value and return it.
      */
     public static boolean switcherIsOpenWithDefault(String switcherName, boolean defaultValue) {
         return switcherService.isOpen(switcherName, defaultValue);
     }
 
     /**
-     * 设置开关状态。
+     * Set switcher state
      * 
      * @param switcherName switcher name
      * @param value value to be set
