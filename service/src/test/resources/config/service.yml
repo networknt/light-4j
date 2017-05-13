@@ -1,5 +1,5 @@
 ---
-description: singleton service factory configuration
+# singleton service factory configuration
 singletons:
 - com.networknt.service.A:
   - com.networknt.service.AImpl

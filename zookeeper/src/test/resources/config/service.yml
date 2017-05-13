@@ -1,5 +1,5 @@
 ---
-description: singleton service factory configuration
+# singleton service factory configuration
 singletons:
 - com.networknt.registry.URL:
   - com.networknt.registry.URLImpl:

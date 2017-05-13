@@ -3,15 +3,19 @@
 singletons:
 - com.networknt.registry.URL:
   - com.networknt.registry.URLImpl:
-      protocol: light
+      protocol: http
       host: localhost
       port: 8500
       path: ''
       parameters:
-        registrySessionTimeout: '1000'
+        registryRetryPeriod: '30000'
 - com.networknt.consul.client.ConsulClient:
-  - com.networknt.consul.MockConsulClient:
+  - com.networknt.consul.client.ConsulEcwidClient:
     - java.lang.String: localhost
     - int: 8500
 - com.networknt.registry.Registry:
   - com.networknt.consul.ConsulRegistry
+- com.networknt.balance.LoadBalance:
+  - com.networknt.balance.RoundRobinLoadBalance
+- com.networknt.cluster.Cluster:
+  - com.networknt.cluster.LightCluster

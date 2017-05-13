@@ -4,9 +4,12 @@ title: Service
 ---
 
 A light-weight and fast dependency injection framework without any third
-party dependencies. 
+party dependencies. It only support constructor inject and the injection is done
+during server startup. All the object is saved into a map and the key is the
+interface class. That can guarantee that only one instance of implementation
+is available during runtime. 
 
-Light Java framework encourage developers to build microservices with Functional
+Light 4J framework encourage developers to build microservices with Functional
 Programming Style. One of the key principle is immutability so that the code can
 be optimized to take advantage of multi-core CPUs. 
 
@@ -17,7 +20,7 @@ choose from several implementations of an interface in service.yml
 The following is an example of service.yml in the test folder for this module.
 
 ```
-description: singleton service factory configuration
+# singleton service factory configuration
 singletons:
 - com.networknt.service.A:
   - com.networknt.service.AImpl
@@ -61,4 +64,9 @@ singletons:
 
 ```
 
+Here is the code that gets the singleton object from service map. 
+
+```
+A a = (A)SingletonServiceFactory.getBean(A.class);
+```
 

@@ -43,7 +43,7 @@ public class SingletonServiceFactory {
         }
     }
 
-    public static void handleSingleImpl(List<Class> interfaceClasses, List<Object> value) throws Exception {
+    private static void handleSingleImpl(List<Class> interfaceClasses, List<Object> value) throws Exception {
         // only one object should be defined in value. TODO throws exception if number of object is not correct.
         Object object = value.get(0);
         if(object instanceof String) {
@@ -101,7 +101,7 @@ public class SingletonServiceFactory {
         }
     }
 
-    public static void handleMultipleImpl(List<Class> interfaceClasses, List<Object> value) throws Exception {
+    private static void handleMultipleImpl(List<Class> interfaceClasses, List<Object> value) throws Exception {
 
         List<Object> arrays = interfaceClasses.stream().map(c -> Array.newInstance(c, value.size())).collect(Collectors.toList());
         for(int i = 0; i < value.size(); i++) {
@@ -159,7 +159,7 @@ public class SingletonServiceFactory {
      * @param value List of implementations of interface(s) defined in the key
      * @throws Exception exception thrown from the object creation
      */
-    public static void handleSingleton(String key, List<Object> value) throws Exception {
+    private static void handleSingleton(String key, List<Object> value) throws Exception {
 
         List<Class> interfaceClasses = new ArrayList();
         if(key.contains(",")) {
@@ -178,7 +178,7 @@ public class SingletonServiceFactory {
         }
     }
 
-    public static Object construct(Class clazz) throws Exception {
+    private static Object construct(Class clazz) throws Exception {
         // find out how many constructors this class has.
         Object instance  = null;
         Constructor[] allConstructors = clazz.getDeclaredConstructors();
@@ -226,7 +226,7 @@ public class SingletonServiceFactory {
         }
     }
 
-    public static Object constructWithParameters(Class clazz, List parameters) throws Exception {
+    private static Object constructWithParameters(Class clazz, List parameters) throws Exception {
         // find out how many constructors this class has and match the one with the same sequence of
         // parameters.
         Object instance  = null;
@@ -285,6 +285,13 @@ public class SingletonServiceFactory {
         }
     }
 
+    /**
+     * Get a cached singleton object from service map by interface class. The serviceMap
+     * is constructed from service.yml which defines interface to implementation mapping.
+     *
+     * @param interfaceClass Interface class
+     * @return The implementation object
+     */
     public static Object getBean(Class interfaceClass) {
        return serviceMap.get(interfaceClass);
     }

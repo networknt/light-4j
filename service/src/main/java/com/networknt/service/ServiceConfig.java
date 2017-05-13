@@ -4,21 +4,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by steve on 2016-11-26.
+ * Service Config Class that encapsulate all the service defined in service.yml
+ *
+ * @author Steve Hu
  */
 public class ServiceConfig {
-    String description;
     List<Map<String, List<Object>>> singletons;
 
     public ServiceConfig() {
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     public List<Map<String, List<Object>>> getSingletons() {
