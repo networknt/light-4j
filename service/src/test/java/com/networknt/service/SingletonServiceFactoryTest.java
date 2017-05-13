@@ -73,5 +73,17 @@ public class SingletonServiceFactoryTest {
         MImpl m = (MImpl)SingletonServiceFactory.getBean(M.class);
         Assert.assertEquals(5, m.getValue());
     }
+    @Test
+    public void testCastAarry() {
+        MImpl[] m = (MImpl[])SingletonServiceFactory.getBean(M.class);
+        Assert.assertEquals(1, m.length);
+    }
 
+    @Test
+    public void testA2() {
+        A a = (A)SingletonServiceFactory.getBean(M.class);
+        Assert.assertEquals("a real", a.a());
+    }
 }
+
+
