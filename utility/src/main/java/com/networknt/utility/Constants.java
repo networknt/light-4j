@@ -16,6 +16,11 @@
 
 package com.networknt.utility;
 
+/**
+ * Constants shared by all light-4j components.
+ *
+ * @author Steve Hu
+ */
 public class Constants {
     // headers
     public static final String CORRELATION_ID = "X-Correlation-Id";

@@ -22,7 +22,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by steve on 02/09/16.
+ * Module registry for server info component. Every enabled module should register
+ * itself so that server info can output the status of the module as well as its
+ * configuration at runtime.
+ *
+ * @author Steve Hu
  */
 public class ModuleRegistry {
 

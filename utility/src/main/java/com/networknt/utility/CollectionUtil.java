@@ -3,7 +3,9 @@ package com.networknt.utility;
 import java.util.Collection;
 
 /**
- * Created by stevehu on 2017-01-09.
+ * Utility to deal with collection
+ *
+ * @author Steve Hu
  */
 public class CollectionUtil {
     @SuppressWarnings("rawtypes")

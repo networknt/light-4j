@@ -4,7 +4,7 @@ title: Utility
 ---
 
 This module contains some useful classes that shared by multiple modules within
-the framework.
+the light-* frameworks.
 
 # Constants
 
@@ -19,4 +19,26 @@ plugged in modules and their configurations.
 # Util
 
 Some useful utility method like uuid generator etc.
+
+# CollectionUtil
+
+Utility for collection
+
+# ConcurrentHashSet
+
+ConcurrentHashSet implementation
+
+# HashUtil
+
+Hash calculation utility
+
+# NetUtils
+
+Utilities for network
+
+# NioUtils
+
+NIO utility
+
+
 

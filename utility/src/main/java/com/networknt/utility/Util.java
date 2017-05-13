@@ -33,6 +33,11 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Generic utilities
+ *
+ * @author Steve Hu
+ */
 public class Util {
     static final Logger logger = LoggerFactory.getLogger(Util.class);
 

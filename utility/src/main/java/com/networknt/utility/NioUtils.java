@@ -22,7 +22,9 @@ import static java.io.File.separator;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- * Created by steve on 26/04/17.
+ * NIO utility
+ *
+ * @author Steve Hu
  */
 public class NioUtils {
 

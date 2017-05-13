@@ -17,7 +17,9 @@ import java.util.UUID;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- * Created by stevehu on 2016-12-23.
+ * Utility to calculate hash values.
+ *
+ * @author Steve Hu
  */
 public class HashUtil {
     public static void main(String[] args) throws Exception
