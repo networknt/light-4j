@@ -16,16 +16,13 @@
 
 package com.networknt.traceability;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 /**
- * Created by steve on 29/09/16.
+ * Configuration class for traceability
+ *
+ * @author Steve Hu
  */
 public class TraceabilityConfig {
     boolean enabled;
-
-    @JsonIgnore
-    String description;
 
     public TraceabilityConfig() {
     }
@@ -36,14 +33,6 @@ public class TraceabilityConfig {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
 }

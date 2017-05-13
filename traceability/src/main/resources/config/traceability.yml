@@ -1,3 +1,5 @@
 ---
-description: Traceability Handler
+# Traceability handler configuration
+
+# Indicate if this handler is enabled or not
 enabled: true

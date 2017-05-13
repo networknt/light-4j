@@ -32,12 +32,12 @@ import org.slf4j.LoggerFactory;
  * response header if it exists.
  *
  * The traceability-id is set by the consumer and it will be passed to all services and returned
- * to the consumer eventually if there is no error. The SimpleAuditHandler will log it in audit log
+ * to the consumer eventually if there is no error. The AuditHandler will log it in audit log
  * and Client will pass it to the next service.
  *
- * Dependencies: SimpleAuditHandler/FullAuditHandler, Client
+ * Dependencies: AuditHandler, Client
  *
- * Created by steve on 05/11/16.
+ * @author Steve Hu
  */
 public class TraceabilityHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(TraceabilityHandler.class);
