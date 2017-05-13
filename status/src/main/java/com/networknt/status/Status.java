@@ -30,7 +30,7 @@ import static java.lang.String.format;
  * 1. low latency as server will return the first error without further processing
  * 2. limited attack risks and make the error handling harder to analyzed
  *
- * Created by steve on 23/09/16.
+ * @author Steve Hu
  */
 public class Status {
     public static final String CONFIG_NAME = "status";
@@ -45,9 +45,20 @@ public class Status {
         ModuleRegistry.registerModule(Status.class.getName(), config, null);
     }
 
+    /**
+     * Default construction that is only used in reflection.
+     *
+     */
     public Status() {
     }
 
+    /**
+     * Construct a status object based on error code and a list of arguments. It is
+     * the most popular way to create status object from status.yml definition.
+     *
+     * @param code Error Code
+     * @param args A list of arguments that will be populated into the error description
+     */
     public Status(final String code, final Object... args) {
         this.code = code;
         Map<String, Object> map = (Map<String, Object>)config.get(code);
@@ -58,6 +69,15 @@ public class Status {
         }
     }
 
+    /**
+     * Construct a status object based on all the properties in the object. It is not
+     * very often to use this construct to create object.
+     *
+     * @param statusCode
+     * @param code
+     * @param message
+     * @param description
+     */
     public Status(int statusCode, String code, String message, String description) {
         this.statusCode = statusCode;
         this.code = code;
