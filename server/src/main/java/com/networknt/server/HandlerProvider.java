@@ -18,6 +18,24 @@ package com.networknt.server;
 
 import io.undertow.server.HttpHandler;
 
+/**
+ * A user handler provider interface. The framework has some middleware handlers and
+ * these are wired into the request/response chain at the right sequence. At the end
+ * of the request chain, the user business logic need to be called to do the real
+ * processing and it is usually implemented as a serial of handlers. These handlers
+ * needs to be grouped together and mapped to certain URLs and http methods.
+ *
+ * The mapping class implements this HandlerProvider so that it can be loaded during
+ * server startup to inject into the handler chain.
+ *
+ * @author Steve Hu
+ */
 public interface HandlerProvider {
+    /**
+     * Every handler provider needs to implement this method to return a HttpHanlder or
+     * a chain of HttpHandlers.
+     *
+     * @return HttpHandler
+     */
     HttpHandler getHandler();
 }

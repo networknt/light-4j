@@ -11,9 +11,10 @@ import java.util.EnumSet;
 import java.util.Set;
 
 /**
- * This is one of the startup hook to config JsonPath to use Jackson Parser
+ * This is one of the startup hook to config JsonPath to use Jackson Parser, if you are planning
+ * to use JsonPath, then you can put this into the startup hook config file.
  *
- * Created by steve on 2016-10-19.
+ * @author Steve Hu
  */
 public class JsonPathStartupHookProvider implements StartupHookProvider {
     @Override

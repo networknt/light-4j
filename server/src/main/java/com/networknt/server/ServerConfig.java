@@ -16,6 +16,11 @@
 
 package com.networknt.server;
 
+/**
+ * Server configuration class that maps to server.yml properties.
+ *
+ * @author Steve Hu
+ */
 public class ServerConfig {
     String ip;
     int httpPort;

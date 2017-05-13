@@ -58,7 +58,13 @@ import java.util.ServiceLoader;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-
+/**
+ * This is the entry point of the framework. It wrapped Undertow Core HTTP server
+ * and controls the lifecycle of the server. It also orchestrate different types
+ * of plugins and wire them in at the right location.
+ *
+ * @author Steve Hu
+ */
 public class Server {
 
     static final Logger logger = LoggerFactory.getLogger(Server.class);
@@ -303,6 +309,15 @@ public class Server {
         }
     }
 
+    /**
+     * Load config files from light-config-server instance. This is normally only
+     * used when you run light-4j server as standalone java process. If the server
+     * is dockerized and orchestrated by Kubernetes, the config files and secret will
+     * be mapped to Kubernetes ConfigMap and Secret and passed into the container.
+     *
+     * Of course, you can still use it with standalone docker container but it is not
+     * recommended.
+     */
     private static void loadConfig() {
         // if it is necessary to load config files from config server
         // Here we expect at least env(dev/sit/uat/prod) and optional config server url

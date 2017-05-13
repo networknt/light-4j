@@ -5,9 +5,16 @@ package com.networknt.server;
  * in the application before server shutdown, please implement this interface
  * with a class and put it into your API project
  * /src/main/resources/META-INF/services/com.networknt.server.ShutdownHookProvider
-
- * Created by steve on 2016-10-19.
+ *
+ * All shutdown hooks will be called during server shutdown so that resources can
+ * be released completely.
+ *
+ * @author Steve Hu
  */
 public interface ShutdownHookProvider {
+    /**
+     * Every implementation must implement this onShutdown method to hook in
+     * some business logic during server shutdown phase.
+     */
     void onShutdown();
 }
