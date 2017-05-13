@@ -1,7 +1,9 @@
 package com.networknt.security.inbound;
 
 /**
- * Created by steve on 10/04/17.
+ * Verified message
+ *
+ * @author Steve Hu
  */
 public interface VerifiedMessage {
 

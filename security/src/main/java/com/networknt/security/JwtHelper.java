@@ -47,7 +47,10 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
- * Created by steve on 01/09/16.
+ * JWT token helper utility that use by different framework to verify JWT tokens and
+ * light-oauth2 to generate JWT tokens.
+ *
+ * @author Steve Hu
  */
 public class JwtHelper {
     static final XLogger logger = XLoggerFactory.getXLogger(JwtHelper.class);
@@ -68,6 +71,13 @@ public class JwtHelper {
     static Map<String, Object> securityJwtConfig = (Map)securityConfig.get(JWT_CONFIG);
     static JwtConfig jwtConfig = (JwtConfig) Config.getInstance().getJsonObjectConfig(JWT_CONFIG, JwtConfig.class);
 
+    /**
+     * A static method that generate JWT token from JWT claims object
+     *
+     * @param claims JwtClaims object
+     * @return A string represents jwt token
+     * @throws JoseException
+     */
     public static String getJwt(JwtClaims claims) throws JoseException {
         String jwt;
         RSAPrivateKey privateKey = (RSAPrivateKey) getPrivateKey(
@@ -95,6 +105,11 @@ public class JwtHelper {
         return jwt;
     }
 
+    /**
+     * Construct a default JwtClaims
+     *
+     * @return JwtClaims
+     */
     public static JwtClaims getDefaultJwtClaims() {
         JwtConfig config = (JwtConfig) Config.getInstance().getJsonObjectConfig(JWT_CONFIG, JwtConfig.class);
 
@@ -111,6 +126,14 @@ public class JwtHelper {
 
     }
 
+    /**
+     * Get private key from java key store
+     *
+     * @param filename Key store file name
+     * @param password Key store password
+     * @param key key name in keystore
+     * @return A PrivateKey object
+     */
     private static PrivateKey getPrivateKey(String filename, String password, String key) {
         PrivateKey privateKey = null;
 
@@ -132,7 +155,13 @@ public class JwtHelper {
         return privateKey;
     }
 
-
+    /**
+     * Read certificate from a file and convert it into X509Certificate object
+     *
+     * @param filename certificate file name
+     * @return X509Certificate object
+     * @throws Exception
+     */
     static public X509Certificate readCertificate(String filename)
             throws Exception {
         InputStream inStream = null;
@@ -173,6 +202,12 @@ public class JwtHelper {
         }
     }
 
+    /**
+     * Parse the jwt token from Authorization header.
+     *
+     * @param authorization authorization header.
+     * @return JWT token
+     */
     public static String getJwtFromAuthorization(String authorization) {
         String jwt = null;
         if(authorization != null) {
@@ -189,6 +224,14 @@ public class JwtHelper {
         return jwt;
     }
 
+    /**
+     * Verify JWT token signature as well as expiry.
+     *
+     * @param jwt String of Json web token
+     * @return JwtClaims object
+     * @throws InvalidJwtException
+     * @throws ExpiredTokenException
+     */
     public static JwtClaims verifyJwt(String jwt) throws InvalidJwtException, ExpiredTokenException {
         JwtClaims claims;
         JwtConsumer consumer = new JwtConsumerBuilder()

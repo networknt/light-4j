@@ -33,7 +33,7 @@ import java.util.Map;
  * after it is started. Do not use it on production runtime. If you need an external
  * OAuth2 server, please take a look at https://github.com/networknt/light-oauth2
  *
- * Created by steve on 18/09/16.
+ * @author Steve Hu
  */
 public class JwtMockHandler implements HttpHandler {
 

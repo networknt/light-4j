@@ -1,6 +1,6 @@
 ---
 date: 2016-10-23T10:35:04-04:00
-title: sanitizer
+title: Sanitizer
 ---
 
 # Introduction
@@ -15,14 +15,28 @@ plugged into the request/response chain after Body.
 Here is the default configuration sanitizer.yml
 
 ```
-description: Sanitize request for cross site scripting during runtime
+# Sanitize request for cross site scripting during runtime
+
+# indicate if sanitizer is enabled or not
 enabled: true
+
+# if it is enabled, does body need to be sanitized
 sanitizeBody: true
-sanitizeHeader: true
+
+# if it is enabled, does header need to be sanitized
+sanitizeHeader: false
 ```
 
 If enabled is false, this middleware won't be loaded during server startup. 
-sanitizeBody and sanitizeHeader control if body and header need to be sanitized or both.
+sanitizeBody and sanitizeHeader control if body and header need to be sanitized or both. In
+most of the cases, sanitizing body make sense and sanitizing header is not necessary.
+
+# When to use sanitizer
+
+This handler should only be used when you are collecting user input from Web/Mobile UI and
+later on use the input data to generate web pages. For example, a forum or blog application.
+
+For services that user input will never used to construct web pages, don't use this handler.
 
 # Query Parameters
 

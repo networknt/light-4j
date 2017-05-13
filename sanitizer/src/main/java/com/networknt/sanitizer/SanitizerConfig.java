@@ -3,15 +3,14 @@ package com.networknt.sanitizer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * Created by steve on 22/10/16.
+ * Sanitizer configuration class
+ *
+ * @author Steve Hu
  */
 public class SanitizerConfig {
     boolean enabled;
     boolean sanitizeBody;
     boolean sanitizeHeader;
-
-    @JsonIgnore
-    String description;
 
     public SanitizerConfig() {
     }
@@ -40,11 +39,4 @@ public class SanitizerConfig {
         this.sanitizeHeader = sanitizeHeader;
     }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
 }

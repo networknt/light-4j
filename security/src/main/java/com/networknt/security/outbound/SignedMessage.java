@@ -1,7 +1,9 @@
 package com.networknt.security.outbound;
 
 /**
- * Created by steve on 10/04/17.
+ * Signed Message
+ *
+ * @author Steve Hu
  */
 public interface SignedMessage {
     String getEnvelope();

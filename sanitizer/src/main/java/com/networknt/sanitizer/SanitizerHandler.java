@@ -19,7 +19,7 @@ import java.util.*;
  * This is a middleware component that sanitize cross site scripting tags in request. As potentially
  * sanitizing body of the request, this middleware must be plugged into the chain after body parser.
  *
- * Created by steve on 22/10/16.
+ * @author Steve Hu
  */
 public class SanitizerHandler implements MiddlewareHandler {
     public static final String CONFIG_NAME = "sanitizer";
