@@ -41,7 +41,14 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Created by steve on 03/10/16.
+ * Metrics middleware handler can be plugged into the request/response chain to
+ * capture metrics information for all services. It is based on the dropwizard
+ * metric but customized to capture statistic info for a period of time and then
+ * reset all the data in order to capture the next period. The capture period can
+ * be configured in metrics.yml and normally should be 5 minutes, 10 minutes or
+ * 20 minutes depending on the load of the service.
+ *
+ * @author Steve Hu
  */
 public class MetricsHandler implements MiddlewareHandler {
     public static final String CONFIG_NAME = "metrics";

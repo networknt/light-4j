@@ -22,7 +22,6 @@ import java.util.Collection;
  * Register service to Registry center.
  *
  * @author fishermen
- * @version V1.0 created at: 2013-5-16
  */
 
 public interface RegistryService {

@@ -8,7 +8,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Created by stevehu on 2017-01-17.
+ * Implementation of URL interface.
+ *
+ * @author Steve Hu
  */
 public class URLImpl implements URL {
     private String protocol;

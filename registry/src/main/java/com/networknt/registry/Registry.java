@@ -21,7 +21,6 @@ package com.networknt.registry;
  * Used to register and discover.
  *
  * @author fishermen
- * @version V1.0 created at: 2013-5-28
  */
 public interface Registry extends RegistryService, DiscoveryService {
 

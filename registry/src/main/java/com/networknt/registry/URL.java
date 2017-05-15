@@ -15,26 +15,17 @@
  */
 package com.networknt.registry;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.apache.commons.lang3.StringUtils;
-
-import com.networknt.utility.Constants;
 
 /**
- * <pre>
  * Describe a service in registry.
  *
  * All parameter retrieve methods(getXXX method) must return an object. This is to prevent
  * value modification accidentally.
  *
  * If there is no defaultValue, return null for getXXX
- * </pre>
- * 
+ *
  * @author fishermen, stevehu
- * @version V1.0 created at: 2013-5-16
  */
 
 public interface URL {

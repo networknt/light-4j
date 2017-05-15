@@ -19,8 +19,11 @@ package com.networknt.registry;
 import com.networknt.utility.Constants;
 
 /**
+ * The URL parameters are extra information attached to URL which is the main
+ * object for service registry and discovery. This class defines all types of
+ * URL parameters that are supported in the framework.
+ *
  * @author maijunsheng
- * created at 2013-5-21
  *
  */
 public enum URLParamType {

@@ -29,7 +29,12 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Created by axb on 16/6/12.
+ * Direct registry is used for local testing only. It is implement all the
+ * interface of registry and discovery that is backed by local service.yml
+ * configuration. All instances of the service will be defined in the config
+ * as hard-coded url:port along with other parameters.
+ *
+ * @author Steve Hu
  */
 public class DirectRegistry extends AbstractRegistry {
     private final static String PARSE_DIRECT_URL_ERROR = "ERR10019";

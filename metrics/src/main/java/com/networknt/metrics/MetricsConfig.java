@@ -19,7 +19,10 @@ package com.networknt.metrics;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * Created by steve on 04/10/16.
+ * Metrics middleware handler configuration that is mapped to all
+ * properties in metrics.yml config file.
+ *
+ * @author Steve Hu
  */
 public class MetricsConfig {
     boolean enabled;

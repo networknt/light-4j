@@ -22,7 +22,6 @@ import java.util.List;
  * Discovery service.
  *
  * @author fishermen
- * @version V1.0 created at: 2013-5-16
  */
 
 public interface DiscoveryService {

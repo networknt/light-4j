@@ -31,12 +31,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * <pre>
  * Abstract registry。
  *
  * Use url createCopy to prevent object modification in multi-thread env
- *
- * </pre>
  *
  * @author fishermen
  */

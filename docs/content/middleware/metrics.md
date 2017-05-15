@@ -18,16 +18,25 @@ to output the metrics on dashboard from two different perspectives:
 Here is an example of configuration.
 
 ```
-{
-  "description": "Metrics handler configuration",
-  "enabled": true,
-  "influxdbHost": "localhost",
-  "influxdbPort": 8086,
-  "influxdbName": "metrics",
-  "influxdbUser": "admin",
-  "influxdbPass": "admin",
-  "reportInMinutes": 5
-}
+# Metrics handler configuration
+
+# If metrics handler is enabled or not
+enabled: false
+
+# influxdb protocal can be http, https
+influxdbProtocol: http
+# influxdb hostname
+influxdbHost: localhost
+# influxdb port number
+influxdbPort: 8086
+# influxdb database name
+influxdbName: metrics
+# influxdb user
+influxdbUser: admin
+# influx db password
+influxdbPass: admin
+# report and reset metrics in minutes.
+reportInMinutes: 1
 ```
 
 ## InfluxDB and Grafana
@@ -83,4 +92,17 @@ The default implementation is based on InfluxDB and Grafana which are the most p
 for docker containers. However, the database and dashboard can be replaced easily with another
 reporter implementation. To replace it, change the MetricsHandler to use another reporter instead of
 InfluxDB.
+
+## reportInMinutes
+
+In the metrics.yml, you can choose reportInMinutes. This is a period the system caches and 
+calculates statistic info about the request/response and report to the Influxdb. After the
+report, the data set is reset so that the collection is started from scratch again. Depending
+on the performance requirement for your services and your capacity of influxdb, you may choose
+long report period or short report period. Short period like 5 minutes will generate more
+traffic and data to influxdb but reduce the chance of data loss when server is restarting.
+Long period like 15 minutes will reduce the load to influxdb and you can keep more days data
+online in influxdb to study the long term trends of your services.
+
+
 
