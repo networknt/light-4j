@@ -35,6 +35,8 @@ import java.util.regex.Pattern;
 
 /**
  * A utility to mask sensitive data based on regex pattern before logging
+ *
+ * @author Steve Hu
  */
 public class Mask {
 

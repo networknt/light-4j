@@ -20,3 +20,6 @@ and can be applied at header, cookie, query parameters and body.
 # Mask with Regex
 
 # Mask with JsonPath
+
+# Mask with Map and List
+
