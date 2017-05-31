@@ -224,10 +224,6 @@ public class NioUtils {
         }
     }
 
-    public static void writeJson(Path path, Object model) throws IOException {
-        Config.getInstance().getMapper().writerWithDefaultPrettyPrinter().writeValue(new FileOutputStream(path.toFile()), model);
-    }
-
     public static ByteBuffer toByteBuffer(String s) {
         ByteBuffer buffer = ByteBuffer.allocateDirect(s.length());
         buffer.put(s.getBytes(UTF_8));
