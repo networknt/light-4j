@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.3.1 - 2017-06-03
+### Added
+
+### Changed
+- Fixes #60 add java doc and update online documents
+- Fixes #61 response time and status code are not shown up in audit.log
+- Fixes #63 rename HealthHandler to HealthGetHandler in order to inject from light-codegen
+
+
 ## 1.3.0 - 2017-05-05
 ### Added
 - Fixes #59 change project name to light-4j
