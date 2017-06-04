@@ -119,6 +119,7 @@ repository. To work around it, we can include .gitkeep file in each of these
 directories.
 
 ```
+cd docs
 for DIR in `ls -p | grep /`; do touch ${DIR}.gitkeep; done
 ```
 To verify that these files are created.
