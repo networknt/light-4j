@@ -1,6 +1,6 @@
 ---
 date: 2016-10-23T13:22:33-04:00
-title: Other Component
+title: Other Components
 ---
 
 
