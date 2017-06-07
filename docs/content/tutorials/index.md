@@ -30,7 +30,7 @@ framework document site. Here is a list of links:
 
 [light-graphql-4j tutorials]()
 
-[light-hybrid-4j tutorials]()
+[light-hybrid-4j tutorials](https://networknt.github.io/light-hybrid-4j/tutorial/)
 
 [light-eventuate-4j tutorials]()
 

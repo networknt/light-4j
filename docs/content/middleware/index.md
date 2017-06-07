@@ -22,19 +22,6 @@ handlers to do fine-grained authorization and request and response filtering and
 
 It contains the following components:
 
-* [swagger-meta](https://networknt.github.io/light-4j/middleware/swagger-meta/) is a 
-middleware that load swagger at runtime and parse it based on the request uri and method and 
-attached the swagger data related to the current endpoint into the exchange for subsequent 
-handlers to use.
-
-* [swagger-security](https://networknt.github.io/light-4j/middleware/swagger-security/) 
-Oauth2 JWT token verification distributed in every microservice. Also, there is an OAuth2 
-server based on light-4j released [here](https://github.com/networknt/light-oauth2)
-
-* [swagger-validator](https://networknt.github.io/light-4j/middleware/swagger-validator/) 
-validates request based on the swagger.json for uri parameters, query parameters and body 
-which is based on [json-schema-validator](https://github.com/networknt/json-schema-validator)
-
 * [audit](https://networknt.github.io/light-4j/middleware/audit/) logs most important info 
 about request and response into audit.log in JSON format with config file that controls which
 fields to be logged.
