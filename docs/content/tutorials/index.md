@@ -18,3 +18,5 @@ The following tutorials will help users to get started and more will be added la
 * [How to debug the service](https://networknt.github.io/light-4j/tutorials/debug/)
 
 * [How to register and discover services](https://networknt.github.io/light-4j/tutorials/discovery/)
+
+* [How to implement Chain Pattern of microservices](https://networknt.github.io/light-4j/tutorials/ms-chain/)
