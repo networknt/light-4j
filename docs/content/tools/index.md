@@ -9,10 +9,6 @@ There are so many tools that help us to build microservices and here is a small 
 
 * [Memory Monitoring](https://networknt.github.io/light-4j/tools/memory_monitor/) on MacOS while doing performance test
 
-* [Swagger CLI](https://networknt.github.io/light-4j/tools/swagger-cli/) to validate, merge and convert swagger specification files.
-
-* [Swagger Editor](https://networknt.github.io/light-4j/tools/swagger-editor/) is used to create and update swagger specifications.
-
 * [WRK](https://networknt.github.io/light-4j/tools/wrk-perf/) is used as client for performance test.
 
 * [Minikube](https://networknt.github.io/light-4j/tools/minikube/) is a single node Kubernetes cluster for developers to work on laptop.
