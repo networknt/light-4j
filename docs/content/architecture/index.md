@@ -29,3 +29,6 @@ Here is a list of architecture decisions for the framework:
  
 * Has its own dependency injection framework so that developers can avoid heavy Spring or Guice as they are [bloated](https://networknt.github.io/light-4j/architecture/spring-is-bloated/) 
 
+* [Elements](https://networknt.github.io/light-4j/architecture/platform/) of API platform. 
+
+* API [category](https://networknt.github.io/light-4j/architecture/category/) and how to choose a framework to build your APIs.
