@@ -23,3 +23,4 @@ Here is a list of design decisions for microservices:
 
 * [How to replace monolithic Java EE application to microservices](https://networknt.github.io/light-4j/design/monojee/)
 
+* [How to handle Partial Faiure](https://networknt.github.io/light-4j/design/partial-failure/)
