@@ -24,7 +24,7 @@ tls:
   # or load truststore that contains the self-signed cretificate.
   verifyHostname: true
   # trust store contains certifictes that server needs. Enable if tls is used.
-  loadTrustStore: false
+  loadTrustStore: true
   # trust store location can be specified here or system properties javax.net.ssl.trustStore and password javax.net.ssl.trustStorePassword
   trustStore: tls/client.truststore
   # key store contains client key and it should be loaded if two-way ssl is uesed.
@@ -35,8 +35,10 @@ oauth:
   tokenRenewBeforeExpired: 600000
   expiredRefreshRetryDelay: 5000
   earlyRefreshRetryDelay: 30000
-  server_url: http://localhost:8888
+  # token server url. The default port number for token service is 6882.
+  server_url: http://localhost:6882
   authorization_code:
+    # token endpoint for authorization code grant
     uri: "/oauth2/token"
     # client_id for authorization code grant flow. client_secret is in secret.yml
     client_id: 3798d583-275c-47d7-bf46-a3c436846336
@@ -45,6 +47,7 @@ oauth:
     - customer.r
     - customer.w
   client_credentials:
+    # token endpoint for client credentials grant
     uri: "/oauth2/token"
     # client_id for client credentials grant flow. client_secret is in secret.yml
     client_id: 6e9d1db3-2feb-4c1f-a5ad-9e93ae8ca59d
