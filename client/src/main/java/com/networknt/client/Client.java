@@ -71,6 +71,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Client {
     public static final String CONFIG_NAME = "client";
+    public static final String CONFIG_SECRET = "secret";
 
     static final Logger logger = LoggerFactory.getLogger(Client.class);
 
@@ -90,9 +91,10 @@ public class Client {
     static final String LOAD_KEY_STORE = "loadKeyStore";
     static final String VERIFY_HOSTNAME = "verifyHostname";
     static final String TRUST_STORE = "trustStore";
-    static final String TRUST_PASS = "trustPass";
+    static final String CLIENT_TRUSTSTORE_PASS = "clientTruststorePass";
     static final String KEY_STORE = "keyStore";
-    static final String KEY_PASS = "keyPass";
+    static final String CLIENT_KEYSTORE_PASS = "clientKeystorePass";
+    static final String CLIENT_KEY_PASS = "clientKeyPass";
     static final String TRUST_STORE_PROPERTY = "javax.net.ssl.trustStore";
     static final String TRUST_STORE_PASSWORD_PROPERTY = "javax.net.ssl.trustStorePassword";
 
@@ -125,15 +127,13 @@ public class Client {
 
     static {
         List<String> masks = new ArrayList<>();
-        masks.add("trustPass");
-        masks.add("keyPass");
-        masks.add("client_secret");
         ModuleRegistry.registerModule(Client.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), masks);
         config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
         if(config != null) {
             oauthConfig = (Map<String, Object>)config.get(OAUTH);
         }
     }
+    public static Map<String, Object> secret = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
 
     // This eager initialization.
     private static final Client instance = new Client();
@@ -513,7 +513,7 @@ public class Client {
                     logger.info("Loading trust store from system property at " + Encode.forJava(trustStoreName));
                 } else {
                     trustStoreName = (String)tlsMap.get(TRUST_STORE);
-                    trustStorePass = (String)tlsMap.get(TRUST_PASS);
+                    trustStorePass = (String)secret.get(CLIENT_TRUSTSTORE_PASS);
                     logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
                 }
 
@@ -542,7 +542,8 @@ public class Client {
             Boolean loadKeyStore = (Boolean) tlsMap.get(LOAD_KEY_STORE);
             if (loadKeyStore != null && loadKeyStore) {
                 String keyStoreName = (String)tlsMap.get(KEY_STORE);
-                String keyStorePass = (String)tlsMap.get(KEY_PASS);
+                String keyStorePass = (String)secret.get(CLIENT_KEYSTORE_PASS);
+                String keyPass = (String)secret.get(CLIENT_KEY_PASS);
                 KeyStore keyStore;
                 if(keyStoreName != null && keyStorePass != null) {
                     InputStream keyStream = Config.getInstance().getInputStreamFromFile(keyStoreName);
@@ -550,7 +551,7 @@ public class Client {
                         try {
                             keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
                             keyStore.load(keyStream, keyStorePass.toCharArray());
-                            builder.loadKeyMaterial(keyStore, keyStorePass.toCharArray());
+                            builder.loadKeyMaterial(keyStore, keyPass.toCharArray());
                         } catch (CertificateException ce) {
                             logger.error("CertificateException: Unable to load key store.", ce);
                             throw new ClientException("CertificateException: Unable to load key store.", ce);

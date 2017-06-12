@@ -1,5 +1,4 @@
 ---
-description: client configuration, all timing is milli-second
 sync:
   maxConnectionTotal: 100
   maxConnectionPerRoute: 10
@@ -21,13 +20,16 @@ async:
   timeout: 2000
   keepAlive: 15000
 tls:
-  enableSsl: false
-  enableTwoWaySsl: false
+  # if the server is using self-signed certificate, this need to be false.
   verifyHostname: false
-  trustStore: trust.keystore
-  trustPass: password
-  keyStore: key.jks
-  keyPass: password
+  # trust store contains certifictes that server needs. Enable if tls is used.
+  loadTrustStore: false
+  # trust store location can be specified here or system properties javax.net.ssl.trustStore and password javax.net.ssl.trustStorePassword
+  trustStore: tls/client.truststore
+  # key store contains client key and it should be loaded if two-way ssl is uesed.
+  loadKeyStore: false
+  # key store location
+  keyStore: tls/client.keystore
 oauth:
   tokenRenewBeforeExpired: 4000
   expiredRefreshRetryDelay: 5000

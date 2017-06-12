@@ -37,6 +37,8 @@ public class AuthorizationCodeRequest extends TokenRequest {
     public AuthorizationCodeRequest() {
         setGrantType(AUTHORIZATION_CODE);
         Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Client.CONFIG_NAME);
+        // client_secret is in secret.yml instead of client.yml
+        Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(Client.CONFIG_SECRET);
         if(clientConfig != null) {
             Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OAUTH);
             if(oauthConfig != null) {
@@ -44,7 +46,7 @@ public class AuthorizationCodeRequest extends TokenRequest {
                 Map<String, Object> acConfig = (Map<String, Object>) oauthConfig.get(AUTHORIZATION_CODE);
                 if(acConfig != null) {
                     setClientId((String)acConfig.get(CLIENT_ID));
-                    setClientSecret((String)acConfig.get(CLIENT_SECRET));
+                    setClientSecret((String)secretConfig.get(AUTHORIZATION_CODE_CLIENT_SECRET));
                     setUri((String)acConfig.get(URI));
                     setScope((List<String>)acConfig.get(SCOPE));
                     setRedirectUri((String)acConfig.get(REDIRECT_URI));

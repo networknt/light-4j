@@ -28,7 +28,8 @@ public class TokenRequest {
     public static String CLIENT_CREDENTIALS = "client_credentials";
     public static String URI = "uri";
     public static String CLIENT_ID = "client_id";
-    public static String CLIENT_SECRET = "client_secret";
+    public static String AUTHORIZATION_CODE_CLIENT_SECRET = "authorizationCodeClientSecret";
+    public static String CLIENT_CREDENTIALS_CLIENT_SECRET = "clientCredentialsClientSecret";
     public static String REDIRECT_URI = "redirect_uri";
     public static String SCOPE = "scope";
 

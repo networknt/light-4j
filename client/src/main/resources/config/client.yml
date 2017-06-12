@@ -1,5 +1,4 @@
 ---
-description: client configuration, all timing is milli-second
 sync:
   maxConnectionTotal: 100
   maxConnectionPerRoute: 10
@@ -21,13 +20,17 @@ async:
   timeout: 10000
   keepAlive: 15000
 tls:
-  verifyHostname: false
+  # if the server is using self-signed certificate, this need to be false. If true, you have to use CA signed certificate
+  # or load truststore that contains the self-signed cretificate.
+  verifyHostname: true
+  # trust store contains certifictes that server needs. Enable if tls is used.
   loadTrustStore: false
-  trustStore: trust.keystore
-  trustPass: password
+  # trust store location can be specified here or system properties javax.net.ssl.trustStore and password javax.net.ssl.trustStorePassword
+  trustStore: tls/client.truststore
+  # key store contains client key and it should be loaded if two-way ssl is uesed.
   loadKeyStore: false
-  keyStore: key.jks
-  keyPass: password
+  # key store location
+  keyStore: tls/client.keystore
 oauth:
   tokenRenewBeforeExpired: 600000
   expiredRefreshRetryDelay: 5000
@@ -35,16 +38,16 @@ oauth:
   server_url: http://localhost:8888
   authorization_code:
     uri: "/oauth2/token"
+    # client_id for authorization code grant flow. client_secret is in secret.yml
     client_id: 3798d583-275c-47d7-bf46-a3c436846336
-    client_secret: CeHJjNRjRiS1dH1qqme2LQ
     redirect_uri: https://localhost:8080/authorization_code
     scope:
     - customer.r
     - customer.w
   client_credentials:
     uri: "/oauth2/token"
+    # client_id for client credentials grant flow. client_secret is in secret.yml
     client_id: 6e9d1db3-2feb-4c1f-a5ad-9e93ae8ca59d
-    client_secret: sQesTWAnTwaw-Nn0oK35GA
     scope:
     - account.r
     - account.w

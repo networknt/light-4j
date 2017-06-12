@@ -23,17 +23,22 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by steve on 02/09/16.
+ * load default values from client.yml for client credentials grant, overwrite by setters
+ * in case you want to change it at runtime.
+ *
+ * Note that client_secret is loaded from secret.yml instead of client.yml and the assumption
+ * is that there is only one client shared by both authorization code grant and client credentials
+ * grant.
+ *
+ * @author Steve Hu
  */
 public class ClientCredentialsRequest extends TokenRequest {
 
-    /**
-     * load default values from client.json for client credentials grant, overwrite by setters
-     * in case you want to change it at runtime.
-     */
     public ClientCredentialsRequest() {
         setGrantType(CLIENT_CREDENTIALS);
         Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Client.CONFIG_NAME);
+        // client_secret is in secret.yml instead of client.yml
+        Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(Client.CONFIG_SECRET);
         if(clientConfig != null) {
             Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OAUTH);
             if(oauthConfig != null) {
@@ -41,7 +46,7 @@ public class ClientCredentialsRequest extends TokenRequest {
                 Map<String, Object> ccConfig = (Map<String, Object>) oauthConfig.get(CLIENT_CREDENTIALS);
                 if(ccConfig != null) {
                     setClientId((String)ccConfig.get(CLIENT_ID));
-                    setClientSecret((String)ccConfig.get(CLIENT_SECRET));
+                    setClientSecret((String)secretConfig.get(CLIENT_CREDENTIALS_CLIENT_SECRET));
                     setUri((String)ccConfig.get(URI));
                     setScope((List<String>)ccConfig.get(SCOPE));
                 }
