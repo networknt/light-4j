@@ -75,6 +75,9 @@ public class Server {
     static final String LIGHT_ENV = "light-env";
     static final String LIGHT_CONFIG_SERVER_URI = "light-config-server-uri";
 
+    // service_id in slf4j MDC
+    static final String SID = "sId";
+
     public static ServerConfig config = (ServerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServerConfig.class);
     public static Map<String, Object> secret = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
     public final static TrustManager[] TRUST_ALL_CERTS = new X509TrustManager[] { new DummyTrustManager() };
@@ -91,6 +94,8 @@ public class Server {
         logger.info("server starts");
         // setup system property to redirect undertow logs to slf4j/logback.
         System.setProperty("org.jboss.logging.provider", "slf4j");
+        // this will make sure that all log statement will have serviceId
+        MDC.put(SID, config.getServiceId());
         // load config files from light-config-server if possible.
         loadConfig();
         start();

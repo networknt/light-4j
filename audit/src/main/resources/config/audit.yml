@@ -21,16 +21,13 @@ headers:
 # Output from id token and access token
 audit:
 
-# Service Id
-- service_id
-
 # Client Id
 - client_id
 
-# User Id
+# User Id in id token, this is optional
 - user_id
 
-# Client Id in scope/access token
+# Client Id in scope/access token, this is optional
 - scope_client_id
 
 # Request endpoint uri@method.
