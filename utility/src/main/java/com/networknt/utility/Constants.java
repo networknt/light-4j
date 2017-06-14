@@ -30,6 +30,7 @@ public class Constants {
     public static final String SCOPE_CLIENT_ID = "scope_client_id";
     public static final String SCOPE = "scope";
     public static final String ENDPOINT = "endpoint";
+    public static final String SWAGGER_OPERATION = "swagger_operation";
 
     public static final String SCOPE_TOKEN = "X-Scope-Token";
     public static final String AUTHORIZATION = "Authorization";

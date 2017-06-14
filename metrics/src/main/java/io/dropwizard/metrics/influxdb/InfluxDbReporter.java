@@ -119,6 +119,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
     public void report(final SortedMap<MetricName, Gauge> gauges, final SortedMap<MetricName, Counter> counters,
                        final SortedMap<MetricName, Histogram> histograms, final SortedMap<MetricName, Meter> meters, final SortedMap<MetricName, Timer> timers) {
         final long now = System.currentTimeMillis();
+        if(logger.isDebugEnabled()) logger.debug("InfluxDbReporter report is called with counter size " + counters.size());
         try {
             influxDb.flush();
 
