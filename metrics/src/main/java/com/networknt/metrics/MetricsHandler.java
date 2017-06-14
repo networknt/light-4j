@@ -92,8 +92,8 @@ public class MetricsHandler implements MiddlewareHandler {
         InetAddress inetAddress = Util.getInetAddress();
         commonTags.put("ipAddress", inetAddress.getHostAddress());
         commonTags.put("hostname", inetAddress.getHostName()); // will be container id if in docker.
-        commonTags.put("version", Util.getJarVersion());
 
+        //commonTags.put("version", Util.getJarVersion());
         //commonTags.put("frameworkVersion", Util.getFrameworkVersion());
         // TODO need to find a way to get env to put into the metrics.
     }
@@ -119,7 +119,7 @@ public class MetricsHandler implements MiddlewareHandler {
             if(auditInfo != null) {
                 Map<String, String> tags = new HashMap<>();
                 tags.put("endpoint", (String)auditInfo.get(Constants.ENDPOINT));
-                tags.put("clientId", (String)auditInfo.get(Constants.CLIENT_ID));
+                tags.put("clientId", auditInfo.get(Constants.CLIENT_ID) != null ? (String)auditInfo.get(Constants.CLIENT_ID) : "unknown");
 
                 long time = Clock.defaultClock().getTick() - startTime;
                 MetricName metricName = new MetricName("response_time");

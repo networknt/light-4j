@@ -162,42 +162,21 @@ public final class InfluxDbReporter extends ScheduledReporter {
             return;
         }
         final Snapshot snapshot = timer.getSnapshot();
-        Map<String, String> tags = new HashMap<>(name.getTags());
-        String apiName = tags.remove("apiName");
-        String clientId = tags.remove("clientId");
 
-        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".min", tags, now, format(convertDuration(snapshot.getMin()))));
-        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".max", tags, now, format(convertDuration(snapshot.getMax()))));
-        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".mean", tags, now, format(convertDuration(snapshot.getMean()))));
+        Map<String, String> apiTags = new HashMap<>(name.getTags());
+        String apiName = apiTags.remove("apiName");
+        Map<String, String> clientTags = new HashMap<>(name.getTags());
+        String clientId = clientTags.remove("clientId");
 
-        influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".min", tags, now, format(convertDuration(snapshot.getMin()))));
-        influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".max", tags, now, format(convertDuration(snapshot.getMax()))));
-        influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".mean", tags, now, format(convertDuration(snapshot.getMean()))));
-        /*
-        Map<String, Object> fields = new HashMap<>();
-        fields.put("count", timer.getCount());
-        fields.put("min", convertDuration(snapshot.getMin()));
-        fields.put("max", convertDuration(snapshot.getMax()));
-        fields.put("mean", convertDuration(snapshot.getMean()));
-        fields.put("std-dev", convertDuration(snapshot.getStdDev()));
-        fields.put("median", convertDuration(snapshot.getMedian()));
-        fields.put("50-percentile", convertDuration(snapshot.getMedian()));
-        fields.put("75-percentile", convertDuration(snapshot.get75thPercentile()));
-        fields.put("95-percentile", convertDuration(snapshot.get95thPercentile()));
-        fields.put("98-percentile", convertDuration(snapshot.get98thPercentile()));
-        fields.put("99-percentile", convertDuration(snapshot.get99thPercentile()));
-        fields.put("999-percentile", convertDuration(snapshot.get999thPercentile()));
-        fields.put("one-minute", convertRate(timer.getOneMinuteRate()));
-        fields.put("five-minute", convertRate(timer.getFiveMinuteRate()));
-        fields.put("fifteen-minute", convertRate(timer.getFifteenMinuteRate()));
-        fields.put("mean-rate", convertRate(timer.getMeanRate()));
-        fields.put("run-count", timer.getCount());
-        influxDb.appendPoints(new InfluxDbPoint(
-                name.getKey(),
-                name.getTags(),
-                now,
-                fields));
-        */
+        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".min", apiTags, now, format(convertDuration(snapshot.getMin()))));
+        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".max", apiTags, now, format(convertDuration(snapshot.getMax()))));
+        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".mean", apiTags, now, format(convertDuration(snapshot.getMean()))));
+
+        if(clientId != null) {
+            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".min", clientTags, now, format(convertDuration(snapshot.getMin()))));
+            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".max", clientTags, now, format(convertDuration(snapshot.getMax()))));
+            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".mean", clientTags, now, format(convertDuration(snapshot.getMean()))));
+        }
     }
 
     private void reportHistogram(MetricName name, Histogram histogram, long now) {
@@ -205,104 +184,64 @@ public final class InfluxDbReporter extends ScheduledReporter {
             return;
         }
         final Snapshot snapshot = histogram.getSnapshot();
-        Map<String, String> tags = new HashMap<>(name.getTags());
-        String apiName = tags.remove("apiName");
-        String clientId = tags.remove("clientId");
+        Map<String, String> apiTags = new HashMap<>(name.getTags());
+        String apiName = apiTags.remove("apiName");
+        Map<String, String> clientTags = new HashMap<>(name.getTags());
+        String clientId = clientTags.remove("clientId");
 
-        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".count", tags, now, format(histogram.getCount())));
-        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".min", tags, now, format(snapshot.getMin())));
-        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".max", tags, now, format(snapshot.getMax())));
-        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".mean", tags, now, format(snapshot.getMean())));
+        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".count", apiTags, now, format(histogram.getCount())));
+        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".min", apiTags, now, format(snapshot.getMin())));
+        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".max", apiTags, now, format(snapshot.getMax())));
+        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".mean", apiTags, now, format(snapshot.getMean())));
 
-        influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".count", tags, now, format(histogram.getCount())));
-        influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".min", tags, now, format(snapshot.getMin())));
-        influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".max", tags, now, format(snapshot.getMax())));
-        influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".mean", tags, now, format(snapshot.getMean())));
-        /*
-        Map<String, Object> fields = new HashMap<>();
-        fields.put("count", histogram.getCount());
-        fields.put("min", snapshot.getMin());
-        fields.put("max", snapshot.getMax());
-        fields.put("mean", snapshot.getMean());
-        fields.put("median", snapshot.getMedian());
-        fields.put("std-dev", snapshot.getStdDev());
-        fields.put("50-percentile", snapshot.getMedian());
-        fields.put("75-percentile", snapshot.get75thPercentile());
-        fields.put("95-percentile", snapshot.get95thPercentile());
-        fields.put("98-percentile", snapshot.get98thPercentile());
-        fields.put("99-percentile", snapshot.get99thPercentile());
-        fields.put("999-percentile", snapshot.get999thPercentile());
-        fields.put("run-count", histogram.getCount());
-        influxDb.appendPoints(new InfluxDbPoint(
-                name.getKey(),
-                name.getTags(),
-                String.valueOf(now),
-                fields));
-        */
+        if(clientId != null) {
+            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".count", clientTags, now, format(histogram.getCount())));
+            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".min", clientTags, now, format(snapshot.getMin())));
+            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".max", clientTags, now, format(snapshot.getMax())));
+            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".mean", clientTags, now, format(snapshot.getMean())));
+        }
     }
 
     private void reportCounter(MetricName name, Counter counter, long now) {
-        Map<String, String> tags = new HashMap<>(name.getTags());
-        String apiName = tags.remove("apiName");
-        String clientId = tags.remove("clientId");
+        Map<String, String> apiTags = new HashMap<>(name.getTags());
+        String apiName = apiTags.remove("apiName");
+        Map<String, String> clientTags = new HashMap<>(name.getTags());
+        String clientId = clientTags.remove("clientId");
 
-        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".count", tags, now, format(counter.getCount())));
-        influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".count", tags, now, format(counter.getCount())));
-
-        /*
-        Map<String, Object> fields = new HashMap<>();
-        fields.put("count", counter.getCount());
-        influxDb.appendPoints(new InfluxDbPoint(
-                name.getKey(),
-                name.getTags(),
-                String.valueOf(now),
-                fields));
-        */
+        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".count", apiTags, now, format(counter.getCount())));
+        if(clientId != null) {
+            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".count", clientTags, now, format(counter.getCount())));
+        }
     }
 
     private void reportGauge(MetricName name, Gauge<?> gauge, long now) {
         final String value = format(gauge.getValue());
         if(value != null) {
-            Map<String, String> tags = new HashMap<>(name.getTags());
-            String apiName = tags.remove("apiName");
-            String clientId = tags.remove("clientId");
-            influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey(), tags, now, value));
-            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey(), tags, now, value));
+            Map<String, String> apiTags = new HashMap<>(name.getTags());
+            String apiName = apiTags.remove("apiName");
+            Map<String, String> clientTags = new HashMap<>(name.getTags());
+            String clientId = clientTags.remove("clientId");
+
+            influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey(), apiTags, now, value));
+            if(clientId != null) {
+                influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey(), clientTags, now, value));
+            }
         }
-        /*
-        Map<String, Object> fields = new HashMap<>();
-        fields.put("value", gauge.getValue());
-        influxDb.appendPoints(new InfluxDbPoint(
-                name.getKey(),
-                name.getTags(),
-                String.valueOf(now),
-                fields));
-        */
     }
 
     private void reportMeter(MetricName name, Metered meter, long now) {
         if (canSkipMetric(name, meter)) {
             return;
         }
-        Map<String, String> tags = new HashMap<>(name.getTags());
-        String apiName = tags.remove("apiName");
-        String clientId = tags.remove("clientId");
+        Map<String, String> apiTags = new HashMap<>(name.getTags());
+        String apiName = apiTags.remove("apiName");
+        Map<String, String> clientTags = new HashMap<>(name.getTags());
+        String clientId = clientTags.remove("clientId");
 
-        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".count", tags, now, format(meter.getCount())));
-        influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".count", tags, now, format(meter.getCount())));
-        /*
-        Map<String, Object> fields = new HashMap<>();
-        fields.put("count", meter.getCount());
-        fields.put("one-minute", convertRate(meter.getOneMinuteRate()));
-        fields.put("five-minute", convertRate(meter.getFiveMinuteRate()));
-        fields.put("fifteen-minute", convertRate(meter.getFifteenMinuteRate()));
-        fields.put("mean-rate", convertRate(meter.getMeanRate()));
-        influxDb.appendPoints(new InfluxDbPoint(
-                name.getKey(),
-                name.getTags(),
-                String.valueOf(now),
-                fields));
-        */
+        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".count", apiTags, now, format(meter.getCount())));
+        if(clientId != null) {
+            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".count", clientTags, now, format(meter.getCount())));
+        }
     }
 
     private boolean canSkipMetric(MetricName name, Counting counting) {
@@ -350,5 +289,4 @@ public final class InfluxDbReporter extends ScheduledReporter {
         // US-formatted digits
         return String.format(Locale.US, "%2.2f", v);
     }
-
 }
