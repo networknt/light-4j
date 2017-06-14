@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.3.3 - 2017-06-14
+### Added
+
+### Changed
+- fixes #71 break the metrics tie to security for client_id
+
 ## 1.3.2 - 2017-06-14
 ### Added
 
