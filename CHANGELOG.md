@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.3.2 - 2017-06-14
+### Added
+
+### Changed
+- Fixes #58 add filter and role based auth handler
+- Fixes #66 update keystore and truststore for both client and server
+- Fixes #67 add serviceId to slf4j MDC and remove from audit.yml
+- Fixes #68 add log statement in influxdb reporter with counter size
+- Fixes #70 make default constructor of UnsafeLongAdderImpl public
+
 ## 1.3.1 - 2017-06-03
 ### Added
 
