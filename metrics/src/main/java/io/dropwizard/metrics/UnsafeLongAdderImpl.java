@@ -48,7 +48,7 @@ class UnsafeLongAdderImpl extends UnsafeStriped64 implements LongAdder, Serializ
     /**
      * Creates a new adder with initial sum of zero.
      */
-    UnsafeLongAdderImpl() {
+    public UnsafeLongAdderImpl() {
     }
 
     /**

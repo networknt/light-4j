@@ -20,6 +20,7 @@ import com.networknt.audit.AuditHandler;
 import com.networknt.config.Config;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.server.Server;
+import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.Util;
 import io.dropwizard.metrics.Clock;
@@ -117,8 +118,8 @@ public class MetricsHandler implements MiddlewareHandler {
             Map<String, Object> auditInfo = exchange1.getAttachment(AuditHandler.AUDIT_INFO);
             if(auditInfo != null) {
                 Map<String, String> tags = new HashMap<>();
-                tags.put("endpoint", (String)auditInfo.get("endpoint"));
-                tags.put("clientId", (String)auditInfo.get("client_id"));
+                tags.put("endpoint", (String)auditInfo.get(Constants.ENDPOINT));
+                tags.put("clientId", (String)auditInfo.get(Constants.CLIENT_ID));
 
                 long time = Clock.defaultClock().getTick() - startTime;
                 MetricName metricName = new MetricName("response_time");
