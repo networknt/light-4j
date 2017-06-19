@@ -16,6 +16,10 @@
 
 package com.networknt.security;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.networknt.config.Config;
 import com.networknt.exception.ExpiredTokenException;
 import org.jose4j.jws.AlgorithmIdentifiers;
@@ -44,6 +48,7 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
@@ -70,6 +75,15 @@ public class JwtHelper {
     static Map<String, Object> securityConfig = (Map)Config.getInstance().getJsonMapConfig(SECURITY_CONFIG);
     static Map<String, Object> securityJwtConfig = (Map)securityConfig.get(JWT_CONFIG);
     static JwtConfig jwtConfig = (JwtConfig) Config.getInstance().getJsonObjectConfig(JWT_CONFIG, JwtConfig.class);
+
+    static Cache<String, JwtClaims> cache;
+
+    static {
+        cache = CacheBuilder.newBuilder()
+                .expireAfterWrite(jwtConfig.expiredInMinutes, TimeUnit.MINUTES)
+                .build();
+    }
+
 
     /**
      * A static method that generate JWT token from JWT claims object
@@ -233,7 +247,10 @@ public class JwtHelper {
      * @throws ExpiredTokenException
      */
     public static JwtClaims verifyJwt(String jwt) throws InvalidJwtException, ExpiredTokenException {
-        JwtClaims claims;
+        JwtClaims claims = cache.getIfPresent(jwt);
+        if(claims != null) {
+            return claims;
+        }
         JwtConsumer consumer = new JwtConsumerBuilder()
                 .setSkipAllValidators()
                 .setDisableRequireSignature()
@@ -270,6 +287,7 @@ public class JwtHelper {
         // Validate the JWT and process it to the Claims
         jwtContext = consumer.process(jwt);
         claims = jwtContext.getJwtClaims();
+        cache.put(jwt, claims);
         return claims;
     }
 }

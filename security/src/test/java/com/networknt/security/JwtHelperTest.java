@@ -130,6 +130,13 @@ public class JwtHelperTest {
         }
         Assert.assertNotNull(claims);
         Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID));
+
+        try {
+            claims = JwtHelper.verifyJwt(jwt);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         System.out.println("jwtClaims = " + claims);
     }
 
