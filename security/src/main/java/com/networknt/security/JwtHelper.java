@@ -75,12 +75,14 @@ public class JwtHelper {
     static Map<String, Object> securityConfig = (Map)Config.getInstance().getJsonMapConfig(SECURITY_CONFIG);
     static Map<String, Object> securityJwtConfig = (Map)securityConfig.get(JWT_CONFIG);
     static JwtConfig jwtConfig = (JwtConfig) Config.getInstance().getJsonObjectConfig(JWT_CONFIG, JwtConfig.class);
+    static int secondsOfAllowedClockSkew = (Integer) securityJwtConfig.get(JwT_CLOCK_SKEW_IN_SECONDS);
 
     static Cache<String, JwtClaims> cache;
 
     static {
         cache = CacheBuilder.newBuilder()
-                .expireAfterWrite(jwtConfig.expiredInMinutes, TimeUnit.MINUTES)
+                // assuming that the clock screw time is less than 5 minutes
+                .expireAfterWrite(jwtConfig.expiredInMinutes + 5, TimeUnit.MINUTES)
                 .build();
     }
 
@@ -249,6 +251,16 @@ public class JwtHelper {
     public static JwtClaims verifyJwt(String jwt) throws InvalidJwtException, ExpiredTokenException {
         JwtClaims claims = cache.getIfPresent(jwt);
         if(claims != null) {
+            try {
+                if ((NumericDate.now().getValue() - secondsOfAllowedClockSkew) >= claims.getExpirationTime().getValue())
+                {
+                    logger.info("jwt token is expired!");
+                    throw new ExpiredTokenException("Token is expired");
+                }
+            } catch (MalformedClaimException e) {
+                logger.error("MalformedClaimException:", e);
+                throw new InvalidJwtException("MalformedClaimException", e);
+            }
             return claims;
         }
         JwtConsumer consumer = new JwtConsumerBuilder()
@@ -262,7 +274,6 @@ public class JwtHelper {
         JsonWebStructure structure = jwtContext.getJoseObjects().get(0);
         String kid = structure.getKeyIdHeaderValue();
 
-        int secondsOfAllowedClockSkew = 30;
         try {
             if ((NumericDate.now().getValue() - secondsOfAllowedClockSkew) >= jwtClaims.getExpirationTime().getValue())
             {
@@ -278,8 +289,7 @@ public class JwtHelper {
         x509VerificationKeyResolver.setTryAllOnNoThumbHeader(true);
         consumer = new JwtConsumerBuilder()
                 .setRequireExpirationTime()
-                .setAllowedClockSkewInSeconds(
-                        (Integer) securityJwtConfig.get(JwT_CLOCK_SKEW_IN_SECONDS))
+                .setAllowedClockSkewInSeconds(secondsOfAllowedClockSkew)
                 .setSkipDefaultAudienceValidation()
                 .setVerificationKeyResolver(x509VerificationKeyResolver)
                 .build();
