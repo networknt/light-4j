@@ -430,7 +430,7 @@ ERR12024:
   statusCode: 400
   code: ERR12024
   message: NOT_TRUSTED_CLIENT
-  description: Password grant type is allowed only for trusted client type.
+  description: Grant type is allowed only for trusted client type.
 ERR12025:
   statusCode: 400
   code: ERR12025
@@ -461,6 +461,18 @@ ERR12030:
   code: ERR12030
   message: INVALID_KEY_ID
   description: Invalid key id %s.
+
+ERR12031:
+  statusCode: 400
+  code: ERR12031
+  message: USER_ID_REQUIRED_FOR_CLIENT_AUTHENTICATED_USER_GRANT_TYPE
+  description: UserId is required for client_authenticated_user grant type.
+
+ERR12032:
+  statusCode: 400
+  code: ERR12032
+  message: USER_TYPE_REQUIRED_FOR_CLIENT_AUTHENTICATED_USER_GRANT_TYPE
+  description: UserType is required for client_authenticated_user grant type.
 
 
 # 20000-29999 common error codes within your business domain.
