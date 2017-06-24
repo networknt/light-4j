@@ -78,9 +78,7 @@ public class CodeVerifierUtil {
      * @see "Proof Key for Code Exchange by OAuth Public Clients (RFC 7636), Section 4.1
      * <https://tools.ietf.org/html/rfc7636#section-4.1>"
      */
-    private static final Pattern REGEX_CODE_VERIFIER =
-            Pattern.compile("^[0-9a-zA-Z\\-\\.\\_\\~]{43,128}$");
-
+    public static final Pattern VALID_CODE_CHALLENGE_PATTERN = Pattern.compile("^[0-9a-zA-Z\\-\\.~_]+$");
 
 
     /**
