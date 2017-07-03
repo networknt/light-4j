@@ -179,7 +179,7 @@ Also, to give confidence for service provider to evolve, it is wise to ask all c
 to provide test cases which described consumers expectations in their processing as part
 of the regression test for the service. Once service changes happen, it only need to run
 the entire regression test cases to ensure nothing is broken on the consumer side. This
-consumer expectation is called [consume contract](consumer-contract/) which is another 
-topic that is out of scope of this article. 
+consumer expectation is called [consume contract](https://networknt.github.io/light-4j/design/consumer-contract/) 
+which is another topic that is out of scope of this article. 
 
 

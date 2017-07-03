@@ -25,7 +25,9 @@ Here is a list of design decisions for microservices:
 
 * [How to handle Partial Faiure](https://networknt.github.io/light-4j/design/partial-failure/)
 
-* [Service Evolution](evolution/)
+* [Idempotency](https://networknt.github.io/light-4j/design/idempotency/)
 
-* [Consumer Contract and Consumer Driven Contract](consumer-contract/)
+* [Service Evolution](https://networknt.github.io/light-4j/design/evolution/)
+
+* [Consumer Contract and Consumer Driven Contract](https://networknt.github.io/light-4j/design/consumer-contract/)
 
