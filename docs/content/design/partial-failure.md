@@ -65,6 +65,6 @@ When partial failures happen to update services in a chain, the data consistency
 unknown and it will require client to retry the request in order to ensure that consistency between 
 multiple services are maintained. If we are doing it, all services in the chain must be idempotent so
 that the same request only updates the database exact once. The request can only be started from the
-original client not in the middle of the service chain. For details, please refer to [idempotency](https://networknt.github.io/light-4j/design/idemponency/)  
+original client not in the middle of the service chain. For details, please refer to [idempotency](https://networknt.github.io/light-4j/design/idempotency/)  
 
 
