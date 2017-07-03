@@ -16,6 +16,10 @@
 
 package com.networknt.security;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.networknt.config.Config;
 import com.networknt.exception.ExpiredTokenException;
 import org.jose4j.jws.AlgorithmIdentifiers;
@@ -44,6 +48,7 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
@@ -70,6 +75,17 @@ public class JwtHelper {
     static Map<String, Object> securityConfig = (Map)Config.getInstance().getJsonMapConfig(SECURITY_CONFIG);
     static Map<String, Object> securityJwtConfig = (Map)securityConfig.get(JWT_CONFIG);
     static JwtConfig jwtConfig = (JwtConfig) Config.getInstance().getJsonObjectConfig(JWT_CONFIG, JwtConfig.class);
+    static int secondsOfAllowedClockSkew = (Integer) securityJwtConfig.get(JwT_CLOCK_SKEW_IN_SECONDS);
+
+    static Cache<String, JwtClaims> cache;
+
+    static {
+        cache = CacheBuilder.newBuilder()
+                // assuming that the clock screw time is less than 5 minutes
+                .expireAfterWrite(jwtConfig.expiredInMinutes + 5, TimeUnit.MINUTES)
+                .build();
+    }
+
 
     /**
      * A static method that generate JWT token from JWT claims object
@@ -233,7 +249,20 @@ public class JwtHelper {
      * @throws ExpiredTokenException
      */
     public static JwtClaims verifyJwt(String jwt) throws InvalidJwtException, ExpiredTokenException {
-        JwtClaims claims;
+        JwtClaims claims = cache.getIfPresent(jwt);
+        if(claims != null) {
+            try {
+                if ((NumericDate.now().getValue() - secondsOfAllowedClockSkew) >= claims.getExpirationTime().getValue())
+                {
+                    logger.info("jwt token is expired!");
+                    throw new ExpiredTokenException("Token is expired");
+                }
+            } catch (MalformedClaimException e) {
+                logger.error("MalformedClaimException:", e);
+                throw new InvalidJwtException("MalformedClaimException", e);
+            }
+            return claims;
+        }
         JwtConsumer consumer = new JwtConsumerBuilder()
                 .setSkipAllValidators()
                 .setDisableRequireSignature()
@@ -245,7 +274,6 @@ public class JwtHelper {
         JsonWebStructure structure = jwtContext.getJoseObjects().get(0);
         String kid = structure.getKeyIdHeaderValue();
 
-        int secondsOfAllowedClockSkew = 30;
         try {
             if ((NumericDate.now().getValue() - secondsOfAllowedClockSkew) >= jwtClaims.getExpirationTime().getValue())
             {
@@ -261,8 +289,7 @@ public class JwtHelper {
         x509VerificationKeyResolver.setTryAllOnNoThumbHeader(true);
         consumer = new JwtConsumerBuilder()
                 .setRequireExpirationTime()
-                .setAllowedClockSkewInSeconds(
-                        (Integer) securityJwtConfig.get(JwT_CLOCK_SKEW_IN_SECONDS))
+                .setAllowedClockSkewInSeconds(secondsOfAllowedClockSkew)
                 .setSkipDefaultAudienceValidation()
                 .setVerificationKeyResolver(x509VerificationKeyResolver)
                 .build();
@@ -270,6 +297,7 @@ public class JwtHelper {
         // Validate the JWT and process it to the Claims
         jwtContext = consumer.process(jwt);
         claims = jwtContext.getJwtClaims();
+        cache.put(jwt, claims);
         return claims;
     }
 }

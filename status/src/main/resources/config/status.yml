@@ -430,7 +430,7 @@ ERR12024:
   statusCode: 400
   code: ERR12024
   message: NOT_TRUSTED_CLIENT
-  description: Password grant type is allowed only for trusted client type.
+  description: Grant type is allowed only for trusted client type.
 ERR12025:
   statusCode: 400
   code: ERR12025
@@ -461,6 +461,65 @@ ERR12030:
   code: ERR12030
   message: INVALID_KEY_ID
   description: Invalid key id %s.
+
+ERR12031:
+  statusCode: 400
+  code: ERR12031
+  message: USER_ID_REQUIRED_FOR_CLIENT_AUTHENTICATED_USER_GRANT_TYPE
+  description: UserId is required for client_authenticated_user grant type.
+
+ERR12032:
+  statusCode: 400
+  code: ERR12032
+  message: USER_TYPE_REQUIRED_FOR_CLIENT_AUTHENTICATED_USER_GRANT_TYPE
+  description: UserType is required for client_authenticated_user grant type.
+
+ERR12033:
+  statusCode: 400
+  code: ERR12033
+  message: INVALID_CODE_CHALLENGE_METHOD
+  description: Invalid PKCE code challenge method %s.
+
+ERR12034:
+  statusCode: 400
+  code: ERR12034
+  message: CODE_CHALLENGE_TOO_SHORT
+  description: PKCE codeChallenge length under lower limit, codeChallenge = %s
+ERR12035:
+  statusCode: 400
+  code: ERR12035
+  message: CODE_CHALLENGE_TOO_LONG
+  description: PKCE codeChallenge length over upper limit, codeChallenge = %s
+ERR12036:
+  statusCode: 400
+  code: ERR12036
+  message: INVALID_CODE_CHALLENGE_FORMAT
+  description: PKCE codeChallenge format is invalid, codeChallenge = %s
+ERR12037:
+  statusCode: 400
+  code: ERR12037
+  message: INVALID_CODE_VERIFIER_FORMAT
+  description: PKCE codeVerifier format is invalid, codeVerifier = %s
+ERR12038:
+  statusCode: 400
+  code: ERR12038
+  message: CODE_VERIFIER_TOO_SHORT
+  description: PKCE codeVerifier length under lower limit , codeVerifier = %s
+ERR12039:
+  statusCode: 400
+  code: ERR12039
+  message: CODE_VERIFIER_TOO_LONG
+  description: PKCE codeVerifier length over upper limit , codeVerifier = %s
+ERR12040:
+  statusCode: 400
+  code: ERR12040
+  message: CODE_VERIFIER_MISSING
+  description: PKCE codeVerifier is not specified
+ERR12041:
+  statusCode: 400
+  code: ERR12041
+  message: CODE_VERIFIER_FAILED
+  description: PKCE verification failed
 
 
 # 20000-29999 common error codes within your business domain.
