@@ -18,7 +18,7 @@ applications.
 To overcome this sort of inherently unreliable environment, it’s important to design 
 APIs and clients that will be robust in the event of failure, and will predictably 
 bring a complex integration to a consistent state despite failures. Remember that a
-service might be a client when call another service.
+service might be a client when calling another service.
 
 # Planning for failure
   
@@ -41,7 +41,13 @@ safe. A connection terminating midway through message exchange is an example of 
 
 This problem is a classic staple of distributed systems, and the definition is broad when 
 talking about a “distributed system” in this sense: as few as two computers connecting 
-via a network that are passing each other messages. 
+via a network that are passing each other messages.
+ 
+With microservices are getting popular, the partial failure is more complicated as it can
+happen deep in the chain of services. It is not a simple retry from any client and the retry
+has to be initialized from the original client. This requires all the services in the chain
+must be idempotent.
+
 
 # Use of idempotency
 
@@ -65,8 +71,12 @@ responds with a successful status code.
 
 According to HTTP semantics, the PUT and DELETE verbs are idempotent, and the PUT verb in 
 particular signifies that a target resource should be created or replaced entirely with the 
-contents of a request’s payload (in modern RESTful parlance, a modification would be 
+contents of a request’s payload (in modern RESTful service, a partial modification would be 
 represented by a PATCH).
+
+We have used request/response communication style as an example; however, messaging based
+microservices should follow the same approach in case duplicate messages are delivery in the
+pipeline.
 
 # Guarantee exactly once
 
@@ -88,19 +98,20 @@ first time, and process it normally.
 
 - On a failure midway through an operation, the server picks up the work and carries it through. 
 The exact behavior is heavily dependent on implementation, but if the previous operation was 
-successfully rolled back by way of an ACID database, it’ll be safe to retry it wholesale. 
-Otherwise, state is recovered and the call is continued.
+successfully rolled back by way of an ACID database, it’ll be safe to retry it. Otherwise, state 
+is recovered and the call is continued.
 
 - On a response failure (i.e. the operation executed successfully, but the client couldn’t get 
 the result), the server simply replies with a cached result of the successful operation.
 
+In light-4j, we have a component traceability that is a middleware handler to move traceabilityId
+from request header to response header. Also, the client module which is used to call services
+has the ability to propagate traceabilityId to the next request in the service call stack. This
+header can be used as idempotency key on mutating services(i.e. anything under POST in our case).
 
-The Stripe API implements idempotency keys on mutating endpoints (i.e. anything under POST in 
-our case) by allowing clients to pass a unique value in with the special Idempotency-Key header, 
-which allows a client to guarantee the safety of distributed operations:
-
-If the above Stripe request fails due to a network connection error, you can safely retry it 
-with the same idempotency key, and the customer is charged only once.
+If the above one request fails due to a network connection error, you can safely retry it 
+with the same idempotency key, and the services must be designed to work with the idempotency key
+/traceabilityId to decide what the business logic with the key.
 
 # Being a good distributed citizen
 
@@ -128,11 +139,13 @@ We can address thundering herd by adding some amount of random “jitter” to e
 time. This will space out requests across all clients, and give the server some breathing room 
 to recover.
 
-The Stripe Ruby library retries on failure automatically with an idempotency key using increasing 
-backoff times and jitter. The implementation for that is pretty simple, and you can refer to it 
-on GitHub to see exactly how it works.
+The client module in [light-4j](https://github.com/networknt/light-4j) will be enhanced to retry 
+on failure automatically with an idempotency key using increasing backoff times and jitter. Given
+not all client need to retry on failure, we need to make sure it is configurable in client.yml so
+that retry can only be initiated from the original client.
 
-# Codifying the design of robust APIs
+
+# Design robust APIs
 
 Considering the possibility of failure in a distributed system and how to handle it is of 
 paramount importance in building APIs that are both robust and predictable. Retry logic on 
@@ -150,5 +163,4 @@ clients to pass a unique value and retry requests as needed.
 
 - Make sure that failures are handled responsibly. Use techniques like exponential backoff 
 and random jitter. Be considerate of servers that may be stuck in a degraded state.
-
 
