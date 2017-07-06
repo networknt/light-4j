@@ -15,19 +15,19 @@ these services with OpenAPI specifications.
 
 Here is a list of design decisions for microservices:
 
-* [Microservice Design Patterns](http://blog.arungupta.me/microservice-design-patterns/) 
+* [Microservice Design Patterns](http://blog.arungupta.me/microservice-design-patterns/)
 
-* [How to convert existing RESTful web services to microservices](https://networknt.github.io/light-4j/design/convtws/) 
+* [How to convert existing web services to microservices](https://networknt.github.io/light-4j/design/convtws/)
 
-* [How to design microservices for brand new project/product](https://networknt.github.io/light-4j/design/newprod/)
-
-* [How to replace monolithic Java EE application to microservices](https://networknt.github.io/light-4j/design/monojee/)
+* [Service Evolution](https://networknt.github.io/light-4j/design/evolution/)
 
 * [How to handle Partial Faiure](https://networknt.github.io/light-4j/design/partial-failure/)
 
 * [Idempotency](https://networknt.github.io/light-4j/design/idempotency/)
 
-* [Service Evolution](https://networknt.github.io/light-4j/design/evolution/)
-
 * [Consumer Contract and Consumer Driven Contract](https://networknt.github.io/light-4j/design/consumer-contract/)
 
+Work-in-progress:
+* [How to design microservices for brand new project/product](https://networknt.github.io/light-4j/design/newprod/)
+
+* [How to replace monolithic Java EE application to microservices](https://networknt.github.io/light-4j/design/monojee/)
