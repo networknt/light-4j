@@ -90,12 +90,9 @@ public class MetricsHandler implements MiddlewareHandler {
     public MetricsHandler() {
         commonTags.put("apiName", Server.config.getServiceId());
         InetAddress inetAddress = Util.getInetAddress();
-        commonTags.put("ipAddress", inetAddress.getHostAddress());
-        commonTags.put("hostname", inetAddress.getHostName()); // will be container id if in docker.
-
-        //commonTags.put("version", Util.getJarVersion());
-        //commonTags.put("frameworkVersion", Util.getFrameworkVersion());
-        // TODO need to find a way to get env to put into the metrics.
+        // On Docker for Mac, inetAddress will be null as there is a bug.
+        commonTags.put("ipAddress", inetAddress == null ? "unknown" : inetAddress.getHostAddress());
+        commonTags.put("hostname", inetAddress == null ? "unknown" : inetAddress.getHostName()); // will be container id if in docker.
     }
 
     @Override
