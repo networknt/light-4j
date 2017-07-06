@@ -136,7 +136,7 @@ public class ConsulRegistryTest {
     public void discoverService() throws Exception {
         registry.doRegister(serviceUrl);
         List<URL> urls = registry.discoverService(serviceUrl);
-        Assert.assertFalse(urls.contains(serviceUrl));
+        Assert.assertNull(urls);
 
         registry.doAvailable(null);
         Thread.sleep(sleepTime);
