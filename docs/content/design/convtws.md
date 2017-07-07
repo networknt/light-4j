@@ -35,28 +35,28 @@ As you can see, the network communication in microservice diagram is significant
 more then web service and this is why that traditional commercial API gateway
 is not suitable in this architecture as it will become bottleneck and single
 point of failure. Most gateway products on the market today are Java EE based
-monolithic application and it is against distributed principal of microservices
+monolithic applications and they are against distributed principal of microservices
 architecture.
 
 Microservice architecture evolves from monolithic application architecture 
-naturally as a monolith grows to certain stage that become not maintainable
+naturally as a monolith grows to certain stage that becomes not maintainable
 and not scalable. Imaging that you have a big application and only one 
 developer knows it inside out and every time one line of code is changed ten
-other places are broken. The make every release risky and there are several
+other places are broken. This makes every release risky and there are several
 months testing cycles to ensure that nothing is broken. In order to meet the
 demand from business growth, the application can only be scaled horizontally
 and it is all or nothing. You cannot scale an individual service which is
-facing volume spike during month end and year end. 
+facing volume spike during month end or year end. 
 
 From anohter perspective, it is natual for human beings to break up complex
-things into simpler and smaller pieces to tackle it. This is not just limited
+things into simpler and smaller pieces to tackle them. This is not just limited
 to computer software but in every field. According to brain science, most
 people can only remember 7 to 9 things in short term and focus on them
 at a particular moment. Can you imagine a big application with thousands
 moving pieces? A good developer/prgrammer must have very good short term
 memory so that their brain can wire many things together.
 
-IIn the entire history of software programming, developers were break things
+In the entire history of software programming, developers were break things
 up all the time. If you ever worked on assembly in early years, you know it
 is a big monolithic app with one entry point and so many goto statements.
 some smart developers tried to extract common and repeatable code into function
@@ -65,12 +65,12 @@ so that it can be called from different places.
 A monolithic application just like a Java class with only one main method with
 thousands line of code. In order to make it easy to read and maintain, some of
 the duplicated lines of code should be extracted into other method in the same
-class or some other classes. This make developers' life easier becuase when
+class or some other classes. This make developers' life easier because when
 you work, you are dealing with only one class or one method at a time. The only
 problem with this kind of break up is classes and methods are tightly coupled
 and there are a lot of assumptions in these class and method calls. This is
 why you change one method to fix an issue for one caller and other callers are
-broken as they have different assumptions although the signaure of the method
+broken as they have different assumptions although the signature of the method
 has never been changed. Another issue with this kind of break up is you have to
 package your changed method/class with others as one deployment unit to deploy
 them together to production and the entire deployment process is very risky.
@@ -91,12 +91,12 @@ that the slowest service will decide the response time. If you call multiple
 services in serial, then the sum of these services will be your response time.
 
 Given above nature of microservices, a low latency HTTP server is very important
-so that it won't add to much over head to each service to service call. Also,
+so that it won't add too much over head to each service to service call. Also,
 as service calls are over the network, there are a lot of things need to be
 handled like security, logging, metrics, auditing, service registry/discovery
 etc. This is why you need a framework to build microservices so that developers
 can only focus on the business logic of the service without worrying about
-cross-cutting concerns. The light-4j/light-rest-4j framework is designed
-just for that. 
+cross-cutting concerns. The [light-4j](https://github.com/networknt/light-4j) 
+framework is designed just for that. 
 
 
