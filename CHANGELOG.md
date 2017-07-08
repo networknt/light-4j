@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.3.4 - 2017-07-08
+### Added
+
+### Changed
+- fixes #47 jwt token verification with cached
+- fixes #72 PKCE CodeVerifierUtil impl for light-oauth2
+- fixes #72 Update CodeVerifierUtil to support light-oauth2 implementation
+- fixes #74 update ConsulRegistry to use one layer of cache structure
+- fixes #75 workaround a bug in Docker for Mac that hostname is not mapped in host
+
 ## 1.3.3 - 2017-06-14
 ### Added
 
