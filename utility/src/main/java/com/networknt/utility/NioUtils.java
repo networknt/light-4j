@@ -230,4 +230,17 @@ public class NioUtils {
         buffer.flip();
         return buffer;
     }
+
+    public static String getTempDir() {
+        // default is user home directory
+        String tempDir = System.getProperty("user.home");
+        try{
+            //create a temp file
+            File temp = File.createTempFile("A0393939", ".tmp");
+            //Get tempropary file path
+            String absolutePath = temp.getAbsolutePath();
+            tempDir = absolutePath.substring(0,absolutePath.lastIndexOf(File.separator));
+        }catch(IOException e){}
+        return tempDir;
+    }
 }
