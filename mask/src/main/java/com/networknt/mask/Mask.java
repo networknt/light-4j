@@ -16,17 +16,12 @@
 
 package com.networknt.mask;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.jayway.jsonpath.*;
 import com.networknt.config.Config;
 import com.networknt.utility.ModuleRegistry;
 import org.apache.commons.lang.StringUtils;
-import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -102,53 +97,6 @@ public class Mask {
         return input;
     }
 
-    /**
-     * Replace values in JSON using json path
-     * @param input String The source of the string that needs to be masked
-     * @param key String The key maps to a list of json path for masking
-     * @return String Masked result
-     */
-    public static String maskJson(String input, String key) {
-        DocumentContext ctx = JsonPath.parse(input);
-        Map<String, Object> jsonConfig = (Map<String, Object>) config.get(MASK_TYPE_JSON);
-        if (jsonConfig != null) {
-            Map<String, Object> patternMap = (Map<String, Object>) jsonConfig.get(key);
-            if (patternMap != null) {
-                JsonNode configNode = Config.getInstance().getMapper().valueToTree(patternMap);
-                Iterator<Map.Entry<String, JsonNode>> iterator = configNode.fields();
-                while (iterator.hasNext()) {
-                    Map.Entry<String, JsonNode> entry = iterator.next();
-                    applyMask(entry, ctx);
-                }
-                return ctx.jsonString();
-            } else {
-                logger.warn("mask.json doesn't contain the key {} ", Encode.forJava(key));
-                return input;
-            }
-        }
-        return input;
-    }
-
-    private static void applyMask(Map.Entry<String, JsonNode> entry, DocumentContext ctx) {
-        Object value;
-        String jsonPath = entry.getKey();
-        try {
-            value = ctx.read(jsonPath);
-            if (!(value instanceof String || value instanceof Integer || value instanceof List<?>)) {
-                logger.error("The value specified by path {} cannot be masked", jsonPath);
-            } else {
-                if (!(value instanceof List<?>)) {
-                    ctx.set(jsonPath, replaceWithMask(value.toString(), MASK_REPLACEMENT_CHAR.charAt(0), entry.getValue().asText()));
-                } else {
-                    maskList(ctx, jsonPath, entry.getValue().asText());
-                }
-            }
-        } catch (PathNotFoundException e) {
-            logger.warn("JsonPath {} could not be found.", jsonPath);
-        }
-    }
-
-
     private static String replaceWithMask(String stringToBeMasked, char maskingChar, String regex) {
         if (stringToBeMasked.length() == 0) {
             return stringToBeMasked;
@@ -181,6 +129,102 @@ public class Mask {
         return replacementString;
     }
 
+
+    /**
+     * Replace values in JSON using json path
+     * @param input String The source of the string that needs to be masked
+     * @param key String The key maps to a list of json path for masking
+     * @return String Masked result
+     */
+    /*
+    public static String maskJson(String input, String key) {
+        DocumentContext ctx = JsonPath.parse(input);
+        Map<String, Object> jsonConfig = (Map<String, Object>) config.get(MASK_TYPE_JSON);
+        if (jsonConfig != null) {
+            Map<String, Object> patternMap = (Map<String, Object>) jsonConfig.get(key);
+            if (patternMap != null) {
+                JsonNode configNode = Config.getInstance().getMapper().valueToTree(patternMap);
+                Iterator<Map.Entry<String, JsonNode>> iterator = configNode.fields();
+                while (iterator.hasNext()) {
+                    Map.Entry<String, JsonNode> entry = iterator.next();
+                    applyMask(entry, ctx);
+                }
+                return ctx.jsonString();
+            } else {
+                logger.warn("mask.json doesn't contain the key {} ", Encode.forJava(key));
+                return input;
+            }
+        }
+        return input;
+    }
+    */
+
+    /**
+     * Replace values in JSON using json path
+     * @param input String The source of the string that needs to be masked
+     * @param key String The key maps to a list of json path for masking
+     * @return String Masked result
+     */
+    /*
+    public static String maskJson(String input, String key) {
+        Any any = Any.wrap(input);
+        Map<String, Object> jsonConfig = (Map<String, Object>) config.get(MASK_TYPE_JSON);
+        if (jsonConfig != null) {
+            Map<String, Object> patterns = (Map<String, Object>) jsonConfig.get(key);
+            if (patterns != null) {
+                // there might be multiple patterns per key.
+                patterns.forEach((k, v) -> {
+                    if(logger.isDebugEnabled()) logger.debug("k = " + k + " v = " + v);
+                    applyMask(any, k, v);
+                });
+            } else {
+                logger.warn("mask.yml doesn't contain the key {} ", Encode.forJava(key));
+                return input;
+            }
+        }
+        return any.toString();
+    }
+
+    private static void applyMask(Any any, String k, Object v) {
+        Object value;
+        String pattern = (String)v;
+        try {
+            value = any.get(jsonPath);
+            if (!(value instanceof String || value instanceof Integer || value instanceof List<?>)) {
+                logger.error("The value specified by path {} cannot be masked", k);
+            } else {
+                if (!(value instanceof List<?>)) {
+                    ctx.set(jsonPath, replaceWithMask(value.toString(), MASK_REPLACEMENT_CHAR.charAt(0), entry.getValue().asText()));
+                } else {
+                    maskList(ctx, jsonPath, entry.getValue().asText());
+                }
+            }
+        } catch (PathNotFoundException e) {
+            logger.warn("JsonPath {} could not be found.", jsonPath);
+        }
+    }
+
+
+    private static void applyMask(Map.Entry<String, JsonNode> entry, DocumentContext ctx) {
+        Object value;
+        String jsonPath = entry.getKey();
+        try {
+            value = ctx.read(jsonPath);
+            if (!(value instanceof String || value instanceof Integer || value instanceof List<?>)) {
+                logger.error("The value specified by path {} cannot be masked", jsonPath);
+            } else {
+                if (!(value instanceof List<?>)) {
+                    ctx.set(jsonPath, replaceWithMask(value.toString(), MASK_REPLACEMENT_CHAR.charAt(0), entry.getValue().asText()));
+                } else {
+                    maskList(ctx, jsonPath, entry.getValue().asText());
+                }
+            }
+        } catch (PathNotFoundException e) {
+            logger.warn("JsonPath {} could not be found.", jsonPath);
+        }
+    }
+
+
     private static void maskList(DocumentContext ctx, String jsonPath, String expression) {
         ctx.configuration().addOptions(Option.AS_PATH_LIST);
         Configuration conf = Configuration.builder().options(Option.AS_PATH_LIST).build();
@@ -191,4 +235,5 @@ public class Mask {
             ctx.set(path, replaceWithMask(value.toString(), MASK_REPLACEMENT_CHAR.charAt(0), expression));
         }
     }
+    */
 }

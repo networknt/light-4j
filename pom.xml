@@ -67,6 +67,7 @@
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <version.jackson>2.8.7</version.jackson>
+        <version.jsoniter>0.9.15</version.jsoniter>
         <version.slf4j>1.7.25</version.slf4j>
         <version.jose4j>0.5.5</version.jose4j>
         <version.antlr4>4.7</version.antlr4>
@@ -78,7 +79,6 @@
         <version.junit>4.12</version.junit>
         <version.mockito>2.7.21</version.mockito>
         <version.undertow>1.4.11.Final</version.undertow>
-        <version.jsonpath>2.2.0</version.jsonpath>
         <version.httpclient>4.5.2</version.httpclient>
         <version.httpasyncclient>4.1.2</version.httpasyncclient>
         <version.swagger>1.0.28</version.swagger>
@@ -275,10 +275,16 @@
                 <artifactId>swagger-parser</artifactId>
                 <version>${version.swagger}</version>
             </dependency>
+
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
                 <version>${version.jackson}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.jsoniter</groupId>
+                <artifactId>jsoniter</artifactId>
+                <version>${version.jsoniter}</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
@@ -319,17 +325,6 @@
                 <groupId>org.owasp.encoder</groupId>
                 <artifactId>encoder</artifactId>
                 <version>${version.encoder}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.jayway.jsonpath</groupId>
-                <artifactId>json-path</artifactId>
-                <version>${version.jsonpath}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>net.minidev</groupId>
-                        <artifactId>json-smart</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
