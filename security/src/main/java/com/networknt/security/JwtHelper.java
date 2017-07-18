@@ -64,7 +64,8 @@ public class JwtHelper {
     public static final String SECURITY_CONFIG = "security";
     public static final String JWT_CERTIFICATE = "certificate";
     public static final String JwT_CLOCK_SKEW_IN_SECONDS = "clockSkewInSeconds";
-
+    public static final String ENABLE_VERIFY_JWT = "enableVerifyJwt";
+    
     static Map<String, X509Certificate> certMap;
 
     static Map<String, Object> securityConfig = (Map)Config.getInstance().getJsonMapConfig(SECURITY_CONFIG);
