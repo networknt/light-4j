@@ -22,34 +22,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @author Steve Hu
  */
 public class HashUtil {
-    public static void main(String[] args) throws Exception
-    {
-
-        String uuid = generateUUID();
-        System.out.println("uuid =" + uuid);
-
-        String  originalPassword = "password";
-        String generatedSecuredPasswordHash = generateStorngPasswordHash(originalPassword);
-        System.out.println(generatedSecuredPasswordHash);
-
-        boolean matched = validatePassword("password", generatedSecuredPasswordHash);
-        System.out.println(matched);
-
-        matched = validatePassword("password1", generatedSecuredPasswordHash);
-        System.out.println(matched);
-
-        originalPassword = "123456";
-        generatedSecuredPasswordHash = generateStorngPasswordHash(originalPassword);
-        System.out.println(generatedSecuredPasswordHash);
-
-        matched = validatePassword("123456", generatedSecuredPasswordHash);
-        System.out.println(matched);
-
-        matched = validatePassword("1234567", generatedSecuredPasswordHash);
-        System.out.println(matched);
-
-
-    }
 
     private HashUtil() {throw new UnsupportedOperationException("do not instantiate");}
 

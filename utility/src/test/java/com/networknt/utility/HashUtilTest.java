@@ -14,18 +14,18 @@ public class HashUtilTest {
     }
     @Test
     public void testPasswordHash() throws Exception {
-        String password = "123456";
-        String hashedPass = HashUtil.generateStorngPasswordHash(password);
+        String p = "123456";
+        String hashedPass = HashUtil.generateStorngPasswordHash(p);
         System.out.println("hashedPass = " + hashedPass);
-        Assert.assertTrue(HashUtil.validatePassword(password, hashedPass));
+        Assert.assertTrue(HashUtil.validatePassword(p, hashedPass));
     }
 
     @Test
     public void testClientSecretHash() throws Exception {
-        String secret = "f6h1FTI8Q3-7UScPZDzfXA";
-        String hashedPass = HashUtil.generateStorngPasswordHash(secret);
+        String s = "f6h1FTI8Q3-7UScPZDzfXA";
+        String hashedPass = HashUtil.generateStorngPasswordHash(s);
         System.out.println("hashedSecret = " + hashedPass);
-        Assert.assertTrue(HashUtil.validatePassword(secret, hashedPass));
+        Assert.assertTrue(HashUtil.validatePassword(s, hashedPass));
     }
 
 }

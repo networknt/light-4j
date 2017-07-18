@@ -60,15 +60,10 @@ import java.util.regex.Pattern;
 public class JwtHelper {
     static final XLogger logger = XLoggerFactory.getXLogger(JwtHelper.class);
     public static final String JWT_CONFIG = "jwt";
-    public static final String KEY = "key";
-    public static final String FILENAME = "filename";
-    public static final String PASSWORD = "password";
-    public static final String KEY_NAME = "keyName";
     public static final String KID = "kid";
     public static final String SECURITY_CONFIG = "security";
     public static final String JWT_CERTIFICATE = "certificate";
     public static final String JwT_CLOCK_SKEW_IN_SECONDS = "clockSkewInSeconds";
-    public static final String ENABLE_VERIFY_JWT = "enableVerifyJwt";
 
     static Map<String, X509Certificate> certMap;
 
