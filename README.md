@@ -138,7 +138,7 @@ before shutting down.
 
 ## Appreciation
 
-- Light-4j has been optimized by using open source license of [JProfile](http://www.ej-technologies.com/products/jprofiler/overview.html) 
+- Light-4j has been optimized by using open source license of [JProfiler](http://www.ej-technologies.com/products/jprofiler/overview.html) 
 from [ej-technologies](http://www.ej-technologies.com/). 
 
 ## License
