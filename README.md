@@ -16,7 +16,8 @@ Light means lightweight, lighting fast and shed light on how to program with mod
 
 It is 44 times faster than the most popular microservices platform Spring Boot embedded 
 Tomcat and use only 1/5 of memory. Here is the [benchmark](https://github.com/networknt/microservices-framework-benchmark) 
-results compare with Spring Boot and other microservices frameworks.
+results compare with Spring Boot and other microservices frameworks. Here is the [comparison](https://www.techempower.com/benchmarks/previews/round15/)
+with other Web frameworks. 
 
 ### Provide an embedded gateway to address cross cutting concerns.
 * Plugin architecture for startup/shutdown hooks and middleware components
@@ -134,3 +135,13 @@ complete in-flight requests and close the database connections etc. If service r
 and discovery is used, then the server will send shutdown event to service registry and
 keep processing requests for 30 seconds until all clients refreshes their local cache 
 before shutting down. 
+
+## Appreciation
+
+- Light-4j has been optimized by using open source license of [JProfile](http://www.ej-technologies.com/products/jprofiler/overview.html) 
+from [ej-technologies](http://www.ej-technologies.com/). 
+
+## License
+
+Light-4j and all light-*-4j frameworks are available under the Apache 2.0 license. See the [LICENSE](https://www.apache.org/licenses/LICENSE-2.0) 
+file for more info.
