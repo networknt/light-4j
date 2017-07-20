@@ -44,7 +44,9 @@ import java.security.PrivateKey;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -65,7 +67,7 @@ public class JwtHelper {
     public static final String ENABLE_VERIFY_JWT = "enableVerifyJwt";
     
     static Map<String, X509Certificate> certMap;
-    static Map<String, String> fingerPrintMap;
+    static List<String> fingerPrints;
 
     static Map<String, Object> securityConfig = (Map)Config.getInstance().getJsonMapConfig(SECURITY_CONFIG);
     static Map<String, Object> securityJwtConfig = (Map)securityConfig.get(JWT_CONFIG);
@@ -201,7 +203,7 @@ public class JwtHelper {
 
     static {
         certMap = new HashMap<>();
-        fingerPrintMap = new HashMap<>();
+        fingerPrints = new ArrayList<>();
         Map<String, Object> keyMap = (Map<String, Object>) securityJwtConfig.get(JwtHelper.JWT_CERTIFICATE);
         for(String kid: keyMap.keySet()) {
             X509Certificate cert = null;
@@ -211,7 +213,7 @@ public class JwtHelper {
                 logger.error("Exception:", e);
             }
             certMap.put(kid, cert);
-            fingerPrintMap.put(kid, FingerPrintUtil.getCertFingerPrint(cert));
+            fingerPrints.add(FingerPrintUtil.getCertFingerPrint(cert));
         }
     }
 
@@ -296,5 +298,9 @@ public class JwtHelper {
         claims = jwtContext.getJwtClaims();
         cache.put(jwt, claims);
         return claims;
+    }
+
+    public static List getFingerPrints() {
+        return fingerPrints;
     }
 }

@@ -17,6 +17,7 @@
 package com.networknt.info;
 
 import com.networknt.config.Config;
+import com.networknt.security.JwtHelper;
 import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.Util;
@@ -57,6 +58,7 @@ public class ServerInfoGetHandler implements HttpHandler {
             Map<String, Object> infoMap = new LinkedHashMap<>();
             infoMap.put("deployment", getDeployment());
             infoMap.put("environment", getEnvironment(exchange));
+            infoMap.put("security", getSecurity());
             infoMap.put("specification", Config.getInstance().getJsonMapConfigNoCache("swagger"));
             infoMap.put("component", ModuleRegistry.getRegistry());
             exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
@@ -81,6 +83,14 @@ public class ServerInfoGetHandler implements HttpHandler {
         envMap.put("runtime", getRuntime());
         envMap.put("system", getSystem());
         return envMap;
+    }
+
+    public Map<String, Object> getSecurity() {
+        Map<String, Object> secMap = new LinkedHashMap<>();
+        secMap.put("oauth2FingerPrints", JwtHelper.getFingerPrints());
+        secMap.put("tlsFingerPrint", "");
+        secMap.put("clientFingerPrint", "");
+        return secMap;
     }
 
     public Map<String, Object> getHost(HttpServerExchange exchange) {
