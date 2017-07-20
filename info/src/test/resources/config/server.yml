@@ -1,0 +1,35 @@
+# Server configuration
+---
+# This is the default binding address if the service is dockerized.
+ip: 0.0.0.0
+
+# Http port if enableHttp is true.
+httpPort: 8080
+
+# Enable HTTP should be false on official environment.
+enableHttp: true
+
+# Https port if enableHttps is true.
+httpsPort: 8443
+
+# Enable HTTPS should be true on official environment.
+enableHttps: true
+
+# Http/2 is enabled. When Http2 is enable, enableHttps is true and enableHttp is false by default.
+# If you want to have http enabled, enableHttp2 must be false.
+enableHttp2: false
+
+# Keystore file name in config folder. KeystorePass is in secret.yml to access it.
+keystoreName: tls/server.keystore
+
+# Flag that indicate if two way TLS is enabled. Not recommended in docker container.
+enableTwoWayTls: false
+
+# Truststore file name in config folder. TruststorePass is in secret.yml to access it.
+truststoreName: tls/server.truststore
+
+# Unique service identifier. Used in service registration and discovery etc.
+serviceId: com.networknt.petstore-1.0.0
+
+# Flag to enable service registration. Only be true if running as standalone Java jar.
+enableRegistry: false
