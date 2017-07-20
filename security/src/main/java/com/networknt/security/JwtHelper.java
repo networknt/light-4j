@@ -18,10 +18,9 @@ package com.networknt.security;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.networknt.config.Config;
 import com.networknt.exception.ExpiredTokenException;
+import com.networknt.utility.FingerPrintUtil;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
@@ -41,7 +40,6 @@ import org.slf4j.ext.XLoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
-import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -67,6 +65,7 @@ public class JwtHelper {
     public static final String ENABLE_VERIFY_JWT = "enableVerifyJwt";
     
     static Map<String, X509Certificate> certMap;
+    static Map<String, String> fingerPrintMap;
 
     static Map<String, Object> securityConfig = (Map)Config.getInstance().getJsonMapConfig(SECURITY_CONFIG);
     static Map<String, Object> securityJwtConfig = (Map)securityConfig.get(JWT_CONFIG);
@@ -202,6 +201,7 @@ public class JwtHelper {
 
     static {
         certMap = new HashMap<>();
+        fingerPrintMap = new HashMap<>();
         Map<String, Object> keyMap = (Map<String, Object>) securityJwtConfig.get(JwtHelper.JWT_CERTIFICATE);
         for(String kid: keyMap.keySet()) {
             X509Certificate cert = null;
@@ -211,6 +211,7 @@ public class JwtHelper {
                 logger.error("Exception:", e);
             }
             certMap.put(kid, cert);
+            fingerPrintMap.put(kid, FingerPrintUtil.getCertFingerPrint(cert));
         }
     }
 
