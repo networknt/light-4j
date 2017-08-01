@@ -16,9 +16,7 @@
 
 package com.networknt.mask;
 
-import com.jsoniter.any.Any;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class MaskTest {
