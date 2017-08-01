@@ -109,14 +109,14 @@ public class HashUtil {
         }
     }
 
-    public static boolean validatePassword(String originalPassword, String storedPassword) throws NoSuchAlgorithmException, InvalidKeySpecException
+    public static boolean validatePassword(char[] originalPassword, String storedPassword) throws NoSuchAlgorithmException, InvalidKeySpecException
     {
         String[] parts = storedPassword.split(":");
         int iterations = Integer.parseInt(parts[0]);
         byte[] salt = fromHex(parts[1]);
         byte[] hash = fromHex(parts[2]);
 
-        PBEKeySpec spec = new PBEKeySpec(originalPassword.toCharArray(), salt, iterations, hash.length * 8);
+        PBEKeySpec spec = new PBEKeySpec(originalPassword, salt, iterations, hash.length * 8);
         SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
         byte[] testHash = skf.generateSecret(spec).getEncoded();
 
