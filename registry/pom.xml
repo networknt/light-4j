@@ -21,7 +21,7 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>1.3.4</version>
+        <version>1.3.5</version>
         <relativePath>..</relativePath>
     </parent>
 
