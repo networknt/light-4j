@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.3.5 - 2017-08-01
+### Added
+
+
+### Changed
+- fixes #76 add getTempDir and test cases for NioUtils
+- fixes #78 resolve security issues reported from Fortify scanner
+- fixes #79 add server tls finger print into server info
+- fixes #80 Update validatePassword in HashUtil to accept origianlPassword
+- fixes #81 Remove jsoniter dependencies in mask until it has a feature of JsonPath
+
 ## 1.3.4 - 2017-07-08
 ### Added
 
