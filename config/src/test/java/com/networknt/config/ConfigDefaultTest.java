@@ -22,6 +22,8 @@ import junit.framework.TestCase;
 import org.junit.Assert;
 
 import java.io.InputStream;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Map;
@@ -57,7 +59,7 @@ public class ConfigDefaultTest extends TestCase {
 
     public void testGetJsonObjectConfig() throws Exception {
         config.clear();
-        TestConfig tc = (TestConfig)config.getJsonObjectConfig("test", TestConfig.class);
+        TestConfig tc = (TestConfig) config.getJsonObjectConfig("test", TestConfig.class);
         Assert.assertEquals("default config", tc.getValue());
     }
 
@@ -69,7 +71,7 @@ public class ConfigDefaultTest extends TestCase {
 
     public void test1GetJsonObjectConfig() throws Exception {
         config.clear();
-        TestConfig tc = (TestConfig)config.getJsonObjectConfig("test1", TestConfig.class);
+        TestConfig tc = (TestConfig) config.getJsonObjectConfig("test1", TestConfig.class);
         Assert.assertEquals("default config", tc.getValue());
     }
 
@@ -81,7 +83,7 @@ public class ConfigDefaultTest extends TestCase {
 
     public void test2GetJsonObjectConfig() throws Exception {
         config.clear();
-        TestConfig tc = (TestConfig)config.getJsonObjectConfig("test2", TestConfig.class);
+        TestConfig tc = (TestConfig) config.getJsonObjectConfig("test2", TestConfig.class);
         Assert.assertEquals("default config", tc.getValue());
     }
 
@@ -91,14 +93,32 @@ public class ConfigDefaultTest extends TestCase {
         }
     }
 
-    public void testObjectMapper() throws Exception {
+    public void testObjectMapperZonedDateTime() throws Exception {
         ObjectMapper mapper = Config.getInstance().getMapper();
-        DateModel dm = mapper.readValue("{\"time\" : \"2014-07-02T04:00:00.000000Z\"}", DateModel.class);
+        ZonedDateTimeModel dm = mapper.readValue("{\"time\" : \"2014-07-02T04:00:00.000000Z\"}",
+                ZonedDateTimeModel.class);
         System.out.println(dm.getTime());
         ZoneId zoneId = ZoneId.of("UTC");
-        ZonedDateTime zonedDateTime2 =
-                ZonedDateTime.of(2014, 7, 2, 4, 0, 0, 0, zoneId);
+        ZonedDateTime zonedDateTime2 = ZonedDateTime.of(2014, 7, 2, 4, 0, 0, 0, zoneId);
         System.out.println(zonedDateTime2);
         Assert.assertTrue(zonedDateTime2.equals(dm.getTime()));
+    }
+
+    public void testObjectMapperLocalDateTime() throws Exception {
+        ObjectMapper mapper = Config.getInstance().getMapper();
+        LocalDateTimeModel dm = mapper.readValue("{\"time\" : \"1999-01-02T04:05:06.700000Z\"}", LocalDateTimeModel.class);
+        System.out.println(dm.getTime());
+        LocalDateTime dm2 = LocalDateTime.of(1999, 1, 2, 4, 5, 6, 700000000);
+        System.out.println(dm2);
+        Assert.assertTrue(dm2.equals(dm.getTime()));
+    }
+    
+    public void testObjectMapperLocalDate() throws Exception {
+        ObjectMapper mapper = Config.getInstance().getMapper();
+        LocalDateModel dm = mapper.readValue("{\"date\" : \"1999-02-03T04:05:06.700000Z\"}", LocalDateModel.class);
+        System.out.println(dm.getDate());
+        LocalDate dm2 = LocalDate.of(1999, 2, 3);
+        System.out.println(dm2);
+        Assert.assertTrue(dm2.equals(dm.getDate()));
     }
 }
