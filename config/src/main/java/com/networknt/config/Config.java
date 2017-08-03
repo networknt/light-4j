@@ -23,6 +23,8 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.owasp.encoder.Encode;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
@@ -93,13 +95,19 @@ public abstract class Config {
         final Map<String, Object> configCache = new ConcurrentHashMap<>(10, 0.9f, 1);
 
         // An instance of Jackson ObjectMapper that can be used anywhere else for Json.
-        final ObjectMapper mapper = new ObjectMapper();
+        final static ObjectMapper mapper = new ObjectMapper();
+        static {
+            mapper.registerModule(new JavaTimeModule());
+            mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        }
+
         final Yaml yaml = new Yaml();
 
         private static Config initialize() {
             Iterator<Config> it;
             it = ServiceLoader.load(Config.class).iterator();
             return it.hasNext() ? it.next() : new FileConfigImpl();
+
         }
 
         // Return instance of Jackson Object Mapper

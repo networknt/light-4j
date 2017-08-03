@@ -17,10 +17,13 @@
 package com.networknt.config;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import junit.framework.TestCase;
 import org.junit.Assert;
 
 import java.io.InputStream;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Map;
 
 /**
@@ -88,5 +91,14 @@ public class ConfigDefaultTest extends TestCase {
         }
     }
 
-
+    public void testObjectMapper() throws Exception {
+        ObjectMapper mapper = Config.getInstance().getMapper();
+        DateModel dm = mapper.readValue("{\"time\" : \"2014-07-02T04:00:00.000000Z\"}", DateModel.class);
+        System.out.println(dm.getTime());
+        ZoneId zoneId = ZoneId.of("UTC");
+        ZonedDateTime zonedDateTime2 =
+                ZonedDateTime.of(2014, 7, 2, 4, 0, 0, 0, zoneId);
+        System.out.println(zonedDateTime2);
+        Assert.assertTrue(zonedDateTime2.equals(dm.getTime()));
+    }
 }
