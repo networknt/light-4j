@@ -1,7 +1,21 @@
 package com.networknt.client;
 
+import com.networknt.client.oauth.ClientCredentialsRequest;
+import com.networknt.client.oauth.TokenHelper;
+import com.networknt.client.oauth.TokenRequest;
+import com.networknt.client.oauth.TokenResponse;
+import com.networknt.config.Config;
+import com.networknt.exception.ApiException;
+import com.networknt.exception.ClientException;
+import com.networknt.status.Status;
+import com.networknt.utility.Constants;
+import com.networknt.utility.ModuleRegistry;
 import io.undertow.client.*;
 import io.undertow.connector.ByteBufferPool;
+import io.undertow.server.HttpServerExchange;
+import org.apache.http.HttpRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xnio.FutureResult;
 import org.xnio.IoFuture;
 import org.xnio.OptionMap;
@@ -12,15 +26,48 @@ import org.xnio.ssl.XnioSsl;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.ServiceLoader;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by stevehu on 2017-03-21.
  */
 public class Http2Client {
+    static final Logger logger = LoggerFactory.getLogger(Http2Client.class);
+
+    public static final String CONFIG_NAME = "client";
+    public static final String CONFIG_SECRET = "secret";
+
+    static final String OAUTH = "oauth";
+    static final String TOKEN_RENEW_BEFORE_EXPIRED = "tokenRenewBeforeExpired";
+    static final String EXPIRED_REFRESH_RETRY_DELAY = "expiredRefreshRetryDelay";
+    static final String EARLY_REFRESH_RETRY_DELAY = "earlyRefreshRetryDelay";
+
+    static final String STATUS_CLIENT_CREDENTIALS_TOKEN_NOT_AVAILABLE = "ERR10009";
+
+    static Map<String, Object> config;
+    static Map<String, Object> oauthConfig;
+
+    // Cached jwt token for this client.
+    private String jwt;
+    private long expire;
+    private volatile boolean renewing = false;
+    private volatile long expiredRetryTimeout;
+    private volatile long earlyRetryTimeout;
+
+    private final Object lock = new Object();
+
+    static {
+        List<String> masks = new ArrayList<>();
+        ModuleRegistry.registerModule(Client.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), masks);
+        config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
+        if(config != null) {
+            oauthConfig = (Map<String, Object>)config.get(OAUTH);
+        }
+    }
+    public static Map<String, Object> secret = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
 
     private final Map<String, ClientProvider> clientProviders;
 
@@ -147,6 +194,193 @@ public class Http2Client {
 
     public static Http2Client getInstance(final ClassLoader classLoader) {
         return new Http2Client(classLoader);
+    }
+
+
+    /**
+     * Add Authorization Code grant token the caller app gets from OAuth2 server.
+     *
+     * This is the method called from client like web server
+     *
+     * @param request the http request
+     * @param token the bearer token
+     */
+    public void addAuthToken(HttpRequest request, String token) {
+        if(token != null && !token.startsWith("Bearer ")) {
+            if(token.toUpperCase().startsWith("BEARER ")) {
+                // other cases of Bearer
+                token = "Bearer " + token.substring(7);
+            } else {
+                token = "Bearer " + token;
+            }
+        }
+        request.addHeader(Constants.AUTHORIZATION, token);
+    }
+
+    /**
+     * Add Authorization Code grant token the caller app gets from OAuth2 server and add traceabilityId
+     *
+     * This is the method called from client like web server that want to have traceabilityId pass through.
+     *
+     * @param request the http request
+     * @param token the bearer token
+     * @param traceabilityId the traceability id
+     */
+    public void addAuthTokenTrace(HttpRequest request, String token, String traceabilityId) {
+        if(token != null && !token.startsWith("Bearer ")) {
+            if(token.toUpperCase().startsWith("BEARER ")) {
+                // other cases of Bearer
+                token = "Bearer " + token.substring(7);
+            } else {
+                token = "Bearer " + token;
+            }
+        }
+        request.addHeader(Constants.AUTHORIZATION, token);
+        request.addHeader(Constants.TRACEABILITY_ID, traceabilityId);
+    }
+
+    /**
+     * Add Client Credentials token cached in the client for standalone application
+     *
+     * This is the method called from standalone application like enterprise scheduler for batch jobs
+     * or mobile apps.
+     *
+     * @param request the http request
+     * @throws ClientException client exception
+     * @throws ApiException api exception
+     */
+    public void addCcToken(HttpRequest request) throws ClientException, ApiException {
+        checkCCTokenExpired();
+        request.addHeader(Constants.AUTHORIZATION, "Bearer " + jwt);
+    }
+
+    /**
+     * Add Client Credentials token cached in the client for standalone application
+     *
+     * This is the method called from standalone application like enterprise scheduler for batch jobs
+     * or mobile apps.
+     *
+     * @param request the http request
+     * @param traceabilityId the traceability id
+     * @throws ClientException client exception
+     * @throws ApiException api exception
+     */
+    public void addCcTokenTrace(HttpRequest request, String traceabilityId) throws ClientException, ApiException {
+        checkCCTokenExpired();
+        request.addHeader(Constants.AUTHORIZATION, "Bearer " + jwt);
+        request.addHeader(Constants.TRACEABILITY_ID, traceabilityId);
+    }
+
+    /**
+     * Support API to API calls with scope token. The token is the original token from consumer and
+     * the client credentials token of caller API is added from cache.
+     *
+     * This method is used in API to API call
+     *
+     * @param request the http request
+     * @param exchange the http server exchange
+     * @throws ClientException client exception
+     * @throws ApiException api exception
+     */
+    public void propagateHeaders(HttpRequest request, final HttpServerExchange exchange) throws ClientException, ApiException {
+        String tid = exchange.getRequestHeaders().getFirst(Constants.TRACEABILITY_ID);
+        String token = exchange.getRequestHeaders().getFirst(Constants.AUTHORIZATION);
+        String cid = exchange.getRequestHeaders().getFirst(Constants.CORRELATION_ID);
+        populateHeader(request, token, cid, tid);
+    }
+
+    /**
+     * Support API to API calls with scope token. The token is the original token from consumer and
+     * the client credentials token of caller API is added from cache. authToken, correlationId and
+     * traceabilityId are passed in as strings.
+     *
+     * This method is used in API to API call
+     *
+     * @param request the http request
+     * @param authToken the authorization token
+     * @param correlationId the correlation id
+     * @param traceabilityId the traceability id
+     * @throws ClientException client exception
+     * @throws ApiException api exception
+     */
+    public void populateHeader(HttpRequest request, String authToken, String correlationId, String traceabilityId) throws ClientException, ApiException {
+        if(traceabilityId != null) {
+            addAuthTokenTrace(request, authToken, traceabilityId);
+        } else {
+            addAuthToken(request, authToken);
+        }
+        request.addHeader(Constants.CORRELATION_ID, correlationId);
+        checkCCTokenExpired();
+        request.addHeader(Constants.SCOPE_TOKEN, "Bearer " + jwt);
+    }
+
+    private void getCCToken() throws ClientException {
+        TokenRequest tokenRequest = new ClientCredentialsRequest();
+        TokenResponse tokenResponse = TokenHelper.getToken(tokenRequest);
+        synchronized (lock) {
+            jwt = tokenResponse.getAccessToken();
+            // the expiresIn is seconds and it is converted to millisecond in the future.
+            expire = System.currentTimeMillis() + tokenResponse.getExpiresIn() * 1000;
+            logger.info("Get client credentials token {} with expire_in {} seconds", jwt, tokenResponse.getExpiresIn());
+        }
+    }
+
+    private void checkCCTokenExpired() throws ClientException, ApiException {
+        long tokenRenewBeforeExpired = (Integer) oauthConfig.get(TOKEN_RENEW_BEFORE_EXPIRED);
+        long expiredRefreshRetryDelay = (Integer)oauthConfig.get(EXPIRED_REFRESH_RETRY_DELAY);
+        long earlyRefreshRetryDelay = (Integer)oauthConfig.get(EARLY_REFRESH_RETRY_DELAY);
+        boolean isInRenewWindow = expire - System.currentTimeMillis() < tokenRenewBeforeExpired;
+        logger.trace("isInRenewWindow = " + isInRenewWindow);
+        if(isInRenewWindow) {
+            if(expire <= System.currentTimeMillis()) {
+                logger.trace("In renew window and token is expired.");
+                // block other request here to prevent using expired token.
+                synchronized (Client.class) {
+                    if(expire <= System.currentTimeMillis()) {
+                        logger.trace("Within the synch block, check if the current request need to renew token");
+                        if(!renewing || System.currentTimeMillis() > expiredRetryTimeout) {
+                            // if there is no other request is renewing or the renewing flag is true but renewTimeout is passed
+                            renewing = true;
+                            expiredRetryTimeout = System.currentTimeMillis() + expiredRefreshRetryDelay;
+                            logger.trace("Current request is renewing token synchronously as token is expired already");
+                            getCCToken();
+                            renewing = false;
+                        } else {
+                            logger.trace("Circuit breaker is tripped and not timeout yet!");
+                            // reject all waiting requests by thrown an exception.
+                            throw new ApiException(new Status(STATUS_CLIENT_CREDENTIALS_TOKEN_NOT_AVAILABLE));
+                        }
+                    }
+                }
+            } else {
+                // Not expired yet, try to renew async but let requests use the old token.
+                logger.trace("In renew window but token is not expired yet.");
+                synchronized (Client.class) {
+                    if(expire > System.currentTimeMillis()) {
+                        if(!renewing || System.currentTimeMillis() > earlyRetryTimeout) {
+                            renewing = true;
+                            earlyRetryTimeout = System.currentTimeMillis() + earlyRefreshRetryDelay;
+                            logger.trace("Retrieve token async is called while token is not expired yet");
+
+                            ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+
+                            executor.schedule(() -> {
+                                try {
+                                    getCCToken();
+                                    renewing = false;
+                                    logger.trace("Async get token is completed.");
+                                } catch (Exception e) {
+                                    logger.error("Async retrieve token error", e);
+                                    // swallow the exception here as it is on a best effort basis.
+                                }
+                            }, 50, TimeUnit.MILLISECONDS);
+                            executor.shutdown();
+                        }
+                    }
+                }
+            }
+        }
+        logger.trace("Check secondary token is done!");
     }
 
 }
