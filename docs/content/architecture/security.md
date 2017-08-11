@@ -10,7 +10,7 @@ the grant types we are using, please read this
 
 Everyone’s excited about microservices, but actual implementation is sparse. Perhaps the
 reason is that people are unclear on how these services talk to one another; especially 
-tricky is access management throughout a sea of independent services.
+tricky thing is access management throughout a sea of independent services.
 
 While designing microserivces, big monolithic application is breaking down to smaller
 services that can be independently deployed or replaced. The final application will have
@@ -23,7 +23,7 @@ a simple web token (a UUID in most of the cases), then the client sends the requ
 server with access token in the Authorization header. Once API server receives the request,
 it has to send the access token to OAuth2 server to verify if this is valid token and if
 this token is allowed to access this API. As you can see there must be a database lookup on
-OAuth2 server to do that. Distributed cache help a lot but there is still a network call and
+OAuth2 server to do that. Distributed cache helps a lot but there is still a network call and
 lookup for every single request. OAuth2 server eventually becomes a bottleneck and a single 
 point of failure.
 
