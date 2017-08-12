@@ -112,6 +112,11 @@ googleAnalytics = ""
 	weight = 70
 
 [[menu.main]]
+	name   = "FAQ"
+	url    = "faq/"
+	weight = 75
+
+[[menu.main]]
 	name   = "License"
 	url    = "https://www.apache.org/licenses/LICENSE-2.0"
 	weight = 80
