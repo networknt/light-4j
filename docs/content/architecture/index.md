@@ -15,6 +15,8 @@ Here is a list of architecture decisions for the framework:
  
 * [Security](https://networknt.github.io/light-4j/architecture/security/) first design with OAuth2 integration and distributed verification with embedded distributed gateway.
 
+* How to handler distributed [transaction](https://networknt.github.io/light-4j/architecture/transaction/) in microserivces.
+
 * All components are designed as [plugins](https://networknt.github.io/light-4j/architecture/plugin/) and the framework is easy to be extended and customized.
 
 * Can be [integrated](https://networknt.github.io/light-4j/architecture/integration/) with existing application to protect investment over the year for your organization.
