@@ -17,7 +17,7 @@ public` HttpHandler getHandler() {
     return new EncodingHandler(new ContentEncodingRepository()
             .addEncodingHandler("gzip",
                     new GzipEncodingProvider(), 50,
-                    Predicates.parse("max-content-size[5]")))
+                    Predicates.parse("max-content-size[150]")))
             .setNext(
                     Handlers.routing()
 
