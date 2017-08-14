@@ -19,13 +19,13 @@ public class NioUtilsTest {
     @Test
     public void testList() throws IOException {
         URL url = Thread.currentThread().getContextClassLoader().getResource("rest.zip");
-        NioUtils.list(url.getPath());
+        NioUtils.list(url.getPath().toString().replace("/C:/","C:\\"));
     }
 
     @Test
     public void testUnzip() throws IOException {
         URL url = Thread.currentThread().getContextClassLoader().getResource("rest.zip");
-        NioUtils.unzip(url.getPath(), NioUtils.getTempDir());
+        NioUtils.unzip(url.getPath().toString().replace("/C:/","C:\\"), NioUtils.getTempDir());
     }
 
 }
