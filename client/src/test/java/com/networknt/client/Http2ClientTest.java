@@ -596,6 +596,76 @@ public class Http2ClientTest {
     }
 
     @Test
+    public void testSingleHttp2PostSsl() throws Exception {
+        //
+        final Http2Client client = createClient();
+        final String postMessage = "This is a post request";
+
+        final List<String> responses = new CopyOnWriteArrayList<>();
+        final CountDownLatch latch = new CountDownLatch(1);
+        SSLContext context = createSSLContext(loadKeyStore(CLIENT_KEY_STORE), loadKeyStore(CLIENT_TRUST_STORE), true);
+        XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, SSL_BUFFER_POOL, context);
+
+        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, pool, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        try {
+            connection.getIoThread().execute(new Runnable() {
+                @Override
+                public void run() {
+                    final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(POST);
+                    request.getRequestHeaders().put(Headers.HOST, "localhost");
+                    request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+                    connection.sendRequest(request, new ClientCallback<ClientExchange>() {
+                        @Override
+                        public void completed(ClientExchange result) {
+                            new StringWriteChannelListener(postMessage).setup(result.getRequestChannel());
+                            result.setResponseListener(new ClientCallback<ClientExchange>() {
+                                @Override
+                                public void completed(ClientExchange result) {
+                                    new StringReadChannelListener(pool) {
+
+                                        @Override
+                                        protected void stringDone(String string) {
+                                            responses.add(string);
+                                            latch.countDown();
+                                        }
+
+                                        @Override
+                                        protected void error(IOException e) {
+                                            e.printStackTrace();
+                                            latch.countDown();
+                                        }
+                                    }.setup(result.getResponseChannel());
+                                }
+
+                                @Override
+                                public void failed(IOException e) {
+                                    e.printStackTrace();
+                                    latch.countDown();
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void failed(IOException e) {
+                            e.printStackTrace();
+                            latch.countDown();
+                        }
+                    });
+                }
+            });
+
+            latch.await(10, TimeUnit.SECONDS);
+
+            Assert.assertEquals(1, responses.size());
+            for (final String response : responses) {
+                Assert.assertEquals(postMessage, response);
+            }
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+    }
+
+    @Test
     public void testConnectionClose() throws Exception {
         //
         final Http2Client client = createClient();
