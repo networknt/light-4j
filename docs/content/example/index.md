@@ -11,11 +11,9 @@ The following examples can be found in [light-example-4j](https://github.com/net
 
 * [Performance](https://networknt.github.io/light-4j/example/performance/) - Perforamnce comprison with other frameworks
 
-* [Petstore](https://networknt.github.io/light-4j/example/petstore/) - Generated Petstore example service
-
 * [Routing](https://networknt.github.io/light-4j/example/routing/) - Demo how routing works
 
-* [Swagger](https://networknt.github.io/light-4j/example/swagger/) - All swagger/OpenAPI specifications 
+* [Swagger Specifications](https://github.com/networknt/model-config/tree/master/rest) - All swagger/OpenAPI specifications
 
 * [Web Server](https://networknt.github.io/light-4j/example/webserver/) - How to integrate API server and Web server together
 
