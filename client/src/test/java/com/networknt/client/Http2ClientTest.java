@@ -28,7 +28,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.*;
 import java.security.cert.CertificateException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -39,6 +41,7 @@ public class Http2ClientTest {
     private static final String message = "Hello World!";
     public static final String MESSAGE = "/message";
     public static final String POST = "/post";
+    public static final String FORM = "/form";
 
     private static final String SERVER_KEY_STORE = "tls/server.keystore";
     private static final String SERVER_TRUST_STORE = "tls/server.truststore";
@@ -98,6 +101,18 @@ public class Http2ClientTest {
                                 @Override
                                 public void handleRequest(HttpServerExchange exchange) throws Exception {
                                     sendMessage(exchange);
+                                }
+                            })
+                            .addExactPath(FORM, new HttpHandler() {
+                                @Override
+                                public void handleRequest(HttpServerExchange exchange) throws Exception {
+                                    exchange.getRequestReceiver().receiveFullString(new Receiver.FullStringCallback() {
+                                        @Override
+                                        public void handle(HttpServerExchange exchange, String message) {
+                                            System.out.println("message = " + message);
+                                            exchange.getResponseSender().send(message);
+                                        }
+                                    });
                                 }
                             })
                             .addExactPath(POST, new HttpHandler() {
@@ -603,6 +618,81 @@ public class Http2ClientTest {
                     final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(POST);
                     request.getRequestHeaders().put(Headers.HOST, "localhost");
                     request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+                    connection.sendRequest(request, new ClientCallback<ClientExchange>() {
+                        @Override
+                        public void completed(ClientExchange result) {
+                            new StringWriteChannelListener(postMessage).setup(result.getRequestChannel());
+                            result.setResponseListener(new ClientCallback<ClientExchange>() {
+                                @Override
+                                public void completed(ClientExchange result) {
+                                    new StringReadChannelListener(Http2Client.POOL) {
+
+                                        @Override
+                                        protected void stringDone(String string) {
+                                            responses.add(string);
+                                            latch.countDown();
+                                        }
+
+                                        @Override
+                                        protected void error(IOException e) {
+                                            e.printStackTrace();
+                                            latch.countDown();
+                                        }
+                                    }.setup(result.getResponseChannel());
+                                }
+
+                                @Override
+                                public void failed(IOException e) {
+                                    e.printStackTrace();
+                                    latch.countDown();
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void failed(IOException e) {
+                            e.printStackTrace();
+                            latch.countDown();
+                        }
+                    });
+                }
+            });
+
+            latch.await(10, TimeUnit.SECONDS);
+
+            Assert.assertEquals(1, responses.size());
+            for (final String response : responses) {
+                Assert.assertEquals(postMessage, response);
+            }
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+    }
+
+    @Test
+    public void testSingleHttp2FormSsl() throws Exception {
+        //
+        final Http2Client client = createClient();
+        Map<String, String> params = new HashMap<>();
+        params.put("key1", "value1");
+        params.put("key2", "value2");
+
+        final String postMessage = client.getFormDataString(params);
+
+        final List<String> responses = new CopyOnWriteArrayList<>();
+        final CountDownLatch latch = new CountDownLatch(1);
+        SSLContext context = client.createSSLContext();
+        XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.SSL_BUFFER_POOL, context);
+
+        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        try {
+            connection.getIoThread().execute(new Runnable() {
+                @Override
+                public void run() {
+                    final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(FORM);
+                    request.getRequestHeaders().put(Headers.HOST, "localhost");
+                    request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+                    request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
                     connection.sendRequest(request, new ClientCallback<ClientExchange>() {
                         @Override
                         public void completed(ClientExchange result) {

@@ -25,8 +25,10 @@ import org.xnio.ssl.XnioSsl;
 import javax.net.ssl.*;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.*;
@@ -498,4 +500,18 @@ public class Http2Client {
         return sslContext;
     }
 
+    public String getFormDataString(Map<String, String> params) throws UnsupportedEncodingException {
+        StringBuilder result = new StringBuilder();
+        boolean first = true;
+        for(Map.Entry<String, String> entry : params.entrySet()){
+            if (first)
+                first = false;
+            else
+                result.append("&");
+            result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
+            result.append("=");
+            result.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+        }
+        return result.toString();
+    }
 }
