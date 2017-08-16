@@ -12,20 +12,23 @@ import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.client.*;
 import io.undertow.connector.ByteBufferPool;
+import io.undertow.protocols.ssl.UndertowXnioSsl;
+import io.undertow.server.DefaultByteBufferPool;
 import io.undertow.server.HttpServerExchange;
 import org.apache.http.HttpRequest;
+import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xnio.FutureResult;
-import org.xnio.IoFuture;
-import org.xnio.OptionMap;
-import org.xnio.XnioIoThread;
-import org.xnio.XnioWorker;
+import org.xnio.*;
 import org.xnio.ssl.XnioSsl;
 
+import javax.net.ssl.*;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.security.*;
+import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -39,6 +42,32 @@ public class Http2Client {
 
     public static final String CONFIG_NAME = "client";
     public static final String CONFIG_SECRET = "secret";
+    public static final int BUFFER_SIZE = 8192 * 3;
+    public static final OptionMap DEFAULT_OPTIONS = OptionMap.builder()
+            .set(Options.WORKER_IO_THREADS, 8)
+            .set(Options.TCP_NODELAY, true)
+            .set(Options.KEEP_ALIVE, true)
+            .set(Options.WORKER_NAME, "Client").getMap();
+    public static final ByteBufferPool POOL = new DefaultByteBufferPool(true, BUFFER_SIZE, 1000, 10, 100);
+    public static final ByteBufferPool SSL_BUFFER_POOL = new DefaultByteBufferPool(true, 17 * 1024);
+    public static XnioWorker WORKER;
+    public static XnioSsl SSL;
+
+    static final String MAX_CONNECTION_TOTAL = "maxConnectionTotal";
+    static final String MAX_CONNECTION_PER_ROUTE = "maxConnectionPerRoute";
+    static final String TIMEOUT = "timeout";
+    static final String KEEP_ALIVE = "keepAlive";
+    static final String TLS = "tls";
+    static final String LOAD_TRUST_STORE = "loadTrustStore";
+    static final String LOAD_KEY_STORE = "loadKeyStore";
+    static final String VERIFY_HOSTNAME = "verifyHostname";
+    static final String TRUST_STORE = "trustStore";
+    static final String CLIENT_TRUSTSTORE_PASS = "clientTruststorePass";
+    static final String KEY_STORE = "keyStore";
+    static final String CLIENT_KEYSTORE_PASS = "clientKeystorePass";
+    static final String CLIENT_KEY_PASS = "clientKeyPass";
+    static final String TRUST_STORE_PROPERTY = "javax.net.ssl.trustStore";
+    static final String TRUST_STORE_PASSWORD_PROPERTY = "javax.net.ssl.trustStorePassword";
 
     static final String OAUTH = "oauth";
     static final String TOKEN_RENEW_BEFORE_EXPIRED = "tokenRenewBeforeExpired";
@@ -66,6 +95,7 @@ public class Http2Client {
         if(config != null) {
             oauthConfig = (Map<String, Object>)config.get(OAUTH);
         }
+
     }
     public static Map<String, Object> secret = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
 
@@ -86,6 +116,13 @@ public class Http2Client {
             }
         }
         this.clientProviders = Collections.unmodifiableMap(map);
+        try {
+            final Xnio xnio = Xnio.getInstance();
+            WORKER = xnio.createWorker(null, Http2Client.DEFAULT_OPTIONS);
+            SSL = new UndertowXnioSsl(WORKER.getXnio(), OptionMap.EMPTY, SSL_BUFFER_POOL, createSSLContext());
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+        }
     }
 
     public IoFuture<ClientConnection> connect(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
@@ -381,6 +418,84 @@ public class Http2Client {
             }
         }
         logger.trace("Check secondary token is done!");
+    }
+
+    private static KeyStore loadKeyStore(final String name, final char[] password) throws IOException {
+        final InputStream stream = Config.getInstance().getInputStreamFromFile(name);
+        if(stream == null) {
+            throw new RuntimeException("Could not load keystore");
+        }
+        try {
+            KeyStore loadedKeystore = KeyStore.getInstance("JKS");
+            loadedKeystore.load(stream, password);
+
+            return loadedKeystore;
+        } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException e) {
+            throw new IOException(String.format("Unable to load KeyStore %s", name), e);
+        } finally {
+            IoUtils.safeClose(stream);
+        }
+    }
+
+    public static SSLContext createSSLContext() throws IOException {
+        SSLContext sslContext = null;
+        KeyManager[] keyManagers = null;
+        Map<String, Object> tlsMap = (Map)config.get(TLS);
+        if(tlsMap != null) {
+            try {
+                // load key store for client certificate if two way ssl is used.
+                Boolean loadKeyStore = (Boolean) tlsMap.get(LOAD_KEY_STORE);
+                if (loadKeyStore != null && loadKeyStore) {
+                    String keyStoreName = (String)tlsMap.get(KEY_STORE);
+                    String keyStorePass = (String)secret.get(CLIENT_KEYSTORE_PASS);
+                    String keyPass = (String)secret.get(CLIENT_KEY_PASS);
+                    KeyStore keyStore = loadKeyStore(keyStoreName, keyStorePass.toCharArray());
+                    KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                    keyManagerFactory.init(keyStore, keyPass.toCharArray());
+                    keyManagers = keyManagerFactory.getKeyManagers();
+                }
+            } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
+                throw new IOException("Unable to initialise KeyManager[]", e);
+            }
+
+            TrustManager[] trustManagers = null;
+            try {
+                // load trust store, this is the server public key certificate
+                // first check if javax.net.ssl.trustStore system properties is set. It is only necessary if the server
+                // certificate doesn't have the entire chain.
+                Boolean loadTrustStore = (Boolean) tlsMap.get(LOAD_TRUST_STORE);
+                if (loadTrustStore != null && loadTrustStore) {
+                    String trustStoreName = System.getProperty(TRUST_STORE_PROPERTY);
+                    String trustStorePass = System.getProperty(TRUST_STORE_PASSWORD_PROPERTY);
+                    if (trustStoreName != null && trustStorePass != null) {
+                        logger.info("Loading trust store from system property at " + Encode.forJava(trustStoreName));
+                    } else {
+                        trustStoreName = (String) tlsMap.get(TRUST_STORE);
+                        trustStorePass = (String) secret.get(CLIENT_TRUSTSTORE_PASS);
+                        logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
+                    }
+                    if (trustStoreName != null && trustStorePass != null) {
+                        KeyStore trustStore = loadKeyStore(trustStoreName, trustStorePass.toCharArray());
+                        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                        trustManagerFactory.init(trustStore);
+                        trustManagers = trustManagerFactory.getTrustManagers();
+                    }
+                }
+            } catch (NoSuchAlgorithmException | KeyStoreException e) {
+                throw new IOException("Unable to initialise TrustManager[]", e);
+            }
+
+            try {
+                sslContext = SSLContext.getInstance("TLS");
+                sslContext.init(keyManagers, trustManagers, null);
+            } catch (NoSuchAlgorithmException | KeyManagementException e) {
+                throw new IOException("Unable to create and initialise the SSLContext", e);
+            }
+        } else {
+            logger.error("TLS configuration section is missing in client.yml");
+        }
+
+        return sslContext;
     }
 
 }

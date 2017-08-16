@@ -39,7 +39,6 @@ public class Http2ClientTest {
     private static final String message = "Hello World!";
     public static final String MESSAGE = "/message";
     public static final String POST = "/post";
-    public static final int BUFFER_SIZE = 8192 * 3;
 
     private static final String SERVER_KEY_STORE = "tls/server.keystore";
     private static final String SERVER_TRUST_STORE = "tls/server.truststore";
@@ -49,22 +48,12 @@ public class Http2ClientTest {
 
     private static XnioWorker worker;
 
-    private static final OptionMap DEFAULT_OPTIONS;
     private static final URI ADDRESS;
 
 
     private static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
-    private static final ByteBufferPool pool = new DefaultByteBufferPool(true, BUFFER_SIZE, 1000, 10, 100);
-    public static final ByteBufferPool SSL_BUFFER_POOL = new DefaultByteBufferPool(true, 17 * 1024);
 
     static {
-        final OptionMap.Builder builder = OptionMap.builder()
-                .set(Options.WORKER_IO_THREADS, 8)
-                .set(Options.TCP_NODELAY, true)
-                .set(Options.KEEP_ALIVE, true)
-                .set(Options.WORKER_NAME, "Client");
-
-        DEFAULT_OPTIONS = builder.getMap();
         try {
             ADDRESS = new URI("http://localhost:7777");
         } catch (URISyntaxException e) {
@@ -83,7 +72,7 @@ public class Http2ClientTest {
     public static void beforeClass() throws IOException {
         // Create xnio worker
         final Xnio xnio = Xnio.getInstance();
-        final XnioWorker xnioWorker = xnio.createWorker(null, DEFAULT_OPTIONS);
+        final XnioWorker xnioWorker = xnio.createWorker(null, Http2Client.DEFAULT_OPTIONS);
         worker = xnioWorker;
 
         if(server == null) {
@@ -163,7 +152,7 @@ public class Http2ClientTest {
 
         final List<ClientResponse> responses = new CopyOnWriteArrayList<>();
         final CountDownLatch latch = new CountDownLatch(10);
-        final ClientConnection connection = client.connect(ADDRESS, worker, pool, OptionMap.EMPTY).get();
+        final ClientConnection connection = client.connect(ADDRESS, worker, Http2Client.POOL, OptionMap.EMPTY).get();
         try {
             connection.getIoThread().execute(new Runnable() {
                 @Override
@@ -232,7 +221,7 @@ public class Http2ClientTest {
 
         final List<String> responses = new CopyOnWriteArrayList<>();
         final CountDownLatch latch = new CountDownLatch(10);
-        final ClientConnection connection = client.connect(ADDRESS, worker, pool, OptionMap.EMPTY).get();
+        final ClientConnection connection = client.connect(ADDRESS, worker, Http2Client.POOL, OptionMap.EMPTY).get();
         try {
             connection.getIoThread().execute(new Runnable() {
                 @Override
@@ -248,7 +237,7 @@ public class Http2ClientTest {
                                 result.setResponseListener(new ClientCallback<ClientExchange>() {
                                     @Override
                                     public void completed(ClientExchange result) {
-                                        new StringReadChannelListener(pool) {
+                                        new StringReadChannelListener(Http2Client.POOL) {
 
                                             @Override
                                             protected void stringDone(String string) {
@@ -373,10 +362,10 @@ public class Http2ClientTest {
 
         final List<ClientResponse> responses = new CopyOnWriteArrayList<>();
         final CountDownLatch latch = new CountDownLatch(10);
-        SSLContext context = createSSLContext(loadKeyStore(CLIENT_KEY_STORE), loadKeyStore(CLIENT_TRUST_STORE), true);
-        XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, SSL_BUFFER_POOL, context);
+        SSLContext context = client.createSSLContext();
+        XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.SSL_BUFFER_POOL, context);
 
-        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, pool, OptionMap.EMPTY).get();
+        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.POOL, OptionMap.EMPTY).get();
         try {
             connection.getIoThread().execute(new Runnable() {
                 @Override
@@ -414,10 +403,10 @@ public class Http2ClientTest {
 
         final List<ClientResponse> responses = new CopyOnWriteArrayList<>();
         final CountDownLatch latch = new CountDownLatch(10);
-        SSLContext context = createSSLContext(loadKeyStore(CLIENT_KEY_STORE), loadKeyStore(CLIENT_TRUST_STORE), true);
-        XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, SSL_BUFFER_POOL, context);
+        SSLContext context = client.createSSLContext();
+        XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.SSL_BUFFER_POOL, context);
 
-        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, pool, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
         try {
             connection.getIoThread().execute(new Runnable() {
                 @Override
@@ -457,10 +446,10 @@ public class Http2ClientTest {
 
         final List<String> responses = new CopyOnWriteArrayList<>();
         final CountDownLatch latch = new CountDownLatch(10);
-        SSLContext context = createSSLContext(loadKeyStore(CLIENT_KEY_STORE), loadKeyStore(CLIENT_TRUST_STORE), true);
-        XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, SSL_BUFFER_POOL, context);
+        SSLContext context = client.createSSLContext();
+        XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.SSL_BUFFER_POOL, context);
 
-        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, pool, OptionMap.EMPTY).get();
+        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.POOL, OptionMap.EMPTY).get();
         try {
             connection.getIoThread().execute(new Runnable() {
                 @Override
@@ -476,7 +465,7 @@ public class Http2ClientTest {
                                 result.setResponseListener(new ClientCallback<ClientExchange>() {
                                     @Override
                                     public void completed(ClientExchange result) {
-                                        new StringReadChannelListener(pool) {
+                                        new StringReadChannelListener(Http2Client.POOL) {
 
                                             @Override
                                             protected void stringDone(String string) {
@@ -530,10 +519,10 @@ public class Http2ClientTest {
 
         final List<String> responses = new CopyOnWriteArrayList<>();
         final CountDownLatch latch = new CountDownLatch(10);
-        SSLContext context = createSSLContext(loadKeyStore(CLIENT_KEY_STORE), loadKeyStore(CLIENT_TRUST_STORE), true);
-        XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, SSL_BUFFER_POOL, context);
+        SSLContext context = client.createSSLContext();
+        XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.SSL_BUFFER_POOL, context);
 
-        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, pool, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
         try {
             connection.getIoThread().execute(new Runnable() {
                 @Override
@@ -549,7 +538,7 @@ public class Http2ClientTest {
                                 result.setResponseListener(new ClientCallback<ClientExchange>() {
                                     @Override
                                     public void completed(ClientExchange result) {
-                                        new StringReadChannelListener(pool) {
+                                        new StringReadChannelListener(Http2Client.POOL) {
 
                                             @Override
                                             protected void stringDone(String string) {
@@ -603,10 +592,10 @@ public class Http2ClientTest {
 
         final List<String> responses = new CopyOnWriteArrayList<>();
         final CountDownLatch latch = new CountDownLatch(1);
-        SSLContext context = createSSLContext(loadKeyStore(CLIENT_KEY_STORE), loadKeyStore(CLIENT_TRUST_STORE), true);
-        XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, SSL_BUFFER_POOL, context);
+        SSLContext context = client.createSSLContext();
+        XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.SSL_BUFFER_POOL, context);
 
-        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, pool, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
         try {
             connection.getIoThread().execute(new Runnable() {
                 @Override
@@ -621,7 +610,7 @@ public class Http2ClientTest {
                             result.setResponseListener(new ClientCallback<ClientExchange>() {
                                 @Override
                                 public void completed(ClientExchange result) {
-                                    new StringReadChannelListener(pool) {
+                                    new StringReadChannelListener(Http2Client.POOL) {
 
                                         @Override
                                         protected void stringDone(String string) {
@@ -671,7 +660,7 @@ public class Http2ClientTest {
         final Http2Client client = createClient();
 
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection = client.connect(ADDRESS, worker, pool, OptionMap.EMPTY).get();
+        final ClientConnection connection = client.connect(ADDRESS, worker, Http2Client.POOL, OptionMap.EMPTY).get();
         try {
             ClientRequest request = new ClientRequest().setPath(MESSAGE).setMethod(Methods.GET);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
