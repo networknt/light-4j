@@ -109,7 +109,6 @@ public class Http2ClientTest {
                                     exchange.getRequestReceiver().receiveFullString(new Receiver.FullStringCallback() {
                                         @Override
                                         public void handle(HttpServerExchange exchange, String message) {
-                                            System.out.println("message = " + message);
                                             exchange.getResponseSender().send(message);
                                         }
                                     });
@@ -704,6 +703,7 @@ public class Http2ClientTest {
 
                                         @Override
                                         protected void stringDone(String string) {
+                                            System.out.println("string = " + string);
                                             responses.add(string);
                                             latch.countDown();
                                         }
