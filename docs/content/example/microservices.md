@@ -3,23 +3,19 @@ date: 2016-10-22T20:48:04-04:00
 title: microservices
 ---
 
-# Introduction
+## Introduction
 
-This example contains four projects:
+There are several example applications that have multiple microserivces and they
+can be found in https://github.com/networknt/light-example-4j/tree/master/rest
 
-[API A](https://github.com/networknt/light-example-4j/tree/master/api_a) is calling [API B](https://github.com/networknt/light-example-4j/tree/master/api_b) and [API C](https://github.com/networknt/light-example-4j/tree/master/api_c)
-
-API B is calling [API D](https://github.com/networknt/light-example-4j/tree/master/api_d)
-
-
-This example shows:
+These examples will show you: 
 
 * How to build microservices
 * How to do API to API call with light-4j client component
 * How to protect API with JWT token with scopes
 * How to performance test APIs with wrk
+* How to centralize logs with ELK
+* How to collect metrics for each services
+* How to deployed with Kubernetes
 
-There is a [tutorial](https://networknt.github.io/light-4j/tutorials/microservices/) for these projects.
-
-Note: these projects are not 100% completed yet. I am going to dockerize them and then compose them with OAuth2 server.
-
+The tutorials can be found at https://networknt.github.io/light-rest-4j/tutorial/
