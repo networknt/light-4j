@@ -1,34 +1,25 @@
 package com.networknt.client.oauth;
 
 import com.networknt.client.ClientTest;
-import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.security.JwtHelper;
-import com.networknt.utility.Constants;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
-import io.undertow.UndertowOptions;
-import io.undertow.io.Receiver;
-import io.undertow.server.HttpHandler;
-import io.undertow.server.HttpServerExchange;
-import io.undertow.server.handlers.PathHandler;
 import io.undertow.util.Headers;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.NumericDate;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xnio.Options;
-import org.xnio.Xnio;
-import org.xnio.XnioWorker;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
 
 /**
  * This is the tests for TokenHelper and it doesn't need live light-oauth2
- * server up and running. 
+ * server up and running.
  *
  */
 public class TokenHelperTest {
