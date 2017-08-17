@@ -811,48 +811,29 @@ public class Http2ClientTest {
 
     }
 
+    @Test
+    public void testSingleAsych() throws Exception {
+        callApiAsync();
+    }
 
-
-    public String callApiAsync() throws Exception {
+    public void callApiAsync() throws Exception {
         final Http2Client client = createClient();
-
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection = client.connect(ADDRESS, worker, Http2Client.POOL, OptionMap.EMPTY).get();
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath(API).setMethod(Methods.GET);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
-            final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+            client.populateHeader(request, "Bearer token", "cid", "tid");
             request.getRequestHeaders().add(Headers.CONNECTION, Headers.CLOSE.toString());
             connection.sendRequest(request, createClientCallback(reference, latch));
             latch.await();
             final ClientResponse response = reference.get();
-            Assert.assertEquals(message, response.getAttachment(RESPONSE_BODY));
+            Assert.assertEquals("{\"message\":\"OK!\"}", response.getAttachment(RESPONSE_BODY));
             Assert.assertEquals(false, connection.isOpen());
         } finally {
             IoUtils.safeClose(connection);
         }
-
-        /*
-        String url = "http://localhost:8887/api";
-        CloseableHttpAsyncClient client = Client.getInstance().getAsyncClient();
-        HttpGet httpGet = new HttpGet(url);
-        try {
-            Client.getInstance().populateHeader(httpGet, "Bearer token", "cid", "tid");
-            Future<HttpResponse> future = client.execute(httpGet, null);
-            HttpResponse response = future.get();
-            int status = response.getStatusLine().getStatusCode();
-            Assert.assertEquals(200, status);
-            HttpEntity entity = response.getEntity();
-            String result = EntityUtils.toString(entity);
-            Assert.assertEquals("{\"message\":\"OK!\"}", result);
-            logger.debug("message = " + result);
-            return result;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "{\"message\":\"Error!\"}";
-        }
-        */
-        return null;
     }
 
     private ClientCallback<ClientExchange> createClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch) {

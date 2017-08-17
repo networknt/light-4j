@@ -34,7 +34,7 @@ oauth:
   tokenRenewBeforeExpired: 4000
   expiredRefreshRetryDelay: 5000
   earlyRefreshRetryDelay: 30000
-  server_url: http://localhost:8887
+  server_url: http://localhost:7777
   authorization_code:
     uri: "/oauth2/token"
     client_id: test_client

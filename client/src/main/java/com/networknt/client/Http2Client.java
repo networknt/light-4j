@@ -15,6 +15,9 @@ import io.undertow.connector.ByteBufferPool;
 import io.undertow.protocols.ssl.UndertowXnioSsl;
 import io.undertow.server.DefaultByteBufferPool;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.util.Headers;
+import io.undertow.util.HttpString;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
@@ -54,6 +57,11 @@ public class Http2Client {
     public static final ByteBufferPool SSL_BUFFER_POOL = new DefaultByteBufferPool(true, 17 * 1024);
     public static XnioWorker WORKER;
     public static XnioSsl SSL;
+
+    public static final HttpString CORRELATION_ID = new HttpString(Constants.CORRELATION_ID);
+    public static final HttpString TRACEABILITY_ID = new HttpString(Constants.TRACEABILITY_ID);
+    public static final HttpString SCOPE_TOKEN = new HttpString(Constants.SCOPE_TOKEN);
+
 
     static final String MAX_CONNECTION_TOTAL = "maxConnectionTotal";
     static final String MAX_CONNECTION_PER_ROUTE = "maxConnectionPerRoute";
@@ -244,7 +252,7 @@ public class Http2Client {
      * @param request the http request
      * @param token the bearer token
      */
-    public void addAuthToken(HttpRequest request, String token) {
+    public void addAuthToken(ClientRequest request, String token) {
         if(token != null && !token.startsWith("Bearer ")) {
             if(token.toUpperCase().startsWith("BEARER ")) {
                 // other cases of Bearer
@@ -253,7 +261,7 @@ public class Http2Client {
                 token = "Bearer " + token;
             }
         }
-        request.addHeader(Constants.AUTHORIZATION, token);
+        request.getRequestHeaders().put(Headers.AUTHORIZATION, token);
     }
 
     /**
@@ -265,7 +273,7 @@ public class Http2Client {
      * @param token the bearer token
      * @param traceabilityId the traceability id
      */
-    public void addAuthTokenTrace(HttpRequest request, String token, String traceabilityId) {
+    public void addAuthTokenTrace(ClientRequest request, String token, String traceabilityId) {
         if(token != null && !token.startsWith("Bearer ")) {
             if(token.toUpperCase().startsWith("BEARER ")) {
                 // other cases of Bearer
@@ -274,8 +282,8 @@ public class Http2Client {
                 token = "Bearer " + token;
             }
         }
-        request.addHeader(Constants.AUTHORIZATION, token);
-        request.addHeader(Constants.TRACEABILITY_ID, traceabilityId);
+        request.getRequestHeaders().put(Headers.AUTHORIZATION, token);
+        request.getRequestHeaders().put(TRACEABILITY_ID, traceabilityId);
     }
 
     /**
@@ -288,9 +296,9 @@ public class Http2Client {
      * @throws ClientException client exception
      * @throws ApiException api exception
      */
-    public void addCcToken(HttpRequest request) throws ClientException, ApiException {
+    public void addCcToken(ClientRequest request) throws ClientException, ApiException {
         checkCCTokenExpired();
-        request.addHeader(Constants.AUTHORIZATION, "Bearer " + jwt);
+        request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + jwt);
     }
 
     /**
@@ -304,10 +312,10 @@ public class Http2Client {
      * @throws ClientException client exception
      * @throws ApiException api exception
      */
-    public void addCcTokenTrace(HttpRequest request, String traceabilityId) throws ClientException, ApiException {
+    public void addCcTokenTrace(ClientRequest request, String traceabilityId) throws ClientException, ApiException {
         checkCCTokenExpired();
-        request.addHeader(Constants.AUTHORIZATION, "Bearer " + jwt);
-        request.addHeader(Constants.TRACEABILITY_ID, traceabilityId);
+        request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + jwt);
+        request.getRequestHeaders().put(TRACEABILITY_ID, traceabilityId);
     }
 
     /**
@@ -321,7 +329,7 @@ public class Http2Client {
      * @throws ClientException client exception
      * @throws ApiException api exception
      */
-    public void propagateHeaders(HttpRequest request, final HttpServerExchange exchange) throws ClientException, ApiException {
+    public void propagateHeaders(ClientRequest request, final HttpServerExchange exchange) throws ClientException, ApiException {
         String tid = exchange.getRequestHeaders().getFirst(Constants.TRACEABILITY_ID);
         String token = exchange.getRequestHeaders().getFirst(Constants.AUTHORIZATION);
         String cid = exchange.getRequestHeaders().getFirst(Constants.CORRELATION_ID);
@@ -342,15 +350,15 @@ public class Http2Client {
      * @throws ClientException client exception
      * @throws ApiException api exception
      */
-    public void populateHeader(HttpRequest request, String authToken, String correlationId, String traceabilityId) throws ClientException, ApiException {
+    public void populateHeader(ClientRequest request, String authToken, String correlationId, String traceabilityId) throws ClientException, ApiException {
         if(traceabilityId != null) {
             addAuthTokenTrace(request, authToken, traceabilityId);
         } else {
             addAuthToken(request, authToken);
         }
-        request.addHeader(Constants.CORRELATION_ID, correlationId);
+        request.getRequestHeaders().put(CORRELATION_ID, correlationId);
         checkCCTokenExpired();
-        request.addHeader(Constants.SCOPE_TOKEN, "Bearer " + jwt);
+        request.getRequestHeaders().put(SCOPE_TOKEN, "Bearer " + jwt);
     }
 
     private void getCCToken() throws ClientException {
