@@ -1,84 +1,116 @@
-/*
- * Copyright (c) 2016 Network New Technologies Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.networknt.client.oauth;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.networknt.client.Client;
+import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
-import com.networknt.utility.Constants;
+import io.undertow.UndertowOptions;
+import io.undertow.client.ClientCallback;
+import io.undertow.client.ClientConnection;
+import io.undertow.client.ClientExchange;
+import io.undertow.client.ClientRequest;
+import io.undertow.util.Headers;
+import io.undertow.util.Methods;
+import io.undertow.util.StringReadChannelListener;
+import io.undertow.util.StringWriteChannelListener;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xnio.IoUtils;
+import org.xnio.OptionMap;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.List;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
+import static com.networknt.client.oauth.TokenRequest.REDIRECT_URI;
+import static com.networknt.client.oauth.TokenRequest.SCOPE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-/**
- * Created by steve on 02/09/16.
- */
 public class TokenHelper {
-
     static final String BASIC = "Basic";
     static final String GRANT_TYPE = "grant_type";
     static final String CODE = "code";
 
-    static final int HTTP_OK = 200;
-
     static final Logger logger = LoggerFactory.getLogger(TokenHelper.class);
 
     public static TokenResponse getToken(TokenRequest tokenRequest) throws ClientException {
-        String url = tokenRequest.getServerUrl() + tokenRequest.getUri();
-        TokenResponse tokenResponse;
-
-        HttpPost httpPost = new HttpPost(url);
-        httpPost.addHeader(Constants.AUTHORIZATION,
-                getBasicAuthHeader(tokenRequest.getClientId(), tokenRequest.getClientSecret()));
+        final AtomicReference<TokenResponse> reference = new AtomicReference<>();
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection;
+        try {
+            connection = client.connect(new URI(tokenRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        } catch (Exception e) {
+            throw new ClientException(e);
+        }
 
         try {
-            CloseableHttpClient client = Client.getInstance().getSyncClient();
-            httpPost.setEntity(getEntity(tokenRequest));
-            HttpResponse response = client.execute(httpPost);
-            tokenResponse = handleResponse(response);
+            String requestBody = getEncodedString(tokenRequest);
+            connection.getIoThread().execute(new Runnable() {
+                @Override
+                public void run() {
+                    final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(tokenRequest.getUri());
+                    request.getRequestHeaders().put(Headers.HOST, "localhost");
+                    request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+                    request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
+                    request.getRequestHeaders().put(Headers.AUTHORIZATION, getBasicAuthHeader(tokenRequest.getClientId(), tokenRequest.getClientSecret()));
+                    connection.sendRequest(request, new ClientCallback<ClientExchange>() {
+                        @Override
+                        public void completed(ClientExchange result) {
+                            new StringWriteChannelListener(requestBody).setup(result.getRequestChannel());
+                            result.setResponseListener(new ClientCallback<ClientExchange>() {
+                                @Override
+                                public void completed(ClientExchange result) {
+                                    new StringReadChannelListener(Http2Client.POOL) {
 
-        } catch (JsonProcessingException jpe) {
-            logger.error("JsonProcessingException: ", jpe);
-            throw new ClientException("JsonProcessingException: ", jpe);
-        } catch (UnsupportedEncodingException uee) {
-            logger.error("UnsupportedEncodingException", uee);
-            throw new ClientException("UnsupportedEncodingException: ", uee);
-        } catch (IOException ioe) {
-            logger.error("IOException: ", ioe);
-            throw new ClientException("IOException: ", ioe);
+                                        @Override
+                                        protected void stringDone(String string) {
+                                            logger.debug("getToken response = " + string);
+                                            reference.set(handleResponse(string));
+                                            latch.countDown();
+                                        }
+
+                                        @Override
+                                        protected void error(IOException e) {
+                                            e.printStackTrace();
+                                            latch.countDown();
+                                        }
+                                    }.setup(result.getResponseChannel());
+                                }
+
+                                @Override
+                                public void failed(IOException e) {
+                                    e.printStackTrace();
+                                    latch.countDown();
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void failed(IOException e) {
+                            e.printStackTrace();
+                            latch.countDown();
+                        }
+                    });
+                }
+            });
+
+            latch.await(10, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            logger.error("IOException: ", e);
+            throw new ClientException(e);
+        } finally {
+            IoUtils.safeClose(connection);
         }
-        return tokenResponse;
+        return reference.get();
     }
 
     public static String getBasicAuthHeader(String clientId, String clientSecret) {
@@ -98,39 +130,30 @@ public class TokenHelper {
         return encodedValue;
     }
 
-    public static String decodeCredentials(String cred) {
-        return new String(Base64.decodeBase64(cred), UTF_8);
-    }
-
-    private static UrlEncodedFormEntity getEntity(TokenRequest request) throws JsonProcessingException, UnsupportedEncodingException {
-        List<NameValuePair> urlParameters = new ArrayList<>();
-        urlParameters.add(new BasicNameValuePair(GRANT_TYPE, request.getGrantType()));
+    private static String getEncodedString(TokenRequest request) throws UnsupportedEncodingException {
+        Map<String, String> params = new HashMap<>();
+        params.put(GRANT_TYPE, request.getGrantType());
         if(TokenRequest.AUTHORIZATION_CODE.equals(request.getGrantType())) {
-            urlParameters.add(new BasicNameValuePair(CODE, ((AuthorizationCodeRequest)request).getAuthCode()));
-            urlParameters.add(new BasicNameValuePair(TokenRequest.REDIRECT_URI, ((AuthorizationCodeRequest)request).getRedirectUri()));
+            params.put(CODE, ((AuthorizationCodeRequest)request).getAuthCode());
+            params.put(REDIRECT_URI, ((AuthorizationCodeRequest)request).getRedirectUri());
         }
         if(request.getScope() != null) {
-            urlParameters.add(new BasicNameValuePair(TokenRequest.SCOPE, StringUtils.join(request.getScope(), " ")));
+            params.put(SCOPE, StringUtils.join(request.getScope(), " "));
         }
-        return new UrlEncodedFormEntity(urlParameters);
+        return Http2Client.getFormDataString(params);
     }
 
-    private static TokenResponse handleResponse(HttpResponse response) throws ClientException {
-        TokenResponse tokenResponse;
-        int statusCode = response.getStatusLine().getStatusCode();
+    private static TokenResponse handleResponse(String responseBody) {
+        TokenResponse tokenResponse = null;
         try {
-            if (statusCode == HTTP_OK) {
-                tokenResponse = Config.getInstance().getMapper()
-                        .readValue(response.getEntity().getContent(),
-                                TokenResponse.class);
+            if (responseBody != null && responseBody.length() > 0) {
+                tokenResponse = Config.getInstance().getMapper().readValue(responseBody, TokenResponse.class);
             } else {
                 logger.error("Error in token retrieval, response = " +
-                        Encode.forJava(EntityUtils.toString(response.getEntity())));
-                throw new ClientException("Error in token retrieval, status code = " + statusCode);
+                        Encode.forJava(responseBody));
             }
         } catch (IOException | RuntimeException e) {
             logger.error("Error in token retrieval", e);
-            throw new ClientException("Error in token retrieval", e);
         }
         return tokenResponse;
     }

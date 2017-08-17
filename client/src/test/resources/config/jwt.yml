@@ -1,5 +1,4 @@
 ---
-description: JWT token generator configuration
 key:
   kid: '100'
   filename: "/config/oauth/primary.jks"

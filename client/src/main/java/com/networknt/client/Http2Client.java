@@ -500,7 +500,7 @@ public class Http2Client {
         return sslContext;
     }
 
-    public String getFormDataString(Map<String, String> params) throws UnsupportedEncodingException {
+    public static String getFormDataString(Map<String, String> params) throws UnsupportedEncodingException {
         StringBuilder result = new StringBuilder();
         boolean first = true;
         for(Map.Entry<String, String> entry : params.entrySet()){
