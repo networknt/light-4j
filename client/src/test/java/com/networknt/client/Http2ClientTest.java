@@ -43,10 +43,7 @@ import java.nio.ByteBuffer;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class Http2ClientTest {
@@ -816,7 +813,7 @@ public class Http2ClientTest {
         callApiAsync();
     }
 
-    public void callApiAsync() throws Exception {
+    public String callApiAsync() throws Exception {
         final Http2Client client = createClient();
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection = client.connect(ADDRESS, worker, Http2Client.POOL, OptionMap.EMPTY).get();
@@ -834,6 +831,62 @@ public class Http2ClientTest {
         } finally {
             IoUtils.safeClose(connection);
         }
+        return reference.get().getAttachment(RESPONSE_BODY);
+    }
+
+    @Test
+    public void testAsyncAboutToExpire() throws InterruptedException, ExecutionException {
+        for(int i = 0; i < 10; i++) {
+            callApiAsyncMultiThread(4);
+            logger.info("called times: " + i);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ignored) {
+            }
+        }
+    }
+
+    @Test
+    public void testAsyncExpired() throws InterruptedException, ExecutionException {
+        for(int i = 0; i < 10; i++) {
+            callApiAsyncMultiThread(4);
+            logger.info("called times: " + i);
+            try {
+                Thread.sleep(6000);
+            } catch (InterruptedException ignored) {
+            }
+        }
+    }
+
+    @Test
+    public void testMixed() throws InterruptedException, ExecutionException {
+        for(int i = 0; i < 10; i++) {
+            callApiAsyncMultiThread(4
+            );
+            logger.info("called times: " + i);
+            try {
+                int sleepTime = randInt(1, 6) * 1000;
+                if (sleepTime > 3000) {
+                    sleepTime = 6000;
+                } else {
+                    sleepTime = 1000;
+                }
+                Thread.sleep(sleepTime);
+            } catch (InterruptedException ignored) {
+            }
+        }
+    }
+
+    private void callApiAsyncMultiThread(final int threadCount) throws InterruptedException, ExecutionException {
+        Callable<String> task = this::callApiAsync;
+        List<Callable<String>> tasks = Collections.nCopies(threadCount, task);
+        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+        List<Future<String>> futures = executorService.invokeAll(tasks);
+        List<String> resultList = new ArrayList<>(futures.size());
+        for (Future<String> future : futures) {
+            resultList.add(future.get());
+        }
+        System.out.println("resultList = " + resultList);
     }
 
     private ClientCallback<ClientExchange> createClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch) {
