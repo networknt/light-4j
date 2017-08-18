@@ -42,14 +42,17 @@ public class AuthorizationCodeRequest extends TokenRequest {
         if(clientConfig != null) {
             Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OAUTH);
             if(oauthConfig != null) {
-                setServerUrl((String)oauthConfig.get(SERVER_URL));
-                Map<String, Object> acConfig = (Map<String, Object>) oauthConfig.get(AUTHORIZATION_CODE);
-                if(acConfig != null) {
-                    setClientId((String)acConfig.get(CLIENT_ID));
-                    setClientSecret((String)secretConfig.get(AUTHORIZATION_CODE_CLIENT_SECRET));
-                    setUri((String)acConfig.get(URI));
-                    setScope((List<String>)acConfig.get(SCOPE));
-                    setRedirectUri((String)acConfig.get(REDIRECT_URI));
+                Map<String, Object> tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);
+                if(tokenConfig != null) {
+                    setServerUrl((String)tokenConfig.get(SERVER_URL));
+                    Map<String, Object> acConfig = (Map<String, Object>) tokenConfig.get(AUTHORIZATION_CODE);
+                    if(acConfig != null) {
+                        setClientId((String)acConfig.get(CLIENT_ID));
+                        setClientSecret((String)secretConfig.get(AUTHORIZATION_CODE_CLIENT_SECRET));
+                        setUri((String)acConfig.get(URI));
+                        setScope((List<String>)acConfig.get(SCOPE));
+                        setRedirectUri((String)acConfig.get(REDIRECT_URI));
+                    }
                 }
             }
         }

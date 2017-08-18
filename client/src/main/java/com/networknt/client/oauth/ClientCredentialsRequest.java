@@ -42,13 +42,16 @@ public class ClientCredentialsRequest extends TokenRequest {
         if(clientConfig != null) {
             Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OAUTH);
             if(oauthConfig != null) {
-                setServerUrl((String)oauthConfig.get(SERVER_URL));
-                Map<String, Object> ccConfig = (Map<String, Object>) oauthConfig.get(CLIENT_CREDENTIALS);
-                if(ccConfig != null) {
-                    setClientId((String)ccConfig.get(CLIENT_ID));
-                    setClientSecret((String)secretConfig.get(CLIENT_CREDENTIALS_CLIENT_SECRET));
-                    setUri((String)ccConfig.get(URI));
-                    setScope((List<String>)ccConfig.get(SCOPE));
+                Map<String, Object> tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);
+                if(tokenConfig != null) {
+                    setServerUrl((String)tokenConfig.get(SERVER_URL));
+                    Map<String, Object> ccConfig = (Map<String, Object>) tokenConfig.get(CLIENT_CREDENTIALS);
+                    if(ccConfig != null) {
+                        setClientId((String)ccConfig.get(CLIENT_ID));
+                        setClientSecret((String)secretConfig.get(CLIENT_CREDENTIALS_CLIENT_SECRET));
+                        setUri((String)ccConfig.get(URI));
+                        setScope((List<String>)ccConfig.get(SCOPE));
+                    }
                 }
             }
         }

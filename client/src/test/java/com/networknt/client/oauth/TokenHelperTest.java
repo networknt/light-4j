@@ -103,7 +103,7 @@ public class TokenHelperTest {
         tokenRequest.setRedirectUri("https://localhost:8443/authorize");
         tokenRequest.setAuthCode("test_code");
 
-        TokenResponse tokenResponse = TokenHelper.getToken(tokenRequest);
+        TokenResponse tokenResponse = TokenHelper.getToken(tokenRequest, true);
         System.out.println("tokenResponse = " + tokenResponse);
     }
 }

@@ -63,14 +63,10 @@ public class Http2Client {
     public static final HttpString SCOPE_TOKEN = new HttpString(Constants.SCOPE_TOKEN);
 
 
-    static final String MAX_CONNECTION_TOTAL = "maxConnectionTotal";
-    static final String MAX_CONNECTION_PER_ROUTE = "maxConnectionPerRoute";
     static final String TIMEOUT = "timeout";
-    static final String KEEP_ALIVE = "keepAlive";
     static final String TLS = "tls";
     static final String LOAD_TRUST_STORE = "loadTrustStore";
     static final String LOAD_KEY_STORE = "loadKeyStore";
-    static final String VERIFY_HOSTNAME = "verifyHostname";
     static final String TRUST_STORE = "trustStore";
     static final String CLIENT_TRUSTSTORE_PASS = "clientTruststorePass";
     static final String KEY_STORE = "keyStore";
@@ -80,6 +76,7 @@ public class Http2Client {
     static final String TRUST_STORE_PASSWORD_PROPERTY = "javax.net.ssl.trustStorePassword";
 
     static final String OAUTH = "oauth";
+    static final String TOKEN = "token";
     static final String TOKEN_RENEW_BEFORE_EXPIRED = "tokenRenewBeforeExpired";
     static final String EXPIRED_REFRESH_RETRY_DELAY = "expiredRefreshRetryDelay";
     static final String EARLY_REFRESH_RETRY_DELAY = "earlyRefreshRetryDelay";
@@ -87,7 +84,7 @@ public class Http2Client {
     static final String STATUS_CLIENT_CREDENTIALS_TOKEN_NOT_AVAILABLE = "ERR10009";
 
     static Map<String, Object> config;
-    static Map<String, Object> oauthConfig;
+    static Map<String, Object> tokenConfig;
 
     // Cached jwt token for this client.
     private String jwt;
@@ -103,10 +100,13 @@ public class Http2Client {
         ModuleRegistry.registerModule(Client.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), masks);
         config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
         if(config != null) {
-            oauthConfig = (Map<String, Object>)config.get(OAUTH);
+            Map<String, Object> oauthConfig = (Map<String, Object>)config.get(OAUTH);
+            if(oauthConfig != null) {
+                tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);
+            }
         }
-
     }
+
     public static Map<String, Object> secret = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
 
     private final Map<String, ClientProvider> clientProviders;
@@ -363,7 +363,7 @@ public class Http2Client {
 
     private void getCCToken() throws ClientException {
         TokenRequest tokenRequest = new ClientCredentialsRequest();
-        TokenResponse tokenResponse = TokenHelper.getToken(tokenRequest);
+        TokenResponse tokenResponse = TokenHelper.getToken(tokenRequest, true);
         synchronized (lock) {
             jwt = tokenResponse.getAccessToken();
             // the expiresIn is seconds and it is converted to millisecond in the future.
@@ -373,9 +373,9 @@ public class Http2Client {
     }
 
     private void checkCCTokenExpired() throws ClientException, ApiException {
-        long tokenRenewBeforeExpired = (Integer) oauthConfig.get(TOKEN_RENEW_BEFORE_EXPIRED);
-        long expiredRefreshRetryDelay = (Integer)oauthConfig.get(EXPIRED_REFRESH_RETRY_DELAY);
-        long earlyRefreshRetryDelay = (Integer)oauthConfig.get(EARLY_REFRESH_RETRY_DELAY);
+        long tokenRenewBeforeExpired = (Integer) tokenConfig.get(TOKEN_RENEW_BEFORE_EXPIRED);
+        long expiredRefreshRetryDelay = (Integer)tokenConfig.get(EXPIRED_REFRESH_RETRY_DELAY);
+        long earlyRefreshRetryDelay = (Integer)tokenConfig.get(EARLY_REFRESH_RETRY_DELAY);
         boolean isInRenewWindow = expire - System.currentTimeMillis() < tokenRenewBeforeExpired;
         logger.trace("isInRenewWindow = " + isInRenewWindow);
         if(isInRenewWindow) {

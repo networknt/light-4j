@@ -41,13 +41,13 @@ public class TokenHelper {
 
     static final Logger logger = LoggerFactory.getLogger(TokenHelper.class);
 
-    public static TokenResponse getToken(TokenRequest tokenRequest) throws ClientException {
+    public static TokenResponse getToken(TokenRequest tokenRequest, boolean http2) throws ClientException {
         final AtomicReference<TokenResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
         try {
-            connection = client.connect(new URI(tokenRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+            connection = client.connect(new URI(tokenRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, http2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
         } catch (Exception e) {
             throw new ClientException(e);
         }

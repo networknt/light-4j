@@ -23,6 +23,7 @@ import java.util.List;
  */
 public class TokenRequest {
     public static String OAUTH = "oauth";
+    public static String TOKEN = "token";
     public static String SERVER_URL = "server_url";
     public static String AUTHORIZATION_CODE = "authorization_code";
     public static String CLIENT_CREDENTIALS = "client_credentials";

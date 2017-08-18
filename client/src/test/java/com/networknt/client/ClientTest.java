@@ -22,6 +22,7 @@ import com.networknt.utility.Constants;
 import com.networknt.exception.ExpiredTokenException;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
+import io.undertow.UndertowOptions;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
@@ -44,6 +45,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
 
+@Deprecated
 public class ClientTest {
     static final Logger logger = LoggerFactory.getLogger(ClientTest.class);
 
@@ -54,7 +56,7 @@ public class ClientTest {
         if(server == null) {
             logger.info("starting server");
             server = Undertow.builder()
-                    .addHttpListener(8887, "localhost")
+                    .addHttpListener(7777, "localhost")
                     .setHandler(Handlers.header(Handlers.path()
                                     .addPrefixPath("/api", new ApiHandler())
                                     .addPrefixPath("/oauth2/token", new OAuthHandler()),
@@ -133,7 +135,7 @@ public class ClientTest {
 
     public String callApiSync() throws Exception {
 
-        String url = "http://localhost:8887/api";
+        String url = "http://localhost:7777/api";
         CloseableHttpClient client = Client.getInstance().getSyncClient();
         HttpGet httpGet = new HttpGet(url);
         ResponseHandler<String> responseHandler = response -> {
@@ -160,7 +162,7 @@ public class ClientTest {
     }
 
     public String callApiAsync() throws Exception {
-        String url = "http://localhost:8887/api";
+        String url = "http://localhost:7777/api";
         CloseableHttpAsyncClient client = Client.getInstance().getAsyncClient();
         HttpGet httpGet = new HttpGet(url);
         try {

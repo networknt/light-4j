@@ -69,6 +69,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+@Deprecated
 public class Client {
     public static final String CONFIG_NAME = "client";
     public static final String CONFIG_SECRET = "secret";
@@ -104,6 +105,7 @@ public class Client {
     static final String REACTOR_SO_TIMEOUT = "soTimeout";
 
     static final String OAUTH = "oauth";
+    static final String TOKEN = "token";
     static final String TOKEN_RENEW_BEFORE_EXPIRED = "tokenRenewBeforeExpired";
     static final String EXPIRED_REFRESH_RETRY_DELAY = "expiredRefreshRetryDelay";
     static final String EARLY_REFRESH_RETRY_DELAY = "earlyRefreshRetryDelay";
@@ -111,7 +113,7 @@ public class Client {
     static final String STATUS_CLIENT_CREDENTIALS_TOKEN_NOT_AVAILABLE = "ERR10009";
 
     static Map<String, Object> config;
-    static Map<String, Object> oauthConfig;
+    static Map<String, Object> tokenConfig;
     private volatile CloseableHttpClient httpClient = null;
     private volatile CloseableHttpAsyncClient httpAsyncClient = null;
 
@@ -130,7 +132,10 @@ public class Client {
         ModuleRegistry.registerModule(Client.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), masks);
         config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
         if(config != null) {
-            oauthConfig = (Map<String, Object>)config.get(OAUTH);
+            Map<String, Object> oauthConfig = (Map<String, Object>)config.get(OAUTH);
+            if(oauthConfig != null) {
+                tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);
+            }
         }
     }
     public static Map<String, Object> secret = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
@@ -288,7 +293,7 @@ public class Client {
 
     private void getCCToken() throws ClientException {
         TokenRequest tokenRequest = new ClientCredentialsRequest();
-        TokenResponse tokenResponse = TokenHelper.getToken(tokenRequest);
+        TokenResponse tokenResponse = TokenHelper.getToken(tokenRequest, false);
         synchronized (lock) {
             jwt = tokenResponse.getAccessToken();
             // the expiresIn is seconds and it is converted to millisecond in the future.
@@ -298,9 +303,9 @@ public class Client {
     }
 
     private void checkCCTokenExpired() throws ClientException, ApiException {
-        long tokenRenewBeforeExpired = (Integer) oauthConfig.get(TOKEN_RENEW_BEFORE_EXPIRED);
-        long expiredRefreshRetryDelay = (Integer)oauthConfig.get(EXPIRED_REFRESH_RETRY_DELAY);
-        long earlyRefreshRetryDelay = (Integer)oauthConfig.get(EARLY_REFRESH_RETRY_DELAY);
+        long tokenRenewBeforeExpired = (Integer) tokenConfig.get(TOKEN_RENEW_BEFORE_EXPIRED);
+        long expiredRefreshRetryDelay = (Integer)tokenConfig.get(EXPIRED_REFRESH_RETRY_DELAY);
+        long earlyRefreshRetryDelay = (Integer)tokenConfig.get(EARLY_REFRESH_RETRY_DELAY);
         boolean isInRenewWindow = expire - System.currentTimeMillis() < tokenRenewBeforeExpired;
         logger.trace("isInRenewWindow = " + isInRenewWindow);
         if(isInRenewWindow) {

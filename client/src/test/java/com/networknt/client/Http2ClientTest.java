@@ -1029,6 +1029,4 @@ public class Http2ClientTest {
         claims.setStringListClaim("scope", scope); // multi-valued claims work too and will end up as a JSON array
         return claims;
     }
-
-
 }
