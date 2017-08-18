@@ -43,7 +43,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Created by stevehu on 2017-03-21.
+ * This is a new client module that replaces the old Client module. The old version
+ * only support HTTP 1.1 and the new version support both 1.1 and 2.0 and it is very
+ * simple to use and more efficient. It is light-weight with only Undertow core dependency.
+ *
+ * @author Steve Hu
  */
 public class Http2Client {
     static final Logger logger = LoggerFactory.getLogger(Http2Client.class);

@@ -89,8 +89,8 @@
         </dependency>
 
         <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>security</artifactId>
+            <groupId>org.bitbucket.b_c</groupId>
+            <artifactId>jose4j</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
