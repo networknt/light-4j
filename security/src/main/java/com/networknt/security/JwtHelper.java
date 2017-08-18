@@ -294,7 +294,8 @@ public class JwtHelper {
         // go to OAuth2 server /oauth2/key endpoint to get the public key certificate with kid as parameter.
         X509Certificate certificate = certMap.get(kid);
         if(certificate == null) {
-            getCertFromOauth(kid);
+            certificate = getCertFromOauth(kid);
+            certMap.put(kid, certificate);
         }
         X509VerificationKeyResolver x509VerificationKeyResolver = new X509VerificationKeyResolver(certificate);
 
