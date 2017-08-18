@@ -315,7 +315,7 @@ public class JwtHelper {
 
     public static X509Certificate getCertFromOauth(String kid) {
         X509Certificate certificate = null;
-        KeyRequest keyRequest = new KeyRequest();
+        KeyRequest keyRequest = new KeyRequest(kid);
         try {
             Boolean http2 = (Boolean)securityConfig.get(OAUTH_HTTP2_SUPPORT);
             String key = OauthHelper.getKey(keyRequest, http2);

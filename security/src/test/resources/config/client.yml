@@ -63,4 +63,4 @@ oauth:
     server_url: http://localhost:6886
     serviceId: com.networknt.oauth2-key-1.0.0
     uri: "/oauth2/key"
-    client_id: 6e9d1db3-2feb-4c1f-a5ad-9e93ae8ca59d
+    client_id: f7d42348-c647-4efb-a52d-4c5787421e72

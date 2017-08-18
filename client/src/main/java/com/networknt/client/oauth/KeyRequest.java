@@ -19,7 +19,7 @@ public class KeyRequest {
     String clientId;
     String clientSecret;
 
-    public KeyRequest() {
+    public KeyRequest(String kid) {
         Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
         // client_secret is in secret.yml instead of client.yml
         Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
@@ -29,7 +29,7 @@ public class KeyRequest {
                 Map<String, Object> keyConfig = (Map<String, Object>)oauthConfig.get(KEY);
                 if(keyConfig != null) {
                     setServerUrl((String)keyConfig.get(SERVER_URL));
-                    setUri((String)keyConfig.get(URI));
+                    setUri((String)keyConfig.get(URI) + "/" + kid);
                     setClientId((String)keyConfig.get(CLIENT_ID));
                     setClientSecret((String)secretConfig.get(CLIENT_SECRET));
                 }

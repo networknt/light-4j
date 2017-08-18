@@ -225,7 +225,7 @@ public class OauthHelperTest {
 
     @Test
     public void testGetKey() throws Exception {
-        KeyRequest keyRequest = new KeyRequest();
+        KeyRequest keyRequest = new KeyRequest("100");
         keyRequest.setClientId("test_client");
         keyRequest.setClientSecret("test_secret");
         keyRequest.setServerUrl("http://localhost:8887");
