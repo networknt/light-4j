@@ -140,4 +140,10 @@ public class JwtHelperTest {
         System.out.println("jwtClaims = " + claims);
     }
 
+    @Test
+    public void testGetCertFromOauth() {
+        X509Certificate certificate = JwtHelper.getCertFromOauth("100");
+        System.out.println("certificate = " + certificate);
+        Assert.assertNotNull(certificate);
+    }
 }

@@ -18,6 +18,7 @@ package com.networknt.security;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.networknt.client.oauth.*;
 import com.networknt.config.Config;
 import com.networknt.exception.ExpiredTokenException;
 import com.networknt.utility.FingerPrintUtil;
@@ -37,8 +38,10 @@ import org.owasp.encoder.Encode;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.CertificateFactory;
@@ -65,6 +68,7 @@ public class JwtHelper {
     public static final String JWT_CERTIFICATE = "certificate";
     public static final String JwT_CLOCK_SKEW_IN_SECONDS = "clockSkewInSeconds";
     public static final String ENABLE_VERIFY_JWT = "enableVerifyJwt";
+    public static final String OAUTH_HTTP2_SUPPORT = "oauthHttp2Support";
     
     static Map<String, X509Certificate> certMap;
     static List<String> fingerPrints;
@@ -251,6 +255,8 @@ public class JwtHelper {
         JwtClaims claims = cache.getIfPresent(jwt);
         if(claims != null) {
             try {
+                // if using our own client module, the jwt token should be renewed automatically
+                // and it will never expired here. However, we need to handle other clients.
                 if ((NumericDate.now().getValue() - secondsOfAllowedClockSkew) >= claims.getExpirationTime().getValue())
                 {
                     logger.info("jwt token is expired!");
@@ -284,7 +290,14 @@ public class JwtHelper {
             throw new InvalidJwtException("MalformedClaimException", e);
         }
 
-        X509VerificationKeyResolver x509VerificationKeyResolver = new X509VerificationKeyResolver(certMap.get(kid));
+        // get the public key certificate from the cache that is loaded from security.yml if it is not there,
+        // go to OAuth2 server /oauth2/key endpoint to get the public key certificate with kid as parameter.
+        X509Certificate certificate = certMap.get(kid);
+        if(certificate == null) {
+            getCertFromOauth(kid);
+        }
+        X509VerificationKeyResolver x509VerificationKeyResolver = new X509VerificationKeyResolver(certificate);
+
         x509VerificationKeyResolver.setTryAllOnNoThumbHeader(true);
         consumer = new JwtConsumerBuilder()
                 .setRequireExpirationTime()
@@ -298,6 +311,21 @@ public class JwtHelper {
         claims = jwtContext.getJwtClaims();
         cache.put(jwt, claims);
         return claims;
+    }
+
+    public static X509Certificate getCertFromOauth(String kid) {
+        X509Certificate certificate = null;
+        KeyRequest keyRequest = new KeyRequest();
+        try {
+            Boolean http2 = (Boolean)securityConfig.get(OAUTH_HTTP2_SUPPORT);
+            String key = OauthHelper.getKey(keyRequest, http2);
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            certificate = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(key.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw new RuntimeException(e);
+        }
+        return certificate;
     }
 
     public static List getFingerPrints() {

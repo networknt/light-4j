@@ -21,3 +21,6 @@ logJwtToken: true
 
 # Enable or disable client_id, user_id and scope logging.
 logClientUserScope: false
+
+# If OAuth2 provider support http2 protocol.
+oauthHttp2Support: true

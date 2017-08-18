@@ -1,0 +1,66 @@
+# This is the shared configuration file for Client and Http2Client.
+---
+# sync and async settings are applied to Client only
+sync:
+  maxConnectionTotal: 100
+  maxConnectionPerRoute: 10
+  routes:
+    api.google.com: 20
+    api.facebook.com: 10
+  timeout: 10000
+  keepAlive: 15000
+async:
+  maxConnectionTotal: 100
+  maxConnectionPerRoute: 10
+  routes:
+    api.google.com: 20
+    api.facebook.com: 10
+  reactor:
+    ioThreadCount: 1
+    connectTimeout: 10000
+    soTimeout: 10000
+  timeout: 10000
+  keepAlive: 15000
+# tls and oauth settings are shared by both Client and Http2Client
+tls:
+  # if the server is using self-signed certificate, this need to be false. If true, you have to use CA signed certificate
+  # or load truststore that contains the self-signed cretificate.
+  verifyHostname: true
+  # trust store contains certifictes that server needs. Enable if tls is used.
+  loadTrustStore: true
+  # trust store location can be specified here or system properties javax.net.ssl.trustStore and password javax.net.ssl.trustStorePassword
+  trustStore: tls/client.truststore
+  # key store contains client key and it should be loaded if two-way ssl is uesed.
+  loadKeyStore: false
+  # key store location
+  keyStore: tls/client.keystore
+oauth:
+  token:
+    tokenRenewBeforeExpired: 600000
+    expiredRefreshRetryDelay: 5000
+    earlyRefreshRetryDelay: 30000
+    # token server url. The default port number for token service is 6882.
+    server_url: http://localhost:6882
+    serviceId: com.networknt.oauth2-token-1.0.0
+    authorization_code:
+      # token endpoint for authorization code grant
+      uri: "/oauth2/token"
+      # client_id for authorization code grant flow. client_secret is in secret.yml
+      client_id: 3798d583-275c-47d7-bf46-a3c436846336
+      redirect_uri: https://localhost:8080/authorization_code
+      scope:
+      - customer.r
+      - customer.w
+    client_credentials:
+      # token endpoint for client credentials grant
+      uri: "/oauth2/token"
+      # client_id for client credentials grant flow. client_secret is in secret.yml
+      client_id: 6e9d1db3-2feb-4c1f-a5ad-9e93ae8ca59d
+      scope:
+      - account.r
+      - account.w
+  key:
+    server_url: http://localhost:6886
+    serviceId: com.networknt.oauth2-key-1.0.0
+    uri: "/oauth2/key"
+    client_id: 6e9d1db3-2feb-4c1f-a5ad-9e93ae8ca59d
