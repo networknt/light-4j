@@ -18,11 +18,11 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 /**
- * This is the tests for TokenHelper and it doesn't need live light-oauth2
+ * This is the tests for OauthHelper and it doesn't need live light-oauth2
  * server up and running.
  *
  */
-public class TokenHelperTest {
+public class OauthHelperTest {
     static final Logger logger = LoggerFactory.getLogger(ClientTest.class);
 
     static Undertow server = null;
@@ -103,7 +103,20 @@ public class TokenHelperTest {
         tokenRequest.setRedirectUri("https://localhost:8443/authorize");
         tokenRequest.setAuthCode("test_code");
 
-        TokenResponse tokenResponse = TokenHelper.getToken(tokenRequest, true);
+        TokenResponse tokenResponse = OauthHelper.getToken(tokenRequest, true);
         System.out.println("tokenResponse = " + tokenResponse);
     }
+
+    @Test
+    public void testGetKey() throws Exception {
+        KeyRequest keyRequest = new KeyRequest();
+        keyRequest.setClientId("test_client");
+        keyRequest.setClientSecret("test_secret");
+        keyRequest.setServerUrl("http://localhost:8887");
+        keyRequest.setUri("/oauth2/key");
+
+        String key = OauthHelper.getKey(keyRequest, true);
+        System.out.println("key = " + key);
+    }
+
 }

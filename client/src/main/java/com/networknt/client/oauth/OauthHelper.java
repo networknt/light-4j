@@ -4,10 +4,8 @@ import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
 import io.undertow.UndertowOptions;
-import io.undertow.client.ClientCallback;
-import io.undertow.client.ClientConnection;
-import io.undertow.client.ClientExchange;
-import io.undertow.client.ClientRequest;
+import io.undertow.client.*;
+import io.undertow.protocols.ssl.UndertowXnioSsl;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
 import io.undertow.util.StringReadChannelListener;
@@ -19,11 +17,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
 import org.xnio.OptionMap;
+import org.xnio.ssl.XnioSsl;
 
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -34,12 +33,12 @@ import static com.networknt.client.oauth.TokenRequest.REDIRECT_URI;
 import static com.networknt.client.oauth.TokenRequest.SCOPE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public class TokenHelper {
+public class OauthHelper {
     static final String BASIC = "Basic";
     static final String GRANT_TYPE = "grant_type";
     static final String CODE = "code";
 
-    static final Logger logger = LoggerFactory.getLogger(TokenHelper.class);
+    static final Logger logger = LoggerFactory.getLogger(OauthHelper.class);
 
     public static TokenResponse getToken(TokenRequest tokenRequest, boolean http2) throws ClientException {
         final AtomicReference<TokenResponse> reference = new AtomicReference<>();
@@ -111,6 +110,30 @@ public class TokenHelper {
             IoUtils.safeClose(connection);
         }
         return reference.get();
+    }
+
+    public static String getKey(KeyRequest keyRequest, boolean http2) throws ClientException {
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection;
+        try {
+            connection = client.connect(new URI(keyRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, http2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+        } catch (Exception e) {
+            throw new ClientException(e);
+        }
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        try {
+            ClientRequest request = new ClientRequest().setPath(keyRequest.getUri()).setMethod(Methods.GET);
+            request.getRequestHeaders().put(Headers.AUTHORIZATION, getBasicAuthHeader(keyRequest.getClientId(), keyRequest.getClientSecret()));
+            connection.sendRequest(request, client.createClientCallback(reference, latch));
+            latch.await();
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw new ClientException(e);
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+        return reference.get().getAttachment(Http2Client.RESPONSE_BODY);
     }
 
     public static String getBasicAuthHeader(String clientId, String clientSecret) {

@@ -17,7 +17,7 @@
 package com.networknt.client;
 
 import com.networknt.client.oauth.ClientCredentialsRequest;
-import com.networknt.client.oauth.TokenHelper;
+import com.networknt.client.oauth.OauthHelper;
 import com.networknt.client.oauth.TokenRequest;
 import com.networknt.client.oauth.TokenResponse;
 import com.networknt.config.Config;
@@ -293,7 +293,7 @@ public class Client {
 
     private void getCCToken() throws ClientException {
         TokenRequest tokenRequest = new ClientCredentialsRequest();
-        TokenResponse tokenResponse = TokenHelper.getToken(tokenRequest, false);
+        TokenResponse tokenResponse = OauthHelper.getToken(tokenRequest, false);
         synchronized (lock) {
             jwt = tokenResponse.getAccessToken();
             // the expiresIn is seconds and it is converted to millisecond in the future.

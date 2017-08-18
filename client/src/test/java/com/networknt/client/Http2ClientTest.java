@@ -56,6 +56,7 @@ public class Http2ClientTest {
     public static final String FORM = "/form";
     public static final String TOKEN = "/oauth2/token";
     public static final String API = "/api";
+    public static final String KEY = "/oauth2/key";
 
     private static final String SERVER_KEY_STORE = "tls/server.keystore";
     private static final String SERVER_TRUST_STORE = "tls/server.truststore";
@@ -68,7 +69,6 @@ public class Http2ClientTest {
     private static final URI ADDRESS;
 
 
-    private static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
 
     static {
         try {
@@ -112,6 +112,7 @@ public class Http2ClientTest {
                     .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, false)
                     .setHandler(new PathHandler()
                             .addExactPath(MESSAGE, exchange -> sendMessage(exchange))
+                            .addExactPath(KEY, exchange -> sendMessage(exchange))
                             .addExactPath(API, (exchange) -> {
                                 boolean hasScopeToken = exchange.getRequestHeaders().contains(Constants.SCOPE_TOKEN);
                                 Assert.assertTrue(hasScopeToken);
@@ -211,7 +212,7 @@ public class Http2ClientTest {
                         references.add(i, reference);
                         final ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(MESSAGE);
                         request.getRequestHeaders().put(Headers.HOST, "localhost");
-                        connection.sendRequest(request, createClientCallback(reference, latch));
+                        connection.sendRequest(request, client.createClientCallback(reference, latch));
                     }
                 }
 
@@ -221,7 +222,7 @@ public class Http2ClientTest {
 
             Assert.assertEquals(10, references.size());
             for (final AtomicReference<ClientResponse> reference : references) {
-                Assert.assertEquals(message, reference.get().getAttachment(RESPONSE_BODY));
+                Assert.assertEquals(message, reference.get().getAttachment(Http2Client.RESPONSE_BODY));
                 Assert.assertEquals("HTTP/1.1", reference.get().getProtocol().toString());
             }
         } finally {
@@ -426,7 +427,7 @@ public class Http2ClientTest {
                         references.add(i, reference);
                         final ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(MESSAGE);
                         request.getRequestHeaders().put(Headers.HOST, "localhost");
-                        connection.sendRequest(request, createClientCallback(reference, latch));
+                        connection.sendRequest(request, client.createClientCallback(reference, latch));
                     }
                 }
 
@@ -436,7 +437,7 @@ public class Http2ClientTest {
 
             Assert.assertEquals(10, references.size());
             for (final AtomicReference<ClientResponse> reference : references) {
-                Assert.assertEquals(message, reference.get().getAttachment(RESPONSE_BODY));
+                Assert.assertEquals(message, reference.get().getAttachment(Http2Client.RESPONSE_BODY));
                 Assert.assertEquals("HTTP/1.1", reference.get().getProtocol().toString());
             }
         } finally {
@@ -469,7 +470,7 @@ public class Http2ClientTest {
                         references.add(i, reference);
                         final ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(MESSAGE);
                         request.getRequestHeaders().put(Headers.HOST, "localhost");
-                        connection.sendRequest(request, createClientCallback(reference, latch));
+                        connection.sendRequest(request, client.createClientCallback(reference, latch));
                     }
                 }
 
@@ -479,7 +480,7 @@ public class Http2ClientTest {
 
             Assert.assertEquals(10, references.size());
             for (final AtomicReference<ClientResponse> reference : references) {
-                Assert.assertEquals(message, reference.get().getAttachment(RESPONSE_BODY));
+                Assert.assertEquals(message, reference.get().getAttachment(Http2Client.RESPONSE_BODY));
                 Assert.assertEquals("HTTP/2.0", reference.get().getProtocol().toString());
             }
         } finally {
@@ -797,10 +798,10 @@ public class Http2ClientTest {
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             final AtomicReference<ClientResponse> reference = new AtomicReference<>();
             request.getRequestHeaders().add(Headers.CONNECTION, Headers.CLOSE.toString());
-            connection.sendRequest(request, createClientCallback(reference, latch));
+            connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
             final ClientResponse response = reference.get();
-            Assert.assertEquals(message, response.getAttachment(RESPONSE_BODY));
+            Assert.assertEquals(message, response.getAttachment(Http2Client.RESPONSE_BODY));
             Assert.assertEquals(false, connection.isOpen());
         } finally {
             IoUtils.safeClose(connection);
@@ -823,15 +824,15 @@ public class Http2ClientTest {
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             client.populateHeader(request, "Bearer token", "cid", "tid");
             request.getRequestHeaders().add(Headers.CONNECTION, Headers.CLOSE.toString());
-            connection.sendRequest(request, createClientCallback(reference, latch));
+            connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
             final ClientResponse response = reference.get();
-            Assert.assertEquals("{\"message\":\"OK!\"}", response.getAttachment(RESPONSE_BODY));
+            Assert.assertEquals("{\"message\":\"OK!\"}", response.getAttachment(Http2Client.RESPONSE_BODY));
             Assert.assertEquals(false, connection.isOpen());
         } finally {
             IoUtils.safeClose(connection);
         }
-        return reference.get().getAttachment(RESPONSE_BODY);
+        return reference.get().getAttachment(Http2Client.RESPONSE_BODY);
     }
 
     @Test
@@ -889,6 +890,7 @@ public class Http2ClientTest {
         System.out.println("resultList = " + resultList);
     }
 
+    /*
     private ClientCallback<ClientExchange> createClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch) {
         return new ClientCallback<ClientExchange>() {
             @Override
@@ -901,7 +903,7 @@ public class Http2ClientTest {
 
                             @Override
                             protected void stringDone(String string) {
-                                result.getResponse().putAttachment(RESPONSE_BODY, string);
+                                result.getResponse().putAttachment(Http2Client.RESPONSE_BODY, string);
                                 latch.countDown();
                             }
 
@@ -940,7 +942,7 @@ public class Http2ClientTest {
             }
         };
     }
-
+    */
 
     private static KeyStore loadKeyStore(final String name) throws IOException {
         final InputStream stream = Config.getInstance().getInputStreamFromFile(name);

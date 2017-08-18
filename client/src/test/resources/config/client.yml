@@ -56,7 +56,7 @@ oauth:
   key:
     # if there is no service discovery and you have OAuth2 server deployed on VM
     # and there is load balance in front of these service instances.
-    server_url: http://localhost:6886
+    server_url: http://localhost:7777
     # if you are using consul/zookeeper for service discovery
     # serviceId: com.networknt.oauth2-key-1.0.0
     uri: "/oauth2/key"

@@ -1,7 +1,7 @@
 package com.networknt.client;
 
 import com.networknt.client.oauth.ClientCredentialsRequest;
-import com.networknt.client.oauth.TokenHelper;
+import com.networknt.client.oauth.OauthHelper;
 import com.networknt.client.oauth.TokenRequest;
 import com.networknt.client.oauth.TokenResponse;
 import com.networknt.config.Config;
@@ -15,14 +15,15 @@ import io.undertow.connector.ByteBufferPool;
 import io.undertow.protocols.ssl.UndertowXnioSsl;
 import io.undertow.server.DefaultByteBufferPool;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.util.AttachmentKey;
 import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpRequest;
+import io.undertow.util.StringReadChannelListener;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.*;
+import org.xnio.channels.StreamSinkChannel;
 import org.xnio.ssl.XnioSsl;
 
 import javax.net.ssl.*;
@@ -35,9 +36,11 @@ import java.net.URLEncoder;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created by stevehu on 2017-03-21.
@@ -62,6 +65,7 @@ public class Http2Client {
     public static final HttpString TRACEABILITY_ID = new HttpString(Constants.TRACEABILITY_ID);
     public static final HttpString SCOPE_TOKEN = new HttpString(Constants.SCOPE_TOKEN);
 
+    public static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
 
     static final String TIMEOUT = "timeout";
     static final String TLS = "tls";
@@ -363,7 +367,7 @@ public class Http2Client {
 
     private void getCCToken() throws ClientException {
         TokenRequest tokenRequest = new ClientCredentialsRequest();
-        TokenResponse tokenResponse = TokenHelper.getToken(tokenRequest, true);
+        TokenResponse tokenResponse = OauthHelper.getToken(tokenRequest, true);
         synchronized (lock) {
             jwt = tokenResponse.getAccessToken();
             // the expiresIn is seconds and it is converted to millisecond in the future.
@@ -522,4 +526,57 @@ public class Http2Client {
         }
         return result.toString();
     }
+
+    public ClientCallback<ClientExchange> createClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch) {
+        return new ClientCallback<ClientExchange>() {
+            @Override
+            public void completed(ClientExchange result) {
+                result.setResponseListener(new ClientCallback<ClientExchange>() {
+                    @Override
+                    public void completed(final ClientExchange result) {
+                        reference.set(result.getResponse());
+                        new StringReadChannelListener(result.getConnection().getBufferPool()) {
+
+                            @Override
+                            protected void stringDone(String string) {
+                                result.getResponse().putAttachment(RESPONSE_BODY, string);
+                                latch.countDown();
+                            }
+
+                            @Override
+                            protected void error(IOException e) {
+                                e.printStackTrace();
+
+                                latch.countDown();
+                            }
+                        }.setup(result.getResponseChannel());
+                    }
+
+                    @Override
+                    public void failed(IOException e) {
+                        e.printStackTrace();
+
+                        latch.countDown();
+                    }
+                });
+                try {
+                    result.getRequestChannel().shutdownWrites();
+                    if(!result.getRequestChannel().flush()) {
+                        result.getRequestChannel().getWriteSetter().set(ChannelListeners.<StreamSinkChannel>flushingChannelListener(null, null));
+                        result.getRequestChannel().resumeWrites();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    latch.countDown();
+                }
+            }
+
+            @Override
+            public void failed(IOException e) {
+                e.printStackTrace();
+                latch.countDown();
+            }
+        };
+    }
+
 }
