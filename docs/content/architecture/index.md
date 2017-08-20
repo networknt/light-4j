@@ -3,9 +3,14 @@ date: 2017-01-25T20:18:44-05:00
 title: Architecture
 ---
 
-light-4j is aiming microservices and it has to be light weight and address a lot of cross-cutting
-concerns at the same time. It is based on Undertow Core Http server and depending on minimum third
-party libraries. 
+light-4j is aiming microservices and it has to be high throughput, low latency, light-weight and
+address a lot of cross-cutting concerns at the same time. It is based on Undertow Core Http server
+and depending on minimum third party libraries.
+
+The topics here are architectural considerations. In a nutshell, architecture is a type of design
+where the focus is quality attributes and wide(er) scope whereas design focuses on functional
+requirements and more localized concerns. There is another [section](https://networknt.github.io/light-4j/design/)
+for design decisions. 
 
 Here is a list of architecture decisions for the framework:
 
