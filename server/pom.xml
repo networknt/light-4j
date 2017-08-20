@@ -91,8 +91,8 @@
             <artifactId>slf4j-ext</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
+            <groupId>com.networknt</groupId>
+            <artifactId>client</artifactId>
         </dependency>
 
         <dependency>

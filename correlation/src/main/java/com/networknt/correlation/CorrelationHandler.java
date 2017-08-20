@@ -62,7 +62,7 @@ public class CorrelationHandler implements MiddlewareHandler {
         if(cId == null) {
             // if not, generate a UUID and put it into the request header
             cId = Util.getUUID();
-            exchange.getRequestHeaders().put(new HttpString(Constants.CORRELATION_ID), cId);
+            exchange.getRequestHeaders().put(Constants.CORRELATION_ID, cId);
         }
         // Add the cId into MDC so that all log statement will have cId as part of it.
         MDC.put(CID, cId);

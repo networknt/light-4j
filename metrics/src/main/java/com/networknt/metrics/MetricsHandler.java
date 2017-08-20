@@ -115,8 +115,8 @@ public class MetricsHandler implements MiddlewareHandler {
             Map<String, Object> auditInfo = exchange1.getAttachment(AuditHandler.AUDIT_INFO);
             if(auditInfo != null) {
                 Map<String, String> tags = new HashMap<>();
-                tags.put("endpoint", (String)auditInfo.get(Constants.ENDPOINT));
-                tags.put("clientId", auditInfo.get(Constants.CLIENT_ID) != null ? (String)auditInfo.get(Constants.CLIENT_ID) : "unknown");
+                tags.put("endpoint", (String)auditInfo.get(Constants.ENDPOINT_STRING));
+                tags.put("clientId", auditInfo.get(Constants.CLIENT_ID_STRING) != null ? (String)auditInfo.get(Constants.CLIENT_ID_STRING) : "unknown");
 
                 long time = Clock.defaultClock().getTick() - startTime;
                 MetricName metricName = new MetricName("response_time");

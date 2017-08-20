@@ -16,7 +16,7 @@
 
 package com.networknt.client.oauth;
 
-import com.networknt.client.Client;
+import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 
 import java.util.List;
@@ -36,9 +36,9 @@ public class AuthorizationCodeRequest extends TokenRequest {
      */
     public AuthorizationCodeRequest() {
         setGrantType(AUTHORIZATION_CODE);
-        Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Client.CONFIG_NAME);
+        Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
         // client_secret is in secret.yml instead of client.yml
-        Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(Client.CONFIG_SECRET);
+        Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
         if(clientConfig != null) {
             Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OAUTH);
             if(oauthConfig != null) {

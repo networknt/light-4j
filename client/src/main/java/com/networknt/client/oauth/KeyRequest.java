@@ -1,6 +1,5 @@
 package com.networknt.client.oauth;
 
-import com.networknt.client.Client;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 

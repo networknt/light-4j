@@ -16,8 +16,6 @@
 
 package com.networknt.health;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 /**
  * Config class for Health Handler
  *

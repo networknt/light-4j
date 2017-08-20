@@ -16,24 +16,32 @@
 
 package com.networknt.traceability;
 
+import com.networknt.client.Http2Client;
+import com.networknt.exception.ClientException;
 import com.networknt.utility.Constants;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
+import io.undertow.client.*;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.Header;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.junit.*;
+import io.undertow.util.StringReadChannelListener;
+import io.undertow.util.StringWriteChannelListener;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xnio.IoUtils;
+import org.xnio.OptionMap;
+
+import java.io.IOException;
+import java.net.URI;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 
 /**
@@ -81,70 +89,111 @@ public class TraceabilityHandlerTest {
 
     @Test
     public void testGetWithTid() throws Exception {
-        String url = "http://localhost:8080/get";
-        CloseableHttpClient client = HttpClients.createDefault();
-        HttpGet httpGet = new HttpGet(url);
-        httpGet.setHeader(Constants.TRACEABILITY_ID, "12345");
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection;
         try {
-            CloseableHttpResponse response = client.execute(httpGet);
-            int statusCode = response.getStatusLine().getStatusCode();
-            Assert.assertEquals(200, statusCode);
-            if(statusCode == 200) {
-                String s = IOUtils.toString(response.getEntity().getContent(), "utf8");
-                Assert.assertNotNull(s);
-                Assert.assertEquals("get", s);
-                Header tid = response.getFirstHeader(Constants.TRACEABILITY_ID);
-                Assert.assertEquals("12345", tid.getValue());
-            }
+            connection = client.connect(new URI("http://localhost:8080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new ClientException(e);
+        }
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        try {
+            ClientRequest request = new ClientRequest().setPath("/get").setMethod(Methods.GET);
+            request.getRequestHeaders().put(Constants.TRACEABILITY_ID, "12345");
+            connection.sendRequest(request, client.createClientCallback(reference, latch));
+            latch.await();
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw new ClientException(e);
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+        int statusCode = reference.get().getResponseCode();
+        Assert.assertEquals(200, statusCode);
+        if(statusCode == 200) {
+            String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+            Assert.assertNotNull(body);
+            Assert.assertEquals("get", body);
+            String tid = reference.get().getResponseHeaders().getFirst(Constants.TRACEABILITY_ID);
+            Assert.assertEquals("12345", tid);
         }
     }
 
     @Test
     public void testGetWithoutTid() throws Exception {
-        String url = "http://localhost:8080/get";
-        CloseableHttpClient client = HttpClients.createDefault();
-        HttpGet httpGet = new HttpGet(url);
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection;
         try {
-            CloseableHttpResponse response = client.execute(httpGet);
-            int statusCode = response.getStatusLine().getStatusCode();
-            Assert.assertEquals(200, statusCode);
-            if(statusCode == 200) {
-                String s = IOUtils.toString(response.getEntity().getContent(), "utf8");
-                Assert.assertNotNull(s);
-                Assert.assertEquals("get", s);
-                Header tid = response.getFirstHeader(Constants.TRACEABILITY_ID);
-                Assert.assertNull(tid);
-            }
+            connection = client.connect(new URI("http://localhost:8080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new ClientException(e);
+        }
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        try {
+            ClientRequest request = new ClientRequest().setPath("/get").setMethod(Methods.GET);
+            //request.getRequestHeaders().put(Constants.TRACEABILITY_ID, "12345");
+            connection.sendRequest(request, client.createClientCallback(reference, latch));
+            latch.await();
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw new ClientException(e);
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+        int statusCode = reference.get().getResponseCode();
+        Assert.assertEquals(200, statusCode);
+        if(statusCode == 200) {
+            String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+            Assert.assertNotNull(body);
+            Assert.assertEquals("get", body);
+            String tid = reference.get().getResponseHeaders().getFirst(Constants.TRACEABILITY_ID);
+            Assert.assertNull(tid);
         }
     }
 
     @Test
     public void testPostWithTid() throws Exception {
-        String url = "http://localhost:8080/post";
-        CloseableHttpClient client = HttpClients.createDefault();
-        HttpPost httpPost = new HttpPost(url);
-        httpPost.setHeader(Constants.TRACEABILITY_ID, "12345");
-        httpPost.setHeader(Headers.CONTENT_TYPE.toString(), "application/json");
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection;
         try {
-            StringEntity stringEntity = new StringEntity("post");
-            httpPost.setEntity(stringEntity);
-            CloseableHttpResponse response = client.execute(httpPost);
-            int statusCode = response.getStatusLine().getStatusCode();
-            Assert.assertEquals(200, statusCode);
-            if(statusCode == 200) {
-                String s = IOUtils.toString(response.getEntity().getContent(), "utf8");
-                Assert.assertNotNull(s);
-                Assert.assertEquals("post", s);
-                Header tid = response.getFirstHeader(Constants.TRACEABILITY_ID);
-                Assert.assertEquals("12345", tid.getValue());
-            }
+            connection = client.connect(new URI("http://localhost:8080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new ClientException(e);
+        }
+
+        try {
+            String post = "post";
+            connection.getIoThread().execute(new Runnable() {
+                @Override
+                public void run() {
+                    final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/post");
+                    request.getRequestHeaders().put(Headers.HOST, "localhost");
+                    request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/json");
+                    request.getRequestHeaders().put(Constants.TRACEABILITY_ID, "12345");
+                    request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, post));
+                }
+            });
+
+            latch.await(10, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            logger.error("IOException: ", e);
+            throw new ClientException(e);
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+        int statusCode = reference.get().getResponseCode();
+        Assert.assertEquals(200, statusCode);
+        if(statusCode == 200) {
+            String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+            Assert.assertNotNull(body);
+            Assert.assertEquals("post", body);
+            String tid = reference.get().getResponseHeaders().getFirst(Constants.TRACEABILITY_ID);
+            Assert.assertEquals("12345", tid);
         }
     }
-
 }

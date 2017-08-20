@@ -1,6 +1,5 @@
 package com.networknt.client.oauth;
 
-import com.networknt.client.ClientTest;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import io.undertow.Handlers;
@@ -36,7 +35,7 @@ import java.util.regex.Pattern;
  *
  */
 public class OauthHelperTest {
-    static final Logger logger = LoggerFactory.getLogger(ClientTest.class);
+    static final Logger logger = LoggerFactory.getLogger(OauthHelperTest.class);
 
     static Undertow server = null;
 

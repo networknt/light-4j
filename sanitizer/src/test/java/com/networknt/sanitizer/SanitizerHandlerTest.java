@@ -2,21 +2,15 @@ package com.networknt.sanitizer;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.body.BodyHandler;
+import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
+import com.networknt.exception.ClientException;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
+import io.undertow.client.*;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
-import io.undertow.util.HeaderMap;
-import io.undertow.util.Headers;
-import io.undertow.util.Methods;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import io.undertow.util.*;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -24,8 +18,18 @@ import org.junit.Test;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xnio.IoUtils;
+import org.xnio.OptionMap;
 
-import java.util.*;
+import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created by steve on 22/10/16.
@@ -99,91 +103,115 @@ public class SanitizerHandlerTest {
                 });
     }
 
-    /*
-    @Test
-    public void testGetParameter() throws Exception {
-        String url = "http://localhost:8080/parameter?p=<script>alert('This is a test')</script>";
-        CloseableHttpClient client = HttpClients.createDefault();
-        HttpGet httpGet = new HttpGet(url);
-        try {
-            CloseableHttpResponse response = client.execute(httpGet);
-            int statusCode = response.getStatusLine().getStatusCode();
-            Assert.assertEquals(200, statusCode);
-            if(statusCode == 200) {
-                String s = IOUtils.toString(response.getEntity().getContent(), "utf8");
-                Assert.assertNotNull(s);
-                Assert.assertEquals("nobody", s);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-    */
-
     @Test
     public void testGetHeader() throws Exception {
-        String url = "http://localhost:8080/header";
-        CloseableHttpClient client = HttpClients.createDefault();
-        HttpGet httpGet = new HttpGet(url);
-        httpGet.setHeader("param", "<script>alert('header test')</script>");
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection;
         try {
-            CloseableHttpResponse response = client.execute(httpGet);
-            int statusCode = response.getStatusLine().getStatusCode();
-            Assert.assertEquals(200, statusCode);
-            if(statusCode == 200) {
-                String s = IOUtils.toString(response.getEntity().getContent(), "utf8");
-                Assert.assertNotNull(s);
-                Assert.assertTrue(s.contains("<script>alert(\\'header test\\')</script>"));
-            }
+            connection = client.connect(new URI("http://localhost:8080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new ClientException(e);
         }
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        try {
+            ClientRequest request = new ClientRequest().setPath("/header").setMethod(Methods.GET);
+            request.getRequestHeaders().put(new HttpString("param"), "<script>alert('header test')</script>");
+            connection.sendRequest(request, client.createClientCallback(reference, latch));
+            latch.await();
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw new ClientException(e);
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+        int statusCode = reference.get().getResponseCode();
+        String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+        Assert.assertEquals(200, statusCode);
+        Assert.assertTrue(body.contains("<script>alert(\\'header test\\')</script>"));
     }
 
     @Test
     public void testPostHeader() throws Exception {
-        String url = "http://localhost:8080/header";
-        CloseableHttpClient client = HttpClients.createDefault();
-        HttpPost httpPost = new HttpPost(url);
-        httpPost.setHeader(Headers.CONTENT_TYPE.toString(), "application/json");
-        httpPost.setHeader("param", "<script>alert('header test')</script>");
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection;
         try {
-            StringEntity stringEntity = new StringEntity("{\"key\":\"value\"}");
-            httpPost.setEntity(stringEntity);
-            CloseableHttpResponse response = client.execute(httpPost);
-            int statusCode = response.getStatusLine().getStatusCode();
-            Assert.assertEquals(200, statusCode);
-            if(statusCode == 200) {
-                String s = IOUtils.toString(response.getEntity().getContent(), "utf8");
-                Assert.assertNotNull(s);
-                Assert.assertTrue(s.contains("<script>alert(\\'header test\\')</script>"));
-            }
+            connection = client.connect(new URI("http://localhost:8080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new ClientException(e);
+        }
+
+        try {
+            String post = "{\"key\":\"value\"}";
+            connection.getIoThread().execute(new Runnable() {
+                @Override
+                public void run() {
+                    final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/header");
+                    request.getRequestHeaders().put(Headers.HOST, "localhost");
+                    request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/json");
+                    request.getRequestHeaders().put(new HttpString("param"), "<script>alert('header test')</script>");
+                    request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, post));
+                }
+            });
+
+            latch.await(10, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            logger.error("IOException: ", e);
+            throw new ClientException(e);
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+        int statusCode = reference.get().getResponseCode();
+        Assert.assertEquals(200, statusCode);
+        if(statusCode == 200) {
+            String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+            Assert.assertNotNull(body);
+            Assert.assertTrue(body.contains("<script>alert(\\'header test\\')</script>"));
         }
     }
 
     @Test
     public void testPostBody() throws Exception {
-        String url = "http://localhost:8080/body";
-        CloseableHttpClient client = HttpClients.createDefault();
-        HttpPost httpPost = new HttpPost(url);
-        httpPost.setHeader(Headers.CONTENT_TYPE.toString(), "application/json");
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection;
+        try {
+            connection = client.connect(new URI("http://localhost:8080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
+        } catch (Exception e) {
+            throw new ClientException(e);
+        }
 
         try {
-            StringEntity stringEntity = new StringEntity("{\"key\":\"<script>alert('test')</script>\"}");
-            httpPost.setEntity(stringEntity);
-            CloseableHttpResponse response = client.execute(httpPost);
-            int statusCode = response.getStatusLine().getStatusCode();
-            Assert.assertEquals(200, statusCode);
-            if(statusCode == 200) {
-                String s = IOUtils.toString(response.getEntity().getContent(), "utf8");
-                Assert.assertNotNull(s);
-                Map map = Config.getInstance().getMapper().readValue(s, new TypeReference<HashMap<String, Object>>() {});
-                Assert.assertEquals("<script>alert(\\'test\\')</script>", map.get("key"));
-            }
+            String post = "{\"key\":\"<script>alert('test')</script>\"}";
+            connection.getIoThread().execute(new Runnable() {
+                @Override
+                public void run() {
+                    final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/body");
+                    request.getRequestHeaders().put(Headers.HOST, "localhost");
+                    request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/json");
+                    request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, post));
+                }
+            });
+
+            latch.await(10, TimeUnit.SECONDS);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("IOException: ", e);
+            throw new ClientException(e);
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+        int statusCode = reference.get().getResponseCode();
+        Assert.assertEquals(200, statusCode);
+        if(statusCode == 200) {
+            String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+            Assert.assertNotNull(body);
+            Map map = Config.getInstance().getMapper().readValue(body, new TypeReference<HashMap<String, Object>>() {});
+            Assert.assertEquals("<script>alert(\\'test\\')</script>", map.get("key"));
         }
     }
 

@@ -77,8 +77,8 @@
         </dependency>
 
         <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
+            <groupId>com.networknt</groupId>
+            <artifactId>client</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

@@ -59,7 +59,7 @@ public class TraceabilityHandler implements MiddlewareHandler {
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         String tid = exchange.getRequestHeaders().getFirst(Constants.TRACEABILITY_ID);
         if(tid != null) {
-            exchange.getResponseHeaders().put(new HttpString(Constants.TRACEABILITY_ID), tid);
+            exchange.getResponseHeaders().put(Constants.TRACEABILITY_ID, tid);
         }
         next.handleRequest(exchange);
     }

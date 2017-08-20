@@ -11,10 +11,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
 
-import io.dropwizard.metrics.InstrumentedThreadFactory;
-import io.dropwizard.metrics.Meter;
-import io.dropwizard.metrics.MetricRegistry;
-
 public class InstrumentedThreadFactoryTest {
     private static final int THREAD_COUNT = 10;
 

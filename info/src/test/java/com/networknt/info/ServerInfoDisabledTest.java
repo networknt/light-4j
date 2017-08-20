@@ -16,29 +16,37 @@
 
 package com.networknt.info;
 
+import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
+import com.networknt.exception.ClientException;
 import com.networknt.status.Status;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
+import io.undertow.client.ClientConnection;
+import io.undertow.client.ClientRequest;
+import io.undertow.client.ClientResponse;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Methods;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xnio.IoUtils;
+import org.xnio.OptionMap;
 
 import java.io.File;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created by steve on 01/10/16.
@@ -104,23 +112,33 @@ public class ServerInfoDisabledTest {
 
     @Test
     public void testServerInfo() throws Exception {
-        String url = "http://localhost:8080/v1/server/info";
-        CloseableHttpClient client = HttpClients.createDefault();
-        HttpGet httpGet = new HttpGet(url);
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection;
         try {
-            CloseableHttpResponse response = client.execute(httpGet);
-            int statusCode = response.getStatusLine().getStatusCode();
-            String body = IOUtils.toString(response.getEntity().getContent(), "utf8");
-            Assert.assertEquals(404, statusCode);
-            if(statusCode == 404) {
-                Status status = Config.getInstance().getMapper().readValue(body, Status.class);
-                Assert.assertNotNull(status);
-                Assert.assertEquals("ERR10013", status.getCode());
-            }
+            connection = client.connect(new URI("http://localhost:8080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new ClientException(e);
+        }
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        try {
+            ClientRequest request = new ClientRequest().setPath("/v1/server/info").setMethod(Methods.GET);
+            connection.sendRequest(request, client.createClientCallback(reference, latch));
+            latch.await();
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw new ClientException(e);
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+        int statusCode = reference.get().getResponseCode();
+        String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+        Assert.assertEquals(404, statusCode);
+        if(statusCode == 404) {
+            Status status = Config.getInstance().getMapper().readValue(body, Status.class);
+            Assert.assertNotNull(status);
+            Assert.assertEquals("ERR10013", status.getCode());
         }
     }
-
 
 }

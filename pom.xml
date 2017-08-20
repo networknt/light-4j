@@ -326,16 +326,6 @@
                 <version>${version.encoder}</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.httpcomponents</groupId>
-                <artifactId>httpclient</artifactId>
-                <version>${version.httpclient}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.httpcomponents</groupId>
-                <artifactId>httpasyncclient</artifactId>
-                <version>${version.httpasyncclient}</version>
-            </dependency>
-            <dependency>
                 <groupId>io.undertow</groupId>
                 <artifactId>undertow-core</artifactId>
                 <version>${version.undertow}</version>
@@ -359,6 +349,8 @@
                 <groupId>org.apache.zookeeper</groupId>
                 <artifactId>zookeeper</artifactId>
                 <version>${version.zookeeper}</version>
+                <scope>compile</scope>
+                <optional>true</optional>
                 <exclusions>
                     <exclusion>
                         <groupId>org.slf4j</groupId>
@@ -374,6 +366,8 @@
                 <groupId>com.101tec</groupId>
                 <artifactId>zkclient</artifactId>
                 <version>${version.zkclient}</version>
+                <scope>compile</scope>
+                <optional>true</optional>
                 <exclusions>
                     <exclusion>
                         <groupId>log4j</groupId>

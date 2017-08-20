@@ -16,6 +16,8 @@
 
 package com.networknt.utility;
 
+import io.undertow.util.HttpString;
+
 /**
  * Constants shared by all light-4j components.
  *
@@ -23,17 +25,26 @@ package com.networknt.utility;
  */
 public class Constants {
     // headers
-    public static final String CORRELATION_ID = "X-Correlation-Id";
-    public static final String TRACEABILITY_ID = "X-Traceability-Id";
-    public static final String USER_ID = "user_id";
-    public static final String CLIENT_ID = "client_id";
-    public static final String SCOPE_CLIENT_ID = "scope_client_id";
-    public static final String SCOPE = "scope";
-    public static final String ENDPOINT = "endpoint";
-    public static final String SWAGGER_OPERATION = "swagger_operation";
 
-    public static final String SCOPE_TOKEN = "X-Scope-Token";
-    public static final String AUTHORIZATION = "Authorization";
+    public static final String CORRELATION_ID_STRING = "X-Correlation-Id";
+    public static final String TRACEABILITY_ID_STRING = "X-Traceability-Id";
+    public static final String USER_ID_STRING = "user_id";
+    public static final String CLIENT_ID_STRING = "client_id";
+    public static final String SCOPE_CLIENT_ID_STRING = "scope_client_id";
+    public static final String SCOPE_STRING = "scope";
+    public static final String ENDPOINT_STRING = "endpoint";
+    public static final String SWAGGER_OPERATION_STRING = "swagger_operation";
+    public static final String SCOPE_TOKEN_STRING = "X-Scope-Token";
+
+    public static final HttpString CORRELATION_ID = new HttpString(CORRELATION_ID_STRING);
+    public static final HttpString TRACEABILITY_ID = new HttpString(TRACEABILITY_ID_STRING);
+    public static final HttpString USER_ID = new HttpString(USER_ID_STRING);
+    public static final HttpString CLIENT_ID = new HttpString(CLIENT_ID_STRING);
+    public static final HttpString SCOPE_CLIENT_ID = new HttpString(SCOPE_CLIENT_ID_STRING);
+    public static final HttpString SCOPE = new HttpString(SCOPE_STRING);
+    public static final HttpString ENDPOINT = new HttpString(ENDPOINT_STRING);
+    public static final HttpString SWAGGER_OPERATION = new HttpString(SWAGGER_OPERATION_STRING);
+    public static final HttpString SCOPE_TOKEN = new HttpString(SCOPE_TOKEN_STRING);
 
     // Logger
     public static final String AUDIT_LOGGER = "Audit";

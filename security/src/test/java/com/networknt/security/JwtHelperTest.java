@@ -129,7 +129,7 @@ public class JwtHelperTest {
             e.printStackTrace();
         }
         Assert.assertNotNull(claims);
-        Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID));
+        Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
 
         try {
             claims = JwtHelper.verifyJwt(jwt);

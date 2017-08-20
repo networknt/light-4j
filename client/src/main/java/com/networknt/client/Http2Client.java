@@ -15,10 +15,7 @@ import io.undertow.connector.ByteBufferPool;
 import io.undertow.protocols.ssl.UndertowXnioSsl;
 import io.undertow.server.DefaultByteBufferPool;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.AttachmentKey;
-import io.undertow.util.Headers;
-import io.undertow.util.HttpString;
-import io.undertow.util.StringReadChannelListener;
+import io.undertow.util.*;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,10 +62,6 @@ public class Http2Client {
     public static XnioWorker WORKER;
     public static XnioSsl SSL;
 
-    public static final HttpString CORRELATION_ID = new HttpString(Constants.CORRELATION_ID);
-    public static final HttpString TRACEABILITY_ID = new HttpString(Constants.TRACEABILITY_ID);
-    public static final HttpString SCOPE_TOKEN = new HttpString(Constants.SCOPE_TOKEN);
-
     public static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
 
     static final String TIMEOUT = "timeout";
@@ -105,7 +98,7 @@ public class Http2Client {
 
     static {
         List<String> masks = new ArrayList<>();
-        ModuleRegistry.registerModule(Client.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), masks);
+        ModuleRegistry.registerModule(Http2Client.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), masks);
         config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
         if(config != null) {
             Map<String, Object> oauthConfig = (Map<String, Object>)config.get(OAUTH);
@@ -291,7 +284,7 @@ public class Http2Client {
             }
         }
         request.getRequestHeaders().put(Headers.AUTHORIZATION, token);
-        request.getRequestHeaders().put(TRACEABILITY_ID, traceabilityId);
+        request.getRequestHeaders().put(Constants.TRACEABILITY_ID, traceabilityId);
     }
 
     /**
@@ -323,7 +316,7 @@ public class Http2Client {
     public void addCcTokenTrace(ClientRequest request, String traceabilityId) throws ClientException, ApiException {
         checkCCTokenExpired();
         request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + jwt);
-        request.getRequestHeaders().put(TRACEABILITY_ID, traceabilityId);
+        request.getRequestHeaders().put(Constants.TRACEABILITY_ID, traceabilityId);
     }
 
     /**
@@ -339,7 +332,7 @@ public class Http2Client {
      */
     public void propagateHeaders(ClientRequest request, final HttpServerExchange exchange) throws ClientException, ApiException {
         String tid = exchange.getRequestHeaders().getFirst(Constants.TRACEABILITY_ID);
-        String token = exchange.getRequestHeaders().getFirst(Constants.AUTHORIZATION);
+        String token = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
         String cid = exchange.getRequestHeaders().getFirst(Constants.CORRELATION_ID);
         populateHeader(request, token, cid, tid);
     }
@@ -364,9 +357,9 @@ public class Http2Client {
         } else {
             addAuthToken(request, authToken);
         }
-        request.getRequestHeaders().put(CORRELATION_ID, correlationId);
+        request.getRequestHeaders().put(Constants.CORRELATION_ID, correlationId);
         checkCCTokenExpired();
-        request.getRequestHeaders().put(SCOPE_TOKEN, "Bearer " + jwt);
+        request.getRequestHeaders().put(Constants.SCOPE_TOKEN, "Bearer " + jwt);
     }
 
     private void getCCToken() throws ClientException {
@@ -390,7 +383,7 @@ public class Http2Client {
             if(expire <= System.currentTimeMillis()) {
                 logger.trace("In renew window and token is expired.");
                 // block other request here to prevent using expired token.
-                synchronized (Client.class) {
+                synchronized (Http2Client.class) {
                     if(expire <= System.currentTimeMillis()) {
                         logger.trace("Within the synch block, check if the current request need to renew token");
                         if(!renewing || System.currentTimeMillis() > expiredRetryTimeout) {
@@ -410,7 +403,7 @@ public class Http2Client {
             } else {
                 // Not expired yet, try to renew async but let requests use the old token.
                 logger.trace("In renew window but token is not expired yet.");
-                synchronized (Client.class) {
+                synchronized (Http2Client.class) {
                     if(expire > System.currentTimeMillis()) {
                         if(!renewing || System.currentTimeMillis() > earlyRetryTimeout) {
                             renewing = true;
@@ -583,4 +576,43 @@ public class Http2Client {
         };
     }
 
+    public ClientCallback<ClientExchange> createClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch, final String requestBody) {
+        return new ClientCallback<ClientExchange>() {
+            @Override
+            public void completed(ClientExchange result) {
+                new StringWriteChannelListener(requestBody).setup(result.getRequestChannel());
+                result.setResponseListener(new ClientCallback<ClientExchange>() {
+                    @Override
+                    public void completed(ClientExchange result) {
+                        reference.set(result.getResponse());
+                        new StringReadChannelListener(Http2Client.POOL) {
+                            @Override
+                            protected void stringDone(String string) {
+                                result.getResponse().putAttachment(Http2Client.RESPONSE_BODY, string);
+                                latch.countDown();
+                            }
+
+                            @Override
+                            protected void error(IOException e) {
+                                e.printStackTrace();
+                                latch.countDown();
+                            }
+                        }.setup(result.getResponseChannel());
+                    }
+
+                    @Override
+                    public void failed(IOException e) {
+                        e.printStackTrace();
+                        latch.countDown();
+                    }
+                });
+            }
+
+            @Override
+            public void failed(IOException e) {
+                e.printStackTrace();
+                latch.countDown();
+            }
+        };
+    }
 }

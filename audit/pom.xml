@@ -72,15 +72,14 @@
             <version>${version.jose4j}</version>
         </dependency>
 
-
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>correlation</artifactId>
+            <artifactId>client</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
+            <groupId>com.networknt</groupId>
+            <artifactId>correlation</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

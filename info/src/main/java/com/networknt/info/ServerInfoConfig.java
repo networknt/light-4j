@@ -16,8 +16,6 @@
 
 package com.networknt.info;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 /**
  * Created by steve on 18/09/16.
  */

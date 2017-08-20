@@ -4,8 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Test;
 
-import io.dropwizard.metrics.MetricName;
-
 import java.util.HashMap;
 import java.util.Map;
 

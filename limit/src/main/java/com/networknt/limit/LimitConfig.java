@@ -16,8 +16,6 @@
 
 package com.networknt.limit;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 /**
  * Config class for limit module
  *

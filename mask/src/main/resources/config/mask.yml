@@ -1,0 +1,6 @@
+# This is the default mask config file that is used to mask password in
+# uri before logging it. If you want to overwrite this config file, please
+# make sure that this entry is not removed. The metrics module is using it.
+string:
+  uri:
+    password=[^&]*: password=******

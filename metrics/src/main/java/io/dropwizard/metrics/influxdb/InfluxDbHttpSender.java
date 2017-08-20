@@ -1,39 +1,42 @@
 package io.dropwizard.metrics.influxdb;
 
+import com.networknt.client.Http2Client;
+import com.networknt.config.Config;
+import com.networknt.exception.ClientException;
+import com.networknt.mask.Mask;
+import com.networknt.status.Status;
 import io.dropwizard.metrics.influxdb.data.InfluxDbPoint;
 import io.dropwizard.metrics.influxdb.data.InfluxDbWriteObject;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
+import io.undertow.client.*;
+import io.undertow.util.Headers;
+import io.undertow.util.Methods;
+import io.undertow.util.StringReadChannelListener;
+import io.undertow.util.StringWriteChannelListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xnio.IoUtils;
+import org.xnio.OptionMap;
 
+import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * An implementation of InfluxDbSender that writes to InfluxDb via http.
  */
 public class InfluxDbHttpSender implements InfluxDbSender {
     private static final Logger logger = LoggerFactory.getLogger(InfluxDbReporter.class);
+    private final Http2Client client = Http2Client.getInstance();
 
-    private final CloseableHttpClient closeableHttpClient;
     private final URL url;
-    private final String username;
-    private final String password;
+    private final String path;
+
     private final InfluxDbWriteObject influxDbWriteObject;
 
     /**
@@ -65,15 +68,12 @@ public class InfluxDbHttpSender implements InfluxDbSender {
      */
     public InfluxDbHttpSender(final String protocol, final String hostname, final int port, final String database, final String username, final String password,
                               final TimeUnit timePrecision) throws Exception {
-        String endpoint = new URL(protocol, hostname, port, "/write").toString();
+        this.url = new URL(protocol, hostname, port, null);
         String queryDb = String.format("db=%s", URLEncoder.encode(database, "UTF-8"));
+        String queryCredential = String.format("u=%s&p=%s", URLEncoder.encode(username, "UTF8"), URLEncoder.encode(password, "UTF8"));
         String queryPrecision = String.format("precision=%s", TimeUtils.toTimePrecision(timePrecision));
-        this.url = new URL(endpoint + "?" + queryDb + "&" + queryPrecision);
-
-        this.closeableHttpClient = HttpClients.createDefault();
-        this.username = username;
-        this.password = password;
-        if(logger.isInfoEnabled()) logger.info("InfluxDbHttpSender is created with url = " + url + " username = " + username);
+        this.path = "/write?" + queryDb + "&" + queryCredential + "&" + queryPrecision;
+        if(logger.isInfoEnabled()) logger.info("InfluxDbHttpSender is created with path = " + Mask.maskString(path, "uri") + " and host = " + url);
         this.influxDbWriteObject = new InfluxDbWriteObject(timePrecision);
     }
 
@@ -94,54 +94,85 @@ public class InfluxDbHttpSender implements InfluxDbSender {
         }
     }
 
-    private RequestConfig getRequestConfig() {
-        return RequestConfig
-            .custom()
-            .setConnectTimeout(1000)
-            .setConnectionRequestTimeout(1000)
-            .build();
-    }
-
-    private HttpClientContext getHttpClientContext() {
-        HttpClientContext httpClientContext = null;
-        if (username != null && !username.isEmpty() && password != null && !password.isEmpty())
-        {
-            httpClientContext = HttpClientContext.create();
-            AuthScope authScope = new AuthScope(url.getHost(), url.getPort());
-            UsernamePasswordCredentials usernamePasswordCredentials = new UsernamePasswordCredentials(username, password);
-            CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-            credentialsProvider.setCredentials(authScope, usernamePasswordCredentials);
-            httpClientContext.setCredentialsProvider(credentialsProvider);
-        }
-
-        return httpClientContext;
-    }
-
     @Override
     public int writeData() throws Exception {
         final String body = influxDbWriteObject.getBody();
-        HttpPost httpPost = new HttpPost(this.url.toURI());
-        httpPost.setEntity(new StringEntity(body, ContentType.APPLICATION_JSON));
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection;
+        try {
+            connection = client.connect(this.url.toURI(), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
+        } catch (Exception e) {
+            throw new ClientException(e);
+        }
 
-        httpPost.setConfig(getRequestConfig());
+        try {
+            connection.getIoThread().execute(new Runnable() {
+                @Override
+                public void run() {
+                    final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(path);
+                    request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+                    connection.sendRequest(request, new ClientCallback<ClientExchange>() {
+                        @Override
+                        public void completed(ClientExchange result) {
+                            new StringWriteChannelListener(body).setup(result.getRequestChannel());
+                            result.setResponseListener(new ClientCallback<ClientExchange>() {
+                                @Override
+                                public void completed(ClientExchange result) {
+                                    reference.set(result.getResponse());
+                                    new StringReadChannelListener(Http2Client.POOL) {
+                                        @Override
+                                        protected void stringDone(String string) {
+                                            result.getResponse().putAttachment(Http2Client.RESPONSE_BODY, string);
+                                            latch.countDown();
+                                        }
 
-        return closeableHttpClient.execute(httpPost, httpResponse -> {
-            int statusCode = httpResponse.getStatusLine().getStatusCode();
-            EntityUtils.consumeQuietly(httpResponse.getEntity());
-            if (statusCode >= 200 && statusCode < 300) {
-                return statusCode;
-            } else {
-                logger.error("Server returned HTTP response code: " + statusCode
-                        + "for URL: " + url
-                        + " with content :'"
-                        + httpResponse.getStatusLine().getReasonPhrase() + "'");
-                throw new ClientProtocolException("Server returned HTTP response code: " + statusCode
-                                                      + "for URL: " + url
-                                                      + " with content :'"
-                                                      + httpResponse.getStatusLine().getReasonPhrase() + "'" );
-            }
+                                        @Override
+                                        protected void error(IOException e) {
+                                            e.printStackTrace();
+                                            latch.countDown();
+                                        }
+                                    }.setup(result.getResponseChannel());
+                                }
 
-        }, getHttpClientContext());
+                                @Override
+                                public void failed(IOException e) {
+                                    e.printStackTrace();
+                                    latch.countDown();
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void failed(IOException e) {
+                            e.printStackTrace();
+                            latch.countDown();
+                        }
+                    });
+                }
+            });
+
+            latch.await(10, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            logger.error("IOException: ", e);
+            throw new ClientException(e);
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+        int statusCode = reference.get().getResponseCode();
+        if(statusCode >= 200 && statusCode < 300) {
+            return statusCode;
+        } else {
+            logger.error("Server returned HTTP response code: " + statusCode
+                    + "for path: " + path + " and host: " + url
+                    + " with content :'"
+                    + reference.get().getAttachment(Http2Client.RESPONSE_BODY) + "'");
+            throw new ClientException("Server returned HTTP response code: " + statusCode
+                    + "for path: " + path + " and host: " + url
+                    + " with content :'"
+                    + reference.get().getAttachment(Http2Client.RESPONSE_BODY) + "'");
+        }
     }
 
     @Override
