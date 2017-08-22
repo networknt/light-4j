@@ -113,46 +113,9 @@ public class InfluxDbHttpSender implements InfluxDbSender {
                 public void run() {
                     final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(path);
                     request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
-                    connection.sendRequest(request, new ClientCallback<ClientExchange>() {
-                        @Override
-                        public void completed(ClientExchange result) {
-                            new StringWriteChannelListener(body).setup(result.getRequestChannel());
-                            result.setResponseListener(new ClientCallback<ClientExchange>() {
-                                @Override
-                                public void completed(ClientExchange result) {
-                                    reference.set(result.getResponse());
-                                    new StringReadChannelListener(Http2Client.POOL) {
-                                        @Override
-                                        protected void stringDone(String string) {
-                                            result.getResponse().putAttachment(Http2Client.RESPONSE_BODY, string);
-                                            latch.countDown();
-                                        }
-
-                                        @Override
-                                        protected void error(IOException e) {
-                                            e.printStackTrace();
-                                            latch.countDown();
-                                        }
-                                    }.setup(result.getResponseChannel());
-                                }
-
-                                @Override
-                                public void failed(IOException e) {
-                                    e.printStackTrace();
-                                    latch.countDown();
-                                }
-                            });
-                        }
-
-                        @Override
-                        public void failed(IOException e) {
-                            e.printStackTrace();
-                            latch.countDown();
-                        }
-                    });
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, body));
                 }
             });
-
             latch.await(10, TimeUnit.SECONDS);
         } catch (Exception e) {
             logger.error("IOException: ", e);
