@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.4.0 - 2017-08-22
+### Added
+- fixes #85 Implement Http2Client
+
+### Changed
+- fixes #82 Register JavaTimeModule for the default Jackson ObjectMapper(Thanks @pragmaticway)
+- fixes #87 upgrade Undertow to 1.4.18.Final to support HTTP2 on server
+- fixes #84 enable security to call client module to load public key cert
+- fixes #90 Remove Client and replace it with Http2Client
+
 ## 1.3.5 - 2017-08-01
 ### Added
 
