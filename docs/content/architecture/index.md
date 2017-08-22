@@ -10,7 +10,7 @@ and depending on minimum third party libraries.
 The topics here are architectural considerations. In a nutshell, architecture is a type of design
 where the focus is quality attributes and wide(er) scope whereas design focuses on functional
 requirements and more localized concerns. There is another [section](https://networknt.github.io/light-4j/design/)
-for design decisions. 
+for design decisions.
 
 Here is a list of architecture decisions for the framework:
 
