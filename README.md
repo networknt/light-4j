@@ -31,7 +31,7 @@ with other Web frameworks.
 * Body parser to support different content types
 * Standardized response code and messages from configuration file
 * Externalized configuration for all modules for dockerized environment 
-* CORS pre-flight handler for SPA (Augular or React) from another domain
+* CORS pre-flight handler for SPA (Angular or React) from another domain
 * Rate limiting for services that exposed outside to the Internet
 * Service registry and discovery support direct, Consul and Zookeeper
 * Client side discovery and load balance to eliminate proxies
