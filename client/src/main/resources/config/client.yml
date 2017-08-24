@@ -1,27 +1,5 @@
 # This is the shared configuration file for Client and Http2Client.
 ---
-# sync and async settings are applied to Client only
-sync:
-  maxConnectionTotal: 100
-  maxConnectionPerRoute: 10
-  routes:
-    api.google.com: 20
-    api.facebook.com: 10
-  timeout: 10000
-  keepAlive: 15000
-async:
-  maxConnectionTotal: 100
-  maxConnectionPerRoute: 10
-  routes:
-    api.google.com: 20
-    api.facebook.com: 10
-  reactor:
-    ioThreadCount: 1
-    connectTimeout: 10000
-    soTimeout: 10000
-  timeout: 10000
-  keepAlive: 15000
-# tls and oauth settings are shared by both Client and Http2Client
 tls:
   # if the server is using self-signed certificate, this need to be false. If true, you have to use CA signed certificate
   # or load truststore that contains the self-signed cretificate.
