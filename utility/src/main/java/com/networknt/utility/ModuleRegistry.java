@@ -16,10 +16,7 @@
 
 package com.networknt.utility;
 
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Module registry for server info component. Every enabled module should register
@@ -30,23 +27,24 @@ import java.util.Map;
  */
 public class ModuleRegistry {
 
-    private static List<Map<String, Object>> registry = new LinkedList<>();
+    private static Map<String, Object> registry = new HashMap<>();
 
     public static void registerModule(String moduleName, Map<String, Object> config, List<String> masks) {
-        Map<String, Object> moduleMap = new LinkedHashMap<>();
-        moduleMap.put("moduleName", moduleName);
+        // use module name as key for the config map will make api-certification parses this object easily.
         if(config != null) {
             if(masks != null && masks.size() > 0) {
                 for (String mask : masks) {
                     maskNode(config, mask);
                 }
             }
-            moduleMap.put("config", config);
+            registry.put(moduleName, config);
+        } else {
+            // we don't have any module without config but we cannot guarantee user created modules
+            registry.put(moduleName, new HashMap<String, Object>());
         }
-        registry.add(moduleMap);
     }
 
-    public static List<Map<String, Object>> getRegistry() {
+    public static Map<String, Object> getRegistry() {
         return registry;
     }
 
