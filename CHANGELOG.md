@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.4.1 - 2017-08-30
+### Added
+
+### Changed
+- fixes #93 update default client.yml to remove the settings for http1.1
+- fixes #95 Refactor server info component object so that it is easy to consume
+- fixes #96 Default to enableHttp2 in client and server
+- fixes #86 server support HTTP 2.0 by default in configuration
+- fixes #97 Add host head when sending requests to influxdb in InfluxDb
+- fixes #98 Upgrade to undertow 1.4.19.Final as there an HTTP 2.0 bug
+
 ## 1.4.0 - 2017-08-22
 ### Added
 - fixes #85 Implement Http2Client
