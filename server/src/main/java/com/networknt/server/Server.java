@@ -158,18 +158,15 @@ public class Server {
 
         Undertow.Builder builder = Undertow.builder();
 
-        if(config.enableHttp2) {
+        if(config.enableHttp) {
+            builder.addHttpListener(config.getHttpPort(), config.getIp());
+        }
+        if(config.enableHttps) {
             sslContext = createSSLContext();
             builder.addHttpsListener(config.getHttpsPort(), config.getIp(), sslContext);
+        }
+        if(config.enableHttp2) {
             builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true);
-        } else {
-            if(config.enableHttp) {
-                builder.addHttpListener(config.getHttpPort(), config.getIp());
-            }
-            if(config.enableHttps) {
-                sslContext = createSSLContext();
-                builder.addHttpsListener(config.getHttpsPort(), config.getIp(), sslContext);
-            }
         }
 
         server = builder
