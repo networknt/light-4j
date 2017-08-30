@@ -1,5 +1,4 @@
 ---
-enableHttp2: true
 tls:
   # if the server is using self-signed certificate, this need to be false.
   verifyHostname: false

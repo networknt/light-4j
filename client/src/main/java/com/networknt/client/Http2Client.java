@@ -64,7 +64,6 @@ public class Http2Client {
 
     public static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
 
-    static final String ENABLE_HTTP2 = "enableHttp2";
     static final String TLS = "tls";
     static final String LOAD_TRUST_STORE = "loadTrustStore";
     static final String LOAD_KEY_STORE = "loadKeyStore";
@@ -86,7 +85,6 @@ public class Http2Client {
 
     static Map<String, Object> config;
     static Map<String, Object> tokenConfig;
-    public static boolean enableHttp2;
 
     // Cached jwt token for this client.
     private String jwt;
@@ -102,7 +100,6 @@ public class Http2Client {
         ModuleRegistry.registerModule(Http2Client.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), masks);
         config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
         if(config != null) {
-            enableHttp2 = (boolean)config.get(ENABLE_HTTP2);
             Map<String, Object> oauthConfig = (Map<String, Object>)config.get(OAUTH);
             if(oauthConfig != null) {
                 tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);

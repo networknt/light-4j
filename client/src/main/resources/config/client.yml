@@ -1,7 +1,5 @@
 # This is the shared configuration file for Client and Http2Client.
 ---
-# This will enable the Http2Client to use HTTP 2.0 protocol to communicate with the target server
-enableHttp2: true
 # Settings for TLS
 tls:
   # if the server is using self-signed certificate, this need to be false. If true, you have to use CA signed certificate
