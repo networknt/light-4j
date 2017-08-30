@@ -68,7 +68,7 @@ public class InfluxDbHttpSender implements InfluxDbSender {
      */
     public InfluxDbHttpSender(final String protocol, final String hostname, final int port, final String database, final String username, final String password,
                               final TimeUnit timePrecision) throws Exception {
-        this.url = new URL(protocol, hostname, port, null);
+        this.url = new URL(protocol, hostname, port, "");
         String queryDb = String.format("db=%s", URLEncoder.encode(database, "UTF-8"));
         String queryCredential = String.format("u=%s&p=%s", URLEncoder.encode(username, "UTF8"), URLEncoder.encode(password, "UTF8"));
         String queryPrecision = String.format("precision=%s", TimeUtils.toTimePrecision(timePrecision));
@@ -113,6 +113,7 @@ public class InfluxDbHttpSender implements InfluxDbSender {
                 public void run() {
                     final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(path);
                     request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+                    request.getRequestHeaders().put(Headers.HOST, "localhost");
                     connection.sendRequest(request, client.createClientCallback(reference, latch, body));
                 }
             });
