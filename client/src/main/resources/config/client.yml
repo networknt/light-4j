@@ -1,4 +1,4 @@
-# This is the shared configuration file for Client and Http2Client.
+# This is the configuration file for Http2Client.
 ---
 # Settings for TLS
 tls:
