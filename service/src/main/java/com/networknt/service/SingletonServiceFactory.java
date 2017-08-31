@@ -292,7 +292,17 @@ public class SingletonServiceFactory {
      * @param interfaceClass Interface class
      * @return The implementation object
      */
-    public static Object getBean(Class interfaceClass) {
-       return serviceMap.get(interfaceClass);
+    public static <T> T getBean(Class<T> interfaceClass) {
+        return (T) serviceMap.get(interfaceClass);
+    }
+
+    /**
+     * Get a cached singleton objects from service map by interface class.
+     *
+     * @param interfaceClass Interface class
+     * @return The array of implementation objects
+     */
+    public static <T> T[] getBeans(Class<T> interfaceClass) {
+        return (T[]) serviceMap.get(interfaceClass);
     }
 }
