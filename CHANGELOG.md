@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 ### Changed
+## 1.4.2 - 2017-08-31
+### Added
+
+### Changed
+- fixes #99 Update SingletonServiceFactory to support getBeans for array of impls(Thanks @ruslanys)
 
 ## 1.4.1 - 2017-08-30
 ### Added
