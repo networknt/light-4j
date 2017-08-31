@@ -11,41 +11,41 @@ import java.util.Arrays;
 public class SingletonServiceFactoryTest {
     @Test
     public void testGetSingleBean() {
-        A a = (A)SingletonServiceFactory.getBean(A.class);
+        A a = SingletonServiceFactory.getBean(A.class);
         Assert.assertEquals("a real", a.a());
 
-        B b = (B)SingletonServiceFactory.getBean(B.class);
+        B b = SingletonServiceFactory.getBean(B.class);
         Assert.assertEquals("b test", b.b());
 
-        C c = (C)SingletonServiceFactory.getBean(C.class);
+        C c = SingletonServiceFactory.getBean(C.class);
         Assert.assertEquals("a realb test", c.c());
     }
 
     @Test
     public void testGetMultipleBean() {
-        Object object = SingletonServiceFactory.getBean(Processor.class);
-        //Processor[] processors = (Processor[])object;
-        Arrays.stream((Processor[])object).forEach(processor -> System.out.println(processor.process()));
+        Processor[] processors = SingletonServiceFactory.getBeans(Processor.class);
+        Assert.assertEquals(processors.length, 3);
+        Arrays.stream(processors).forEach(processor -> System.out.println(processor.process()));
     }
 
     @Test
     public void testMultipleInterfaceOneBean() {
-        Object object1 = SingletonServiceFactory.getBean(D1.class);
-        Object object2 = SingletonServiceFactory.getBean(D2.class);
-        Assert.assertEquals(object1, object2);
+        D1 d1 = SingletonServiceFactory.getBean(D1.class);
+        D2 d2 = SingletonServiceFactory.getBean(D2.class);
+        Assert.assertEquals(d1, d2);
     }
 
     @Test
     public void testMultipleToMultiple() {
-        Object e = SingletonServiceFactory.getBean(E.class);
-        Arrays.stream((E[])e).forEach(o -> System.out.println(o.e()));
-        Object f = SingletonServiceFactory.getBean(F.class);
-        Arrays.stream((F[])f).forEach(o -> System.out.println(o.f()));
+        E[] e = SingletonServiceFactory.getBeans(E.class);
+        Arrays.stream(e).forEach(o -> System.out.println(o.e()));
+        F[] f = SingletonServiceFactory.getBeans(F.class);
+        Arrays.stream(f).forEach(o -> System.out.println(o.f()));
     }
 
     @Test
     public void testSingleWithProperties() {
-        G g = (G)SingletonServiceFactory.getBean(G.class);
+        G g = SingletonServiceFactory.getBean(G.class);
         Assert.assertEquals("Sky Walker", g.getName());
         Assert.assertEquals(23, g.getAge());
 
@@ -53,10 +53,10 @@ public class SingletonServiceFactoryTest {
 
     //@Test
     public void testMultipleWithProperties() {
-        Object j = SingletonServiceFactory.getBean(J.class);
-        Arrays.stream((J[])j).forEach(o -> System.out.println(o.getJack()));
-        Object k = SingletonServiceFactory.getBean(K.class);
-        Arrays.stream((K[])k).forEach(o -> System.out.println(o.getKing()));
+        J[] j = SingletonServiceFactory.getBeans(J.class);
+        Arrays.stream(j).forEach(o -> System.out.println(o.getJack()));
+        K[] k = SingletonServiceFactory.getBeans(K.class);
+        Arrays.stream(k).forEach(o -> System.out.println(o.getKing()));
 
     }
 
