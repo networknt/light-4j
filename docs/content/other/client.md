@@ -176,3 +176,24 @@ https://networknt.github.io/light-rest-4j/tutorial/ms-chain/
 https://networknt.github.io/light-rest-4j/tutorial/discovery/
 
 
+### Close connection
+
+In most of the cases, we don't close the connection and all the requests will go through the same
+HTTP/2 connection with multiplex support. However, there are times you need to create a new connection
+on demand and close it once it is used. For example, in [Server.java](https://github.com/networknt/light-4j/blob/master/server/src/main/java/com/networknt/server/Server.java) 
+we create a new connection to load config from light-config-server during startup. In this case,
+although our config server supports HTTP/2, we create and close the connection as this is one time
+request and we don't want to hold the resource. Here is the lines to close the connection in finally
+block.
+
+```java
+    } finally {
+        IoUtils.safeClose(connection);
+    }
+```
+
+Another place that we create connection for each request is [ConsulEcwidClient.java](https://github.com/networknt/light-4j/blob/develop/consul/src/main/java/com/networknt/consul/client/ConsulEcwidClient.java) 
+in the consul module. The reason is due to consul doesn't support HTTP/2 and all the requests are 
+on/off basis. 
+
+ 
