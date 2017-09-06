@@ -1,6 +1,7 @@
 package com.networknt.consul;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ConsulService {
 
@@ -62,6 +63,17 @@ public class ConsulService {
 
 	public void setTtl(long ttl) {
 		this.ttl = ttl;
+	}
+
+	@Override
+	public String toString() {
+		String s = tags.stream().map(Object::toString).collect(Collectors.joining("\",\""));
+		return "{\"ID\":\"" + id +
+				"\",\"Name\":\"" + name
+				+ "\",\"Tags\":[\"" + s
+				+ "\"],\"Address\":\"" + address
+				+ "\",\"Port\":" + port
+				+ ",\"Check\":{\"TTL\":\"" + ttl + "s\"}}";
 	}
 
 }

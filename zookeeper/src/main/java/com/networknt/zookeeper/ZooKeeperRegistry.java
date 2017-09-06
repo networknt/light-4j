@@ -50,18 +50,14 @@ import org.slf4j.LoggerFactory;
 public class ZooKeeperRegistry extends CommandFailbackRegistry {
     private static final Logger logger = LoggerFactory.getLogger(ZooKeeperRegistry.class);
     private static final String SUBSCRIBE_ZOOKEEPER_SERVICE_ERROR = "ERR10027";
-    private static final String SUBSCRIBE_ZOOKEEPER_COMMAND_ERROR = "ERR10028";
     private static final String UNSUBSCRIBE_ZOOKEEPER_SERVICE_ERROR = "ERR10029";
-    private static final String UNSUBSCRIBE_ZOOKEEPER_COMMAND_ERROR = "ERR10030";
     private static final String DISCOVER_ZOOKEEPER_SERVICE_ERROR = "ERR10031";
-    private static final String DISCOVER_ZOOKEEPER_COMMAND_ERROR = "ERR10032";
     private static final String REGISTER_ZOOKEEPER_ERROR = "ERR10033";
     private static final String UNREGISTER_ZOOKEEPER_ERROR = "ERR10034";
 
     private ZooKeeperClient client;
     private Set<URL> availableServices = new ConcurrentHashSet<URL>();
     private ConcurrentHashMap<URL, ConcurrentHashMap<ServiceListener, IZkChildListener>> serviceListeners = new ConcurrentHashMap<URL, ConcurrentHashMap<ServiceListener, IZkChildListener>>();
-    private ConcurrentHashMap<URL, ConcurrentHashMap<CommandListener, IZkDataListener>> commandListeners = new ConcurrentHashMap<URL, ConcurrentHashMap<CommandListener, IZkDataListener>>();
     private final ReentrantLock clientLock = new ReentrantLock();
     private final ReentrantLock serverLock = new ReentrantLock();
     
@@ -78,7 +74,6 @@ public class ZooKeeperRegistry extends CommandFailbackRegistry {
             public void handleNewSession() throws Exception {
                 if(logger.isInfoEnabled()) logger.info("zkRegistry get new session notify.");
                 reconnectService();
-                reconnectClient();
             }
         };
         client.subscribeStateChanges(zkStateListener);
@@ -86,10 +81,6 @@ public class ZooKeeperRegistry extends CommandFailbackRegistry {
 
     public ConcurrentHashMap<URL, ConcurrentHashMap<ServiceListener, IZkChildListener>> getServiceListeners() {
         return serviceListeners;
-    }
-
-    public ConcurrentHashMap<URL, ConcurrentHashMap<CommandListener, IZkDataListener>> getCommandListeners() {
-        return commandListeners;
     }
 
     @Override
@@ -128,43 +119,6 @@ public class ZooKeeperRegistry extends CommandFailbackRegistry {
     }
 
     @Override
-    protected void subscribeCommand(final URL url, final CommandListener commandListener) {
-        try {
-            clientLock.lock();
-            ConcurrentHashMap<CommandListener, IZkDataListener> dataChangeListeners = commandListeners.get(url);
-            if (dataChangeListeners == null) {
-                commandListeners.putIfAbsent(url, new ConcurrentHashMap<CommandListener, IZkDataListener>());
-                dataChangeListeners = commandListeners.get(url);
-            }
-            IZkDataListener zkDataListener = dataChangeListeners.get(commandListener);
-            if (zkDataListener == null) {
-                dataChangeListeners.putIfAbsent(commandListener, new IZkDataListener() {
-                    @Override
-                    public void handleDataChange(String dataPath, Object data) throws Exception {
-                        commandListener.notifyCommand(url, (String) data);
-                        if(logger.isInfoEnabled()) logger.info(String.format("[ZooKeeperRegistry] command data change: path=%s, command=%s", dataPath, (String) data));
-                    }
-
-                    @Override
-                    public void handleDataDeleted(String dataPath) throws Exception {
-                        commandListener.notifyCommand(url, null);
-                        if(logger.isInfoEnabled()) logger.info(String.format("[ZooKeeperRegistry] command deleted: path=%s", dataPath));
-                    }
-                });
-                zkDataListener = dataChangeListeners.get(commandListener);
-            }
-
-            String commandPath = ZkUtils.toCommandPath(url);
-            client.subscribeDataChanges(commandPath, zkDataListener);
-            if(logger.isInfoEnabled()) logger.info(String.format("[ZooKeeperRegistry] subscribe command: path=%s, info=%s", commandPath, url.toFullStr()));
-        } catch (Throwable e) {
-            throw new FrameworkException(new Status(SUBSCRIBE_ZOOKEEPER_COMMAND_ERROR, url, getUrl(), e.getMessage()), e);
-        } finally {
-            clientLock.unlock();
-        }
-    }
-
-    @Override
     protected void unsubscribeService(URL url, ServiceListener serviceListener) {
         try {
             clientLock.lock();
@@ -184,25 +138,6 @@ public class ZooKeeperRegistry extends CommandFailbackRegistry {
     }
 
     @Override
-    protected void unsubscribeCommand(URL url, CommandListener commandListener) {
-        try {
-            clientLock.lock();
-            Map<CommandListener, IZkDataListener> dataChangeListeners = commandListeners.get(url);
-            if (dataChangeListeners != null) {
-                IZkDataListener zkDataListener = dataChangeListeners.get(commandListener);
-                if (zkDataListener != null) {
-                    client.unsubscribeDataChanges(ZkUtils.toCommandPath(url), zkDataListener);
-                    dataChangeListeners.remove(commandListener);
-                }
-            }
-        } catch (Throwable e) {
-            throw new FrameworkException(new Status(UNSUBSCRIBE_ZOOKEEPER_COMMAND_ERROR, url, getUrl(), e.getMessage()), e);
-        } finally {
-            clientLock.unlock();
-        }
-    }
-
-    @Override
     protected List<URL> discoverService(URL url) {
         try {
             String parentPath = ZkUtils.toNodeTypePath(url, ZkNodeType.AVAILABLE_SERVER);
@@ -213,20 +148,6 @@ public class ZooKeeperRegistry extends CommandFailbackRegistry {
             return nodeChildsToUrls(parentPath, currentChilds);
         } catch (Throwable e) {
             throw new FrameworkException(new Status(DISCOVER_ZOOKEEPER_SERVICE_ERROR, url, getUrl(), e.getMessage()), e);
-        }
-    }
-
-    @Override
-    protected String discoverCommand(URL url) {
-        try {
-            String commandPath = ZkUtils.toCommandPath(url);
-            String command = "";
-            if (client.exists(commandPath)) {
-                command = client.readData(commandPath);
-            }
-            return command;
-        } catch (Throwable e) {
-            throw new FrameworkException(new Status(DISCOVER_ZOOKEEPER_COMMAND_ERROR, url, getUrl(), e.getMessage()));
         }
     }
 
@@ -353,36 +274,6 @@ public class ZooKeeperRegistry extends CommandFailbackRegistry {
                 if(logger.isInfoEnabled()) logger.info("[{}] reconnect: available services {}", registryClassName, availableServices);
             } finally {
                 serverLock.unlock();
-            }
-        }
-    }
-
-    @SuppressWarnings("rawtypes")
-    private void reconnectClient() {
-        if (serviceListeners != null && !serviceListeners.isEmpty()) {
-            try {
-                clientLock.lock();
-                for (Map.Entry entry : serviceListeners.entrySet()) {
-                    URL url = (URL) entry.getKey();
-                    ConcurrentHashMap<ServiceListener, IZkChildListener> childChangeListeners = serviceListeners.get(url);
-                    if (childChangeListeners != null) {
-                        for (Map.Entry e : childChangeListeners.entrySet()) {
-                            subscribeService(url, (ServiceListener) e.getKey());
-                        }
-                    }
-                }
-                for (Map.Entry entry : commandListeners.entrySet()) {
-                    URL url = (URL) entry.getKey();
-                    ConcurrentHashMap<CommandListener, IZkDataListener> dataChangeListeners = commandListeners.get(url);
-                    if (dataChangeListeners != null) {
-                        for (Map.Entry e : dataChangeListeners.entrySet()) {
-                            subscribeCommand(url, (CommandListener) e.getKey());
-                        }
-                    }
-                }
-                if(logger.isInfoEnabled()) logger.info("[{}] reconnect all clients", registryClassName);
-            } finally {
-                clientLock.unlock();
             }
         }
     }

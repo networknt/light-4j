@@ -81,15 +81,6 @@ public class MockConsulClient implements ConsulClient {
         return res;
     }
 
-    @Override
-    public String lookupCommand(String group) {
-        String command = KVValues.get(group);
-        if (command == null) {
-            command = "";
-        }
-        return command;
-    }
-
     public long getCheckPassTimes(String serviceid) {
         AtomicLong times = checkPassTimesMap.get(serviceid);
         if (times == null) {

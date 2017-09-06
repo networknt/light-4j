@@ -74,37 +74,6 @@ public class ZooKeeperRegistryTest {
     }
 
     @Test
-    public void subAndUnsubCommand() throws Exception {
-        final String command = "{\"index\":0,\"mergeGroups\":[\"aaa:1\",\"bbb:1\"],\"pattern\":\"*\",\"routeRules\":[]}\n";
-        CommandListener commandListener = new CommandListener() {
-            @Override
-            public void notifyCommand(URL refUrl, String commandString) {
-                if (commandString != null) {
-                    Assert.assertTrue(commandString.equals(command));
-                }
-            }
-        };
-        registry.subscribeCommand(clientUrl, commandListener);
-        Assert.assertTrue(containsCommandListener(clientUrl, commandListener));
-
-        String commandPath = ZkUtils.toCommandPath(clientUrl);
-        if (!client.exists(commandPath)) {
-            client.createPersistent(commandPath, true);
-        }
-        client.writeData(commandPath, command);
-        Thread.sleep(2000);
-
-        client.delete(commandPath);
-
-        registry.unsubscribeCommand(clientUrl, commandListener);
-        Assert.assertFalse(containsCommandListener(clientUrl, commandListener));
-    }
-
-    private boolean containsCommandListener(URL clientUrl, CommandListener commandListener) {
-        return registry.getCommandListeners().get(clientUrl).containsKey(commandListener);
-    }
-
-    @Test
     public void discoverService() throws Exception {
         registry.doRegister(serviceUrl);
         List<URL> results = registry.discoverService(clientUrl);
@@ -113,21 +82,6 @@ public class ZooKeeperRegistryTest {
         registry.doAvailable(serviceUrl);
         results = registry.discoverService(clientUrl);
         Assert.assertTrue(results.contains(serviceUrl));
-    }
-
-    @Test
-    public void discoverCommand() throws Exception {
-        String result = registry.discoverCommand(clientUrl);
-        Assert.assertTrue(result.equals(""));
-
-        String command = "{\"index\":0,\"mergeGroups\":[\"aaa:1\",\"bbb:1\"],\"pattern\":\"*\",\"routeRules\":[]}\n";
-        String commandPath = ZkUtils.toCommandPath(clientUrl);
-        if (!client.exists(commandPath)) {
-            client.createPersistent(commandPath, true);
-        }
-        client.writeData(commandPath, command);
-        result = registry.discoverCommand(clientUrl);
-        Assert.assertTrue(result.equals(command));
     }
 
     @Test

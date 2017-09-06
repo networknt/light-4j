@@ -16,17 +16,14 @@
 
 package com.networknt.registry.support.command;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.apache.commons.lang3.StringUtils;
-
 import com.networknt.registry.NotifyListener;
-import com.networknt.registry.support.FailbackRegistry;
 import com.networknt.registry.URL;
+import com.networknt.registry.support.FailbackRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class CommandFailbackRegistry extends FailbackRegistry {
     private static final Logger logger = LoggerFactory.getLogger(CommandFailbackRegistry.class);
@@ -46,7 +43,7 @@ public abstract class CommandFailbackRegistry extends FailbackRegistry {
         manager.addNotifyListener(listener);
 
         subscribeService(urlCopy, manager);
-        subscribeCommand(urlCopy, manager);
+        //subscribeCommand(urlCopy, manager);
 
         List<URL> urls = doDiscover(urlCopy);
         if (urls != null && urls.size() > 0) {
@@ -62,55 +59,16 @@ public abstract class CommandFailbackRegistry extends FailbackRegistry {
 
         manager.removeNotifyListener(listener);
         unsubscribeService(urlCopy, manager);
-        unsubscribeCommand(urlCopy, manager);
+        //unsubscribeCommand(urlCopy, manager);
 
     }
 
     @Override
     protected List<URL> doDiscover(URL url) {
         if(logger.isInfoEnabled()) logger.info("CommandFailbackRegistry discover. url: " + url.toSimpleString());
-        List<URL> finalResult;
-
-        URL urlCopy = url.createCopy();
-        String commandStr = discoverCommand(urlCopy);
-        RpcCommand rpcCommand = null;
-        if (StringUtils.isNotEmpty(commandStr)) {
-            rpcCommand = RpcCommandUtil.stringToCommand(commandStr);
-
-        }
-
-        if(logger.isInfoEnabled()) logger.info("CommandFailbackRegistry discover command. commandStr: " + commandStr + ", rpccommand "
-                + (rpcCommand == null ? "is null." : "is not null."));
-
-        if (rpcCommand != null) {
-            rpcCommand.sort();
-            CommandServiceManager manager = getCommandServiceManager(urlCopy);
-            finalResult = manager.discoverServiceWithCommand(urlCopy, new HashMap<String, Integer>(), rpcCommand);
-
-            // when subscribing command and notify immediately, other services might not subscribed yet
-            // here just update command to manager to avoid first subscription failure.
-            manager.setCommandCache(commandStr);
-        } else {
-            finalResult = discoverService(urlCopy);
-        }
-
+        List<URL> finalResult = discoverService(url.createCopy());
         if(logger.isInfoEnabled()) logger.info("CommandFailbackRegistry discover size: " +
                 finalResult.size() + ", result:" + finalResult.toString());
-
-        return finalResult;
-    }
-
-    public List<URL> commandPreview(URL url, RpcCommand rpcCommand, String previewIP) {
-        List<URL> finalResult;
-        URL urlCopy = url.createCopy();
-
-        if (rpcCommand != null) {
-            CommandServiceManager manager = getCommandServiceManager(urlCopy);
-            finalResult = manager.discoverServiceWithCommand(urlCopy, new HashMap<>(), rpcCommand, previewIP);
-        } else {
-            finalResult = discoverService(urlCopy);
-        }
-
         return finalResult;
     }
 
@@ -132,14 +90,8 @@ public abstract class CommandFailbackRegistry extends FailbackRegistry {
 
     protected abstract void subscribeService(URL url, ServiceListener listener);
 
-    protected abstract void subscribeCommand(URL url, CommandListener listener);
-
     protected abstract void unsubscribeService(URL url, ServiceListener listener);
 
-    protected abstract void unsubscribeCommand(URL url, CommandListener listener);
-
     protected abstract List<URL> discoverService(URL url);
-
-    protected abstract String discoverCommand(URL url);
 
 }

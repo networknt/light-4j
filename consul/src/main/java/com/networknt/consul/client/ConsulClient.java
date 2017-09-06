@@ -45,6 +45,4 @@ public interface ConsulClient {
 	ConsulResponse<List<ConsulService>> lookupHealthService(
 			String serviceName, long lastConsulIndex);
 
-	String lookupCommand(String group);
-
 }

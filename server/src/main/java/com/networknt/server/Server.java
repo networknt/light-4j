@@ -16,6 +16,7 @@
 
 package com.networknt.server;
 
+import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.registry.Registry;
@@ -28,16 +29,17 @@ import com.networknt.utility.Util;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
+import io.undertow.client.ClientConnection;
+import io.undertow.client.ClientRequest;
+import io.undertow.client.ClientResponse;
 import io.undertow.server.HttpHandler;
 import io.undertow.util.Headers;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.HttpClientBuilder;
+import io.undertow.util.Methods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.xnio.IoUtils;
+import org.xnio.OptionMap;
 import org.xnio.Options;
 
 import javax.net.ssl.*;
@@ -46,6 +48,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
+import java.net.URI;
 import java.nio.file.*;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -54,6 +57,8 @@ import java.security.UnrecoverableKeyException;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -80,6 +85,7 @@ public class Server {
     public static ServerConfig config = (ServerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServerConfig.class);
     public static Map<String, Object> secret = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
     public final static TrustManager[] TRUST_ALL_CERTS = new X509TrustManager[] { new DummyTrustManager() };
+    static Http2Client client = Http2Client.getInstance();
 
     static protected boolean shutdownRequested = false;
     static Undertow server = null;
@@ -337,24 +343,40 @@ public class Server {
             }
             String version = Util.getJarVersion();
             String service = config.getServiceId();
-            configUri = configUri + "/v1/config/" + version + "/" + env + "/" + service;
             String tempDir = System.getProperty("java.io.tmpdir");
             String zipFile = tempDir + "/config.zip";
             // /v1/config/1.2.4/dev/com.networknt.petstore-1.0.0
-            HttpClient httpClient = HttpClientBuilder.create().build();
-            HttpGet httpGet = new HttpGet(configUri);
+
+            String path = "/v1/config/" + version + "/" + env + "/" + service;
+            ClientConnection connection = null;
             try {
-                HttpResponse response = httpClient.execute(httpGet);
-                HttpEntity entity = response.getEntity();
-                if (entity != null) {
+                connection = client.connect(new URI(configUri), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
+            } catch (Exception e) {
+                logger.error("Exeption:", e);
+            }
+            final CountDownLatch latch = new CountDownLatch(1);
+            final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+            try {
+                ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(path);
+                request.getRequestHeaders().put(Headers.HOST, "localhost");
+                connection.sendRequest(request, client.createClientCallback(reference, latch));
+                latch.await();
+                int statusCode = reference.get().getResponseCode();
+
+                if(statusCode >= 300){
+                    logger.error("Failed to load config from config server" + statusCode + ":" + reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+                    throw new Exception("Failed to load config from config server: " + statusCode);
+                } else {
+                    // TODO test it out
                     FileOutputStream fos = new FileOutputStream(zipFile);
-                    entity.writeTo(fos);
+                    fos.write(reference.get().getAttachment(Http2Client.RESPONSE_BODY).getBytes());
                     fos.close();
+                    unzipFile(zipFile, targetMergeDirectory);
                 }
-                // unzip config.zip and merge files to externalized config folder.
-                unzipFile(zipFile, targetMergeDirectory);
-            } catch (IOException e) {
-                logger.error("IOException", e);
+            } catch (Exception e) {
+                logger.error("Exception:", e);
+            } finally {
+                IoUtils.safeClose(connection);
             }
         } else {
             logger.info("light-config-server-uri is missing in the command line. Use local config files");

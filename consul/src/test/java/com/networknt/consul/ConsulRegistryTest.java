@@ -110,29 +110,6 @@ public class ConsulRegistryTest {
     }
 
     @Test
-    public void subAndUnsubCommand() throws Exception {
-        final String command = "{\"index\":0,\"mergeGroups\":[\"aaa:1\",\"bbb:1\"],\"pattern\":\"*\",\"routeRules\":[]}\n";
-        CommandListener commandListener = new CommandListener() {
-            @Override
-            public void notifyCommand(URL refUrl, String commandString) {
-                if (commandString != null) {
-                    Assert.assertTrue(commandString.equals(command));
-                }
-            }
-        };
-        registry.subscribeCommand(clientUrl, commandListener);
-        Assert.assertTrue(containsCommandListener(serviceUrl, clientUrl, commandListener));
-
-        client.setKVValue(clientUrl.getPath(), command);
-        Thread.sleep(2000);
-
-        client.removeKVValue(clientUrl.getPath());
-
-        registry.unsubscribeCommand(clientUrl, commandListener);
-        Assert.assertFalse(containsCommandListener(serviceUrl, clientUrl, commandListener));
-    }
-
-    @Test
     public void discoverService() throws Exception {
         registry.doRegister(serviceUrl);
         List<URL> urls = registry.discoverService(serviceUrl);
@@ -144,26 +121,9 @@ public class ConsulRegistryTest {
         Assert.assertTrue(urls.contains(serviceUrl));
     }
 
-    @Test
-    public void discoverCommand() throws Exception {
-        String result = registry.discoverCommand(clientUrl);
-        Assert.assertTrue(result.equals(""));
-
-        String command = "{\"index\":0,\"mergeGroups\":[\"aaa:1\",\"bbb:1\"],\"pattern\":\"*\",\"routeRules\":[]}\n";
-        client.setKVValue(clientUrl.getPath(), command);
-
-        result = registry.discoverCommand(clientUrl);
-        Assert.assertTrue(result.equals(command));
-    }
-
     private Boolean containsServiceListener(URL serviceUrl, URL clientUrl, ServiceListener serviceListener) {
         String service = ConsulUtils.getUrlClusterInfo(serviceUrl);
         return registry.getServiceListeners().get(service).get(clientUrl) == serviceListener;
-    }
-
-    private Boolean containsCommandListener(URL serviceUrl, URL clientUrl, CommandListener commandListener) {
-        String serviceName = serviceUrl.getPath();
-        return registry.getCommandListeners().get(serviceName).get(clientUrl) == commandListener;
     }
 
 }
