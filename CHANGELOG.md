@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 ### Changed
+## 1.4.3 - 2017-09-10
+### Added
+
+### Changed
+- fixes #94 Calling consul directly with Http2Client instead of consul client
+
+### Changed
 ## 1.4.2 - 2017-08-31
 ### Added
 
