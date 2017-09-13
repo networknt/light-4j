@@ -15,6 +15,7 @@ tls:
   keyStore: tls/client.keystore
 # settings for OAuth2 server communication
 oauth:
+  # OAuth 2.0 token endpoint configuration
   token:
     # The scope token will be renewed automatically 1 minutes before expiry
     tokenRenewBeforeExpired: 60000
@@ -24,26 +25,37 @@ oauth:
     earlyRefreshRetryDelay: 4000
     # token server url. The default port number for token service is 6882.
     server_url: http://localhost:6882
+    # token service unique id for OAuth 2.0 provider
     serviceId: com.networknt.oauth2-token-1.0.0
+    # the following section defines uri and parameters for authorization code grant type
     authorization_code:
       # token endpoint for authorization code grant
       uri: "/oauth2/token"
       # client_id for authorization code grant flow. client_secret is in secret.yml
       client_id: 3798d583-275c-47d7-bf46-a3c436846336
+      # the web server uri that will receive the redirected authorization code
       redirect_uri: https://localhost:8080/authorization_code
+      # optional scope, default scope in the client registration will be used if not defined.
       scope:
       - customer.r
       - customer.w
+    # the following section defines uri and parameters for client credentials grant type
     client_credentials:
       # token endpoint for client credentials grant
       uri: "/oauth2/token"
       # client_id for client credentials grant flow. client_secret is in secret.yml
       client_id: 6e9d1db3-2feb-4c1f-a5ad-9e93ae8ca59d
+      # optional scope, default scope in the client registration will be used if not defined.
       scope:
       - account.r
       - account.w
+  # light-oauth2 key distribution endpoint configuration
   key:
+    # key distribution server url
     server_url: http://localhost:6886
+    # the unique service id for key distribution service
     serviceId: com.networknt.oauth2-key-1.0.0
+    # the path for the key distribution endpoint
     uri: "/oauth2/key"
+    # client_id used to access key distribution service. It can be the same client_id with token service or not.
     client_id: 6e9d1db3-2feb-4c1f-a5ad-9e93ae8ca59d
