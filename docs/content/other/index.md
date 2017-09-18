@@ -39,7 +39,7 @@ sensitive info before logging.
 * [status](https://networknt.github.io/light-4j/other/status/) is used to model 
 error http response and assist production monitoring with unique error code.
 
-* [security](https://networknt.github.io/light-4j/other/status/) is used by 
+* [security](https://networknt.github.io/light-4j/other/security/) is used by 
 swagger-security and graphql-security currently but these utilities and helpers can 
 be used by other security handlers for Role-Based or Attribute-Based Authorization.
 
