@@ -147,9 +147,9 @@ public class LimitHandlerTest {
     @Test
     public void testMoreRequests() throws Exception {
         Callable<String> task = this::callApi;
-        List<Callable<String>> tasks = Collections.nCopies(10, task);
+        List<Callable<String>> tasks = Collections.nCopies(20, task);
         long start = System.currentTimeMillis();
-        ExecutorService executorService = Executors.newFixedThreadPool(10);
+        ExecutorService executorService = Executors.newFixedThreadPool(20);
         List<Future<String>> futures = executorService.invokeAll(tasks);
         List<String> resultList = new ArrayList<>(futures.size());
         // Check for exceptions
