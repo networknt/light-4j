@@ -20,6 +20,7 @@ import com.networknt.client.Http2Client;
 import com.networknt.exception.ClientException;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
+import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
@@ -60,6 +61,7 @@ public class LimitHandlerTest {
             limitHandler.setNext(handler);
             handler = limitHandler;
             server = Undertow.builder()
+                    .setServerOption(UndertowOptions.ENABLE_HTTP2, true)
                     .addHttpListener(8080, "localhost")
                     .setHandler(handler)
                     .build();
@@ -98,7 +100,7 @@ public class LimitHandlerTest {
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
         try {
-            connection = client.connect(new URI("http://localhost:8080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
+            connection = client.connect(new URI("http://localhost:8080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
         } catch (Exception e) {
             throw new ClientException(e);
         }
