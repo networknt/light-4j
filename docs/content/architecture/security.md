@@ -167,4 +167,10 @@ Sometimes, certain request fields need to be removed based on the clientId or ot
 the rule business handler can be done in a consistent way. Also, for certain client or user, the
 response might need to filter out some information before returning to the consume. 
 
+# JWT public key certificate distribution
 
+As we are using JWT token for distributed token verification on each service instance, we need to make
+sure that the public key certificate from OAuth 2.0 provider can be distributed to each individual
+service instance so that they can verify the token issued by the same OAuth 2.0 token service independently.
+
+Here is the [document](https://networknt.github.io/light-4j/architecture/key-distribution/) that describes how key is distributed to the services during runtime.  
