@@ -202,7 +202,7 @@ server instances unless you want to pin a particular client instance to a server
 This will eventually cause im-balance load on the service instances if there are not too many different
 clients. 
 
-The easist way to close collection periodically is to close it after number of request or close it after
+The easier way to close collection periodically is to close it after number of requests or close it after
 number of minutes. The same finally block can be written as.
 
 ```java
@@ -234,10 +234,9 @@ Here is the example to check the connection before using it.
 ```
 
 The above code checks the cached connectionC and if it is closed already, then create a new connection and
-cache it.
+cache it again.
 
-For full example, please refer to  https://github.com/networknt/light-example-4j/blob/master/discovery/api_a/consul/src/main/java/com/networknt/apia/handler/DataGetHandler.java
-
+For full example, please refer to https://github.com/networknt/light-example-4j/blob/master/discovery/api_a/consul/src/main/java/com/networknt/apia/handler/DataGetHandler.java
 
 ### Configuration
 
