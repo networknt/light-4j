@@ -22,15 +22,19 @@ import com.networknt.handler.MiddlewareHandler;
 import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
+import io.undertow.io.Receiver;
+import io.undertow.server.Connectors;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
 import io.undertow.util.Headers;
+import io.undertow.util.ImmediatePooledByteBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
@@ -76,38 +80,37 @@ public class BodyHandler implements MiddlewareHandler {
         // parse the body to map or list if content type is application/json
         String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
         if (contentType != null && contentType.startsWith("application/json")) {
-            if (exchange.isInIoThread()) {
-                exchange.dispatch(this);
-                return;
-            }
-            exchange.startBlocking();
-            InputStream is = exchange.getInputStream();
-            if (is != null) {
-                try {
-                    if (is.available() != -1) {
-                        Object body;
-                        String s = new Scanner(is, "UTF-8").useDelimiter("\\A").next();
-                        s = s.trim();
-                        if (s.startsWith("{")) {
-                            body = Config.getInstance().getMapper().readValue(s, new TypeReference<HashMap<String, Object>>() {
-                            });
-                        } else if (s.startsWith("[")) {
-                            body = Config.getInstance().getMapper().readValue(s, new TypeReference<List<HashMap<String, Object>>>() {
-                            });
-                        } else {
-                            // error here. The content type in head doesn't match the body.
-                            Status status = new Status(CONTENT_TYPE_MISMATCH, contentType);
-                            exchange.setStatusCode(status.getStatusCode());
-                            exchange.getResponseSender().send(status.toString());
-                            return;
+            exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
+                @Override
+                public void handle(HttpServerExchange httpServerExchange, byte[] bytes) {
+                    // convert to json and attach the body
+                    try {
+                        if(bytes != null && bytes.length > 0) {
+                            Object body;
+                            if(bytes[0] == 123) { // handle { which is a map
+                                body = Config.getInstance().getMapper().readValue(bytes, new TypeReference<HashMap<String, Object>>() {});
+                            } else if(bytes[0] == 91) {  // handle [ which is an array
+                                body = Config.getInstance().getMapper().readValue(bytes, new TypeReference<List<HashMap<String, Object>>>() {});
+                            } else {
+                                // error here. The content type in head doesn't match the body.
+                                Status status = new Status(CONTENT_TYPE_MISMATCH, contentType);
+                                exchange.setStatusCode(status.getStatusCode());
+                                exchange.getResponseSender().send(status.toString());
+                                return;
+                            }
+                            exchange.putAttachment(REQUEST_BODY, body);
+                            if(config.keepStream) {
+                                // put the bytes back to exchange so that subsequent handlers still have the body stream
+                                Connectors.ungetRequestBytes(exchange, new ImmediatePooledByteBuffer(ByteBuffer.wrap(bytes)));
+                            }
                         }
-                        exchange.putAttachment(REQUEST_BODY, body);
+                    } catch (IOException e) {
+                        logger.error("IOException: ", e);
                     }
-                } catch (IOException e) {
-                    logger.error("IOException: ", e);
                 }
-            }
+            });
         }
+        // if content type is not application/json, then ignore it.
         next.handleRequest(exchange);
     }
 
