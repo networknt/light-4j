@@ -155,11 +155,12 @@ public class LimitHandlerTest {
         // Check for exceptions
         for (Future<String> future : futures) {
             // Throws an exception if an exception was thrown by the task.
-            resultList.add(future.get());
+            String s = future.get();
+            logger.info("future = " + s);
+            resultList.add(s);
         }
         long last = (System.currentTimeMillis() - start);
         // make sure that there are at least one element in resultList is :513
         Assert.assertTrue(resultList.contains(":513"));
-        System.out.println("resultList = " + resultList + " response time = " + last);
     }
 }
