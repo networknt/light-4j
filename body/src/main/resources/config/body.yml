@@ -1,6 +1,3 @@
 ---
 # Enable body parse flag
 enabled: true
-# If true, put the stream back to exchange so that other handler can still use it.
-# default is false as most handlers don't need it. It will be true for light-proxy
-keepStream: false

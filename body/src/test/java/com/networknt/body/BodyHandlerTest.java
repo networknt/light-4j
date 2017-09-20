@@ -163,6 +163,7 @@ public class BodyHandlerTest {
             IoUtils.safeClose(connection);
         }
         int statusCode = reference.get().getResponseCode();
+        // as content type and body is mismatched, the body will be ignored.
         Assert.assertEquals(400, statusCode);
         if(statusCode == 400) {
             Status status = Config.getInstance().getMapper().readValue(reference.get().getAttachment(Http2Client.RESPONSE_BODY), Status.class);

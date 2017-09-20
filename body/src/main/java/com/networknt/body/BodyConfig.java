@@ -21,7 +21,6 @@ package com.networknt.body;
  */
 public class BodyConfig {
     boolean enabled;
-    boolean keepStream;
 
     public BodyConfig() {
     }
@@ -32,13 +31,5 @@ public class BodyConfig {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
-    }
-
-    public boolean isKeepStream() {
-        return keepStream;
-    }
-
-    public void setKeepStream(boolean keepStream) {
-        this.keepStream = keepStream;
     }
 }

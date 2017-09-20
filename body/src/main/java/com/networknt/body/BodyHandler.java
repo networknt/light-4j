@@ -38,6 +38,7 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * This is a handler that parses the body into a Map or List if the input content type is JSON.
@@ -80,9 +81,52 @@ public class BodyHandler implements MiddlewareHandler {
         // parse the body to map or list if content type is application/json
         String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
         if (contentType != null && contentType.startsWith("application/json")) {
+            if (exchange.isInIoThread()) {
+                exchange.dispatch(this);
+                return;
+            }
+            exchange.startBlocking();
+            InputStream is = exchange.getInputStream();
+            if (is != null) {
+                try {
+                    if (is.available() != -1) {
+                        Object body;
+                        String s = new Scanner(is, "UTF-8").useDelimiter("\\A").next();
+                        s = s.trim();
+                        if (s.startsWith("{")) {
+                            body = Config.getInstance().getMapper().readValue(s, new TypeReference<HashMap<String, Object>>() {
+                            });
+                        } else if (s.startsWith("[")) {
+                            body = Config.getInstance().getMapper().readValue(s, new TypeReference<List<HashMap<String, Object>>>() {
+                            });
+                        } else {
+                            // error here. The content type in head doesn't match the body.
+                            Status status = new Status(CONTENT_TYPE_MISMATCH, contentType);
+                            exchange.setStatusCode(status.getStatusCode());
+                            exchange.getResponseSender().send(status.toString());
+                            return;
+                        }
+                        exchange.putAttachment(REQUEST_BODY, body);
+                    }
+                } catch (IOException e) {
+                    logger.error("IOException: ", e);
+                }
+            }
+        }
+        next.handleRequest(exchange);
+    }
+
+    /*
+    // for some reason this implementation is not stable and I need time to figure it out
+    // as of now, let's just block exchange and get the input stream.
+    public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        // parse the body to map or list if content type is application/json
+        String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
+        if (contentType != null && contentType.startsWith("application/json")) {
+            final CountDownLatch latch = new CountDownLatch(1);
             exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
                 @Override
-                public void handle(HttpServerExchange httpServerExchange, byte[] bytes) {
+                public void handle(HttpServerExchange exchange, byte[] bytes) {
                     // convert to json and attach the body
                     try {
                         if(bytes != null && bytes.length > 0) {
@@ -92,27 +136,31 @@ public class BodyHandler implements MiddlewareHandler {
                             } else if(bytes[0] == 91) {  // handle [ which is an array
                                 body = Config.getInstance().getMapper().readValue(bytes, new TypeReference<List<HashMap<String, Object>>>() {});
                             } else {
-                                // error here. The content type in head doesn't match the body.
-                                Status status = new Status(CONTENT_TYPE_MISMATCH, contentType);
-                                exchange.setStatusCode(status.getStatusCode());
-                                exchange.getResponseSender().send(status.toString());
-                                return;
+                                body = null;
+                                System.out.println("content type mismatch!");
                             }
-                            exchange.putAttachment(REQUEST_BODY, body);
-                            if(config.keepStream) {
+                            if(body != null) {
+                                exchange.putAttachment(REQUEST_BODY, body);
+                            }
+                            if(config.keepStream || body == null) {
                                 // put the bytes back to exchange so that subsequent handlers still have the body stream
+                                // also, if the body and header content type is mismatched, put the body back to stream
                                 Connectors.ungetRequestBytes(exchange, new ImmediatePooledByteBuffer(ByteBuffer.wrap(bytes)));
                             }
                         }
+                        latch.countDown();
                     } catch (IOException e) {
                         logger.error("IOException: ", e);
+                        latch.countDown();
                     }
                 }
             });
+            latch.await();
         }
         // if content type is not application/json, then ignore it.
         next.handleRequest(exchange);
     }
+    */
 
     @Override
     public HttpHandler getNext() {
