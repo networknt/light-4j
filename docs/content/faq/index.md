@@ -37,6 +37,7 @@ public` HttpHandler getHandler() {
 
 For more information about the implementation, please refer to https://github.com/networknt/light-4j/issues/88
 
+
 Thanks @samek to confirm it works and provide the example.
 
 ## How to serve Single Page Application(React/Angular etc.) from your API server instance
