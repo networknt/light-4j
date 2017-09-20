@@ -75,4 +75,31 @@ that support Event Sourcing and CQRS with Kafka as event broker. You can build y
 with light-rest-4j, light-graphql-4j or light-hybrid-4j. They will communicate with each
 other asynchronously with events and eventually the states of each services will be consistent.
 
- 
+## XA in one service
+
+Above we've talked about transactions across multiple microserivces. How about XA transaction
+in one service? For example, in one service, it updates two different databases at in one
+transaction or updates one database and push a message into MQ queue in the same transaction.
+
+In general, it is OK to use XA in one service and for light-*-4j frameworks, you can use a
+third party library to manage XA transaction even we are not on Java EE platform. 
+
+[Transactions Essentials](https://www.atomikos.com/Main/TransactionsEssentials)
+is an open source transaction manager and it is free. 
+
+Although it is doable with a Java SE JTA/XA transaction manager, it is not scaling at all.
+For high performance microservices, it would be better to adapt eventual consistency instead. 
+
+When discussing transaction between multiple microservices, light-eventuate-4j is recommended
+to be used to resolve data consistency between services. In one service, it is still can be
+used to eliminate the needs for XA transaction. 
+
+## Complex business transaction
+
+For complex business transactions, only eventual consistency is not enough and Saga pattern
+would be used to ensure that partial of services can be rollback with compensation steps if one
+of the services fails. 
+
+Our saga implementation is still working in progress and here is an [article](https://blog.bernd-ruecker.com/saga-how-to-implement-complex-business-transactions-without-two-phase-commit-e00aa41a1b1b) 
+explain it very good.
+
