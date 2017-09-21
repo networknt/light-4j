@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.4.4 - 2017-09-20
+### Added
+
+### Changed
+- fixes #101 nothing change but to release for light-proxy
+
 ## 1.4.3 - 2017-09-10
 ### Added
 
