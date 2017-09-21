@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 ### Changed
-- fixes #101 nothing change but to release for light-proxy
+- fixes #101 nothing changed but to release for light-proxy
 
 ## 1.4.3 - 2017-09-10
 ### Added
