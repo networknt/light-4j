@@ -31,3 +31,5 @@ Work-in-progress:
 * [How to design microservices for brand new project/product](https://networknt.github.io/light-4j/design/newprod/)
 
 * [How to replace monolithic Java EE application to microservices](https://networknt.github.io/light-4j/design/monojee/)
+
+* [Why check token expiration in client](https://networknt.github.io/light-4j/design/check-token/)
