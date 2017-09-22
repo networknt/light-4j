@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.4.5 - 2017-09-22
+### Added
+
+### Changed
+- fixes #102 Return invalid json error in body handler for malformed body
+
 ## 1.4.4 - 2017-09-20
 ### Added
 
