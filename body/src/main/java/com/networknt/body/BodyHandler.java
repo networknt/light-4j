@@ -105,6 +105,10 @@ public class BodyHandler implements MiddlewareHandler {
                     }
                 } catch (IOException e) {
                     logger.error("IOException: ", e);
+                    Status status = new Status(CONTENT_TYPE_MISMATCH, contentType);
+                    exchange.setStatusCode(status.getStatusCode());
+                    exchange.getResponseSender().send(status.toString());
+                    return;
                 }
             }
         }
