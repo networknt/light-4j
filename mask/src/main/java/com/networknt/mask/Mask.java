@@ -18,7 +18,7 @@ package com.networknt.mask;
 
 import com.networknt.config.Config;
 import com.networknt.utility.ModuleRegistry;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
