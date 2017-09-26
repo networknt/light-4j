@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.4.6 - 2017-09-22
+### Added
+
+### Changed
+- Upgrade to 1.4.6
+
 ## 1.4.5 - 2017-09-22
 ### Added
 
