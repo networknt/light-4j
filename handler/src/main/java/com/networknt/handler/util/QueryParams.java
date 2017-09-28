@@ -1,4 +1,4 @@
-package utils;
+package com.networknt.handler.util;
 
 /**
  * A utility interface with default implementations for extracting query parameters from the URL.

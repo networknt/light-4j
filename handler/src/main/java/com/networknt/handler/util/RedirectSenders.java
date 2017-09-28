@@ -1,4 +1,4 @@
-package utils;
+package com.networknt.handler.util;
 
 /**
  * A utility interface with default implementations for handling temporary and permanent redirects.

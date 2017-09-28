@@ -1,4 +1,4 @@
-package utils;
+package com.networknt.handler.util;
 
 /**
  * A interface for rendering content with appropriate mime settings.

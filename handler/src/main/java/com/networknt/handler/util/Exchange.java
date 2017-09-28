@@ -1,4 +1,4 @@
-package utils;
+package com.networknt.handler.util;
 
 /**
  * A container class for providing implementations of utility interfaces for boilerplate tasks such as
