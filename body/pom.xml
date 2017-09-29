@@ -47,20 +47,12 @@
             <artifactId>exception</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>client</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-ext</artifactId>
         </dependency>
         <dependency>
             <groupId>commons-codec</groupId>
@@ -88,6 +80,11 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>client</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

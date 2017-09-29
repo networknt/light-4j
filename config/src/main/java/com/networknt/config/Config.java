@@ -16,23 +16,21 @@
 
 package com.networknt.config;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.owasp.encoder.Encode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.yaml.snakeyaml.Yaml;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.owasp.encoder.Encode;
-import org.slf4j.ext.XLogger;
-import org.slf4j.ext.XLoggerFactory;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.yaml.snakeyaml.Yaml;
 
 /**
  * A injectable singleton config that has default implementation
@@ -83,7 +81,7 @@ public abstract class Config {
         static final String CONFIG_EXT_YAML = ".yaml";
         static final String CONFIG_EXT_YML = ".yml";
 
-        static final XLogger logger = XLoggerFactory.getXLogger(Config.class);
+        static final Logger logger = LoggerFactory.getLogger(Config.class);
 
         public final String EXTERNALIZED_PROPERTY_DIR = System.getProperty(LIGHT_4J_CONFIG_DIR, "");
 
@@ -193,13 +191,13 @@ public abstract class Config {
                     content = convertStreamToString(inStream);
                 }
             } catch (Exception ioe) {
-                logger.catching(ioe);
+                logger.error("Exception", ioe);
             } finally {
                 if(inStream != null) {
                     try {
                         inStream.close();
                     } catch(IOException ioe) {
-                        logger.catching(ioe);
+                        logger.error("IOException", ioe);
                     }
                 }
             }

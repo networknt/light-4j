@@ -240,11 +240,13 @@
                 <groupId>com.networknt</groupId>
                 <artifactId>zookeeper</artifactId>
                 <version>${project.version}</version>
+                <optional>true</optional>
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>cors</artifactId>
                 <version>${project.version}</version>
+                <optional>true</optional>
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
@@ -287,11 +289,6 @@
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
-                <version>${version.slf4j}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-ext</artifactId>
                 <version>${version.slf4j}</version>
             </dependency>
             <dependency>
