@@ -17,7 +17,6 @@
 package com.networknt.utility;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -124,7 +123,7 @@ public class Util {
     }
 
     public static String urlEncode(String value) {
-        if (StringUtils.isEmpty(value)) {
+        if (value == null || value.length() == 0) {
             return "";
         }
         try {
@@ -135,7 +134,7 @@ public class Util {
     }
 
     public static String urlDecode(String value) {
-        if (StringUtils.isBlank(value)) {
+        if (value == null || value.length() == 0) {
             return "";
         }
         try {

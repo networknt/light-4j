@@ -87,27 +87,15 @@ public class OauthHelperTest {
         boolean expired = false;
         String jwt = getJwtFromAuthorization(authorization);
         if(jwt != null) {
+            JwtConsumer consumer = new JwtConsumerBuilder()
+                    .setDisableRequireSignature()
+                    .setSkipSignatureVerification()
+                    .build();
+
             try {
-                JwtConsumer consumer = new JwtConsumerBuilder()
-                        .setSkipAllValidators()
-                        .setDisableRequireSignature()
-                        .setSkipSignatureVerification()
-                        .build();
-
-                JwtContext jwtContext = consumer.process(jwt);
-                JwtClaims jwtClaims = jwtContext.getJwtClaims();
-                JsonWebStructure structure = jwtContext.getJoseObjects().get(0);
-
-                try {
-                    if ((NumericDate.now().getValue() - 60) >= jwtClaims.getExpirationTime().getValue()) {
-                        expired = true;
-                    }
-                } catch (MalformedClaimException e) {
-                    logger.error("MalformedClaimException:", e);
-                    throw new InvalidJwtException("MalformedClaimException", e);
-                }
-            } catch(InvalidJwtException e) {
-                e.printStackTrace();
+                consumer.processToClaims(jwt);
+            } catch (InvalidJwtException e) {
+                if(e.hasExpired()) expired = true;
             }
         }
         return expired;

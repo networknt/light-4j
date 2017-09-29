@@ -16,39 +16,31 @@
 
 package com.networknt.registry.support.command;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Pattern;
-
-import com.networknt.registry.URLImpl;
-import com.networknt.status.Status;
-import org.apache.commons.lang3.StringUtils;
-
-import com.networknt.registry.URLParamType;
 import com.networknt.exception.FrameworkException;
 import com.networknt.registry.NotifyListener;
 import com.networknt.registry.URL;
-import com.networknt.utility.CollectionUtil;
-import com.networknt.utility.ConcurrentHashSet;
+import com.networknt.registry.URLImpl;
+import com.networknt.registry.URLParamType;
+import com.networknt.status.Status;
 import com.networknt.switcher.SwitcherUtil;
-import com.networknt.utility.NetUtils;
+import com.networknt.utility.ConcurrentHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
-public class CommandServiceManager implements CommandListener, ServiceListener {
+
+public class CommandServiceManager implements ServiceListener {
     private static final Logger logger = LoggerFactory.getLogger(CommandServiceManager.class);
     private static final String REGISTRY_IS_NULL = "ERR10024";
     private static final String WEIGHT_OUT_OF_RANGE = "ERR10025";
 
     public static final String LIGHT_COMMAND_SWITCHER = "feature.light.command.enable";
-    private static Pattern IP_PATTERN = Pattern.compile("^!?[0-9.]*\\*?$");
+    //private static Pattern IP_PATTERN = Pattern.compile("^!?[0-9.]*\\*?$");
 
     static {
         SwitcherUtil.initSwitcher(LIGHT_COMMAND_SWITCHER, true);
@@ -60,8 +52,8 @@ public class CommandServiceManager implements CommandListener, ServiceListener {
     // service cache
     private Map<String, List<URL>> groupServiceCache;
     // command cache
-    private String commandStringCache = "";
-    private volatile RpcCommand commandCache;
+    //private String commandStringCache = "";
+    //private volatile RpcCommand commandCache;
 
     public CommandServiceManager(URL refUrl) {
         if(logger.isInfoEnabled()) logger.info("CommandServiceManager init url:" + refUrl.toFullStr());
@@ -83,14 +75,9 @@ public class CommandServiceManager implements CommandListener, ServiceListener {
         groupServiceCache.put(groupName, urls);
 
         List<URL> finalResult = new ArrayList<URL>();
-        if (commandCache != null) {
-            Map<String, Integer> weights = new HashMap<String, Integer>();
-            finalResult = discoverServiceWithCommand(refUrl, weights, commandCache);
-        } else {
-            if(logger.isInfoEnabled()) logger.info("command cache is null. service:" + serviceUrl.toSimpleString());
-            // if no command cache, return group
-            finalResult.addAll(discoverOneGroup(refUrl));
-        }
+        if(logger.isInfoEnabled()) logger.info("command cache is null. service:" + serviceUrl.toSimpleString());
+        // if no command cache, return group
+        finalResult.addAll(discoverOneGroup(refUrl));
 
         for (NotifyListener notifyListener : notifySet) {
             notifyListener.notify(registry.getUrl(), finalResult);
@@ -98,6 +85,7 @@ public class CommandServiceManager implements CommandListener, ServiceListener {
 
     }
 
+    /*
     @Override
     public void notifyCommand(URL serviceUrl, String commandString) {
         if(logger.isInfoEnabled()) logger.info("CommandServiceManager notify command. service:" + serviceUrl.toSimpleString() + ", command:" + commandString);
@@ -268,6 +256,7 @@ public class CommandServiceManager implements CommandListener, ServiceListener {
         }
         return finalResult;
     }
+    */
 
     private void buildWeightsMap(Map<String, Integer> weights, RpcCommand.ClientCommand command) {
         for (String rule : command.getMergeGroups()) {
@@ -324,14 +313,14 @@ public class CommandServiceManager implements CommandListener, ServiceListener {
         }
         return list;
     }
-
+    /*
     public void setCommandCache(String command) {
         commandStringCache = command;
         commandCache = RpcCommandUtil.stringToCommand(commandStringCache);
         if(logger.isInfoEnabled()) logger.info("CommandServiceManager set commandcache. commandstring:" + commandStringCache + ", comandcache "
                 + (commandCache == null ? "is null." : "is not null."));
     }
-
+    */
     public void addNotifyListener(NotifyListener notifyListener) {
         notifySet.add(notifyListener);
     }

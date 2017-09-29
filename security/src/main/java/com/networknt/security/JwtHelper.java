@@ -16,9 +16,10 @@
 
 package com.networknt.security;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.networknt.client.oauth.*;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.networknt.client.oauth.KeyRequest;
+import com.networknt.client.oauth.OauthHelper;
 import com.networknt.config.Config;
 import com.networknt.exception.ExpiredTokenException;
 import com.networknt.utility.FingerPrintUtil;
@@ -27,16 +28,13 @@ import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.NumericDate;
-import org.jose4j.jwt.consumer.InvalidJwtException;
-import org.jose4j.jwt.consumer.JwtConsumer;
-import org.jose4j.jwt.consumer.JwtConsumerBuilder;
-import org.jose4j.jwt.consumer.JwtContext;
+import org.jose4j.jwt.consumer.*;
 import org.jose4j.jwx.JsonWebStructure;
 import org.jose4j.keys.resolvers.X509VerificationKeyResolver;
 import org.jose4j.lang.JoseException;
 import org.owasp.encoder.Encode;
-import org.slf4j.ext.XLogger;
-import org.slf4j.ext.XLoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -61,7 +59,7 @@ import java.util.regex.Pattern;
  * @author Steve Hu
  */
 public class JwtHelper {
-    static final XLogger logger = XLoggerFactory.getXLogger(JwtHelper.class);
+    static final Logger logger = LoggerFactory.getLogger(JwtHelper.class);
     public static final String JWT_CONFIG = "jwt";
     public static final String KID = "kid";
     public static final String SECURITY_CONFIG = "security";
@@ -81,12 +79,11 @@ public class JwtHelper {
     static Cache<String, JwtClaims> cache;
 
     static {
-        cache = CacheBuilder.newBuilder()
+        cache = Caffeine.newBuilder()
                 // assuming that the clock screw time is less than 5 minutes
                 .expireAfterWrite(jwtConfig.expiredInMinutes + 5, TimeUnit.MINUTES)
                 .build();
     }
-
 
     /**
      * A static method that generate JWT token from JWT claims object
@@ -259,12 +256,12 @@ public class JwtHelper {
                 // and it will never expired here. However, we need to handle other clients.
                 if ((NumericDate.now().getValue() - secondsOfAllowedClockSkew) >= claims.getExpirationTime().getValue())
                 {
-                    logger.info("jwt token is expired!");
+                    logger.info("Cached jwt token is expired!");
                     throw new ExpiredTokenException("Token is expired");
                 }
             } catch (MalformedClaimException e) {
+                // This is cached token and it is impossible to have this exception
                 logger.error("MalformedClaimException:", e);
-                throw new InvalidJwtException("MalformedClaimException", e);
             }
             return claims;
         }
@@ -278,7 +275,7 @@ public class JwtHelper {
         JwtClaims jwtClaims = jwtContext.getJwtClaims();
         JsonWebStructure structure = jwtContext.getJoseObjects().get(0);
         String kid = structure.getKeyIdHeaderValue();
-
+        // so we do expiration check here manually as we have the claim already for kid
         try {
             if ((NumericDate.now().getValue() - secondsOfAllowedClockSkew) >= jwtClaims.getExpirationTime().getValue())
             {
@@ -287,7 +284,7 @@ public class JwtHelper {
             }
         } catch (MalformedClaimException e) {
             logger.error("MalformedClaimException:", e);
-            throw new InvalidJwtException("MalformedClaimException", e);
+            throw new InvalidJwtException("MalformedClaimException", new ErrorCodeValidator.Error(ErrorCodes.MALFORMED_CLAIM, "Invalid ExpirationTime Format"), e, jwtContext);
         }
 
         // get the public key certificate from the cache that is loaded from security.yml if it is not there,

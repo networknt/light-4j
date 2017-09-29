@@ -1,7 +1,6 @@
 package com.networknt.registry;
 
 import com.networknt.utility.Constants;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -215,7 +214,7 @@ public class URLImpl implements URL {
 
     @Override
     public void addParameter(String name, String value) {
-        if (StringUtils.isEmpty(name) || StringUtils.isEmpty(value)) {
+        if (name == null || value == null) {
             return;
         }
         parameters.put(name, value);
@@ -325,7 +324,8 @@ public class URLImpl implements URL {
         if(!protocol.equals(refUrl.getProtocol())) {
             return false;
         }
-        if (!StringUtils.equals(this.getParameter(URLParamType.nodeType.getName()), Constants.NODE_TYPE_SERVICE)) {
+
+        if (!Constants.NODE_TYPE_SERVICE.equals(this.getParameter(URLParamType.nodeType.getName()))) {
             return false;
         }
 
@@ -374,7 +374,8 @@ public class URLImpl implements URL {
 
     @Override
     public boolean hasParameter(String key) {
-        return StringUtils.isNotBlank(getParameter(key));
+        String p = getParameter(key);
+        return p != null && p.trim().length() > 0;
     }
 
     /**

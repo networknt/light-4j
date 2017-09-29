@@ -994,7 +994,6 @@ public class Http2ClientTest {
         return sslContext;
     }
 
-
     private static int randInt(int min, int max) {
         Random rand = new Random();
         return rand.nextInt((max-min) + 1) + min;
@@ -1013,7 +1012,6 @@ public class Http2ClientTest {
 
                 JwtContext jwtContext = consumer.process(jwt);
                 JwtClaims jwtClaims = jwtContext.getJwtClaims();
-                JsonWebStructure structure = jwtContext.getJoseObjects().get(0);
 
                 try {
                     if ((NumericDate.now().getValue() - 60) >= jwtClaims.getExpirationTime().getValue()) {
@@ -1021,7 +1019,6 @@ public class Http2ClientTest {
                     }
                 } catch (MalformedClaimException e) {
                     logger.error("MalformedClaimException:", e);
-                    throw new InvalidJwtException("MalformedClaimException", e);
                 }
             } catch(InvalidJwtException e) {
                 e.printStackTrace();
