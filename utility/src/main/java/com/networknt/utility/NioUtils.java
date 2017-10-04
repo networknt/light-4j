@@ -4,12 +4,10 @@ import com.networknt.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.URI;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.DateFormat;
@@ -27,6 +25,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @author Steve Hu
  */
 public class NioUtils {
+    private static final int BUFFER_SIZE = 1024 * 4;
 
     static final Logger logger = LoggerFactory.getLogger(NioUtils.class);
 
@@ -243,4 +242,31 @@ public class NioUtils {
         }catch(IOException e){}
         return tempDir;
     }
+
+    /**
+     * Reads and returns the rest of the given input stream as a byte array.
+     * Caller is responsible for closing the given input stream.
+     */
+    public static byte[] toByteArray(InputStream is) throws IOException {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        try {
+            byte[] b = new byte[BUFFER_SIZE];
+            int n = 0;
+            while ((n = is.read(b)) != -1) {
+                output.write(b, 0, n);
+            }
+            return output.toByteArray();
+        } finally {
+            output.close();
+        }
+    }
+
+    /**
+     * Reads and returns the rest of the given input stream as a string.
+     * Caller is responsible for closing the given input stream.
+     */
+    public static String toString(InputStream is) throws IOException {
+        return new String(toByteArray(is), StandardCharsets.UTF_8);
+    }
+
 }
