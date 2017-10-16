@@ -14,6 +14,7 @@ public class SecretConfig {
     String clientTruststorePass;
     String authorizationCodeClientSecret;
     String clientCredentialsClientSecret;
+    String keyClientSecret;
     String consulToken;
 
     public SecretConfig() {
@@ -81,6 +82,14 @@ public class SecretConfig {
 
     public void setClientCredentialsClientSecret(String clientCredentialsClientSecret) {
         this.clientCredentialsClientSecret = clientCredentialsClientSecret;
+    }
+
+    public String getKeyClientSecret() {
+        return keyClientSecret;
+    }
+
+    public void setKeyClientSecret(String keyClientSecret) {
+        this.keyClientSecret = keyClientSecret;
     }
 
     public String getConsulToken() {

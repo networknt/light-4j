@@ -44,9 +44,9 @@ public interface ConsulClient {
 	 */
 	ConsulResponse<List<ConsulService>> lookupHealthService(String serviceName, long lastConsulIndex);
 
-	ConsulResponse<List<ConsulService>> lookupHealthService(String serviceName, String tag, long lasConsulIndex);
+	//ConsulResponse<List<ConsulService>> lookupHealthService(String serviceName, String tag, long lasConsulIndex);
 
-	ConsulResponse<List<ConsulService>> lookupHealthService(String serviceName, String tag, long lasConsulIndex, String token);
+	//ConsulResponse<List<ConsulService>> lookupHealthService(String serviceName, String tag, long lasConsulIndex, String token);
 
 
 
