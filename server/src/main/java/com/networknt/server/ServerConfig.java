@@ -33,6 +33,7 @@ public class ServerConfig {
     String truststoreName;
     boolean enableRegistry;
     String serviceId;
+    String environment;
 
     public ServerConfig() {
     }
@@ -123,5 +124,13 @@ public class ServerConfig {
 
     public void setEnableHttp2(boolean enableHttp2) {
         this.enableHttp2 = enableHttp2;
+    }
+
+    public String getEnvironment() {
+        return environment;
+    }
+
+    public void setEnvironment(String environment) {
+        this.environment = environment;
     }
 }

@@ -27,6 +27,8 @@ import com.networknt.utility.Constants;
  *
  */
 public enum URLParamType {
+    /** environment **/
+    environment("environment", "production"),
     /** version **/
     version("version", Constants.DEFAULT_VERSION),
     /** request timeout **/

@@ -4,6 +4,7 @@ import com.networknt.client.oauth.ClientCredentialsRequest;
 import com.networknt.client.oauth.OauthHelper;
 import com.networknt.client.oauth.TokenRequest;
 import com.networknt.client.oauth.TokenResponse;
+import com.networknt.common.SecretConfig;
 import com.networknt.config.Config;
 import com.networknt.exception.ApiException;
 import com.networknt.exception.ClientException;
@@ -68,10 +69,7 @@ public class Http2Client {
     static final String LOAD_TRUST_STORE = "loadTrustStore";
     static final String LOAD_KEY_STORE = "loadKeyStore";
     static final String TRUST_STORE = "trustStore";
-    static final String CLIENT_TRUSTSTORE_PASS = "clientTruststorePass";
     static final String KEY_STORE = "keyStore";
-    static final String CLIENT_KEYSTORE_PASS = "clientKeystorePass";
-    static final String CLIENT_KEY_PASS = "clientKeyPass";
     static final String TRUST_STORE_PROPERTY = "javax.net.ssl.trustStore";
     static final String TRUST_STORE_PASSWORD_PROPERTY = "javax.net.ssl.trustStorePassword";
 
@@ -107,7 +105,7 @@ public class Http2Client {
         }
     }
 
-    public static Map<String, Object> secret = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
+    public static SecretConfig secret = (SecretConfig)Config.getInstance().getJsonObjectConfig(CONFIG_SECRET, SecretConfig.class);
 
     private final Map<String, ClientProvider> clientProviders;
 
@@ -457,8 +455,8 @@ public class Http2Client {
                 Boolean loadKeyStore = (Boolean) tlsMap.get(LOAD_KEY_STORE);
                 if (loadKeyStore != null && loadKeyStore) {
                     String keyStoreName = (String)tlsMap.get(KEY_STORE);
-                    String keyStorePass = (String)secret.get(CLIENT_KEYSTORE_PASS);
-                    String keyPass = (String)secret.get(CLIENT_KEY_PASS);
+                    String keyStorePass = secret.getClientKeystorePass();
+                    String keyPass = secret.getClientKeyPass();
                     KeyStore keyStore = loadKeyStore(keyStoreName, keyStorePass.toCharArray());
                     KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                     keyManagerFactory.init(keyStore, keyPass.toCharArray());
@@ -481,7 +479,7 @@ public class Http2Client {
                         logger.info("Loading trust store from system property at " + Encode.forJava(trustStoreName));
                     } else {
                         trustStoreName = (String) tlsMap.get(TRUST_STORE);
-                        trustStorePass = (String) secret.get(CLIENT_TRUSTSTORE_PASS);
+                        trustStorePass = (String) secret.getClientTruststorePass();
                         logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
                     }
                     if (trustStoreName != null && trustStorePass != null) {

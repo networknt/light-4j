@@ -17,6 +17,7 @@
 package com.networknt.server;
 
 import com.networknt.client.Http2Client;
+import com.networknt.common.SecretConfig;
 import com.networknt.config.Config;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.registry.Registry;
@@ -55,6 +56,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.concurrent.CountDownLatch;
@@ -83,7 +85,7 @@ public class Server {
     static final String SID = "sId";
 
     public static ServerConfig config = (ServerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServerConfig.class);
-    public static Map<String, Object> secret = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
+    public static SecretConfig secret = (SecretConfig) Config.getInstance().getJsonObjectConfig(CONFIG_SECRET, SecretConfig.class);
     public final static TrustManager[] TRUST_ALL_CERTS = new X509TrustManager[] { new DummyTrustManager() };
     static Http2Client client = Http2Client.getInstance();
 
@@ -124,15 +126,17 @@ public class Server {
             if(registry == null) throw new RuntimeException("Could not find registry instance in service map");
             InetAddress inetAddress = Util.getInetAddress();
             String ipAddress = inetAddress.getHostAddress();
+            Map parameters = new HashMap<>();
+            if(config.getEnvironment() != null) parameters.put("environment", config.getEnvironment());
             if(config.enableHttp) {
-                serviceHttpUrl = new URLImpl("light", ipAddress, config.getHttpPort(), config.getServiceId());
+                serviceHttpUrl = new URLImpl("light", ipAddress, config.getHttpPort(), config.getServiceId(), parameters);
                 registry.register(serviceHttpUrl);
-                if(logger.isInfoEnabled()) logger.info("register serviceHttpUrl " + serviceHttpUrl);
+                if(logger.isInfoEnabled()) logger.info("register service: " + serviceHttpUrl.toFullStr());
             }
             if(config.enableHttps) {
-                serviceHttpsUrl = new URLImpl("light", ipAddress, config.getHttpsPort(), config.getServiceId());
+                serviceHttpsUrl = new URLImpl("light", ipAddress, config.getHttpsPort(), config.getServiceId(), parameters);
                 registry.register(serviceHttpsUrl);
-                if(logger.isInfoEnabled()) logger.info("register serviceHttpsUrl " + serviceHttpsUrl);
+                if(logger.isInfoEnabled()) logger.info("register service: " + serviceHttpsUrl.toFullStr());
             }
         }
 
@@ -241,7 +245,7 @@ public class Server {
         String name = config.getKeystoreName();
         try (InputStream stream = Config.getInstance().getInputStreamFromFile(name)) {
             KeyStore loadedKeystore = KeyStore.getInstance("JKS");
-            loadedKeystore.load(stream, ((String)secret.get("serverKeystorePass")).toCharArray());
+            loadedKeystore.load(stream, secret.getServerKeystorePass().toCharArray());
             return loadedKeystore;
         } catch (Exception e) {
             logger.error("Unable to load keystore " + name, e);
@@ -253,7 +257,7 @@ public class Server {
         String name = config.getTruststoreName();
         try (InputStream stream = Config.getInstance().getInputStreamFromFile(name)) {
             KeyStore loadedKeystore = KeyStore.getInstance("JKS");
-            loadedKeystore.load(stream, ((String)secret.get("serverTruststorePass")).toCharArray());
+            loadedKeystore.load(stream, secret.getServerTruststorePass().toCharArray());
             return loadedKeystore;
         } catch (Exception e) {
             logger.error("Unable to load truststore " + name, e);
@@ -298,7 +302,7 @@ public class Server {
 
     private static SSLContext createSSLContext() throws RuntimeException {
         try {
-            KeyManager[] keyManagers = buildKeyManagers(loadKeyStore(), ((String)secret.get("serverKeyPass")).toCharArray());
+            KeyManager[] keyManagers = buildKeyManagers(loadKeyStore(), secret.getServerKeyPass().toCharArray());
             TrustManager[] trustManagers;
             if(config.isEnableTwoWayTls()) {
                 trustManagers = buildTrustManagers(loadTrustStore());

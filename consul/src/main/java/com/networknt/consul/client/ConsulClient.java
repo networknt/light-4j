@@ -42,7 +42,12 @@ public interface ConsulClient {
 	 * @param lastConsulIndex last consul index
 	 * @return T
 	 */
-	ConsulResponse<List<ConsulService>> lookupHealthService(
-			String serviceName, long lastConsulIndex);
+	ConsulResponse<List<ConsulService>> lookupHealthService(String serviceName, long lastConsulIndex);
+
+	ConsulResponse<List<ConsulService>> lookupHealthService(String serviceName, String tag, long lasConsulIndex);
+
+	ConsulResponse<List<ConsulService>> lookupHealthService(String serviceName, String tag, long lasConsulIndex, String token);
+
+
 
 }
