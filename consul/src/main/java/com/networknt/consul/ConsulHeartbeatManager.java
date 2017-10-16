@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 public class ConsulHeartbeatManager {
 	private static final Logger logger = LoggerFactory.getLogger(ConsulHeartbeatManager.class);
 	private ConsulClient client;
+	private String token;
 	// all serviceIds that need heart beats.
 	private ConcurrentHashSet<String> serviceIds = new ConcurrentHashSet<String>();
 
@@ -36,8 +37,9 @@ public class ConsulHeartbeatManager {
 	// switcher check times
 	private int switcherCheckTimes = 0;
 
-	public ConsulHeartbeatManager(ConsulClient client) {
+	public ConsulHeartbeatManager(ConsulClient client, String token) {
 		this.client = client;
+		this.token = token;
 		heartbeatExecutor = Executors.newSingleThreadScheduledExecutor();
 		ArrayBlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<Runnable>(
 				10000);
@@ -152,9 +154,9 @@ public class ConsulHeartbeatManager {
 		public void run() {
 			try {
 				if (isPass) {
-					client.checkPass(serviceId);
+					client.checkPass(serviceId, token);
 				} else {
-					client.checkFail(serviceId);
+					client.checkFail(serviceId, token);
 				}
 			} catch (Exception e) {
 				logger.error(

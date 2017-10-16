@@ -1,11 +1,14 @@
 package com.networknt.consul;
 
+import com.networknt.client.Http2Client;
+import com.networknt.common.SecretConfig;
 import com.networknt.config.Config;
 import com.networknt.registry.URLParamType;
 import com.networknt.consul.client.ConsulClient;
 import com.networknt.registry.support.command.CommandFailbackRegistry;
 import com.networknt.registry.support.command.ServiceListener;
 import com.networknt.registry.URL;
+import com.networknt.utility.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +25,8 @@ public class ConsulRegistry extends CommandFailbackRegistry {
     private ConsulClient client;
     private ConsulHeartbeatManager heartbeatManager;
     private int lookupInterval;
-
+    private SecretConfig secretConfig = (SecretConfig)Config.getInstance().getJsonObjectConfig(Http2Client.CONFIG_SECRET, SecretConfig.class);
+    private String token = secretConfig.getConsulToken();
     // service local cache. key: serviceName, value: <service url list>
     private ConcurrentHashMap<String, List<URL>> serviceCache = new ConcurrentHashMap<String, List<URL>>();
 
@@ -38,7 +42,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
         super(url);
         this.client = client;
 
-        heartbeatManager = new ConsulHeartbeatManager(client);
+        heartbeatManager = new ConsulHeartbeatManager(client, token);
         heartbeatManager.start();
         lookupInterval = getUrl().getIntParameter(URLParamType.registrySessionTimeout.getName(), ConsulConstants.DEFAULT_LOOKUP_INTERVAL);
 
@@ -54,14 +58,14 @@ public class ConsulRegistry extends CommandFailbackRegistry {
     @Override
     protected void doRegister(URL url) {
         ConsulService service = ConsulUtils.buildService(url);
-        client.registerService(service);
+        client.registerService(service, token);
         heartbeatManager.addHeartbeatServcieId(service.getId());
     }
 
     @Override
     protected void doUnregister(URL url) {
         ConsulService service = ConsulUtils.buildService(url);
-        client.unregisterService(service.getId());
+        client.unregisterService(service.getId(), token);
         heartbeatManager.removeHeartbeatServiceId(service.getId());
     }
 
@@ -97,10 +101,11 @@ public class ConsulRegistry extends CommandFailbackRegistry {
      */
     private void startListenerThreadIfNewService(URL url) {
         String serviceName = url.getPath();
+        String tag = url.getParameter(Constants.TAG_ENVIRONMENT);
         if (!lookupServices.containsKey(serviceName)) {
             Long value = lookupServices.putIfAbsent(serviceName, 0L);
             if (value == null) {
-                ServiceLookupThread lookupThread = new ServiceLookupThread(serviceName);
+                ServiceLookupThread lookupThread = new ServiceLookupThread(serviceName, tag);
                 lookupThread.setDaemon(true);
                 lookupThread.start();
             }
@@ -133,13 +138,14 @@ public class ConsulRegistry extends CommandFailbackRegistry {
     @Override
     protected List<URL> discoverService(URL url) {
         String serviceName = url.getPath();
-        if(logger.isDebugEnabled()) logger.debug("serviceName = " + serviceName);
+        String tag = url.getParameter(Constants.TAG_ENVIRONMENT);
+        if(logger.isDebugEnabled()) logger.debug("serviceName = " + serviceName + " tag = " + tag);
         List<URL> urls = serviceCache.get(serviceName);
         if (urls == null) {
             synchronized (serviceName.intern()) {
                 urls = serviceCache.get(serviceName);
                 if (urls == null) {
-                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(serviceName);
+                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(serviceName, tag);
                     updateServiceCache(serviceName, serviceUrls, false);
                     urls = serviceCache.get(serviceName);
                 }
@@ -148,10 +154,10 @@ public class ConsulRegistry extends CommandFailbackRegistry {
         return urls;
     }
 
-    private ConcurrentHashMap<String, List<URL>> lookupServiceUpdate(String serviceName) {
+    private ConcurrentHashMap<String, List<URL>> lookupServiceUpdate(String serviceName, String tag) {
         Long lastConsulIndexId = lookupServices.get(serviceName) == null ? 0L : lookupServices.get(serviceName);
-        if(logger.isDebugEnabled()) logger.debug("serviceName = " + serviceName + " lastConsulIndexId = " + lastConsulIndexId);
-        ConsulResponse<List<ConsulService>> response = lookupConsulService(serviceName, lastConsulIndexId);
+        if(logger.isDebugEnabled()) logger.debug("serviceName = " + serviceName + " tag = " + tag + " lastConsulIndexId = " + lastConsulIndexId);
+        ConsulResponse<List<ConsulService>> response = lookupConsulService(serviceName, tag, lastConsulIndexId);
         if(logger.isDebugEnabled()) {
             try {
                 logger.debug("response = " + Config.getInstance().getMapper().writeValueAsString(response));
@@ -192,8 +198,8 @@ public class ConsulRegistry extends CommandFailbackRegistry {
      * @param serviceName
      * @return ConsulResponse or null
      */
-    private ConsulResponse<List<ConsulService>> lookupConsulService(String serviceName, Long lastConsulIndexId) {
-        ConsulResponse<List<ConsulService>> response = client.lookupHealthService(serviceName, lastConsulIndexId);
+    private ConsulResponse<List<ConsulService>> lookupConsulService(String serviceName, String tag,  Long lastConsulIndexId) {
+        ConsulResponse<List<ConsulService>> response = client.lookupHealthService(serviceName, tag, lastConsulIndexId, token);
         return response;
     }
 
@@ -243,18 +249,20 @@ public class ConsulRegistry extends CommandFailbackRegistry {
 
     private class ServiceLookupThread extends Thread {
         private String serviceName;
+        private String tag;
 
-        public ServiceLookupThread(String serviceName) {
+        public ServiceLookupThread(String serviceName, String tag) {
             this.serviceName = serviceName;
+            this.tag = tag;
         }
 
         @Override
         public void run() {
-            logger.info("start service lookup thread. lookup interval: " + lookupInterval + "ms, service: " + serviceName);
+            logger.info("start service lookup thread. lookup interval: " + lookupInterval + "ms, service: " + serviceName + ", tag: " + tag);
             while (true) {
                 try {
                     sleep(lookupInterval);
-                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(serviceName);
+                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(serviceName, tag);
                     updateServiceCache(serviceName, serviceUrls, true);
                 } catch (Throwable e) {
                     logger.error("service lookup thread fail!", e);

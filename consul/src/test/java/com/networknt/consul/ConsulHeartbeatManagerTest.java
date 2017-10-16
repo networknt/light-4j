@@ -19,11 +19,12 @@ import org.junit.Test;
 public class ConsulHeartbeatManagerTest {
     private ConsulHeartbeatManager heartbeatManager;
     private MockConsulClient client;
+    private String token;
 
     @Before
     public void setUp() throws Exception {
         client = new MockConsulClient("localhost", 8500);
-        heartbeatManager = new ConsulHeartbeatManager(client);
+        heartbeatManager = new ConsulHeartbeatManager(client, null);
 
         ConsulConstants.HEARTBEAT_CIRCLE = 200;
         ConsulConstants.SWITCHER_CHECK_CIRCLE = 20;

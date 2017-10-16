@@ -45,7 +45,8 @@ public class ConsulUtils {
         service.setTtl(ConsulConstants.TTL);
 
         List<String> tags = new ArrayList<String>();
-        tags.add(ConsulConstants.CONSUL_TAG_LIGHT_PROTOCOL + url.getProtocol());
+        String env = url.getParameter(Constants.TAG_ENVIRONMENT);
+        if(env != null) tags.add(env);
         service.setTags(tags);
 
         return service;

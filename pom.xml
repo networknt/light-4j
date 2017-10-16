@@ -122,6 +122,7 @@
         <module>cluster</module>
         <module>limit</module>
         <module>server</module>
+        <module>e2e-test</module>
     </modules>
 
     <dependencyManagement>

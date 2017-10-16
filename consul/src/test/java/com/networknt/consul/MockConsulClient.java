@@ -36,7 +36,7 @@ public class MockConsulClient implements ConsulClient {
 
 
     @Override
-    public void checkPass(String serviceid) {
+    public void checkPass(String serviceid, String token) {
         AtomicLong times = checkPassTimesMap.get(serviceid);
         if (times == null) {
             checkPassTimesMap.putIfAbsent(serviceid, new AtomicLong());
@@ -48,24 +48,24 @@ public class MockConsulClient implements ConsulClient {
     }
 
     @Override
-    public void checkFail(String serviceid) {
+    public void checkFail(String serviceid, String tag) {
         serviceStatus.put(serviceid, false);
     }
 
     @Override
-    public void registerService(ConsulService service) {
+    public void registerService(ConsulService service, String token) {
         serviceStatus.put(service.getId(), false);
         services.put(service.getId(), service);
     }
 
     @Override
-    public void unregisterService(String serviceid) {
+    public void unregisterService(String serviceid, String token) {
         serviceStatus.remove(serviceid);
         services.remove(serviceid);
     }
 
     @Override
-    public ConsulResponse<List<ConsulService>> lookupHealthService(String serviceName, long lastConsulIndex) {
+    public ConsulResponse<List<ConsulService>> lookupHealthService(String serviceName, String tag, long lastConsulIndex, String token) {
         ConsulResponse<List<ConsulService>> res = new ConsulResponse<List<ConsulService>>();
         res.setConsulIndex(lastConsulIndex + 1);
         res.setConsulKnownLeader(true);

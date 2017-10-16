@@ -5,10 +5,12 @@ import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.consul.ConsulResponse;
 import com.networknt.consul.ConsulService;
+import com.networknt.utility.Constants;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
 import io.undertow.util.Headers;
+import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,22 +24,22 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class ConsulEcwidClient implements ConsulClient {
-	private static final Logger logger = LoggerFactory.getLogger(ConsulEcwidClient.class);
+public class ConsulClientImpl implements ConsulClient {
+	private static final Logger logger = LoggerFactory.getLogger(ConsulClientImpl.class);
 	static Http2Client client = Http2Client.getInstance();
 	String url;
 	/**
-	 * Construct ConsulEcwidClient with host and port.
+	 * Construct ConsulClient with host and port.
 	 *
 	 * @param host host
 	 * @param port port
 	 */
-	public ConsulEcwidClient(String host, int port) {
+	public ConsulClientImpl(String host, int port) {
 		url = "http://" + host + ":" + port;
 	}
 
 	@Override
-	public void checkPass(String serviceId) {
+	public void checkPass(String serviceId, String token) {
 		if(logger.isDebugEnabled()) logger.debug("checkPass serviceId = " + serviceId);
 		String path = "/v1/agent/check/pass/" + "service:" + serviceId;
 		ClientConnection connection = null;
@@ -50,7 +52,8 @@ public class ConsulEcwidClient implements ConsulClient {
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
 			ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(path);
-			request.getRequestHeaders().put(Headers.HOST, "localhost");
+			//request.getRequestHeaders().put(Headers.HOST, "localhost");
+			if(token != null) request.getRequestHeaders().put(Constants.CONSUL_TOKEN, token);
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
 			int statusCode = reference.get().getResponseCode();
@@ -67,7 +70,7 @@ public class ConsulEcwidClient implements ConsulClient {
 	}
 
 	@Override
-	public void checkFail(String serviceId) {
+	public void checkFail(String serviceId, String token) {
 		if(logger.isDebugEnabled()) logger.debug("checkFail serviceId = " + serviceId);
 		String path = "/v1/agent/check/fail/" + "service:" + serviceId;
 		ClientConnection connection = null;
@@ -80,7 +83,8 @@ public class ConsulEcwidClient implements ConsulClient {
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
 			ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(path);
-			request.getRequestHeaders().put(Headers.HOST, "localhost");
+			//request.getRequestHeaders().put(Headers.HOST, "localhost");
+			if(token != null) request.getRequestHeaders().put(Constants.CONSUL_TOKEN, token);
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
 			int statusCode = reference.get().getResponseCode();
@@ -96,7 +100,7 @@ public class ConsulEcwidClient implements ConsulClient {
 	}
 
 	@Override
-	public void registerService(ConsulService service) {
+	public void registerService(ConsulService service, String token) {
 		String json = service.toString();
 		String path = "/v1/agent/service/register";
 		ClientConnection connection = null;
@@ -109,7 +113,7 @@ public class ConsulEcwidClient implements ConsulClient {
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
-            request.getRequestHeaders().put(Headers.HOST, "localhost");
+			if(token != null) request.getRequestHeaders().put(Constants.CONSUL_TOKEN, token);
 			request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
 			connection.sendRequest(request, client.createClientCallback(reference, latch, json));
 			latch.await();
@@ -126,7 +130,7 @@ public class ConsulEcwidClient implements ConsulClient {
 	}
 
 	@Override
-	public void unregisterService(String serviceId) {
+	public void unregisterService(String serviceId, String token) {
 		String path = "/v1/agent/service/deregister/" + serviceId;
 		ClientConnection connection = null;
 		try {
@@ -138,7 +142,8 @@ public class ConsulEcwidClient implements ConsulClient {
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
 			ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(path);
-            request.getRequestHeaders().put(Headers.HOST, "localhost");
+            //request.getRequestHeaders().put(Headers.HOST, "localhost");
+			if(token != null) request.getRequestHeaders().put(Constants.CONSUL_TOKEN, token);
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
 			int statusCode = reference.get().getResponseCode();
@@ -153,13 +158,15 @@ public class ConsulEcwidClient implements ConsulClient {
 		}
 	}
 
-
 	@Override
-	public ConsulResponse<List<ConsulService>> lookupHealthService(
-			String serviceName, long lastConsulIndex) {
+	public ConsulResponse<List<ConsulService>> lookupHealthService(String serviceName, String tag, long lastConsulIndex, String token) {
 		ConsulResponse<List<ConsulService>> newResponse = null;
 
 		String path = "/v1/health/service/" + serviceName + "?passing&wait=600s&index=" + lastConsulIndex;
+		if(tag != null) {
+			path = path + "&tag=" + tag;
+		}
+
 		ClientConnection connection = null;
 		try {
 			connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
@@ -170,7 +177,7 @@ public class ConsulEcwidClient implements ConsulClient {
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
 			ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(path);
-			request.getRequestHeaders().put(Headers.HOST, "localhost");
+			if(token != null) request.getRequestHeaders().put(Constants.CONSUL_TOKEN, token);
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
 			int statusCode = reference.get().getResponseCode();

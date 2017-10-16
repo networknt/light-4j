@@ -35,6 +35,7 @@ public class Constants {
     public static final String ENDPOINT_STRING = "endpoint";
     public static final String SWAGGER_OPERATION_STRING = "swagger_operation";
     public static final String SCOPE_TOKEN_STRING = "X-Scope-Token";
+    public static final String CONSUL_TOKEN_STRING = "X-Consul-Token";
 
     public static final HttpString CORRELATION_ID = new HttpString(CORRELATION_ID_STRING);
     public static final HttpString TRACEABILITY_ID = new HttpString(TRACEABILITY_ID_STRING);
@@ -45,6 +46,7 @@ public class Constants {
     public static final HttpString ENDPOINT = new HttpString(ENDPOINT_STRING);
     public static final HttpString SWAGGER_OPERATION = new HttpString(SWAGGER_OPERATION_STRING);
     public static final HttpString SCOPE_TOKEN = new HttpString(SCOPE_TOKEN_STRING);
+    public static final HttpString CONSUL_TOKEN = new HttpString(CONSUL_TOKEN_STRING);
 
     // Logger
     public static final String AUDIT_LOGGER = "Audit";
@@ -69,6 +71,7 @@ public class Constants {
 
     public static final String PROTOCOL_SEPARATOR = "://";
     public static final String PROTOCOL_LIGHT = "light";
+    public static final String TAG_ENVIRONMENT = "environment";
     public static final String PATH_SEPARATOR = "/";
 
     public static final String REGISTRY_PROTOCOL_LOCAL = "local";
@@ -77,5 +80,6 @@ public class Constants {
 
     public static final String ZOOKEEPER_REGISTRY_NAMESPACE = "/light";
     public static final String ZOOKEEPER_REGISTRY_COMMAND = "/command";
+
 
 }
