@@ -6,6 +6,7 @@ import com.networknt.config.Config;
 import com.networknt.consul.ConsulResponse;
 import com.networknt.consul.ConsulService;
 import com.networknt.utility.Constants;
+import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
@@ -34,8 +35,8 @@ public class ConsulClientImpl implements ConsulClient {
 	 * @param host host
 	 * @param port port
 	 */
-	public ConsulClientImpl(String host, int port) {
-		url = "http://" + host + ":" + port;
+	public ConsulClientImpl(String protocol, String host, int port) {
+		url = protocol + "://" + host + ":" + port;
 	}
 
 	@Override
@@ -52,7 +53,7 @@ public class ConsulClientImpl implements ConsulClient {
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
 			ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(path);
-			//request.getRequestHeaders().put(Headers.HOST, "localhost");
+			request.getRequestHeaders().put(Headers.HOST, "localhost");
 			if(token != null) request.getRequestHeaders().put(Constants.CONSUL_TOKEN, token);
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
@@ -83,7 +84,7 @@ public class ConsulClientImpl implements ConsulClient {
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
 			ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(path);
-			//request.getRequestHeaders().put(Headers.HOST, "localhost");
+			request.getRequestHeaders().put(Headers.HOST, "localhost");
 			if(token != null) request.getRequestHeaders().put(Constants.CONSUL_TOKEN, token);
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
@@ -114,11 +115,11 @@ public class ConsulClientImpl implements ConsulClient {
 		try {
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
 			if(token != null) request.getRequestHeaders().put(Constants.CONSUL_TOKEN, token);
+			request.getRequestHeaders().put(Headers.HOST, "localhost");
 			request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
 			connection.sendRequest(request, client.createClientCallback(reference, latch, json));
 			latch.await();
 			int statusCode = reference.get().getResponseCode();
-			System.out.println("statusCode = " + statusCode);
 			if(statusCode >= 300){
 				throw new Exception("Failed to register on Consul: " + statusCode);
 			}
@@ -142,7 +143,7 @@ public class ConsulClientImpl implements ConsulClient {
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
 			ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(path);
-            //request.getRequestHeaders().put(Headers.HOST, "localhost");
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
 			if(token != null) request.getRequestHeaders().put(Constants.CONSUL_TOKEN, token);
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
@@ -178,6 +179,7 @@ public class ConsulClientImpl implements ConsulClient {
 		try {
 			ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(path);
 			if(token != null) request.getRequestHeaders().put(Constants.CONSUL_TOKEN, token);
+			request.getRequestHeaders().put(Headers.HOST, "localhost");
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
 			int statusCode = reference.get().getResponseCode();
