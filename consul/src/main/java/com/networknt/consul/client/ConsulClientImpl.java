@@ -29,14 +29,26 @@ public class ConsulClientImpl implements ConsulClient {
 	private static final Logger logger = LoggerFactory.getLogger(ConsulClientImpl.class);
 	static Http2Client client = Http2Client.getInstance();
 	String url;
+
 	/**
-	 * Construct ConsulClient with host and port.
+	 * Construct ConsulClient with protocol, host and port.
 	 *
+	 * @param protocol protocol
 	 * @param host host
 	 * @param port port
 	 */
 	public ConsulClientImpl(String protocol, String host, int port) {
 		url = protocol + "://" + host + ":" + port;
+	}
+
+	/**
+	 * Construct ConsulClient with protocol and host.
+	 *
+	 * @param protocol protocol
+	 * @param host host
+	 */
+	public ConsulClientImpl(String protocol, String host) {
+		url = protocol + "://" + host;
 	}
 
 	@Override
