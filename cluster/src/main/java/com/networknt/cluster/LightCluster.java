@@ -11,6 +11,7 @@ import com.networknt.utility.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,13 +45,16 @@ public class LightCluster implements Cluster {
      * @return String
      */
     @Override
-    public String serviceToUrl(String protocol, String serviceName, String requestKey) {
+    public String serviceToUrl(String protocol, String serviceName, String tag, String requestKey) {
         if(logger.isDebugEnabled()) logger.debug("protocol = " + protocol + " serviceName = " + serviceName);
         // lookup in serviceMap first, if not there, then subscribe and discover.
         List<URL> urls = serviceMap.get(serviceName);
         if(logger.isDebugEnabled()) logger.debug("cached serviceName " + serviceName + " urls = " + urls);
         if(urls == null) {
             URL subscribeUrl = URLImpl.valueOf("light://localhost/" + serviceName);
+            if(tag != null) {
+                subscribeUrl.addParameter(Constants.TAG_ENVIRONMENT, tag);
+            }
             if(logger.isDebugEnabled()) logger.debug("subscribeUrl = " + subscribeUrl);
             // you only need to subscribe once.
             if(!subscribedSet.contains(subscribeUrl)) {

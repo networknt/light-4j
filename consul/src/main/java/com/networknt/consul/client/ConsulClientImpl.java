@@ -179,7 +179,7 @@ public class ConsulClientImpl implements ConsulClient {
 		if(tag != null) {
 			path = path + "&tag=" + tag;
 		}
-
+		if(logger.isDebugEnabled()) logger.debug("path = " + path);
 		ClientConnection connection = null;
 		try {
 			connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();

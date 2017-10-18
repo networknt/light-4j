@@ -17,6 +17,12 @@ public interface Cluster {
      * load balance, normally client_id or user_id from JWT token should be passed
      * in to route the same client to the same server all the time or the same user
      * to the same server all the time
+     *
+     * @param protocol either http or https
+     * @param serviceId unique service identifier
+     * @param tag an environment tag use along with serviceId for discovery
+     * @param requestKey load balancer key
+     * @return String url
      */
-    String serviceToUrl(String protocol, String serviceId, String requestKey);
+    String serviceToUrl(String protocol, String serviceId, String tag, String requestKey);
 }

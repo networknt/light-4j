@@ -14,10 +14,10 @@ public class LightClusterTest {
 
     @Test
     public void testLightCluster() {
-        String s = cluster.serviceToUrl("http", "com.networknt.apib-1.0.0", null);
+        String s = cluster.serviceToUrl("http", "com.networknt.apib-1.0.0", null, null);
         Assert.assertEquals(s, "http://localhost:7005");
 
-        s = cluster.serviceToUrl("http", "com.networknt.apib-1.0.0", null);
+        s = cluster.serviceToUrl("http", "com.networknt.apib-1.0.0", null, null);
         Assert.assertEquals(s, "http://localhost:7002");
     }
 }
