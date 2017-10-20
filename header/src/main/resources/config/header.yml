@@ -1,0 +1,25 @@
+# Enable header handler or not, default to false
+enabled: false
+# Request header manipulation
+request:
+  # Remove all the headers listed here
+  remove:
+  - header1
+  - header2
+  # Add or update the header with key/value pairs
+  # Although HTTP header supports multiple values per key, it is not supported here.
+  update:
+    key1: value1
+    key2: value2
+
+# Response header manipulation
+response:
+  # Remove all the headers listed here
+  remove:
+  - header1
+  - header2
+  # Add or update the header with key/value pairs
+  # Although HTTP header supports multiple values per key, it is not supported here.
+  update:
+    key1: value1
+    key2: value2
