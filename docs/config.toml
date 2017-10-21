@@ -17,7 +17,7 @@ googleAnalytics = ""
 	provider = "GitHub"
 	repo_url = "https://github.com/networknt/light-4j"
 
-	version = "1.4.6"
+	version = "1.5.0"
 	logo = "images/logo.png"
 	favicon = ""
 

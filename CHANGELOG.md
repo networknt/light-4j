@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.5.0 - 2017-10-20
+### Added
+- fixes #118 add a header handler to manipulate request/response headers
+
+### Changed
+
+- fixes #116 add environment tag for consul resgistry and discovery
+- fixes #117 Add SecretConfig to model secret.yml and add consulToken
+- fixes #114 Add utilities classes for light-workflow-4j
+- fixes #112 remove unused dependencies to reduce the final jar size.
+- fixes #111 add utility interfaces for exchange access. (Thanks @sachinwalia2k8)
+- fixes #107 upgrade dependencies to the latest. (Thanks @sachinwalia2k8)
+- Upgrade to 1.5.0
+
+
 ## 1.4.6 - 2017-09-22
 ### Added
 
