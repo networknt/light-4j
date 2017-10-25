@@ -87,7 +87,6 @@ public class Server {
     public static ServerConfig config = (ServerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServerConfig.class);
     public static SecretConfig secret = (SecretConfig) Config.getInstance().getJsonObjectConfig(CONFIG_SECRET, SecretConfig.class);
     public final static TrustManager[] TRUST_ALL_CERTS = new X509TrustManager[] { new DummyTrustManager() };
-    static Http2Client client = Http2Client.getInstance();
 
     static protected boolean shutdownRequested = false;
     static Undertow server = null;
@@ -352,6 +351,7 @@ public class Server {
             // /v1/config/1.2.4/dev/com.networknt.petstore-1.0.0
 
             String path = "/v1/config/" + version + "/" + env + "/" + service;
+            Http2Client client = Http2Client.getInstance();
             ClientConnection connection = null;
             try {
                 connection = client.connect(new URI(configUri), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
