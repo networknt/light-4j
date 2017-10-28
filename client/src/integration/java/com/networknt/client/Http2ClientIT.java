@@ -45,8 +45,8 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
-public class Http2ClientTest {
-    static final Logger logger = LoggerFactory.getLogger(Http2ClientTest.class);
+public class Http2ClientIT {
+    static final Logger logger = LoggerFactory.getLogger(Http2ClientIT.class);
     static Undertow server = null;
     static SSLContext sslContext;
     private static final String message = "Hello World!";
@@ -195,178 +195,450 @@ public class Http2ClientTest {
     }
 
     @Test
-    public void testSingleHttp2PostSsl() throws Exception {
+    public void testMultipleHttpGet() throws Exception {
+        //
+        final Http2Client client = createClient();
+
+        final List<AtomicReference<ClientResponse>> references = new CopyOnWriteArrayList<>();
+        final CountDownLatch latch = new CountDownLatch(10);
+        final ClientConnection connection = client.connect(ADDRESS, worker, Http2Client.POOL, OptionMap.EMPTY).get();
+        try {
+            connection.getIoThread().execute(new Runnable() {
+                @Override
+                public void run() {
+                    for (int i = 0; i < 10; i++) {
+                        AtomicReference<ClientResponse> reference = new AtomicReference<>();
+                        references.add(i, reference);
+                        final ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(MESSAGE);
+                        request.getRequestHeaders().put(Headers.HOST, "localhost");
+                        connection.sendRequest(request, client.createClientCallback(reference, latch));
+                    }
+                }
+
+            });
+
+            latch.await(10, TimeUnit.SECONDS);
+
+            Assert.assertEquals(10, references.size());
+            for (final AtomicReference<ClientResponse> reference : references) {
+                Assert.assertEquals(message, reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+                Assert.assertEquals("HTTP/1.1", reference.get().getProtocol().toString());
+            }
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+    }
+
+    /*
+    @Test
+    public void testMultipleHttp2Get() throws Exception {
+        //
+        final Http2Client client = createClient();
+
+        final List<ClientResponse> responses = new CopyOnWriteArrayList<>();
+        final CountDownLatch latch = new CountDownLatch(10);
+        final ClientConnection connection = client.connect(ADDRESS, worker, pool, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        try {
+            connection.getIoThread().execute(new Runnable() {
+                @Override
+                public void run() {
+                    for (int i = 0; i < 10; i++) {
+                        final ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(MESSAGE);
+                        request.getRequestHeaders().put(Headers.HOST, "localhost");
+                        connection.sendRequest(request, createClientCallback(responses, latch));
+                    }
+                }
+
+            });
+
+            latch.await(10, TimeUnit.SECONDS);
+
+            Assert.assertEquals(10, responses.size());
+            for (final ClientResponse response : responses) {
+                Assert.assertEquals(message, response.getAttachment(RESPONSE_BODY));
+                Assert.assertEquals("HTTP/1.1", response.getProtocol().toString());
+            }
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+    }
+    */
+
+    @Test
+    public void testMultipleHttpPost() throws Exception {
         //
         final Http2Client client = createClient();
         final String postMessage = "This is a post request";
 
         final List<String> responses = new CopyOnWriteArrayList<>();
-        final CountDownLatch latch = new CountDownLatch(1);
-        SSLContext context = client.createSSLContext();
-        XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.SSL_BUFFER_POOL, context);
-
-        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
-        try {
-            connection.getIoThread().execute(new Runnable() {
-                @Override
-                public void run() {
-                    final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(POST);
-                    request.getRequestHeaders().put(Headers.HOST, "localhost");
-                    request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
-                    connection.sendRequest(request, new ClientCallback<ClientExchange>() {
-                        @Override
-                        public void completed(ClientExchange result) {
-                            new StringWriteChannelListener(postMessage).setup(result.getRequestChannel());
-                            result.setResponseListener(new ClientCallback<ClientExchange>() {
-                                @Override
-                                public void completed(ClientExchange result) {
-                                    new StringReadChannelListener(Http2Client.POOL) {
-
-                                        @Override
-                                        protected void stringDone(String string) {
-                                            responses.add(string);
-                                            latch.countDown();
-                                        }
-
-                                        @Override
-                                        protected void error(IOException e) {
-                                            e.printStackTrace();
-                                            latch.countDown();
-                                        }
-                                    }.setup(result.getResponseChannel());
-                                }
-
-                                @Override
-                                public void failed(IOException e) {
-                                    e.printStackTrace();
-                                    latch.countDown();
-                                }
-                            });
-                        }
-
-                        @Override
-                        public void failed(IOException e) {
-                            e.printStackTrace();
-                            latch.countDown();
-                        }
-                    });
-                }
-            });
-
-            latch.await(10, TimeUnit.SECONDS);
-
-            Assert.assertEquals(1, responses.size());
-            for (final String response : responses) {
-                Assert.assertEquals(postMessage, response);
-            }
-        } finally {
-            IoUtils.safeClose(connection);
-        }
-    }
-
-    @Test
-    public void testSingleHttp2FormSsl() throws Exception {
-        //
-        final Http2Client client = createClient();
-        Map<String, String> params = new HashMap<>();
-        params.put("key1", "value1");
-        params.put("key2", "value2");
-
-        final String postMessage = client.getFormDataString(params);
-
-        final List<String> responses = new CopyOnWriteArrayList<>();
-        final CountDownLatch latch = new CountDownLatch(1);
-        SSLContext context = client.createSSLContext();
-        XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.SSL_BUFFER_POOL, context);
-
-        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
-        try {
-            connection.getIoThread().execute(new Runnable() {
-                @Override
-                public void run() {
-                    final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(FORM);
-                    request.getRequestHeaders().put(Headers.HOST, "localhost");
-                    request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
-                    request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
-                    connection.sendRequest(request, new ClientCallback<ClientExchange>() {
-                        @Override
-                        public void completed(ClientExchange result) {
-                            new StringWriteChannelListener(postMessage).setup(result.getRequestChannel());
-                            result.setResponseListener(new ClientCallback<ClientExchange>() {
-                                @Override
-                                public void completed(ClientExchange result) {
-                                    new StringReadChannelListener(Http2Client.POOL) {
-
-                                        @Override
-                                        protected void stringDone(String string) {
-                                            System.out.println("string = " + string);
-                                            responses.add(string);
-                                            latch.countDown();
-                                        }
-
-                                        @Override
-                                        protected void error(IOException e) {
-                                            e.printStackTrace();
-                                            latch.countDown();
-                                        }
-                                    }.setup(result.getResponseChannel());
-                                }
-
-                                @Override
-                                public void failed(IOException e) {
-                                    e.printStackTrace();
-                                    latch.countDown();
-                                }
-                            });
-                        }
-
-                        @Override
-                        public void failed(IOException e) {
-                            e.printStackTrace();
-                            latch.countDown();
-                        }
-                    });
-                }
-            });
-
-            latch.await(10, TimeUnit.SECONDS);
-
-            Assert.assertEquals(1, responses.size());
-            for (final String response : responses) {
-                Assert.assertEquals(postMessage, response);
-            }
-        } finally {
-            IoUtils.safeClose(connection);
-        }
-    }
-
-    @Test
-    public void testConnectionClose() throws Exception {
-        //
-        final Http2Client client = createClient();
-
-        final CountDownLatch latch = new CountDownLatch(1);
+        final CountDownLatch latch = new CountDownLatch(10);
         final ClientConnection connection = client.connect(ADDRESS, worker, Http2Client.POOL, OptionMap.EMPTY).get();
         try {
-            ClientRequest request = new ClientRequest().setPath(MESSAGE).setMethod(Methods.GET);
-            request.getRequestHeaders().put(Headers.HOST, "localhost");
-            final AtomicReference<ClientResponse> reference = new AtomicReference<>();
-            request.getRequestHeaders().add(Headers.CONNECTION, Headers.CLOSE.toString());
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
-            latch.await();
-            final ClientResponse response = reference.get();
-            Assert.assertEquals(message, response.getAttachment(Http2Client.RESPONSE_BODY));
-            Assert.assertEquals(false, connection.isOpen());
+            connection.getIoThread().execute(new Runnable() {
+                @Override
+                public void run() {
+                    for (int i = 0; i < 10; i++) {
+                        final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(POST);
+                        request.getRequestHeaders().put(Headers.HOST, "localhost");
+                        request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+                        connection.sendRequest(request, new ClientCallback<ClientExchange>() {
+                            @Override
+                            public void completed(ClientExchange result) {
+                                new StringWriteChannelListener(postMessage).setup(result.getRequestChannel());
+                                result.setResponseListener(new ClientCallback<ClientExchange>() {
+                                    @Override
+                                    public void completed(ClientExchange result) {
+                                        new StringReadChannelListener(Http2Client.POOL) {
+
+                                            @Override
+                                            protected void stringDone(String string) {
+                                                responses.add(string);
+                                                latch.countDown();
+                                            }
+
+                                            @Override
+                                            protected void error(IOException e) {
+                                                e.printStackTrace();
+                                                latch.countDown();
+                                            }
+                                        }.setup(result.getResponseChannel());
+                                    }
+
+                                    @Override
+                                    public void failed(IOException e) {
+                                        e.printStackTrace();
+                                        latch.countDown();
+                                    }
+                                });
+                            }
+
+                            @Override
+                            public void failed(IOException e) {
+                                e.printStackTrace();
+                                latch.countDown();
+                            }
+                        });
+                    }
+                }
+
+            });
+
+            latch.await(10, TimeUnit.SECONDS);
+
+            Assert.assertEquals(10, responses.size());
+            for (final String response : responses) {
+                Assert.assertEquals(postMessage, response);
+            }
         } finally {
             IoUtils.safeClose(connection);
         }
+    }
 
+    /*
+    @Test
+    public void testMultipleHttp2Post() throws Exception {
+        //
+        final Http2Client client = createClient();
+        final String postMessage = "This is a post request";
+
+        final List<String> responses = new CopyOnWriteArrayList<>();
+        final CountDownLatch latch = new CountDownLatch(10);
+        final ClientConnection connection = client.connect(ADDRESS, worker, pool, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        try {
+            connection.getIoThread().execute(new Runnable() {
+                @Override
+                public void run() {
+                    for (int i = 0; i < 10; i++) {
+                        final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(POST);
+                        request.getRequestHeaders().put(Headers.HOST, "localhost");
+                        request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+                        connection.sendRequest(request, new ClientCallback<ClientExchange>() {
+                            @Override
+                            public void completed(ClientExchange result) {
+                                new StringWriteChannelListener(postMessage).setup(result.getRequestChannel());
+                                result.setResponseListener(new ClientCallback<ClientExchange>() {
+                                    @Override
+                                    public void completed(ClientExchange result) {
+                                        new StringReadChannelListener(pool) {
+
+                                            @Override
+                                            protected void stringDone(String string) {
+                                                responses.add(string);
+                                                latch.countDown();
+                                            }
+
+                                            @Override
+                                            protected void error(IOException e) {
+                                                e.printStackTrace();
+                                                latch.countDown();
+                                            }
+                                        }.setup(result.getResponseChannel());
+                                    }
+
+                                    @Override
+                                    public void failed(IOException e) {
+                                        e.printStackTrace();
+                                        latch.countDown();
+                                    }
+                                });
+                            }
+
+                            @Override
+                            public void failed(IOException e) {
+                                e.printStackTrace();
+                                latch.countDown();
+                            }
+                        });
+                    }
+                }
+
+            });
+
+            latch.await(10, TimeUnit.SECONDS);
+
+            Assert.assertEquals(10, responses.size());
+            for (final String response : responses) {
+                Assert.assertEquals(postMessage, response);
+            }
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+    }
+    */
+
+    @Test
+    public void testMultipleHttpGetSsl() throws Exception {
+        //
+        final Http2Client client = createClient();
+
+        final List<AtomicReference<ClientResponse>> references = new CopyOnWriteArrayList<>();
+        final CountDownLatch latch = new CountDownLatch(10);
+        SSLContext context = client.createSSLContext();
+        XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.SSL_BUFFER_POOL, context);
+
+        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.POOL, OptionMap.EMPTY).get();
+        try {
+            connection.getIoThread().execute(new Runnable() {
+                @Override
+                public void run() {
+                    for (int i = 0; i < 10; i++) {
+                        AtomicReference<ClientResponse> reference = new AtomicReference<>();
+                        references.add(i, reference);
+                        final ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(MESSAGE);
+                        request.getRequestHeaders().put(Headers.HOST, "localhost");
+                        connection.sendRequest(request, client.createClientCallback(reference, latch));
+                    }
+                }
+
+            });
+
+            latch.await(10, TimeUnit.SECONDS);
+
+            Assert.assertEquals(10, references.size());
+            for (final AtomicReference<ClientResponse> reference : references) {
+                Assert.assertEquals(message, reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+                Assert.assertEquals("HTTP/1.1", reference.get().getProtocol().toString());
+            }
+        } finally {
+            connection.getIoThread().execute(new Runnable() {
+                @Override
+                public void run() {
+                    IoUtils.safeClose(connection);
+                }
+            });
+        }
     }
 
     @Test
-    public void testSingleAsych() throws Exception {
-        callApiAsync();
+    public void testMultipleHttp2GetSsl() throws Exception {
+        //
+        final Http2Client client = createClient();
+
+        final List<AtomicReference<ClientResponse>> references = new CopyOnWriteArrayList<>();
+        final CountDownLatch latch = new CountDownLatch(10);
+        SSLContext context = client.createSSLContext();
+        XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.SSL_BUFFER_POOL, context);
+
+        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        try {
+            connection.getIoThread().execute(new Runnable() {
+                @Override
+                public void run() {
+                    for (int i = 0; i < 10; i++) {
+                        AtomicReference<ClientResponse> reference = new AtomicReference<>();
+                        references.add(i, reference);
+                        final ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(MESSAGE);
+                        request.getRequestHeaders().put(Headers.HOST, "localhost");
+                        connection.sendRequest(request, client.createClientCallback(reference, latch));
+                    }
+                }
+
+            });
+
+            latch.await(10, TimeUnit.SECONDS);
+
+            Assert.assertEquals(10, references.size());
+            for (final AtomicReference<ClientResponse> reference : references) {
+                Assert.assertEquals(message, reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+                Assert.assertEquals("HTTP/2.0", reference.get().getProtocol().toString());
+            }
+        } finally {
+            connection.getIoThread().execute(new Runnable() {
+                @Override
+                public void run() {
+                    IoUtils.safeClose(connection);
+                }
+            });
+        }
     }
+
+
+    @Test
+    public void testMultipleHttpPostSsl() throws Exception {
+        //
+        final Http2Client client = createClient();
+        final String postMessage = "This is a post request";
+
+        final List<String> responses = new CopyOnWriteArrayList<>();
+        final CountDownLatch latch = new CountDownLatch(10);
+        SSLContext context = client.createSSLContext();
+        XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.SSL_BUFFER_POOL, context);
+
+        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.POOL, OptionMap.EMPTY).get();
+        try {
+            connection.getIoThread().execute(new Runnable() {
+                @Override
+                public void run() {
+                    for (int i = 0; i < 10; i++) {
+                        final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(POST);
+                        request.getRequestHeaders().put(Headers.HOST, "localhost");
+                        request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+                        connection.sendRequest(request, new ClientCallback<ClientExchange>() {
+                            @Override
+                            public void completed(ClientExchange result) {
+                                new StringWriteChannelListener(postMessage).setup(result.getRequestChannel());
+                                result.setResponseListener(new ClientCallback<ClientExchange>() {
+                                    @Override
+                                    public void completed(ClientExchange result) {
+                                        new StringReadChannelListener(Http2Client.POOL) {
+
+                                            @Override
+                                            protected void stringDone(String string) {
+                                                responses.add(string);
+                                                latch.countDown();
+                                            }
+
+                                            @Override
+                                            protected void error(IOException e) {
+                                                e.printStackTrace();
+                                                latch.countDown();
+                                            }
+                                        }.setup(result.getResponseChannel());
+                                    }
+
+                                    @Override
+                                    public void failed(IOException e) {
+                                        e.printStackTrace();
+                                        latch.countDown();
+                                    }
+                                });
+                            }
+
+                            @Override
+                            public void failed(IOException e) {
+                                e.printStackTrace();
+                                latch.countDown();
+                            }
+                        });
+                    }
+                }
+
+            });
+
+            latch.await(10, TimeUnit.SECONDS);
+
+            Assert.assertEquals(10, responses.size());
+            for (final String response : responses) {
+                Assert.assertEquals(postMessage, response);
+            }
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+    }
+
+    @Test
+    public void testMultipleHttp2PostSsl() throws Exception {
+        //
+        final Http2Client client = createClient();
+        final String postMessage = "This is a post request";
+
+        final List<String> responses = new CopyOnWriteArrayList<>();
+        final CountDownLatch latch = new CountDownLatch(10);
+        SSLContext context = client.createSSLContext();
+        XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.SSL_BUFFER_POOL, context);
+
+        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        try {
+            connection.getIoThread().execute(new Runnable() {
+                @Override
+                public void run() {
+                    for (int i = 0; i < 10; i++) {
+                        final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(POST);
+                        request.getRequestHeaders().put(Headers.HOST, "localhost");
+                        request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+                        connection.sendRequest(request, new ClientCallback<ClientExchange>() {
+                            @Override
+                            public void completed(ClientExchange result) {
+                                new StringWriteChannelListener(postMessage).setup(result.getRequestChannel());
+                                result.setResponseListener(new ClientCallback<ClientExchange>() {
+                                    @Override
+                                    public void completed(ClientExchange result) {
+                                        new StringReadChannelListener(Http2Client.POOL) {
+
+                                            @Override
+                                            protected void stringDone(String string) {
+                                                responses.add(string);
+                                                latch.countDown();
+                                            }
+
+                                            @Override
+                                            protected void error(IOException e) {
+                                                e.printStackTrace();
+                                                latch.countDown();
+                                            }
+                                        }.setup(result.getResponseChannel());
+                                    }
+
+                                    @Override
+                                    public void failed(IOException e) {
+                                        e.printStackTrace();
+                                        latch.countDown();
+                                    }
+                                });
+                            }
+
+                            @Override
+                            public void failed(IOException e) {
+                                e.printStackTrace();
+                                latch.countDown();
+                            }
+                        });
+                    }
+                }
+
+            });
+
+            latch.await(10, TimeUnit.SECONDS);
+
+            Assert.assertEquals(10, responses.size());
+            for (final String response : responses) {
+                Assert.assertEquals(postMessage, response);
+            }
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+    }
+
 
     public String callApiAsync() throws Exception {
         final Http2Client client = createClient();
@@ -391,7 +663,7 @@ public class Http2ClientTest {
 
     @Test
     public void testAsyncAboutToExpire() throws InterruptedException, ExecutionException {
-        for(int i = 0; i < 1; i++) {
+        for(int i = 0; i < 10; i++) {
             callApiAsyncMultiThread(4);
             logger.info("called times: " + i);
             try {
@@ -403,7 +675,7 @@ public class Http2ClientTest {
 
     @Test
     public void testAsyncExpired() throws InterruptedException, ExecutionException {
-        for(int i = 0; i < 1; i++) {
+        for(int i = 0; i < 10; i++) {
             callApiAsyncMultiThread(4);
             logger.info("called times: " + i);
             try {
@@ -415,7 +687,7 @@ public class Http2ClientTest {
 
     @Test
     public void testMixed() throws InterruptedException, ExecutionException {
-        for(int i = 0; i < 1; i++) {
+        for(int i = 0; i < 10; i++) {
             callApiAsyncMultiThread(4
             );
             logger.info("called times: " + i);
