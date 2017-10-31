@@ -39,6 +39,7 @@ public class ConsulClientImpl implements ConsulClient {
 	 */
 	public ConsulClientImpl(String protocol, String host, int port) {
 		url = protocol + "://" + host + ":" + port;
+		if(logger.isDebugEnabled()) logger.debug("url = " + url);
 	}
 
 	/**
@@ -49,6 +50,7 @@ public class ConsulClientImpl implements ConsulClient {
 	 */
 	public ConsulClientImpl(String protocol, String host) {
 		url = protocol + "://" + host;
+		if(logger.isDebugEnabled()) logger.debug("url = " + url);
 	}
 
 	@Override
