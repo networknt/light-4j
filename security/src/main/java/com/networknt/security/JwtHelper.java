@@ -67,6 +67,8 @@ public class JwtHelper {
     public static final String JwT_CLOCK_SKEW_IN_SECONDS = "clockSkewInSeconds";
     public static final String ENABLE_VERIFY_JWT = "enableVerifyJwt";
     public static final String OAUTH_HTTP2_SUPPORT = "oauthHttp2Support";
+    public static final String ENABLE_JWT_CACHE = "enableJwtCache";
+
     
     static Map<String, X509Certificate> certMap;
     static List<String> fingerPrints;
@@ -75,14 +77,17 @@ public class JwtHelper {
     static Map<String, Object> securityJwtConfig = (Map)securityConfig.get(JWT_CONFIG);
     static JwtConfig jwtConfig = (JwtConfig) Config.getInstance().getJsonObjectConfig(JWT_CONFIG, JwtConfig.class);
     static int secondsOfAllowedClockSkew = (Integer) securityJwtConfig.get(JwT_CLOCK_SKEW_IN_SECONDS);
+    static Boolean enableJwtCache = (Boolean)securityConfig.get(ENABLE_JWT_CACHE);
 
     static Cache<String, JwtClaims> cache;
 
     static {
-        cache = Caffeine.newBuilder()
-                // assuming that the clock screw time is less than 5 minutes
-                .expireAfterWrite(jwtConfig.expiredInMinutes + 5, TimeUnit.MINUTES)
-                .build();
+        if(Boolean.TRUE.equals(enableJwtCache)) {
+            cache = Caffeine.newBuilder()
+                    // assuming that the clock screw time is less than 5 minutes
+                    .expireAfterWrite(jwtConfig.expiredInMinutes + 5, TimeUnit.MINUTES)
+                    .build();
+        }
     }
 
     /**
@@ -249,21 +254,24 @@ public class JwtHelper {
      * @throws ExpiredTokenException
      */
     public static JwtClaims verifyJwt(String jwt) throws InvalidJwtException, ExpiredTokenException {
-        JwtClaims claims = cache.getIfPresent(jwt);
-        if(claims != null) {
-            try {
-                // if using our own client module, the jwt token should be renewed automatically
-                // and it will never expired here. However, we need to handle other clients.
-                if ((NumericDate.now().getValue() - secondsOfAllowedClockSkew) >= claims.getExpirationTime().getValue())
-                {
-                    logger.info("Cached jwt token is expired!");
-                    throw new ExpiredTokenException("Token is expired");
+        JwtClaims claims;
+        if(Boolean.TRUE.equals(enableJwtCache)) {
+            claims = cache.getIfPresent(jwt);
+            if(claims != null) {
+                try {
+                    // if using our own client module, the jwt token should be renewed automatically
+                    // and it will never expired here. However, we need to handle other clients.
+                    if ((NumericDate.now().getValue() - secondsOfAllowedClockSkew) >= claims.getExpirationTime().getValue())
+                    {
+                        logger.info("Cached jwt token is expired!");
+                        throw new ExpiredTokenException("Token is expired");
+                    }
+                } catch (MalformedClaimException e) {
+                    // This is cached token and it is impossible to have this exception
+                    logger.error("MalformedClaimException:", e);
                 }
-            } catch (MalformedClaimException e) {
-                // This is cached token and it is impossible to have this exception
-                logger.error("MalformedClaimException:", e);
+                return claims;
             }
-            return claims;
         }
         JwtConsumer consumer = new JwtConsumerBuilder()
                 .setSkipAllValidators()
@@ -307,7 +315,9 @@ public class JwtHelper {
         // Validate the JWT and process it to the Claims
         jwtContext = consumer.process(jwt);
         claims = jwtContext.getJwtClaims();
-        cache.put(jwt, claims);
+        if(Boolean.TRUE.equals(enableJwtCache)) {
+            cache.put(jwt, claims);
+        }
         return claims;
     }
 

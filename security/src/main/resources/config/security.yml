@@ -16,11 +16,17 @@ jwt:
     '101': oauth/secondary.crt
   clockSkewInSeconds: 60
 
-# Enable or disable JWT token logging
+# Enable or disable JWT token logging for audit. This is to log the entire token
+# or choose the next option that only logs client_id, user_id and scope.
 logJwtToken: true
 
-# Enable or disable client_id, user_id and scope logging.
+# Enable or disable client_id, user_id and scope logging if you don't want to log
+# the entire token. Choose this option or the option above.
 logClientUserScope: false
 
-# If OAuth2 provider support http2 protocol.
+# If OAuth2 provider support http2 protocol. If using light-oauth2, set this to true.
 oauthHttp2Support: true
+
+# Enable JWT token cache to speed up verification. This will only verify expired time
+# and skip the signature verification as it takes more CPU power and long time.
+enableJwtCache: true
