@@ -15,7 +15,7 @@ public class ErrorRootStatusSerializer implements StatusSerializer {
 
 	@Override
 	public String serializeStatus(Status status) {
-		return "{ error : {\"statusCode\":" + status.getStatusCode()
+		return "{ \"error\" : {\"statusCode\":" + status.getStatusCode()
         + ",\"code\":\"" + status.getCode()
         + "\",\"message\":\""
         + status.getMessage() + "\",\"description\":\""
