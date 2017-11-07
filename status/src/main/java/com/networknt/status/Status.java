@@ -17,6 +17,7 @@
 package com.networknt.status;
 
 import com.networknt.config.Config;
+import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.ModuleRegistry;
 
 import java.util.Map;
@@ -35,6 +36,10 @@ import static java.lang.String.format;
 public class Status {
     public static final String CONFIG_NAME = "status";
     public static final Map<String, Object> config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
+
+    // status serialization bean
+    // allows API implementations to provide their own Status serialization mechanism
+    static final StatusSerializer statusSerializer = SingletonServiceFactory.getBean(StatusSerializer.class);
 
     int statusCode;
     String code;
@@ -119,11 +124,7 @@ public class Status {
 
     @Override
     public String toString() {
-        return "{\"statusCode\":" + statusCode
-                + ",\"code\":\"" + code
-                + "\",\"message\":\""
-                + message + "\",\"description\":\""
-                + description + "\"}";
+    		return statusSerializer.serializeStatus(this);
     }
 
     /*
