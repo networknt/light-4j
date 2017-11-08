@@ -1,5 +1,0 @@
-# Singleton service factory configuration
-
-singletons:
-- com.networknt.status.StatusSerializer:
-  - com.networknt.status.ErrorRootStatusSerializer

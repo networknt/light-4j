@@ -39,7 +39,7 @@ public class Status {
 
     // status serialization bean
     // allows API implementations to provide their own Status serialization mechanism
-    static final StatusSerializer statusSerializer = SingletonServiceFactory.getBean(StatusSerializer.class);
+    static StatusSerializer statusSerializer;
 
     int statusCode;
     String code;
@@ -48,6 +48,11 @@ public class Status {
 
     static {
         ModuleRegistry.registerModule(Status.class.getName(), config, null);
+        try {
+            statusSerializer = SingletonServiceFactory.getBean(StatusSerializer.class);
+        } catch (ExceptionInInitializerError e) {
+            statusSerializer = null;
+        }
     }
 
     /**
@@ -78,10 +83,10 @@ public class Status {
      * Construct a status object based on all the properties in the object. It is not
      * very often to use this construct to create object.
      *
-     * @param statusCode
-     * @param code
-     * @param message
-     * @param description
+     * @param statusCode Status Code
+     * @param code Code
+     * @param message Message
+     * @param description Description
      */
     public Status(int statusCode, String code, String message, String description) {
         this.statusCode = statusCode;
@@ -124,21 +129,14 @@ public class Status {
 
     @Override
     public String toString() {
-    		return statusSerializer.serializeStatus(this);
+    	if(statusSerializer != null) {
+    	    return statusSerializer.serializeStatus(this);
+        } else {
+            return "{\"statusCode\":" + getStatusCode()
+                    + ",\"code\":\"" + getCode()
+                    + "\",\"message\":\""
+                    + getMessage() + "\",\"description\":\""
+                    + getDescription() + "\"}";
+        }
     }
-
-    /*
-    public String toStringAppend() {
-        StringBuilder builder = new StringBuilder("{\"statusCode\":");
-        return builder.append(statusCode)
-                .append(",\"code\":\"")
-                .append(code)
-                .append("\",\"message\":\"")
-                .append(message)
-                .append("\",\"description\":\"")
-                .append(description)
-                .append("\"}").toString();
-    }
-    */
-
 }
