@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.5.1 - 2017-11-8
+### Added
+
+### Changed
+
+- Fixed #124 Remove mockito dependencies in most modules
+- Fixed #122 Customize return of the status from cross-cutting concerns(Thanks @ddobrin)
+- Fixed #121 Add url debug output in ConsulClientImpl
+- Fixed #120 Split integration tests from unit tests
+- Fixed #119 Server module should only initialize client instance if config server is enabled
+- Fixed #113 Make Jwt token verification cache configurable
+- Upgrade to 1.5.1
+
 ## 1.5.0 - 2017-10-20
 ### Added
 - fixes #118 add a header handler to manipulate request/response headers

@@ -84,7 +84,7 @@ public class MetricRegistry implements MetricSet {
     /**
      * @param name name
      * @param metric metric
-     * @return {@code metric}
+     * @return T git s{@code metric}
      * @see #register(MetricName, Metric)
      */
     @SuppressWarnings("unchecked")
