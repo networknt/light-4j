@@ -68,18 +68,29 @@ public class HeaderHandler implements MiddlewareHandler {
 
         // handle request header
         Map<String, Object> requestHeaderMap = (Map<String, Object>)config.get(REQUEST);
-        List<String> requestHeaderRemove = (List<String>)requestHeaderMap.get(REMOVE);
-        requestHeaderRemove.forEach(s -> exchange.getRequestHeaders().remove(s));
-        Map<String, String> requestHeaderUpdate = (Map<String, String>)requestHeaderMap.get(UPDATE);
-        requestHeaderUpdate.forEach((k, v) -> exchange.getRequestHeaders().put(new HttpString(k), v));
+        if(requestHeaderMap != null) {
+            List<String> requestHeaderRemove = (List<String>)requestHeaderMap.get(REMOVE);
+            if(requestHeaderRemove != null) {
+                requestHeaderRemove.forEach(s -> exchange.getRequestHeaders().remove(s));
+            }
+            Map<String, String> requestHeaderUpdate = (Map<String, String>)requestHeaderMap.get(UPDATE);
+            if(requestHeaderUpdate != null) {
+                requestHeaderUpdate.forEach((k, v) -> exchange.getRequestHeaders().put(new HttpString(k), v));
+            }
+        }
 
         // handle response header
         Map<String, Object> responseHeaderMap = (Map<String, Object>)config.get(RESPONSE);
-        List<String> responseHeaderRemove = (List<String>)responseHeaderMap.get(REMOVE);
-        responseHeaderRemove.forEach(s -> exchange.getResponseHeaders().remove(s));
-        Map<String, String> responseHeaderUpdate = (Map<String, String>)responseHeaderMap.get(UPDATE);
-        responseHeaderUpdate.forEach((k, v) -> exchange.getResponseHeaders().put(new HttpString(k), v));
-
+        if(responseHeaderMap != null) {
+            List<String> responseHeaderRemove = (List<String>)responseHeaderMap.get(REMOVE);
+            if(responseHeaderRemove != null) {
+                responseHeaderRemove.forEach(s -> exchange.getResponseHeaders().remove(s));
+            }
+            Map<String, String> responseHeaderUpdate = (Map<String, String>)responseHeaderMap.get(UPDATE);
+            if(responseHeaderUpdate != null) {
+                responseHeaderUpdate.forEach((k, v) -> exchange.getResponseHeaders().put(new HttpString(k), v));
+            }
+        }
         next.handleRequest(exchange);
     }
 
