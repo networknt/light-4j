@@ -18,7 +18,7 @@ public class SingletonServiceFactory {
     static String CONFIG_NAME = "service";
     static Logger logger = LoggerFactory.getLogger(SingletonServiceFactory.class);
 
-    private static Map<Class, Object> serviceMap = new HashMap<>();
+    private static Map<String, Object> serviceMap = new HashMap<>();
     // map is statically loaded to make sure there is only one instance per jvm
     static {
         ServiceConfig serviceConfig =
@@ -43,13 +43,13 @@ public class SingletonServiceFactory {
         }
     }
 
-    private static void handleSingleImpl(List<Class> interfaceClasses, List<Object> value) throws Exception {
+    private static void handleSingleImpl(List<String> interfaceClasses, List<Object> value) throws Exception {
         // only one object should be defined in value. TODO throws exception if number of object is not correct.
         Object object = value.get(0);
         if(object instanceof String) {
             Class implClass = Class.forName((String)object);
             Object obj = construct(implClass);
-            for(Class c: interfaceClasses) {
+            for(String c: interfaceClasses) {
                 serviceMap.put(c, obj);  // all interfaces share the same impl
             }
         } else {
@@ -94,16 +94,23 @@ public class SingletonServiceFactory {
                 } else {
                     throw new RuntimeException("Only Map or List is allowed for implementation parameters " + mapOrList);
                 }
-                for(Class c: interfaceClasses) {
+                for(String c: interfaceClasses) {
                     serviceMap.put(c, obj);  // all interfaces share the same impl
                 }
             }
         }
     }
 
-    private static void handleMultipleImpl(List<Class> interfaceClasses, List<Object> value) throws Exception {
+    private static void handleMultipleImpl(List<String> interfaceClasses, List<Object> value) throws Exception {
 
-        List<Object> arrays = interfaceClasses.stream().map(c -> Array.newInstance(c, value.size())).collect(Collectors.toList());
+        List<Object> arrays = interfaceClasses.stream()
+                .map(c -> { try {
+                    return Array.newInstance(Class.forName(c), value.size());
+                } catch (ClassNotFoundException e) {
+                    throw new RuntimeException("ClassNotFoundException for " + c, e);
+                }
+                })
+                .collect(Collectors.toList());
         for(int i = 0; i < value.size(); i++) {
             Object object = value.get(i);
             if(object instanceof String) {
@@ -161,14 +168,14 @@ public class SingletonServiceFactory {
      */
     private static void handleSingleton(String key, List<Object> value) throws Exception {
 
-        List<Class> interfaceClasses = new ArrayList();
+        List<String> interfaceClasses = new ArrayList();
         if(key.contains(",")) {
             String[] interfaces = key.split(",");
             for (String anInterface : interfaces) {
-                interfaceClasses.add(Class.forName(anInterface));
+                interfaceClasses.add(anInterface);
             }
         } else {
-            interfaceClasses.add(Class.forName(key));
+            interfaceClasses.add(key);
         }
         // the value can be a list of implementation class names or a map.
         if(value != null && value.size() == 1) {
@@ -286,6 +293,19 @@ public class SingletonServiceFactory {
     }
 
     /**
+     * Get a cached singleton object from service map by interface class and generic type class.
+     * The serviceMap is constructed from service.yml which defines interface and generic type
+     * to implementation mapping.
+     *
+     * @param interfaceClass Interface class
+     * @param typeClass Generic type class
+     * @return The implementation object
+     */
+    public static <T> T getBean(Class<T> interfaceClass, Class typeClass) {
+        return (T) serviceMap.get(interfaceClass.getName() + "<" + typeClass.getName() + ">");
+    }
+
+    /**
      * Get a cached singleton object from service map by interface class. The serviceMap
      * is constructed from service.yml which defines interface to implementation mapping.
      *
@@ -293,7 +313,7 @@ public class SingletonServiceFactory {
      * @return The implementation object
      */
     public static <T> T getBean(Class<T> interfaceClass) {
-        return (T) serviceMap.get(interfaceClass);
+        return (T) serviceMap.get(interfaceClass.getName());
     }
 
     /**
@@ -303,6 +323,6 @@ public class SingletonServiceFactory {
      * @return The array of implementation objects
      */
     public static <T> T[] getBeans(Class<T> interfaceClass) {
-        return (T[]) serviceMap.get(interfaceClass);
+        return (T[]) serviceMap.get(interfaceClass.getName());
     }
 }
