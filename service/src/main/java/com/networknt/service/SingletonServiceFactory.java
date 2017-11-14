@@ -81,7 +81,7 @@ public class SingletonServiceFactory {
                             if(v == null) {
                                 // it is not primitive type, so find the object in service map.
                                 Class<?>[] pType  = method.getParameterTypes();
-                                v = serviceMap.get(pType[0]);
+                                v = serviceMap.get(pType[0].getName());
                             }
                             if(v != null) {
                                 o[0] = v;

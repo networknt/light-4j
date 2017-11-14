@@ -40,3 +40,15 @@ singletons:
     - java.lang.String: Steve
     - int: 2
     - int: 3
+- com.networknt.service.Contact:
+  - com.networknt.service.ContactImpl
+- com.networknt.service.License:
+  - com.networknt.service.LicenseImpl
+- com.networknt.service.Info:
+  - com.networknt.service.InfoImpl
+- com.networknt.service.Validator<com.networknt.service.Contact>:
+  - com.networknt.service.ContactValidator
+- com.networknt.service.Validator<com.networknt.service.License>:
+  - com.networknt.service.LicenseValidator
+- com.networknt.service.Validator<com.networknt.service.Info>:
+  - com.networknt.service.InfoValidator

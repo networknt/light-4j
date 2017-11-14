@@ -74,4 +74,17 @@ public class SingletonServiceFactoryTest {
         Assert.assertEquals(5, m.getValue());
     }
 
+    @Test
+    public void testInfo() {
+        Info info = SingletonServiceFactory.getBean(Info.class);
+        Assert.assertEquals("contact", info.getContact().getName());
+        Assert.assertEquals("license", info.getLicense().getName());
+    }
+
+    @Test
+    public void testInfoValidator() {
+        Validator<Info> infoValidator = SingletonServiceFactory.getBean(Validator.class, Info.class);
+        Info info = SingletonServiceFactory.getBean(Info.class);
+        Assert.assertTrue(infoValidator.validate(info));
+    }
 }
