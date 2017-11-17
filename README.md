@@ -1,7 +1,7 @@
 A fast, lightweight and cloud native microservices framework.
 
 [Developer Chat](https://gitter.im/networknt/light-4j) |
-[Documentation](https://networknt.github.io/light-4j) |
+[Documentation](https://doc.networknt.com) |
 [Contribution Guide](CONTRIBUTING.md) |
 
 [![Build Status](https://travis-ci.org/networknt/light-4j.svg?branch=master)](https://travis-ci.org/networknt/light-4j)
