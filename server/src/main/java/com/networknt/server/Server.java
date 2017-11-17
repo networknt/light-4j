@@ -112,7 +112,7 @@ public class Server {
 
         // add startup hooks here.
         StartupHookProvider[] startupHookProviders = SingletonServiceFactory.getBeans(StartupHookProvider.class);
-        Arrays.stream(startupHookProviders).forEach(s -> s.onStartup());
+        if(startupHookProviders != null) Arrays.stream(startupHookProviders).forEach(s -> s.onStartup());
 
         // application level service registry. only be used without docker container.
         if(config.enableRegistry) {
@@ -143,17 +143,19 @@ public class Server {
             handler = handlerProvider.getHandler();
         }
         if (handler == null) {
-            logger.error("Unable to start the server - no route handler provider available in the classpath");
-            return;
+            logger.error("Unable to start the server - no route handler provider available in service.yml");
+            throw new RuntimeException("Unable to start the server - no route handler provider available in service.yml");
         }
 
         // Middleware Handlers plugged into the handler chain.
         MiddlewareHandler[] middlewareHandlers = SingletonServiceFactory.getBeans(MiddlewareHandler.class);
-        for (int i = middlewareHandlers.length - 1; i >= 0; i--) {
-            logger.info("Plugin: " + middlewareHandlers[i].getClass().getName());
-            if(middlewareHandlers[i].isEnabled()) {
-                handler = middlewareHandlers[i].setNext(handler);
-                middlewareHandlers[i].register();
+        if(middlewareHandlers != null) {
+            for (int i = middlewareHandlers.length - 1; i >= 0; i--) {
+                logger.info("Plugin: " + middlewareHandlers[i].getClass().getName());
+                if(middlewareHandlers[i].isEnabled()) {
+                    handler = middlewareHandlers[i].setNext(handler);
+                    middlewareHandlers[i].register();
+                }
             }
         }
 
@@ -216,7 +218,7 @@ public class Server {
         }
 
         ShutdownHookProvider[] shutdownHookProviders = SingletonServiceFactory.getBeans(ShutdownHookProvider.class);
-        Arrays.stream(shutdownHookProviders).forEach(s -> s.onShutdown());
+        if(shutdownHookProviders != null) Arrays.stream(shutdownHookProviders).forEach(s -> s.onShutdown());
 
         stop();
         logger.info("Cleaning up before server shutdown");
