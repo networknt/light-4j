@@ -42,6 +42,7 @@ import org.slf4j.MDC;
 import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 import org.xnio.Options;
+import sun.nio.ch.sctp.Shutdown;
 
 import javax.net.ssl.*;
 import java.io.BufferedInputStream;
@@ -55,10 +56,7 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.ServiceLoader;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipEntry;
@@ -113,10 +111,8 @@ public class Server {
         addDaemonShutdownHook();
 
         // add startup hooks here.
-        final ServiceLoader<StartupHookProvider> startupLoaders = ServiceLoader.load(StartupHookProvider.class);
-        for (final StartupHookProvider provider : startupLoaders) {
-            provider.onStartup();
-        }
+        StartupHookProvider[] startupHookProviders = SingletonServiceFactory.getBeans(StartupHookProvider.class);
+        Arrays.stream(startupHookProviders).forEach(s -> s.onStartup());
 
         // application level service registry. only be used without docker container.
         if(config.enableRegistry) {
@@ -142,12 +138,9 @@ public class Server {
         HttpHandler handler = null;
 
         // API routing handler or others handler implemented by application developer.
-        final ServiceLoader<HandlerProvider> handlerLoaders = ServiceLoader.load(HandlerProvider.class);
-        for (final HandlerProvider provider : handlerLoaders) {
-            if (provider.getHandler() != null) {
-                handler = provider.getHandler();
-                break;
-            }
+        HandlerProvider handlerProvider = SingletonServiceFactory.getBean(HandlerProvider.class);
+        if(handlerProvider != null) {
+            handler = handlerProvider.getHandler();
         }
         if (handler == null) {
             logger.error("Unable to start the server - no route handler provider available in the classpath");
@@ -155,13 +148,12 @@ public class Server {
         }
 
         // Middleware Handlers plugged into the handler chain.
-        final ServiceLoader<MiddlewareHandler> middlewareLoaders = ServiceLoader.load(MiddlewareHandler.class);
-        logger.debug("found middlewareLoaders", middlewareLoaders);
-        for (final MiddlewareHandler middlewareHandler : middlewareLoaders) {
-            logger.info("Plugin: " + middlewareHandler.getClass().getName());
-            if(middlewareHandler.isEnabled()) {
-                handler = middlewareHandler.setNext(handler);
-                middlewareHandler.register();
+        MiddlewareHandler[] middlewareHandlers = SingletonServiceFactory.getBeans(MiddlewareHandler.class);
+        for (int i = middlewareHandlers.length - 1; i >= 0; i--) {
+            logger.info("Plugin: " + middlewareHandlers[i].getClass().getName());
+            if(middlewareHandlers[i].isEnabled()) {
+                handler = middlewareHandlers[i].setNext(handler);
+                middlewareHandlers[i].register();
             }
         }
 
@@ -223,10 +215,9 @@ public class Server {
             if(logger.isInfoEnabled()) logger.info("unregister serviceHttpsUrl " + serviceHttpsUrl);
         }
 
-        final ServiceLoader<ShutdownHookProvider> shutdownLoaders = ServiceLoader.load(ShutdownHookProvider.class);
-        for (final ShutdownHookProvider provider : shutdownLoaders) {
-            provider.onShutdown();
-        }
+        ShutdownHookProvider[] shutdownHookProviders = SingletonServiceFactory.getBeans(ShutdownHookProvider.class);
+        Arrays.stream(shutdownHookProviders).forEach(s -> s.onShutdown());
+
         stop();
         logger.info("Cleaning up before server shutdown");
     }

@@ -25,7 +25,7 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.RequestLimit;
 
 /**
- A handler which limits the maximum number of concurrent requests.  Requests beyond the limit will
+ * A handler which limits the maximum number of concurrent requests.  Requests beyond the limit will
  * be queued with limited size of queue. If the queue is full, then request will be dropped.
  *
  * @author Steve Hu

@@ -1,6 +1,21 @@
 ---
 # singleton service factory configuration
 singletons:
+# HandlerProvider implementation
+- com.networknt.server.HandlerProvider:
+  - com.networknt.server.TestHandlerProvider
+# StartupHookProvider implementations
+- com.networknt.server.StartupHookProvider:
+  - com.networknt.server.Test1StartupHook
+  - com.networknt.server.Test2StartupHook
+# ShutdownHookProvider implementations
+- com.networknt.server.ShutdownHookProvider:
+  - com.networknt.server.Test1ShutdownHook
+  - com.networknt.server.Test2ShutdownHook
+# MiddlewareHandler implementations
+- com.networknt.handler.MiddlewareHandler:
+  - com.networknt.server.Test1MiddlewareHandler
+  - com.networknt.server.Test2MiddlewareHandler
 - com.networknt.registry.URL:
   - com.networknt.registry.URLImpl:
       protocol: http
@@ -10,7 +25,8 @@ singletons:
       parameters:
         registryRetryPeriod: '30000'
 - com.networknt.consul.client.ConsulClient:
-  - com.networknt.consul.client.ConsulEcwidClient:
+  - com.networknt.consul.client.ConsulClientImpl:
+    - java.lang.String: http
     - java.lang.String: localhost
     - int: 8500
 - com.networknt.registry.Registry:

@@ -11,6 +11,6 @@ public class TestHandlerProvider implements HandlerProvider {
     @Override
     public HttpHandler getHandler() {
         return Handlers.routing()
-                .add(Methods.GET, "/", new TestHandler());
+                .add(Methods.GET, "/test", new TestHandler());
     }
 }
