@@ -102,4 +102,15 @@ public class SingletonServiceFactoryTest {
         Assert.assertEquals("e1", e.e());
     }
 
+    @Test
+    public void testArrayNotDefined() {
+        Dummy[] dummies = SingletonServiceFactory.getBeans(Dummy.class);
+        Assert.assertNull(dummies);
+    }
+
+    @Test
+    public void testObjectNotDefined() {
+        Dummy dummy = SingletonServiceFactory.getBean(Dummy.class);
+        Assert.assertNull(dummy);
+    }
 }

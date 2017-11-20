@@ -303,6 +303,7 @@ public class SingletonServiceFactory {
      */
     public static <T> T getBean(Class<T> interfaceClass, Class typeClass) {
         Object object = serviceMap.get(interfaceClass.getName() + "<" + typeClass.getName() + ">");
+        if(object == null) return null;
         if(object instanceof Object[]) {
             return (T)Array.get(object, 0);
         } else {
@@ -322,6 +323,7 @@ public class SingletonServiceFactory {
      */
     public static <T> T getBean(Class<T> interfaceClass) {
         Object object = serviceMap.get(interfaceClass.getName());
+        if(object == null) return null;
         if(object instanceof Object[]) {
             return (T)Array.get(object, 0);
         } else {
@@ -338,6 +340,7 @@ public class SingletonServiceFactory {
      */
     public static <T> T[] getBeans(Class<T> interfaceClass) {
         Object object = serviceMap.get(interfaceClass.getName());
+        if(object == null) return null;
         if(object instanceof Object[]) {
             return (T[])object;
         } else {
