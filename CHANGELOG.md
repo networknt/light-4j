@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.5.3 - 2017-11-19
+### Added
+
+### Changed
+
+- fixes #131 class cast exception in service module if getting an array from one impl
+- Upgrade to 1.5.3
+
 ## 1.5.2 - 2017-11-19
 ### Added
 
