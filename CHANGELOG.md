@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.5.2 - 2017-11-19
+### Added
+
+### Changed
+
+- fixes #130 Add a new constant OPENAPI_OPERATION_STRING for OpenAPI 3
+- fixes #129 Improve configurability for networknt.handler.MiddlewareHandler
+- fixes #127 Add support for interface with generic type in service module
+- fixes #126 Update serviceMap key to interface class name instead of class
+- fixes #125 Need to check certain section is empty for header.yml
+- Upgrade to 1.5.2
+
 ## 1.5.1 - 2017-11-8
 ### Added
 
