@@ -302,27 +302,48 @@ public class SingletonServiceFactory {
      * @return The implementation object
      */
     public static <T> T getBean(Class<T> interfaceClass, Class typeClass) {
-        return (T) serviceMap.get(interfaceClass.getName() + "<" + typeClass.getName() + ">");
+        Object object = serviceMap.get(interfaceClass.getName() + "<" + typeClass.getName() + ">");
+        if(object instanceof Object[]) {
+            return (T)Array.get(object, 0);
+        } else {
+            return (T)object;
+        }
     }
 
     /**
      * Get a cached singleton object from service map by interface class. The serviceMap
      * is constructed from service.yml which defines interface to implementation mapping.
      *
+     * As in the service.yml one interface can have several implementations and that might be
+     * the case for this method to get the first one only if there are multiple.
+     *
      * @param interfaceClass Interface class
      * @return The implementation object
      */
     public static <T> T getBean(Class<T> interfaceClass) {
-        return (T) serviceMap.get(interfaceClass.getName());
+        Object object = serviceMap.get(interfaceClass.getName());
+        if(object instanceof Object[]) {
+            return (T)Array.get(object, 0);
+        } else {
+            return (T)object;
+        }
     }
 
     /**
-     * Get a cached singleton objects from service map by interface class.
+     * Get a list of cached singleton objects from service map by interface class. If there
+     * is only one object in the serviceMap, then construct the list with this only object.
      *
      * @param interfaceClass Interface class
      * @return The array of implementation objects
      */
     public static <T> T[] getBeans(Class<T> interfaceClass) {
-        return (T[]) serviceMap.get(interfaceClass.getName());
+        Object object = serviceMap.get(interfaceClass.getName());
+        if(object instanceof Object[]) {
+            return (T[])object;
+        } else {
+            Object array = Array.newInstance(interfaceClass, 1);
+            Array.set(array, 0, object);
+            return (T[])array;
+        }
     }
 }

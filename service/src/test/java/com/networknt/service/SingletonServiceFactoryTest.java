@@ -87,4 +87,19 @@ public class SingletonServiceFactoryTest {
         Info info = SingletonServiceFactory.getBean(Info.class);
         Assert.assertTrue(infoValidator.validate(info));
     }
+
+    @Test
+    public void testArrayFromSingle() {
+        // get an array with only one implementation.
+        A[] a = SingletonServiceFactory.getBeans(A.class);
+        Assert.assertEquals(1, a.length);
+    }
+
+    @Test
+    public void testSingleFromArray() {
+        // get the first object from an array of impelementation in service.yml
+        E e = SingletonServiceFactory.getBean(E.class);
+        Assert.assertEquals("e1", e.e());
+    }
+
 }
