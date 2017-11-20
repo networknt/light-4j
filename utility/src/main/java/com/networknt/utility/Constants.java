@@ -33,7 +33,11 @@ public class Constants {
     public static final String SCOPE_CLIENT_ID_STRING = "scope_client_id";
     public static final String SCOPE_STRING = "scope";
     public static final String ENDPOINT_STRING = "endpoint";
+    // Swagger 2.0 operation header name
     public static final String SWAGGER_OPERATION_STRING = "swagger_operation";
+    // OpenAPI 3.0 operation header name
+    public static final String OPENAPI_OPERATION_STRING = "openapi_operation";
+
     public static final String SCOPE_TOKEN_STRING = "X-Scope-Token";
     public static final String CONSUL_TOKEN_STRING = "X-Consul-Token";
 
