@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.5.4 - 2017-11-20
+### Added
+
+### Changed
+
+- fixes #132 service lookup returns null if there is no entry defined in service.yml
+- Upgrade to 1.5.4
+
 ## 1.5.3 - 2017-11-19
 ### Added
 
