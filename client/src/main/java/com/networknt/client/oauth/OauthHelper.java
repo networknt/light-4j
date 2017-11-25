@@ -102,7 +102,7 @@ public class OauthHelper {
                 }
             });
 
-            latch.await(1, TimeUnit.SECONDS);
+            latch.await(4, TimeUnit.SECONDS);
         } catch (Exception e) {
             logger.error("IOException: ", e);
             throw new ClientException(e);
