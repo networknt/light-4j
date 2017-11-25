@@ -79,7 +79,7 @@ public class OauthHelper {
 
                                         @Override
                                         protected void error(IOException e) {
-                                            e.printStackTrace();
+                                            logger.error("IOException:", e);
                                             latch.countDown();
                                         }
                                     }.setup(result.getResponseChannel());
@@ -87,7 +87,7 @@ public class OauthHelper {
 
                                 @Override
                                 public void failed(IOException e) {
-                                    e.printStackTrace();
+                                    logger.error("IOException:", e);
                                     latch.countDown();
                                 }
                             });
@@ -95,14 +95,14 @@ public class OauthHelper {
 
                         @Override
                         public void failed(IOException e) {
-                            e.printStackTrace();
+                            logger.error("IOException:", e);
                             latch.countDown();
                         }
                     });
                 }
             });
 
-            latch.await(10, TimeUnit.SECONDS);
+            latch.await(1, TimeUnit.SECONDS);
         } catch (Exception e) {
             logger.error("IOException: ", e);
             throw new ClientException(e);

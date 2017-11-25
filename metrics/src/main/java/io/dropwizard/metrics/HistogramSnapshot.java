@@ -2,6 +2,8 @@ package io.dropwizard.metrics;
 
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.HistogramIterationValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import java.io.OutputStream;
@@ -11,6 +13,8 @@ import java.io.PrintWriter;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 final class HistogramSnapshot extends Snapshot {
+    private static final Logger logger = LoggerFactory.getLogger(HistogramSnapshot.class);
+
     private final Histogram histogram;
 
     HistogramSnapshot(@Nonnull Histogram histogram) {
@@ -82,7 +86,7 @@ final class HistogramSnapshot extends Snapshot {
             }
         } catch (Exception e) {
             if(p != null) p.close();
-            e.printStackTrace();
+            logger.error("Exception:", e);
         }
     }
 }

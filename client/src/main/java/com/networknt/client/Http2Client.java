@@ -539,8 +539,7 @@ public class Http2Client {
 
                             @Override
                             protected void error(IOException e) {
-                                e.printStackTrace();
-
+                                logger.error("IOException:", e);
                                 latch.countDown();
                             }
                         }.setup(result.getResponseChannel());
@@ -548,8 +547,7 @@ public class Http2Client {
 
                     @Override
                     public void failed(IOException e) {
-                        e.printStackTrace();
-
+                        logger.error("IOException:", e);
                         latch.countDown();
                     }
                 });
@@ -560,14 +558,14 @@ public class Http2Client {
                         result.getRequestChannel().resumeWrites();
                     }
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    logger.error("IOException:", e);
                     latch.countDown();
                 }
             }
 
             @Override
             public void failed(IOException e) {
-                e.printStackTrace();
+                logger.error("IOException:", e);
                 latch.countDown();
             }
         };
@@ -591,7 +589,7 @@ public class Http2Client {
 
                             @Override
                             protected void error(IOException e) {
-                                e.printStackTrace();
+                                logger.error("IOException:", e);
                                 latch.countDown();
                             }
                         }.setup(result.getResponseChannel());
@@ -599,7 +597,7 @@ public class Http2Client {
 
                     @Override
                     public void failed(IOException e) {
-                        e.printStackTrace();
+                        logger.error("IOException:", e);
                         latch.countDown();
                     }
                 });
@@ -607,7 +605,7 @@ public class Http2Client {
 
             @Override
             public void failed(IOException e) {
-                e.printStackTrace();
+                logger.error("IOException:", e);
                 latch.countDown();
             }
         };
