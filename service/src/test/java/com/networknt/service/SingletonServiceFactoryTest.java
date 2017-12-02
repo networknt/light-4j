@@ -113,4 +113,13 @@ public class SingletonServiceFactoryTest {
         Dummy dummy = SingletonServiceFactory.getBean(Dummy.class);
         Assert.assertNull(dummy);
     }
+
+    @Test
+    public void testInitializerInterfaceWithBuilder() {
+        ChannelMapping channelMapping = SingletonServiceFactory.getBean(ChannelMapping.class);
+        Assert.assertNotNull(channelMapping);
+        Assert.assertTrue(channelMapping.transform("ReplyTo").startsWith("aggregate-destination-"));
+    }
+
+
 }

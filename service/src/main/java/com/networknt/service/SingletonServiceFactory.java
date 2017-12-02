@@ -23,18 +23,23 @@ public class SingletonServiceFactory {
     static {
         ServiceConfig serviceConfig =
                 (ServiceConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServiceConfig.class);
-        List<Map<String, List<Object>>> singletons = serviceConfig.getSingletons();
+        List<Map<String, Object>> singletons = serviceConfig.getSingletons();
         //logger.debug("singletons " + singletons);
         try {
             if(singletons != null && singletons.size() > 0) {
-                for(Map<String, List<Object>> singleton: singletons) {
+                // for each interface or class, there might be a list of implementations or one init class::method
+                for(Map<String, Object> singleton: singletons) {
                     Iterator it = singleton.entrySet().iterator();
                     if (it.hasNext()) {
-                        Map.Entry<String, List<Object>> pair = (Map.Entry)it.next();
+                        Map.Entry<String, Object> pair = (Map.Entry)it.next();
                         String key = pair.getKey();
                         key = key.replaceAll("\\s+","");
-                        List<Object> value = pair.getValue();
-                        handleSingleton(key, value);
+                        Object value = pair.getValue();
+                        if(value instanceof List) {
+                            handleSingletonList(key, (List)value);
+                        } else if(value instanceof String) {
+                            handleSingletonClass(key, (String)value);
+                        }
                     }
                 }
             }
@@ -161,12 +166,38 @@ public class SingletonServiceFactory {
     }
 
     /**
-     * For each singleton definition, create object and push it into the service map
+     * For each singleton definition, create object with the initializer class and method,
+     * and push it into the service map with the key of the class name.
+     *
+     * @param key String class name of the object that needs to be initialized
+     * @param value String class name of initializer class and method separated by "::"
+     * @throws Exception exception thrown from the object creation
+     */
+    private static void handleSingletonClass(String key, String value) throws Exception {
+        System.out.println("key = " + key + " value = " + value);
+        if(value.contains("::")) {
+            String initClassName = value.substring(0, value.indexOf("::"));
+            String initMethodName = value.substring(value.indexOf("::") + 2);
+            System.out.println("initClassName = " + initClassName + " initMethodName = " + initMethodName);
+            Class initClass = Class.forName(initClassName);
+            Object obj = construct(initClass);
+            Method method = obj.getClass().getMethod(initMethodName);
+            Object result = method.invoke(obj);
+            serviceMap.put(key, result);
+        } else {
+            throw new RuntimeException("No initializer method defined for " + key);
+        }
+    }
+
+
+    /**
+     * For each singleton definition, create object for the interface with the implementation class,
+     * and push it into the service map with key and implemented object.
      * @param key String interface or multiple interface separated by ","
      * @param value List of implementations of interface(s) defined in the key
      * @throws Exception exception thrown from the object creation
      */
-    private static void handleSingleton(String key, List<Object> value) throws Exception {
+    private static void handleSingletonList(String key, List<Object> value) throws Exception {
 
         List<String> interfaceClasses = new ArrayList();
         if(key.contains(",")) {

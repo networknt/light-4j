@@ -9,16 +9,16 @@ import java.util.Map;
  * @author Steve Hu
  */
 public class ServiceConfig {
-    List<Map<String, List<Object>>> singletons;
+    List<Map<String, Object>> singletons;
 
     public ServiceConfig() {
     }
 
-    public List<Map<String, List<Object>>> getSingletons() {
+    public List<Map<String, Object>> getSingletons() {
         return singletons;
     }
 
-    public void setSingletons(List<Map<String, List<Object>>> singletons) {
+    public void setSingletons(List<Map<String, Object>> singletons) {
         this.singletons = singletons;
     }
 }
