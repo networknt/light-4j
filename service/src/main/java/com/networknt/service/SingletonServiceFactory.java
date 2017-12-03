@@ -174,29 +174,27 @@ public class SingletonServiceFactory {
      * @throws Exception exception thrown from the object creation
      */
     private static void handleSingletonClass(String key, String value) throws Exception {
-        System.out.println("key = " + key + " value = " + value);
+        Object object = handleValue(value);
         if(key.contains(",")) {
             String[] interfaces = key.split(",");
             for (String anInterface : interfaces) {
-                handleValue(anInterface, value);
+                serviceMap.put(anInterface, object);
             }
         } else {
-            handleValue(key, value);
+            serviceMap.put(key, object);
         }
     }
 
-    private static void handleValue(String key, String value) throws Exception {
+    private static Object handleValue(String value) throws Exception {
         if(value.contains("::")) {
             String initClassName = value.substring(0, value.indexOf("::"));
             String initMethodName = value.substring(value.indexOf("::") + 2);
-            System.out.println("initClassName = " + initClassName + " initMethodName = " + initMethodName);
             Class initClass = Class.forName(initClassName);
             Object obj = construct(initClass);
             Method method = obj.getClass().getMethod(initMethodName);
-            Object result = method.invoke(obj);
-            serviceMap.put(key, result);
+            return method.invoke(obj);
         } else {
-            throw new RuntimeException("No initializer method defined for " + key);
+            throw new RuntimeException("No initializer method defined for " + value);
         }
     }
 
