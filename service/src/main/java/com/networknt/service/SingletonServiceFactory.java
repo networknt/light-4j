@@ -175,6 +175,17 @@ public class SingletonServiceFactory {
      */
     private static void handleSingletonClass(String key, String value) throws Exception {
         System.out.println("key = " + key + " value = " + value);
+        if(key.contains(",")) {
+            String[] interfaces = key.split(",");
+            for (String anInterface : interfaces) {
+                handleValue(anInterface, value);
+            }
+        } else {
+            handleValue(key, value);
+        }
+    }
+
+    private static void handleValue(String key, String value) throws Exception {
         if(value.contains("::")) {
             String initClassName = value.substring(0, value.indexOf("::"));
             String initMethodName = value.substring(value.indexOf("::") + 2);
@@ -188,7 +199,6 @@ public class SingletonServiceFactory {
             throw new RuntimeException("No initializer method defined for " + key);
         }
     }
-
 
     /**
      * For each singleton definition, create object for the interface with the implementation class,
@@ -379,5 +389,17 @@ public class SingletonServiceFactory {
             Array.set(array, 0, object);
             return (T[])array;
         }
+    }
+
+    /**
+     * This is a testing API that you can manipulate serviceMap by inject an object
+     * into it programmatically. It is not recommended to use it for the normal code
+     * but just for test cases in order to simulate certain scenarios.
+     *
+     * @param className full classname with package
+     * @param object The object that you want to binding to the class
+     */
+    public static void setBean(String className, Object object) {
+        serviceMap.put(className, object);
     }
 }
