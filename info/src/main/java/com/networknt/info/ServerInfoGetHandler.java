@@ -90,7 +90,9 @@ public class ServerInfoGetHandler implements HttpHandler {
 
     public Map<String, Object> getSecurity() {
         Map<String, Object> secMap = new LinkedHashMap<>();
-        secMap.put("oauth2FingerPrints", JwtHelper.getFingerPrints());
+        if(JwtHelper.getFingerPrints() != null) {
+            secMap.put("oauth2FingerPrints", JwtHelper.getFingerPrints());
+        }
         secMap.put("serverFingerPrint", getServerTlsFingerPrint());
         return secMap;
     }

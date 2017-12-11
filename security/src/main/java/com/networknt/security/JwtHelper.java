@@ -68,6 +68,7 @@ public class JwtHelper {
     public static final String ENABLE_VERIFY_JWT = "enableVerifyJwt";
     public static final String OAUTH_HTTP2_SUPPORT = "oauthHttp2Support";
     public static final String ENABLE_JWT_CACHE = "enableJwtCache";
+    public static final String BOOTSTRAP_FROM_KEY_SERVICE = "bootstrapFromKeyService";
 
     
     static Map<String, X509Certificate> certMap;
@@ -78,6 +79,7 @@ public class JwtHelper {
     static JwtConfig jwtConfig = (JwtConfig) Config.getInstance().getJsonObjectConfig(JWT_CONFIG, JwtConfig.class);
     static int secondsOfAllowedClockSkew = (Integer) securityJwtConfig.get(JwT_CLOCK_SKEW_IN_SECONDS);
     static Boolean enableJwtCache = (Boolean)securityConfig.get(ENABLE_JWT_CACHE);
+    static Boolean bootstrapFromKeyService = (Boolean)securityConfig.get(BOOTSTRAP_FROM_KEY_SERVICE);
 
     static Cache<String, JwtClaims> cache;
 
@@ -208,18 +210,21 @@ public class JwtHelper {
     }
 
     static {
-        certMap = new HashMap<>();
-        fingerPrints = new ArrayList<>();
-        Map<String, Object> keyMap = (Map<String, Object>) securityJwtConfig.get(JwtHelper.JWT_CERTIFICATE);
-        for(String kid: keyMap.keySet()) {
-            X509Certificate cert = null;
-            try {
-                cert = JwtHelper.readCertificate((String)keyMap.get(kid));
-            } catch (Exception e) {
-                logger.error("Exception:", e);
+        // load local public key certificates only if bootstrapFromKeyService is false
+        if(Boolean.FALSE.equals(bootstrapFromKeyService)) {
+            certMap = new HashMap<>();
+            fingerPrints = new ArrayList<>();
+            Map<String, Object> keyMap = (Map<String, Object>) securityJwtConfig.get(JwtHelper.JWT_CERTIFICATE);
+            for(String kid: keyMap.keySet()) {
+                X509Certificate cert = null;
+                try {
+                    cert = JwtHelper.readCertificate((String)keyMap.get(kid));
+                } catch (Exception e) {
+                    logger.error("Exception:", e);
+                }
+                certMap.put(kid, cert);
+                fingerPrints.add(FingerPrintUtil.getCertFingerPrint(cert));
             }
-            certMap.put(kid, cert);
-            fingerPrints.add(FingerPrintUtil.getCertFingerPrint(cert));
         }
     }
 
@@ -297,9 +302,10 @@ public class JwtHelper {
 
         // get the public key certificate from the cache that is loaded from security.yml if it is not there,
         // go to OAuth2 server /oauth2/key endpoint to get the public key certificate with kid as parameter.
-        X509Certificate certificate = certMap.get(kid);
+        X509Certificate certificate = certMap == null? null : certMap.get(kid);
         if(certificate == null) {
             certificate = getCertFromOauth(kid);
+            if(certMap == null) certMap = new HashMap<>();  // null if bootstrapFromKeyService is true
             certMap.put(kid, certificate);
         }
         X509VerificationKeyResolver x509VerificationKeyResolver = new X509VerificationKeyResolver(certificate);
@@ -336,6 +342,15 @@ public class JwtHelper {
         return certificate;
     }
 
+    /**
+     * Get a list of certificate fingerprints for server info endpoint so that certification process in light-portal
+     * can detect if your service still use the default public key certificates provided by the light-4j framework.
+     *
+     * The default public key certificates are for dev only and should be replaced on any other environment or
+     * set bootstrapFromKeyService: true if you are using light-oauth2 so that key can be dynamically loaded.
+     *
+     * @return List of certificate fingerprints
+     */
     public static List getFingerPrints() {
         return fingerPrints;
     }
