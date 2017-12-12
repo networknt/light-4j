@@ -211,7 +211,7 @@ public class JwtHelper {
 
     static {
         // load local public key certificates only if bootstrapFromKeyService is false
-        if(Boolean.FALSE.equals(bootstrapFromKeyService)) {
+        if(bootstrapFromKeyService == null || Boolean.FALSE.equals(bootstrapFromKeyService)) {
             certMap = new HashMap<>();
             fingerPrints = new ArrayList<>();
             Map<String, Object> keyMap = (Map<String, Object>) securityJwtConfig.get(JwtHelper.JWT_CERTIFICATE);
