@@ -52,4 +52,5 @@ singletons:
   - com.networknt.service.LicenseValidator
 - com.networknt.service.Validator<com.networknt.service.Info>:
   - com.networknt.service.InfoValidator
+- com.networknt.service.IntegrationData: com.networknt.service.ServiceInitializer::integrationData
 - com.networknt.service.ChannelMapping: com.networknt.service.ServiceInitializer::channelMapping
