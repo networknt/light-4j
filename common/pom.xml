@@ -25,15 +25,14 @@
         <relativePath>..</relativePath>
     </parent>
 
-    <artifactId>client</artifactId>
+    <artifactId>common</artifactId>
     <packaging>jar</packaging>
-    <description>A client module that is used by API consumer to call an API or from an API calling another API.
-    </description>
+    <description>A common module that contains some shared classes between client and server.</description>
 
     <dependencies>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>common</artifactId>
+            <artifactId>utility</artifactId>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
@@ -41,42 +40,13 @@
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>status</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
+            <artifactId>service</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
-        <dependency>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.owasp.encoder</groupId>
-            <artifactId>encoder</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.undertow</groupId>
-            <artifactId>undertow-core</artifactId>
-        </dependency>
 
-        <dependency>
-            <groupId>org.bitbucket.b_c</groupId>
-            <artifactId>jose4j</artifactId>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
