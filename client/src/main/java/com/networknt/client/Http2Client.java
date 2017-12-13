@@ -625,7 +625,7 @@ public class Http2Client {
                             @Override
                             protected void stringDone(String string) {
                                 result.getResponse().putAttachment(RESPONSE_BODY, string);
-                                result.getResponse().putAttachment(RESPONSE_TIME, new Long(System.currentTimeMillis() - startTime));
+                                result.getResponse().putAttachment(RESPONSE_TIME, System.currentTimeMillis() - startTime);
                                 latch.countDown();
                             }
 
@@ -676,7 +676,7 @@ public class Http2Client {
                             @Override
                             protected void stringDone(String string) {
                                 result.getResponse().putAttachment(RESPONSE_BODY, string);
-                                result.getResponse().putAttachment(RESPONSE_TIME, new Long(System.currentTimeMillis() - startTime));
+                                result.getResponse().putAttachment(RESPONSE_TIME, System.currentTimeMillis() - startTime);
                                 latch.countDown();
                             }
 
