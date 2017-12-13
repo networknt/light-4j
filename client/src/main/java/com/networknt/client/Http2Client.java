@@ -64,6 +64,7 @@ public class Http2Client {
     public static XnioSsl SSL;
 
     public static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
+    public static final AttachmentKey<Long> RESPONSE_TIME = AttachmentKey.create(Long.class);
 
     static final String TLS = "tls";
     static final String LOAD_TRUST_STORE = "loadTrustStore";
@@ -580,10 +581,10 @@ public class Http2Client {
                     @Override
                     public void completed(ClientExchange result) {
                         reference.set(result.getResponse());
-                        new StringReadChannelListener(Http2Client.POOL) {
+                        new StringReadChannelListener(POOL) {
                             @Override
                             protected void stringDone(String string) {
-                                result.getResponse().putAttachment(Http2Client.RESPONSE_BODY, string);
+                                result.getResponse().putAttachment(RESPONSE_BODY, string);
                                 latch.countDown();
                             }
 
@@ -610,4 +611,97 @@ public class Http2Client {
             }
         };
     }
+
+    public ClientCallback<ClientExchange> createClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch, final long startTime) {
+        return new ClientCallback<ClientExchange>() {
+            @Override
+            public void completed(ClientExchange result) {
+                result.setResponseListener(new ClientCallback<ClientExchange>() {
+                    @Override
+                    public void completed(final ClientExchange result) {
+                        reference.set(result.getResponse());
+                        new StringReadChannelListener(result.getConnection().getBufferPool()) {
+
+                            @Override
+                            protected void stringDone(String string) {
+                                result.getResponse().putAttachment(RESPONSE_BODY, string);
+                                result.getResponse().putAttachment(RESPONSE_TIME, new Long(System.currentTimeMillis() - startTime));
+                                latch.countDown();
+                            }
+
+                            @Override
+                            protected void error(IOException e) {
+                                logger.error("IOException:", e);
+                                latch.countDown();
+                            }
+                        }.setup(result.getResponseChannel());
+                    }
+
+                    @Override
+                    public void failed(IOException e) {
+                        logger.error("IOException:", e);
+                        latch.countDown();
+                    }
+                });
+                try {
+                    result.getRequestChannel().shutdownWrites();
+                    if(!result.getRequestChannel().flush()) {
+                        result.getRequestChannel().getWriteSetter().set(ChannelListeners.<StreamSinkChannel>flushingChannelListener(null, null));
+                        result.getRequestChannel().resumeWrites();
+                    }
+                } catch (IOException e) {
+                    logger.error("IOException:", e);
+                    latch.countDown();
+                }
+            }
+
+            @Override
+            public void failed(IOException e) {
+                logger.error("IOException:", e);
+                latch.countDown();
+            }
+        };
+    }
+
+    public ClientCallback<ClientExchange> createClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch, final String requestBody, final long startTime) {
+        return new ClientCallback<ClientExchange>() {
+            @Override
+            public void completed(ClientExchange result) {
+                new StringWriteChannelListener(requestBody).setup(result.getRequestChannel());
+                result.setResponseListener(new ClientCallback<ClientExchange>() {
+                    @Override
+                    public void completed(ClientExchange result) {
+                        reference.set(result.getResponse());
+                        new StringReadChannelListener(POOL) {
+                            @Override
+                            protected void stringDone(String string) {
+                                result.getResponse().putAttachment(RESPONSE_BODY, string);
+                                result.getResponse().putAttachment(RESPONSE_TIME, new Long(System.currentTimeMillis() - startTime));
+                                latch.countDown();
+                            }
+
+                            @Override
+                            protected void error(IOException e) {
+                                logger.error("IOException:", e);
+                                latch.countDown();
+                            }
+                        }.setup(result.getResponseChannel());
+                    }
+
+                    @Override
+                    public void failed(IOException e) {
+                        logger.error("IOException:", e);
+                        latch.countDown();
+                    }
+                });
+            }
+
+            @Override
+            public void failed(IOException e) {
+                logger.error("IOException:", e);
+                latch.countDown();
+            }
+        };
+    }
+
 }

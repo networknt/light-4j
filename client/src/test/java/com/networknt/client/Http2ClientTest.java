@@ -364,6 +364,32 @@ public class Http2ClientTest {
     }
 
     @Test
+    public void testResponseTime() throws Exception {
+        //
+        final Http2Client client = createClient();
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection = client.connect(ADDRESS, worker, Http2Client.POOL, OptionMap.EMPTY).get();
+        try {
+            ClientRequest request = new ClientRequest().setPath(MESSAGE).setMethod(Methods.GET);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
+            final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+            request.getRequestHeaders().add(Headers.CONNECTION, Headers.CLOSE.toString());
+            connection.sendRequest(request, client.createClientCallback(reference, latch, System.currentTimeMillis()));
+            latch.await();
+            final ClientResponse response = reference.get();
+            Assert.assertEquals(message, response.getAttachment(Http2Client.RESPONSE_BODY));
+            System.out.println("responseTime = " + response.getAttachment(Http2Client.RESPONSE_TIME));
+            Assert.assertTrue(response.getAttachment(Http2Client.RESPONSE_TIME).longValue() > 0);
+            Assert.assertEquals(false, connection.isOpen());
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+
+    }
+
+
+    @Test
     public void testSingleAsych() throws Exception {
         callApiAsync();
     }
