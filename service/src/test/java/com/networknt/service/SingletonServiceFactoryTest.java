@@ -1,6 +1,7 @@
 package com.networknt.service;
 
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -9,6 +10,18 @@ import java.util.Arrays;
  * Created by steve on 2016-11-26.
  */
 public class SingletonServiceFactoryTest {
+    @BeforeClass
+    public static void setup() {
+        InjectedBean injectedBean = new InjectedBean();
+        SingletonServiceFactory.setBean(InjectedBean.class.getName(), injectedBean);
+    }
+
+    @Test
+    public void testInjectedBean() {
+        InjectedBean injectedBean = SingletonServiceFactory.getBean(InjectedBean.class);
+        Assert.assertEquals("Injected Bean", injectedBean.name());
+    }
+
     @Test
     public void testGetSingleBean() {
         A a = SingletonServiceFactory.getBean(A.class);
