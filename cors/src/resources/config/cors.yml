@@ -1,8 +1,9 @@
 ---
 description: Cors Http Handler
-# If cors is enabled or not
+# If cors handler is enabled or not
 enabled: true
-# Allowed origins, you can have multiple and with port
+# Allowed origins, you can have multiple and with port if port is not 80 or 443
+# Wildcard is not supported for security reasons.
 allowedOrigins:
 - http://localhost
 # Allowed methods list.
