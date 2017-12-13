@@ -31,8 +31,6 @@ public class AESDecryptor implements Decryptor {
 
     private Cipher cipher;
 
-    private BASE64Encoder base64Encoder;
-
     private BASE64Decoder base64Decoder;
 
     public AESDecryptor() {
@@ -52,7 +50,6 @@ public class AESDecryptor implements Decryptor {
 
             // For production use commons base64 encoder
             base64Decoder = new BASE64Decoder();
-            base64Encoder = new BASE64Encoder();
         }
         catch (Exception e)
         {

@@ -10,7 +10,6 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
 import java.security.AlgorithmParameters;
 import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
 
