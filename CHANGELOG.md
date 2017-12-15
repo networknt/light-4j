@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+## 1.5.5 - 2017-12-15
+### Added
+
+### Changed
+
+- Fixes #144 Find a way to propagate callback exception to the caller thread in Http2Client
+- Fixes #143 Encrypt the values in secret.yml
+- Fixes #141 Adding java bean initializer and manual injection test cases for service module
+- Fixes #140 make it configurable to get jwt public certificates from cache or from oauth server 
+- Fixes #138 Add support for two or more beans initialized by one initializer class and method
+- Fixes #137 Add an API to manipulate SingletonServiceFactory to add new entries programatically
+- Fixes #136 Loading Java bean with initializer class and method in service module 
+- Upgrade to 1.5.5
+
 ## 1.5.4 - 2017-11-20
 ### Added
 
