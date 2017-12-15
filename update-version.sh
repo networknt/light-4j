@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Purpose:  Bump up version after release in develop branch and checked in.
+# Purpose:  Bump up version after release in develop branch and check in.
 #
 # Author:  Steve Hu, stevehu@gmail.com
 #
