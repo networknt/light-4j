@@ -42,7 +42,6 @@ import org.slf4j.MDC;
 import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 import org.xnio.Options;
-import sun.nio.ch.sctp.Shutdown;
 
 import javax.net.ssl.*;
 import java.io.BufferedInputStream;
