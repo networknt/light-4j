@@ -612,26 +612,26 @@ public class Http2Client {
         };
     }
 
-    public ClientCallback<ClientExchange> createClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch, final long startTime) {
+    public ClientCallback<ClientExchange> createFullCallback(final AtomicReference<AsyncResult<AsyncResponse>> reference, final CountDownLatch latch) {
+        final long startTime = System.currentTimeMillis();
         return new ClientCallback<ClientExchange>() {
             @Override
             public void completed(ClientExchange result) {
                 result.setResponseListener(new ClientCallback<ClientExchange>() {
                     @Override
                     public void completed(final ClientExchange result) {
-                        reference.set(result.getResponse());
                         new StringReadChannelListener(result.getConnection().getBufferPool()) {
 
                             @Override
                             protected void stringDone(String string) {
-                                result.getResponse().putAttachment(RESPONSE_BODY, string);
-                                result.getResponse().putAttachment(RESPONSE_TIME, System.currentTimeMillis() - startTime);
+                                AsyncResponse ar = new AsyncResponse(result.getResponse(), string, System.currentTimeMillis() - startTime);
+                                reference.set(DefaultAsyncResult.succeed(ar));
                                 latch.countDown();
                             }
 
                             @Override
                             protected void error(IOException e) {
-                                logger.error("IOException:", e);
+                                reference.set(DefaultAsyncResult.fail(e));
                                 latch.countDown();
                             }
                         }.setup(result.getResponseChannel());
@@ -639,7 +639,7 @@ public class Http2Client {
 
                     @Override
                     public void failed(IOException e) {
-                        logger.error("IOException:", e);
+                        reference.set(DefaultAsyncResult.fail(e));
                         latch.countDown();
                     }
                 });
@@ -650,20 +650,21 @@ public class Http2Client {
                         result.getRequestChannel().resumeWrites();
                     }
                 } catch (IOException e) {
-                    logger.error("IOException:", e);
+                    reference.set(DefaultAsyncResult.fail(e));
                     latch.countDown();
                 }
             }
 
             @Override
             public void failed(IOException e) {
-                logger.error("IOException:", e);
+                reference.set(DefaultAsyncResult.fail(e));
                 latch.countDown();
             }
         };
     }
 
-    public ClientCallback<ClientExchange> createClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch, final String requestBody, final long startTime) {
+    public ClientCallback<ClientExchange> createFullCallback(final AtomicReference<AsyncResult<AsyncResponse>> reference, final CountDownLatch latch, final String requestBody) {
+        final long startTime = System.currentTimeMillis();
         return new ClientCallback<ClientExchange>() {
             @Override
             public void completed(ClientExchange result) {
@@ -671,18 +672,17 @@ public class Http2Client {
                 result.setResponseListener(new ClientCallback<ClientExchange>() {
                     @Override
                     public void completed(ClientExchange result) {
-                        reference.set(result.getResponse());
                         new StringReadChannelListener(POOL) {
                             @Override
                             protected void stringDone(String string) {
-                                result.getResponse().putAttachment(RESPONSE_BODY, string);
-                                result.getResponse().putAttachment(RESPONSE_TIME, System.currentTimeMillis() - startTime);
+                                AsyncResponse ar = new AsyncResponse(result.getResponse(), string, System.currentTimeMillis() - startTime);
+                                reference.set(DefaultAsyncResult.succeed(ar));
                                 latch.countDown();
                             }
 
                             @Override
                             protected void error(IOException e) {
-                                logger.error("IOException:", e);
+                                reference.set(DefaultAsyncResult.fail(e));
                                 latch.countDown();
                             }
                         }.setup(result.getResponseChannel());
@@ -690,7 +690,7 @@ public class Http2Client {
 
                     @Override
                     public void failed(IOException e) {
-                        logger.error("IOException:", e);
+                        reference.set(DefaultAsyncResult.fail(e));
                         latch.countDown();
                     }
                 });
@@ -698,7 +698,7 @@ public class Http2Client {
 
             @Override
             public void failed(IOException e) {
-                logger.error("IOException:", e);
+                reference.set(DefaultAsyncResult.fail(e));
                 latch.countDown();
             }
         };

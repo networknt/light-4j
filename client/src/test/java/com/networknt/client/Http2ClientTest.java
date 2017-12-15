@@ -373,19 +373,22 @@ public class Http2ClientTest {
         try {
             ClientRequest request = new ClientRequest().setPath(MESSAGE).setMethod(Methods.GET);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
-            final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+            final AtomicReference<AsyncResult<AsyncResponse>> reference = new AtomicReference<>();
             request.getRequestHeaders().add(Headers.CONNECTION, Headers.CLOSE.toString());
-            connection.sendRequest(request, client.createClientCallback(reference, latch, System.currentTimeMillis()));
+            connection.sendRequest(request, client.createFullCallback(reference, latch));
             latch.await();
-            final ClientResponse response = reference.get();
-            Assert.assertEquals(message, response.getAttachment(Http2Client.RESPONSE_BODY));
-            System.out.println("responseTime = " + response.getAttachment(Http2Client.RESPONSE_TIME));
-            Assert.assertTrue(response.getAttachment(Http2Client.RESPONSE_TIME).longValue() > 0);
+            final AsyncResult<AsyncResponse> ar = reference.get();
+            if(ar.succeeded()) {
+                Assert.assertEquals(message, ar.result().getResponseBody());
+                Assert.assertTrue(ar.result().getResponseTime() > 0);
+                System.out.println("responseTime = " + ar.result().getResponseTime());
+            } else {
+                ar.cause().printStackTrace();
+            }
             Assert.assertEquals(false, connection.isOpen());
         } finally {
             IoUtils.safeClose(connection);
         }
-
     }
 
 
