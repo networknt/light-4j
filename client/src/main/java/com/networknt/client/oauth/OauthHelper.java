@@ -125,6 +125,7 @@ public class OauthHelper {
         try {
             ClientRequest request = new ClientRequest().setPath(keyRequest.getUri()).setMethod(Methods.GET);
             request.getRequestHeaders().put(Headers.AUTHORIZATION, getBasicAuthHeader(keyRequest.getClientId(), keyRequest.getClientSecret()));
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
         } catch (Exception e) {
