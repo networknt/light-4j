@@ -52,6 +52,7 @@ public class Http2Client {
 
     public static final String CONFIG_NAME = "client";
     public static final String CONFIG_SECRET = "secret";
+    public static final String CONFIG_SECURITY = "security";
     public static final int BUFFER_SIZE = 8192 * 3;
     public static final OptionMap DEFAULT_OPTIONS = OptionMap.builder()
             .set(Options.WORKER_IO_THREADS, 8)
@@ -64,7 +65,6 @@ public class Http2Client {
     public static XnioSsl SSL;
 
     public static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
-    public static final AttachmentKey<Long> RESPONSE_TIME = AttachmentKey.create(Long.class);
 
     static final String TLS = "tls";
     static final String LOAD_TRUST_STORE = "loadTrustStore";
@@ -79,11 +79,13 @@ public class Http2Client {
     static final String TOKEN_RENEW_BEFORE_EXPIRED = "tokenRenewBeforeExpired";
     static final String EXPIRED_REFRESH_RETRY_DELAY = "expiredRefreshRetryDelay";
     static final String EARLY_REFRESH_RETRY_DELAY = "earlyRefreshRetryDelay";
+    static final String OAUTH_HTTP2_SUPPORT = "oauthHttp2Support";
 
     static final String STATUS_CLIENT_CREDENTIALS_TOKEN_NOT_AVAILABLE = "ERR10009";
 
     static Map<String, Object> config;
     static Map<String, Object> tokenConfig;
+    static boolean oauthHttp2Support;
 
     // Cached jwt token for this client.
     private String jwt;
@@ -103,6 +105,11 @@ public class Http2Client {
             if(oauthConfig != null) {
                 tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);
             }
+        }
+        Map<String, Object> securityConfig = Config.getInstance().getJsonMapConfig(CONFIG_SECURITY);
+        if(securityConfig != null) {
+            Boolean b = (Boolean)securityConfig.get(OAUTH_HTTP2_SUPPORT);
+            oauthHttp2Support = (b == null ? false : b.booleanValue());
         }
     }
 
@@ -362,7 +369,7 @@ public class Http2Client {
 
     private void getCCToken() throws ClientException {
         TokenRequest tokenRequest = new ClientCredentialsRequest();
-        TokenResponse tokenResponse = OauthHelper.getToken(tokenRequest, true);
+        TokenResponse tokenResponse = OauthHelper.getToken(tokenRequest, oauthHttp2Support);
         synchronized (lock) {
             jwt = tokenResponse.getAccessToken();
             // the expiresIn is seconds and it is converted to millisecond in the future.
@@ -480,7 +487,7 @@ public class Http2Client {
                         logger.info("Loading trust store from system property at " + Encode.forJava(trustStoreName));
                     } else {
                         trustStoreName = (String) tlsMap.get(TRUST_STORE);
-                        trustStorePass = (String) secret.getClientTruststorePass();
+                        trustStorePass = secret.getClientTruststorePass();
                         logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
                     }
                     if (trustStoreName != null && trustStorePass != null) {
