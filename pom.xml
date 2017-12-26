@@ -90,6 +90,7 @@
         <version.curator>4.0.0</version.curator>
         <version.snakeyaml>1.18</version.snakeyaml>
         <version.caffeine>2.5.6</version.caffeine>
+        <version.javamail>1.6.0</version.javamail>
         <versions.maven-version>2.4</versions.maven-version>
         <argLine>-Xmx512m -XX:MaxPermSize=256m</argLine>
     </properties>
@@ -124,6 +125,7 @@
         <module>limit</module>
         <module>decryptor</module>
         <module>common</module>
+        <module>email</module>
         <module>server</module>
     </modules>
 
@@ -279,6 +281,11 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
+                <artifactId>email</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
                 <artifactId>server</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -400,6 +407,12 @@
                 <artifactId>caffeine</artifactId>
                 <version>${version.caffeine}</version>
             </dependency>
+            <dependency>
+                <groupId>com.sun.mail</groupId>
+                <artifactId>javax.mail</artifactId>
+                <version>${version.javamail}</version>
+            </dependency>
+
             <!-- Test dependencies -->
             <dependency>
                 <groupId>ch.qos.logback</groupId>

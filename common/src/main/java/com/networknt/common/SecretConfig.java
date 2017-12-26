@@ -19,6 +19,7 @@ public class SecretConfig {
     String clientCredentialsClientSecret;
     String keyClientSecret;
     String consulToken;
+    String emailPassword;
 
     public SecretConfig() {
     }
@@ -151,6 +152,19 @@ public class SecretConfig {
             consulToken = decryptor.decrypt(consulToken);
         }
         this.consulToken = consulToken;
+    }
+
+    public String getEmailPassword() {
+        return emailPassword;
+    }
+
+    public void setEmailPassword(String emailPassword) {
+        if(emailPassword.startsWith(Decryptor.CRYPT_PREFIX)) {
+            Decryptor decryptor = SingletonServiceFactory.getBean(Decryptor.class);
+            if(decryptor == null) throw new RuntimeException("No implementation of Decryptor is defined in service.yml");
+            emailPassword = decryptor.decrypt(emailPassword);
+        }
+        this.emailPassword = emailPassword;
     }
 }
 

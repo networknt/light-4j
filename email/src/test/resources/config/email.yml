@@ -1,0 +1,12 @@
+# Email Sender Configuration
+---
+# Email server host name or IP address
+host: mail.lightapi.net
+# Email SMTP port number. Please don't use port 25 as it is not safe
+port: 587
+# Email user or sender address.
+user: noreply@lightapi.net
+# Enable debug. Default to false.
+debug: true
+# Enable Authentication. Default to true.
+auth: true
