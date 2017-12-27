@@ -92,7 +92,7 @@ public class EmailSender {
         Transport.send(message);
     }
 
-    private class SMTPAuthenticator extends Authenticator {
+    private static class SMTPAuthenticator extends Authenticator {
         public  String user;
         public  String password;
 
@@ -101,6 +101,7 @@ public class EmailSender {
             this.password = password ;
         }
 
+        @Override
         public PasswordAuthentication getPasswordAuthentication()
         {
             return new PasswordAuthentication(this.user, this.password);
