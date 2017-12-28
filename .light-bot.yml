@@ -1,6 +1,0 @@
-dependents:
-- git@github.com:networknt/openapi-parser.git
-- git@github.com:networknt/light-rest-4j.git
-- git@github.com:networknt/light-graphql-4j.git
-- git@github.com:networknt/light-hybrid-4j.git
-- git@github.com:networknt/light-codegen.git
