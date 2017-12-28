@@ -14,9 +14,10 @@ import java.util.stream.Collectors;
 /**
  * Created by steve on 2016-11-26.
  */
+@SuppressWarnings("unchecked")
 public class SingletonServiceFactory {
-    static String CONFIG_NAME = "service";
-    static Logger logger = LoggerFactory.getLogger(SingletonServiceFactory.class);
+    private static String CONFIG_NAME = "service";
+    private static Logger logger = LoggerFactory.getLogger(SingletonServiceFactory.class);
 
     private static Map<String, Object> serviceMap = new HashMap<>();
     // map is statically loaded to make sure there is only one instance per jvm
@@ -71,7 +72,7 @@ public class SingletonServiceFactory {
                 // at this moment, pair.getValue() has two scenarios,
                 // 1. map that can be used to set properties after construct the object with reflection.
                 // 2. list that can be used by matched constructor to create the instance.
-                Object obj = null;
+                Object obj;
                 if(mapOrList instanceof Map) {
                     obj = construct(implClass);
 
@@ -210,9 +211,7 @@ public class SingletonServiceFactory {
         List<String> interfaceClasses = new ArrayList();
         if(key.contains(",")) {
             String[] interfaces = key.split(",");
-            for (String anInterface : interfaces) {
-                interfaceClasses.add(anInterface);
-            }
+            interfaceClasses.addAll(Arrays.asList(interfaces));
         } else {
             interfaceClasses.add(key);
         }
@@ -247,17 +246,13 @@ public class SingletonServiceFactory {
                         break;
                     }
                 }
-                if(!beanFound) {
-                    // could not find all parameters, try another constructor.
-                    continue;
-                } else {
+                if(beanFound) {
                     // this constructor parameters are found.
                     instance = ctor.newInstance(params);
                     break;
                 }
             } else {
                 hasDefaultConstructor = true;
-                continue;
             }
         }
         if(instance != null) {
@@ -283,9 +278,7 @@ public class SingletonServiceFactory {
         for (Constructor ctor : allConstructors) {
             Class<?>[] pType  = ctor.getParameterTypes();
             if(pType.length > 0) {
-                if(pType.length != parameters.size()) {
-                    continue;
-                } else {
+                if(pType.length == parameters.size()) {
                     // number of parameters is matched. Make sure that each parameter type is matched.
                     boolean matched = true;
                     Object[] params = new Object[pType.length];
@@ -305,10 +298,7 @@ public class SingletonServiceFactory {
                             }
                         }
                     }
-                    if(!matched) {
-                        // could not find all parameters, try another constructor.
-                        continue;
-                    } else {
+                    if(matched) {
                         // this constructor parameters are found.
                         instance = ctor.newInstance(params);
                         break;
@@ -316,7 +306,6 @@ public class SingletonServiceFactory {
                 }
             } else {
                 hasDefaultConstructor = true;
-                continue;
             }
         }
         if(instance != null) {

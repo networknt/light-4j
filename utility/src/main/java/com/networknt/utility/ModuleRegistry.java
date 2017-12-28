@@ -48,6 +48,7 @@ public class ModuleRegistry {
         return registry;
     }
 
+    @SuppressWarnings("unchecked")
     private static void maskNode(Map<String, Object> map, String mask) {
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             String key = entry.getKey();
@@ -62,6 +63,7 @@ public class ModuleRegistry {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private static void maskList(List list, String mask) {
         for (int i = 0; i < list.size(); i++) {
             if (list.get(i) instanceof String && list.get(i).equals(mask)) {

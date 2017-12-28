@@ -39,12 +39,12 @@ public class Status {
 
     // status serialization bean
     // allows API implementations to provide their own Status serialization mechanism
-    static StatusSerializer statusSerializer;
+    private static StatusSerializer statusSerializer;
 
-    int statusCode;
-    String code;
-    String message;
-    String description;
+    private int statusCode;
+    private String code;
+    private String message;
+    private String description;
 
     static {
         ModuleRegistry.registerModule(Status.class.getName(), config, null);
@@ -71,6 +71,7 @@ public class Status {
      */
     public Status(final String code, final Object... args) {
         this.code = code;
+        @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>)config.get(code);
         if(map != null) {
             this.statusCode = (Integer)map.get("statusCode");

@@ -31,8 +31,8 @@ import java.util.Map;
  */
 public class ConfigClassPathTest extends TestCase {
 
-    Config config = null;
-    final String homeDir = System.getProperty("user.home");
+    private Config config = null;
+    private final String homeDir = System.getProperty("user.home");
 
     @Override
     public void setUp() throws Exception {
@@ -51,18 +51,19 @@ public class ConfigClassPathTest extends TestCase {
 
     @Override
     public void tearDown() throws Exception {
+        super.tearDown();
         // Remove the test.json from home directory
         File test = new File(homeDir + "/test.json");
         test.delete();
     }
 
-    public void testGetConfigFromClassPath() throws Exception {
+    public void testGetConfigFromClassPath() {
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test");
         Assert.assertEquals("classpath", configMap.get("value"));
     }
 
-    public void addURL(URL url) throws Exception {
+    private void addURL(URL url) throws Exception {
         URLClassLoader classLoader
                 = (URLClassLoader) ClassLoader.getSystemClassLoader();
         Class clazz= URLClassLoader.class;

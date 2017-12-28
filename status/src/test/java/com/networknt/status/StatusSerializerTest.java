@@ -17,8 +17,8 @@ import java.util.Map;
 
 public class StatusSerializerTest {
 
-    static Config config = null;
-    static final String homeDir = System.getProperty("user.home");
+    private static Config config = null;
+    private static final String homeDir = System.getProperty("user.home");
 
     @BeforeClass
     public static void setUp() throws Exception {
@@ -40,21 +40,16 @@ public class StatusSerializerTest {
     }
 
     @AfterClass
-    public static void tearDown() throws Exception {
+    public static void tearDown() {
         // Remove the test.json from home directory
         File test = new File(homeDir + "/service.json");
         test.delete();
     }
 
-    public void testGetConfigFromClassPath() throws Exception {
-        Map<String, Object> configMap = config.getJsonMapConfig("service");
-        Assert.assertNotNull(configMap.get("singletons"));
-    }
-
-    public static void addURL(URL url) throws Exception {
+    private static void addURL(URL url) throws Exception {
         URLClassLoader classLoader
                 = (URLClassLoader) ClassLoader.getSystemClassLoader();
-        Class clazz= URLClassLoader.class;
+        Class clazz = URLClassLoader.class;
 
         // Use reflection
         Method method= clazz.getDeclaredMethod("addURL", URL.class);
