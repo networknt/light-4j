@@ -13,6 +13,11 @@ import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 import java.util.Properties;
 
+/**
+ * Email sender that support both text and attachment.
+ *
+ * @author Steve Hu
+ */
 public class EmailSender {
     public static final String CONFIG_EMAIL = "email";
     public static final String CONFIG_SECRET = "secret";
@@ -23,6 +28,14 @@ public class EmailSender {
     public EmailSender() {
     }
 
+    /**
+     * Send email with a string content.
+     *
+     * @param to destination email address
+     * @param subject email subject
+     * @param content email content
+     * @throws MessagingException message exception
+     */
     public void sendMail (String to, String subject, String content) throws MessagingException{
         Properties props = new Properties();
         props.put("mail.smtp.user", emailConfg.getUser());
@@ -48,6 +61,15 @@ public class EmailSender {
         Transport.send(message);
     }
 
+    /**
+     * Send email with a string content and attachment
+     *
+     * @param to destination eamil address
+     * @param subject email subject
+     * @param content email content
+     * @param filename attachment filename
+     * @throws MessagingException messaging exception
+     */
     public void sendMailWithAttachment (String to, String subject, String content, String filename) throws MessagingException{
         Properties props = new Properties();
         props.put("mail.smtp.user", emailConfg.getUser());
@@ -70,7 +92,7 @@ public class EmailSender {
         BodyPart messageBodyPart = new MimeBodyPart();
 
         // Now set the actual message
-        messageBodyPart.setText("This is message body");
+        messageBodyPart.setText(content);
 
         // Create a multipar message
         Multipart multipart = new MimeMultipart();

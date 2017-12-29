@@ -1,5 +1,10 @@
 package com.networknt.email;
 
+/**
+ * Email Configuration
+ *
+ * @author Steve Hu
+ */
 public class EmailConfig {
     String host;
     String port;
