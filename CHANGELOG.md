@@ -1,473 +1,431 @@
 # Change Log
-All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](http://keepachangelog.com/)
-and this project adheres to [Semantic Versioning](http://semver.org/).
+## [1.5.6](https://github.com/networknt/light-4j/tree/1.5.6) (2017-12-29)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.5...1.5.6)
 
-## [Unreleased]
-### Added
+**Fixed bugs:**
 
-### Changed
+- Get token un Http2Client line 367 is hard coded using Http2 [\#146](https://github.com/networknt/light-4j/issues/146)
 
-## 1.5.5 - 2017-12-15
-### Added
+**Closed issues:**
 
-### Changed
+- some compiler warnings  [\#148](https://github.com/networknt/light-4j/issues/148)
+- Add email sender module and update secret.yml [\#147](https://github.com/networknt/light-4j/issues/147)
+- Add host header for getkey in oauthHelper for HTTP 1.1 [\#145](https://github.com/networknt/light-4j/issues/145)
 
-- Fixes #144 Find a way to propagate callback exception to the caller thread in Http2Client
-- Fixes #143 Encrypt the values in secret.yml
-- Fixes #141 Adding java bean initializer and manual injection test cases for service module
-- Fixes #140 make it configurable to get jwt public certificates from cache or from oauth server 
-- Fixes #138 Add support for two or more beans initialized by one initializer class and method
-- Fixes #137 Add an API to manipulate SingletonServiceFactory to add new entries programatically
-- Fixes #136 Loading Java bean with initializer class and method in service module 
-- Upgrade to 1.5.5
+## [1.5.5](https://github.com/networknt/light-4j/tree/1.5.5) (2017-12-15)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.4...1.5.5)
 
-## 1.5.4 - 2017-11-20
-### Added
+**Implemented enhancements:**
 
-### Changed
+- make it configurable to  get jwt public certificates from cache or from oauth server  [\#140](https://github.com/networknt/light-4j/issues/140)
 
-- fixes #132 service lookup returns null if there is no entry defined in service.yml
-- Upgrade to 1.5.4
+**Closed issues:**
 
-## 1.5.3 - 2017-11-19
-### Added
+- Find a way to propagate callback exception to the caller thread in Http2Client [\#144](https://github.com/networknt/light-4j/issues/144)
+- Encrypt the values in secret.yml [\#143](https://github.com/networknt/light-4j/issues/143)
+- Add two more callback functions in Http2Client to return response time [\#142](https://github.com/networknt/light-4j/issues/142)
+- Adding java bean initializer and manual injection test cases for service module [\#141](https://github.com/networknt/light-4j/issues/141)
+- Add support for two or more beans initialized by one initializer class and method [\#138](https://github.com/networknt/light-4j/issues/138)
+- Add an API to manipulate SingletonServiceFactory to add new entries programatically [\#137](https://github.com/networknt/light-4j/issues/137)
+- Loading Java bean with initializer class and method in service module [\#136](https://github.com/networknt/light-4j/issues/136)
+- Reduce token endpoint access timeout to 4 seconds [\#135](https://github.com/networknt/light-4j/issues/135)
+- Remove e.printStackTrace\(\) in the source code [\#134](https://github.com/networknt/light-4j/issues/134)
 
-### Changed
+## [1.5.4](https://github.com/networknt/light-4j/tree/1.5.4) (2017-11-21)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.3...1.5.4)
 
-- fixes #131 class cast exception in service module if getting an array from one impl
-- Upgrade to 1.5.3
+**Fixed bugs:**
 
-## 1.5.2 - 2017-11-19
-### Added
+- Need to ensure that server lookup returns null if there is no entry defined in service.yml [\#132](https://github.com/networknt/light-4j/issues/132)
 
-### Changed
+## [1.5.3](https://github.com/networknt/light-4j/tree/1.5.3) (2017-11-20)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.2...1.5.3)
 
-- fixes #130 Add a new constant OPENAPI_OPERATION_STRING for OpenAPI 3
-- fixes #129 Improve configurability for networknt.handler.MiddlewareHandler
-- fixes #127 Add support for interface with generic type in service module
-- fixes #126 Update serviceMap key to interface class name instead of class
-- fixes #125 Need to check certain section is empty for header.yml
-- Upgrade to 1.5.2
+**Fixed bugs:**
 
-## 1.5.1 - 2017-11-8
-### Added
+- Fixed the class cast exception in service module if getting an array but only one impl is configured [\#131](https://github.com/networknt/light-4j/issues/131)
 
-### Changed
+## [1.5.2](https://github.com/networknt/light-4j/tree/1.5.2) (2017-11-20)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.1...1.5.2)
 
-- Fixed #124 Remove mockito dependencies in most modules
-- Fixed #122 Customize return of the status from cross-cutting concerns(Thanks @ddobrin)
-- Fixed #121 Add url debug output in ConsulClientImpl
-- Fixed #120 Split integration tests from unit tests
-- Fixed #119 Server module should only initialize client instance if config server is enabled
-- Fixed #113 Make Jwt token verification cache configurable
-- Upgrade to 1.5.1
+**Implemented enhancements:**
 
-## 1.5.0 - 2017-10-20
-### Added
-- fixes #118 add a header handler to manipulate request/response headers
+- Add a new constant OPENAPI\_OPERATION\_STRING for OpenAPI 3.0 support [\#130](https://github.com/networknt/light-4j/issues/130)
+- Improve configurability for networknt.handler.MiddlewareHandler [\#129](https://github.com/networknt/light-4j/issues/129)
+- Add support for interface with generic type in service module [\#127](https://github.com/networknt/light-4j/issues/127)
+- Update serviceMap key to interface class name instead of class in service module [\#126](https://github.com/networknt/light-4j/issues/126)
 
-### Changed
+**Fixed bugs:**
 
-- fixes #116 add environment tag for consul resgistry and discovery
-- fixes #117 Add SecretConfig to model secret.yml and add consulToken
-- fixes #114 Add utilities classes for light-workflow-4j
-- fixes #112 remove unused dependencies to reduce the final jar size.
-- fixes #111 add utility interfaces for exchange access. (Thanks @sachinwalia2k8)
-- fixes #107 upgrade dependencies to the latest. (Thanks @sachinwalia2k8)
-- Upgrade to 1.5.0
+- Need to check certain section is empty for header.yml in HeaderHandler [\#125](https://github.com/networknt/light-4j/issues/125)
 
+## [1.5.1](https://github.com/networknt/light-4j/tree/1.5.1) (2017-11-09)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.0...1.5.1)
 
-## 1.4.6 - 2017-09-22
-### Added
+**Implemented enhancements:**
 
-### Changed
-- Upgrade to 1.4.6
+- Upgrade to Undertow 1.4.20.Final [\#108](https://github.com/networknt/light-4j/issues/108)
+- Implement rpc and websocket support with light-java-rpc [\#6](https://github.com/networknt/light-4j/issues/6)
+- Server module should only initialize client instance if config server is enabled [\#119](https://github.com/networknt/light-4j/issues/119)
+- Make Jwt token verification cache configurable. [\#113](https://github.com/networknt/light-4j/issues/113)
 
-## 1.4.5 - 2017-09-22
-### Added
+**Closed issues:**
 
-### Changed
-- fixes #102 Return invalid json error in body handler for malformed body
+- Remove mockito dependencies in most modules [\#124](https://github.com/networknt/light-4j/issues/124)
+- Add pre-release script to update versions [\#123](https://github.com/networknt/light-4j/issues/123)
+- Customize return of the status from cross-cutting concerns [\#122](https://github.com/networknt/light-4j/issues/122)
+- Add url debug output in ConsulClientImpl [\#121](https://github.com/networknt/light-4j/issues/121)
+- Split integration tests from unit tests [\#120](https://github.com/networknt/light-4j/issues/120)
 
-## 1.4.4 - 2017-09-20
-### Added
+## [1.5.0](https://github.com/networknt/light-4j/tree/1.5.0) (2017-10-21)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.4.6...1.5.0)
 
-### Changed
-- fixes #101 nothing changed but to release for light-proxy
+**Implemented enhancements:**
 
-## 1.4.3 - 2017-09-10
-### Added
+- Add SecretConfig to model properties in secret.yml instead of Map.  [\#117](https://github.com/networknt/light-4j/issues/117)
+- Change server registry and client discovery to support environment tag for test segregation [\#116](https://github.com/networknt/light-4j/issues/116)
+- Add utilities classes for light-workflow-4j [\#114](https://github.com/networknt/light-4j/issues/114)
+- Remove some dependencies as they are not being used or can be eliminated [\#112](https://github.com/networknt/light-4j/issues/112)
+- Utility methods in server project for accessing path variables [\#104](https://github.com/networknt/light-4j/issues/104)
 
-### Changed
-- fixes #94 Calling consul directly with Http2Client instead of consul client
-
-## 1.4.2 - 2017-08-31
-### Added
-
-### Changed
-- fixes #99 Update SingletonServiceFactory to support getBeans for array of impls(Thanks @ruslanys)
-
-## 1.4.1 - 2017-08-30
-### Added
-
-### Changed
-- fixes #93 update default client.yml to remove the settings for http1.1
-- fixes #95 Refactor server info component object so that it is easy to consume
-- fixes #96 Default to enableHttp2 in client and server
-- fixes #86 server support HTTP 2.0 by default in configuration
-- fixes #97 Add host head when sending requests to influxdb in InfluxDb
-- fixes #98 Upgrade to undertow 1.4.19.Final as there an HTTP 2.0 bug
-
-## 1.4.0 - 2017-08-22
-### Added
-- fixes #85 Implement Http2Client
-
-### Changed
-- fixes #82 Register JavaTimeModule for the default Jackson ObjectMapper(Thanks @pragmaticway)
-- fixes #87 upgrade Undertow to 1.4.18.Final to support HTTP2 on server
-- fixes #84 enable security to call client module to load public key cert
-- fixes #90 Remove Client and replace it with Http2Client
-
-## 1.3.5 - 2017-08-01
-### Added
-
-
-### Changed
-- fixes #76 add getTempDir and test cases for NioUtils
-- fixes #78 resolve security issues reported from Fortify scanner
-- fixes #79 add server tls finger print into server info
-- fixes #80 Update validatePassword in HashUtil to accept origianlPassword
-- fixes #81 Remove jsoniter dependencies in mask until it has a feature of JsonPath
-
-## 1.3.4 - 2017-07-08
-### Added
+**Closed issues:**
 
-### Changed
-- fixes #47 jwt token verification with cached
-- fixes #72 PKCE CodeVerifierUtil impl for light-oauth2
-- fixes #72 Update CodeVerifierUtil to support light-oauth2 implementation
-- fixes #74 update ConsulRegistry to use one layer of cache structure
-- fixes #75 workaround a bug in Docker for Mac that hostname is not mapped in host
-
-## 1.3.3 - 2017-06-14
-### Added
-
-### Changed
-- fixes #71 break the metrics tie to security for client_id
-
-## 1.3.2 - 2017-06-14
-### Added
-
-### Changed
-- Fixes #58 add filter and role based auth handler
-- Fixes #66 update keystore and truststore for both client and server
-- Fixes #67 add serviceId to slf4j MDC and remove from audit.yml
-- Fixes #68 add log statement in influxdb reporter with counter size
-- Fixes #70 make default constructor of UnsafeLongAdderImpl public
-
-## 1.3.1 - 2017-06-03
-### Added
-
-### Changed
-- Fixes #60 add java doc and update online documents
-- Fixes #61 response time and status code are not shown up in audit.log
-- Fixes #63 rename HealthHandler to HealthGetHandler in order to inject from light-codegen
-
-
-## 1.3.0 - 2017-05-05
-### Added
-- Fixes #59 change project name to light-4j
-
-## 1.2.8 - 2017-05-02
-### Added
-- Fixes #42 upgrade dependencies
-- Fixes #43 add more debug info during metrics startup
-- Fixes #48 clean up status.xml and make comment on each segment
-
-## 1.2.7 - 2017-03-28
-### Added
-- Fixes #38 add status codes and utilities for light-graphql-4j
-
-### Changed
-- Fixes #34 enable HTTP/2 on server and make HTTP/2 configurable in server.yml
-- Fixes #36 upgrade to undertow 1.4.11
-
-## 1.2.6 - 2017-03-17
-### Added
-- Fixes #33 to create a separate secret.yml for Kubernetes integration
-
-### Changed
-- Fixes #30 check if token is null and ignore it for API to API call
-- Define static LIGHT_JAVA_CONFIG_DIR to avoid hard-coded property name
-- Fixes #32 support yaml and yml config format
-- 
-## 1.2.5 - 2017-03-03
-### Added
-
-### Changed
-- Fixes #11 inject server info into swagger-codegen
-- Change server name to L to optimize performance
-
-## 1.2.4 - 2017-02-19
-### Added
-- Fixes #27 Add rate limiting module
-
-### Changed
-- Upgrade to Undertow 1.4.10
-- Fixes #26 Update CORS handler to support method level control 
-
-## 1.2.3 - 2017-02-08
-### Added
-
-### Changed
-- Fixes some google error-prone warnings
-- Fixes #25 Add a system property in Server.java to redirect Undertow logs to slf4j
-- Fixes #25 ExceptionHandler to dispatch in the beginning to by pass Connectors in Undertow
-
-## 1.2.2 - 2017-02-03
-### Added
-- Add Cluster module to work with Client module for service discovery and load balance
-- Add Https support in server module. 
-
-### Changed
-- Update consul registry to make it simpler and streamline.
-- Update cluster to work with registrator and docker
-
-
-## 1.2.1 - 2017-01-25
-### Added
-
-### Changed
-- Clean up maven dependencies
-
-
-## 1.2.0 - 2017-01-22
-### Added
-- Add service registry and discovery
-- Add zookeeper support for resgistry and discovery
-- Add consul support for registry and discovery
-- Add direct registry for direct ip and port registry and discovery
-- Add Cors handler to support OAuth2 login page from another domain
-
-### Changed
-- Resolve Maven Eclipse errors
-- Enhanced service module to support parameterized constructor
-- Integrate server with registry
-- Spin off swagger, security and validator handlers to light-rest-4j
-
-## 1.1.7 - 2017-01-14
-### Added
-- Add error status for OAuth2 server
-
-### Changed
-- Fix warnings reported from google error-prone
-
-## 1.1.7 - 2017-01-09
-### Added
-- Add error status for OAuth2 server
-
-### Changed
-- Update JwtHelper to throw JoseException instead of Exception
-
-## 1.1.6 - 2017-01-01
-### Added
-- Add error status for OAuth2 server
-- Add local first load balancer (Thanks @ddobrin)
-
-### Changed
-- Remove duplicated plugin
-- Update JwtHelper to support JWT token generation with parameters
-
-## 1.1.5 - 2016-12-24
-### Added
-- Add HashUtil for password used in OAuth2 server light-oauth2
-- Add Status code for OAuth2 server
-
-### Changed
-
-## 1.1.4 - 2016-12-12
-### Added
-- Switcher is a module to control on/off of certain component during runtime
-- Discovery is a module used by Client to discover services by names from Consul or ZooKeeper
-- Registry is a module used by Server to register itself to Consul or ZooKeeper during server startup 
-
-### Changed
-- Update service module to support spaces in interface key part.
-- Integrate Google Error-prone for static source code scan
-- Fixed some many warnings from Intellij Idea Inspect
-
-## 1.1.3 - 2016-12-03
-### Added
-
-### Changed
-- Service config changed to JSON format so that properties can be injected 
-
-## 1.1.2 - 2016-11-28
-### Added
-
-### Changed
-- Add support to one interface to map multiple implementations in singleton service factory
-- Add support to multiple interfaces to map multiple implementations in singleton service factory
-
-## 1.1.1 - 2016-11-26
-### Added
-- Add a method to get framework version from /META-INFO/maven/com.networknt/info/pom.properties
-- Add a missing handler error code in status.json
-- Add MDC for correlation id in logging
-- Add service module which is a singleton service factory
-
-### Changed
-- Disable metrics by default in metrics module so that it won't try to report to influxdb
-
-## 1.1.0 - 2016-11-06
-### Added
-- Traceability handler to set traceabilityId to the response header from request header
-- Correlation handler to generate correlationId if it doesn't exist in the request header
-- Create dump handler but not implemented yet
-
-### Changed
-- Update Client to support traceabilityId and correlationId propagation
-- Refactor Audit to split full dump out.
-- Refactor Audit handler to output into audit log
-- Update Swagger Handler to add endpoint into the request header for audit log
-- Update JwtVerifyHandler to put scope_client_id into the request header
-
-
-## 1.0.2 - 2016-11-03
-### Added
-
-### Changed
-- Upgrade to json-schema-form 0.1.3
-- Fixes #2 exchange completed already issue.
-
-
-## 1.0.1 - 2016-10-30
-### Added
-- Sanitizer middleware to handle cross site scripting on header and body of request.
-- Health endpoint to indicate if the server is alive by sending OK.
-
-### Changed
-- Update body middleware so that it checks content type and parse the application/json to list or map.
-- Update Validator middleware to handle body as object or string
-- Move info to package info instead of audit
-- Upgrade undertow to 1.4.4-Final to address patch issue.
-- Update default server.json to bind to 0.0.0.0 instead of localhost for docker
-
-## 1.0.0 - 2016-10-21
-
-### Added
-- Add startup hook provider to allow API project to initialize resource, loading spring app context etc.
-- Add shutdown hook provider to allow API project to release connection pools or other resources.
-- Add Dockerfile to the root of generated API project.
-
-### Changed
-- Rename project to light-4j
-- JsonPath configuration is done in a startup hook provider now.
-
-## 0.1.9 - 2016-10-17
-### Added
-- Add metrics with Influx DB and Grafana combination.
-
-### Changed
-- Move swagger.json from swagger module resources to test resources so that petstore specification won't be included in API project by default.
-- Security scope verification will check swagger object before enabling it.
-- Validator test now has petstore swagger.json in test resources.
-- Update docs
+- Add a header handler to manipulate request header based on the config file [\#118](https://github.com/networknt/light-4j/issues/118)
+- Upgrade dependency versions for commons lang + deprecate commons-codec [\#106](https://github.com/networknt/light-4j/issues/106)
+- Implement session manager that can support web server cluster. [\#73](https://github.com/networknt/light-4j/issues/73)
 
-## 0.1.8 - 2016-10-10
-### Added
-- Add new Status code into status.json for OAuth2 server
-- Add docs folder for project documentation
+**Merged pull requests:**
 
-### Changed
-- Fix a bug in client to prevent calling oauth2 server multiple times if in renew window.
-- Add socket timeout for client
-- update client.json in test resource to simulate different errors.
+- Upgraded Undertow, Added Utility Interfaces for Header, path, query extraction [\#111](https://github.com/networknt/light-4j/pull/111) ([sachinwalia2k8](https://github.com/sachinwalia2k8))
+- Resolved \#1 Upgrading libraries and other changes [\#107](https://github.com/networknt/light-4j/pull/107) ([sachinwalia2k8](https://github.com/sachinwalia2k8))
 
-## 0.1.7 - 2016-10-05
-### Added
-- Introduce MiddlewareHandler interface so that user can plug in more middleware or switch middleware
+## [1.4.6](https://github.com/networknt/light-4j/tree/1.4.6) (2017-09-22)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.4.5...1.4.6)
 
-### Changed
-- Fixed info test case to clear the injected config
-- All middleware handlers implement MiddlewareHandler interface so that they are loaded from SPI
-- Middleware handlers will be enabled by checking isEnable()
-- Update validator test case to remove oauth2 dependency
-- Fix the NPE issue if swagger specification does not have security defined
-- SwaggerHandler will only be enabled if swagger.json exists in config
-- Fix the token helper to get token from OAuth2 server
+## [1.4.5](https://github.com/networknt/light-4j/tree/1.4.5) (2017-09-22)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.4.4...1.4.5)
 
-## 0.1.6 - 2016-10-02
-### Added
-- Add header parameter validation against swagger specification
+**Closed issues:**
 
-### Changed
-- Refactor validator to fail fast while error occurs
-- All validator returns Status object instead
+- Return invalid json error in body handler for malformed body [\#102](https://github.com/networknt/light-4j/issues/102)
 
+## [1.4.4](https://github.com/networknt/light-4j/tree/1.4.4) (2017-09-21)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.4.3...1.4.4)
 
-## 0.1.5 - 2016-10-01
-### Added
-- A body parser handler to parse body into String and attached to the exchange
-- A swagger handler to identify operation based on request uri and method and attach to the exchange
+**Implemented enhancements:**
 
-### Changed
-- Move swagger related classes from utility to swagger module
-- Update security module to leverage swagger handler attachment
-- Update validator module to leverage swagger handler and body handler attachments
-- Server Info handler is not injected in server but is included into swagger specification
+- service.yml configuration need to have entry name that is unique in order to support two or more db connection pools [\#50](https://github.com/networknt/light-4j/issues/50)
+- Centralize configurations to light-config-server which is backed by git repositories [\#29](https://github.com/networknt/light-4j/issues/29)
+- Revisit client module for the per route connection pooling in config in cluster/load balance/discovery environment. [\#24](https://github.com/networknt/light-4j/issues/24)
+- \[service module\] Add support for multiple definitions and bean references [\#9](https://github.com/networknt/light-4j/issues/9)
 
-## 0.1.4 - 2016-09-29
-### Added
-- A generic exception handler for runtime exception, ApiException and uncaught exception
+**Closed issues:**
 
-### Changed
-- Move checked exceptions to exception module from status
+- Update BodyHandler to parse the body and then put the stream back for subsequent handlers [\#101](https://github.com/networknt/light-4j/issues/101)
+- Add a reverse proxy middleware handler [\#100](https://github.com/networknt/light-4j/issues/100)
 
-## 0.1.3 - 2016-09-28
-### Added
+## [1.4.3](https://github.com/networknt/light-4j/tree/1.4.3) (2017-09-10)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.4.2...1.4.3)
 
-### Changed
-- Fix a NPE in request validator if query parameter is missing
-- Do not validate query parameter if there is none.
-- Handle the case that security definition is empty.
+**Closed issues:**
 
+- Calling consul directly with Http2Client instead of consul client [\#94](https://github.com/networknt/light-4j/issues/94)
 
-## 0.1.2 - 2016-09-27
-### Added
-- Jwt token scope verification based on swagger spec in security
-- Status module to standardize error response
-- Config can be loaded from classpath directly so that test case can inject different combination of configs.
+## [1.4.2](https://github.com/networknt/light-4j/tree/1.4.2) (2017-08-31)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.4.1...1.4.2)
 
-### Changed
-- Update the jwt.json and security.json to support multiple certificates and kid to pick up the right certificate
-for jwt verification. Also, expired token will throw ExpiredJwtException now.
-- Move request uri matching and swagger.json to utility
-- Move exceptions to status from utility
-- Instead of using Jackson ObjectMapper to serialize Status object, using toString now. 10 times faster
+**Merged pull requests:**
 
+- Update SingletonServiceFactory.java [\#99](https://github.com/networknt/light-4j/pull/99) ([ruslanys](https://github.com/ruslanys))
 
-## 0.1.1 - 2016-09-19
-### Added
-- Audit
-- Client
-- Info
-- Mask
-- Validator
+## [1.4.1](https://github.com/networknt/light-4j/tree/1.4.1) (2017-08-30)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.4.0...1.4.1)
 
+**Fixed bugs:**
 
+- Timeout when looking up from consul with ecwid client [\#19](https://github.com/networknt/light-4j/issues/19)
 
-## 0.1.0 - 2016-08-16
-### Added
-- Server
-- Config
-- Utility
-- Security
+**Closed issues:**
 
+- Upgrade to undertow 1.4.19.Final as there an HTTP 2.0 bug in 1.4.18.Final [\#98](https://github.com/networknt/light-4j/issues/98)
+- Add host head when sending requests to influxdb in InfluxDbHttpSender [\#97](https://github.com/networknt/light-4j/issues/97)
+- Add enableHttp2 in client.yml to control if Http2Client will be using HTTP 2.0 protocol [\#96](https://github.com/networknt/light-4j/issues/96)
+- Refactor server info component object so that it is easy to be consumed by api-certification [\#95](https://github.com/networknt/light-4j/issues/95)
+- update default client.yml to remove the settings for http1.1 [\#93](https://github.com/networknt/light-4j/issues/93)
+- Create a websocket example in light-example-4j to demo how to use websocket endpoint. [\#64](https://github.com/networknt/light-4j/issues/64)
 
+**Merged pull requests:**
 
+- Update README.md [\#92](https://github.com/networknt/light-4j/pull/92) ([joaozitopolo](https://github.com/joaozitopolo))
+- Update SingletonServiceFactory.java [\#91](https://github.com/networknt/light-4j/pull/91) ([ruslanys](https://github.com/ruslanys))
 
+## [1.4.0](https://github.com/networknt/light-4j/tree/1.4.0) (2017-08-22)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.3.5...1.4.0)
 
+**Implemented enhancements:**
 
+- Register JavaTimeModule for the default Jackson ObjectMapper from Config [\#82](https://github.com/networknt/light-4j/issues/82)
+
+**Closed issues:**
+
+- Remove Client which depends on apache httpclient and replace with Http2Client [\#90](https://github.com/networknt/light-4j/issues/90)
+- gzip compression  [\#88](https://github.com/networknt/light-4j/issues/88)
+- Upgrade to undertow 1.4.18.Final to support http2 [\#87](https://github.com/networknt/light-4j/issues/87)
+- Complete the Http2Client in client module [\#85](https://github.com/networknt/light-4j/issues/85)
+- Dynamically load public key certificate from OAuth2 provider [\#84](https://github.com/networknt/light-4j/issues/84)
+
+**Merged pull requests:**
+
+- Config module: Added 2 extra test cases for LocalDateTime and LocalDate [\#83](https://github.com/networknt/light-4j/pull/83) ([pragmaticway](https://github.com/pragmaticway))
+
+## [1.3.5](https://github.com/networknt/light-4j/tree/1.3.5) (2017-08-01)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.3.4...1.3.5)
+
+**Closed issues:**
+
+- Remove jsoniter dependencies in mask until it has a feature of jsonpath [\#81](https://github.com/networknt/light-4j/issues/81)
+- Update validatePassword in HashUtil to accept origianlPassword as char\[\] instead of String [\#80](https://github.com/networknt/light-4j/issues/80)
+- Add TLS certificate and OAuth2 certificate SHA1 fingerprint to the /server/info output [\#79](https://github.com/networknt/light-4j/issues/79)
+- Resolve security issues reported from Fortify scanner [\#78](https://github.com/networknt/light-4j/issues/78)
+- Remove JsonPath in Mask module with JsonIter to simplify dependencies [\#77](https://github.com/networknt/light-4j/issues/77)
+- Add getTempDir for NioUtils and add test cases for zip file manipulation [\#76](https://github.com/networknt/light-4j/issues/76)
+
+## [1.3.4](https://github.com/networknt/light-4j/tree/1.3.4) (2017-07-08)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.3.3...1.3.4)
+
+**Implemented enhancements:**
+
+- test: use random port [\#55](https://github.com/networknt/light-4j/issues/55)
+- JWT token verification with cached token and expire time [\#47](https://github.com/networknt/light-4j/issues/47)
+- Need to encrypt secrets in config files so that they won't be leaked [\#31](https://github.com/networknt/light-4j/issues/31)
+
+**Closed issues:**
+
+- InetAddress is not working in Docker for Mac as hostname is not mapped to /etc/hosts [\#75](https://github.com/networknt/light-4j/issues/75)
+- Update ConsulRegistry to refactor discovery cache to one layer from two [\#74](https://github.com/networknt/light-4j/issues/74)
+- Add CodeVerifierUtil to support PKCE in light-oauth2 implementation [\#72](https://github.com/networknt/light-4j/issues/72)
+
+## [1.3.3](https://github.com/networknt/light-4j/tree/1.3.3) (2017-06-14)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.3.2...1.3.3)
+
+**Closed issues:**
+
+- Break the metrics tie to security for client\_id [\#71](https://github.com/networknt/light-4j/issues/71)
+
+## [1.3.2](https://github.com/networknt/light-4j/tree/1.3.2) (2017-06-14)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.3.1...1.3.2)
+
+**Implemented enhancements:**
+
+- Request and response filter implementation [\#58](https://github.com/networknt/light-4j/issues/58)
+
+**Closed issues:**
+
+- Make UnsafeLongAdderImpl default construction public [\#70](https://github.com/networknt/light-4j/issues/70)
+- Switch to AuditInfo attachment for metrics collection [\#69](https://github.com/networknt/light-4j/issues/69)
+- Add debug level log when InfluxDb reporter is call with counter size. [\#68](https://github.com/networknt/light-4j/issues/68)
+- Add serviceId sId into slf4j MDC so that it can be added to all logging statement along with cId [\#67](https://github.com/networknt/light-4j/issues/67)
+- Switch to undertow server and client truststore and keystore [\#66](https://github.com/networknt/light-4j/issues/66)
+- microservices sample error [\#65](https://github.com/networknt/light-4j/issues/65)
+- Any plan to create tools like "jhispter" to help build microservices? [\#5](https://github.com/networknt/light-4j/issues/5)
+
+## [1.3.1](https://github.com/networknt/light-4j/tree/1.3.1) (2017-06-03)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.3.0...1.3.1)
+
+**Implemented enhancements:**
+
+- Put more comments in source code to improve the readability [\#60](https://github.com/networknt/light-4j/issues/60)
+
+**Fixed bugs:**
+
+- Response time and status code is not shown up in audit log [\#61](https://github.com/networknt/light-4j/issues/61)
+
+**Closed issues:**
+
+- Update HealthHandler to HealthGetHandler in order to inject into the light-rest-4j generator in light-codegen [\#63](https://github.com/networknt/light-4j/issues/63)
+- Upgrade json-schema-validator to 0.1.7 from 0.1.5 [\#62](https://github.com/networknt/light-4j/issues/62)
+
+## [1.3.0](https://github.com/networknt/light-4j/tree/1.3.0) (2017-05-06)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.2.8...1.3.0)
+
+**Closed issues:**
+
+- Change the project name to light-4j instead of light-java as java is a trademark of Oracle [\#59](https://github.com/networknt/light-4j/issues/59)
+
+## [1.2.8](https://github.com/networknt/light-4j/tree/1.2.8) (2017-05-02)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.2.7...1.2.8)
+
+**Implemented enhancements:**
+
+- Clean up status.yml and add comments for each segment [\#48](https://github.com/networknt/light-4j/issues/48)
+- Add more debug info to metrics as people having trouble to config it right with Influxdb [\#43](https://github.com/networknt/light-4j/issues/43)
+- Upgrade dependencies to the latest version [\#42](https://github.com/networknt/light-4j/issues/42)
+
+**Fixed bugs:**
+
+- Client - propagateHeaders expect JWT token to be in the request header or output an error.  [\#41](https://github.com/networknt/light-4j/issues/41)
+
+**Closed issues:**
+
+- Create a NioUtils with some helpers in utility module [\#54](https://github.com/networknt/light-4j/issues/54)
+- Add NIO utility and status code to support light-codegen [\#52](https://github.com/networknt/light-4j/issues/52)
+- Adding kid to the header of the JWT token issued by light-java. [\#46](https://github.com/networknt/light-4j/issues/46)
+- Bump up scope mismatch log from debug to warn as it is security violation [\#45](https://github.com/networknt/light-4j/issues/45)
+
+## [1.2.7](https://github.com/networknt/light-4j/tree/1.2.7) (2017-03-28)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.2.6...1.2.7)
+
+**Implemented enhancements:**
+
+- Add status code and a util method for light-java-graphql [\#38](https://github.com/networknt/light-4j/issues/38)
+- Separate secrets from config files in order to support Kubernetes secrets and configmap [\#33](https://github.com/networknt/light-4j/issues/33)
+
+**Closed issues:**
+
+- Upgrade to undertow 1.4.11.Final [\#36](https://github.com/networknt/light-4j/issues/36)
+- Implement GraphQL support with light-java-graphql [\#8](https://github.com/networknt/light-4j/issues/8)
+
+## [1.2.6](https://github.com/networknt/light-4j/tree/1.2.6) (2017-03-18)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.2.5...1.2.6)
+
+**Implemented enhancements:**
+
+- Token scope and spec scope mismatch error is not clear in logs [\#35](https://github.com/networknt/light-4j/issues/35)
+- Switch server and client to HTTP/2 [\#34](https://github.com/networknt/light-4j/issues/34)
+- Config file support yaml format along with json [\#32](https://github.com/networknt/light-4j/issues/32)
+
+**Closed issues:**
+
+- NullPointerException when populating a request to call another API due to original token is missing [\#30](https://github.com/networknt/light-4j/issues/30)
+
+## [1.2.5](https://github.com/networknt/light-4j/tree/1.2.5) (2017-03-04)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.2.4...1.2.5)
+
+**Implemented enhancements:**
+
+- Find the best location to inject server info to the routing handler [\#11](https://github.com/networknt/light-4j/issues/11)
+
+**Closed issues:**
+
+- Alternate Config impls ... S3, http? [\#28](https://github.com/networknt/light-4j/issues/28)
+
+## [1.2.4](https://github.com/networknt/light-4j/tree/1.2.4) (2017-02-20)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.2.3...1.2.4)
+
+**Implemented enhancements:**
+
+- Add rate limit in order to prevent DDOS attack for public facing services [\#27](https://github.com/networknt/light-4j/issues/27)
+- Allow cors handler to specify which method is allowed. [\#26](https://github.com/networknt/light-4j/issues/26)
+
+## [1.2.3](https://github.com/networknt/light-4j/tree/1.2.3) (2017-02-09)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.2.2...1.2.3)
+
+**Implemented enhancements:**
+
+- Add a system property to redirect jboss logs to slf4j [\#25](https://github.com/networknt/light-4j/issues/25)
+
+**Closed issues:**
+
+- Add TLS support for server module [\#22](https://github.com/networknt/light-4j/issues/22)
+- Add cluster module to work with client module for service discovery and load balance [\#21](https://github.com/networknt/light-4j/issues/21)
+
+## [1.2.2](https://github.com/networknt/light-4j/tree/1.2.2) (2017-02-04)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.2.1...1.2.2)
+
+## [1.2.1](https://github.com/networknt/light-4j/tree/1.2.1) (2017-01-25)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.2.0...1.2.1)
+
+## [1.2.0](https://github.com/networknt/light-4j/tree/1.2.0) (2017-01-22)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.1.7...1.2.0)
+
+**Implemented enhancements:**
+
+- Integrate service registry and discovery with Server and Client modules [\#17](https://github.com/networknt/light-4j/issues/17)
+- Implement a CORS handler to support calls from Single Page Application from another domain [\#14](https://github.com/networknt/light-4j/issues/14)
+- Update JwtHelper to throw JoseException instead of throwing Exception [\#12](https://github.com/networknt/light-4j/issues/12)
+- Implement service registry and discovery that support consul and zookeeper [\#10](https://github.com/networknt/light-4j/issues/10)
+
+**Closed issues:**
+
+- Spin off swagger, validator and security to light-java-rest repo [\#18](https://github.com/networknt/light-4j/issues/18)
+- service - support parameterized constructor instead of default constructor and then set properties [\#16](https://github.com/networknt/light-4j/issues/16)
+
+**Merged pull requests:**
+
+- Resolve Maven Eclipse errors [\#15](https://github.com/networknt/light-4j/pull/15) ([ddobrin](https://github.com/ddobrin))
+
+## [1.1.7](https://github.com/networknt/light-4j/tree/1.1.7) (2017-01-08)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.1.6...1.1.7)
+
+## [1.1.6](https://github.com/networknt/light-4j/tree/1.1.6) (2017-01-02)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.1.5...1.1.6)
+
+**Merged pull requests:**
+
+- Add a load balancer matching across the local host, then round-robin [\#7](https://github.com/networknt/light-4j/pull/7) ([ddobrin](https://github.com/ddobrin))
+
+## [1.1.5](https://github.com/networknt/light-4j/tree/1.1.5) (2016-12-24)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.1.4...1.1.5)
+
+## [1.1.4](https://github.com/networknt/light-4j/tree/1.1.4) (2016-12-13)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.1.3...1.1.4)
+
+## [1.1.3](https://github.com/networknt/light-4j/tree/1.1.3) (2016-12-03)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.1.2...1.1.3)
+
+## [1.1.2](https://github.com/networknt/light-4j/tree/1.1.2) (2016-11-29)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.1.1...1.1.2)
+
+## [1.1.1](https://github.com/networknt/light-4j/tree/1.1.1) (2016-11-27)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.1.0...1.1.1)
+
+**Merged pull requests:**
+
+- Docs: Fix switched links [\#4](https://github.com/networknt/light-4j/pull/4) ([spinscale](https://github.com/spinscale))
+- Fixing small issue with documentation's example. \(Changing "clone ...… [\#3](https://github.com/networknt/light-4j/pull/3) ([lkoolma](https://github.com/lkoolma))
+
+## [1.1.0](https://github.com/networknt/light-4j/tree/1.1.0) (2016-11-07)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.0.2...1.1.0)
+
+## [1.0.2](https://github.com/networknt/light-4j/tree/1.0.2) (2016-11-04)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.0.1...1.0.2)
+
+**Fixed bugs:**
+
+- Exchange already complete in jwt token if scope is mismatched [\#2](https://github.com/networknt/light-4j/issues/2)
+
+## [1.0.1](https://github.com/networknt/light-4j/tree/1.0.1) (2016-10-30)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.0.0...1.0.1)
+
+## [1.0.0](https://github.com/networknt/light-4j/tree/1.0.0) (2016-10-21)
+[Full Changelog](https://github.com/networknt/light-4j/compare/0.1.9...1.0.0)
+
+## [0.1.9](https://github.com/networknt/light-4j/tree/0.1.9) (2016-10-18)
+[Full Changelog](https://github.com/networknt/light-4j/compare/0.1.8...0.1.9)
+
+## [0.1.8](https://github.com/networknt/light-4j/tree/0.1.8) (2016-10-11)
+[Full Changelog](https://github.com/networknt/light-4j/compare/0.1.7...0.1.8)
+
+## [0.1.7](https://github.com/networknt/light-4j/tree/0.1.7) (2016-10-05)
+[Full Changelog](https://github.com/networknt/light-4j/compare/0.1.6...0.1.7)
+
+## [0.1.6](https://github.com/networknt/light-4j/tree/0.1.6) (2016-10-02)
+[Full Changelog](https://github.com/networknt/light-4j/compare/0.1.5...0.1.6)
+
+## [0.1.5](https://github.com/networknt/light-4j/tree/0.1.5) (2016-10-01)
+[Full Changelog](https://github.com/networknt/light-4j/compare/0.1.4...0.1.5)
+
+## [0.1.4](https://github.com/networknt/light-4j/tree/0.1.4) (2016-09-30)
+[Full Changelog](https://github.com/networknt/light-4j/compare/0.1.3...0.1.4)
+
+## [0.1.3](https://github.com/networknt/light-4j/tree/0.1.3) (2016-09-28)
+[Full Changelog](https://github.com/networknt/light-4j/compare/0.1.2...0.1.3)
+
+## [0.1.2](https://github.com/networknt/light-4j/tree/0.1.2) (2016-09-25)
+[Full Changelog](https://github.com/networknt/light-4j/compare/0.1.1...0.1.2)
+
+## [0.1.1](https://github.com/networknt/light-4j/tree/0.1.1) (2016-09-18)
+
+
+\* *This Change Log was automatically generated by [github_changelog_generator](https://github.com/skywinder/Github-Changelog-Generator)*
