@@ -1,6 +1,5 @@
 package com.networknt.utility;
 
-import com.networknt.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +15,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import static java.io.File.separator;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
