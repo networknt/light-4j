@@ -1,6 +1,7 @@
 package com.networknt.email;
 
-import com.networknt.common.SecretConfig;
+import com.networknt.common.DecryptUtil;
+import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 
 import javax.activation.DataHandler;
@@ -11,6 +12,7 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -23,7 +25,7 @@ public class EmailSender {
     public static final String CONFIG_SECRET = "secret";
 
     static final EmailConfig emailConfg = (EmailConfig)Config.getInstance().getJsonObjectConfig(CONFIG_EMAIL, EmailConfig.class);
-    static final SecretConfig secretConfig = (SecretConfig)Config.getInstance().getJsonObjectConfig(CONFIG_SECRET, SecretConfig.class);
+    static final Map<String, Object> secret = DecryptUtil.decryptMap(Config.getInstance().getJsonMapConfig(CONFIG_SECRET));
 
     public EmailSender() {
     }
@@ -45,7 +47,7 @@ public class EmailSender {
         props.put("mail.smtp.debug", emailConfg.getDebug());
         props.put("mail.smtp.auth", emailConfg.getAuth());
 
-        SMTPAuthenticator auth = new SMTPAuthenticator(emailConfg.getUser(), secretConfig.getEmailPassword());
+        SMTPAuthenticator auth = new SMTPAuthenticator(emailConfg.getUser(), (String)secret.get(SecretConstants.EMAIL_PASSWORD));
         Session session = Session.getInstance(props, auth);
 
         MimeMessage message = new MimeMessage(session);
@@ -79,7 +81,7 @@ public class EmailSender {
         props.put("mail.smtp.debug", emailConfg.getDebug());
         props.put("mail.smtp.auth", emailConfg.getAuth());
 
-        SMTPAuthenticator auth = new SMTPAuthenticator(emailConfg.getUser(), secretConfig.getEmailPassword());
+        SMTPAuthenticator auth = new SMTPAuthenticator(emailConfg.getUser(), (String)secret.get(SecretConstants.EMAIL_PASSWORD));
         Session session = Session.getInstance(props, auth);
 
         MimeMessage message = new MimeMessage(session);

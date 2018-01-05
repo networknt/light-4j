@@ -97,7 +97,7 @@ public class JwtHelper {
      *
      * @param claims JwtClaims object
      * @return A string represents jwt token
-     * @throws JoseException
+     * @throws JoseException JoseException
      */
     public static String getJwt(JwtClaims claims) throws JoseException {
         String jwt;
@@ -181,7 +181,7 @@ public class JwtHelper {
      *
      * @param filename certificate file name
      * @return X509Certificate object
-     * @throws Exception
+     * @throws Exception Exception while reading certificate
      */
     static public X509Certificate readCertificate(String filename)
             throws Exception {
@@ -255,8 +255,8 @@ public class JwtHelper {
      *
      * @param jwt String of Json web token
      * @return JwtClaims object
-     * @throws InvalidJwtException
-     * @throws ExpiredTokenException
+     * @throws InvalidJwtException InvalidJwtException
+     * @throws ExpiredTokenException ExpiredTokenException
      */
     public static JwtClaims verifyJwt(String jwt) throws InvalidJwtException, ExpiredTokenException {
         JwtClaims claims;

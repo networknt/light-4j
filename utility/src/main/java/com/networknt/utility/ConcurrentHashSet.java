@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * ConcurrentHashSet implementation
  *
- * @param <E>
+ * @param <E> element
  */
 public class ConcurrentHashSet<E> extends AbstractSet<E> implements Set<E>, java.io.Serializable {
 

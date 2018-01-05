@@ -55,7 +55,7 @@ public class NioUtils {
      * Replaces any files in the destination, if they already exist.
      * @param zipFilename the name of the zip file to extract
      * @param destDirname the directory to unzip to
-     * @throws IOException
+     * @throws IOException IOException
      */
     public static void unzip(String zipFilename, String destDirname)
             throws IOException{
@@ -102,7 +102,7 @@ public class NioUtils {
      * Creates/updates a zip file.
      * @param zipFilename the name of the zip to create
      * @param filenames list of filename to add to the zip
-     * @throws IOException
+     * @throws IOException IOException
      */
     public static void create(String zipFilename, String... filenames)
             throws IOException {
@@ -156,8 +156,8 @@ public class NioUtils {
 
     /**
      * List the contents of the specified zip file
-     * @param zipFilename
-     * @throws IOException
+     * @param zipFilename zip filename
+     * @throws IOException IOException
      */
     public static void list(String zipFilename) throws IOException{
 
@@ -204,7 +204,12 @@ public class NioUtils {
         }
     }
 
-
+    /**
+     * Delele old files
+     *
+     * @param dirPath path of the filesystem
+     * @param olderThanMinute the minutes that defines older files
+     */
     public static void deleteOldFiles(String dirPath, int olderThanMinute)  {
 
         File folder = new File(dirPath);
@@ -221,6 +226,11 @@ public class NioUtils {
         }
     }
 
+    /**
+     * convert String to ByteBuffer
+     * @param s string to be converted
+     * @return ByteBuffer the result ByteBuffer
+     */
     public static ByteBuffer toByteBuffer(String s) {
         ByteBuffer buffer = ByteBuffer.allocateDirect(s.length());
         buffer.put(s.getBytes(UTF_8));
@@ -228,6 +238,11 @@ public class NioUtils {
         return buffer;
     }
 
+    /**
+     * get temp dir from OS.
+     *
+     * @return String temp dir
+     */
     public static String getTempDir() {
         // default is user home directory
         String tempDir = System.getProperty("user.home");
@@ -244,6 +259,9 @@ public class NioUtils {
     /**
      * Reads and returns the rest of the given input stream as a byte array.
      * Caller is responsible for closing the given input stream.
+     * @param is input stream
+     * @return byte[] byte array
+     * @throws IOException IOException
      */
     public static byte[] toByteArray(InputStream is) throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
@@ -262,6 +280,9 @@ public class NioUtils {
     /**
      * Reads and returns the rest of the given input stream as a string.
      * Caller is responsible for closing the given input stream.
+     * @param is input stream
+     * @return String the string result
+     * @throws IOException IOException
      */
     public static String toString(InputStream is) throws IOException {
         return new String(toByteArray(is), StandardCharsets.UTF_8);

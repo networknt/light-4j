@@ -1,7 +1,8 @@
 package com.networknt.consul;
 
 import com.networknt.client.Http2Client;
-import com.networknt.common.SecretConfig;
+import com.networknt.common.DecryptUtil;
+import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 import com.networknt.registry.URLParamType;
 import com.networknt.consul.client.ConsulClient;
@@ -25,8 +26,8 @@ public class ConsulRegistry extends CommandFailbackRegistry {
     private ConsulClient client;
     private ConsulHeartbeatManager heartbeatManager;
     private int lookupInterval;
-    private SecretConfig secretConfig = (SecretConfig)Config.getInstance().getJsonObjectConfig(Http2Client.CONFIG_SECRET, SecretConfig.class);
-    private String token = secretConfig.getConsulToken();
+    private Map<String, Object> secret = DecryptUtil.decryptMap(Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET));
+    private String token = secret == null? null : (String)secret.get(SecretConstants.CONSUL_TOKEN);
     // service local cache. key: serviceName, value: <service url list>
     private ConcurrentHashMap<String, List<URL>> serviceCache = new ConcurrentHashMap<String, List<URL>>();
 

@@ -326,6 +326,7 @@ public class SingletonServiceFactory {
      * to implementation mapping.
      *
      * @param interfaceClass Interface class
+     * @param <T> class type
      * @param typeClass Generic type class
      * @return The implementation object
      */
@@ -347,6 +348,7 @@ public class SingletonServiceFactory {
      * the case for this method to get the first one only if there are multiple.
      *
      * @param interfaceClass Interface class
+     * @param <T> class type
      * @return The implementation object
      */
     public static <T> T getBean(Class<T> interfaceClass) {
@@ -364,6 +366,7 @@ public class SingletonServiceFactory {
      * is only one object in the serviceMap, then construct the list with this only object.
      *
      * @param interfaceClass Interface class
+     * @param <T> class type
      * @return The array of implementation objects
      */
     public static <T> T[] getBeans(Class<T> interfaceClass) {

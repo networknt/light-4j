@@ -17,7 +17,8 @@
 package com.networknt.client.oauth;
 
 import com.networknt.client.Http2Client;
-import com.networknt.common.SecretConfig;
+import com.networknt.common.DecryptUtil;
+import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 
 import java.util.List;
@@ -34,12 +35,13 @@ import java.util.Map;
  * @author Steve Hu
  */
 public class ClientCredentialsRequest extends TokenRequest {
+    static Map<String, Object> secret = DecryptUtil.decryptMap((Map<String, Object>)Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET));
+
 
     public ClientCredentialsRequest() {
         setGrantType(CLIENT_CREDENTIALS);
         Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
         // client_secret is in secret.yml instead of client.yml
-        SecretConfig secretConfig = (SecretConfig)Config.getInstance().getJsonObjectConfig(Http2Client.CONFIG_SECRET, SecretConfig.class);
         if(clientConfig != null) {
             Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OAUTH);
             if(oauthConfig != null) {
@@ -49,7 +51,7 @@ public class ClientCredentialsRequest extends TokenRequest {
                     Map<String, Object> ccConfig = (Map<String, Object>) tokenConfig.get(CLIENT_CREDENTIALS);
                     if(ccConfig != null) {
                         setClientId((String)ccConfig.get(CLIENT_ID));
-                        setClientSecret(secretConfig.getClientCredentialsClientSecret());
+                        setClientSecret((String)secret.get(SecretConstants.CLIENT_CREDENTIALS_CLIENT_SECRET));
                         setUri((String)ccConfig.get(URI));
                         setScope((List<String>)ccConfig.get(SCOPE));
                     }

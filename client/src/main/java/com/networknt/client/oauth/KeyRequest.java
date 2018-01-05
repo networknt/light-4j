@@ -1,7 +1,8 @@
 package com.networknt.client.oauth;
 
 import com.networknt.client.Http2Client;
-import com.networknt.common.SecretConfig;
+import com.networknt.common.DecryptUtil;
+import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 
 import java.util.Map;
@@ -13,6 +14,8 @@ public class KeyRequest {
     public static String URI = "uri";
     public static String CLIENT_ID = "client_id";
 
+    static Map<String, Object> secret = DecryptUtil.decryptMap((Map<String, Object>)Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET));
+
     String serverUrl;
     String uri;
     String clientId;
@@ -21,7 +24,6 @@ public class KeyRequest {
     public KeyRequest(String kid) {
         Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
         // client_secret is in secret.yml instead of client.yml
-        SecretConfig secretConfig = (SecretConfig)Config.getInstance().getJsonObjectConfig(Http2Client.CONFIG_SECRET, SecretConfig.class);
         if(clientConfig != null) {
             Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OAUTH);
             if(oauthConfig != null) {
@@ -30,7 +32,7 @@ public class KeyRequest {
                     setServerUrl((String)keyConfig.get(SERVER_URL));
                     setUri(keyConfig.get(URI) + "/" + kid);
                     setClientId((String)keyConfig.get(CLIENT_ID));
-                    setClientSecret(secretConfig.getKeyClientSecret());
+                    setClientSecret((String)secret.get(SecretConstants.KEY_CLIENT_SECRET));
                 }
             }
         }

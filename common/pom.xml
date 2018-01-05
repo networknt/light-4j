@@ -32,15 +32,7 @@
     <dependencies>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>utility</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>config</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>service</artifactId>
+            <artifactId>decryptor</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

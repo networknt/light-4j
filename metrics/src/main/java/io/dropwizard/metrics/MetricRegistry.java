@@ -84,6 +84,7 @@ public class MetricRegistry implements MetricSet {
     /**
      * @param name name
      * @param metric metric
+     * @param <T> type of metrics
      * @return T git s{@code metric}
      * @see #register(MetricName, Metric)
      */

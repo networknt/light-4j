@@ -7,7 +7,11 @@ import java.util.regex.Pattern;
 public class StringUtil {
 
     /**
+     * Check if the string is null or empty
+     *
+     * @param value the value that is checked
      * @return true if the given value is either null or the empty string
+     *
      */
     public static boolean isNullOrEmpty(String value) {
         return value == null || value.isEmpty();

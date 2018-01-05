@@ -17,7 +17,8 @@
 package com.networknt.server;
 
 import com.networknt.client.Http2Client;
-import com.networknt.common.SecretConfig;
+import com.networknt.common.DecryptUtil;
+import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.registry.Registry;
@@ -82,7 +83,7 @@ public class Server {
     static final String SID = "sId";
 
     public static ServerConfig config = (ServerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServerConfig.class);
-    public static SecretConfig secret = (SecretConfig) Config.getInstance().getJsonObjectConfig(CONFIG_SECRET, SecretConfig.class);
+    public static Map<String, Object> secret = DecryptUtil.decryptMap(Config.getInstance().getJsonMapConfig(CONFIG_SECRET));
     public final static TrustManager[] TRUST_ALL_CERTS = new X509TrustManager[] { new DummyTrustManager() };
 
     static protected boolean shutdownRequested = false;
@@ -236,7 +237,7 @@ public class Server {
         String name = config.getKeystoreName();
         try (InputStream stream = Config.getInstance().getInputStreamFromFile(name)) {
             KeyStore loadedKeystore = KeyStore.getInstance("JKS");
-            loadedKeystore.load(stream, secret.getServerKeystorePass().toCharArray());
+            loadedKeystore.load(stream, ((String)secret.get(SecretConstants.SERVER_KEYSTORE_PASS)).toCharArray());
             return loadedKeystore;
         } catch (Exception e) {
             logger.error("Unable to load keystore " + name, e);
@@ -248,7 +249,7 @@ public class Server {
         String name = config.getTruststoreName();
         try (InputStream stream = Config.getInstance().getInputStreamFromFile(name)) {
             KeyStore loadedKeystore = KeyStore.getInstance("JKS");
-            loadedKeystore.load(stream, secret.getServerTruststorePass().toCharArray());
+            loadedKeystore.load(stream, ((String)secret.get(SecretConstants.SERVER_TRUSTSTORE_PASS)).toCharArray());
             return loadedKeystore;
         } catch (Exception e) {
             logger.error("Unable to load truststore " + name, e);
@@ -293,7 +294,7 @@ public class Server {
 
     private static SSLContext createSSLContext() throws RuntimeException {
         try {
-            KeyManager[] keyManagers = buildKeyManagers(loadKeyStore(), secret.getServerKeyPass().toCharArray());
+            KeyManager[] keyManagers = buildKeyManagers(loadKeyStore(), ((String)secret.get(SecretConstants.SERVER_KEY_PASS)).toCharArray());
             TrustManager[] trustManagers;
             if(config.isEnableTwoWayTls()) {
                 trustManagers = buildTrustManagers(loadTrustStore());

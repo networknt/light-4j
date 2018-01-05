@@ -85,6 +85,7 @@ public class CodeVerifierUtil {
      * Generates a random code verifier string using {@link SecureRandom} as the source of
      * entropy, with the default entropy quantity as defined by
      * {@link #DEFAULT_CODE_VERIFIER_ENTROPY}.
+     * @return String the generated code verifier
      */
     public static String generateRandomCodeVerifier() {
         return generateRandomCodeVerifier(new SecureRandom(), DEFAULT_CODE_VERIFIER_ENTROPY);
@@ -93,6 +94,9 @@ public class CodeVerifierUtil {
     /**
      * Generates a random code verifier string using the provided entropy source and the specified
      * number of bytes of entropy.
+     * @param entropySource entropy source
+     * @param entropyBytes entropy bytes
+     * @return String generated code verifier
      */
     public static String generateRandomCodeVerifier(SecureRandom entropySource, int entropyBytes) {
         byte[] randomBytes = new byte[entropyBytes];
@@ -104,6 +108,8 @@ public class CodeVerifierUtil {
      * Produces a challenge from a code verifier, using SHA-256 as the challenge method if the
      * system supports it (all Android devices _should_ support SHA-256), and falls back
      * to the "plain" challenge type if unavailable.
+     * @param codeVerifier code verifier
+     * @return String derived challenge
      */
     public static String deriveCodeVerifierChallenge(String codeVerifier) {
         try {
@@ -123,6 +129,7 @@ public class CodeVerifierUtil {
     /**
      * Returns the challenge method utilized on this system: typically SHA-256 if supported by
      * the system, plain otherwise.
+     * @return String challenge method
      */
     public static String getCodeVerifierChallengeMethod() {
         try {

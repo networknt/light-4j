@@ -48,7 +48,7 @@ public interface MiddlewareHandler extends HttpHandler {
     /**
      * Indicate if this handler is enabled or not.
      *
-     * @return
+     * @return boolean true if enabled
      */
     boolean isEnabled();
 

@@ -1,4 +1,4 @@
-package com.networknt.decrypt;
+package com.networknt.common;
 
 import com.networknt.utility.Constants;
 import sun.misc.BASE64Encoder;
