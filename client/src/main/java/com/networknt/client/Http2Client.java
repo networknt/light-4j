@@ -115,9 +115,11 @@ public class Http2Client {
         }
 
         Map<String, Object> secretMap = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
-        //if(secretMap != null) {
+        if(secretMap != null) {
             secretConfig = DecryptUtil.decryptMap(secretMap);
-        //}
+        } else {
+            throw new ExceptionInInitializerError("Could not locate secret.yml");
+        }
     }
 
     private final Map<String, ClientProvider> clientProviders;
