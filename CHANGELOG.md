@@ -1,5 +1,17 @@
 # Change Log
 
+## [1.5.7](https://github.com/networknt/light-4j/tree/1.5.7) (2018-01-09)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.6...1.5.7)
+
+**Implemented enhancements:**
+
+- provide a utility to substitute environment variables in config  [\#149](https://github.com/networknt/light-4j/issues/149)
+
+**Closed issues:**
+
+- change secret.yml loading from SecretConfig to Map for flexibility [\#151](https://github.com/networknt/light-4j/issues/151)
+- Remove docs folder and repo specific document site once all contents are migrated [\#139](https://github.com/networknt/light-4j/issues/139)
+
 ## [1.5.6](https://github.com/networknt/light-4j/tree/1.5.6) (2017-12-29)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.5...1.5.6)
 
