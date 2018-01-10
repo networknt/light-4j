@@ -66,7 +66,7 @@ public class ConsulClientImpl implements ConsulClient {
 		final CountDownLatch latch = new CountDownLatch(1);
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
-			ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(path);
+			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
 			if(token != null) request.getRequestHeaders().put(Constants.CONSUL_TOKEN, token);
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
@@ -97,7 +97,7 @@ public class ConsulClientImpl implements ConsulClient {
 		final CountDownLatch latch = new CountDownLatch(1);
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
-			ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(path);
+			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
 			if(token != null) request.getRequestHeaders().put(Constants.CONSUL_TOKEN, token);
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
@@ -156,7 +156,7 @@ public class ConsulClientImpl implements ConsulClient {
 		final CountDownLatch latch = new CountDownLatch(1);
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
-			ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(path);
+			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
 			if(token != null) request.getRequestHeaders().put(Constants.CONSUL_TOKEN, token);
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
