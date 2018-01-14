@@ -521,6 +521,11 @@ ERR12041:
   message: CODE_VERIFIER_FAILED
   description: PKCE verification failed
 
+ERR12042:
+  statusCode: 404
+  code: ERR12042
+  message: SERVICE_ENDPOINT_NOT_FOUND
+  description: Service endpoint not found for serviceId %s
 
 # 20000-29999 common error codes within your business domain.
 # It is highly recommended to have your error code shared within your organization or your line of business.
