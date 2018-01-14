@@ -92,7 +92,7 @@ public class BodyHandler implements MiddlewareHandler {
                             body = Config.getInstance().getMapper().readValue(s, new TypeReference<HashMap<String, Object>>() {
                             });
                         } else if (s.startsWith("[")) {
-                            body = Config.getInstance().getMapper().readValue(s, new TypeReference<List<HashMap<String, Object>>>() {
+                            body = Config.getInstance().getMapper().readValue(s, new TypeReference<List<Object>>() {
                             });
                         } else {
                             // error here. The content type in head doesn't match the body.
