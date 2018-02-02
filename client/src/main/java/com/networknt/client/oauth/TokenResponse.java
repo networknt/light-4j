@@ -31,6 +31,18 @@ public class TokenResponse {
     @JsonProperty(value="expires_in")
     private long expiresIn;
 
+    @JsonProperty(value="scope")
+    private String scope;
+
+    @JsonProperty(value="state")
+    private String state;
+
+    @JsonProperty(value="refresh_token")
+    private String refreshToken;
+
+    @JsonProperty(value="example_parameter")
+    private String exampleParameter;
+
     public String getAccessToken() {
         return accessToken;
     }
@@ -55,12 +67,48 @@ public class TokenResponse {
         this.expiresIn = expiresIn;
     }
 
+    public String getScope() {
+        return scope;
+    }
+
+    public void setScope(String scope) {
+        this.scope = scope;
+    }
+
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
+    public String getExampleParameter() {
+        return exampleParameter;
+    }
+
+    public void setExampleParameter(String exampleParameter) {
+        this.exampleParameter = exampleParameter;
+    }
+
     @Override
     public String toString() {
         return "TokenResponse{" +
                 "accessToken='" + accessToken + '\'' +
                 ", tokenType='" + tokenType + '\'' +
                 ", expiresIn=" + expiresIn +
+                ", scope='" + scope + '\'' +
+                ", state='" + state + '\'' +
+                ", refreshToken='" + refreshToken + '\'' +
+                ", exampleParameter='" + exampleParameter + '\'' +
                 '}';
     }
 }
