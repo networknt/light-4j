@@ -64,7 +64,7 @@ public class JwtHelper {
     public static final String KID = "kid";
     public static final String SECURITY_CONFIG = "security";
     public static final String JWT_CERTIFICATE = "certificate";
-    public static final String JwT_CLOCK_SKEW_IN_SECONDS = "clockSkewInSeconds";
+    public static final String JWT_CLOCK_SKEW_IN_SECONDS = "clockSkewInSeconds";
     public static final String ENABLE_VERIFY_JWT = "enableVerifyJwt";
     public static final String OAUTH_HTTP2_SUPPORT = "oauthHttp2Support";
     public static final String ENABLE_JWT_CACHE = "enableJwtCache";
@@ -77,7 +77,7 @@ public class JwtHelper {
     static Map<String, Object> securityConfig = (Map)Config.getInstance().getJsonMapConfig(SECURITY_CONFIG);
     static Map<String, Object> securityJwtConfig = (Map)securityConfig.get(JWT_CONFIG);
     static JwtConfig jwtConfig = (JwtConfig) Config.getInstance().getJsonObjectConfig(JWT_CONFIG, JwtConfig.class);
-    static int secondsOfAllowedClockSkew = (Integer) securityJwtConfig.get(JwT_CLOCK_SKEW_IN_SECONDS);
+    static int secondsOfAllowedClockSkew = (Integer) securityJwtConfig.get(JWT_CLOCK_SKEW_IN_SECONDS);
     static Boolean enableJwtCache = (Boolean)securityConfig.get(ENABLE_JWT_CACHE);
     static Boolean bootstrapFromKeyService = (Boolean)securityConfig.get(BOOTSTRAP_FROM_KEY_SERVICE);
 
