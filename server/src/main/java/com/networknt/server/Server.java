@@ -75,7 +75,7 @@ public class Server {
     public static final String CONFIG_NAME = "server";
     public static final String CONFIG_SECRET = "secret";
 
-    static final String DEFAULT_ENV = "dev";
+    static final String DEFAULT_ENV = "test";
     static final String LIGHT_ENV = "light-env";
     static final String LIGHT_CONFIG_SERVER_URI = "light-config-server-uri";
 
@@ -347,7 +347,7 @@ public class Server {
             Http2Client client = Http2Client.getInstance();
             ClientConnection connection = null;
             try {
-                connection = client.connect(new URI(configUri), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
+                connection = client.connect(new URI(configUri), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
             } catch (Exception e) {
                 logger.error("Exeption:", e);
             }

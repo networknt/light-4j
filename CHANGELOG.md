@@ -1,5 +1,19 @@
 # Change Log
 
+## [1.5.8](https://github.com/networknt/light-4j/tree/1.5.8) (2018-02-03)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.7...1.5.8)
+
+**Closed issues:**
+
+- fix a typo in variable JwT\_CLOCK\_SKEW\_IN\_SECONDS [\#158](https://github.com/networknt/light-4j/issues/158)
+- accept other optional fields in OAuth2 token response [\#156](https://github.com/networknt/light-4j/issues/156)
+- handle a list of string instead of list of maps in BodyHandler [\#154](https://github.com/networknt/light-4j/issues/154)
+- Add a status code ERR12042 SERVICE\_ENDPOINT\_NOT\_FOUND [\#153](https://github.com/networknt/light-4j/issues/153)
+
+**Merged pull requests:**
+
+- Fix HTTP verbs [\#152](https://github.com/networknt/light-4j/pull/152) ([morganseznec](https://github.com/morganseznec))
+
 ## [1.5.7](https://github.com/networknt/light-4j/tree/1.5.7) (2018-01-09)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.6...1.5.7)
 
