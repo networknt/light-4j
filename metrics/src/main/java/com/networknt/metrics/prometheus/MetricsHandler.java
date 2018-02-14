@@ -44,7 +44,7 @@ import java.util.Map;
 
 public class MetricsHandler implements MiddlewareHandler {
     public static final String CONFIG_NAME = "metrics";
-    public static MetricsConfig config;
+    public static MetricsConfig config =(MetricsConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, MetricsConfig.class);
 
     private CollectorRegistry registry;
 
@@ -67,20 +67,20 @@ public class MetricsHandler implements MiddlewareHandler {
 
         List<String> labels = new ArrayList<>(this.commonTags.keySet());
         List<String> labelValues = new ArrayList<>(this.commonTags.values());
-        requests = Counter.build().name("requests_total").help("Total requests.").labelNames((String[])labels.toArray()).register();
-        requests.labels((String[])labelValues.toArray());
+        requests = Counter.build().name("requests_total").help("Total requests.").labelNames(labels.stream().toArray(String[]::new)).register();
+        requests.labels(labelValues.stream().toArray(String[]::new));
 
-        success = Counter.build().name("success_total").help("Total success requests.").labelNames((String[])labels.toArray()).register();
-        success.labels((String[])labelValues.toArray());
+        success = Counter.build().name("success_total").help("Total success requests.").labelNames(labels.stream().toArray(String[]::new)).register();
+        success.labels(labelValues.stream().toArray(String[]::new));
 
-        auth_error = Counter.build().name("auth_error_total").help("Total auth_error requests.").labelNames((String[])labels.toArray()).register();
-        auth_error.labels((String[])labelValues.toArray());
+        auth_error = Counter.build().name("auth_error_total").help("Total auth_error requests.").labelNames(labels.stream().toArray(String[]::new)).register();
+        auth_error.labels(labelValues.stream().toArray(String[]::new));
 
-        request_error = Counter.build().name("request_error_total").help("Total request error requests.").labelNames((String[])labels.toArray()).register();
-        request_error.labels((String[])labelValues.toArray());
+        request_error = Counter.build().name("request_error_total").help("Total request error requests.").labelNames(labels.stream().toArray(String[]::new)).register();
+        request_error.labels(labelValues.stream().toArray(String[]::new));
 
-        server_error = Counter.build().name("server_error_total").help("Total server error requests.").labelNames((String[])labels.toArray()).register();
-        server_error.labels((String[])labelValues.toArray());
+        server_error = Counter.build().name("server_error_total").help("Total server error requests.").labelNames(labels.stream().toArray(String[]::new)).register();
+        server_error.labels(labelValues.stream().toArray(String[]::new));
     }
 
     @Override
