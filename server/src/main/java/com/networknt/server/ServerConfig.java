@@ -34,6 +34,9 @@ public class ServerConfig {
     boolean enableRegistry;
     String serviceId;
     String environment;
+    boolean dynamicPort;
+    int minPort;
+    int maxPort;
 
     public ServerConfig() {
     }
@@ -132,5 +135,29 @@ public class ServerConfig {
 
     public void setEnvironment(String environment) {
         this.environment = environment;
+    }
+
+    public boolean isDynamicPort() {
+        return dynamicPort;
+    }
+
+    public void setDynamicPort(boolean dynamicPort) {
+        this.dynamicPort = dynamicPort;
+    }
+
+    public int getMinPort() {
+        return minPort;
+    }
+
+    public void setMinPort(int minPort) {
+        this.minPort = minPort;
+    }
+
+    public int getMaxPort() {
+        return maxPort;
+    }
+
+    public void setMaxPort(int maxPort) {
+        this.maxPort = maxPort;
     }
 }

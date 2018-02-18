@@ -49,6 +49,7 @@ import java.io.BufferedInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.BindException;
 import java.net.InetAddress;
 import java.net.URI;
 import java.nio.file.*;
@@ -78,6 +79,7 @@ public class Server {
     static final String DEFAULT_ENV = "test";
     static final String LIGHT_ENV = "light-env";
     static final String LIGHT_CONFIG_SERVER_URI = "light-config-server-uri";
+    static final String STATUS_HOST_IP = "STATUS_HOST_IP";
 
     // service_id in slf4j MDC
     static final String SID = "sId";
@@ -88,8 +90,7 @@ public class Server {
 
     static protected boolean shutdownRequested = false;
     static Undertow server = null;
-    static URL serviceHttpUrl;
-    static URL serviceHttpsUrl;
+    static URL serviceUrl;
     static Registry registry;
 
     static SSLContext sslContext;
@@ -113,27 +114,6 @@ public class Server {
         // add startup hooks here.
         StartupHookProvider[] startupHookProviders = SingletonServiceFactory.getBeans(StartupHookProvider.class);
         if(startupHookProviders != null) Arrays.stream(startupHookProviders).forEach(s -> s.onStartup());
-
-        // application level service registry. only be used without docker container.
-        if(config.enableRegistry) {
-            // assuming that registry is defined in service.json, otherwise won't start server.
-            registry = (Registry) SingletonServiceFactory.getBean(Registry.class);
-            if(registry == null) throw new RuntimeException("Could not find registry instance in service map");
-            InetAddress inetAddress = Util.getInetAddress();
-            String ipAddress = inetAddress.getHostAddress();
-            Map parameters = new HashMap<>();
-            if(config.getEnvironment() != null) parameters.put("environment", config.getEnvironment());
-            if(config.enableHttp) {
-                serviceHttpUrl = new URLImpl("light", ipAddress, config.getHttpPort(), config.getServiceId(), parameters);
-                registry.register(serviceHttpUrl);
-                if(logger.isInfoEnabled()) logger.info("register service: " + serviceHttpUrl.toFullStr());
-            }
-            if(config.enableHttps) {
-                serviceHttpsUrl = new URLImpl("light", ipAddress, config.getHttpsPort(), config.getServiceId(), parameters);
-                registry.register(serviceHttpsUrl);
-                if(logger.isInfoEnabled()) logger.info("register service: " + serviceHttpsUrl.toFullStr());
-            }
-        }
 
         HttpHandler handler = null;
 
@@ -159,44 +139,86 @@ public class Server {
             }
         }
 
-        Undertow.Builder builder = Undertow.builder();
-
-        if(config.enableHttp) {
-            builder.addHttpListener(config.getHttpPort(), config.getIp());
+        if(config.dynamicPort) {
+            for(int i = config.minPort; i < config.maxPort; i++) {
+                boolean b = bind(handler, i);
+                if(b) {
+                    break;
+                }
+            }
+        } else {
+            bind(handler, -1);
         }
-        if(config.enableHttps) {
-            sslContext = createSSLContext();
-            builder.addHttpsListener(config.getHttpsPort(), config.getIp(), sslContext);
-        }
-        if(config.enableHttp2) {
-            builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true);
-        }
+    }
 
-        server = builder
-                .setBufferSize(1024 * 16)
-                .setIoThreads(Runtime.getRuntime().availableProcessors() * 2) //this seems slightly faster in some configurations
-                .setSocketOption(Options.BACKLOG, 10000)
-                .setServerOption(UndertowOptions.ALWAYS_SET_KEEP_ALIVE, false) //don't send a keep-alive header for HTTP/1.1 requests, as it is not required
-                .setServerOption(UndertowOptions.ALWAYS_SET_DATE, true)
-                .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, false)
-                .setHandler(Handlers.header(handler, Headers.SERVER_STRING, "L"))
-                .setWorkerThreads(200)
-                .build();
-        server.start();
+    static private boolean bind(HttpHandler handler, int port) {
+        try {
+            Undertow.Builder builder = Undertow.builder();
+            if(config.enableHttps) {
+                port = port < 0 ? config.httpsPort : port;
+                sslContext = createSSLContext();
+                builder.addHttpsListener(port, config.getIp(), sslContext);
+            } else if(config.enableHttp) {
+                port = port < 0 ? config.httpPort : port;
+                builder.addHttpListener(port, config.getIp());
+            } else {
+                throw new RuntimeException("Unable to start the server as both http and https are disabled in server.yml");
+            }
 
-        if(logger.isInfoEnabled()) {
+            if(config.enableHttp2) {
+                builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true);
+            }
+
+            server = builder
+                    .setBufferSize(1024 * 16)
+                    .setIoThreads(Runtime.getRuntime().availableProcessors() * 2) //this seems slightly faster in some configurations
+                    .setSocketOption(Options.BACKLOG, 10000)
+                    .setServerOption(UndertowOptions.ALWAYS_SET_KEEP_ALIVE, false) //don't send a keep-alive header for HTTP/1.1 requests, as it is not required
+                    .setServerOption(UndertowOptions.ALWAYS_SET_DATE, true)
+                    .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, false)
+                    .setHandler(Handlers.header(handler, Headers.SERVER_STRING, "L"))
+                    .setWorkerThreads(200)
+                    .build();
+
+            server.start();
+            System.out.println("HOST IP " + System.getenv(STATUS_HOST_IP));
+            // application level service registry. only be used without docker container.
+            if(config.enableRegistry) {
+                // assuming that registry is defined in service.json, otherwise won't start server.
+                registry = SingletonServiceFactory.getBean(Registry.class);
+                if(registry == null) throw new RuntimeException("Could not find registry instance in service map");
+                // in kubernetes pod, the hostIP is passed in as STATUS_HOST_IP environment variable. If this is null
+                // then get the current server IP as it is not running in Kubernetes.
+                String ipAddress = System.getenv(STATUS_HOST_IP);
+                if(ipAddress == null) {
+                    InetAddress inetAddress = Util.getInetAddress();
+                    ipAddress = inetAddress.getHostAddress();
+                }
+                Map parameters = new HashMap<>();
+                if(config.getEnvironment() != null) parameters.put("environment", config.getEnvironment());
+                serviceUrl = new URLImpl("light", ipAddress, port, config.getServiceId(), parameters);
+                registry.register(serviceUrl);
+                if(logger.isInfoEnabled()) logger.info("register service: " + serviceUrl.toFullStr());
+
+                // start heart beat if registry is enabled
+                SwitcherUtil.setSwitcherValue(Constants.REGISTRY_HEARTBEAT_SWITCHER, true);
+                if(logger.isInfoEnabled()) logger.info("Registry heart beat switcher is on");
+
+            }
+
             if(config.enableHttp) {
-                logger.info("Http Server started on ip:" + config.getIp() + " Port:" + config.getHttpPort());
+                System.out.println("Http Server started on ip:" + config.getIp() + " Port:" + port);
+                if(logger.isInfoEnabled()) logger.info("Http Server started on ip:" + config.getIp() + " Port:" + port);
             }
             if(config.enableHttps) {
-                logger.info("Https Server started on ip:" + config.getIp() + " Port:" + config.getHttpsPort());
+                System.out.println("Https Server started on ip:" + config.getIp() + " Port:" + port);
+                if(logger.isInfoEnabled()) logger.info("Https Server started on ip:" + config.getIp() + " Port:" + port);
             }
-        }
-
-        if(config.enableRegistry) {
-            // start heart beat if registry is enabled
-            SwitcherUtil.setSwitcherValue(Constants.REGISTRY_HEARTBEAT_SWITCHER, true);
-            if(logger.isInfoEnabled()) logger.info("Registry heart beat switcher is on");
+            return true;
+        } catch (Exception e) {
+            System.out.println("Failed to bind to port " + port);
+            if(logger.isInfoEnabled()) logger.info("Failed to bind to port " + port);
+            return false;
         }
     }
 
@@ -208,13 +230,10 @@ public class Server {
     static public void shutdown() {
 
         // need to unregister the service
-        if(config.enableRegistry && registry != null && config.enableHttp) {
-            registry.unregister(serviceHttpUrl);
-            if(logger.isInfoEnabled()) logger.info("unregister serviceHttpUrl " + serviceHttpUrl);
-        }
-        if(config.enableRegistry && registry != null && config.enableHttps) {
-            registry.unregister(serviceHttpsUrl);
-            if(logger.isInfoEnabled()) logger.info("unregister serviceHttpsUrl " + serviceHttpsUrl);
+        if(config.enableRegistry && registry != null) {
+            registry.unregister(serviceUrl);
+            System.out.println("unregister serviceUrl " + serviceUrl);
+            if(logger.isInfoEnabled()) logger.info("unregister serviceUrl " + serviceUrl);
         }
 
         ShutdownHookProvider[] shutdownHookProviders = SingletonServiceFactory.getBeans(ShutdownHookProvider.class);
