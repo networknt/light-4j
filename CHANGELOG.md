@@ -1,5 +1,17 @@
 # Change Log
 
+## [1.5.9](https://github.com/networknt/light-4j/tree/1.5.9) (2018-02-21)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.8...1.5.9)
+
+**Closed issues:**
+
+- Support dynamic port binding for Kubernetes hostNetwork [\#162](https://github.com/networknt/light-4j/issues/162)
+- switch light-config-server connection to HTTP 2.0 [\#159](https://github.com/networknt/light-4j/issues/159)
+
+**Merged pull requests:**
+
+- update to latest Develop branch [\#160](https://github.com/networknt/light-4j/pull/160) ([chenyan71](https://github.com/chenyan71))
+
 ## [1.5.8](https://github.com/networknt/light-4j/tree/1.5.8) (2018-02-03)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.7...1.5.8)
 
