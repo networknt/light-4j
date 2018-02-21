@@ -1,0 +1,5 @@
+---
+# Metrics handler configuration
+
+# If metrics handler is enabled or not
+enabled: false
