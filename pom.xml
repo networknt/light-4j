@@ -113,6 +113,7 @@
         <module>mask</module>
         <module>handler</module>
         <module>metrics</module>
+        <module>prometheus</module>
         <module>sanitizer</module>
         <module>traceability</module>
         <module>correlation</module>
