@@ -51,7 +51,6 @@ public class MetricsHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(MetricsHandler.class);
 
     private volatile HttpHandler next;
-    Map<String, String> commonTags = new HashMap<>();
     private Counter requests, success, request_error, auth_error, server_error;
 
     static final Summary response_time = Summary.build().name("response_time_seconds").help("Response time in seconds.").labelNames("MetricsHandler").register();
@@ -59,28 +58,19 @@ public class MetricsHandler implements MiddlewareHandler {
     public MetricsHandler() {
         registry=  CollectorRegistry.defaultRegistry;
 
-        commonTags.put("apiName", Server.config.getServiceId());
-        InetAddress inetAddress = Util.getInetAddress();
-        // On Docker for Mac, inetAddress will be null as there is a bug.
-        commonTags.put("ipAddress", inetAddress == null ? "unknown" : inetAddress.getHostAddress());
-        commonTags.put("hostname", inetAddress == null ? "unknown" : inetAddress.getHostName()); // will be container id if in docker.
+        requests = Counter.build().name("requests_total").help("Total requests.").register(registry);
 
-        List<String> labels = new ArrayList<>(this.commonTags.keySet());
-        List<String> labelValues = new ArrayList<>(this.commonTags.values());
-        requests = Counter.build().name("requests_total").help("Total requests.").labelNames(labels.stream().toArray(String[]::new)).register();
-        requests.labels(labelValues.stream().toArray(String[]::new));
+        success = Counter.build().name("success_total").help("Total success requests.").register(registry);
 
-        success = Counter.build().name("success_total").help("Total success requests.").labelNames(labels.stream().toArray(String[]::new)).register();
-        success.labels(labelValues.stream().toArray(String[]::new));
+        auth_error = Counter.build().name("auth_error_total").help("Total auth_error requests.").register(registry);
 
-        auth_error = Counter.build().name("auth_error_total").help("Total auth_error requests.").labelNames(labels.stream().toArray(String[]::new)).register();
-        auth_error.labels(labelValues.stream().toArray(String[]::new));
+        //  auth_error = Counter.build().name("auth_error_total").help("Total auth_error requests.").labelNames(labels.stream().toArray(String[]::new)).register(registry);
+        //auth_error.labels(labelValues.stream().toArray(String[]::new));
 
-        request_error = Counter.build().name("request_error_total").help("Total request error requests.").labelNames(labels.stream().toArray(String[]::new)).register();
-        request_error.labels(labelValues.stream().toArray(String[]::new));
+        request_error = Counter.build().name("request_error_total").help("Total request error requests.").register(registry);
 
-        server_error = Counter.build().name("server_error_total").help("Total server error requests.").labelNames(labels.stream().toArray(String[]::new)).register();
-        server_error.labels(labelValues.stream().toArray(String[]::new));
+        server_error = Counter.build().name("server_error_total").help("Total server error requests.").register(registry);
+
     }
 
     @Override
@@ -99,18 +89,12 @@ public class MetricsHandler implements MiddlewareHandler {
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         SimpleTimer respTimer = new SimpleTimer();
+
         exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
             Map<String, Object> auditInfo = exchange1.getAttachment(AuditHandler.AUDIT_INFO);
             if(auditInfo != null) {
-
-
-                Map<String, String> tags = new HashMap<>();
-                tags.put("endpoint", (String)auditInfo.get(Constants.ENDPOINT_STRING));
-                tags.put("clientId", auditInfo.get(Constants.CLIENT_ID_STRING) != null ? (String)auditInfo.get(Constants.CLIENT_ID_STRING) : "unknown");
-
                 response_time.labels("respTimer").observe(respTimer.elapsedSeconds());
-
-                incCounterForStatusCode(exchange1.getStatusCode(), commonTags, tags);
+                incCounterForStatusCode(exchange1.getStatusCode());
             }
             nextListener.proceed();
         });
@@ -128,16 +112,16 @@ public class MetricsHandler implements MiddlewareHandler {
         ModuleRegistry.registerModule(MetricsHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
-    private void incCounterForStatusCode(int statusCode, Map<String, String> commonTags, Map<String, String> tags) {
-        requests.inc();
+    private void incCounterForStatusCode(int statusCode) {
+        this.requests.inc();
         if(statusCode >= 200 && statusCode < 400) {
-            success.inc();
+            this.success.inc();
         } else if(statusCode == 401 || statusCode == 403) {
-            auth_error.inc();
+            this.auth_error.inc();
         } else if(statusCode >= 400 && statusCode < 500) {
-            request_error.inc();
+            this.request_error.inc();
         } else if(statusCode >= 500) {
-            server_error.inc();
+            this.server_error.inc();
         }
 
     }
