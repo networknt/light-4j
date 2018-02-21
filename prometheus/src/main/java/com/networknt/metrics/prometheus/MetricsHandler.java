@@ -19,12 +19,8 @@ package com.networknt.metrics.prometheus;
 import com.networknt.audit.AuditHandler;
 import com.networknt.config.Config;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.metrics.MetricsConfig;
-import com.networknt.server.Server;
-import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
-import com.networknt.utility.Util;
 
+import com.networknt.utility.ModuleRegistry;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.Counter;
 import io.prometheus.client.SimpleTimer;
@@ -35,10 +31,6 @@ import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 
