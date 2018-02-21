@@ -18,7 +18,6 @@ package com.networknt.metrics.prometheus;
 
 import com.networknt.client.Http2Client;
 import com.networknt.exception.ClientException;
-import com.networknt.metrics.prometheus.MetricsHandler;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.client.ClientConnection;
