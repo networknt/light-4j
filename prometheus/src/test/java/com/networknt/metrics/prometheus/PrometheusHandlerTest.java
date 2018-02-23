@@ -43,8 +43,8 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Created by steve on 01/09/16.
  */
-public class MetricsHandlerTest {
-    static final Logger logger = LoggerFactory.getLogger(MetricsHandlerTest.class);
+public class PrometheusHandlerTest {
+    static final Logger logger = LoggerFactory.getLogger(PrometheusHandlerTest.class);
 
     static Undertow server = null;
 
@@ -54,9 +54,9 @@ public class MetricsHandlerTest {
             logger.info("starting server");
             HttpHandler handler = getTestHandler();
 
-            MetricsHandler metricsHandler = new MetricsHandler();
-            metricsHandler.setNext(handler);
-            handler = metricsHandler;
+            PrometheusHandler prometheusHandler = new PrometheusHandler();
+            prometheusHandler.setNext(handler);
+            handler = prometheusHandler;
 
             server = Undertow.builder()
                     .addHttpListener(8080, "localhost")
