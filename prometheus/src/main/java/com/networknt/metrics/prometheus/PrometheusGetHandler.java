@@ -32,13 +32,13 @@ import java.io.Writer;
  * The default path for the handler should be /v1/prometheus
  * @author Gavin Chen
  */
-public class MetricsGetHandler implements HttpHandler {
+public class PrometheusGetHandler implements HttpHandler {
 
 
-    static final Logger logger = LoggerFactory.getLogger(MetricsGetHandler.class);
+    static final Logger logger = LoggerFactory.getLogger(PrometheusGetHandler.class);
     static CollectorRegistry registry =  CollectorRegistry.defaultRegistry;
 
-    public MetricsGetHandler(){}
+    public PrometheusGetHandler(){}
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
