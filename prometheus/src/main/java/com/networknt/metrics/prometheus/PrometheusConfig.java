@@ -19,12 +19,12 @@ package com.networknt.metrics.prometheus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * Metrics middleware handler configuration that is mapped to all
+ * Prometheus metrics middleware handler configuration that is mapped to all
  * properties in metrics.yml config file.
  *
- * @author Steve Hu
+ * @author Gavin Chen
  */
-public class MetricsConfig {
+public class PrometheusConfig {
     boolean enabled;
 
 
@@ -32,7 +32,7 @@ public class MetricsConfig {
     @JsonIgnore
     String description;
 
-    public MetricsConfig() {
+    public PrometheusConfig() {
     }
 
     public boolean isEnabled() {
