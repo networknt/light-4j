@@ -209,11 +209,18 @@ public class Server {
             if(config.enableHttp) {
                 System.out.println("Http Server started on ip:" + config.getIp() + " Port:" + port);
                 if(logger.isInfoEnabled()) logger.info("Http Server started on ip:" + config.getIp() + " Port:" + port);
+            } else {
+                System.out.println("Http port disabled.");
+                if(logger.isInfoEnabled()) logger.info("Http port disabled.");                
             }
             if(config.enableHttps) {
                 System.out.println("Https Server started on ip:" + config.getIp() + " Port:" + port);
                 if(logger.isInfoEnabled()) logger.info("Https Server started on ip:" + config.getIp() + " Port:" + port);
+            } else {
+                System.out.println("Https port disabled.");
+                if(logger.isInfoEnabled()) logger.info("Https port disabled.");                   
             }
+
             return true;
         } catch (Exception e) {
             System.out.println("Failed to bind to port " + port);
