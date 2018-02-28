@@ -55,6 +55,15 @@ public class Constants {
     // Logger
     public static final String AUDIT_LOGGER = "Audit";
 
+    // JWT claims for fine-grained authorization in business context.
+    // The key for the subject token claims in auditInfo after security handler
+    // This token is passed in from Authorization header
+    public static final String SUBJECT_CLAIMS = "subject_claims";
+    // The key for the access token claims in auditInfo after security handler
+    // This token is passed in from X-Scope-Token and it is optional
+    public static final String ACCESS_CLAIMS = "access_claims";
+
+
     // Framework
     public static final String FRAMEWORK_NAME = "light";
     public static final String METHOD_CONFIG_PREFIX = "methodconfig.";
