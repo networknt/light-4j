@@ -1,5 +1,19 @@
 # Change Log
 
+## [1.5.10](https://github.com/networknt/light-4j/tree/1.5.10) (2018-03-02)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.9...1.5.10)
+
+**Closed issues:**
+
+- add subject\_claims and access\_claims constants [\#170](https://github.com/networknt/light-4j/issues/170)
+- Port enabling indicator [\#168](https://github.com/networknt/light-4j/issues/168)
+- add prometheus to the module list in parent pom.xml [\#164](https://github.com/networknt/light-4j/issues/164)
+
+**Merged pull requests:**
+
+- prometheus metrics package and class name change [\#166](https://github.com/networknt/light-4j/pull/166) ([chenyan71](https://github.com/chenyan71))
+- get latest develop branch [\#163](https://github.com/networknt/light-4j/pull/163) ([chenyan71](https://github.com/chenyan71))
+
 ## [1.5.9](https://github.com/networknt/light-4j/tree/1.5.9) (2018-02-21)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.8...1.5.9)
 
