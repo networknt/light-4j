@@ -34,6 +34,7 @@ import org.xnio.ssl.XnioSsl;
 import javax.net.ssl.*;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
@@ -395,6 +396,15 @@ public class Http2ClientTest {
     @Test
     public void testSingleAsych() throws Exception {
         callApiAsync();
+    }
+
+    @Test
+    public void testGetFormDataString() throws UnsupportedEncodingException {
+        // This is to reproduce and fix #172
+        Map<String, String> params = new HashMap<>();
+        params.put("scope", "a b c d");
+        String s = Http2Client.getFormDataString(params);
+        Assert.assertEquals("scope=a%20b%20c%20d", s);
     }
 
     public String callApiAsync() throws Exception {
