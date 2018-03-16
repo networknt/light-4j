@@ -292,7 +292,13 @@ ERR11201:
   statusCode: 400
   code: ERR11201
   message: REQUEST_BODY_EMPTY
-  description: Hybrid request body is empty.
+  description: Hybrid request body is empty for post method.
+
+ERR11202:
+  statusCode: 400
+  code: ERR11202
+  message: REQUEST_CMD_EMPTY
+  description: Hybrid request cmd parameter is empty for get method.
 
 # 11500 - 11600 GraphQL valdator errors
 ERR11500:
