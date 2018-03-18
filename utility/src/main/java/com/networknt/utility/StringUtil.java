@@ -21,7 +21,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Majority of the method is extracted from apache commons-lang to avoid include a
+ * Majority of the methods are extracted from apache commons-lang to avoid include a
  * big jar file into the final package.
  *
  */
