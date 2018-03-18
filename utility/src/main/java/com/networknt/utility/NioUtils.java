@@ -1,5 +1,6 @@
 package com.networknt.utility;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -234,6 +235,22 @@ public class NioUtils {
     public static ByteBuffer toByteBuffer(String s) {
         ByteBuffer buffer = ByteBuffer.allocateDirect(s.length());
         buffer.put(s.getBytes(UTF_8));
+        buffer.flip();
+        return buffer;
+    }
+
+    /**
+     * Convert a File into a ByteBuffer
+     * @param file File to be converted
+     * @return ByteBuffer containing the file
+     */
+    public static ByteBuffer toByteBuffer(File file) {
+        ByteBuffer buffer = ByteBuffer.allocateDirect((int) file.length());
+        try {
+            buffer.put(IOUtils.toByteArray(new FileInputStream(file)));
+        } catch (IOException e) {
+            logger.error("Failed to write file to byte array: " + e.getMessage());
+        }
         buffer.flip();
         return buffer;
     }
