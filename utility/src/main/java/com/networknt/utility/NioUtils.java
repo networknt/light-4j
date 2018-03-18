@@ -1,6 +1,5 @@
 package com.networknt.utility;
 
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -8,6 +7,7 @@ import java.io.*;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.DateFormat;
@@ -247,7 +247,7 @@ public class NioUtils {
     public static ByteBuffer toByteBuffer(File file) {
         ByteBuffer buffer = ByteBuffer.allocateDirect((int) file.length());
         try {
-            buffer.put(IOUtils.toByteArray(new FileInputStream(file)));
+            buffer.put(toByteArray(new FileInputStream(file)));
         } catch (IOException e) {
             logger.error("Failed to write file to byte array: " + e.getMessage());
         }
