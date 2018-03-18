@@ -18,7 +18,7 @@ package com.networknt.mask;
 
 import com.networknt.config.Config;
 import com.networknt.utility.ModuleRegistry;
-import org.apache.commons.lang3.StringUtils;
+import com.networknt.utility.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,7 +103,7 @@ public class Mask {
         }
         String replacementString = "";
         String padGroup;
-        if (!StringUtils.isEmpty(regex)) {
+        if (!StringUtil.isEmpty(regex)) {
             try {
                 Pattern pattern = patternCache.get(regex);
                 if (pattern == null) {
@@ -115,16 +115,16 @@ public class Mask {
                     String currentGroup;
                     for (int i = 0; i < matcher.groupCount(); i++) {
                         currentGroup = matcher.group(i + 1);
-                        padGroup = StringUtils.rightPad("", currentGroup.length(), maskingChar);
-                        stringToBeMasked = StringUtils.replace(stringToBeMasked, currentGroup, padGroup, 1);
+                        padGroup = StringUtil.rightPad("", currentGroup.length(), maskingChar);
+                        stringToBeMasked = StringUtil.replace(stringToBeMasked, currentGroup, padGroup, 1);
                     }
                     replacementString = stringToBeMasked;
                 }
             } catch (Exception e) {
-                replacementString = StringUtils.rightPad("", stringToBeMasked.length(), maskingChar);
+                replacementString = StringUtil.rightPad("", stringToBeMasked.length(), maskingChar);
             }
         } else {
-            replacementString = StringUtils.rightPad("", stringToBeMasked.length(), maskingChar);
+            replacementString = StringUtil.rightPad("", stringToBeMasked.length(), maskingChar);
         }
         return replacementString;
     }
