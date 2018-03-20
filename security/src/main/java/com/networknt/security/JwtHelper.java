@@ -156,11 +156,12 @@ public class JwtHelper {
      * @return A PrivateKey object
      */
     private static PrivateKey getPrivateKey(String filename, String password, String key) {
+        if(logger.isDebugEnabled()) logger.debug("filename = " + filename + " key = " + key);
         PrivateKey privateKey = null;
 
         try {
             KeyStore keystore = KeyStore.getInstance("JKS");
-            keystore.load(JwtHelper.class.getResourceAsStream(filename),
+            keystore.load(Config.getInstance().getInputStreamFromFile(filename),
                     password.toCharArray());
 
             privateKey = (PrivateKey) keystore.getKey(key,
