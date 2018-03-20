@@ -107,6 +107,13 @@ public class JwtHelperTest {
         System.out.println("***JWT***: " + jwt);
     }
 
+    @Test
+    public void longlivedTransferJwt() throws Exception {
+        JwtClaims claims = getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("etransfer.r", "etransfer.w"));
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtHelper.getJwt(claims);
+        System.out.println("***Long lived token for etransfer***: " + jwt);
+    }
 
     private JwtClaims getTestClaims(String userId, String userType, String clientId, List<String> scope) {
         JwtClaims claims = JwtHelper.getDefaultJwtClaims();
