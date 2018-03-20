@@ -20,17 +20,6 @@
  */
 package com.networknt.cors;
 
-import static io.undertow.server.handlers.ResponseCodeHandler.HANDLE_200;
-import static com.networknt.cors.CorsHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS;
-import static com.networknt.cors.CorsHeaders.ACCESS_CONTROL_ALLOW_HEADERS;
-import static com.networknt.cors.CorsHeaders.ACCESS_CONTROL_ALLOW_METHODS;
-import static com.networknt.cors.CorsHeaders.ACCESS_CONTROL_ALLOW_ORIGIN;
-import static com.networknt.cors.CorsHeaders.ACCESS_CONTROL_MAX_AGE;
-import static com.networknt.cors.CorsHeaders.ACCESS_CONTROL_REQUEST_HEADERS;
-import static com.networknt.cors.CorsHeaders.ACCESS_CONTROL_REQUEST_METHOD;
-import static com.networknt.cors.CorsUtil.isPreflightedRequest;
-import static com.networknt.cors.CorsUtil.matchOrigin;
-
 import com.networknt.config.Config;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.ModuleRegistry;
@@ -40,10 +29,13 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderMap;
 import io.undertow.util.HeaderValues;
 import io.undertow.util.Headers;
-import io.undertow.util.Methods;
-import java.util.ArrayList;
-import java.util.Arrays;
+
 import java.util.Collection;
+
+import static com.networknt.cors.CorsHeaders.*;
+import static com.networknt.cors.CorsUtil.isPreflightedRequest;
+import static com.networknt.cors.CorsUtil.matchOrigin;
+import static io.undertow.server.handlers.ResponseCodeHandler.HANDLE_200;
 
 /**
  * Undertow handler for CORS headers.

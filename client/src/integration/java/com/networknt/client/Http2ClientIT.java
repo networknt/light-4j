@@ -711,7 +711,8 @@ public class Http2ClientIT {
         List<Future<String>> futures = executorService.invokeAll(tasks);
         List<String> resultList = new ArrayList<>(futures.size());
         for (Future<String> future : futures) {
-            resultList.add(future.get());
+            logger.debug("future = " + future);
+            resultList.add(future.get());  // We have NPE here once. Need to reproduce.
         }
         System.out.println("resultList = " + resultList);
     }

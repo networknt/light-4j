@@ -5,21 +5,16 @@ import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
 import io.undertow.UndertowOptions;
 import io.undertow.client.*;
-import io.undertow.protocols.ssl.UndertowXnioSsl;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
 import io.undertow.util.StringReadChannelListener;
 import io.undertow.util.StringWriteChannelListener;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang3.StringUtils;
-import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
 import org.xnio.OptionMap;
-import org.xnio.ssl.XnioSsl;
 
-import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -162,7 +157,7 @@ public class OauthHelper {
             params.put(REDIRECT_URI, ((AuthorizationCodeRequest)request).getRedirectUri());
         }
         if(request.getScope() != null) {
-            params.put(SCOPE, StringUtils.join(request.getScope(), " "));
+            params.put(SCOPE, String.join(" ", request.getScope()));
         }
         return Http2Client.getFormDataString(params);
     }
@@ -173,8 +168,7 @@ public class OauthHelper {
             if (responseBody != null && responseBody.length() > 0) {
                 tokenResponse = Config.getInstance().getMapper().readValue(responseBody, TokenResponse.class);
             } else {
-                logger.error("Error in token retrieval, response = " +
-                        Encode.forJava(responseBody));
+                logger.error("Error in token retrieval, response = " + responseBody);
             }
         } catch (IOException | RuntimeException e) {
             logger.error("Error in token retrieval", e);
