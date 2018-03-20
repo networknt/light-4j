@@ -7,6 +7,7 @@ import java.io.*;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.DateFormat;
@@ -234,6 +235,22 @@ public class NioUtils {
     public static ByteBuffer toByteBuffer(String s) {
         ByteBuffer buffer = ByteBuffer.allocateDirect(s.length());
         buffer.put(s.getBytes(UTF_8));
+        buffer.flip();
+        return buffer;
+    }
+
+    /**
+     * Convert a File into a ByteBuffer
+     * @param file File to be converted
+     * @return ByteBuffer containing the file
+     */
+    public static ByteBuffer toByteBuffer(File file) {
+        ByteBuffer buffer = ByteBuffer.allocateDirect((int) file.length());
+        try {
+            buffer.put(toByteArray(new FileInputStream(file)));
+        } catch (IOException e) {
+            logger.error("Failed to write file to byte array: " + e.getMessage());
+        }
         buffer.flip();
         return buffer;
     }

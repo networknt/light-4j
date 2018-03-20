@@ -71,8 +71,6 @@
         <version.slf4j>1.7.25</version.slf4j>
         <version.jose4j>0.6.1</version.jose4j>
         <version.antlr4>4.7</version.antlr4>
-        <version.commons-lang>3.6</version.commons-lang>
-        <version.commons.io>2.5</version.commons.io>
         <version.commons.codec>1.10</version.commons.codec>
         <version.encoder>1.2.1</version.encoder>
         <version.logback>1.2.3</version.logback>
@@ -329,16 +327,6 @@
                 <groupId>org.antlr</groupId>
                 <artifactId>antlr4-runtime</artifactId>
                 <version>${version.antlr4}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.commons</groupId>
-                <artifactId>commons-lang3</artifactId>
-                <version>${version.commons-lang}</version>
-            </dependency>
-            <dependency>
-                <groupId>commons-io</groupId>
-                <artifactId>commons-io</artifactId>
-                <version>${version.commons.io}</version>
             </dependency>
             <dependency>
                 <groupId>commons-codec</groupId>
