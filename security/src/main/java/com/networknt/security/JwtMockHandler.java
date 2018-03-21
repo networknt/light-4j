@@ -47,7 +47,7 @@ public class JwtMockHandler implements HttpHandler {
                 Headers.CONTENT_TYPE, "application/json");
 
         Map<String, Object> resMap = new HashMap<>();
-        resMap.put("access_token", JwtHelper.getJwt(mockClaims()));
+        resMap.put("access_token", JwtIssuer.getJwt(mockClaims()));
         resMap.put("token_type", "bearer");
         resMap.put("expires_in", 600);
         exchange.getResponseSender().send(ByteBuffer.wrap(
@@ -56,7 +56,7 @@ public class JwtMockHandler implements HttpHandler {
     }
 
     public JwtClaims mockClaims() {
-        JwtClaims claims = JwtHelper.getDefaultJwtClaims();
+        JwtClaims claims = JwtIssuer.getDefaultJwtClaims();
         claims.setClaim("user_id", "steve");
         claims.setClaim("user_type", "EMPLOYEE");
         claims.setClaim("client_id", "aaaaaaaa-1234-1234-1234-bbbbbbbb");
