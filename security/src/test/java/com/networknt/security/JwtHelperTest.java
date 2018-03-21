@@ -35,7 +35,7 @@ public class JwtHelperTest {
     @Test
     public void testReadCertificate() {
         Map<String, Object> securityConfig = Config.getInstance().getJsonMapConfig(JwtHelper.SECURITY_CONFIG);
-        Map<String, Object> jwtConfig = (Map<String, Object>)securityConfig.get(JwtHelper.JWT_CONFIG);
+        Map<String, Object> jwtConfig = (Map<String, Object>)securityConfig.get(JwtIssuer.JWT_CONFIG);
         Map<String, Object> keyMap = (Map<String, Object>) jwtConfig.get(JwtHelper.JWT_CERTIFICATE);
         Map<String, X509Certificate> certMap = new HashMap<>();
         for(String kid: keyMap.keySet()) {
@@ -51,123 +51,9 @@ public class JwtHelperTest {
     }
 
     @Test
-    public void longLivedAPIAJwt() throws Exception {
-        JwtClaims claims = getTestClaims("Steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("api_a.w", "api_b.w", "api_c.w", "api_d.w", "server.info.r"));
-        claims.setExpirationTimeMinutesInTheFuture(5256000);
-        String jwt = JwtHelper.getJwt(claims);
-        System.out.println("***LongLived APIA JWT***: " + jwt);
-    }
-
-    @Test
-    public void longLivedATMP1000Jwt() throws Exception {
-        JwtClaims claims = getTestClaims("eric", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("ATMP1000.w", "ATMP1000.r"));
-        claims.setExpirationTimeMinutesInTheFuture(5256000);
-        String jwt = JwtHelper.getJwt(claims);
-        System.out.println("***LongLived ATMP1000 JWT***: " + jwt);
-    }
-
-
-    @Test
-    public void longLivedPetStoreJwt() throws Exception {
-        JwtClaims claims = getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"));
-        claims.setExpirationTimeMinutesInTheFuture(5256000);
-        String jwt = JwtHelper.getJwt(claims);
-        System.out.println("***LongLived PetStore JWT***: " + jwt);
-    }
-
-    @Test
-    public void longLivedTrainingJwt() throws Exception {
-        JwtClaims claims = getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("training.accounts.read", "training.customers.read", "training.myaccounts.read", "training.transacts.read"));
-        claims.setExpirationTimeMinutesInTheFuture(5256000);
-        String jwt = JwtHelper.getJwt(claims);
-        System.out.println("***LongLived Training JWT***: " + jwt);
-    }
-
-    @Test
-    public void longLivedHelloWorldJwt() throws Exception {
-        JwtClaims claims = getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("world.r", "world.w", "server.info.r"));
-        claims.setExpirationTimeMinutesInTheFuture(5256000);
-        String jwt = JwtHelper.getJwt(claims);
-        System.out.println("***LongLived HelloWorld JWT***: " + jwt);
-    }
-
-    @Test
-    public void longLivedCodegenJwt() throws Exception {
-        JwtClaims claims = getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("codegen.r", "codegen.w", "server.info.r"));
-        claims.setExpirationTimeMinutesInTheFuture(5256000);
-        String jwt = JwtHelper.getJwt(claims);
-        System.out.println("***LongLived Codegen JWT***: " + jwt);
-    }
-
-    @Test
-    public void longLivedReferenceJwt() throws Exception {
-        Map<String, String> custom = new HashMap<>();
-        custom.put("consumer_application_id", "361");
-        custom.put("request_transit", "67");
-        JwtClaims claims = getCustomClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("party.util.reference.read", "server.info.r"), custom);
-        claims.setExpirationTimeMinutesInTheFuture(5256000);
-        String jwt = JwtHelper.getJwt(claims);
-        System.out.println("***LongLived reference JWT***: " + jwt);
-    }
-
-    @Test
-    public void longLivedProductSubjectJwt() throws Exception {
-        Map<String, String> custom = new HashMap<>();
-        custom.put("consumer_application_id", "361");
-        custom.put("request_transit", "67");
-        JwtClaims claims = getCustomClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", null, custom);
-        claims.setExpirationTimeMinutesInTheFuture(5256000);
-        String jwt = JwtHelper.getJwt(claims);
-        System.out.println("***LongLived product subject JWT***: " + jwt);
-    }
-
-    @Test
-    public void longLivedProductAccessJwt() throws Exception {
-        JwtClaims claims = getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("party.product.read", "server.info.r"));
-        claims.setExpirationTimeMinutesInTheFuture(5256000);
-        String jwt = JwtHelper.getJwt(claims);
-        System.out.println("***LongLived product access JWT***: " + jwt);
-    }
-
-    @Test
-    public void normalPetStoreJwt() throws Exception {
-        JwtClaims claims = getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"));
-        claims.setExpirationTimeMinutesInTheFuture(10);
-        String jwt = JwtHelper.getJwt(claims);
-        System.out.println("***JWT***: " + jwt);
-    }
-
-    @Test
-    public void longlivedTransferJwt() throws Exception {
-        JwtClaims claims = getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("etransfer.r", "etransfer.w"));
-        claims.setExpirationTimeMinutesInTheFuture(5256000);
-        String jwt = JwtHelper.getJwt(claims);
-        System.out.println("***Long lived token for etransfer***: " + jwt);
-    }
-
-    private JwtClaims getTestClaims(String userId, String userType, String clientId, List<String> scope) {
-        JwtClaims claims = JwtHelper.getDefaultJwtClaims();
-        claims.setClaim("user_id", userId);
-        claims.setClaim("user_type", userType);
-        claims.setClaim("client_id", clientId);
-        if(scope != null) claims.setStringListClaim("scope", scope); // multi-valued claims work too and will end up as a JSON array
-        return claims;
-    }
-
-    private JwtClaims getCustomClaims(String userId, String userType, String clientId, List<String> scope, Map<String, String> custom) {
-        JwtClaims claims = JwtHelper.getDefaultJwtClaims();
-        claims.setClaim("user_id", userId);
-        claims.setClaim("user_type", userType);
-        claims.setClaim("client_id", clientId);
-        custom.forEach((k, v) -> claims.setClaim(k, v));
-        if(scope != null) claims.setStringListClaim("scope", scope); // multi-valued claims work too and will end up as a JSON array
-        return claims;
-    }
-
-    @Test
     public void testVerifyJwt() throws Exception {
-        JwtClaims claims = getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"));
-        String jwt = JwtHelper.getJwt(claims);
+        JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"));
+        String jwt = JwtIssuer.getJwt(claims);
         claims = null;
         Assert.assertNotNull(jwt);
         try {
