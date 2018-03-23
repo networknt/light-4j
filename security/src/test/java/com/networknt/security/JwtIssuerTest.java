@@ -104,5 +104,20 @@ public class JwtIssuerTest {
         System.out.println("***Long lived token for etransfer***: " + jwt);
     }
 
+    @Test
+    public void longlivedTokenizationJwt() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("token.r", "token.w", "scheme.r"));
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***Long lived token for tokenizaiton***: " + jwt);
+    }
+
+    @Test
+    public void longlivedTokenizationJwt73() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e73", Arrays.asList("token.r", "token.w"));
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***Long lived token for tokenizaiton***: " + jwt);
+    }
 
 }
