@@ -300,6 +300,17 @@ ERR11202:
   message: REQUEST_CMD_EMPTY
   description: Hybrid request cmd parameter is empty for get method.
 
+# 11300-11349 light-proxy
+
+ERR11300:
+  statusCode: 400
+  code: ERR11300
+  message: FAIL_TO_GET_TABLEAU_TOKEN
+  description: Fail to get token from Tableau server.
+
+# 11350-11399 light-router
+
+
 # 11500 - 11600 GraphQL valdator errors
 ERR11500:
   statusCode: 400
