@@ -390,23 +390,23 @@ public class Http2Client {
         long expiredRefreshRetryDelay = (Integer)tokenConfig.get(EXPIRED_REFRESH_RETRY_DELAY);
         long earlyRefreshRetryDelay = (Integer)tokenConfig.get(EARLY_REFRESH_RETRY_DELAY);
         boolean isInRenewWindow = expire - System.currentTimeMillis() < tokenRenewBeforeExpired;
-        logger.trace("isInRenewWindow = " + isInRenewWindow);
+        if(logger.isTraceEnabled()) logger.trace("isInRenewWindow = " + isInRenewWindow);
         if(isInRenewWindow) {
             if(expire <= System.currentTimeMillis()) {
-                logger.trace("In renew window and token is expired.");
+                if(logger.isTraceEnabled()) logger.trace("In renew window and token is expired.");
                 // block other request here to prevent using expired token.
                 synchronized (Http2Client.class) {
                     if(expire <= System.currentTimeMillis()) {
-                        logger.trace("Within the synch block, check if the current request need to renew token");
+                        if(logger.isTraceEnabled()) logger.trace("Within the synch block, check if the current request need to renew token");
                         if(!renewing || System.currentTimeMillis() > expiredRetryTimeout) {
                             // if there is no other request is renewing or the renewing flag is true but renewTimeout is passed
                             renewing = true;
                             expiredRetryTimeout = System.currentTimeMillis() + expiredRefreshRetryDelay;
-                            logger.trace("Current request is renewing token synchronously as token is expired already");
+                            if(logger.isTraceEnabled()) logger.trace("Current request is renewing token synchronously as token is expired already");
                             getCCToken();
                             renewing = false;
                         } else {
-                            logger.trace("Circuit breaker is tripped and not timeout yet!");
+                            if(logger.isTraceEnabled()) logger.trace("Circuit breaker is tripped and not timeout yet!");
                             // reject all waiting requests by thrown an exception.
                             throw new ApiException(new Status(STATUS_CLIENT_CREDENTIALS_TOKEN_NOT_AVAILABLE));
                         }
@@ -414,13 +414,13 @@ public class Http2Client {
                 }
             } else {
                 // Not expired yet, try to renew async but let requests use the old token.
-                logger.trace("In renew window but token is not expired yet.");
+                if(logger.isTraceEnabled()) logger.trace("In renew window but token is not expired yet.");
                 synchronized (Http2Client.class) {
                     if(expire > System.currentTimeMillis()) {
                         if(!renewing || System.currentTimeMillis() > earlyRetryTimeout) {
                             renewing = true;
                             earlyRetryTimeout = System.currentTimeMillis() + earlyRefreshRetryDelay;
-                            logger.trace("Retrieve token async is called while token is not expired yet");
+                            if(logger.isTraceEnabled()) logger.trace("Retrieve token async is called while token is not expired yet");
 
                             ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
@@ -428,7 +428,7 @@ public class Http2Client {
                                 try {
                                     getCCToken();
                                     renewing = false;
-                                    logger.trace("Async get token is completed.");
+                                    if(logger.isTraceEnabled()) logger.trace("Async get token is completed.");
                                 } catch (Exception e) {
                                     logger.error("Async retrieve token error", e);
                                     // swallow the exception here as it is on a best effort basis.
@@ -440,7 +440,7 @@ public class Http2Client {
                 }
             }
         }
-        logger.trace("Check secondary token is done!");
+        if(logger.isTraceEnabled()) logger.trace("Check secondary token is done!");
     }
 
     private static KeyStore loadKeyStore(final String name, final char[] password) throws IOException {
@@ -491,11 +491,11 @@ public class Http2Client {
                     String trustStoreName = System.getProperty(TRUST_STORE_PROPERTY);
                     String trustStorePass = System.getProperty(TRUST_STORE_PASSWORD_PROPERTY);
                     if (trustStoreName != null && trustStorePass != null) {
-                        logger.info("Loading trust store from system property at " + Encode.forJava(trustStoreName));
+                        if(logger.isInfoEnabled()) logger.info("Loading trust store from system property at " + Encode.forJava(trustStoreName));
                     } else {
                         trustStoreName = (String) tlsMap.get(TRUST_STORE);
                         trustStorePass = (String)secretConfig.get(SecretConstants.CLIENT_TRUSTSTORE_PASS);
-                        logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
+                        if(logger.isInfoEnabled()) logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
                     }
                     if (trustStoreName != null && trustStorePass != null) {
                         KeyStore trustStore = loadKeyStore(trustStoreName, trustStorePass.toCharArray());
