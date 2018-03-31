@@ -1,5 +1,29 @@
 # Change Log
 
+## [1.5.11](https://github.com/networknt/light-4j/tree/1.5.11) (2018-03-31)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.10...1.5.11)
+
+**Fixed bugs:**
+
+- JWT signing private key cannot be externalized [\#178](https://github.com/networknt/light-4j/issues/178)
+- scope encoding changes space to plus sign in OAuthHelper [\#172](https://github.com/networknt/light-4j/issues/172)
+
+**Closed issues:**
+
+- add ERR11300 FAIL\_TO\_GET\_TABLEAU\_TOKEN error code in status.yml [\#184](https://github.com/networknt/light-4j/issues/184)
+- check if trace is enabled in Http2Client logger [\#183](https://github.com/networknt/light-4j/issues/183)
+- add isBlank to StringUtil in utility class [\#180](https://github.com/networknt/light-4j/issues/180)
+- split JwtHelper to JwtHelper for token verification and JwtIssuer to issue token [\#179](https://github.com/networknt/light-4j/issues/179)
+- remove Apache commons-lang dependency from mask [\#177](https://github.com/networknt/light-4j/issues/177)
+- remove commons-io dependencies [\#176](https://github.com/networknt/light-4j/issues/176)
+- refactor CorsHttpHandlerTest to use Http2Client [\#175](https://github.com/networknt/light-4j/issues/175)
+- add status code ERR11202 for hybrid-4j get request [\#173](https://github.com/networknt/light-4j/issues/173)
+- remove unused import in DecryptUtil [\#171](https://github.com/networknt/light-4j/issues/171)
+
+**Merged pull requests:**
+
+- feat\(util\): Add toByteBuffer overload util method to convert files. [\#174](https://github.com/networknt/light-4j/pull/174) ([NicholasAzar](https://github.com/NicholasAzar))
+
 ## [1.5.10](https://github.com/networknt/light-4j/tree/1.5.10) (2018-03-02)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.9...1.5.10)
 
