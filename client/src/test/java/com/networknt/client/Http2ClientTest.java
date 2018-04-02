@@ -195,6 +195,22 @@ public class Http2ClientTest {
     }
 
     @Test
+    public void testAddNullToken() {
+        final Http2Client client = Http2Client.getInstance();
+        final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(POST);
+        client.addAuthToken(request, null);
+        Assert.assertNull(request.getRequestHeaders().getFirst(Headers.AUTHORIZATION));
+    }
+
+    @Test
+    public void testAddToken() {
+        final Http2Client client = Http2Client.getInstance();
+        final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(POST);
+        client.addAuthToken(request, "token");
+        Assert.assertEquals("Bearer token", request.getRequestHeaders().getFirst(Headers.AUTHORIZATION));
+    }
+
+    @Test
     public void testSingleHttp2PostSsl() throws Exception {
         //
         final Http2Client client = createClient();
