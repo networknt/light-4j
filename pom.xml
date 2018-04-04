@@ -297,20 +297,20 @@
                 <artifactId>json-schema-validator</artifactId>
                 <version>${version.json-schema-validator}</version>
             </dependency>
-            <dependency>
-                <groupId>io.swagger</groupId>
-                <artifactId>swagger-parser</artifactId>
-                <version>${version.swagger-parser}</version>
-            </dependency>
 
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-annotations</artifactId>
-                <version>${version.jackson}</version>                   
+                <artifactId>jackson-databind</artifactId>
+                <version>${version.jackson}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
+                <artifactId>jackson-core</artifactId>
+                <version>${version.jackson}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
                 <version>${version.jackson}</version>
             </dependency>
             <dependency>
@@ -318,11 +318,19 @@
                 <artifactId>jackson-datatype-jsr310</artifactId>
                 <version>${version.jackson}</version>
                 <exclusions>
-                   <exclusion>
+                    <exclusion>
+                        <groupId>com.fasterxml.jackson.dataformat</groupId>
+                        <artifactId>jackson-core</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.fasterxml.jackson.core</groupId>
+                        <artifactId>jackson-databind</artifactId>
+                    </exclusion>
+                    <exclusion>
                         <groupId>com.fasterxml.jackson.core</groupId>
                         <artifactId>jackson-annotations</artifactId>
-                    </exclusion>     
-                </exclusions>                  
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
