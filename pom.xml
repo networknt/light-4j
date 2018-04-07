@@ -88,7 +88,7 @@
         <version.snakeyaml>1.20</version.snakeyaml>
         <version.caffeine>2.6.2</version.caffeine>
         <version.prometheus>0.3.0</version.prometheus>
-        <version.javamail>1.6.0</version.javamail>
+        <version.javamail>1.6.1</version.javamail>
         <versions.maven-version>2.4</versions.maven-version>
         <argLine>-Xmx512m -XX:MaxPermSize=256m</argLine>
     </properties>
