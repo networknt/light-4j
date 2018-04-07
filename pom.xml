@@ -86,7 +86,7 @@
         <version.zkclient>0.3</version.zkclient>
         <version.curator>4.0.1</version.curator>
         <version.snakeyaml>1.20</version.snakeyaml>
-        <version.caffeine>2.5.6</version.caffeine>
+        <version.caffeine>2.6.2</version.caffeine>
         <version.prometheus>0.2.0</version.prometheus>
         <version.javamail>1.6.0</version.javamail>
         <versions.maven-version>2.4</versions.maven-version>
