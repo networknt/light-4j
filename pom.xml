@@ -83,7 +83,7 @@
         <version.jsr305>3.0.2</version.jsr305>
         <version.json-schema-validator>0.1.18</version.json-schema-validator>
         <version.zookeeper>3.5.3-beta</version.zookeeper>
-        <version.zkclient>0.10</version.zkclient>
+        <version.zkclient>0.3</version.zkclient>
         <version.curator>4.0.1</version.curator>
         <version.snakeyaml>1.18</version.snakeyaml>
         <version.caffeine>2.5.6</version.caffeine>
