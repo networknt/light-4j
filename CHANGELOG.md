@@ -1,5 +1,17 @@
 # Change Log
 
+## [1.5.12](https://github.com/networknt/light-4j/tree/1.5.12) (2018-04-08)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.11...1.5.12)
+
+**Closed issues:**
+
+- upgrade to prometheus 0.3.0 [\#192](https://github.com/networknt/light-4j/issues/192)
+- rollback zkclient to 0.3 [\#191](https://github.com/networknt/light-4j/issues/191)
+- remove consul client and update version for zkclient and curator [\#190](https://github.com/networknt/light-4j/issues/190)
+- remove antlr4 from dependencies [\#189](https://github.com/networknt/light-4j/issues/189)
+- upgrade jackson 2.9.5 remove swagger from light-4j dependencies [\#188](https://github.com/networknt/light-4j/issues/188)
+- add two more test cases for Http2Client [\#186](https://github.com/networknt/light-4j/issues/186)
+
 ## [1.5.11](https://github.com/networknt/light-4j/tree/1.5.11) (2018-03-31)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.10...1.5.11)
 
