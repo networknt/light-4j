@@ -1,5 +1,20 @@
 # Change Log
 
+## [1.5.13](https://github.com/networknt/light-4j/tree/1.5.13) (2018-04-20)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.12...1.5.13)
+
+**Implemented enhancements:**
+
+- create a middleware handler for Prometheus [\#150](https://github.com/networknt/light-4j/issues/150)
+- Sanitizer mangles content [\#51](https://github.com/networknt/light-4j/issues/51)
+
+**Closed issues:**
+
+- light-codegen command line error handling [\#195](https://github.com/networknt/light-4j/issues/195)
+- upgrade jackson library to 2.9.4 [\#187](https://github.com/networknt/light-4j/issues/187)
+- put client credentials token into authorization header instead of X-Scope-Token header [\#185](https://github.com/networknt/light-4j/issues/185)
+- name convention between metrics and prometheus [\#165](https://github.com/networknt/light-4j/issues/165)
+
 ## [1.5.12](https://github.com/networknt/light-4j/tree/1.5.12) (2018-04-08)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.11...1.5.12)
 
