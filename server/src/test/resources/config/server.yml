@@ -4,7 +4,7 @@
 ip: 0.0.0.0
 
 # Http port if enableHttp is true. It will be ignored if dynamicPort is true.
-httpPort: 8080
+httpPort: 49587
 
 # Enable HTTP should be false by default. It should be only used for testing with clients or tools
 # that don't support https or very hard to import the certificate. Otherwise, https should be used.
@@ -14,7 +14,7 @@ httpPort: 8080
 enableHttp: false
 
 # Https port if enableHttps is true. It will be ignored if dynamicPort is true.
-httpsPort: 8443
+httpsPort: 49588
 
 # Enable HTTPS should be true on official environment and most dev environments.
 enableHttps: true
