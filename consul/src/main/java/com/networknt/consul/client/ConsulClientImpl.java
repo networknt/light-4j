@@ -6,16 +6,13 @@ import com.networknt.config.Config;
 import com.networknt.consul.ConsulResponse;
 import com.networknt.consul.ConsulService;
 import com.networknt.utility.Constants;
-import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
 import io.undertow.util.Headers;
-import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
 import java.net.URI;
@@ -25,9 +22,18 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * A client that talks to Consul agent with REST API.
+ * Client and connection are cached as instance variable in singleton class.
+ *
+ * @author Steve Hu
+ */
 public class ConsulClientImpl implements ConsulClient {
 	private static final Logger logger = LoggerFactory.getLogger(ConsulClientImpl.class);
-	static Http2Client client = Http2Client.getInstance();
+	// Single Factory Object so just like static.
+	Http2Client client = Http2Client.getInstance();
+	ClientConnection connection;
+	ClientConnection lookupConn;
 	String url;
 
 	/**
@@ -57,15 +63,13 @@ public class ConsulClientImpl implements ConsulClient {
 	public void checkPass(String serviceId, String token) {
 		if(logger.isDebugEnabled()) logger.debug("checkPass serviceId = " + serviceId);
 		String path = "/v1/agent/check/pass/" + "service:" + serviceId;
-		ClientConnection connection = null;
-		try {
-			connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
-		} catch (Exception e) {
-			logger.error("Exeption:", e);
-		}
 		final CountDownLatch latch = new CountDownLatch(1);
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
+			if(connection == null || !connection.isOpen()) {
+				if(logger.isDebugEnabled()) logger.debug("connection is closed somehow, reconnecting...");
+				connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
+			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
 			if(token != null) request.getRequestHeaders().put(Constants.CONSUL_TOKEN, token);
@@ -78,25 +82,20 @@ public class ConsulClientImpl implements ConsulClient {
 			}
 		} catch (Exception e) {
 			logger.error("CheckPass request exception", e);
-		} finally {
-			IoUtils.safeClose(connection);
 		}
-
 	}
 
 	@Override
 	public void checkFail(String serviceId, String token) {
 		if(logger.isDebugEnabled()) logger.debug("checkFail serviceId = " + serviceId);
 		String path = "/v1/agent/check/fail/" + "service:" + serviceId;
-		ClientConnection connection = null;
-		try {
-			connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
-		} catch (Exception e) {
-			logger.error("Exeption:", e);
-		}
 		final CountDownLatch latch = new CountDownLatch(1);
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
+			if(connection == null || !connection.isOpen()) {
+				if(logger.isDebugEnabled()) logger.debug("connection is closed somehow, reconnecting...");
+				connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
+			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
 			if(token != null) request.getRequestHeaders().put(Constants.CONSUL_TOKEN, token);
@@ -109,8 +108,6 @@ public class ConsulClientImpl implements ConsulClient {
 			}
 		} catch (Exception e) {
 			logger.error("CheckPass request exception", e);
-		} finally {
-			IoUtils.safeClose(connection);
 		}
 	}
 
@@ -118,15 +115,13 @@ public class ConsulClientImpl implements ConsulClient {
 	public void registerService(ConsulService service, String token) {
 		String json = service.toString();
 		String path = "/v1/agent/service/register";
-		ClientConnection connection = null;
-		try {
-			connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
-		} catch (Exception e) {
-			logger.error("Exeption:", e);
-		}
 		final CountDownLatch latch = new CountDownLatch(1);
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
+			if(connection == null || !connection.isOpen()) {
+				if(logger.isDebugEnabled()) logger.debug("connection is closed somehow, reconnecting...");
+				connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
+			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
 			if(token != null) request.getRequestHeaders().put(Constants.CONSUL_TOKEN, token);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
@@ -139,23 +134,20 @@ public class ConsulClientImpl implements ConsulClient {
 			}
 		} catch (Exception e) {
 			logger.error("Exception:", e);
-		} finally {
-			IoUtils.safeClose(connection);
 		}
 	}
 
 	@Override
 	public void unregisterService(String serviceId, String token) {
 		String path = "/v1/agent/service/deregister/" + serviceId;
-		ClientConnection connection = null;
-		try {
-			connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
-		} catch (Exception e) {
-			logger.error("Exeption:", e);
-		}
 		final CountDownLatch latch = new CountDownLatch(1);
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
+			if(connection == null || !connection.isOpen()) {
+				if(logger.isDebugEnabled()) logger.debug("connection is closed somehow, reconnecting...");
+				connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
+			}
+
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
 			if(token != null) request.getRequestHeaders().put(Constants.CONSUL_TOKEN, token);
@@ -168,8 +160,6 @@ public class ConsulClientImpl implements ConsulClient {
 			}
 		} catch (Exception e) {
 			logger.error("Exception:", e);
-		} finally {
-			IoUtils.safeClose(connection);
 		}
 	}
 
@@ -182,27 +172,25 @@ public class ConsulClientImpl implements ConsulClient {
 			path = path + "&tag=" + tag;
 		}
 		if(logger.isDebugEnabled()) logger.debug("path = " + path);
-		ClientConnection connection = null;
-		try {
-			connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
-		} catch (Exception e) {
-			logger.error("Exeption:", e);
-		}
 		final CountDownLatch latch = new CountDownLatch(1);
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
+			if(lookupConn == null || !lookupConn.isOpen()) {
+				if(logger.isDebugEnabled()) logger.debug("lookupConn is closed somehow, reconnecting...");
+				lookupConn = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
+			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(path);
 			if(token != null) request.getRequestHeaders().put(Constants.CONSUL_TOKEN, token);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
-			connection.sendRequest(request, client.createClientCallback(reference, latch));
+			lookupConn.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= 300){
-				System.out.println("body = " + reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+				if(logger.isDebugEnabled()) logger.debug("body = " + reference.get().getAttachment(Http2Client.RESPONSE_BODY));
 				throw new Exception("Failed to unregister on Consul: " + statusCode);
 			} else {
 				String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-				System.out.println("body = " + body);
+				if(logger.isDebugEnabled()) logger.debug("body = " + body);
 				List<Map<String, Object>> services = Config.getInstance().getMapper().readValue(body, new TypeReference<List<Map<String, Object>>>(){});
 				List<ConsulService> ConsulServcies = new ArrayList<>(
 						services.size());
@@ -220,8 +208,6 @@ public class ConsulClientImpl implements ConsulClient {
 			}
 		} catch (Exception e) {
 			logger.error("Exception:", e);
-		} finally {
-			IoUtils.safeClose(connection);
 		}
 		return newResponse;
 	}
