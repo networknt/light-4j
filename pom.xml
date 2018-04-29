@@ -126,6 +126,7 @@
         <module>common</module>
         <module>email</module>
         <module>server</module>
+        <module>resources</module>
     </modules>
 
     <dependencyManagement>
