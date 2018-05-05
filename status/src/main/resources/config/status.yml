@@ -307,6 +307,12 @@ ERR11300:
   code: ERR11300
   message: FAIL_TO_GET_TABLEAU_TOKEN
   description: Fail to get token from Tableau server.
+ERR11301:
+  statusCode: 400
+  code: ERR11301
+  message: MISSING_TABLEAU_CONTENT_URL
+  description: TableauContentUrl is missing in the request header.
+
 
 # 11350-11399 light-router
 
