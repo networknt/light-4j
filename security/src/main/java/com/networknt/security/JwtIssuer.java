@@ -15,6 +15,7 @@
  */
 package com.networknt.security;
 
+import com.networknt.common.DecryptUtil;
 import com.networknt.config.Config;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
@@ -26,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.interfaces.RSAPrivateKey;
+import java.util.Map;
 
 /**
  * JWT token issuer helper utility that use by light-ouath2 token and code services to
@@ -36,7 +38,10 @@ import java.security.interfaces.RSAPrivateKey;
 public class JwtIssuer {
     private static final Logger logger = LoggerFactory.getLogger(JwtIssuer.class);
     public static final String JWT_CONFIG = "jwt";
+    public static final String SECRET_CONFIG = "secret";
+    public static final String JWT_PRIVATE_KEY_PASSWORD = "jwtPrivateKeyPassword";
     private static JwtConfig jwtConfig = (JwtConfig) Config.getInstance().getJsonObjectConfig(JWT_CONFIG, JwtConfig.class);
+    private static Map<String, Object> secretConfig = DecryptUtil.decryptMap(Config.getInstance().getJsonMapConfig(SECRET_CONFIG));
 
     /**
      * A static method that generate JWT token from JWT claims object
@@ -48,7 +53,7 @@ public class JwtIssuer {
     public static String getJwt(JwtClaims claims) throws JoseException {
         String jwt;
         RSAPrivateKey privateKey = (RSAPrivateKey) getPrivateKey(
-                jwtConfig.getKey().getFilename(), jwtConfig.getKey().getPassword(), jwtConfig.getKey().getKeyName());
+                jwtConfig.getKey().getFilename(), (String)secretConfig.get(JWT_PRIVATE_KEY_PASSWORD), jwtConfig.getKey().getKeyName());
 
         // A JWT is a JWS and/or a JWE with JSON claims as the payload.
         // In this example it is a JWS nested inside a JWE
@@ -78,17 +83,16 @@ public class JwtIssuer {
      * @return JwtClaims
      */
     public static JwtClaims getDefaultJwtClaims() {
-        JwtConfig config = (JwtConfig) Config.getInstance().getJsonObjectConfig(JWT_CONFIG, JwtConfig.class);
 
         JwtClaims claims = new JwtClaims();
 
-        claims.setIssuer(config.getIssuer());
-        claims.setAudience(config.getAudience());
-        claims.setExpirationTimeMinutesInTheFuture(config.getExpiredInMinutes());
+        claims.setIssuer(jwtConfig.getIssuer());
+        claims.setAudience(jwtConfig.getAudience());
+        claims.setExpirationTimeMinutesInTheFuture(jwtConfig.getExpiredInMinutes());
         claims.setGeneratedJwtId(); // a unique identifier for the token
         claims.setIssuedAtToNow();  // when the token was issued/created (now)
         claims.setNotBeforeMinutesInThePast(2); // time before which the token is not yet valid (2 minutes ago)
-        claims.setClaim("version", config.getVersion());
+        claims.setClaim("version", jwtConfig.getVersion());
         return claims;
 
     }
