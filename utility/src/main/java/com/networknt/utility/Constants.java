@@ -84,6 +84,7 @@ public class Constants {
 
     public static final String PROTOCOL_SEPARATOR = "://";
     public static final String PROTOCOL_LIGHT = "light";
+    public static final String PROTOCOL_HTTPS = "https";
     public static final String TAG_ENVIRONMENT = "environment";
     public static final String PATH_SEPARATOR = "/";
 
@@ -93,6 +94,4 @@ public class Constants {
 
     public static final String ZOOKEEPER_REGISTRY_NAMESPACE = "/light";
     public static final String ZOOKEEPER_REGISTRY_COMMAND = "/command";
-
-
 }
