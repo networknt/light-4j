@@ -280,6 +280,11 @@ ERR11101:
   code: ERR11101
   message: MISSING_GENERATOR_ITEM
   description: Missing generator item.
+ERR11102:
+  statusCode: 400
+  code: ERR11102
+  message: INVALID_CONFIG_HTTP_LISTEN_TYPE
+  description: enableHttp or enableHttps needs to be set to true, but not both.
 
 
 # 11200 - 11299 light hybrid validation errors
