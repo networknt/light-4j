@@ -21,9 +21,12 @@ import com.networknt.client.oauth.OauthHelper;
 import com.networknt.client.oauth.TokenRequest;
 import com.networknt.client.oauth.TokenResponse;
 import com.networknt.config.Config;
+import com.networknt.handler.MiddlewareHandler;
 import com.networknt.status.Status;
 import com.networknt.utility.Constants;
+import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.Util;
+import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.CookieImpl;
@@ -35,14 +38,20 @@ import org.slf4j.LoggerFactory;
 import java.util.Deque;
 
 /**
- * This is a handler that receives authorization code from OAuth 2.0 provider with authorizaiton grant type.
+ * This is a handler that receives authorization code from OAuth 2.0 provider with authorization grant type.
  * It will take the redirected code and get JWT token along with client_id and client_secret defined in
- * client.yml and secret.yml config files. Once the token is received, a session will be created to put the
- * token into.
+ * client.yml and secret.yml config files. Once the tokens are received, they will be sent to the browser
+ * with cookies immediately.
+ *
+ * This middleware handler must be place before StatelessCsrfHandler as the request doesn't have any CSRF
+ * header yet. After this action, all subsequent requests from the browser will have jwt token in cookies
+ * and CSRF token in headers.
+ *
+ * Note that this handler only handles requestPath in config file. Other path will be passed through.
  *
  * @author Steve Hu
  */
-public class StatelessAuthHandler implements HttpHandler {
+public class StatelessAuthHandler implements MiddlewareHandler {
     private static final Logger logger = LoggerFactory.getLogger(StatelessAuthHandler.class);
     private static final String CONFIG_NAME = "statelessAuth";
     private static final String CODE = "code";
@@ -51,6 +60,8 @@ public class StatelessAuthHandler implements HttpHandler {
     public static StatelessAuthConfig config =
             (StatelessAuthConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, StatelessAuthConfig.class);
 
+    private volatile HttpHandler next;
+
     public StatelessAuthHandler() {
         logger.info("StatelessAuthHandler is constructed.");
     }
@@ -58,6 +69,13 @@ public class StatelessAuthHandler implements HttpHandler {
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         if(logger.isInfoEnabled()) logger.info("StatelessAuthHandler.handleRequest is called.");
+        // This handler only cares about /authorization path. Pass to the next handler if path is not matched.
+        if(logger.isDebugEnabled()) logger.debug("exchange path = " + exchange.getRelativePath() + " config path = " + config.getRequestPath());
+        if(!exchange.getRelativePath().equals(config.getRequestPath())) {
+            next.handleRequest(exchange);
+            // nothing needs to be done from the moment. need to bypass the rest of the code.
+            return;
+        }
         Deque<String> deque = exchange.getQueryParameters().get(CODE);
         String code = deque == null ? null : deque.getFirst();
         if(logger.isDebugEnabled()) logger.debug("code = " + code);
@@ -105,4 +123,27 @@ public class StatelessAuthHandler implements HttpHandler {
         exchange.getResponseHeaders().put(Headers.LOCATION, config.getRedirectUri());
         exchange.endExchange();
     }
+
+    @Override
+    public HttpHandler getNext() {
+        return next;
+    }
+
+    @Override
+    public MiddlewareHandler setNext(final HttpHandler next) {
+        Handlers.handlerNotNull(next);
+        this.next = next;
+        return this;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return config.isEnabled();
+    }
+
+    @Override
+    public void register() {
+        ModuleRegistry.registerModule(StatelessAuthHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+    }
+
 }
