@@ -32,6 +32,7 @@ public class AuthorizationCodeRequest extends TokenRequest {
 
     String authCode;
     String redirectUri;
+    String csrf;
 
     /**
      * load default values from client.json for authorization code grant, overwrite by setters
@@ -75,4 +76,8 @@ public class AuthorizationCodeRequest extends TokenRequest {
     public void setRedirectUri(String redirectUri) {
         this.redirectUri = redirectUri;
     }
+
+    public String getCsrf() { return csrf; }
+
+    public void setCsrf(String csrf) { this.csrf = csrf; }
 }
