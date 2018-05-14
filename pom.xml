@@ -127,6 +127,8 @@
         <module>email</module>
         <module>server</module>
         <module>resources</module>
+        <module>csrf</module>
+        <module>auth</module>
     </modules>
 
     <dependencyManagement>
@@ -282,6 +284,21 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>email</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>resources</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>csrf</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>auth</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

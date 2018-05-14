@@ -33,6 +33,8 @@ public class Constants {
     public static final String SCOPE_CLIENT_ID_STRING = "scope_client_id";
     public static final String SCOPE_STRING = "scope";
     public static final String ENDPOINT_STRING = "endpoint";
+    public static final String CSRF_STRING = "csrf";
+
     // Swagger 2.0 operation header name
     public static final String SWAGGER_OPERATION_STRING = "swagger_operation";
     // OpenAPI 3.0 operation header name
@@ -40,6 +42,8 @@ public class Constants {
 
     public static final String SCOPE_TOKEN_STRING = "X-Scope-Token";
     public static final String CONSUL_TOKEN_STRING = "X-Consul-Token";
+
+    public static final String CSRF_TOKEN_STRING = "X-CSRF-TOKEN";
 
     public static final HttpString CORRELATION_ID = new HttpString(CORRELATION_ID_STRING);
     public static final HttpString TRACEABILITY_ID = new HttpString(TRACEABILITY_ID_STRING);
@@ -51,6 +55,7 @@ public class Constants {
     public static final HttpString SWAGGER_OPERATION = new HttpString(SWAGGER_OPERATION_STRING);
     public static final HttpString SCOPE_TOKEN = new HttpString(SCOPE_TOKEN_STRING);
     public static final HttpString CONSUL_TOKEN = new HttpString(CONSUL_TOKEN_STRING);
+    public static final HttpString CSRF_TOKEN = new HttpString(CSRF_TOKEN_STRING);
 
     // Logger
     public static final String AUDIT_LOGGER = "Audit";
