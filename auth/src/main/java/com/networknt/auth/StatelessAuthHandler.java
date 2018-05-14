@@ -104,21 +104,27 @@ public class StatelessAuthHandler implements MiddlewareHandler {
                 .setPath(config.getCookiePath())
                 .setMaxAge(config.cookieMaxAge)
                 .setHttpOnly(true)
-                .setSecure(true));
+                .setSecure(config.cookieSecure));
         exchange.setResponseCookie(new CookieImpl("refreshToken", refreshToken)
                 .setDomain(config.cookieDomain)
                 .setPath(config.getCookiePath())
                 .setMaxAge(config.cookieMaxAge)
                 .setHttpOnly(true)
-                .setSecure(true));
+                .setSecure(config.cookieSecure));
         exchange.setResponseCookie(new CookieImpl("expiresIn", "" + expiresIn)
                 .setDomain(config.cookieDomain)
                 .setPath(config.cookiePath)
                 .setMaxAge(config.cookieMaxAge)
                 .setHttpOnly(true)
-                .setSecure(true));
-        // this is another csrf token in header and it is accessible for Javascript.
-        exchange.getResponseHeaders().put(Constants.CSRF_TOKEN, csrf);
+                .setSecure(config.cookieSecure));
+        // this is another csrf token in cookie and it is accessible for Javascript.
+        exchange.setResponseCookie(new CookieImpl(Constants.CSRF_STRING, csrf)
+                .setDomain(config.cookieDomain)
+                .setPath(config.cookiePath)
+                .setMaxAge(config.cookieMaxAge)
+                .setHttpOnly(false)
+                .setSecure(config.cookieSecure));
+
         exchange.setStatusCode(StatusCodes.FOUND);
         exchange.getResponseHeaders().put(Headers.LOCATION, config.getRedirectUri());
         exchange.endExchange();

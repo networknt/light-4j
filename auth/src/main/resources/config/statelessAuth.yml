@@ -14,8 +14,10 @@ enableHttp2: true
 # Request path
 requestPath: /v1/authorization
 # Cookie domain
-cookieDomain: com.networknt
+cookieDomain: localhost
 # Cookie path
-cookiePath: /auth
+cookiePath: /
 # Cookie maxAge
 cookieMaxAge: 600
+# Cookie secured
+cookieSecure: true
