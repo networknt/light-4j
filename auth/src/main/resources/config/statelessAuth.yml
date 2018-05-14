@@ -11,11 +11,11 @@ redirectUri: /special
 # Http/2 is enabled by default for light-oauth2 provider. If other oauth2 server is used, change
 # to false if the provider doesn't support HTTP/2
 enableHttp2: true
+# Request path
+requestPath: /v1/authorization
 # Cookie domain
 cookieDomain: com.networknt
 # Cookie path
 cookiePath: /auth
 # Cookie maxAge
 cookieMaxAge: 600
-
-

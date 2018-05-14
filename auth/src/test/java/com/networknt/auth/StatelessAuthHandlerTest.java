@@ -91,6 +91,9 @@ public class StatelessAuthHandlerTest {
         if(authServer == null) {
             logger.info("starting server");
             HttpHandler handler = getTestHandler();
+            StatelessAuthHandler statelessAuthHandler = new StatelessAuthHandler();
+            statelessAuthHandler.setNext(handler);
+            handler = statelessAuthHandler;
             authServer = Undertow.builder()
                     .addHttpsListener(8080, "localhost", sslContext)
                     .setServerOption(UndertowOptions.ENABLE_HTTP2, true)
@@ -98,6 +101,7 @@ public class StatelessAuthHandlerTest {
                     .build();
             authServer.start();
         }
+
         if(tokenServer == null) {
             logger.info("starting oauth token server");
             tokenServer = Undertow.builder()
