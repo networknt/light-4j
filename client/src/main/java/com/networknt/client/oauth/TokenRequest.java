@@ -31,6 +31,7 @@ public class TokenRequest {
     public static String CLIENT_ID = "client_id";
     public static String REDIRECT_URI = "redirect_uri";
     public static String SCOPE = "scope";
+    public static String CSRF = "csrf";
 
     String grantType;
     String serverUrl;
@@ -38,6 +39,7 @@ public class TokenRequest {
     String clientId;
     String clientSecret;
     List<String> scope;
+    String csrf;
 
     public TokenRequest() {
     }
@@ -89,4 +91,8 @@ public class TokenRequest {
     public void setServerUrl(String serverUrl) {
         this.serverUrl = serverUrl;
     }
+
+    public String getCsrf() { return csrf; }
+
+    public void setCsrf(String csrf) { this.csrf = csrf; }
 }
