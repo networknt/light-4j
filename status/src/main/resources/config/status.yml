@@ -175,6 +175,31 @@ ERR10034:
   code: ERR10034
   message: UNREGISTER_ZOOKEEPER_ERROR
   description: Failed to unregister %s to zookeeper(%s), cause %s
+ERR10035:
+  statusCode: 400
+  code: ERR10035
+  message: AUTHORIZATION_CODE_MISSING
+  description: Authorization code is missing when calling AuthHandler
+ERR10036:
+  statusCode: 400
+  code: ERR10036
+  message: CSRF_HEADER_MISSING
+  description: X-CSRF-TOKEN header is missing in Middleware CsrfHandler
+ERR10037:
+  statusCode: 400
+  code: ERR10037
+  message: SUBJECT_JWT_CLAIMS_NOT_FOUND
+  description: Subject claims is not found in auditInfo. JwtVerifyHandler must be enabled and injected before CsrfHandler.
+ERR10038:
+  statusCode: 400
+  code: ERR10038
+  message: CSRF_TOKEN_MISSING_IN_JWT
+  description: CSRF token is missing in JWT token while StatelessAuthHandler is enabled.
+ERR10039:
+  statusCode: 400
+  code: ERR10039
+  message: HEADER_CSRF_JWT_CSRF_NOT_MATCH
+  description: CSRF token %s in header is not matched with CSRF token %s in JWT
 
 
 # 11000-11500 swagger-validator errors

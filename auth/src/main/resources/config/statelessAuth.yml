@@ -1,0 +1,21 @@
+# This handler is generic request handler for the OAuth 2.0 provider authorization code redirect.
+# It receives the auth code and goes to the OAuth 2.0 provider to get the subject token. The jwt
+# token is then sent to the browser with two cookies with splitting header/payload and signature.
+# Another options is to keep the jwt in session and return sessionId to the browser. In either
+# case, the csrf token will be send with a separate cookie.
+---
+# Indicate if the StatelessAuthHandler is enabled or not
+enabled: true
+# Once Authorization is done, which path the UI is redirected.
+redirectUri: /special
+# Http/2 is enabled by default for light-oauth2 provider. If other oauth2 server is used, change
+# to false if the provider doesn't support HTTP/2
+enableHttp2: true
+# Cookie domain
+cookieDomain: com.networknt
+# Cookie path
+cookiePath: /auth
+# Cookie maxAge
+cookieMaxAge: 600
+
+
