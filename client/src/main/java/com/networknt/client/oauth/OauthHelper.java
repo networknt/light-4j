@@ -24,6 +24,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.networknt.client.oauth.TokenRequest.CSRF;
 import static com.networknt.client.oauth.TokenRequest.REDIRECT_URI;
 import static com.networknt.client.oauth.TokenRequest.SCOPE;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -158,6 +159,9 @@ public class OauthHelper {
         }
         if(request.getScope() != null) {
             params.put(SCOPE, String.join(" ", request.getScope()));
+        }
+        if(request.getCsrf() != null) {
+            params.put(CSRF, request.getCsrf());
         }
         return Http2Client.getFormDataString(params);
     }
