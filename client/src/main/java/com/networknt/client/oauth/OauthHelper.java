@@ -156,12 +156,13 @@ public class OauthHelper {
         if(TokenRequest.AUTHORIZATION_CODE.equals(request.getGrantType())) {
             params.put(CODE, ((AuthorizationCodeRequest)request).getAuthCode());
             params.put(REDIRECT_URI, ((AuthorizationCodeRequest)request).getRedirectUri());
+            String csrf = ((AuthorizationCodeRequest)request).getCsrf();
+            if(csrf != null) {
+                params.put(CSRF, csrf);
+            }
         }
         if(request.getScope() != null) {
             params.put(SCOPE, String.join(" ", request.getScope()));
-        }
-        if(request.getCsrf() != null) {
-            params.put(CSRF, request.getCsrf());
         }
         return Http2Client.getFormDataString(params);
     }

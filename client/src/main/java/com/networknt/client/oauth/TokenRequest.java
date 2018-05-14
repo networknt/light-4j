@@ -39,7 +39,6 @@ public class TokenRequest {
     String clientId;
     String clientSecret;
     List<String> scope;
-    String csrf;
 
     public TokenRequest() {
     }
@@ -91,8 +90,4 @@ public class TokenRequest {
     public void setServerUrl(String serverUrl) {
         this.serverUrl = serverUrl;
     }
-
-    public String getCsrf() { return csrf; }
-
-    public void setCsrf(String csrf) { this.csrf = csrf; }
 }
