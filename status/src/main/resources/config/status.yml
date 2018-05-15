@@ -200,6 +200,11 @@ ERR10039:
   code: ERR10039
   message: HEADER_CSRF_JWT_CSRF_NOT_MATCH
   description: CSRF token %s in header is not matched with CSRF token %s in JWT
+ERR10040:
+  statusCode: 400
+  code: ERR10040
+  message: JWT_NOT_FOUND_IN_COOKIES
+  description: JWT token cannot be found in cookies set by StatelessAuthHandler
 
 
 # 11000-11500 swagger-validator errors
