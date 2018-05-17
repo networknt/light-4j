@@ -15,7 +15,11 @@
  */
 
 package com.networknt.handler;
+import com.networknt.status.Status;
 import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A interface for middleware handlers. All middleware handlers must implement this interface
@@ -29,7 +33,7 @@ import io.undertow.server.HttpHandler;
  * @author Steve Hu
  */
 public interface MiddlewareHandler extends HttpHandler {
-
+    Logger logger = LoggerFactory.getLogger(MiddlewareHandler.class);
     /**
      * Get the next handler in the chain
      *
@@ -57,4 +61,10 @@ public interface MiddlewareHandler extends HttpHandler {
      */
     void register();
 
+    default void setExchangeStatus(HttpServerExchange exchange, String code, final Object... args) {
+        Status status = new Status(code, args);
+        exchange.setStatusCode(status.getStatusCode());
+        exchange.getResponseSender().send(status.toString());
+        logger.error(status.toString());
+    }
 }
