@@ -57,7 +57,7 @@ public class JwtHelperTest {
         claims = null;
         Assert.assertNotNull(jwt);
         try {
-            claims = JwtHelper.verifyJwt(jwt);
+            claims = JwtHelper.verifyJwt(jwt, false);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -65,7 +65,7 @@ public class JwtHelperTest {
         Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
 
         try {
-            claims = JwtHelper.verifyJwt(jwt);
+            claims = JwtHelper.verifyJwt(jwt, false);
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -158,33 +158,44 @@ public class JwtHelper {
     }
 
     /**
-     * Verify JWT token signature as well as expiry.
+     * Verify JWT token format and signature. If ignoreExpiry is true, skip expiry verification, otherwise
+     * verify the expiry before signature verification.
+     *
+     * In most cases, we need to verify the expiry of the jwt token. The only time we need to ignore expiry
+     * verification is in SPA middleware handlers which need to verify csrf token in jwt against the csrf
+     * token in the request header to renew the expired token.
      *
      * @param jwt String of Json web token
+     * @param ignoreExpiry If true, don't verify if the token is expired.
      * @return JwtClaims object
      * @throws InvalidJwtException InvalidJwtException
      * @throws ExpiredTokenException ExpiredTokenException
      */
-    public static JwtClaims verifyJwt(String jwt) throws InvalidJwtException, ExpiredTokenException {
+    public static JwtClaims verifyJwt(String jwt, boolean ignoreExpiry) throws InvalidJwtException, ExpiredTokenException {
         JwtClaims claims;
+
         if(Boolean.TRUE.equals(enableJwtCache)) {
             claims = cache.getIfPresent(jwt);
             if(claims != null) {
-                try {
-                    // if using our own client module, the jwt token should be renewed automatically
-                    // and it will never expired here. However, we need to handle other clients.
-                    if ((NumericDate.now().getValue() - secondsOfAllowedClockSkew) >= claims.getExpirationTime().getValue())
-                    {
-                        logger.info("Cached jwt token is expired!");
-                        throw new ExpiredTokenException("Token is expired");
+                if(!ignoreExpiry) {
+                    try {
+                        // if using our own client module, the jwt token should be renewed automatically
+                        // and it will never expired here. However, we need to handle other clients.
+                        if ((NumericDate.now().getValue() - secondsOfAllowedClockSkew) >= claims.getExpirationTime().getValue())
+                        {
+                            logger.info("Cached jwt token is expired!");
+                            throw new ExpiredTokenException("Token is expired");
+                        }
+                    } catch (MalformedClaimException e) {
+                        // This is cached token and it is impossible to have this exception
+                        logger.error("MalformedClaimException:", e);
                     }
-                } catch (MalformedClaimException e) {
-                    // This is cached token and it is impossible to have this exception
-                    logger.error("MalformedClaimException:", e);
                 }
+                // this claims object is signature verified already
                 return claims;
             }
         }
+
         JwtConsumer consumer = new JwtConsumerBuilder()
                 .setSkipAllValidators()
                 .setDisableRequireSignature()
@@ -192,19 +203,24 @@ public class JwtHelper {
                 .build();
 
         JwtContext jwtContext = consumer.process(jwt);
-        JwtClaims jwtClaims = jwtContext.getJwtClaims();
+        claims = jwtContext.getJwtClaims();
         JsonWebStructure structure = jwtContext.getJoseObjects().get(0);
+        // need this kid to load public key certificate for signature verification
         String kid = structure.getKeyIdHeaderValue();
+
         // so we do expiration check here manually as we have the claim already for kid
-        try {
-            if ((NumericDate.now().getValue() - secondsOfAllowedClockSkew) >= jwtClaims.getExpirationTime().getValue())
-            {
-                logger.info("jwt token is expired!");
-                throw new ExpiredTokenException("Token is expired");
+        // if ignoreExpiry is false, verify expiration of the token
+        if(!ignoreExpiry) {
+            try {
+                if ((NumericDate.now().getValue() - secondsOfAllowedClockSkew) >= claims.getExpirationTime().getValue())
+                {
+                    logger.info("jwt token is expired!");
+                    throw new ExpiredTokenException("Token is expired");
+                }
+            } catch (MalformedClaimException e) {
+                logger.error("MalformedClaimException:", e);
+                throw new InvalidJwtException("MalformedClaimException", new ErrorCodeValidator.Error(ErrorCodes.MALFORMED_CLAIM, "Invalid ExpirationTime Format"), e, jwtContext);
             }
-        } catch (MalformedClaimException e) {
-            logger.error("MalformedClaimException:", e);
-            throw new InvalidJwtException("MalformedClaimException", new ErrorCodeValidator.Error(ErrorCodes.MALFORMED_CLAIM, "Invalid ExpirationTime Format"), e, jwtContext);
         }
 
         // get the public key certificate from the cache that is loaded from security.yml if it is not there,
@@ -220,7 +236,7 @@ public class JwtHelper {
         x509VerificationKeyResolver.setTryAllOnNoThumbHeader(true);
         consumer = new JwtConsumerBuilder()
                 .setRequireExpirationTime()
-                .setAllowedClockSkewInSeconds(secondsOfAllowedClockSkew)
+                .setAllowedClockSkewInSeconds(315360000) // use seconds of 10 years to skip expiration validation as we need skip it in some cases.
                 .setSkipDefaultAudienceValidation()
                 .setVerificationKeyResolver(x509VerificationKeyResolver)
                 .build();
@@ -238,8 +254,7 @@ public class JwtHelper {
         X509Certificate certificate = null;
         KeyRequest keyRequest = new KeyRequest(kid);
         try {
-            Boolean http2 = (Boolean)securityConfig.get(OAUTH_HTTP2_SUPPORT);
-            String key = OauthHelper.getKey(keyRequest, http2);
+            String key = OauthHelper.getKey(keyRequest);
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
             certificate = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(key.getBytes(StandardCharsets.UTF_8)));
         } catch (Exception e) {
