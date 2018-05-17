@@ -48,6 +48,8 @@ public class ClientCredentialsRequest extends TokenRequest {
                 Map<String, Object> tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);
                 if(tokenConfig != null) {
                     setServerUrl((String)tokenConfig.get(SERVER_URL));
+                    Object object = tokenConfig.get(ENABLE_HTTP2);
+                    setEnableHttp2(object != null && (Boolean) object);
                     Map<String, Object> ccConfig = (Map<String, Object>) tokenConfig.get(CLIENT_CREDENTIALS);
                     if(ccConfig != null) {
                         setClientId((String)ccConfig.get(CLIENT_ID));

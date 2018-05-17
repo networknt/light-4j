@@ -25,8 +25,10 @@ public class TokenRequest {
     public static String OAUTH = "oauth";
     public static String TOKEN = "token";
     public static String SERVER_URL = "server_url";
+    public static String ENABLE_HTTP2 = "enableHttp2";
     public static String AUTHORIZATION_CODE = "authorization_code";
     public static String CLIENT_CREDENTIALS = "client_credentials";
+    public static String REFRESH_TOKEN = "refresh_token";
     public static String URI = "uri";
     public static String CLIENT_ID = "client_id";
     public static String REDIRECT_URI = "redirect_uri";
@@ -35,10 +37,13 @@ public class TokenRequest {
 
     String grantType;
     String serverUrl;
+    boolean enableHttp2;
     String uri;
     String clientId;
     String clientSecret;
     List<String> scope;
+    // put csrf here as both authorization code and refresh token need it.
+    String csrf;
 
     public TokenRequest() {
     }
@@ -54,6 +59,10 @@ public class TokenRequest {
     public String getUri() {
         return uri;
     }
+
+    public boolean isEnableHttp2() { return enableHttp2; }
+
+    public void setEnableHttp2(boolean enableHttp2) { this.enableHttp2 = enableHttp2; }
 
     public void setUri(String uri) {
         this.uri = uri;
@@ -90,4 +99,10 @@ public class TokenRequest {
     public void setServerUrl(String serverUrl) {
         this.serverUrl = serverUrl;
     }
+
+    public String getCsrf() { return csrf; }
+
+    public void setCsrf(String csrf) { this.csrf = csrf; }
+
+
 }

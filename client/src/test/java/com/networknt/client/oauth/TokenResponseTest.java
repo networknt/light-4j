@@ -19,6 +19,13 @@ public class TokenResponseTest {
         TokenResponse tokenResponse = Config.getInstance().getMapper().readValue(s, TokenResponse.class);
     }
 
+    @Test
+    public void testErrorStatus() throws IOException {
+        String s = "{\"statusCode\":401,\"code\":\"ERR10001\",\"message\":\"AUTH_TOKEN_EXPIRED\",\"description\":\"Jwt token in authorization header expired\"}";
+        TokenResponse tokenResponse = Config.getInstance().getMapper().readValue(s, TokenResponse.class);
+    }
+
+
     @Test(expected = UnrecognizedPropertyException.class)
     public void testExtraFields() throws IOException {
         String s = "{\"access_token\":\"access_token\",\"token_type\":\"token_type\",\"expires_in\":3600,\"scope\":\"scope\",\"state\":\"state\",\"refresh_token\":\"refresh_token\",\"example_parameter\":\"example_parameter\",\"extra\":\"extra\"}";

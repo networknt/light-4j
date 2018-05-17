@@ -188,8 +188,8 @@ ERR10036:
 ERR10037:
   statusCode: 400
   code: ERR10037
-  message: SUBJECT_JWT_CLAIMS_NOT_FOUND
-  description: Subject claims is not found in auditInfo. JwtVerifyHandler must be enabled and injected before CsrfHandler.
+  message: REFRESH_TOKEN_RESPONSE_EMPTY
+  description: Empty response returned from OAuth 2.0 provider while using refresh token to get access token
 ERR10038:
   statusCode: 400
   code: ERR10038

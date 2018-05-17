@@ -24,9 +24,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.networknt.client.oauth.TokenRequest.CSRF;
-import static com.networknt.client.oauth.TokenRequest.REDIRECT_URI;
-import static com.networknt.client.oauth.TokenRequest.SCOPE;
+import static com.networknt.client.oauth.TokenRequest.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class OauthHelper {
@@ -36,13 +34,13 @@ public class OauthHelper {
 
     static final Logger logger = LoggerFactory.getLogger(OauthHelper.class);
 
-    public static TokenResponse getToken(TokenRequest tokenRequest, boolean http2) throws ClientException {
+    public static TokenResponse getToken(TokenRequest tokenRequest) throws ClientException {
         final AtomicReference<TokenResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
         try {
-            connection = client.connect(new URI(tokenRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, http2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+            connection = client.connect(new URI(tokenRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, tokenRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
         } catch (Exception e) {
             throw new ClientException(e);
         }
@@ -108,12 +106,12 @@ public class OauthHelper {
         return reference.get();
     }
 
-    public static String getKey(KeyRequest keyRequest, boolean http2) throws ClientException {
+    public static String getKey(KeyRequest keyRequest) throws ClientException {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
         try {
-            connection = client.connect(new URI(keyRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, http2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+            connection = client.connect(new URI(keyRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, keyRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
         } catch (Exception e) {
             throw new ClientException(e);
         }
@@ -156,7 +154,14 @@ public class OauthHelper {
         if(TokenRequest.AUTHORIZATION_CODE.equals(request.getGrantType())) {
             params.put(CODE, ((AuthorizationCodeRequest)request).getAuthCode());
             params.put(REDIRECT_URI, ((AuthorizationCodeRequest)request).getRedirectUri());
-            String csrf = ((AuthorizationCodeRequest)request).getCsrf();
+            String csrf = request.getCsrf();
+            if(csrf != null) {
+                params.put(CSRF, csrf);
+            }
+        }
+        if(TokenRequest.REFRESH_TOKEN.equals(request.getGrantType())) {
+            params.put(REFRESH_TOKEN, ((RefreshTokenRequest)request).getRefreshToken());
+            String csrf = request.getCsrf();
             if(csrf != null) {
                 params.put(CSRF, csrf);
             }

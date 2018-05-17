@@ -13,6 +13,7 @@ public class KeyRequest {
     public static String SERVER_URL = "server_url";
     public static String URI = "uri";
     public static String CLIENT_ID = "client_id";
+    public static String ENABLE_HTTP2 = "enableHttp2";
 
     static Map<String, Object> secret = DecryptUtil.decryptMap((Map<String, Object>)Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET));
 
@@ -20,6 +21,7 @@ public class KeyRequest {
     String uri;
     String clientId;
     String clientSecret;
+    boolean enableHttp2;
 
     public KeyRequest(String kid) {
         Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
@@ -30,6 +32,8 @@ public class KeyRequest {
                 Map<String, Object> keyConfig = (Map<String, Object>)oauthConfig.get(KEY);
                 if(keyConfig != null) {
                     setServerUrl((String)keyConfig.get(SERVER_URL));
+                    Object object = keyConfig.get(ENABLE_HTTP2);
+                    setEnableHttp2(object != null && (Boolean) object);
                     setUri(keyConfig.get(URI) + "/" + kid);
                     setClientId((String)keyConfig.get(CLIENT_ID));
                     setClientSecret((String)secret.get(SecretConstants.KEY_CLIENT_SECRET));
@@ -70,4 +74,7 @@ public class KeyRequest {
         this.serverUrl = serverUrl;
     }
 
+    public boolean isEnableHttp2() { return enableHttp2; }
+
+    public void setEnableHttp2(boolean enableHttp2) { this.enableHttp2 = enableHttp2; }
 }

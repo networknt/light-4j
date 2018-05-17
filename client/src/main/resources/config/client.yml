@@ -27,6 +27,8 @@ oauth:
     server_url: https://localhost:6882
     # token service unique id for OAuth 2.0 provider
     serviceId: com.networknt.oauth2-token-1.0.0
+    # set to true if the oauth2 provider supports HTTP/2
+    enableHttp2: true
     # the following section defines uri and parameters for authorization code grant type
     authorization_code:
       # token endpoint for authorization code grant
@@ -49,6 +51,15 @@ oauth:
       scope:
       - petstore.r
       - petstore.w
+    refresh_token:
+      # token endpoint for client credentials grant
+      uri: "/oauth2/token"
+      # client_id for refresh token grant flow. client_secret is in secret.yml
+      client_id: f7d42348-c647-4efb-a52d-4c5787421e72
+      # optional scope, default scope in the client registration will be used if not defined.
+      scope:
+      - petstore.r
+      - petstore.w
   # light-oauth2 key distribution endpoint configuration
   key:
     # key distribution server url
@@ -59,3 +70,5 @@ oauth:
     uri: "/oauth2/key"
     # client_id used to access key distribution service. It can be the same client_id with token service or not.
     client_id: f7d42348-c647-4efb-a52d-4c5787421e72
+    # set to true if the oauth2 provider supports HTTP/2
+    enableHttp2: true

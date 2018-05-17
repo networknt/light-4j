@@ -32,7 +32,6 @@ public class AuthorizationCodeRequest extends TokenRequest {
 
     String authCode;
     String redirectUri;
-    String csrf;
 
     /**
      * load default values from client.json for authorization code grant, overwrite by setters
@@ -48,6 +47,8 @@ public class AuthorizationCodeRequest extends TokenRequest {
                 Map<String, Object> tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);
                 if(tokenConfig != null) {
                     setServerUrl((String)tokenConfig.get(SERVER_URL));
+                    Object object = tokenConfig.get(ENABLE_HTTP2);
+                    setEnableHttp2(object != null && (Boolean) object);
                     Map<String, Object> acConfig = (Map<String, Object>) tokenConfig.get(AUTHORIZATION_CODE);
                     if(acConfig != null) {
                         setClientId((String)acConfig.get(CLIENT_ID));
@@ -76,8 +77,4 @@ public class AuthorizationCodeRequest extends TokenRequest {
     public void setRedirectUri(String redirectUri) {
         this.redirectUri = redirectUri;
     }
-
-    public String getCsrf() { return csrf; }
-
-    public void setCsrf(String csrf) { this.csrf = csrf; }
 }
