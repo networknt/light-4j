@@ -198,12 +198,12 @@ public class OauthHelperTest {
         list.add("test.w");
         tokenRequest.setScope(list);
         tokenRequest.setServerUrl("http://localhost:8887");
+        tokenRequest.setEnableHttp2(true);
         tokenRequest.setUri("/oauth2/token");
-
         tokenRequest.setRedirectUri("https://localhost:8443/authorize");
         tokenRequest.setAuthCode("test_code");
 
-        TokenResponse tokenResponse = OauthHelper.getToken(tokenRequest, true);
+        TokenResponse tokenResponse = OauthHelper.getToken(tokenRequest);
         System.out.println("tokenResponse = " + tokenResponse);
     }
 
@@ -214,8 +214,9 @@ public class OauthHelperTest {
         keyRequest.setClientSecret("test_secret");
         keyRequest.setServerUrl("http://localhost:8887");
         keyRequest.setUri("/oauth2/key");
+        keyRequest.setEnableHttp2(true);
 
-        String key = OauthHelper.getKey(keyRequest, true);
+        String key = OauthHelper.getKey(keyRequest);
         System.out.println("key = " + key);
     }
 

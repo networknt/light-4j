@@ -17,11 +17,16 @@
 package com.networknt.client.oauth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.networknt.status.Status;
 
 /**
- * Created by steve on 02/09/16.
+ * TokenResponse is extended from Status so that error response can be handled gracefully. You
+ * should check if statusCode is not empty to ensure that normal response is back from OAuth.
+ *
+ * @author Steve Hu
+ *
  */
-public class TokenResponse {
+public class TokenResponse extends Status {
     @JsonProperty(value="access_token")
     private String accessToken;
 
@@ -110,5 +115,9 @@ public class TokenResponse {
                 ", refreshToken='" + refreshToken + '\'' +
                 ", exampleParameter='" + exampleParameter + '\'' +
                 '}';
+    }
+
+    public String superString() {
+        return super.toString();
     }
 }

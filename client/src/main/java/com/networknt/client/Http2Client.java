@@ -80,14 +80,12 @@ public class Http2Client {
     static final String TOKEN_RENEW_BEFORE_EXPIRED = "tokenRenewBeforeExpired";
     static final String EXPIRED_REFRESH_RETRY_DELAY = "expiredRefreshRetryDelay";
     static final String EARLY_REFRESH_RETRY_DELAY = "earlyRefreshRetryDelay";
-    static final String OAUTH_HTTP2_SUPPORT = "oauthHttp2Support";
 
     static final String STATUS_CLIENT_CREDENTIALS_TOKEN_NOT_AVAILABLE = "ERR10009";
 
     static Map<String, Object> config;
     static Map<String, Object> tokenConfig;
     static Map<String, Object> secretConfig;
-    static boolean oauthHttp2Support;
 
     // Cached jwt token for this client.
     private String jwt;
@@ -107,11 +105,6 @@ public class Http2Client {
             if(oauthConfig != null) {
                 tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);
             }
-        }
-        Map<String, Object> securityConfig = Config.getInstance().getJsonMapConfig(CONFIG_SECURITY);
-        if(securityConfig != null) {
-            Boolean b = (Boolean)securityConfig.get(OAUTH_HTTP2_SUPPORT);
-            oauthHttp2Support = (b == null ? false : b.booleanValue());
         }
 
         Map<String, Object> secretMap = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
@@ -376,7 +369,7 @@ public class Http2Client {
 
     private void getCCToken() throws ClientException {
         TokenRequest tokenRequest = new ClientCredentialsRequest();
-        TokenResponse tokenResponse = OauthHelper.getToken(tokenRequest, oauthHttp2Support);
+        TokenResponse tokenResponse = OauthHelper.getToken(tokenRequest);
         synchronized (lock) {
             jwt = tokenResponse.getAccessToken();
             // the expiresIn is seconds and it is converted to millisecond in the future.
