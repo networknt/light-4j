@@ -126,7 +126,7 @@
         <module>common</module>
         <module>email</module>
         <module>server</module>
-        <module>resources</module>
+        <module>resource</module>
     </modules>
 
     <dependencyManagement>
@@ -286,7 +286,7 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
-                <artifactId>resources</artifactId>
+                <artifactId>resource</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
