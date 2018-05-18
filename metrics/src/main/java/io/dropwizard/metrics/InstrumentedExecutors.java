@@ -207,7 +207,7 @@ public final class InstrumentedExecutors {
      * thread will be created and added to the pool. Threads that have
      * not been used for sixty seconds are terminated and removed from
      * the cache. Thus, a pool that remains idle for long enough will
-     * not consume any resources. Note that pools with similar
+     * not consume any resource. Note that pools with similar
      * properties but different details (for example, timeout parameters)
      * may be created using {@link ThreadPoolExecutor} constructors.
      *
@@ -230,7 +230,7 @@ public final class InstrumentedExecutors {
      * thread will be created and added to the pool. Threads that have
      * not been used for sixty seconds are terminated and removed from
      * the cache. Thus, a pool that remains idle for long enough will
-     * not consume any resources. Note that pools with similar
+     * not consume any resource. Note that pools with similar
      * properties but different details (for example, timeout parameters)
      * may be created using {@link ThreadPoolExecutor} constructors.
      *

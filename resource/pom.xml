@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>resources</artifactId>
+    <artifactId>resource</artifactId>
     <packaging>jar</packaging>
     <description>Handler endpoints that will provide clients the ability to server static content.</description>
 
