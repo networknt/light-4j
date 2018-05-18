@@ -1,4 +1,4 @@
-package com.networknt.resources;
+package com.networknt.resource;
 
 import io.undertow.server.handlers.resource.ResourceManager;
 
