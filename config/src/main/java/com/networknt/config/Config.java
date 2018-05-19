@@ -39,7 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * another jar in the classpath to replace the default implementation.
  *
  * Config files are loaded in the following sequence:
- * 1. resources/config folder for the default
+ * 1. resource/config folder for the default
  * 2. externalized directory specified by light-4j-config-dir
  *
  * In docker, the config files should be in volume and any update will
