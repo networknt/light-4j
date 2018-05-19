@@ -1,5 +1,28 @@
 # Change Log
 
+## [1.5.14](https://github.com/networknt/light-4j/tree/1.5.14) (2018-05-19)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.13...1.5.14)
+
+**Closed issues:**
+
+- update client.yml and secret.yml in other modules [\#211](https://github.com/networknt/light-4j/issues/211)
+- Rename resources module to resource for consistency [\#209](https://github.com/networknt/light-4j/issues/209)
+- update client module to support refresh token flow for light-spa-4j [\#208](https://github.com/networknt/light-4j/issues/208)
+- update verifyJwt with ignoreExpiry flag [\#207](https://github.com/networknt/light-4j/issues/207)
+- add default method setExchangeStatus into MiddlewareHandler [\#206](https://github.com/networknt/light-4j/issues/206)
+- move auth and csrf to light-spa-4j repository [\#205](https://github.com/networknt/light-4j/issues/205)
+- add error code for light-spa-4j stateless-token handler [\#204](https://github.com/networknt/light-4j/issues/204)
+- switch StatelessAuthHandler to middleware handler [\#203](https://github.com/networknt/light-4j/issues/203)
+- add stateless auth and csrf handlers for SPA application [\#201](https://github.com/networknt/light-4j/issues/201)
+- pass csrf token in oauth token request [\#200](https://github.com/networknt/light-4j/issues/200)
+- add status code for light-proxy tableau authentication handler [\#199](https://github.com/networknt/light-4j/issues/199)
+- move password in jwt.yml to secret.yml [\#198](https://github.com/networknt/light-4j/issues/198)
+- share the connections to consul in ConsulClientImpl [\#196](https://github.com/networknt/light-4j/issues/196)
+
+**Merged pull requests:**
+
+- Feature/resource providers [\#197](https://github.com/networknt/light-4j/pull/197) ([stevehu](https://github.com/stevehu))
+
 ## [1.5.13](https://github.com/networknt/light-4j/tree/1.5.13) (2018-04-20)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.12...1.5.13)
 
