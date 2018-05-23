@@ -155,11 +155,11 @@ public class Server {
         try {
             Undertow.Builder builder = Undertow.builder();
             if(config.enableHttps) {
-                port = port < 0 ? config.httpsPort : port;
+                port = port < 0 ? config.getHttpsPort() : port;
                 sslContext = createSSLContext();
                 builder.addHttpsListener(port, config.getIp(), sslContext);
             } else if(config.enableHttp) {
-                port = port < 0 ? config.httpPort : port;
+                port = port < 0 ? config.getHttpPort() : port;
                 builder.addHttpListener(port, config.getIp());
             } else {
                 throw new RuntimeException("Unable to start the server as both http and https are disabled in server.yml");

@@ -50,6 +50,16 @@ public class ServerConfig {
     }
 
     public int getHttpPort() {
+    	String port = System.getProperty("httpPort");
+    	if (port != null) {
+    		try {
+    			int newPort = Integer.parseInt(port);
+    			httpPort = newPort;
+    		}
+    		catch (NumberFormatException ex) {
+    			ex.printStackTrace(System.err);
+    		}
+    	}
         return httpPort;
     }
 
@@ -66,6 +76,16 @@ public class ServerConfig {
     }
 
     public int getHttpsPort() {
+    	String port = System.getProperty("httpsPort");
+    	if (port != null) {
+    		try {
+    			int newPort = Integer.parseInt(port);
+    			httpsPort = newPort;
+    		}
+    		catch (NumberFormatException ex) {
+    			ex.printStackTrace(System.err);
+    		}
+    	}
         return httpsPort;
     }
 
