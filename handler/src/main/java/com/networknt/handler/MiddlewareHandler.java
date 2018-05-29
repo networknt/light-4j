@@ -34,6 +34,8 @@ import org.slf4j.LoggerFactory;
  */
 public interface MiddlewareHandler extends HttpHandler {
     Logger logger = LoggerFactory.getLogger(MiddlewareHandler.class);
+    String ERROR_NOT_DEFINED = "ERR10042";
+
     /**
      * Get the next handler in the chain
      *
@@ -63,6 +65,10 @@ public interface MiddlewareHandler extends HttpHandler {
 
     default void setExchangeStatus(HttpServerExchange exchange, String code, final Object... args) {
         Status status = new Status(code, args);
+        if(status.getStatusCode() == 0) {
+            // There is no entry in status.yml for this particular error code.
+            status = new Status(ERROR_NOT_DEFINED, code);
+        }
         exchange.setStatusCode(status.getStatusCode());
         exchange.getResponseSender().send(status.toString());
         logger.error(status.toString());

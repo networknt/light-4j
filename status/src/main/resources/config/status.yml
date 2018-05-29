@@ -194,7 +194,7 @@ ERR10038:
   statusCode: 400
   code: ERR10038
   message: CSRF_TOKEN_MISSING_IN_JWT
-  description: CSRF token is missing in JWT token while StatelessAuthHandler is enabled.
+  description: CSRF token is missing in JWT token while StatelessAuthHandler is enabled
 ERR10039:
   statusCode: 400
   code: ERR10039
@@ -205,6 +205,16 @@ ERR10040:
   code: ERR10040
   message: JWT_NOT_FOUND_IN_COOKIES
   description: JWT token cannot be found in cookies set by StatelessAuthHandler
+ERR10041:
+  statusCode: 400
+  code: ERR10041
+  message: AUDIT_INFO_NOT_FOUND
+  description: AuditInfo could not be found in exchange attachment. Ensure that OpenApiHandler or SwaggerHandler is used
+ERR10042:
+  statusCode: 400
+  code: ERR10042
+  message: ERROR_NOT_DEFINED
+  description: Error code %s is not defined in status.yml file
 
 
 # 11000-11500 swagger-validator errors
