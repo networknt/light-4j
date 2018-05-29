@@ -99,4 +99,13 @@ public class Constants {
 
     public static final String ZOOKEEPER_REGISTRY_NAMESPACE = "/light";
     public static final String ZOOKEEPER_REGISTRY_COMMAND = "/command";
+
+    // Headers for light-router
+    public static final String SERVICE_ID_STRING = "service_id";
+    public static final String ENV_TAG_STRING = "env_tag";
+    public static final String HASH_KEY_STRING = "hash_key";
+    public static final HttpString SERVICE_ID = new HttpString(SERVICE_ID_STRING);
+    public static final HttpString ENV_TAG = new HttpString(ENV_TAG_STRING);
+    public static final HttpString HASH_KEY = new HttpString(HASH_KEY_STRING);
+    public static final String HTTPS = "https";
 }
