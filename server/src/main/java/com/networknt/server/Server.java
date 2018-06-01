@@ -35,6 +35,7 @@ import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
 import io.undertow.server.HttpHandler;
+import io.undertow.server.handlers.GracefulShutdownHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
 import org.slf4j.Logger;
@@ -95,6 +96,8 @@ public class Server {
 
     static SSLContext sslContext;
 
+    static GracefulShutdownHandler gracefulShutdownHandler;
+
     public static void main(final String[] args) {
         logger.info("server starts");
         // setup system property to redirect undertow logs to slf4j/logback.
@@ -139,15 +142,17 @@ public class Server {
             }
         }
 
+        gracefulShutdownHandler = new GracefulShutdownHandler(handler);
+
         if(config.dynamicPort) {
             for(int i = config.minPort; i < config.maxPort; i++) {
-                boolean b = bind(handler, i);
+                boolean b = bind(gracefulShutdownHandler, i);
                 if(b) {
                     break;
                 }
             }
         } else {
-            bind(handler, -1);
+            bind(gracefulShutdownHandler, -1);
         }
     }
 
@@ -242,6 +247,15 @@ public class Server {
             System.out.println("unregister serviceUrl " + serviceUrl);
             if(logger.isInfoEnabled()) logger.info("unregister serviceUrl " + serviceUrl);
         }
+
+        logger.info("Starting graceful shutdown.");
+        gracefulShutdownHandler.shutdown();
+        try {
+            gracefulShutdownHandler.awaitShutdown(60 * 1000);
+        } catch (InterruptedException e) {
+            logger.error("Error occurred while waiting for pending requests to complete.", e);
+        }
+        logger.info("Graceful shutdown complete.");
 
         ShutdownHookProvider[] shutdownHookProviders = SingletonServiceFactory.getBeans(ShutdownHookProvider.class);
         if(shutdownHookProviders != null) Arrays.stream(shutdownHookProviders).forEach(s -> s.onShutdown());
