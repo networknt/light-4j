@@ -37,3 +37,7 @@ enableRegistry: false
 # https://github.com/networknt/light-doc/blob/master/docs/content/design/env-segregation.md
 # This tag should only be set for testing env, not production. The production certification process will enforce it.
 # environment: test1
+
+# Build number, to be set by teams for auditing purposes. 
+# This build number is independent of the API version, and it set by teams according to their release management process
+buildNumber: latest

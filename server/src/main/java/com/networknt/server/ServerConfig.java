@@ -34,6 +34,7 @@ public class ServerConfig {
     boolean enableRegistry;
     String serviceId;
     String environment;
+    String buildNumber;
     boolean dynamicPort;
     int minPort;
     int maxPort;
@@ -155,6 +156,14 @@ public class ServerConfig {
 
     public void setEnvironment(String environment) {
         this.environment = environment;
+    }
+
+    public String getBuildNumber() {
+        return buildNumber;
+    }
+
+    public void setBuildNumber(String buildNumber) {
+        this.buildNumber = buildNumber;
     }
 
     public boolean isDynamicPort() {
