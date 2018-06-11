@@ -215,6 +215,11 @@ ERR10042:
   code: ERR10042
   message: ERROR_NOT_DEFINED
   description: Error code %s is not defined in status.yml file
+ERR10043:
+  statusCode: 400
+  code: ERR10043
+  message: CLIENT_AUTHENTICATE_CLASS_NOT_FOUND
+  description: Authenticate class %s defined for the client could not be found
 
 
 # 11000-11500 swagger-validator errors
