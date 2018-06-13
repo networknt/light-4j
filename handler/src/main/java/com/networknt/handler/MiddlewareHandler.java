@@ -18,6 +18,7 @@ package com.networknt.handler;
 import com.networknt.status.Status;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,6 +71,7 @@ public interface MiddlewareHandler extends HttpHandler {
             status = new Status(ERROR_NOT_DEFINED, code);
         }
         exchange.setStatusCode(status.getStatusCode());
+        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
         exchange.getResponseSender().send(status.toString());
         logger.error(status.toString());
     }
