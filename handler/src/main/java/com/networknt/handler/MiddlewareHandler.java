@@ -15,12 +15,8 @@
  */
 
 package com.networknt.handler;
-import com.networknt.status.Status;
+
 import io.undertow.server.HttpHandler;
-import io.undertow.server.HttpServerExchange;
-import io.undertow.util.Headers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A interface for middleware handlers. All middleware handlers must implement this interface
@@ -31,12 +27,12 @@ import org.slf4j.LoggerFactory;
  *
  * The middleware handlers are designed based on chain of responsibility pattern.
  *
+ * This handler extends LightHttpHandler which has a default method to handle the error status
+ * response.
+ *
  * @author Steve Hu
  */
-public interface MiddlewareHandler extends HttpHandler {
-    Logger logger = LoggerFactory.getLogger(MiddlewareHandler.class);
-    String ERROR_NOT_DEFINED = "ERR10042";
-
+public interface MiddlewareHandler extends LightHttpHandler {
     /**
      * Get the next handler in the chain
      *
@@ -63,16 +59,4 @@ public interface MiddlewareHandler extends HttpHandler {
      * Register this handler to the handler registration.
      */
     void register();
-
-    default void setExchangeStatus(HttpServerExchange exchange, String code, final Object... args) {
-        Status status = new Status(code, args);
-        if(status.getStatusCode() == 0) {
-            // There is no entry in status.yml for this particular error code.
-            status = new Status(ERROR_NOT_DEFINED, code);
-        }
-        exchange.setStatusCode(status.getStatusCode());
-        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-        exchange.getResponseSender().send(status.toString());
-        logger.error(status.toString());
-    }
 }
