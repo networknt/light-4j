@@ -17,6 +17,7 @@
 package com.networknt.info;
 
 import com.networknt.config.Config;
+import com.networknt.handler.LightHttpHandler;
 import com.networknt.security.JwtHelper;
 import com.networknt.status.Status;
 import com.networknt.utility.FingerPrintUtil;
@@ -45,7 +46,7 @@ import java.util.Properties;
  *
  * @author Steve Hu
  */
-public class ServerInfoGetHandler implements HttpHandler {
+public class ServerInfoGetHandler implements LightHttpHandler {
     public static final String CONFIG_NAME = "info";
 
     static final String STATUS_SERVER_INFO_DISABLED = "ERR10013";
@@ -67,11 +68,7 @@ public class ServerInfoGetHandler implements HttpHandler {
             exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
             exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(infoMap));
         } else {
-            Status status = new Status(STATUS_SERVER_INFO_DISABLED);
-            exchange.setStatusCode(status.getStatusCode());
-            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-            exchange.getResponseSender().send(status.toString());
-            logger.error(status.toString());
+            setExchangeStatus(exchange, STATUS_SERVER_INFO_DISABLED);
         }
     }
 

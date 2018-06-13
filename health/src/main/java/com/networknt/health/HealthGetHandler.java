@@ -16,6 +16,7 @@
 
 package com.networknt.health;
 
+import com.networknt.handler.LightHttpHandler;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
@@ -38,7 +39,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Steve Hu
  */
-public class HealthGetHandler implements HttpHandler {
+public class HealthGetHandler implements LightHttpHandler {
     public static final String CONFIG_NAME = "health";
 
     static final Logger logger = LoggerFactory.getLogger(HealthGetHandler.class);

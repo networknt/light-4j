@@ -17,6 +17,7 @@
 package com.networknt.security;
 
 import com.networknt.config.Config;
+import com.networknt.handler.LightHttpHandler;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
@@ -35,7 +36,7 @@ import java.util.Map;
  *
  * @author Steve Hu
  */
-public class JwtMockHandler implements HttpHandler {
+public class JwtMockHandler implements LightHttpHandler {
 
     public static final String ENABLE_MOCK_JWT = "enableMockJwt";
 
