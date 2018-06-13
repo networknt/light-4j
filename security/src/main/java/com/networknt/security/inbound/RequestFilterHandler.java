@@ -1,5 +1,6 @@
 package com.networknt.security.inbound;
 
+import com.networknt.handler.LightHttpHandler;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 
@@ -11,7 +12,7 @@ import io.undertow.server.HttpServerExchange;
  * @author Steve Hu
  *
  */
-public class RequestFilterHandler implements HttpHandler {
+public class RequestFilterHandler implements LightHttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {

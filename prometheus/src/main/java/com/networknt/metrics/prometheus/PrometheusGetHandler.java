@@ -16,6 +16,7 @@
 
 package com.networknt.metrics.prometheus;
 
+import com.networknt.handler.LightHttpHandler;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.common.TextFormat;
 import io.undertow.server.HttpHandler;
@@ -32,7 +33,7 @@ import java.io.Writer;
  * The default path for the handler should be /v1/prometheus
  * @author Gavin Chen
  */
-public class PrometheusGetHandler implements HttpHandler {
+public class PrometheusGetHandler implements LightHttpHandler {
 
 
     static final Logger logger = LoggerFactory.getLogger(PrometheusGetHandler.class);
