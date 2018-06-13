@@ -69,7 +69,9 @@ public class ServerInfoGetHandler implements HttpHandler {
         } else {
             Status status = new Status(STATUS_SERVER_INFO_DISABLED);
             exchange.setStatusCode(status.getStatusCode());
+            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
             exchange.getResponseSender().send(status.toString());
+            logger.error(status.toString());
         }
     }
 
