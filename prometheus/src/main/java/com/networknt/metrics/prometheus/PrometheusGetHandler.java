@@ -47,7 +47,7 @@ public class PrometheusGetHandler implements HttpHandler {
         try {
             TextFormat.write004(writer, registry.metricFamilySamples());
         } catch (IOException e) {
-            logger.error("error on put result:" + e);
+            logger.error("error on put result:", e);
         }
         exchange.getResponseSender().send(writer.toString());
 

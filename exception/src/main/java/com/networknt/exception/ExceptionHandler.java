@@ -23,6 +23,7 @@ import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -79,21 +80,21 @@ public class ExceptionHandler implements MiddlewareHandler {
                     if(e instanceof FrameworkException) {
                         FrameworkException fe = (FrameworkException)e;
                         exchange.setStatusCode(fe.getStatus().getStatusCode());
+                        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
                         exchange.getResponseSender().send(fe.getStatus().toString());
+                        logger.error(fe.getStatus().toString(), e);
                     } else {
-                        Status status = new Status(STATUS_RUNTIME_EXCEPTION);
-                        exchange.setStatusCode(status.getStatusCode());
-                        exchange.getResponseSender().send(status.toString());
+                        setExchangeStatus(exchange, STATUS_RUNTIME_EXCEPTION);
                     }
                 } else {
                     if(e instanceof ApiException) {
                         ApiException ae = (ApiException)e;
                         exchange.setStatusCode(ae.getStatus().getStatusCode());
+                        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
                         exchange.getResponseSender().send(ae.getStatus().toString());
+                        logger.error(ae.getStatus().toString(), e);
                     } else {
-                        Status status = new Status(STATUS_UNCAUGHT_EXCEPTION);
-                        exchange.setStatusCode(status.getStatusCode());
-                        exchange.getResponseSender().send(status.toString());
+                        setExchangeStatus(exchange, STATUS_UNCAUGHT_EXCEPTION);
                     }
                 }
             }

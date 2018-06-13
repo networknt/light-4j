@@ -96,18 +96,14 @@ public class BodyHandler implements MiddlewareHandler {
                             });
                         } else {
                             // error here. The content type in head doesn't match the body.
-                            Status status = new Status(CONTENT_TYPE_MISMATCH, contentType);
-                            exchange.setStatusCode(status.getStatusCode());
-                            exchange.getResponseSender().send(status.toString());
+                            setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, contentType);
                             return;
                         }
                         exchange.putAttachment(REQUEST_BODY, body);
                     }
                 } catch (IOException e) {
                     logger.error("IOException: ", e);
-                    Status status = new Status(CONTENT_TYPE_MISMATCH, contentType);
-                    exchange.setStatusCode(status.getStatusCode());
-                    exchange.getResponseSender().send(status.toString());
+                    setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, contentType);
                     return;
                 }
             }
