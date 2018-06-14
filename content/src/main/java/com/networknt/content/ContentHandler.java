@@ -9,6 +9,13 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 
 /**
+ * This is a middleware handler that is responsible for setting the default content-type header
+ * if it is empty. This can be enabled with content.yml config file and the default type in the
+ * config file is application/json.
+ *
+ * The other way to do that is to extend your handler from LightHttpHandler use the setExchangeStatus
+ * default method for all error status. 
+ *
  * Created by Ricardo Pina Arellano on 13/06/18.
  */
 public class ContentHandler implements MiddlewareHandler {
