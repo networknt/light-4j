@@ -21,6 +21,7 @@ import com.networknt.config.Config;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
+import com.networknt.utility.StringUtil;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -31,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
@@ -82,30 +84,28 @@ public class BodyHandler implements MiddlewareHandler {
             }
             exchange.startBlocking();
             InputStream is = exchange.getInputStream();
-            if (is != null) {
-                try {
-                    if (is.available() != -1) {
-                        Object body;
-                        String s = new Scanner(is, "UTF-8").useDelimiter("\\A").next();
-                        s = s.trim();
-                        if (s.startsWith("{")) {
-                            body = Config.getInstance().getMapper().readValue(s, new TypeReference<HashMap<String, Object>>() {
-                            });
-                        } else if (s.startsWith("[")) {
-                            body = Config.getInstance().getMapper().readValue(s, new TypeReference<List<Object>>() {
-                            });
-                        } else {
-                            // error here. The content type in head doesn't match the body.
-                            setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, contentType);
-                            return;
-                        }
-                        exchange.putAttachment(REQUEST_BODY, body);
+            try {
+                Object body;
+                String s = StringUtil.inputStreamToString(is, StandardCharsets.UTF_8);
+                if (s != null) {
+                    s = s.trim();
+                    if (s.startsWith("{")) {
+                        body = Config.getInstance().getMapper().readValue(s, new TypeReference<HashMap<String, Object>>() {
+                        });
+                    } else if (s.startsWith("[")) {
+                        body = Config.getInstance().getMapper().readValue(s, new TypeReference<List<Object>>() {
+                        });
+                    } else {
+                        // error here. The content type in head doesn't match the body.
+                        setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, contentType);
+                        return;
                     }
-                } catch (IOException e) {
-                    logger.error("IOException: ", e);
-                    setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, contentType);
-                    return;
+                    exchange.putAttachment(REQUEST_BODY, body);
                 }
+            } catch (IOException e) {
+                logger.error("IOException: ", e);
+                setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, contentType);
+                return;
             }
         }
         next.handleRequest(exchange);
