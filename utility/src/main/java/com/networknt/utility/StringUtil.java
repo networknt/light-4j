@@ -16,6 +16,11 @@
  */
 package com.networknt.utility;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -350,5 +355,31 @@ public class StringUtil {
             }
         }
         return true;
+    }
+
+    /**
+     * Convert an InputStream into a String.
+     *
+     * Highest performing conversion per: https://stackoverflow.com/a/35446009
+     *
+     * @param inputStream The input stream to be converted.
+     * @param charset The decoding charset to use.
+     * @return The string value of the input stream, null otherwise.
+     * @throws IOException If there are any issues in reading from the stream.
+     */
+    public static String inputStreamToString(InputStream inputStream, Charset charset) throws IOException {
+        if (inputStream != null && inputStream.available() != -1) {
+            ByteArrayOutputStream result = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = inputStream.read(buffer)) != -1) {
+                result.write(buffer, 0, length);
+            }
+            if (charset != null) {
+                return result.toString(charset.name());
+            }
+            return result.toString(StandardCharsets.UTF_8.name());
+        }
+        return null;
     }
 }
