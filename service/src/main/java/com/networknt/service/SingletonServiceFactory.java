@@ -63,48 +63,57 @@ public class SingletonServiceFactory {
             Map<String, Map<String, Object>> map = (Map<String, Map<String, Object>>)object;
             //logger.debug("map = " + map);
             // construct it using default construct and call all set methods with values defined in the properties
-            Iterator it = map.entrySet().iterator();
-            if (it.hasNext()) {
-                Map.Entry<String, Map<String, Object>> pair = (Map.Entry) it.next();
-                String key = pair.getKey();
-                Class implClass = Class.forName(key);
-                Object mapOrList = pair.getValue();
-                // at this moment, pair.getValue() has two scenarios,
-                // 1. map that can be used to set properties after construct the object with reflection.
-                // 2. list that can be used by matched constructor to create the instance.
-                Object obj;
-                if(mapOrList instanceof Map) {
-                    obj = construct(implClass);
+            constructAndAddToServiceMap(interfaceClasses, map);
+        }
+    }
 
-                    Method[] allMethods = implClass.getMethods();
-                    for(Method method : allMethods) {
+    private static List<Object> constructAndAddToServiceMap(List<String> interfaceClasses, Map map) throws Exception {
+        Iterator it = map.entrySet().iterator();
+        List<Object> items = new ArrayList<>();
+        if (it.hasNext()) {
+            Map.Entry<String, Map<String, Object>> pair = (Map.Entry) it.next();
+            String key = pair.getKey();
+            Class implClass = Class.forName(key);
+            Object mapOrList = pair.getValue();
+            // at this moment, pair.getValue() has two scenarios,
+            // 1. map that can be used to set properties after construct the object with reflection.
+            // 2. list that can be used by matched constructor to create the instance.
+            Object obj;
+            if(mapOrList instanceof Map) {
+                obj = construct(implClass);
 
-                        if(method.getName().startsWith("set")) {
-                            //logger.debug("method name " + method.getName());
-                            Object [] o = new Object [1];
-                            String propertyName = Introspector.decapitalize(method.getName().substring(3));
-                            Object v = ((Map)mapOrList).get(propertyName);
-                            if(v == null) {
-                                // it is not primitive type, so find the object in service map.
-                                Class<?>[] pType  = method.getParameterTypes();
-                                v = serviceMap.get(pType[0].getName());
-                            }
-                            if(v != null) {
-                                o[0] = v;
-                                method.invoke(obj, o);
-                            }
+                Method[] allMethods = implClass.getMethods();
+                for(Method method : allMethods) {
+
+                    if(method.getName().startsWith("set")) {
+                        //logger.debug("method name " + method.getName());
+                        Object [] o = new Object [1];
+                        String propertyName = Introspector.decapitalize(method.getName().substring(3));
+                        Object v = ((Map)mapOrList).get(propertyName);
+                        if(v == null) {
+                            // it is not primitive type, so find the object in service map.
+                            Class<?>[] pType  = method.getParameterTypes();
+                            v = serviceMap.get(pType[0].getName());
+                        }
+                        if(v != null) {
+
+                            o[0] = v;
+                            method.invoke(obj, o);
                         }
                     }
-                } else if(mapOrList instanceof List){
-                    obj = constructWithParameters(implClass, (List)mapOrList);
-                } else {
-                    throw new RuntimeException("Only Map or List is allowed for implementation parameters " + mapOrList);
                 }
-                for(String c: interfaceClasses) {
-                    serviceMap.put(c, obj);  // all interfaces share the same impl
-                }
+            } else if(mapOrList instanceof List){
+                obj = constructWithParameters(implClass, (List)mapOrList);
+            } else {
+                throw new RuntimeException("Only Map or List is allowed for implementation parameters, null provided.");
+            }
+            items.add(obj);
+
+            for(String c: interfaceClasses) {
+                serviceMap.put(c, obj);  // all interfaces share the same impl
             }
         }
+        return items;
     }
 
     private static void handleMultipleImpl(List<String> interfaceClasses, List<Object> value) throws Exception {
@@ -124,46 +133,17 @@ public class SingletonServiceFactory {
                 for (Object array : arrays) {
                     Array.set(array, i, construct(implClass));
                 }
-            } else {
-                // TODO map of impl class and properties.
-                /*
+            } else if (object instanceof Map) {
                 Map<String, Map<String, Object>> map = (Map<String, Map<String, Object>>)object;
-                // construct it using default construct and call all set methods with values defined in the properties
-                Iterator it = map.entrySet().iterator();
-                while(it.hasNext()) {
-                    Map.Entry<String, Map<String, Object>> pair = (Map.Entry) it.next();
-                    String key = pair.getKey();
-                    Map<String, Object> properties = pair.getValue();
-                    Class implClass = Class.forName(key);
-                    Object obj = construct(implClass);
-
-                    Method[] allMethods = implClass.getMethods();
-                    for(Method method : allMethods) {
-
-                        if(method.getName().startsWith("set")) {
-                            Object [] o = new Object [1];
-                            String propertyName = Introspector.decapitalize(method.getName().substring(3));
-                            Object v = properties.get(propertyName);
-                            if(v == null) {
-                                // it is not primitive type, so find the object in service map.
-                                Class<?>[] pType  = method.getParameterTypes();
-                                v = serviceMap.get(pType[0]);
-                            }
-                            o[0] = v;
-                            method.invoke(obj, o);
-                        }
-                    }
-                    for(Class c: interfaceClasses) {
-                        serviceMap.put(c, obj);  // all interfaces share the same impl
-                    }
+                List<Object> constructedClasses = constructAndAddToServiceMap(interfaceClasses, map);
+                for (Object array : arrays) {
+                    Array.set(array, i, constructedClasses.get(0));
                 }
-                */
             }
         }
         for(int i = 0; i < interfaceClasses.size(); i++) {
             serviceMap.put(interfaceClasses.get(i), arrays.get(i));
         }
-
     }
 
     /**
