@@ -3,6 +3,7 @@ package com.networknt.handler;
 import com.networknt.config.Config;
 import com.networknt.handler.config.HandlerConfig;
 import com.networknt.handler.config.HandlerPath;
+import com.networknt.handler.config.NamedRequestChain;
 import com.networknt.service.ServiceUtil;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
@@ -35,13 +36,13 @@ public class PathMiddlewareHandler implements NonFunctionalMiddlewareHandler {
                 .collect(Collectors.toList());
     }
 
-    private HttpHandler getHandler(HandlerPath handlerPath) {
+    private HttpHandler getHandler(Object endPoint, List<Object> middlewareList) {
         HttpHandler httpHandler = null;
         try {
-            Object object = ServiceUtil.construct(handlerPath.getEndPoint());
+            Object object = ServiceUtil.construct(endPoint);
             if (object instanceof HttpHandler) {
                 httpHandler = (HttpHandler) object;
-                List<Object> updatedList = new ArrayList<>(handlerPath.getMiddleware());
+                List<Object> updatedList = new ArrayList<>(middlewareList);
                 Collections.reverse(updatedList);
                 for (Object middleware : updatedList) {
                     Object constructedMiddleware = ServiceUtil.construct(middleware);
@@ -72,9 +73,21 @@ public class PathMiddlewareHandler implements NonFunctionalMiddlewareHandler {
         RoutingHandler routingHandler = Handlers.routing().setFallbackHandler(next);
         for (HandlerPath handlerPath : getHandlerPaths()) {
             try {
-                HttpHandler httpHandler = getHandler(handlerPath);
-                if (httpHandler != null) {
-                    routingHandler.add(handlerPath.getHttpVerb(), handlerPath.getPath(), httpHandler);
+                if (handlerPath.getNamedRequestChain() == null || handlerPath.getNamedRequestChain().length() == 0) {
+                    HttpHandler httpHandler = getHandler(handlerPath.getEndPoint(), handlerPath.getMiddleware());
+                    if (httpHandler != null) {
+                        routingHandler.add(handlerPath.getHttpVerb(), handlerPath.getPath(), httpHandler);
+                    }
+                } else {
+                    // Handle named request chains.
+                    List<NamedRequestChain> requestChains = config.getNamedRequestChain().stream()
+                            .filter(namedRequestChain -> namedRequestChain.getName().equals(handlerPath.getNamedRequestChain())).collect(Collectors.toList());
+                    if (requestChains != null && requestChains.size() > 0) {
+                        HttpHandler httpHandler = getHandler(requestChains.get(0).getEndPoint(), requestChains.get(0).getMiddleware());
+                        if (httpHandler != null) {
+                            routingHandler.add(handlerPath.getHttpVerb(), handlerPath.getPath(), httpHandler);
+                        }
+                    }
                 }
             } catch (Exception e) {
                 logger.error("Failed to add PathMiddlewareHandler.", e);
