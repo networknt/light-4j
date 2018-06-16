@@ -108,7 +108,7 @@ public class SingletonServiceFactory {
                     }
                 }
             } else if(mapOrList instanceof List){
-                obj = constructWithParameters(implClass, (List)mapOrList);
+                obj = ServiceUtil.constructByParameterizedConstructor(implClass, (List)mapOrList);
             } else {
                 throw new RuntimeException("Only Map or List is allowed for implementation parameters, null provided.");
             }
@@ -252,58 +252,6 @@ public class SingletonServiceFactory {
         }
     }
 
-    private static Object constructWithParameters(Class clazz, List parameters) throws Exception {
-        // find out how many constructors this class has and match the one with the same sequence of
-        // parameters.
-        Object instance  = null;
-        Constructor[] allConstructors = clazz.getDeclaredConstructors();
-        // iterate all constructors of this class and try each non-default one with parameters
-        // from parameter list also flag if there is default constructor without argument.
-        boolean hasDefaultConstructor = false;
-        for (Constructor ctor : allConstructors) {
-            Class<?>[] pType  = ctor.getParameterTypes();
-            if(pType.length > 0) {
-                if(pType.length == parameters.size()) {
-                    // number of parameters is matched. Make sure that each parameter type is matched.
-                    boolean matched = true;
-                    Object[] params = new Object[pType.length];
-                    for (int j = 0; j < pType.length; j++) {
-                        //System.out.println("pType = " + pType[j]);
-                        Map<String, Object> parameter = (Map)parameters.get(j);
-                        Iterator it = parameter.entrySet().iterator();
-                        if (it.hasNext()) {  // there is only one object in each item.
-                            Map.Entry<String, Object> pair = (Map.Entry) it.next();
-                            String key = pair.getKey();
-                            Object value = pair.getValue();
-                            if(pType[j].getName().equals(key)) {
-                                params[j] = value;
-                            } else {
-                                matched = false;
-                                break;
-                            }
-                        }
-                    }
-                    if(matched) {
-                        // this constructor parameters are found.
-                        instance = ctor.newInstance(params);
-                        break;
-                    }
-                }
-            } else {
-                hasDefaultConstructor = true;
-            }
-        }
-        if(instance != null) {
-            return instance;
-        } else {
-            if(hasDefaultConstructor) {
-                return clazz.getConstructor().newInstance();
-            } else {
-                // error that no instance can be created.
-                throw new Exception("No instance can be created for class " + clazz);
-            }
-        }
-    }
 
     /**
      * Get a cached singleton object from service map by interface class and generic type class.

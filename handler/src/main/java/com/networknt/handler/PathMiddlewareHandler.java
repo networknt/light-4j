@@ -3,7 +3,7 @@ package com.networknt.handler;
 import com.networknt.config.Config;
 import com.networknt.handler.config.HandlerConfig;
 import com.networknt.handler.config.HandlerPath;
-import com.networknt.service.SingletonServiceFactory;
+import com.networknt.service.ServiceUtil;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -38,25 +38,23 @@ public class PathMiddlewareHandler implements NonFunctionalMiddlewareHandler {
     private HttpHandler getHandler(HandlerPath handlerPath) {
         HttpHandler httpHandler = null;
         try {
-            Object object = Class.forName(handlerPath.getEndPoint()).newInstance();
+            Object object = ServiceUtil.construct(handlerPath.getEndPoint());
             if (object instanceof HttpHandler) {
                 httpHandler = (HttpHandler) object;
+                List<Object> updatedList = new ArrayList<>(handlerPath.getMiddleware());
+                Collections.reverse(updatedList);
+                for (Object middleware : updatedList) {
+                    Object constructedMiddleware = ServiceUtil.construct(middleware);
+                    if (constructedMiddleware instanceof MiddlewareHandler) {
+                        MiddlewareHandler middlewareHandler = (MiddlewareHandler) constructedMiddleware;
+                        if (middlewareHandler.isEnabled()) {
+                            httpHandler = middlewareHandler.setNext(httpHandler);
+                        }
+                    }
+                }
             }
-//            List<Object> constructedMiddleware = SingletonServiceFactory.constructAndAddToServiceMap(Collections.singletonList("com.networknt.handler.MiddlewareHandler"), null);
-//            List<Object> updatedList = new ArrayList<>(handlerPath.getMiddleware());
-//            Collections.reverse(updatedList);
-//            for (String middlewareClass : updatedList) {
-//                Object middlewareObject = Class.forName(middlewareClass).newInstance();
-//                if (middlewareObject instanceof MiddlewareHandler) {
-//                    MiddlewareHandler middlewareHandler = (MiddlewareHandler) middlewareObject;
-//                    if (middlewareHandler.isEnabled()) {
-//                        httpHandler = middlewareHandler.setNext(httpHandler);
-//                    }
-//                }
-//            }
-
         } catch (Exception e) {
-            System.out.println();
+            logger.error("Failed when retrieving Handler.", e);
         }
         return httpHandler;
     }
@@ -73,7 +71,14 @@ public class PathMiddlewareHandler implements NonFunctionalMiddlewareHandler {
         Handlers.handlerNotNull(next);
         RoutingHandler routingHandler = Handlers.routing().setFallbackHandler(next);
         for (HandlerPath handlerPath : getHandlerPaths()) {
-            routingHandler.add(handlerPath.getHttpVerb(), handlerPath.getPath(), getHandler(handlerPath));
+            try {
+                HttpHandler httpHandler = getHandler(handlerPath);
+                if (httpHandler != null) {
+                    routingHandler.add(handlerPath.getHttpVerb(), handlerPath.getPath(), httpHandler);
+                }
+            } catch (Exception e) {
+                logger.error("Failed to add PathMiddlewareHandler.", e);
+            }
         }
         this.next = routingHandler;
         return this;
