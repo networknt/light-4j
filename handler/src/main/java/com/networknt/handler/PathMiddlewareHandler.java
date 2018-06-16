@@ -3,6 +3,7 @@ package com.networknt.handler;
 import com.networknt.config.Config;
 import com.networknt.handler.config.HandlerConfig;
 import com.networknt.handler.config.HandlerPath;
+import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -41,17 +42,18 @@ public class PathMiddlewareHandler implements NonFunctionalMiddlewareHandler {
             if (object instanceof HttpHandler) {
                 httpHandler = (HttpHandler) object;
             }
-            List<String> updatedList = new ArrayList<>(handlerPath.getMiddleware());
-            Collections.reverse(updatedList);
-            for (String middlewareClass : updatedList) {
-                Object middlewareObject = Class.forName(middlewareClass).newInstance();
-                if (middlewareObject instanceof MiddlewareHandler) {
-                    MiddlewareHandler middlewareHandler = (MiddlewareHandler) middlewareObject;
-                    if (middlewareHandler.isEnabled()) {
-                        httpHandler = middlewareHandler.setNext(httpHandler);
-                    }
-                }
-            }
+//            List<Object> constructedMiddleware = SingletonServiceFactory.constructAndAddToServiceMap(Collections.singletonList("com.networknt.handler.MiddlewareHandler"), null);
+//            List<Object> updatedList = new ArrayList<>(handlerPath.getMiddleware());
+//            Collections.reverse(updatedList);
+//            for (String middlewareClass : updatedList) {
+//                Object middlewareObject = Class.forName(middlewareClass).newInstance();
+//                if (middlewareObject instanceof MiddlewareHandler) {
+//                    MiddlewareHandler middlewareHandler = (MiddlewareHandler) middlewareObject;
+//                    if (middlewareHandler.isEnabled()) {
+//                        httpHandler = middlewareHandler.setNext(httpHandler);
+//                    }
+//                }
+//            }
 
         } catch (Exception e) {
             System.out.println();

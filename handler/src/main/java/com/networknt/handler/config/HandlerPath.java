@@ -5,7 +5,7 @@ import java.util.List;
 public class HandlerPath {
     private String path;
     private String httpVerb;
-    private List<String> middleware;
+    private List<Object> middleware;
     private String endPoint;
     private String namedRequestChain;
 
@@ -25,13 +25,6 @@ public class HandlerPath {
         this.httpVerb = httpVerb;
     }
 
-    public List<String> getMiddleware() {
-        return middleware;
-    }
-
-    public void setMiddleware(List<String> middleware) {
-        this.middleware = middleware;
-    }
 
     public String getNamedRequestChain() {
         return namedRequestChain;
@@ -47,5 +40,13 @@ public class HandlerPath {
 
     public void setEndPoint(String endPoint) {
         this.endPoint = endPoint;
+    }
+
+    public List<Object> getMiddleware() {
+        return middleware;
+    }
+
+    public void setMiddleware(List<Object> middleware) {
+        this.middleware = middleware;
     }
 }

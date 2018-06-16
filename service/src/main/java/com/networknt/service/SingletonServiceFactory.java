@@ -49,7 +49,7 @@ public class SingletonServiceFactory {
         }
     }
 
-    private static void handleSingleImpl(List<String> interfaceClasses, List<Object> value) throws Exception {
+    public static Object handleSingleImpl(List<String> interfaceClasses, List<Object> value) throws Exception {
         // only one object should be defined in value. TODO throws exception if number of object is not correct.
         Object object = value.get(0);
         if(object instanceof String) {
@@ -58,16 +58,21 @@ public class SingletonServiceFactory {
             for(String c: interfaceClasses) {
                 serviceMap.put(c, obj);  // all interfaces share the same impl
             }
-        } else {
-            // map of impl class and properties.
-            Map<String, Map<String, Object>> map = (Map<String, Map<String, Object>>)object;
-            //logger.debug("map = " + map);
-            // construct it using default construct and call all set methods with values defined in the properties
-            constructAndAddToServiceMap(interfaceClasses, map);
+            return obj;
         }
+        // map of impl class and properties.
+        Map<String, Map<String, Object>> map = (Map<String, Map<String, Object>>)object;
+        //logger.debug("map = " + map);
+        // construct it using default construct and call all set methods with values defined in the properties
+        return constructAndAddToServiceMap(interfaceClasses, map);
     }
 
-    private static List<Object> constructAndAddToServiceMap(List<String> interfaceClasses, Map map) throws Exception {
+    /**
+     * @param interfaceClasses A list of the interfaces implemented by the map. (usually just one though)
+     * @param map Mapping of name of concrete class to its fields (could be field name : value, or list of types to value).
+     * @throws Exception
+     */
+    public static List<Object> constructAndAddToServiceMap(List<String> interfaceClasses, Map map) throws Exception {
         Iterator it = map.entrySet().iterator();
         List<Object> items = new ArrayList<>();
         if (it.hasNext()) {
@@ -186,7 +191,7 @@ public class SingletonServiceFactory {
      * @param value List of implementations of interface(s) defined in the key
      * @throws Exception exception thrown from the object creation
      */
-    private static void handleSingletonList(String key, List<Object> value) throws Exception {
+    public static void handleSingletonList(String key, List<Object> value) throws Exception {
 
         List<String> interfaceClasses = new ArrayList();
         if(key.contains(",")) {
