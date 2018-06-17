@@ -10,7 +10,7 @@ public class HandlerPath {
     private String httpVerb;
     private List<Object> middleware;
     private Object endPoint;
-    private String namedRequestChain;
+    private String namedMiddlewareChain;
 
     public String getPath() {
         return path;
@@ -28,16 +28,6 @@ public class HandlerPath {
         this.httpVerb = httpVerb;
     }
 
-
-    public String getNamedRequestChain() {
-        return namedRequestChain;
-    }
-
-    public void setNamedRequestChain(String namedRequestChain) {
-        this.namedRequestChain = namedRequestChain;
-    }
-
-
     public List<Object> getMiddleware() {
         return middleware;
     }
@@ -52,5 +42,13 @@ public class HandlerPath {
 
     public void setEndPoint(Object endPoint) {
         this.endPoint = endPoint;
+    }
+
+    public String getNamedMiddlewareChain() {
+        return namedMiddlewareChain;
+    }
+
+    public void setNamedMiddlewareChain(String namedMiddlewareChain) {
+        this.namedMiddlewareChain = namedMiddlewareChain;
     }
 }

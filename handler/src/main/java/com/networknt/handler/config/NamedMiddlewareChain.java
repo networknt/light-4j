@@ -5,10 +5,9 @@ import java.util.List;
 /**
  * @author Nicholas Azar
  */
-public class NamedRequestChain {
+public class NamedMiddlewareChain {
     private String name;
     private List<Object> middleware;
-    private String endPoint;
 
     public String getName() {
         return name;
@@ -16,14 +15,6 @@ public class NamedRequestChain {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getEndPoint() {
-        return endPoint;
-    }
-
-    public void setEndPoint(String endPoint) {
-        this.endPoint = endPoint;
     }
 
     public List<Object> getMiddleware() {

@@ -2,8 +2,9 @@ package com.networknt.handler;
 
 import com.networknt.config.Config;
 import com.networknt.handler.config.HandlerConfig;
+import com.networknt.handler.config.HandlerConfigValidator;
 import com.networknt.handler.config.HandlerPath;
-import com.networknt.handler.config.NamedRequestChain;
+import com.networknt.handler.config.NamedMiddlewareChain;
 import com.networknt.service.ServiceUtil;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
@@ -27,9 +28,7 @@ public class PathMiddlewareHandler implements NonFunctionalMiddlewareHandler {
     private String handlerName;
 
     @Override
-    public void handleRequest(HttpServerExchange exchange) throws Exception {
-        // Doesn't get called.
-    }
+    public void handleRequest(HttpServerExchange exchange) throws Exception {} // Doesn't get called.
 
     List<HandlerPath> getHandlerPaths() {
         return config.getPathHandlers().stream()
@@ -39,15 +38,15 @@ public class PathMiddlewareHandler implements NonFunctionalMiddlewareHandler {
                 .collect(Collectors.toList());
     }
 
-    private HttpHandler getHandler(Object endPoint, List<Object> middlewareList) {
+    private HttpHandler getHandler(Object endPointConfig, List<Object> middlewareConfigList) {
         HttpHandler httpHandler = null;
         try {
-            Object object = ServiceUtil.construct(endPoint);
+            Object object = ServiceUtil.construct(endPointConfig);
             if (object instanceof HttpHandler) {
                 httpHandler = (HttpHandler) object;
-                List<Object> updatedList = new ArrayList<>(middlewareList);
-                Collections.reverse(updatedList);
-                for (Object middleware : updatedList) {
+                List<Object> reverseOrderedMiddlewareConfigList = new ArrayList<>(middlewareConfigList);
+                Collections.reverse(reverseOrderedMiddlewareConfigList);
+                for (Object middleware : reverseOrderedMiddlewareConfigList) {
                     Object constructedMiddleware = ServiceUtil.construct(middleware);
                     if (constructedMiddleware instanceof MiddlewareHandler) {
                         MiddlewareHandler middlewareHandler = (MiddlewareHandler) constructedMiddleware;
@@ -63,7 +62,13 @@ public class PathMiddlewareHandler implements NonFunctionalMiddlewareHandler {
         return httpHandler;
     }
 
-    public PathMiddlewareHandler() {}
+    public PathMiddlewareHandler() {
+        try {
+            HandlerConfigValidator.validate(config);
+        } catch (Exception e) {
+            logger.error("Found validation errors in HandlerConfig", e);
+        }
+    }
 
     @Override
     public HttpHandler getNext() {
@@ -76,20 +81,22 @@ public class PathMiddlewareHandler implements NonFunctionalMiddlewareHandler {
         RoutingHandler routingHandler = Handlers.routing().setFallbackHandler(next);
         for (HandlerPath handlerPath : getHandlerPaths()) {
             try {
-                if (handlerPath.getNamedRequestChain() == null || handlerPath.getNamedRequestChain().length() == 0) {
+                if (handlerPath.getNamedMiddlewareChain() == null || handlerPath.getNamedMiddlewareChain().length() == 0) {
                     HttpHandler httpHandler = getHandler(handlerPath.getEndPoint(), handlerPath.getMiddleware());
                     if (httpHandler != null) {
                         routingHandler.add(handlerPath.getHttpVerb(), handlerPath.getPath(), httpHandler);
                     }
                 } else {
                     // Handle named request chains.
-                    List<NamedRequestChain> requestChains = config.getNamedRequestChain().stream()
-                            .filter(namedRequestChain -> namedRequestChain.getName().equals(handlerPath.getNamedRequestChain())).collect(Collectors.toList());
+                    List<NamedMiddlewareChain> requestChains = config.getNamedMiddlewareChain().stream()
+                            .filter(namedMiddlewareChain -> namedMiddlewareChain.getName().equals(handlerPath.getNamedMiddlewareChain())).collect(Collectors.toList());
                     if (requestChains != null && requestChains.size() > 0) {
-                        HttpHandler httpHandler = getHandler(requestChains.get(0).getEndPoint(), requestChains.get(0).getMiddleware());
+                        HttpHandler httpHandler = getHandler(handlerPath.getEndPoint(), requestChains.get(0).getMiddleware());
                         if (httpHandler != null) {
                             routingHandler.add(handlerPath.getHttpVerb(), handlerPath.getPath(), httpHandler);
                         }
+                    } else {
+                        throw new Exception("Named request chain \"" + handlerPath.getNamedMiddlewareChain() + "\" not found in config");
                     }
                 }
             } catch (Exception e) {
@@ -117,5 +124,10 @@ public class PathMiddlewareHandler implements NonFunctionalMiddlewareHandler {
     // Exposed for testing.
     protected void setConfig(String configName) {
         config = (HandlerConfig) Config.getInstance().getJsonObjectConfig(configName, HandlerConfig.class);
+        try {
+            HandlerConfigValidator.validate(config);
+        } catch (Exception e) {
+            logger.error("Found validation errors in HandlerConfig", e);
+        }
     }
 }

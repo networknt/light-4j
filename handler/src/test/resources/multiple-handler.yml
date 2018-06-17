@@ -11,7 +11,7 @@ pathHandlers:
         endPoint: com.networknt.handler.SampleHttpHandler
       - path: '/v1/something'
         httpVerb: 'post'
-        namedRequestChain: 'something'
+        namedMiddlewareChain: 'something'
   - handlerName: 'second'
     paths:
       - path: '/v1/health'

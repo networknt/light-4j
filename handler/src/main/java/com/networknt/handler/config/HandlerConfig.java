@@ -8,7 +8,9 @@ import java.util.List;
 public class HandlerConfig {
     private boolean enabled;
     private List<PathHandler> pathHandlers;
-    private List<NamedRequestChain> namedRequestChain;
+    private List<NamedMiddlewareChain> namedMiddlewareChain;
+
+
 
     public boolean isEnabled() {
         return enabled;
@@ -26,11 +28,12 @@ public class HandlerConfig {
         this.pathHandlers = pathHandlers;
     }
 
-    public List<NamedRequestChain> getNamedRequestChain() {
-        return namedRequestChain;
+    public List<NamedMiddlewareChain> getNamedMiddlewareChain() {
+        return namedMiddlewareChain;
     }
 
-    public void setNamedRequestChain(List<NamedRequestChain> namedRequestChain) {
-        this.namedRequestChain = namedRequestChain;
+    public void setNamedMiddlewareChain(List<NamedMiddlewareChain> namedMiddlewareChain) {
+        this.namedMiddlewareChain = namedMiddlewareChain;
     }
 }
+

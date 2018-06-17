@@ -9,7 +9,6 @@ public class PathHandler {
     private String handlerName;
     private List<HandlerPath> paths;
 
-
     public List<HandlerPath> getPaths() {
         return paths;
     }
