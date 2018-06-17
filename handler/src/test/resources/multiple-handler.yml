@@ -1,0 +1,21 @@
+---
+enabled: true
+
+pathHandlers:
+  - handlerName: 'first'
+    paths:
+      - path: '/v1/health'
+        httpVerb: 'get'
+        middleware:
+          - com.networknt.handler.SampleMiddlewareHandler
+        endPoint: com.networknt.handler.SampleHttpHandler
+      - path: '/v1/something'
+        httpVerb: 'post'
+        namedRequestChain: 'something'
+  - handlerName: 'second'
+    paths:
+      - path: '/v1/health'
+        httpVerb: 'get'
+        middleware:
+          - com.networknt.handler.SampleMiddlewareHandler
+        endPoint: com.networknt.handler.SampleHttpHandler

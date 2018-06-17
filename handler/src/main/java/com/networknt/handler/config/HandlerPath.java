@@ -2,6 +2,9 @@ package com.networknt.handler.config;
 
 import java.util.List;
 
+/**
+ * @author Nicholas Azar
+ */
 public class HandlerPath {
     private String path;
     private String httpVerb;

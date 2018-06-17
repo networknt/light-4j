@@ -54,7 +54,7 @@ public class ServiceUtil {
                 String propertyName = Introspector.decapitalize(method.getName().substring(3));
                 if (params.containsKey(propertyName)) {
                     o[0] = params.get(propertyName);
-                    method.invoke(o);
+                    method.invoke(obj, o);
                 }
             }
         }

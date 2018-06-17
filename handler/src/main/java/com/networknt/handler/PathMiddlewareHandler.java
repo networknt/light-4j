@@ -16,10 +16,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * @author Nicholas Azar
+ */
 public class PathMiddlewareHandler implements NonFunctionalMiddlewareHandler {
 
     private static final String CONFIG_NAME = "handler";
-    public static final HandlerConfig config = (HandlerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, HandlerConfig.class);
+    public static HandlerConfig config = (HandlerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, HandlerConfig.class);
     private volatile HttpHandler next;
     private String handlerName;
 
@@ -28,7 +31,7 @@ public class PathMiddlewareHandler implements NonFunctionalMiddlewareHandler {
         // Doesn't get called.
     }
 
-    private List<HandlerPath> getHandlerPaths() {
+    List<HandlerPath> getHandlerPaths() {
         return config.getPathHandlers().stream()
                 .filter(pathHandler -> pathHandler.getHandlerName().equals(handlerName))
                 .filter(pathHandler -> pathHandler.getPaths() != null && pathHandler.getPaths().size() > 0)
@@ -109,5 +112,10 @@ public class PathMiddlewareHandler implements NonFunctionalMiddlewareHandler {
 
     public void setHandlerName(String handlerName) {
         this.handlerName = handlerName;
+    }
+
+    // Exposed for testing.
+    protected void setConfig(String configName) {
+        config = (HandlerConfig) Config.getInstance().getJsonObjectConfig(configName, HandlerConfig.class);
     }
 }

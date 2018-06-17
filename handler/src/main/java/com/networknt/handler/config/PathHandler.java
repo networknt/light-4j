@@ -2,6 +2,9 @@ package com.networknt.handler.config;
 
 import java.util.List;
 
+/**
+ * @author Nicholas Azar
+ */
 public class PathHandler {
     private String handlerName;
     private List<HandlerPath> paths;
