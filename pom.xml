@@ -89,6 +89,12 @@
         <version.caffeine>2.6.2</version.caffeine>
         <version.prometheus>0.3.0</version.prometheus>
         <version.javamail>1.6.1</version.javamail>
+        <version.hikaricp>3.1.0</version.hikaricp>
+        <version.h2>1.4.196</version.h2>
+        <version.mysql>6.0.5</version.mysql>
+        <version.postgres>9.4.1211</version.postgres>
+        <version.oracle>11.2.0.3</version.oracle>
+        <version.sqlserver>6.5.1.jre8-preview</version.sqlserver>
         <versions.maven-version>2.4</versions.maven-version>
         <argLine>-Xmx512m -XX:MaxPermSize=256m</argLine>
     </properties>
@@ -128,6 +134,7 @@
         <module>server</module>
         <module>resource</module>
         <module>content</module>
+        <module>datasource</module>
     </modules>
 
     <dependencyManagement>
@@ -297,6 +304,11 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
+                <artifactId>datasource</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
                 <artifactId>server</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -432,6 +444,11 @@
                 <artifactId>javax.mail</artifactId>
                 <version>${version.javamail}</version>
             </dependency>
+            <dependency>
+                <groupId>com.zaxxer</groupId>
+                <artifactId>HikariCP</artifactId>
+                <version>${version.hikaricp}</version>
+            </dependency>
 
             <!-- Test dependencies -->
             <dependency>
@@ -468,6 +485,36 @@
                 <groupId>org.apache.curator</groupId>
                 <artifactId>curator-test</artifactId>
                 <version>${version.curator}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>mysql</groupId>
+                <artifactId>mysql-connector-java</artifactId>
+                <version>${version.mysql}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${version.postgres}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.microsoft.sqlserver</groupId>
+                <artifactId>mssql-jdbc</artifactId>
+                <version>${version.sqlserver}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.oracle</groupId>
+                <artifactId>ojdbc6</artifactId>
+                <version>${version.oracle}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.h2database</groupId>
+                <artifactId>h2</artifactId>
+                <version>${version.h2}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>
