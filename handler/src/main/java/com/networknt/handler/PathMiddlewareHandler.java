@@ -56,14 +56,17 @@ public class PathMiddlewareHandler implements NonFunctionalMiddlewareHandler {
             Object object = ServiceUtil.construct(endPointConfig);
             if (object instanceof HttpHandler) {
                 httpHandler = (HttpHandler) object;
-                List<Object> reverseOrderedMiddlewareConfigList = new ArrayList<>(middlewareConfigList);
-                Collections.reverse(reverseOrderedMiddlewareConfigList);
-                for (Object middleware : reverseOrderedMiddlewareConfigList) {
-                    Object constructedMiddleware = ServiceUtil.construct(middleware);
-                    if (constructedMiddleware instanceof MiddlewareHandler) {
-                        MiddlewareHandler middlewareHandler = (MiddlewareHandler) constructedMiddleware;
-                        if (middlewareHandler.isEnabled()) {
-                            httpHandler = middlewareHandler.setNext(httpHandler);
+                // If they give an empty middleware list, we want to only return the endpoint.
+                if (middlewareConfigList != null && middlewareConfigList.size() > 0) {
+                    List<Object> reverseOrderedMiddlewareConfigList = new ArrayList<>(middlewareConfigList);
+                    Collections.reverse(reverseOrderedMiddlewareConfigList);
+                    for (Object middleware : reverseOrderedMiddlewareConfigList) {
+                        Object constructedMiddleware = ServiceUtil.construct(middleware);
+                        if (constructedMiddleware instanceof MiddlewareHandler) {
+                            MiddlewareHandler middlewareHandler = (MiddlewareHandler) constructedMiddleware;
+                            if (middlewareHandler.isEnabled()) {
+                                httpHandler = middlewareHandler.setNext(httpHandler);
+                            }
                         }
                     }
                 }
