@@ -1,0 +1,66 @@
+# This file gives you several examples for setting up HikariCP with datasource
+# module in light-4j. There are two parts in the configuration, properties for
+# the HikariCP and properties for the database driver itself. For the parameters
+# defined for JDBC driver, put them under parameter with single quote as it is
+# handled as string.
+MysqlDataSource:
+  DriverClassName: com.mysql.jdbc.Driver
+  jdbcUrl: jdbc:mysql://localhost:3306/eventuate?useSSL=false
+  username: mysqluser
+  maximumPoolSize: 2
+  connectionTimeout: 500
+  parameters:
+    useServerPrepStmts: 'true'
+    cachePrepStmts: 'true'
+    cacheCallableStmts: 'true'
+    prepStmtCacheSize: '4096'
+    prepStmtCacheSqlLimit: '2048'
+    verifyServerCertificate: 'false'
+    useSSL: 'true'
+    requireSSL: 'true'
+MariaDataSource:
+  DriverClassName: org.mariadb.jdbc.MariaDbDataSource
+  jdbcUrl: jdbc:mariadb://mariadb:3306/oauth2?useSSL=false
+  username: mysqluser
+  maximumPoolSize: 2
+  connectionTimeout: 500
+  parameters:
+    useServerPrepStmts: 'true'
+    cachePrepStmts: 'true'
+    cacheCallableStmts: 'true'
+    prepStmtCacheSize: '4096'
+    prepStmtCacheSqlLimit: '2048'
+
+PostgresDataSource:
+  DriverClassName: org.postgresql.ds.PGSimpleDataSource
+  jdbcUrl: jdbc:postgresql://postgresdb:5432/oauth2
+  username: postgres
+  maximumPoolSize: 2
+  connectionTimeout: 500
+
+SqlServerDataSource:
+  DriverClassName: com.microsoft.sqlserver.jdbc.SQLServerDataSource
+  jdbcUrl: jdbc:sqlserver://sqlserver:1433;databaseName=oauth2
+  username: sa
+  maximumPoolSize: 2
+  connectionTimeout: 500
+
+OracleDataSource:
+  DriverClassName: oracle.jdbc.pool.OracleDataSource
+  jdbcUrl: jdbc:oracle:thin:@localhost:1521:XE
+  username: SYSTEM
+  maximumPoolSize: 2
+  connectionTimeout: 500
+  parameters:
+    useServerPrepStmts: 'true'
+    cachePrepStmts: 'true'
+    cacheCallableStmts: 'true'
+    prepStmtCacheSize: '10'
+    prepStmtCacheSqlLimit: '2048'
+
+H2DataSource:
+  DriverClassName: org.h2.jdbcx.JdbcDataSource
+  jdbcUrl: jdbc:h2:mem:XE;MODE=MYSQL;INIT=runscript from 'classpath:scripts/test-oauth2.sql'\;runscript from 'classpath:scripts/test-tokenization.sql'\;runscript from 'classpath:scripts/test-vault.sql'\;runscript from 'classpath:scripts/test-todo.sql';
+  username: sa
+  maximumPoolSize: 2
+  connectionTimeout: 500
