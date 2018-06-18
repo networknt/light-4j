@@ -28,8 +28,14 @@ public class PathMiddlewareHandler implements NonFunctionalMiddlewareHandler {
     private String handlerName;
 
     @Override
-    public void handleRequest(HttpServerExchange exchange) throws Exception {} // Doesn't get called.
+    /**
+     * Since this class implements NonFunctionalMiddlewareHandler, instead of this being called, the handler returned in next will be instead.
+     */
+    public void handleRequest(HttpServerExchange exchange) throws Exception {}
 
+    /**
+     * @return The list of handler paths that have been configured by the current handler name.
+     */
     List<HandlerPath> getHandlerPaths() {
         return config.getPathHandlers().stream()
                 .filter(pathHandler -> pathHandler.getHandlerName().equals(handlerName))
@@ -38,6 +44,12 @@ public class PathMiddlewareHandler implements NonFunctionalMiddlewareHandler {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Return a handler chain built out of the given end point and middleware configuration.
+     * @param endPointConfig The configuration to build an endpoint, follows service.yml format.
+     * @param middlewareConfigList The configuration to build the middleware chain.
+     * @return An HttpHandler entering at the first middleware and ending at the endpoint.
+     */
     private HttpHandler getHandler(Object endPointConfig, List<Object> middlewareConfigList) {
         HttpHandler httpHandler = null;
         try {
@@ -62,6 +74,10 @@ public class PathMiddlewareHandler implements NonFunctionalMiddlewareHandler {
         return httpHandler;
     }
 
+    /**
+     * When a new instance is create, validate config. Right now it's ok not to fail when a validation error is thrown
+     * and should be enough just to log an error. Eventually we may want to propagate this exception.
+     */
     public PathMiddlewareHandler() {
         try {
             HandlerConfigValidator.validate(config);
@@ -75,6 +91,11 @@ public class PathMiddlewareHandler implements NonFunctionalMiddlewareHandler {
         return next;
     }
 
+    /**
+     * Build out the RoutingHandler from the given config.
+     * @param next HttpHandler The next handler in the chain (could be another middleware handler).
+     * @return this, with the next instance variable set.
+     */
     @Override
     public MiddlewareHandler setNext(final HttpHandler next) {
         Handlers.handlerNotNull(next);
@@ -121,7 +142,7 @@ public class PathMiddlewareHandler implements NonFunctionalMiddlewareHandler {
         this.handlerName = handlerName;
     }
 
-    // Exposed for testing.
+    // Exposed for testing only.
     protected void setConfig(String configName) {
         config = (HandlerConfig) Config.getInstance().getJsonObjectConfig(configName, HandlerConfig.class);
         try {
