@@ -1,0 +1,31 @@
+# Singleton service factory configuration
+
+singletons:
+- com.networknt.utility.Decryptor:
+  - com.networknt.decrypt.AESDecryptor
+
+- javax.sql.DataSource: com.networknt.db.H2DataSource::getDataSource
+
+- com.networknt.db.MysqlDataSource:
+  - com.networknt.db.MysqlDataSource:
+    - java.lang.String: MysqlDataSource
+
+- com.networknt.db.MariaDataSource:
+  - com.networknt.db.MariaDataSource:
+    - java.lang.String: MariaDataSource
+
+- com.networknt.db.PostgresDataSource:
+  - com.networknt.db.PostgresDataSource:
+    - java.lang.String: PostgresDataSource
+
+- com.networknt.db.SqlServerDataSource:
+  - com.networknt.db.SqlServerDataSource:
+    - java.lang.String: SqlServerDataSource
+
+- com.networknt.db.OracleDataSource:
+  - com.networknt.db.OracleDataSource:
+    - java.lang.String: OracleDataSource
+
+- com.networknt.db.H2DataSource:
+  - com.networknt.db.H2DataSource:
+    - java.lang.String: H2DataSource
