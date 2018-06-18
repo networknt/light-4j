@@ -1,5 +1,29 @@
 # Change Log
 
+## [1.5.15](https://github.com/networknt/light-4j/tree/1.5.15) (2018-06-18)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.14...1.5.15)
+
+**Implemented enhancements:**
+
+- Dynamic server  listener port configuration [\#210](https://github.com/networknt/light-4j/issues/210)
+- Unexpected behavior when Status is created for non-existent status code [\#169](https://github.com/networknt/light-4j/issues/169)
+
+**Closed issues:**
+
+- add datasource module for most popular relational databases [\#220](https://github.com/networknt/light-4j/issues/220)
+- create LightHttpHandler with default method to handle the error status [\#217](https://github.com/networknt/light-4j/issues/217)
+- A default content-type is not set [\#216](https://github.com/networknt/light-4j/issues/216)
+- add a new status code in status.yml for authenticate class not found [\#215](https://github.com/networknt/light-4j/issues/215)
+- Add a Build Number to the server.yml [\#214](https://github.com/networknt/light-4j/issues/214)
+- add constants to utility Constants for light-router [\#212](https://github.com/networknt/light-4j/issues/212)
+- OAuthHelper needs to handle the error status from OAuth 2.0 provider [\#202](https://github.com/networknt/light-4j/issues/202)
+
+**Merged pull requests:**
+
+- Adding InputStream to String conversion utility [\#219](https://github.com/networknt/light-4j/pull/219) ([NicholasAzar](https://github.com/NicholasAzar))
+- Fix216 [\#218](https://github.com/networknt/light-4j/pull/218) ([rpinaa](https://github.com/rpinaa))
+- testing addition of graceful shutdown handler [\#213](https://github.com/networknt/light-4j/pull/213) ([NicholasAzar](https://github.com/NicholasAzar))
+
 ## [1.5.14](https://github.com/networknt/light-4j/tree/1.5.14) (2018-05-19)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.13...1.5.14)
 
