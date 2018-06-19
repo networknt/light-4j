@@ -21,6 +21,7 @@ import com.networknt.common.DecryptUtil;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.handler.NonFunctionalMiddlewareHandler;
 import com.networknt.registry.Registry;
 import com.networknt.registry.URL;
 import com.networknt.registry.URLImpl;
@@ -50,7 +51,6 @@ import java.io.BufferedInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.BindException;
 import java.net.InetAddress;
 import java.net.URI;
 import java.nio.file.*;
@@ -136,7 +136,11 @@ public class Server {
             for (int i = middlewareHandlers.length - 1; i >= 0; i--) {
                 logger.info("Plugin: " + middlewareHandlers[i].getClass().getName());
                 if(middlewareHandlers[i].isEnabled()) {
-                    handler = middlewareHandlers[i].setNext(handler);
+                    if (handler instanceof NonFunctionalMiddlewareHandler) {
+                        handler = middlewareHandlers[i].setNext(((NonFunctionalMiddlewareHandler) handler).getNext());
+                    } else {
+                        handler = middlewareHandlers[i].setNext(handler);
+                    }
                     middlewareHandlers[i].register();
                 }
             }
