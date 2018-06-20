@@ -305,9 +305,7 @@ public abstract class Config {
                 }
                 return inStream;
             }
-            if(logger.isInfoEnabled()) {
-                logger.error("Unable to load config " + Encode.forJava(configFilename));
-            }
+            logger.error("*****Unable to load config " + Encode.forJava(configFilename));
             return null;
         }
 
