@@ -229,7 +229,7 @@ ERR10045:
   statusCode: 400
   code: ERR10045
   message: TOKEN_DEREFERENCE_ERROR
-  description: Token de-reference from OAuth 2.0 provider returns error: %s
+  description: Token de-reference from OAuth 2.0 provider returns error %s
 
 
 # 11000-11500 swagger-validator errors

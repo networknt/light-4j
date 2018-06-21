@@ -18,7 +18,7 @@ public class StringUtilTest {
     @Test
     public void testInputStreamToString_withExpected() throws IOException {
         String expected = "test data";
-        InputStream anyInputStream = new ByteArrayInputStream(expected.getBytes());
+        InputStream anyInputStream = new ByteArrayInputStream(expected.getBytes(StandardCharsets.UTF_8));
         String actual = StringUtil.inputStreamToString(anyInputStream, StandardCharsets.UTF_8);
         Assert.assertEquals(expected, actual);
     }
