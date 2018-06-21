@@ -12,6 +12,8 @@ public class SecretConstants {
     public static final String CLIENT_CREDENTIALS_CLIENT_SECRET = "clientCredentialsClientSecret";
     public static final String REFRESH_TOKEN_CLIENT_SECRET = "refreshTokenClientSecret";
     public static final String KEY_CLIENT_SECRET = "keyClientSecret";
+    public static final String DEREF_CLIENT_SECRET = "derefClientSecret";
+
     public static final String CONSUL_TOKEN = "consulToken";
     public static final String EMAIL_PASSWORD = "emailPassword";
 
