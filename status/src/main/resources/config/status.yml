@@ -220,6 +220,16 @@ ERR10043:
   code: ERR10043
   message: CLIENT_AUTHENTICATE_CLASS_NOT_FOUND
   description: Authenticate class %s defined for the client could not be found
+ERR10044:
+  statusCode: 400
+  code: ERR10044
+  message: EMPTY_TOKEN_DEREFERENCE_RESPONSE
+  description: OAuth 2.0 provider returns empty response with de-reference token request for token %s
+ERR10045:
+  statusCode: 400
+  code: ERR10045
+  message: TOKEN_DEREFERENCE_ERROR
+  description: Token de-reference from OAuth 2.0 provider returns error %s
 
 
 # 11000-11500 swagger-validator errors

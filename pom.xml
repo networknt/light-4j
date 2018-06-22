@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.networknt</groupId>
     <artifactId>light-4j</artifactId>
-    <version>1.5.15</version>
+    <version>1.5.16</version>
     <packaging>pom</packaging>
     <name>Parent POM</name>
     <description>Light 4J Framework Components</description>
