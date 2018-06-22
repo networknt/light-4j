@@ -1,24 +1,28 @@
 ---
 enabled: true
 
-pathHandlers:
-  - handlerName: 'first'
-    paths:
-      - path: '/test'
-        httpVerb: 'get'
-        middleware:
-          - com.networknt.server.Test1MiddlewareHandler
-        endPoint: com.networknt.server.TestHandler
-      - path: '/v1/something'
-        httpVerb: 'post'
-        namedMiddlewareChain: 'something'
-        endPoint: com.networknt.server.TestHandler
+handlers:
+  - com.networknt.server.TestHandler
+  - com.networknt.server.Test1MiddlewareHandler@test1
+  - com.networknt.server.Test2MiddlewareHandler@test2
 
-namedMiddlewareChain:
-  - name: 'something'
-    middleware:
-      - com.networknt.server.Test2MiddlewareHandler
-  - name: 'somethingelse'
-    middleware:
-      - com.networknt.server.Test2MiddlewareHandler
-      - com.networknt.server.Test1MiddlewareHandler
+chains:
+  bothMiddleware:
+    - test1
+    - test2
+  something:
+    - com.networknt.server.TestHandler
+  somethingElse:
+    - com.networknt.server.TestHandler
+
+paths:
+  - path: '/test'
+    verb: 'get'
+    exec:
+      - bothMiddleware
+      - something
+  - path: '/v2/health'
+    verb: 'post'
+    exec:
+      - bothMiddleware
+      - somethingElse

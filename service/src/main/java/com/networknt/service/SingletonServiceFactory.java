@@ -49,7 +49,7 @@ public class SingletonServiceFactory {
         }
     }
 
-    public static Object handleSingleImpl(List<String> interfaceClasses, List<Object> value) throws Exception {
+    private static Object handleSingleImpl(List<String> interfaceClasses, List<Object> value) throws Exception {
         // only one object should be defined in value. TODO throws exception if number of object is not correct.
         Object object = value.get(0);
         if(object instanceof String) {
@@ -72,7 +72,7 @@ public class SingletonServiceFactory {
      * @param map Mapping of name of concrete class to its fields (could be field name : value, or list of types to value).
      * @throws Exception
      */
-    public static List<Object> constructAndAddToServiceMap(List<String> interfaceClasses, Map map) throws Exception {
+    private static List<Object> constructAndAddToServiceMap(List<String> interfaceClasses, Map map) throws Exception {
         Iterator it = map.entrySet().iterator();
         List<Object> items = new ArrayList<>();
         if (it.hasNext()) {
@@ -191,7 +191,7 @@ public class SingletonServiceFactory {
      * @param value List of implementations of interface(s) defined in the key
      * @throws Exception exception thrown from the object creation
      */
-    public static void handleSingletonList(String key, List<Object> value) throws Exception {
+    private static void handleSingletonList(String key, List<Object> value) throws Exception {
 
         List<String> interfaceClasses = new ArrayList();
         if(key.contains(",")) {

@@ -1,16 +1,16 @@
 package com.networknt.handler.config;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Nicholas Azar
  */
 public class HandlerConfig {
     private boolean enabled;
-    private List<PathHandler> pathHandlers;
-    private List<NamedMiddlewareChain> namedMiddlewareChain;
-
-
+    private List<Object> handlers;
+    private Map<String, List<String>> chains;
+    private List<PathChain> paths;
 
     public boolean isEnabled() {
         return enabled;
@@ -20,20 +20,28 @@ public class HandlerConfig {
         this.enabled = enabled;
     }
 
-    public List<PathHandler> getPathHandlers() {
-        return pathHandlers;
+    public List<Object> getHandlers() {
+        return handlers;
     }
 
-    public void setPathHandlers(List<PathHandler> pathHandlers) {
-        this.pathHandlers = pathHandlers;
+    public void setHandlers(List<Object> handlers) {
+        this.handlers = handlers;
     }
 
-    public List<NamedMiddlewareChain> getNamedMiddlewareChain() {
-        return namedMiddlewareChain;
+    public Map<String, List<String>> getChains() {
+        return chains;
     }
 
-    public void setNamedMiddlewareChain(List<NamedMiddlewareChain> namedMiddlewareChain) {
-        this.namedMiddlewareChain = namedMiddlewareChain;
+    public void setChains(Map<String, List<String>> chains) {
+        this.chains = chains;
+    }
+
+    public List<PathChain> getPaths() {
+        return paths;
+    }
+
+    public void setPaths(List<PathChain> paths) {
+        this.paths = paths;
     }
 }
 

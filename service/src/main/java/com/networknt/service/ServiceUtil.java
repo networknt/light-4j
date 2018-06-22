@@ -44,7 +44,7 @@ public class ServiceUtil {
      * @return An instantiated object.
      * @throws Exception
      */
-    private static Object constructByNamedParams(Class clazz, Map params) throws Exception {
+    public static Object constructByNamedParams(Class clazz, Map params) throws Exception {
         Object obj = clazz.newInstance();
 
         Method[] allMethods = clazz.getMethods();
@@ -70,7 +70,7 @@ public class ServiceUtil {
      * @return An instantiated parameters.
      * @throws Exception
      */
-    static Object constructByParameterizedConstructor(Class clazz, List parameters) throws Exception {
+    public static Object constructByParameterizedConstructor(Class clazz, List parameters) throws Exception {
         // find out how many constructors this class has and match the one with the same sequence of
         // parameters.
         Object instance  = null;
