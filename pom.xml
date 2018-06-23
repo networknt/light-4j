@@ -135,6 +135,7 @@
         <module>resource</module>
         <module>content</module>
         <module>datasource</module>
+        <module>basic</module>
     </modules>
 
     <dependencyManagement>
@@ -305,6 +306,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>datasource</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>basic</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
