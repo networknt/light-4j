@@ -620,6 +620,12 @@ ERR12042:
   message: SERVICE_ENDPOINT_NOT_FOUND
   description: Service endpoint not found for serviceId %s
 
+ERR12043:
+  statusCode: 400
+  code: ERR12043
+  message: DEREF_NOT_EXTERNAL
+  description: Only external client type needs optional deref client id
+
 # 20000-29999 common error codes within your business domain.
 # It is highly recommended to have your error code shared within your organization or your line of business.
 # In that case, all your services can share the same status.yml which in org default config
