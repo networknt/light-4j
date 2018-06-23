@@ -625,6 +625,21 @@ ERR12043:
   code: ERR12043
   message: DEREF_NOT_EXTERNAL
   description: Only external client type needs optional deref client id
+ERR12044:
+  statusCode: 400
+  code: ERR12044
+  message: DEREF_CLIENT_NOT_MATCH
+  description: The authenticated client id %s is not matched to the registered dereference client id
+ERR12045:
+  statusCode: 400
+  code: ERR12045
+  message: DEREF_TOKEN_NOT_FOUND
+  description: The reference token %s cannot be found to exchange to JWT
+ERR12046:
+  statusCode: 400
+  code: ERR12046
+  message: JWT_TOKEN_NOT_FOUND
+  description: The jwt token cannot be found to match the reference token %s
 
 # 20000-29999 common error codes within your business domain.
 # It is highly recommended to have your error code shared within your organization or your line of business.
