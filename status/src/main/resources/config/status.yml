@@ -230,6 +230,16 @@ ERR10045:
   code: ERR10045
   message: TOKEN_DEREFERENCE_ERROR
   description: Token de-reference from OAuth 2.0 provider returns error %s
+ERR10046:
+  statusCode: 401
+  code: ERR10046
+  message: INVALID_BASIC_HEADER
+  description: Invalid basic authentication header %s
+ERR10047:
+  statusCode: 401
+  code: ERR10047
+  message: INVALID_USERNAME_OR_PASSWORD
+  description: Invalid username or password for basic authentication
 
 
 # 11000-11500 swagger-validator errors
