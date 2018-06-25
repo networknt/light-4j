@@ -2,9 +2,12 @@ package com.networknt.handler.config;
 
 import java.util.List;
 
+/**
+ * @author Nicholas Azar
+ */
 public class PathChain {
     private String path;
-    private String verb;
+    private String requestType;
     private List<String> exec;
 
     public String getPath() {
@@ -15,19 +18,19 @@ public class PathChain {
         this.path = path;
     }
 
-    public String getVerb() {
-        return verb;
-    }
-
-    public void setVerb(String verb) {
-        this.verb = verb;
-    }
-
     public List<String> getExec() {
         return exec;
     }
 
     public void setExec(List<String> exec) {
         this.exec = exec;
+    }
+
+    public String getRequestType() {
+        return requestType;
+    }
+
+    public void setRequestType(String requestType) {
+        this.requestType = requestType;
     }
 }

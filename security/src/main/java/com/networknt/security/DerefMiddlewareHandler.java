@@ -3,6 +3,7 @@ package com.networknt.security;
 import com.networknt.client.oauth.DerefRequest;
 import com.networknt.client.oauth.OauthHelper;
 import com.networknt.config.Config;
+import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
@@ -70,7 +71,7 @@ public class DerefMiddlewareHandler implements MiddlewareHandler {
                 }
             }
         }
-        next.handleRequest(exchange);
+        Handler.next(exchange, next);
     }
 
     @Override

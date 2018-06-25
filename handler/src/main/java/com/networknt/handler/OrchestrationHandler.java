@@ -1,13 +1,18 @@
 package com.networknt.handler;
 
-import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 
-public class OrchestrationHandler implements HttpHandler {
+/**
+ * @author Nicholas Azar
+ */
+public class OrchestrationHandler implements LightHttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
-        Handler.start(exchange);
-        Handler.next(exchange);
+        if (Handler.start(exchange)) {
+            Handler.next(exchange);
+        } else {
+            setExchangeStatus(exchange, "ERR10046");
+        }
     }
 }

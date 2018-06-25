@@ -7,8 +7,8 @@ pathHandlers:
       - path: '/v1/health'
         httpVerb: 'get'
         middleware:
-          - com.networknt.handler.SampleMiddlewareHandler
-        endPoint: com.networknt.handler.SampleHttpHandler
+          - com.networknt.handler.sample.SampleHttpHandler2
+        endPoint: com.networknt.handler.sample.SampleHttpHandler1
       - path: '/v1/something'
         httpVerb: 'post'
         namedMiddlewareChain: 'something'
@@ -17,5 +17,5 @@ pathHandlers:
       - path: '/v1/health'
         httpVerb: 'get'
         middleware:
-          - com.networknt.handler.SampleMiddlewareHandler
-        endPoint: com.networknt.handler.SampleHttpHandler
+          - com.networknt.handler.sample.SampleHttpHandler2
+        endPoint: com.networknt.handler.sample.SampleHttpHandler1

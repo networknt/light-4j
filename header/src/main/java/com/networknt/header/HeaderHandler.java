@@ -17,6 +17,7 @@
 package com.networknt.header;
 
 import com.networknt.config.Config;
+import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
@@ -91,7 +92,7 @@ public class HeaderHandler implements MiddlewareHandler {
                 responseHeaderUpdate.forEach((k, v) -> exchange.getResponseHeaders().put(new HttpString(k), v));
             }
         }
-        next.handleRequest(exchange);
+        Handler.next(exchange, next);
     }
 
     @Override

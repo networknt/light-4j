@@ -21,6 +21,7 @@
 package com.networknt.cors;
 
 import com.networknt.config.Config;
+import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
@@ -70,7 +71,7 @@ public class CorsHttpHandler implements MiddlewareHandler {
             }
             setCorsResponseHeaders(exchange);
         }
-        next.handleRequest(exchange);
+        Handler.next(exchange, next);
     }
 
     private void handlePreflightRequest(HttpServerExchange exchange) throws Exception {

@@ -2,27 +2,23 @@
 enabled: true
 
 handlers:
-  - com.networknt.server.TestHandler
-  - com.networknt.server.Test1MiddlewareHandler@test1
-  - com.networknt.server.Test2MiddlewareHandler@test2
+  - com.networknt.handler.sample.SampleHttpHandler1
+  - com.networknt.handler.sample.SampleHttpHandler2
+  - com.networknt.handler.sample.SampleHttpHandler3@third
 
 chains:
-  bothMiddleware:
-    - test1
-    - test2
-  something:
-    - com.networknt.server.TestHandler
-  somethingElse:
-    - com.networknt.server.TestHandler
+  secondBeforeFirst:
+    - com.networknt.handler.sample.SampleHttpHandler2
+    - com.networknt.handler.sample.SampleHttpHandler1
 
 paths:
   - path: '/test'
-    verb: 'get'
+    requestType: 'get'
     exec:
-      - bothMiddleware
-      - something
+      - secondBeforeFirst
+      - third
   - path: '/v2/health'
-    verb: 'post'
+    requestType: 'post'
     exec:
-      - bothMiddleware
-      - somethingElse
+      - secondBeforeFirst
+      - third
