@@ -13,12 +13,12 @@ chains:
 
 paths:
   - path: '/test'
-    requestType: 'get'
+    method: 'get'
     exec:
       - secondBeforeFirst
       - handler
   - path: '/v2/health'
-    requestType: 'post'
+    method: 'post'
     exec:
       - secondBeforeFirst
       - handler

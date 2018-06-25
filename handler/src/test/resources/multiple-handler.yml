@@ -1,21 +1,24 @@
 ---
 enabled: true
 
-pathHandlers:
-  - handlerName: 'first'
-    paths:
-      - path: '/v1/health'
-        httpVerb: 'get'
-        middleware:
-          - com.networknt.handler.sample.SampleHttpHandler2
-        endPoint: com.networknt.handler.sample.SampleHttpHandler1
-      - path: '/v1/something'
-        httpVerb: 'post'
-        namedMiddlewareChain: 'something'
-  - handlerName: 'second'
-    paths:
-      - path: '/v1/health'
-        httpVerb: 'get'
-        middleware:
-          - com.networknt.handler.sample.SampleHttpHandler2
-        endPoint: com.networknt.handler.sample.SampleHttpHandler1
+handlers:
+  - com.networknt.handler.sample.SampleHttpHandler1
+  - com.networknt.handler.sample.SampleHttpHandler2
+  - com.networknt.handler.sample.SampleHttpHandler3@third
+
+chains:
+  secondBeforeFirst:
+    - com.networknt.handler.sample.SampleHttpHandler2
+    - com.networknt.handler.sample.SampleHttpHandler1
+
+paths:
+  - path: '/test'
+    method: 'get'
+    exec:
+      - secondBeforeFirst
+      - third
+  - path: '/v2/health'
+    method: 'post'
+    exec:
+      - secondBeforeFirst
+      - third

@@ -1,5 +1,7 @@
 package com.networknt.handler.config;
 
+import com.networknt.utility.NetUtils;
+
 import java.util.List;
 
 /**
@@ -7,7 +9,7 @@ import java.util.List;
  */
 public class PathChain {
     private String path;
-    private String requestType;
+    private String method;
     private List<String> exec;
 
     public String getPath() {
@@ -26,11 +28,15 @@ public class PathChain {
         this.exec = exec;
     }
 
-    public String getRequestType() {
-        return requestType;
+    public String getMethod() {
+        return method;
     }
 
-    public void setRequestType(String requestType) {
-        this.requestType = requestType;
+    public void setMethod(String method) throws Exception {
+        if (NetUtils.METHODS.contains(method.toUpperCase())) {
+            this.method = method;
+        } else {
+            throw new Exception("Invalid HTTP method provided: " + method);
+        }
     }
 }

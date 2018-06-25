@@ -132,7 +132,7 @@ public class Server {
         }
 
         // For backwards compatibility, check if a handler.yml has been included. If not, default to original configuration.
-        if (Handler.config == null) {
+        if (Handler.config == null || !Handler.config.isEnabled()) {
             // Middleware Handlers plugged into the handler chain.
             MiddlewareHandler[] middlewareHandlers = SingletonServiceFactory.getBeans(MiddlewareHandler.class);
             if (middlewareHandlers != null) {

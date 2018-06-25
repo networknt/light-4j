@@ -1,4 +1,4 @@
-package com.networknt.common;
+package com.networknt.utility;
 
 /**
  * @param <T> The type of the first element

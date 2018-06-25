@@ -15,8 +15,6 @@ singletons:
 # MiddlewareHandler implementations
 - com.networknt.handler.MiddlewareHandler:
   - com.networknt.server.Test1MiddlewareHandler
-  - com.networknt.handler.PathMiddlewareHandler:
-      handlerName: 'first'
   - com.networknt.server.Test2MiddlewareHandler
 - com.networknt.registry.URL:
   - com.networknt.registry.URLImpl:

@@ -13,12 +13,7 @@ chains:
 
 paths:
   - path: '/test'
-    method: 'get'
-    exec:
-      - secondBeforeFirst
-      - third
-  - path: '/v2/health'
-    method: 'post'
+    method: 'hello'
     exec:
       - secondBeforeFirst
       - third
