@@ -231,8 +231,18 @@ ERR10045:
   message: TOKEN_DEREFERENCE_ERROR
   description: Token de-reference from OAuth 2.0 provider returns error %s
 ERR10046:
-  statusCode: 404
+  statusCode: 401
   code: ERR10046
+  message: INVALID_BASIC_HEADER
+  description: Invalid basic authentication header %s
+ERR10047:
+  statusCode: 401
+  code: ERR10047
+  message: INVALID_USERNAME_OR_PASSWORD
+  description: Invalid username or password for basic authentication
+ERR10048:
+  statusCode: 404
+  code: ERR10048
   message: PATH_NOT_IMPLEMENTED
   description: No handler defined for path '%s'
 
@@ -614,6 +624,27 @@ ERR12042:
   code: ERR12042
   message: SERVICE_ENDPOINT_NOT_FOUND
   description: Service endpoint not found for serviceId %s
+
+ERR12043:
+  statusCode: 400
+  code: ERR12043
+  message: DEREF_NOT_EXTERNAL
+  description: Only external client type needs optional deref client id
+ERR12044:
+  statusCode: 400
+  code: ERR12044
+  message: DEREF_CLIENT_NOT_MATCH
+  description: The authenticated client id %s is not matched to the registered dereference client id
+ERR12045:
+  statusCode: 400
+  code: ERR12045
+  message: DEREF_TOKEN_NOT_FOUND
+  description: The reference token %s cannot be found to exchange to JWT
+ERR12046:
+  statusCode: 400
+  code: ERR12046
+  message: JWT_TOKEN_NOT_FOUND
+  description: The jwt token cannot be found to match the reference token %s
 
 # 20000-29999 common error codes within your business domain.
 # It is highly recommended to have your error code shared within your organization or your line of business.

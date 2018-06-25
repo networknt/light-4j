@@ -12,7 +12,7 @@ public class OrchestrationHandler implements LightHttpHandler {
         if (Handler.start(exchange)) {
             Handler.next(exchange);
         } else {
-            setExchangeStatus(exchange, "ERR10046");
+            setExchangeStatus(exchange, "ERR10048");
         }
     }
 }
