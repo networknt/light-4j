@@ -44,11 +44,11 @@ oauth:
   # de-ref by reference token to JWT token. It is separate service as it might be the external OAuth 2.0 provider.
   deref:
     # Token service server url, this might be different than the above token server url.
-    server_url: https://localhost:6882
+    server_url: http://localhost:6753
     # token service unique id for OAuth 2.0 provider. Need for service lookup/discovery.
     serviceId: com.networknt.oauth2-token-1.0.0
     # set to true if the oauth2 provider supports HTTP/2
-    enableHttp2: true
+    enableHttp2: false
     # the path for the key distribution endpoint
     uri: "/oauth2/deref"
     # client_id used to access key distribution service. It can be the same client_id with token service or not.
