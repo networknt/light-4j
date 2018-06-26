@@ -1,4 +1,4 @@
-package com.networknt.security;
+package com.networknt.deref;
 
 /**
  * The config class that maps to deref.yml

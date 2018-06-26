@@ -1,19 +1,16 @@
-package com.networknt.security;
+package com.networknt.deref;
 
 import com.networknt.client.oauth.DerefRequest;
 import com.networknt.client.oauth.OauthHelper;
 import com.networknt.config.Config;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
-import com.networknt.utility.Util;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 /**
  * This is the middleware handler that is responsible for sending the by reference token to OAuth 2.0
@@ -66,7 +63,7 @@ public class DerefMiddlewareHandler implements MiddlewareHandler {
                     return;
                 } else {
                     // now consider the response it jwt
-                    exchange.getRequestHeaders().put(Headers.AUTHORIZATION, response);
+                    exchange.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + response);
                 }
             }
         }
