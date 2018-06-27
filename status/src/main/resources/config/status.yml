@@ -650,6 +650,11 @@ ERR12048:
   code: ERR12048
   message: PROVIDER_ID_EXISTS
   description: Provider id %s exists; It has been regristed already.
+ERR12049:
+  statusCode: 400
+  code: ERR12048
+  message: PROVIDER_ID_INVALID
+  description: Provider id invalid; Provider should be two digits only.
 # 20000-29999 common error codes within your business domain.
 # It is highly recommended to have your error code shared within your organization or your line of business.
 # In that case, all your services can share the same status.yml which in org default config
