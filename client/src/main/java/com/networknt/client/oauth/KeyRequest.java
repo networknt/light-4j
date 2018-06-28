@@ -42,6 +42,8 @@ public class KeyRequest {
         }
     }
 
+    public KeyRequest() { }
+
     public String getUri() {
         return uri;
     }
