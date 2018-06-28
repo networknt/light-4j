@@ -17,6 +17,7 @@
 package com.networknt.limit;
 
 import com.networknt.config.Config;
+import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
@@ -45,7 +46,7 @@ public class LimitHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        requestLimit.handleRequest(exchange, this.next);
+        requestLimit.handleRequest(exchange, Handler.getNext(exchange, next));
     }
 
     @Override

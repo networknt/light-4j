@@ -1,5 +1,6 @@
 package com.networknt.server;
 
+import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -32,6 +33,7 @@ public class Test2MiddlewareHandler implements MiddlewareHandler {
     @Override
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
         System.out.println("Test2MiddlewareHandler is called");
-        next.handleRequest(httpServerExchange);
+//        next.handleRequest(httpServerExchange);
+        Handler.next(httpServerExchange);
     }
 }

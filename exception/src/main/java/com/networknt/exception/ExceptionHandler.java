@@ -17,6 +17,7 @@
 package com.networknt.exception;
 
 import com.networknt.config.Config;
+import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
@@ -70,7 +71,7 @@ public class ExceptionHandler implements MiddlewareHandler {
         }
 
         try {
-            next.handleRequest(exchange);
+            Handler.next(exchange, next);
         } catch (Throwable e) {
             logger.error("Exception:", e);
             if(exchange.isResponseChannelAvailable()) {

@@ -11,6 +11,7 @@ public class TestHandler implements LightHttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        System.out.println("Hello World!");
         exchange.getResponseSender().send("Hello World!");
     }
 }
