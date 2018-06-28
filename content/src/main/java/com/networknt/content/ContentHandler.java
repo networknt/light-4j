@@ -1,6 +1,7 @@
 package com.networknt.content;
 
 import com.networknt.config.Config;
+import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
@@ -65,7 +66,6 @@ public class ContentHandler implements MiddlewareHandler {
         .getResponseHeaders()
         .put(Headers.CONTENT_TYPE, contentType);
     }
-
-    next.handleRequest(exchange);
+    Handler.next(exchange, next);
   }
 }

@@ -1,0 +1,24 @@
+---
+enabled: true
+
+handlers:
+  - com.networknt.server.Test1MiddlewareHandler
+  - com.networknt.server.Test2MiddlewareHandler
+  - com.networknt.server.TestHandler@handler
+
+chains:
+  secondBeforeFirst:
+    - com.networknt.server.Test2MiddlewareHandler
+    - com.networknt.server.Test1MiddlewareHandler
+
+paths:
+  - path: '/test'
+    method: 'get'
+    exec:
+      - secondBeforeFirst
+      - handler
+  - path: '/v2/health'
+    method: 'post'
+    exec:
+      - secondBeforeFirst
+      - handler

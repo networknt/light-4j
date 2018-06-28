@@ -18,6 +18,7 @@ package com.networknt.audit;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.config.Config;
+import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
@@ -147,7 +148,7 @@ public class AuditHandler implements MiddlewareHandler {
         } else {
             audit.info(Config.getInstance().getMapper().writeValueAsString(auditMap));
         }
-        next.handleRequest(exchange);
+        Handler.next(exchange, next);
     }
 
     @Override

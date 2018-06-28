@@ -2,6 +2,7 @@ package com.networknt.sanitizer;
 
 import com.networknt.body.BodyHandler;
 import com.networknt.config.Config;
+import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
@@ -84,7 +85,7 @@ public class SanitizerHandler implements MiddlewareHandler {
                 }
             }
         }
-        next.handleRequest(exchange);
+        Handler.next(exchange, next);
     }
 
     @Override
