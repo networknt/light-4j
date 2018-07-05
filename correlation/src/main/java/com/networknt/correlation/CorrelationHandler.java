@@ -17,6 +17,7 @@
 package com.networknt.correlation;
 
 import com.networknt.config.Config;
+import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
@@ -67,7 +68,7 @@ public class CorrelationHandler implements MiddlewareHandler {
         // Add the cId into MDC so that all log statement will have cId as part of it.
         MDC.put(CID, cId);
         //logger.debug("Init cId:" + cId);
-        next.handleRequest(exchange);
+        Handler.next(exchange, next);
     }
 
     @Override

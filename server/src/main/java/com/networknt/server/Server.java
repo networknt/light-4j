@@ -21,7 +21,9 @@ import com.networknt.common.DecryptUtil;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 import com.networknt.handler.HandlerProvider;
+import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.handler.OrchestrationHandler;
 import com.networknt.registry.Registry;
 import com.networknt.registry.URL;
 import com.networknt.registry.URLImpl;
@@ -130,19 +132,24 @@ public class Server {
             throw new RuntimeException("Unable to start the server - no route handler provider available in service.yml");
         }
 
-        // Middleware Handlers plugged into the handler chain.
-        MiddlewareHandler[] middlewareHandlers = SingletonServiceFactory.getBeans(MiddlewareHandler.class);
-        if(middlewareHandlers != null) {
-            for (int i = middlewareHandlers.length - 1; i >= 0; i--) {
-                logger.info("Plugin: " + middlewareHandlers[i].getClass().getName());
-                if(middlewareHandlers[i].isEnabled()) {
-                    handler = middlewareHandlers[i].setNext(handler);
-                    middlewareHandlers[i].register();
+        // For backwards compatibility, check if a handler.yml has been included. If not, default to original configuration.
+        if (Handler.config == null || !Handler.config.isEnabled()) {
+            // Middleware Handlers plugged into the handler chain.
+            MiddlewareHandler[] middlewareHandlers = SingletonServiceFactory.getBeans(MiddlewareHandler.class);
+            if (middlewareHandlers != null) {
+                for (int i = middlewareHandlers.length - 1; i >= 0; i--) {
+                    logger.info("Plugin: " + middlewareHandlers[i].getClass().getName());
+                    if (middlewareHandlers[i].isEnabled()) {
+                        handler = middlewareHandlers[i].setNext(handler);
+                        middlewareHandlers[i].register();
+                    }
                 }
             }
+            gracefulShutdownHandler = new GracefulShutdownHandler(handler);
+        } else {
+            gracefulShutdownHandler = new GracefulShutdownHandler(new OrchestrationHandler());
         }
 
-        gracefulShutdownHandler = new GracefulShutdownHandler(handler);
 
         if(config.dynamicPort) {
             for(int i = config.minPort; i < config.maxPort; i++) {

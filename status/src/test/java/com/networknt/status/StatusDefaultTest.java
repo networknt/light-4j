@@ -40,14 +40,28 @@ public class StatusDefaultTest {
     public void testToString() {
         Status status = new Status("ERR10001");
         System.out.println(status);
-        Assert.assertEquals("{\"statusCode\":401,\"code\":\"ERR10001\",\"message\":\"AUTH_TOKEN_EXPIRED\",\"description\":\"Jwt token in authorization header expired\"}", status.toString());
+        Assert.assertEquals("{\"statusCode\":401,\"code\":\"ERR10001\",\"message\":\"AUTH_TOKEN_EXPIRED\",\"description\":\"Jwt token in authorization header expired\",\"severity\":\"ERROR\"}", status.toString());
     }
 
     @Test
     public void testToStringWithArgs() {
         Status status = new Status("ERR11000", "parameter name", "original url");
         System.out.println(status);
-        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\"}", status.toString());
+        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"severity\":\"ERROR\"}", status.toString());
+    }
+
+    @Test
+    public void testToStringWithoutSeverity() {
+        Status status = new Status(400, "ERR11000", "INVALID_AUTH_TOKEN","Incorrect signature or malformed token in authorization header");
+        System.out.println(status);
+        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"INVALID_AUTH_TOKEN\",\"description\":\"Incorrect signature or malformed token in authorization header\",\"severity\":\"ERROR\"}", status.toString());
+    }
+
+    @Test
+    public void testToStringWithAllArgs() {
+        Status status = new Status(400, "ERR11000", "INVALID_AUTH_TOKEN","Incorrect signature or malformed token in authorization header", "SEVERE");
+        System.out.println(status);
+        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"INVALID_AUTH_TOKEN\",\"description\":\"Incorrect signature or malformed token in authorization header\",\"severity\":\"SEVERE\"}", status.toString());
     }
 
     @Test

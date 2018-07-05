@@ -18,6 +18,7 @@ package com.networknt.body;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
+import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
@@ -108,7 +109,7 @@ public class BodyHandler implements MiddlewareHandler {
                 return;
             }
         }
-        next.handleRequest(exchange);
+        Handler.next(exchange, next);
     }
 
     /*
