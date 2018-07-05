@@ -1,5 +1,29 @@
 # Change Log
 
+## [1.5.16](https://github.com/networknt/light-4j/tree/1.5.16) (2018-07-05)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.15...1.5.16)
+
+**Implemented enhancements:**
+
+- Add "severity" to Status [\#232](https://github.com/networknt/light-4j/issues/232)
+- Extending handler chain configuration functionality [\#222](https://github.com/networknt/light-4j/issues/222)
+
+**Closed issues:**
+
+- move HandlerProvider interface to handler package from server [\#236](https://github.com/networknt/light-4j/issues/236)
+- separate de-reference middleware handler to its own module [\#233](https://github.com/networknt/light-4j/issues/233)
+- add error status for token dereference in light-oauth2 token service [\#230](https://github.com/networknt/light-4j/issues/230)
+- add an error status code for light-oauth2 client registration [\#229](https://github.com/networknt/light-4j/issues/229)
+- log the class, method, file and line number for status [\#228](https://github.com/networknt/light-4j/issues/228)
+- move the basic authentication middleware handler from light-rest-4j [\#226](https://github.com/networknt/light-4j/issues/226)
+- enhance client module to add de-reference token in OauthHelper [\#225](https://github.com/networknt/light-4j/issues/225)
+- Add a middleware handler to de-reference opaque access token to JWT [\#224](https://github.com/networknt/light-4j/issues/224)
+- log error if config file cannot be found in all possible locations [\#223](https://github.com/networknt/light-4j/issues/223)
+
+**Merged pull requests:**
+
+- Feat/path middleware handler [\#227](https://github.com/networknt/light-4j/pull/227) ([NicholasAzar](https://github.com/NicholasAzar))
+
 ## [1.5.15](https://github.com/networknt/light-4j/tree/1.5.15) (2018-06-18)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.14...1.5.15)
 
