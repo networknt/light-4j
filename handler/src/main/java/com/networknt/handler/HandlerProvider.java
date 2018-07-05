@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.networknt.server;
+package com.networknt.handler;
 
 import io.undertow.server.HttpHandler;
 
