@@ -2,7 +2,7 @@
 # singleton service factory configuration
 singletons:
 # HandlerProvider implementation
-- com.networknt.server.HandlerProvider:
+- com.networknt.handler.HandlerProvider:
   - com.networknt.server.TestHandlerProvider
 # StartupHookProvider implementations
 - com.networknt.server.StartupHookProvider:
