@@ -17,6 +17,7 @@
 package com.networknt.traceability;
 
 import com.networknt.config.Config;
+import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
@@ -61,7 +62,7 @@ public class TraceabilityHandler implements MiddlewareHandler {
         if(tid != null) {
             exchange.getResponseHeaders().put(Constants.TRACEABILITY_ID, tid);
         }
-        next.handleRequest(exchange);
+        Handler.next(exchange, next);
     }
 
     @Override

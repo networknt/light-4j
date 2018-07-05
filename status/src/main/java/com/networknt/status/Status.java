@@ -37,12 +37,16 @@ public class Status {
     public static final String CONFIG_NAME = "status";
     public static final Map<String, Object> config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
 
+    // default severity
+    public static final String defaultSeverity = "ERROR";
+
     // status serialization bean
     // allows API implementations to provide their own Status serialization mechanism
     private static StatusSerializer statusSerializer;
 
     private int statusCode;
     private String code;
+    private String severity;
     private String message;
     private String description;
 
@@ -77,6 +81,9 @@ public class Status {
             this.statusCode = (Integer)map.get("statusCode");
             this.message = (String)map.get("message");
             this.description = format((String)map.get("description"), args);
+            if((this.severity = (String)map.get("severity")) == null)
+                this.severity = defaultSeverity;
+
         }
     }
 
@@ -92,6 +99,25 @@ public class Status {
     public Status(int statusCode, String code, String message, String description) {
         this.statusCode = statusCode;
         this.code = code;
+        this.severity = defaultSeverity; 
+        this.message = message;
+        this.description = description;
+    }
+
+    /**
+     * Construct a status object based on all the properties in the object. It is not
+     * very often to use this construct to create object.
+     *
+     * @param statusCode Status Code
+     * @param code Code
+     * @param severity Status Severity
+     * @param message Message
+     * @param description Description
+     */
+    public Status(int statusCode, String code, String message, String description, String severity) {
+        this.statusCode = statusCode;
+        this.code = code;
+        this.severity = severity;
         this.message = message;
         this.description = description;
     }
@@ -128,6 +154,14 @@ public class Status {
         this.description = description;
     }
 
+    public void setSeverity(String severity){
+        this.severity = severity;
+    }
+
+    public String getSeverity() {
+        return severity;
+    }
+
     @Override
     public String toString() {
     	if(statusSerializer != null) {
@@ -137,7 +171,7 @@ public class Status {
                     + ",\"code\":\"" + getCode()
                     + "\",\"message\":\""
                     + getMessage() + "\",\"description\":\""
-                    + getDescription() + "\"}";
+                    + getDescription() + "\",\"severity\":\"" + getSeverity() + "\"}";
         }
     }
 }
