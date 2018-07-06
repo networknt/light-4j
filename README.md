@@ -93,14 +93,14 @@ The light-codegen project README.md describes four ways to use the generator wit
 
 The other way to start your project is to copy from [light-example-4j](https://github.com/networknt/light-example-4j).
 
-You can find the description of these [examples](https://networknt.github.io/light-4j/example/)  
+You can find the description of these [examples](https://www.networknt.com/example/)  
 
-Also, there are some [tutorials](https://networknt.github.io/light-4j/tutorials/) 
+Also, there are some [tutorials](https://www.networknt.com/tutorial/) 
 
 
 ## Debugging
 
-[To run/debug from IDE](https://networknt.github.io/light-4j/tutorials/debug/), you need to 
+[To run/debug from IDE](https://www.networknt.com/tutorial/common/debug/), you need to 
 configure a Java application with main class "com.networknt.server.Server" and working 
 directory is your project folder. There is no container and you are working on just a standalone
 Java application.
