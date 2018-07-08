@@ -1,14 +1,14 @@
-A fast, lightweight and cloud native microservices framework.
+A fast, lightweight and cloud-native microservices framework.
 
 [Developer Chat](https://gitter.im/networknt/light-4j) |
-[Documentation](https://doc.networknt.com) |
+[Documentation](https://www.networknt.com) |
 [Contribution Guide](CONTRIBUTING.md) |
 
 [![Build Status](https://travis-ci.org/networknt/light-4j.svg?branch=master)](https://travis-ci.org/networknt/light-4j)
 
 ## Why called Light 4J
 
-Light means lightweight, lighting fast and shed light on how to program with modern Java SE.   
+Light means lightweight, lightning fast and shedding light on how to program with modern Java SE.   
 
 ## Why this framework
 
@@ -16,25 +16,25 @@ Light means lightweight, lighting fast and shed light on how to program with mod
 
 It is 44 times faster than the most popular microservices platform Spring Boot embedded 
 Tomcat and use only 1/5 of memory. Here is the [benchmark](https://github.com/networknt/microservices-framework-benchmark) 
-results compare with Spring Boot and other microservices frameworks. Here is the [comparison](https://www.techempower.com/benchmarks/previews/round15/)
+results compare with Spring Boot and other microservices frameworks. Here is the [comparison](https://www.techempower.com/benchmarks/#section=data-r15&hw=ph&test=plaintext)
 with other Web frameworks. 
 
-### Provide an embedded gateway to address cross cutting concerns.
+### Provide an embedded gateway to address cross-cutting concerns.
 * Plugin architecture for startup/shutdown hooks and middleware components
 * Distributed OAuth2 JWT security verification as part of the framework
 * Request and response validation against OpenAPI specification at runtime
-* Metrics collected in influxdb and viewed from Grafana Dashboard for both services and clients
-* Global exception handling for runtime exception, api exception and other checked exceptions
-* Mask sensitive data like credit card, sin number etc. before logging
-* Sanitize cross site scripting for query parameters, request headers and body
+* Metrics collected in Influxdb/Prometheus and viewed from Grafana Dashboard for both services and clients
+* Global exception handling for runtime exception, API exception, and other checked exceptions
+* Mask sensitive data like the credit card, sin number, etc. before logging
+* Sanitize cross-site scripting for query parameters, request headers and body
 * Audit to dump important info or entire request and response.
 * Body parser to support different content types
-* Standardized response code and messages from configuration file
-* Externalized configuration for all modules for dockerized environment 
+* Standardized response code and messages from the configuration file
+* Externalized configuration for all modules for the dockerized environment 
 * CORS pre-flight handler for SPA (Angular or React) from another domain
 * Rate limiting for services that exposed outside to the Internet
 * Service registry and discovery support direct, Consul and Zookeeper
-* Client side discovery and load balance to eliminate proxies
+* Client-side discovery and load balance to eliminate proxies
 * A client module that is tightly integrated with Light-OAuth2 and supports traceability
 
 ### Design and Test driven development to increase productivity
