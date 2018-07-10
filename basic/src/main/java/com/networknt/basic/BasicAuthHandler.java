@@ -17,6 +17,7 @@
 package com.networknt.basic;
 
 import com.networknt.config.Config;
+import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
@@ -95,7 +96,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
                 setExchangeStatus(exchange, INVALID_BASIC_HEADER, auth);
                 return;
             }
-            next.handleRequest(exchange);
+            Handler.next(exchange, next);
         }
     }
 
