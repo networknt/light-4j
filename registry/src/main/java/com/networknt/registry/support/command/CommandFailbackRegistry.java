@@ -68,7 +68,7 @@ public abstract class CommandFailbackRegistry extends FailbackRegistry {
         if(logger.isInfoEnabled()) logger.info("CommandFailbackRegistry discover. url: " + url.toSimpleString());
         List<URL> finalResult = discoverService(url.createCopy());
         if(logger.isInfoEnabled()) logger.info("CommandFailbackRegistry discover size: " +
-                finalResult.size() + ", result:" + finalResult.toString());
+                (finalResult==null ? 0 : finalResult.size()) + ", result:" + (finalResult==null ? null: finalResult.toString()));
         return finalResult;
     }
 
