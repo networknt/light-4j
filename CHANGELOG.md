@@ -1,5 +1,12 @@
 # Change Log
 
+## [1.5.17](https://github.com/networknt/light-4j/tree/1.5.17) (2018-07-15)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.16...1.5.17)
+
+**Closed issues:**
+
+- update readme.md to fix the document links [\#239](https://github.com/networknt/light-4j/issues/239)
+
 ## [1.5.16](https://github.com/networknt/light-4j/tree/1.5.16) (2018-07-05)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.15...1.5.16)
 
