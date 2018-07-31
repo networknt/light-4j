@@ -11,6 +11,7 @@ import io.undertow.client.ClientResponse;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.HeaderMap;
+import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
 import org.junit.AfterClass;
@@ -100,7 +101,7 @@ public class ContentHandlerTest {
 
     try {
       final ClientRequest request = new ClientRequest().setPath("/").setMethod(Methods.GET);
-
+      request.getRequestHeaders().put(Headers.HOST, "localhost");
       request.getRequestHeaders().put(new HttpString(defaultHeader), defaultContentType);
       connection.sendRequest(request, client.createClientCallback(reference, latch));
       latch.await();
@@ -138,7 +139,7 @@ public class ContentHandlerTest {
 
     try {
       final ClientRequest request = new ClientRequest().setPath("/xml").setMethod(Methods.GET);
-
+      request.getRequestHeaders().put(Headers.HOST, "localhost");
       request.getRequestHeaders().put(new HttpString(defaultHeader), defaultContentType);
       connection.sendRequest(request, client.createClientCallback(reference, latch));
       latch.await();
@@ -176,7 +177,7 @@ public class ContentHandlerTest {
 
     try {
       final ClientRequest request = new ClientRequest().setPath("/json").setMethod(Methods.GET);
-
+      request.getRequestHeaders().put(Headers.HOST, "localhost");
       request.getRequestHeaders().put(new HttpString(defaultHeader), defaultContentType);
       connection.sendRequest(request, client.createClientCallback(reference, latch));
       latch.await();
@@ -212,7 +213,7 @@ public class ContentHandlerTest {
 
     try {
       final ClientRequest request = new ClientRequest().setPath("/json").setMethod(Methods.GET);
-
+      request.getRequestHeaders().put(Headers.HOST, "localhost");
       connection.sendRequest(request, client.createClientCallback(reference, latch));
       latch.await();
     } catch (Exception e) {

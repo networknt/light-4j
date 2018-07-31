@@ -26,6 +26,7 @@ import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
+import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
 import org.junit.AfterClass;
@@ -124,6 +125,7 @@ public class HeaderHandlerTest {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/get").setMethod(Methods.GET);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
             request.getRequestHeaders().put(new HttpString("header1"), "header1");
             request.getRequestHeaders().put(new HttpString("header2"), "header2");
             request.getRequestHeaders().put(new HttpString("key1"), "old1");

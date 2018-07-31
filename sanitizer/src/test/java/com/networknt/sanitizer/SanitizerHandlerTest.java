@@ -116,6 +116,7 @@ public class SanitizerHandlerTest {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/header").setMethod(Methods.GET);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
             request.getRequestHeaders().put(new HttpString("param"), "<script>alert('header test')</script>");
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();

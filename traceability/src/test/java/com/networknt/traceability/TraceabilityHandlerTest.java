@@ -100,6 +100,7 @@ public class TraceabilityHandlerTest {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/get").setMethod(Methods.GET);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
             request.getRequestHeaders().put(Constants.TRACEABILITY_ID, "12345");
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
@@ -133,6 +134,7 @@ public class TraceabilityHandlerTest {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/get").setMethod(Methods.GET);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
             //request.getRequestHeaders().put(Constants.TRACEABILITY_ID, "12345");
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();

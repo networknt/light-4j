@@ -117,6 +117,7 @@ public class BodyHandlerTest {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/get").setMethod(Methods.GET);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
         } catch (Exception e) {
