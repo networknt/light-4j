@@ -25,6 +25,7 @@ import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
+import io.undertow.util.Headers;
 import io.undertow.util.Methods;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -90,6 +91,7 @@ public class HealthGetHandlerTest {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/server/health").setMethod(Methods.GET);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
         } catch (Exception e) {

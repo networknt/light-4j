@@ -11,6 +11,7 @@ import io.undertow.client.ClientResponse;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.HeaderMap;
+import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
 import org.junit.AfterClass;
@@ -87,6 +88,7 @@ public class CorsHttpHandlerTest {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/").setMethod(Methods.OPTIONS);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
             request.getRequestHeaders().put(new HttpString("Origin"), "http://example.com");
             request.getRequestHeaders().put(new HttpString("Access-Control-Request-Method"), "POST");
             request.getRequestHeaders().put(new HttpString("Access-Control-Request-Headers"), "X-Requested-With");
@@ -122,6 +124,7 @@ public class CorsHttpHandlerTest {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/").setMethod(Methods.OPTIONS);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
             request.getRequestHeaders().put(new HttpString("Origin"), "http://localhost");
             request.getRequestHeaders().put(new HttpString("Access-Control-Request-Method"), "POST");
             request.getRequestHeaders().put(new HttpString("Access-Control-Request-Headers"), "X-Requested-With");

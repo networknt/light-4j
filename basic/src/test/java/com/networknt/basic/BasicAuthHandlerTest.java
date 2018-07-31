@@ -117,6 +117,7 @@ public class BasicAuthHandlerTest {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/v2/pet").setMethod(Methods.GET);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
             request.getRequestHeaders().put(Headers.AUTHORIZATION, "BASIC " + encodeCredentials("user1", "user1pass"));
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
@@ -146,6 +147,7 @@ public class BasicAuthHandlerTest {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/v2/pet").setMethod(Methods.GET);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
             request.getRequestHeaders().put(Headers.AUTHORIZATION, "BASIC " + encodeCredentials("user2", "password"));
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
@@ -175,6 +177,7 @@ public class BasicAuthHandlerTest {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/v2/pet").setMethod(Methods.GET);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
         } catch (Exception e) {
@@ -205,6 +208,7 @@ public class BasicAuthHandlerTest {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/v2/pet").setMethod(Methods.GET);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
             request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + encodeCredentials("user1", "user1pass"));
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
@@ -236,6 +240,7 @@ public class BasicAuthHandlerTest {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/v2/pet").setMethod(Methods.GET);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
             request.getRequestHeaders().put(Headers.AUTHORIZATION, "BASIC " + encodeCredentials("user3", "user1pass"));
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
@@ -267,6 +272,7 @@ public class BasicAuthHandlerTest {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath("/v2/pet").setMethod(Methods.GET);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
             request.getRequestHeaders().put(Headers.AUTHORIZATION, "BASIC " + encodeCredentials("user2", "ppp"));
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
