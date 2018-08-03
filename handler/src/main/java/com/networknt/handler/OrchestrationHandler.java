@@ -12,7 +12,8 @@ public class OrchestrationHandler implements LightHttpHandler {
         if (Handler.start(exchange)) {
             Handler.next(exchange);
         } else {
-            setExchangeStatus(exchange, "ERR10048");
+            String methodPath = String.format("%s %s", exchange.getRequestMethod(), exchange.getRequestPath());
+            setExchangeStatus(exchange, "ERR10048", methodPath);
         }
     }
 }
