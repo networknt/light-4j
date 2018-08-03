@@ -37,6 +37,13 @@ public class StatusDefaultTest {
     }
 
     @Test
+    public void testConstructorMissingArgs() {
+        Status status = new Status("ERR10048");
+        Assert.assertEquals(404, status.getStatusCode());
+        Assert.assertTrue(status.getDescription().contains("%s"));
+    }
+
+    @Test
     public void testToString() {
         Status status = new Status("ERR10001");
         System.out.println(status);
