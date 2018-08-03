@@ -19,7 +19,10 @@ package com.networknt.status;
 import com.networknt.config.Config;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.ModuleRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.IllegalFormatException;
 import java.util.Map;
 
 import static java.lang.String.format;
@@ -34,6 +37,8 @@ import static java.lang.String.format;
  * @author Steve Hu
  */
 public class Status {
+    private static final Logger logger = LoggerFactory.getLogger(Status.class);
+
     public static final String CONFIG_NAME = "status";
     public static final Map<String, Object> config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
 
@@ -80,7 +85,12 @@ public class Status {
         if(map != null) {
             this.statusCode = (Integer)map.get("statusCode");
             this.message = (String)map.get("message");
-            this.description = format((String)map.get("description"), args);
+            this.description = (String)map.get("description");
+            try {
+                this.description = format(this.description, args);
+            } catch (IllegalFormatException e) {
+                logger.warn(format("Error formatting description of status %s", code), e);
+            }
             if((this.severity = (String)map.get("severity")) == null)
                 this.severity = defaultSeverity;
 
