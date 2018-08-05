@@ -6,6 +6,7 @@ import com.networknt.config.Config;
 import com.networknt.consul.ConsulResponse;
 import com.networknt.consul.ConsulService;
 import com.networknt.utility.Constants;
+import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
@@ -16,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.xnio.OptionMap;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -32,9 +34,12 @@ public class ConsulClientImpl implements ConsulClient {
 	private static final Logger logger = LoggerFactory.getLogger(ConsulClientImpl.class);
 	// Single Factory Object so just like static.
 	Http2Client client = Http2Client.getInstance();
+	// There is only one cached connection shared by all the API calls to Consul. If http is used, it should
+	// be for dev testing only and one connection should be fine. For production, https must be used and it
+	// supports multiplex.
 	ClientConnection connection;
-	ClientConnection lookupConn;
-	String url;
+	OptionMap optionMap;
+	URI uri;
 
 	/**
 	 * Construct ConsulClient with protocol, host and port.
@@ -44,8 +49,16 @@ public class ConsulClientImpl implements ConsulClient {
 	 * @param port port
 	 */
 	public ConsulClientImpl(String protocol, String host, int port) {
-		url = protocol + "://" + host + ":" + port;
+		// Will use http/2 connection if tls is enabled as Consul only support HTTP/2 with TLS.
+		optionMap =  "https".equalsIgnoreCase(protocol) ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY;
+		String url = protocol + "://" + host + ":" + port;
 		if(logger.isDebugEnabled()) logger.debug("url = " + url);
+		try {
+			uri = new URI(url);
+		} catch (URISyntaxException e) {
+			logger.error("Invalid URI " + url, e);
+			throw new RuntimeException("Invalid URI " + url, e);
+		}
 	}
 
 	/**
@@ -55,8 +68,16 @@ public class ConsulClientImpl implements ConsulClient {
 	 * @param host host
 	 */
 	public ConsulClientImpl(String protocol, String host) {
-		url = protocol + "://" + host;
+		// Will use http/2 connection if tls is enabled as Consul only support HTTP/2 with TLS.
+		optionMap =  "https".equalsIgnoreCase(protocol) ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY;
+		String url = protocol + "://" + host;
 		if(logger.isDebugEnabled()) logger.debug("url = " + url);
+		try {
+			uri = new URI(url);
+		} catch (URISyntaxException e) {
+			logger.error("Invalid URI " + url, e);
+			throw new RuntimeException("Invalid URI " + url, e);
+		}
 	}
 
 	@Override
@@ -68,7 +89,7 @@ public class ConsulClientImpl implements ConsulClient {
 		try {
 			if(connection == null || !connection.isOpen()) {
 				if(logger.isDebugEnabled()) logger.debug("connection is closed somehow, reconnecting...");
-				connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
+				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, optionMap).get();
 			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
@@ -94,7 +115,7 @@ public class ConsulClientImpl implements ConsulClient {
 		try {
 			if(connection == null || !connection.isOpen()) {
 				if(logger.isDebugEnabled()) logger.debug("connection is closed somehow, reconnecting...");
-				connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
+				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, optionMap).get();
 			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
@@ -120,7 +141,7 @@ public class ConsulClientImpl implements ConsulClient {
 		try {
 			if(connection == null || !connection.isOpen()) {
 				if(logger.isDebugEnabled()) logger.debug("connection is closed somehow, reconnecting...");
-				connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
+				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, optionMap).get();
 			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
 			if(token != null) request.getRequestHeaders().put(Constants.CONSUL_TOKEN, token);
@@ -145,7 +166,7 @@ public class ConsulClientImpl implements ConsulClient {
 		try {
 			if(connection == null || !connection.isOpen()) {
 				if(logger.isDebugEnabled()) logger.debug("connection is closed somehow, reconnecting...");
-				connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
+				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, optionMap).get();
 			}
 
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
@@ -175,14 +196,14 @@ public class ConsulClientImpl implements ConsulClient {
 		final CountDownLatch latch = new CountDownLatch(1);
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
-			if(lookupConn == null || !lookupConn.isOpen()) {
-				if(logger.isDebugEnabled()) logger.debug("lookupConn is closed somehow, reconnecting...");
-				lookupConn = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, OptionMap.EMPTY).get();
+			if(connection == null || !connection.isOpen()) {
+				if(logger.isDebugEnabled()) logger.debug("connection is closed somehow, reconnecting...");
+				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, optionMap).get();
 			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(path);
 			if(token != null) request.getRequestHeaders().put(Constants.CONSUL_TOKEN, token);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
-			lookupConn.sendRequest(request, client.createClientCallback(reference, latch));
+			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= 300){
