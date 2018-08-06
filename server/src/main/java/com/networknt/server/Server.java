@@ -251,6 +251,8 @@ public class Server {
         // need to unregister the service
         if(config.enableRegistry && registry != null) {
             registry.unregister(serviceUrl);
+            // Please don't remove the following line. When server is killed, the logback won't work anymore.
+            // Even debugger won't reach this point; however, the logic is executed successfully here.
             System.out.println("unregister serviceUrl " + serviceUrl);
             if(logger.isInfoEnabled()) logger.info("unregister serviceUrl " + serviceUrl);
         }

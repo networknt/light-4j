@@ -65,6 +65,11 @@ public class ConsulService {
 		this.ttl = ttl;
 	}
 
+	/**
+	 * Construct a register json payload. Note that deregister internal minimum is 1m.
+	 * 
+	 * @return String
+	 */
 	@Override
 	public String toString() {
 		String s = tags.stream().map(Object::toString).collect(Collectors.joining("\",\""));
@@ -73,7 +78,7 @@ public class ConsulService {
 				+ "\",\"Tags\":[\"" + s
 				+ "\"],\"Address\":\"" + address
 				+ "\",\"Port\":" + port
-				+ ",\"Check\":{\"TTL\":\"" + ttl + "s\"}}";
+				+ ",\"Check\":{\"DeregisterCriticalServiceAfter\":\"1m\",\"TTL\":\"" + ttl + "s\"}}";
 	}
 
 }
