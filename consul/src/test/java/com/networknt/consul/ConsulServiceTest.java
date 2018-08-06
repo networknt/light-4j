@@ -21,7 +21,7 @@ public class ConsulServiceTest {
 
         String s = service.toString();
         System.out.println("s = " + s);
-        Assert.assertEquals("{\"ID\":\"127.0.0.1:com.networknt.apib-1.0.0:7442\",\"Name\":\"com.networknt.apib-1.0.0\",\"Tags\":[\"protocol_light\"],\"Address\":\"127.0.0.1\",\"Port\":7442,\"Check\":{\"TTL\":\"30s\"}}", s);
+        Assert.assertEquals("{\"ID\":\"127.0.0.1:com.networknt.apib-1.0.0:7442\",\"Name\":\"com.networknt.apib-1.0.0\",\"Tags\":[\"protocol_light\"],\"Address\":\"127.0.0.1\",\"Port\":7442,\"Check\":{\"DeregisterCriticalServiceAfter\":\"1m\",\"TTL\":\"30s\"}}", s);
     }
 
     @Test
@@ -39,7 +39,7 @@ public class ConsulServiceTest {
 
         String s = service.toString();
         System.out.println("s = " + s);
-        Assert.assertEquals("{\"ID\":\"127.0.0.1:com.networknt.apib-1.0.0:7442\",\"Name\":\"com.networknt.apib-1.0.0\",\"Tags\":[\"protocol_light\",\"second_tag\"],\"Address\":\"127.0.0.1\",\"Port\":7442,\"Check\":{\"TTL\":\"30s\"}}", s);
+        Assert.assertEquals("{\"ID\":\"127.0.0.1:com.networknt.apib-1.0.0:7442\",\"Name\":\"com.networknt.apib-1.0.0\",\"Tags\":[\"protocol_light\",\"second_tag\"],\"Address\":\"127.0.0.1\",\"Port\":7442,\"Check\":{\"DeregisterCriticalServiceAfter\":\"1m\",\"TTL\":\"30s\"}}", s);
     }
 
 }
