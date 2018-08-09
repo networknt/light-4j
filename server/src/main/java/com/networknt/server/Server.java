@@ -127,13 +127,13 @@ public class Server {
         if(handlerProvider != null) {
             handler = handlerProvider.getHandler();
         }
-        if (handler == null) {
-            logger.error("Unable to start the server - no route handler provider available in service.yml");
-            throw new RuntimeException("Unable to start the server - no route handler provider available in service.yml");
-        }
 
         // For backwards compatibility, check if a handler.yml has been included. If not, default to original configuration.
         if (Handler.config == null || !Handler.config.isEnabled()) {
+            if (handler == null) {
+                logger.error("Unable to start the server - no route handler provider available in service.yml");
+                throw new RuntimeException("Unable to start the server - no route handler provider available in service.yml");
+            }
             // Middleware Handlers plugged into the handler chain.
             MiddlewareHandler[] middlewareHandlers = SingletonServiceFactory.getBeans(MiddlewareHandler.class);
             if (middlewareHandlers != null) {
