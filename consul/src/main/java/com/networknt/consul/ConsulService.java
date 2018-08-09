@@ -1,9 +1,14 @@
 package com.networknt.consul;
 
+import com.networknt.config.Config;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.networknt.consul.ConsulConstants.CONFIG_NAME;
+
 public class ConsulService {
+	static ConsulConfig config = (ConsulConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ConsulConfig.class);
 
 	private String id;
 
@@ -14,9 +19,9 @@ public class ConsulService {
 	private String address;
 
 	private Integer port;
-	
-	private long ttl;
 
+	private String checkString;
+	
 	public String getId() {
 		return id;
 	}
@@ -53,21 +58,21 @@ public class ConsulService {
 		return port;
 	}
 
-	public void setPort(Integer port) {
-		this.port = port;
-	}
+	public void setPort(Integer port) { this.port = port; }
 
-	public long getTtl() {
-		return ttl;
-	}
-
-	public void setTtl(long ttl) {
-		this.ttl = ttl;
+	public ConsulService() {
+		if(config.tcpCheck) {
+			checkString = ",\"Check\":{\"ID\":\"check-%s\",\"DeregisterCriticalServiceAfter\":\"" + config.deregisterAfter + "\",\"TCP\":\"%s" + ":%s\",\"Interval\":\"" + config.checkInterval + "\"}}";
+		} else if(config.httpCheck) {
+			checkString = ",\"Check\":{\"ID\":\"check-%s\",\"DeregisterCriticalServiceAfter\":\"" + config.deregisterAfter + "\",\"HTTP\":\"" + "https://%s:%s/health" + "\",\"Interval\":\"" + config.checkInterval + "\"}}";
+		} else {
+			checkString = ",\"Check\":{\"ID\":\"check-%s\",\"DeregisterCriticalServiceAfter\":\"" + config.deregisterAfter + "\",\"TTL\":\"" + config.checkInterval + "\"}}";
+		}
 	}
 
 	/**
 	 * Construct a register json payload. Note that deregister internal minimum is 1m.
-	 * 
+	 *
 	 * @return String
 	 */
 	@Override
@@ -78,7 +83,6 @@ public class ConsulService {
 				+ "\",\"Tags\":[\"" + s
 				+ "\"],\"Address\":\"" + address
 				+ "\",\"Port\":" + port
-				+ ",\"Check\":{\"DeregisterCriticalServiceAfter\":\"1m\",\"TTL\":\"" + ttl + "s\"}}";
+				+ String.format(checkString, name, address, port);
 	}
-
 }

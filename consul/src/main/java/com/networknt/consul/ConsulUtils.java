@@ -42,8 +42,6 @@ public class ConsulUtils {
         service.setId(ConsulUtils.convertConsulSerivceId(url));
         service.setName(url.getPath());
         service.setPort(url.getPort());
-        service.setTtl(ConsulConstants.TTL);
-
         List<String> tags = new ArrayList<String>();
         String env = url.getParameter(Constants.TAG_ENVIRONMENT);
         if(env != null) tags.add(env);
