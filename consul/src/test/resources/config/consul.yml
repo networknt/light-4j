@@ -17,4 +17,4 @@ httpCheck: false
 # enable health check TTL. When this is enabled, Consul won't actively check your service to ensure it is healthy,
 # but your service will call check endpoint with heart beat to indicate it is alive. This requires that the service
 # is built on top of light-4j and the above options are not available. For example, your service is behind NAT.
-ttlCheck: true
+ttlCheck: false

@@ -3,6 +3,8 @@ package com.networknt.consul.client;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
+import com.networknt.consul.ConsulConfig;
+import com.networknt.consul.ConsulConstants;
 import com.networknt.consul.ConsulResponse;
 import com.networknt.consul.ConsulService;
 import com.networknt.utility.Constants;
@@ -32,6 +34,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class ConsulClientImpl implements ConsulClient {
 	private static final Logger logger = LoggerFactory.getLogger(ConsulClientImpl.class);
+	private static final ConsulConfig config = (ConsulConfig)Config.getInstance().getJsonObjectConfig(ConsulConstants.CONFIG_NAME, ConsulConfig.class);
+
 	// Single Factory Object so just like static.
 	Http2Client client = Http2Client.getInstance();
 	// There is only one cached connection shared by all the API calls to Consul. If http is used, it should
@@ -42,41 +46,20 @@ public class ConsulClientImpl implements ConsulClient {
 	URI uri;
 
 	/**
-	 * Construct ConsulClient with protocol, host and port.
+	 * Construct ConsulClient with all parameters from consul.yml config file. The other two constructors are
+	 * just for backward compatibility.
 	 *
-	 * @param protocol protocol
-	 * @param host host
-	 * @param port port
 	 */
-	public ConsulClientImpl(String protocol, String host, int port) {
+	public ConsulClientImpl() {
 		// Will use http/2 connection if tls is enabled as Consul only support HTTP/2 with TLS.
-		optionMap =  "https".equalsIgnoreCase(protocol) ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY;
-		String url = protocol + "://" + host + ":" + port;
-		if(logger.isDebugEnabled()) logger.debug("url = " + url);
+		String consulUrl = config.getConsulUrl().toLowerCase();
+		optionMap =  consulUrl.startsWith("https") ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY;
+		if(logger.isDebugEnabled()) logger.debug("url = " + consulUrl);
 		try {
-			uri = new URI(url);
+			uri = new URI(consulUrl);
 		} catch (URISyntaxException e) {
-			logger.error("Invalid URI " + url, e);
-			throw new RuntimeException("Invalid URI " + url, e);
-		}
-	}
-
-	/**
-	 * Construct ConsulClient with protocol and host.
-	 *
-	 * @param protocol protocol
-	 * @param host host
-	 */
-	public ConsulClientImpl(String protocol, String host) {
-		// Will use http/2 connection if tls is enabled as Consul only support HTTP/2 with TLS.
-		optionMap =  "https".equalsIgnoreCase(protocol) ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY;
-		String url = protocol + "://" + host;
-		if(logger.isDebugEnabled()) logger.debug("url = " + url);
-		try {
-			uri = new URI(url);
-		} catch (URISyntaxException e) {
-			logger.error("Invalid URI " + url, e);
-			throw new RuntimeException("Invalid URI " + url, e);
+			logger.error("Invalid URI " + consulUrl, e);
+			throw new RuntimeException("Invalid URI " + consulUrl, e);
 		}
 	}
 
