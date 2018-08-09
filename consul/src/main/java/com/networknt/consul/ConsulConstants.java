@@ -39,6 +39,16 @@ public class ConsulConstants {
 	public static String TTL_STR = TTL + "s";
 
 	/**
+	 * Service TCP Check Interval
+	 */
+	public static String INTERVAL = "10s";
+
+	/**
+	 * Service TCP Check Deregister After
+	 */
+	public static String DEREGISTER_AFTER = "90m";
+
+	/**
 	 * Heart beat circle，2/3 of ttl
 	 */
 	public static int HEARTBEAT_CIRCLE = (TTL * 1000 * 2) / 3;
@@ -73,4 +83,10 @@ public class ConsulConstants {
 	 * consul block max block time in second
 	 */
 	public static long CONSUL_BLOCK_TIME_SECONDS = CONSUL_BLOCK_TIME_MINUTES * 60;
+
+	/**
+	 * consul configuration file name
+	 */
+	public static final String CONFIG_NAME = "consul";
+
 }

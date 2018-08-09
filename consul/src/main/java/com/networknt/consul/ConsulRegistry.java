@@ -28,6 +28,8 @@ public class ConsulRegistry extends CommandFailbackRegistry {
     private int lookupInterval;
     private Map<String, Object> secret = DecryptUtil.decryptMap(Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET));
     private String token = secret == null? null : (String)secret.get(SecretConstants.CONSUL_TOKEN);
+    private ConsulConfig config = (ConsulConfig)Config.getInstance().getJsonObjectConfig(ConsulConstants.CONFIG_NAME, ConsulConfig.class);
+
     // service local cache. key: serviceName, value: <service url list>
     private ConcurrentHashMap<String, List<URL>> serviceCache = new ConcurrentHashMap<String, List<URL>>();
 
@@ -42,9 +44,10 @@ public class ConsulRegistry extends CommandFailbackRegistry {
     public ConsulRegistry(URL url, ConsulClient client) {
         super(url);
         this.client = client;
-
-        heartbeatManager = new ConsulHeartbeatManager(client, token);
-        heartbeatManager.start();
+        if(config.ttlCheck) {
+            heartbeatManager = new ConsulHeartbeatManager(client, token);
+            heartbeatManager.start();
+        }
         lookupInterval = getUrl().getIntParameter(URLParamType.registrySessionTimeout.getName(), ConsulConstants.DEFAULT_LOOKUP_INTERVAL);
 
         ArrayBlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<Runnable>(20000);
@@ -60,20 +63,20 @@ public class ConsulRegistry extends CommandFailbackRegistry {
     protected void doRegister(URL url) {
         ConsulService service = ConsulUtils.buildService(url);
         client.registerService(service, token);
-        heartbeatManager.addHeartbeatServcieId(service.getId());
+        if(config.ttlCheck) heartbeatManager.addHeartbeatServcieId(service.getId());
     }
 
     @Override
     protected void doUnregister(URL url) {
         ConsulService service = ConsulUtils.buildService(url);
         client.unregisterService(service.getId(), token);
-        heartbeatManager.removeHeartbeatServiceId(service.getId());
+        if(config.ttlCheck) heartbeatManager.removeHeartbeatServiceId(service.getId());
     }
 
     @Override
     protected void doAvailable(URL url) {
         if (url == null) {
-            heartbeatManager.setHeartbeatOpen(true);
+            if(config.ttlCheck) heartbeatManager.setHeartbeatOpen(true);
         } else {
             throw new UnsupportedOperationException("Command consul registry not support available by urls yet");
         }
@@ -82,7 +85,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
     @Override
     protected void doUnavailable(URL url) {
         if (url == null) {
-            heartbeatManager.setHeartbeatOpen(false);
+            if(config.ttlCheck) heartbeatManager.setHeartbeatOpen(false);
         } else {
             throw new UnsupportedOperationException("Command consul registry not support unavailable by urls yet");
         }
