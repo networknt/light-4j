@@ -48,7 +48,14 @@ public class ConsulServiceTest {
 
         String s = service.toString();
         System.out.println("s = " + s);
-        Assert.assertEquals("{\"ID\":\"127.0.0.1:com.networknt.apib-1.0.0:7442\",\"Name\":\"com.networknt.apib-1.0.0\",\"Tags\":[\"protocol_light\",\"second_tag\"],\"Address\":\"127.0.0.1\",\"Port\":7442,\"Check\":{\"ID\":\"check-com.networknt.apib-1.0.0\",\"DeregisterCriticalServiceAfter\":\"90m\",\"TCP\":\"127.0.0.1:7442\",\"Interval\":\"10s\"}}", s);
+        if(config.tcpCheck) {
+            Assert.assertEquals("{\"ID\":\"127.0.0.1:com.networknt.apib-1.0.0:7442\",\"Name\":\"com.networknt.apib-1.0.0\",\"Tags\":[\"protocol_light\",\"second_tag\"],\"Address\":\"127.0.0.1\",\"Port\":7442,\"Check\":{\"ID\":\"check-com.networknt.apib-1.0.0\",\"DeregisterCriticalServiceAfter\":\"90m\",\"TCP\":\"127.0.0.1:7442\",\"Interval\":\"10s\"}}", s);
+        } else if(config.httpCheck) {
+            Assert.assertEquals("{\"ID\":\"127.0.0.1:com.networknt.apib-1.0.0:7442\",\"Name\":\"com.networknt.apib-1.0.0\",\"Tags\":[\"protocol_light\",\"second_tag\"],\"Address\":\"127.0.0.1\",\"Port\":7442,\"Check\":{\"ID\":\"check-com.networknt.apib-1.0.0\",\"DeregisterCriticalServiceAfter\":\"90m\",\"HTTP\":\"https://127.0.0.1:7442/health\",\"Interval\":\"10s\"}}", s);
+        } else {
+            Assert.assertEquals("{\"ID\":\"127.0.0.1:com.networknt.apib-1.0.0:7442\",\"Name\":\"com.networknt.apib-1.0.0\",\"Tags\":[\"protocol_light\",\"second_tag\"],\"Address\":\"127.0.0.1\",\"Port\":7442,\"Check\":{\"ID\":\"check-com.networknt.apib-1.0.0\",\"DeregisterCriticalServiceAfter\":\"90m\",\"TTL\":\"10s\"}}", s);
+        }
+
     }
 
 }
