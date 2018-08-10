@@ -167,41 +167,24 @@ public class Handler {
     static void initPaths() {
         if (config != null && config.getPaths() != null) {
             for (PathChain pathChain : config.getPaths()) {
-                HttpString method;
-                if (pathChain.getMethod().contains(",")) {
-                    String[] methods = pathChain.getMethod().split(",");
-                    for (String oneMethod: methods) {
-                         method = new HttpString(oneMethod.trim());
-                         addByMethod(method, pathChain);
-                    }
-                } else {
-                    method = new HttpString(pathChain.getMethod().trim());
-                    addByMethod(method, pathChain);
+                HttpString method = new HttpString(pathChain.getMethod());
+
+                // Use a random integer as the id for a given path.
+                Integer randInt = new Random().nextInt();
+                while (handlerListById.containsKey(randInt.toString())) {
+                    randInt = new Random().nextInt();
+                }
+
+                // Flatten out the execution list from a mix of middleware chains and handlers.
+                List<HttpHandler> handlers = getHandlersFromExecList(pathChain.getExec());
+                if (handlers.size() > 0) {
+                    // If a matcher already exists for the given type, at to that instead of creating a new one.
+                    PathTemplateMatcher<String> pathTemplateMatcher = methodToMatcherMap.containsKey(method) ? methodToMatcherMap.get(method) : new PathTemplateMatcher<>();
+                    pathTemplateMatcher.add(pathChain.getPath(), randInt.toString());
+                    methodToMatcherMap.put(method, pathTemplateMatcher);
+                    handlerListById.put(randInt.toString(), handlers);
                 }
             }
-        }
-    }
-
-    /**
-     * Given the method and pathChain, setup and add the template matcher.
-     * @param method
-     * @param pathChain
-     */
-    static void addByMethod(HttpString method, PathChain pathChain) {
-        // Use a random integer as the id for a given path.
-        int randInt = new Random().nextInt();
-        while (handlerListById.containsKey(Integer.toString(randInt))) {
-            randInt = new Random().nextInt();
-        }
-
-        // Flatten out the execution list from a mix of middleware chains and handlers.
-        List<HttpHandler> handlers = getHandlersFromExecList(pathChain.getExec());
-        if (handlers.size() > 0) {
-            // If a matcher already exists for the given type, at to that instead of creating a new one.
-            PathTemplateMatcher<String> pathTemplateMatcher = methodToMatcherMap.containsKey(method) ? methodToMatcherMap.get(method) : new PathTemplateMatcher<>();
-            pathTemplateMatcher.add(pathChain.getPath(), Integer.toString(randInt));
-            methodToMatcherMap.put(method, pathTemplateMatcher);
-            handlerListById.put(Integer.toString(randInt), handlers);
         }
     }
 
