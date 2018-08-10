@@ -199,7 +199,9 @@ public class Handler {
         List<HttpHandler> handlersFromExecList = new ArrayList<>();
         if (execs != null) {
             for (String exec : execs) {
-                handlersFromExecList.addAll(handlerListById.get(exec));
+                List<HttpHandler> handerList = handlerListById.get(exec);
+                if(handerList == null) throw new RuntimeException("Unknown handler or chain: " + exec);
+                handlersFromExecList.addAll(handerList);
             }
         }
         return handlersFromExecList;
@@ -241,7 +243,9 @@ public class Handler {
                 List<String> chain = config.getChains().get(chainName);
                 List<HttpHandler> handlerChain = new ArrayList<>();
                 for (String chainItemName : chain) {
-                    handlerChain.add(handlers.get(chainItemName));
+                    HttpHandler chainItem = handlers.get(chainItemName);
+                    if(chainItem == null) throw new RuntimeException("Chain " + chainName + " uses Unknown handler: " + chainItemName);
+                    handlerChain.add(chainItem);
                 }
                 handlerListById.put(chainName, handlerChain);
             }
