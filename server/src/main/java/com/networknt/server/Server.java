@@ -120,16 +120,16 @@ public class Server {
         StartupHookProvider[] startupHookProviders = SingletonServiceFactory.getBeans(StartupHookProvider.class);
         if(startupHookProviders != null) Arrays.stream(startupHookProviders).forEach(s -> s.onStartup());
 
-        HttpHandler handler = null;
-
-        // API routing handler or others handler implemented by application developer.
-        HandlerProvider handlerProvider = SingletonServiceFactory.getBean(HandlerProvider.class);
-        if(handlerProvider != null) {
-            handler = handlerProvider.getHandler();
-        }
-
         // For backwards compatibility, check if a handler.yml has been included. If not, default to original configuration.
         if (Handler.config == null || !Handler.config.isEnabled()) {
+
+            HttpHandler handler = null;
+
+            // API routing handler or others handler implemented by application developer.
+            HandlerProvider handlerProvider = SingletonServiceFactory.getBean(HandlerProvider.class);
+            if(handlerProvider != null) {
+                handler = handlerProvider.getHandler();
+            }
             if (handler == null) {
                 logger.error("Unable to start the server - no route handler provider available in service.yml");
                 throw new RuntimeException("Unable to start the server - no route handler provider available in service.yml");
