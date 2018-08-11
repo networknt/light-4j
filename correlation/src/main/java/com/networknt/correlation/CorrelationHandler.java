@@ -25,7 +25,6 @@ import com.networknt.utility.Util;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.HttpString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -53,7 +52,7 @@ public class CorrelationHandler implements MiddlewareHandler {
     private volatile HttpHandler next;
 
     public CorrelationHandler() {
-
+        if(logger.isInfoEnabled()) logger.info("CorrelationHandler is loaded.");
     }
 
     @Override

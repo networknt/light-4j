@@ -13,19 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.networknt.correlation;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * Created by steve on 29/09/16.
  */
 public class CorrelationConfig {
     boolean enabled;
-
-    @JsonIgnore
-    String description;
 
     public CorrelationConfig() {
     }
@@ -37,13 +31,4 @@ public class CorrelationConfig {
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
 }

@@ -1,3 +1,4 @@
+# Correlation Id Handler Configuration
 ---
-description: Correlation Handler
+# If enabled is true, the handler will be injected into the request and response chain.
 enabled: true
