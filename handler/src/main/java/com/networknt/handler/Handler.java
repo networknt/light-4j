@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import static io.undertow.util.PathTemplateMatch.ATTACHMENT_KEY;
+
 /**
  * @author Nicholas Azar
  */
@@ -152,6 +154,11 @@ public class Handler {
             PathTemplateMatcher.PathMatchResult<String> result = pathTemplateMatcher.match(httpServerExchange.getRequestPath());
             if (result != null) {
                 // Found a match, configure and return true;
+                // Add path variables to query params.
+                httpServerExchange.putAttachment(ATTACHMENT_KEY, new io.undertow.util.PathTemplateMatch(result.getMatchedTemplate(), result.getParameters()));
+                for (Map.Entry<String, String> entry : result.getParameters().entrySet()) {
+                    httpServerExchange.addQueryParam(entry.getKey(), entry.getValue());
+                }
                 String id = result.getValue();
                 httpServerExchange.putAttachment(CHAIN_ID, id);
                 httpServerExchange.putAttachment(CHAIN_SEQ, 0);
