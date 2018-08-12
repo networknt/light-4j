@@ -98,6 +98,25 @@ public class JwtIssuer {
     }
 
     /**
+     * Construct a default JwtClaims
+     *
+     * @return JwtClaims
+     */
+    public static JwtClaims getJwtClaimsWithExpiresIn(int expiresIn) {
+
+        JwtClaims claims = new JwtClaims();
+
+        claims.setIssuer(jwtConfig.getIssuer());
+        claims.setAudience(jwtConfig.getAudience());
+        claims.setExpirationTimeMinutesInTheFuture(expiresIn/60);
+        claims.setGeneratedJwtId(); // a unique identifier for the token
+        claims.setIssuedAtToNow();  // when the token was issued/created (now)
+        claims.setNotBeforeMinutesInThePast(2); // time before which the token is not yet valid (2 minutes ago)
+        claims.setClaim("version", jwtConfig.getVersion());
+        return claims;
+    }
+
+    /**
      * Get private key from java key store
      *
      * @param filename Key store file name
