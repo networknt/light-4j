@@ -5,11 +5,11 @@ tls:
   # trust store contains certifictes that server needs. Enable if tls is used.
   loadTrustStore: true
   # trust store location can be specified here or system properties javax.net.ssl.trustStore and password javax.net.ssl.trustStorePassword
-  trustStore: tls/client.truststore
+  trustStore: client.truststore
   # key store contains client key and it should be loaded if two-way ssl is uesed.
   loadKeyStore: true
   # key store location
-  keyStore: tls/client.keystore
+  keyStore: client.keystore
 oauth:
   token:
     tokenRenewBeforeExpired: 4000

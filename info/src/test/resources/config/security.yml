@@ -12,8 +12,8 @@ enableMockJwt: false
 # JWT signature public certificates. kid and certificate path mappings.
 jwt:
   certificate:
-    '100': oauth/primary.crt
-    '101': oauth/secondary.crt
+    '100': primary.crt
+    '101': secondary.crt
   clockSkewInSeconds: 60
 
 # Enable or disable JWT token logging for audit. This is to log the entire token

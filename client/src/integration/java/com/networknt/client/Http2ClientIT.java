@@ -20,7 +20,6 @@ import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.jwt.consumer.JwtContext;
-import org.jose4j.jwx.JsonWebStructure;
 import org.jose4j.lang.JoseException;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -57,10 +56,10 @@ public class Http2ClientIT {
     public static final String API = "/api";
     public static final String KEY = "/oauth2/key";
 
-    private static final String SERVER_KEY_STORE = "tls/server.keystore";
-    private static final String SERVER_TRUST_STORE = "tls/server.truststore";
-    private static final String CLIENT_KEY_STORE = "tls/client.keystore";
-    private static final String CLIENT_TRUST_STORE = "tls/client.truststore";
+    private static final String SERVER_KEY_STORE = "server.keystore";
+    private static final String SERVER_TRUST_STORE = "server.truststore";
+    private static final String CLIENT_KEY_STORE = "client.keystore";
+    private static final String CLIENT_TRUST_STORE = "client.truststore";
     private static final char[] STORE_PASSWORD = "password".toCharArray();
 
     private static XnioWorker worker;
@@ -899,7 +898,7 @@ public class Http2ClientIT {
         String jwt;
 
         RSAPrivateKey privateKey = (RSAPrivateKey) getPrivateKey(
-                "/config/oauth/primary.jks", "password", "selfsigned");
+                "/config/primary.jks", "password", "selfsigned");
 
         // A JWT is a JWS and/or a JWE with JSON claims as the payload.
         // In this example it is a JWS nested inside a JWE

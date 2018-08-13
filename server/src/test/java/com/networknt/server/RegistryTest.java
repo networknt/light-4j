@@ -43,7 +43,7 @@ public class RegistryTest {
         map.put("httpPort", 8080);
         map.put("enableHttps", true);
         map.put("httpsPort", 8443);
-        map.put("keystoreName", "tls/server.keystore");
+        map.put("keystoreName", "server.keystore");
         map.put("keystorePass", "secret");
         map.put("keyPass", "secret");
         map.put("serviceId", "com.networknt.apia-1.0.0");
