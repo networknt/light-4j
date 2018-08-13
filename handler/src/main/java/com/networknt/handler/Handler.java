@@ -215,6 +215,32 @@ public class Handler {
     }
 
     /**
+     * Helper method for generating the instance of a handler from its string definition in config. Ie. No mapped
+     * values for setters, or list of constructor fields.
+     * To note: It could either implement HttpHandler, or HandlerProvider.
+     *
+     * @param handler
+     */
+    private static void evalStringDefinedHandler(String handler) throws Exception {
+        Tuple<String, Class> namedClass = splitClassAndName(handler);
+
+        Object handlerOrProviderObject = namedClass.second.newInstance();
+        HttpHandler resolvedHandler;
+        if (handlerOrProviderObject instanceof HttpHandler) {
+            resolvedHandler = (HttpHandler) handlerOrProviderObject;
+        } else if (handlerOrProviderObject instanceof HandlerProvider) {
+            resolvedHandler = ((HandlerProvider)handlerOrProviderObject).getHandler();
+        } else {
+            // TODO Should we skip here or fail fast?
+            throw new RuntimeException("Unsupported type of handler provided: " + handlerOrProviderObject);
+//          logger.warn("SKIPPING - Unsupported type of handler provided: " + handlerOrProviderObject);
+//          return;
+        }
+        handlers.put(namedClass.first, resolvedHandler);
+        handlerListById.put(namedClass.first, Collections.singletonList(resolvedHandler));
+    }
+
+    /**
      * Construct the named map of handlers.
      * @throws Exception
      */
@@ -223,10 +249,7 @@ public class Handler {
             for (Object handler : config.getHandlers()) {
                 // If the handler is configured as just a string, it's a fully qualified class name with a default constructor.
                 if (handler instanceof String) {
-                    Tuple<String, Class> namedClass = splitClassAndName((String) handler);
-                    HttpHandler httpHandler = (HttpHandler) namedClass.second.newInstance();
-                    handlers.put(namedClass.first, httpHandler);
-                    handlerListById.put(namedClass.first, Collections.singletonList(httpHandler));
+                    evalStringDefinedHandler((String) handler);
                 } else if (handler instanceof Map) {
                     // If the handler is a map, the keys are the class name, values are the parameters.
                     for (Map.Entry<String, Object> entry : ((Map<String, Object>) handler).entrySet()) {
