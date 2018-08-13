@@ -1,5 +1,5 @@
 # Consul URL for accessing APIs
-consulUrl: https://198.55.49.188:8500
+consulUrl: https://localhost:8500
 # deregister the service after the amount of time after health check failed.
 deregisterAfter: 90m
 # health check interval for TCP or HTTP check. Or it will be the TTL for TTL check. Every 10 seconds,
