@@ -1,7 +1,7 @@
 ---
 key:
   kid: '100'
-  filename: "/config/oauth/primary.jks"
+  filename: "primary.jks"
   password: password
   keyName: selfsigned
 issuer: urn:com:networknt:oauth2:v1

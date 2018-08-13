@@ -19,13 +19,13 @@ enableHttps: true
 enableHttp2: true
 
 # Keystore file name in config folder. KeystorePass is in secret.yml to access it.
-keystoreName: tls/server.keystore
+keystoreName: server.keystore
 
 # Flag that indicate if two way TLS is enabled. Not recommended in docker container.
 enableTwoWayTls: false
 
 # Truststore file name in config folder. TruststorePass is in secret.yml to access it.
-truststoreName: tls/server.truststore
+truststoreName: server.truststore
 
 # Unique service identifier. Used in service registration and discovery etc.
 serviceId: com.networknt.petstore-1.0.0

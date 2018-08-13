@@ -146,7 +146,7 @@ public class OauthHelperTest {
         String jwt;
 
         RSAPrivateKey privateKey = (RSAPrivateKey) getPrivateKey(
-                "/config/oauth/primary.jks", "password", "selfsigned");
+                "/config/primary.jks", "password", "selfsigned");
 
         // A JWT is a JWS and/or a JWE with JSON claims as the payload.
         // In this example it is a JWS nested inside a JWE
