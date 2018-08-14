@@ -40,12 +40,18 @@ public class Handler {
 	static final Map<String, List<HttpHandler>> handlerListById = new HashMap<>();
 	static final Map<HttpString, PathTemplateMatcher<String>> methodToMatcherMap = new HashMap<>();
 
-	static {
+//	static {
+//		initHandlers();
+//		initChains();
+//		initPaths();
+//	}
+
+	public static void init() {
 		initHandlers();
 		initChains();
-		initPaths();
+		initPaths();		
 	}
-
+	
 	/**
 	 * Construct the named map of handlers. Note: All handlers in use for this
 	 * microservice should be listed in this handlers list
@@ -272,12 +278,13 @@ public class Handler {
 				
 				for(HttpHandler handler : handlerList) {
 					if(handler instanceof MiddlewareHandler) {
-						// register the handler if it is a middleware handler
-						((MiddlewareHandler) handler).register();
-						 
 						// add the handler to the list of handlers to execute if it is enabled in the configuration
-						if( ((MiddlewareHandler) handler).isEnabled() )
+						if( ((MiddlewareHandler) handler).isEnabled() ) {
+							// register the handler if it is a middleware handler
+							((MiddlewareHandler) handler).register();
+						
 							handlersFromExecList.add(handler);
+						}
 					}	
 					else
 						handlersFromExecList.add(handler);
