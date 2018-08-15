@@ -62,9 +62,9 @@ public class ConsulService {
 
 	public ConsulService() {
 		if(config.tcpCheck) {
-			checkString = ",\"Check\":{\"ID\":\"check-%s\",\"DeregisterCriticalServiceAfter\":\"" + config.deregisterAfter + "\",\"TCP\":\"%s" + ":%s\",\"Interval\":\"" + config.checkInterval + "\"}}";
+			checkString = ",\"Check\":{\"ID\":\"check-%s\",\"DeregisterCriticalServiceAfter\":\"" + config.deregisterAfter + "\",\"TCP\":\"%s:%s\",\"Interval\":\"" + config.checkInterval + "\"}}";
 		} else if(config.httpCheck) {
-			checkString = ",\"Check\":{\"ID\":\"check-%s\",\"DeregisterCriticalServiceAfter\":\"" + config.deregisterAfter + "\",\"HTTP\":\"" + "https://%s:%s/health" + "\",\"Interval\":\"" + config.checkInterval + "\"}}";
+			checkString = ",\"Check\":{\"ID\":\"check-%s\",\"DeregisterCriticalServiceAfter\":\"" + config.deregisterAfter + "\",\"HTTP\":\"" + "https://%s:%s/health/%s" + "\",\"TLSSkipVerify\":true,\"Interval\":\"" + config.checkInterval + "\"}}";
 		} else {
 			checkString = ",\"Check\":{\"ID\":\"check-%s\",\"DeregisterCriticalServiceAfter\":\"" + config.deregisterAfter + "\",\"TTL\":\"" + config.checkInterval + "\"}}";
 		}
@@ -83,6 +83,6 @@ public class ConsulService {
 				+ "\",\"Tags\":[\"" + s
 				+ "\"],\"Address\":\"" + address
 				+ "\",\"Port\":" + port
-				+ String.format(checkString, name, address, port);
+				+ String.format(checkString, id, address, port, name);
 	}
 }
