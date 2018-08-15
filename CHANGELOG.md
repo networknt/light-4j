@@ -1,5 +1,42 @@
 # Change Log
 
+## [1.5.18](https://github.com/networknt/light-4j/tree/1.5.18) (2018-08-15)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.17...1.5.18)
+
+**Implemented enhancements:**
+
+- Support HandlerProvider definitions in handler.yml configuration definitions [\#258](https://github.com/networknt/light-4j/issues/258)
+- When stopping the server, give 30 seconds grace period to let service discovery propagate to all clients [\#20](https://github.com/networknt/light-4j/issues/20)
+
+**Fixed bugs:**
+
+- Fix issue causing path variables not to show up in query params when using new handler config [\#250](https://github.com/networknt/light-4j/issues/250)
+- Reproduce issue in handler chaining, ensure that the MiddlewareHandler interface is respected [\#247](https://github.com/networknt/light-4j/issues/247)
+
+**Closed issues:**
+
+- Re-starting Server no longer works [\#263](https://github.com/networknt/light-4j/issues/263)
+- health endpoint with serviceId as path parameter [\#262](https://github.com/networknt/light-4j/issues/262)
+- Address graceful server shutdown while encountering an exception during start-up [\#261](https://github.com/networknt/light-4j/issues/261)
+- add a default consul.yml for consul client [\#260](https://github.com/networknt/light-4j/issues/260)
+- flatten the config files into the same directory for k8s [\#257](https://github.com/networknt/light-4j/issues/257)
+- add getJwtClaimsWithExpiresIn for digital signing only in light-oauth2 token service [\#256](https://github.com/networknt/light-4j/issues/256)
+- remove description in the CorrelationHandler config file [\#255](https://github.com/networknt/light-4j/issues/255)
+- enable http2 for consul client when TLS is enabled [\#246](https://github.com/networknt/light-4j/issues/246)
+- catastrophic setExchangeStatus calls without args [\#244](https://github.com/networknt/light-4j/issues/244)
+- upgrade to undertow 2.0.11.Final [\#243](https://github.com/networknt/light-4j/issues/243)
+- several enhancements for Consul registration [\#242](https://github.com/networknt/light-4j/issues/242)
+- networknt page is not working [\#238](https://github.com/networknt/light-4j/issues/238)
+- extend Http2Client to OAuth 2.0 provider communication to support arbitrary number of parameters [\#181](https://github.com/networknt/light-4j/issues/181)
+
+**Merged pull requests:**
+
+- Adding HandlerProvider support to list of handlers. [\#259](https://github.com/networknt/light-4j/pull/259) ([NicholasAzar](https://github.com/NicholasAzar))
+- Don't require ignored config [\#254](https://github.com/networknt/light-4j/pull/254) ([logi](https://github.com/logi))
+-  Descriptive Exception on unknown chain or handler in handler.yml [\#253](https://github.com/networknt/light-4j/pull/253) ([logi](https://github.com/logi))
+- Fix issue causing query params to be missing from exchange. [\#251](https://github.com/networknt/light-4j/pull/251) ([NicholasAzar](https://github.com/NicholasAzar))
+- Safer set exchange status [\#245](https://github.com/networknt/light-4j/pull/245) ([logi](https://github.com/logi))
+
 ## [1.5.17](https://github.com/networknt/light-4j/tree/1.5.17) (2018-07-15)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.16...1.5.17)
 
