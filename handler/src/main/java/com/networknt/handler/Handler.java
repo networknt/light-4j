@@ -116,7 +116,9 @@ public class Handler {
 					PathTemplateMatcher<String> pathTemplateMatcher = methodToMatcherMap.containsKey(method)
 							? methodToMatcherMap.get(method)
 							: new PathTemplateMatcher<>();
-					pathTemplateMatcher.add(pathChain.getPath(), randInt.toString());
+							
+					if(pathTemplateMatcher.get(pathChain.getPath()) == null)
+						pathTemplateMatcher.add(pathChain.getPath(), randInt.toString());
 					methodToMatcherMap.put(method, pathTemplateMatcher);
 					handlerListById.put(randInt.toString(), handlers);
 				}
