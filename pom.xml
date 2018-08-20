@@ -127,7 +127,7 @@
         <module>zookeeper</module>
         <module>cors</module>
         <module>cluster</module>
-        <module>limit</module>
+        <module>ratelimit</module>
         <module>decryptor</module>
         <module>common</module>
         <module>email</module>
@@ -135,8 +135,9 @@
         <module>resource</module>
         <module>content</module>
         <module>datasource</module>
-        <module>basic</module>
-        <module>deref</module>
+        <module>basicauth</module>
+        <module>dereftoken</module>
+        <module>ipwhitelist</module>
     </modules>
 
     <dependencyManagement>
