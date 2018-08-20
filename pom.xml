@@ -127,7 +127,7 @@
         <module>zookeeper</module>
         <module>cors</module>
         <module>cluster</module>
-        <module>ratelimit</module>
+        <module>rate-limit</module>
         <module>decryptor</module>
         <module>common</module>
         <module>email</module>
