@@ -134,7 +134,7 @@
         <module>server</module>
         <module>resource</module>
         <module>content</module>
-        <module>datasource</module>
+        <module>data-source</module>
         <module>basic-auth</module>
         <module>deref-token</module>
         <module>ip-whitelist</module>
