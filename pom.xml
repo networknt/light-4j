@@ -137,7 +137,7 @@
         <module>datasource</module>
         <module>basic-auth</module>
         <module>deref-token</module>
-        <module>ipwhitelist</module>
+        <module>ip-whitelist</module>
     </modules>
 
     <dependencyManagement>
