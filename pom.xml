@@ -135,7 +135,7 @@
         <module>resource</module>
         <module>content</module>
         <module>datasource</module>
-        <module>basicauth</module>
+        <module>basic-auth</module>
         <module>dereftoken</module>
         <module>ipwhitelist</module>
     </modules>
