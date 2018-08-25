@@ -391,6 +391,22 @@ ERR11301:
 
 # 11350-11399 light-router
 
+# 11400-11499 light-config-server
+ERR11400:
+  statusCode: 400
+  code: ERR11400
+  message: CONFIG_SERVER_INITIALIZED
+  description: The config server has been initialized already with an encryption key.
+ERR11401:
+  statusCode: 400
+  code: ERR11401
+  message: INVALID_INITIALIZE_KEY_FORMAT
+  description: Invalid initialize key format for light-config-server.
+ERR11402:
+  statusCode: 400
+  code: ERR11402
+  message: ERROR_WRITING_KEY_FILE
+  description: Error writing key file to path %s.
 
 # 11500 - 11600 GraphQL valdator errors
 ERR11500:
