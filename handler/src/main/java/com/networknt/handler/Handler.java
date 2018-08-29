@@ -150,7 +150,7 @@ public class Handler {
 	 *            The current requests server exchange.
 	 * @param next
 	 *            The next HttpHandler to go to if it's not null.
-	 * @throws Exception
+	 * @throws Exception exception
 	 */
 	public static void next(HttpServerExchange httpServerExchange, HttpHandler next) throws Exception {
 		if (next != null) {
@@ -171,7 +171,8 @@ public class Handler {
 	 * @param returnToOrigFlow
 	 *            True if you want to call the next handler defined in your original
 	 *            chain after the provided execName is completed. False otherwise.
-	 * @throws Exception
+	 * @throws Exception exception
+	 *
 	 */
 	public static void next(HttpServerExchange httpServerExchange, String execName, Boolean returnToOrigFlow)
 			throws Exception {
@@ -220,7 +221,7 @@ public class Handler {
 	 * @param next
 	 *            If not null, return this.
 	 * @return The next handler in the chain, or next if it's not null.
-	 * @throws Exception
+	 * @throws Exception exception
 	 */
 	public static HttpHandler getNext(HttpServerExchange httpServerExchange, HttpHandler next) throws Exception {
 		if (next != null) {
