@@ -245,6 +245,11 @@ ERR10048:
   code: ERR10048
   message: PATH_NOT_IMPLEMENTED
   description: No handler defined for path '%s'
+ERR10049:
+  statusCode: 403
+  code: ERR10049
+  message: INVALID_IP_FOR_PATH
+  description: Peer IP %s is not in the whitelist for the endpoint %s
 
 
 # 11000-11500 swagger-validator errors
