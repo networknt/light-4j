@@ -1,6 +1,8 @@
 package com.networknt.registry;
 
 import com.networknt.utility.Constants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,6 +14,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Steve Hu
  */
 public class URLImpl implements URL {
+    private static final Logger logger = LoggerFactory.getLogger(URLImpl.class);
+
     private String protocol;
 
     private String host;
@@ -90,6 +94,16 @@ public class URLImpl implements URL {
             url = url.substring(0, i);
         }
         if (url.length() > 0) host = url;
+        if(port == 0) {
+            // set the default port based on the protocol
+            if("http".equalsIgnoreCase(protocol)) {
+                port = 80;
+            } else if("https".equalsIgnoreCase(protocol)) {
+                port = 443;
+            } else {
+                logger.error("Unknown protocol " + protocol);
+            }
+        }
         return new URLImpl(protocol, host, port, path, parameters);
     }
 

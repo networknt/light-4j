@@ -10,5 +10,6 @@ singletons:
       parameters:
         code: http://192.168.1.100:6881,http://192.168.1.101:6881
         token: http://192.168.1.100:6882
+        com.networknt.test-1.0.0: http://localhost,https://localhost
 - com.networknt.registry.Registry:
   - com.networknt.registry.support.DirectRegistry
