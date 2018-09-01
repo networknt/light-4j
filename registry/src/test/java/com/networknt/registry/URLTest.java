@@ -104,4 +104,8 @@ public class URLTest {
         Assert.assertNotNull(newUrl);
     }
 
+    @Test
+    public void testDefaultPort() {
+
+    }
 }
