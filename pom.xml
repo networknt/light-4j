@@ -103,6 +103,7 @@
         <module>config</module>
         <module>utility</module>
         <module>http-string</module>
+        <module>http-url</module>
         <module>security</module>
         <module>client</module>
         <module>audit</module>
@@ -157,6 +158,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>http-string</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>http-url</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
