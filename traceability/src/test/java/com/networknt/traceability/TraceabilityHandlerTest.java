@@ -18,6 +18,7 @@ package com.networknt.traceability;
 
 import com.networknt.client.Http2Client;
 import com.networknt.exception.ClientException;
+import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.Constants;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
@@ -26,8 +27,6 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import io.undertow.util.StringReadChannelListener;
-import io.undertow.util.StringWriteChannelListener;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -101,7 +100,7 @@ public class TraceabilityHandlerTest {
         try {
             ClientRequest request = new ClientRequest().setPath("/get").setMethod(Methods.GET);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
-            request.getRequestHeaders().put(Constants.TRACEABILITY_ID, "12345");
+            request.getRequestHeaders().put(HttpStringConstants.TRACEABILITY_ID, "12345");
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
         } catch (Exception e) {
@@ -116,7 +115,7 @@ public class TraceabilityHandlerTest {
             String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
             Assert.assertNotNull(body);
             Assert.assertEquals("get", body);
-            String tid = reference.get().getResponseHeaders().getFirst(Constants.TRACEABILITY_ID);
+            String tid = reference.get().getResponseHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
             Assert.assertEquals("12345", tid);
         }
     }
@@ -150,7 +149,7 @@ public class TraceabilityHandlerTest {
             String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
             Assert.assertNotNull(body);
             Assert.assertEquals("get", body);
-            String tid = reference.get().getResponseHeaders().getFirst(Constants.TRACEABILITY_ID);
+            String tid = reference.get().getResponseHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
             Assert.assertNull(tid);
         }
     }
@@ -175,7 +174,7 @@ public class TraceabilityHandlerTest {
                     final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/post");
                     request.getRequestHeaders().put(Headers.HOST, "localhost");
                     request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/json");
-                    request.getRequestHeaders().put(Constants.TRACEABILITY_ID, "12345");
+                    request.getRequestHeaders().put(HttpStringConstants.TRACEABILITY_ID, "12345");
                     request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
                     connection.sendRequest(request, client.createClientCallback(reference, latch, post));
                 }
@@ -194,7 +193,7 @@ public class TraceabilityHandlerTest {
             String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
             Assert.assertNotNull(body);
             Assert.assertEquals("post", body);
-            String tid = reference.get().getResponseHeaders().getFirst(Constants.TRACEABILITY_ID);
+            String tid = reference.get().getResponseHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
             Assert.assertEquals("12345", tid);
         }
     }

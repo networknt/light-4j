@@ -7,6 +7,7 @@ import com.networknt.consul.ConsulConfig;
 import com.networknt.consul.ConsulConstants;
 import com.networknt.consul.ConsulResponse;
 import com.networknt.consul.ConsulService;
+import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.Constants;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
@@ -76,7 +77,7 @@ public class ConsulClientImpl implements ConsulClient {
 			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
-			if(token != null) request.getRequestHeaders().put(Constants.CONSUL_TOKEN, token);
+			if(token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
 			int statusCode = reference.get().getResponseCode();
@@ -102,7 +103,7 @@ public class ConsulClientImpl implements ConsulClient {
 			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
-			if(token != null) request.getRequestHeaders().put(Constants.CONSUL_TOKEN, token);
+			if(token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
 			int statusCode = reference.get().getResponseCode();
@@ -127,7 +128,7 @@ public class ConsulClientImpl implements ConsulClient {
 				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, optionMap).get();
 			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
-			if(token != null) request.getRequestHeaders().put(Constants.CONSUL_TOKEN, token);
+			if(token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
 			request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
 			connection.sendRequest(request, client.createClientCallback(reference, latch, json));
@@ -154,7 +155,7 @@ public class ConsulClientImpl implements ConsulClient {
 
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
-			if(token != null) request.getRequestHeaders().put(Constants.CONSUL_TOKEN, token);
+			if(token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
 			int statusCode = reference.get().getResponseCode();
@@ -184,7 +185,7 @@ public class ConsulClientImpl implements ConsulClient {
 				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, optionMap).get();
 			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(path);
-			if(token != null) request.getRequestHeaders().put(Constants.CONSUL_TOKEN, token);
+			if(token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
