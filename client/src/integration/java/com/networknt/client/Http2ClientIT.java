@@ -1,6 +1,7 @@
 package com.networknt.client;
 
 import com.networknt.config.Config;
+import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.Constants;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
@@ -112,9 +113,9 @@ public class Http2ClientIT {
                             .addExactPath(MESSAGE, exchange -> sendMessage(exchange))
                             .addExactPath(KEY, exchange -> sendMessage(exchange))
                             .addExactPath(API, (exchange) -> {
-                                boolean hasScopeToken = exchange.getRequestHeaders().contains(Constants.SCOPE_TOKEN);
+                                boolean hasScopeToken = exchange.getRequestHeaders().contains(HttpStringConstants.SCOPE_TOKEN);
                                 Assert.assertTrue(hasScopeToken);
-                                String scopeToken = exchange.getRequestHeaders().get(Constants.SCOPE_TOKEN, 0);
+                                String scopeToken = exchange.getRequestHeaders().get(HttpStringConstants.SCOPE_TOKEN, 0);
                                 boolean expired = isTokenExpired(scopeToken);
                                 Assert.assertFalse(expired);
                                 exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");

@@ -18,6 +18,7 @@ package com.networknt.correlation;
 
 import com.networknt.client.Http2Client;
 import com.networknt.exception.ClientException;
+import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.Constants;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
@@ -83,11 +84,11 @@ public class CorrelationHandlerTest {
     static RoutingHandler getTestHandler() {
         return Handlers.routing()
                 .add(Methods.GET, "/with", exchange -> {
-                    String cid = exchange.getRequestHeaders().getFirst(Constants.CORRELATION_ID);
+                    String cid = exchange.getRequestHeaders().getFirst(HttpStringConstants.CORRELATION_ID);
                     exchange.getResponseSender().send(cid);
                 })
                 .add(Methods.GET, "/without", exchange -> {
-                    String cid = exchange.getRequestHeaders().getFirst(Constants.CORRELATION_ID);
+                    String cid = exchange.getRequestHeaders().getFirst(HttpStringConstants.CORRELATION_ID);
                     exchange.getResponseSender().send(cid);
                 });
     }
@@ -106,7 +107,7 @@ public class CorrelationHandlerTest {
         try {
             ClientRequest request = new ClientRequest().setPath("/with").setMethod(Methods.GET);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
-            request.getRequestHeaders().put(Constants.CORRELATION_ID, "cid");
+            request.getRequestHeaders().put(HttpStringConstants.CORRELATION_ID, "cid");
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
         } catch (Exception e) {
