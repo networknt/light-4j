@@ -3,6 +3,9 @@ package com.networknt.email;
 import com.networknt.common.DecryptUtil;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
+import com.sun.mail.util.MailSSLSocketFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
@@ -12,6 +15,7 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
+import java.security.GeneralSecurityException;
 import java.util.Map;
 import java.util.Properties;
 
@@ -21,6 +25,7 @@ import java.util.Properties;
  * @author Steve Hu
  */
 public class EmailSender {
+    private static final Logger logger = LoggerFactory.getLogger(EmailSender.class);
     public static final String CONFIG_EMAIL = "email";
     public static final String CONFIG_SECRET = "secret";
 
@@ -38,7 +43,7 @@ public class EmailSender {
      * @param content email content
      * @throws MessagingException message exception
      */
-    public void sendMail (String to, String subject, String content) throws MessagingException{
+    public void sendMail (String to, String subject, String content) throws MessagingException {
         Properties props = new Properties();
         props.put("mail.smtp.user", emailConfg.getUser());
         props.put("mail.smtp.host", emailConfg.getHost());
@@ -46,6 +51,7 @@ public class EmailSender {
         props.put("mail.smtp.starttls.enable","true");
         props.put("mail.smtp.debug", emailConfg.getDebug());
         props.put("mail.smtp.auth", emailConfg.getAuth());
+        props.put("mail.smtp.ssl.trust", emailConfg.host);
 
         SMTPAuthenticator auth = new SMTPAuthenticator(emailConfg.getUser(), (String)secret.get(SecretConstants.EMAIL_PASSWORD));
         Session session = Session.getInstance(props, auth);
@@ -61,6 +67,7 @@ public class EmailSender {
 
         // Send message
         Transport.send(message);
+        if(logger.isInfoEnabled()) logger.info("An email has been sent to " + to + " with subject " + subject);
     }
 
     /**
@@ -80,6 +87,7 @@ public class EmailSender {
         props.put("mail.smtp.starttls.enable","true");
         props.put("mail.smtp.debug", emailConfg.getDebug());
         props.put("mail.smtp.auth", emailConfg.getAuth());
+        props.put("mail.smtp.ssl.trust", emailConfg.host);
 
         SMTPAuthenticator auth = new SMTPAuthenticator(emailConfg.getUser(), (String)secret.get(SecretConstants.EMAIL_PASSWORD));
         Session session = Session.getInstance(props, auth);
@@ -114,6 +122,7 @@ public class EmailSender {
 
         // Send message
         Transport.send(message);
+        if(logger.isInfoEnabled()) logger.info("An email has been sent to " + to + " with subject " + subject);
     }
 
     private static class SMTPAuthenticator extends Authenticator {

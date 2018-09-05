@@ -6,7 +6,7 @@ import javax.mail.MessagingException;
 import java.io.File;
 
 public class EmailSenderTest {
-    //@Test
+    @Test
     public void testEmail() {
         EmailSender sender = new EmailSender();
         try {
@@ -16,7 +16,7 @@ public class EmailSenderTest {
         }
     }
 
-    //@Test
+    @Test
     public void testEmailWithAttachment() {
         EmailSender sender = new EmailSender();
         try {
