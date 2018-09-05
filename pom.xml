@@ -132,7 +132,7 @@
         <module>rate-limit</module>
         <module>decryptor</module>
         <module>common</module>
-        <module>email</module>
+        <module>email-sender</module>
         <module>server</module>
         <module>resource</module>
         <module>content</module>
@@ -304,7 +304,7 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
-                <artifactId>email</artifactId>
+                <artifactId>email-sender</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

@@ -25,9 +25,9 @@
         <relativePath>..</relativePath>
     </parent>
 
-    <artifactId>email</artifactId>
+    <artifactId>email-sender</artifactId>
     <packaging>jar</packaging>
-    <description>A email utility that is repsonsible for sending emails.</description>
+    <description>An email utility that is responsible for sending emails.</description>
 
     <dependencies>
         <dependency>
