@@ -49,7 +49,7 @@ public class Handler {
 //		initPaths();
 //	}
 
-	public static void init() throws Exception {
+	public static void init() {
 		initHandlers();
 		initChains();
 		initPaths();		
@@ -100,7 +100,7 @@ public class Handler {
 	/**
 	 * Build "handlerListById" and "reqTypeMatcherMap" from the paths in the config.
 	 */
-	static void initPaths() throws Exception {
+	static void initPaths() {
 		if (config != null && config.getPaths() != null) {
 			for (PathChain pathChain : config.getPaths()) {
 				pathChain.validate(configName + " config"); // raises exception on misconfiguration
@@ -116,7 +116,7 @@ public class Handler {
 	/**
 	 * Add PathChains crated from the EndpointSource given in sourceChain
 	 */
-	private static void addSourceChain(PathChain sourceChain) throws Exception {
+	private static void addSourceChain(PathChain sourceChain) {
 		try {
 			Class sourceClass = Class.forName(sourceChain.getSource());
 			EndpointSource source = (EndpointSource)sourceClass.newInstance();
@@ -130,7 +130,11 @@ public class Handler {
 			}
 		} catch (Exception e) {
 			logger.error("Failed to inject handler.yml paths from: " + sourceChain);
-			throw e;
+			if(e instanceof RuntimeException) {
+				throw (RuntimeException)e;
+			} else {
+				throw new RuntimeException(e);
+			}
 		}
 	}
 

@@ -31,14 +31,14 @@ public class HandlerTest {
     }
 
     @Test
-    public void validConfig_init_handlersCreated() throws Exception {
+    public void validConfig_init_handlersCreated() {
     	Handler.init();
         Map<String, List<HttpHandler>> handlers = Handler.handlerListById;
         Assert.assertEquals(1, handlers.get("third").size());
         Assert.assertEquals(2, handlers.get("secondBeforeFirst").size());
     }
 
-    private PathChain mkPathChain(String source, String path, String method, String... exec) throws Exception {
+    private PathChain mkPathChain(String source, String path, String method, String... exec) {
         PathChain pc = new PathChain();
         pc.setSource(source);
         pc.setPath(path);
@@ -60,7 +60,7 @@ public class HandlerTest {
     }
 
     @Test
-    public void mixedPathsAndSource() throws Exception {
+    public void mixedPathsAndSource() {
         Handler.config.setPaths(Arrays.asList(
             mkPathChain(null, "/my-api/first", "post", "third"),
             mkPathChain(MockEndpointSource.class.getName(), null, null, "secondBeforeFirst", "third"),
@@ -80,7 +80,7 @@ public class HandlerTest {
     }
 
     @Test
-    public void conflictingSourceAndPath_init_throws() throws Exception {
+    public void conflictingSourceAndPath_init_throws() {
         // Reconfigure path chain with an invalid path in the middle
         Handler.config.setPaths(Arrays.asList(
             mkPathChain(null, "/a/good/path", "POST", "third"),

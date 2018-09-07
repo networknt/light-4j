@@ -53,7 +53,7 @@ public class PathChain {
      * Validate the settings and raise Exception on error.
      * The origin is used to help locate problems.
      */
-    public void validate(String origin) throws Exception {
+    public void validate(String origin) {
         List<String> problems = new ArrayList<>();
         if(source == null) {
             if(path == null) {
@@ -69,7 +69,7 @@ public class PathChain {
             problems.add("Invalid HTTP method: " + method);
         }
         if(!problems.isEmpty()) {
-            throw new Exception("Bad paths element in " + origin + " [ " + String.join(" | ", problems) + " ]");
+            throw new RuntimeException("Bad paths element in " + origin + " [ " + String.join(" | ", problems) + " ]");
         }
     }
 }
