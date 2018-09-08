@@ -52,10 +52,10 @@ integration to production.
 
 ### Multiple frameworks for different type of microservices
 
-light-rest-4j is a RESTful microservice framework with OpenAPI specification for code generation and runtime security and validation
-light-graphql-4j is a GraphQL microservice framework that supports schema generation from IDL and plugin.
-light-hybrid-4j is a hybrid microservice framework that takes advantages of both monolithic and microservice architectures.
-light-eventuate is a messaging based microservice framework based on Kafka, event sourcing and CQRS
+- [light-rest-4j](https://github.com/networknt/light-rest-4j) is a RESTful microservice framework with OpenAPI specification for code generation and runtime security and validation
+- [light-graphql-4j](https://github.com/networknt/light-graphql-4j) is a GraphQL microservice framework that supports schema generation from IDL and plugin.
+- [light-hybrid-4j](https://github.com/networknt/light-hybrid-4j) is a hybrid microservice framework that takes advantages of both monolithic and microservice architectures.
+- [light-eventuate](https://github.com/networknt/light-eventuate-4j) is a messaging based microservice framework based on Kafka, event sourcing and CQRS
 
 ### Multiple languages support
 
