@@ -481,7 +481,41 @@ ERR11610:
   code: ERR11610
   message: USER_NOT_FOUND_BY_USERIDEMAIL
   description: User not found by userIdEmail %s.
-
+ERR11611:
+  statusCode: 400
+  code: ERR11611
+  message: USER_EMAIL_IS_USED
+  description: User email address %s is registered.
+ERR11612:
+  statusCode: 400
+  code: ERR11612
+  message: USER_ID_IS_USED
+  description: Userid %s is registered.
+ERR11613:
+  statusCode: 400
+  code: ERR11613
+  message: PASSWORD_NOT_MATCH
+  description: Password and passwordConfirm are not matched.
+ERR11614:
+  statusCode: 400
+  code: ERR11614
+  message: ERROR_HASHING_PASSWORD
+  description: Error in hashing password with exception %s.
+ERR11615:
+  statusCode: 400
+  code: ERR11615
+  message: ERROR_PARSING_USER
+  description: Error in parsing user to JSON with exception %s.
+ERR11616:
+  statusCode: 400
+  code: ERR11616
+  message: INVALID_SIGNIN_PASSWORD
+  description: Invalid signIn password.
+ERR11617:
+  statusCode: 400
+  code: ERR11617
+  message: USER_NOT_ACTIVATED
+  description: User %s is not activated.
 
 
 # OAuth2 service error 12000-13000
