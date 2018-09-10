@@ -2,6 +2,7 @@ package com.networknt.consul;
 
 public class ConsulConfig {
     String consulUrl;
+    int maxReqPerConn;
     String deregisterAfter;
     String checkInterval;
     boolean tcpCheck;
@@ -15,6 +16,10 @@ public class ConsulConfig {
     public void setConsulUrl(String consulUrl) {
         this.consulUrl = consulUrl;
     }
+
+    public int getMaxReqPerConn() { return maxReqPerConn; }
+
+    public void setMaxReqPerConn(int maxReqPerConn) { this.maxReqPerConn = maxReqPerConn; }
 
     public String getDeregisterAfter() {
         return deregisterAfter;
