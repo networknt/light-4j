@@ -15,7 +15,7 @@ public class HashUtilTest {
     @Test
     public void testPasswordHash() throws Exception {
         String p = "123456";
-        String hashedPass = HashUtil.generateStorngPasswordHash(p);
+        String hashedPass = HashUtil.generateStrongPasswordHash(p);
         System.out.println("hashedPass = " + hashedPass);
         Assert.assertTrue(HashUtil.validatePassword(p.toCharArray(), hashedPass));
     }
@@ -23,7 +23,7 @@ public class HashUtilTest {
     @Test
     public void testClientSecretHash() throws Exception {
         String s = "f6h1FTI8Q3-7UScPZDzfXA";
-        String hashedPass = HashUtil.generateStorngPasswordHash(s);
+        String hashedPass = HashUtil.generateStrongPasswordHash(s);
         System.out.println("hashedSecret = " + hashedPass);
         Assert.assertTrue(HashUtil.validatePassword(s.toCharArray(), hashedPass));
     }
