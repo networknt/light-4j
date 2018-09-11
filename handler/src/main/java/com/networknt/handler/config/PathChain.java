@@ -62,8 +62,12 @@ public class PathChain {
                 problems.add("You must specify method along with path: " + path);
             }
         } else {
-            if(path != null) problems.add("Conflicting source: " + source + " and path: " + path);
-            if(path != null) problems.add("Conflicting source: " + source + " and method: " + method);
+            if(path != null) {
+                problems.add("Conflicting source: " + source + " and path: " + path);
+            }
+            if(method != null) {
+                problems.add("Conflicting source: " + source + " and method: " + method);
+            }
         }
         if(method != null && !NetUtils.METHODS.contains(method.toUpperCase())) {
             problems.add("Invalid HTTP method: " + method);
