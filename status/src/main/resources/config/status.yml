@@ -296,9 +296,11 @@ ERR11008:
   code: ERR11008
   message: VALIDATOR_REQUEST_PARAMETER_COLLECTION_DUPLICATE_ITEMS
   description: Parameter %s does not allow duplicate values.
-
-# ERR11009:
-
+ERR11009:
+  statusCode: 400
+  code: ERR11009
+  message: VALIDATOR_REQUEST_PARAMETER_ENUM_INVALID
+  description: Value %s for parameter %s is not allowed. Allowed values are <%s>.
 ERR11010:
   statusCode: 400
   code: ERR11010
@@ -765,6 +767,49 @@ ERR12049:
   code: ERR12048
   message: PROVIDER_ID_INVALID
   description: Provider id invalid
+
+# Tokenization service
+ERR12100:
+  statusCode: 404
+  code: ERR12100
+  message: SCHEME_NOT_FOUND
+  description: Tokenizer scheme %s not found
+ERR12101:
+  statusCode: 400
+  code: ERR12101
+  message: CLIENT_ID_MISSING
+  description: Client_id is missing, JWT verification needs to be enable in security.yml
+ERR12102:
+  statusCode: 400
+  code: ERR12102
+  message: DATABASE_NOT_FOUND
+  description: Database not found from client_id %s to database mapping table.
+ERR12103:
+  statusCode: 400
+  code: ERR12103
+  message: DATASOURCE_NOT_CONFIGURED
+  description: DataSource %s is not configured in datasource.yml
+ERR12104:
+  statusCode: 400
+  code: ERR12104
+  message: FAIL_TO_QUERY_TOKEN_VAULT
+  description: Fail to query token_vault table in database %s
+ERR12105:
+  statusCode: 400
+  code: ERR12105
+  message: FAIL_TO_INSERT_TOKEN_VAULT
+  description: Fail to insert into token_vault table in database %s
+ERR12106:
+  statusCode: 400
+  code: ERR12106
+  message: FAIL_TO_DELETE_TOKEN_VAULT
+  description: Fail to delete from token_vault table in database %s
+ERR12107:
+  statusCode: 404
+  code: ERR12107
+  message: TOKEN_NOT_FOUND
+  description: Token %s not found in token_vault table in database %s
+  
 # 20000-29999 common error codes within your business domain.
 # It is highly recommended to have your error code shared within your organization or your line of business.
 # In that case, all your services can share the same status.yml which in org default config
