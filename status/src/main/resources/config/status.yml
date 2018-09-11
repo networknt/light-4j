@@ -263,11 +263,9 @@ ERR11001:
   code: ERR11001
   message: VALIDATOR_REQUEST_PARAMETER_MISSING
   description: Parameter %s is required but is missing.
-ERR11002:
-  statusCode: 400
-  code: ERR11002
-  message: VALIDATOR_REQUEST_PARAMETER_ENUM_INVALID
-  description: Value %s for parameter %s is not allowed. Allowed values are <%s>.
+
+# ERR11002:
+
 ERR11003:
   statusCode: 400
   code: ERR11003
@@ -298,11 +296,9 @@ ERR11008:
   code: ERR11008
   message: VALIDATOR_REQUEST_PARAMETER_COLLECTION_DUPLICATE_ITEMS
   description: Parameter %s does not allow duplicate values.
-ERR11009:
-  statusCode: 400
-  code: ERR11009
-  message: VALIDATOR_REQUEST_PARAMETER_ENUM_INVALID
-  description: Value %s for parameter %s is not allowed. Allowed values are <%s>.
+
+# ERR11009:
+
 ERR11010:
   statusCode: 400
   code: ERR11010
