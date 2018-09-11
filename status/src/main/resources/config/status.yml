@@ -263,9 +263,11 @@ ERR11001:
   code: ERR11001
   message: VALIDATOR_REQUEST_PARAMETER_MISSING
   description: Parameter %s is required but is missing.
-
-# ERR11002:
-
+ERR11002:
+  statusCode: 400
+  code: ERR11002
+  message: VALIDATOR_REQUEST_PARAMETER_ENUM_INVALID
+  description: Value %s for parameter %s is not allowed. Allowed values are <%s>.
 ERR11003:
   statusCode: 400
   code: ERR11003
