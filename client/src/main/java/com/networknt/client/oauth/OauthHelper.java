@@ -125,7 +125,7 @@ public class OauthHelper {
             postBody.put(SAMLBearerRequest.CLIENT_ASSERTION_TYPE_KEY, SAMLBearerRequest.CLIENT_ASSERTION_TYPE_VALUE);
             postBody.put(SAMLBearerRequest.CLIENT_ASSERTION_KEY, tokenRequest.getJwtClientAssertion());
             String requestBody = Http2Client.getFormDataString(postBody);
-            System.out.println(requestBody);
+            logger.debug(requestBody);
 
             connection.getIoThread().execute(new Runnable() {
 
