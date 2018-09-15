@@ -106,6 +106,90 @@ public class OauthHelper {
         return reference.get();
     }
 
+    public static TokenResponse getTokenFromSaml(SAMLBearerRequest tokenRequest) throws ClientException {
+        final AtomicReference<TokenResponse> reference = new AtomicReference<>();
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection;
+        try {
+            connection = client.connect(new URI(tokenRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, tokenRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+        } catch (Exception e) {
+            throw new ClientException(e);
+        }
+
+        try {
+
+            Map<String, String> postBody = new HashMap<String, String>();
+            postBody.put(SAMLBearerRequest.GRANT_TYPE_KEY , SAMLBearerRequest.GRANT_TYPE_VALUE );
+            postBody.put(SAMLBearerRequest.ASSERTION_KEY, tokenRequest.getSamlAssertion());
+            postBody.put(SAMLBearerRequest.CLIENT_ASSERTION_TYPE_KEY, SAMLBearerRequest.CLIENT_ASSERTION_TYPE_VALUE);
+            postBody.put(SAMLBearerRequest.CLIENT_ASSERTION_KEY, tokenRequest.getJwtClientAssertion());
+            String requestBody = Http2Client.getFormDataString(postBody);
+            System.out.println(requestBody);
+
+            connection.getIoThread().execute(new Runnable() {
+
+                @Override
+                public void run()  {
+                    final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(tokenRequest.getUri());
+                    request.getRequestHeaders().put(Headers.HOST, "localhost");
+                    request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+                    request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
+
+
+
+                    connection.sendRequest(request, new ClientCallback<ClientExchange>() {
+
+                        @Override
+                        public void completed(ClientExchange result) {
+                            new StringWriteChannelListener(requestBody).setup(result.getRequestChannel());
+                            result.setResponseListener(new ClientCallback<ClientExchange>() {
+                                @Override
+                                public void completed(ClientExchange result) {
+                                    new StringReadChannelListener(Http2Client.POOL) {
+
+                                        @Override
+                                        protected void stringDone(String string) {
+                                            logger.debug("getToken response = " + string);
+                                            reference.set(handleResponse(string));
+                                            latch.countDown();
+                                        }
+
+                                        @Override
+                                        protected void error(IOException e) {
+                                            logger.error("IOException:", e);
+                                            latch.countDown();
+                                        }
+                                    }.setup(result.getResponseChannel());
+                                }
+
+                                @Override
+                                public void failed(IOException e) {
+                                    logger.error("IOException:", e);
+                                    latch.countDown();
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void failed(IOException e) {
+                            logger.error("IOException:", e);
+                            latch.countDown();
+                        }
+                    });
+                }
+            });
+
+            latch.await(4, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            logger.error("IOException: ", e);
+            throw new ClientException(e);
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+        return reference.get();
+    }
+
     public static String getKey(KeyRequest keyRequest) throws ClientException {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
