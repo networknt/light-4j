@@ -68,6 +68,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
  * This is the entry point of the framework. It wrapped Undertow Core HTTP
  * server and controls the lifecycle of the server. It also orchestrate
@@ -463,7 +465,7 @@ public class Server {
 				} else {
 					// TODO test it out
 					FileOutputStream fos = new FileOutputStream(zipFile);
-					fos.write(reference.get().getAttachment(Http2Client.RESPONSE_BODY).getBytes());
+					fos.write(reference.get().getAttachment(Http2Client.RESPONSE_BODY).getBytes(UTF_8));
 					fos.close();
 					unzipFile(zipFile, targetMergeDirectory);
 				}
