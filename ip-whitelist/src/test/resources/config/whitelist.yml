@@ -1,0 +1,34 @@
+# IP Whitelist configuration
+---
+# Indicate if this handler is enabled or not
+enabled: true
+
+defaultAllow: true
+
+paths:
+  # For a particular endpoint(path@method), there are three IPs can access
+  '/health/com.networknt.petstore-1.0.0@get':
+  # IPv4 Exact
+  - '127.0.0.1'
+  # IPv4 Wildcard
+  - '10.10.*.*'
+  # IPv4 Slash
+  - '127.0.0.48/30'
+
+  # For a path, the following IP can access regardless the method
+  '/prometheus@get':
+  # IPv6 Exact
+  - 'FE45:00:00:000:0:AAA:FFFF:0045'
+  # IPv6 Prefix
+  - 'FE45:00:00:000:0:AAA:FFFF:*'
+  # IPv6 Slash
+  - 'FE45:00:00:000:0:AAA:FFFF:01F4/127'
+
+  # For a particular endpoint(path@method), there are three IPs can access
+  '/data@get':
+  # IPv4 Exact
+  - '127.0.0.2'
+  # IPv4 Wildcard
+  - '10.10.*.*'
+  # IPv4 Slash
+  - '127.0.0.48/30'

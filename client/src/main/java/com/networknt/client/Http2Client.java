@@ -9,8 +9,8 @@ import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 import com.networknt.exception.ApiException;
 import com.networknt.exception.ClientException;
+import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.status.Status;
-import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.client.*;
 import io.undertow.connector.ByteBufferPool;
@@ -289,7 +289,7 @@ public class Http2Client {
             }
         }
         request.getRequestHeaders().put(Headers.AUTHORIZATION, token);
-        request.getRequestHeaders().put(Constants.TRACEABILITY_ID, traceabilityId);
+        request.getRequestHeaders().put(HttpStringConstants.TRACEABILITY_ID, traceabilityId);
     }
 
     /**
@@ -321,7 +321,7 @@ public class Http2Client {
     public void addCcTokenTrace(ClientRequest request, String traceabilityId) throws ClientException, ApiException {
         checkCCTokenExpired();
         request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + jwt);
-        request.getRequestHeaders().put(Constants.TRACEABILITY_ID, traceabilityId);
+        request.getRequestHeaders().put(HttpStringConstants.TRACEABILITY_ID, traceabilityId);
     }
 
     /**
@@ -336,9 +336,9 @@ public class Http2Client {
      * @throws ApiException api exception
      */
     public void propagateHeaders(ClientRequest request, final HttpServerExchange exchange) throws ClientException, ApiException {
-        String tid = exchange.getRequestHeaders().getFirst(Constants.TRACEABILITY_ID);
+        String tid = exchange.getRequestHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
         String token = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
-        String cid = exchange.getRequestHeaders().getFirst(Constants.CORRELATION_ID);
+        String cid = exchange.getRequestHeaders().getFirst(HttpStringConstants.CORRELATION_ID);
         populateHeader(request, token, cid, tid);
     }
 
@@ -362,9 +362,9 @@ public class Http2Client {
         } else {
             addAuthToken(request, authToken);
         }
-        request.getRequestHeaders().put(Constants.CORRELATION_ID, correlationId);
+        request.getRequestHeaders().put(HttpStringConstants.CORRELATION_ID, correlationId);
         checkCCTokenExpired();
-        request.getRequestHeaders().put(Constants.SCOPE_TOKEN, "Bearer " + jwt);
+        request.getRequestHeaders().put(HttpStringConstants.SCOPE_TOKEN, "Bearer " + jwt);
     }
 
     private void getCCToken() throws ClientException {

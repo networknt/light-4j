@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.networknt</groupId>
     <artifactId>light-4j</artifactId>
-    <version>1.5.18</version>
+    <version>1.5.19</version>
     <packaging>pom</packaging>
     <name>Parent POM</name>
     <description>Light 4J Framework Components</description>
@@ -81,7 +81,7 @@
         <version.assertj>3.8.0</version.assertj>
         <version.hdrhistogram>2.1.10</version.hdrhistogram>
         <version.jsr305>3.0.2</version.jsr305>
-        <version.json-schema-validator>0.1.21</version.json-schema-validator>
+        <version.json-schema-validator>0.1.22</version.json-schema-validator>
         <version.zookeeper>3.5.3-beta</version.zookeeper>
         <version.zkclient>0.3</version.zkclient>
         <version.curator>4.0.1</version.curator>
@@ -102,6 +102,8 @@
     <modules>
         <module>config</module>
         <module>utility</module>
+        <module>http-string</module>
+        <module>http-url</module>
         <module>security</module>
         <module>client</module>
         <module>audit</module>
@@ -127,16 +129,17 @@
         <module>zookeeper</module>
         <module>cors</module>
         <module>cluster</module>
-        <module>limit</module>
+        <module>rate-limit</module>
         <module>decryptor</module>
         <module>common</module>
-        <module>email</module>
+        <module>email-sender</module>
         <module>server</module>
         <module>resource</module>
         <module>content</module>
-        <module>datasource</module>
-        <module>basic</module>
-        <module>deref</module>
+        <module>data-source</module>
+        <module>basic-auth</module>
+        <module>deref-token</module>
+        <module>ip-whitelist</module>
     </modules>
 
     <dependencyManagement>
@@ -150,6 +153,16 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>utility</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>http-string</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>http-url</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -291,7 +304,7 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
-                <artifactId>email</artifactId>
+                <artifactId>email-sender</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

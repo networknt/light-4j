@@ -1,0 +1,7 @@
+# IP Whitelist configuration
+---
+# Indicate if this handler is enabled or not
+enabled: false
+
+defaultAllow: true
+

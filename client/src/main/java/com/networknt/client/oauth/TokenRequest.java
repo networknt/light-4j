@@ -28,6 +28,7 @@ public class TokenRequest {
     public static String ENABLE_HTTP2 = "enableHttp2";
     public static String AUTHORIZATION_CODE = "authorization_code";
     public static String CLIENT_CREDENTIALS = "client_credentials";
+    public static String SAML_BEARER = "saml_bearer";
     public static String REFRESH_TOKEN = "refresh_token";
     public static String URI = "uri";
     public static String CLIENT_ID = "client_id";
