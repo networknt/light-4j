@@ -245,6 +245,11 @@ ERR10048:
   code: ERR10048
   message: PATH_NOT_IMPLEMENTED
   description: No handler defined for path '%s'
+ERR10049:
+  statusCode: 403
+  code: ERR10049
+  message: INVALID_IP_FOR_PATH
+  description: Peer IP %s is not in the whitelist for the endpoint %s
 
 
 # 11000-11500 swagger-validator errors
@@ -391,6 +396,22 @@ ERR11301:
 
 # 11350-11399 light-router
 
+# 11400-11499 light-config-server
+ERR11400:
+  statusCode: 400
+  code: ERR11400
+  message: CONFIG_SERVER_INITIALIZED
+  description: The config server has been initialized already with an encryption key.
+ERR11401:
+  statusCode: 400
+  code: ERR11401
+  message: INVALID_INITIALIZE_KEY_FORMAT
+  description: Invalid initialize key format for light-config-server.
+ERR11402:
+  statusCode: 400
+  code: ERR11402
+  message: ERROR_WRITING_KEY_FILE
+  description: Error writing key file to path %s.
 
 # 11500 - 11600 GraphQL valdator errors
 ERR11500:
@@ -408,6 +429,94 @@ ERR11502:
   code: ERR11502
   message: GRAHPQL_MISSING_QUERY
   description: Missing GraphQL query.
+
+# 11601 - 11999 light-portal errors
+ERR11601:
+  statusCode: 400
+  code: ERR11601
+  message: DELETE_USER_EXECUTION_EXCEPTION
+  description: Execution Exception caused by %s when deleting user %s.
+ERR11602:
+  statusCode: 400
+  code: ERR11602
+  message: DELETE_USER_EXCEPTION
+  description: Exception %s is caught when deleting user %s.
+ERR11603:
+  statusCode: 400
+  code: ERR11603
+  message: CREATE_USER_EXECUTION_EXCEPTION
+  description: Execution Exception caused by %s when creating user %s.
+ERR11604:
+  statusCode: 400
+  code: ERR11604
+  message: CREATE_USER_EXCEPTION
+  description: Exception %s is caught when creating user %s.
+ERR11605:
+  statusCode: 400
+  code: ERR11605
+  message: UPDATE_USER_EXECUTION_EXCEPTION
+  description: Execution Exception caused by %s when updating user %s.
+ERR11606:
+  statusCode: 400
+  code: ERR11606
+  message: UPDATE_USER_EXCEPTION
+  description: Exception %s is caught when updating user %s.
+ERR11607:
+  statusCode: 400
+  code: ERR11607
+  message: USER_NOT_FOUND_BY_EMAIL
+  description: User not found by email %s.
+ERR11608:
+  statusCode: 400
+  code: ERR11608
+  message: USER_NOT_FOUND_BY_ID
+  description: User not found by entityId %s.
+ERR11609:
+  statusCode: 400
+  code: ERR11609
+  message: USER_NOT_FOUND_BY_USERID
+  description: User not found by userId %s.
+ERR11610:
+  statusCode: 400
+  code: ERR11610
+  message: USER_NOT_FOUND_BY_USERIDEMAIL
+  description: User not found by userIdEmail %s.
+ERR11611:
+  statusCode: 400
+  code: ERR11611
+  message: USER_EMAIL_IS_USED
+  description: User email address %s is registered.
+ERR11612:
+  statusCode: 400
+  code: ERR11612
+  message: USER_ID_IS_USED
+  description: Userid %s is registered.
+ERR11613:
+  statusCode: 400
+  code: ERR11613
+  message: PASSWORD_NOT_MATCH
+  description: Password and passwordConfirm are not matched.
+ERR11614:
+  statusCode: 400
+  code: ERR11614
+  message: ERROR_HASHING_PASSWORD
+  description: Error in hashing password with exception %s.
+ERR11615:
+  statusCode: 400
+  code: ERR11615
+  message: ERROR_PARSING_USER
+  description: Error in parsing user to JSON with exception %s.
+ERR11616:
+  statusCode: 400
+  code: ERR11616
+  message: INVALID_SIGNIN_PASSWORD
+  description: Invalid signIn password.
+ERR11617:
+  statusCode: 400
+  code: ERR11617
+  message: USER_NOT_ACTIVATED
+  description: User %s is not activated.
+
 
 # OAuth2 service error 12000-13000
 
@@ -648,18 +757,61 @@ ERR12046:
 ERR12047:
   statusCode: 400
   code: ERR12047
-  message: PROVIDER_ID_NOT_SET
-  description: The provider id is not set in the security config file before register
+  message: PROVIDER_ID_NOT_EXISTING
+  description: The provider id is not existing
 ERR12048:
   statusCode: 400
   code: ERR12048
   message: PROVIDER_ID_EXISTS
-  description: Provider id %s exists; It has been regristed already.
+  description: Provider id %s exists; It has been regristed already
 ERR12049:
   statusCode: 400
   code: ERR12048
   message: PROVIDER_ID_INVALID
-  description: Provider id invalid; Provider should be two digits only.
+  description: Provider id invalid
+
+# Tokenization service
+ERR12100:
+  statusCode: 404
+  code: ERR12100
+  message: SCHEME_NOT_FOUND
+  description: Tokenizer scheme %s not found
+ERR12101:
+  statusCode: 400
+  code: ERR12101
+  message: CLIENT_ID_MISSING
+  description: Client_id is missing, JWT verification needs to be enable in security.yml
+ERR12102:
+  statusCode: 400
+  code: ERR12102
+  message: DATABASE_NOT_FOUND
+  description: Database not found from client_id %s to database mapping table.
+ERR12103:
+  statusCode: 400
+  code: ERR12103
+  message: DATASOURCE_NOT_CONFIGURED
+  description: DataSource %s is not configured in datasource.yml
+ERR12104:
+  statusCode: 400
+  code: ERR12104
+  message: FAIL_TO_QUERY_TOKEN_VAULT
+  description: Fail to query token_vault table in database %s
+ERR12105:
+  statusCode: 400
+  code: ERR12105
+  message: FAIL_TO_INSERT_TOKEN_VAULT
+  description: Fail to insert into token_vault table in database %s
+ERR12106:
+  statusCode: 400
+  code: ERR12106
+  message: FAIL_TO_DELETE_TOKEN_VAULT
+  description: Fail to delete from token_vault table in database %s
+ERR12107:
+  statusCode: 404
+  code: ERR12107
+  message: TOKEN_NOT_FOUND
+  description: Token %s not found in token_vault table in database %s
+  
 # 20000-29999 common error codes within your business domain.
 # It is highly recommended to have your error code shared within your organization or your line of business.
 # In that case, all your services can share the same status.yml which in org default config

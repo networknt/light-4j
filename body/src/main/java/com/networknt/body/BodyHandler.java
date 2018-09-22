@@ -20,9 +20,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
-import com.networknt.utility.StringUtil;
+import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -36,7 +35,6 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Scanner;
 
 /**
  * This is a handler that parses the body into a Map or List if the input content type is JSON.
@@ -87,7 +85,7 @@ public class BodyHandler implements MiddlewareHandler {
             InputStream is = exchange.getInputStream();
             try {
                 Object body;
-                String s = StringUtil.inputStreamToString(is, StandardCharsets.UTF_8);
+                String s = StringUtils.inputStreamToString(is, StandardCharsets.UTF_8);
                 if (s != null) {
                     s = s.trim();
                     if (s.startsWith("{")) {

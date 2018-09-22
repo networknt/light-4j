@@ -16,8 +16,6 @@
 
 package com.networknt.utility;
 
-import io.undertow.util.HttpString;
-
 /**
  * Constants shared by all light-4j components.
  *
@@ -44,18 +42,6 @@ public class Constants {
     public static final String CONSUL_TOKEN_STRING = "X-Consul-Token";
 
     public static final String CSRF_TOKEN_STRING = "X-CSRF-TOKEN";
-
-    public static final HttpString CORRELATION_ID = new HttpString(CORRELATION_ID_STRING);
-    public static final HttpString TRACEABILITY_ID = new HttpString(TRACEABILITY_ID_STRING);
-    public static final HttpString USER_ID = new HttpString(USER_ID_STRING);
-    public static final HttpString CLIENT_ID = new HttpString(CLIENT_ID_STRING);
-    public static final HttpString SCOPE_CLIENT_ID = new HttpString(SCOPE_CLIENT_ID_STRING);
-    public static final HttpString SCOPE = new HttpString(SCOPE_STRING);
-    public static final HttpString ENDPOINT = new HttpString(ENDPOINT_STRING);
-    public static final HttpString SWAGGER_OPERATION = new HttpString(SWAGGER_OPERATION_STRING);
-    public static final HttpString SCOPE_TOKEN = new HttpString(SCOPE_TOKEN_STRING);
-    public static final HttpString CONSUL_TOKEN = new HttpString(CONSUL_TOKEN_STRING);
-    public static final HttpString CSRF_TOKEN = new HttpString(CSRF_TOKEN_STRING);
 
     // Logger
     public static final String AUDIT_LOGGER = "Audit";
@@ -104,8 +90,5 @@ public class Constants {
     public static final String SERVICE_ID_STRING = "service_id";
     public static final String ENV_TAG_STRING = "env_tag";
     public static final String HASH_KEY_STRING = "hash_key";
-    public static final HttpString SERVICE_ID = new HttpString(SERVICE_ID_STRING);
-    public static final HttpString ENV_TAG = new HttpString(ENV_TAG_STRING);
-    public static final HttpString HASH_KEY = new HttpString(HASH_KEY_STRING);
     public static final String HTTPS = "https";
 }

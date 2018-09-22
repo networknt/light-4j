@@ -19,6 +19,7 @@ package com.networknt.traceability;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
@@ -58,9 +59,9 @@ public class TraceabilityHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        String tid = exchange.getRequestHeaders().getFirst(Constants.TRACEABILITY_ID);
+        String tid = exchange.getRequestHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
         if(tid != null) {
-            exchange.getResponseHeaders().put(Constants.TRACEABILITY_ID, tid);
+            exchange.getResponseHeaders().put(HttpStringConstants.TRACEABILITY_ID, tid);
         }
         Handler.next(exchange, next);
     }

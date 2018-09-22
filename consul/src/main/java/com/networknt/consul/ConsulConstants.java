@@ -46,7 +46,7 @@ public class ConsulConstants {
 	/**
 	 * Service TCP Check Deregister After
 	 */
-	public static String DEREGISTER_AFTER = "90m";
+	public static String DEREGISTER_AFTER = "2m";
 
 	/**
 	 * Heart beat circle，2/3 of ttl

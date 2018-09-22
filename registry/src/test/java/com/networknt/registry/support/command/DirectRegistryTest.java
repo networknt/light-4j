@@ -15,7 +15,7 @@ import java.util.List;
 public class DirectRegistryTest {
     @Test
     public void testDirectRegistry() {
-        Registry registry = (Registry)SingletonServiceFactory.getBean(Registry.class);
+        Registry registry = SingletonServiceFactory.getBean(Registry.class);
 
         URL subscribeUrl = URLImpl.valueOf("light://localhost:8080/token");
         List<URL> urls = registry.discover(subscribeUrl);
@@ -24,5 +24,7 @@ public class DirectRegistryTest {
         subscribeUrl = URLImpl.valueOf("light://localhost:8080/code");
         urls = registry.discover(subscribeUrl);
         Assert.assertEquals(2, urls.size());
+
+
     }
 }

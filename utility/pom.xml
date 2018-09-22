@@ -21,7 +21,7 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>1.5.18</version>
+        <version>1.5.19</version>
         <relativePath>..</relativePath>
     </parent>
 
@@ -33,10 +33,6 @@
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>config</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.undertow</groupId>
-            <artifactId>undertow-core</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

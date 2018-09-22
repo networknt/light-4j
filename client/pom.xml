@@ -21,7 +21,7 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>1.5.18</version>
+        <version>1.5.19</version>
         <relativePath>..</relativePath>
     </parent>
 
@@ -34,6 +34,10 @@
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>http-string</artifactId>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>

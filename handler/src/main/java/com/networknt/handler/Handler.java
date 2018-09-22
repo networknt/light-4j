@@ -2,6 +2,7 @@ package com.networknt.handler;
 
 import com.networknt.utility.Tuple;
 import com.networknt.config.Config;
+import com.networknt.handler.config.EndpointSource;
 import com.networknt.handler.config.HandlerConfig;
 import com.networknt.handler.config.PathChain;
 import com.networknt.service.ServiceUtil;
@@ -31,6 +32,8 @@ public class Handler {
 	private static final AttachmentKey<String> CHAIN_ID = AttachmentKey.create(String.class);
 	private static final Logger logger = LoggerFactory.getLogger(Handler.class);
 	private static final String CONFIG_NAME = "handler";
+	private static String configName = CONFIG_NAME;
+
 	// Accessed directly.
 	public static HandlerConfig config = (HandlerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME,
 			HandlerConfig.class);
@@ -100,32 +103,68 @@ public class Handler {
 	static void initPaths() {
 		if (config != null && config.getPaths() != null) {
 			for (PathChain pathChain : config.getPaths()) {
-				HttpString method = new HttpString(pathChain.getMethod());
-
-				// Use a random integer as the id for a given path.
-				Integer randInt = new Random().nextInt();
-				while (handlerListById.containsKey(randInt.toString())) {
-					randInt = new Random().nextInt();
-				}
-
-				// Flatten out the execution list from a mix of middleware chains and handlers.
-				List<HttpHandler> handlers = getHandlersFromExecList(pathChain.getExec());
-				if (handlers.size() > 0) {
-					// If a matcher already exists for the given type, at to that instead of
-					// creating a new one.
-					PathTemplateMatcher<String> pathTemplateMatcher = methodToMatcherMap.containsKey(method)
-							? methodToMatcherMap.get(method)
-							: new PathTemplateMatcher<>();
-							
-					if(pathTemplateMatcher.get(pathChain.getPath()) == null)
-						pathTemplateMatcher.add(pathChain.getPath(), randInt.toString());
-					methodToMatcherMap.put(method, pathTemplateMatcher);
-					handlerListById.put(randInt.toString(), handlers);
+				pathChain.validate(configName + " config"); // raises exception on misconfiguration
+				if(pathChain.getPath() == null) {
+					addSourceChain(pathChain);
+				} else {
+					addPathChain(pathChain);
 				}
 			}
 		}
 	}
-	
+
+	/**
+	 * Add PathChains crated from the EndpointSource given in sourceChain
+	 */
+	private static void addSourceChain(PathChain sourceChain) {
+		try {
+			Class sourceClass = Class.forName(sourceChain.getSource());
+			EndpointSource source = (EndpointSource)sourceClass.newInstance();
+			for (EndpointSource.Endpoint endpoint : source.listEndpoints()) {
+				PathChain sourcedPath = new PathChain();
+				sourcedPath.setPath(endpoint.getPath());
+				sourcedPath.setMethod(endpoint.getMethod());
+				sourcedPath.setExec(sourceChain.getExec());
+				sourcedPath.validate(sourceChain.getSource());
+				addPathChain(sourcedPath);
+			}
+		} catch (Exception e) {
+			logger.error("Failed to inject handler.yml paths from: " + sourceChain);
+			if(e instanceof RuntimeException) {
+				throw (RuntimeException)e;
+			} else {
+				throw new RuntimeException(e);
+			}
+		}
+	}
+
+	/**
+	 * Add a PathChain (having a non-null path) to the handler data structures.
+	 */
+	private static void addPathChain(PathChain pathChain) {
+		HttpString method = new HttpString(pathChain.getMethod());
+
+		// Use a random integer as the id for a given path.
+		Integer randInt = new Random().nextInt();
+		while (handlerListById.containsKey(randInt.toString())) {
+			randInt = new Random().nextInt();
+		}
+
+		// Flatten out the execution list from a mix of middleware chains and handlers.
+		List<HttpHandler> handlers = getHandlersFromExecList(pathChain.getExec());
+		if(handlers.size() > 0) {
+			// If a matcher already exists for the given type, at to that instead of
+			// creating a new one.
+			PathTemplateMatcher<String> pathTemplateMatcher = methodToMatcherMap.containsKey(method)
+				? methodToMatcherMap.get(method)
+				: new PathTemplateMatcher<>();
+
+			if(pathTemplateMatcher.get(pathChain.getPath()) == null) { pathTemplateMatcher.add(pathChain.getPath(), randInt.toString()); }
+			methodToMatcherMap.put(method, pathTemplateMatcher);
+			handlerListById.put(randInt.toString(), handlers);
+		}
+	}
+
 	/**
 	 * Handle the next request in the chain.
 	 *
@@ -150,7 +189,7 @@ public class Handler {
 	 *            The current requests server exchange.
 	 * @param next
 	 *            The next HttpHandler to go to if it's not null.
-	 * @throws Exception
+	 * @throws Exception exception
 	 */
 	public static void next(HttpServerExchange httpServerExchange, HttpHandler next) throws Exception {
 		if (next != null) {
@@ -171,7 +210,8 @@ public class Handler {
 	 * @param returnToOrigFlow
 	 *            True if you want to call the next handler defined in your original
 	 *            chain after the provided execName is completed. False otherwise.
-	 * @throws Exception
+	 * @throws Exception exception
+	 *
 	 */
 	public static void next(HttpServerExchange httpServerExchange, String execName, Boolean returnToOrigFlow)
 			throws Exception {
@@ -220,7 +260,7 @@ public class Handler {
 	 * @param next
 	 *            If not null, return this.
 	 * @return The next handler in the chain, or next if it's not null.
-	 * @throws Exception
+	 * @throws Exception exception
 	 */
 	public static HttpHandler getNext(HttpServerExchange httpServerExchange, HttpHandler next) throws Exception {
 		if (next != null) {
@@ -405,6 +445,7 @@ public class Handler {
 
 	// Exposed for testing only.
 	static void setConfig(String configName) throws Exception {
+		Handler.configName = configName;
 		config = (HandlerConfig) Config.getInstance().getJsonObjectConfig(configName, HandlerConfig.class);
 		initHandlers();
 		initPaths();
