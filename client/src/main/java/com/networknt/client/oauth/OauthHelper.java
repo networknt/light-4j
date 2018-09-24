@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -119,12 +120,14 @@ public class OauthHelper {
 
         try {
 
-            Map<String, String> postBody = new HashMap<String, String>();
+            Map<String, String> postBody = new LinkedHashMap<>();
             postBody.put(SAMLBearerRequest.GRANT_TYPE_KEY , SAMLBearerRequest.GRANT_TYPE_VALUE );
             postBody.put(SAMLBearerRequest.ASSERTION_KEY, tokenRequest.getSamlAssertion());
             postBody.put(SAMLBearerRequest.CLIENT_ASSERTION_TYPE_KEY, SAMLBearerRequest.CLIENT_ASSERTION_TYPE_VALUE);
             postBody.put(SAMLBearerRequest.CLIENT_ASSERTION_KEY, tokenRequest.getJwtClientAssertion());
             String requestBody = Http2Client.getFormDataString(postBody);
+
+
             logger.debug(requestBody);
 
             connection.getIoThread().execute(new Runnable() {
