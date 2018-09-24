@@ -136,8 +136,9 @@ public class OauthHelper {
                 public void run()  {
                     final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(tokenRequest.getUri());
                     request.getRequestHeaders().put(Headers.HOST, "localhost");
-                    request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+                    //request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
                     request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
+                    request.getRequestHeaders().put(Headers.ACCEPT_ENCODING, "gzip, deflate");
 
 
 
