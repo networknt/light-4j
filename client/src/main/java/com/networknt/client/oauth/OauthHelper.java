@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -120,14 +119,12 @@ public class OauthHelper {
 
         try {
 
-            Map<String, String> postBody = new LinkedHashMap<>();
+            Map<String, String> postBody = new HashMap<String, String>();
             postBody.put(SAMLBearerRequest.GRANT_TYPE_KEY , SAMLBearerRequest.GRANT_TYPE_VALUE );
             postBody.put(SAMLBearerRequest.ASSERTION_KEY, tokenRequest.getSamlAssertion());
             postBody.put(SAMLBearerRequest.CLIENT_ASSERTION_TYPE_KEY, SAMLBearerRequest.CLIENT_ASSERTION_TYPE_VALUE);
             postBody.put(SAMLBearerRequest.CLIENT_ASSERTION_KEY, tokenRequest.getJwtClientAssertion());
             String requestBody = Http2Client.getFormDataString(postBody);
-
-
             logger.debug(requestBody);
 
             connection.getIoThread().execute(new Runnable() {
@@ -135,10 +132,9 @@ public class OauthHelper {
                 @Override
                 public void run()  {
                     final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(tokenRequest.getUri());
-                    request.getRequestHeaders().put(Headers.HOST, "localhost");
-                    //request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+                    request.getRequestHeaders().put(Headers.HOST, tokenRequest.getHostName());
+                    request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
                     request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
-                    request.getRequestHeaders().put(Headers.ACCEPT_ENCODING, "gzip, deflate");
 
 
 
