@@ -1,7 +1,7 @@
 # This is the configuration file for Http2Client.
 ---
 # Buffer Size in the buffer pool in KB. If should be bigger than your request or response body size.
-bufferSize: 80
+bufferSize: 24
 # Settings for TLS
 tls:
   # if the server is using self-signed certificate, this need to be false. If true, you have to use CA signed certificate
