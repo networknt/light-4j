@@ -53,20 +53,18 @@ public class Http2Client {
 
     public static final String CONFIG_NAME = "client";
     public static final String CONFIG_SECRET = "secret";
-    public static final String CONFIG_SECURITY = "security";
-    public static final int BUFFER_SIZE = 8192 * 3;
     public static final OptionMap DEFAULT_OPTIONS = OptionMap.builder()
             .set(Options.WORKER_IO_THREADS, 8)
             .set(Options.TCP_NODELAY, true)
             .set(Options.KEEP_ALIVE, true)
             .set(Options.WORKER_NAME, "Client").getMap();
-    public static final ByteBufferPool POOL = new DefaultByteBufferPool(true, BUFFER_SIZE, 1000, 10, 100);
-    public static final ByteBufferPool SSL_BUFFER_POOL = new DefaultByteBufferPool(true, 17 * 1024);
     public static XnioWorker WORKER;
     public static XnioSsl SSL;
-
+    public static int bufferSize;
+    public static int DEFAULT_BUFFER_SIZE = 24; // 24*1024 buffer size will be good for most of the app.
     public static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
 
+    static final String BUFFER_SIZE = "bufferSize";
     static final String TLS = "tls";
     static final String LOAD_TRUST_STORE = "loadTrustStore";
     static final String LOAD_KEY_STORE = "loadKeyStore";
@@ -100,6 +98,12 @@ public class Http2Client {
         List<String> masks = new ArrayList<>();
         ModuleRegistry.registerModule(Http2Client.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), masks);
         config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
+        Object bufferSizeObject = config.get(BUFFER_SIZE);
+        if(bufferSizeObject == null) {
+            bufferSize = DEFAULT_BUFFER_SIZE;
+        } else {
+            bufferSize = (int)bufferSizeObject;
+        }
         if(config != null) {
             Map<String, Object> oauthConfig = (Map<String, Object>)config.get(OAUTH);
             if(oauthConfig != null) {
@@ -114,6 +118,18 @@ public class Http2Client {
             throw new ExceptionInInitializerError("Could not locate secret.yml");
         }
     }
+
+    public static final ByteBufferPool BUFFER_POOL = new DefaultByteBufferPool(true, bufferSize * 1024);
+    /**
+     * @deprecated Use BUFFER_POOL instead!
+     */
+    @Deprecated
+    public static final ByteBufferPool POOL = BUFFER_POOL;
+    /**
+     * @deprecated Use BUFFER_POOL instead!
+     */
+    @Deprecated
+    public static final ByteBufferPool SSL_BUFFER_POOL = BUFFER_POOL;
 
     private final Map<String, ClientProvider> clientProviders;
 
@@ -135,7 +151,7 @@ public class Http2Client {
         try {
             final Xnio xnio = Xnio.getInstance();
             WORKER = xnio.createWorker(null, Http2Client.DEFAULT_OPTIONS);
-            SSL = new UndertowXnioSsl(WORKER.getXnio(), OptionMap.EMPTY, SSL_BUFFER_POOL, createSSLContext());
+            SSL = new UndertowXnioSsl(WORKER.getXnio(), OptionMap.EMPTY, BUFFER_POOL, createSSLContext());
         } catch (Exception e) {
             logger.error("Exception: ", e);
         }
@@ -588,7 +604,7 @@ public class Http2Client {
                     @Override
                     public void completed(ClientExchange result) {
                         reference.set(result.getResponse());
-                        new StringReadChannelListener(POOL) {
+                        new StringReadChannelListener(BUFFER_POOL) {
                             @Override
                             protected void stringDone(String string) {
                                 result.getResponse().putAttachment(RESPONSE_BODY, string);
@@ -679,7 +695,7 @@ public class Http2Client {
                 result.setResponseListener(new ClientCallback<ClientExchange>() {
                     @Override
                     public void completed(ClientExchange result) {
-                        new StringReadChannelListener(POOL) {
+                        new StringReadChannelListener(BUFFER_POOL) {
                             @Override
                             protected void stringDone(String string) {
                                 AsyncResponse ar = new AsyncResponse(result.getResponse(), string, System.currentTimeMillis() - startTime);
