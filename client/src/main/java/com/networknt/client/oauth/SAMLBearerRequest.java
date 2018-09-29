@@ -45,6 +45,7 @@ public class SAMLBearerRequest extends TokenRequest {
 
     private String samlAssertion;
     private String jwtClientAssertion;
+    private String hostName ;
 
     static Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
     static final Logger logger = LoggerFactory.getLogger(SAMLBearerRequest.class);
@@ -61,6 +62,9 @@ public class SAMLBearerRequest extends TokenRequest {
             Map<String, Object> oauthConfig = (Map<String, Object>) clientConfig.get(OAUTH);
 
             Map<String, Object> tokenConfig = (Map<String, Object>) oauthConfig.get(TOKEN);
+
+            //Temporary fix to make this work with the current L7 configuration. To be reverted.
+            hostName = (String)tokenConfig.get("hostname");
 
             setServerUrl((String) tokenConfig.get(SERVER_URL));
             Object object = tokenConfig.get(ENABLE_HTTP2);
@@ -82,4 +86,6 @@ public class SAMLBearerRequest extends TokenRequest {
     public String getJwtClientAssertion() {
         return this.jwtClientAssertion;
     }
+
+    public String getHostName() { return this.hostName ; }
 }

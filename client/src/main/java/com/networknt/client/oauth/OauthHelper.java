@@ -132,7 +132,7 @@ public class OauthHelper {
                 @Override
                 public void run()  {
                     final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(tokenRequest.getUri());
-                    request.getRequestHeaders().put(Headers.HOST, "localhost");
+                    request.getRequestHeaders().put(Headers.HOST, tokenRequest.getHostName());
                     request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
                     request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
 
