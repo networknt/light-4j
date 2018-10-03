@@ -444,7 +444,7 @@ public class Server {
             Http2Client client = Http2Client.getInstance();
             ClientConnection connection = null;
             try {
-                connection = client.connect(new URI(configUri), Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL,
+                connection = client.connect(new URI(configUri), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL,
                         OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
             } catch (Exception e) {
                 logger.error("Exeption:", e);
