@@ -39,12 +39,10 @@ public class JwtIssuer {
     private static final Logger logger = LoggerFactory.getLogger(JwtIssuer.class);
     public static final String JWT_CONFIG = "jwt";
     public static final String SECRET_CONFIG = "secret";
-    public static final String CONFIG_SECURITY = "security";
     public static final String JWT_PRIVATE_KEY_PASSWORD = "jwtPrivateKeyPassword";
     private static JwtConfig jwtConfig = (JwtConfig) Config.getInstance().getJsonObjectConfig(JWT_CONFIG, JwtConfig.class);
     private static Map<String, Object> secretConfig = DecryptUtil.decryptMap(Config.getInstance().getJsonMapConfig(SECRET_CONFIG));
-    private static Map<String, Object> secuirtyConfig = Config.getInstance().getJsonMapConfig(CONFIG_SECURITY);
-    private static final String PROVIDER_ID = "providerId";
+
     /**
      * A static method that generate JWT token from JWT claims object
      *
@@ -72,8 +70,8 @@ public class JwtIssuer {
         // And the provider id will set as prefix for keyid in the token header, for example: 05100
         // if there is no provider id, we use "00" for the default value
         String provider_id = "";
-        if (secuirtyConfig.get(PROVIDER_ID)!=null) {
-            provider_id = secuirtyConfig.get(PROVIDER_ID).toString();
+        if (jwtConfig.getProviderId() != null) {
+            provider_id = jwtConfig.getProviderId();
             if (provider_id.length() == 1) {
                 provider_id = "0" + provider_id;
             } else if (provider_id.length() > 2) {
@@ -82,7 +80,6 @@ public class JwtIssuer {
             }
         }
         jws.setKeyIdHeaderValue(provider_id + jwtConfig.getKey().getKid());
-
 
         // Set the signature algorithm on the JWT/JWS that will integrity protect the claims
         jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.RSA_USING_SHA256);
@@ -116,7 +113,7 @@ public class JwtIssuer {
 
     /**
      * Construct a default JwtClaims
-     *
+     * @param expiresIn expires in
      * @return JwtClaims
      */
     public static JwtClaims getJwtClaimsWithExpiresIn(int expiresIn) {

@@ -4,11 +4,12 @@
 # Signature private key that used to sign JWT tokens.
 key:
   kid: '100'                               # kid that used to sign the JWT tokens. It will be shown up in the token header.
-  filename: "primary.jks"            # private key that is used to sign JWT tokens.
-  # It is moved to secret.yml so that it can be encrypted easily.
-  # password: password                     # password for the private key. It should be set during deployment time along with pk
+  filename: "primary.jks"                  # private key that is used to sign JWT tokens.
   keyName: selfsigned                      # key name that is used to identify the right key in keystore.
 issuer: urn:com:networknt:oauth2:v1        # default issuer of the JWT token
 audience: urn:com.networknt                # default audience of the JWT token
 expiredInMinutes: 10                       # expired in 10 minutes by default for issued JWT tokens
 version: '1.0'                             # JWT token version
+# If federated OAuth 2.0 providers are used, you need to set providerId for each OAuth instance. In most cases, this value
+# should be null so that the OAuth 2.0 provider is run as one cluster of microservices
+# providerId: 1

@@ -1,4 +1,10 @@
-# Security configuration in light framework.
+# Security configuration for security module in light-4j. For each individual framework,
+# it has a framework specific security config file to control if security and scopes
+# verification are enabled or not.
+
+# This configuration file is only for JwtHelper class most of the cases. However, if there
+# is no framework specific security configuration available. The fallback security config
+# is read from this file. Hence we leave the enableVerifyJwt and enableVerifyScope to true.
 ---
 # Enable JWT verification flag.
 enableVerifyJwt: true
