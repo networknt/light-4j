@@ -58,7 +58,6 @@ public class JwtHelper {
     public static final String JWT_CERTIFICATE = "certificate";
     public static final String JWT_CLOCK_SKEW_IN_SECONDS = "clockSkewInSeconds";
     public static final String ENABLE_VERIFY_JWT = "enableVerifyJwt";
-    public static final String OAUTH_HTTP2_SUPPORT = "oauthHttp2Support";
     private static final String ENABLE_JWT_CACHE = "enableJwtCache";
     private static final String BOOTSTRAP_FROM_KEY_SERVICE = "bootstrapFromKeyService";
     private static final int CACHE_EXPIRED_IN_MINUTES = 15;

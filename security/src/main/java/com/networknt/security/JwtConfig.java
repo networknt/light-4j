@@ -27,6 +27,7 @@ public class JwtConfig {
     String version;
     int expiredInMinutes;
     Key key;
+    String providerId;
 
     public JwtConfig() {
     }
@@ -70,6 +71,10 @@ public class JwtConfig {
     public void setKey(Key key) {
         this.key = key;
     }
+
+    public String getProviderId() { return providerId; }
+
+    public void setProviderId(String providerId) { this.providerId = providerId; }
 
     public static class Key {
         String kid;
