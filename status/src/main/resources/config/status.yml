@@ -79,7 +79,7 @@ ERR10015:
   statusCode: 400
   code: ERR10015
   message: CONTENT_TYPE_MISMATCH
-  description: Content type in header %s doesn't match the body.
+  description: Content type in header %s doesn't match the body. The body might be trucated due to bufferSize to small in client.xml
 ERR10016:
   statusCode: 400
   code: ERR10016
