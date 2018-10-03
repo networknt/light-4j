@@ -319,21 +319,24 @@ public class Handler {
 					throw new RuntimeException("Unknown handler or chain: " + exec);
 				
 				for(HttpHandler handler : handlerList) {
-					if(handler instanceof MiddlewareHandler) {
-						// add the handler to the list of handlers to execute if it is enabled in the configuration
-						if( ((MiddlewareHandler) handler).isEnabled() ) {
-							// register the handler if it is a middleware handler
-							((MiddlewareHandler) handler).register();
-						
-							handlersFromExecList.add(handler);
-						}
-					}	
-					else
-						handlersFromExecList.add(handler);
+					handlersFromExecList.add(handler);
 				}
 			}
 		}
 		return handlersFromExecList;
+	}
+
+	/**
+	 * Detect if the handler is a MiddlewareHandler instance. If yes, then register it.
+	 * @param handler
+	 */
+	private static void registerMiddlewareHandler(Object handler) {
+		if(handler instanceof MiddlewareHandler) {
+			// register the middleware handler if it is enabled.
+			if(((MiddlewareHandler) handler).isEnabled()) {
+				((MiddlewareHandler) handler).register();
+			}
+		}
 	}
 
 	/**
@@ -364,7 +367,7 @@ public class Handler {
 		} else {
 			throw new RuntimeException("Unsupported type of handler provided: " + handlerOrProviderObject);
 		}
-
+		registerMiddlewareHandler(resolvedHandler);
 		handlers.put(namedClass.first, resolvedHandler);
 		handlerListById.put(namedClass.first, Collections.singletonList(resolvedHandler));
 	}
@@ -393,6 +396,7 @@ public class Handler {
 					throw new RuntimeException(
 							"Could not construct a handler with values provided as a map: " + namedClass.second);
 				}
+				registerMiddlewareHandler(httpHandler);
 				handlers.put(namedClass.first, httpHandler);
 				handlerListById.put(namedClass.first, Collections.singletonList(httpHandler));
 			} else if (entry.getValue() instanceof List) {
@@ -407,6 +411,7 @@ public class Handler {
 					throw new RuntimeException(
 							"Could not construct a handler with values provided as a list: " + namedClass.second);
 				}
+				registerMiddlewareHandler(httpHandler);
 				handlers.put(namedClass.first, httpHandler);
 				handlerListById.put(namedClass.first, Collections.singletonList(httpHandler));
 			}
