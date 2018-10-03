@@ -75,7 +75,7 @@ public class ConsulClientImpl implements ConsulClient {
 		try {
 			if(connection == null || !connection.isOpen() || reqCounter >= maxReqPerConn) {
 				if(logger.isDebugEnabled()) logger.debug("connection is closed with counter " + reqCounter + ", reconnecting...");
-				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, optionMap).get();
+				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
 				reqCounter = 0;
 			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
@@ -103,7 +103,7 @@ public class ConsulClientImpl implements ConsulClient {
 		try {
 			if(connection == null || !connection.isOpen() || reqCounter >= maxReqPerConn) {
 				if(logger.isDebugEnabled()) logger.debug("connection is closed with counter " + reqCounter + ", reconnecting...");
-				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, optionMap).get();
+				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
 				reqCounter = 0;
 			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
@@ -131,7 +131,7 @@ public class ConsulClientImpl implements ConsulClient {
 		try {
 			if(connection == null || !connection.isOpen() || reqCounter >= maxReqPerConn) {
 				if(logger.isDebugEnabled()) logger.debug("connection is closed with counter " + reqCounter + ", reconnecting...");
-				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, optionMap).get();
+				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
 				reqCounter = 0;
 			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
@@ -158,7 +158,7 @@ public class ConsulClientImpl implements ConsulClient {
 		try {
 			if(connection == null || !connection.isOpen() || reqCounter >= maxReqPerConn) {
 				if(logger.isDebugEnabled()) logger.debug("connection is closed with counter " + reqCounter + ", reconnecting...");
-				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, optionMap).get();
+				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
 				reqCounter = 0;
 			}
 
@@ -192,7 +192,7 @@ public class ConsulClientImpl implements ConsulClient {
 		try {
 			if(connection == null || !connection.isOpen() || reqCounter >= maxReqPerConn) {
 				if(logger.isDebugEnabled()) logger.debug("connection is closed with counter " + reqCounter + ", reconnecting...");
-				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.POOL, optionMap).get();
+				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
 				reqCounter = 0;
 			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(path);
