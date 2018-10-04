@@ -319,7 +319,14 @@ public class Handler {
 					throw new RuntimeException("Unknown handler or chain: " + exec);
 				
 				for(HttpHandler handler : handlerList) {
-					handlersFromExecList.add(handler);
+					if(handler instanceof MiddlewareHandler) {
+						// add the handler to the list of handlers to execute if it is enabled in the configuration
+						if(((MiddlewareHandler)handler).isEnabled()) {
+							handlersFromExecList.add(handler);
+						}
+					} else {
+						handlersFromExecList.add(handler);
+					}
 				}
 			}
 		}
