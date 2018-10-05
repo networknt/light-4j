@@ -1,5 +1,24 @@
 # Change Log
 
+## [1.5.20](https://github.com/networknt/light-4j/tree/1.5.20) (2018-10-05)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.19...1.5.20)
+
+**Fixed bugs:**
+
+- MiddlewareHandler.register is called for each endpoint [\#305](https://github.com/networknt/light-4j/issues/305)
+
+**Closed issues:**
+
+- Handler needs to properly escape characters in the Status description [\#306](https://github.com/networknt/light-4j/issues/306)
+- provide default security.yml and move providerId to jwt.yml [\#304](https://github.com/networknt/light-4j/issues/304)
+- Indicate that the BufferSize is too small in client.yml if Body cannot be parsed [\#302](https://github.com/networknt/light-4j/issues/302)
+- Intermittent issues with Consul API discovery [\#301](https://github.com/networknt/light-4j/issues/301)
+- make bufferSize configurable for default buffer pool in Http2Client [\#299](https://github.com/networknt/light-4j/issues/299)
+- Add more debug info during startup for the Kubernetes status.hostIP [\#297](https://github.com/networknt/light-4j/issues/297)
+- Update the config module output to error only when config file not found [\#294](https://github.com/networknt/light-4j/issues/294)
+- Update OAuthHelper to include new method to support SAML grant type flow [\#290](https://github.com/networknt/light-4j/issues/290)
+- server does not create zip file from config server correctly [\#157](https://github.com/networknt/light-4j/issues/157)
+
 ## [1.5.19](https://github.com/networknt/light-4j/tree/1.5.19) (2018-09-22)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.18...1.5.19)
 
@@ -9,7 +28,6 @@
 
 **Closed issues:**
 
-- Update the config module output to error only when config file not found [\#294](https://github.com/networknt/light-4j/issues/294)
 - move light-tokenization status codes to status.ym in light-4j [\#289](https://github.com/networknt/light-4j/issues/289)
 - remove unused status code from status.yml [\#288](https://github.com/networknt/light-4j/issues/288)
 - add status code for user-management in light-portal [\#287](https://github.com/networknt/light-4j/issues/287)
