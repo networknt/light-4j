@@ -76,7 +76,7 @@
         <version.encoder>1.2.1</version.encoder>
         <version.logback>1.2.3</version.logback>
         <version.junit>4.12</version.junit>
-        <version.mockito>2.10.0</version.mockito>
+        <version.mockito>2.23.0</version.mockito>
         <version.undertow>2.0.11.Final</version.undertow>
         <version.swagger-parser>1.0.34</version.swagger-parser>
         <version.hamcrest>1.3</version.hamcrest>
