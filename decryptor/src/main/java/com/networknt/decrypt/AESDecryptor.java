@@ -2,8 +2,6 @@ package com.networknt.decrypt;
 
 import com.networknt.utility.Constants;
 import com.networknt.utility.Decryptor;
-import sun.misc.BASE64Decoder;
-import sun.misc.BASE64Encoder;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -12,6 +10,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.spec.KeySpec;
+import java.util.Base64;
 
 public class AESDecryptor implements Decryptor {
     private static final int ITERATIONS = 65536;
@@ -31,7 +30,7 @@ public class AESDecryptor implements Decryptor {
 
     private Cipher cipher;
 
-    private BASE64Decoder base64Decoder;
+    private Base64.Decoder base64Decoder;
 
     public AESDecryptor() {
         try
@@ -49,7 +48,7 @@ public class AESDecryptor implements Decryptor {
             cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 
             // For production use commons base64 encoder
-            base64Decoder = new BASE64Decoder();
+            base64Decoder = Base64.getDecoder();
         }
         catch (Exception e)
         {
@@ -66,7 +65,7 @@ public class AESDecryptor implements Decryptor {
 
         try
         {
-            byte[] data = base64Decoder.decodeBuffer(input.substring(6, input.length()));
+            byte[] data = base64Decoder.decode(input.substring(6, input.length()));
             int keylen = KEY_SIZE / 8;
             byte[] iv = new byte[keylen];
             System.arraycopy(data, 0, iv, 0, keylen);
