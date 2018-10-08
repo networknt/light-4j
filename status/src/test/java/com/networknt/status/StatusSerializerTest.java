@@ -36,7 +36,9 @@ public class StatusSerializerTest {
         config.getMapper().writeValue(new File(homeDir + "/service.json"), singletons);
 
         // Add home directory to the classpath of the system class loader.
-        addURL(new File(homeDir).toURI().toURL());
+        AppURLClassLoader classLoader = new AppURLClassLoader(new URL[0], ClassLoader.getSystemClassLoader());
+        classLoader.addURL(new File(homeDir).toURI().toURL());
+        config.setClassLoader(classLoader);
     }
 
     @AfterClass
@@ -44,17 +46,6 @@ public class StatusSerializerTest {
         // Remove the test.json from home directory
         File test = new File(homeDir + "/service.json");
         test.delete();
-    }
-
-    private static void addURL(URL url) throws Exception {
-        URLClassLoader classLoader
-                = (URLClassLoader) ClassLoader.getSystemClassLoader();
-        Class clazz = URLClassLoader.class;
-
-        // Use reflection
-        Method method= clazz.getDeclaredMethod("addURL", URL.class);
-        method.setAccessible(true);
-        method.invoke(classLoader, url);
     }
 
     @Test
