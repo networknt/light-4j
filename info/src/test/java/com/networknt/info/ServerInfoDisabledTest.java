@@ -58,6 +58,8 @@ public class ServerInfoDisabledTest {
     static Undertow server = null;
     static String homeDir = System.getProperty("user.home");
 
+    static ClassLoader classLoader;
+
     @BeforeClass
     public static void setUp() throws Exception {
         // inject in memory constructed info.json to homeDir as classpath
@@ -66,7 +68,9 @@ public class ServerInfoDisabledTest {
         map.put("enableServerInfo", false);
         Config.getInstance().getYaml().dump(map, new PrintWriter(new File(homeDir + "/info.yml")));
         // Add home directory to the classpath of the system class loader.
-        addURL(new File(homeDir).toURI().toURL());
+        AppURLClassLoader classLoader = new AppURLClassLoader(new URL[0], ClassLoader.getSystemClassLoader());
+        classLoader.addURL(new File(homeDir).toURI().toURL());
+        Config.getInstance().setClassLoader(classLoader);
 
         if(server == null) {
             logger.info("starting server");
@@ -95,16 +99,6 @@ public class ServerInfoDisabledTest {
         configFile.delete();
         // this is very important as it impacts subsequent test case if it is not cleared.
         Config.getInstance().clear();
-    }
-
-    static void addURL(URL url) throws Exception {
-        URLClassLoader classLoader
-                = (URLClassLoader) ClassLoader.getSystemClassLoader();
-        Class clazz = URLClassLoader.class;
-        // Use reflection
-        Method method = clazz.getDeclaredMethod("addURL", URL.class);
-        method.setAccessible(true);
-        method.invoke(classLoader, url);
     }
 
     static RoutingHandler getTestHandler() {
