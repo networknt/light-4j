@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * This is a simple audit handler that dump most important info per request basis. The following
@@ -76,6 +77,8 @@ public class AuditHandler implements MiddlewareHandler {
     static final String STATUS_CODE = "statusCode";
     static final String RESPONSE_TIME = "responseTime";
     static final String TIMESTAMP = "timestamp";
+    static final String AUDIT_ON_ERROR = "auditOnError";
+    static final String IS_LOG_LEVEL_ERROR = "logLevelIsError";
 
     public static final Map<String, Object> config;
     private static final List<String> headerList;
@@ -83,9 +86,10 @@ public class AuditHandler implements MiddlewareHandler {
 
     private static boolean statusCode = false;
     private static boolean responseTime = false;
+    private static boolean auditOnError = false;
 
     // A customized logger appender defined in default logback.xml
-    static final Logger audit = LoggerFactory.getLogger(Constants.AUDIT_LOGGER);
+    static Consumer<String> auditFunc = LoggerFactory.getLogger(Constants.AUDIT_LOGGER)::info;
 
     // The key to the audit info attachment in exchange. Allow other handlers to set values.
     public static final AttachmentKey<Map> AUDIT_INFO = AttachmentKey.create(Map.class);
@@ -104,6 +108,18 @@ public class AuditHandler implements MiddlewareHandler {
         if(object != null && (Boolean) object) {
             responseTime = true;
         }
+
+        // audit on error response flag
+        object = config.get(AUDIT_ON_ERROR);
+        if(object != null && (Boolean) object) {
+            auditOnError = true;
+        }
+
+        // set the log level
+        object = config.get(IS_LOG_LEVEL_ERROR);
+        auditFunc = (object != null && (Boolean) object) ?
+            LoggerFactory.getLogger(Constants.AUDIT_LOGGER)::error : LoggerFactory.getLogger(Constants.AUDIT_LOGGER)::info;
+
     }
 
     public AuditHandler() {
@@ -132,21 +148,40 @@ public class AuditHandler implements MiddlewareHandler {
         }
         if(statusCode || responseTime) {
             exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
-                if(statusCode) {
+                if (AuditHandler.statusCode) {
                     auditMap.put(STATUS_CODE, exchange1.getStatusCode());
                 }
-                if(responseTime) {
+                if (responseTime) {
                     auditMap.put(RESPONSE_TIME, System.currentTimeMillis() - start);
                 }
+
+                // add additional fields accumulated during the microservice execution
+                // according to the config
+                //Map<String, Object> auditInfo1 = exchange.getAttachment(AuditHandler.AUDIT_INFO);
+                if(auditInfo != null) {
+                    if(auditList != null && auditList.size() > 0) {
+                        for(String name: auditList) {
+                            auditMap.putIfAbsent(name, auditInfo.get(name));
+                        }
+                    }
+                }
+
                 try {
-                    audit.info(Config.getInstance().getMapper().writeValueAsString(auditMap));
+                    // audit entries only is it is an error, if auditOnError flag is set
+                    if(auditOnError) {
+                        if (exchange1.getStatusCode() >= 400)
+                            auditFunc.accept(Config.getInstance().getMapper().writeValueAsString(auditMap));
+                    } else {
+                        auditFunc.accept(Config.getInstance().getMapper().writeValueAsString(auditMap));
+                    }
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
                 }
+
                 nextListener.proceed();
             });
         } else {
-            audit.info(Config.getInstance().getMapper().writeValueAsString(auditMap));
+            auditFunc.accept(Config.getInstance().getMapper().writeValueAsString(auditMap));
         }
         Handler.next(exchange, next);
     }

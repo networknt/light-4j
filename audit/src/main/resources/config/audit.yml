@@ -9,6 +9,15 @@ statusCode: true
 # Output response time
 responseTime: true
 
+# audit only on error responses; by default log for any return status code
+# if true, audit at error level if status code >= 400
+# log level is controlled by logLevel
+auditOnError: false
+
+# log level; by default set to info
+logLevelIsError: false
+
+
 # Output header elements. You can add more if you want.
 headers:
 
@@ -32,3 +41,12 @@ audit:
 
 # Request endpoint uri@method.
 - endpoint
+
+# Service ID assigned to the service, this is optional and must be set by the service in its implementation
+- serviceId
+
+# Request Body, this is optional and must be set by the service in its implementation
+- request
+
+# Response payload, this is optional and must be set by the service in its implementation
+- response
