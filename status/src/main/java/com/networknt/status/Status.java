@@ -89,7 +89,7 @@ public class Status {
             try {
                 this.description = format(this.description, args);
             } catch (IllegalFormatException e) {
-                logger.warn(format("Error formatting description of status %s", code), e);
+//                logger.warn(format("Error formatting description of status %s", code), e);
             }
             if((this.severity = (String)map.get("severity")) == null)
                 this.severity = defaultSeverity;

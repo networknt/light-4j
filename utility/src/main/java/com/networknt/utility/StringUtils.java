@@ -998,7 +998,7 @@ public class StringUtils {
                 i++;
             }
         }
-        if (match || preserveAllTokens && lastMatch) {
+        if (match || (preserveAllTokens && lastMatch)) {
             list.add(str.substring(start, i));
         }
         return list.toArray(new String[list.size()]);
@@ -1044,7 +1044,7 @@ public class StringUtils {
             match = true;
             i++;
         }
-        if (match || preserveAllTokens && lastMatch) {
+        if (match || (preserveAllTokens && lastMatch)) {
             list.add(str.substring(start, i));
         }
         return list.toArray(new String[list.size()]);

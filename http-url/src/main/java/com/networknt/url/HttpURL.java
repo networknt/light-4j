@@ -397,10 +397,8 @@ public class HttpURL implements Serializable {
      * @since 1.8.0
      */
     public boolean isPortDefault() {
-        return PROTOCOL_HTTPS.equalsIgnoreCase(protocol)
-                && port == DEFAULT_HTTPS_PORT
-                || PROTOCOL_HTTP.equalsIgnoreCase(protocol)
-                && port == DEFAULT_HTTP_PORT;
+        return (PROTOCOL_HTTPS.equalsIgnoreCase(protocol) && port == DEFAULT_HTTPS_PORT)
+                || (PROTOCOL_HTTP.equalsIgnoreCase(protocol) && port == DEFAULT_HTTP_PORT);
     }
 
     /**
