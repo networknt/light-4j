@@ -23,7 +23,7 @@ public class ServiceUtil {
      */
     public static Object construct(Object something) throws Exception {
         if (something instanceof String) {
-            return Class.forName((String)something).newInstance();
+            return Class.forName((String)something).getConstructor().newInstance();
         } else if (something instanceof Map) {
             // keys are the class name, values are the parameters.
             for (Map.Entry<String, Object> entry : ((Map<String, Object>) something).entrySet()) {
@@ -45,7 +45,7 @@ public class ServiceUtil {
      * @throws Exception
      */
     public static Object constructByNamedParams(Class clazz, Map params) throws Exception {
-        Object obj = clazz.newInstance();
+        Object obj = clazz.getDeclaredConstructor().newInstance();
 
         Method[] allMethods = clazz.getMethods();
         for(Method method : allMethods) {
@@ -115,7 +115,7 @@ public class ServiceUtil {
             return instance;
         } else {
             if(hasDefaultConstructor) {
-                return clazz.getConstructor().newInstance();
+                return clazz.getDeclaredConstructor().newInstance();
             } else {
                 // error that no instance can be created.
                 throw new Exception("No instance can be created for class " + clazz);
