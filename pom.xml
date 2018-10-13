@@ -98,7 +98,7 @@
         <version.oracle>11.2.0.3</version.oracle>
         <version.sqlserver>7.0.0.jre10</version.sqlserver>
         <versions.maven-version>2.4</versions.maven-version>
-        <argLine>-Xmx512m -XX:MaxPermSize=256m</argLine>
+        <argLine>-Xmx512m</argLine>
     </properties>
 
     <modules>
