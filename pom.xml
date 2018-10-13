@@ -96,7 +96,7 @@
         <version.mysql>6.0.5</version.mysql>
         <version.postgres>9.4.1211</version.postgres>
         <version.oracle>11.2.0.3</version.oracle>
-        <version.sqlserver>6.5.1.jre8-preview</version.sqlserver>
+        <version.sqlserver>7.0.0.jre10</version.sqlserver>
         <versions.maven-version>2.4</versions.maven-version>
         <argLine>-Xmx512m -XX:MaxPermSize=256m</argLine>
     </properties>
