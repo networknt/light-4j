@@ -1,0 +1,46 @@
+openapi: 3.0.0
+servers:
+  - url: 'http://aa.networknt.com/v1'
+info:
+  version: 1.0.0
+  title: API AA for aggregate microservices pattern
+  description: API AA is called by consumer directly and it will call API AB, API AC and API AD to get data
+  contact:
+    email: stevehu@gmail.com
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+paths:
+  /data:
+    get:
+      description: Return an array of strings collected from down stream APIs
+      operationId: listData
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                title: ArrayOfStrings
+                type: array
+                items:
+                  type: string
+              examples:
+                response:
+                  value:
+                    - Message 1
+                    - Message 2
+      security:
+        - aa_auth:
+            - aa.w
+            - aa.r
+components:
+  securitySchemes:
+    aa_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: 'http://localhost:8080/oauth2/code'
+          scopes:
+            aa.w: write access
+            aa.r: read access

@@ -1,0 +1,5 @@
+---
+# Sepcification type and file name definition
+
+fileName: config/openapi.yaml
+contentType: text/yaml
