@@ -1,5 +1,7 @@
 module com.networknt.handler {
     exports com.networknt.handler;
+    exports com.networknt.handler.config;
+    exports com.networknt.handler.util;
     
     requires com.networknt.status;
     requires com.networknt.utility;

@@ -1,4 +1,7 @@
-open module client {
+open module com.networknt.client {
+    exports com.networknt.client;
+    exports com.networknt.client.oauth;
+
     requires com.networknt.common;
     requires com.networknt.config;
     requires com.networknt.status;
@@ -6,9 +9,7 @@ open module client {
     requires com.networknt.http.string;
 
     requires java.sql;
-
     requires com.fasterxml.jackson.annotation;
-
     requires undertow.core;
     requires slf4j.api;
     requires encoder;
