@@ -18,9 +18,8 @@ package com.networknt.audit;
 
 import com.networknt.client.Http2Client;
 import com.networknt.correlation.CorrelationHandler;
-import com.networknt.exception.ClientException;
+import com.networknt.status.exception.ClientException;
 import com.networknt.httpstring.HttpStringConstants;
-import com.networknt.utility.Constants;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.client.*;
@@ -28,23 +27,19 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import io.undertow.util.StringReadChannelListener;
-import io.undertow.util.StringWriteChannelListener;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
-import java.io.IOException;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 /**
  * Created by steve on 01/09/16.

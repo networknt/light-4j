@@ -41,6 +41,8 @@ public class InstrumentedExecutorsTest {
         final ThreadPoolExecutor delegate = (ThreadPoolExecutor) delegateField.get(executorService);
         assertThat(delegate.getCorePoolSize()).isEqualTo(2);
         assertThat(delegate.getMaximumPoolSize()).isEqualTo(2);
+
+        executorService.shutdown();
     }
 
     @Test
@@ -54,6 +56,7 @@ public class InstrumentedExecutorsTest {
         assertThat(delegate.getCorePoolSize()).isEqualTo(2);
         assertThat(delegate.getMaximumPoolSize()).isEqualTo(2);
         assertThat(delegate.getThreadFactory()).isSameAs(defaultThreadFactory);
+        executorService.shutdown();
     }
 
     @Test
@@ -69,6 +72,7 @@ public class InstrumentedExecutorsTest {
         assertThat(delegate.getCorePoolSize()).isEqualTo(2);
         assertThat(delegate.getMaximumPoolSize()).isEqualTo(2);
         assertThat(delegate.getThreadFactory()).isSameAs(defaultThreadFactory);
+        executorService.shutdown();
     }
 
     @Test
@@ -77,12 +81,14 @@ public class InstrumentedExecutorsTest {
         executorService.submit(new NoopRunnable());
 
         assertThat(registry.meter("xs.submitted").getCount()).isEqualTo(1L);
+        executorService.shutdown();
     }
 
     @Test
     public void testNewSingleThreadExecutorWithThreadFactory() throws Exception {
         final ExecutorService executorService = InstrumentedExecutors.newSingleThreadExecutor(defaultThreadFactory, registry);
         executorService.submit(new NoopRunnable());
+        executorService.shutdown();
     }
 
     @Test
@@ -91,6 +97,7 @@ public class InstrumentedExecutorsTest {
         executorService.submit(new NoopRunnable());
 
         assertThat(registry.meter("xs.submitted").getCount()).isEqualTo(1L);
+        executorService.shutdown();
     }
 
     @Test
@@ -106,6 +113,7 @@ public class InstrumentedExecutorsTest {
         final ThreadPoolExecutor delegate = (ThreadPoolExecutor) delegateField.get(executorService);
         assertThat(delegate.getCorePoolSize()).isEqualTo(0);
         assertThat(delegate.getPoolSize()).isEqualTo(2);
+        executorService.shutdown();
     }
 
     @Test
@@ -120,6 +128,7 @@ public class InstrumentedExecutorsTest {
         assertThat(delegate.getCorePoolSize()).isEqualTo(0);
         assertThat(delegate.getPoolSize()).isEqualTo(2);
         assertThat(delegate.getThreadFactory()).isSameAs(defaultThreadFactory);
+        executorService.shutdown();
     }
 
     @Test
@@ -136,12 +145,14 @@ public class InstrumentedExecutorsTest {
         assertThat(delegate.getCorePoolSize()).isEqualTo(0);
         assertThat(delegate.getPoolSize()).isEqualTo(2);
         assertThat(delegate.getThreadFactory()).isSameAs(defaultThreadFactory);
+        executorService.shutdown();
     }
 
     @Test
     public void testNewSingleThreadScheduledExecutor() throws Exception {
         final ScheduledExecutorService executorService = InstrumentedExecutors.newSingleThreadScheduledExecutor(registry);
         executorService.schedule(new NoopRunnable(), 0, TimeUnit.SECONDS);
+        executorService.shutdown();
     }
 
     @Test
@@ -150,6 +161,7 @@ public class InstrumentedExecutorsTest {
         executorService.schedule(new NoopRunnable(), 0, TimeUnit.SECONDS);
 
         assertThat(registry.meter("xs.scheduled.once").getCount()).isEqualTo(1L);
+        executorService.shutdown();
     }
 
     @Test
@@ -163,6 +175,7 @@ public class InstrumentedExecutorsTest {
         delegateField.setAccessible(true);
         final ScheduledThreadPoolExecutor delegate = (ScheduledThreadPoolExecutor) delegateField.get(executorService);
         assertThat(delegate.getCorePoolSize()).isEqualTo(2);
+        executorService.shutdown();
     }
 
     @Test
@@ -175,6 +188,7 @@ public class InstrumentedExecutorsTest {
         final ScheduledThreadPoolExecutor delegate = (ScheduledThreadPoolExecutor) delegateField.get(executorService);
         assertThat(delegate.getCorePoolSize()).isEqualTo(2);
         assertThat(delegate.getThreadFactory()).isSameAs(defaultThreadFactory);
+        executorService.shutdown();
     }
 
     @Test
@@ -189,6 +203,7 @@ public class InstrumentedExecutorsTest {
         final ScheduledThreadPoolExecutor delegate = (ScheduledThreadPoolExecutor) delegateField.get(executorService);
         assertThat(delegate.getCorePoolSize()).isEqualTo(2);
         assertThat(delegate.getThreadFactory()).isSameAs(defaultThreadFactory);
+        executorService.shutdown();
     }
 
     @Test

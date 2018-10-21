@@ -17,7 +17,7 @@
 package com.networknt.limit;
 
 import com.networknt.client.Http2Client;
-import com.networknt.exception.ClientException;
+import com.networknt.status.exception.ClientException;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
@@ -38,9 +38,6 @@ import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 

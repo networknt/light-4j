@@ -20,7 +20,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.networknt.client.oauth.KeyRequest;
 import com.networknt.client.oauth.OauthHelper;
 import com.networknt.config.Config;
-import com.networknt.exception.ExpiredTokenException;
+import com.networknt.status.exception.ExpiredTokenException;
 import com.networknt.utility.FingerPrintUtil;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;

@@ -17,9 +17,8 @@
 package com.networknt.correlation;
 
 import com.networknt.client.Http2Client;
-import com.networknt.exception.ClientException;
+import com.networknt.status.exception.ClientException;
 import com.networknt.httpstring.HttpStringConstants;
-import com.networknt.utility.Constants;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.client.ClientConnection;
@@ -28,7 +27,6 @@ import io.undertow.client.ClientResponse;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
-import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
 import org.junit.AfterClass;
 import org.junit.Assert;

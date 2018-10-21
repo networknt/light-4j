@@ -14,30 +14,20 @@
  * limitations under the License.
  */
 
-package com.networknt.exception;
+package com.networknt.status.exception;
 
 /**
- * This is a checked exception used by Client module.
+ * A checked exception to indicate something is wrong in the configuration
+ * file. Most config files will be loaded during server startup in a static
+ * block and there is no way an exception can be thrown. This is a special
+ * exception that need to be monitored in logs in order to capture config
+ * issue during development phase.
  *
  * @author Steve Hu
  */
-public class ClientException extends Exception {
+public class ConfigException extends Exception {
     private static final long serialVersionUID = 1L;
-
-    public ClientException() {
-        super();
-    }
-
-    public ClientException(String message) {
-        super(message);
-    }
-
-    public ClientException(String message, Throwable cause) {
+    public ConfigException(String message, Throwable cause) {
         super(message, cause);
     }
-
-    public ClientException(Throwable cause) {
-        super(cause);
-    }
-
 }

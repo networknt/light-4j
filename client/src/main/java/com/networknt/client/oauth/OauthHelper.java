@@ -2,7 +2,7 @@ package com.networknt.client.oauth;
 
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
-import com.networknt.exception.ClientException;
+import com.networknt.status.exception.ClientException;
 import io.undertow.UndertowOptions;
 import io.undertow.client.*;
 import io.undertow.util.Headers;
