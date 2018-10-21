@@ -9,4 +9,6 @@ module com.networknt.exception {
     requires undertow.core;
     requires slf4j.api;
     requires com.fasterxml.jackson.annotation;
+
+    requires java.logging;
 }

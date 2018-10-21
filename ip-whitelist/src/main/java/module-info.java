@@ -8,4 +8,5 @@ module com.networknt.ip.whitelist {
     requires undertow.core;
     requires xnio.api;
     requires slf4j.api;
+    requires java.logging;
 }

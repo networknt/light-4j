@@ -7,4 +7,5 @@ module com.networknt.header {
 
     requires undertow.core;
     requires slf4j.api;
+    requires java.logging;
 }

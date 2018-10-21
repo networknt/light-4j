@@ -6,4 +6,5 @@ module com.networknt.rate.limit {
     requires com.networknt.utility;
 
     requires undertow.core;
+    requires java.logging;
 }
