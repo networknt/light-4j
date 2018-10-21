@@ -5,4 +5,5 @@ module com.networknt.health {
 
     requires undertow.core;
     requires slf4j.api;
+    requires java.logging;
 }

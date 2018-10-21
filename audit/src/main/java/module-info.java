@@ -8,4 +8,5 @@ module com.networknt.audit {
     requires undertow.core;
     requires com.fasterxml.jackson.core;
     requires slf4j.api;
+    requires java.logging;
 }

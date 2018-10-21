@@ -6,4 +6,5 @@ module com.networknt.content {
     requires com.networknt.utility;
 
     requires undertow.core;
+    requires java.logging;
 }
