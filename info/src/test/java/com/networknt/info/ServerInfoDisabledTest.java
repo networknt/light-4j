@@ -18,7 +18,7 @@ package com.networknt.info;
 
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
-import com.networknt.exception.ClientException;
+import com.networknt.status.exception.ClientException;
 import com.networknt.status.Status;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
@@ -40,10 +40,8 @@ import org.xnio.OptionMap;
 
 import java.io.File;
 import java.io.PrintWriter;
-import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;

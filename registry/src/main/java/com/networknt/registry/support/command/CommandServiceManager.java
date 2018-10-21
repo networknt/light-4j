@@ -16,7 +16,7 @@
 
 package com.networknt.registry.support.command;
 
-import com.networknt.exception.FrameworkException;
+import com.networknt.status.exception.FrameworkException;
 import com.networknt.registry.NotifyListener;
 import com.networknt.registry.URL;
 import com.networknt.registry.URLImpl;
@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Pattern;
 
 
 public class CommandServiceManager implements ServiceListener {

@@ -19,6 +19,8 @@ package com.networknt.exception;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.status.Status;
+import com.networknt.status.exception.ApiException;
+import com.networknt.status.exception.ClientException;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.client.ClientConnection;

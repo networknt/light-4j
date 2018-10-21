@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.networknt.exception;
+package com.networknt.status.exception;
 
 import com.networknt.status.Status;
 
