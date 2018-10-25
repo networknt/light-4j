@@ -65,7 +65,7 @@
     </distributionManagement>
 
     <properties>
-        <java.version>11</java.version>
+        <java.version>10</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -98,7 +98,7 @@
         <version.oracle>11.2.0.3</version.oracle>
         <version.sqlserver>7.0.0.jre10</version.sqlserver>
         <versions.maven-version>2.4</versions.maven-version>
-        <argLine>-Xmx512m -Djava.net.preferIPv4Stack=true --add-modules java.sql</argLine>
+        <argLine>-Xmx512m -Djava.net.preferIPv4Stack=true</argLine>
     </properties>
 
     <modules>
@@ -405,33 +405,6 @@
                 <groupId>io.undertow</groupId>
                 <artifactId>undertow-core</artifactId>
                 <version>${version.undertow}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.jboss.xnio</groupId>
-                        <artifactId>xnio-api</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.jboss.xnio</groupId>
-                        <artifactId>xnio-nio</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>org.jboss.xnio</groupId>
-                <artifactId>xnio-api</artifactId>
-                <version>3.6.5.Final</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jboss.xnio</groupId>
-                <artifactId>xnio-nio</artifactId>
-                <version>3.6.5.Final</version>
-                <scope>runtime</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.jboss.threads</groupId>
-                        <artifactId>jboss-threads</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.jboss.threads</groupId>
@@ -623,7 +596,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.0</version>
                 <configuration>
-                    <release>11</release>
+                    <release>10</release>
                 </configuration>
             </plugin>
             <!--
