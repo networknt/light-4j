@@ -15,5 +15,4 @@ open module com.networknt.client {
     requires encoder;
     requires org.apache.commons.codec;
     requires xnio.api;
-    requires jboss.threads;
 }
