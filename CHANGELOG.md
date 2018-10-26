@@ -1,5 +1,18 @@
 # Change Log
 
+## [1.5.21](https://github.com/networknt/light-4j/tree/1.5.21) (2018-10-26)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.20...1.5.21)
+
+**Implemented enhancements:**
+
+- Collect environment element in the Metrics Handler [\#310](https://github.com/networknt/light-4j/issues/310)
+- Enhance logging in the AuditHandler [\#295](https://github.com/networknt/light-4j/issues/295)
+- Environment config in client only applications [\#272](https://github.com/networknt/light-4j/issues/272)
+
+**Fixed bugs:**
+
+- Set correct status code if Method or URI from request could not be resolved in the handler chain [\#308](https://github.com/networknt/light-4j/issues/308)
+
 ## [1.5.20](https://github.com/networknt/light-4j/tree/1.5.20) (2018-10-05)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.19...1.5.20)
 
