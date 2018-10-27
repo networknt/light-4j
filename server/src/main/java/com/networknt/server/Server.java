@@ -111,6 +111,10 @@ public class Server {
     static GracefulShutdownHandler gracefulShutdownHandler;
 
     public static void main(final String[] args) {
+        init();
+    }
+
+    public static void init() {
         logger.info("server starts");
         // setup system property to redirect undertow logs to slf4j/logback.
         System.setProperty("org.jboss.logging.provider", "slf4j");
