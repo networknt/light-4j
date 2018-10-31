@@ -84,7 +84,7 @@ ERR10016:
   statusCode: 400
   code: ERR10016
   message: MISSING_HANDlER
-  description: Could not find handler for the uri %s and method %s.
+  description: Could not find the handler for the endpoint %s.
 ERR10017:
   statusCode: 400
   code: ERR10017
