@@ -1,0 +1,5 @@
+path: /view
+base: /home/steve/sites/public
+prefix: true
+transferMinSize: 10485760
+directoryListingEnabled: false

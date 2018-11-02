@@ -22,3 +22,7 @@ paths:
     exec:
       - secondBeforeFirst
       - third
+# If there is no matched path, then it goes here first. If this is not set, then an error
+# will be returned.
+defaultHandlers:
+  - third
