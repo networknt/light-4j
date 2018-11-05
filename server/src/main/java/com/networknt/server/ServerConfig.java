@@ -22,6 +22,7 @@ package com.networknt.server;
  * @author Steve Hu
  */
 public class ServerConfig {
+    public static final String CONFIG_NAME = "server";
     String ip;
     int httpPort;
     boolean enableHttp;
