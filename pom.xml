@@ -95,6 +95,7 @@
         <version.postgres>9.4.1211</version.postgres>
         <version.oracle>11.2.0.3</version.oracle>
         <version.sqlserver>6.5.1.jre8-preview</version.sqlserver>
+        <version.httpclient>4.5.6</version.httpclient>
         <versions.maven-version>2.4</versions.maven-version>
         <argLine>-Xmx512m -XX:MaxPermSize=256m</argLine>
     </properties>
@@ -140,6 +141,7 @@
         <module>basic-auth</module>
         <module>deref-token</module>
         <module>ip-whitelist</module>
+        <module>encode-decode</module>
     </modules>
 
     <dependencyManagement>
@@ -289,7 +291,7 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
-                <artifactId>limit</artifactId>
+                <artifactId>rate-limit</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -319,17 +321,22 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
-                <artifactId>datasource</artifactId>
+                <artifactId>data-source</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
-                <artifactId>basic</artifactId>
+                <artifactId>basic-auth</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
-                <artifactId>deref</artifactId>
+                <artifactId>deref-token</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>encode-decode</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -540,6 +547,12 @@
                 <groupId>com.h2database</groupId>
                 <artifactId>h2</artifactId>
                 <version>${version.h2}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>${version.httpclient}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>
