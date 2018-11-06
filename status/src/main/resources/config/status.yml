@@ -250,6 +250,11 @@ ERR10049:
   code: ERR10049
   message: INVALID_IP_FOR_PATH
   description: Peer IP %s is not in the whitelist for the endpoint %s
+ERR10050:
+  statusCode: 406
+  code: ERR10050
+  message: NO_ENCODING_HANDLER
+  description: No encoding handler for the required encoder.
 
 
 # 11000-11500 swagger-validator errors
