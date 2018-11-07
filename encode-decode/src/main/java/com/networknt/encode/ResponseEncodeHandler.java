@@ -1,6 +1,7 @@
 package com.networknt.encode;
 
 import com.networknt.config.Config;
+import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
@@ -71,14 +72,14 @@ public class ResponseEncodeHandler implements MiddlewareHandler {
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         AllowedContentEncodings encodings = contentEncodingRepository.getContentEncodings(exchange);
         if (encodings == null || !exchange.isResponseChannelAvailable()) {
-            next.handleRequest(exchange);
+            Handler.next(exchange, next);
         } else if (encodings.isNoEncodingsAllowed()) {
             setExchangeStatus(exchange, NO_ENCODING_HANDLER);
             return;
         } else {
             exchange.addResponseWrapper(encodings);
             exchange.putAttachment(AllowedContentEncodings.ATTACHMENT_KEY, encodings);
-            next.handleRequest(exchange);
+            Handler.next(exchange, next);
         }
     }
 }

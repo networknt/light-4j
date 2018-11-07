@@ -1,6 +1,7 @@
 package com.networknt.decode;
 
 import com.networknt.config.Config;
+import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
@@ -79,6 +80,6 @@ public class RequestDecodeHandler implements MiddlewareHandler {
             // Since the data is no longer encoded, we remove the encoding header.
             exchange.getRequestHeaders().remove(Headers.CONTENT_ENCODING);
         }
-        next.handleRequest(exchange);
+        Handler.next(exchange, next);
     }
 }
