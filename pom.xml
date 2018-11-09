@@ -142,6 +142,7 @@
         <module>deref-token</module>
         <module>ip-whitelist</module>
         <module>encode-decode</module>
+        <module>monad-result</module>
     </modules>
 
     <dependencyManagement>
@@ -337,6 +338,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>encode-decode</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>monad-result</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
