@@ -1,4 +1,126 @@
 ---
+SUC10200:
+  statusCode: 200
+  code: SUC10200
+  message: OK
+  severity: NA
+  description: The request is handled successfully
+SUC10201:
+  statusCode: 201
+  code: SUC10201
+  message: CREATED
+  severity: NA
+  description: A new resource is created
+SUC10202:
+  statusCode: 202
+  code: SUC10202
+  message: ACCEPTED
+  severity: NA
+  description: The request has been accepted for processing
+SUC10203:
+  statusCode: 203
+  code: SUC10203
+  message: NON-AUTHORITATIVE_INFORMATION
+  severity: NA
+  description: The server received a 200 OK but returned a modified version of response
+SUC10204:
+  statusCode: 204
+  code: SUC10204
+  message: NO_CONTENT
+  severity: NA
+  description: The request is processed but no conent is returned
+SUC10205:
+  statusCode: 205
+  code: SUC10205
+  message: RESET_CONTENT
+  severity: NA
+  description: The request is processed but no conent is returned and document view needs to be reset
+SUC10206:
+  statusCode: 206
+  code: SUC10206
+  message: PARTIAL_CONTENT
+  severity: NA
+  description: The server is delivering only part of the resource
+SUC10207:
+  statusCode: 207
+  code: SUC10207
+  message: MULTI-STATUS
+  severity: NA
+  description: Separate response codes are returned
+SUC10208:
+  statusCode: 208
+  code: SUC10208
+  message: ALREADY_REPORTED
+  severity: NA
+  description: DAV bindings have been returned in a preceding response
+SUC10209:
+  statusCode: 209
+  code: SUC10209
+  message: ALREADY_REPORTED
+  severity: NA
+  description: DAV bindings have been returned in a preceding response
+SUC10226:
+  statusCode: 226
+  code: SUC10226
+  message: IM_USED
+  severity: NA
+  description: The response is a representation of the result of one or more instance-manipulations applied to the current instance
+
+SUC10300:
+  statusCode: 300
+  code: SUC10300
+  message: MULTIPLE_CHOICES
+  severity: NA
+  description: The client can choose multiple options for the resource
+SUC10301:
+  statusCode: 301
+  code: SUC10301
+  message: MOVED_PERMANENTLY
+  severity: NA
+  description: All future requests should be redirect to the give URI
+SUC10302:
+  statusCode: 302
+  code: SUC10302
+  message: FOUND
+  severity: NA
+  description: Please look at (browse to) another url
+SUC10303:
+  statusCode: 303
+  code: SUC10303
+  message: SEE_OTHER
+  severity: NA
+  description: The request can be found under another URI
+SUC10304:
+  statusCode: 304
+  code: SUC10304
+  message: NOT_MODIFIED
+  severity: NA
+  description: The resource has not been modified
+SUC10305:
+  statusCode: 305
+  code: SUC10305
+  message: USE_PROXY
+  severity: NA
+  description: The resource is available only through a proxy
+SUC10306:
+  statusCode: 306
+  code: SUC10306
+  message: SWITCH_PROXY
+  severity: NA
+  description: Subsequent requests should use a specified proxy
+SUC10307:
+  statusCode: 307
+  code: SUC10307
+  message: TEMPORARY_REDIRECT
+  severity: NA
+  description: The request should be repeated with another URI
+SUC10308:
+  statusCode: 308
+  code: SUC10308
+  message: PERMANENT_REDIRECT
+  severity: NA
+  description: The request and all future requests should be repeated with another URI
+
 # 10000-11000 Light Java Framework validation errors
 ERR10000:
   statusCode: 401
