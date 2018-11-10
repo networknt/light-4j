@@ -1,5 +1,27 @@
 # Change Log
 
+## [1.5.22](https://github.com/networknt/light-4j/tree/1.5.22) (2018-11-10)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.21...1.5.22)
+
+**Fixed bugs:**
+
+- handle the situation that the alias is not server in the server.keystore [\#317](https://github.com/networknt/light-4j/issues/317)
+
+**Closed issues:**
+
+- add monad-result module to wrap success T and failure Status [\#325](https://github.com/networknt/light-4j/issues/325)
+- add successful status code to status.yml [\#324](https://github.com/networknt/light-4j/issues/324)
+- gzip and deflate encoding and decoding support in middleware handlers [\#323](https://github.com/networknt/light-4j/issues/323)
+- add static CONFIG\_NAME to serverConfig [\#320](https://github.com/networknt/light-4j/issues/320)
+- add another default method in LightHttpHandler to bubble up the status [\#319](https://github.com/networknt/light-4j/issues/319)
+- support default path in handler.yml for single page application [\#316](https://github.com/networknt/light-4j/issues/316)
+- update status.yml ERR10016 to have only one parameter [\#314](https://github.com/networknt/light-4j/issues/314)
+
+**Merged pull requests:**
+
+- fixes \#316 update resource and handler to support SPA from handler.yml [\#318](https://github.com/networknt/light-4j/pull/318) ([stevehu](https://github.com/stevehu))
+- Refactored code from main\(\) to init\(\) so server can be embedded. [\#311](https://github.com/networknt/light-4j/pull/311) ([farrukhnajmi](https://github.com/farrukhnajmi))
+
 ## [1.5.21](https://github.com/networknt/light-4j/tree/1.5.21) (2018-10-26)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.20...1.5.21)
 
