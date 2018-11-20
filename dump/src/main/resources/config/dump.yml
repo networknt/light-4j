@@ -4,12 +4,11 @@ description: controls how to dump entire request and response to log file. not r
 enabled: true
 enableMask: true
 request:
-  headers:
-  - Authorization
-  - Host
+  headers: true
   cookies: true
   queryParameters: true
   body: true
+
 response:
   headers: true
   cookies: true
