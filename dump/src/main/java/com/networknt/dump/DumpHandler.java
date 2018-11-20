@@ -27,9 +27,15 @@ import io.undertow.util.HeaderValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Handler that dumps request and response to a log based on the dump.json config
@@ -39,12 +45,18 @@ import java.util.Map;
 public class DumpHandler implements MiddlewareHandler {
     public static final String CONFIG_NAME = "dump";
     public static final String ENABLED = "enabled";
+    static final String DUMP_METHOD_PREFIX = "dump";
+    static final String DUMP_REQUEST_METHOD_PREFIX = "dumpRequest";
     static final String REQUEST = "request";
     static final String RESPONSE = "response";
     static final String HEADERS = "headers";
     static final String COOKIES = "cookies";
     static final String QUERY_PARAMETERS = "queryParameters";
-
+    static final String BODY = "body";
+    static final String STATUS_CODE = "statusCode";
+    static final String CONTENT_LENGTH = "contentLength";
+    static final String[] REQUEST_OPTIONS = {HEADERS, COOKIES, QUERY_PARAMETERS, BODY};
+    static final String[] RESPONSE_OPTIONS = {HEADERS, COOKIES, BODY, STATUS_CODE, CONTENT_LENGTH};
     static final Logger audit = LoggerFactory.getLogger(Constants.AUDIT_LOGGER);
     static final Logger logger = LoggerFactory.getLogger(DumpHandler.class);
 
@@ -52,6 +64,8 @@ public class DumpHandler implements MiddlewareHandler {
             Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
 
     private volatile HttpHandler next;
+
+    private static boolean isEnabled = false;
 
     public DumpHandler() {
 
@@ -61,6 +75,24 @@ public class DumpHandler implements MiddlewareHandler {
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         Map<String, Object> result = new LinkedHashMap<>();
         Map<String, Object> config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
+        Object requestConfig = config.get(REQUEST);
+        if(isEnabled()) {
+            dumpRequest(result, exchange, requestConfig);
+        }
+
+        logResult(result);
+    }
+
+    private void logResult(Map<String, Object> result) {
+        for(Entry<String, Object> entry: result.entrySet()) {
+            if(entry.getValue() instanceof Map<?, ?>) {
+                logResult((Map)entry.getValue());
+            } else if(entry.getValue() instanceof String) {
+                logger.info("{}: {}",entry.getKey(), (String)entry.getValue());
+            } else {
+                logger.debug("Cannot handle this type: {}", entry.getKey());
+            }
+        }
     }
 
     @Override
@@ -86,17 +118,44 @@ public class DumpHandler implements MiddlewareHandler {
         ModuleRegistry.registerModule(DumpHandler.class.getName(), config, null);
     }
 
-    private void dumpRequest(Map<String, Object> result, HttpServerExchange exchange, Object configObject) {
+    private void dumpRequest(Map<String, Object> result, HttpServerExchange exchange, Object requestConfigObject) {
         Map<String, Object> requestMap = new LinkedHashMap<>();
-        if (configObject instanceof Boolean) {
-            if ((Boolean) configObject) {
-
+        if (requestConfigObject instanceof Boolean) {
+            if ((Boolean) requestConfigObject) {
+                dumpRequestHeaders(result, exchange, true);
             }
-        } else if (configObject instanceof List<?>) {
-
+            //check options under "request"
+        } else if (requestConfigObject instanceof Map<?, ?>) {
+            Map<String, Object> requestConfigMap = ((Map)requestConfigObject);
+            for(String requestOption: REQUEST_OPTIONS) {
+                if(requestConfigMap.containsKey(requestOption)) {
+                    dumpRequestOptions(requestOption, requestMap, exchange, requestConfigMap.get(requestOption));
+                }
+            }
+        } else {
+            logger.error("Request configuration is incorrect");
+        }
+        if(requestMap.size() > 0) {
+            result.put(REQUEST, requestMap);
         }
     }
 
+    //Based on option name inside "request", call related handle method. e.g.  "cookies: true" inside "header", will call "dumpRequestCookie"
+    private void dumpRequestOptions(String requestOption, Map<String, Object> result, HttpServerExchange exchange, Object requestConfigObject) {
+        String dumpRequestOptionMethodName = DUMP_REQUEST_METHOD_PREFIX + requestOption.substring(0, 1).toUpperCase() + requestOption.substring(1);
+        try {
+            Method dumpRequestOptionMethod = DumpHandler.class.getDeclaredMethod(dumpRequestOptionMethodName, Map.class, HttpServerExchange.class, Object.class);
+            dumpRequestOptionMethod.invoke(this, result, exchange, requestConfigObject);
+        } catch (NoSuchMethodException e) {
+            logger.error("Cannot find a method for this request option: {}", requestOption);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
+    }
+
+    //configObject is on "header" level
     private void dumpRequestHeaders(Map<String, Object> result, HttpServerExchange exchange, Object configObject) {
         Map<String, Object> headerMap = new LinkedHashMap<>();
         if (configObject instanceof Boolean) {
@@ -123,6 +182,36 @@ public class DumpHandler implements MiddlewareHandler {
         }
         if (headerMap.size() > 0) {
             result.put(HEADERS, headerMap);
+        }
+    }
+
+    private void dumpRequestCookies(Map<String, Object> result, HttpServerExchange exchange, Object requestConfigObject) {
+        if(requestConfigObject instanceof Boolean && (Boolean)requestConfigObject) {
+            result.put(COOKIES, exchange.getRequestCookies());
+        }
+    }
+
+    private void dumpRequestQueryParameters(Map<String, Object> result, HttpServerExchange exchange, Object requestConfigObject) {
+        if(requestConfigObject instanceof Boolean && (Boolean)requestConfigObject) {
+            result.put(QUERY_PARAMETERS, exchange.getQueryParameters());
+        }
+    }
+
+    private void dumpRequestBody(Map<String, Object> result, HttpServerExchange exchange, Object requestConfigObject) {
+        if(requestConfigObject instanceof Boolean && (Boolean)requestConfigObject) {
+            exchange.startBlocking();
+            InputStream inputStream = exchange.getInputStream();
+            ByteArrayOutputStream body = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            int length;
+            try {
+                while ((length = inputStream.read(buffer)) != -1) {
+                    body.write(buffer, 0, length);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            result.put(BODY, body.toString());
         }
     }
 
