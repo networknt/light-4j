@@ -1,12 +1,12 @@
 ---
 description: controls how to dump entire request and response to log file. not recommended
   on production if performance is important
-enabled: false
+enabled: true
 enableMask: true
 request:
   headers:
-  - contentType
-  - characterEncoding
+  - Authorization
+  - Host
   cookies: true
   queryParameters: true
   body: true
