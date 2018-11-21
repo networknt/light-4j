@@ -1,34 +1,23 @@
 package com.networknt.db;
 
+import javax.sql.DataSource;
+
 /**
  * Maria DB data source that is a drop-in replacement for Mysql database.
  *
  * @author Steve Hu
  */
-public class MariaDataSource extends GenericDataSource {
-    private static final String MARIA_DS = "MariaDataSource";
-    private static final String MARIA_PASSWORD = "mariaPassword";
+public class MariaDataSource implements GenericDataSource
+{
+    private static final String DS_NAME = "MariaDataSource";
+    private static final String DB_PASS_KEY = "mariaPassword";
 
-    @Override
-    public String getDsName() {
-        if(dsName != null) {
-            return dsName;
-        } else {
-            return MARIA_DS;
-        }
-    }
+    private DataSourceHelper _dsh;
 
-    @Override
-    public String getDbPassKey() {
-        return MARIA_PASSWORD;
-    }
+    public MariaDataSource() { _dsh = new DataSourceHelper(DS_NAME, DB_PASS_KEY); }
+    public MariaDataSource(String dsName) { _dsh = new DataSourceHelper(dsName != null ? dsName : DS_NAME, DB_PASS_KEY); }
 
-    public MariaDataSource(String dsName) {
-        super(dsName);
-    }
-
-    public MariaDataSource() {
-        super();
-    }
-
+    public String getDsName() { return _dsh.getDsName(); }
+    public String getDbPassKey() { return _dsh.getDbPassKey(); }
+    public DataSource getDataSource() { return _dsh.getDataSource(); }
 }

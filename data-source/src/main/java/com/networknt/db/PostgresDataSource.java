@@ -1,34 +1,22 @@
 package com.networknt.db;
 
+import javax.sql.DataSource;
+
 /**
  * Another popular open source database.
  *
  * @author Steve Hu
  */
-public class PostgresDataSource extends GenericDataSource {
-    private static final String POSTGRES_DS = "PostgresDataSource";
-    private static final String POSTGRES_PASSWORD = "postgresPassword";
+public class PostgresDataSource implements GenericDataSource
+{
+    private static final String DS_NAME = "PostgresDataSource";
+    private static final String DB_PASS_KEY = "postgresPassword";
+    private DataSourceHelper _dsh;
 
-    @Override
-    public String getDsName() {
-        if(dsName != null) {
-            return dsName;
-        } else {
-            return POSTGRES_DS;
-        }
-    }
+    public PostgresDataSource() { _dsh = new DataSourceHelper(DS_NAME, DB_PASS_KEY); }
+    public PostgresDataSource(String dsName) { _dsh = new DataSourceHelper(dsName != null ? dsName : DS_NAME, DB_PASS_KEY); }
 
-    @Override
-    public String getDbPassKey() {
-        return POSTGRES_PASSWORD;
-    }
-
-    public PostgresDataSource(String dsName) {
-        super(dsName);
-    }
-
-    public PostgresDataSource() {
-        super();
-    }
-
+    public String getDsName() { return _dsh.getDsName(); }
+    public String getDbPassKey() { return _dsh.getDbPassKey(); }
+    public DataSource getDataSource() { return _dsh.getDataSource(); }
 }

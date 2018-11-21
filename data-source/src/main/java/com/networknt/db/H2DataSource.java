@@ -1,5 +1,7 @@
 package com.networknt.db;
 
+import javax.sql.DataSource;
+
 /**
  * H2 database data source. Usually it is used for testing and it can simulate other database by specify
  * the mode. It also load the script during the startup in the jdbcUrl. When used for test, we would use
@@ -7,29 +9,17 @@ package com.networknt.db;
  *
  * @author Steve Hu
  */
-public class H2DataSource extends GenericDataSource {
-    private static final String H2_DS = "H2DataSource";
-    private static final String H2_PASSWORD = "H2Password";
+public class H2DataSource implements GenericDataSource
+{
+    private static final String DS_NAME = "H2DataSource";
+    private static final String DB_PASS_KEY = "H2Password";
 
-    @Override
-    public String getDsName() {
-        if(dsName != null) {
-            return dsName;
-        } else {
-            return H2_DS;
-        }
-    }
+    private DataSourceHelper _dsh;
 
-    @Override
-    public String getDbPassKey() {
-        return H2_PASSWORD;
-    }
+    public H2DataSource() { _dsh = new DataSourceHelper(DS_NAME, DB_PASS_KEY); }
+    public H2DataSource(String dsName) { _dsh = new DataSourceHelper(dsName != null ? dsName : DS_NAME, DB_PASS_KEY); }
 
-    public H2DataSource(String dsName) {
-        super(dsName);
-    }
-
-    public H2DataSource() {
-        super();
-    }
+    public String getDsName() { return _dsh.getDsName(); }
+    public String getDbPassKey() { return _dsh.getDbPassKey(); }
+    public DataSource getDataSource() { return _dsh.getDataSource(); }
 }

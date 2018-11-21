@@ -1,34 +1,22 @@
 package com.networknt.db;
 
+import javax.sql.DataSource;
+
 /**
  * Oracle database data source. We are using XE docker container for testing.
  *
  * @author Steve Hu
  */
-public class OracleDataSource extends GenericDataSource {
-    private static final String ORACLE_DS = "OracleDataSource";
-    private static final String ORACLE_PASSWORD = "oraclePassword";
+public class OracleDataSource implements GenericDataSource
+{
+    private static final String DS_NAME = "OracleDataSource";
+    private static final String DB_PASS_KEY = "oraclePassword";
+    private DataSourceHelper _dsh;
 
-    @Override
-    public String getDsName() {
-        if(dsName != null) {
-            return dsName;
-        } else {
-            return ORACLE_DS;
-        }
-    }
+    public OracleDataSource() { _dsh = new DataSourceHelper(DS_NAME, DB_PASS_KEY); }
+    public OracleDataSource(String dsName) { _dsh = new DataSourceHelper(dsName != null ? dsName : DS_NAME, DB_PASS_KEY); }
 
-    @Override
-    public String getDbPassKey() {
-        return ORACLE_PASSWORD;
-    }
-
-    public OracleDataSource(String dsName) {
-        super(dsName);
-    }
-
-    public OracleDataSource() {
-        super();
-    }
-
+    public String getDsName() { return _dsh.getDsName(); }
+    public String getDbPassKey() { return _dsh.getDbPassKey(); }
+    public DataSource getDataSource() { return _dsh.getDataSource(); }
 }

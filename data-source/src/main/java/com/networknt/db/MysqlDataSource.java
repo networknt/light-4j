@@ -1,34 +1,23 @@
 package com.networknt.db;
 
+import javax.sql.DataSource;
+
+
 /**
  * The most populate open source database.
  *
  * @author Steve Hu
  */
-public class MysqlDataSource extends GenericDataSource {
-    private static final String MYSQL_DS = "MysqlDataSource";
-    private static final String MYSQL_PASSWORD = "mysqlPassword";
+public class MysqlDataSource implements GenericDataSource
+{
+    private static final String DS_NAME = "mysqlPassword";
+    private static final String DB_PASS_KEY = "MysqlDataSource";
+    private DataSourceHelper _dsh;
 
-    @Override
-    public String getDsName() {
-        if(dsName != null) {
-            return dsName;
-        } else {
-            return MYSQL_DS;
-        }
-    }
+    public MysqlDataSource() { _dsh = new DataSourceHelper(DS_NAME, DB_PASS_KEY); }
+    public MysqlDataSource(String dsName) { _dsh = new DataSourceHelper(dsName != null ? dsName : DS_NAME, DB_PASS_KEY); }
 
-    @Override
-    public String getDbPassKey() {
-        return MYSQL_PASSWORD;
-    }
-
-    public MysqlDataSource(String dsName) {
-        super(dsName);
-    }
-
-    public MysqlDataSource() {
-        super();
-    }
-
+    public String getDsName() { return _dsh.getDsName(); }
+    public String getDbPassKey() { return _dsh.getDbPassKey(); }
+    public DataSource getDataSource() { return _dsh.getDataSource(); }
 }

@@ -1,34 +1,22 @@
 package com.networknt.db;
 
+import javax.sql.DataSource;
+
 /**
  * Microsoft SQL Server database data source.
  *
  * @author Steve Hu
  */
-public class SqlServerDataSource extends GenericDataSource {
-    private static final String SQLSERVER_DS = "SqlServerDataSource";
-    private static final String SQLSERVER_PASSWORD = "sqlServerPassword";
+public class SqlServerDataSource implements GenericDataSource
+{
+    private static final String DS_NAME = "SqlServerDataSource";
+    private static final String DB_PASS_KEY = "sqlServerPassword";
+    private DataSourceHelper _dsh;
 
-    @Override
-    public String getDsName() {
-        if(dsName != null) {
-            return dsName;
-        } else {
-            return SQLSERVER_DS;
-        }
-    }
+    public SqlServerDataSource() { _dsh = new DataSourceHelper(DS_NAME, DB_PASS_KEY); }
+    public SqlServerDataSource(String dsName) { _dsh = new DataSourceHelper(dsName != null ? dsName : DS_NAME, DB_PASS_KEY); }
 
-    @Override
-    public String getDbPassKey() {
-        return SQLSERVER_PASSWORD;
-    }
-
-    public SqlServerDataSource(String dsName) {
-        super(dsName);
-    }
-
-    public SqlServerDataSource() {
-        super();
-    }
-
+    public String getDsName() { return _dsh.getDsName(); }
+    public String getDbPassKey() { return _dsh.getDbPassKey(); }
+    public DataSource getDataSource() { return _dsh.getDataSource(); }
 }
