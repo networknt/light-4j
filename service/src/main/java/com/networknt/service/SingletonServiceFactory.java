@@ -77,8 +77,14 @@ public class SingletonServiceFactory {
         List<Object> items = new ArrayList<>();
         if (it.hasNext()) {
             Map.Entry<String, Map<String, Object>> pair = (Map.Entry) it.next();
+
+            // check whether intent is to generate implementation from factory method
             String key = pair.getKey();
-            Class implClass = Class.forName(key);
+            String initClassName = key.contains("::") ? key.substring(0, key.indexOf("::")) : key;
+            String initMethodName = key.contains("::") ? key.substring(key.indexOf("::") + 2) : null;
+
+            Class implClass = Class.forName(initClassName);
+
             Object mapOrList = pair.getValue();
             // at this moment, pair.getValue() has two scenarios,
             // 1. map that can be used to set properties after construct the object with reflection.
@@ -109,6 +115,13 @@ public class SingletonServiceFactory {
                 }
             } else if(mapOrList instanceof List){
                 obj = ServiceUtil.constructByParameterizedConstructor(implClass, (List)mapOrList);
+
+                // use instance method to instantiate object if one was specified
+                if(initMethodName != null) {
+                    Method method = obj.getClass().getMethod(initMethodName);
+                    obj = method.invoke(obj);
+                }
+
             } else {
                 throw new RuntimeException("Only Map or List is allowed for implementation parameters, null provided.");
             }
