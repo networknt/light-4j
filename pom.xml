@@ -97,6 +97,7 @@
         <version.postgres>9.4.1211</version.postgres>
         <version.oracle>11.2.0.3</version.oracle>
         <version.sqlserver>7.0.0.jre10</version.sqlserver>
+        <version.httpclient>4.5.6</version.httpclient>
         <versions.maven-version>2.4</versions.maven-version>
         <argLine>-Xmx512m -Djava.net.preferIPv4Stack=true</argLine>
     </properties>
@@ -638,19 +639,19 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.10.4</version>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+            <!--<plugin>-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-javadoc-plugin</artifactId>-->
+                <!--<version>2.10.4</version>-->
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--<id>attach-javadocs</id>-->
+                        <!--<goals>-->
+                            <!--<goal>jar</goal>-->
+                        <!--</goals>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+            <!--</plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
