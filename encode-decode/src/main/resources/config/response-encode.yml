@@ -1,0 +1,6 @@
+---
+# response encode handler for gzip and deflate
+enabled: false
+encoders:
+  - gzip
+  - deflate

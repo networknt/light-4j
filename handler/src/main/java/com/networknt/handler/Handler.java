@@ -43,6 +43,7 @@ public class Handler {
 	static final Map<String, HttpHandler> handlers = new HashMap<>();
 	static final Map<String, List<HttpHandler>> handlerListById = new HashMap<>();
 	static final Map<HttpString, PathTemplateMatcher<String>> methodToMatcherMap = new HashMap<>();
+	static List<HttpHandler> defaultHandlers;
 
 //	static {
 //		initHandlers();
@@ -53,7 +54,8 @@ public class Handler {
 	public static void init() {
 		initHandlers();
 		initChains();
-		initPaths();		
+		initPaths();
+		initDefaultHandlers();
 	}
 	
 	/**
@@ -111,6 +113,16 @@ public class Handler {
 					addPathChain(pathChain);
 				}
 			}
+		}
+	}
+
+	/**
+	 * Build "defaultHandlers" from the defaultHandlers in the config.
+	 */
+	static void initDefaultHandlers() {
+		if (config != null && config.getDefaultHandlers() != null) {
+			defaultHandlers = getHandlersFromExecList(config.getDefaultHandlers());
+			handlerListById.put("defaultHandlers", defaultHandlers);
 		}
 	}
 
@@ -299,6 +311,26 @@ public class Handler {
 				httpServerExchange.putAttachment(CHAIN_SEQ, 0);
 				return true;
 			}
+		}
+		return false;
+	}
+
+
+	/**
+	 * If there is no matching path, the OrchestrationHandler is going to try to start the defaultHandlers.
+	 * If there are default handlers defined, store the chain id within the exchange.
+	 * Otherwise return false.
+	 *
+	 * @param httpServerExchange
+	 *            The current requests server exchange.
+	 * @return true if a handler has been defined for the given path.
+	 */
+	public static boolean startDefaultHandlers(HttpServerExchange httpServerExchange) {
+		// check if defaultHandlers is empty
+		if(defaultHandlers != null && defaultHandlers.size() > 0) {
+			httpServerExchange.putAttachment(CHAIN_ID, "defaultHandlers");
+			httpServerExchange.putAttachment(CHAIN_SEQ, 0);
+			return true;
 		}
 		return false;
 	}

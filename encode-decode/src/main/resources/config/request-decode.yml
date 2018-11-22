@@ -1,0 +1,6 @@
+---
+# request decode handler for gzip and deflate
+enabled: false
+decoders:
+  - gzip
+  - deflate
