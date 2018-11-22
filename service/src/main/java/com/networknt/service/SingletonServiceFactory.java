@@ -116,7 +116,7 @@ public class SingletonServiceFactory {
             } else if(mapOrList instanceof List){
                 obj = ServiceUtil.constructByParameterizedConstructor(implClass, (List)mapOrList);
 
-                // use instance method to instantiate object if one was specified
+                // use instance factory method to instantiate object if one was specified
                 if(initMethodName != null) {
                     Method method = obj.getClass().getMethod(initMethodName);
                     obj = method.invoke(obj);
