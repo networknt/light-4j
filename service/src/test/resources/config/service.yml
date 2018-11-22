@@ -54,3 +54,8 @@ singletons:
   - com.networknt.service.InfoValidator
 - com.networknt.service.IntegrationData: com.networknt.service.ServiceInitializer::integrationData
 - com.networknt.service.ChannelMapping: com.networknt.service.ServiceInitializer::channelMapping
+
+- com.networknt.service.N: com.networknt.service.NFactory::getN
+- com.networknt.service.O:
+  - com.networknt.service.OFactory::getO:
+    - java.lang.String: "newVal"

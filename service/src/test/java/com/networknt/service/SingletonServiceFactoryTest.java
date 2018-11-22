@@ -134,5 +134,18 @@ public class SingletonServiceFactoryTest {
         Assert.assertTrue(channelMapping.transform("ReplyTo").startsWith("aggregate-destination-"));
     }
 
+    @Test
+    public void testFactoryConstructor() {
+        N n = SingletonServiceFactory.getBean(N.class);
+        Assert.assertNotNull(n);
+        Assert.assertTrue(n.getVal().equals("default"));
+    }
+
+    @Test
+    public void testFactoryConstructorWithArguments() {
+        O o = SingletonServiceFactory.getBean(O.class);
+        Assert.assertNotNull(o);
+        Assert.assertTrue(o.getVal().equals("newVal"));
+    }
 
 }
