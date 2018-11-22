@@ -1,0 +1,21 @@
+hosts:
+  - domain: www.edibleforestgarden.ca
+    path: /
+    base: /home/steve/networknt/site/edibleforestgarden/build
+    transferMinSize: 10245760
+    directoryListingEnabled: false
+  - domain: taiji.io
+    path: /
+    base: /home/steve/networknt/site/taiji/build
+    transferMinSize: 10245760
+    directoryListingEnabled: false
+  - domain: lightapi.net
+    path: /
+    base: /home/steve/networknt/site/lightapi/build
+    transferMinSize: 10245760
+    directoryListingEnabled: false
+  - domain: www.networknt.com
+    path: /
+    base: /home/steve/networknt/site/networknt/build
+    transferMinSize: 10245760
+    directoryListingEnabled: false

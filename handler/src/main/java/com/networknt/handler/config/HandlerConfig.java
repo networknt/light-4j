@@ -11,6 +11,7 @@ public class HandlerConfig {
     private List<Object> handlers;
     private Map<String, List<String>> chains;
     private List<PathChain> paths;
+    private List<String> defaultHandlers;
 
     public boolean isEnabled() {
         return enabled;
@@ -42,6 +43,14 @@ public class HandlerConfig {
 
     public void setPaths(List<PathChain> paths) {
         this.paths = paths;
+    }
+
+    public List<String> getDefaultHandlers() {
+        return defaultHandlers;
+    }
+
+    public void setDefaultHandlers(List<String> defaultHandlers) {
+        this.defaultHandlers = defaultHandlers;
     }
 }
 

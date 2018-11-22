@@ -14,8 +14,13 @@ public class OrchestrationHandler implements LightHttpHandler {
         if (Handler.start(exchange)) {
             Handler.next(exchange);
         } else {
-            String methodPath = String.format("Method: %s, RequestPath: %s", exchange.getRequestMethod(), exchange.getRequestPath());
-            setExchangeStatus(exchange, MISSING_HANDlER, methodPath);
+            // There is no matching path/method combination. Check if there are defaultHandlers defined.
+            if(Handler.startDefaultHandlers(exchange)) {
+                Handler.next(exchange);
+            } else {
+                String methodPath = String.format("Method: %s, RequestPath: %s", exchange.getRequestMethod(), exchange.getRequestPath());
+                setExchangeStatus(exchange, MISSING_HANDlER, methodPath);
+            }
         }
     }
 }
