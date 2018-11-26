@@ -4,7 +4,10 @@ description: controls how to dump entire request and response to log file. not r
 enabled: true
 enableMask: true
 request:
-  headers: true
+  headers:
+  - Authorization
+  - Host
+  - Transfer-Encoding
   cookies: true
   queryParameters: true
   body: true
