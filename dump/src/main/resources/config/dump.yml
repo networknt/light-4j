@@ -3,8 +3,11 @@ description: controls how to dump entire request and response to log file. not r
   on production if performance is important
 enabled: true
 enableMask: true
+indentSize: 4
+#if request: true, all supported configs under request will be true
 request:
   headers:
+    #filters
   - Authorization
   - Host
   - Transfer-Encoding
@@ -17,4 +20,3 @@ response:
   cookies: true
   body: true
   statusCode: true
-  contentLength: true
