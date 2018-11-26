@@ -17,25 +17,31 @@
 package com.networknt.dump;
 
 import com.networknt.config.Config;
+import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
+import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
+import io.undertow.server.ConduitWrapper;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.server.handlers.Cookie;
+import io.undertow.util.ConduitFactory;
+import io.undertow.util.HeaderMap;
 import io.undertow.util.HeaderValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xnio.conduits.StreamSinkConduit;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 /**
  * Handler that dumps request and response to a log based on the dump.json config
@@ -48,6 +54,7 @@ public class DumpHandler implements MiddlewareHandler {
     public static final String ENABLED = "enabled";
     static final String DUMP_METHOD_PREFIX = "dump";
     static final String DUMP_REQUEST_METHOD_PREFIX = "dumpRequest";
+    static final String DUMP_RESPONSE_METHOD_PREFIX = "dumpResponse";
     static final String REQUEST = "request";
     static final String RESPONSE = "response";
     static final String HEADERS = "headers";
@@ -61,6 +68,8 @@ public class DumpHandler implements MiddlewareHandler {
     static final Logger audit = LoggerFactory.getLogger(Constants.AUDIT_LOGGER);
     static final Logger logger = LoggerFactory.getLogger(DumpHandler.class);
 
+    private static int START_LEVEL = -1;
+
     public static Map<String, Object> config =
             Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
 
@@ -70,30 +79,6 @@ public class DumpHandler implements MiddlewareHandler {
 
     public DumpHandler() {
 
-    }
-
-    @Override
-    public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        Map<String, Object> result = new LinkedHashMap<>();
-        Map<String, Object> config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
-        Object requestConfig = config.get(REQUEST);
-        if(isEnabled()) {
-            dumpRequest(result, exchange, requestConfig);
-        }
-
-        logResult(result);
-    }
-
-    private void logResult(Map<String, Object> result) {
-        for(Entry<String, Object> entry: result.entrySet()) {
-            if(entry.getValue() instanceof Map<?, ?>) {
-                logResult((Map)entry.getValue());
-            } else if(entry.getValue() instanceof String) {
-                logger.info("{}: {}",entry.getKey(), (String)entry.getValue());
-            } else {
-                logger.debug("Cannot handle this type: {}", entry.getKey());
-            }
-        }
     }
 
     @Override
@@ -119,42 +104,78 @@ public class DumpHandler implements MiddlewareHandler {
         ModuleRegistry.registerModule(DumpHandler.class.getName(), config, null);
     }
 
-    private void dumpRequest(Map<String, Object> result, HttpServerExchange exchange, Object requestConfigObject) {
-        DumpHelper.dumpBasedOnOption(result, exchange, requestConfigObject,
+    @Override
+    public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        if (exchange.isInIoThread()) {
+            exchange.dispatch(this);
+            return;
+        }
+        Map<String, Object> result = new LinkedHashMap<>();
+        Map<String, Object> config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
+        Object requestConfig = config.get(REQUEST);
+        Object responseConfig = config.get(RESPONSE);
+        if(isEnabled()) {
+            dumpHttpMessage(result, exchange, requestConfig, IDumpable.HttpMessageType.REQUEST);
+            if(DumpHelper.checkOptionNotFalse(requestConfig)) {
+                exchange.addResponseWrapper(new ConduitWrapper<StreamSinkConduit>() {
+                    @Override
+                    public StreamSinkConduit wrap(ConduitFactory<StreamSinkConduit> factory, HttpServerExchange exchange) {
+                        return new StoreResponseStreamSinkConduit(factory.create(), exchange);
+                    }
+                });
+            }
+            exchange.addExchangeCompleteListener((exchange1, nextListener) ->{
+                    dumpHttpMessage(result, exchange1, responseConfig, IDumpable.HttpMessageType.RESPONSE);
+                    DumpHelper.logResult(result, START_LEVEL);
+                    nextListener.proceed();
+                });
+        }
+        Handler.next(exchange, next);
+    }
+
+    /**
+     *
+     * @param result
+     * @param exchange
+     * @param configObject
+     * @param type IDumpable.HttpMessageType
+     */
+    private void dumpHttpMessage(Map<String, Object> result, HttpServerExchange exchange, Object configObject, IDumpable.HttpMessageType type) {
+        Map<String, Object> httpMessageMap = new LinkedHashMap<>();
+        DumpHelper.dumpBasedOnOption(configObject,
                 new IDumpable(){
                     @Override
-                    public void dumpOption(Map<String, Object> result, HttpServerExchange exchange, Map requestConfigObject) {
-                        Map<String, Object> requestMap = new LinkedHashMap<>();
+                    public void dumpOption(Boolean configObject) {
+                        if(configObject){
+                            for(String requestOption: DumpHelper.getSupportHttpMessageOptions(type)) {
+                                //if request option is true, put all supported request child options with true
+                                dumpHttpMessageOptions(requestOption, httpMessageMap, exchange, configObject, type);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void dumpOption(Map requestConfigObject) {
                         Map<String, Object> requestConfigMap = ((Map)requestConfigObject);
                         for(String requestOption: REQUEST_OPTIONS) {
                             if(requestConfigMap.containsKey(requestOption)) {
-                                dumpRequestOptions(requestOption, requestMap, exchange, requestConfigMap.get(requestOption));
+                                dumpHttpMessageOptions(requestOption, httpMessageMap, exchange, requestConfigMap.get(requestOption), type);
                             }
                         }
-                        if(requestMap.size() > 0) {
-                            result.put(REQUEST, requestMap);
-                        }
-                    }
 
-                    @Override
-                    public void dumpOption(Map<String, Object> result, HttpServerExchange exchange, Boolean requestConfigObject) {
-                        Map<String, Object> requestMap = new LinkedHashMap<>();
-                        if ((Boolean) requestConfigObject) {
-                            dumpRequestHeaders(result, exchange, true);
-                        }
-                        if(requestMap.size() > 0) {
-                            result.put(REQUEST, requestMap);
-                        }
                     }
                 });
+        if(httpMessageMap.size() > 0) {
+            result.put(type.name(), httpMessageMap);
+        }
     }
 
-    //Based on option name inside "request", call related handle method. e.g.  "cookies: true" inside "header", will call "dumpRequestCookie"
-    private void dumpRequestOptions(String requestOption, Map<String, Object> result, HttpServerExchange exchange, Object requestConfigObject) {
-        String dumpRequestOptionMethodName = DUMP_REQUEST_METHOD_PREFIX + requestOption.substring(0, 1).toUpperCase() + requestOption.substring(1);
+    //Based on option name inside "request" or "response", call related handle method. e.g.  "cookies: true" inside "header", will call "dumpCookie"
+    private void dumpHttpMessageOptions(String requestOption, Map<String, Object> result, HttpServerExchange exchange, Object requestConfigObject, IDumpable.HttpMessageType type) {
+        String composedHttpMessageOptionMethodName = DUMP_METHOD_PREFIX + requestOption.substring(0, 1).toUpperCase() + requestOption.substring(1);
         try {
-            Method dumpRequestOptionMethod = DumpHandler.class.getDeclaredMethod(dumpRequestOptionMethodName, Map.class, HttpServerExchange.class, Object.class);
-            dumpRequestOptionMethod.invoke(this, result, exchange, requestConfigObject);
+            Method dumpHttpMessageOptionMethod = DumpHandler.class.getDeclaredMethod(composedHttpMessageOptionMethodName, Map.class, HttpServerExchange.class, Object.class, IDumpable.HttpMessageType.class);
+            dumpHttpMessageOptionMethod.invoke(this, result, exchange, requestConfigObject, type);
         } catch (NoSuchMethodException e) {
             logger.error("Cannot find a method for this request option: {}", requestOption);
         } catch (IllegalAccessException e) {
@@ -165,30 +186,28 @@ public class DumpHandler implements MiddlewareHandler {
     }
 
     //configObject is on "header" level
-    private void dumpRequestHeaders(Map<String, Object> result, HttpServerExchange exchange, Object configObject) {
-        DumpHelper.dumpBasedOnOption(result, exchange, configObject,
+    private void dumpHeaders(Map<String, Object> result, HttpServerExchange exchange, Object configObject, IDumpable.HttpMessageType type) {
+        Map<String, Object> headerMap = new LinkedHashMap<>();
+        //all raw unfiltered headers
+        HeaderMap headers = type.equals(IDumpable.HttpMessageType.RESPONSE) ? exchange.getResponseHeaders(): exchange.getRequestHeaders();
+        DumpHelper.dumpBasedOnOption(configObject,
                 new IDumpable() {
                     @Override
-                    public void dumpOption(Map<String, Object> result, HttpServerExchange exchange, Boolean configObject) {
-                        Map<String, Object> headerMap = new LinkedHashMap<>();
+                    public void dumpOption(Boolean configObject) {
                         if (configObject) {
-                            for (HeaderValues header : exchange.getRequestHeaders()) {
+                            for (HeaderValues header : headers) {
                                 for (String value : header) {
                                     headerMap.put(header.getHeaderName().toString(), value);
                                 }
                             }
                         }
-                        if (headerMap.size() > 0) {
-                            result.put(HEADERS, headerMap);
-                        }
                     }
 
                     @Override
-                    public void dumpOption(Map<String, Object> result, HttpServerExchange exchange, List<?> configObject) {
-                        Map<String, Object> headerMap = new LinkedHashMap<>();
+                    public void dumpOption(List<?> configObject) {
                         // configObject is a list of header names
                         List headerList = (List<String>) configObject;
-                        for (HeaderValues header : exchange.getRequestHeaders()) {
+                        for (HeaderValues header : headers) {
                             for (String value : header) {
                                 String name = header.getHeaderName().toString();
                                 if (headerList.contains(name)) {
@@ -196,58 +215,75 @@ public class DumpHandler implements MiddlewareHandler {
                                 }
                             }
                         }
-                        if (headerMap.size() > 0) {
-                            result.put(HEADERS, headerMap);
+                    }
+                });
+        if (headerMap.size() > 0) {
+            result.put(HEADERS, headerMap);
+        }
+    }
+
+    private void dumpCookies(Map<String, Object> result, HttpServerExchange exchange, Object configObject, IDumpable.HttpMessageType type) {
+        Map<String, Cookie> cookiesMap = type.equals(IDumpable.HttpMessageType.RESPONSE) ? exchange.getResponseCookies() : exchange.getRequestCookies();
+        DumpHelper.dumpBasedOnOption(configObject,
+                new IDumpable() {
+                    @Override
+                    public void dumpOption(Boolean configObject) {
+                        if (configObject) {
+                            result.put(COOKIES, cookiesMap);
                         }
                     }
                 });
     }
 
-    private void dumpRequestCookies(Map<String, Object> result, HttpServerExchange exchange, Object requestConfigObject) {
-        DumpHelper.dumpBasedOnOption(result, exchange, requestConfigObject,
+    private void dumpQueryParameters(Map<String, Object> result, HttpServerExchange exchange, Object configObject, IDumpable.HttpMessageType type) {
+        if(type.equals(IDumpable.HttpMessageType.RESPONSE)) {
+            logger.error("Http type: \'{}\' doesn't support \'{}\' option", type.name(), configObject.toString());
+            return;
+        }
+        DumpHelper.dumpBasedOnOption(configObject,
                 new IDumpable() {
                     @Override
-                    public void dumpOption(Map<String, Object> result, HttpServerExchange exchange, Boolean requestConfigObject) {
-                        if (requestConfigObject) {
-                            result.put(COOKIES, exchange.getRequestCookies());
-                        }
-                    }
-                });
-    }
-
-    private void dumpRequestQueryParameters(Map<String, Object> result, HttpServerExchange exchange, Object requestConfigObject) {
-        DumpHelper.dumpBasedOnOption(result, exchange, requestConfigObject,
-                new IDumpable() {
-                    @Override
-                    public void dumpOption(Map<String, Object> result, HttpServerExchange exchange, Boolean requestConfigObject) {
-                        if(requestConfigObject) {
+                    public void dumpOption(Boolean configObject) {
+                        if(configObject) {
                             result.put(QUERY_PARAMETERS, exchange.getQueryParameters());
                         }
                     }
                 });
     }
 
-    private void dumpRequestBody(Map<String, Object> result, HttpServerExchange exchange, Object requestConfigObject) {
-        DumpHelper.dumpBasedOnOption(result, exchange, requestConfigObject,
-                new IDumpable() {
-                    @Override
-                    public void dumpOption(Map<String, Object> result, HttpServerExchange exchange, Boolean requestConfigObject) {
-                        if(requestConfigObject) {
-                            exchange.startBlocking();
-                            InputStream inputStream = exchange.getInputStream();
-                            ByteArrayOutputStream body = new ByteArrayOutputStream();
-                            byte[] buffer = new byte[1024];
-                            int length;
-                            try {
-                                while ((length = inputStream.read(buffer)) != -1) {
-                                    body.write(buffer, 0, length);
+    private void dumpBody(Map<String, Object> result, HttpServerExchange exchange, Object configObject, IDumpable.HttpMessageType type) {
+
+        if(type.equals(IDumpable.HttpMessageType.RESPONSE)) {
+            DumpHelper.dumpBasedOnOption(configObject,
+                    new IDumpable() {
+                        @Override
+                        public void dumpOption(Boolean configObject) {
+                            if(configObject) {
+                                String responseBody = new String(exchange.getAttachment(StoreResponseStreamSinkConduit.RESPONSE));
+                                if(responseBody != null) {
+                                    result.put(BODY, responseBody);
                                 }
-                            } catch (IOException e) {
-                                e.printStackTrace();
                             }
-                            result.put(BODY, body.toString());
                         }
-                    }
-                });
+                    });
+        } else {
+            DumpHelper.dumpBasedOnOption(configObject,
+                    new IDumpable() {
+                        @Override
+                        public void dumpOption(Boolean configObject) {
+                            if(configObject) {
+                                exchange.startBlocking();
+                                String body = "";
+                                InputStream inputStream = exchange.getInputStream();
+                                try {
+                                    body = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                                result.put(BODY, body);
+                            }
+                        }
+                    });
+        }
     }
 }
