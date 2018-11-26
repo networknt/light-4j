@@ -19,7 +19,6 @@ package com.networknt.dump;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
@@ -52,30 +51,22 @@ import java.util.Map;
 public class DumpHandler implements MiddlewareHandler {
     public static final String CONFIG_NAME = "dump";
     public static final String ENABLED = "enabled";
-    static final String DUMP_METHOD_PREFIX = "dump";
-    static final String DUMP_REQUEST_METHOD_PREFIX = "dumpRequest";
-    static final String DUMP_RESPONSE_METHOD_PREFIX = "dumpResponse";
-    static final String REQUEST = "request";
-    static final String RESPONSE = "response";
+    private static final String DUMP_METHOD_PREFIX = "dump";
     static final String HEADERS = "headers";
     static final String COOKIES = "cookies";
     static final String QUERY_PARAMETERS = "queryParameters";
     static final String BODY = "body";
     static final String STATUS_CODE = "statusCode";
-    static final String CONTENT_LENGTH = "contentLength";
+    static final String INDENT_SIZE = "indentSize";
+    static final int DEFAULT_INDENT_SIZE = 4;
     static final String[] REQUEST_OPTIONS = {HEADERS, COOKIES, QUERY_PARAMETERS, BODY};
-    static final String[] RESPONSE_OPTIONS = {HEADERS, COOKIES, BODY, STATUS_CODE, CONTENT_LENGTH};
-    static final Logger audit = LoggerFactory.getLogger(Constants.AUDIT_LOGGER);
+    static final String[] RESPONSE_OPTIONS = {HEADERS, COOKIES, BODY, STATUS_CODE};
     static final Logger logger = LoggerFactory.getLogger(DumpHandler.class);
-
-    private static int START_LEVEL = -1;
 
     public static Map<String, Object> config =
             Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
 
     private volatile HttpHandler next;
-
-    private static boolean isEnabled = false;
 
     public DumpHandler() {
 
@@ -112,11 +103,14 @@ public class DumpHandler implements MiddlewareHandler {
         }
         Map<String, Object> result = new LinkedHashMap<>();
         Map<String, Object> config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
-        Object requestConfig = config.get(REQUEST);
-        Object responseConfig = config.get(RESPONSE);
+        Object requestConfig = config.get(IDumpable.HttpMessageType.REQUEST.value());
+        Object responseConfig = config.get(IDumpable.HttpMessageType.RESPONSE.value());
         if(isEnabled()) {
+            //dump request info right away
             dumpHttpMessage(result, exchange, requestConfig, IDumpable.HttpMessageType.REQUEST);
-            if(DumpHelper.checkOptionNotFalse(requestConfig)) {
+            //if response config is not set to "false"
+            if(DumpHelper.checkOptionNotFalse(responseConfig)) {
+                //set Conduit to the conduit chain to store response body
                 exchange.addResponseWrapper(new ConduitWrapper<StreamSinkConduit>() {
                     @Override
                     public StreamSinkConduit wrap(ConduitFactory<StreamSinkConduit> factory, HttpServerExchange exchange) {
@@ -124,18 +118,28 @@ public class DumpHandler implements MiddlewareHandler {
                     }
                 });
             }
+            //when complete exchange, dump http message info
             exchange.addExchangeCompleteListener((exchange1, nextListener) ->{
                     dumpHttpMessage(result, exchange1, responseConfig, IDumpable.HttpMessageType.RESPONSE);
-                    DumpHelper.logResult(result, START_LEVEL);
+                    DumpHelper.logResult(result, getIndentSize());
                     nextListener.proceed();
                 });
         }
         Handler.next(exchange, next);
     }
 
+    private int getIndentSize() {
+        Object indentSize = config.get(INDENT_SIZE);
+        if(indentSize instanceof Integer) {
+            return (int)config.get(INDENT_SIZE);
+        } else {
+            return DEFAULT_INDENT_SIZE;
+        }
+    }
+
     /**
-     *
-     * @param result
+     * dump request/response Message based on response/request Option
+     * @param result result to be logged
      * @param exchange
      * @param configObject
      * @param type IDumpable.HttpMessageType
@@ -148,18 +152,18 @@ public class DumpHandler implements MiddlewareHandler {
                     public void dumpOption(Boolean configObject) {
                         if(configObject){
                             for(String requestOption: DumpHelper.getSupportHttpMessageOptions(type)) {
-                                //if request option is true, put all supported request child options with true
-                                dumpHttpMessageOptions(requestOption, httpMessageMap, exchange, configObject, type);
+                                //if request/response option is true, put all supported request child options with true
+                                dumpHttpMessageBasedOnOptionName(requestOption, httpMessageMap, exchange, true, type);
                             }
                         }
                     }
 
                     @Override
-                    public void dumpOption(Map requestConfigObject) {
-                        Map<String, Object> requestConfigMap = ((Map)requestConfigObject);
-                        for(String requestOption: REQUEST_OPTIONS) {
-                            if(requestConfigMap.containsKey(requestOption)) {
-                                dumpHttpMessageOptions(requestOption, httpMessageMap, exchange, requestConfigMap.get(requestOption), type);
+                    public void dumpOption(Map configObject) {
+                        String[] configOptions = type == HttpMessageType.RESPONSE ? RESPONSE_OPTIONS : REQUEST_OPTIONS;
+                        for(String requestOrResponseOption: configOptions) {
+                            if(configObject.containsKey(requestOrResponseOption)) {
+                                dumpHttpMessageBasedOnOptionName(requestOrResponseOption, httpMessageMap, exchange, configObject.get(requestOrResponseOption), type);
                             }
                         }
 
@@ -171,13 +175,13 @@ public class DumpHandler implements MiddlewareHandler {
     }
 
     //Based on option name inside "request" or "response", call related handle method. e.g.  "cookies: true" inside "header", will call "dumpCookie"
-    private void dumpHttpMessageOptions(String requestOption, Map<String, Object> result, HttpServerExchange exchange, Object requestConfigObject, IDumpable.HttpMessageType type) {
-        String composedHttpMessageOptionMethodName = DUMP_METHOD_PREFIX + requestOption.substring(0, 1).toUpperCase() + requestOption.substring(1);
+    private void dumpHttpMessageBasedOnOptionName(String httpMessageOption, Map<String, Object> result, HttpServerExchange exchange, Object configObject, IDumpable.HttpMessageType type) {
+        String composedHttpMessageOptionMethodName = DUMP_METHOD_PREFIX + httpMessageOption.substring(0, 1).toUpperCase() + httpMessageOption.substring(1);
         try {
             Method dumpHttpMessageOptionMethod = DumpHandler.class.getDeclaredMethod(composedHttpMessageOptionMethodName, Map.class, HttpServerExchange.class, Object.class, IDumpable.HttpMessageType.class);
-            dumpHttpMessageOptionMethod.invoke(this, result, exchange, requestConfigObject, type);
+            dumpHttpMessageOptionMethod.invoke(this, result, exchange, configObject, type);
         } catch (NoSuchMethodException e) {
-            logger.error("Cannot find a method for this request option: {}", requestOption);
+            logger.error("Cannot find a method for this request option: {}", httpMessageOption);
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         } catch (InvocationTargetException e) {
@@ -210,7 +214,8 @@ public class DumpHandler implements MiddlewareHandler {
                         for (HeaderValues header : headers) {
                             for (String value : header) {
                                 String name = header.getHeaderName().toString();
-                                if (headerList.contains(name)) {
+                                //filter out listed headers
+                                if (!headerList.contains(name)) {
                                     headerMap.put(header.getHeaderName().toString(), value);
                                 }
                             }
@@ -245,7 +250,11 @@ public class DumpHandler implements MiddlewareHandler {
                     @Override
                     public void dumpOption(Boolean configObject) {
                         if(configObject) {
-                            result.put(QUERY_PARAMETERS, exchange.getQueryParameters());
+                            Map<String, String> queryParametersMap = new LinkedHashMap<>();
+                            exchange.getQueryParameters().forEach((k, v) ->
+                                queryParametersMap.put(k, v.getFirst())
+                            );
+                            result.put(QUERY_PARAMETERS, queryParametersMap);
                         }
                     }
                 });
@@ -259,8 +268,9 @@ public class DumpHandler implements MiddlewareHandler {
                         @Override
                         public void dumpOption(Boolean configObject) {
                             if(configObject) {
-                                String responseBody = new String(exchange.getAttachment(StoreResponseStreamSinkConduit.RESPONSE));
-                                if(responseBody != null) {
+                                byte[] responseBodyAttachment = exchange.getAttachment(StoreResponseStreamSinkConduit.RESPONSE);
+                                if(responseBodyAttachment != null) {
+                                    String responseBody = new String();
                                     result.put(BODY, responseBody);
                                 }
                             }
@@ -285,5 +295,23 @@ public class DumpHandler implements MiddlewareHandler {
                         }
                     });
         }
+    }
+
+    private void dumpStatusCode(Map<String, Object> result, HttpServerExchange exchange, Object configObject, IDumpable.HttpMessageType type) {
+        if(type.equals(IDumpable.HttpMessageType.REQUEST)) {
+            logger.error("Http type: \'{}\' doesn't support \'{}\' option", type.name(), configObject.toString());
+            return;
+        }
+
+        DumpHelper.dumpBasedOnOption(configObject,
+                new IDumpable() {
+                    @Override
+                    public void dumpOption(Boolean configObject) {
+                        if(configObject) {
+                            result.put(STATUS_CODE, String.valueOf(exchange.getStatusCode()));
+                        }
+                    }
+                });
+
     }
 }
