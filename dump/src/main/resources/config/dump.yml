@@ -6,8 +6,9 @@ enableMask: true
 indentSize: 4
 #if request: true, all supported configs under request will be true
 request:
-  headers:
-    #filters
+  headers: true
+  filteredHeaders:
+  #filters
   - Authorization
   - Host
   - Transfer-Encoding
