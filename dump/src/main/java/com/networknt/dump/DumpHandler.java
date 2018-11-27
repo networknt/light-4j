@@ -22,25 +22,22 @@ import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
-import io.undertow.server.ConduitWrapper;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.Cookie;
-import io.undertow.util.ConduitFactory;
 import io.undertow.util.HeaderMap;
 import io.undertow.util.HeaderValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xnio.conduits.StreamSinkConduit;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.networknt.dump.DumpConstants.*;
 
 /**
  * Handler that dumps request and response to a log based on the dump.json config
@@ -52,15 +49,11 @@ public class DumpHandler implements MiddlewareHandler {
     public static final String CONFIG_NAME = "dump";
     public static final String ENABLED = "enabled";
     private static final String DUMP_METHOD_PREFIX = "dump";
-    static final String HEADERS = "headers";
-    static final String COOKIES = "cookies";
-    static final String QUERY_PARAMETERS = "queryParameters";
-    static final String BODY = "body";
-    static final String STATUS_CODE = "statusCode";
+
+
     static final String INDENT_SIZE = "indentSize";
     static final int DEFAULT_INDENT_SIZE = 4;
-    static final String[] REQUEST_OPTIONS = {HEADERS, COOKIES, QUERY_PARAMETERS, BODY};
-    static final String[] RESPONSE_OPTIONS = {HEADERS, COOKIES, BODY, STATUS_CODE};
+
     static final Logger logger = LoggerFactory.getLogger(DumpHandler.class);
 
     public static Map<String, Object> config =
@@ -111,12 +104,7 @@ public class DumpHandler implements MiddlewareHandler {
             //if response config is not set to "false"
             if(DumpHelper.checkOptionNotFalse(responseConfig)) {
                 //set Conduit to the conduit chain to store response body
-                exchange.addResponseWrapper(new ConduitWrapper<StreamSinkConduit>() {
-                    @Override
-                    public StreamSinkConduit wrap(ConduitFactory<StreamSinkConduit> factory, HttpServerExchange exchange) {
-                        return new StoreResponseStreamSinkConduit(factory.create(), exchange);
-                    }
-                });
+                exchange.addResponseWrapper((factory, exchange12) -> new StoreResponseStreamSinkConduit(factory.create(), exchange12));
             }
             //when complete exchange, dump http message info
             exchange.addExchangeCompleteListener((exchange1, nextListener) ->{
@@ -145,49 +133,14 @@ public class DumpHandler implements MiddlewareHandler {
      * @param type IDumpable.HttpMessageType
      */
     private void dumpHttpMessage(Map<String, Object> result, HttpServerExchange exchange, Object configObject, IDumpable.HttpMessageType type) {
-        Map<String, Object> httpMessageMap = new LinkedHashMap<>();
-        DumpHelper.dumpBasedOnOption(configObject,
-                new IDumpable(){
-                    @Override
-                    public void dumpOption(Boolean configObject) {
-                        if(configObject){
-                            for(String requestOption: DumpHelper.getSupportHttpMessageOptions(type)) {
-                                //if request/response option is true, put all supported request child options with true
-                                dumpHttpMessageBasedOnOptionName(requestOption, httpMessageMap, exchange, true, type);
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void dumpOption(Map configObject) {
-                        String[] configOptions = type == HttpMessageType.RESPONSE ? RESPONSE_OPTIONS : REQUEST_OPTIONS;
-                        for(String requestOrResponseOption: configOptions) {
-                            if(configObject.containsKey(requestOrResponseOption)) {
-                                dumpHttpMessageBasedOnOptionName(requestOrResponseOption, httpMessageMap, exchange, configObject.get(requestOrResponseOption), type);
-                            }
-                        }
-
-                    }
-                });
-        if(httpMessageMap.size() > 0) {
-            result.put(type.name(), httpMessageMap);
+        IDumpable httpMethodDumper = new HttpMethodDumper(type, exchange);
+        DumpHelper.dumpBasedOnOption(configObject, httpMethodDumper);
+        if(httpMethodDumper.getResult().size() > 0) {
+            result.put(type.name(), httpMethodDumper.getResult());
         }
     }
 
-    //Based on option name inside "request" or "response", call related handle method. e.g.  "cookies: true" inside "header", will call "dumpCookie"
-    private void dumpHttpMessageBasedOnOptionName(String httpMessageOption, Map<String, Object> result, HttpServerExchange exchange, Object configObject, IDumpable.HttpMessageType type) {
-        String composedHttpMessageOptionMethodName = DUMP_METHOD_PREFIX + httpMessageOption.substring(0, 1).toUpperCase() + httpMessageOption.substring(1);
-        try {
-            Method dumpHttpMessageOptionMethod = DumpHandler.class.getDeclaredMethod(composedHttpMessageOptionMethodName, Map.class, HttpServerExchange.class, Object.class, IDumpable.HttpMessageType.class);
-            dumpHttpMessageOptionMethod.invoke(this, result, exchange, configObject, type);
-        } catch (NoSuchMethodException e) {
-            logger.error("Cannot find a method for this request option: {}", httpMessageOption);
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        }
-    }
+
 
     //configObject is on "header" level
     private void dumpHeaders(Map<String, Object> result, HttpServerExchange exchange, Object configObject, IDumpable.HttpMessageType type) {
@@ -210,12 +163,11 @@ public class DumpHandler implements MiddlewareHandler {
                     @Override
                     public void dumpOption(List<?> configObject) {
                         // configObject is a list of header names
-                        List headerList = (List<String>) configObject;
                         for (HeaderValues header : headers) {
                             for (String value : header) {
                                 String name = header.getHeaderName().toString();
                                 //filter out listed headers
-                                if (!headerList.contains(name)) {
+                                if (!configObject.contains(name)) {
                                     headerMap.put(header.getHeaderName().toString(), value);
                                 }
                             }

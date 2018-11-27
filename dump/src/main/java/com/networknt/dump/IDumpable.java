@@ -24,4 +24,6 @@ interface IDumpable {
     default void dumpOption(Map configObject){}
 
     default void dumpOption(List<?> configObject){}
+
+    Map<String, Object> getResult();
 }
