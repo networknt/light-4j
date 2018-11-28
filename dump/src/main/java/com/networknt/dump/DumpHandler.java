@@ -39,12 +39,12 @@ public class DumpHandler implements MiddlewareHandler {
     public static final String CONFIG_NAME = "dump";
     public static final String ENABLED = "enabled";
 
-    static final String INDENT_SIZE = "indentSize";
-    static final int DEFAULT_INDENT_SIZE = 4;
+    private static final String INDENT_SIZE = "indentSize";
+    private static final int DEFAULT_INDENT_SIZE = 4;
 
-    static final Logger logger = LoggerFactory.getLogger(DumpHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(DumpHandler.class);
 
-    public static Map<String, Object> config =
+    private static Map<String, Object> config =
             Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
 
     private volatile HttpHandler next;
@@ -93,7 +93,7 @@ public class DumpHandler implements MiddlewareHandler {
             //when complete exchange, dump http message info
             exchange.addExchangeCompleteListener((exchange1, nextListener) ->{
                     dumpHttpMessage(result, exchange1, config, IDumpable.HttpMessageType.RESPONSE);
-                    DumpHelper.logResult(result, getIndentSize());
+                    DumpHelper.logResult(result, getIndentSize(), checkIfUseJson());
                     nextListener.proceed();
                 });
         }
@@ -107,6 +107,11 @@ public class DumpHandler implements MiddlewareHandler {
         } else {
             return DEFAULT_INDENT_SIZE;
         }
+    }
+
+    private boolean checkIfUseJson() {
+        Object useJson = config.get(DumpConstants.USE_JSON);
+        return useJson instanceof Boolean && (Boolean) useJson;
     }
 
     /**

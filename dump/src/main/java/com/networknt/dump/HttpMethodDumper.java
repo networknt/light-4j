@@ -1,6 +1,8 @@
 package com.networknt.dump;
 
 import io.undertow.server.HttpServerExchange;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -10,7 +12,7 @@ import static com.networknt.dump.DumpConstants.RESPONSE;
 public class HttpMethodDumper extends AbstractDumper {
     private Map<String, Object> httpMethodMap = new LinkedHashMap<>();
     private List<IDumpable> childDumpers;
-
+    private static Logger logger = LoggerFactory.getLogger(HttpMethodDumper.class);
     HttpMethodDumper(Object config, HttpServerExchange exchange, HttpMessageType type) {
         super(config, exchange, type);
     }
@@ -40,8 +42,12 @@ public class HttpMethodDumper extends AbstractDumper {
                 initializeChildDumpers();
             }
             childDumpers.forEach(dumper -> {
-                dumper.dump();
-                dumper.putResultTo(httpMethodMap);
+                try{
+                    dumper.dump();
+                    dumper.putResultTo(httpMethodMap);
+                } catch (Exception e) {
+                    logger.error(e.toString());
+                }
             });
         }
     }
