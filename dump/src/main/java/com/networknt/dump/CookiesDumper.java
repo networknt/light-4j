@@ -39,9 +39,12 @@ public class CookiesDumper extends AbstractFilterableDumper {
             Map<String, Cookie> cookiesMap = type.equals(IDumpable.HttpMessageType.RESPONSE) ? exchange.getResponseCookies() : exchange.getRequestCookies();
             cookiesMap.forEach((key, cookie) -> {
                 if(!this.filter.contains(cookie.getName())) {
-                    Map<String, String> cookieInfo = new HashMap();
-                    cookieInfo.put(cookie.getName(), cookie.getValue());
-                    this.cookieMap.put(key, cookieInfo);
+                    List<Map<String, String>> cookieInfoList = new ArrayList<>();
+                    cookieInfoList.add(new HashMap<String, String>(){{put(cookie.getName(), cookie.getValue());}});
+                    cookieInfoList.add(new HashMap<String, String>(){{put(DumpConstants.COOKIE_DOMAIN, cookie.getDomain());}});
+                    cookieInfoList.add(new HashMap<String, String>(){{put(DumpConstants.COOKIE_PATH, cookie.getPath());}});
+                    cookieInfoList.add(new HashMap<String, String>(){{put(DumpConstants.COOKIE_EXPIRES, cookie.getExpires() == null ? "" : cookie.getExpires().toString());}});
+                    this.cookieMap.put(key, cookieInfoList);
                 }
             });
         }
