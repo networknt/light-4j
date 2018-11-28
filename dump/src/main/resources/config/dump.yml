@@ -1,6 +1,5 @@
----
-description: controls how to dump entire request and response to log file. not recommended
-  on production if performance is important
+# controls how to dump entire request and response to log file. not recommended
+# on production if performance is important
 enabled: true
 enableMask: true
 indentSize: 4
@@ -9,11 +8,15 @@ request:
   headers: true
   filteredHeaders:
   #filters
-  - Authorization
-  - Host
-  - Transfer-Encoding
+  - Postman-Token
+  - X-Correlation-Id
   cookies: true
+  filteredCookies:
+  - Cookie_Gmail
   queryParameters: true
+  filteredQueryParameters:
+  - itemId
+  - a
   body: true
 
 response:

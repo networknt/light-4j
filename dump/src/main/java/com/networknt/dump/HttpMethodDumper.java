@@ -1,65 +1,73 @@
 package com.networknt.dump;
 
 import io.undertow.server.HttpServerExchange;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
-import static com.networknt.dump.DumpConstants.*;
+import static com.networknt.dump.DumpConstants.REQUEST;
+import static com.networknt.dump.DumpConstants.RESPONSE;
 
-public class HttpMethodDumper implements IDumpable {
-    private static final Logger logger = LoggerFactory.getLogger(HttpMethodDumper.class);
-    private Map<String, Object> httpMessageMap = new LinkedHashMap<>();
+public class HttpMethodDumper extends AbstractDumper {
+    private Map<String, Object> httpMethodMap = new LinkedHashMap<>();
+    private List<IDumpable> childDumpers;
 
-    private HttpMessageType type;
-    private HttpServerExchange exchange;
-
-    HttpMethodDumper(HttpMessageType type, HttpServerExchange exchange) {
-        this.type = type;
-        this.exchange = exchange;
+    HttpMethodDumper(Object config, HttpServerExchange exchange, HttpMessageType type) {
+        super(config, exchange, type);
     }
 
     @Override
-    public void dumpOption(Boolean configObject) {
-        if(configObject){
-            for(String requestOption: DumpHelper.getSupportHttpMessageOptions(type)) {
-                //if request/response option is true, put all supported request child options with true
-                dumpHttpMethodBasedOnOptionName(requestOption, httpMessageMap, exchange, true, type);
+    protected void loadConfig() {
+        super.loadConfig();
+        if(parentConfig instanceof Map<?, ?>) {
+            if(this.type == HttpMessageType.RESPONSE) {
+                //when response: true
+                loadEnableConfig(DumpConstants.RESPONSE);
+                this.config = ((Map) parentConfig).get(DumpConstants.RESPONSE);
+            } else {
+                loadEnableConfig(DumpConstants.REQUEST);
+                this.config = ((Map) parentConfig).get(DumpConstants.REQUEST);
+            }
+            if(this.config instanceof Map<?, ?>) {
+                this.isEnabled = true;
             }
         }
     }
 
     @Override
-    public void dumpOption(Map configObject) {
-        String[] configOptions = type == HttpMessageType.RESPONSE ? RESPONSE_OPTIONS : REQUEST_OPTIONS;
-        for(String requestOrResponseOption: configOptions) {
-            if(configObject.containsKey(requestOrResponseOption)) {
-                dumpHttpMethodBasedOnOptionName(requestOrResponseOption, httpMessageMap, exchange, configObject.get(requestOrResponseOption), type);
+    public void dump() {
+        if(isApplicable()) {
+            if(this.childDumpers == null || this.childDumpers.size() == 0 ) {
+                initializeChildDumpers();
             }
+            childDumpers.forEach(dumper -> {
+                dumper.dump();
+                dumper.putResultTo(httpMethodMap);
+            });
         }
-
     }
 
     @Override
     public Map<String, Object> getResult() {
-        return this.httpMessageMap;
+        return this.httpMethodMap;
     }
 
-    //Based on option name inside "request" or "response", call related handle method. e.g.  "cookies: true" inside "header", will call "dumpCookie"
-    private void dumpHttpMethodBasedOnOptionName(String httpMessageOption, Map<String, Object> result, HttpServerExchange exchange, Object configObject, IDumpable.HttpMessageType type) {
-        String composedHttpMessageOptionMethodName = DUMP_METHOD_PREFIX + httpMessageOption.substring(0, 1).toUpperCase() + httpMessageOption.substring(1);
-        try {
-            Method dumpHttpMessageOptionMethod = DumpHandler.class.getDeclaredMethod(composedHttpMessageOptionMethodName, Map.class, HttpServerExchange.class, Object.class, IDumpable.HttpMessageType.class);
-            dumpHttpMessageOptionMethod.invoke(this, result, exchange, configObject, type);
-        } catch (NoSuchMethodException e) {
-            logger.error("Cannot find a method for this request option: {}", httpMessageOption);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            e.printStackTrace();
+    @Override
+    public void putResultTo(Map<String, Object> result) {
+        if(this.httpMethodMap.size() > 0) {
+            if(this.type == HttpMessageType.RESPONSE) {
+                result.put(RESPONSE, this.httpMethodMap);
+            } else {
+                result.put(REQUEST, this.httpMethodMap);
+            }
         }
     }
 
+    private void initializeChildDumpers() {
+        IDumpable bodyDumper = new BodyDumper(config, exchange, type);
+        IDumpable cookiesDumper = new CookiesDumper(config, exchange, type);
+        IDumpable headersDumper = new HeadersDumper(config, exchange, type);
+        IDumpable queryParametersDumper = new QueryParametersDumper(config, exchange, type);
+        IDumpable statusCodeDumper = new StatusCodeDumper(config, exchange, type);
+        this.childDumpers = new ArrayList<>(Arrays.asList(bodyDumper, cookiesDumper, headersDumper, queryParametersDumper, statusCodeDumper));
+    }
 }

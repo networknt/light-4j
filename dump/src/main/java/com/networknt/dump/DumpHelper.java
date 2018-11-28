@@ -3,28 +3,11 @@ package com.networknt.dump;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Map;
 
 class DumpHelper {
 
     private static Logger logger = LoggerFactory.getLogger(DumpHelper.class);
-
-    static void dumpBasedOnOption(Object configObject, IDumpable dumpable) {
-        if(configObject instanceof Boolean) {
-            dumpable.dumpOption((Boolean)configObject);
-        } else if(configObject instanceof Map<?, ?>) {
-            dumpable.dumpOption((Map)configObject);
-        } else if(configObject instanceof List<?>) {
-            dumpable.dumpOption((List<?>) configObject);
-        } else {
-            logger.error("configuration is incorrect for {}", configObject.toString());
-        }
-    }
-
-    static String[] getSupportHttpMessageOptions(IDumpable.HttpMessageType type) {
-        return IDumpable.HttpMessageType.RESPONSE.equals(type) ? DumpHandler.RESPONSE_OPTIONS : DumpHandler.REQUEST_OPTIONS;
-    }
 
     static void logResult(Map<String, Object> result, int indentSize) {
         int startLevel = -1;
