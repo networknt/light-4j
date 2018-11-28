@@ -1,29 +1,18 @@
 package com.networknt.dump;
 
-import java.util.List;
 import java.util.Map;
 
 interface IDumpable {
     enum HttpMessageType {
-        RESPONSE("response"),
-        REQUEST("request");
-
-        private String type;
-
-        HttpMessageType(String type) {
-            this.type = type;
-        }
-
-        public String value() {
-            return this.type;
-        }
+        RESPONSE,
+        REQUEST
     }
 
-    default void dumpOption(Boolean configObject){}
+    //Dumper dump into their own result
+    void dump();
 
-    default void dumpOption(Map configObject){}
+    //Dumper put their own result to passed in result
+    void putResultTo(Map<String, Object> result);
 
-    default void dumpOption(List<?> configObject){}
-
-    Map<String, Object> getResult();
+    Object getResult();
 }
