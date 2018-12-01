@@ -1,5 +1,13 @@
 # Change Log
 
+## [1.5.23](https://github.com/networknt/light-4j/tree/1.5.23) (2018-12-01)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.22...1.5.23)
+
+**Closed issues:**
+
+- light-4j benchmark [\#315](https://github.com/networknt/light-4j/issues/315)
+- Need to allow server to be embedded [\#312](https://github.com/networknt/light-4j/issues/312)
+
 ## [1.5.22](https://github.com/networknt/light-4j/tree/1.5.22) (2018-11-10)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.21...1.5.22)
 
