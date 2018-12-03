@@ -15,11 +15,13 @@ public abstract class AbstractFilterableDumper extends AbstractDumper {
     }
 
     protected void loadFilterConfig(String filterOptionName) {
-        Object filterList = ((Map) parentConfig).get(filterOptionName);
-        if(filterList instanceof List<?>) {
-            this.filter = (List<String>) filterList;
-        } else{
-            this.filter = new ArrayList<>();
+        //init filter with an empty list
+        this.filter = new ArrayList<>();
+        if (parentConfig instanceof Map) {
+            Object filterList = ((Map) parentConfig).get(filterOptionName);
+            if(filterList instanceof List<?>) {
+                this.filter = (List<String>) filterList;
+            }
         }
     }
 }

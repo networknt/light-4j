@@ -1,19 +1,23 @@
 # controls how to dump entire request and response to log file. not recommended
 # on production if performance is important
 enabled: true
-enableMask: true
+# indent size for logging info
 indentSize: 4
-#if request: true, all supported configs under request will be true
+# use json style or not, if use json, indentSize option will be useless
+useJson: false
+# if "request: false", disable dumping requests.
 request:
   headers: true
+  # filter for headers
   filteredHeaders:
-  #filters
   - Postman-Token
   - X-Correlation-Id
   cookies: true
+  #filter for cookies
   filteredCookies:
   - Cookie_Gmail
   queryParameters: true
+  #filter for queryParameters
   filteredQueryParameters:
   - itemId
   - a

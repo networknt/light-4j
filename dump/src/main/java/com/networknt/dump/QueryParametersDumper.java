@@ -26,11 +26,8 @@ public class QueryParametersDumper extends AbstractFilterableDumper {
 
     @Override
     protected void loadConfig() {
-        super.loadConfig();
-        if(parentConfig instanceof Map<?, ?>) {
-            loadEnableConfig(DumpConstants.COOKIES);
-            loadFilterConfig(DumpConstants.FILTERED_QUERY_PARAMETERS);
-        }
+        loadEnableConfig(DumpConstants.COOKIES);
+        loadFilterConfig(DumpConstants.FILTERED_QUERY_PARAMETERS);
     }
 
     @Override

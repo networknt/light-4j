@@ -80,22 +80,25 @@ public class DumpHandler implements MiddlewareHandler {
             exchange.dispatch(this);
             return;
         }
-        Map<String, Object> result = new LinkedHashMap<>();
-        Map<String, Object> config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
         if(isEnabled()) {
+            Map<String, Object> result = new LinkedHashMap<>();
             //dump request info into result right away
-            dumpHttpMessage(result, exchange, config, IDumpable.HttpMessageType.REQUEST);
+            RequestResponseDumper requestDumper = new RequestResponseDumper(config, exchange, IDumpable.HttpMessageType.REQUEST);
+            requestDumper.dump();
+            requestDumper.putResultTo(result);
             //only add response wrapper when response config is not set to "false"
             if(DumpHelper.checkOptionNotFalse(config.get(DumpConstants.RESPONSE))) {
                 //set Conduit to the conduit chain to store response body
                 exchange.addResponseWrapper((factory, exchange12) -> new StoreResponseStreamSinkConduit(factory.create(), exchange12));
             }
-            //when complete exchange, dump http message info
+            //when complete exchange, dump response info to result, and log the result.
             exchange.addExchangeCompleteListener((exchange1, nextListener) ->{
-                    dumpHttpMessage(result, exchange1, config, IDumpable.HttpMessageType.RESPONSE);
-                    DumpHelper.logResult(result, getIndentSize(), checkIfUseJson());
-                    nextListener.proceed();
-                });
+                RequestResponseDumper responseDumper = new RequestResponseDumper(config, exchange, IDumpable.HttpMessageType.RESPONSE);
+                responseDumper.dump();
+                responseDumper.putResultTo(result);
+                DumpHelper.logResult(result, getIndentSize(), checkIfUseJson());
+                nextListener.proceed();
+            });
         }
         Handler.next(exchange, next);
     }
@@ -112,18 +115,5 @@ public class DumpHandler implements MiddlewareHandler {
     private boolean checkIfUseJson() {
         Object useJson = config.get(DumpConstants.USE_JSON);
         return useJson instanceof Boolean && (Boolean) useJson;
-    }
-
-    /**
-     * dump request/response Message based on response/request Option
-     * @param result result to be logged
-     * @param exchange http server exchange
-     * @param configObject root dump config object
-     * @param type IDumpable.HttpMessageType
-     */
-    private void dumpHttpMessage(Map<String, Object> result, HttpServerExchange exchange, Object configObject, IDumpable.HttpMessageType type) {
-        IDumpable dumper = new HttpMethodDumper(configObject, exchange, type);
-        dumper.dump();
-        dumper.putResultTo(result);
     }
 }
