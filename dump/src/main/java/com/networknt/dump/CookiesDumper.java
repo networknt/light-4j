@@ -26,11 +26,8 @@ public class CookiesDumper extends AbstractFilterableDumper {
 
     @Override
     protected void loadConfig() {
-        super.loadConfig();
-        if(parentConfig instanceof Map<?, ?>) {
-            loadEnableConfig(DumpConstants.COOKIES);
-            loadFilterConfig(DumpConstants.FILTERED_COOKIES);
-        }
+        loadEnableConfig(DumpConstants.COOKIES);
+        loadFilterConfig(DumpConstants.FILTERED_COOKIES);
     }
 
     @Override

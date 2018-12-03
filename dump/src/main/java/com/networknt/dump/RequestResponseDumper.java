@@ -9,47 +9,45 @@ import java.util.*;
 import static com.networknt.dump.DumpConstants.REQUEST;
 import static com.networknt.dump.DumpConstants.RESPONSE;
 
-public class HttpMethodDumper extends AbstractDumper {
+/**
+ * Root dumper to delegate child dumpers dump Requests and Responses
+ */
+public class RequestResponseDumper extends AbstractDumper {
     private Map<String, Object> httpMethodMap = new LinkedHashMap<>();
     private List<IDumpable> childDumpers;
-    private static Logger logger = LoggerFactory.getLogger(HttpMethodDumper.class);
-    HttpMethodDumper(Object config, HttpServerExchange exchange, HttpMessageType type) {
+    private static Logger logger = LoggerFactory.getLogger(RequestResponseDumper.class);
+    RequestResponseDumper(Object config, HttpServerExchange exchange, HttpMessageType type) {
         super(config, exchange, type);
+        initializeChildDumpers();
     }
 
     @Override
     protected void loadConfig() {
-        super.loadConfig();
-        if(parentConfig instanceof Map<?, ?>) {
-            if(this.type == HttpMessageType.RESPONSE) {
-                //when response: true
-                loadEnableConfig(DumpConstants.RESPONSE);
-                this.config = ((Map) parentConfig).get(DumpConstants.RESPONSE);
-            } else {
-                loadEnableConfig(DumpConstants.REQUEST);
-                this.config = ((Map) parentConfig).get(DumpConstants.REQUEST);
-            }
-            if(this.config instanceof Map<?, ?>) {
-                this.isEnabled = true;
-            }
+        if(this.type == HttpMessageType.RESPONSE) {
+            //load Response config
+            loadEnableConfig(DumpConstants.RESPONSE);
+        } else {
+            //load Request config
+            loadEnableConfig(DumpConstants.REQUEST);
         }
     }
 
     @Override
     public void dump() {
         if(isApplicable()) {
-            if(this.childDumpers == null || this.childDumpers.size() == 0 ) {
-                initializeChildDumpers();
-            }
-            childDumpers.forEach(dumper -> {
-                try{
-                    dumper.dump();
-                    dumper.putResultTo(httpMethodMap);
-                } catch (Exception e) {
-                    logger.error(e.toString());
-                }
-            });
+            delegateToChildDumpers();
         }
+    }
+
+    private void delegateToChildDumpers() {
+        childDumpers.forEach(dumper -> {
+            try{
+                dumper.dump();
+                dumper.putResultTo(httpMethodMap);
+            } catch (Exception e) {
+                logger.error(e.toString());
+            }
+        });
     }
 
     @Override

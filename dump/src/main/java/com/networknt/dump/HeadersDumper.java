@@ -14,11 +14,8 @@ public class HeadersDumper extends AbstractFilterableDumper {
 
     @Override
     protected void loadConfig() {
-        super.loadConfig();
-        if(parentConfig instanceof Map<?, ?>) {
-            loadEnableConfig(DumpConstants.HEADERS);
-            loadFilterConfig(DumpConstants.FILTERED_HEADERS);
-        }
+        loadEnableConfig(DumpConstants.HEADERS);
+        loadFilterConfig(DumpConstants.FILTERED_HEADERS);
     }
 
     @Override

@@ -26,10 +26,7 @@ public class StatusCodeDumper extends AbstractDumper{
 
     @Override
     protected void loadConfig() {
-        super.loadConfig();
-        if(parentConfig instanceof Map<?, ?>) {
-            loadEnableConfig(DumpConstants.STATUS_CODE);
-        }
+        loadEnableConfig(DumpConstants.STATUS_CODE);
     }
 
     @Override

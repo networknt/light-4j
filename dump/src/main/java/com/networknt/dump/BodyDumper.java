@@ -31,10 +31,7 @@ public class BodyDumper extends AbstractDumper {
 
     @Override
     protected void loadConfig() {
-        super.loadConfig();
-        if(this.parentConfig instanceof Map<?, ?>) {
-            loadEnableConfig(DumpConstants.BODY);
-        }
+        loadEnableConfig(DumpConstants.BODY);
     }
 
     @Override
