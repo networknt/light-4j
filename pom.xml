@@ -143,7 +143,6 @@
         <module>ip-whitelist</module>
         <module>encode-decode</module>
         <module>monad-result</module>
-        <module>customers</module>
     </modules>
 
     <dependencyManagement>
