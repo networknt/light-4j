@@ -115,7 +115,7 @@ public class BodyHandler implements MiddlewareHandler {
                 setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, contentType);
                 return;
             }
-            // parse the body to formdata if content type is multipart/form-data or application/x-www-form-urlencoded
+            // parse the body to form-data if content type is multipart/form-data or application/x-www-form-urlencoded
         } else if (contentType != null &&
                 (contentType.startsWith("multipart/form-data") || contentType.startsWith("application/x-www-form-urlencoded"))) {
             if (exchange.isInIoThread()) {
@@ -123,15 +123,13 @@ public class BodyHandler implements MiddlewareHandler {
                 return;
             }
             exchange.startBlocking();
-            // Convert multipart/form-data to application/x-www-form-urlencoded to enable form parser
-            if (contentType.startsWith("multipart/form-data")) {
-                exchange.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
-            }
             try {
+                Object data;
                 FormParserFactory formParserFactory = FormParserFactory.builder().build();
                 FormDataParser parser = formParserFactory.createParser(exchange);
                 if (parser != null) {
-                    FormData data = parser.parseBlocking();
+                    FormData formData = parser.parseBlocking();
+                    data = BodyConverter.convert(formData);
                     exchange.putAttachment(REQUEST_BODY, data);
                 }
             } catch (Exception e) {

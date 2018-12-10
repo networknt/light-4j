@@ -25,6 +25,7 @@ import io.undertow.Undertow;
 import io.undertow.client.*;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
+import io.undertow.server.handlers.form.FormData;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
 import org.junit.AfterClass;
@@ -99,10 +100,8 @@ public class BodyHandlerTest {
                     } else {
                         if (body instanceof List) {
                             exchange.getResponseSender().send("list");
-                        } else if (body instanceof Map){
-                            exchange.getResponseSender().send("map");
                         } else {
-                            exchange.getResponseSender().send("formdata");
+                            exchange.getResponseSender().send("map");
                         }
                     }
                 });
@@ -355,7 +354,7 @@ public class BodyHandlerTest {
     }
 
     @Test
-    public void testPostFormWithContentTypeMultipartFormData() throws Exception {
+    public void testPostForm() throws Exception {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
@@ -372,7 +371,7 @@ public class BodyHandlerTest {
                 public void run() {
                     final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/post");
                     request.getRequestHeaders().put(Headers.HOST, "localhost");
-                    request.getRequestHeaders().put(Headers.CONTENT_TYPE, "multipart/form-data");
+                    request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
                     request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
                     connection.sendRequest(request, client.createClientCallback(reference, latch, post));
                 }
@@ -384,6 +383,6 @@ public class BodyHandlerTest {
         } finally {
             IoUtils.safeClose(connection);
         }
-        Assert.assertEquals("formdata", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+        Assert.assertEquals("map", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
     }
 }
