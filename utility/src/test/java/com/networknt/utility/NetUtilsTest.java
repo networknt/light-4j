@@ -45,4 +45,9 @@ public class NetUtilsTest {
         }
     }
 
+    @Test
+    public void testGetLocalAddressByDatagram() {
+        String ip = NetUtils.getLocalAddressByDatagram();
+        System.out.println("ip = " + ip);
+    }
 }

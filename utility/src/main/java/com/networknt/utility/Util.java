@@ -27,6 +27,8 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -39,6 +41,8 @@ import java.util.regex.Pattern;
  */
 public class Util {
     static final Logger logger = LoggerFactory.getLogger(Util.class);
+
+    public static final List<String> METHODS = Arrays.asList("GET", "HEAD", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH");
 
     /**
      * Generate UUID across the entire app and it is used for correlationId.
