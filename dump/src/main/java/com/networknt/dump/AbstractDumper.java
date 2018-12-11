@@ -25,7 +25,7 @@ public abstract class AbstractDumper implements IDumpable{
 
     /**
      * @param optionName should be supported dumper type inside com.networknt.dump.DumpConstants
-     * set this.config && this.isEnabled based on dumper config
+     * set this.config and this.isEnabled based on dumper config
      * the dumper should be enabled when the dumper option is "true", or it has child options
      */
     protected void loadEnableConfig(String optionName) {
