@@ -20,5 +20,7 @@ httpCheck: false
 # but your service will call check endpoint with heart beat to indicate it is alive. This requires that the service
 # is built on top of light-4j and the above options are not available. For example, your service is behind NAT.
 ttlCheck: true
-#request TimeOut.
+# endpoints that support blocking will also honor a wait parameter specifying a maximum duration for the blocking request.
+# This is limited to 10 minutes.This value can be specified in the form of "10s" or "5m" (i.e., 10 seconds or 5 minutes,
+# respectively).
 wait: 600s
