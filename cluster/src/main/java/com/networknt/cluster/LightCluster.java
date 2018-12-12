@@ -51,7 +51,7 @@ public class LightCluster implements Cluster {
         List<URL> urls = serviceMap.get(serviceName);
         if(logger.isDebugEnabled()) logger.debug("cached serviceName " + serviceName + " urls = " + urls);
         if(urls == null) {
-            URL subscribeUrl = URLImpl.valueOf("light://localhost/" + serviceName);
+            URL subscribeUrl = URLImpl.valueOf(protocol + "://localhost/" + serviceName);
             if(tag != null) {
                 subscribeUrl.addParameter(Constants.TAG_ENVIRONMENT, tag);
             }
