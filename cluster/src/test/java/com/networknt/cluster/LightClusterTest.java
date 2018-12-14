@@ -4,6 +4,7 @@ import com.networknt.service.SingletonServiceFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.net.URI;
 import java.util.List;
 
 /**
@@ -13,11 +14,16 @@ public class LightClusterTest {
     private static Cluster cluster = (Cluster) SingletonServiceFactory.getBean(Cluster.class);
 
     @Test
-    public void testLightCluster() {
+    public void testServiceToUrl() {
         String s = cluster.serviceToUrl("http", "com.networknt.apib-1.0.0", null, null);
-        Assert.assertEquals(s, "http://localhost:7005");
-
+        Assert.assertTrue("http://localhost:7005".equals(s) || "http://localhost:7002".equals(s));
         s = cluster.serviceToUrl("http", "com.networknt.apib-1.0.0", null, null);
-        Assert.assertEquals(s, "http://localhost:7002");
+        Assert.assertTrue("http://localhost:7005".equals(s) || "http://localhost:7002".equals(s));
+    }
+
+    @Test
+    public void testServices() {
+        List<URI> l = cluster.services("http", "com.networknt.apib-1.0.0", null);
+        Assert.assertEquals(2, l.size());
     }
 }
