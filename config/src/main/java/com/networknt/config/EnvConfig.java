@@ -72,12 +72,12 @@ public class EnvConfig {
     private static EnvEntity getEnvEntity(String envReference) {
         String contents = getContents(envReference);
         EnvEntity envEntity = new EnvEntity();
-        if (contents == null || contents == "") {
+        if (contents == null || contents.equals("")) {
             return null;
         }
         String[] rfcArray = contents.split(":", 2);
         rfcArray[0] = rfcArray[0].trim();
-        if (rfcArray[0] == "") {
+        if ("".equals(rfcArray[0])) {
             return null;
         }
         envEntity.setEnvName(rfcArray[0]);
@@ -131,11 +131,22 @@ public class EnvConfig {
 
     private static void setFieldValue(String fieldName, Object fieldValue, Object obj) {
         String setter = "set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+        String getter = "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
         try {
-            Method method = obj.getClass().getMethod(setter, new Class[]{String.class});
+            Method method = obj.getClass().getMethod(setter, getReturnTypeFromGetterMethod(getter, obj));
             method.invoke(obj, fieldValue);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
+        }
+    }
+
+    private static Class<?> getReturnTypeFromGetterMethod(String getter, Object obj) {
+        try {
+            Method method = obj.getClass().getMethod(getter, new Class[]{});
+            return method.getReturnType();
+        } catch (NoSuchMethodException e) {
+            logger.error(e.getMessage(), e);
+            return null;
         }
     }
 
@@ -149,7 +160,7 @@ public class EnvConfig {
         }
 
         public void setErrorText(String errorTest) {
-            this.errorText = errorText;
+            this.errorText = errorTest;
         }
 
         public String getDefaultValue() {
