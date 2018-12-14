@@ -16,7 +16,6 @@
 
 package com.networknt.config;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import junit.framework.TestCase;
 import org.junit.Assert;
@@ -55,36 +54,65 @@ public class ConfigDefaultTest extends TestCase {
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test");
         Assert.assertEquals("default config", configMap.get("value"));
+        Assert.assertEquals(System.getenv("HOME"), configMap.get("value1"));
+        Assert.assertEquals(System.getenv("LOGNAME"), configMap.get("value2"));
+        Assert.assertEquals("default", configMap.get("value3"));
+        Assert.assertEquals(null, configMap.get("value4"));
+        Assert.assertEquals(null, configMap.get("value5"));
     }
 
     public void testGetJsonObjectConfig() throws Exception {
         config.clear();
         TestConfig tc = (TestConfig) config.getJsonObjectConfig("test", TestConfig.class);
         Assert.assertEquals("default config", tc.getValue());
+        Assert.assertEquals(System.getenv("HOME"), tc.getValue1());
+        Assert.assertEquals(System.getenv("LOGNAME"), tc.getValue2());
+        Assert.assertEquals(null, tc.getValue4());
+        Assert.assertEquals(null, tc.getValue5());
     }
 
     public void test1GetJsonMapConfig() throws Exception {
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test1");
         Assert.assertEquals("default config", configMap.get("value"));
+        Assert.assertEquals(System.getenv("HOME"), configMap.get("value1"));
+        Assert.assertEquals(System.getenv("LOGNAME"), configMap.get("value2"));
+        Assert.assertEquals("default", configMap.get("value3"));
+        Assert.assertEquals(null, configMap.get("value4"));
+        Assert.assertEquals(null, configMap.get("value5"));
     }
 
     public void test1GetJsonObjectConfig() throws Exception {
         config.clear();
         TestConfig tc = (TestConfig) config.getJsonObjectConfig("test1", TestConfig.class);
         Assert.assertEquals("default config", tc.getValue());
+        Assert.assertEquals(System.getenv("HOME"), tc.getValue1());
+        Assert.assertEquals(System.getenv("LOGNAME"), tc.getValue2());
+        Assert.assertEquals("default", tc.getValue3());
+        Assert.assertEquals(null, tc.getValue4());
+        Assert.assertEquals(null, tc.getValue5());
     }
 
     public void test2GetJsonMapConfig() throws Exception {
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test2");
         Assert.assertEquals("default config", configMap.get("value"));
+        Assert.assertEquals(System.getenv("HOME"), configMap.get("value1"));
+        Assert.assertEquals(System.getenv("LOGNAME"), configMap.get("value2"));
+        Assert.assertEquals("default", configMap.get("value3"));
+        Assert.assertEquals(null, configMap.get("value4"));
+        Assert.assertEquals(null, configMap.get("value5"));
     }
 
     public void test2GetJsonObjectConfig() throws Exception {
         config.clear();
         TestConfig tc = (TestConfig) config.getJsonObjectConfig("test2", TestConfig.class);
         Assert.assertEquals("default config", tc.getValue());
+        Assert.assertEquals(System.getenv("HOME"), tc.getValue1());
+        Assert.assertEquals(System.getenv("LOGNAME"), tc.getValue2());
+        Assert.assertEquals("default", tc.getValue3());
+        Assert.assertEquals(null, tc.getValue4());
+        Assert.assertEquals(null, tc.getValue5());
     }
 
     public void testGetInputStream() throws Exception {
