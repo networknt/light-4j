@@ -211,6 +211,7 @@ public abstract class Config {
             try (InputStream inStream = getConfigStream(ymlFilename)) {
                 if(inStream != null) {
                     config = yaml.loadAs(inStream, clazz);
+                    EnvConfig.injectObjectEnv(config);
                 }
             } catch (IOException ioe) {
                 logger.error("IOException", ioe);
@@ -221,6 +222,7 @@ public abstract class Config {
             try (InputStream inStream = getConfigStream(yamlFilename)) {
                 if(inStream != null) {
                     config = yaml.loadAs(inStream, clazz);
+                    EnvConfig.injectObjectEnv(config);
                 }
             } catch (IOException ioe) {
                 logger.error("IOException", ioe);
@@ -231,6 +233,7 @@ public abstract class Config {
             try (InputStream inStream = getConfigStream(jsonFilename)) {
                 if(inStream != null) {
                     config = mapper.readValue(inStream, clazz);
+                    EnvConfig.injectObjectEnv(config);
                 }
             } catch (IOException ioe) {
                 logger.error("IOException", ioe);
@@ -245,6 +248,7 @@ public abstract class Config {
             try (InputStream inStream = getConfigStream(ymlFilename)) {
                 if(inStream != null) {
                     config = (Map<String, Object>)yaml.load(inStream);
+                    EnvConfig.injectMapEnv(config);
                 }
             } catch (IOException ioe) {
                 logger.error("IOException", ioe);
@@ -255,6 +259,7 @@ public abstract class Config {
             try (InputStream inStream = getConfigStream(yamlFilename)) {
                 if(inStream != null) {
                     config = (Map<String, Object>)yaml.load(inStream);
+                    EnvConfig.injectMapEnv(config);
                 }
             } catch (IOException ioe) {
                 logger.error("IOException", ioe);
@@ -265,6 +270,7 @@ public abstract class Config {
             try (InputStream inStream = getConfigStream(configFilename)){
                 if(inStream != null) {
                     config = mapper.readValue(inStream, new TypeReference<HashMap<String, Object>>() {});
+                    EnvConfig.injectMapEnv(config);
                 }
             } catch (IOException ioe) {
                 logger.error("IOException", ioe);
