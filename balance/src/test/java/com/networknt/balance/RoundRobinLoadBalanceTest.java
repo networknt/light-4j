@@ -4,6 +4,7 @@ import com.networknt.registry.URL;
 import com.networknt.registry.URLImpl;
 import com.networknt.service.SingletonServiceFactory;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -47,6 +48,11 @@ public class RoundRobinLoadBalanceTest {
         Assert.assertNull(url);
     }
 
+    /**
+     * There is a chance that both values are the same but it should be very rare. Given this possibility,
+     * ignore this test unless we need it. 
+     */
+    @Ignore
     @Test
     public void testRandom() {
         int r1 = (int)(Math.random()*50);
