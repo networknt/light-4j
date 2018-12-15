@@ -10,6 +10,7 @@
 
 **Closed issues:**
 
+- ignore the random number test in balance [\#338](https://github.com/networknt/light-4j/issues/338)
 - add a new services method to the Cluster [\#336](https://github.com/networknt/light-4j/issues/336)
 - make round robin load balance start with random number [\#335](https://github.com/networknt/light-4j/issues/335)
 - A bug that shows Unknown protocol light in service discovery [\#334](https://github.com/networknt/light-4j/issues/334)
