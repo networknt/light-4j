@@ -3,74 +3,93 @@ package com.networknt.config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.Map;
+import java.io.*;
 
 public class EnvConfig {
     static final Logger logger = LoggerFactory.getLogger(EnvConfig.class);
 
-    public static void injectMapEnv(Map<String, Object> map) {
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            String value = (String) entry.getValue();
-            if (isEnvReference(value)) {
-                EnvEntity envEntity = getEnvEntity(value);
-                if (envEntity != null) {
-                    String envName = envEntity.getEnvName();
-                    Object envVariable = getEnvVariable(envName);
-                    if (envVariable != null) {
-                        map.put(entry.getKey(), envVariable);
-                    } else if (envEntity.getDefaultValue() != null) {
-                        map.put(entry.getKey(), envEntity.getDefaultValue());
-                    } else if (envEntity.getErrorText() != null) {
-                        logger.info(envEntity.getErrorText());
-                        map.put(entry.getKey(), null);
-                    } else {
-                        logger.info("The environment variable:" + envName + " cannot be expanded.");
-                        map.put(entry.getKey(), null);
-                    }
-                } else {
-                    logger.info("The environment variable reference is empty.");
-                    map.put(entry.getKey(), null);
+    private static boolean[] escape;
+
+    public static InputStream preprocessYaml(String string) {
+        String[] lines = string.split("\n");
+        escape = new boolean[lines.length];
+        for (int i = 0; i < lines.length; i++) {
+            if ((lines[i].contains(": ${") || lines[i].contains("- ${")) && lines[i].endsWith("}")) {
+                int start = lines[i].indexOf(": ${");
+                if (start == -1) start = lines[i].indexOf("- ${");
+                int index = start + 4;
+                StringBuilder stringBuilder = new StringBuilder();
+                while (index < lines[i].length() - 1) {
+                    stringBuilder.append(lines[i].charAt(index));
+                    index++;
                 }
-            } else if (isEscapeReference(value)) {
-                map.put(entry.getKey(), null);
+                lines[i] = lines[i].substring(0, start + 2) + get(stringBuilder.toString(), i);
+            } else if ((lines[i].contains(": $${") || lines[i].contains("- $${")) && lines[i].endsWith("}")) {
+                escape[i] = true;
             }
         }
-    }
-
-    public static void injectObjectEnv(Object obj) {
-        String[] fieldNames = getFieldName(obj);
-        for (int i = 0; i < fieldNames.length; i++) {
-            String value = (String) getFieldValueByName(fieldNames[i], obj);
-            if (isEnvReference(value)) {
-                EnvEntity envEntity = getEnvEntity(value);
-                if (envEntity != null) {
-                    String envName = envEntity.getEnvName();
-                    Object envVariable = getEnvVariable(envName);
-                    if (envVariable != null) {
-                        setFieldValue(fieldNames[i], envVariable, obj);
-                    } else if (envEntity.getDefaultValue() != null) {
-                        setFieldValue(fieldNames[i], envEntity.getDefaultValue(), obj);
-                    } else if (envEntity.getErrorText() != null) {
-                        logger.info(envEntity.getErrorText());
-                        setFieldValue(fieldNames[i], null, obj);
-                    } else {
-                        logger.info("The environment variable:" + envName + " cannot be expanded.");
-                        setFieldValue(fieldNames[i], null, obj);
-                    }
-                } else {
-                    logger.info("The environment variable reference is empty.");
-                    setFieldValue(fieldNames[i], null, obj);
-                }
-            } else if (isEscapeReference(value)) {
-                setFieldValue(fieldNames[i], null, obj);
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < lines.length; i++) {
+            if (!escape[i]) {
+                stringBuilder.append(lines[i] + "\n");
             }
         }
+        return convertStringToStream(stringBuilder.substring(0, stringBuilder.length() - 1));
     }
 
-    private static EnvEntity getEnvEntity(String envReference) {
-        String contents = getContents(envReference);
+    public static InputStream preprocessJson(String string) {
+        String[] lines = string.split(",");
+        escape = new boolean[lines.length];
+        for (int i = 0; i < lines.length; i++) {
+            if (lines[i].contains(": \"${") && (lines[i].endsWith("}\""))) {
+                int start = lines[i].indexOf(": \"${");
+                int index = start + 5;
+                StringBuilder stringBuilder = new StringBuilder();
+                while (index < lines[i].length() - 2) {
+                    stringBuilder.append(lines[i].charAt(index));
+                    index++;
+                }
+                lines[i] = lines[i].substring(0, start + 3) + get(stringBuilder.toString(), i) + "\"";
+            } else if (lines[i].contains(": \"$${") && (lines[i].endsWith("}\"\n}") || lines[i].endsWith("}\"}"))) {
+                escape[i] = true;
+            }
+        }
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < lines.length; i++) {
+            if (!escape[i]) {
+                stringBuilder.append(lines[i] + ",");
+            }
+        }
+        if (stringBuilder.length() == 0) {
+            return convertStringToStream("{}");
+        }
+        String result = stringBuilder.substring(0, stringBuilder.length() - 1);
+        if (!result.endsWith("}")) {
+            result = result + "}";
+        }
+        return convertStringToStream(result);
+    }
+
+    private static Object get(String content, int index) {
+        EnvEntity envEntity = getEnvEntity(content);
+        Object envVariable = null;
+        if (envEntity != null) {
+            envVariable = getEnvVariable(envEntity.getEnvName());
+            if (envVariable == null || envVariable.equals("")) {
+                envVariable = envEntity.getDefaultValue();
+                if (envVariable == null || envVariable.equals("")) {
+                    String error_text = envEntity.getErrorText();
+                    escape[index] = true;
+                    if (error_text != null && !error_text.equals("")) {
+                        logger.error(error_text);
+                    }
+                }
+            }
+        }
+        return envVariable;
+    }
+
+    private static EnvEntity getEnvEntity(String contents) {
         EnvEntity envEntity = new EnvEntity();
         if (contents == null || contents.equals("")) {
             return null;
@@ -96,64 +115,19 @@ public class EnvConfig {
         return System.getenv(envName);
     }
 
-    private static boolean isEnvReference(String envName) {
-        return envName.startsWith("${") && envName.endsWith("}");
-    }
-
-    private static boolean isEscapeReference(String envName) {
-        return envName.startsWith("$${") && envName.endsWith("}");
-    }
-
-    private static String getContents(String envReference) {
-        return envReference.substring(2, envReference.length() - 1);
-    }
-
-    private static String[] getFieldName(Object obj) {
-        Field[] fields = obj.getClass().getDeclaredFields();
-        String[] fieldName = new String[fields.length];
-        for (int i = 0; i < fields.length; i++) {
-            fieldName[i] = fields[i].getName();
-        }
-        return fieldName;
-    }
-
-    private static Object getFieldValueByName(String fieldName, Object obj) {
-        String getter = "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
-        try {
-            Method method = obj.getClass().getMethod(getter, new Class[]{});
-            Object value = method.invoke(obj, new Object[]{});
-            return value;
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
-            return null;
-        }
-    }
-
-    private static void setFieldValue(String fieldName, Object fieldValue, Object obj) {
-        String setter = "set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
-        String getter = "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
-        try {
-            Method method = obj.getClass().getMethod(setter, getReturnTypeFromGetterMethod(getter, obj));
-            method.invoke(obj, fieldValue);
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
-        }
-    }
-
-    private static Class<?> getReturnTypeFromGetterMethod(String getter, Object obj) {
-        try {
-            Method method = obj.getClass().getMethod(getter, new Class[]{});
-            return method.getReturnType();
-        } catch (NoSuchMethodException e) {
-            logger.error(e.getMessage(), e);
-            return null;
-        }
-    }
-
     private static class EnvEntity {
+        private String key;
         private String envName;
         private String defaultValue;
         private String errorText;
+
+        public String getKey() {
+            return key;
+        }
+
+        public void setKey(String key) {
+            this.key = key;
+        }
 
         public String getErrorText() {
             return errorText;
@@ -178,5 +152,9 @@ public class EnvConfig {
         public void setEnvName(String envName) {
             this.envName = envName;
         }
+    }
+
+    private static InputStream convertStringToStream(String string) {
+        return new ByteArrayInputStream(string.getBytes());
     }
 }
