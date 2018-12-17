@@ -25,10 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -210,8 +207,8 @@ public abstract class Config {
             String ymlFilename = configName + CONFIG_EXT_YML;
             try (InputStream inStream = getConfigStream(ymlFilename)) {
                 if(inStream != null) {
-                    config = yaml.loadAs(inStream, clazz);
-                    EnvConfig.injectObjectEnv(config);
+                    String string = convertStreamToString(inStream);
+                    config = yaml.loadAs(EnvConfig.preprocessYaml(string), clazz);
                 }
             } catch (IOException ioe) {
                 logger.error("IOException", ioe);
@@ -221,8 +218,8 @@ public abstract class Config {
             String yamlFilename = configName + CONFIG_EXT_YAML;
             try (InputStream inStream = getConfigStream(yamlFilename)) {
                 if(inStream != null) {
-                    config = yaml.loadAs(inStream, clazz);
-                    EnvConfig.injectObjectEnv(config);
+                    String string = convertStreamToString(inStream);
+                    config = yaml.loadAs(EnvConfig.preprocessYaml(string), clazz);
                 }
             } catch (IOException ioe) {
                 logger.error("IOException", ioe);
@@ -232,8 +229,8 @@ public abstract class Config {
             String jsonFilename = configName + CONFIG_EXT_JSON;
             try (InputStream inStream = getConfigStream(jsonFilename)) {
                 if(inStream != null) {
-                    config = mapper.readValue(inStream, clazz);
-                    EnvConfig.injectObjectEnv(config);
+                    String string = convertStreamToString(inStream);
+                    config = mapper.readValue(EnvConfig.preprocessJson(string), clazz);
                 }
             } catch (IOException ioe) {
                 logger.error("IOException", ioe);
@@ -247,8 +244,8 @@ public abstract class Config {
             String ymlFilename = configName + CONFIG_EXT_YML;
             try (InputStream inStream = getConfigStream(ymlFilename)) {
                 if(inStream != null) {
-                    config = (Map<String, Object>)yaml.load(inStream);
-                    EnvConfig.injectMapEnv(config);
+                    String string = convertStreamToString(inStream);
+                    config = (Map<String, Object>)yaml.load(EnvConfig.preprocessYaml(string));
                 }
             } catch (IOException ioe) {
                 logger.error("IOException", ioe);
@@ -258,8 +255,8 @@ public abstract class Config {
             String yamlFilename = configName + CONFIG_EXT_YAML;
             try (InputStream inStream = getConfigStream(yamlFilename)) {
                 if(inStream != null) {
-                    config = (Map<String, Object>)yaml.load(inStream);
-                    EnvConfig.injectMapEnv(config);
+                    String string = convertStreamToString(inStream);
+                    config = (Map<String, Object>)yaml.load(EnvConfig.preprocessYaml(string));
                 }
             } catch (IOException ioe) {
                 logger.error("IOException", ioe);
@@ -269,8 +266,8 @@ public abstract class Config {
             String configFilename = configName + CONFIG_EXT_JSON;
             try (InputStream inStream = getConfigStream(configFilename)){
                 if(inStream != null) {
-                    config = mapper.readValue(inStream, new TypeReference<HashMap<String, Object>>() {});
-                    EnvConfig.injectMapEnv(config);
+                    String string = convertStreamToString(inStream);
+                    config = mapper.readValue(EnvConfig.preprocessJson(string), new TypeReference<HashMap<String, Object>>() {});
                 }
             } catch (IOException ioe) {
                 logger.error("IOException", ioe);

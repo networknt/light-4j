@@ -25,6 +25,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -80,6 +81,7 @@ public class ConfigDefaultTest extends TestCase {
         Assert.assertEquals("default", configMap.get("value3"));
         Assert.assertEquals(null, configMap.get("value4"));
         Assert.assertEquals(null, configMap.get("value5"));
+        Assert.assertEquals(Arrays.asList("default", System.getenv("HOME")), configMap.get("value6"));
     }
 
     public void test1GetJsonObjectConfig() throws Exception {
@@ -91,6 +93,7 @@ public class ConfigDefaultTest extends TestCase {
         Assert.assertEquals("default", tc.getValue3());
         Assert.assertEquals(null, tc.getValue4());
         Assert.assertEquals(null, tc.getValue5());
+        Assert.assertEquals(Arrays.asList("default", System.getenv("HOME")), tc.getValue6());
     }
 
     public void test2GetJsonMapConfig() throws Exception {
@@ -102,6 +105,7 @@ public class ConfigDefaultTest extends TestCase {
         Assert.assertEquals("default", configMap.get("value3"));
         Assert.assertEquals(null, configMap.get("value4"));
         Assert.assertEquals(null, configMap.get("value5"));
+        Assert.assertEquals(Arrays.asList("default", System.getenv("HOME")), configMap.get("value6"));
     }
 
     public void test2GetJsonObjectConfig() throws Exception {
@@ -113,6 +117,7 @@ public class ConfigDefaultTest extends TestCase {
         Assert.assertEquals("default", tc.getValue3());
         Assert.assertEquals(null, tc.getValue4());
         Assert.assertEquals(null, tc.getValue5());
+        Assert.assertEquals(Arrays.asList("default", System.getenv("HOME")), tc.getValue6());
     }
 
     public void testGetInputStream() throws Exception {
