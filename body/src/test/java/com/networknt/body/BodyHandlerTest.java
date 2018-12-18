@@ -25,6 +25,7 @@ import io.undertow.Undertow;
 import io.undertow.client.*;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
+import io.undertow.server.handlers.form.FormData;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
 import org.junit.AfterClass;
@@ -38,6 +39,7 @@ import org.xnio.OptionMap;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -45,6 +47,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created by steve on 23/09/16.
+ * Updated on 07/12/18
  */
 public class BodyHandlerTest {
     static final Logger logger = LoggerFactory.getLogger(BodyHandlerTest.class);
@@ -53,7 +56,7 @@ public class BodyHandlerTest {
 
     @BeforeClass
     public static void setUp() {
-        if(server == null) {
+        if (server == null) {
             logger.info("starting server");
             HttpHandler handler = getTestHandler();
             BodyHandler bodyHandler = new BodyHandler();
@@ -69,7 +72,7 @@ public class BodyHandlerTest {
 
     @AfterClass
     public static void tearDown() throws Exception {
-        if(server != null) {
+        if (server != null) {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException ignored) {
@@ -84,7 +87,7 @@ public class BodyHandlerTest {
         return Handlers.routing()
                 .add(Methods.GET, "/get", exchange -> {
                     Object body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
-                    if(body == null) {
+                    if (body == null) {
                         exchange.getResponseSender().send("nobody");
                     } else {
                         exchange.getResponseSender().send("body");
@@ -92,10 +95,10 @@ public class BodyHandlerTest {
                 })
                 .add(Methods.POST, "/post", exchange -> {
                     Object body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
-                    if(body == null) {
+                    if (body == null) {
                         exchange.getResponseSender().send("nobody");
                     } else {
-                        if(body instanceof List) {
+                        if (body instanceof List) {
                             exchange.getResponseSender().send("list");
                         } else {
                             exchange.getResponseSender().send("map");
@@ -166,7 +169,7 @@ public class BodyHandlerTest {
         int statusCode = reference.get().getResponseCode();
         // as content type and body is mismatched, the body will be ignored.
         Assert.assertEquals(400, statusCode);
-        if(statusCode == 400) {
+        if (statusCode == 400) {
             Status status = Config.getInstance().getMapper().readValue(reference.get().getAttachment(Http2Client.RESPONSE_BODY), Status.class);
             Assert.assertNotNull(status);
             Assert.assertEquals("ERR10015", status.getCode());
@@ -207,7 +210,7 @@ public class BodyHandlerTest {
         int statusCode = reference.get().getResponseCode();
         // as content type and body is mismatched, the body will be ignored.
         Assert.assertEquals(400, statusCode);
-        if(statusCode == 400) {
+        if (statusCode == 400) {
             Status status = Config.getInstance().getMapper().readValue(reference.get().getAttachment(Http2Client.RESPONSE_BODY), Status.class);
             Assert.assertNotNull(status);
             Assert.assertEquals("ERR10015", status.getCode());
@@ -298,15 +301,15 @@ public class BodyHandlerTest {
         try {
             String post = "{\"key\":\"value\"}";
             connection.getIoThread().execute(new Runnable() {
-                 @Override
-                 public void run() {
-                     final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/post");
-                     request.getRequestHeaders().put(Headers.HOST, "localhost");
-                     //request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/json");
-                     request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
-                     connection.sendRequest(request, client.createClientCallback(reference, latch, post));
-                 }
-             });
+                @Override
+                public void run() {
+                    final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/post");
+                    request.getRequestHeaders().put(Headers.HOST, "localhost");
+                    //request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/json");
+                    request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, post));
+                }
+            });
             latch.await(10, TimeUnit.SECONDS);
         } catch (Exception e) {
             logger.error("IOException: ", e);
@@ -317,4 +320,69 @@ public class BodyHandlerTest {
         Assert.assertEquals("nobody", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
     }
 
+    @Test
+    public void testPostFormWithoutContentTypeHeader() throws Exception {
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection;
+        try {
+            connection = client.connect(new URI("http://localhost:8080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        } catch (Exception e) {
+            throw new ClientException(e);
+        }
+        try {
+            String post = "name=value";
+            connection.getIoThread().execute(new Runnable() {
+                @Override
+                public void run() {
+                    final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/post");
+                    request.getRequestHeaders().put(Headers.HOST, "localhost");
+                    //request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/json");
+                    request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, post));
+                }
+            });
+            latch.await(10, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            logger.error("IOException: ", e);
+            throw new ClientException(e);
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+        Assert.assertEquals("nobody", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+    }
+
+    @Test
+    public void testPostForm() throws Exception {
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection;
+        try {
+            connection = client.connect(new URI("http://localhost:8080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        } catch (Exception e) {
+            throw new ClientException(e);
+        }
+        try {
+            String post = "key=value";
+            connection.getIoThread().execute(new Runnable() {
+                @Override
+                public void run() {
+                    final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/post");
+                    request.getRequestHeaders().put(Headers.HOST, "localhost");
+                    request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
+                    request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+                    connection.sendRequest(request, client.createClientCallback(reference, latch, post));
+                }
+            });
+            latch.await(10, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            logger.error("IOException: ", e);
+            throw new ClientException(e);
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+        Assert.assertEquals("map", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+    }
 }
