@@ -1,6 +1,7 @@
-{"value": "default config",
+{
+  "value": "default config",
   "value1": "${HOME}",
-  "value2": "${LOGNAME:SHOULD_NOT_DISPLAY}",
+  "value2": ${LOGNAME:SHOULD_NOT_DISPLAY},
   "value3": "${TEST:default}",
-  "value4": "${TEST1:?ERROR_MESSAGE}",
-  "value5": "$${ESCAPE}"}
+  "value4": "/${ESCAPE}"
+}
