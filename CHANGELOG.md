@@ -1,5 +1,28 @@
 # Change Log
 
+## [1.5.24](https://github.com/networknt/light-4j/tree/1.5.24) (2018-12-15)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.23...1.5.24)
+
+**Implemented enhancements:**
+
+- Attachment Handler [\#326](https://github.com/networknt/light-4j/issues/326)
+- refactor the dump handler to support response body logging [\#23](https://github.com/networknt/light-4j/issues/23)
+
+**Closed issues:**
+
+- ignore the random number test in balance [\#338](https://github.com/networknt/light-4j/issues/338)
+- add a new services method to the Cluster [\#336](https://github.com/networknt/light-4j/issues/336)
+- make round robin load balance start with random number [\#335](https://github.com/networknt/light-4j/issues/335)
+- A bug that shows Unknown protocol light in service discovery [\#334](https://github.com/networknt/light-4j/issues/334)
+- In consul client the hard coded wait value changed through configuration.  [\#332](https://github.com/networknt/light-4j/issues/332)
+- add a new method to get local IP for interactive queries [\#331](https://github.com/networknt/light-4j/issues/331)
+
+**Merged pull requests:**
+
+- Issue \#332, \(API 6\) in consul client the wait hard coded value changed through configuration  [\#333](https://github.com/networknt/light-4j/pull/333) ([sreenicibc](https://github.com/sreenicibc))
+- \#326 created a form handler [\#329](https://github.com/networknt/light-4j/pull/329) ([jiachen1120](https://github.com/jiachen1120))
+- Refactor the dump handler to support response body logging [\#328](https://github.com/networknt/light-4j/pull/328) ([BalloonWen](https://github.com/BalloonWen))
+
 ## [1.5.23](https://github.com/networknt/light-4j/tree/1.5.23) (2018-12-01)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.22...1.5.23)
 
