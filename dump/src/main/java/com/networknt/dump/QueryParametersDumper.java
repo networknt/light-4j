@@ -5,48 +5,36 @@ import io.undertow.server.HttpServerExchange;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class QueryParametersDumper extends AbstractFilterableDumper {
+public class QueryParametersDumper extends AbstractFilterableDumper implements IRequestDumpable {
     private Map<String, Object> queryParametersMap = new LinkedHashMap<>();
 
-    public QueryParametersDumper(Object parentConfig, HttpServerExchange exchange, IDumpable.HttpMessageType type) {
-        super(parentConfig, exchange, type);
-    }
-
-    @Override
-    public Map<String, Object> getResult() {
-        return this.queryParametersMap;
-    }
-
-    @Override
-    public void putResultTo(Map<String, Object> result) {
-        if(this.queryParametersMap.size() > 0) {
-            result.put(DumpConstants.QUERY_PARAMETERS, queryParametersMap);
-        }
+    public QueryParametersDumper(Object parentConfig, HttpServerExchange exchange) {
+        super(parentConfig, exchange);
     }
 
     @Override
     protected void loadConfig() {
-        loadEnableConfig(DumpConstants.COOKIES);
+        loadEnableConfig(DumpConstants.QUERY_PARAMETERS);
         loadFilterConfig(DumpConstants.FILTERED_QUERY_PARAMETERS);
     }
 
     @Override
-    public void dump() {
-        if(isApplicable()) {
-            exchange.getQueryParameters().forEach((k, v) -> {
-                if (!this.filter.contains(k)) {
-                    queryParametersMap.put(k, v.getFirst());
-                }
-            });
-
+    public void dumpRequest(Map<String, Object> result) {
+        if(!isEnabled()) {
+            return;
         }
+        exchange.getQueryParameters().forEach((k, v) -> {
+            if (!this.filter.contains(k)) {
+                queryParametersMap.put(k, v.getFirst());
+            }
+        });
+        this.putDumpInfoTo(result);
     }
 
     @Override
-    protected Boolean isApplicable() {
-        if(this.type.equals(IDumpable.HttpMessageType.RESPONSE)) {
-            return false;
+    public void putDumpInfoTo(Map<String, Object> result) {
+        if(this.queryParametersMap.size() > 0) {
+            result.put(DumpConstants.QUERY_PARAMETERS, queryParametersMap);
         }
-        return super.isApplicable();
     }
 }

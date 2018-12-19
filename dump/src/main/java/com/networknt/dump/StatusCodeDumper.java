@@ -5,23 +5,11 @@ import io.undertow.server.HttpServerExchange;
 
 import java.util.Map;
 
-public class StatusCodeDumper extends AbstractDumper{
+public class StatusCodeDumper extends AbstractDumper implements IResponseDumpable{
     private String statusCodeResult = "";
 
-    public StatusCodeDumper(Object parentConfig, HttpServerExchange exchange, IDumpable.HttpMessageType type) {
-        super(parentConfig, exchange, type);
-    }
-
-    @Override
-    public String getResult() {
-        return this.statusCodeResult;
-    }
-
-    @Override
-    public void putResultTo(Map<String, Object> result) {
-        if(StringUtils.isNotBlank(this.statusCodeResult)) {
-            result.put(DumpConstants.STATUS_CODE, this.statusCodeResult);
-        }
+    public StatusCodeDumper(Object parentConfig, HttpServerExchange exchange) {
+        super(parentConfig, exchange);
     }
 
     @Override
@@ -29,18 +17,20 @@ public class StatusCodeDumper extends AbstractDumper{
         loadEnableConfig(DumpConstants.STATUS_CODE);
     }
 
+
     @Override
-    public void dump() {
-        if(isApplicable()) {
-            this.statusCodeResult = String.valueOf(exchange.getStatusCode());
+    public void dumpResponse(Map<String, Object> result) {
+        if(!isEnabled()) {
+            return;
         }
+        this.statusCodeResult = String.valueOf(exchange.getStatusCode());
+        this.putDumpInfoTo(result);
     }
 
     @Override
-    protected Boolean isApplicable() {
-        if(this.type.equals(IDumpable.HttpMessageType.REQUEST)) {
-            return false;
+    public void putDumpInfoTo(Map<String, Object> result) {
+        if(StringUtils.isNotBlank(this.statusCodeResult)) {
+            result.put(DumpConstants.STATUS_CODE, this.statusCodeResult);
         }
-        return super.isApplicable();
     }
 }
