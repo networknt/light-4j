@@ -210,7 +210,9 @@ public abstract class Config {
             try (InputStream inStream = getConfigStream(ymlFilename)) {
                 if (inStream != null) {
                     if (isEnableInjection) {
-                        config = yaml.loadAs(EnvConfig.resolveYaml(inStream), clazz);
+                        try (InputStream injectedStream = EnvConfig.resolveYaml(inStream)) {
+                            config = yaml.loadAs(EnvConfig.resolveYaml(injectedStream), clazz);
+                        }
                     } else {
                         config = yaml.loadAs(inStream, clazz);
                     }
@@ -224,7 +226,9 @@ public abstract class Config {
             try (InputStream inStream = getConfigStream(yamlFilename)) {
                 if (inStream != null) {
                     if (isEnableInjection) {
-                        config = yaml.loadAs(EnvConfig.resolveYaml(inStream), clazz);
+                        try (InputStream injectedStream = EnvConfig.resolveYaml(inStream)) {
+                            config = yaml.loadAs(EnvConfig.resolveYaml(injectedStream), clazz);
+                        }
                     } else {
                         config = yaml.loadAs(inStream, clazz);
                     }
@@ -238,7 +242,9 @@ public abstract class Config {
             try (InputStream inStream = getConfigStream(jsonFilename)) {
                 if (inStream != null) {
                     if (isEnableInjection) {
-                        config = mapper.readValue(EnvConfig.resolveJson(inStream), clazz);
+                        try (InputStream injectedStream = EnvConfig.resolveJson(inStream)) {
+                            config = mapper.readValue(EnvConfig.resolveJson(injectedStream), clazz);
+                        }
                     } else {
                         config = mapper.readValue(inStream, clazz);
                     }
@@ -256,7 +262,9 @@ public abstract class Config {
             try (InputStream inStream = getConfigStream(ymlFilename)) {
                 if (inStream != null) {
                     if (isEnableInjection) {
-                        config = (Map<String, Object>) yaml.load(EnvConfig.resolveYaml(inStream));
+                        try (InputStream injectedStream = EnvConfig.resolveYaml(inStream)) {
+                            config = (Map<String, Object>) yaml.load(EnvConfig.resolveYaml(injectedStream));
+                        }
                     } else {
                         config = (Map<String, Object>) yaml.load(inStream);
                     }
@@ -270,7 +278,9 @@ public abstract class Config {
             try (InputStream inStream = getConfigStream(yamlFilename)) {
                 if (inStream != null) {
                     if (isEnableInjection) {
-                        config = (Map<String, Object>) yaml.load(EnvConfig.resolveYaml(inStream));
+                        try (InputStream injectedStream = EnvConfig.resolveYaml(inStream)) {
+                            config = (Map<String, Object>) yaml.load(EnvConfig.resolveYaml(injectedStream));
+                        }
                     } else {
                         config = (Map<String, Object>) yaml.load(inStream);
                     }
@@ -284,8 +294,10 @@ public abstract class Config {
             try (InputStream inStream = getConfigStream(configFilename)) {
                 if (inStream != null) {
                     if (isEnableInjection) {
-                        config = mapper.readValue(EnvConfig.resolveJson(inStream), new TypeReference<HashMap<String, Object>>() {
-                        });
+                        try (InputStream injectedStream = EnvConfig.resolveJson(inStream)) {
+                            config = mapper.readValue(EnvConfig.resolveJson(injectedStream), new TypeReference<HashMap<String, Object>>() {
+                            });
+                        }
                     } else {
                         config = mapper.readValue(inStream, new TypeReference<HashMap<String, Object>>() {
                         });
