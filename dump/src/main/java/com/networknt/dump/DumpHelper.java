@@ -11,6 +11,9 @@ import java.util.Map;
 
 class DumpHelper {
 
+    private static final String INDENT_SIZE = "indentSize";
+    private static final int DEFAULT_INDENT_SIZE = 4;
+
     private static Logger logger = LoggerFactory.getLogger(DumpHelper.class);
 
     static void logResult(Map<String, Object> result, int indentSize, boolean useJson) {
@@ -72,9 +75,37 @@ class DumpHelper {
         return sb.toString();
     }
 
-    //return true when an option is not written as 'true'
-    static Boolean checkOptionNotFalse(Object option) {
-        return (option instanceof Boolean && (Boolean) option)
-                || (!(option instanceof Boolean) && option != null);
+    /**
+     *
+     * @param config the config map
+     * @param optionName option name of config map above
+     * @return true if option has value and the value is not false
+     */
+    static boolean checkIfOptionTruthy(Map<String, Object> config, String optionName) {
+        Object option = config.get(optionName);
+        if(option instanceof Map || option instanceof List) {
+            return true;
+        } else if(option instanceof Boolean) {
+            return (Boolean)option;
+        } else if(option == null){
+            return false;
+        } else {
+            logger.error("cannot handle option type for option: {}", optionName);
+            return false;
+        }
+    }
+
+    static int getIndentSize(Map<String, Object> config) {
+        Object indentSize = config.get(INDENT_SIZE);
+        if(indentSize instanceof Integer) {
+            return (int)config.get(INDENT_SIZE);
+        } else {
+            return DEFAULT_INDENT_SIZE;
+        }
+    }
+
+    static boolean checkIfUseJson(Map<String, Object> config) {
+        Object useJson = config.get(DumpConstants.USE_JSON);
+        return useJson instanceof Boolean && (Boolean) useJson;
     }
 }

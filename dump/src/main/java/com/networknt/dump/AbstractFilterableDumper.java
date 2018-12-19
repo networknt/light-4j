@@ -10,8 +10,8 @@ public abstract class AbstractFilterableDumper extends AbstractDumper {
     //after loadFilterConfig(), filter won't be empty
     protected List<String> filter;
 
-    public AbstractFilterableDumper(Object parentConfig, HttpServerExchange exchange, HttpMessageType type) {
-        super(parentConfig, exchange, type);
+    public AbstractFilterableDumper(Object parentConfig, HttpServerExchange exchange) {
+        super(parentConfig, exchange);
     }
 
     protected void loadFilterConfig(String filterOptionName) {
@@ -20,7 +20,7 @@ public abstract class AbstractFilterableDumper extends AbstractDumper {
         if (parentConfig instanceof Map) {
             Object filterList = ((Map) parentConfig).get(filterOptionName);
             if(filterList instanceof List<?>) {
-                this.filter = (List<String>) filterList;
+                this.filter = (List) filterList;
             }
         }
     }

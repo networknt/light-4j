@@ -39,11 +39,6 @@ public class DumpHandler implements MiddlewareHandler {
     public static final String CONFIG_NAME = "dump";
     public static final String ENABLED = "enabled";
 
-    private static final String INDENT_SIZE = "indentSize";
-    private static final int DEFAULT_INDENT_SIZE = 4;
-
-    private static final Logger logger = LoggerFactory.getLogger(DumpHandler.class);
-
     private static Map<String, Object> config =
             Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
 
@@ -83,37 +78,22 @@ public class DumpHandler implements MiddlewareHandler {
         if(isEnabled()) {
             Map<String, Object> result = new LinkedHashMap<>();
             //dump request info into result right away
-            RequestResponseDumper requestDumper = new RequestResponseDumper(config, exchange, IDumpable.HttpMessageType.REQUEST);
-            requestDumper.dump();
-            requestDumper.putResultTo(result);
+            RootDumper rootDumper = new RootDumper(config, exchange);
+            rootDumper.dumpRequest(result);
             //only add response wrapper when response config is not set to "false"
-            if(DumpHelper.checkOptionNotFalse(config.get(DumpConstants.RESPONSE))) {
+            if(DumpHelper.checkIfOptionTruthy(config, DumpConstants.RESPONSE)) {
                 //set Conduit to the conduit chain to store response body
                 exchange.addResponseWrapper((factory, exchange12) -> new StoreResponseStreamSinkConduit(factory.create(), exchange12));
             }
             //when complete exchange, dump response info to result, and log the result.
             exchange.addExchangeCompleteListener((exchange1, nextListener) ->{
-                RequestResponseDumper responseDumper = new RequestResponseDumper(config, exchange, IDumpable.HttpMessageType.RESPONSE);
-                responseDumper.dump();
-                responseDumper.putResultTo(result);
-                DumpHelper.logResult(result, getIndentSize(), checkIfUseJson());
+                rootDumper.dumpResponse(result);
+                DumpHelper.logResult(result, DumpHelper.getIndentSize(config), DumpHelper.checkIfUseJson(config));
                 nextListener.proceed();
             });
         }
         Handler.next(exchange, next);
     }
 
-    private int getIndentSize() {
-        Object indentSize = config.get(INDENT_SIZE);
-        if(indentSize instanceof Integer) {
-            return (int)config.get(INDENT_SIZE);
-        } else {
-            return DEFAULT_INDENT_SIZE;
-        }
-    }
 
-    private boolean checkIfUseJson() {
-        Object useJson = config.get(DumpConstants.USE_JSON);
-        return useJson instanceof Boolean && (Boolean) useJson;
-    }
 }

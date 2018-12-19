@@ -6,10 +6,10 @@ import io.undertow.util.HeaderMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class HeadersDumper extends AbstractFilterableDumper {
+public class HeadersDumper extends AbstractFilterableDumper implements IRequestDumpable, IResponseDumpable {
     Map<String, Object> headerMap = new LinkedHashMap<>();
-    public HeadersDumper(Object parentConfig, HttpServerExchange exchange, IDumpable.HttpMessageType type) {
-        super(parentConfig, exchange, type);
+    public HeadersDumper(Object parentConfig, HttpServerExchange exchange) {
+        super(parentConfig, exchange);
     }
 
     @Override
@@ -19,27 +19,42 @@ public class HeadersDumper extends AbstractFilterableDumper {
     }
 
     @Override
-    public void dump() {
-        if(isApplicable()) {
-            HeaderMap headers = type.equals(IDumpable.HttpMessageType.RESPONSE) ? exchange.getResponseHeaders(): exchange.getRequestHeaders();
-            headers.forEach((headerValues) -> headerValues.forEach((headerValue) -> {
-                String headerName = headerValues.getHeaderName().toString();
-                if(!this.filter.contains(headerName)) {
-                    headerMap.put(headerName, headerValue);
-                }
-            }));
-        }
-    }
-
-    @Override
-    public Map<String, Object> getResult() {
-        return this.headerMap;
-    }
-
-    @Override
-    public void putResultTo(Map<String, Object> result) {
+    public void putDumpInfoTo(Map<String, Object> result) {
         if(this.headerMap.size() > 0) {
             result.put(DumpConstants.HEADERS, this.headerMap);
         }
+    }
+
+    @Override
+    public void dumpRequest(Map<String, Object> result) {
+        if(!isEnabled()) {
+            return;
+        }
+        HeaderMap headers = exchange.getRequestHeaders();
+        dumpHeaders(headers);
+        this.putDumpInfoTo(result);
+    }
+
+    @Override
+    public void dumpResponse(Map<String, Object> result) {
+        if(!isEnabled()) {
+            return;
+        }
+        HeaderMap headers = exchange.getResponseHeaders();
+        dumpHeaders(headers);
+        this.putDumpInfoTo(result);
+    }
+
+    /**
+     * put headers info to headerMap
+     * @param headers typs: HeaderMap, get from response or request
+     */
+    private void dumpHeaders(HeaderMap headers) {
+        headers.forEach((headerValues) -> headerValues.forEach((headerValue) -> {
+            String headerName = headerValues.getHeaderName().toString();
+            if(!this.filter.contains(headerName)) {
+                headerMap.put(headerName, headerValue);
+            }
+        }));
     }
 }
