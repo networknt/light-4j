@@ -58,7 +58,7 @@ public class ConfigDefaultTest extends TestCase {
         Assert.assertEquals(System.getenv("HOME"), configMap.get("value1"));
         Assert.assertEquals(System.getenv("LOGNAME"), configMap.get("value2"));
         Assert.assertEquals("default", configMap.get("value3"));
-        Assert.assertEquals("/${ESCAPE}", configMap.get("value4"));
+        Assert.assertEquals("${ESCAPE}", configMap.get("value4"));
     }
 
     public void testGetJsonObjectConfig() throws Exception {
@@ -68,7 +68,7 @@ public class ConfigDefaultTest extends TestCase {
         Assert.assertEquals(System.getenv("HOME"), tc.getValue1());
         Assert.assertEquals(System.getenv("LOGNAME"), tc.getValue2());
         Assert.assertEquals("default", tc.getValue3());
-        Assert.assertEquals("/${ESCAPE}", tc.getValue4());
+        Assert.assertEquals("${ESCAPE}", tc.getValue4());
     }
 
     public void test1GetJsonMapConfig() throws Exception {
@@ -98,7 +98,7 @@ public class ConfigDefaultTest extends TestCase {
         Assert.assertEquals(System.getenv("HOME"), configMap.get("value1"));
         Assert.assertEquals(System.getenv("LOGNAME"), configMap.get("value2"));
         Assert.assertEquals("default", configMap.get("value3"));
-        Assert.assertEquals(Arrays.asList("default", "/${ESCAPE}"), configMap.get("value4"));
+        Assert.assertEquals(Arrays.asList("default", "${ESCAPE}"), configMap.get("value4"));
     }
 
     public void test2GetJsonObjectConfig() throws Exception {
@@ -108,7 +108,7 @@ public class ConfigDefaultTest extends TestCase {
         Assert.assertEquals(System.getenv("HOME"), tc.getValue1());
         Assert.assertEquals(System.getenv("LOGNAME"), tc.getValue2());
         Assert.assertEquals("default", tc.getValue3());
-        Assert.assertEquals(Arrays.asList("default", "/${ESCAPE}"), tc.getValue4());
+        Assert.assertEquals(Arrays.asList("default", "${ESCAPE}"), tc.getValue4());
     }
 
     public void testGetInputStream() throws Exception {

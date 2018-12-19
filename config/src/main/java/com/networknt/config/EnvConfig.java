@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 
 public class EnvConfig {
     private static final String ENABLE_ENV_VARIABLE_INJECTION = "enable_env_variables_injection";
-    private static Pattern pattern = Pattern.compile("[^/]\\$\\{(.*?)\\}(\")?");
+    private static Pattern pattern = Pattern.compile("\\$\\{(.*?)\\}");
     private static String enabled = System.getProperty(ENABLE_ENV_VARIABLE_INJECTION, "").toLowerCase();
 
     public static boolean isEnabled() {
@@ -17,44 +17,28 @@ public class EnvConfig {
         }
     }
 
-    public static InputStream resolveYaml(InputStream inStream) {
-        String string = Config.convertStreamToString(inStream);
+    public static String inject(String string) {
         Matcher m = pattern.matcher(string);
         StringBuffer sb = new StringBuffer();
         while (m.find()) {
-            Object variable = get(m.group(1));
-            if (variable == null) {
+            Object value = get(m.group(1));
+            if (value == null) {
                 throw new ConfigException(
                         m.group(1) + " appears in config file cannot be expanded");
             }
-            m.appendReplacement(sb, " " + (String) variable);
+            m.appendReplacement(sb, (String)value);
         }
-        return convertStringToStream(m.appendTail(sb).toString());
-    }
-
-    public static InputStream resolveJson(InputStream inStream) {
-        String string = Config.convertStreamToString(inStream);
-        Matcher m = pattern.matcher(string);
-        StringBuffer sb = new StringBuffer();
-        while (m.find()) {
-            Object variable = get(m.group(1));
-            if (variable == null) {
-                throw new ConfigException(
-                        m.group(1) + " appears in config file cannot be expanded");
-            }
-            m.appendReplacement(sb, "\"" + (String) variable + "\"");
-        }
-        return convertStringToStream(m.appendTail(sb).toString());
+        return m.appendTail(sb).toString();
     }
 
     private static Object get(String content) {
         EnvEntity envEntity = getEnvEntity(content);
-        Object envVariable = null;
+        Object value = null;
         if (envEntity != null) {
-            envVariable = getEnvVariable(envEntity.getEnvName());
-            if (envVariable == null || envVariable.equals("")) {
-                envVariable = envEntity.getDefaultValue();
-                if (envVariable == null || envVariable.equals("")) {
+            value = getEnvVariable(envEntity.getEnvName());
+            if (value == null || value.equals("")) {
+                value = envEntity.getDefaultValue();
+                if (value == null || value.equals("")) {
                     String error_text = envEntity.getErrorText();
                     if (error_text != null && !error_text.equals("")) {
                         throw new ConfigException(error_text);
@@ -62,10 +46,13 @@ public class EnvConfig {
                 }
             }
         }
-        return envVariable;
+        return value;
     }
 
     private static EnvEntity getEnvEntity(String contents) {
+        if (contents == null || contents.equals("")) {
+            return null;
+        }
         EnvEntity envEntity = new EnvEntity();
         contents = contents.trim();
         if (contents == null || contents.equals("")) {
@@ -79,7 +66,9 @@ public class EnvConfig {
         if (rfcArray.length == 2) {
             if (rfcArray[1].startsWith("?")) {
                 envEntity.setErrorText(rfcArray[1].substring(1));
-            } else {
+            }else if(rfcArray[1].startsWith("$")) {
+                envEntity.setDefaultValue("\\$\\{" + rfcArray[0] + "\\}");
+            }else {
                 envEntity.setDefaultValue(rfcArray[1]);
             }
         }
@@ -118,9 +107,5 @@ public class EnvConfig {
         public void setEnvName(String envName) {
             this.envName = envName;
         }
-    }
-
-    private static InputStream convertStringToStream(String string) {
-        return new ByteArrayInputStream(string.getBytes());
     }
 }
