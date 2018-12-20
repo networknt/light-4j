@@ -96,6 +96,7 @@
         <version.oracle>11.2.0.3</version.oracle>
         <version.sqlserver>6.5.1.jre8-preview</version.sqlserver>
         <version.httpclient>4.5.6</version.httpclient>
+        <version.jsonpath>2.2.0</version.jsonpath>
         <versions.maven-version>2.4</versions.maven-version>
         <argLine>-Xmx512m -XX:MaxPermSize=256m</argLine>
     </properties>
@@ -560,6 +561,11 @@
                 <artifactId>httpclient</artifactId>
                 <version>${version.httpclient}</version>
                 <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.jayway.jsonpath</groupId>
+                <artifactId>json-path</artifactId>
+                <version>${version.jsonpath}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
