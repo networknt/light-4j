@@ -16,12 +16,18 @@
 
 package com.networknt.mask;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.jayway.jsonpath.*;
 import com.networknt.config.Config;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
+import net.minidev.json.JSONArray;
+import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -136,7 +142,6 @@ public class Mask {
      * @param key String The key maps to a list of json path for masking
      * @return String Masked result
      */
-    /*
     public static String maskJson(String input, String key) {
         DocumentContext ctx = JsonPath.parse(input);
         Map<String, Object> jsonConfig = (Map<String, Object>) config.get(MASK_TYPE_JSON);
@@ -157,15 +162,63 @@ public class Mask {
         }
         return input;
     }
-    */
+    private static void applyMask(Map.Entry<String, JsonNode> entry, DocumentContext ctx) {
+        Object value;
+        String jsonPath = entry.getKey();
+        try {
+            value = ctx.read(jsonPath);
+            if (!(value instanceof String || value instanceof Integer || value instanceof List<?>)) {
+                logger.error("The value specified by path {} cannot be masked", jsonPath);
+            } else {
+                if (!(value instanceof List<?>)) {
+                    ctx.set(jsonPath, replaceWithMask(value.toString(), MASK_REPLACEMENT_CHAR.charAt(0), entry.getValue().asText()));
+                } else if(value instanceof List<?>){
+                    for(Object ele : (List)value) {
+                        if(!(ele instanceof String)) {
+                            logger.error("json path: {} is incorrect, cannot mask an object", jsonPath);
+                            return;
+                        }
+                    }
+                    maskList(ctx, jsonPath, entry.getValue().asText());
+                }
+            }
+        } catch (PathNotFoundException e) {
+            logger.warn("JsonPath {} could not be found.", jsonPath);
+        }
+    }
+    private static void maskList(DocumentContext ctx, String jsonPath, String expression) {
+        ctx.configuration().addOptions(Option.AS_PATH_LIST);
+        Configuration conf = Configuration.builder().options(Option.AS_PATH_LIST).build();
+        DocumentContext context = JsonPath.using(conf).parse(ctx.jsonString());
+        List<String> pathList = context.read(jsonPath);
+        /**
+         * when reach here, ctx.read(jsonPath) should only give us a list of strings so that we can replace with MASK_REPLACEMENT_CHAR
+         * list of values can belongs to a same path or different paths, we should treat differently.
+         * two situations:
+         * an array contains multiple String values like: "list": ["ab", "cd", "ef]
+         * or single value belongs to different paths.
+         */
+        if(pathList != null && pathList.size() == 1) {
+            String path = pathList.get(0);
+            List values = ctx.read(path);
+            JSONArray maskedValue = new JSONArray();
+            //mask each value in the list of the same path
+            values.forEach(o -> maskedValue.add(replaceWithMask(o.toString(), MASK_REPLACEMENT_CHAR.charAt(0), expression)));
+            ctx.set(path, maskedValue);
+        } else {
+            for (String path : pathList) {
+                Object value = ctx.read(path);
+                ctx.set(path, replaceWithMask(value.toString(), MASK_REPLACEMENT_CHAR.charAt(0), expression));
+            }
+        }
+    }
 
     /**
      * Replace values in JSON using json path
      * @param input String The source of the string that needs to be masked
      * @param key String The key maps to a list of json path for masking
      * @return String Masked result
-     */
-    /*
+     *//*
     public static String maskJson(String input, String key) {
         Any any = Any.wrap(input);
         Map<String, Object> jsonConfig = (Map<String, Object>) config.get(MASK_TYPE_JSON);
@@ -235,5 +288,5 @@ public class Mask {
             ctx.set(path, replaceWithMask(value.toString(), MASK_REPLACEMENT_CHAR.charAt(0), expression));
         }
     }
-    */
+*/
 }
