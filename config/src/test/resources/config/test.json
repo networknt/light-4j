@@ -6,6 +6,6 @@
   "value4": [
     "element1",
     {"key": "element2",
-    "key": "element3"}
+    "key2": "element3"}
   ]
 }
