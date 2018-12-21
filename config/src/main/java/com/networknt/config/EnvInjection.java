@@ -4,7 +4,7 @@ import java.io.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class EnvConfig {
+public class EnvInjection {
     private static final String ENABLE_ENV_VARIABLE_INJECTION = "enable_env_variables_injection";
     private static Pattern pattern = Pattern.compile("\\$\\{(.*?)\\}");
     private static String enabled = System.getProperty(ENABLE_ENV_VARIABLE_INJECTION, "").toLowerCase();
