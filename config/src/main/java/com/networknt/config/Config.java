@@ -98,10 +98,10 @@ public abstract class Config {
         final Yaml yaml = new Yaml();
 
         //Flag of environment variables injection
-        private final boolean isEnableInjection = EnvConfig.isEnabled();
+        private final boolean isEnableInjection = EnvInjection.isEnabled();
 
         //Flag of centralized management
-        private final boolean isEnableCentralizedManagement = CentralizedManagement.isEnabled();
+//        private final boolean isEnableCentralizedManagement = CentralizedManagement.isEnabled();
 
         private static Config initialize() {
             Iterator<Config> it;
@@ -212,19 +212,14 @@ public abstract class Config {
             String ymlFilename = configName + CONFIG_EXT_YML;
             try (InputStream inStream = getConfigStream(ymlFilename)) {
                 if (inStream != null) {
-                    String string = null;
-                    if (isEnableCentralizedManagement || isEnableInjection) {
-                        string = convertStreamToString(inStream);
-                    }
-                    if (isEnableCentralizedManagement) {
-                        CentralizedManagement cm = new CentralizedManagement();
-                        string = cm.centralize(ymlFilename, string);
-                    }
                     if (isEnableInjection) {
-                        string = EnvConfig.inject(string);
-                    }
-                    if (string != null) {
-                        config = yaml.loadAs(string, clazz);
+                        String string = convertStreamToString(inStream);
+                        if (string != null && !string.equals("")) {
+                            string = EnvInjection.inject(string);
+                            if (string != null && !string.equals("")) {
+                                config = yaml.loadAs(string, clazz);
+                            }
+                        }
                     } else {
                         config = yaml.loadAs(inStream, clazz);
                     }
@@ -237,19 +232,14 @@ public abstract class Config {
             String yamlFilename = configName + CONFIG_EXT_YAML;
             try (InputStream inStream = getConfigStream(yamlFilename)) {
                 if (inStream != null) {
-                    String string = null;
-                    if (isEnableCentralizedManagement || isEnableInjection) {
-                        string = convertStreamToString(inStream);
-                    }
-                    if (isEnableCentralizedManagement) {
-                        CentralizedManagement cm = new CentralizedManagement();
-                        string = cm.centralize(yamlFilename, string);
-                    }
                     if (isEnableInjection) {
-                        string = EnvConfig.inject(string);
-                    }
-                    if (string != null) {
-                        config = yaml.loadAs(string, clazz);
+                        String string = convertStreamToString(inStream);
+                        if (string != null && !string.equals("")) {
+                            string = EnvInjection.inject(string);
+                            if (string != null && !string.equals("")) {
+                                config = yaml.loadAs(string, clazz);
+                            }
+                        }
                     } else {
                         config = yaml.loadAs(inStream, clazz);
                     }
@@ -262,19 +252,14 @@ public abstract class Config {
             String jsonFilename = configName + CONFIG_EXT_JSON;
             try (InputStream inStream = getConfigStream(jsonFilename)) {
                 if (inStream != null) {
-                    String string = null;
-                    if (isEnableCentralizedManagement || isEnableInjection) {
-                        string = convertStreamToString(inStream);
-                    }
-                    if (isEnableCentralizedManagement) {
-                        CentralizedManagement cm = new CentralizedManagement();
-                        string = cm.centralize(jsonFilename, string);
-                    }
                     if (isEnableInjection) {
-                        string = EnvConfig.inject(string);
-                    }
-                    if (string != null) {
-                        config = mapper.readValue(string, clazz);
+                        String string = convertStreamToString(inStream);
+                        if (string != null && !string.equals("")) {
+                            string = EnvInjection.inject(string);
+                            if (string != null && !string.equals("")) {
+                                config = mapper.readValue(string, clazz);
+                            }
+                        }
                     } else {
                         config = mapper.readValue(inStream, clazz);
                     }
@@ -291,19 +276,14 @@ public abstract class Config {
             String ymlFilename = configName + CONFIG_EXT_YML;
             try (InputStream inStream = getConfigStream(ymlFilename)) {
                 if (inStream != null) {
-                    String string = null;
-                    if (isEnableCentralizedManagement || isEnableInjection) {
-                        string = convertStreamToString(inStream);
-                    }
-                    if (isEnableCentralizedManagement) {
-                        CentralizedManagement cm = new CentralizedManagement();
-                        string = cm.centralize(ymlFilename, string);
-                    }
                     if (isEnableInjection) {
-                        string = EnvConfig.inject(string);
-                    }
-                    if (string != null) {
-                        config = yaml.load(string);
+                        String string = convertStreamToString(inStream);
+                        if (string != null && !string.equals("")) {
+                            string = EnvInjection.inject(string);
+                            if (string != null && !string.equals("")) {
+                                config = (Map<String, Object>) yaml.load(string);
+                            }
+                        }
                     } else {
                         config = (Map<String, Object>) yaml.load(inStream);
                     }
@@ -316,19 +296,14 @@ public abstract class Config {
             String yamlFilename = configName + CONFIG_EXT_YAML;
             try (InputStream inStream = getConfigStream(yamlFilename)) {
                 if (inStream != null) {
-                    String string = null;
-                    if (isEnableCentralizedManagement || isEnableInjection) {
-                        string = convertStreamToString(inStream);
-                    }
-                    if (isEnableCentralizedManagement) {
-                        CentralizedManagement cm = new CentralizedManagement();
-                        string = cm.centralize(yamlFilename, string);
-                    }
                     if (isEnableInjection) {
-                        string = EnvConfig.inject(string);
-                    }
-                    if (string != null) {
-                        config = yaml.load(string);
+                        String string = convertStreamToString(inStream);
+                        if (string != null && !string.equals("")) {
+                            string = EnvInjection.inject(string);
+                            if (string != null && !string.equals("")) {
+                                config = (Map<String, Object>) yaml.load(string);
+                            }
+                        }
                     } else {
                         config = (Map<String, Object>) yaml.load(inStream);
                     }
@@ -341,20 +316,15 @@ public abstract class Config {
             String configFilename = configName + CONFIG_EXT_JSON;
             try (InputStream inStream = getConfigStream(configFilename)) {
                 if (inStream != null) {
-                    String string = null;
-                    if (isEnableCentralizedManagement || isEnableInjection) {
-                        string = convertStreamToString(inStream);
-                    }
-                    if (isEnableCentralizedManagement) {
-                        CentralizedManagement cm = new CentralizedManagement();
-                        string = cm.centralize(configFilename, string);
-                    }
                     if (isEnableInjection) {
-                        string = EnvConfig.inject(string);
-                    }
-                    if (string != null) {
-                        config = mapper.readValue(string, new TypeReference<HashMap<String, Object>>() {
-                        });
+                        String string = convertStreamToString(inStream);
+                        if (string != null && !string.equals("")) {
+                            string = EnvInjection.inject(string);
+                            if (string != null && !string.equals("")) {
+                                config = mapper.readValue(string, new TypeReference<HashMap<String, Object>>() {
+                                });
+                            }
+                        }
                     } else {
                         config = mapper.readValue(inStream, new TypeReference<HashMap<String, Object>>() {
                         });
