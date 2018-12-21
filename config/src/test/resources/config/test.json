@@ -1,7 +1,11 @@
 {
-  "value":"default config",
+  "value": "default config",
   "value1": "${HOME}",
   "value2": "${LOGNAME:SHOULD_NOT_DISPLAY}",
   "value3": "${TEST:default}",
-  "value4": "${ESCAPE:$}"
+  "value4": [
+    "element1",
+    {"key": "element2",
+    "key": "element3"}
+  ]
 }

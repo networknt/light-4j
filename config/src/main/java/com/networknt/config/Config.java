@@ -44,6 +44,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public abstract class Config {
     public static final String LIGHT_4J_CONFIG_DIR = "light-4j-config-dir";
+    private static final String ENABLE_CENTRALIZED_MANAGEMENT = "enable_centralized_management";
+    private static final String ENABLE_ENV_VARIABLE_INJECTION = "enable_env_variables_injection";
 
     protected Config() {
     }
@@ -80,6 +82,16 @@ public abstract class Config {
 
         public final String EXTERNALIZED_PROPERTY_DIR = System.getProperty(LIGHT_4J_CONFIG_DIR, "");
 
+        public final String INJECTION_FLAG = System.getProperty(ENABLE_ENV_VARIABLE_INJECTION, "").toLowerCase();
+
+        public final String CENTRALIZED_FLAG = System.getProperty(ENABLE_CENTRALIZED_MANAGEMENT, "").toLowerCase();
+
+        //Flag of environment variables injection
+        private final boolean isEnableInjection = (INJECTION_FLAG.equals("false")) ? false : true;
+
+        //Flag of centralized management
+        private final boolean isEnableCentralizedManagement = (CENTRALIZED_FLAG.equals("false")) ? false : true;
+
         private long cacheExpirationTime = 0L;
 
         private static final Config DEFAULT = initialize();
@@ -97,17 +109,10 @@ public abstract class Config {
 
         final Yaml yaml = new Yaml();
 
-        //Flag of environment variables injection
-        private final boolean isEnableInjection = EnvInjection.isEnabled();
-
-        //Flag of centralized management
-//        private final boolean isEnableCentralizedManagement = CentralizedManagement.isEnabled();
-
         private static Config initialize() {
             Iterator<Config> it;
             it = ServiceLoader.load(Config.class).iterator();
             return it.hasNext() ? it.next() : new FileConfigImpl();
-
         }
 
         // Return instance of Jackson Object Mapper
@@ -262,6 +267,9 @@ public abstract class Config {
                         }
                     } else {
                         config = mapper.readValue(inStream, clazz);
+                    }
+                    if (isEnableCentralizedManagement && configName != "values") {
+                        config = CentralizedManagement.merge(configName, config, clazz);
                     }
                 }
             } catch (IOException ioe) {

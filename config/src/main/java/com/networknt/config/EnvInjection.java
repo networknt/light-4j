@@ -5,17 +5,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class EnvInjection {
-    private static final String ENABLE_ENV_VARIABLE_INJECTION = "enable_env_variables_injection";
     private static Pattern pattern = Pattern.compile("\\$\\{(.*?)\\}");
-    private static String enabled = System.getProperty(ENABLE_ENV_VARIABLE_INJECTION, "").toLowerCase();
-
-    public static boolean isEnabled() {
-        if ("false".equals(enabled)) {
-            return false;
-        } else {
-            return true;
-        }
-    }
 
     public static String inject(String string) {
         Matcher m = pattern.matcher(string);
