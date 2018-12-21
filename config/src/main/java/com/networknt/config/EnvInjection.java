@@ -48,18 +48,18 @@ public class EnvInjection {
         if (contents == null || contents.equals("")) {
             return null;
         }
-        String[] rfcArray = contents.split(":", 2);
-        if ("".equals(rfcArray[0])) {
+        String[] array = contents.split(":", 2);
+        if ("".equals(array[0])) {
             return null;
         }
-        envEntity.setEnvName(rfcArray[0]);
-        if (rfcArray.length == 2) {
-            if (rfcArray[1].startsWith("?")) {
-                envEntity.setErrorText(rfcArray[1].substring(1));
-            }else if(rfcArray[1].startsWith("$")) {
-                envEntity.setDefaultValue("\\$\\{" + rfcArray[0] + "\\}");
+        envEntity.setEnvName(array[0]);
+        if (array.length == 2) {
+            if (array[1].startsWith("?")) {
+                envEntity.setErrorText(array[1].substring(1));
+            }else if(array[1].startsWith("$")) {
+                envEntity.setDefaultValue("\\$\\{" + array[0] + "\\}");
             }else {
-                envEntity.setDefaultValue(rfcArray[1]);
+                envEntity.setDefaultValue(array[1]);
             }
         }
         return envEntity;
