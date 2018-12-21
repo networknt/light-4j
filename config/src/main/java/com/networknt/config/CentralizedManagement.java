@@ -5,7 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-
+// TODO: convert recursive to bfs
+// TODO: solve "map inside list" occasion
 public class CentralizedManagement {
     private static final String CENTRALIZED_MANAGEMENT = "values";
     private static final Map<String, Object> valueConfig = Config.getInstance().getJsonMapConfig(CENTRALIZED_MANAGEMENT);
