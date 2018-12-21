@@ -5,8 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-// TODO: convert recursive to bfs
-// TODO: solve "map inside list" occasion
+
 public class CentralizedManagement {
     private static final String CENTRALIZED_MANAGEMENT = "values";
     private static final Map<String, Object> valueConfig = Config.getInstance().getJsonMapConfig(CENTRALIZED_MANAGEMENT);
@@ -18,31 +17,31 @@ public class CentralizedManagement {
         return config;
     }
 
-    public static Object merge(String configName, Object config, Class clazz) {
-        Map<String, Object> map = covertObjectToMap(config);
-        merge(map, valueConfig.get(configName));
-        return convertMapToObj(map, clazz);
+    public static Object merge(String configName, Map<String, Object> config, Class clazz) {
+        merge(config, valueConfig.get(configName));
+        return convertMapToObj(config, clazz);
     }
 
     private static void merge(Object m1, Object m2) {
-        Iterator<String> fieldNames = ((Map<String, Object>) m1).keySet().iterator();
-        while (fieldNames.hasNext()) {
-            String fieldName = fieldNames.next();
-            Object field1 = ((Map<String, Object>) m1).get(fieldName);
-            Object field2 = ((Map<String, Object>) m2).get(fieldName);
-            if (field1 != null && field2 != null
-                    && field1 instanceof Map && field2 instanceof Map) {
-                merge(field1, field2);
-            } else if (field2 != null) {
-                ((Map<String, Object>) m1).put(fieldName, field2);
+        if (m1 instanceof Map && m2 instanceof Map) {
+            Iterator<String> fieldNames = ((Map<String, Object>) m1).keySet().iterator();
+            while (fieldNames.hasNext()) {
+                String fieldName = fieldNames.next();
+                Object field1 = ((Map<String, Object>) m1).get(fieldName);
+                Object field2 = ((Map<String, Object>) m2).get(fieldName);
+                if (field1 != null && field2 != null && field2 instanceof Map) {
+                    merge(field1, field2);
+                }  else if (field2 != null) {
+                    ((Map<String, Object>) m1).put(fieldName, field2);
+                }
+            }
+        } else if (m1 instanceof List && m2 instanceof Map) {
+            for (Object field : ((List<Object>)m1)) {
+                if (field instanceof Map) {
+                    merge(field, m2);
+                }
             }
         }
-    }
-
-    private static Map<String, Object> covertObjectToMap(Object obj) {
-        ObjectMapper mapper = new ObjectMapper();
-        Map<String, Object> map = mapper.convertValue(obj, Map.class);
-        return map;
     }
 
     private static Object convertMapToObj(Map<String, Object> map, Class clazz) {
