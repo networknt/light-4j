@@ -29,18 +29,16 @@ public class CentralizedManagement {
                 String fieldName = fieldNames.next();
                 Object field1 = ((Map<String, Object>) m1).get(fieldName);
                 Object field2 = ((Map<String, Object>) m2).get(fieldName);
-                if (field1 != null && field2 != null
-                        && (field2 instanceof Map && field1 instanceof Map) || (field1 instanceof List && field2 instanceof List)) {
-                    merge(field1, field2);
+                if (field1 != null && field2 == null
+                        && (field1 instanceof Map || field1 instanceof List)) {
+                    merge(field1, m2);
                 } else if (field2 != null) {
                     ((Map<String, Object>) m1).put(fieldName, field2);
                 }
             }
-        } else if (m1 instanceof List && m2 instanceof List) {
+        } else if (m1 instanceof List) {
             for (Object field1 : ((List<Object>) m1)) {
-                for (Object field2 : ((List<Object>) m2)) {
-                    merge(field1, field2);
-                }
+                merge(field1, m2);
             }
         }
     }
