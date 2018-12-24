@@ -13,11 +13,19 @@ public class CentralizedManagement {
     static final Logger logger = LoggerFactory.getLogger(CentralizedManagement.class);
 
     public static Map<String, Object> merge(String configName, Map<String, Object> config) {
+        if (valueConfig == null) {
+            logger.error("centralized management file \"values.yaml\" cannot be found");
+            return config;
+        }
         merge(config, valueConfig.get(configName));
         return config;
     }
 
     public static Object merge(String configName, Map<String, Object> config, Class clazz) {
+        if (valueConfig == null) {
+            logger.error("centralized management file \"values.yaml\" cannot be found");
+            return convertMapToObj(config, clazz);
+        }
         merge(config, valueConfig.get(configName));
         return convertMapToObj(config, clazz);
     }
