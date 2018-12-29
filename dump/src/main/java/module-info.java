@@ -4,7 +4,8 @@ module com.networknt.dump {
     requires com.networknt.config;
     requires com.networknt.handler;
     requires com.networknt.utility;
+    requires com.networknt.status;
 
-    requires undertow.core;
-    requires slf4j.api;
+    requires xnio.api;
+    requires java.logging;
 }

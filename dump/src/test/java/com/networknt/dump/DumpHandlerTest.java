@@ -18,7 +18,7 @@ package com.networknt.dump;
 
 import com.networknt.client.Http2Client;
 import com.networknt.correlation.CorrelationHandler;
-import com.networknt.exception.ClientException;
+import com.networknt.status.exception.ClientException;
 import com.networknt.httpstring.HttpStringConstants;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
