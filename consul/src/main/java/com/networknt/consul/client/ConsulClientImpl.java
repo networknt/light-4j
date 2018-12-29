@@ -47,6 +47,8 @@ public class ConsulClientImpl implements ConsulClient {
 	URI uri;
 	int maxReqPerConn;
 	int reqCounter = 0;
+	String wait = "600s";
+
 	/**
 	 * Construct ConsulClient with all parameters from consul.yml config file. The other two constructors are
 	 * just for backward compatibility.
@@ -57,6 +59,8 @@ public class ConsulClientImpl implements ConsulClient {
 		String consulUrl = config.getConsulUrl().toLowerCase();
 		optionMap =  consulUrl.startsWith("https") ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY;
 		if(logger.isDebugEnabled()) logger.debug("url = " + consulUrl);
+		if(config.getWait() != null && config.getWait().length() > 2) wait = config.getWait();
+		if(logger.isDebugEnabled()) logger.debug("wait = " + wait);
 		try {
 			uri = new URI(consulUrl);
 		} catch (URISyntaxException e) {
@@ -182,7 +186,7 @@ public class ConsulClientImpl implements ConsulClient {
 	public ConsulResponse<List<ConsulService>> lookupHealthService(String serviceName, String tag, long lastConsulIndex, String token) {
 		ConsulResponse<List<ConsulService>> newResponse = null;
 
-		String path = "/v1/health/service/" + serviceName + "?passing&wait=600s&index=" + lastConsulIndex;
+		String path = "/v1/health/service/" + serviceName + "?passing&wait="+wait+"&index=" + lastConsulIndex;
 		if(tag != null) {
 			path = path + "&tag=" + tag;
 		}
@@ -238,5 +242,4 @@ public class ConsulClientImpl implements ConsulClient {
 		service.setTags((List)serviceMap.get("Tags"));
 		return service;
 	}
-
 }
