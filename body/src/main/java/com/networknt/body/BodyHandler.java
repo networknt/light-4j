@@ -25,6 +25,9 @@ import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.server.handlers.form.FormData;
+import io.undertow.server.handlers.form.FormDataParser;
+import io.undertow.server.handlers.form.FormParserFactory;
 import io.undertow.util.AttachmentKey;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
@@ -40,13 +43,17 @@ import java.util.List;
  * This is a handler that parses the body into a Map or List if the input content type is JSON.
  * For other content type, don't parse it. In order to trigger this middleware, the content type
  * must be set in header for post, put and patch.
- *
+ * <p>
  * Currently, it is only used in light-rest-4j framework as subsequent handler will use the parsed
  * body for further processing. Other frameworks like light-graphql-4j or light-hybrid-4j won't
  * need this middleware handler.
- *
+ * <p>
  * Created by steve on 29/09/16.
+ * <p>
+ * Update on 09/12/18
+ * Enhanced the handler that parses the body into a DataForm if the input content type is data-form.
  */
+
 public class BodyHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(BodyHandler.class);
     static final String CONTENT_TYPE_MISMATCH = "ERR10015";
@@ -67,7 +74,9 @@ public class BodyHandler implements MiddlewareHandler {
 
     /**
      * Check the header starts with application/json and parse it into map or list
-     * based on the first character "{" or "[". Ignore other content type values.
+     * based on the first character "{" or "[". Otherwise, check the header starts
+     * with application/x-www-form-urlencoded or multipart/form-data and parse it
+     * into formdata
      *
      * @param exchange HttpServerExchange
      * @throws Exception Exception
@@ -102,6 +111,28 @@ public class BodyHandler implements MiddlewareHandler {
                     exchange.putAttachment(REQUEST_BODY, body);
                 }
             } catch (IOException e) {
+                logger.error("IOException: ", e);
+                setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, contentType);
+                return;
+            }
+            // parse the body to form-data if content type is multipart/form-data or application/x-www-form-urlencoded
+        } else if (contentType != null &&
+                (contentType.startsWith("multipart/form-data") || contentType.startsWith("application/x-www-form-urlencoded"))) {
+            if (exchange.isInIoThread()) {
+                exchange.dispatch(this);
+                return;
+            }
+            exchange.startBlocking();
+            try {
+                Object data;
+                FormParserFactory formParserFactory = FormParserFactory.builder().build();
+                FormDataParser parser = formParserFactory.createParser(exchange);
+                if (parser != null) {
+                    FormData formData = parser.parseBlocking();
+                    data = BodyConverter.convert(formData);
+                    exchange.putAttachment(REQUEST_BODY, data);
+                }
+            } catch (Exception e) {
                 logger.error("IOException: ", e);
                 setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, contentType);
                 return;

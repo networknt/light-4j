@@ -11,11 +11,14 @@ import com.networknt.utility.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * This is the only concrete implementation of cluster interface. It basically integrates
@@ -27,8 +30,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class LightCluster implements Cluster {
     private static Logger logger = LoggerFactory.getLogger(LightCluster.class);
-    private static Registry registry = (Registry) SingletonServiceFactory.getBean(Registry.class);
-    private static LoadBalance loadBalance = (LoadBalance)SingletonServiceFactory.getBean(LoadBalance.class);
+    private static Registry registry = SingletonServiceFactory.getBean(Registry.class);
+    private static LoadBalance loadBalance = SingletonServiceFactory.getBean(LoadBalance.class);
     private static Set<URL> subscribedSet = new ConcurrentHashSet<>();
     private static Map<String, List<URL>> serviceMap = new ConcurrentHashMap<>();
 
@@ -40,18 +43,40 @@ public class LightCluster implements Cluster {
      * Implement serviceToUrl with client side service discovery.
      *
      * @param protocol String
-     * @param serviceName String
+     * @param serviceId String
      * @param requestKey String
      * @return String
      */
     @Override
-    public String serviceToUrl(String protocol, String serviceName, String tag, String requestKey) {
-        if(logger.isDebugEnabled()) logger.debug("protocol = " + protocol + " serviceName = " + serviceName);
+    public String serviceToUrl(String protocol, String serviceId, String tag, String requestKey) {
+        URL url = loadBalance.select(discovery(protocol, serviceId, tag), requestKey);
+        if(logger.isDebugEnabled()) logger.debug("final url after load balance = " + url);
+        // construct a url in string
+        return protocol + "://" + url.getHost() + ":" + url.getPort();
+    }
+
+    /**
+     *
+     * @param protocol either http or https
+     * @param serviceId unique service identifier
+     * @param tag an environment tag use along with serviceId for discovery
+     * @return List of URI objects
+     */
+    @Override
+    public List<URI> services(String protocol, String serviceId, String tag) {
+        // transform to a list of URIs
+        return discovery(protocol, serviceId, tag).stream()
+                .map(this::toUri)
+                .collect(Collectors.toList());
+    }
+
+    private List<URL> discovery(String protocol, String serviceId, String tag) {
+        if(logger.isDebugEnabled()) logger.debug("protocol = " + protocol + " serviceId = " + serviceId);
         // lookup in serviceMap first, if not there, then subscribe and discover.
-        List<URL> urls = serviceMap.get(serviceName);
-        if(logger.isDebugEnabled()) logger.debug("cached serviceName " + serviceName + " urls = " + urls);
+        List<URL> urls = serviceMap.get(serviceId);
+        if(logger.isDebugEnabled()) logger.debug("cached serviceId " + serviceId + " urls = " + urls);
         if(urls == null) {
-            URL subscribeUrl = URLImpl.valueOf("light://localhost/" + serviceName);
+            URL subscribeUrl = URLImpl.valueOf(protocol + "://localhost/" + serviceId);
             if(tag != null) {
                 subscribeUrl.addParameter(Constants.TAG_ENVIRONMENT, tag);
             }
@@ -64,10 +89,17 @@ public class LightCluster implements Cluster {
             urls = registry.discover(subscribeUrl);
             if(logger.isDebugEnabled()) logger.debug("discovered urls = " + urls);
         }
-        URL url = loadBalance.select(urls, requestKey);
-        if(logger.isDebugEnabled()) logger.debug("final url after load balance = " + url);
-        // construct a url in string
-        return protocol + "://" + url.getHost() + ":" + url.getPort();
+        return urls;
+    }
+
+    private URI toUri(URL url) {
+        URI uri = null;
+        try {
+            uri = new URI(url.getProtocol(), null, url.getHost(), url.getPort(), null, null, null);
+        } catch (URISyntaxException e) {
+            logger.error("URISyntaxExcpetion", e);
+        }
+        return uri;
     }
 
     static class ClusterNotifyListener implements NotifyListener {

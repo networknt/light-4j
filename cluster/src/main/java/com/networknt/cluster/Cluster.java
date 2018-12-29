@@ -1,5 +1,8 @@
 package com.networknt.cluster;
 
+import java.net.URI;
+import java.util.List;
+
 /**
  * Cluster interface is used to lookup a service instance by protocol, service id
  * and requestKey if necessary. Under the hood, it calls load balance to pick up
@@ -25,4 +28,19 @@ public interface Cluster {
      * @return String url
      */
     String serviceToUrl(String protocol, String serviceId, String tag, String requestKey);
+
+    /**
+     * give a service name and return a list of URI object that represent the services
+     * returned from the discovery lookup. It gives the client an opportunity to load
+     * balance by itself. The main usage is for light-router to balance between muliple
+     * instances of downstream services.
+     *
+     * @param protocol either http or https
+     * @param serviceId unique service identifier
+     * @param tag an environment tag use along with serviceId for discovery
+     * @return List of URI objects
+     */
+    List<URI> services(String protocol, String serviceId, String tag);
+
+
 }

@@ -1,6 +1,7 @@
 package com.networknt.handler.config;
 
 import com.networknt.utility.NetUtils;
+import com.networknt.utility.Util;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,7 +70,7 @@ public class PathChain {
                 problems.add("Conflicting source: " + source + " and method: " + method);
             }
         }
-        if(method != null && !NetUtils.METHODS.contains(method.toUpperCase())) {
+        if(method != null && !Util.METHODS.contains(method.toUpperCase())) {
             problems.add("Invalid HTTP method: " + method);
         }
         if(!problems.isEmpty()) {
