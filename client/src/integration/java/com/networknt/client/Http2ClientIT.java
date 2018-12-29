@@ -111,6 +111,7 @@ public class Http2ClientIT {
                     .setServerOption(UndertowOptions.ALWAYS_SET_KEEP_ALIVE, false) //don't send a keep-alive header for HTTP/1.1 requests, as it is not required
                     .setServerOption(UndertowOptions.ALWAYS_SET_DATE, true)
                     .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, false)
+                    .setSocketOption(Options.SSL_ENABLED_PROTOCOLS, Sequence.of("TLSv1.2"))
                     .setHandler(new PathHandler()
                             .addExactPath(MESSAGE, exchange -> sendMessage(exchange))
                             .addExactPath(KEY, exchange -> sendMessage(exchange))
