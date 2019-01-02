@@ -1,5 +1,6 @@
 package com.networknt.dump;
 
+import com.networknt.mask.Mask;
 import io.undertow.server.HttpServerExchange;
 
 import java.util.LinkedHashMap;
@@ -25,7 +26,11 @@ public class QueryParametersDumper extends AbstractFilterableDumper implements I
         }
         exchange.getQueryParameters().forEach((k, v) -> {
             if (!this.filter.contains(k)) {
-                queryParametersMap.put(k, v.getFirst());
+                if(isMaskEnabled()) {
+                    queryParametersMap.put(k, Mask.maskRegex( v.getFirst(), "queryParameter", k));
+                } else {
+                    queryParametersMap.put(k, v.getFirst());
+                }
             }
         });
         this.putDumpInfoTo(result);

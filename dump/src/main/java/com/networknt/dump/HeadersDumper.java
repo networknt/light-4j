@@ -46,6 +46,9 @@ public class HeadersDumper extends AbstractFilterableDumper implements IRequestD
         }
         HeaderMap headers = exchange.getResponseHeaders();
         dumpHeaders(headers);
+        if(isMaskEnabled()) {
+            this.headerMap.forEach((s, o) -> headerMap.put(s, Mask.maskRegex((String) o, "responseHeader", s)));
+        }
         this.putDumpInfoTo(result);
     }
 

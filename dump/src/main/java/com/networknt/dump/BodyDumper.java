@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
@@ -47,7 +48,11 @@ public class BodyDumper extends AbstractDumper implements IRequestDumpable, IRes
                 dumpBodyAttachment(requestBodyAttachment);
                 //otherwise get it from input stream directly
             } else {
-                dumpInputStream();
+                try{
+                    dumpInputStream();
+                } catch (IOException e) {
+                    logger.error("undertow inputstream error:" + e.getMessage());
+                }
             }
         } else {
             logger.info("unsupported contentType: {}", contentType);
@@ -71,12 +76,12 @@ public class BodyDumper extends AbstractDumper implements IRequestDumpable, IRes
         this.putDumpInfoTo(result);
     }
 
-    private void dumpInputStream() {
+    private void dumpInputStream() throws IOException {
         //dump request body
         exchange.startBlocking();
         String body = "";
         InputStream inputStream = exchange.getInputStream();
-        if(isMaskEnabled()) {
+        if(isMaskEnabled() && inputStream.available() != -1) {
             this.bodyContent = Mask.maskJson(inputStream, "requestBody");
         } else {
             this.bodyContent = body;
