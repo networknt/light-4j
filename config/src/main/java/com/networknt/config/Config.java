@@ -44,8 +44,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public abstract class Config {
     public static final String LIGHT_4J_CONFIG_DIR = "light-4j-config-dir";
-    private static final String ENABLE_CENTRALIZED_MANAGEMENT = "enable_centralized_management";
-    private static final String ENABLE_ENV_VARIABLE_INJECTION = "enable_env_variables_injection";
+    private static final String ENVIRONMENT_INJECTION_FIRST = "environment_injection_first";
 
     protected Config() {
     }
@@ -81,16 +80,6 @@ public abstract class Config {
         static final Logger logger = LoggerFactory.getLogger(Config.class);
 
         public final String EXTERNALIZED_PROPERTY_DIR = System.getProperty(LIGHT_4J_CONFIG_DIR, "");
-
-        public final String INJECTION_FLAG = System.getProperty(ENABLE_ENV_VARIABLE_INJECTION, "").toLowerCase();
-
-        public final String CENTRALIZED_FLAG = System.getProperty(ENABLE_CENTRALIZED_MANAGEMENT, "").toLowerCase();
-
-        //Flag of environment variables injection
-        private final boolean isEnableInjection = (INJECTION_FLAG.equals("false")) ? false : true;
-
-        //Flag of centralized management
-        private final boolean isEnableCentralizedManagement = (CENTRALIZED_FLAG.equals("false")) ? false : true;
 
         private long cacheExpirationTime = 0L;
 
@@ -217,25 +206,12 @@ public abstract class Config {
             String ymlFilename = configName + CONFIG_EXT_YML;
             try (InputStream inStream = getConfigStream(ymlFilename)) {
                 if (inStream != null) {
-                    String string = null;
-                    if (isEnableCentralizedManagement || isEnableInjection) {
-                        string = convertStreamToString(inStream);
-                        if (isEnableInjection) {
-                            if (string != null && !string.equals("")) {
-                                string = EnvInjection.inject(string);
-                                if (string != null && !string.equals("")) {
-                                    config = yaml.loadAs(string, clazz);
-                                }
-                            }
-                        }
-                        if (isEnableCentralizedManagement && configName != "values") {
-                            if (string != null && !string.equals("")) {
-                                config = yaml.load(string);
-                                config = CentralizedManagement.merge(configName, (Map<String, Object>)config, clazz);
-                            }
-                        }
-                    } else {
+                    if (configName.equals("values")) {
                         config = yaml.loadAs(inStream, clazz);
+                    } else {
+                        String string = convertStreamToString(inStream);
+                        string = ConfigInjection.inject(string);
+                        config = yaml.loadAs(string, clazz);
                     }
                 }
             } catch (IOException ioe) {
@@ -246,25 +222,12 @@ public abstract class Config {
             String yamlFilename = configName + CONFIG_EXT_YAML;
             try (InputStream inStream = getConfigStream(yamlFilename)) {
                 if (inStream != null) {
-                    String string = null;
-                    if (isEnableCentralizedManagement || isEnableInjection) {
-                        string = convertStreamToString(inStream);
-                        if (isEnableInjection) {
-                            if (string != null && !string.equals("")) {
-                                string = EnvInjection.inject(string);
-                                if (string != null && !string.equals("")) {
-                                    config = yaml.loadAs(string, clazz);
-                                }
-                            }
-                        }
-                        if (isEnableCentralizedManagement && configName != "values") {
-                            if (string != null && !string.equals("")) {
-                                config = yaml.load(string);
-                                config = CentralizedManagement.merge(configName, (Map<String, Object>)config, clazz);
-                            }
-                        }
-                    } else {
+                    if (configName.equals("values")) {
                         config = yaml.loadAs(inStream, clazz);
+                    } else {
+                        String string = convertStreamToString(inStream);
+                        string = ConfigInjection.inject(string);
+                        config = yaml.loadAs(string, clazz);
                     }
                 }
             } catch (IOException ioe) {
@@ -275,26 +238,12 @@ public abstract class Config {
             String jsonFilename = configName + CONFIG_EXT_JSON;
             try (InputStream inStream = getConfigStream(jsonFilename)) {
                 if (inStream != null) {
-                    String string = null;
-                    if (isEnableCentralizedManagement || isEnableInjection) {
-                        string = convertStreamToString(inStream);
-                        if (isEnableInjection) {
-                            if (string != null && !string.equals("")) {
-                                string = EnvInjection.inject(string);
-                                if (string != null && !string.equals("")) {
-                                    config = mapper.readValue(string, clazz);
-                                }
-                            }
-                        }
-                        if (isEnableCentralizedManagement && configName != "values") {
-                            if (string != null && !string.equals("")) {
-                                config = mapper.readValue(string, new TypeReference<HashMap<String, Object>>() {
-                                });
-                                config = CentralizedManagement.merge(configName, (Map<String, Object>)config, clazz);
-                            }
-                        }
-                    } else {
+                    if (configName.equals("values")) {
                         config = mapper.readValue(inStream, clazz);
+                    } else {
+                        String string = convertStreamToString(inStream);
+                        string = ConfigInjection.inject(string);
+                        config = mapper.readValue(string, clazz);
                     }
                 }
             } catch (IOException ioe) {
@@ -309,19 +258,12 @@ public abstract class Config {
             String ymlFilename = configName + CONFIG_EXT_YML;
             try (InputStream inStream = getConfigStream(ymlFilename)) {
                 if (inStream != null) {
-                    if (isEnableInjection) {
-                        String string = convertStreamToString(inStream);
-                        if (string != null && !string.equals("")) {
-                            string = EnvInjection.inject(string);
-                            if (string != null && !string.equals("")) {
-                                config = (Map<String, Object>) yaml.load(string);
-                            }
-                        }
+                    if (configName.equals("values")) {
+                        config = (Map<String, Object>)yaml.load(inStream);
                     } else {
-                        config = (Map<String, Object>) yaml.load(inStream);
-                    }
-                    if (isEnableCentralizedManagement && configName != "values") {
-                        CentralizedManagement.merge(configName, config);
+                        String string = convertStreamToString(inStream);
+                        string = ConfigInjection.inject(string);
+                        config = (Map<String, Object>)yaml.load(string);
                     }
                 }
             } catch (IOException ioe) {
@@ -332,19 +274,12 @@ public abstract class Config {
             String yamlFilename = configName + CONFIG_EXT_YAML;
             try (InputStream inStream = getConfigStream(yamlFilename)) {
                 if (inStream != null) {
-                    if (isEnableInjection) {
-                        String string = convertStreamToString(inStream);
-                        if (string != null && !string.equals("")) {
-                            string = EnvInjection.inject(string);
-                            if (string != null && !string.equals("")) {
-                                config = (Map<String, Object>) yaml.load(string);
-                            }
-                        }
+                    if (configName.equals("values")) {
+                        config = (Map<String, Object>)yaml.load(inStream);
                     } else {
-                        config = (Map<String, Object>) yaml.load(inStream);
-                    }
-                    if (isEnableCentralizedManagement && configName != "values") {
-                        CentralizedManagement.merge(configName, config);
+                        String string = convertStreamToString(inStream);
+                        string = ConfigInjection.inject(string);
+                        config = (Map<String, Object>)yaml.load(string);
                     }
                 }
             } catch (IOException ioe) {
@@ -355,21 +290,14 @@ public abstract class Config {
             String configFilename = configName + CONFIG_EXT_JSON;
             try (InputStream inStream = getConfigStream(configFilename)) {
                 if (inStream != null) {
-                    if (isEnableInjection) {
-                        String string = convertStreamToString(inStream);
-                        if (string != null && !string.equals("")) {
-                            string = EnvInjection.inject(string);
-                            if (string != null && !string.equals("")) {
-                                config = mapper.readValue(string, new TypeReference<HashMap<String, Object>>() {
-                                });
-                            }
-                        }
-                    } else {
+                    if (configName.equals("values")) {
                         config = mapper.readValue(inStream, new TypeReference<HashMap<String, Object>>() {
                         });
-                    }
-                    if (isEnableCentralizedManagement && configName != "values") {
-                        CentralizedManagement.merge(configName, config);
+                    } else {
+                        String string = convertStreamToString(inStream);
+                        string = ConfigInjection.inject(string);
+                        config = mapper.readValue(string, new TypeReference<HashMap<String, Object>>() {
+                        });
                     }
                 }
             } catch (IOException ioe) {
