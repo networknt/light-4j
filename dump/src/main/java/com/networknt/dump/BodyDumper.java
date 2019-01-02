@@ -46,13 +46,9 @@ public class BodyDumper extends AbstractDumper implements IRequestDumpable, IRes
             Object requestBodyAttachment = exchange.getAttachment(BodyHandler.REQUEST_BODY);
             if(requestBodyAttachment != null) {
                 dumpBodyAttachment(requestBodyAttachment);
-                //otherwise get it from input stream directly
             } else {
-                try{
-                    dumpInputStream();
-                } catch (IOException e) {
-                    logger.error("undertow inputstream error:" + e.getMessage());
-                }
+                //otherwise get it from input stream directly
+                dumpInputStream();
             }
         } else {
             logger.info("unsupported contentType: {}", contentType);
@@ -67,32 +63,28 @@ public class BodyDumper extends AbstractDumper implements IRequestDumpable, IRes
         }
         byte[] responseBodyAttachment = exchange.getAttachment(StoreResponseStreamSinkConduit.RESPONSE);
         if(responseBodyAttachment != null) {
-            if (isMaskEnabled()) {
-                this.bodyContent = Mask.maskJson(new ByteArrayInputStream(responseBodyAttachment), "responseBody");
-            } else {
-                this.bodyContent = new String(responseBodyAttachment);
-            }
+            this.bodyContent = isMaskEnabled() ? Mask.maskJson(new ByteArrayInputStream(responseBodyAttachment), "responseBody") : new String(responseBodyAttachment);
         }
         this.putDumpInfoTo(result);
     }
 
-    private void dumpInputStream() throws IOException {
+    private void dumpInputStream(){
         //dump request body
         exchange.startBlocking();
         String body = "";
         InputStream inputStream = exchange.getInputStream();
-        if(isMaskEnabled() && inputStream.available() != -1) {
-            this.bodyContent = Mask.maskJson(inputStream, "requestBody");
-        } else {
-            this.bodyContent = body;
+        try {
+            if(isMaskEnabled() && inputStream.available() != -1) {
+                this.bodyContent = Mask.maskJson(inputStream, "requestBody");
+            } else {
+                this.bodyContent = body;
+            }
+        } catch (IOException e) {
+            logger.error("undertow inputstream error:" + e.getMessage());
         }
     }
 
     private void dumpBodyAttachment(Object requestBodyAttachment) {
-        if(isMaskEnabled()) {
-            this.bodyContent = Mask.maskJson(requestBodyAttachment, "requestBody");
-        } else {
-            this.bodyContent = requestBodyAttachment.toString();
-        }
+        this.bodyContent = isMaskEnabled() ? Mask.maskJson(requestBodyAttachment, "requestBody") : requestBodyAttachment.toString();
     }
 }
