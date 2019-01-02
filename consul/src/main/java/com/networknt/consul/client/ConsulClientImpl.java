@@ -47,7 +47,7 @@ public class ConsulClientImpl implements ConsulClient {
 	URI uri;
 	int maxReqPerConn;
 	int reqCounter = 0;
-	String wait;
+	String wait = "600s";
 
 	/**
 	 * Construct ConsulClient with all parameters from consul.yml config file. The other two constructors are
@@ -59,7 +59,7 @@ public class ConsulClientImpl implements ConsulClient {
 		String consulUrl = config.getConsulUrl().toLowerCase();
 		optionMap =  consulUrl.startsWith("https") ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY;
 		if(logger.isDebugEnabled()) logger.debug("url = " + consulUrl);
-		wait=config.getWait();
+		if(config.getWait() != null && config.getWait().length() > 2) wait = config.getWait();
 		if(logger.isDebugEnabled()) logger.debug("wait = " + wait);
 		try {
 			uri = new URI(consulUrl);
@@ -241,12 +241,5 @@ public class ConsulClientImpl implements ConsulClient {
 		service.setPort((Integer)serviceMap.get("Port"));
 		service.setTags((List)serviceMap.get("Tags"));
 		return service;
-	}
-	public String getWait() {
-		return wait;
-	}
-
-	public void setWait(String wait) {
-		this.wait = wait;
 	}
 }

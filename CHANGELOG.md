@@ -1,5 +1,12 @@
 # Change Log
 
+## [1.5.25](https://github.com/networknt/light-4j/tree/1.5.25) (2018-12-24)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.24...1.5.25)
+
+**Closed issues:**
+
+- give wait a default value for backward compatibility [\#339](https://github.com/networknt/light-4j/issues/339)
+
 ## [1.5.24](https://github.com/networknt/light-4j/tree/1.5.24) (2018-12-15)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.23...1.5.24)
 

@@ -12,8 +12,7 @@ public class ConsulClientImplTest {
 
    @Test
     public void testWaitProperty() {
-        ConsulClientImpl consulClientImpl= new ConsulClientImpl();
-        assertEquals(config.getWait(),consulClientImpl.getWait());
+        assertEquals("600s", config.getWait());
 
     }
 }
