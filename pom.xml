@@ -394,6 +394,11 @@
                 </exclusions>
             </dependency>
             <dependency>
+                <groupId>com.jayway.jsonpath</groupId>
+                <artifactId>json-path</artifactId>
+                <version>${version.jsonpath}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>${version.slf4j}</version>
@@ -561,11 +566,6 @@
                 <artifactId>httpclient</artifactId>
                 <version>${version.httpclient}</version>
                 <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.jayway.jsonpath</groupId>
-                <artifactId>json-path</artifactId>
-                <version>${version.jsonpath}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

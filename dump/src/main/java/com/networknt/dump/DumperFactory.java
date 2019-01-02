@@ -9,44 +9,46 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.networknt.dump.DumpConstants.*;
-import static com.networknt.dump.DumpConstants.STATUS_CODE;
 
 public class DumperFactory {
     private Logger logger = LoggerFactory.getLogger(DumperFactory.class);
-    private List<String> requestDumpers = Arrays.asList(BODY, COOKIES, HEADERS, QUERY_PARAMETERS);
+    private List<String> requestDumpers = Arrays.asList(BODY, COOKIES, HEADERS, QUERY_PARAMETERS, URL);
     private List<String> responseDumpers = Arrays.asList(BODY, COOKIES, HEADERS, STATUS_CODE);
 
-    public List<IRequestDumpable> createRequestDumpers(Object requestConfig, HttpServerExchange exchange) {
+    public List<IRequestDumpable> createRequestDumpers(Object requestConfig, HttpServerExchange exchange, boolean maskEnabled) {
+
         RequestDumperFactory factory = new RequestDumperFactory();
         List<IRequestDumpable> dumpers = new ArrayList<>();
         for(String dumperNames: requestDumpers) {
-            IRequestDumpable dumper = factory.create(dumperNames, requestConfig, exchange);
+            IRequestDumpable dumper = factory.create(dumperNames, requestConfig, exchange, maskEnabled);
             dumpers.add(dumper);
         }
         return dumpers;
     }
 
-    public List<IResponseDumpable> createResponseDumpers(Object responseConfig, HttpServerExchange exchange) {
+    public List<IResponseDumpable> createResponseDumpers(Object responseConfig, HttpServerExchange exchange, boolean maskEnabled) {
         ResponseDumperFactory factory = new ResponseDumperFactory();
         List<IResponseDumpable> dumpers = new ArrayList<>();
         for(String dumperNames: responseDumpers) {
-            IResponseDumpable dumper = factory.create(dumperNames, responseConfig, exchange);
+            IResponseDumpable dumper = factory.create(dumperNames, responseConfig, exchange, maskEnabled);
             dumpers.add(dumper);
         }
         return dumpers;
     }
 
     public class RequestDumperFactory{
-        public IRequestDumpable create(String dumperName, Object config, HttpServerExchange exchange) {
+        public IRequestDumpable create(String dumperName, Object config, HttpServerExchange exchange, boolean maskEnabled) {
             switch (dumperName) {
                 case DumpConstants.BODY:
-                    return new BodyDumper(config, exchange);
+                    return new BodyDumper(config, exchange, maskEnabled);
                 case  DumpConstants.COOKIES:
-                    return new CookiesDumper(config, exchange);
+                    return new CookiesDumper(config, exchange, maskEnabled);
                 case DumpConstants.HEADERS:
-                    return new HeadersDumper(config, exchange);
+                    return new HeadersDumper(config, exchange, maskEnabled);
                 case DumpConstants.QUERY_PARAMETERS:
-                    return new QueryParametersDumper(config, exchange);
+                    return new QueryParametersDumper(config, exchange, maskEnabled);
+                case DumpConstants.URL:
+                    return new UrlDumper(config, exchange, maskEnabled);
                 default:
                     logger.error("unsupported dump type: {}", dumperName);
                     return null;
@@ -55,16 +57,16 @@ public class DumperFactory {
     }
 
     public class ResponseDumperFactory{
-        public IResponseDumpable create(String dumperName, Object config, HttpServerExchange exchange) {
+        public IResponseDumpable create(String dumperName, Object config, HttpServerExchange exchange, boolean maskEnabled) {
             switch (dumperName) {
                 case DumpConstants.BODY:
-                    return new BodyDumper(config, exchange);
+                    return new BodyDumper(config, exchange, maskEnabled);
                 case  DumpConstants.COOKIES:
-                    return new CookiesDumper(config, exchange);
+                    return new CookiesDumper(config, exchange, maskEnabled);
                 case DumpConstants.HEADERS:
-                    return new HeadersDumper(config, exchange);
+                    return new HeadersDumper(config, exchange, maskEnabled);
                 case DumpConstants.STATUS_CODE:
-                    return new StatusCodeDumper(config, exchange);
+                    return new StatusCodeDumper(config, exchange, maskEnabled);
                 default:
                     logger.error("unsupported dump type: {}", dumperName);
                     return null;

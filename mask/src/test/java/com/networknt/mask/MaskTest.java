@@ -86,7 +86,6 @@ public class MaskTest {
 //        String input = "{\"name\":\"Steve\",\"list\":[\"secret1\", \"secret2\"],\"password\":\"secret\"}";
         String output = Mask.maskJson(input, "test2");
         System.out.println(output);
-
         Assert.assertEquals(JsonPath.parse(output).read("$.list[2].accounts[2]"), "******");
         Assert.assertEquals(JsonPath.parse(output).read("$.list[1].name"), "***");
         Assert.assertEquals(JsonPath.parse(output).read("$.list1[2]"), "*****");

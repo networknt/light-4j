@@ -26,10 +26,8 @@ import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.InputStream;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -50,7 +48,7 @@ public class Mask {
     public static final String MASK_TYPE_JSON = "json";
 
     static final Logger logger = LoggerFactory.getLogger(Mask.class);
-    private static Map<String, Object> config = null;
+    private static Map<String, Object> config;
 
     static {
         config = Config.getInstance().getJsonMapConfigNoCache(MASK_CONFIG);
@@ -144,6 +142,32 @@ public class Mask {
      */
     public static String maskJson(String input, String key) {
         DocumentContext ctx = JsonPath.parse(input);
+        return maskJson(ctx, key);
+    }
+
+    /**
+     * Replace values in JSON using json path
+     * @param input InputStream inputStream of json that needs to be masked
+     * @param key String The key maps to a list of json path for masking
+     * @return String Masked result
+     */
+    public static String maskJson(InputStream input, String key) {
+        DocumentContext ctx = JsonPath.parse(input);
+        return maskJson(ctx, key);
+    }
+
+    /**
+     * Replace values in JSON using json path
+     * @param input Object POJO of json that needs to be masked
+     * @param key String The key maps to a list of json path for masking
+     * @return String Masked result
+     */
+    public static String maskJson(Object input, String key) {
+        DocumentContext ctx = JsonPath.parse(input);
+        return maskJson(ctx, key);
+    }
+
+    public static String maskJson(DocumentContext ctx, String key) {
         Map<String, Object> jsonConfig = (Map<String, Object>) config.get(MASK_TYPE_JSON);
         if (jsonConfig != null) {
             Map<String, Object> patternMap = (Map<String, Object>) jsonConfig.get(key);
@@ -157,11 +181,11 @@ public class Mask {
                 return ctx.jsonString();
             } else {
                 logger.warn("mask.json doesn't contain the key {} ", Encode.forJava(key));
-                return input;
             }
         }
-        return input;
+        return ctx.jsonString();
     }
+
     private static void applyMask(Map.Entry<String, JsonNode> entry, DocumentContext ctx) {
         Object value;
         String jsonPath = entry.getKey();
@@ -206,7 +230,7 @@ public class Mask {
             values.forEach(o -> maskedValue.add(replaceWithMask(o.toString(), MASK_REPLACEMENT_CHAR.charAt(0), expression)));
             ctx.set(path, maskedValue);
         } else {
-            for (String path : pathList) {
+            for (String path : Optional.ofNullable(pathList).orElse(Collections.emptyList())) {
                 Object value = ctx.read(path);
                 ctx.set(path, replaceWithMask(value.toString(), MASK_REPLACEMENT_CHAR.charAt(0), expression));
             }

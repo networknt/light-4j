@@ -13,8 +13,11 @@ regex:
     header2: "(.*)"
   responseHeader:
     header3: "(.*)"
+  requestCookies:
+    userName: "(.*)"
 json:
   requestBody:
+    "$.*.email": "(.*)"
     "$.product[*].item[*].name": "(.*)"
   responseBody:
     "$.product[*].item[*].name": "(.*)"

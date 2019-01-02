@@ -8,22 +8,30 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 class DumpHelper {
 
     private static final String INDENT_SIZE = "indentSize";
     private static final int DEFAULT_INDENT_SIZE = 4;
 
-    private static Logger logger = LoggerFactory.getLogger(DumpHelper.class);
+    private static Logger logger = LoggerFactory.getLogger(DumpHandler.class);
 
-    static void logResult(Map<String, Object> result, int indentSize, boolean useJson) {
+    /**
+     * A help method to log result pojo
+     * @param result the map contains info that needs to be logged
+     * @param indentSize indentSize for each line
+     * @param useJson if use default json format
+     * @param logFunc use Logger.error(), Logger.info() or Logger.debug() to log based on different level
+     */
+    static void logResult(Map<String, Object> result, int indentSize, boolean useJson, Consumer<String> logFunc) {
         if(useJson) {
             logResultUsingJson(result);
         } else {
             int startLevel = -1;
             StringBuilder sb = new StringBuilder("Http request/response information:");
             _logResult(result, startLevel, indentSize, sb);
-            logger.info(sb.toString());
+            logFunc.accept(sb.toString());
         }
     }
 
@@ -107,5 +115,26 @@ class DumpHelper {
     static boolean checkIfUseJson(Map<String, Object> config) {
         Object useJson = config.get(DumpConstants.USE_JSON);
         return useJson instanceof Boolean && (Boolean) useJson;
+    }
+
+    static Consumer<String> getLoggerFuncBasedOnLevel(String level) {
+        switch(level.toUpperCase()) {
+            case "ERROR":
+                return logger::error;
+            case "INFO":
+                return logger::info;
+            case "DEBUG":
+                return logger::debug;
+            case "WARN":
+                return logger::warn;
+            default:
+                return logger::info;
+        }
+    }
+
+
+    static Consumer<String> getLoggerFunc(Map<String, Object> config) {
+        Object logLevel = config.get(DumpConstants.LOG_LEVEL);
+        return logLevel instanceof String ? DumpHelper.getLoggerFuncBasedOnLevel((String)logLevel) : DumpHelper.getLoggerFuncBasedOnLevel("");
     }
 }

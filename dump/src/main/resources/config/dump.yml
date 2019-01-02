@@ -1,12 +1,16 @@
 # controls how to dump entire request and response to log file. not recommended
 # on production if performance is important
 enabled: true
+mask: true
+# logger level ERROR | WARN | INFO | DEBUG
+logLevel: WARN
 # indent size for logging info
 indentSize: 4
 # use json style or not, if use json, indentSize option will be useless
 useJson: false
 # if "request: false", disable dumping requests.
 request:
+  url: true
   headers: true
   # filter for headers
   filteredHeaders:

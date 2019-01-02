@@ -16,5 +16,8 @@ public class DumpConstants {
     static final String COOKIE_PATH = "path";
     static final String COOKIE_EXPIRES = "expires";
     static final String USE_JSON = "useJson";
-
+    static final String URL = "url";
+    static final String ENABLED = "enabled";
+    static final String MASK = "mask";
+    static final String LOG_LEVEL = "logLevel";
 }
