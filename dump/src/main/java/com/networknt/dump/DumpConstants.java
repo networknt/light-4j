@@ -1,6 +1,6 @@
 package com.networknt.dump;
 
-public class DumpConstants {
+class DumpConstants {
     //CONFIG OPTIONS
     static final String HEADERS = "headers";
     static final String COOKIES = "cookies";

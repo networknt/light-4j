@@ -8,27 +8,20 @@ import java.util.Map;
 public class StatusCodeDumper extends AbstractDumper implements IResponseDumpable{
     private String statusCodeResult = "";
 
-    public StatusCodeDumper(Object parentConfig, HttpServerExchange exchange, Boolean maskEnabled) {
-        super(parentConfig, exchange, maskEnabled);
+    public StatusCodeDumper(DumpConfig config, HttpServerExchange exchange) {
+        super(config, exchange);
     }
-
-    @Override
-    protected void loadConfig() {
-        loadEnableConfig(DumpConstants.STATUS_CODE);
-    }
-
 
     @Override
     public void dumpResponse(Map<String, Object> result) {
-        if(!isEnabled()) {
-            return;
-        }
+        if(!config.isResponseStatusCodeEnabled()) { return; }
+
         this.statusCodeResult = String.valueOf(exchange.getStatusCode());
         this.putDumpInfoTo(result);
     }
 
     @Override
-    public void putDumpInfoTo(Map<String, Object> result) {
+    protected void putDumpInfoTo(Map<String, Object> result) {
         if(StringUtils.isNotBlank(this.statusCodeResult)) {
             result.put(DumpConstants.STATUS_CODE, this.statusCodeResult);
         }

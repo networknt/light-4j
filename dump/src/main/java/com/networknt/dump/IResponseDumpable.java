@@ -2,7 +2,7 @@ package com.networknt.dump;
 
 import java.util.Map;
 
-public interface IResponseDumpable {
+interface IResponseDumpable {
     /**
      * @param result A map you want to put dump information to
      */
