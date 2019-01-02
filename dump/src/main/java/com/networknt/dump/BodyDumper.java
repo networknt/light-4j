@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
  class BodyDumper extends AbstractDumper implements IRequestDumpable, IResponseDumpable{
@@ -63,13 +64,16 @@ import java.util.Map;
     private void dumpInputStream(){
         //dump request body
         exchange.startBlocking();
-        String body = "";
         InputStream inputStream = exchange.getInputStream();
         try {
             if(config.isMaskEnabled() && inputStream.available() != -1) {
                 this.bodyContent = Mask.maskJson(inputStream, "requestBody");
             } else {
-                this.bodyContent = body;
+                try {
+                    this.bodyContent = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
+                } catch (IOException e) {
+                    logger.error(e.toString());
+                }
             }
         } catch (IOException e) {
             logger.error("undertow inputstream error:" + e.getMessage());
