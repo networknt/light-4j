@@ -18,7 +18,9 @@ package com.networknt.utility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.*;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -193,4 +195,142 @@ public class NetUtils {
         }
         return null;
     }
+
+    /**
+     * Find a non-occupied port.
+     *
+     * @return A non-occupied port.
+     */
+    public static int getAvailablePort() {
+        for (int i = 0; i < 50; i++) {
+            try (ServerSocket serverSocket = new ServerSocket(0)) {
+                int port = serverSocket.getLocalPort();
+                if (port != 0) {
+                    return port;
+                }
+            }
+            catch (IOException ignored) {}
+        }
+
+        throw new RuntimeException("Could not find a free permitted port on the machine.");
+    }
+
+    /**
+     * Normalizes and encodes a hostname and port to be included in URL.
+     * In particular, this method makes sure that IPv6 address literals have the proper
+     * formatting to be included in URLs.
+     *
+     * @param host The address to be included in the URL.
+     * @param port The port for the URL address.
+     * @return The proper URL string encoded IP address and port.
+     * @throws java.net.UnknownHostException Thrown, if the hostname cannot be translated into a URL.
+     */
+    public static String hostAndPortToUrlString(String host, int port) throws UnknownHostException {
+        return ipAddressAndPortToUrlString(InetAddress.getByName(host), port);
+    }
+
+    /**
+     * Encodes an IP address and port to be included in URL. in particular, this method makes
+     * sure that IPv6 addresses have the proper formatting to be included in URLs.
+     *
+     * @param address The address to be included in the URL.
+     * @param port The port for the URL address.
+     * @return The proper URL string encoded IP address and port.
+     */
+    public static String ipAddressAndPortToUrlString(InetAddress address, int port) {
+        return ipAddressToUrlString(address) + ':' + port;
+    }
+
+    /**
+     * Encodes an IP address properly as a URL string. This method makes sure that IPv6 addresses
+     * have the proper formatting to be included in URLs.
+     *
+     * @param address The IP address to encode.
+     * @return The proper URL string encoded IP address.
+     */
+    public static String ipAddressToUrlString(InetAddress address) {
+        if (address == null) {
+            throw new NullPointerException("address is null");
+        }
+        else if (address instanceof Inet4Address) {
+            return address.getHostAddress();
+        }
+        else if (address instanceof Inet6Address) {
+            return getIPv6UrlRepresentation((Inet6Address) address);
+        }
+        else {
+            throw new IllegalArgumentException("Unrecognized type of InetAddress: " + address);
+        }
+    }
+
+    /**
+     * Creates a compressed URL style representation of an Inet6Address.
+     *
+     * <p>This method copies and adopts code from Google's Guava library.
+     * We re-implement this here in order to reduce dependency on Guava.
+     * The Guava library has frequently caused dependency conflicts in the past.
+     */
+    private static String getIPv6UrlRepresentation(Inet6Address address) {
+        return getIPv6UrlRepresentation(address.getAddress());
+    }
+
+    /**
+     * Creates a compressed URL style representation of an Inet6Address.
+     *
+     * <p>This method copies and adopts code from Google's Guava library.
+     * We re-implement this here in order to reduce dependency on Guava.
+     * The Guava library has frequently caused dependency conflicts in the past.
+     */
+    private static String getIPv6UrlRepresentation(byte[] addressBytes) {
+        // first, convert bytes to 16 bit chunks
+        int[] hextets = new int[8];
+        for (int i = 0; i < hextets.length; i++) {
+            hextets[i] = (addressBytes[2 * i] & 0xFF) << 8 | (addressBytes[2 * i + 1] & 0xFF);
+        }
+
+        // now, find the sequence of zeros that should be compressed
+        int bestRunStart = -1;
+        int bestRunLength = -1;
+        int runStart = -1;
+        for (int i = 0; i < hextets.length + 1; i++) {
+            if (i < hextets.length && hextets[i] == 0) {
+                if (runStart < 0) {
+                    runStart = i;
+                }
+            } else if (runStart >= 0) {
+                int runLength = i - runStart;
+                if (runLength > bestRunLength) {
+                    bestRunStart = runStart;
+                    bestRunLength = runLength;
+                }
+                runStart = -1;
+            }
+        }
+        if (bestRunLength >= 2) {
+            Arrays.fill(hextets, bestRunStart, bestRunStart + bestRunLength, -1);
+        }
+
+        // convert into text form
+        StringBuilder buf = new StringBuilder(40);
+        buf.append('[');
+
+        boolean lastWasNumber = false;
+        for (int i = 0; i < hextets.length; i++) {
+            boolean thisIsNumber = hextets[i] >= 0;
+            if (thisIsNumber) {
+                if (lastWasNumber) {
+                    buf.append(':');
+                }
+                buf.append(Integer.toHexString(hextets[i]));
+            } else {
+                if (i == 0 || lastWasNumber) {
+                    buf.append("::");
+                }
+            }
+            lastWasNumber = thisIsNumber;
+        }
+        buf.append(']');
+        return buf.toString();
+    }
+
 }
