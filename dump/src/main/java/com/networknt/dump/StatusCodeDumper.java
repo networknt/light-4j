@@ -8,8 +8,8 @@ import java.util.Map;
 public class StatusCodeDumper extends AbstractDumper implements IResponseDumpable{
     private String statusCodeResult = "";
 
-    public StatusCodeDumper(Object parentConfig, HttpServerExchange exchange) {
-        super(parentConfig, exchange);
+    public StatusCodeDumper(Object parentConfig, HttpServerExchange exchange, Boolean maskEnabled) {
+        super(parentConfig, exchange, maskEnabled);
     }
 
     @Override

@@ -23,14 +23,13 @@ import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
  * Handler that dumps request and response to a log based on the dump.json config
+ * This handler should be after Body Handler, otherwise body handler won't get info from inputstream.
  * <p>
  * Created by steve on 01/09/16.
  * To handle options in request, should name method dumpRequest[OPTION_NAME]
@@ -38,7 +37,6 @@ import java.util.Map;
 public class DumpHandler implements MiddlewareHandler {
     public static final String CONFIG_NAME = "dump";
     public static final String ENABLED = "enabled";
-
     private static Map<String, Object> config =
             Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
 
@@ -76,6 +74,7 @@ public class DumpHandler implements MiddlewareHandler {
             return;
         }
         if(isEnabled()) {
+
             Map<String, Object> result = new LinkedHashMap<>();
             //dump request info into result right away
             RootDumper rootDumper = new RootDumper(config, exchange);
@@ -88,12 +87,11 @@ public class DumpHandler implements MiddlewareHandler {
             //when complete exchange, dump response info to result, and log the result.
             exchange.addExchangeCompleteListener((exchange1, nextListener) ->{
                 rootDumper.dumpResponse(result);
-                DumpHelper.logResult(result, DumpHelper.getIndentSize(config), DumpHelper.checkIfUseJson(config));
+                DumpHelper.logResult(result, DumpHelper.getIndentSize(config), DumpHelper.checkIfUseJson(config), DumpHelper.getLoggerFunc(config));
                 nextListener.proceed();
             });
         }
         Handler.next(exchange, next);
     }
-
 
 }

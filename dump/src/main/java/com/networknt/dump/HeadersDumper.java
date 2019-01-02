@@ -1,5 +1,6 @@
 package com.networknt.dump;
 
+import com.networknt.mask.Mask;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderMap;
 
@@ -8,8 +9,8 @@ import java.util.Map;
 
 public class HeadersDumper extends AbstractFilterableDumper implements IRequestDumpable, IResponseDumpable {
     Map<String, Object> headerMap = new LinkedHashMap<>();
-    public HeadersDumper(Object parentConfig, HttpServerExchange exchange) {
-        super(parentConfig, exchange);
+    public HeadersDumper(Object parentConfig, HttpServerExchange exchange, Boolean maskEnabled) {
+        super(parentConfig, exchange, maskEnabled);
     }
 
     @Override
@@ -32,6 +33,9 @@ public class HeadersDumper extends AbstractFilterableDumper implements IRequestD
         }
         HeaderMap headers = exchange.getRequestHeaders();
         dumpHeaders(headers);
+        if(isMaskEnabled()) {
+            this.headerMap.forEach((s, o) -> headerMap.put(s, Mask.maskRegex((String) o, "requestHeader", s)));
+        }
         this.putDumpInfoTo(result);
     }
 
@@ -47,7 +51,7 @@ public class HeadersDumper extends AbstractFilterableDumper implements IRequestD
 
     /**
      * put headers info to headerMap
-     * @param headers typs: HeaderMap, get from response or request
+     * @param headers types: HeaderMap, get from response or request
      */
     private void dumpHeaders(HeaderMap headers) {
         headers.forEach((headerValues) -> headerValues.forEach((headerValue) -> {

@@ -8,8 +8,8 @@ import java.util.*;
 public class CookiesDumper extends AbstractFilterableDumper implements IRequestDumpable, IResponseDumpable{
     private Map<String, Object> cookieMap = new LinkedHashMap<>();
 
-    CookiesDumper(Object parentConfig, HttpServerExchange exchange) {
-        super(parentConfig, exchange);
+    CookiesDumper(Object parentConfig, HttpServerExchange exchange, Boolean maskEnabled) {
+        super(parentConfig, exchange, maskEnabled);
     }
 
     @Override

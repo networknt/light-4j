@@ -10,12 +10,14 @@ import java.util.Map;
 public abstract class AbstractDumper{
     protected final Object parentConfig;
     protected boolean enabled = false;
+    protected boolean maskEnabled;
     protected final HttpServerExchange exchange;
     protected Object config;
-    private Logger logger = LoggerFactory.getLogger(AbstractDumper.class);
-    public AbstractDumper(Object parentConfig, HttpServerExchange exchange) {
+    private final Logger logger = LoggerFactory.getLogger(AbstractDumper.class);
+    public AbstractDumper(Object parentConfig, HttpServerExchange exchange, Boolean maskEnabled) {
         this.parentConfig = parentConfig;
         this.exchange = exchange;
+        this.maskEnabled = maskEnabled;
         loadConfig();
     }
 
@@ -43,4 +45,6 @@ public abstract class AbstractDumper{
     protected Boolean isEnabled() {
         return this.enabled;
     }
+
+    protected Boolean isMaskEnabled() { return this.maskEnabled; }
 }

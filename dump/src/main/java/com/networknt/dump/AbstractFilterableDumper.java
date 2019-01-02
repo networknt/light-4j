@@ -10,8 +10,8 @@ public abstract class AbstractFilterableDumper extends AbstractDumper {
     //after loadFilterConfig(), filter won't be empty
     protected List<String> filter;
 
-    public AbstractFilterableDumper(Object parentConfig, HttpServerExchange exchange) {
-        super(parentConfig, exchange);
+    public AbstractFilterableDumper(Object parentConfig, HttpServerExchange exchange, Boolean maskEnabled) {
+        super(parentConfig, exchange, maskEnabled);
     }
 
     protected void loadFilterConfig(String filterOptionName) {

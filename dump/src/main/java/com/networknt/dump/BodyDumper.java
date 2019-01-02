@@ -1,21 +1,23 @@
 package com.networknt.dump;
 
+import com.networknt.body.BodyHandler;
+import com.networknt.mask.Mask;
 import com.networknt.utility.StringUtils;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 public class BodyDumper extends AbstractDumper implements IRequestDumpable, IResponseDumpable{
     private static final Logger logger = LoggerFactory.getLogger(BodyDumper.class);
     private String bodyContent = "";
 
-    BodyDumper(Object config, HttpServerExchange exchange) {
-        super(config, exchange);
+    BodyDumper(Object config, HttpServerExchange exchange, Boolean maskEnabled) {
+        super(config, exchange, maskEnabled);
     }
 
     @Override
@@ -35,19 +37,23 @@ public class BodyDumper extends AbstractDumper implements IRequestDumpable, IRes
         if(!isEnabled()) {
             return;
         }
-        //dump request body
-        exchange.startBlocking();
-        String body = "";
-        InputStream inputStream = exchange.getInputStream();
-        try {
-            body = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            logger.error(e.toString());
+
+        String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
+        //only dump json info
+        if (contentType != null && contentType.startsWith("application/json")) {
+            //if body info already grab by body handler, get it from attachment directly
+            Object requestBodyAttachment = exchange.getAttachment(BodyHandler.REQUEST_BODY);
+            if(requestBodyAttachment != null) {
+                dumpBodyAttachment(requestBodyAttachment);
+                //otherwise get it from input stream directly
+            } else {
+                dumpInputStream();
+            }
+        } else {
+            logger.info("unsupported contentType: {}", contentType);
         }
-        this.bodyContent = body;
         this.putDumpInfoTo(result);
     }
-
 
     @Override
     public void dumpResponse(Map<String, Object> result) {
@@ -56,8 +62,32 @@ public class BodyDumper extends AbstractDumper implements IRequestDumpable, IRes
         }
         byte[] responseBodyAttachment = exchange.getAttachment(StoreResponseStreamSinkConduit.RESPONSE);
         if(responseBodyAttachment != null) {
-            this.bodyContent = new String(responseBodyAttachment);
+            if (isMaskEnabled()) {
+                this.bodyContent = Mask.maskJson(new ByteArrayInputStream(responseBodyAttachment), "responseBody");
+            } else {
+                this.bodyContent = new String(responseBodyAttachment);
+            }
         }
         this.putDumpInfoTo(result);
+    }
+
+    private void dumpInputStream() {
+        //dump request body
+        exchange.startBlocking();
+        String body = "";
+        InputStream inputStream = exchange.getInputStream();
+        if(isMaskEnabled()) {
+            this.bodyContent = Mask.maskJson(inputStream, "requestBody");
+        } else {
+            this.bodyContent = body;
+        }
+    }
+
+    private void dumpBodyAttachment(Object requestBodyAttachment) {
+        if(isMaskEnabled()) {
+            this.bodyContent = Mask.maskJson(requestBodyAttachment, "requestBody");
+        } else {
+            this.bodyContent = requestBodyAttachment.toString();
+        }
     }
 }

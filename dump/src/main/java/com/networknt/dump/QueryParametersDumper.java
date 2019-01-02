@@ -8,8 +8,8 @@ import java.util.Map;
 public class QueryParametersDumper extends AbstractFilterableDumper implements IRequestDumpable {
     private Map<String, Object> queryParametersMap = new LinkedHashMap<>();
 
-    public QueryParametersDumper(Object parentConfig, HttpServerExchange exchange) {
-        super(parentConfig, exchange);
+    public QueryParametersDumper(Object parentConfig, HttpServerExchange exchange, Boolean maskEnabled) {
+        super(parentConfig, exchange, maskEnabled);
     }
 
     @Override
