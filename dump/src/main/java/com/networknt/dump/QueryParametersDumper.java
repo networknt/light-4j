@@ -6,28 +6,21 @@ import io.undertow.server.HttpServerExchange;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class QueryParametersDumper extends AbstractFilterableDumper implements IRequestDumpable {
+public class QueryParametersDumper extends AbstractDumper implements IRequestDumpable {
     private Map<String, Object> queryParametersMap = new LinkedHashMap<>();
 
-    public QueryParametersDumper(Object parentConfig, HttpServerExchange exchange, Boolean maskEnabled) {
-        super(parentConfig, exchange, maskEnabled);
-    }
-
-    @Override
-    protected void loadConfig() {
-        loadEnableConfig(DumpConstants.QUERY_PARAMETERS);
-        loadFilterConfig(DumpConstants.FILTERED_QUERY_PARAMETERS);
+    public QueryParametersDumper(DumpConfig config, HttpServerExchange exchange) {
+        super(config, exchange);
     }
 
     @Override
     public void dumpRequest(Map<String, Object> result) {
-        if(!isEnabled()) {
-            return;
-        }
+        if(!config.isRequestQueryParametersEnabled()) { return; }
+
         exchange.getQueryParameters().forEach((k, v) -> {
-            if (!this.filter.contains(k)) {
+            if (config.getRequestFilteredQueryParameters().contains(k)) {
                 //mask query parameter value
-                String queryParameterValue = isMaskEnabled() ? Mask.maskRegex( v.getFirst(), "queryParameter", k) : v.getFirst();
+                String queryParameterValue = config.isMaskEnabled() ? Mask.maskRegex( v.getFirst(), "queryParameter", k) : v.getFirst();
                 queryParametersMap.put(k, queryParameterValue);
             }
         });
@@ -35,7 +28,7 @@ public class QueryParametersDumper extends AbstractFilterableDumper implements I
     }
 
     @Override
-    public void putDumpInfoTo(Map<String, Object> result) {
+    protected void putDumpInfoTo(Map<String, Object> result) {
         if(this.queryParametersMap.size() > 0) {
             result.put(DumpConstants.QUERY_PARAMETERS, queryParametersMap);
         }

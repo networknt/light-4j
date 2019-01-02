@@ -6,24 +6,17 @@ import io.undertow.server.handlers.Cookie;
 
 import java.util.*;
 
-public class CookiesDumper extends AbstractFilterableDumper implements IRequestDumpable, IResponseDumpable{
+public class CookiesDumper extends AbstractDumper implements IRequestDumpable, IResponseDumpable{
     private Map<String, Object> cookieMap = new LinkedHashMap<>();
 
-    CookiesDumper(Object parentConfig, HttpServerExchange exchange, Boolean maskEnabled) {
-        super(parentConfig, exchange, maskEnabled);
-    }
-
-    @Override
-    protected void loadConfig() {
-        loadEnableConfig(DumpConstants.COOKIES);
-        loadFilterConfig(DumpConstants.FILTERED_COOKIES);
+    CookiesDumper(DumpConfig config, HttpServerExchange exchange) {
+        super(config, exchange);
     }
 
     @Override
     public void dumpRequest(Map<String, Object> result) {
-        if(!isEnabled()) {
-            return;
-        }
+        if(!config.isRequestCookieEnabled()) { return; }
+
         Map<String, Cookie> cookiesMap = exchange.getRequestCookies();
         dumpCookies(cookiesMap, "requestCookies");
         this.putDumpInfoTo(result);
@@ -32,9 +25,8 @@ public class CookiesDumper extends AbstractFilterableDumper implements IRequestD
 
     @Override
     public void dumpResponse(Map<String, Object> result) {
-        if(!isEnabled()) {
-            return;
-        }
+        if(!config.isResponseCookieEnabled()) { return; }
+
         Map<String, Cookie> cookiesMap = exchange.getResponseCookies();
         dumpCookies(cookiesMap, "responseCookies");
         this.putDumpInfoTo(result);
@@ -46,10 +38,10 @@ public class CookiesDumper extends AbstractFilterableDumper implements IRequestD
      */
     private void dumpCookies(Map<String, Cookie> cookiesMap, String maskKey) {
         cookiesMap.forEach((key, cookie) -> {
-            if(!this.filter.contains(cookie.getName())) {
+            if(!config.getRequestFilteredCookies().contains(cookie.getName())) {
                 List<Map<String, String>> cookieInfoList = new ArrayList<>();
                 //mask cookieValue
-                String cookieValue = isMaskEnabled() ? Mask.maskRegex(cookie.getValue(), maskKey, cookie.getName()) : cookie.getValue();
+                String cookieValue = config.isMaskEnabled() ? Mask.maskRegex(cookie.getValue(), maskKey, cookie.getName()) : cookie.getValue();
                 cookieInfoList.add(new HashMap<String, String>(){{put(DumpConstants.COOKIE_VALUE, cookieValue);}});
                 cookieInfoList.add(new HashMap<String, String>(){{put(DumpConstants.COOKIE_DOMAIN, cookie.getDomain());}});
                 cookieInfoList.add(new HashMap<String, String>(){{put(DumpConstants.COOKIE_PATH, cookie.getPath());}});
@@ -60,7 +52,7 @@ public class CookiesDumper extends AbstractFilterableDumper implements IRequestD
     }
 
     @Override
-    public void putDumpInfoTo(Map<String, Object> result) {
+    protected void putDumpInfoTo(Map<String, Object> result) {
         if(this.cookieMap.size() > 0) {
             result.put(DumpConstants.COOKIES, cookieMap);
         }

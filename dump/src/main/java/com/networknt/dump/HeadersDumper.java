@@ -7,20 +7,14 @@ import io.undertow.util.HeaderMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class HeadersDumper extends AbstractFilterableDumper implements IRequestDumpable, IResponseDumpable {
-    Map<String, Object> headerMap = new LinkedHashMap<>();
-    public HeadersDumper(Object parentConfig, HttpServerExchange exchange, Boolean maskEnabled) {
-        super(parentConfig, exchange, maskEnabled);
+public class HeadersDumper extends AbstractDumper implements IRequestDumpable, IResponseDumpable {
+    private Map<String, Object> headerMap = new LinkedHashMap<>();
+    public HeadersDumper(DumpConfig config, HttpServerExchange exchange) {
+        super(config, exchange);
     }
 
     @Override
-    protected void loadConfig() {
-        loadEnableConfig(DumpConstants.HEADERS);
-        loadFilterConfig(DumpConstants.FILTERED_HEADERS);
-    }
-
-    @Override
-    public void putDumpInfoTo(Map<String, Object> result) {
+    protected void putDumpInfoTo(Map<String, Object> result) {
         if(this.headerMap.size() > 0) {
             result.put(DumpConstants.HEADERS, this.headerMap);
         }
@@ -28,12 +22,11 @@ public class HeadersDumper extends AbstractFilterableDumper implements IRequestD
 
     @Override
     public void dumpRequest(Map<String, Object> result) {
-        if(!isEnabled()) {
-            return;
-        }
+        if(!config.isRequestHeaderEnabled()) { return; }
+
         HeaderMap headers = exchange.getRequestHeaders();
         dumpHeaders(headers);
-        if(isMaskEnabled()) {
+        if(config.isMaskEnabled()) {
             this.headerMap.forEach((s, o) -> headerMap.put(s, Mask.maskRegex((String) o, "requestHeader", s)));
         }
         this.putDumpInfoTo(result);
@@ -41,12 +34,11 @@ public class HeadersDumper extends AbstractFilterableDumper implements IRequestD
 
     @Override
     public void dumpResponse(Map<String, Object> result) {
-        if(!isEnabled()) {
-            return;
-        }
+        if(!config.isResponseHeaderEnabled()) { return; }
+
         HeaderMap headers = exchange.getResponseHeaders();
         dumpHeaders(headers);
-        if(isMaskEnabled()) {
+        if(config.isMaskEnabled()) {
             this.headerMap.forEach((s, o) -> headerMap.put(s, Mask.maskRegex((String) o, "responseHeader", s)));
         }
         this.putDumpInfoTo(result);
@@ -59,7 +51,7 @@ public class HeadersDumper extends AbstractFilterableDumper implements IRequestD
     private void dumpHeaders(HeaderMap headers) {
         headers.forEach((headerValues) -> headerValues.forEach((headerValue) -> {
             String headerName = headerValues.getHeaderName().toString();
-            if(!this.filter.contains(headerName)) {
+            if(!config.getRequestFilteredHeaders().contains(headerName)) {
                 headerMap.put(headerName, headerValue);
             }
         }));

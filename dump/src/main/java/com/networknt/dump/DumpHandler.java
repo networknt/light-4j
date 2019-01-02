@@ -35,10 +35,9 @@ import java.util.Map;
  * To handle options in request, should name method dumpRequest[OPTION_NAME]
  */
 public class DumpHandler implements MiddlewareHandler {
-    public static final String CONFIG_NAME = "dump";
-    public static final String ENABLED = "enabled";
-    private static Map<String, Object> config =
-            Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
+    private static final String CONFIG_NAME = "dump";
+
+    private static DumpConfig config = (DumpConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, DumpConfig.class);
 
     private volatile HttpHandler next;
 
@@ -58,13 +57,12 @@ public class DumpHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        Object object = config.get(ENABLED);
-        return object != null && (Boolean) object;
+        return config.isEnabled();
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(DumpHandler.class.getName(), config, null);
+        ModuleRegistry.registerModule(DumpHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
     @Override
@@ -74,24 +72,23 @@ public class DumpHandler implements MiddlewareHandler {
             return;
         }
         if(isEnabled()) {
-
             Map<String, Object> result = new LinkedHashMap<>();
-            //dump request info into result right away
+
             RootDumper rootDumper = new RootDumper(config, exchange);
+            //dump request info into result right away
             rootDumper.dumpRequest(result);
             //only add response wrapper when response config is not set to "false"
-            if(DumpHelper.checkIfOptionTruthy(config, DumpConstants.RESPONSE)) {
+            if(config.isResponseEnabled()) {
                 //set Conduit to the conduit chain to store response body
                 exchange.addResponseWrapper((factory, exchange12) -> new StoreResponseStreamSinkConduit(factory.create(), exchange12));
             }
             //when complete exchange, dump response info to result, and log the result.
             exchange.addExchangeCompleteListener((exchange1, nextListener) ->{
                 rootDumper.dumpResponse(result);
-                DumpHelper.logResult(result, DumpHelper.getIndentSize(config), DumpHelper.checkIfUseJson(config), DumpHelper.getLoggerFunc(config));
+                DumpHelper.logResult(result, config);
                 nextListener.proceed();
             });
         }
         Handler.next(exchange, next);
     }
-
 }

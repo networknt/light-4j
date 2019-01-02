@@ -13,31 +13,24 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
-public class BodyDumper extends AbstractDumper implements IRequestDumpable, IResponseDumpable{
+ class BodyDumper extends AbstractDumper implements IRequestDumpable, IResponseDumpable{
     private static final Logger logger = LoggerFactory.getLogger(BodyDumper.class);
     private String bodyContent = "";
 
-    BodyDumper(Object config, HttpServerExchange exchange, Boolean maskEnabled) {
-        super(config, exchange, maskEnabled);
+    BodyDumper(DumpConfig config, HttpServerExchange exchange) {
+        super(config, exchange);
     }
 
     @Override
-    public void putDumpInfoTo(Map<String, Object> result) {
+    protected void putDumpInfoTo(Map<String, Object> result) {
         if(StringUtils.isNotBlank(this.bodyContent)) {
             result.put(DumpConstants.BODY, this.bodyContent);
         }
     }
 
     @Override
-    protected void loadConfig() {
-        loadEnableConfig(DumpConstants.BODY);
-    }
-
-    @Override
     public void dumpRequest(Map<String, Object> result) {
-        if(!isEnabled()) {
-            return;
-        }
+        if(!config.isRequestBodyEnabled()) { return; }
 
         String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
         //only dump json info
@@ -58,12 +51,11 @@ public class BodyDumper extends AbstractDumper implements IRequestDumpable, IRes
 
     @Override
     public void dumpResponse(Map<String, Object> result) {
-        if(!isEnabled()) {
-            return;
-        }
+        if(!config.isRequestBodyEnabled()) { return; }
+
         byte[] responseBodyAttachment = exchange.getAttachment(StoreResponseStreamSinkConduit.RESPONSE);
         if(responseBodyAttachment != null) {
-            this.bodyContent = isMaskEnabled() ? Mask.maskJson(new ByteArrayInputStream(responseBodyAttachment), "responseBody") : new String(responseBodyAttachment);
+            this.bodyContent = config.isMaskEnabled() ? Mask.maskJson(new ByteArrayInputStream(responseBodyAttachment), "responseBody") : new String(responseBodyAttachment);
         }
         this.putDumpInfoTo(result);
     }
@@ -74,7 +66,7 @@ public class BodyDumper extends AbstractDumper implements IRequestDumpable, IRes
         String body = "";
         InputStream inputStream = exchange.getInputStream();
         try {
-            if(isMaskEnabled() && inputStream.available() != -1) {
+            if(config.isMaskEnabled() && inputStream.available() != -1) {
                 this.bodyContent = Mask.maskJson(inputStream, "requestBody");
             } else {
                 this.bodyContent = body;
@@ -85,6 +77,6 @@ public class BodyDumper extends AbstractDumper implements IRequestDumpable, IRes
     }
 
     private void dumpBodyAttachment(Object requestBodyAttachment) {
-        this.bodyContent = isMaskEnabled() ? Mask.maskJson(requestBodyAttachment, "requestBody") : requestBodyAttachment.toString();
+        this.bodyContent = config.isMaskEnabled() ? Mask.maskJson(requestBodyAttachment, "requestBody") : requestBodyAttachment.toString();
     }
 }
