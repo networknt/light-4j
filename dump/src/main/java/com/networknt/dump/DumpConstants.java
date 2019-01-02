@@ -20,4 +20,5 @@ public class DumpConstants {
     static final String ENABLED = "enabled";
     static final String MASK = "mask";
     static final String LOG_LEVEL = "logLevel";
+    static final String COOKIE_VALUE = "value";
 }

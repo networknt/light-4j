@@ -1,5 +1,6 @@
 package com.networknt.dump;
 
+import com.networknt.mask.Mask;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.Cookie;
 
@@ -24,7 +25,7 @@ public class CookiesDumper extends AbstractFilterableDumper implements IRequestD
             return;
         }
         Map<String, Cookie> cookiesMap = exchange.getRequestCookies();
-        dumpCookies(cookiesMap);
+        dumpCookies(cookiesMap, "requestCookies");
         this.putDumpInfoTo(result);
 
     }
@@ -35,7 +36,7 @@ public class CookiesDumper extends AbstractFilterableDumper implements IRequestD
             return;
         }
         Map<String, Cookie> cookiesMap = exchange.getResponseCookies();
-        dumpCookies(cookiesMap);
+        dumpCookies(cookiesMap, "responseCookies");
         this.putDumpInfoTo(result);
     }
 
@@ -43,11 +44,13 @@ public class CookiesDumper extends AbstractFilterableDumper implements IRequestD
      * put cookies info to cookieMap
      * @param cookiesMap Map of cookies
      */
-    private void dumpCookies(Map<String, Cookie> cookiesMap) {
+    private void dumpCookies(Map<String, Cookie> cookiesMap, String maskKey) {
         cookiesMap.forEach((key, cookie) -> {
             if(!this.filter.contains(cookie.getName())) {
                 List<Map<String, String>> cookieInfoList = new ArrayList<>();
-                cookieInfoList.add(new HashMap<String, String>(){{put(cookie.getName(), cookie.getValue());}});
+                //mask cookieValue
+                String cookieValue = isMaskEnabled() ? Mask.maskRegex(cookie.getValue(), maskKey, cookie.getName()) : cookie.getValue();
+                cookieInfoList.add(new HashMap<String, String>(){{put(DumpConstants.COOKIE_VALUE, cookieValue);}});
                 cookieInfoList.add(new HashMap<String, String>(){{put(DumpConstants.COOKIE_DOMAIN, cookie.getDomain());}});
                 cookieInfoList.add(new HashMap<String, String>(){{put(DumpConstants.COOKIE_PATH, cookie.getPath());}});
                 cookieInfoList.add(new HashMap<String, String>(){{put(DumpConstants.COOKIE_EXPIRES, cookie.getExpires() == null ? "" : cookie.getExpires().toString());}});

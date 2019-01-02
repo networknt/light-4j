@@ -26,11 +26,9 @@ public class QueryParametersDumper extends AbstractFilterableDumper implements I
         }
         exchange.getQueryParameters().forEach((k, v) -> {
             if (!this.filter.contains(k)) {
-                if(isMaskEnabled()) {
-                    queryParametersMap.put(k, Mask.maskRegex( v.getFirst(), "queryParameter", k));
-                } else {
-                    queryParametersMap.put(k, v.getFirst());
-                }
+                //mask query parameter value
+                String queryParameterValue = isMaskEnabled() ? Mask.maskRegex( v.getFirst(), "queryParameter", k) : v.getFirst();
+                queryParametersMap.put(k, queryParameterValue);
             }
         });
         this.putDumpInfoTo(result);
