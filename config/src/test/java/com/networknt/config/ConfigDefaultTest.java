@@ -34,15 +34,11 @@ import java.util.Map;
  */
 public class ConfigDefaultTest extends TestCase {
     Config config = null;
-    Map<String, Object> testMap = new HashMap<>();
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
         config = Config.getInstance();
-        testMap.put("key", "old");
-        testMap.put("key1", "new");
-        testMap.put("key2", Arrays.asList("new", "new"));
     }
 
     @Override
@@ -70,7 +66,7 @@ public class ConfigDefaultTest extends TestCase {
         // case5: escape from injecting environment variable
         Assert.assertEquals("${ESCAPE}", configMap.get("value4"));
         // case6: override values with centralized file
-        Assert.assertEquals(testMap, configMap.get("value5"));
+        Assert.assertEquals("default", configMap.get("value5"));
     }
 
     public void testGetJsonObjectConfig() throws Exception {
@@ -81,7 +77,7 @@ public class ConfigDefaultTest extends TestCase {
         Assert.assertEquals(System.getenv("LOGNAME"), tc.getValue2());
         Assert.assertEquals("default", tc.getValue3());
         Assert.assertEquals("${ESCAPE}", tc.getValue4());
-        Assert.assertEquals(testMap, tc.getValue5());
+        Assert.assertEquals("default", tc.getValue5());
     }
 
     public void test1GetJsonMapConfig() throws Exception {
@@ -92,7 +88,7 @@ public class ConfigDefaultTest extends TestCase {
         Assert.assertEquals(System.getenv("LOGNAME"), configMap.get("value2"));
         Assert.assertEquals("default", configMap.get("value3"));
         Assert.assertEquals("${ESCAPE}", configMap.get("value4"));
-        Assert.assertEquals(testMap, configMap.get("value5"));
+        Assert.assertEquals("default", configMap.get("value5"));
     }
 
     public void test1GetJsonObjectConfig() throws Exception {
@@ -103,7 +99,7 @@ public class ConfigDefaultTest extends TestCase {
         Assert.assertEquals(System.getenv("LOGNAME"), tc.getValue2());
         Assert.assertEquals("default", tc.getValue3());
         Assert.assertEquals("${ESCAPE}", tc.getValue4());
-        Assert.assertEquals(testMap, tc.getValue5());
+        Assert.assertEquals("default", tc.getValue5());
     }
 
     public void test2GetJsonMapConfig() throws Exception {
@@ -114,7 +110,7 @@ public class ConfigDefaultTest extends TestCase {
         Assert.assertEquals(System.getenv("LOGNAME"), configMap.get("value2"));
         Assert.assertEquals("default", configMap.get("value3"));
         Assert.assertEquals("${ESCAPE}", configMap.get("value4"));
-        Assert.assertEquals(testMap, configMap.get("value5"));
+        Assert.assertEquals("default", configMap.get("value5"));
     }
 
     public void test2GetJsonObjectConfig() throws Exception {
@@ -125,7 +121,7 @@ public class ConfigDefaultTest extends TestCase {
         Assert.assertEquals(System.getenv("LOGNAME"), tc.getValue2());
         Assert.assertEquals("default", tc.getValue3());
         Assert.assertEquals("${ESCAPE}", tc.getValue4());
-        Assert.assertEquals(testMap, tc.getValue5());
+        Assert.assertEquals("default", tc.getValue5());
     }
 
     public void testGetInputStream() throws Exception {

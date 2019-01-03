@@ -4,9 +4,5 @@
   "value2": "${LOGNAME:default}",
   "value3": "${TEST:default}",
   "value4": "${ESCAPE:$}",
-  "value5": {
-    "key": "old",
-    "key1": "old",
-    "key2": ["old", "old"]
-  }
+  "value5": "${VALUE}"
 }

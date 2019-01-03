@@ -13,7 +13,7 @@ public class ConfigInjection {
     private static final String INJECTION_ORDER = "injection_order";
     private static final String INJECTION_ORDER_CODE = System.getProperty(INJECTION_ORDER, "").toLowerCase();
 
-    private static int orderCode = 1;
+    private static int orderCode = 2;
 
     private static Map<String, Object> valueMap = CentralizedManagement.getValuesFromFile();
 
@@ -42,7 +42,7 @@ public class ConfigInjection {
         try {
             orderCode = Integer.parseInt(INJECTION_ORDER_CODE);
         } catch(Exception e) {
-            logger.error("Injection order code is not set or invalid.");
+            logger.error("Injection order code is not set or invalid, the order will be set as default");
         }
     }
 
@@ -51,16 +51,18 @@ public class ConfigInjection {
         Object value = null;
         setOrderCode();
         if (injectionPattern != null) {
-            if (orderCode == 1) {
-                value = System.getenv(injectionPattern.getKey());
+            Object envValue = System.getenv(injectionPattern.getKey());
+            Object fileValue = (valueMap != null) ? valueMap.get(injectionPattern.getKey()) : null;
+            if (orderCode == 1 && envValue != null) {
+                value = envValue;
             }
-            if (valueMap != null) {
-                value = valueMap.get(injectionPattern.getKey());
+            if (fileValue != null) {
+                value = fileValue;
             } else {
                 logger.error("Cannot find centralized management file \"values.yaml\".");
             }
-            if (orderCode == 2) {
-                value = System.getenv(injectionPattern.getKey());
+            if (orderCode == 2 && envValue != null) {
+                value = envValue;
             }
             if (value == null || value.equals("")) {
                 value = injectionPattern.getDefaultValue();
