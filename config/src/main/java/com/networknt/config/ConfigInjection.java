@@ -11,11 +11,11 @@ import java.util.regex.Pattern;
 
 public class ConfigInjection {
     private static final String INJECTION_ORDER = "injection_order";
-    private static final String INJECTION_ORDER_CODE = System.getProperty(INJECTION_ORDER, "").toLowerCase();
+    private static final String INJECTION_ORDER_CODE = (!System.getProperty(INJECTION_ORDER, "").equals("")) ?
+            System.getProperty(INJECTION_ORDER, "") : "2";
 
-    private static int orderCode = 2;
-
-    private static Map<String, Object> valueMap = CentralizedManagement.getValuesFromFile();
+    private static final String CENTRALIZED_MANAGEMENT = "values";
+    private static final Map<String, Object> valueMap = Config.getInstance().getJsonMapConfig(CENTRALIZED_MANAGEMENT);
 
     static final Logger logger = LoggerFactory.getLogger(ConfigInjection.class);
 
@@ -33,36 +33,21 @@ public class ConfigInjection {
             if (value instanceof Integer) {
                 value = String.valueOf(value);
             }
-            m.appendReplacement(sb, (String)value);
+            m.appendReplacement(sb, (String) value);
         }
         return m.appendTail(sb).toString();
-    }
-
-    private static void setOrderCode() {
-        try {
-            orderCode = Integer.parseInt(INJECTION_ORDER_CODE);
-        } catch(Exception e) {
-            logger.error("Injection order code is not set or invalid, the order will be set as default");
-        }
     }
 
     private static Object getValue(String content) {
         InjectionPattern injectionPattern = getInjectionPattern(content);
         Object value = null;
-        setOrderCode();
         if (injectionPattern != null) {
             Object envValue = System.getenv(injectionPattern.getKey());
             Object fileValue = (valueMap != null) ? valueMap.get(injectionPattern.getKey()) : null;
-            if (orderCode == 1 && envValue != null) {
+            if (INJECTION_ORDER_CODE.equals("2") && envValue != null || (INJECTION_ORDER_CODE.equals("1") && fileValue == null)) {
                 value = envValue;
-            }
-            if (fileValue != null) {
-                value = fileValue;
             } else {
-                logger.error("Cannot find centralized management file \"values.yaml\".");
-            }
-            if (orderCode == 2 && envValue != null) {
-                value = envValue;
+                value = fileValue;
             }
             if (value == null || value.equals("")) {
                 value = injectionPattern.getDefaultValue();
@@ -78,14 +63,11 @@ public class ConfigInjection {
     }
 
     private static InjectionPattern getInjectionPattern(String contents) {
-        if (contents == null || contents.equals("")) {
+        if (contents == null || contents.trim().equals("")) {
             return null;
         }
         InjectionPattern injectionPattern = new InjectionPattern();
         contents = contents.trim();
-        if (contents == null || contents.equals("")) {
-            return null;
-        }
         String[] array = contents.split(":", 2);
         if ("".equals(array[0])) {
             return null;
@@ -94,9 +76,9 @@ public class ConfigInjection {
         if (array.length == 2) {
             if (array[1].startsWith("?")) {
                 injectionPattern.setErrorText(array[1].substring(1));
-            }else if(array[1].startsWith("$")) {
+            } else if (array[1].startsWith("$")) {
                 injectionPattern.setDefaultValue("\\$\\{" + array[0] + "\\}");
-            }else {
+            } else {
                 injectionPattern.setDefaultValue(array[1]);
             }
         }
