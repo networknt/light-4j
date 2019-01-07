@@ -21,7 +21,7 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>1.5.24</version>
+        <version>1.5.26</version>
         <relativePath>..</relativePath>
     </parent>
 
@@ -77,6 +77,16 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>client</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>correlation</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
