@@ -44,7 +44,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public abstract class Config {
     public static final String LIGHT_4J_CONFIG_DIR = "light-4j-config-dir";
-    private static final String ENVIRONMENT_INJECTION_FIRST = "environment_injection_first";
 
     protected Config() {
     }
