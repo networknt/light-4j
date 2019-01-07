@@ -8,6 +8,8 @@ public class ConsulConfig {
     boolean tcpCheck;
     boolean httpCheck;
     boolean ttlCheck;
+    String wait;
+
 
     public String getConsulUrl() {
         return consulUrl;
@@ -59,5 +61,12 @@ public class ConsulConfig {
 
     public void setTtlCheck(boolean ttlCheck) {
         this.ttlCheck = ttlCheck;
+    }
+    public String getWait() {
+        return wait;
+    }
+
+    public void setWait(String wait) {
+        this.wait = wait;
     }
 }

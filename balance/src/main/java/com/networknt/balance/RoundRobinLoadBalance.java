@@ -28,7 +28,7 @@ public class RoundRobinLoadBalance implements LoadBalance {
         if(logger.isInfoEnabled()) logger.info("A RoundRobinLoadBalance instance is started");
     }
 
-    private AtomicInteger idx = new AtomicInteger(0);
+    private AtomicInteger idx = new AtomicInteger((int)(Math.random()*10));
 
     /**
      * Round robin requestKey is not used as it should be null, the url will
