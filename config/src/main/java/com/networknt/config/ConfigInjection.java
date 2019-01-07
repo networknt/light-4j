@@ -1,11 +1,6 @@
 package com.networknt.config;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.*;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,8 +11,6 @@ public class ConfigInjection {
 
     private static final String CENTRALIZED_MANAGEMENT = "values";
     private static final Map<String, Object> valueMap = Config.getInstance().getJsonMapConfig(CENTRALIZED_MANAGEMENT);
-
-    static final Logger logger = LoggerFactory.getLogger(ConfigInjection.class);
 
     private static Pattern pattern = Pattern.compile("\\$\\{(.*?)\\}");
 
