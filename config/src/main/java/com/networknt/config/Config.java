@@ -205,9 +205,11 @@ public abstract class Config {
             String ymlFilename = configName + CONFIG_EXT_YML;
             try (InputStream inStream = getConfigStream(ymlFilename)) {
                 if (inStream != null) {
+                    // The values.yaml should be processed by centralized management, since it would cause a dead loop
                     if (configName.equals("values")) {
                         config = yaml.loadAs(inStream, clazz);
                     } else {
+                        // Parse into map first, since map is easier to be manipulated in merging process
                         Map<String, Object> configMap = yaml.load(inStream);
                         config = CentralizedManagement.mergeObject(configMap, clazz);
                     }
@@ -220,9 +222,11 @@ public abstract class Config {
             String yamlFilename = configName + CONFIG_EXT_YAML;
             try (InputStream inStream = getConfigStream(yamlFilename)) {
                 if (inStream != null) {
+                    // The values.yaml should be processed by centralized management, since it would cause a dead loop
                     if (configName.equals("values")) {
                         config = yaml.loadAs(inStream, clazz);
                     } else {
+                        // Parse into map first, since map is easier to be manipulated in merging process
                         Map<String, Object> configMap = yaml.load(inStream);
                         config = CentralizedManagement.mergeObject(configMap, clazz);
                     }
@@ -235,9 +239,11 @@ public abstract class Config {
             String jsonFilename = configName + CONFIG_EXT_JSON;
             try (InputStream inStream = getConfigStream(jsonFilename)) {
                 if (inStream != null) {
+                    // The values.yaml should be processed by centralized management, since it would cause a dead loop
                     if (configName.equals("values")) {
                         config = mapper.readValue(inStream, clazz);
                     } else {
+                        // Parse into map first, since map is easier to be manipulated in merging process
                         Map<String, Object> configMap = mapper.readValue(inStream, new TypeReference<HashMap<String, Object>>() {
                         });
                         config = CentralizedManagement.mergeObject(configMap, clazz);
