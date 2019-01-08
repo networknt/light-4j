@@ -1,1 +1,7 @@
-VALUE.test: default
+TEST.string: test
+TEST.list:
+  - element1
+  - element2
+TEST.map:
+  key1: element1
+  key2: element2

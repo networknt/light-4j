@@ -1,6 +1,6 @@
 value: "default config"
 value1: ${HOME:default}
-value2: ${LOGNAME:default}
-value3: ${TEST:default}
-value4: ${ESCAPE:$}
-value5: ${VALUE.test:123}
+value2: ${ESCAPE:$}
+value3: ${TEST.string:default}
+value4: ${TEST.list:default}
+value5: ${TEST.map:default}

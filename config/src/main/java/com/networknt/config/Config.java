@@ -208,9 +208,8 @@ public abstract class Config {
                     if (configName.equals("values")) {
                         config = yaml.loadAs(inStream, clazz);
                     } else {
-                        String string = convertStreamToString(inStream);
-                        string = ConfigInjection.inject(string);
-                        config = yaml.loadAs(string, clazz);
+                        Map<String, Object> configMap = yaml.load(inStream);
+                        config = CentralizedManagement.mergeObject(configMap, clazz);
                     }
                 }
             } catch (IOException ioe) {
@@ -224,9 +223,8 @@ public abstract class Config {
                     if (configName.equals("values")) {
                         config = yaml.loadAs(inStream, clazz);
                     } else {
-                        String string = convertStreamToString(inStream);
-                        string = ConfigInjection.inject(string);
-                        config = yaml.loadAs(string, clazz);
+                        Map<String, Object> configMap = yaml.load(inStream);
+                        config = CentralizedManagement.mergeObject(configMap, clazz);
                     }
                 }
             } catch (IOException ioe) {
@@ -240,9 +238,9 @@ public abstract class Config {
                     if (configName.equals("values")) {
                         config = mapper.readValue(inStream, clazz);
                     } else {
-                        String string = convertStreamToString(inStream);
-                        string = ConfigInjection.inject(string);
-                        config = mapper.readValue(string, clazz);
+                        Map<String, Object> configMap = mapper.readValue(inStream, new TypeReference<HashMap<String, Object>>() {
+                        });
+                        config = CentralizedManagement.mergeObject(configMap, clazz);
                     }
                 }
             } catch (IOException ioe) {
@@ -257,12 +255,9 @@ public abstract class Config {
             String ymlFilename = configName + CONFIG_EXT_YML;
             try (InputStream inStream = getConfigStream(ymlFilename)) {
                 if (inStream != null) {
-                    if (configName.equals("values")) {
-                        config = (Map<String, Object>)yaml.load(inStream);
-                    } else {
-                        String string = convertStreamToString(inStream);
-                        string = ConfigInjection.inject(string);
-                        config = (Map<String, Object>)yaml.load(string);
+                    config = (Map<String, Object>) yaml.load(inStream);
+                    if (!configName.equals("values")) {
+                        config = CentralizedManagement.mergeMap(config);
                     }
                 }
             } catch (IOException ioe) {
@@ -273,12 +268,9 @@ public abstract class Config {
             String yamlFilename = configName + CONFIG_EXT_YAML;
             try (InputStream inStream = getConfigStream(yamlFilename)) {
                 if (inStream != null) {
-                    if (configName.equals("values")) {
-                        config = (Map<String, Object>)yaml.load(inStream);
-                    } else {
-                        String string = convertStreamToString(inStream);
-                        string = ConfigInjection.inject(string);
-                        config = (Map<String, Object>)yaml.load(string);
+                        config = (Map<String, Object>) yaml.load(inStream);
+                    if (!configName.equals("values")) {
+                        config = CentralizedManagement.mergeMap(config);
                     }
                 }
             } catch (IOException ioe) {
@@ -289,14 +281,10 @@ public abstract class Config {
             String configFilename = configName + CONFIG_EXT_JSON;
             try (InputStream inStream = getConfigStream(configFilename)) {
                 if (inStream != null) {
-                    if (configName.equals("values")) {
                         config = mapper.readValue(inStream, new TypeReference<HashMap<String, Object>>() {
                         });
-                    } else {
-                        String string = convertStreamToString(inStream);
-                        string = ConfigInjection.inject(string);
-                        config = mapper.readValue(string, new TypeReference<HashMap<String, Object>>() {
-                        });
+                    if (!configName.equals("values")) {
+                        config = CentralizedManagement.mergeMap(config);
                     }
                 }
             } catch (IOException ioe) {
