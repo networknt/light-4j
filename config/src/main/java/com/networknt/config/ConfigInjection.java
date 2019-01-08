@@ -1,6 +1,7 @@
 package com.networknt.config;
 
 import java.util.Map;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -14,7 +15,7 @@ public class ConfigInjection {
 
     private static Pattern pattern = Pattern.compile("\\$\\{(.*?)\\}");
 
-    public static String inject(String string) {
+    public static Object getInjectValue(String string) {
         Matcher m = pattern.matcher(string);
         StringBuffer sb = new StringBuffer();
         while (m.find()) {
@@ -22,9 +23,10 @@ public class ConfigInjection {
             if (value == null) {
                 throw new ConfigException(
                         m.group(1) + " appears in config file cannot be expanded");
-            }
-            if (value instanceof Integer) {
+            } else if (value instanceof Integer) {
                 value = String.valueOf(value);
+            } else if (value instanceof List || value instanceof Map) {
+                return value;
             }
             m.appendReplacement(sb, (String) value);
         }
