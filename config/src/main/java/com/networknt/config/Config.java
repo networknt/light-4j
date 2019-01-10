@@ -25,10 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -37,15 +34,13 @@ import java.util.concurrent.ConcurrentHashMap;
  * based on FileSystem json files. It can be extended to
  * other sources (database, distributed cache etc.) by providing
  * another jar in the classpath to replace the default implementation.
- *
+ * <p>
  * Config files are loaded in the following sequence:
  * 1. resource/config folder for the default
  * 2. externalized directory specified by light-4j-config-dir
- *
+ * <p>
  * In docker, the config files should be in volume and any update will
  * be picked up the next day morning.
- *
- *
  */
 public abstract class Config {
     public static final String LIGHT_4J_CONFIG_DIR = "light-4j-config-dir";
@@ -94,6 +89,7 @@ public abstract class Config {
 
         // An instance of Jackson ObjectMapper that can be used anywhere else for Json.
         final static ObjectMapper mapper = new ObjectMapper();
+
         static {
             mapper.registerModule(new JavaTimeModule());
             mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
@@ -105,7 +101,6 @@ public abstract class Config {
             Iterator<Config> it;
             it = ServiceLoader.load(Config.class).iterator();
             return it.hasNext() ? it.next() : new FileConfigImpl();
-
         }
 
         // Return instance of Jackson Object Mapper
@@ -127,13 +122,13 @@ public abstract class Config {
         @Override
         public String getStringFromFile(String filename) {
             checkCacheExpiration();
-            String content = (String)configCache.get(filename);
-            if(content == null) {
+            String content = (String) configCache.get(filename);
+            if (content == null) {
                 synchronized (FileConfigImpl.class) {
-                    content = (String)configCache.get(filename);
-                    if(content == null) {
+                    content = (String) configCache.get(filename);
+                    if (content == null) {
                         content = loadStringFromFile(filename);
-                        if(content != null) configCache.put(filename, content);
+                        if (content != null) configCache.put(filename, content);
                     }
                 }
             }
@@ -149,12 +144,12 @@ public abstract class Config {
         public Object getJsonObjectConfig(String configName, Class clazz) {
             checkCacheExpiration();
             Object config = configCache.get(configName);
-            if(config == null) {
+            if (config == null) {
                 synchronized (FileConfigImpl.class) {
                     config = configCache.get(configName);
-                    if(config == null) {
+                    if (config == null) {
                         config = loadObjectConfig(configName, clazz);
-                        if(config != null) configCache.put(configName, config);
+                        if (config != null) configCache.put(configName, config);
                     }
                 }
             }
@@ -164,13 +159,13 @@ public abstract class Config {
         @Override
         public Map<String, Object> getJsonMapConfig(String configName) {
             checkCacheExpiration();
-            Map<String, Object> config = (Map<String, Object>)configCache.get(configName);
-            if(config == null) {
+            Map<String, Object> config = (Map<String, Object>) configCache.get(configName);
+            if (config == null) {
                 synchronized (FileConfigImpl.class) {
-                    config = (Map<String, Object>)configCache.get(configName);
-                    if(config == null) {
+                    config = (Map<String, Object>) configCache.get(configName);
+                    if (config == null) {
                         config = loadMapConfig(configName);
-                        if(config != null) configCache.put(configName, config);
+                        if (config != null) configCache.put(configName, config);
                     }
                 }
             }
@@ -187,16 +182,16 @@ public abstract class Config {
             InputStream inStream = null;
             try {
                 inStream = getConfigStream(filename);
-                if(inStream != null) {
+                if (inStream != null) {
                     content = convertStreamToString(inStream);
                 }
             } catch (Exception ioe) {
                 logger.error("Exception", ioe);
             } finally {
-                if(inStream != null) {
+                if (inStream != null) {
                     try {
                         inStream.close();
-                    } catch(IOException ioe) {
+                    } catch (IOException ioe) {
                         logger.error("IOException", ioe);
                     }
                 }
@@ -209,28 +204,50 @@ public abstract class Config {
 
             String ymlFilename = configName + CONFIG_EXT_YML;
             try (InputStream inStream = getConfigStream(ymlFilename)) {
-                if(inStream != null) {
-                    config = yaml.loadAs(inStream, clazz);
+                if (inStream != null) {
+                    // The values.yaml should be processed by centralized management, since it would cause a dead loop
+                    if (configName.equals("values")) {
+                        config = yaml.loadAs(inStream, clazz);
+                    } else {
+                        // Parse into map first, since map is easier to be manipulated in merging process
+                        Map<String, Object> configMap = yaml.load(inStream);
+                        config = CentralizedManagement.mergeObject(configMap, clazz);
+                    }
                 }
             } catch (IOException ioe) {
                 logger.error("IOException", ioe);
             }
-            if(config != null) return config;
+            if (config != null) return config;
 
             String yamlFilename = configName + CONFIG_EXT_YAML;
             try (InputStream inStream = getConfigStream(yamlFilename)) {
-                if(inStream != null) {
-                    config = yaml.loadAs(inStream, clazz);
+                if (inStream != null) {
+                    // The values.yaml should be processed by centralized management, since it would cause a dead loop
+                    if (configName.equals("values")) {
+                        config = yaml.loadAs(inStream, clazz);
+                    } else {
+                        // Parse into map first, since map is easier to be manipulated in merging process
+                        Map<String, Object> configMap = yaml.load(inStream);
+                        config = CentralizedManagement.mergeObject(configMap, clazz);
+                    }
                 }
             } catch (IOException ioe) {
                 logger.error("IOException", ioe);
             }
-            if(config != null) return config;
+            if (config != null) return config;
 
             String jsonFilename = configName + CONFIG_EXT_JSON;
             try (InputStream inStream = getConfigStream(jsonFilename)) {
-                if(inStream != null) {
-                    config = mapper.readValue(inStream, clazz);
+                if (inStream != null) {
+                    // The values.yaml should be processed by centralized management, since it would cause a dead loop
+                    if (configName.equals("values")) {
+                        config = mapper.readValue(inStream, clazz);
+                    } else {
+                        // Parse into map first, since map is easier to be manipulated in merging process
+                        Map<String, Object> configMap = mapper.readValue(inStream, new TypeReference<HashMap<String, Object>>() {
+                        });
+                        config = CentralizedManagement.mergeObject(configMap, clazz);
+                    }
                 }
             } catch (IOException ioe) {
                 logger.error("IOException", ioe);
@@ -243,28 +260,38 @@ public abstract class Config {
 
             String ymlFilename = configName + CONFIG_EXT_YML;
             try (InputStream inStream = getConfigStream(ymlFilename)) {
-                if(inStream != null) {
-                    config = (Map<String, Object>)yaml.load(inStream);
+                if (inStream != null) {
+                    config = (Map<String, Object>) yaml.load(inStream);
+                    if (!configName.equals("values")) {
+                        config = CentralizedManagement.mergeMap(config);
+                    }
                 }
             } catch (IOException ioe) {
                 logger.error("IOException", ioe);
             }
-            if(config != null) return config;
+            if (config != null) return config;
 
             String yamlFilename = configName + CONFIG_EXT_YAML;
             try (InputStream inStream = getConfigStream(yamlFilename)) {
-                if(inStream != null) {
-                    config = (Map<String, Object>)yaml.load(inStream);
+                if (inStream != null) {
+                        config = (Map<String, Object>) yaml.load(inStream);
+                    if (!configName.equals("values")) {
+                        config = CentralizedManagement.mergeMap(config);
+                    }
                 }
             } catch (IOException ioe) {
                 logger.error("IOException", ioe);
             }
-            if(config != null) return config;
+            if (config != null) return config;
 
             String configFilename = configName + CONFIG_EXT_JSON;
-            try (InputStream inStream = getConfigStream(configFilename)){
-                if(inStream != null) {
-                    config = mapper.readValue(inStream, new TypeReference<HashMap<String, Object>>() {});
+            try (InputStream inStream = getConfigStream(configFilename)) {
+                if (inStream != null) {
+                        config = mapper.readValue(inStream, new TypeReference<HashMap<String, Object>>() {
+                        });
+                    if (!configName.equals("values")) {
+                        config = CentralizedManagement.mergeMap(config);
+                    }
                 }
             } catch (IOException ioe) {
                 logger.error("IOException", ioe);
@@ -275,40 +302,40 @@ public abstract class Config {
         private InputStream getConfigStream(String configFilename) {
 
             InputStream inStream = null;
-            try{
-            	inStream = new FileInputStream(EXTERNALIZED_PROPERTY_DIR + "/" + configFilename);
-            } catch (FileNotFoundException ex){
-                if(logger.isInfoEnabled()) {
+            try {
+                inStream = new FileInputStream(EXTERNALIZED_PROPERTY_DIR + "/" + configFilename);
+            } catch (FileNotFoundException ex) {
+                if (logger.isInfoEnabled()) {
                     logger.info("Unable to load config from externalized folder for " + Encode.forJava(configFilename + " in " + EXTERNALIZED_PROPERTY_DIR));
                 }
             }
-            if(inStream != null) {
-                if(logger.isInfoEnabled()) {
+            if (inStream != null) {
+                if (logger.isInfoEnabled()) {
                     logger.info("Config loaded from externalized folder for " + Encode.forJava(configFilename + " in " + EXTERNALIZED_PROPERTY_DIR));
                 }
                 return inStream;
             }
-            if(logger.isInfoEnabled()) {
+            if (logger.isInfoEnabled()) {
                 logger.info("Trying to load config from classpath directory for file " + Encode.forJava(configFilename));
             }
             inStream = getClass().getClassLoader().getResourceAsStream(configFilename);
-            if(inStream != null) {
-                if(logger.isInfoEnabled()) {
+            if (inStream != null) {
+                if (logger.isInfoEnabled()) {
                     logger.info("config loaded from classpath for " + Encode.forJava(configFilename));
                 }
                 return inStream;
             }
             inStream = getClass().getClassLoader().getResourceAsStream("config/" + configFilename);
-            if(inStream != null) {
-                if(logger.isInfoEnabled()) {
+            if (inStream != null) {
+                if (logger.isInfoEnabled()) {
                     logger.info("Config loaded from default folder for " + Encode.forJava(configFilename));
                 }
                 return inStream;
             }
-            if(configFilename.endsWith(CONFIG_EXT_YML)) {
-                logger.info("Unable to load config " + Encode.forJava(configFilename ) + ". Looking for the same file name with extension yaml...");
-            } else if(configFilename.endsWith(CONFIG_EXT_YAML)) {
-                logger.info("Unable to load config " + Encode.forJava(configFilename ) + ". Looking for the same file name with extension json...");
+            if (configFilename.endsWith(CONFIG_EXT_YML)) {
+                logger.info("Unable to load config " + Encode.forJava(configFilename) + ". Looking for the same file name with extension yaml...");
+            } else if (configFilename.endsWith(CONFIG_EXT_YAML)) {
+                logger.info("Unable to load config " + Encode.forJava(configFilename) + ". Looking for the same file name with extension json...");
             } else {
                 System.out.println("Unable to load config '" + Encode.forJava(configFilename.substring(0, configFilename.indexOf("."))) + "' with extension yml, yaml and json from external config, application config and module config. Please ignore this message if you are sure that your application is not using this config file.");
             }
@@ -326,17 +353,20 @@ public abstract class Config {
         }
 
         private void checkCacheExpiration() {
-            if(System.currentTimeMillis() > cacheExpirationTime) {
+            if (System.currentTimeMillis() > cacheExpirationTime) {
                 clear();
                 logger.info("daily config cache refresh");
                 cacheExpirationTime = getNextMidNightTime();
             }
         }
-
     }
 
     static String convertStreamToString(java.io.InputStream is) {
         java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
         return s.hasNext() ? s.next() : "";
+    }
+
+    static InputStream convertStringToStream(String string) {
+        return new ByteArrayInputStream(string.getBytes());
     }
 }
