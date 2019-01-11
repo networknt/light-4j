@@ -5,7 +5,9 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.Cookie;
 
 import java.util.*;
-
+/**
+ * CookiesDumper is to dump http request/response cookie info to result.
+ */
 public class CookiesDumper extends AbstractDumper implements IRequestDumpable, IResponseDumpable{
     private Map<String, Object> cookieMap = new LinkedHashMap<>();
 
@@ -13,6 +15,10 @@ public class CookiesDumper extends AbstractDumper implements IRequestDumpable, I
         super(config, exchange);
     }
 
+    /**
+     * impl of dumping request cookies to result
+     * @param result A map you want to put dump information to
+     */
     @Override
     public void dumpRequest(Map<String, Object> result) {
         Map<String, Cookie> cookiesMap = exchange.getRequestCookies();
@@ -21,6 +27,10 @@ public class CookiesDumper extends AbstractDumper implements IRequestDumpable, I
 
     }
 
+    /**
+     * impl of dumping response cookies to result
+     * @param result A map you want to put dump information to
+     */
     @Override
     public void dumpResponse(Map<String, Object> result) {
         Map<String, Cookie> cookiesMap = exchange.getResponseCookies();
@@ -47,6 +57,10 @@ public class CookiesDumper extends AbstractDumper implements IRequestDumpable, I
         });
     }
 
+    /**
+     * put cookieMap to result
+     * @param result a Map<String, Object> you want to put dumping info to.
+     */
     @Override
     protected void putDumpInfoTo(Map<String, Object> result) {
         if(this.cookieMap.size() > 0) {

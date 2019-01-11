@@ -6,6 +6,9 @@ import io.undertow.server.HttpServerExchange;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * QueryParametersDumper is to dump http request query parameters info to result.
+ */
 public class QueryParametersDumper extends AbstractDumper implements IRequestDumpable {
     private Map<String, Object> queryParametersMap = new LinkedHashMap<>();
 
@@ -13,6 +16,10 @@ public class QueryParametersDumper extends AbstractDumper implements IRequestDum
         super(config, exchange);
     }
 
+    /**
+     * impl of dumping request query parameter to result
+     * @param result A map you want to put dump information to
+     */
     @Override
     public void dumpRequest(Map<String, Object> result) {
         exchange.getQueryParameters().forEach((k, v) -> {
@@ -25,6 +32,10 @@ public class QueryParametersDumper extends AbstractDumper implements IRequestDum
         this.putDumpInfoTo(result);
     }
 
+    /**
+     * put queryParametersMap to result.
+     * @param result a Map<String, Object> you want to put dumping info to.
+     */
     @Override
     protected void putDumpInfoTo(Map<String, Object> result) {
         if(this.queryParametersMap.size() > 0) {
