@@ -22,8 +22,6 @@ public class HeadersDumper extends AbstractDumper implements IRequestDumpable, I
 
     @Override
     public void dumpRequest(Map<String, Object> result) {
-        if(!config.isRequestHeaderEnabled()) { return; }
-
         HeaderMap headers = exchange.getRequestHeaders();
         dumpHeaders(headers);
         if(config.isMaskEnabled()) {
@@ -34,8 +32,6 @@ public class HeadersDumper extends AbstractDumper implements IRequestDumpable, I
 
     @Override
     public void dumpResponse(Map<String, Object> result) {
-        if(!config.isResponseHeaderEnabled()) { return; }
-
         HeaderMap headers = exchange.getResponseHeaders();
         dumpHeaders(headers);
         if(config.isMaskEnabled()) {
@@ -55,5 +51,15 @@ public class HeadersDumper extends AbstractDumper implements IRequestDumpable, I
                 headerMap.put(headerName, headerValue);
             }
         }));
+    }
+
+    @Override
+    public boolean isApplicableForRequest() {
+        return config.isRequestHeaderEnabled();
+    }
+
+    @Override
+    public boolean isApplicableForResponse() {
+        return config.isResponseHeaderEnabled();
     }
 }

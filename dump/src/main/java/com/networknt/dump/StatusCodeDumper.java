@@ -14,8 +14,6 @@ public class StatusCodeDumper extends AbstractDumper implements IResponseDumpabl
 
     @Override
     public void dumpResponse(Map<String, Object> result) {
-        if(!config.isResponseStatusCodeEnabled()) { return; }
-
         this.statusCodeResult = String.valueOf(exchange.getStatusCode());
         this.putDumpInfoTo(result);
     }
@@ -26,4 +24,10 @@ public class StatusCodeDumper extends AbstractDumper implements IResponseDumpabl
             result.put(DumpConstants.STATUS_CODE, this.statusCodeResult);
         }
     }
+
+    @Override
+    public boolean isApplicableForResponse() {
+        return config.isResponseStatusCodeEnabled();
+    }
+
 }

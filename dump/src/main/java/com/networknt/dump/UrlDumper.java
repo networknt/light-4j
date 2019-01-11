@@ -15,8 +15,6 @@ public class UrlDumper extends AbstractDumper implements IRequestDumpable{
 
     @Override
     public void dumpRequest(Map<String, Object> result) {
-        if(!config.isRequestUrlEnabled()) { return; }
-
         this.url = exchange.getRequestURL();
         if(config.isMaskEnabled()) {
             Mask.maskString(url, "uri");
@@ -29,5 +27,10 @@ public class UrlDumper extends AbstractDumper implements IRequestDumpable{
         if(StringUtils.isNotBlank(this.url)) {
             result.put(DumpConstants.URL, this.url);
         }
+    }
+
+    @Override
+    public boolean isApplicableForRequest() {
+        return config.isRequestUrlEnabled();
     }
 }

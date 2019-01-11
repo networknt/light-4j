@@ -21,7 +21,9 @@ class RootDumper {
 
         Map<String, Object> requestResult = new LinkedHashMap<>();
         for(IRequestDumpable dumper: dumperFactory.createRequestDumpers(dumpConfig, exchange)) {
-            dumper.dumpRequest(requestResult);
+            if(dumper.isApplicableForRequest()){
+                dumper.dumpRequest(requestResult);
+            }
         }
         result.put(DumpConstants.REQUEST, requestResult);
     }
@@ -31,7 +33,9 @@ class RootDumper {
 
         Map<String, Object> responseResult = new LinkedHashMap<>();
         for(IResponseDumpable dumper: dumperFactory.createResponseDumpers(dumpConfig, exchange)) {
-            dumper.dumpResponse(responseResult);
+            if (dumper.isApplicableForResponse()) {
+                dumper.dumpResponse(responseResult);
+            }
         }
         result.put(DumpConstants.RESPONSE, responseResult);
     }

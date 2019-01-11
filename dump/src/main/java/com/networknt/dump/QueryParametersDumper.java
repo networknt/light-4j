@@ -15,8 +15,6 @@ public class QueryParametersDumper extends AbstractDumper implements IRequestDum
 
     @Override
     public void dumpRequest(Map<String, Object> result) {
-        if(!config.isRequestQueryParametersEnabled()) { return; }
-
         exchange.getQueryParameters().forEach((k, v) -> {
             if (config.getRequestFilteredQueryParameters().contains(k)) {
                 //mask query parameter value
@@ -32,5 +30,10 @@ public class QueryParametersDumper extends AbstractDumper implements IRequestDum
         if(this.queryParametersMap.size() > 0) {
             result.put(DumpConstants.QUERY_PARAMETERS, queryParametersMap);
         }
+    }
+
+    @Override
+    public boolean isApplicableForRequest() {
+        return config.isRequestQueryParametersEnabled();
     }
 }
