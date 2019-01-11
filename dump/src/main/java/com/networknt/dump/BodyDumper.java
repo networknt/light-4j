@@ -31,8 +31,6 @@ import java.util.Map;
 
     @Override
     public void dumpRequest(Map<String, Object> result) {
-        if(!config.isRequestBodyEnabled()) { return; }
-
         String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
         //only dump json info
         if (contentType != null && contentType.startsWith("application/json")) {
@@ -50,10 +48,8 @@ import java.util.Map;
         this.putDumpInfoTo(result);
     }
 
-    @Override
+     @Override
     public void dumpResponse(Map<String, Object> result) {
-        if(!config.isRequestBodyEnabled()) { return; }
-
         byte[] responseBodyAttachment = exchange.getAttachment(StoreResponseStreamSinkConduit.RESPONSE);
         if(responseBodyAttachment != null) {
             this.bodyContent = config.isMaskEnabled() ? Mask.maskJson(new ByteArrayInputStream(responseBodyAttachment), "responseBody") : new String(responseBodyAttachment);
@@ -61,7 +57,7 @@ import java.util.Map;
         this.putDumpInfoTo(result);
     }
 
-    private void dumpInputStream(){
+     private void dumpInputStream(){
         //dump request body
         exchange.startBlocking();
         InputStream inputStream = exchange.getInputStream();
@@ -83,4 +79,14 @@ import java.util.Map;
     private void dumpBodyAttachment(Object requestBodyAttachment) {
         this.bodyContent = config.isMaskEnabled() ? Mask.maskJson(requestBodyAttachment, "requestBody") : requestBodyAttachment.toString();
     }
+
+     @Override
+     public boolean isApplicableForRequest() {
+         return config.isRequestBodyEnabled();
+     }
+
+     @Override
+     public boolean isApplicableForResponse() {
+         return config.isResponseBodyEnabled();
+     }
 }

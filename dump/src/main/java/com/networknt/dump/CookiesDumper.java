@@ -15,8 +15,6 @@ public class CookiesDumper extends AbstractDumper implements IRequestDumpable, I
 
     @Override
     public void dumpRequest(Map<String, Object> result) {
-        if(!config.isRequestCookieEnabled()) { return; }
-
         Map<String, Cookie> cookiesMap = exchange.getRequestCookies();
         dumpCookies(cookiesMap, "requestCookies");
         this.putDumpInfoTo(result);
@@ -25,8 +23,6 @@ public class CookiesDumper extends AbstractDumper implements IRequestDumpable, I
 
     @Override
     public void dumpResponse(Map<String, Object> result) {
-        if(!config.isResponseCookieEnabled()) { return; }
-
         Map<String, Cookie> cookiesMap = exchange.getResponseCookies();
         dumpCookies(cookiesMap, "responseCookies");
         this.putDumpInfoTo(result);
@@ -56,5 +52,15 @@ public class CookiesDumper extends AbstractDumper implements IRequestDumpable, I
         if(this.cookieMap.size() > 0) {
             result.put(DumpConstants.COOKIES, cookieMap);
         }
+    }
+
+    @Override
+    public boolean isApplicableForRequest() {
+        return config.isRequestCookieEnabled();
+    }
+
+    @Override
+    public boolean isApplicableForResponse() {
+        return config.isResponseCookieEnabled();
     }
 }
