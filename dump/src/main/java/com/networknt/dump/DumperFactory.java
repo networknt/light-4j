@@ -10,11 +10,22 @@ import java.util.List;
 
 import static com.networknt.dump.DumpConstants.*;
 
+/**
+ * a factory class to create IRequestDumpable dumpers and IResponseDumpable dumpers
+ */
 class DumperFactory {
     private Logger logger = LoggerFactory.getLogger(DumperFactory.class);
+    //list of dumpers that can dump http request info
     private List<String> requestDumpers = Arrays.asList(BODY, COOKIES, HEADERS, QUERY_PARAMETERS, URL);
+    //list of dumpers that can dump http response info
     private List<String> responseDumpers = Arrays.asList(BODY, COOKIES, HEADERS, STATUS_CODE);
 
+    /**
+     * use RequestDumperFactory to create dumpers listed in this.requestDumpers
+     * @param config type: DumpConfig
+     * @param exchange type: HttpServerExchange
+     * @return a list of IRequestDumpable, dumpers can dump http request info
+     */
     public List<IRequestDumpable> createRequestDumpers(DumpConfig config, HttpServerExchange exchange) {
 
         RequestDumperFactory factory = new RequestDumperFactory();
@@ -26,6 +37,12 @@ class DumperFactory {
         return dumpers;
     }
 
+    /**
+     * use ResponseDumperFactory to create dumpers listed in this.responseDumpers
+     * @param config type: DumpConfig
+     * @param exchange type: HttpServerExchange
+     * @return a list of IResponseDumpable, dumpers can dump http response info
+     */
     public List<IResponseDumpable> createResponseDumpers(DumpConfig config, HttpServerExchange exchange) {
         ResponseDumperFactory factory = new ResponseDumperFactory();
         List<IResponseDumpable> dumpers = new ArrayList<>();
@@ -36,7 +53,17 @@ class DumperFactory {
         return dumpers;
     }
 
+    /**
+     * this class is an inner class of DumperFactory, to create IRequestDumpable dumpers which can dump http request info.
+     */
     class RequestDumperFactory{
+        /**
+         * create IRequestDumpable dumper.
+         * @param dumperName dumper name, need it to identify which dumper will be created
+         * @param config type: DumpConfig, needed by dumper constructor
+         * @param exchange type: HttpServerExchange, needed by dumper constructor
+         * @return IRequestDumpable dumper
+         */
         IRequestDumpable create(String dumperName, DumpConfig config, HttpServerExchange exchange) {
             switch (dumperName) {
                 case DumpConstants.BODY:
@@ -56,7 +83,17 @@ class DumperFactory {
         }
     }
 
+    /**
+     * this class is an inner class of DumperFactory, to create IResponseDumpable dumpers which can dump http response info.
+     */
     class ResponseDumperFactory{
+        /**
+         *
+         * @param dumperName dumper name, need it to identify which dumper will be created
+         * @param config type: DumpConfig, needed by dumper constructor
+         * @param exchange type: HttpServerExchange, needed by dumper constructor
+         * @return IRequestDumpable dumper
+         */
         IResponseDumpable create(String dumperName, DumpConfig config, HttpServerExchange exchange) {
             switch (dumperName) {
                 case DumpConstants.BODY:

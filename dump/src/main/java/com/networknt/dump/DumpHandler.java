@@ -73,7 +73,7 @@ public class DumpHandler implements MiddlewareHandler {
         }
         if(isEnabled()) {
             Map<String, Object> result = new LinkedHashMap<>();
-
+            //create rootDumper which will do dumping.
             RootDumper rootDumper = new RootDumper(config, exchange);
             //dump request info into result right away
             rootDumper.dumpRequest(result);
@@ -85,6 +85,7 @@ public class DumpHandler implements MiddlewareHandler {
             //when complete exchange, dump response info to result, and log the result.
             exchange.addExchangeCompleteListener((exchange1, nextListener) ->{
                 rootDumper.dumpResponse(result);
+                //log the result
                 DumpHelper.logResult(result, config);
                 nextListener.proceed();
             });

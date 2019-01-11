@@ -57,6 +57,7 @@ public class StoreResponseStreamSinkConduit extends AbstractStreamSinkConduit<St
             ByteBuffer buf = srcs[i + offs];
             int pos = starts[i];
             int limit = buf.limit();
+            //buf.position() could be later than buf.limit() due to after read the last byte, position will still move to next, but it's now larger than limit.
             while (rem > 0 && pos <= buf.position() && pos < limit) {
                 outputStream.write(buf.get(pos));
                 pos++;
@@ -92,6 +93,7 @@ public class StoreResponseStreamSinkConduit extends AbstractStreamSinkConduit<St
             ByteBuffer buf = srcs[i + offs];
             int pos = starts[i];
             int limit = buf.limit();
+            //buf.position() could be later than buf.limit() due to after read the last byte, position will still move to next, but it's now larger than limit.
             while (rem > 0 && pos <= buf.position() && pos < limit) {
                 outputStream.write(buf.get(pos));
                 pos++;
@@ -103,6 +105,7 @@ public class StoreResponseStreamSinkConduit extends AbstractStreamSinkConduit<St
 
     @Override
     public void terminateWrites() throws IOException {
+        //after finish writes all through conduit, it will reach here, at this time, we put response info
         exchange.putAttachment(RESPONSE, outputStream.toByteArray());
         outputStream = null;
         super.terminateWrites();

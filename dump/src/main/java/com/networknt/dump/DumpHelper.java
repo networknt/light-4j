@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+/**
+ * a helper class for com.networknt.dump, contains impl of logging a Map<String, Object>
+ */
 class DumpHelper {
     private static Logger logger = LoggerFactory.getLogger(DumpHandler.class);
 
@@ -29,6 +32,9 @@ class DumpHelper {
         }
     }
 
+    /**
+     *  this method actually append result to result string
+     */
     private static <T> void _logResult(T result, int level, int indentSize, StringBuilder info) {
         if(result instanceof Map) {
             level += 1;
@@ -54,6 +60,11 @@ class DumpHelper {
         }
     }
 
+    /**
+     *
+     * @param result a Map<String, Object> contains http request/response info which needs to be logged.
+     * @param loggerFunc Consuer<T> getLoggerFuncBasedOnLevel(config.getLogLevel())
+     */
     private static void logResultUsingJson(Map<String, Object> result, Consumer<String> loggerFunc) {
         ObjectMapper mapper = new ObjectMapper();
         String resultJson = "";
@@ -67,6 +78,10 @@ class DumpHelper {
         }
     }
 
+    /**
+     * calculate indent for formatting
+     * @return "   " string of empty spaces
+     */
     private static String getTabBasedOnLevel(int level, int indentSize) {
         StringBuilder sb = new StringBuilder();
         for(int i = 0; i < level; i ++) {
@@ -77,6 +92,10 @@ class DumpHelper {
         return sb.toString();
     }
 
+    /**
+     * @param level type: String, the level the logger will log to
+     * @return Consumer<String>
+     */
     private static Consumer<String> getLoggerFuncBasedOnLevel(String level) {
         switch(level.toUpperCase()) {
             case "ERROR":

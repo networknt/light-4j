@@ -4,6 +4,7 @@ import java.util.Map;
 
 interface IRequestDumpable {
     /**
+     * dump http request info to result
      * @param result A map you want to put dump information to
      */
     void dumpRequest(Map<String, Object> result);

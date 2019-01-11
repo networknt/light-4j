@@ -14,6 +14,10 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
+/**
+ * BodyDumper is to dump http request/response body info to result.
+ * Right now only support json info.
+ */
  class BodyDumper extends AbstractDumper implements IRequestDumpable, IResponseDumpable{
     private static final Logger logger = LoggerFactory.getLogger(BodyDumper.class);
     private String bodyContent = "";
@@ -22,6 +26,10 @@ import java.util.Map;
         super(config, exchange);
     }
 
+    /**
+     * put bodyContent to result
+     * @param result a Map<String, Object> you want to put dumping info to.
+     */
     @Override
     protected void putDumpInfoTo(Map<String, Object> result) {
         if(StringUtils.isNotBlank(this.bodyContent)) {
@@ -29,6 +37,10 @@ import java.util.Map;
         }
     }
 
+    /**
+     * impl of dumping request body to result
+     * @param result A map you want to put dump information to
+     */
     @Override
     public void dumpRequest(Map<String, Object> result) {
         String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
@@ -48,7 +60,11 @@ import java.util.Map;
         this.putDumpInfoTo(result);
     }
 
-     @Override
+    /**
+     * impl of dumping response body to result
+     * @param result A map you want to put dump information to
+     */
+    @Override
     public void dumpResponse(Map<String, Object> result) {
         byte[] responseBodyAttachment = exchange.getAttachment(StoreResponseStreamSinkConduit.RESPONSE);
         if(responseBodyAttachment != null) {
@@ -57,6 +73,9 @@ import java.util.Map;
         this.putDumpInfoTo(result);
     }
 
+    /**
+     * read from input stream, convert it to string, put into this.bodyContent
+     */
      private void dumpInputStream(){
         //dump request body
         exchange.startBlocking();
@@ -76,6 +95,9 @@ import java.util.Map;
         }
     }
 
+    /**
+     * read from body attachment from Body Handler, convert it to string, put into this.bodyContent
+     */
     private void dumpBodyAttachment(Object requestBodyAttachment) {
         this.bodyContent = config.isMaskEnabled() ? Mask.maskJson(requestBodyAttachment, "requestBody") : requestBodyAttachment.toString();
     }

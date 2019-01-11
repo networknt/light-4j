@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * this class is to load dump.yml config file, and map settings to properties of this class.
+ */
 public class DumpConfig {
     private boolean enabled = false;
     private boolean mask = false;
