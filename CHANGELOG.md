@@ -1,7 +1,7 @@
 # Change Log
 
-## [1.5.26](https://github.com/networknt/light-4j/tree/1.5.26) (2019-01-12)
-[Full Changelog](https://github.com/networknt/light-4j/compare/2.0.0-BETA2...1.5.26)
+## [1.5.27](https://github.com/networknt/light-4j/tree/1.5.27) (2019-01-12)
+[Full Changelog](https://github.com/networknt/light-4j/compare/2.0.0-BETA2...1.5.27)
 
 **Closed issues:**
 
