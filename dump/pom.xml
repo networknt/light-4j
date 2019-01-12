@@ -67,7 +67,10 @@
             <artifactId>jose4j</artifactId>
             <version>${version.jose4j}</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>mask</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>ch.qos.logback</groupId>
@@ -88,6 +91,10 @@
             <groupId>com.networknt</groupId>
             <artifactId>correlation</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>body</artifactId>
         </dependency>
     </dependencies>
 

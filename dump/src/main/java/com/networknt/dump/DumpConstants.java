@@ -1,6 +1,6 @@
 package com.networknt.dump;
 
-public class DumpConstants {
+class DumpConstants {
     //CONFIG OPTIONS
     static final String HEADERS = "headers";
     static final String COOKIES = "cookies";
@@ -16,5 +16,9 @@ public class DumpConstants {
     static final String COOKIE_PATH = "path";
     static final String COOKIE_EXPIRES = "expires";
     static final String USE_JSON = "useJson";
-
+    static final String URL = "url";
+    static final String ENABLED = "enabled";
+    static final String MASK = "mask";
+    static final String LOG_LEVEL = "logLevel";
+    static final String COOKIE_VALUE = "value";
 }
