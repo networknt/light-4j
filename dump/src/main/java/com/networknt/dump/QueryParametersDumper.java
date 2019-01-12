@@ -1,52 +1,50 @@
 package com.networknt.dump;
 
+import com.networknt.mask.Mask;
 import io.undertow.server.HttpServerExchange;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class QueryParametersDumper extends AbstractFilterableDumper {
+/**
+ * QueryParametersDumper is to dump http request query parameters info to result.
+ */
+public class QueryParametersDumper extends AbstractDumper implements IRequestDumpable {
     private Map<String, Object> queryParametersMap = new LinkedHashMap<>();
 
-    public QueryParametersDumper(Object parentConfig, HttpServerExchange exchange, IDumpable.HttpMessageType type) {
-        super(parentConfig, exchange, type);
+    public QueryParametersDumper(DumpConfig config, HttpServerExchange exchange) {
+        super(config, exchange);
     }
 
+    /**
+     * impl of dumping request query parameter to result
+     * @param result A map you want to put dump information to
+     */
     @Override
-    public Map<String, Object> getResult() {
-        return this.queryParametersMap;
+    public void dumpRequest(Map<String, Object> result) {
+        exchange.getQueryParameters().forEach((k, v) -> {
+            if (config.getRequestFilteredQueryParameters().contains(k)) {
+                //mask query parameter value
+                String queryParameterValue = config.isMaskEnabled() ? Mask.maskRegex( v.getFirst(), "queryParameter", k) : v.getFirst();
+                queryParametersMap.put(k, queryParameterValue);
+            }
+        });
+        this.putDumpInfoTo(result);
     }
 
+    /**
+     * put queryParametersMap to result.
+     * @param result a Map<String, Object> you want to put dumping info to.
+     */
     @Override
-    public void putResultTo(Map<String, Object> result) {
+    protected void putDumpInfoTo(Map<String, Object> result) {
         if(this.queryParametersMap.size() > 0) {
             result.put(DumpConstants.QUERY_PARAMETERS, queryParametersMap);
         }
     }
 
     @Override
-    protected void loadConfig() {
-        loadEnableConfig(DumpConstants.COOKIES);
-        loadFilterConfig(DumpConstants.FILTERED_QUERY_PARAMETERS);
-    }
-
-    @Override
-    public void dump() {
-        if(isApplicable()) {
-            exchange.getQueryParameters().forEach((k, v) -> {
-                if (!this.filter.contains(k)) {
-                    queryParametersMap.put(k, v.getFirst());
-                }
-            });
-
-        }
-    }
-
-    @Override
-    protected Boolean isApplicable() {
-        if(this.type.equals(IDumpable.HttpMessageType.RESPONSE)) {
-            return false;
-        }
-        return super.isApplicable();
+    public boolean isApplicableForRequest() {
+        return config.isRequestQueryParametersEnabled();
     }
 }
