@@ -1,5 +1,26 @@
 # Change Log
 
+## [1.5.26](https://github.com/networknt/light-4j/tree/1.5.26) (2019-01-12)
+[Full Changelog](https://github.com/networknt/light-4j/compare/2.0.0-BETA2...1.5.26)
+
+**Closed issues:**
+
+- resolve the syntax error in java doc for dump [\#352](https://github.com/networknt/light-4j/issues/352)
+- remove the check exception ConfigException [\#350](https://github.com/networknt/light-4j/issues/350)
+
+**Merged pull requests:**
+
+- \#321 Enhanced config injection to support injecting List and Map [\#349](https://github.com/networknt/light-4j/pull/349) ([jiachen1120](https://github.com/jiachen1120))
+- refactored dump handler, add mask feature to it [\#345](https://github.com/networknt/light-4j/pull/345) ([BalloonWen](https://github.com/BalloonWen))
+
+## [2.0.0-BETA2](https://github.com/networknt/light-4j/tree/2.0.0-BETA2) (2018-12-29)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.25...2.0.0-BETA2)
+
+**Closed issues:**
+
+- add several network related utilities [\#343](https://github.com/networknt/light-4j/issues/343)
+- move JsonMapper from taiji-blockchain to light-4j [\#340](https://github.com/networknt/light-4j/issues/340)
+
 ## [1.5.25](https://github.com/networknt/light-4j/tree/1.5.25) (2018-12-24)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.24...1.5.25)
 
