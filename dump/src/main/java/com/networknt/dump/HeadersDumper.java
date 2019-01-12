@@ -18,7 +18,7 @@ public class HeadersDumper extends AbstractDumper implements IRequestDumpable, I
 
     /**
      * put headerMap to result.
-     * @param result a Map<String, Object> you want to put dumping info to.
+     * @param result a Map you want to put dumping info to.
      */
     @Override
     protected void putDumpInfoTo(Map<String, Object> result) {

@@ -34,7 +34,7 @@ public class QueryParametersDumper extends AbstractDumper implements IRequestDum
 
     /**
      * put queryParametersMap to result.
-     * @param result a Map<String, Object> you want to put dumping info to.
+     * @param result a Map you want to put dumping info to.
      */
     @Override
     protected void putDumpInfoTo(Map<String, Object> result) {

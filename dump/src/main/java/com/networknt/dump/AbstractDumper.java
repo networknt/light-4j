@@ -21,7 +21,7 @@ abstract class AbstractDumper{
 
     /**
      * each dumper should finally put http info to a result passed in. should be called when dump request/response
-     * @param result a Map<String, Object> you want to put dumping info to.
+     * @param result a Map you want to put dumping info to.
      */
     abstract protected void putDumpInfoTo(Map<String, Object> result);
 }
