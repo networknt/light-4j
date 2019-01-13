@@ -31,9 +31,10 @@ public class CentralizedManagement {
     // Search the config map recursively, expand List and Map level by level util no further expand
     private static void merge(Object m1) {
         if (m1 instanceof Map) {
-            Iterator<String> fieldNames = ((Map<String, Object>) m1).keySet().iterator();
+            Iterator<Object> fieldNames = ((Map<Object, Object>) m1).keySet().iterator();
+            String fieldName = null;
             while (fieldNames.hasNext()) {
-                String fieldName = fieldNames.next();
+                fieldName = String.valueOf(fieldNames.next());
                 Object field1 = ((Map<String, Object>) m1).get(fieldName);
                 if (field1 != null) {
                     if (field1 instanceof Map || field1 instanceof List) {
