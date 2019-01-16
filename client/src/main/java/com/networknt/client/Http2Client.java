@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -37,6 +38,7 @@ import org.xnio.ChannelListeners;
 import org.xnio.FutureResult;
 import org.xnio.IoFuture;
 import org.xnio.IoUtils;
+import org.xnio.Option;
 import org.xnio.OptionMap;
 import org.xnio.Options;
 import org.xnio.Xnio;
@@ -96,6 +98,7 @@ public class Http2Client {
     public static int bufferSize;
     public static int DEFAULT_BUFFER_SIZE = 24; // 24*1024 buffer size will be good for most of the app.
     public static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
+    public static final Option<String> CONNECTION_ID = Option.simple(Options.class, "CONNECTION_ID", String.class);
 
     static final String BUFFER_SIZE = "bufferSize";
     static final String TLS = "tls";
@@ -239,17 +242,55 @@ public class Http2Client {
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         ClientProvider provider = getClientProvider(uri);
         final FutureResult<ClientConnection> result = new FutureResult<>();
-        provider.connect(new ClientCallback<ClientConnection>() {
-            @Override
-            public void completed(ClientConnection r) {
-                result.setResult(r);
-            }
+        
+        if (ssl instanceof Light4jXnioSsl) {
+        	final Light4jXnioSsl light4jSSL = (Light4jXnioSsl)ssl;
+        	
+        	final String connectionId = light4jSSL.createConnectionId(uri);
+        	
+        	OptionMap connOptions = OptionMap.builder().addAll(options).set(CONNECTION_ID, connectionId).getMap();
+        	
+            provider.connect(new ClientCallback<ClientConnection>() {
+                @Override
+                public void completed(ClientConnection r) {
+                	if (logger.isDebugEnabled()) {
+                		logger.debug("waiting for handshake..");
+                	}
+                	
+                	if (light4jSSL.isHandshakeDown(connectionId)) {
+                    	if (logger.isDebugEnabled()) {
+                    		logger.debug("handshake is done..");
+                    	}
+                    	
+                		result.setResult(r);
+                	}else {
+                    	if (logger.isDebugEnabled()) {
+                    		logger.debug("handshake failed..");
+                    	}
+                    	
+                		result.setException(new IOException("handshake fialed."));
+                	}
+                }
 
-            @Override
-            public void failed(IOException e) {
-                result.setException(e);
-            }
-        }, bindAddress, uri, ioThread, ssl, bufferPool, options);
+                @Override
+                public void failed(IOException e) {
+                    result.setException(e);
+                }
+            }, bindAddress, uri, ioThread, ssl, bufferPool, connOptions);
+        }else {
+            provider.connect(new ClientCallback<ClientConnection>() {
+                @Override
+                public void completed(ClientConnection r) {
+                    result.setResult(r);
+                }
+
+                @Override
+                public void failed(IOException e) {
+                    result.setException(e);
+                }
+            }, bindAddress, uri, ioThread, ssl, bufferPool, options);        	
+        }
+
         return result.getIoFuture();
     }
 
@@ -766,4 +807,21 @@ public class Http2Client {
         };
     }
 
+    private class SslSafeClientCallback implements ClientCallback<ClientConnection>{
+    	
+    	SslSafeClientCallback(URI uri, XnioSsl ssl){
+    		
+    	}
+
+		@Override
+		public void completed(ClientConnection result) {
+			
+		}
+
+		@Override
+		public void failed(IOException e) {
+			
+		}
+    	
+    }
 }

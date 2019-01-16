@@ -9,6 +9,8 @@ tls:
   verifyHostname: true
   # trust store contains certifictes that server needs. Enable if tls is used.
   loadTrustStore: true
+  # max waiting time of ssl handshake. The default is 1000 milliseconds.
+  handshareTimeout: 1000
   # trust store location can be specified here or system properties javax.net.ssl.trustStore and password javax.net.ssl.trustStorePassword
   trustStore: client.truststore
   # key store contains client key and it should be loaded if two-way ssl is uesed.
