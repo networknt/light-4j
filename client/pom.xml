@@ -29,6 +29,8 @@
     <packaging>jar</packaging>
     <description>A client module that is used by API consumer to call an API or from an API calling another API.
     </description>
+    
+  
 
     <dependencies>
         <dependency>
@@ -64,6 +66,13 @@
             <artifactId>undertow-core</artifactId>
         </dependency>
 
+       <dependency>
+       		<groupId>org.apache.httpcomponents</groupId>
+       		<artifactId>httpclient</artifactId>
+       		<version>${version.httpclient}</version>
+       		<scope>compile</scope>
+       	</dependency>
+
         <dependency>
             <groupId>org.bitbucket.b_c</groupId>
             <artifactId>jose4j</artifactId>
@@ -79,6 +88,8 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
+        
+        
     </dependencies>
 
 </project>

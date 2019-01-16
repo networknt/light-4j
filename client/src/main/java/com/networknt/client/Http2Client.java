@@ -1,9 +1,56 @@
 package com.networknt.client;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ServiceLoader;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+
+import org.owasp.encoder.Encode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xnio.ChannelListeners;
+import org.xnio.FutureResult;
+import org.xnio.IoFuture;
+import org.xnio.IoUtils;
+import org.xnio.OptionMap;
+import org.xnio.Options;
+import org.xnio.Xnio;
+import org.xnio.XnioIoThread;
+import org.xnio.XnioWorker;
+import org.xnio.channels.StreamSinkChannel;
+import org.xnio.ssl.XnioSsl;
+
 import com.networknt.client.oauth.ClientCredentialsRequest;
 import com.networknt.client.oauth.OauthHelper;
 import com.networknt.client.oauth.TokenRequest;
 import com.networknt.client.oauth.TokenResponse;
+import com.networknt.client.ssl.Light4jXnioSsl;
+import com.networknt.client.ssl.X509TrustManagerDecorator;
 import com.networknt.common.DecryptUtil;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
@@ -12,34 +59,20 @@ import com.networknt.exception.ClientException;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
-import io.undertow.client.*;
+
+import io.undertow.client.ClientCallback;
+import io.undertow.client.ClientConnection;
+import io.undertow.client.ClientExchange;
+import io.undertow.client.ClientProvider;
+import io.undertow.client.ClientRequest;
+import io.undertow.client.ClientResponse;
 import io.undertow.connector.ByteBufferPool;
-import io.undertow.protocols.ssl.UndertowXnioSsl;
 import io.undertow.server.DefaultByteBufferPool;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.*;
-import org.owasp.encoder.Encode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xnio.*;
-import org.xnio.channels.StreamSinkChannel;
-import org.xnio.ssl.XnioSsl;
-
-import javax.net.ssl.*;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.InetSocketAddress;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.security.*;
-import java.security.cert.CertificateException;
-import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
+import io.undertow.util.AttachmentKey;
+import io.undertow.util.Headers;
+import io.undertow.util.StringReadChannelListener;
+import io.undertow.util.StringWriteChannelListener;
 
 /**
  * This is a new client module that replaces the old Client module. The old version
@@ -66,6 +99,8 @@ public class Http2Client {
 
     static final String BUFFER_SIZE = "bufferSize";
     static final String TLS = "tls";
+    static final String VERIFY_HOSTNAME="verifyHostname";
+    static final String TRUSTED_NAMES="trustedNames";
     static final String LOAD_TRUST_STORE = "loadTrustStore";
     static final String LOAD_KEY_STORE = "loadKeyStore";
     static final String TRUST_STORE = "trustStore";
@@ -151,7 +186,7 @@ public class Http2Client {
         try {
             final Xnio xnio = Xnio.getInstance();
             WORKER = xnio.createWorker(null, Http2Client.DEFAULT_OPTIONS);
-            SSL = new UndertowXnioSsl(WORKER.getXnio(), OptionMap.EMPTY, BUFFER_POOL, createSSLContext());
+            SSL = new Light4jXnioSsl(WORKER.getXnio(), OptionMap.EMPTY, BUFFER_POOL, createSSLContext());
         } catch (Exception e) {
             logger.error("Exception: ", e);
         }
@@ -175,6 +210,8 @@ public class Http2Client {
         provider.connect(new ClientCallback<ClientConnection>() {
             @Override
             public void completed(ClientConnection r) {
+            	logger.debug("connected.");
+            	
                 result.setResult(r);
             }
 
@@ -508,9 +545,10 @@ public class Http2Client {
                     }
                     if (trustStoreName != null && trustStorePass != null) {
                         KeyStore trustStore = loadKeyStore(trustStoreName, trustStorePass.toCharArray());
+                        
                         TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                         trustManagerFactory.init(trustStore);
-                        trustManagers = trustManagerFactory.getTrustManagers();
+                        trustManagers = X509TrustManagerDecorator.decorate(trustManagerFactory.getTrustManagers(), (Boolean)tlsMap.get(VERIFY_HOSTNAME), (String)tlsMap.get(TRUSTED_NAMES));
                     }
                 }
             } catch (NoSuchAlgorithmException | KeyStoreException e) {
@@ -520,6 +558,7 @@ public class Http2Client {
             try {
                 sslContext = SSLContext.getInstance("TLS");
                 sslContext.init(keyManagers, trustManagers, null);
+                
             } catch (NoSuchAlgorithmException | KeyManagementException e) {
                 throw new IOException("Unable to create and initialise the SSLContext", e);
             }
