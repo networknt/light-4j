@@ -3,6 +3,9 @@
 # Enable Audit
 enabled: true
 
+# Enable mask
+mask: true
+
 # Output response status code
 statusCode: true
 

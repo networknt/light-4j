@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.networknt</groupId>
     <artifactId>light-4j</artifactId>
-    <version>1.5.26</version>
+    <version>1.5.28</version>
     <packaging>pom</packaging>
     <name>Parent POM</name>
     <description>Light 4J Framework Components</description>
@@ -81,7 +81,7 @@
         <version.assertj>3.8.0</version.assertj>
         <version.hdrhistogram>2.1.10</version.hdrhistogram>
         <version.jsr305>3.0.2</version.jsr305>
-        <version.json-schema-validator>0.1.26</version.json-schema-validator>
+        <version.json-schema-validator>1.0.1</version.json-schema-validator>
         <version.zookeeper>3.5.3-beta</version.zookeeper>
         <version.zkclient>0.3</version.zkclient>
         <version.curator>4.0.1</version.curator>
@@ -96,6 +96,7 @@
         <version.oracle>11.2.0.3</version.oracle>
         <version.sqlserver>6.5.1.jre8-preview</version.sqlserver>
         <version.httpclient>4.5.6</version.httpclient>
+        <version.jsonpath>2.2.0</version.jsonpath>
         <versions.maven-version>2.4</versions.maven-version>
         <argLine>-Xmx512m -XX:MaxPermSize=256m</argLine>
     </properties>
@@ -391,6 +392,11 @@
                         <artifactId>jackson-annotations</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>com.jayway.jsonpath</groupId>
+                <artifactId>json-path</artifactId>
+                <version>${version.jsonpath}</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>

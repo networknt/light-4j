@@ -5,42 +5,40 @@ import io.undertow.server.HttpServerExchange;
 
 import java.util.Map;
 
-public class StatusCodeDumper extends AbstractDumper{
+/**
+ * StatusCodeDumper is to dump http response status code info to result.
+ */
+public class StatusCodeDumper extends AbstractDumper implements IResponseDumpable{
     private String statusCodeResult = "";
 
-    public StatusCodeDumper(Object parentConfig, HttpServerExchange exchange, IDumpable.HttpMessageType type) {
-        super(parentConfig, exchange, type);
+    public StatusCodeDumper(DumpConfig config, HttpServerExchange exchange) {
+        super(config, exchange);
     }
 
+    /**
+     * impl of dumping response status code to result
+     * @param result A map you want to put dump information to
+     */
     @Override
-    public String getResult() {
-        return this.statusCodeResult;
+    public void dumpResponse(Map<String, Object> result) {
+        this.statusCodeResult = String.valueOf(exchange.getStatusCode());
+        this.putDumpInfoTo(result);
     }
 
+    /**
+     * put this.statusCodeResult to result
+     * @param result a Map you want to put dumping info to.
+     */
     @Override
-    public void putResultTo(Map<String, Object> result) {
+    protected void putDumpInfoTo(Map<String, Object> result) {
         if(StringUtils.isNotBlank(this.statusCodeResult)) {
             result.put(DumpConstants.STATUS_CODE, this.statusCodeResult);
         }
     }
 
     @Override
-    protected void loadConfig() {
-        loadEnableConfig(DumpConstants.STATUS_CODE);
+    public boolean isApplicableForResponse() {
+        return config.isResponseStatusCodeEnabled();
     }
 
-    @Override
-    public void dump() {
-        if(isApplicable()) {
-            this.statusCodeResult = String.valueOf(exchange.getStatusCode());
-        }
-    }
-
-    @Override
-    protected Boolean isApplicable() {
-        if(this.type.equals(IDumpable.HttpMessageType.REQUEST)) {
-            return false;
-        }
-        return super.isApplicable();
-    }
 }
