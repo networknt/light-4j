@@ -777,22 +777,4 @@ public class Http2Client {
             }
         };
     }
-
-    private class SslSafeClientCallback implements ClientCallback<ClientConnection>{
-    	
-    	SslSafeClientCallback(URI uri, XnioSsl ssl){
-    		
-    	}
-
-		@Override
-		public void completed(ClientConnection result) {
-			
-		}
-
-		@Override
-		public void failed(IOException e) {
-			
-		}
-    	
-    }
 }

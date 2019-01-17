@@ -4,13 +4,12 @@
 bufferSize: 24
 # Settings for TLS
 tls:
-  # if the server is using self-signed certificate, this need to be false. If true, you have to use CA signed certificate
-  # or load truststore that contains the self-signed cretificate.
+  # verify server identity or not
   verifyHostname: true
+  # trused hostnames, service names, service Ids, and so on.
+  trustedNames: test
   # trust store contains certifictes that server needs. Enable if tls is used.
   loadTrustStore: true
-  # max waiting time of ssl handshake. The default is 1000 milliseconds.
-  handshareTimeout: 1000
   # trust store location can be specified here or system properties javax.net.ssl.trustStore and password javax.net.ssl.trustStorePassword
   trustStore: client.truststore
   # key store contains client key and it should be loaded if two-way ssl is uesed.

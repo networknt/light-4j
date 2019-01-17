@@ -26,9 +26,9 @@ public enum EndpointIdentificationAlgorithm {
 	/**
 	 * Choose the algorithm to be used based on configuration.
 	 * 
-	 * @param checkIdentity
-	 * @param trustedNameSet
-	 * @return
+	 * @param checkIdentity - from 'verifyHostName' of the client.yml
+	 * @param trustedNameSet  - from 'trustedNames' of the client.yml
+	 * @return the algorithm to be used.
 	 */
 	public static EndpointIdentificationAlgorithm select(boolean checkIdentity, Set<String> trustedNameSet) {
 		if (checkIdentity) {
@@ -47,8 +47,8 @@ public enum EndpointIdentificationAlgorithm {
 	 * 
 	 * EndpointIdentificationAlgorithm.API is not set because it'll cause unsupported algorithm exceptions
 	 * 
-	 * @param engine
-	 * @param identityAlg
+	 * @param engine - ssl engine
+	 * @param identityAlg - EndpointIdentificationAlgorithm to be used
 	 */
 	public static void setup(SSLEngine engine, EndpointIdentificationAlgorithm identityAlg) {
 		if (null!=engine && EndpointIdentificationAlgorithm.HTTPS==identityAlg) {
@@ -67,8 +67,8 @@ public enum EndpointIdentificationAlgorithm {
 	 * 
 	 * EndpointIdentificationAlgorithm.API is not set because it'll cause unsupported algorithm exceptions
 	 * 
-	 * @param socket
-	 * @param identityAlg
+	 * @param socket - ssl socket
+	 * @param identityAlg - EndpointIdentificationAlgorithm to be used
 	 */
 	public static void setup(Socket socket, EndpointIdentificationAlgorithm identityAlg) {
 		if (null!=socket && socket.isConnected() && socket instanceof SSLSocket

@@ -27,7 +27,6 @@ public class APINameChecker {
 		
 		return false;
 	}
-
 	
     public static boolean verify(final String name, final X509Certificate cert) {
         try {
