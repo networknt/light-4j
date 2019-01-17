@@ -18,7 +18,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -31,6 +30,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
+import org.apache.commons.codec.binary.StringUtils;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +51,6 @@ import com.networknt.client.oauth.ClientCredentialsRequest;
 import com.networknt.client.oauth.OauthHelper;
 import com.networknt.client.oauth.TokenRequest;
 import com.networknt.client.oauth.TokenResponse;
-import com.networknt.client.ssl.Light4jXnioSsl;
 import com.networknt.client.ssl.X509TrustManagerDecorator;
 import com.networknt.common.DecryptUtil;
 import com.networknt.common.SecretConstants;
@@ -68,7 +67,9 @@ import io.undertow.client.ClientExchange;
 import io.undertow.client.ClientProvider;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
+import io.undertow.client.http.Light4jHttpClientProvider;
 import io.undertow.connector.ByteBufferPool;
+import io.undertow.protocols.ssl.UndertowXnioSsl;
 import io.undertow.server.DefaultByteBufferPool;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
@@ -182,14 +183,18 @@ public class Http2Client {
         final Map<String, ClientProvider> map = new HashMap<>();
         for (ClientProvider provider : providers) {
             for (String scheme : provider.handlesSchemes()) {
-                map.put(scheme, provider);
+            	if (StringUtils.equals(scheme, Light4jHttpClientProvider.HTTPS)) {
+            		map.putIfAbsent(scheme, new Light4jHttpClientProvider());
+            	}else {
+            		map.put(scheme, provider);
+            	}
             }
         }
         this.clientProviders = Collections.unmodifiableMap(map);
         try {
             final Xnio xnio = Xnio.getInstance();
             WORKER = xnio.createWorker(null, Http2Client.DEFAULT_OPTIONS);
-            SSL = new Light4jXnioSsl(WORKER.getXnio(), OptionMap.EMPTY, BUFFER_POOL, createSSLContext());
+            SSL = new UndertowXnioSsl(WORKER.getXnio(), OptionMap.EMPTY, BUFFER_POOL, createSSLContext());
         } catch (Exception e) {
             logger.error("Exception: ", e);
         }
@@ -206,15 +211,14 @@ public class Http2Client {
     public IoFuture<ClientConnection> connect(final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         return connect((InetSocketAddress) null, uri, worker, ssl, bufferPool, options);
     }
-
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         ClientProvider provider = getClientProvider(uri);
         final FutureResult<ClientConnection> result = new FutureResult<>();
+        
+    
         provider.connect(new ClientCallback<ClientConnection>() {
             @Override
             public void completed(ClientConnection r) {
-            	logger.debug("connected.");
-            	
                 result.setResult(r);
             }
 
@@ -222,7 +226,8 @@ public class Http2Client {
             public void failed(IOException e) {
                 result.setException(e);
             }
-        }, bindAddress, uri, worker, ssl, bufferPool, options);
+        }, bindAddress, uri, worker, ssl, bufferPool, options);        	
+
         return result.getIoFuture();
     }
 
@@ -242,54 +247,18 @@ public class Http2Client {
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         ClientProvider provider = getClientProvider(uri);
         final FutureResult<ClientConnection> result = new FutureResult<>();
-        
-        if (ssl instanceof Light4jXnioSsl) {
-        	final Light4jXnioSsl light4jSSL = (Light4jXnioSsl)ssl;
-        	
-        	final String connectionId = light4jSSL.createConnectionId(uri);
-        	
-        	OptionMap connOptions = OptionMap.builder().addAll(options).set(CONNECTION_ID, connectionId).getMap();
-        	
-            provider.connect(new ClientCallback<ClientConnection>() {
-                @Override
-                public void completed(ClientConnection r) {
-                	if (logger.isDebugEnabled()) {
-                		logger.debug("waiting for handshake..");
-                	}
-                	
-                	if (light4jSSL.isHandshakeDown(connectionId)) {
-                    	if (logger.isDebugEnabled()) {
-                    		logger.debug("handshake is done..");
-                    	}
-                    	
-                		result.setResult(r);
-                	}else {
-                    	if (logger.isDebugEnabled()) {
-                    		logger.debug("handshake failed..");
-                    	}
-                    	
-                		result.setException(new IOException("handshake fialed."));
-                	}
-                }
 
-                @Override
-                public void failed(IOException e) {
-                    result.setException(e);
-                }
-            }, bindAddress, uri, ioThread, ssl, bufferPool, connOptions);
-        }else {
-            provider.connect(new ClientCallback<ClientConnection>() {
-                @Override
-                public void completed(ClientConnection r) {
-                    result.setResult(r);
-                }
+        provider.connect(new ClientCallback<ClientConnection>() {
+            @Override
+            public void completed(ClientConnection r) {
+                result.setResult(r);
+            }
 
-                @Override
-                public void failed(IOException e) {
-                    result.setException(e);
-                }
-            }, bindAddress, uri, ioThread, ssl, bufferPool, options);        	
-        }
+            @Override
+            public void failed(IOException e) {
+                result.setException(e);
+            }
+        }, bindAddress, uri, ioThread, ssl, bufferPool, options);        	
 
         return result.getIoFuture();
     }
