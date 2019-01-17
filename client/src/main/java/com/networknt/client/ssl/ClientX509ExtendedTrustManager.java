@@ -60,12 +60,10 @@ public class ClientX509ExtendedTrustManager extends X509ExtendedTrustManager imp
 
 	@Override
 	public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
-		EndpointIdentificationAlgorithm.setup(socket, identityAlg);
-		
 		try {
 			extendedTrustManager.checkClientTrusted(chain, authType, socket);
 			
-			APINameChecker.verifyAndThrow(trustedNameSet, chain[0]);
+			doAdditionalCheck(chain[0]);
 		} catch (Throwable t) {
 			SSLUtils.handleTrustValidationErrors(t);
 		}
@@ -73,12 +71,10 @@ public class ClientX509ExtendedTrustManager extends X509ExtendedTrustManager imp
 
 	@Override
 	public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
-		EndpointIdentificationAlgorithm.setup(socket, identityAlg);
-		
 		try {
 			extendedTrustManager.checkServerTrusted(chain, authType, socket);
 			
-			APINameChecker.verifyAndThrow(trustedNameSet, chain[0]);
+			doAdditionalCheck(chain[0]);
 		} catch (Throwable t) {
 			SSLUtils.handleTrustValidationErrors(t);
 		}		
@@ -86,12 +82,10 @@ public class ClientX509ExtendedTrustManager extends X509ExtendedTrustManager imp
 
 	@Override
 	public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine) throws CertificateException {
-		EndpointIdentificationAlgorithm.setup(engine, identityAlg);
-		
 		try {
 			extendedTrustManager.checkClientTrusted(chain, authType, engine);
 			
-			APINameChecker.verifyAndThrow(trustedNameSet, chain[0]);
+			doAdditionalCheck(chain[0]);
 		} catch (Throwable t) {
 			SSLUtils.handleTrustValidationErrors(t);
 		}
@@ -99,15 +93,16 @@ public class ClientX509ExtendedTrustManager extends X509ExtendedTrustManager imp
 
 	@Override
 	public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine) throws CertificateException {
-		EndpointIdentificationAlgorithm.setup(engine, identityAlg);
-		
 		try {
 			extendedTrustManager.checkServerTrusted(chain, authType, engine);
 			
-			APINameChecker.verifyAndThrow(trustedNameSet, chain[0]);
+			doAdditionalCheck(chain[0]);
 		} catch (Throwable t) {
 			SSLUtils.handleTrustValidationErrors(t);
 		}
-		
+	}
+	
+	private void doAdditionalCheck(X509Certificate cert) throws CertificateException{
+		APINameChecker.verifyAndThrow(identityAlg, trustedNameSet, cert);
 	}
 }

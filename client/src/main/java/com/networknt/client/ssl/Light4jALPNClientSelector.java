@@ -24,11 +24,13 @@ import io.undertow.protocols.ssl.SslConduit;
 import io.undertow.protocols.ssl.UndertowXnioSsl;
 import io.undertow.util.ImmediatePooled;
 
+/**
+ * Customized ALPNClientSelector for handling TLS handshake for HTTP2.
+ * 
+ * @author Daniel Zhao
+ *
+ */
 public class Light4jALPNClientSelector {
-	private Light4jALPNClientSelector() {
-		
-	}
-	
     public static void runAlpn(final SslConnection sslConnection, final ChannelListener<SslConnection> fallback, final ClientCallback<ClientConnection> failedListener, final ALPNProtocol... details) {
         SslConduit conduit = UndertowXnioSsl.getSslConduit(sslConnection);
 

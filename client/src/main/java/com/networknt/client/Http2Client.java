@@ -30,7 +30,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
-import org.apache.commons.codec.binary.StringUtils;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,6 +66,7 @@ import io.undertow.client.ClientExchange;
 import io.undertow.client.ClientProvider;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
+import io.undertow.client.http.Light4jHttp2ClientProvider;
 import io.undertow.client.http.Light4jHttpClientProvider;
 import io.undertow.connector.ByteBufferPool;
 import io.undertow.protocols.ssl.UndertowXnioSsl;
@@ -183,8 +183,10 @@ public class Http2Client {
         final Map<String, ClientProvider> map = new HashMap<>();
         for (ClientProvider provider : providers) {
             for (String scheme : provider.handlesSchemes()) {
-            	if (StringUtils.equals(scheme, Light4jHttpClientProvider.HTTPS)) {
+            	if (Light4jHttpClientProvider.HTTPS.equalsIgnoreCase(scheme)) {
             		map.putIfAbsent(scheme, new Light4jHttpClientProvider());
+            	}else if (Light4jHttp2ClientProvider.HTTP2.equalsIgnoreCase(scheme)){
+            		map.putIfAbsent(scheme, new Light4jHttp2ClientProvider());
             	}else {
             		map.put(scheme, provider);
             	}

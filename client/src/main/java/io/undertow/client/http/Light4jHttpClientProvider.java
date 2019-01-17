@@ -31,7 +31,7 @@ import io.undertow.client.http2.Http2ClientProvider;
 import io.undertow.connector.ByteBufferPool;
 
 /**
- * Customized http client provider for handling https handshake.
+ * Customized HttpClientProvider for handling TLS handshake for HTTPS.
  * 
  * This class needs to be in the package {@link io.undertow.client.http} in order to use HttpClientConnection.
  * 
@@ -44,7 +44,7 @@ public class Light4jHttpClientProvider implements ClientProvider {
 
    @Override
    public Set<String> handlesSchemes() {
-       return new HashSet<>(Arrays.asList(new String[]{"http", "https"}));
+       return new HashSet<>(Arrays.asList(new String[]{HTTP, HTTPS}));
    }
 
    @Override
@@ -59,7 +59,7 @@ public class Light4jHttpClientProvider implements ClientProvider {
 
    @Override
    public void connect(ClientCallback<ClientConnection> listener, InetSocketAddress bindAddress, URI uri, XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
-       if (uri.getScheme().equals("https")) {
+       if (uri.getScheme().equals(HTTPS)) {
            if (ssl == null) {
                listener.failed(UndertowMessages.MESSAGES.sslWasNull());
                return;
@@ -81,7 +81,7 @@ public class Light4jHttpClientProvider implements ClientProvider {
 
    @Override
    public void connect(ClientCallback<ClientConnection> listener, InetSocketAddress bindAddress, URI uri, XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
-       if (uri.getScheme().equals("https")) {
+       if (uri.getScheme().equals(HTTPS)) {
            if (ssl == null) {
                listener.failed(UndertowMessages.MESSAGES.sslWasNull());
                return;
@@ -121,9 +121,7 @@ public class Light4jHttpClientProvider implements ClientProvider {
        };
    }
 
-
    private void handleConnected(final StreamConnection connection, final ClientCallback<ClientConnection> listener, final ByteBufferPool bufferPool, final OptionMap options, URI uri) {
-
        boolean h2 = options.get(UndertowOptions.ENABLE_HTTP2, false);
        if(connection instanceof SslConnection && (h2)) {
            List<ALPNClientSelector.ALPNProtocol> protocolList = new ArrayList<>();

@@ -7,11 +7,7 @@ import java.util.Set;
 
 import javax.net.ssl.X509TrustManager;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class CientX509TrustManager implements X509TrustManager{
-	private static final Logger logger = LoggerFactory.getLogger(CientX509TrustManager.class);
 	private final X509TrustManager trustManager;
 	private final Set<String> trustedNameSet;
 	private final EndpointIdentificationAlgorithm identityAlg;
@@ -27,19 +23,33 @@ public class CientX509TrustManager implements X509TrustManager{
 	}
 
 	@Override
-	public void checkClientTrusted(X509Certificate[] var1, String var2) throws CertificateException {
-		// TODO Auto-generated method stub
-		
+	public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+		try {
+			trustManager.checkClientTrusted(chain, authType);
+			
+			doAdditionalCheck(chain[0]);
+		} catch (Throwable t) {
+			SSLUtils.handleTrustValidationErrors(t);
+		}		
 	}
 
 	@Override
-	public void checkServerTrusted(X509Certificate[] var1, String var2) throws CertificateException {
-		// TODO Auto-generated method stub
-		
+	public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+		try {
+			trustManager.checkServerTrusted(chain, authType);
+			
+			doAdditionalCheck(chain[0]);
+		} catch (Throwable t) {
+			SSLUtils.handleTrustValidationErrors(t);
+		}			
 	}
 
 	@Override
 	public X509Certificate[] getAcceptedIssuers() {
 		return trustManager.getAcceptedIssuers();
+	}
+	
+	private void doAdditionalCheck(X509Certificate cert) throws CertificateException{
+		APINameChecker.verifyAndThrow(identityAlg, trustedNameSet, cert);
 	}
 }
