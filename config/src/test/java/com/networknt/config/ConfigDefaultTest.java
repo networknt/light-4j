@@ -27,6 +27,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -35,6 +36,8 @@ import java.util.Map;
 public class ConfigDefaultTest extends TestCase {
     Config config = null;
     Map<String, Object> testMap = null;
+    String OS = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
+
 
     @Override
     public void setUp() throws Exception {
@@ -62,7 +65,9 @@ public class ConfigDefaultTest extends TestCase {
         // case1: regular config
         Assert.assertEquals("default config", configMap.get("value"));
         // case2: config with environment variable
-        Assert.assertEquals(System.getenv("HOME"), configMap.get("value1"));
+        if (!OS.startsWith("windows")) {
+            Assert.assertEquals(System.getenv("HOME"), configMap.get("value1"));
+        }
         // case3: escape from injecting environment variable
         Assert.assertEquals("${ESCAPE}", configMap.get("value2"));
         // case4: override to map with centralized file
@@ -79,7 +84,9 @@ public class ConfigDefaultTest extends TestCase {
         // case1: regular config
         Assert.assertEquals("default config", tc.getValue());
         // case2: config with environment variable
-        Assert.assertEquals(System.getenv("HOME"), tc.getValue1());
+        if (!OS.startsWith("windows")) {
+            Assert.assertEquals(System.getenv("HOME"), tc.getValue1());
+        }
         // case3: escape from injecting environment variable
         Assert.assertEquals("${ESCAPE}", tc.getValue2());
         // case4: override to map with centralized file
@@ -96,7 +103,9 @@ public class ConfigDefaultTest extends TestCase {
         // case1: regular config
         Assert.assertEquals("default config", configMap.get("value"));
         // case2: config with environment variable
-        Assert.assertEquals(System.getenv("HOME"), configMap.get("value1"));
+        if (!OS.startsWith("windows")) {
+            Assert.assertEquals(System.getenv("HOME"), configMap.get("value1"));
+        }
         // case3: escape from injecting environment variable
         Assert.assertEquals("${ESCAPE}", configMap.get("value2"));
         // case4: override to map with centralized file
@@ -113,7 +122,9 @@ public class ConfigDefaultTest extends TestCase {
         // case1: regular config
         Assert.assertEquals("default config", tc.getValue());
         // case2: config with environment variable
-        Assert.assertEquals(System.getenv("HOME"), tc.getValue1());
+        if (!OS.startsWith("windows")) {
+            Assert.assertEquals(System.getenv("HOME"), tc.getValue1());
+        }
         // case3: escape from injecting environment variable
         Assert.assertEquals("${ESCAPE}", tc.getValue2());
         // case4: override to map with centralized file
@@ -130,7 +141,9 @@ public class ConfigDefaultTest extends TestCase {
         // case1: regular config
         Assert.assertEquals("default config", configMap.get("value"));
         // case2: config with environment variable
-        Assert.assertEquals(System.getenv("HOME"), configMap.get("value1"));
+        if (!OS.startsWith("windows")) {
+            Assert.assertEquals(System.getenv("HOME"), configMap.get("value1"));
+        }
         // case3: escape from injecting environment variable
         Assert.assertEquals("${ESCAPE}", configMap.get("value2"));
         // case4: override to map with centralized file
@@ -147,7 +160,9 @@ public class ConfigDefaultTest extends TestCase {
         // case1: regular config
         Assert.assertEquals("default config", tc.getValue());
         // case2: config with environment variable
-        Assert.assertEquals(System.getenv("HOME"), tc.getValue1());
+        if (!OS.startsWith("windows")) {
+            Assert.assertEquals(System.getenv("HOME"), tc.getValue1());
+        }
         // case3: escape from injecting environment variable
         Assert.assertEquals("${ESCAPE}", tc.getValue2());
         // case4: override to map with centralized file
