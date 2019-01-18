@@ -23,6 +23,6 @@ This specifies a comma delimited list of trusted names. These names are used to 
 
 # enhancement of TLS handshake for HTTP2 in undertow
 
-When using undertow HTTP2 with Java 8, connections are exposed to users before the handshaking is completed. This might because Application-Layer Protocol Negotiation (ALPN) protocol is not supported in Java 8. Although, Undertow provides a set of `ALPNHack*` classes to provide ALPN services for Java 8. But it looks like that is not enough.
+When using undertow HTTP2 with Java 8, connections are exposed to users before the handshaking is completed. This might because Application-Layer Protocol Negotiation (ALPN) protocol is not supported in Java 8. Undertow provides a set of `ALPNHack*` classes to provide ALPN services for Java 8. But it looks like that is not enough.
 
 As the handshaking is controlled privately in undertow classes, we end up rewrote the three undertow classes, ALPNClientSelector, Http2ClientProvider, and HttpClientProvider. In the re-written classes, connections are only returned to users after handshaking is completed successfully. If the handshaking fails, a `ClosedChannelException` will be thrown. These classes are meant to be used with Java 8 only and need to be reviewed if Java 9 or later is used.
