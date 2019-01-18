@@ -51,7 +51,9 @@ public enum EndpointIdentificationAlgorithm {
 	 * @param identityAlg - EndpointIdentificationAlgorithm to be used
 	 */
 	public static void setup(SSLEngine engine, EndpointIdentificationAlgorithm identityAlg) {
-		if (null!=engine && EndpointIdentificationAlgorithm.HTTPS==identityAlg) {
+		if (null!=engine 
+				&& null!= identityAlg
+				&& EndpointIdentificationAlgorithm.API!=identityAlg) {
 			SSLParameters parameters = engine.getSSLParameters();
 			String existingAlgorithm = parameters.getEndpointIdentificationAlgorithm();
 			
@@ -72,7 +74,8 @@ public enum EndpointIdentificationAlgorithm {
 	 */
 	public static void setup(Socket socket, EndpointIdentificationAlgorithm identityAlg) {
 		if (null!=socket && socket.isConnected() && socket instanceof SSLSocket
-				&& EndpointIdentificationAlgorithm.HTTPS==identityAlg) {
+				&& null!=identityAlg
+				&& EndpointIdentificationAlgorithm.API!=identityAlg) {
 			SSLSocket sslSocket = (SSLSocket)socket;
 			
 			SSLParameters parameters = sslSocket.getSSLParameters();

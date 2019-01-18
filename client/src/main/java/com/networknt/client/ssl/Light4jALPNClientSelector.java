@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.net.ssl.SSLEngine;
@@ -13,6 +14,9 @@ import org.xnio.ChannelListener;
 import org.xnio.channels.StreamSourceChannel;
 import org.xnio.conduits.PushBackStreamSourceConduit;
 import org.xnio.ssl.SslConnection;
+
+import com.networknt.client.Http2Client;
+import com.networknt.config.Config;
 
 import io.undertow.client.ALPNClientSelector;
 import io.undertow.client.ALPNClientSelector.ALPNProtocol;
@@ -31,8 +35,17 @@ import io.undertow.util.ImmediatePooled;
  *
  */
 public class Light4jALPNClientSelector {
+	@SuppressWarnings("unchecked")
+	private static final Map<String, Object> TLS_CONFIG = (Map<String, Object>)Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME).get(Http2Client.TLS);
+	
     public static void runAlpn(final SslConnection sslConnection, final ChannelListener<SslConnection> fallback, final ClientCallback<ClientConnection> failedListener, final ALPNProtocol... details) {
         SslConduit conduit = UndertowXnioSsl.getSslConduit(sslConnection);
+        SSLEngine engine = UndertowXnioSsl.getSslEngine(sslConnection);
+        
+    	// set ssl parameters
+        Set<String> trustedNameSet = SSLUtils.resolveTrustedNames((String)TLS_CONFIG.get(Http2Client.TRUSTED_NAMES));
+        EndpointIdentificationAlgorithm alg = EndpointIdentificationAlgorithm.select((Boolean)TLS_CONFIG.get(Http2Client.VERIFY_HOSTNAME), trustedNameSet);
+    	EndpointIdentificationAlgorithm.setup(engine, alg);
 
         final ALPNProvider provider = ALPNManager.INSTANCE.getProvider(conduit.getSSLEngine());
         if (provider == null) {
@@ -51,10 +64,6 @@ public class Light4jALPNClientSelector {
         final AtomicReference<Boolean> connClosed = new AtomicReference<>(false);
 
         try {
-        	// set ssl parameters
-        	EndpointIdentificationAlgorithm.setup(sslEngine, EndpointIdentificationAlgorithm.HTTPS);
-        	
-            sslConnection.startHandshake();
             sslConnection.getHandshakeSetter().set(new ChannelListener<SslConnection>() {
                 @Override
                 public void handleEvent(SslConnection channel) {
@@ -74,6 +83,8 @@ public class Light4jALPNClientSelector {
                     connClosed.set(true);
                 }
             });
+            
+            sslConnection.startHandshake();
             
             sslConnection.getSourceChannel().getReadSetter().set(new ChannelListener<StreamSourceChannel>() {
                 @Override
