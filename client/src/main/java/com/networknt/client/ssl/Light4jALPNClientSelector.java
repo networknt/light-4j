@@ -132,7 +132,7 @@ public class Light4jALPNClientSelector {
                             sslConnection.getSourceChannel().suspendReads();
                             fallback.handleEvent(sslConnection);
                             return;
-                        } else {// modification of ALPNClientSelector for JDK8. need to check for handshake results.
+                        } else {// modification of ALPNClientSelector for JDK8. need to check handshake results.
                         	if (handshakeDone.get()) {
                                 sslConnection.getSourceChannel().suspendReads();
                                 details.getSelected().handleEvent(sslConnection);                        		
