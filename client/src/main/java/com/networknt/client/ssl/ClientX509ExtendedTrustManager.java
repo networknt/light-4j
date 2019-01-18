@@ -11,18 +11,7 @@ import javax.net.ssl.X509ExtendedTrustManager;
 import javax.net.ssl.X509TrustManager;
 
 /**
- * This trust manager is created due to the fact that the identity check is not enabled in X509TrustManager by default.
- * There are two approaches to enable the identity check:
- * 1. Customize SSLContext, SSLContextSpi, and SSLSocketFactory to set EndpointIdentificationAlgorithm for SSLEngine and SSLSocket once they are created.
- * 2. Customize the X509TrustManager to set EndpointIdentificationAlgorithm for SSLEngine and SSLSocket before the validation is started.
- * 
- * We prefer approach 2 over approach 1 for two reasons:
- * a. Approach 1 requires more changes, including 3 customized classes and tens of methods. With approach 2, all required changes are in this class.
- * b. Approach 1 is not easy to understand or debug since it's not obvious why the algorithm needs to be set. With approach 2, the algorithm is set right before where it is used.
- * 
- * In addition, this class also adds logs for validation failures (i.e, CertificateException). These failures are swallowed within a multi-thread context (e.g., undertow).
- * 
- * Note: Trust manager needs to be an instance of X509ExtendedTrustManager in order to accomplish identify check. 
+ * Customized X509ExtendedTrustManager
  * 
  * @see javax.net.ssl.X509ExtendedTrustManager
  * @author Daniel Zhao

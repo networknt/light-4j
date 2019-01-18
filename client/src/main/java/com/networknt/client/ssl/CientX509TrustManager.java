@@ -7,6 +7,13 @@ import java.util.Set;
 
 import javax.net.ssl.X509TrustManager;
 
+/**
+ * Customized X509TrustManager. 
+ * Note: X509TrustManagers are eventually converted to X509ExtendedTrustManagers by sun.security.ssl.SSLContextImpl.AbstractTrustManagerWrapper
+ * 
+ * @author Daniel Zhao
+ *
+ */
 public class CientX509TrustManager implements X509TrustManager{
 	private final X509TrustManager trustManager;
 	private final Set<String> trustedNameSet;

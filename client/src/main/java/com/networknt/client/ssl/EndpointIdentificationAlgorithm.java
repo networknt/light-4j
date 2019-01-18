@@ -10,10 +10,10 @@ import javax.net.ssl.SSLSocket;
 import com.networknt.utility.StringUtils;
 
 /**
- * This Enum is used to support endpoint identification algorithms LDAPS (RFC 2818), HTTPS (RFC 2818), and API.
+ * This Enum is used to support endpoint identification algorithms LDAPS (RFC 2818), HTTPS (RFC 2818), and APIS.
  * 
  * HTTPS and LDAPS are standard algorithms, see {@link javax.net.ssl.SSLParameters#setEndpointIdentificationAlgorithm(String)}.
- * API is a custom algorithm for server identity check in light-4j.
+ * APIS is a custom algorithm for server identity check in light-4j.
  * 
  * @author Daniel Zhao
  *
@@ -45,7 +45,7 @@ public enum EndpointIdentificationAlgorithm {
 	/**
 	 * set EndpointIdentificationAlgorithm to SSLEngine
 	 * 
-	 * EndpointIdentificationAlgorithm.API is not set because it'll cause unsupported algorithm exceptions
+	 * EndpointIdentificationAlgorithm.APIS is not set because it'll cause unsupported algorithm exceptions
 	 * 
 	 * @param engine - ssl engine
 	 * @param identityAlg - EndpointIdentificationAlgorithm to be used
@@ -67,7 +67,7 @@ public enum EndpointIdentificationAlgorithm {
 	/**
 	 * set EndpointIdentificationAlgorithm to SSLSocket
 	 * 
-	 * EndpointIdentificationAlgorithm.API is not set because it'll cause unsupported algorithm exceptions
+	 * EndpointIdentificationAlgorithm.APIS is not set because it'll cause unsupported algorithm exceptions
 	 * 
 	 * @param socket - ssl socket
 	 * @param identityAlg - EndpointIdentificationAlgorithm to be used

@@ -37,7 +37,6 @@ import org.xnio.ChannelListeners;
 import org.xnio.FutureResult;
 import org.xnio.IoFuture;
 import org.xnio.IoUtils;
-import org.xnio.Option;
 import org.xnio.OptionMap;
 import org.xnio.Options;
 import org.xnio.Xnio;
@@ -99,7 +98,6 @@ public class Http2Client {
     public static int bufferSize;
     public static int DEFAULT_BUFFER_SIZE = 24; // 24*1024 buffer size will be good for most of the app.
     public static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
-    public static final Option<String> CONNECTION_ID = Option.simple(Options.class, "CONNECTION_ID", String.class);
     public static final String TLS = "tls";
     public static final String VERIFY_HOSTNAME="verifyHostname";
     public static final String TRUSTED_NAMES="trustedNames";    
