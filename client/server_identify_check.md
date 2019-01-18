@@ -19,7 +19,7 @@ This specifies whether server identify check is enabled or not.
 
 * String trustedNames
 
-This specifies a comma delimited list of trusted names. These names are used to do the server identity check if configured. If this is not configured (i.e., trustedNames is blank), the standartd algorithm are used. That is, server identify check is done using hostnames.
+This specifies a comma delimited list of trusted names. These names are used to do the server identity check if configured. If this is not configured (i.e., trustedNames is blank), the standard algorithm are used. That is, server identify check is done using hostnames.
 
 # enhancement of TLS handshake for HTTP2 in undertow
 
