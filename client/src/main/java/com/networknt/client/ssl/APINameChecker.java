@@ -15,7 +15,7 @@ public class APINameChecker {
 	private static final DefaultHostnameVerifier verifier = new DefaultHostnameVerifier();
 	
 	public static void verifyAndThrow(EndpointIdentificationAlgorithm identityAlg, final Set<String> nameSet, final X509Certificate cert) throws CertificateException{
-		if (EndpointIdentificationAlgorithm.API==identityAlg && !verify(nameSet, cert)) {
+		if (EndpointIdentificationAlgorithm.APIS==identityAlg && !verify(nameSet, cert)) {
 			throw new CertificateException("No name matching " + nameSet + " found");
 		}
 	}

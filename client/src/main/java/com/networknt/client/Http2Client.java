@@ -183,13 +183,7 @@ public class Http2Client {
         final Map<String, ClientProvider> map = new HashMap<>();
         for (ClientProvider provider : providers) {
             for (String scheme : provider.handlesSchemes()) {
-            	if (Light4jHttpClientProvider.HTTPS.equalsIgnoreCase(scheme)) {
-            		map.putIfAbsent(scheme, new Light4jHttpClientProvider());
-            	}else if (Light4jHttp2ClientProvider.HTTP2.equalsIgnoreCase(scheme)){
-            		map.putIfAbsent(scheme, new Light4jHttp2ClientProvider());
-            	}else {
-            		map.put(scheme, provider);
-            	}
+            	addProvider(map, scheme, provider);
             }
         }
         this.clientProviders = Collections.unmodifiableMap(map);
@@ -200,6 +194,20 @@ public class Http2Client {
         } catch (Exception e) {
             logger.error("Exception: ", e);
         }
+    }
+    
+    private void addProvider(Map<String, ClientProvider> map, String scheme, ClientProvider provider) {
+    	if (System.getProperty("java.version").startsWith("1.8.")) {// Java 8
+        	if (Light4jHttpClientProvider.HTTPS.equalsIgnoreCase(scheme)) {
+        		map.putIfAbsent(scheme, new Light4jHttpClientProvider());
+        	}else if (Light4jHttp2ClientProvider.HTTP2.equalsIgnoreCase(scheme)){
+        		map.putIfAbsent(scheme, new Light4jHttp2ClientProvider());
+        	}else {
+        		map.put(scheme, provider);
+        	}
+    	}else {
+    		map.put(scheme, provider);
+    	}
     }
 
     public IoFuture<ClientConnection> connect(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {

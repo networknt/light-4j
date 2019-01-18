@@ -21,7 +21,7 @@ import com.networknt.utility.StringUtils;
 public enum EndpointIdentificationAlgorithm {
 	HTTPS,
 	LDAPS,
-	API;
+	APIS;
 	
 	/**
 	 * Choose the algorithm to be used based on configuration.
@@ -35,7 +35,7 @@ public enum EndpointIdentificationAlgorithm {
 			if (trustedNameSet.isEmpty()) {
 				return EndpointIdentificationAlgorithm.HTTPS;
 			}else {
-				return EndpointIdentificationAlgorithm.API;
+				return EndpointIdentificationAlgorithm.APIS;
 			}
 		}
 		
@@ -53,7 +53,7 @@ public enum EndpointIdentificationAlgorithm {
 	public static void setup(SSLEngine engine, EndpointIdentificationAlgorithm identityAlg) {
 		if (null!=engine 
 				&& null!= identityAlg
-				&& EndpointIdentificationAlgorithm.API!=identityAlg) {
+				&& EndpointIdentificationAlgorithm.APIS!=identityAlg) {
 			SSLParameters parameters = engine.getSSLParameters();
 			String existingAlgorithm = parameters.getEndpointIdentificationAlgorithm();
 			
@@ -75,7 +75,7 @@ public enum EndpointIdentificationAlgorithm {
 	public static void setup(Socket socket, EndpointIdentificationAlgorithm identityAlg) {
 		if (null!=socket && socket.isConnected() && socket instanceof SSLSocket
 				&& null!=identityAlg
-				&& EndpointIdentificationAlgorithm.API!=identityAlg) {
+				&& EndpointIdentificationAlgorithm.APIS!=identityAlg) {
 			SSLSocket sslSocket = (SSLSocket)socket;
 			
 			SSLParameters parameters = sslSocket.getSSLParameters();
