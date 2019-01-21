@@ -10,7 +10,7 @@ import javax.net.ssl.SSLSocket;
 import com.networknt.utility.StringUtils;
 
 /**
- * This Enum is used to support endpoint identification algorithms LDAPS (RFC 2818), HTTPS (RFC 2818), and APIS.
+ * This Enum is used to support endpoint identification algorithms LDAPS (RFC 2830), HTTPS (RFC 2818), and APIS.
  * 
  * HTTPS and LDAPS are standard algorithms, see {@link javax.net.ssl.SSLParameters#setEndpointIdentificationAlgorithm(String)}.
  * APIS is a custom algorithm for server identity check in light-4j.

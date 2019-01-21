@@ -4,14 +4,15 @@ import java.net.Socket;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Objects;
-import java.util.Set;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.X509ExtendedTrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import com.networknt.client.Http2Client;
+
 /**
- * Customized X509ExtendedTrustManager
+ * Customized implementation of {@link javax.net.ssl.X509ExtendedTrustManager} to support validation of server identity using given trusted names.
  * 
  * @see javax.net.ssl.X509ExtendedTrustManager
  * @author Daniel Zhao
@@ -19,17 +20,9 @@ import javax.net.ssl.X509TrustManager;
  */
 public class ClientX509ExtendedTrustManager extends X509ExtendedTrustManager implements X509TrustManager {
 	private final X509ExtendedTrustManager extendedTrustManager;
-	private final Set<String> trustedNameSet;
-	private final EndpointIdentificationAlgorithm identityAlg;
 	
 	public ClientX509ExtendedTrustManager(X509ExtendedTrustManager trustManager) {
-		this(trustManager, false, null);
-	}
-	
-	public ClientX509ExtendedTrustManager(X509ExtendedTrustManager trustManager, boolean checkIdentity, String trustedNames) {
 		this.extendedTrustManager = Objects.requireNonNull(trustManager);
-		trustedNameSet = SSLUtils.resolveTrustedNames(trustedNames);
-		identityAlg = EndpointIdentificationAlgorithm.select(checkIdentity, trustedNameSet);
 	}
 	
 	@Override
@@ -92,6 +85,6 @@ public class ClientX509ExtendedTrustManager extends X509ExtendedTrustManager imp
 	}
 	
 	private void doAdditionalCheck(X509Certificate cert) throws CertificateException{
-		APINameChecker.verifyAndThrow(identityAlg, trustedNameSet, cert);
+		APINameChecker.verifyAndThrow(Http2Client.TLS_CONFIG.getEndpointIdentificationAlgorithm(), Http2Client.TLS_CONFIG.getTrustedNameSet(), cert);
 	}
 }

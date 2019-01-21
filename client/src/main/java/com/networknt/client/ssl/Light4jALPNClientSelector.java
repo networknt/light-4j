@@ -5,7 +5,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.net.ssl.SSLEngine;
@@ -16,7 +15,6 @@ import org.xnio.conduits.PushBackStreamSourceConduit;
 import org.xnio.ssl.SslConnection;
 
 import com.networknt.client.Http2Client;
-import com.networknt.config.Config;
 
 import io.undertow.client.ALPNClientSelector;
 import io.undertow.client.ALPNClientSelector.ALPNProtocol;
@@ -35,17 +33,28 @@ import io.undertow.util.ImmediatePooled;
  *
  */
 public class Light4jALPNClientSelector {
-	@SuppressWarnings("unchecked")
-	private static final Map<String, Object> TLS_CONFIG = (Map<String, Object>)Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME).get(Http2Client.TLS);
 	
+	/**
+	 * A connection is first created by org.xnio.nio.WorkerThread.openTcpStreamConnection(). Once the connection is established, it is passed to io.undertow.protocols.ssl.UndertowXnioSsl.StreamConnectionChannelListener.
+	 * StreamConnectionChannelListener creates an io.undertow.protocols.ssl.UndertowSslConnection instance and passes it to this method.
+	 * 
+	 * This method uses the provided sslConnection to perform Application-Layer Protocol Negotiation (ALPN). More specifically, this method negotiates with the server side about which protocol should be used.
+	 *  - If the negotiation succeeds, the selected protocol is passed to the corresponding channel listeners defined in the 'details' argument. 
+	 *    For example, if HttpClientProvider is used and http2 is selected in the negotiation result, Http2ClientConnection will be created.
+	 *  - If the negotiation fails (i.e., selectedProtocol is null), the fallback listener is used to continue the communication if possible or simply close the connection.
+	 *    For the example above, if http2 is not supported on the server side, HttpClientConnection will be created in the fallback listener.
+	 * 
+	 * @param sslConnection - an UndertowSslConnection instance
+	 * @param fallback - the callback used if the ALPN negotiation fails or no APLN provider can be found
+	 * @param failedListener - the callback for handling failures happened in the negotiations
+	 * @param details - callbacks used to create client connections when the negotiation succeeds. Ideally, one callback should be provided for each protocol in {@link javax.net.ssl.SSLEngine#getSupportedProtocols()}.
+	 */
     public static void runAlpn(final SslConnection sslConnection, final ChannelListener<SslConnection> fallback, final ClientCallback<ClientConnection> failedListener, final ALPNProtocol... details) {
         SslConduit conduit = UndertowXnioSsl.getSslConduit(sslConnection);
         SSLEngine engine = UndertowXnioSsl.getSslEngine(sslConnection);
         
     	// set ssl parameters
-        Set<String> trustedNameSet = SSLUtils.resolveTrustedNames((String)TLS_CONFIG.get(Http2Client.TRUSTED_NAMES));
-        EndpointIdentificationAlgorithm alg = EndpointIdentificationAlgorithm.select((Boolean)TLS_CONFIG.get(Http2Client.VERIFY_HOSTNAME), trustedNameSet);
-    	EndpointIdentificationAlgorithm.setup(engine, alg);
+    	EndpointIdentificationAlgorithm.setup(engine, Http2Client.TLS_CONFIG.getEndpointIdentificationAlgorithm());
 
         final ALPNProvider provider = ALPNManager.INSTANCE.getProvider(conduit.getSSLEngine());
         if (provider == null) {

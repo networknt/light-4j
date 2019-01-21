@@ -32,10 +32,10 @@ import io.undertow.connector.ByteBufferPool;
 
 /**
  * Customized HttpClientProvider for handling TLS handshake for HTTPS.
+ * Created by modifying {@link io.undertow.client.http.HttpClientProvider}
  * 
  * This class needs to be in the package {@link io.undertow.client.http} in order to use HttpClientConnection.
  * 
- * @author Daniel Zhao
  *
  */
 public class Light4jHttpClientProvider implements ClientProvider {

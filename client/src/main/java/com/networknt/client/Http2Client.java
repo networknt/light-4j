@@ -49,6 +49,7 @@ import com.networknt.client.oauth.ClientCredentialsRequest;
 import com.networknt.client.oauth.OauthHelper;
 import com.networknt.client.oauth.TokenRequest;
 import com.networknt.client.oauth.TokenResponse;
+import com.networknt.client.ssl.TLSConfig;
 import com.networknt.client.ssl.X509TrustManagerDecorator;
 import com.networknt.common.DecryptUtil;
 import com.networknt.common.SecretConstants;
@@ -97,11 +98,10 @@ public class Http2Client {
     public static XnioSsl SSL;
     public static int bufferSize;
     public static int DEFAULT_BUFFER_SIZE = 24; // 24*1024 buffer size will be good for most of the app.
+    public static TLSConfig TLS_CONFIG;
     public static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
-    public static final String TLS = "tls";
-    public static final String VERIFY_HOSTNAME="verifyHostname";
-    public static final String TRUSTED_NAMES="trustedNames";    
-
+    
+    static final String TLS = "tls";
     static final String BUFFER_SIZE = "bufferSize";
     static final String LOAD_TRUST_STORE = "loadTrustStore";
     static final String LOAD_KEY_STORE = "loadKeyStore";
@@ -146,6 +146,8 @@ public class Http2Client {
             if(oauthConfig != null) {
                 tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);
             }
+            
+            TLS_CONFIG = TLSConfig.create((Map)config.get(TLS));
         }
 
         Map<String, Object> secretMap = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
@@ -566,7 +568,7 @@ public class Http2Client {
                         
                         TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                         trustManagerFactory.init(trustStore);
-                        trustManagers = X509TrustManagerDecorator.decorate(trustManagerFactory.getTrustManagers(), (Boolean)tlsMap.get(VERIFY_HOSTNAME), (String)tlsMap.get(TRUSTED_NAMES));
+                        trustManagers = X509TrustManagerDecorator.decorate(trustManagerFactory.getTrustManagers());
                     }
                 }
             } catch (NoSuchAlgorithmException | KeyStoreException e) {

@@ -1,95 +1,92 @@
-<!--
-  ~ Copyright (c) 2016 Network New Technologies Inc.
-  ~
-  ~ Licensed under the Apache License, Version 2.0 (the "License");
-  ~ You may not use this file except in compliance with the License.
-  ~ You may obtain a copy of the License at
-  ~
-  ~      http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
-  -->
+<!-- ~ Copyright (c) 2016 Network New Technologies Inc. ~ ~ Licensed under 
+	the Apache License, Version 2.0 (the "License"); ~ You may not use this file 
+	except in compliance with the License. ~ You may obtain a copy of the License 
+	at ~ ~ http://www.apache.org/licenses/LICENSE-2.0 ~ ~ Unless required by 
+	applicable law or agreed to in writing, software ~ distributed under the 
+	License is distributed on an "AS IS" BASIS, ~ WITHOUT WARRANTIES OR CONDITIONS 
+	OF ANY KIND, either express or implied. ~ See the License for the specific 
+	language governing permissions and ~ limitations under the License. -->
 
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="http://maven.apache.org/POM/4.0.0"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>com.networknt</groupId>
-        <artifactId>light-4j</artifactId>
-        <version>1.5.29</version>
-        <relativePath>..</relativePath>
-    </parent>
+	<parent>
+		<groupId>com.networknt</groupId>
+		<artifactId>light-4j</artifactId>
+		<version>1.5.29</version>
+		<relativePath>..</relativePath>
+	</parent>
 
-    <artifactId>client</artifactId>
-    <packaging>jar</packaging>
-    <description>A client module that is used by API consumer to call an API or from an API calling another API.
+	<artifactId>client</artifactId>
+	<packaging>jar</packaging>
+	<description>A client module that is used by API consumer to call an API or from an API calling another API.
     </description>
-    
-  
 
-    <dependencies>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>common</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>http-string</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>config</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>status</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.undertow</groupId>
-            <artifactId>undertow-core</artifactId>
-        </dependency>
 
-       <dependency>
-       		<groupId>org.apache.httpcomponents</groupId>
-       		<artifactId>httpclient</artifactId>
-       		<version>${version.httpclient}</version>
-       		<scope>compile</scope>
-       	</dependency>
 
-        <dependency>
-            <groupId>org.bitbucket.b_c</groupId>
-            <artifactId>jose4j</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
-        
-        
-    </dependencies>
+	<dependencies>
+		<dependency>
+			<groupId>com.networknt</groupId>
+			<artifactId>common</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.networknt</groupId>
+			<artifactId>http-string</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.networknt</groupId>
+			<artifactId>config</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.networknt</groupId>
+			<artifactId>status</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.undertow</groupId>
+			<artifactId>undertow-core</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<scope>compile</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.bitbucket.b_c</groupId>
+			<artifactId>jose4j</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
 
 </project>

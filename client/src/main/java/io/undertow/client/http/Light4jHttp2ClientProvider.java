@@ -36,9 +36,8 @@ import io.undertow.protocols.http2.Http2Channel;
 
 /**
  * Customized HttpClientProvider for handling TLS handshake for HTTP2.
+ * Created by modifying {@link io.undertow.client.http2.Http2ClientProvider}
  * 
- * 
- * @author Daniel Zhao
  *
  */
 public class Light4jHttp2ClientProvider implements ClientProvider {
