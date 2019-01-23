@@ -181,40 +181,18 @@ public class ConfigDefaultTest extends TestCase {
 
     public void testGetMapConfigFromSingleConfig () {
         config.clear();
-        Map<String, Object> configMap = config.getJsonMapConfig("test1");
-        // case1: regular config
-        Assert.assertEquals("single config", configMap.get("value"));
-        // case2: config with environment variable
-        if (!OS.startsWith("windows")) {
-            Assert.assertEquals(System.getenv("HOME"), configMap.get("value1"));
-        }
-        // case3: escape from injecting environment variable
-        Assert.assertEquals("${ESCAPE}", configMap.get("value2"));
-        // case4: override to map with centralized file
-        Assert.assertEquals("test", configMap.get("value3"));
-        // case5: override to map with centralized file
-        Assert.assertEquals(Arrays.asList("element1", "element2"), configMap.get("value4"));
-        // case6: override to map with centralized file
-        Assert.assertEquals(testMap, configMap.get("value5"));
+        Map<String, Object> configMap1 = config.getJsonMapConfig("test1");
+        Map<String, Object> configMap2 = config.getJsonMapConfig("test2");
+        Assert.assertEquals("single config1", configMap1.get("value"));
+        Assert.assertEquals("single config2", configMap2.get("value"));
     }
 
     public void testGetObjectConfigFromSingleConfig() {
         config.clear();
-        TestConfig tc = (TestConfig) config.getJsonObjectConfig("test2", TestConfig.class);
-        // case1: regular config
-        Assert.assertEquals("single config", tc.getValue());
-        // case2: config with environment variable
-        if (!OS.startsWith("windows")) {
-            Assert.assertEquals(System.getenv("HOME"), tc.getValue1());
-        }
-        // case3: escape from injecting environment variable
-        Assert.assertEquals("${ESCAPE}", tc.getValue2());
-        // case4: override to map with centralized file
-        Assert.assertEquals("test", tc.getValue3());
-        // case5: override to map with centralized file
-        Assert.assertEquals(Arrays.asList("element1", "element2"), tc.getValue4());
-        // case6: override to map with centralized file
-        Assert.assertEquals(testMap, tc.getValue5());
+        TestConfig tc1 = (TestConfig) config.getJsonObjectConfig("test1", TestConfig.class);
+        TestConfig tc2 = (TestConfig) config.getJsonObjectConfig("test2", TestConfig.class);
+        Assert.assertEquals("single config1", tc1.getValue());
+        Assert.assertEquals("single config2", tc2.getValue());
     }
 
     public void testGetInputStream() throws Exception {
