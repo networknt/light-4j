@@ -1,7 +1,5 @@
 package com.networknt.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
