@@ -1,0 +1,7 @@
+# Set the default behavior, in case people don't have core.autocrlf set.
+* text=auto eol=lf
+
+*.keystore binary
+*.truststore binary
+*.jks binary
+*.zip binary
