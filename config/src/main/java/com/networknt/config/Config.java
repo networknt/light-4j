@@ -117,6 +117,7 @@ public abstract class Config {
         @Override
         public void clear() {
             configCache.clear();
+            SingleConfig.setSingleConfigEnabled(true);
         }
 
         @Override
@@ -148,7 +149,13 @@ public abstract class Config {
                 synchronized (FileConfigImpl.class) {
                     config = configCache.get(configName);
                     if (config == null) {
-                        config = loadObjectConfig(configName, clazz);
+                        // Load configuration from `application.yaml or yml or json` first if available
+                        if (SingleConfig.isPresent()) {
+                            config = SingleConfig.getObjectConfigFromSingleConfig(configName, clazz);
+                        }
+                        if (config == null) {
+                            config = loadObjectConfig(configName, clazz);
+                        }
                         if (config != null) configCache.put(configName, config);
                     }
                 }
@@ -164,7 +171,13 @@ public abstract class Config {
                 synchronized (FileConfigImpl.class) {
                     config = (Map<String, Object>) configCache.get(configName);
                     if (config == null) {
-                        config = loadMapConfig(configName);
+                        // Load configuration from `application.yaml or yml or json` first if available
+                        if (SingleConfig.isPresent()) {
+                            config = SingleConfig.getMapConfigFromSingleConfig(configName);
+                        }
+                        if (config == null) {
+                            config = loadMapConfig(configName);
+                        }
                         if (config != null) configCache.put(configName, config);
                     }
                 }
@@ -174,7 +187,14 @@ public abstract class Config {
 
         @Override
         public Map<String, Object> getJsonMapConfigNoCache(String configName) {
-            return loadMapConfig(configName);
+            Map<String, Object> config = null;
+            if (SingleConfig.isPresent()) {
+                config = SingleConfig.getMapConfigFromSingleConfig(configName);
+            }
+            if (config == null) {
+                config = loadMapConfig(configName);
+            }
+            return config;
         }
 
         private String loadStringFromFile(String filename) {
@@ -274,7 +294,7 @@ public abstract class Config {
             String yamlFilename = configName + CONFIG_EXT_YAML;
             try (InputStream inStream = getConfigStream(yamlFilename)) {
                 if (inStream != null) {
-                        config = (Map<String, Object>) yaml.load(inStream);
+                    config = (Map<String, Object>) yaml.load(inStream);
                     if (!configName.equals("values")) {
                         config = CentralizedManagement.mergeMap(config);
                     }
@@ -287,8 +307,8 @@ public abstract class Config {
             String configFilename = configName + CONFIG_EXT_JSON;
             try (InputStream inStream = getConfigStream(configFilename)) {
                 if (inStream != null) {
-                        config = mapper.readValue(inStream, new TypeReference<HashMap<String, Object>>() {
-                        });
+                    config = mapper.readValue(inStream, new TypeReference<HashMap<String, Object>>() {
+                    });
                     if (!configName.equals("values")) {
                         config = CentralizedManagement.mergeMap(config);
                     }
@@ -368,5 +388,13 @@ public abstract class Config {
 
     static InputStream convertStringToStream(String string) {
         return new ByteArrayInputStream(string.getBytes());
+    }
+
+
+    // Method used to convert map to object based on the reference class provided
+    static Object convertMapToObj(Map<String, Object> map, Class clazz) {
+        ObjectMapper mapper = new ObjectMapper();
+        Object obj = mapper.convertValue(map, clazz);
+        return obj;
     }
 }

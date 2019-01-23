@@ -1,0 +1,14 @@
+test1:
+  value: "single config"
+  value1: ${HOME:default}
+  value2: ${ESCAPE:$}
+  value3: ${TEST.string:default}
+  value4: ${TEST.list:default}
+  value5: ${TEST.map:default}
+test2:
+  value: "single config"
+  value1: ${HOME:default}
+  value2: ${ESCAPE:$}
+  value3: ${TEST.string:default}
+  value4: ${TEST.list:default}
+  value5: ${TEST.map:default}

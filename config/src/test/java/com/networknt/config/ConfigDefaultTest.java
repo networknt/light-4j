@@ -61,6 +61,7 @@ public class ConfigDefaultTest extends TestCase {
 
     public void testGetJsonMapConfig() throws Exception {
         config.clear();
+        SingleConfig.setSingleConfigEnabled(false);
         Map<String, Object> configMap = config.getJsonMapConfig("test");
         // case1: regular config
         Assert.assertEquals("default config", configMap.get("value"));
@@ -80,6 +81,7 @@ public class ConfigDefaultTest extends TestCase {
 
     public void testGetJsonObjectConfig() throws Exception {
         config.clear();
+        SingleConfig.setSingleConfigEnabled(false);
         TestConfig tc = (TestConfig) config.getJsonObjectConfig("test", TestConfig.class);
         // case1: regular config
         Assert.assertEquals("default config", tc.getValue());
@@ -99,6 +101,7 @@ public class ConfigDefaultTest extends TestCase {
 
     public void test1GetJsonMapConfig() throws Exception {
         config.clear();
+        SingleConfig.setSingleConfigEnabled(false);
         Map<String, Object> configMap = config.getJsonMapConfig("test1");
         // case1: regular config
         Assert.assertEquals("default config", configMap.get("value"));
@@ -118,6 +121,7 @@ public class ConfigDefaultTest extends TestCase {
 
     public void test1GetJsonObjectConfig() throws Exception {
         config.clear();
+        SingleConfig.setSingleConfigEnabled(false);
         TestConfig tc = (TestConfig) config.getJsonObjectConfig("test1", TestConfig.class);
         // case1: regular config
         Assert.assertEquals("default config", tc.getValue());
@@ -137,6 +141,7 @@ public class ConfigDefaultTest extends TestCase {
 
     public void test2GetJsonMapConfig() throws Exception {
         config.clear();
+        SingleConfig.setSingleConfigEnabled(false);
         Map<String, Object> configMap = config.getJsonMapConfig("test2");
         // case1: regular config
         Assert.assertEquals("default config", configMap.get("value"));
@@ -156,9 +161,48 @@ public class ConfigDefaultTest extends TestCase {
 
     public void test2GetJsonObjectConfig() throws Exception {
         config.clear();
+        SingleConfig.setSingleConfigEnabled(false);
         TestConfig tc = (TestConfig) config.getJsonObjectConfig("test2", TestConfig.class);
         // case1: regular config
         Assert.assertEquals("default config", tc.getValue());
+        // case2: config with environment variable
+        if (!OS.startsWith("windows")) {
+            Assert.assertEquals(System.getenv("HOME"), tc.getValue1());
+        }
+        // case3: escape from injecting environment variable
+        Assert.assertEquals("${ESCAPE}", tc.getValue2());
+        // case4: override to map with centralized file
+        Assert.assertEquals("test", tc.getValue3());
+        // case5: override to map with centralized file
+        Assert.assertEquals(Arrays.asList("element1", "element2"), tc.getValue4());
+        // case6: override to map with centralized file
+        Assert.assertEquals(testMap, tc.getValue5());
+    }
+
+    public void testGetMapConfigFromSingleConfig () {
+        config.clear();
+        Map<String, Object> configMap = config.getJsonMapConfig("test1");
+        // case1: regular config
+        Assert.assertEquals("single config", configMap.get("value"));
+        // case2: config with environment variable
+        if (!OS.startsWith("windows")) {
+            Assert.assertEquals(System.getenv("HOME"), configMap.get("value1"));
+        }
+        // case3: escape from injecting environment variable
+        Assert.assertEquals("${ESCAPE}", configMap.get("value2"));
+        // case4: override to map with centralized file
+        Assert.assertEquals("test", configMap.get("value3"));
+        // case5: override to map with centralized file
+        Assert.assertEquals(Arrays.asList("element1", "element2"), configMap.get("value4"));
+        // case6: override to map with centralized file
+        Assert.assertEquals(testMap, configMap.get("value5"));
+    }
+
+    public void testGetObjectConfigFromSingleConfig() {
+        config.clear();
+        TestConfig tc = (TestConfig) config.getJsonObjectConfig("test2", TestConfig.class);
+        // case1: regular config
+        Assert.assertEquals("single config", tc.getValue());
         // case2: config with environment variable
         if (!OS.startsWith("windows")) {
             Assert.assertEquals(System.getenv("HOME"), tc.getValue1());
