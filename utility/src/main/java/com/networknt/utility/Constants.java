@@ -88,6 +88,7 @@ public class Constants {
 
     // Headers for light-router
     public static final String SERVICE_ID_STRING = "service_id";
+    public static final String SERVICE_URL_STRING = "service_url";
     public static final String ENV_TAG_STRING = "env_tag";
     public static final String HASH_KEY_STRING = "hash_key";
     public static final String HTTPS = "https";

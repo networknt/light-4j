@@ -40,6 +40,7 @@ public class HttpStringConstants {
     public static final HttpString CSRF_TOKEN = new HttpString(Constants.CSRF_TOKEN_STRING);
 
     public static final HttpString SERVICE_ID = new HttpString(Constants.SERVICE_ID_STRING);
+    public static final HttpString SERVICE_URL = new HttpString(Constants.SERVICE_URL_STRING);
     public static final HttpString ENV_TAG = new HttpString(Constants.ENV_TAG_STRING);
     public static final HttpString HASH_KEY = new HttpString(Constants.HASH_KEY_STRING);
 }
