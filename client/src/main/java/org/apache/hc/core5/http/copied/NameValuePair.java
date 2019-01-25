@@ -25,7 +25,7 @@
  *
  */
 
-package org.apache.hc.core5.http;
+package org.apache.hc.core5.http.copied;
 
 /**
  * A name-value pair parameter used as an element of HTTP messages.

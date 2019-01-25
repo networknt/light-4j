@@ -25,17 +25,17 @@
  *
  */
 
-package org.apache.hc.client5.http.ssl;
+package org.apache.hc.client5.http.ssl.copied;
 
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
-import org.apache.hc.core5.http.NameValuePair;
-import org.apache.hc.core5.http.message.BasicNameValuePair;
-import org.apache.hc.core5.http.message.ParserCursor;
-import org.apache.hc.core5.http.message.TokenParser;
-import org.apache.hc.core5.util.CharArrayBuffer;
+import org.apache.hc.core5.http.copied.NameValuePair;
+import org.apache.hc.core5.http.message.copied.BasicNameValuePair;
+import org.apache.hc.core5.http.message.copied.ParserCursor;
+import org.apache.hc.core5.http.message.copied.TokenParser;
+import org.apache.hc.core5.util.copied.CharArrayBuffer;
 
 final class DistinguishedNameParser {
 

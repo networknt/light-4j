@@ -24,7 +24,7 @@
  * <http://www.apache.org/>.
  *
  */
-package org.apache.hc.core5.annotation;
+package org.apache.hc.core5.annotation.copied;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

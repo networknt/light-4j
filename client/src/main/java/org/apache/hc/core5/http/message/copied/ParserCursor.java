@@ -25,7 +25,7 @@
  *
  */
 
-package org.apache.hc.core5.http.message;
+package org.apache.hc.core5.http.message.copied;
 
 /**
  * This class represents a context of a parsing operation:

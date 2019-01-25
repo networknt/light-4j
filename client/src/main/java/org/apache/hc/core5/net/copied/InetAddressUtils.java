@@ -25,7 +25,7 @@
  *
  */
 
-package org.apache.hc.core5.net;
+package org.apache.hc.core5.net.copied;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -33,7 +33,7 @@ import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.util.regex.Pattern;
 
-import org.apache.hc.core5.util.Args;
+import org.apache.hc.core5.util.copied.Args;
 
 /**
  * A collection of utilities relating to InetAddresses.

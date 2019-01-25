@@ -25,16 +25,16 @@
  *
  */
 
-package org.apache.hc.core5.http.message;
+package org.apache.hc.core5.http.message.copied;
 
 import java.io.Serializable;
 import java.util.Locale;
 
-import org.apache.hc.core5.annotation.Contract;
-import org.apache.hc.core5.annotation.ThreadingBehavior;
-import org.apache.hc.core5.http.NameValuePair;
-import org.apache.hc.core5.util.Args;
-import org.apache.hc.core5.util.LangUtils;
+import org.apache.hc.core5.annotation.copied.Contract;
+import org.apache.hc.core5.annotation.copied.ThreadingBehavior;
+import org.apache.hc.core5.http.copied.NameValuePair;
+import org.apache.hc.core5.util.copied.Args;
+import org.apache.hc.core5.util.copied.LangUtils;
 
 /**
  * Basic implementation of {@link NameValuePair}.

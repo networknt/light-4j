@@ -25,21 +25,24 @@
  *
  */
 
-package org.apache.hc.core5.http;
+package org.apache.hc.client5.http.ssl.copied;
+
+import java.security.cert.X509Certificate;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLException;
+
+import org.apache.hc.core5.annotation.copied.Contract;
+import org.apache.hc.core5.annotation.copied.ThreadingBehavior;
 
 /**
- * Commons chars used by HTTP/1.1 protocol.
+ * Extended {@link HostnameVerifier} interface.
  *
  * @since 5.0
  */
-public final class Chars {
+@Contract(threading = ThreadingBehavior.STATELESS)
+public interface HttpClientHostnameVerifier extends HostnameVerifier {
 
-    public static final int CR = 13; // <US-ASCII CR, carriage return (13)>
-    public static final int LF = 10; // <US-ASCII LF, linefeed (10)>
-    public static final int SP = 32; // <US-ASCII SP, space (32)>
-    public static final int HT = 9;  // <US-ASCII HT, horizontal-tab (9)>
-
-    private Chars() {
-    }
+    void verify(String host, X509Certificate cert) throws SSLException;
 
 }

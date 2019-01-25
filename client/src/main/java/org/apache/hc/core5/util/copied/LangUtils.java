@@ -25,7 +25,7 @@
  *
  */
 
-package org.apache.hc.core5.util;
+package org.apache.hc.core5.util.copied;
 
 /**
  * A set of utility methods to help produce consistent

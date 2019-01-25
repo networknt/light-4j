@@ -24,25 +24,46 @@
  * <http://www.apache.org/>.
  *
  */
-
-package org.apache.hc.client5.http.ssl;
-
-import java.security.cert.X509Certificate;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLException;
-
-import org.apache.hc.core5.annotation.Contract;
-import org.apache.hc.core5.annotation.ThreadingBehavior;
+package org.apache.hc.core5.annotation.copied;
 
 /**
- * Extended {@link HostnameVerifier} interface.
- *
- * @since 5.0
+ Defines types of threading behavior enforced at runtime.
  */
-@Contract(threading = ThreadingBehavior.STATELESS)
-public interface HttpClientHostnameVerifier extends HostnameVerifier {
+public enum ThreadingBehavior {
 
-    void verify(String host, X509Certificate cert) throws SSLException;
+    /**
+     * Instances of classes with the given contract are expected to be fully immutable
+     * and thread-safe.
+     */
+    IMMUTABLE,
+
+    /**
+     * Instances of classes with the given contract are expected to be immutable if their
+     * dependencies injected at construction time are immutable and are expected to be thread-safe
+     * if their dependencies are thread-safe.
+     */
+    IMMUTABLE_CONDITIONAL,
+
+    /**
+     * Instances of classes with the given contract are expected to maintain no state
+     * and to be thread-safe.
+     */
+    STATELESS,
+
+    /**
+     * Instances of classes with the given contract are expected to be fully thread-safe.
+     */
+    SAFE,
+
+    /**
+     * Instances of classes with the given contract are expected to be thread-safe if their
+     * dependencies injected at construction time are thread-safe.
+     */
+    SAFE_CONDITIONAL,
+
+    /**
+     * Instances of classes with the given contract are expected to be non thread-safe.
+     */
+    UNSAFE
 
 }

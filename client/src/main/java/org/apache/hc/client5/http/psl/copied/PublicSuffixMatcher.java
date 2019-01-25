@@ -24,7 +24,7 @@
  * <http://www.apache.org/>.
  *
  */
-package org.apache.hc.client5.http.psl;
+package org.apache.hc.client5.http.psl.copied;
 
 import java.net.IDN;
 import java.util.Collection;
@@ -33,9 +33,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.hc.core5.annotation.Contract;
-import org.apache.hc.core5.annotation.ThreadingBehavior;
-import org.apache.hc.core5.util.Args;
+import org.apache.hc.core5.annotation.copied.Contract;
+import org.apache.hc.core5.annotation.copied.ThreadingBehavior;
+import org.apache.hc.core5.util.copied.Args;
 
 /**
  * Utility class that can test if DNS names match the content of the Public Suffix List.

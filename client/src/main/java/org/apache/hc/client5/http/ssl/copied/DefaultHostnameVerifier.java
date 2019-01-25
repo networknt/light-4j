@@ -25,7 +25,7 @@
  *
  */
 
-package org.apache.hc.client5.http.ssl;
+package org.apache.hc.client5.http.ssl.copied;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -43,13 +43,13 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 import javax.security.auth.x500.X500Principal;
 
-import org.apache.hc.client5.http.psl.DomainType;
-import org.apache.hc.client5.http.psl.PublicSuffixMatcher;
-import org.apache.hc.core5.annotation.Contract;
-import org.apache.hc.core5.annotation.ThreadingBehavior;
-import org.apache.hc.core5.http.NameValuePair;
-import org.apache.hc.core5.net.InetAddressUtils;
-import org.apache.hc.core5.util.TextUtils;
+import org.apache.hc.client5.http.psl.copied.DomainType;
+import org.apache.hc.client5.http.psl.copied.PublicSuffixMatcher;
+import org.apache.hc.core5.annotation.copied.Contract;
+import org.apache.hc.core5.annotation.copied.ThreadingBehavior;
+import org.apache.hc.core5.http.copied.NameValuePair;
+import org.apache.hc.core5.net.copied.InetAddressUtils;
+import org.apache.hc.core5.util.copied.TextUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

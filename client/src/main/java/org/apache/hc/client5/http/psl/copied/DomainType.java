@@ -24,26 +24,15 @@
  * <http://www.apache.org/>.
  *
  */
-
-package org.apache.hc.core5.http;
-
-import java.util.Set;
+package org.apache.hc.client5.http.psl.copied;
 
 /**
- * Details of an entity transmitted by a message.
+ * Domain types differentiated by Mozilla Public Suffix List.
  *
- * @since 5.0
+ * @since 4.5
  */
-public interface EntityDetails {
+public enum DomainType {
 
-    long getContentLength();
-
-    String getContentType();
-
-    String getContentEncoding();
-
-    boolean isChunked();
-
-    Set<String> getTrailerNames();
+    UNKNOWN, ICANN, PRIVATE
 
 }

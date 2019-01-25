@@ -24,42 +24,26 @@
  * <http://www.apache.org/>.
  *
  */
-package org.apache.hc.client5.http.ssl;
 
-import org.apache.hc.core5.util.Args;
+package org.apache.hc.core5.http.copied;
 
-final class SubjectName {
+import java.util.Set;
 
-    static final int DNS = 2;
-    static final int IP = 7;
+/**
+ * Details of an entity transmitted by a message.
+ *
+ * @since 5.0
+ */
+public interface EntityDetails {
 
-    private final String value;
-    private final int type;
+    long getContentLength();
 
-    static SubjectName IP(final String value) {
-        return new SubjectName(value, IP);
-    }
+    String getContentType();
 
-    static SubjectName DNS(final String value) {
-        return new SubjectName(value, DNS);
-    }
+    String getContentEncoding();
 
-    SubjectName(final String value, final int type) {
-        this.value = Args.notNull(value, "Value");
-        this.type = Args.positive(type, "Type");
-    }
+    boolean isChunked();
 
-    public int getType() {
-        return type;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    @Override
-    public String toString() {
-        return value;
-    }
+    Set<String> getTrailerNames();
 
 }

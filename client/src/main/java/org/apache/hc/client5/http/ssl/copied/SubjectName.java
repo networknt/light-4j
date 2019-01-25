@@ -24,46 +24,42 @@
  * <http://www.apache.org/>.
  *
  */
-package org.apache.hc.core5.annotation;
+package org.apache.hc.client5.http.ssl.copied;
 
-/**
- Defines types of threading behavior enforced at runtime.
- */
-public enum ThreadingBehavior {
+import org.apache.hc.core5.util.copied.Args;
 
-    /**
-     * Instances of classes with the given contract are expected to be fully immutable
-     * and thread-safe.
-     */
-    IMMUTABLE,
+final class SubjectName {
 
-    /**
-     * Instances of classes with the given contract are expected to be immutable if their
-     * dependencies injected at construction time are immutable and are expected to be thread-safe
-     * if their dependencies are thread-safe.
-     */
-    IMMUTABLE_CONDITIONAL,
+    static final int DNS = 2;
+    static final int IP = 7;
 
-    /**
-     * Instances of classes with the given contract are expected to maintain no state
-     * and to be thread-safe.
-     */
-    STATELESS,
+    private final String value;
+    private final int type;
 
-    /**
-     * Instances of classes with the given contract are expected to be fully thread-safe.
-     */
-    SAFE,
+    static SubjectName IP(final String value) {
+        return new SubjectName(value, IP);
+    }
 
-    /**
-     * Instances of classes with the given contract are expected to be thread-safe if their
-     * dependencies injected at construction time are thread-safe.
-     */
-    SAFE_CONDITIONAL,
+    static SubjectName DNS(final String value) {
+        return new SubjectName(value, DNS);
+    }
 
-    /**
-     * Instances of classes with the given contract are expected to be non thread-safe.
-     */
-    UNSAFE
+    SubjectName(final String value, final int type) {
+        this.value = Args.notNull(value, "Value");
+        this.type = Args.positive(type, "Type");
+    }
+
+    public int getType() {
+        return type;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    @Override
+    public String toString() {
+        return value;
+    }
 
 }

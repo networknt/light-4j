@@ -25,11 +25,11 @@
  *
  */
 
-package org.apache.hc.core5.util;
+package org.apache.hc.core5.util.copied;
 
 import java.util.Collection;
 
-import org.apache.hc.core5.http.EntityDetails;
+import org.apache.hc.core5.http.copied.EntityDetails;
 
 public class Args {
 
