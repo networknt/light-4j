@@ -5,3 +5,4 @@
 *.truststore binary
 *.jks binary
 *.zip binary
+*.crt binary
