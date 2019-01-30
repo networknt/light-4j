@@ -361,7 +361,7 @@ public class Server {
 
     private static TrustManager[] buildTrustManagers(final KeyStore trustStore) {
         TrustManager[] trustManagers = null;
-        if (trustStore == null) {
+        if (trustStore != null) {
             try {
                 TrustManagerFactory trustManagerFactory = TrustManagerFactory
                         .getInstance(KeyManagerFactory.getDefaultAlgorithm());
@@ -372,6 +372,7 @@ public class Server {
                 throw new RuntimeException("Unable to initialise TrustManager[]", e);
             }
         } else {
+            logger.warn("Unable to find server truststore while Mutual TLS is enabled. Falling back to trust all certs.");
             trustManagers = TRUST_ALL_CERTS;
         }
         return trustManagers;
