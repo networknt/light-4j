@@ -205,8 +205,8 @@ public abstract class Config {
             String ymlFilename = configName + CONFIG_EXT_YML;
             try (InputStream inStream = getConfigStream(ymlFilename)) {
                 if (inStream != null) {
-                    // The values.yaml should be processed by centralized management, since it would cause a dead loop
-                    if (configName.equals("values")) {
+                    // The config file specified in the exclusions.yml shouldn't be injected
+                    if (ConfigInjection.isExclusionConfigFile(ymlFilename)) {
                         config = yaml.loadAs(inStream, clazz);
                     } else {
                         // Parse into map first, since map is easier to be manipulated in merging process
@@ -222,8 +222,8 @@ public abstract class Config {
             String yamlFilename = configName + CONFIG_EXT_YAML;
             try (InputStream inStream = getConfigStream(yamlFilename)) {
                 if (inStream != null) {
-                    // The values.yaml should be processed by centralized management, since it would cause a dead loop
-                    if (configName.equals("values")) {
+                    // The config file specified in the exclusions.yml shouldn't be injected
+                    if (ConfigInjection.isExclusionConfigFile(yamlFilename)) {
                         config = yaml.loadAs(inStream, clazz);
                     } else {
                         // Parse into map first, since map is easier to be manipulated in merging process
@@ -239,8 +239,8 @@ public abstract class Config {
             String jsonFilename = configName + CONFIG_EXT_JSON;
             try (InputStream inStream = getConfigStream(jsonFilename)) {
                 if (inStream != null) {
-                    // The values.yaml should be processed by centralized management, since it would cause a dead loop
-                    if (configName.equals("values")) {
+                    // The config file specified in the exclusions.yml shouldn't be injected
+                    if (ConfigInjection.isExclusionConfigFile(jsonFilename)) {
                         config = mapper.readValue(inStream, clazz);
                     } else {
                         // Parse into map first, since map is easier to be manipulated in merging process
@@ -262,7 +262,7 @@ public abstract class Config {
             try (InputStream inStream = getConfigStream(ymlFilename)) {
                 if (inStream != null) {
                     config = (Map<String, Object>) yaml.load(inStream);
-                    if (!configName.equals("values")) {
+                    if (!ConfigInjection.isExclusionConfigFile(ymlFilename)) {
                         config = CentralizedManagement.mergeMap(config);
                     }
                 }
@@ -275,7 +275,7 @@ public abstract class Config {
             try (InputStream inStream = getConfigStream(yamlFilename)) {
                 if (inStream != null) {
                         config = (Map<String, Object>) yaml.load(inStream);
-                    if (!configName.equals("values")) {
+                    if (!ConfigInjection.isExclusionConfigFile(yamlFilename)) {
                         config = CentralizedManagement.mergeMap(config);
                     }
                 }
@@ -289,7 +289,7 @@ public abstract class Config {
                 if (inStream != null) {
                         config = mapper.readValue(inStream, new TypeReference<HashMap<String, Object>>() {
                         });
-                    if (!configName.equals("values")) {
+                    if (!ConfigInjection.isExclusionConfigFile(configFilename)) {
                         config = CentralizedManagement.mergeMap(config);
                     }
                 }

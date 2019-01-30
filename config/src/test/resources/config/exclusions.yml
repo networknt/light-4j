@@ -1,0 +1,7 @@
+exclusionConfigFileList:
+  - openapi.yaml
+  - openapi.json
+  - openapi.yml
+  - values.yml
+  - status.yml
+  - exclusions.yml
