@@ -20,6 +20,7 @@ import com.networknt.client.Http2Client;
 import com.networknt.common.DecryptUtil;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
+import com.networknt.exception.RegistrationException;
 import com.networknt.handler.Handler;
 import com.networknt.handler.HandlerProvider;
 import com.networknt.handler.MiddlewareHandler;
@@ -231,32 +232,36 @@ public class Server {
             if (config.enableRegistry) {
                 // assuming that registry is defined in service.json, otherwise won't start
                 // server.
-                registry = SingletonServiceFactory.getBean(Registry.class);
-                if (registry == null)
-                    throw new RuntimeException("Could not find registry instance in service map");
-                // in kubernetes pod, the hostIP is passed in as STATUS_HOST_IP environment
-                // variable. If this is null
-                // then get the current server IP as it is not running in Kubernetes.
-                String ipAddress = System.getenv(STATUS_HOST_IP);
-                logger.info("Registry IP from STATUS_HOST_IP is " + ipAddress);
-                if (ipAddress == null) {
-                    InetAddress inetAddress = Util.getInetAddress();
-                    ipAddress = inetAddress.getHostAddress();
-                    logger.info("Could not find IP from STATUS_HOST_IP, use the InetAddress " + ipAddress);
+                try {
+                    registry = SingletonServiceFactory.getBean(Registry.class);
+                    if (registry == null)
+                        throw new RuntimeException("Could not find registry instance in service map");
+                    // in kubernetes pod, the hostIP is passed in as STATUS_HOST_IP environment
+                    // variable. If this is null
+                    // then get the current server IP as it is not running in Kubernetes.
+                    String ipAddress = System.getenv(STATUS_HOST_IP);
+                    logger.info("Registry IP from STATUS_HOST_IP is " + ipAddress);
+                    if (ipAddress == null) {
+                        InetAddress inetAddress = Util.getInetAddress();
+                        ipAddress = inetAddress.getHostAddress();
+                        logger.info("Could not find IP from STATUS_HOST_IP, use the InetAddress " + ipAddress);
+                    }
+                    Map parameters = new HashMap<>();
+                    if (config.getEnvironment() != null)
+                        parameters.put("environment", config.getEnvironment());
+                    serviceUrl = new URLImpl("light", ipAddress, port, config.getServiceId(), parameters);
+                    registry.register(serviceUrl);
+                    if (logger.isInfoEnabled())
+                        logger.info("register service: " + serviceUrl.toFullStr());
+
+                    // start heart beat if registry is enabled
+                    SwitcherUtil.setSwitcherValue(Constants.REGISTRY_HEARTBEAT_SWITCHER, true);
+                    if (logger.isInfoEnabled())
+                        logger.info("Registry heart beat switcher is on");
+                    // handle the registration exception separately to eliminate confusion
+                } catch (Exception e) {
+                    throw new RegistrationException(e.getMessage());
                 }
-                Map parameters = new HashMap<>();
-                if (config.getEnvironment() != null)
-                    parameters.put("environment", config.getEnvironment());
-                serviceUrl = new URLImpl("light", ipAddress, port, config.getServiceId(), parameters);
-                registry.register(serviceUrl);
-                if (logger.isInfoEnabled())
-                    logger.info("register service: " + serviceUrl.toFullStr());
-
-                // start heart beat if registry is enabled
-                SwitcherUtil.setSwitcherValue(Constants.REGISTRY_HEARTBEAT_SWITCHER, true);
-                if (logger.isInfoEnabled())
-                    logger.info("Registry heart beat switcher is on");
-
             }
 
             if (config.enableHttp) {
@@ -279,6 +284,12 @@ public class Server {
             }
 
             return true;
+        } catch (RegistrationException registrationException) {
+            System.out.println("Failed to register on Consul, server stopped.");
+            if (logger.isInfoEnabled()) {
+                logger.info("Failed to register on Consul, server stopped.");
+            }
+            throw registrationException;
         } catch (Exception e) {
             System.out.println("Failed to bind to port " + port);
             if (logger.isInfoEnabled())
