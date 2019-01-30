@@ -20,7 +20,6 @@ import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.HttpStringConstants;
-import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.Util;
 import io.undertow.Handlers;
@@ -61,9 +60,12 @@ public class CorrelationHandler implements MiddlewareHandler {
         // check if the cid is in the request header
         String cId = exchange.getRequestHeaders().getFirst(HttpStringConstants.CORRELATION_ID);
         if(cId == null) {
-            // if not, generate a UUID and put it into the request header
-            cId = Util.getUUID();
-            exchange.getRequestHeaders().put(HttpStringConstants.CORRELATION_ID, cId);
+        	// if not set, check the autgen flag and generate if set to true
+        	if(config.isAutogenCorrelationID()) {
+	            // generate a UUID and put it into the request header
+	            cId = Util.getUUID();
+	            exchange.getRequestHeaders().put(HttpStringConstants.CORRELATION_ID, cId);
+        	} 
         }
         // Add the cId into MDC so that all log statement will have cId as part of it.
         MDC.put(CID, cId);

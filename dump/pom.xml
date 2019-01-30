@@ -21,7 +21,7 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>1.5.26</version>
+        <version>1.5.29</version>
         <relativePath>..</relativePath>
     </parent>
 
@@ -67,7 +67,10 @@
             <artifactId>jose4j</artifactId>
             <version>${version.jose4j}</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>mask</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>ch.qos.logback</groupId>
@@ -88,6 +91,10 @@
             <groupId>com.networknt</groupId>
             <artifactId>correlation</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>body</artifactId>
         </dependency>
     </dependencies>
 
