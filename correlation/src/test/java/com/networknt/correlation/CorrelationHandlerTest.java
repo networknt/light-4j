@@ -19,7 +19,6 @@ package com.networknt.correlation;
 import com.networknt.client.Http2Client;
 import com.networknt.exception.ClientException;
 import com.networknt.httpstring.HttpStringConstants;
-import com.networknt.utility.Constants;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.client.ClientConnection;
@@ -28,7 +27,6 @@ import io.undertow.client.ClientResponse;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
-import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -90,6 +88,10 @@ public class CorrelationHandlerTest {
                 .add(Methods.GET, "/without", exchange -> {
                     String cid = exchange.getRequestHeaders().getFirst(HttpStringConstants.CORRELATION_ID);
                     exchange.getResponseSender().send(cid);
+                })
+                .add(Methods.GET, "/withoutNoAutogen", exchange -> {
+                    String cid = exchange.getRequestHeaders().getFirst(HttpStringConstants.CORRELATION_ID);
+                    exchange.getResponseSender().send(cid == null ? "noCID" : "generated cid, error");
                 });
     }
 
@@ -150,4 +152,37 @@ public class CorrelationHandlerTest {
         Assert.assertNotNull(body);
         System.out.println("correlationId = " + body);
     }
+    
+    @Test
+    public void testGetWithoutTidNoAutogen() throws Exception {
+    	// reset the autogen of the correlation ID
+    	CorrelationHandler.config.setAutogenCorrelationID(false);
+    
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection;
+        try {
+            connection = client.connect(new URI("http://localhost:8080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        } catch (Exception e) {
+            throw new ClientException(e);
+        }
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        try {
+            ClientRequest request = new ClientRequest().setPath("/withoutNoAutogen").setMethod(Methods.GET);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
+            connection.sendRequest(request, client.createClientCallback(reference, latch));
+            latch.await();
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw new ClientException(e);
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+        int statusCode = reference.get().getResponseCode();
+        String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+        Assert.assertEquals(200, statusCode);
+        Assert.assertNotNull(body);
+        Assert.assertEquals("noCID", body);
+        System.out.println("correlationId = " + body);
+    }    
 }
