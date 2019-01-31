@@ -47,6 +47,7 @@ import org.slf4j.MDC;
 import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 import org.xnio.Options;
+import org.xnio.SslClientAuthMode;
 
 import javax.net.ssl.*;
 import java.io.BufferedInputStream;
@@ -215,6 +216,10 @@ public class Server {
             if (config.enableHttp2) {
                 builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true);
             }
+
+            if (config.isEnableTwoWayTls()) {
+               builder.setSocketOption(Options.SSL_CLIENT_AUTH_MODE, SslClientAuthMode.REQUIRED);
+            }            
 
             server = builder.setBufferSize(1024 * 16).setIoThreads(Runtime.getRuntime().availableProcessors() * 2)
                     // above seems slightly faster in some configurations
