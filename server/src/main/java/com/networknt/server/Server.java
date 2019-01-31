@@ -265,9 +265,9 @@ public class Server {
                     logger.info("Registry heart beat switcher is on");
                 // handle the registration exception separately to eliminate confusion
             } catch (Exception e) {
-                System.out.println("Failed to register on Consul, server stopped.");
+                System.out.println("Failed to register service, the server stopped.");
                 if (logger.isInfoEnabled())
-                    logger.info("Failed to register on Consul, server stopped.");
+                    logger.info("Failed to register service, the server stopped.");
                 throw new RuntimeException(e.getMessage());
             }
         }
