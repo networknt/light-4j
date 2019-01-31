@@ -4,4 +4,3 @@ exclusionConfigFileList:
   - openapi.yml
   - values.yml
   - status.yml
-  - exclusions.yml

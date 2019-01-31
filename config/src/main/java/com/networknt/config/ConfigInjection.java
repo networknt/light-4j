@@ -30,10 +30,11 @@ public class ConfigInjection {
 
     // Define one of the injection value source "values.yaml" and list of exclusion config files
     private static final String CENTRALIZED_MANAGEMENT = "values";
-    private static final String EXCLUSIONS = "exclusions";
+    private static final String SCALABLE_CONFIG = "config";
+    private static final String EXCLUSION_CONFIG_FILE_LIST = "exclusionConfigFileList";
 
     private static final Map<String, Object> valueMap = Config.getInstance().getJsonMapConfig(CENTRALIZED_MANAGEMENT);
-    private static final Map<String, Object> exclusionMap = Config.getInstance().getJsonMapConfig(EXCLUSIONS);
+    private static final Map<String, Object> exclusionMap = Config.getInstance().getJsonMapConfig(SCALABLE_CONFIG);
 
     // Define the injection pattern which represents the injection points
     private static Pattern pattern = Pattern.compile("\\$\\{(.*?)\\}");
@@ -62,9 +63,9 @@ public class ConfigInjection {
     // Return the list of exclusion files list which includes the names of config files that shouldn't be injected
     // Double check values and exclusions to ensure no dead loop
     public static boolean isExclusionConfigFile(String fileName) {
-        List<Object> exclusionConfigFileList = (exclusionMap == null) ? new ArrayList<>() : (List<Object>)exclusionMap.get("exclusionConfigFileList");
-        return "values".equals(fileName.split("\\.")[0])
-                || "exclusions".equals(fileName.split("\\.")[0])
+        List<Object> exclusionConfigFileList = (exclusionMap == null) ? new ArrayList<>() : (List<Object>)exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST);
+        return CENTRALIZED_MANAGEMENT.equals(fileName.split("\\.")[0])
+                || SCALABLE_CONFIG.equals(fileName.split("\\.")[0])
                 || exclusionConfigFileList.contains(fileName);
     }
 
