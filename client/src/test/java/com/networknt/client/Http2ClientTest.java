@@ -870,8 +870,13 @@ public class Http2ClientTest {
                     }
                     if (trustStoreName != null && trustStorePass != null) {
                         KeyStore trustStore = loadKeyStore(trustStoreName);
-                        tlsMap.put(TLSConfig.VERIFY_HOSTNAME, verifyHostName);
-                        TLSConfig tlsConfig = TLSConfig.create(tlsMap, trustedNamesGroupKey);
+                        
+                        Map<String, Object> tlsMapClone = new HashMap<>();
+                        tlsMapClone.putAll(tlsMap);
+                        
+                        
+                        tlsMapClone.put(TLSConfig.VERIFY_HOSTNAME, verifyHostName);
+                        TLSConfig tlsConfig = TLSConfig.create(tlsMapClone, trustedNamesGroupKey);
                         
                         TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                         trustManagerFactory.init(trustStore);
