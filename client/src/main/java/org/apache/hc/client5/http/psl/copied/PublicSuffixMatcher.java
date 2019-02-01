@@ -58,7 +58,7 @@ public final class PublicSuffixMatcher {
         this(DomainType.UNKNOWN, rules, exceptions);
     }
 
-    /**
+    /*
      * @since 4.5
      */
     public PublicSuffixMatcher(
@@ -77,7 +77,7 @@ public final class PublicSuffixMatcher {
         }
     }
 
-    /**
+    /*
      * @since 4.5
      */
     public PublicSuffixMatcher(final Collection<PublicSuffixList> lists) {
@@ -159,7 +159,7 @@ public final class PublicSuffixMatcher {
         return domainName;
     }
 
-    /**
+    /*
      * Tests whether the given domain matches any of entry from the public suffix list.
      */
     public boolean matches(final String domain) {

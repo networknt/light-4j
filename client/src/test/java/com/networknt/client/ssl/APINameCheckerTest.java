@@ -18,6 +18,7 @@ import javax.security.auth.x500.X500Principal;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class APINameCheckerTest {
 	private static final String x500DistinguishedName = "CN=service.com, OU=Unit Test, O=Test, C=CA";
 	private static final String x500DistinguishedNameWithWildcard = "CN=*.service.com, OU=Unit Test, O=Test, C=CA";
@@ -102,6 +103,6 @@ public class APINameCheckerTest {
 		
 		Mockito.when(cert.getSubjectAlternativeNames()).thenReturn(subjectAlternativeNames);
 	
-		APINameChecker.verifyAndThrow(EndpointIdentificationAlgorithm.APIS, invalidNames, cert);
+		APINameChecker.verifyAndThrow(invalidNames, cert);
 	}
 }

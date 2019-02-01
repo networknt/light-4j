@@ -17,18 +17,28 @@ public class APINameChecker {
 	
 	/**
 	 * Perform server identify check using given names and throw CertificateException if the check fails.
-	 * This method is only used for the custom algorithm EndpointIdentificationAlgorithm.APIS.
-	 * The validation of standard algorithms are performed by trustmanagers shipped with the JRE.
 	 * 
-	 * @param identityAlg - The EndpointIdentificationAlgorithm parsed from the config file.
 	 * @param nameSet - a set of names from the config file
 	 * @param cert - the server certificate
 	 * @throws CertificateException - throws CertificateException if none of the name in the nameSet matches the names in the cert
 	 */
-	public static void verifyAndThrow(EndpointIdentificationAlgorithm identityAlg, final Set<String> nameSet, final X509Certificate cert) throws CertificateException{
-		if (EndpointIdentificationAlgorithm.APIS==identityAlg && !verify(nameSet, cert)) {
+	public static void verifyAndThrow(final Set<String> nameSet, final X509Certificate cert) throws CertificateException{
+		if (!verify(nameSet, cert)) {
 			throw new CertificateException("No name matching " + nameSet + " found");
 		}
+	}
+	
+	/**
+	 * Perform server identify check using given name and throw CertificateException if the check fails.
+	 * 
+	 * @param name
+	 * @param cert
+	 * @throws CertificateException
+	 */
+	public static void verifyAndThrow(final String name, final X509Certificate cert) throws CertificateException{
+		if (!verify(name, cert)) {
+			throw new CertificateException("No name matching " + name + " found");
+		}		
 	}
 	
 	/**

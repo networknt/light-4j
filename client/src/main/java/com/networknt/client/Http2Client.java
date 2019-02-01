@@ -49,8 +49,8 @@ import com.networknt.client.oauth.ClientCredentialsRequest;
 import com.networknt.client.oauth.OauthHelper;
 import com.networknt.client.oauth.TokenRequest;
 import com.networknt.client.oauth.TokenResponse;
+import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
 import com.networknt.client.ssl.TLSConfig;
-import com.networknt.client.ssl.X509TrustManagerDecorator;
 import com.networknt.common.DecryptUtil;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
@@ -98,7 +98,6 @@ public class Http2Client {
     public static XnioSsl SSL;
     public static int bufferSize;
     public static int DEFAULT_BUFFER_SIZE = 24; // 24*1024 buffer size will be good for most of the app.
-    public static TLSConfig TLS_CONFIG;
     public static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
     
     static final String TLS = "tls";
@@ -142,12 +141,10 @@ public class Http2Client {
             bufferSize = (int)bufferSizeObject;
         }
         if(config != null) {
-            Map<String, Object> oauthConfig = (Map<String, Object>)config.get(OAUTH);
+			Map<String, Object> oauthConfig = (Map<String, Object>)config.get(OAUTH);
             if(oauthConfig != null) {
                 tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);
             }
-            
-            TLS_CONFIG = TLSConfig.create((Map)config.get(TLS));
         }
 
         Map<String, Object> secretMap = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
@@ -525,11 +522,16 @@ public class Http2Client {
             IoUtils.safeClose(stream);
         }
     }
-
+    
     public static SSLContext createSSLContext() throws IOException {
+    	return createSSLContext(TLSConfig.DEFAULT_TRUSTED_NAME_GROUP_KEY);
+    }
+
+    @SuppressWarnings("unchecked")
+	public static SSLContext createSSLContext(String trustedNameGroupKey) throws IOException {
         SSLContext sslContext = null;
         KeyManager[] keyManagers = null;
-        Map<String, Object> tlsMap = (Map)config.get(TLS);
+        Map<String, Object> tlsMap = (Map<String, Object>)config.get(TLS);
         if(tlsMap != null) {
             try {
                 // load key store for client certificate if two way ssl is used.
@@ -565,10 +567,11 @@ public class Http2Client {
                     }
                     if (trustStoreName != null && trustStorePass != null) {
                         KeyStore trustStore = loadKeyStore(trustStoreName, trustStorePass.toCharArray());
+                        TLSConfig tlsConfig = TLSConfig.create(tlsMap, trustedNameGroupKey);
                         
                         TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                         trustManagerFactory.init(trustStore);
-                        trustManagers = X509TrustManagerDecorator.decorate(trustManagerFactory.getTrustManagers());
+                        trustManagers = ClientX509ExtendedTrustManager.decorate(trustManagerFactory.getTrustManagers(), tlsConfig);
                     }
                 }
             } catch (NoSuchAlgorithmException | KeyStoreException e) {

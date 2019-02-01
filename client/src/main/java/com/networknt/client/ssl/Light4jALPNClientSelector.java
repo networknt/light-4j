@@ -14,8 +14,6 @@ import org.xnio.channels.StreamSourceChannel;
 import org.xnio.conduits.PushBackStreamSourceConduit;
 import org.xnio.ssl.SslConnection;
 
-import com.networknt.client.Http2Client;
-
 import io.undertow.client.ALPNClientSelector;
 import io.undertow.client.ALPNClientSelector.ALPNProtocol;
 import io.undertow.client.ClientCallback;
@@ -51,10 +49,6 @@ public class Light4jALPNClientSelector {
 	 */
     public static void runAlpn(final SslConnection sslConnection, final ChannelListener<SslConnection> fallback, final ClientCallback<ClientConnection> failedListener, final ALPNProtocol... details) {
         SslConduit conduit = UndertowXnioSsl.getSslConduit(sslConnection);
-        SSLEngine engine = UndertowXnioSsl.getSslEngine(sslConnection);
-        
-    	// set ssl parameters
-    	EndpointIdentificationAlgorithm.setup(engine, Http2Client.TLS_CONFIG.getEndpointIdentificationAlgorithm());
 
         final ALPNProvider provider = ALPNManager.INSTANCE.getProvider(conduit.getSSLEngine());
         if (provider == null) {
