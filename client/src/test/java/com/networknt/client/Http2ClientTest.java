@@ -55,6 +55,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -64,6 +65,9 @@ import org.xnio.Xnio;
 import org.xnio.XnioWorker;
 import org.xnio.ssl.XnioSsl;
 
+import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
+import com.networknt.client.ssl.TLSConfig;
+import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 import com.networknt.httpstring.HttpStringConstants;
 
@@ -814,4 +818,81 @@ public class Http2ClientTest {
         //should not be reached
         assertTrue(false);
     }   
+    
+    @Test
+    public void invalid_hostname_is_accepted_if_verifyhostname_is_disabled() throws Exception{
+    	final Http2Client client = createClient();
+    	SSLContext context = createTestSSLContext(false, null);
+    	
+        XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
+
+        final ClientConnection connection = client.connect(new URI("https://127.0.0.1:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        
+        assertTrue(connection.isOpen());
+        IoUtils.safeClose(connection);  	
+    }
+    
+    private static SSLContext createTestSSLContext(boolean verifyHostName, String trustedNamesGroupKey) throws IOException {
+        SSLContext sslContext = null;
+        KeyManager[] keyManagers = null;
+        Map<String, Object> tlsMap = (Map<String, Object>)Http2Client.config.get(Http2Client.TLS);
+        if(tlsMap != null) {
+            try {
+                // load key store for client certificate if two way ssl is used.
+                Boolean loadKeyStore = (Boolean) tlsMap.get(Http2Client.LOAD_KEY_STORE);
+                if (loadKeyStore != null && loadKeyStore) {
+                    String keyStoreName = (String)tlsMap.get(Http2Client.KEY_STORE);
+                    String keyPass = (String)Http2Client.secretConfig.get(SecretConstants.CLIENT_KEY_PASS);
+                    KeyStore keyStore = loadKeyStore(keyStoreName);
+                    KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                    keyManagerFactory.init(keyStore, keyPass.toCharArray());
+                    keyManagers = keyManagerFactory.getKeyManagers();
+                }
+            } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
+                throw new IOException("Unable to initialise KeyManager[]", e);
+            }
+
+            TrustManager[] trustManagers = null;
+            try {
+                // load trust store, this is the server public key certificate
+                // first check if javax.net.ssl.trustStore system properties is set. It is only necessary if the server
+                // certificate doesn't have the entire chain.
+                Boolean loadTrustStore = (Boolean) tlsMap.get(Http2Client.LOAD_TRUST_STORE);
+                if (loadTrustStore != null && loadTrustStore) {
+                    String trustStoreName = System.getProperty(Http2Client.TRUST_STORE_PROPERTY);
+                    String trustStorePass = System.getProperty(Http2Client.TRUST_STORE_PASSWORD_PROPERTY);
+                    if (trustStoreName != null && trustStorePass != null) {
+                        if(logger.isInfoEnabled()) logger.info("Loading trust store from system property at " + Encode.forJava(trustStoreName));
+                    } else {
+                        trustStoreName = (String) tlsMap.get(Http2Client.TRUST_STORE);
+                        trustStorePass = (String)Http2Client.secretConfig.get(SecretConstants.CLIENT_TRUSTSTORE_PASS);
+                        if(logger.isInfoEnabled()) logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
+                    }
+                    if (trustStoreName != null && trustStorePass != null) {
+                        KeyStore trustStore = loadKeyStore(trustStoreName);
+                        tlsMap.put(TLSConfig.VERIFY_HOSTNAME, verifyHostName);
+                        TLSConfig tlsConfig = TLSConfig.create(tlsMap, trustedNamesGroupKey);
+                        
+                        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                        trustManagerFactory.init(trustStore);
+                        trustManagers = ClientX509ExtendedTrustManager.decorate(trustManagerFactory.getTrustManagers(), tlsConfig);
+                    }
+                }
+            } catch (NoSuchAlgorithmException | KeyStoreException e) {
+                throw new IOException("Unable to initialise TrustManager[]", e);
+            }
+
+            try {
+                sslContext = SSLContext.getInstance("TLS");
+                sslContext.init(keyManagers, trustManagers, null);
+                
+            } catch (NoSuchAlgorithmException | KeyManagementException e) {
+                throw new IOException("Unable to create and initialise the SSLContext", e);
+            }
+        } else {
+            logger.error("TLS configuration section is missing in client.yml");
+        }
+
+        return sslContext;
+    }
 }

@@ -536,12 +536,12 @@ public class Http2Client {
     /**
      * create ssl context using specified trustedName config
      * 
-     * @param trustedNameGroupKey - the trustedName config to be used
+     * @param trustedNamesGroupKey - the trustedName config to be used
      * @return SSLContext
      * @throws IOException
      */
     @SuppressWarnings("unchecked")
-	public static SSLContext createSSLContext(String trustedNameGroupKey) throws IOException {
+	public static SSLContext createSSLContext(String trustedNamesGroupKey) throws IOException {
         SSLContext sslContext = null;
         KeyManager[] keyManagers = null;
         Map<String, Object> tlsMap = (Map<String, Object>)config.get(TLS);
@@ -580,7 +580,7 @@ public class Http2Client {
                     }
                     if (trustStoreName != null && trustStorePass != null) {
                         KeyStore trustStore = loadKeyStore(trustStoreName, trustStorePass.toCharArray());
-                        TLSConfig tlsConfig = TLSConfig.create(tlsMap, trustedNameGroupKey);
+                        TLSConfig tlsConfig = TLSConfig.create(tlsMap, trustedNamesGroupKey);
                         
                         TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                         trustManagerFactory.init(trustStore);

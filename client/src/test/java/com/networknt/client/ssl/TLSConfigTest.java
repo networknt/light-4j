@@ -68,4 +68,16 @@ public class TLSConfigTest {
 		assertTrue(config.getTrustedNameSet().isEmpty());
 		assertTrue(EndpointIdentificationAlgorithm.HTTPS == config.getEndpointIdentificationAlgorithm());		
 	}
+	
+	@Test
+	public void trustedNames_is_not_resolved_if_not_needed() {
+		Map<String, Object> map = new HashMap<>();
+		map.put("verifyHostname", Boolean.FALSE);
+		map.put("trustedNames", LOCALHOST);
+		
+		TLSConfig config = TLSConfig.create(map);
+		
+		assertTrue(config.getTrustedNameSet().isEmpty());
+		assertTrue(null == config.getEndpointIdentificationAlgorithm());		
+	}	
 }
