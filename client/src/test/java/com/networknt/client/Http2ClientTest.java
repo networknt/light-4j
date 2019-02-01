@@ -769,7 +769,7 @@ public class Http2ClientTest {
     @Test
     public void server_identity_check_positive_case() throws Exception{
     	final Http2Client client = createClient();
-        SSLContext context = Http2Client.createSSLContext();// use default
+        SSLContext context = Http2Client.createSSLContext("trustedNames.local");
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
         final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
@@ -802,4 +802,16 @@ public class Http2ClientTest {
         //should not be reached
         assertTrue(false);
     }
+    
+    @Test(expected=ClosedChannelException.class)
+    public void standard_https_hostname_check_kicks_in_if_trustednames_are_not_used_or_not_provided() throws Exception{
+    	final Http2Client client = createClient();
+        SSLContext context = Http2Client.createSSLContext();
+        XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
+
+        client.connect(new URI("https://127.0.0.1:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        
+        //should not be reached
+        assertTrue(false);
+    }   
 }

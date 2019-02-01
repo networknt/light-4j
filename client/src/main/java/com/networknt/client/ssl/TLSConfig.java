@@ -24,7 +24,6 @@ public class TLSConfig {
 	
     public static final String VERIFY_HOSTNAME="verifyHostname";
     public static final String TRUSTED_NAMES="trustedNames";
-    public static final String DEFAULT_TRUSTED_NAME_GROUP_KEY="trustedNames.default";
     public static final String CONFIG_LEVEL_DELIMITER = "\\.";
     
     private final boolean checkServerIdentify;
@@ -38,17 +37,20 @@ public class TLSConfig {
     }
     	
     public static TLSConfig create(final Map<String, Object> tlsMap) {
-    	return create(tlsMap, DEFAULT_TRUSTED_NAME_GROUP_KEY);
+    	return create(tlsMap, null);
     }
     
 	public static TLSConfig create(final Map<String, Object> tlsMap, final String trustedNameGroupKey) {
-    	return memcache.computeIfAbsent(trustedNameGroupKey, key -> new TLSConfig(Boolean.TRUE.equals(tlsMap.get(VERIFY_HOSTNAME)), 
-    			resolveTrustedNames(tlsMap, key)));
+		String cacheKey = toCacheKey(Boolean.TRUE.equals(tlsMap.get(VERIFY_HOSTNAME)), trustedNameGroupKey);
+		
+    	return memcache.computeIfAbsent(cacheKey, key -> new TLSConfig(Boolean.TRUE.equals(tlsMap.get(VERIFY_HOSTNAME)), 
+    			resolveTrustedNames(tlsMap, trustedNameGroupKey)));
     }
     
 	@SuppressWarnings("unchecked")
 	public static Set<String> resolveTrustedNames(Map<String, Object> tlsMap, String groupKey){
-		if (StringUtils.isBlank(groupKey)) {
+		if (StringUtils.isBlank(groupKey) // blank key (null, empty, or white spaces)
+				|| !Boolean.TRUE.equals(tlsMap.get(VERIFY_HOSTNAME))) {// hostname verification is not enabled
 			return Collections.EMPTY_SET;
 		}
 		
@@ -95,6 +97,10 @@ public class TLSConfig {
     
     public EndpointIdentificationAlgorithm getEndpointIdentificationAlgorithm() {
     	return algorithm;
+    }
+    
+    private static String toCacheKey(boolean verifyHostName, String key) {
+    	return String.format("%b-%s", verifyHostName, StringUtils.trimToEmpty(key));
     }
     
     private static <T> T typeSafeGet(Map<String, Object> map, String key, Class<T> valueType, String groupKey) {

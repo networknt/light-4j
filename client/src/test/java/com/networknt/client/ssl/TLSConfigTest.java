@@ -24,7 +24,7 @@ public class TLSConfigTest {
 		tlsMap.put("verifyHostname", Boolean.TRUE);
 		tlsMap.put("trustedNames", nameMap);
 		
-		nameMap.put("default", LOCALHOST);
+		nameMap.put("local", LOCALHOST);
 		nameMap.put("groups", groupMap);
 		
 		groupMap.put("group1", SOMEHOST);
@@ -34,10 +34,10 @@ public class TLSConfigTest {
 
 	@Test
 	public void trusted_names_can_be_properly_resolved() {
-		TLSConfig defaultConfig = TLSConfig.create(tlsMap);
+		TLSConfig localConfig = TLSConfig.create(tlsMap, "trustedNames.local");
 		
-		assertTrue(defaultConfig.getTrustedNameSet().size()==1 && defaultConfig.getTrustedNameSet().contains(LOCALHOST));
-		assertTrue(EndpointIdentificationAlgorithm.APIS == defaultConfig.getEndpointIdentificationAlgorithm());
+		assertTrue(localConfig.getTrustedNameSet().size()==1 && localConfig.getTrustedNameSet().contains(LOCALHOST));
+		assertTrue(EndpointIdentificationAlgorithm.APIS == localConfig.getEndpointIdentificationAlgorithm());
 		
 		TLSConfig group1Config = TLSConfig.create(tlsMap, "trustedNames.groups.group1");
 		assertTrue(group1Config.getTrustedNameSet().size()==1 && group1Config.getTrustedNameSet().contains(SOMEHOST));
@@ -59,16 +59,13 @@ public class TLSConfigTest {
 	}	
 	
 	@Test
-	public void one_for_all_config_is_supported() {
+	public void trustedNames_is_optional() {
 		Map<String, Object> map = new HashMap<>();
 		map.put("verifyHostname", Boolean.TRUE);
-		map.put("trustedNames", LOCALHOST);
 		
-		TLSConfig config = TLSConfig.create(map, "trustedNames");
+		TLSConfig config = TLSConfig.create(map);
 		
-		assertTrue(config.getTrustedNameSet().size()==1 && config.getTrustedNameSet().contains(LOCALHOST));
-		assertTrue(EndpointIdentificationAlgorithm.APIS == config.getEndpointIdentificationAlgorithm());		
-		
-		
+		assertTrue(config.getTrustedNameSet().isEmpty());
+		assertTrue(EndpointIdentificationAlgorithm.HTTPS == config.getEndpointIdentificationAlgorithm());		
 	}
 }

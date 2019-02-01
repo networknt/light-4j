@@ -523,10 +523,23 @@ public class Http2Client {
         }
     }
     
+    /**
+     * default method for creating ssl context. trustedNames config is not used.
+     * 
+     * @return SSLContext
+     * @throws IOException
+     */
     public static SSLContext createSSLContext() throws IOException {
-    	return createSSLContext(TLSConfig.DEFAULT_TRUSTED_NAME_GROUP_KEY);
+    	return createSSLContext(null);
     }
 
+    /**
+     * create ssl context using specified trustedName config
+     * 
+     * @param trustedNameGroupKey - the trustedName config to be used
+     * @return SSLContext
+     * @throws IOException
+     */
     @SuppressWarnings("unchecked")
 	public static SSLContext createSSLContext(String trustedNameGroupKey) throws IOException {
         SSLContext sslContext = null;

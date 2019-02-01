@@ -5,7 +5,7 @@ tls:
   # trused hostnames, service names, service Ids, and so on.
   # Note: localhost and 127.0.0.1 are not trustable hostname/ip in general. So, these values should not be used as trusted names in production.
   trustedNames: 
-    default: localhost
+    local: localhost
     negativeTest: invalidhost 
     empty:
   # trust store contains certifictes that server needs. Enable if tls is used.
