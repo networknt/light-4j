@@ -7,7 +7,7 @@ import io.undertow.server.HttpServerExchange;
  */
 public class OrchestrationHandler implements LightHttpHandler {
 
-	static final String MISSING_HANDlER = "ERR10016";
+    static final String MISSING_HANDlER = "ERR10048";
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
@@ -18,8 +18,7 @@ public class OrchestrationHandler implements LightHttpHandler {
             if(Handler.startDefaultHandlers(exchange)) {
                 Handler.next(exchange);
             } else {
-                String methodPath = String.format("Method: %s, RequestPath: %s", exchange.getRequestMethod(), exchange.getRequestPath());
-                setExchangeStatus(exchange, MISSING_HANDlER, methodPath);
+                setExchangeStatus(exchange, MISSING_HANDlER, exchange.getRequestPath());
             }
         }
     }
