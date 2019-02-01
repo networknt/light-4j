@@ -7,6 +7,7 @@ tls:
   trustedNames: 
     default: localhost
     negativeTest: invalidhost 
+    empty:
   # trust store contains certifictes that server needs. Enable if tls is used.
   loadTrustStore: true
   # trust store location can be specified here or system properties javax.net.ssl.trustStore and password javax.net.ssl.trustStorePassword

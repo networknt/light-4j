@@ -790,4 +790,16 @@ public class Http2ClientTest {
         //should not be reached
         assertTrue(false);
     }
+    
+    @Test(expected=ClosedChannelException.class)
+    public void standard_https_hostname_check_kicks_in_if_trustednames_are_empty() throws Exception{
+    	final Http2Client client = createClient();
+        SSLContext context = Http2Client.createSSLContext("trustedNames.empty");
+        XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
+
+        client.connect(new URI("https://127.0.0.1:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        
+        //should not be reached
+        assertTrue(false);
+    }
 }
