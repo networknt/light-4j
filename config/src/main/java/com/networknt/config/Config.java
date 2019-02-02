@@ -206,7 +206,7 @@ public abstract class Config {
             try (InputStream inStream = getConfigStream(ymlFilename)) {
                 if (inStream != null) {
                     // The config file specified in the exclusions.yml shouldn't be injected
-                    if (ConfigInjection.isExclusionConfigFile(ymlFilename)) {
+                    if (ConfigInjection.isExclusionConfigFile(configName)) {
                         config = yaml.loadAs(inStream, clazz);
                     } else {
                         // Parse into map first, since map is easier to be manipulated in merging process
@@ -223,7 +223,7 @@ public abstract class Config {
             try (InputStream inStream = getConfigStream(yamlFilename)) {
                 if (inStream != null) {
                     // The config file specified in the exclusions.yml shouldn't be injected
-                    if (ConfigInjection.isExclusionConfigFile(yamlFilename)) {
+                    if (ConfigInjection.isExclusionConfigFile(configName)) {
                         config = yaml.loadAs(inStream, clazz);
                     } else {
                         // Parse into map first, since map is easier to be manipulated in merging process
@@ -240,7 +240,7 @@ public abstract class Config {
             try (InputStream inStream = getConfigStream(jsonFilename)) {
                 if (inStream != null) {
                     // The config file specified in the exclusions.yml shouldn't be injected
-                    if (ConfigInjection.isExclusionConfigFile(jsonFilename)) {
+                    if (ConfigInjection.isExclusionConfigFile(configName)) {
                         config = mapper.readValue(inStream, clazz);
                     } else {
                         // Parse into map first, since map is easier to be manipulated in merging process
@@ -262,7 +262,7 @@ public abstract class Config {
             try (InputStream inStream = getConfigStream(ymlFilename)) {
                 if (inStream != null) {
                     config = (Map<String, Object>) yaml.load(inStream);
-                    if (!ConfigInjection.isExclusionConfigFile(ymlFilename)) {
+                    if (!ConfigInjection.isExclusionConfigFile(configName)) {
                         config = CentralizedManagement.mergeMap(config);
                     }
                 }
@@ -275,7 +275,7 @@ public abstract class Config {
             try (InputStream inStream = getConfigStream(yamlFilename)) {
                 if (inStream != null) {
                         config = (Map<String, Object>) yaml.load(inStream);
-                    if (!ConfigInjection.isExclusionConfigFile(yamlFilename)) {
+                    if (!ConfigInjection.isExclusionConfigFile(configName)) {
                         config = CentralizedManagement.mergeMap(config);
                     }
                 }
@@ -289,7 +289,7 @@ public abstract class Config {
                 if (inStream != null) {
                         config = mapper.readValue(inStream, new TypeReference<HashMap<String, Object>>() {
                         });
-                    if (!ConfigInjection.isExclusionConfigFile(configFilename)) {
+                    if (!ConfigInjection.isExclusionConfigFile(configName)) {
                         config = CentralizedManagement.mergeMap(config);
                     }
                 }
