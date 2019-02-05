@@ -3,8 +3,13 @@ package com.networknt.client.oauth;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
+import com.networknt.monad.Failure;
+import com.networknt.monad.Result;
+import com.networknt.monad.Success;
+import com.networknt.status.Status;
 import io.undertow.UndertowOptions;
 import io.undertow.client.*;
+import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
 import io.undertow.util.StringReadChannelListener;
@@ -31,94 +36,96 @@ public class OauthHelper {
     static final String BASIC = "Basic";
     static final String GRANT_TYPE = "grant_type";
     static final String CODE = "code";
+    private static final String FAIL_TO_SEND_REQUEST = "ERR10051";
+    private static final String GET_TOKEN_ERROR = "ERR10052";
+    private static final String ESTABLISH_CONNECTION_ERROR = "ERR10053";
 
     static final Logger logger = LoggerFactory.getLogger(OauthHelper.class);
 
-    public static TokenResponse getToken(TokenRequest tokenRequest) throws ClientException {
-        final AtomicReference<TokenResponse> reference = new AtomicReference<>();
+    public static Result<TokenResponse> getToken(TokenRequest tokenRequest) {
+        final AtomicReference<Result<TokenResponse>> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
         try {
             connection = client.connect(new URI(tokenRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, tokenRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
         } catch (Exception e) {
-            throw new ClientException(e);
+            logger.error("cannot establish connection: {}", e.getStackTrace());
+            return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR));
         }
 
         try {
             String requestBody = getEncodedString(tokenRequest);
-            connection.getIoThread().execute(new Runnable() {
-                @Override
-                public void run() {
-                    final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(tokenRequest.getUri());
-                    request.getRequestHeaders().put(Headers.HOST, "localhost");
-                    request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
-                    request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
-                    request.getRequestHeaders().put(Headers.AUTHORIZATION, getBasicAuthHeader(tokenRequest.getClientId(), tokenRequest.getClientSecret()));
-                    connection.sendRequest(request, new ClientCallback<ClientExchange>() {
-                        @Override
-                        public void completed(ClientExchange result) {
-                            new StringWriteChannelListener(requestBody).setup(result.getRequestChannel());
-                            result.setResponseListener(new ClientCallback<ClientExchange>() {
-                                @Override
-                                public void completed(ClientExchange result) {
-                                    new StringReadChannelListener(Http2Client.BUFFER_POOL) {
+            connection.getIoThread().execute(() -> {
+                final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(tokenRequest.getUri());
+                request.getRequestHeaders().put(Headers.HOST, "localhost");
+                request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+                request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
+                request.getRequestHeaders().put(Headers.AUTHORIZATION, getBasicAuthHeader(tokenRequest.getClientId(), tokenRequest.getClientSecret()));
+                connection.sendRequest(request, new ClientCallback<ClientExchange>() {
+                    @Override
+                    public void completed(ClientExchange result) {
+                        new StringWriteChannelListener(requestBody).setup(result.getRequestChannel());
+                        result.setResponseListener(new ClientCallback<ClientExchange>() {
+                            @Override
+                            public void completed(ClientExchange result) {
+                                new StringReadChannelListener(Http2Client.BUFFER_POOL) {
 
-                                        @Override
-                                        protected void stringDone(String string) {
-                                            logger.debug("getToken response = " + string);
-                                            reference.set(handleResponse(string));
-                                            latch.countDown();
-                                        }
+                                    @Override
+                                    protected void stringDone(String string) {
+                                        logger.debug("getToken response = " + string);
+                                        reference.set(handleResponse(string));
+                                        latch.countDown();
+                                    }
 
-                                        @Override
-                                        protected void error(IOException e) {
-                                            logger.error("IOException:", e);
-                                            latch.countDown();
-                                        }
-                                    }.setup(result.getResponseChannel());
-                                }
+                                    @Override
+                                    protected void error(IOException e) {
+                                        logger.error("IOException:", e);
+                                        latch.countDown();
+                                    }
+                                }.setup(result.getResponseChannel());
+                            }
 
-                                @Override
-                                public void failed(IOException e) {
-                                    logger.error("IOException:", e);
-                                    latch.countDown();
-                                }
-                            });
-                        }
+                            @Override
+                            public void failed(IOException e) {
+                                logger.error("IOException:", e);
+                                latch.countDown();
+                            }
+                        });
+                    }
 
-                        @Override
-                        public void failed(IOException e) {
-                            logger.error("IOException:", e);
-                            latch.countDown();
-                        }
-                    });
-                }
+                    @Override
+                    public void failed(IOException e) {
+                        logger.error("IOException:", e);
+                        latch.countDown();
+                    }
+                });
             });
 
             latch.await(4, TimeUnit.SECONDS);
         } catch (Exception e) {
             logger.error("IOException: ", e);
-            throw new ClientException(e);
+            return Failure.of(new Status(FAIL_TO_SEND_REQUEST));
         } finally {
             IoUtils.safeClose(connection);
         }
+
         return reference.get();
     }
 
-    public static TokenResponse getTokenFromSaml(SAMLBearerRequest tokenRequest) throws ClientException {
-        final AtomicReference<TokenResponse> reference = new AtomicReference<>();
+    public static Result<TokenResponse> getTokenFromSaml(SAMLBearerRequest tokenRequest) throws ClientException {
+        final AtomicReference<Result<TokenResponse>> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
         try {
             connection = client.connect(new URI(tokenRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, tokenRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
         } catch (Exception e) {
-            throw new ClientException(e);
+            logger.error("cannot establish connection: {}", e.getStackTrace());
+            return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR));
         }
 
         try {
-
             Map<String, String> postBody = new HashMap<String, String>();
             postBody.put(SAMLBearerRequest.GRANT_TYPE_KEY , SAMLBearerRequest.GRANT_TYPE_VALUE );
             postBody.put(SAMLBearerRequest.ASSERTION_KEY, tokenRequest.getSamlAssertion());
@@ -127,63 +134,57 @@ public class OauthHelper {
             String requestBody = Http2Client.getFormDataString(postBody);
             logger.debug(requestBody);
 
-            connection.getIoThread().execute(new Runnable() {
+            connection.getIoThread().execute(() -> {
+                final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(tokenRequest.getUri());
+                request.getRequestHeaders().put(Headers.HOST, "localhost");
+                request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+                request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
 
-                @Override
-                public void run()  {
-                    final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(tokenRequest.getUri());
-                    request.getRequestHeaders().put(Headers.HOST, "localhost");
-                    request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
-                    request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
+                connection.sendRequest(request, new ClientCallback<ClientExchange>() {
 
+                    @Override
+                    public void completed(ClientExchange result) {
+                        new StringWriteChannelListener(requestBody).setup(result.getRequestChannel());
+                        result.setResponseListener(new ClientCallback<ClientExchange>() {
+                            @Override
+                            public void completed(ClientExchange result) {
+                                new StringReadChannelListener(Http2Client.BUFFER_POOL) {
 
+                                    @Override
+                                    protected void stringDone(String string) {
+                                        logger.debug("getToken response = " + string);
+                                        reference.set(handleResponse(string));
+                                        latch.countDown();
+                                    }
 
-                    connection.sendRequest(request, new ClientCallback<ClientExchange>() {
+                                    @Override
+                                    protected void error(IOException e) {
+                                        logger.error("IOException:", e);
+                                        latch.countDown();
+                                    }
+                                }.setup(result.getResponseChannel());
+                            }
 
-                        @Override
-                        public void completed(ClientExchange result) {
-                            new StringWriteChannelListener(requestBody).setup(result.getRequestChannel());
-                            result.setResponseListener(new ClientCallback<ClientExchange>() {
-                                @Override
-                                public void completed(ClientExchange result) {
-                                    new StringReadChannelListener(Http2Client.BUFFER_POOL) {
+                            @Override
+                            public void failed(IOException e) {
+                                logger.error("IOException:", e);
+                                latch.countDown();
+                            }
+                        });
+                    }
 
-                                        @Override
-                                        protected void stringDone(String string) {
-                                            logger.debug("getToken response = " + string);
-                                            reference.set(handleResponse(string));
-                                            latch.countDown();
-                                        }
-
-                                        @Override
-                                        protected void error(IOException e) {
-                                            logger.error("IOException:", e);
-                                            latch.countDown();
-                                        }
-                                    }.setup(result.getResponseChannel());
-                                }
-
-                                @Override
-                                public void failed(IOException e) {
-                                    logger.error("IOException:", e);
-                                    latch.countDown();
-                                }
-                            });
-                        }
-
-                        @Override
-                        public void failed(IOException e) {
-                            logger.error("IOException:", e);
-                            latch.countDown();
-                        }
-                    });
-                }
+                    @Override
+                    public void failed(IOException e) {
+                        logger.error("IOException:", e);
+                        latch.countDown();
+                    }
+                });
             });
 
             latch.await(4, TimeUnit.SECONDS);
         } catch (Exception e) {
             logger.error("IOException: ", e);
-            throw new ClientException(e);
+            return Failure.of(new Status(FAIL_TO_SEND_REQUEST));
         } finally {
             IoUtils.safeClose(connection);
         }
@@ -284,18 +285,34 @@ public class OauthHelper {
         return Http2Client.getFormDataString(params);
     }
 
-    private static TokenResponse handleResponse(String responseBody) {
-        TokenResponse tokenResponse = null;
+    private static Result<TokenResponse> handleResponse(String responseBody) {
+        TokenResponse tokenResponse;
+        Result<TokenResponse> result;
         try {
             if (responseBody != null && responseBody.length() > 0) {
                 tokenResponse = Config.getInstance().getMapper().readValue(responseBody, TokenResponse.class);
+                if(tokenResponse != null) {
+                    result = Success.of(tokenResponse);
+                } else {
+                    result = Failure.of(new Status(GET_TOKEN_ERROR, responseBody));
+                }
             } else {
+                result = Failure.of(new Status(GET_TOKEN_ERROR, "no auth server response"));
                 logger.error("Error in token retrieval, response = " + responseBody);
             }
         } catch (IOException | RuntimeException e) {
+            result = Failure.of(new Status(GET_TOKEN_ERROR));
             logger.error("Error in token retrieval", e);
         }
-        return tokenResponse;
+        return result;
     }
 
+    public static void sendStatusToResponse(HttpServerExchange exchange, Status status) {
+        exchange.setStatusCode(status.getStatusCode());
+        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+        status.setDescription(status.getDescription().replaceAll("\\\\", "\\\\\\\\"));
+        exchange.getResponseSender().send(status.toString());
+        StackTraceElement[] elements = Thread.currentThread().getStackTrace();
+        logger.error(status.toString() + " at " + elements[2].getClassName() + "." + elements[2].getMethodName() + "(" + elements[2].getFileName() + ":" + elements[2].getLineNumber() + ")");
+    }
 }

@@ -377,7 +377,21 @@ ERR10050:
   code: ERR10050
   message: NO_ENCODING_HANDLER
   description: No encoding handler for the required encoder.
-
+ERR10051:
+  statusCode: 401
+  code: ERR10051
+  message: FAIL_TO_SEND_REQUEST
+  description: Fail to send request to target server.
+ERR10052:
+  statusCode: 401
+  code: ERR10052
+  message: GET_TOKEN_ERROR
+  description: "Cannot get valid token: %s."
+ERR10053:
+  statusCode: 401
+  code: ERR10053
+  message: ESTABLISH_CONNECTION_ERROR
+  description: Cannot establish connection.
 
 # 11000-11500 swagger-validator errors
 ERR11000:
