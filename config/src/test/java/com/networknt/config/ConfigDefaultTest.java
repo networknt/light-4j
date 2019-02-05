@@ -19,6 +19,7 @@ package com.networknt.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import junit.framework.TestCase;
 import org.junit.Assert;
+import org.junit.Test;
 
 import java.io.InputStream;
 import java.time.LocalDate;
@@ -76,6 +77,8 @@ public class ConfigDefaultTest extends TestCase {
         Assert.assertEquals(Arrays.asList("element1", "element2"), configMap.get("value4"));
         // case6: override to map with centralized file
         Assert.assertEquals(testMap, configMap.get("value5"));
+        // case7: default value start with $ but not escape
+        Assert.assertEquals("$abc", configMap.get("value6"));
     }
 
     public void testGetJsonObjectConfig() throws Exception {
@@ -95,6 +98,8 @@ public class ConfigDefaultTest extends TestCase {
         Assert.assertEquals(Arrays.asList("element1", "element2"), tc.getValue4());
         // case6: override to map with centralized file
         Assert.assertEquals(testMap, tc.getValue5());
+        // case7: default value start with $ but not escape
+        Assert.assertEquals("$abc", tc.getValue6());
     }
 
     public void test1GetJsonMapConfig() throws Exception {
@@ -114,6 +119,8 @@ public class ConfigDefaultTest extends TestCase {
         Assert.assertEquals(Arrays.asList("element1", "element2"), configMap.get("value4"));
         // case6: override to map with centralized file
         Assert.assertEquals(testMap, configMap.get("value5"));
+        // case7: default value start with $ but not escape
+        Assert.assertEquals("$abc", configMap.get("value6"));
     }
 
     public void test1GetJsonObjectConfig() throws Exception {
@@ -133,6 +140,8 @@ public class ConfigDefaultTest extends TestCase {
         Assert.assertEquals(Arrays.asList("element1", "element2"), tc.getValue4());
         // case6: override to map with centralized file
         Assert.assertEquals(testMap, tc.getValue5());
+        // case7: default value start with $ but not escape
+        Assert.assertEquals("$abc", tc.getValue6());
     }
 
     public void test2GetJsonMapConfig() throws Exception {
@@ -152,6 +161,8 @@ public class ConfigDefaultTest extends TestCase {
         Assert.assertEquals(Arrays.asList("element1", "element2"), configMap.get("value4"));
         // case6: override to map with centralized file
         Assert.assertEquals(testMap, configMap.get("value5"));
+        // case7: default value start with $ but not escape
+        Assert.assertEquals("$abc", configMap.get("value6"));
     }
 
     public void test2GetJsonObjectConfig() throws Exception {
@@ -171,6 +182,15 @@ public class ConfigDefaultTest extends TestCase {
         Assert.assertEquals(Arrays.asList("element1", "element2"), tc.getValue4());
         // case6: override to map with centralized file
         Assert.assertEquals(testMap, tc.getValue5());
+        // case7: default value start with $ but not escape
+        Assert.assertEquals("$abc", tc.getValue6());
+    }
+
+    @Test
+    public void testInjectionExclusionConfig() {
+        config.clear();
+        Map<String, Object> configMap = config.getJsonMapConfig("test_exclusion");
+        Assert.assertEquals("${TEST.string}", configMap.get("key"));
     }
 
     public void testGetInputStream() throws Exception {

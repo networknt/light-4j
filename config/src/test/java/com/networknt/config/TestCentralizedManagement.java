@@ -31,4 +31,28 @@ public class TestCentralizedManagement extends TestCase {
             // pass
         }
     }
+
+    @Test
+    public void testMap_valueCastToInt() {
+        Map<String, Object> testMap = new HashMap<>();
+        testMap.put("key", "${TEST.int: 1}");
+        CentralizedManagement.mergeMap(testMap);
+        Assert.assertTrue(testMap.get("key") instanceof Integer);
+    }
+
+    @Test
+    public void testMap_valueCastToDouble() {
+        Map<String, Object> testMap = new HashMap<>();
+        testMap.put("key", "${TEST.double: 1.1}");
+        CentralizedManagement.mergeMap(testMap);
+        Assert.assertTrue(testMap.get("key") instanceof Double);
+    }
+
+    @Test
+    public void testMap_valueCastToBoolean() {
+        Map<String, Object> testMap = new HashMap<>();
+        testMap.put("key", "${TEST.boolean: true}");
+        CentralizedManagement.mergeMap(testMap);
+        Assert.assertTrue(testMap.get("key") instanceof Boolean);
+    }
 }
