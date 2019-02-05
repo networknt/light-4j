@@ -10,6 +10,7 @@ import com.networknt.config.Config;
 import com.networknt.exception.ApiException;
 import com.networknt.exception.ClientException;
 import com.networknt.httpstring.HttpStringConstants;
+import com.networknt.monad.Result;
 import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.client.*;
@@ -385,12 +386,17 @@ public class Http2Client {
 
     private void getCCToken() throws ClientException {
         TokenRequest tokenRequest = new ClientCredentialsRequest();
-        TokenResponse tokenResponse = OauthHelper.getToken(tokenRequest);
-        synchronized (lock) {
-            jwt = tokenResponse.getAccessToken();
-            // the expiresIn is seconds and it is converted to millisecond in the future.
-            expire = System.currentTimeMillis() + tokenResponse.getExpiresIn() * 1000;
-            logger.info("Get client credentials token {} with expire_in {} seconds", jwt, tokenResponse.getExpiresIn());
+        Result<TokenResponse> result = OauthHelper.getToken(tokenRequest);
+        if(result.isSuccess()) {
+            synchronized (lock) {
+                TokenResponse tokenResponse = result.getResult();
+                jwt = tokenResponse.getAccessToken();
+                // the expiresIn is seconds and it is converted to millisecond in the future.
+                expire = System.currentTimeMillis() + tokenResponse.getExpiresIn() * 1000;
+                logger.info("Get client credentials token {} with expire_in {} seconds", jwt, tokenResponse.getExpiresIn());
+            }
+        } else {
+            logger.error("get token fail: {}", result.getError().toString());
         }
     }
 
