@@ -47,6 +47,7 @@ import org.slf4j.MDC;
 import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 import org.xnio.Options;
+import org.xnio.SslClientAuthMode;
 
 import javax.net.ssl.*;
 import java.io.BufferedInputStream;
@@ -216,6 +217,10 @@ public class Server {
                 builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true);
             }
 
+            if (config.isEnableTwoWayTls()) {
+               builder.setSocketOption(Options.SSL_CLIENT_AUTH_MODE, SslClientAuthMode.REQUIRED);
+            }
+
             server = builder.setBufferSize(1024 * 16).setIoThreads(Runtime.getRuntime().availableProcessors() * 2)
                     // above seems slightly faster in some configurations
                     .setSocketOption(Options.BACKLOG, 10000)
@@ -361,7 +366,7 @@ public class Server {
 
     private static TrustManager[] buildTrustManagers(final KeyStore trustStore) {
         TrustManager[] trustManagers = null;
-        if (trustStore == null) {
+        if (trustStore != null) {
             try {
                 TrustManagerFactory trustManagerFactory = TrustManagerFactory
                         .getInstance(KeyManagerFactory.getDefaultAlgorithm());
@@ -372,6 +377,7 @@ public class Server {
                 throw new RuntimeException("Unable to initialise TrustManager[]", e);
             }
         } else {
+            logger.warn("Unable to find server truststore while Mutual TLS is enabled. Falling back to trust all certs.");
             trustManagers = TRUST_ALL_CERTS;
         }
         return trustManagers;
