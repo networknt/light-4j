@@ -119,10 +119,12 @@ public class ConfigInjection {
             // Set error text
             if (array[1].startsWith("?")) {
                 injectionPattern.setErrorText(array[1].substring(1));
-            // Skip this injection when "$" is found after the ":", and set "${key}" as default value
             } else if (array[1].startsWith("$")) {
+                // Skip this injection when "$" is only character found after the ":"
                 if (array[1].length() == 1) {
                     injectionPattern.setDefaultValue("\\$\\{" + array[0] + "\\}");
+                // Otherwise, treat as a default value
+                // Add "\\" since $ is a special character
                 } else {
                     injectionPattern.setDefaultValue("\\" + array[1]);
                 }
