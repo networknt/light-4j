@@ -1,5 +1,6 @@
 package com.networknt.client.oauth;
 
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
@@ -39,6 +40,7 @@ public class OauthHelper {
     private static final String FAIL_TO_SEND_REQUEST = "ERR10051";
     private static final String GET_TOKEN_ERROR = "ERR10052";
     private static final String ESTABLISH_CONNECTION_ERROR = "ERR10053";
+    private static final String GET_TOKEN_TIMEOUT = "ERR10054";
 
     static final Logger logger = LoggerFactory.getLogger(OauthHelper.class);
 
@@ -51,7 +53,7 @@ public class OauthHelper {
             connection = client.connect(new URI(tokenRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, tokenRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
         } catch (Exception e) {
             logger.error("cannot establish connection: {}", e.getStackTrace());
-            return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR));
+            return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR, tokenRequest.getServerUrl()));
         }
 
         try {
@@ -81,6 +83,7 @@ public class OauthHelper {
                                     @Override
                                     protected void error(IOException e) {
                                         logger.error("IOException:", e);
+                                        reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
                                         latch.countDown();
                                     }
                                 }.setup(result.getResponseChannel());
@@ -89,6 +92,7 @@ public class OauthHelper {
                             @Override
                             public void failed(IOException e) {
                                 logger.error("IOException:", e);
+                                reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
                                 latch.countDown();
                             }
                         });
@@ -97,6 +101,7 @@ public class OauthHelper {
                     @Override
                     public void failed(IOException e) {
                         logger.error("IOException:", e);
+                        reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
                         latch.countDown();
                     }
                 });
@@ -110,10 +115,11 @@ public class OauthHelper {
             IoUtils.safeClose(connection);
         }
 
-        return reference.get();
+        //if reference.get() is null at this point, mostly likely couldn't get token within latch.await() timeout.
+        return reference.get() == null ? Failure.of(new Status(GET_TOKEN_TIMEOUT)) : reference.get();
     }
 
-    public static Result<TokenResponse> getTokenFromSaml(SAMLBearerRequest tokenRequest) throws ClientException {
+    public static Result<TokenResponse> getTokenFromSaml(SAMLBearerRequest tokenRequest) {
         final AtomicReference<Result<TokenResponse>> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
@@ -160,6 +166,7 @@ public class OauthHelper {
                                     @Override
                                     protected void error(IOException e) {
                                         logger.error("IOException:", e);
+                                        reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
                                         latch.countDown();
                                     }
                                 }.setup(result.getResponseChannel());
@@ -168,6 +175,7 @@ public class OauthHelper {
                             @Override
                             public void failed(IOException e) {
                                 logger.error("IOException:", e);
+                                reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
                                 latch.countDown();
                             }
                         });
@@ -176,6 +184,7 @@ public class OauthHelper {
                     @Override
                     public void failed(IOException e) {
                         logger.error("IOException:", e);
+                        reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
                         latch.countDown();
                     }
                 });
@@ -188,7 +197,8 @@ public class OauthHelper {
         } finally {
             IoUtils.safeClose(connection);
         }
-        return reference.get();
+        //if reference.get() is null at this point, mostly likely couldn't get token within latch.await() timeout.
+        return reference.get() == null ? Failure.of(new Status(GET_TOKEN_TIMEOUT)) : reference.get();
     }
 
     public static String getKey(KeyRequest keyRequest) throws ClientException {
@@ -300,8 +310,11 @@ public class OauthHelper {
                 result = Failure.of(new Status(GET_TOKEN_ERROR, "no auth server response"));
                 logger.error("Error in token retrieval, response = " + responseBody);
             }
+        } catch (UnrecognizedPropertyException e) {
+            //in this case, cannot parse success token, which means the server doesn't response a successful token but some messages, we need to pass this message out.
+            result = Failure.of(new Status(GET_TOKEN_ERROR, responseBody));
         } catch (IOException | RuntimeException e) {
-            result = Failure.of(new Status(GET_TOKEN_ERROR));
+            result = Failure.of(new Status(GET_TOKEN_ERROR, e.getMessage()));
             logger.error("Error in token retrieval", e);
         }
         return result;
