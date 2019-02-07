@@ -391,7 +391,12 @@ ERR10053:
   statusCode: 401
   code: ERR10053
   message: ESTABLISH_CONNECTION_ERROR
-  description: Cannot establish connection.
+  description: Cannot establish connection for url %s.
+ERR10054:
+  statusCode: 401
+  code: ERR10054
+  message: GET_TOKEN_TIMEOUT
+  description: Cannot get valid token, probably due to a timeout.
 
 # 11000-11500 swagger-validator errors
 ERR11000:

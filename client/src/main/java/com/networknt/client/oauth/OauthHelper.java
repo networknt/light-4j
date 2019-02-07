@@ -27,6 +27,8 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -41,6 +43,7 @@ public class OauthHelper {
     private static final String GET_TOKEN_ERROR = "ERR10052";
     private static final String ESTABLISH_CONNECTION_ERROR = "ERR10053";
     private static final String GET_TOKEN_TIMEOUT = "ERR10054";
+    public static final String STATUS_CLIENT_CREDENTIALS_TOKEN_NOT_AVAILABLE = "ERR10009";
 
     static final Logger logger = LoggerFactory.getLogger(OauthHelper.class);
 
@@ -327,5 +330,108 @@ public class OauthHelper {
         exchange.getResponseSender().send(status.toString());
         StackTraceElement[] elements = Thread.currentThread().getStackTrace();
         logger.error(status.toString() + " at " + elements[2].getClassName() + "." + elements[2].getMethodName() + "(" + elements[2].getFileName() + ":" + elements[2].getLineNumber() + ")");
+    }
+
+    /**
+     * populate/renew jwt info to the give jwt object.
+     * based on the expire time of the jwt, to determine if need to renew jwt or not.
+     * to avoid modifying class member which will case thread-safe problem, move this method from Http2Client to this helper class.
+     * @param jwt the given jwt needs to renew or populate
+     * @return When success return Jwt; When fail return Status.
+     */
+    public static Result<Jwt> populateCCToken(Jwt jwt) {
+        boolean isInRenewWindow = jwt.getExpire() - System.currentTimeMillis() < jwt.getTokenRenewBeforeExpired();
+        logger.trace("isInRenewWindow = " + isInRenewWindow);
+        //if not in renew window, return the current jwt.
+        if(!isInRenewWindow) { return Success.of(jwt); }
+        //block other getting token requests, only once at a time.
+        //Once one request get the token, other requests don't need to get from auth server anymore.
+        synchronized (Http2Client.class) {
+            //if token expired, try to renew synchronously
+            if(jwt.getExpire() <= System.currentTimeMillis()) {
+                Result<Jwt> result = renewCCTokenSync(jwt);
+                if(logger.isTraceEnabled()) logger.trace("Check secondary token is done!");
+                return result;
+            } else {
+                //otherwise renew token silently
+                renewCCTokenAsync(jwt);
+                if(logger.isTraceEnabled()) logger.trace("Check secondary token is done!");
+                return Success.of(jwt);
+            }
+        }
+    }
+
+    /**
+     * renew Client Credential token synchronously.
+     * When success will renew the Jwt jwt passed in.
+     * When fail will return Status code so that can be handled by caller.
+     * @param jwt the jwt you want to renew
+     * @return Jwt when success, it will be the same object as the jwt you passed in; return Status when fail;
+     */
+    private static Result<Jwt> renewCCTokenSync(final Jwt jwt) {
+        // Already expired, try to renew getCCTokenSynchronously but let requests use the old token.
+        logger.trace("In renew window and token is already expired.");
+        //the token can be renew when it's not on renewing or current time is lager than retrying interval
+        if (!jwt.isRenewing() || System.currentTimeMillis() > jwt.getExpiredRetryTimeout()) {
+            jwt.setRenewing(true);
+            jwt.setEarlyRetryTimeout(System.currentTimeMillis() + jwt.getExpiredRefreshRetryDelay());
+            Result<Jwt> result = getCCTokenRemotely(jwt);
+            //set renewing flag to false no mater fail or success
+            jwt.setRenewing(false);
+            return result;
+        } else {
+            if(logger.isTraceEnabled()) logger.trace("Circuit breaker is tripped and not timeout yet!");
+            // token is renewing
+            return Failure.of(new Status(STATUS_CLIENT_CREDENTIALS_TOKEN_NOT_AVAILABLE));
+        }
+    }
+
+    /**
+     * renew the given Jwt jwt asynchronously.
+     * When fail, it will swallow the exception, so no need return type to be handled by caller.
+     * @param jwt the jwt you want to renew
+     */
+    private static void renewCCTokenAsync(Jwt jwt) {
+        // Not expired yet, try to renew async but let requests use the old token.
+        logger.trace("In renew window but token is not expired yet.");
+        if(!jwt.isRenewing() || System.currentTimeMillis() > jwt.getEarlyRetryTimeout()) {
+            jwt.setRenewing(true);
+            jwt.setEarlyRetryTimeout(System.currentTimeMillis() + jwt.getEarlyRefreshRetryDelay());
+            logger.trace("Retrieve token async is called while token is not expired yet");
+
+            ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+
+            executor.schedule(() -> {
+                Result<Jwt> result = getCCTokenRemotely(jwt);
+                if(result.isFailure()) {
+                    // swallow the exception here as it is on a best effort basis.
+                    logger.error("Async retrieve token error with status: {}", result.getError().toString());
+                }
+                //set renewing flag to false after response, doesn't matter if it's success or fail.
+                jwt.setRenewing(false);
+            }, 50, TimeUnit.MILLISECONDS);
+            executor.shutdown();
+        }
+    }
+
+    /**
+     * get Client Credential token from auth server
+     * @param jwt the jwt you want to renew
+     * @return Jwt when success, it will be the same object as the jwt you passed in; return Status when fail;
+     */
+    private static Result<Jwt> getCCTokenRemotely(final Jwt jwt) {
+        TokenRequest tokenRequest = new ClientCredentialsRequest();
+        Result<TokenResponse> result = OauthHelper.getToken(tokenRequest);
+        if(result.isSuccess()) {
+            TokenResponse tokenResponse = result.getResult();
+            jwt.setJwt(tokenResponse.getAccessToken());
+            // the expiresIn is seconds and it is converted to millisecond in the future.
+            jwt.setExpire(System.currentTimeMillis() + tokenResponse.getExpiresIn() * 1000);
+            logger.info("Get client credentials token {} with expire_in {} seconds", jwt, tokenResponse.getExpiresIn());
+            return Success.of(jwt);
+        } else {
+            logger.info("Get client credentials token fail with status: {}", result.getError().toString());
+            return Failure.of(result.getError());
+        }
     }
 }
