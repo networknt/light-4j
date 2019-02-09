@@ -21,7 +21,6 @@ import com.jayway.jsonpath.*;
 import com.networknt.config.Config;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
-import net.minidev.json.JSONArray;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -225,7 +224,7 @@ public class Mask {
         if(pathList != null && pathList.size() == 1) {
             String path = pathList.get(0);
             List values = ctx.read(path);
-            JSONArray maskedValue = new JSONArray();
+            List maskedValue = new ArrayList();
             //mask each value in the list of the same path
             values.forEach(o -> maskedValue.add(replaceWithMask(o.toString(), MASK_REPLACEMENT_CHAR.charAt(0), expression)));
             ctx.set(path, maskedValue);
