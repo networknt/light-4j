@@ -235,6 +235,7 @@ public abstract class Config {
          * @param fileExtension The extension (with a leading .)
          * @param clazz         The class that the object will be deserialized into.
          * @param <T>           The type of the class file should be the type of the object returned.
+         * @param path          The relative directory that config will be loaded from
          * @return An instance of the object if possible, null otherwise. IOExceptions smothered.
          */
         private <T> Object loadSpecificConfigFileAsObject(String configName, String fileExtension, Class<T> clazz, String path) {
@@ -271,6 +272,7 @@ public abstract class Config {
          *
          * @param configName    The name of the config file, without an extension
          * @param fileExtension The extension (with a leading .)
+         * @param path          The relative directory that config will be loaded from
          * @return A map of the config fields if possible, null otherwise. IOExceptions smothered.
          */
         private Map<String, Object> loadSpecificConfigFileAsMap(String configName, String fileExtension, String path) {
@@ -360,8 +362,9 @@ public abstract class Config {
             }
         }
 
+        // private method used to get absolute directory based on relative directory
         private String getAbsolutePath(String path) {
-            return EXTERNALIZED_PROPERTY_DIR + "/" + path;
+            return path.equals("") ? EXTERNALIZED_PROPERTY_DIR : EXTERNALIZED_PROPERTY_DIR + "/" + path;
         }
     }
 

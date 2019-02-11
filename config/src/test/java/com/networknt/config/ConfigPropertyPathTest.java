@@ -33,6 +33,7 @@ public class ConfigPropertyPathTest extends TestCase {
     public void setUp() throws Exception {
         super.setUp();
 
+        System.setProperty("light-4j-config-dir", homeDir);
         config = Config.getInstance();
 
         // write a config file
@@ -54,19 +55,21 @@ public class ConfigPropertyPathTest extends TestCase {
         test2.delete();
     }
 
+    // test getting config from light-4j-config-dir
     public void testGetConfig() throws Exception {
-        System.setProperty("light-4j-config-dir", homeDir);
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test");
         Assert.assertEquals("default config", configMap.get("value"));
     }
 
+    // test getting map config from a relative path "src"
     public void testGetConfigFromRelPath() {
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test", "src");
         Assert.assertEquals("another config", configMap.get("value"));
     }
 
+    // test getting object config from a relative path "src"
     public void testGetObjectConfigFromRelPath() {
         config.clear();
         TestConfig configObject = (TestConfig) config.getJsonObjectConfig("test", TestConfig.class, "src");
