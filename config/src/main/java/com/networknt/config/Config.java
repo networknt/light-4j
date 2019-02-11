@@ -230,10 +230,11 @@ public abstract class Config {
 
         /**
          * Helper method to reduce duplication of loading a given file as a given Object.
-         * @param configName The name of the config file, without an extension
+         *
+         * @param configName    The name of the config file, without an extension
          * @param fileExtension The extension (with a leading .)
-         * @param clazz The class that the object will be deserialized into.
-         * @param <T> The type of the class file should be the type of the object returned.
+         * @param clazz         The class that the object will be deserialized into.
+         * @param <T>           The type of the class file should be the type of the object returned.
          * @return An instance of the object if possible, null otherwise. IOExceptions smothered.
          */
         private <T> Object loadSpecificConfigFileAsObject(String configName, String fileExtension, Class<T> clazz, String path) {
@@ -267,7 +268,8 @@ public abstract class Config {
 
         /**
          * Helper method to reduce duplication of loading a given config file as a Map.
-         * @param configName The name of the config file, without an extension
+         *
+         * @param configName    The name of the config file, without an extension
          * @param fileExtension The extension (with a leading .)
          * @return A map of the config fields if possible, null otherwise. IOExceptions smothered.
          */
@@ -359,11 +361,7 @@ public abstract class Config {
         }
 
         private String getAbsolutePath(String path) {
-            if (path.startsWith("/")) {
-                return path;
-            } else {
-                return EXTERNALIZED_PROPERTY_DIR + "/" + path;
-            }
+            return EXTERNALIZED_PROPERTY_DIR + "/" + path;
         }
     }
 

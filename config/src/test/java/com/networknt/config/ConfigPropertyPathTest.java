@@ -61,22 +61,10 @@ public class ConfigPropertyPathTest extends TestCase {
         Assert.assertEquals("default config", configMap.get("value"));
     }
 
-    public void testGetConfigFromAbsPath() {
-        config.clear();
-        Map<String, Object> configMap = config.getJsonMapConfig("test", homeDir + "/src");
-        Assert.assertEquals("another config", configMap.get("value"));
-    }
-
     public void testGetConfigFromRelPath() {
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test", "src");
         Assert.assertEquals("another config", configMap.get("value"));
-    }
-
-    public void testGetObjectConfigFromAbsPath() {
-        config.clear();
-        TestConfig configObject = (TestConfig) config.getJsonObjectConfig("test", TestConfig.class, homeDir + "/src");
-        Assert.assertEquals("another config", configObject.getValue());
     }
 
     public void testGetObjectConfigFromRelPath() {
