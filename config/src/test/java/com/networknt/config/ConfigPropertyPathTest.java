@@ -20,10 +20,9 @@ import junit.framework.TestCase;
 import org.junit.Assert;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.networknt.config.Config.LIGHT_4J_CONFIG_DIR;
 
 public class ConfigPropertyPathTest extends TestCase {
 
@@ -35,8 +34,12 @@ public class ConfigPropertyPathTest extends TestCase {
     public void setUp() throws Exception {
         super.setUp();
 
-        System.setProperty(LIGHT_4J_CONFIG_DIR, homeDir);
+        // the instance would already be created by other classes since the config is singleton, so need to using
+        // reflection to inject field.
         config = Config.getInstance();
+        Field f1 = config.getClass().getDeclaredField("EXTERNALIZED_PROPERTY_DIR");
+        f1.setAccessible(true);
+        f1.set(config, homeDir);
 
         // write a config file
         Map<String, Object> map = new HashMap<>();

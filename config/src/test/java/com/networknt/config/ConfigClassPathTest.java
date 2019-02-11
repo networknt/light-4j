@@ -26,8 +26,6 @@ import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.networknt.config.Config.LIGHT_4J_CONFIG_DIR;
-
 /**
  * Created by steve on 23/09/16.
  */
@@ -39,8 +37,6 @@ public class ConfigClassPathTest extends TestCase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        // set same property for all test to eliminate conflicts caused by singleton
-        System.setProperty(LIGHT_4J_CONFIG_DIR, System.getProperty("user.home"));
         config = Config.getInstance();
 
         // write a config file into the user home directory.
