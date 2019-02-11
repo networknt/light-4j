@@ -75,6 +75,7 @@ public abstract class Config {
         static final String CONFIG_EXT_JSON = ".json";
         static final String CONFIG_EXT_YAML = ".yaml";
         static final String CONFIG_EXT_YML = ".yml";
+        static final String[] configExtensionsOrdered = {CONFIG_EXT_YML, CONFIG_EXT_YAML, CONFIG_EXT_JSON};
 
         static final Logger logger = LoggerFactory.getLogger(Config.class);
 
@@ -199,53 +200,25 @@ public abstract class Config {
             return content;
         }
 
-        private Object loadObjectConfig(String configName, Class clazz) {
+        /**
+         * Helper method to reduce duplication of loading a given file as a given Object.
+         * @param configName The name of the config file, without an extension
+         * @param fileExtension The extension (with a leading .)
+         * @param clazz The class that the object will be deserialized into.
+         * @param <T> The type of the class file should be the type of the object returned.
+         * @return An instance of the object if possible, null otherwise. IOExceptions smothered.
+         */
+        private <T> Object loadSpecificConfigFileAsObject(String configName, String fileExtension, Class<T> clazz) {
             Object config = null;
-
-            String ymlFilename = configName + CONFIG_EXT_YML;
-            try (InputStream inStream = getConfigStream(ymlFilename)) {
+            String fileName = configName + fileExtension;
+            try (InputStream inStream = getConfigStream(fileName)) {
                 if (inStream != null) {
-                    // The values.yaml should be processed by centralized management, since it would cause a dead loop
-                    if (configName.equals("values")) {
+                    // The config file specified in the exclusions.yml shouldn't be injected
+                    if (ConfigInjection.isExclusionConfigFile(configName)) {
                         config = yaml.loadAs(inStream, clazz);
                     } else {
                         // Parse into map first, since map is easier to be manipulated in merging process
                         Map<String, Object> configMap = yaml.load(inStream);
-                        config = CentralizedManagement.mergeObject(configMap, clazz);
-                    }
-                }
-            } catch (IOException ioe) {
-                logger.error("IOException", ioe);
-            }
-            if (config != null) return config;
-
-            String yamlFilename = configName + CONFIG_EXT_YAML;
-            try (InputStream inStream = getConfigStream(yamlFilename)) {
-                if (inStream != null) {
-                    // The values.yaml should be processed by centralized management, since it would cause a dead loop
-                    if (configName.equals("values")) {
-                        config = yaml.loadAs(inStream, clazz);
-                    } else {
-                        // Parse into map first, since map is easier to be manipulated in merging process
-                        Map<String, Object> configMap = yaml.load(inStream);
-                        config = CentralizedManagement.mergeObject(configMap, clazz);
-                    }
-                }
-            } catch (IOException ioe) {
-                logger.error("IOException", ioe);
-            }
-            if (config != null) return config;
-
-            String jsonFilename = configName + CONFIG_EXT_JSON;
-            try (InputStream inStream = getConfigStream(jsonFilename)) {
-                if (inStream != null) {
-                    // The values.yaml should be processed by centralized management, since it would cause a dead loop
-                    if (configName.equals("values")) {
-                        config = mapper.readValue(inStream, clazz);
-                    } else {
-                        // Parse into map first, since map is easier to be manipulated in merging process
-                        Map<String, Object> configMap = mapper.readValue(inStream, new TypeReference<HashMap<String, Object>>() {
-                        });
                         config = CentralizedManagement.mergeObject(configMap, clazz);
                     }
                 }
@@ -255,48 +228,44 @@ public abstract class Config {
             return config;
         }
 
-        private Map<String, Object> loadMapConfig(String configName) {
-            Map<String, Object> config = null;
+        private <T> Object loadObjectConfig(String configName, Class<T> clazz) {
+            Object config;
+            for (String extension : configExtensionsOrdered) {
+                config = loadSpecificConfigFileAsObject(configName, extension, clazz);
+                if (config != null) return config;
+            }
+            return null;
+        }
 
-            String ymlFilename = configName + CONFIG_EXT_YML;
+        /**
+         * Helper method to reduce duplication of loading a given config file as a Map.
+         * @param configName The name of the config file, without an extension
+         * @param fileExtension The extension (with a leading .)
+         * @return A map of the config fields if possible, null otherwise. IOExceptions smothered.
+         */
+        private Map<String, Object> loadSpecificConfigFileAsMap(String configName, String fileExtension) {
+            Map<String, Object> config = null;
+            String ymlFilename = configName + fileExtension;
             try (InputStream inStream = getConfigStream(ymlFilename)) {
                 if (inStream != null) {
-                    config = (Map<String, Object>) yaml.load(inStream);
-                    if (!configName.equals("values")) {
-                        config = CentralizedManagement.mergeMap(config);
-                    }
-                }
-            } catch (IOException ioe) {
-                logger.error("IOException", ioe);
-            }
-            if (config != null) return config;
-
-            String yamlFilename = configName + CONFIG_EXT_YAML;
-            try (InputStream inStream = getConfigStream(yamlFilename)) {
-                if (inStream != null) {
-                        config = (Map<String, Object>) yaml.load(inStream);
-                    if (!configName.equals("values")) {
-                        config = CentralizedManagement.mergeMap(config);
-                    }
-                }
-            } catch (IOException ioe) {
-                logger.error("IOException", ioe);
-            }
-            if (config != null) return config;
-
-            String configFilename = configName + CONFIG_EXT_JSON;
-            try (InputStream inStream = getConfigStream(configFilename)) {
-                if (inStream != null) {
-                        config = mapper.readValue(inStream, new TypeReference<HashMap<String, Object>>() {
-                        });
-                    if (!configName.equals("values")) {
-                        config = CentralizedManagement.mergeMap(config);
+                    config = yaml.load(inStream);
+                    if (!ConfigInjection.isExclusionConfigFile(configName)) {
+                        CentralizedManagement.mergeMap(config); // mutates the config map in place.
                     }
                 }
             } catch (IOException ioe) {
                 logger.error("IOException", ioe);
             }
             return config;
+        }
+
+        private Map<String, Object> loadMapConfig(String configName) {
+            Map<String, Object> config;
+            for (String extension : configExtensionsOrdered) {
+                config = loadSpecificConfigFileAsMap(configName, extension);
+                if (config != null) return config;
+            }
+            return null;
         }
 
         private InputStream getConfigStream(String configFilename) {
