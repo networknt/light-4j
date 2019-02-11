@@ -19,9 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.net.ssl.KeyManager;
@@ -46,10 +43,7 @@ import org.xnio.channels.StreamSinkChannel;
 import org.xnio.ssl.XnioSsl;
 
 import com.networknt.client.oauth.Jwt;
-import com.networknt.client.oauth.ClientCredentialsRequest;
 import com.networknt.client.oauth.OauthHelper;
-import com.networknt.client.oauth.TokenRequest;
-import com.networknt.client.oauth.TokenResponse;
 import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
 import com.networknt.client.ssl.TLSConfig;
 import com.networknt.common.DecryptUtil;
@@ -66,8 +60,6 @@ import io.undertow.client.ClientExchange;
 import io.undertow.client.ClientProvider;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
-import io.undertow.client.http.Light4jHttp2ClientProvider;
-import io.undertow.client.http.Light4jHttpClientProvider;
 import io.undertow.connector.ByteBufferPool;
 import io.undertow.protocols.ssl.UndertowXnioSsl;
 import io.undertow.server.DefaultByteBufferPool;
@@ -171,7 +163,7 @@ public class Http2Client {
         final Map<String, ClientProvider> map = new HashMap<>();
         for (ClientProvider provider : providers) {
             for (String scheme : provider.handlesSchemes()) {
-            	addProvider(map, scheme, provider);
+                map.put(scheme, provider);
             }
         }
         this.clientProviders = Collections.unmodifiableMap(map);
@@ -182,20 +174,6 @@ public class Http2Client {
         } catch (Exception e) {
             logger.error("Exception: ", e);
         }
-    }
-
-    private void addProvider(Map<String, ClientProvider> map, String scheme, ClientProvider provider) {
-    	if (System.getProperty("java.version").startsWith("1.8.")) {// Java 8
-        	if (Light4jHttpClientProvider.HTTPS.equalsIgnoreCase(scheme)) {
-        		map.putIfAbsent(scheme, new Light4jHttpClientProvider());
-        	}else if (Light4jHttp2ClientProvider.HTTP2.equalsIgnoreCase(scheme)){
-        		map.putIfAbsent(scheme, new Light4jHttp2ClientProvider());
-        	}else {
-        		map.put(scheme, provider);
-        	}
-    	}else {
-    		map.put(scheme, provider);
-    	}
     }
 
     public IoFuture<ClientConnection> connect(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
@@ -209,11 +187,10 @@ public class Http2Client {
     public IoFuture<ClientConnection> connect(final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         return connect((InetSocketAddress) null, uri, worker, ssl, bufferPool, options);
     }
+
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         ClientProvider provider = getClientProvider(uri);
         final FutureResult<ClientConnection> result = new FutureResult<>();
-
-
         provider.connect(new ClientCallback<ClientConnection>() {
             @Override
             public void completed(ClientConnection r) {
@@ -225,7 +202,6 @@ public class Http2Client {
                 result.setException(e);
             }
         }, bindAddress, uri, worker, ssl, bufferPool, options);
-
         return result.getIoFuture();
     }
 
@@ -245,7 +221,6 @@ public class Http2Client {
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         ClientProvider provider = getClientProvider(uri);
         final FutureResult<ClientConnection> result = new FutureResult<>();
-
         provider.connect(new ClientCallback<ClientConnection>() {
             @Override
             public void completed(ClientConnection r) {
@@ -257,7 +232,6 @@ public class Http2Client {
                 result.setException(e);
             }
         }, bindAddress, uri, ioThread, ssl, bufferPool, options);
-
         return result.getIoFuture();
     }
 
@@ -519,7 +493,6 @@ public class Http2Client {
             try {
                 sslContext = SSLContext.getInstance("TLS");
                 sslContext.init(keyManagers, trustManagers, null);
-
             } catch (NoSuchAlgorithmException | KeyManagementException e) {
                 throw new IOException("Unable to create and initialise the SSLContext", e);
             }
@@ -726,4 +699,5 @@ public class Http2Client {
             }
         };
     }
+
 }
