@@ -574,7 +574,7 @@ public class Http2ClientIT {
 
         final List<String> responses = new CopyOnWriteArrayList<>();
         final CountDownLatch latch = new CountDownLatch(10);
-        SSLContext context = client.createSSLContext();
+        SSLContext context = Http2Client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
         final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
