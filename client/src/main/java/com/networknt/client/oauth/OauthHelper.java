@@ -330,7 +330,6 @@ public class OauthHelper {
     public static void sendStatusToResponse(HttpServerExchange exchange, Status status) {
         exchange.setStatusCode(status.getStatusCode());
         exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-        status.setDescription(status.getDescription().replaceAll("\\\\", "\\\\\\\\"));
         exchange.getResponseSender().send(status.toString());
         StackTraceElement[] elements = Thread.currentThread().getStackTrace();
         logger.error(status.toString() + " at " + elements[2].getClassName() + "." + elements[2].getMethodName() + "(" + elements[2].getFileName() + ":" + elements[2].getLineNumber() + ")");
@@ -448,7 +447,8 @@ public class OauthHelper {
         switch (contentType) {
             case APPLICATION_JSON:
                 try {
-                    return Config.getInstance().getMapper().writeValueAsString(responseBody);
+                    String escapedStr = Config.getInstance().getMapper().writeValueAsString(responseBody);
+                    return escapedStr.substring(1,escapedStr.length()-1);
                 } catch (JsonProcessingException e) {
                     logger.error("escape json response fails");
                     return responseBody;
