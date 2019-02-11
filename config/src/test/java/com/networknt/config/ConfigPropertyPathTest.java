@@ -24,32 +24,64 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ConfigPropertyPathTest extends TestCase {
+
+    private Config config = null;
+
     final String homeDir = System.getProperty("user.home");
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        System.setProperty("light-4j-config-dir", homeDir);
 
-        Config config = Config.getInstance();
+        config = Config.getInstance();
 
         // write a config file
         Map<String, Object> map = new HashMap<>();
         map.put("value", "default config");
         config.getMapper().writeValue(new File(homeDir + "/test.json"), map);
+        // write another config file with the same name but in different path
+        Map<String, Object> map2 = new HashMap<>();
+        map2.put("value", "another config");
+        new File(homeDir + "/src").mkdirs();
+        config.getMapper().writeValue(new File(homeDir + "/src/test.json"), map2);
     }
 
     @Override
     public void tearDown() throws Exception {
-        File test = new File(homeDir + "/test.json");
-        test.delete();
+        File test1 = new File(homeDir + "/test.json");
+        File test2 = new File(homeDir + "/src");
+        test1.delete();
+        test2.delete();
     }
 
     public void testGetConfig() throws Exception {
-        Config config  = Config.getInstance();
+        System.setProperty("light-4j-config-dir", homeDir);
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test");
         Assert.assertEquals("default config", configMap.get("value"));
     }
 
+    public void testGetConfigFromAbsPath() {
+        config.clear();
+        Map<String, Object> configMap = config.getJsonMapConfig("test", homeDir + "/src");
+        Assert.assertEquals("another config", configMap.get("value"));
+    }
+
+    public void testGetConfigFromRelPath() {
+        config.clear();
+        Map<String, Object> configMap = config.getJsonMapConfig("test", "src");
+        Assert.assertEquals("another config", configMap.get("value"));
+    }
+
+    public void testGetObjectConfigFromAbsPath() {
+        config.clear();
+        TestConfig configObject = (TestConfig) config.getJsonObjectConfig("test", TestConfig.class, homeDir + "/src");
+        Assert.assertEquals("another config", configObject.getValue());
+    }
+
+    public void testGetObjectConfigFromRelPath() {
+        config.clear();
+        TestConfig configObject = (TestConfig) config.getJsonObjectConfig("test", TestConfig.class, "src");
+        Assert.assertEquals("another config", configObject.getValue());
+    }
 }

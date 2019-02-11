@@ -16,7 +16,6 @@
 
 package com.networknt.config;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -49,15 +48,24 @@ public abstract class Config {
     }
 
     // abstract methods that need be implemented by all implementations
+
     public abstract Map<String, Object> getJsonMapConfig(String configName);
+
+    public abstract Map<String, Object> getJsonMapConfig(String configName, String path);
 
     public abstract Map<String, Object> getJsonMapConfigNoCache(String configName);
 
-    //public abstract JsonNode getJsonNodeConfig(String configName);
+    public abstract Map<String, Object> getJsonMapConfigNoCache(String configName, String path);
+
+    // public abstract JsonNode getJsonNodeConfig(String configName);
 
     public abstract Object getJsonObjectConfig(String configName, Class clazz);
 
+    public abstract Object getJsonObjectConfig(String configName, Class clazz, String path);
+
     public abstract String getStringFromFile(String filename);
+
+    public abstract String getStringFromFile(String filename, String path);
 
     public abstract InputStream getInputStreamFromFile(String filename);
 
@@ -121,14 +129,14 @@ public abstract class Config {
         }
 
         @Override
-        public String getStringFromFile(String filename) {
+        public String getStringFromFile(String filename, String path) {
             checkCacheExpiration();
             String content = (String) configCache.get(filename);
             if (content == null) {
                 synchronized (FileConfigImpl.class) {
                     content = (String) configCache.get(filename);
                     if (content == null) {
-                        content = loadStringFromFile(filename);
+                        content = loadStringFromFile(filename, path);
                         if (content != null) configCache.put(filename, content);
                     }
                 }
@@ -137,19 +145,45 @@ public abstract class Config {
         }
 
         @Override
-        public InputStream getInputStreamFromFile(String filename) {
-            return getConfigStream(filename);
+        public String getStringFromFile(String filename) {
+            return getStringFromFile(filename, "");
         }
 
         @Override
-        public Object getJsonObjectConfig(String configName, Class clazz) {
+        public InputStream getInputStreamFromFile(String filename) {
+            return getConfigStream(filename, "");
+        }
+
+        @Override
+        public Object getJsonObjectConfig(String configName, Class clazz, String path) {
             checkCacheExpiration();
             Object config = configCache.get(configName);
             if (config == null) {
                 synchronized (FileConfigImpl.class) {
                     config = configCache.get(configName);
                     if (config == null) {
-                        config = loadObjectConfig(configName, clazz);
+                        config = loadObjectConfig(configName, clazz, path);
+                        if (config != null) configCache.put(configName, config);
+                    }
+                }
+            }
+            return config;
+        }
+
+        @Override
+        public Object getJsonObjectConfig(String configName, Class clazz) {
+            return getJsonObjectConfig(configName, clazz, "");
+        }
+
+        @Override
+        public Map<String, Object> getJsonMapConfig(String configName, String path) {
+            checkCacheExpiration();
+            Map<String, Object> config = (Map<String, Object>) configCache.get(configName);
+            if (config == null) {
+                synchronized (FileConfigImpl.class) {
+                    config = (Map<String, Object>) configCache.get(configName);
+                    if (config == null) {
+                        config = loadMapConfig(configName, path);
                         if (config != null) configCache.put(configName, config);
                     }
                 }
@@ -159,30 +193,24 @@ public abstract class Config {
 
         @Override
         public Map<String, Object> getJsonMapConfig(String configName) {
-            checkCacheExpiration();
-            Map<String, Object> config = (Map<String, Object>) configCache.get(configName);
-            if (config == null) {
-                synchronized (FileConfigImpl.class) {
-                    config = (Map<String, Object>) configCache.get(configName);
-                    if (config == null) {
-                        config = loadMapConfig(configName);
-                        if (config != null) configCache.put(configName, config);
-                    }
-                }
-            }
-            return config;
+            return getJsonMapConfig(configName, "");
+        }
+
+        @Override
+        public Map<String, Object> getJsonMapConfigNoCache(String configName, String path) {
+            return loadMapConfig(configName, path);
         }
 
         @Override
         public Map<String, Object> getJsonMapConfigNoCache(String configName) {
-            return loadMapConfig(configName);
+            return getJsonMapConfigNoCache(configName, "");
         }
 
-        private String loadStringFromFile(String filename) {
+        private String loadStringFromFile(String filename, String path) {
             String content = null;
             InputStream inStream = null;
             try {
-                inStream = getConfigStream(filename);
+                inStream = getConfigStream(filename, path);
                 if (inStream != null) {
                     content = convertStreamToString(inStream);
                 }
@@ -208,10 +236,10 @@ public abstract class Config {
          * @param <T> The type of the class file should be the type of the object returned.
          * @return An instance of the object if possible, null otherwise. IOExceptions smothered.
          */
-        private <T> Object loadSpecificConfigFileAsObject(String configName, String fileExtension, Class<T> clazz) {
+        private <T> Object loadSpecificConfigFileAsObject(String configName, String fileExtension, Class<T> clazz, String path) {
             Object config = null;
             String fileName = configName + fileExtension;
-            try (InputStream inStream = getConfigStream(fileName)) {
+            try (InputStream inStream = getConfigStream(fileName, path)) {
                 if (inStream != null) {
                     // The config file specified in the config.yml shouldn't be injected
                     if (ConfigInjection.isExclusionConfigFile(configName)) {
@@ -228,10 +256,10 @@ public abstract class Config {
             return config;
         }
 
-        private <T> Object loadObjectConfig(String configName, Class<T> clazz) {
+        private <T> Object loadObjectConfig(String configName, Class<T> clazz, String path) {
             Object config;
             for (String extension : configExtensionsOrdered) {
-                config = loadSpecificConfigFileAsObject(configName, extension, clazz);
+                config = loadSpecificConfigFileAsObject(configName, extension, clazz, path);
                 if (config != null) return config;
             }
             return null;
@@ -243,10 +271,10 @@ public abstract class Config {
          * @param fileExtension The extension (with a leading .)
          * @return A map of the config fields if possible, null otherwise. IOExceptions smothered.
          */
-        private Map<String, Object> loadSpecificConfigFileAsMap(String configName, String fileExtension) {
+        private Map<String, Object> loadSpecificConfigFileAsMap(String configName, String fileExtension, String path) {
             Map<String, Object> config = null;
             String ymlFilename = configName + fileExtension;
-            try (InputStream inStream = getConfigStream(ymlFilename)) {
+            try (InputStream inStream = getConfigStream(ymlFilename, path)) {
                 if (inStream != null) {
                     config = yaml.load(inStream);
                     if (!ConfigInjection.isExclusionConfigFile(configName)) {
@@ -259,28 +287,29 @@ public abstract class Config {
             return config;
         }
 
-        private Map<String, Object> loadMapConfig(String configName) {
+        private Map<String, Object> loadMapConfig(String configName, String path) {
             Map<String, Object> config;
             for (String extension : configExtensionsOrdered) {
-                config = loadSpecificConfigFileAsMap(configName, extension);
+                config = loadSpecificConfigFileAsMap(configName, extension, path);
                 if (config != null) return config;
             }
             return null;
         }
 
-        private InputStream getConfigStream(String configFilename) {
+        private InputStream getConfigStream(String configFilename, String path) {
 
             InputStream inStream = null;
+            String absolutePath = getAbsolutePath(path);
             try {
-                inStream = new FileInputStream(EXTERNALIZED_PROPERTY_DIR + "/" + configFilename);
+                inStream = new FileInputStream(absolutePath + "/" + configFilename);
             } catch (FileNotFoundException ex) {
                 if (logger.isInfoEnabled()) {
-                    logger.info("Unable to load config from externalized folder for " + Encode.forJava(configFilename + " in " + EXTERNALIZED_PROPERTY_DIR));
+                    logger.info("Unable to load config from externalized folder for " + Encode.forJava(configFilename + " in " + absolutePath));
                 }
             }
             if (inStream != null) {
                 if (logger.isInfoEnabled()) {
-                    logger.info("Config loaded from externalized folder for " + Encode.forJava(configFilename + " in " + EXTERNALIZED_PROPERTY_DIR));
+                    logger.info("Config loaded from externalized folder for " + Encode.forJava(configFilename + " in " + absolutePath));
                 }
                 return inStream;
             }
@@ -326,6 +355,14 @@ public abstract class Config {
                 clear();
                 logger.info("daily config cache refresh");
                 cacheExpirationTime = getNextMidNightTime();
+            }
+        }
+
+        private String getAbsolutePath(String path) {
+            if (path.startsWith("/")) {
+                return path;
+            } else {
+                return EXTERNALIZED_PROPERTY_DIR + "/" + path;
             }
         }
     }
