@@ -1,9 +1,11 @@
 package com.networknt.client.oauth;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
+import com.networknt.httpstring.ContentType;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;
@@ -11,10 +13,7 @@ import com.networknt.status.Status;
 import io.undertow.UndertowOptions;
 import io.undertow.client.*;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.Headers;
-import io.undertow.util.Methods;
-import io.undertow.util.StringReadChannelListener;
-import io.undertow.util.StringWriteChannelListener;
+import io.undertow.util.*;
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,8 +77,9 @@ public class OauthHelper {
 
                                     @Override
                                     protected void stringDone(String string) {
+
                                         logger.debug("getToken response = " + string);
-                                        reference.set(handleResponse(string));
+                                        reference.set(handleResponse(getContentTypeFromExchange(result), string));
                                         latch.countDown();
                                     }
 
@@ -162,7 +162,7 @@ public class OauthHelper {
                                     @Override
                                     protected void stringDone(String string) {
                                         logger.debug("getToken response = " + string);
-                                        reference.set(handleResponse(string));
+                                        reference.set(handleResponse(getContentTypeFromExchange(result), string));
                                         latch.countDown();
                                     }
 
@@ -298,10 +298,14 @@ public class OauthHelper {
         return Http2Client.getFormDataString(params);
     }
 
-    private static Result<TokenResponse> handleResponse(String responseBody) {
+    private static Result<TokenResponse> handleResponse(ContentType contentType, String responseBody) {
         TokenResponse tokenResponse;
         Result<TokenResponse> result;
         try {
+            //only accept json format response so that can map to a TokenResponse, otherwise escapes server's response and return to the client.
+            if(!contentType.equals(ContentType.APPLICATION_JSON)) {
+                return Failure.of(new Status(GET_TOKEN_ERROR, escapeBasedOnType(contentType, responseBody)));
+            }
             if (responseBody != null && responseBody.length() > 0) {
                 tokenResponse = Config.getInstance().getMapper().readValue(responseBody, TokenResponse.class);
                 if(tokenResponse != null) {
@@ -315,7 +319,7 @@ public class OauthHelper {
             }
         } catch (UnrecognizedPropertyException e) {
             //in this case, cannot parse success token, which means the server doesn't response a successful token but some messages, we need to pass this message out.
-            result = Failure.of(new Status(GET_TOKEN_ERROR, responseBody));
+            result = Failure.of(new Status(GET_TOKEN_ERROR, escapeBasedOnType(contentType, responseBody)));
         } catch (IOException | RuntimeException e) {
             result = Failure.of(new Status(GET_TOKEN_ERROR, e.getMessage()));
             logger.error("Error in token retrieval", e);
@@ -433,5 +437,63 @@ public class OauthHelper {
             logger.info("Get client credentials token fail with status: {}", result.getError().toString());
             return Failure.of(result.getError());
         }
+    }
+
+    public static ContentType getContentTypeFromExchange(ClientExchange exchange) {
+        HeaderValues headerValues = exchange.getResponse().getResponseHeaders().get(Headers.CONTENT_TYPE);
+        return headerValues == null ? ContentType.ANY_TYPE : ContentType.toContentType(headerValues.getFirst());
+    }
+
+    private static String escapeBasedOnType(ContentType contentType, String responseBody) {
+        switch (contentType) {
+            case APPLICATION_JSON:
+                try {
+                    return Config.getInstance().getMapper().writeValueAsString(responseBody);
+                } catch (JsonProcessingException e) {
+                    logger.error("escape json response fails");
+                    return responseBody;
+                }
+            case XML:
+                //very rare case because the server should response a json format response
+                return escapeXml(responseBody);
+            default:
+                return responseBody;
+        }
+    }
+
+    /**
+     * Instead of including a large library just for escaping xml, using this util.
+     * it should be used in very rare cases because the server should not return xml format message
+     * @param nonEscapedXmlStr
+     */
+    private static String escapeXml (String nonEscapedXmlStr) {
+        StringBuilder escapedXML = new StringBuilder();
+        for (int i = 0; i < nonEscapedXmlStr.length(); i++) {
+            char c = nonEscapedXmlStr.charAt(i);
+            switch (c) {
+                case '<':
+                    escapedXML.append("&lt;");
+                    break;
+                case '>':
+                    escapedXML.append("&gt;");
+                    break;
+                case '\"':
+                    escapedXML.append("&quot;");
+                    break;
+                case '&':
+                    escapedXML.append("&amp;");
+                    break;
+                case '\'':
+                    escapedXML.append("&apos;");
+                    break;
+                default:
+                    if (c > 0x7e) {
+                        escapedXML.append("&#" + ((int) c) + ";");
+                    } else {
+                        escapedXML.append(c);
+                    }
+            }
+        }
+        return escapedXML.toString();
     }
 }
