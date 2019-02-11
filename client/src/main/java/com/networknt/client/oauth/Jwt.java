@@ -4,6 +4,10 @@ import com.networknt.config.Config;
 
 import java.util.Map;
 
+/**
+ * a model class represents a JWT mostly for caching usage so that we don't need to decrypt jwt string to get info.
+ * it will load config from client.yml/oauth/token
+ */
 public class Jwt {
     private String jwt;    // the cached jwt token for client credentials grant type
     private long expire;   // jwt expire time in millisecond so that we don't need to parse the jwt.
