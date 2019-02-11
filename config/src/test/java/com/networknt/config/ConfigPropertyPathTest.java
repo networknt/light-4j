@@ -23,6 +23,8 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.networknt.config.Config.LIGHT_4J_CONFIG_DIR;
+
 public class ConfigPropertyPathTest extends TestCase {
 
     private Config config = null;
@@ -33,7 +35,7 @@ public class ConfigPropertyPathTest extends TestCase {
     public void setUp() throws Exception {
         super.setUp();
 
-        System.setProperty("light-4j-config-dir", homeDir);
+        System.setProperty(LIGHT_4J_CONFIG_DIR, homeDir);
         config = Config.getInstance();
 
         // write a config file
@@ -50,7 +52,7 @@ public class ConfigPropertyPathTest extends TestCase {
     @Override
     public void tearDown() throws Exception {
         File test1 = new File(homeDir + "/test.json");
-        File test2 = new File(homeDir + "/src");
+        File test2 = new File(homeDir + "/src/test.json");
         test1.delete();
         test2.delete();
     }

@@ -230,7 +230,6 @@ public abstract class Config {
 
         /**
          * Helper method to reduce duplication of loading a given file as a given Object.
-         *
          * @param configName    The name of the config file, without an extension
          * @param fileExtension The extension (with a leading .)
          * @param clazz         The class that the object will be deserialized into.
@@ -269,7 +268,6 @@ public abstract class Config {
 
         /**
          * Helper method to reduce duplication of loading a given config file as a Map.
-         *
          * @param configName    The name of the config file, without an extension
          * @param fileExtension The extension (with a leading .)
          * @param path          The relative directory that config will be loaded from
