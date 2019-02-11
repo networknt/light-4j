@@ -20,6 +20,7 @@ import junit.framework.TestCase;
 import org.junit.Assert;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,7 +34,12 @@ public class ConfigPropertyPathTest extends TestCase {
     public void setUp() throws Exception {
         super.setUp();
 
+        // the instance would already be created by other classes since the config is singleton, so need to using
+        // reflection to inject field.
         config = Config.getInstance();
+        Field f1 = config.getClass().getDeclaredField("EXTERNALIZED_PROPERTY_DIR");
+        f1.setAccessible(true);
+        f1.set(config, homeDir);
 
         // write a config file
         Map<String, Object> map = new HashMap<>();
@@ -49,36 +55,40 @@ public class ConfigPropertyPathTest extends TestCase {
     @Override
     public void tearDown() throws Exception {
         File test1 = new File(homeDir + "/test.json");
-        File test2 = new File(homeDir + "/src");
+        File test2 = new File(homeDir + "/src/test.json");
         test1.delete();
         test2.delete();
     }
 
+    // test getting config from light-4j-config-dir
     public void testGetConfig() throws Exception {
-        System.setProperty("light-4j-config-dir", homeDir);
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test");
         Assert.assertEquals("default config", configMap.get("value"));
     }
 
+    // test getting config from absolute path "/homeDir/src"
     public void testGetConfigFromAbsPath() {
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test", homeDir + "/src");
         Assert.assertEquals("another config", configMap.get("value"));
     }
 
+    // test getting config from relative path "src"
     public void testGetConfigFromRelPath() {
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test", "src");
         Assert.assertEquals("another config", configMap.get("value"));
     }
 
+    // test getting config from absolute path "/homeDir/src"
     public void testGetObjectConfigFromAbsPath() {
         config.clear();
         TestConfig configObject = (TestConfig) config.getJsonObjectConfig("test", TestConfig.class, homeDir + "/src");
         Assert.assertEquals("another config", configObject.getValue());
     }
 
+    // test getting config from relative path "src"
     public void testGetObjectConfigFromRelPath() {
         config.clear();
         TestConfig configObject = (TestConfig) config.getJsonObjectConfig("test", TestConfig.class, "src");
