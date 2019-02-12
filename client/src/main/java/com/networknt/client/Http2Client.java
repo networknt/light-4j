@@ -1,9 +1,56 @@
 package com.networknt.client;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ServiceLoader;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+
+import org.owasp.encoder.Encode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xnio.ChannelListeners;
+import org.xnio.FutureResult;
+import org.xnio.IoFuture;
+import org.xnio.IoUtils;
+import org.xnio.OptionMap;
+import org.xnio.Options;
+import org.xnio.Xnio;
+import org.xnio.XnioIoThread;
+import org.xnio.XnioWorker;
+import org.xnio.channels.StreamSinkChannel;
+import org.xnio.ssl.XnioSsl;
+
 import com.networknt.client.oauth.ClientCredentialsRequest;
 import com.networknt.client.oauth.OauthHelper;
 import com.networknt.client.oauth.TokenRequest;
 import com.networknt.client.oauth.TokenResponse;
+import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
+import com.networknt.client.ssl.TLSConfig;
 import com.networknt.common.DecryptUtil;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
@@ -12,34 +59,23 @@ import com.networknt.exception.ClientException;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
-import io.undertow.client.*;
+
+import io.undertow.client.ClientCallback;
+import io.undertow.client.ClientConnection;
+import io.undertow.client.ClientExchange;
+import io.undertow.client.ClientProvider;
+import io.undertow.client.ClientRequest;
+import io.undertow.client.ClientResponse;
+import io.undertow.client.http.Light4jHttp2ClientProvider;
+import io.undertow.client.http.Light4jHttpClientProvider;
 import io.undertow.connector.ByteBufferPool;
 import io.undertow.protocols.ssl.UndertowXnioSsl;
 import io.undertow.server.DefaultByteBufferPool;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.*;
-import org.owasp.encoder.Encode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xnio.*;
-import org.xnio.channels.StreamSinkChannel;
-import org.xnio.ssl.XnioSsl;
-
-import javax.net.ssl.*;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.InetSocketAddress;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.security.*;
-import java.security.cert.CertificateException;
-import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
+import io.undertow.util.AttachmentKey;
+import io.undertow.util.Headers;
+import io.undertow.util.StringReadChannelListener;
+import io.undertow.util.StringWriteChannelListener;
 
 /**
  * This is a new client module that replaces the old Client module. The old version
@@ -63,9 +99,9 @@ public class Http2Client {
     public static int bufferSize;
     public static int DEFAULT_BUFFER_SIZE = 24; // 24*1024 buffer size will be good for most of the app.
     public static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
-
-    static final String BUFFER_SIZE = "bufferSize";
+    
     static final String TLS = "tls";
+    static final String BUFFER_SIZE = "bufferSize";
     static final String LOAD_TRUST_STORE = "loadTrustStore";
     static final String LOAD_KEY_STORE = "loadKeyStore";
     static final String TRUST_STORE = "trustStore";
@@ -105,7 +141,7 @@ public class Http2Client {
             bufferSize = (int)bufferSizeObject;
         }
         if(config != null) {
-            Map<String, Object> oauthConfig = (Map<String, Object>)config.get(OAUTH);
+			Map<String, Object> oauthConfig = (Map<String, Object>)config.get(OAUTH);
             if(oauthConfig != null) {
                 tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);
             }
@@ -144,7 +180,7 @@ public class Http2Client {
         final Map<String, ClientProvider> map = new HashMap<>();
         for (ClientProvider provider : providers) {
             for (String scheme : provider.handlesSchemes()) {
-                map.put(scheme, provider);
+            	addProvider(map, scheme, provider);
             }
         }
         this.clientProviders = Collections.unmodifiableMap(map);
@@ -155,6 +191,20 @@ public class Http2Client {
         } catch (Exception e) {
             logger.error("Exception: ", e);
         }
+    }
+    
+    private void addProvider(Map<String, ClientProvider> map, String scheme, ClientProvider provider) {
+    	if (System.getProperty("java.version").startsWith("1.8.")) {// Java 8
+        	if (Light4jHttpClientProvider.HTTPS.equalsIgnoreCase(scheme)) {
+        		map.putIfAbsent(scheme, new Light4jHttpClientProvider());
+        	}else if (Light4jHttp2ClientProvider.HTTP2.equalsIgnoreCase(scheme)){
+        		map.putIfAbsent(scheme, new Light4jHttp2ClientProvider());
+        	}else {
+        		map.put(scheme, provider);
+        	}
+    	}else {
+    		map.put(scheme, provider);
+    	}
     }
 
     public IoFuture<ClientConnection> connect(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
@@ -168,10 +218,11 @@ public class Http2Client {
     public IoFuture<ClientConnection> connect(final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         return connect((InetSocketAddress) null, uri, worker, ssl, bufferPool, options);
     }
-
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         ClientProvider provider = getClientProvider(uri);
         final FutureResult<ClientConnection> result = new FutureResult<>();
+        
+    
         provider.connect(new ClientCallback<ClientConnection>() {
             @Override
             public void completed(ClientConnection r) {
@@ -182,7 +233,8 @@ public class Http2Client {
             public void failed(IOException e) {
                 result.setException(e);
             }
-        }, bindAddress, uri, worker, ssl, bufferPool, options);
+        }, bindAddress, uri, worker, ssl, bufferPool, options);        	
+
         return result.getIoFuture();
     }
 
@@ -202,6 +254,7 @@ public class Http2Client {
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         ClientProvider provider = getClientProvider(uri);
         final FutureResult<ClientConnection> result = new FutureResult<>();
+
         provider.connect(new ClientCallback<ClientConnection>() {
             @Override
             public void completed(ClientConnection r) {
@@ -212,7 +265,8 @@ public class Http2Client {
             public void failed(IOException e) {
                 result.setException(e);
             }
-        }, bindAddress, uri, ioThread, ssl, bufferPool, options);
+        }, bindAddress, uri, ioThread, ssl, bufferPool, options);        	
+
         return result.getIoFuture();
     }
 
@@ -468,11 +522,29 @@ public class Http2Client {
             IoUtils.safeClose(stream);
         }
     }
-
+    
+    /**
+     * default method for creating ssl context. trustedNames config is not used.
+     * 
+     * @return SSLContext
+     * @throws IOException
+     */
     public static SSLContext createSSLContext() throws IOException {
+    	return createSSLContext(null);
+    }
+
+    /**
+     * create ssl context using specified trustedName config
+     * 
+     * @param trustedNamesGroupKey - the trustedName config to be used
+     * @return SSLContext
+     * @throws IOException
+     */
+    @SuppressWarnings("unchecked")
+	public static SSLContext createSSLContext(String trustedNamesGroupKey) throws IOException {
         SSLContext sslContext = null;
         KeyManager[] keyManagers = null;
-        Map<String, Object> tlsMap = (Map)config.get(TLS);
+        Map<String, Object> tlsMap = (Map<String, Object>)config.get(TLS);
         if(tlsMap != null) {
             try {
                 // load key store for client certificate if two way ssl is used.
@@ -508,9 +580,11 @@ public class Http2Client {
                     }
                     if (trustStoreName != null && trustStorePass != null) {
                         KeyStore trustStore = loadKeyStore(trustStoreName, trustStorePass.toCharArray());
+                        TLSConfig tlsConfig = TLSConfig.create(tlsMap, trustedNamesGroupKey);
+                        
                         TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                         trustManagerFactory.init(trustStore);
-                        trustManagers = trustManagerFactory.getTrustManagers();
+                        trustManagers = ClientX509ExtendedTrustManager.decorate(trustManagerFactory.getTrustManagers(), tlsConfig);
                     }
                 }
             } catch (NoSuchAlgorithmException | KeyStoreException e) {
@@ -520,6 +594,7 @@ public class Http2Client {
             try {
                 sslContext = SSLContext.getInstance("TLS");
                 sslContext.init(keyManagers, trustManagers, null);
+                
             } catch (NoSuchAlgorithmException | KeyManagementException e) {
                 throw new IOException("Unable to create and initialise the SSLContext", e);
             }
@@ -726,5 +801,4 @@ public class Http2Client {
             }
         };
     }
-
 }

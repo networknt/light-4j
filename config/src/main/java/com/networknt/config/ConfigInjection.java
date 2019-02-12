@@ -1,5 +1,7 @@
 package com.networknt.config;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,9 +28,13 @@ public class ConfigInjection {
     private static final String INJECTION_ORDER_CODE = (!System.getProperty(INJECTION_ORDER, "").equals("")) ?
             System.getProperty(INJECTION_ORDER, "") : "2";
 
-    // Define one of the injection value source "values.yaml"
+    // Define one of the injection value source "values.yaml" and list of exclusion config files
     private static final String CENTRALIZED_MANAGEMENT = "values";
+    private static final String SCALABLE_CONFIG = "config";
+    private static final String EXCLUSION_CONFIG_FILE_LIST = "exclusionConfigFileList";
+
     private static final Map<String, Object> valueMap = Config.getInstance().getJsonMapConfig(CENTRALIZED_MANAGEMENT);
+    private static final Map<String, Object> exclusionMap = Config.getInstance().getJsonMapConfig(SCALABLE_CONFIG);
 
     // Define the injection pattern which represents the injection points
     private static Pattern pattern = Pattern.compile("\\$\\{(.*?)\\}");
@@ -52,6 +58,15 @@ public class ConfigInjection {
             m.appendReplacement(sb, (String) value);
         }
         return m.appendTail(sb).toString();
+    }
+
+    // Return the list of exclusion files list which includes the names of config files that shouldn't be injected
+    // Double check values and exclusions to ensure no dead loop
+    public static boolean isExclusionConfigFile(String configName) {
+        List<Object> exclusionConfigFileList = (exclusionMap == null) ? new ArrayList<>() : (List<Object>)exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST);
+        return CENTRALIZED_MANAGEMENT.equals(configName)
+                || SCALABLE_CONFIG.equals(configName)
+                || exclusionConfigFileList.contains(configName);
     }
 
     // Method used to parse the content inside pattern "${}"
