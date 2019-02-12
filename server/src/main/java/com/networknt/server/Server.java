@@ -234,6 +234,7 @@ public class Server {
             System.out.println("HOST IP " + System.getenv(STATUS_HOST_IP));
         } catch (Exception e) {
             System.out.println("Failed to bind to port " + port);
+            e.printStackTrace(System.out);
             if (logger.isInfoEnabled())
                 logger.info("Failed to bind to port " + port);
             return false;
@@ -297,7 +298,6 @@ public class Server {
         }
 
         return true;
-
     }
 
     static public void stop() {
