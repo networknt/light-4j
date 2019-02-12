@@ -301,21 +301,23 @@ public abstract class Config {
         private InputStream getConfigStream(String configFilename, String path) {
 
             InputStream inStream = null;
-            int index = 0;
+            String configFileDir = null;
             for (int i = 0; i < EXTERNALIZED_PROPERTY_DIR.length; i ++) {
                 String absolutePath = getAbsolutePath(path, i);
                 try {
                     inStream = new FileInputStream(absolutePath + "/" + configFilename);
-                    index = i;
+                    configFileDir = absolutePath;
                 } catch (FileNotFoundException ex) {
                     if (logger.isInfoEnabled()) {
                         logger.info("Unable to load config from externalized folder for " + Encode.forJava(configFilename + " in " + absolutePath));
                     }
                 }
+                // absolute path do not need to continue
+                if (path.startsWith("/")) break;
             }
             if (inStream != null) {
                 if (logger.isInfoEnabled()) {
-                    logger.info("Config loaded from externalized folder for " + Encode.forJava(configFilename + " in " + EXTERNALIZED_PROPERTY_DIR[index]));
+                    logger.info("Config loaded from externalized folder for " + Encode.forJava(configFilename + " in " + configFileDir));
                 }
                 return inStream;
             }
@@ -364,7 +366,7 @@ public abstract class Config {
             }
         }
 
-        // private method used to get absolute directory
+        // private method used to get absolute directory, input path can be absolute or relative
         private String getAbsolutePath(String path, int index) {
             if (path.startsWith("/")) {
                 return path;
