@@ -237,7 +237,7 @@ public class Server {
             e.printStackTrace(System.out);
             if (logger.isInfoEnabled())
                 logger.info("Failed to bind to port " + port);
-            return false;
+            throw new RuntimeException(e.getMessage());
         }
         // application level service registry. only be used without docker container.
         if (config.enableRegistry) {
