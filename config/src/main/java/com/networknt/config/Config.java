@@ -369,7 +369,7 @@ public abstract class Config {
             if (path.startsWith("/")) {
                 return path;
             } else {
-                return path.equals("") ? EXTERNALIZED_PROPERTY_DIR[index] : EXTERNALIZED_PROPERTY_DIR[index] + "/" + path;
+                return path.equals("") ? EXTERNALIZED_PROPERTY_DIR[index].trim() : EXTERNALIZED_PROPERTY_DIR[index].trim() + "/" + path;
             }
         }
     }
