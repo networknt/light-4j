@@ -20,6 +20,7 @@ import junit.framework.TestCase;
 import org.junit.Assert;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,18 +38,17 @@ public class ConfigPropertyPathTest extends TestCase {
         // the instance would already be created by other classes since the config is singleton, so need to using
         // reflection to inject field.
         config = Config.getInstance();
-        Field f1 = config.getClass().getDeclaredField("EXTERNALIZED_PROPERTY_DIR");
-        f1.setAccessible(true);
-        f1.set(config, homeDir);
+        setExternalizedConfigDir(homeDir);
 
         // write a config file
         Map<String, Object> map = new HashMap<>();
-        map.put("value", "default config");
+        map.put("value", "config1");
         config.getMapper().writeValue(new File(homeDir + "/test.json"), map);
         // write another config file with the same name but in different path
         Map<String, Object> map2 = new HashMap<>();
-        map2.put("value", "another config");
+        map2.put("value", "config2");
         new File(homeDir + "/src").mkdirs();
+        new File(homeDir + "/config").mkdirs();
         config.getMapper().writeValue(new File(homeDir + "/src/test.json"), map2);
     }
 
@@ -93,5 +93,27 @@ public class ConfigPropertyPathTest extends TestCase {
         config.clear();
         TestConfig configObject = (TestConfig) config.getJsonObjectConfig("test", TestConfig.class, "src");
         Assert.assertEquals("another config", configObject.getValue());
+    }
+
+    public void testGetMapConfigFromMultiPath() {
+        config.clear();
+
+    }
+
+    private void setExternalizedConfigDir(String externalizedDir) throws Exception {
+        Field f1 = config.getClass().getDeclaredField("EXTERNALIZED_PROPERTY_DIR");
+        f1.setAccessible(true);
+        f1.set(config, externalizedDir.split(":"));
+    }
+
+    private void writeConfigFile(int index, String path) throws IOException {
+        Map<String, Object> map = new HashMap<>();
+        map.put("value", "config" + index);
+        if (path.equals("")) {
+            config.getMapper().writeValue(new File(homeDir + "/test.json"), map);
+        } else {
+            new File(homeDir + "/src").mkdirs();
+            config.getMapper().writeValue(new File(homeDir + "/" + path + "test.json"), map);
+        }
     }
 }
