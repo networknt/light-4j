@@ -1,6 +1,7 @@
 package com.networknt.client;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -792,7 +793,7 @@ public class Http2ClientTest {
         client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
         
         //should not be reached
-        assertTrue(false);
+        fail();
     }
     
     @Test(expected=ClosedChannelException.class)
@@ -804,7 +805,7 @@ public class Http2ClientTest {
         client.connect(new URI("https://127.0.0.1:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
         
         //should not be reached
-        assertTrue(false);
+        fail();
     }
     
     @Test(expected=ClosedChannelException.class)
@@ -816,7 +817,7 @@ public class Http2ClientTest {
         client.connect(new URI("https://127.0.0.1:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
         
         //should not be reached
-        assertTrue(false);
+        fail();
     }   
     
     @Test

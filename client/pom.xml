@@ -48,6 +48,10 @@
             <artifactId>status</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>monad-result</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
         </dependency>
@@ -85,5 +89,4 @@
 			<scope>test</scope>
 		</dependency>        
     </dependencies>
-
 </project>
