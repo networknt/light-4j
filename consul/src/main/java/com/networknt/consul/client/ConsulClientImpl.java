@@ -151,6 +151,7 @@ public class ConsulClientImpl implements ConsulClient {
 			}
 		} catch (Exception e) {
 			logger.error("Exception:", e);
+			throw new RuntimeException(e.getMessage());
 		}
 	}
 
