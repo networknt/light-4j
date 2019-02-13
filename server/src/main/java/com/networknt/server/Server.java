@@ -286,8 +286,9 @@ public class Server {
             return true;
         } catch (Exception e) {
             System.out.println("Failed to bind to port " + port);
+            e.printStackTrace(System.out);
             if (logger.isInfoEnabled())
-                logger.info("Failed to bind to port " + port);
+                logger.info("Failed to bind to port " + port, e);
             return false;
         }
     }

@@ -2,6 +2,7 @@ package com.networknt.client.oauth;
 
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
+import com.networknt.monad.Result;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.util.Headers;
@@ -14,6 +15,7 @@ import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.lang.JoseException;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -207,7 +209,9 @@ public class OauthHelperTest {
         tokenRequest.setRedirectUri("https://localhost:8443/authorize");
         tokenRequest.setAuthCode("test_code");
 
-        TokenResponse tokenResponse = OauthHelper.getToken(tokenRequest);
+        Result<TokenResponse> result = OauthHelper.getToken(tokenRequest);
+        Assert.assertTrue(result.isSuccess());
+        TokenResponse tokenResponse = result.getResult();
         System.out.println("tokenResponse = " + tokenResponse);
     }
 
