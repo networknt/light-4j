@@ -232,10 +232,18 @@ public class Server {
 
             server.start();
             System.out.println("HOST IP " + System.getenv(STATUS_HOST_IP));
-            // application level service registry. only be used without docker container.
-            if (config.enableRegistry) {
-                // assuming that registry is defined in service.json, otherwise won't start
-                // server.
+        } catch (Exception e) {
+            System.out.println("Failed to bind to port " + port);
+            e.printStackTrace(System.out);
+            if (logger.isInfoEnabled())
+                logger.info("Failed to bind to port " + port);
+            throw new RuntimeException(e.getMessage());
+        }
+        // application level service registry. only be used without docker container.
+        if (config.enableRegistry) {
+            // assuming that registry is defined in service.json, otherwise won't start
+            // server.
+            try {
                 registry = SingletonServiceFactory.getBean(Registry.class);
                 if (registry == null)
                     throw new RuntimeException("Could not find registry instance in service map");
@@ -261,36 +269,35 @@ public class Server {
                 SwitcherUtil.setSwitcherValue(Constants.REGISTRY_HEARTBEAT_SWITCHER, true);
                 if (logger.isInfoEnabled())
                     logger.info("Registry heart beat switcher is on");
-
+                // handle the registration exception separately to eliminate confusion
+            } catch (Exception e) {
+                System.out.println("Failed to register service, the server stopped.");
+                if (logger.isInfoEnabled())
+                    logger.info("Failed to register service, the server stopped.");
+                throw new RuntimeException(e.getMessage());
             }
-
-            if (config.enableHttp) {
-                System.out.println("Http Server started on ip:" + config.getIp() + " Port:" + port);
-                if (logger.isInfoEnabled())
-                    logger.info("Http Server started on ip:" + config.getIp() + " Port:" + port);
-            } else {
-                System.out.println("Http port disabled.");
-                if (logger.isInfoEnabled())
-                    logger.info("Http port disabled.");
-            }
-            if (config.enableHttps) {
-                System.out.println("Https Server started on ip:" + config.getIp() + " Port:" + port);
-                if (logger.isInfoEnabled())
-                    logger.info("Https Server started on ip:" + config.getIp() + " Port:" + port);
-            } else {
-                System.out.println("Https port disabled.");
-                if (logger.isInfoEnabled())
-                    logger.info("Https port disabled.");
-            }
-
-            return true;
-        } catch (Exception e) {
-            System.out.println("Failed to bind to port " + port);
-            e.printStackTrace(System.out);
-            if (logger.isInfoEnabled())
-                logger.info("Failed to bind to port " + port, e);
-            return false;
         }
+
+        if (config.enableHttp) {
+            System.out.println("Http Server started on ip:" + config.getIp() + " Port:" + port);
+            if (logger.isInfoEnabled())
+                logger.info("Http Server started on ip:" + config.getIp() + " Port:" + port);
+        } else {
+            System.out.println("Http port disabled.");
+            if (logger.isInfoEnabled())
+                logger.info("Http port disabled.");
+        }
+        if (config.enableHttps) {
+            System.out.println("Https Server started on ip:" + config.getIp() + " Port:" + port);
+            if (logger.isInfoEnabled())
+                logger.info("Https Server started on ip:" + config.getIp() + " Port:" + port);
+        } else {
+            System.out.println("Https port disabled.");
+            if (logger.isInfoEnabled())
+                logger.info("Https port disabled.");
+        }
+
+        return true;
     }
 
     static public void stop() {
