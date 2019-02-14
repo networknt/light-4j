@@ -37,7 +37,6 @@ public class ConfigClassPathTest extends TestCase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-
         config = Config.getInstance();
 
         // write a config file into the user home directory.
