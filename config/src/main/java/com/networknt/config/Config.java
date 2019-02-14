@@ -87,7 +87,7 @@ public abstract class Config {
 
         static final Logger logger = LoggerFactory.getLogger(Config.class);
 
-        public final String EXTERNALIZED_PROPERTY_DIR = System.getProperty(LIGHT_4J_CONFIG_DIR, "");
+        public final String[] EXTERNALIZED_PROPERTY_DIR = System.getProperty(LIGHT_4J_CONFIG_DIR, "").split(":");
 
         private long cacheExpirationTime = 0L;
 
@@ -301,17 +301,23 @@ public abstract class Config {
         private InputStream getConfigStream(String configFilename, String path) {
 
             InputStream inStream = null;
-            String absolutePath = getAbsolutePath(path);
-            try {
-                inStream = new FileInputStream(absolutePath + "/" + configFilename);
-            } catch (FileNotFoundException ex) {
-                if (logger.isInfoEnabled()) {
-                    logger.info("Unable to load config from externalized folder for " + Encode.forJava(configFilename + " in " + absolutePath));
+            String configFileDir = null;
+            for (int i = 0; i < EXTERNALIZED_PROPERTY_DIR.length; i ++) {
+                String absolutePath = getAbsolutePath(path, i);
+                try {
+                    inStream = new FileInputStream(absolutePath + "/" + configFilename);
+                    configFileDir = absolutePath;
+                } catch (FileNotFoundException ex) {
+                    if (logger.isInfoEnabled()) {
+                        logger.info("Unable to load config from externalized folder for " + Encode.forJava(configFilename + " in " + absolutePath));
+                    }
                 }
+                // absolute path do not need to continue
+                if (path.startsWith("/")) break;
             }
             if (inStream != null) {
                 if (logger.isInfoEnabled()) {
-                    logger.info("Config loaded from externalized folder for " + Encode.forJava(configFilename + " in " + absolutePath));
+                    logger.info("Config loaded from externalized folder for " + Encode.forJava(configFilename + " in " + configFileDir));
                 }
                 return inStream;
             }
@@ -360,12 +366,12 @@ public abstract class Config {
             }
         }
 
-        // private method used to get absolute directory
-        private String getAbsolutePath(String path) {
+        // private method used to get absolute directory, input path can be absolute or relative
+        private String getAbsolutePath(String path, int index) {
             if (path.startsWith("/")) {
                 return path;
             } else {
-                return path.equals("") ? EXTERNALIZED_PROPERTY_DIR : EXTERNALIZED_PROPERTY_DIR + "/" + path;
+                return path.equals("") ? EXTERNALIZED_PROPERTY_DIR[index].trim() : EXTERNALIZED_PROPERTY_DIR[index].trim() + "/" + path;
             }
         }
     }
@@ -379,3 +385,4 @@ public abstract class Config {
         return new ByteArrayInputStream(string.getBytes());
     }
 }
+
