@@ -126,12 +126,12 @@ public class ConfigInjection {
                 // Skip this injection when "$" is only character found after the ":"
                 if (array[1].length() == 1) {
                     injectionPattern.setDefaultValue("\\$\\{" + array[0] + "\\}");
-                    // Otherwise, treat as a default value
-                    // Add "\\" since $ is a special character
+                // Otherwise, treat as a default value
+                // Add "\\" since $ is a special character
                 } else {
                     injectionPattern.setDefaultValue("\\" + array[1]);
                 }
-                // Set default value
+            // Set default value
             } else {
                 injectionPattern.setDefaultValue(array[1]);
             }
