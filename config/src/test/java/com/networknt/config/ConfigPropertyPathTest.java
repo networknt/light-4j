@@ -67,14 +67,28 @@ public class ConfigPropertyPathTest extends TestCase {
         Assert.assertEquals("default config", configMap.get("value"));
     }
 
-    // test getting map config from a relative path "src"
+    // test getting config from absolute path "/homeDir/src"
+    public void testGetConfigFromAbsPath() {
+        config.clear();
+        Map<String, Object> configMap = config.getJsonMapConfig("test", homeDir + "/src");
+        Assert.assertEquals("another config", configMap.get("value"));
+    }
+
+    // test getting config from relative path "src"
     public void testGetConfigFromRelPath() {
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test", "src");
         Assert.assertEquals("another config", configMap.get("value"));
     }
 
-    // test getting object config from a relative path "src"
+    // test getting config from absolute path "/homeDir/src"
+    public void testGetObjectConfigFromAbsPath() {
+        config.clear();
+        TestConfig configObject = (TestConfig) config.getJsonObjectConfig("test", TestConfig.class, homeDir + "/src");
+        Assert.assertEquals("another config", configObject.getValue());
+    }
+
+    // test getting config from relative path "src"
     public void testGetObjectConfigFromRelPath() {
         config.clear();
         TestConfig configObject = (TestConfig) config.getJsonObjectConfig("test", TestConfig.class, "src");
