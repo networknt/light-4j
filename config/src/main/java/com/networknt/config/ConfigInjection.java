@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
  * This class has a public method called getInjectValue which is used to generate
  * the values which need to be injected from environment variables or a specific
  * file called "values.yaml".
- *
+ * <p>
  * Three injection order defined as following and default mode is [2]:
  * [0] Inject from "values.yaml" only.
  * [1] Inject from system environment first, then overwrite by "values.yaml"
@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
  * system environment.
  * This parameter can be set through setting system property "injection_order" in
  * commend line
- *
+ * <p>
  * Created by jiachen on 2019-01-08.
  */
 public class ConfigInjection {
@@ -39,6 +39,9 @@ public class ConfigInjection {
     // Define the injection pattern which represents the injection points
     private static Pattern pattern = Pattern.compile("\\$\\{(.*?)\\}");
 
+    private static String[] trueArray = {"y", "Y", "yes", "Yes", "YES", "true", "True", "TRUE", "on", "On", "ON"};
+    private static String[] falseArray = {"n", "N", "no", "No", "NO", "false", "False", "FALSE", "off", "Off", "OFF"};
+
     // Method used to generate the values from environment variables or "values.yaml"
     public static Object getInjectValue(String string) {
         Matcher m = pattern.matcher(string);
@@ -50,8 +53,8 @@ public class ConfigInjection {
             // Throw exception when no parsing result found
             if (value == null) {
                 throw new ConfigException(
-                        m.group(1) + " appears in config file cannot be expanded");
-            // Return directly when the parsing result don't need to be casted to String
+                        "\"${" + m.group(1) + "}\" appears in config file cannot be expanded");
+                // Return directly when the parsing result don't need to be casted to String
             } else if (!(value instanceof String)) {
                 return value;
             }
@@ -63,7 +66,7 @@ public class ConfigInjection {
     // Return the list of exclusion files list which includes the names of config files that shouldn't be injected
     // Double check values and exclusions to ensure no dead loop
     public static boolean isExclusionConfigFile(String configName) {
-        List<Object> exclusionConfigFileList = (exclusionMap == null) ? new ArrayList<>() : (List<Object>)exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST);
+        List<Object> exclusionConfigFileList = (exclusionMap == null) ? new ArrayList<>() : (List<Object>) exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST);
         return CENTRALIZED_MANAGEMENT.equals(configName)
                 || SCALABLE_CONFIG.equals(configName)
                 || exclusionConfigFileList.contains(configName);
@@ -75,7 +78,7 @@ public class ConfigInjection {
         Object value = null;
         if (injectionPattern != null) {
             // Use key of injectionPattern to get value from both environment variables and "values.yaml"
-            Object envValue = System.getenv(injectionPattern.getKey());
+            Object envValue = typeCast(System.getenv(injectionPattern.getKey()));
             Object fileValue = (valueMap != null) ? valueMap.get(injectionPattern.getKey()) : null;
             // Return different value from different sources based on injection order defined before
             if (INJECTION_ORDER_CODE.equals("2") && envValue != null || (INJECTION_ORDER_CODE.equals("1") && fileValue == null)) {
@@ -85,7 +88,7 @@ public class ConfigInjection {
             }
             // Return default value when no matched value found from environment variables and "values.yaml"
             if (value == null || value.equals("")) {
-                value = injectionPattern.getDefaultValue();
+                value = typeCast(injectionPattern.getDefaultValue());
                 // Throw exception when error text provided
                 if (value == null || value.equals("")) {
                     String error_text = injectionPattern.getErrorText();
@@ -107,19 +110,28 @@ public class ConfigInjection {
         contents = contents.trim();
         // Retrieve key, default value and error text
         String[] array = contents.split(":", 2);
+        array[0] = array[0].trim();
         if ("".equals(array[0])) {
             return null;
         }
         // Set key of the injectionPattern
         injectionPattern.setKey(array[0]);
         if (array.length == 2) {
+            // Adding space after colon is enabled, so trim is needed
+            array[1] = array[1].trim();
             // Set error text
             if (array[1].startsWith("?")) {
                 injectionPattern.setErrorText(array[1].substring(1));
-            // Skip this injection when "$" is found after the ":", and set "${key}" as default value
             } else if (array[1].startsWith("$")) {
-                injectionPattern.setDefaultValue("\\$\\{" + array[0] + "\\}");
-            // Set default value
+                // Skip this injection when "$" is only character found after the ":"
+                if (array[1].length() == 1) {
+                    injectionPattern.setDefaultValue("\\$\\{" + array[0] + "\\}");
+                    // Otherwise, treat as a default value
+                    // Add "\\" since $ is a special character
+                } else {
+                    injectionPattern.setDefaultValue("\\" + array[1]);
+                }
+                // Set default value
             } else {
                 injectionPattern.setDefaultValue(array[1]);
             }
@@ -130,7 +142,7 @@ public class ConfigInjection {
     /**
      * Wrap the contents inside the pattern ${} into a private class which contains
      * three fields: key, defaultValue and errorText
-      */
+     */
     private static class InjectionPattern {
         private String key;
         private String defaultValue;
@@ -158,6 +170,35 @@ public class ConfigInjection {
 
         public void setKey(String key) {
             this.key = key;
+        }
+    }
+
+    // Method used to cast string into int, double or boolean
+    private static Object typeCast(String str) {
+        if (str == null || str.equals("")) {
+            return null;
+        }
+        // Try to cast to boolean true
+        for (String trueString : trueArray) {
+            if (trueString.equals(str)) {
+                return true;
+            }
+        }
+        // Try to cast to boolean false
+        for (String falseString : falseArray) {
+            if (falseString.equals(str)) {
+                return false;
+            }
+        }
+        // Strings that cannot cast to int or double are treated as string
+        try {
+            return Integer.parseInt(str);
+        } catch (Exception e1) {
+            try {
+                return Double.parseDouble(str);
+            } catch (Exception e2) {
+                return str;
+            }
         }
     }
 }

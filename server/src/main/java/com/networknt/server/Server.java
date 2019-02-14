@@ -219,7 +219,7 @@ public class Server {
 
             if (config.isEnableTwoWayTls()) {
                builder.setSocketOption(Options.SSL_CLIENT_AUTH_MODE, SslClientAuthMode.REQUIRED);
-            }            
+            }
 
             server = builder.setBufferSize(1024 * 16).setIoThreads(Runtime.getRuntime().availableProcessors() * 2)
                     // above seems slightly faster in some configurations

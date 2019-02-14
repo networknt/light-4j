@@ -213,7 +213,7 @@ public abstract class Config {
             String fileName = configName + fileExtension;
             try (InputStream inStream = getConfigStream(fileName)) {
                 if (inStream != null) {
-                    // The config file specified in the exclusions.yml shouldn't be injected
+                    // The config file specified in the config.yml shouldn't be injected
                     if (ConfigInjection.isExclusionConfigFile(configName)) {
                         config = yaml.loadAs(inStream, clazz);
                     } else {

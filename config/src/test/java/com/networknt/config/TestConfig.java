@@ -26,6 +26,7 @@ public class TestConfig {
     String value3;
     Object value4;
     Object value5;
+    Object value6;
 
     public void setValue(String value) {
         this.value = value;
@@ -73,5 +74,13 @@ public class TestConfig {
 
     public void setValue5(Object value5) {
         this.value5 = value5;
+    }
+
+    public Object getValue6() {
+        return value6;
+    }
+
+    public void setValue6(Object value6) {
+        this.value6 = value6;
     }
 }
