@@ -20,6 +20,7 @@ import junit.framework.TestCase;
 import org.junit.Assert;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,61 +38,85 @@ public class ConfigPropertyPathTest extends TestCase {
         // the instance would already be created by other classes since the config is singleton, so need to using
         // reflection to inject field.
         config = Config.getInstance();
-        Field f1 = config.getClass().getDeclaredField("EXTERNALIZED_PROPERTY_DIR");
-        f1.setAccessible(true);
-        f1.set(config, homeDir);
+        setExternalizedConfigDir(homeDir);
 
-        // write a config file
-        Map<String, Object> map = new HashMap<>();
-        map.put("value", "default config");
-        config.getMapper().writeValue(new File(homeDir + "/test.json"), map);
-        // write another config file with the same name but in different path
-        Map<String, Object> map2 = new HashMap<>();
-        map2.put("value", "another config");
-        new File(homeDir + "/src").mkdirs();
-        config.getMapper().writeValue(new File(homeDir + "/src/test.json"), map2);
+        // write config files
+        writeConfigFile("value", "default dir", homeDir);
+        writeConfigFile("value", "externalized dir1", homeDir + "/dir1");
+        writeConfigFile("value", "externalized dir2", homeDir + "/dir2");
     }
 
     @Override
     public void tearDown() throws Exception {
         File test1 = new File(homeDir + "/test.json");
-        File test2 = new File(homeDir + "/src/test.json");
+        File test2 = new File(homeDir + "/dir1/test.json");
+        File test3 = new File(homeDir + "/dir2/test.json");
+        File testFolder1 = new File(homeDir + "/dir1");
+        File testFolder2 = new File(homeDir + "/dir2");
         test1.delete();
         test2.delete();
+        test3.delete();
+        testFolder1.delete();
+        testFolder2.delete();
     }
 
     // test getting config from light-4j-config-dir
     public void testGetConfig() throws Exception {
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test");
-        Assert.assertEquals("default config", configMap.get("value"));
+        Assert.assertEquals("default dir", configMap.get("value"));
     }
 
     // test getting config from absolute path "/homeDir/src"
     public void testGetConfigFromAbsPath() {
         config.clear();
-        Map<String, Object> configMap = config.getJsonMapConfig("test", homeDir + "/src");
-        Assert.assertEquals("another config", configMap.get("value"));
+        Map<String, Object> configMap = config.getJsonMapConfig("test", homeDir + "/dir1");
+        Assert.assertEquals("externalized dir1", configMap.get("value"));
     }
 
     // test getting config from relative path "src"
     public void testGetConfigFromRelPath() {
         config.clear();
-        Map<String, Object> configMap = config.getJsonMapConfig("test", "src");
-        Assert.assertEquals("another config", configMap.get("value"));
+        Map<String, Object> configMap = config.getJsonMapConfig("test", "dir1");
+        Assert.assertEquals("externalized dir1", configMap.get("value"));
     }
 
     // test getting config from absolute path "/homeDir/src"
     public void testGetObjectConfigFromAbsPath() {
         config.clear();
-        TestConfig configObject = (TestConfig) config.getJsonObjectConfig("test", TestConfig.class, homeDir + "/src");
-        Assert.assertEquals("another config", configObject.getValue());
+        TestConfig configObject = (TestConfig) config.getJsonObjectConfig("test", TestConfig.class, homeDir + "/dir1");
+        Assert.assertEquals("externalized dir1", configObject.getValue());
     }
 
     // test getting config from relative path "src"
     public void testGetObjectConfigFromRelPath() {
         config.clear();
-        TestConfig configObject = (TestConfig) config.getJsonObjectConfig("test", TestConfig.class, "src");
-        Assert.assertEquals("another config", configObject.getValue());
+        TestConfig configObject = (TestConfig) config.getJsonObjectConfig("test", TestConfig.class, "dir1");
+        Assert.assertEquals("externalized dir1", configObject.getValue());
+    }
+
+    // test getting config when the config dir is a list
+    public void testGetMapConfigFromMultiPath() throws Exception {
+        config.clear();
+        setExternalizedConfigDir(homeDir + ":" + homeDir + "/dir1:"+ homeDir + "/dir2");
+        Map<String, Object> configMap = config.getJsonMapConfig("test");
+        Assert.assertEquals("externalized dir2", configMap.get("value"));
+    }
+
+    private void setExternalizedConfigDir(String externalizedDir) throws Exception {
+        Field f1 = config.getClass().getDeclaredField("EXTERNALIZED_PROPERTY_DIR");
+        f1.setAccessible(true);
+        f1.set(config, externalizedDir.split(":"));
+    }
+
+    private void writeConfigFile(String key, String value, String path) throws IOException {
+        Map<String, Object> map = new HashMap<>();
+        map.put(key, value);
+        if (path.equals("")) {
+            config.getMapper().writeValue(new File(path), map);
+        } else {
+            new File(path).mkdirs();
+            config.getMapper().writeValue(new File(path + "/test.json"), map);
+        }
     }
 }
