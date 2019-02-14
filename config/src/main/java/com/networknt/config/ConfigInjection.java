@@ -39,6 +39,9 @@ public class ConfigInjection {
     // Define the injection pattern which represents the injection points
     private static Pattern pattern = Pattern.compile("\\$\\{(.*?)\\}");
 
+    private static String[] trueArray = {"y", "Y", "yes", "Yes", "YES", "true", "True", "TRUE", "on", "On", "ON"};
+    private static String[] falseArray = {"n", "N", "no", "No", "NO", "false", "False", "FALSE", "off", "Off", "OFF"};
+
     // Method used to generate the values from environment variables or "values.yaml"
     public static Object getInjectValue(String string) {
         Matcher m = pattern.matcher(string);
@@ -63,7 +66,7 @@ public class ConfigInjection {
     // Return the list of exclusion files list which includes the names of config files that shouldn't be injected
     // Double check values and exclusions to ensure no dead loop
     public static boolean isExclusionConfigFile(String configName) {
-        List<Object> exclusionConfigFileList = (exclusionMap == null) ? new ArrayList<>() : (List<Object>)exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST);
+        List<Object> exclusionConfigFileList = (exclusionMap == null) ? new ArrayList<>() : (List<Object>) exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST);
         return CENTRALIZED_MANAGEMENT.equals(configName)
                 || SCALABLE_CONFIG.equals(configName)
                 || exclusionConfigFileList.contains(configName);
@@ -139,7 +142,7 @@ public class ConfigInjection {
     /**
      * Wrap the contents inside the pattern ${} into a private class which contains
      * three fields: key, defaultValue and errorText
-      */
+     */
     private static class InjectionPattern {
         private String key;
         private String defaultValue;
@@ -175,8 +178,17 @@ public class ConfigInjection {
         if (str == null || str.equals("")) {
             return null;
         }
-        if (isBoolean(str)) {
-            return str.equals("true") || str.equals("True") || str.equals("TRUE") ? true : false;
+        // Try to cast to boolean true
+        for (String trueString : trueArray) {
+            if (trueString.equals(str)) {
+                return true;
+            }
+        }
+        // Try to cast to boolean false
+        for (String falseString : falseArray) {
+            if (falseString.equals(str)) {
+                return false;
+            }
         }
         // Strings that cannot cast to int or double are treated as string
         try {
@@ -188,10 +200,5 @@ public class ConfigInjection {
                 return str;
             }
         }
-    }
-
-    private static boolean isBoolean(String s) {
-        return "true".equals(s) || "false".equals(s) || "True".equals(s)
-                || "False".equals(s) || "TRUE".equals(s) || "FALSE".equals(s);
     }
 }
