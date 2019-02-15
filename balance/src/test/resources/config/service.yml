@@ -1,6 +1,0 @@
-# Default load balance is round robin and it can be replace with another implementation.
----
-# singleton service factory configuration
-singletons:
-- com.networknt.balance.LoadBalance:
-  - com.networknt.balance.RoundRobinLoadBalance
