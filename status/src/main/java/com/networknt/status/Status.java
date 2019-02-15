@@ -17,6 +17,7 @@
 package com.networknt.status;
 
 import com.networknt.config.Config;
+import com.networknt.config.ConfigException;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.ModuleRegistry;
 import org.slf4j.Logger;
@@ -196,7 +197,7 @@ public class Status {
                 if (logger.isInfoEnabled()) {
                     logger.error("The status code: " + key + "has already in use by light-4j, please change to another status code in app-status.yml");
                 }
-                throw new RuntimeException("The status code: " + key + "has already in use by light-4j, please change to another status code in app-status.yml");
+                throw new ConfigException("The status code: " + key + "has already in use by light-4j, please change to another status code in app-status.yml");
             } else {
                 config.put(key, appStatusConfig.get(key));
             }
