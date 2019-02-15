@@ -1,0 +1,5 @@
+exclusionConfigFileList:
+  - openapi
+  - swagger
+  - values
+  - status
