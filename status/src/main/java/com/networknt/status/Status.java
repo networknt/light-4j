@@ -39,8 +39,9 @@ import static java.lang.String.format;
 public class Status {
     private static final Logger logger = LoggerFactory.getLogger(Status.class);
 
-    public static final String CONFIG_NAME = "status";
-    public static final Map<String, Object> config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
+    public static final String[] CONFIG_NAME = {"status", "app-status"};
+    public static Map<String, Object> config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME[0]);
+    public static final Map<String, Object> appStatusConfig = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME[1]);
 
     // default severity
     public static final String defaultSeverity = "ERROR";
@@ -56,6 +57,7 @@ public class Status {
     private String description;
 
     static {
+        mergeAppStatusToDefaultStatus(appStatusConfig);
         ModuleRegistry.registerModule(Status.class.getName(), config, null);
         try {
             statusSerializer = SingletonServiceFactory.getBean(StatusSerializer.class);
@@ -182,6 +184,22 @@ public class Status {
                     + "\",\"message\":\""
                     + getMessage() + "\",\"description\":\""
                     + getDescription() + "\",\"severity\":\"" + getSeverity() + "\"}";
+        }
+    }
+
+    private static void mergeAppStatusToDefaultStatus(Map<String, Object> appStatusConfig) {
+        if (appStatusConfig == null) {
+            return;
+        }
+        for (String key : appStatusConfig.keySet()) {
+            if (config.containsKey(key)) {
+                if (logger.isInfoEnabled()) {
+                    logger.error("The status code: " + key + "has already in use by light-4j, please change to another status code in app-status.yml");
+                }
+                throw new RuntimeException("The status code: " + key + "has already in use by light-4j, please change to another status code in app-status.yml");
+            } else {
+                config.put(key, appStatusConfig.get(key));
+            }
         }
     }
 }
