@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2016 Network New Technologies Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.networknt.balance;
 
 import com.networknt.registry.URL;
@@ -8,14 +24,14 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Round Robin Loadbalance will pick up a url from a list of urls one by one
- * for each call. It will distributed the load equally to all urls in the list.
+ * Round Robin load balance will pick up a url from a list of urls one by one
+ * for each call. It will distribute the load equally to all urls in the list.
  *
  * This class has an instance variable called idx which is AtomicInteger and it
  * increases for every select call to make sure all urls in the list will have
  * an opportunity to be selected.
  *
- * The assumption for round robin is based on all service will have the same
+ * The assumption for round robin is based on all services will have the same
  * hardware/cloud resource configuration so that they can be treated as the
  * same priority without any weight.
  *
@@ -44,7 +60,6 @@ public class RoundRobinLoadBalance implements LoadBalance {
         URL url = null;
         if (urls.size() > 1) {
             url = doSelect(urls);
-
         } else if (urls.size() == 1) {
             url = urls.get(0);
         }
