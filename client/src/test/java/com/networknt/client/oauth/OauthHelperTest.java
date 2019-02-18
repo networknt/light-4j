@@ -194,6 +194,28 @@ public class OauthHelperTest {
     }
 
     @Test
+    public void testGetTokenResult() throws Exception {
+        AuthorizationCodeRequest tokenRequest = new AuthorizationCodeRequest();
+        tokenRequest.setClientId("test_client");
+        tokenRequest.setClientSecret("test_secret");
+        tokenRequest.setGrantType(TokenRequest.AUTHORIZATION_CODE);
+        List<String> list = new ArrayList<>();
+        list.add("test.r");
+        list.add("test.w");
+        tokenRequest.setScope(list);
+        tokenRequest.setServerUrl("http://localhost:8887");
+        tokenRequest.setEnableHttp2(true);
+        tokenRequest.setUri("/oauth2/token");
+        tokenRequest.setRedirectUri("https://localhost:8443/authorize");
+        tokenRequest.setAuthCode("test_code");
+
+        Result<TokenResponse> result = OauthHelper.getTokenResult(tokenRequest);
+        Assert.assertTrue(result.isSuccess());
+        TokenResponse tokenResponse = result.getResult();
+        System.out.println("tokenResponse = " + tokenResponse);
+    }
+
+    @Test
     public void testGetToken() throws Exception {
         AuthorizationCodeRequest tokenRequest = new AuthorizationCodeRequest();
         tokenRequest.setClientId("test_client");
@@ -209,9 +231,8 @@ public class OauthHelperTest {
         tokenRequest.setRedirectUri("https://localhost:8443/authorize");
         tokenRequest.setAuthCode("test_code");
 
-        Result<TokenResponse> result = OauthHelper.getToken(tokenRequest);
-        Assert.assertTrue(result.isSuccess());
-        TokenResponse tokenResponse = result.getResult();
+        TokenResponse tokenResponse = OauthHelper.getToken(tokenRequest);
+        Assert.assertNotNull(tokenResponse);
         System.out.println("tokenResponse = " + tokenResponse);
     }
 
