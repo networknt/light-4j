@@ -46,7 +46,22 @@ public class OauthHelper {
 
     static final Logger logger = LoggerFactory.getLogger(OauthHelper.class);
 
-    public static Result<TokenResponse> getToken(TokenRequest tokenRequest) {
+    /**
+     * @deprecated As of release 1.5.29, replaced with @link #getTokenResult(TokenRequest tokenRequest)
+     * @param tokenRequest Request details for the token
+     * @return A TokenResponse on success
+     * @throws ClientException If any issues
+     */
+    @Deprecated
+    public static TokenResponse getToken(TokenRequest tokenRequest) throws ClientException {
+        Result<TokenResponse> responseResult = getTokenResult(tokenRequest);
+        if (responseResult.isSuccess()) {
+            return responseResult.getResult();
+        }
+        throw new ClientException(responseResult.getError());
+    }
+
+    public static Result<TokenResponse> getTokenResult(TokenRequest tokenRequest) {
         final AtomicReference<Result<TokenResponse>> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
@@ -122,7 +137,23 @@ public class OauthHelper {
         return reference.get() == null ? Failure.of(new Status(GET_TOKEN_TIMEOUT)) : reference.get();
     }
 
-    public static Result<TokenResponse> getTokenFromSaml(SAMLBearerRequest tokenRequest) {
+    /**
+     * @deprecated As of release 1.5.29, replaced with @link #getTokenFromSamlResult(SAMLBearerRequest tokenRequest)
+     *
+     * @param tokenRequest Request details for the token
+     * @return A TokenResponse object on success
+     * @throws ClientException If any issues
+     */
+    @Deprecated
+    public static TokenResponse getTokenFromSaml(SAMLBearerRequest tokenRequest) throws ClientException {
+        Result<TokenResponse> responseResult = getTokenFromSamlResult(tokenRequest);
+        if (responseResult.isSuccess()) {
+            return responseResult.getResult();
+        }
+        throw new ClientException(responseResult.getError());
+    }
+
+    public static Result<TokenResponse> getTokenFromSamlResult(SAMLBearerRequest tokenRequest) {
         final AtomicReference<Result<TokenResponse>> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
@@ -424,7 +455,7 @@ public class OauthHelper {
      */
     private static Result<Jwt> getCCTokenRemotely(final Jwt jwt) {
         TokenRequest tokenRequest = new ClientCredentialsRequest();
-        Result<TokenResponse> result = OauthHelper.getToken(tokenRequest);
+        Result<TokenResponse> result = OauthHelper.getTokenResult(tokenRequest);
         if(result.isSuccess()) {
             TokenResponse tokenResponse = result.getResult();
             jwt.setJwt(tokenResponse.getAccessToken());

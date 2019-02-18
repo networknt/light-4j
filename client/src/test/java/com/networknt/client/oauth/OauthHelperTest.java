@@ -209,7 +209,7 @@ public class OauthHelperTest {
         tokenRequest.setRedirectUri("https://localhost:8443/authorize");
         tokenRequest.setAuthCode("test_code");
 
-        Result<TokenResponse> result = OauthHelper.getToken(tokenRequest);
+        Result<TokenResponse> result = OauthHelper.getTokenResult(tokenRequest);
         Assert.assertTrue(result.isSuccess());
         TokenResponse tokenResponse = result.getResult();
         System.out.println("tokenResponse = " + tokenResponse);
