@@ -48,6 +48,10 @@ public class LocalFirstLoadBalance extends RoundRobinLoadBalance {
         ip = inetAddress.getHostAddress();
     }
 
+    public LocalFirstLoadBalance() {
+        if(logger.isInfoEnabled()) logger.info("A LocalFirstLoadBalance instance is started");
+    }
+
     /**
      * Local first requestKey is not used as it is ip on the localhost. It first needs to
      * find a list of urls on the localhost for the service, and then round robin in the
