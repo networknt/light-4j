@@ -69,6 +69,10 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>server</artifactId>
+        </dependency>
     </dependencies>
 
 </project>
