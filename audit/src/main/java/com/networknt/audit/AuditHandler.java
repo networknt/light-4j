@@ -27,6 +27,7 @@ import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
@@ -69,6 +70,7 @@ import java.util.function.Consumer;
  * Created by steve on 17/09/16.
  */
 public class AuditHandler implements MiddlewareHandler {
+    static final Logger logger = LoggerFactory.getLogger(AuditHandler.class);
     public static final String CONFIG_NAME = "audit";
 
     public static final String ENABLED = "enabled";
@@ -130,9 +132,7 @@ public class AuditHandler implements MiddlewareHandler {
         }
     }
 
-    public AuditHandler() {
-
-    }
+    public AuditHandler() { if(logger.isInfoEnabled()) logger.info("AuditHandler is loaded."); }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {

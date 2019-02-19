@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.networknt.basic;
+package com.networknt.basicauth;
 
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
@@ -28,7 +28,6 @@ import io.undertow.client.ClientResponse;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
-import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
 import org.apache.commons.codec.binary.Base64;
 import org.junit.AfterClass;
@@ -41,8 +40,6 @@ import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -91,10 +88,10 @@ public class BasicAuthHandlerTest {
         return Handlers.routing().add(Methods.GET, "/v2/pet", exchange -> exchange.getResponseSender().send("OK"));
     }
 
-    private static String encodeCredentials(String username, String password) {
+    private static String encodeCredentialsFullFormat(String username, String password, String separator) {
         String cred;
         if(password != null) {
-            cred = username + ":" + password;
+            cred = username + separator + password;
         } else {
             cred = username;
         }
@@ -102,6 +99,10 @@ public class BasicAuthHandlerTest {
         byte[] encodedBytes = Base64.encodeBase64(cred.getBytes(UTF_8));
         encodedValue = new String(encodedBytes, UTF_8);
         return encodedValue;
+    }
+
+    private static String encodeCredentials(String username, String password) {
+        return encodeCredentialsFullFormat(username, password, ":");
     }
 
     @Test
@@ -196,7 +197,39 @@ public class BasicAuthHandlerTest {
     }
 
     @Test
-    public void testInvalidBasicHeader() throws Exception {
+    public void testInvalidBasicHeaderCredentialInfo() throws Exception {
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection;
+        try {
+            connection = client.connect(new URI("http://localhost:17352"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        } catch (Exception e) {
+            throw new ClientException(e);
+        }
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        try {
+            ClientRequest request = new ClientRequest().setPath("/v2/pet").setMethod(Methods.GET);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
+            request.getRequestHeaders().put(Headers.AUTHORIZATION, "BASIC " + encodeCredentialsFullFormat("user1", "user1pass", "/"));
+            connection.sendRequest(request, client.createClientCallback(reference, latch));
+            latch.await();
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw new ClientException(e);
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+        int statusCode = reference.get().getResponseCode();
+        Assert.assertEquals(401, statusCode);
+        if(statusCode == 401) {
+            Status status = Config.getInstance().getMapper().readValue(reference.get().getAttachment(Http2Client.RESPONSE_BODY), Status.class);
+            Assert.assertNotNull(status);
+            Assert.assertEquals("ERR10046", status.getCode());
+        }
+    }
+
+    @Test
+    public void testInvalidBasicHeaderPrefixText() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
