@@ -12,12 +12,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.ServiceLoader;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -114,6 +109,7 @@ public class Http2Client {
 
     // Cached jwt token for this client.
     private final Jwt cachedJwt = new Jwt();
+    private Map<Set<String>, Jwt> cachedJwts= new HashMap<>();
 
     static {
         List<String> masks = new ArrayList<>();
@@ -354,6 +350,15 @@ public class Http2Client {
      */
     public Result addCcToken(ClientRequest request) {
         Result<Jwt> result = OauthHelper.populateCCToken(cachedJwt);
+        if(result.isFailure()) { return Failure.of(result.getError()); }
+        request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + result.getResult().getJwt());
+        return result;
+    }
+
+    public Result addCcToken(ClientRequest request, Set<String> scopes) {
+        Jwt jwt = cachedJwts.get(scopes);
+        Result<Jwt> result = OauthHelper.populateCCToken(jwt);
+        cachedJwts.put(scopes, jwt);
         if(result.isFailure()) { return Failure.of(result.getError()); }
         request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + result.getResult().getJwt());
         return result;

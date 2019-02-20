@@ -380,7 +380,7 @@ public class OauthHelper {
         if(!isInRenewWindow) { return Success.of(jwt); }
         //block other getting token requests, only once at a time.
         //Once one request get the token, other requests don't need to get from auth server anymore.
-        synchronized (OauthHelper.class) {
+        synchronized (jwt) {
             //if token expired, try to renew synchronously
             if(jwt.getExpire() <= System.currentTimeMillis()) {
                 Result<Jwt> result = renewCCTokenSync(jwt);
