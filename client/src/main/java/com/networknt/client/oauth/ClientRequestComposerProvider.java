@@ -95,7 +95,7 @@ public class ClientRequestComposerProvider {
         @Override
         public String ComposeRequestBody(TokenRequest tokenRequest) {
             try {
-                return getEncodedString(tokenRequest);
+                return OauthHelper.getEncodedString(tokenRequest);
             } catch (UnsupportedEncodingException e) {
                 logger.error("get encoded string from tokenRequest fails: \n {}", e.toString());
             }
@@ -103,28 +103,6 @@ public class ClientRequestComposerProvider {
         }
     }
 
-    private static String getEncodedString(TokenRequest request) throws UnsupportedEncodingException {
-        Map<String, String> params = new HashMap<>();
-        params.put(GRANT_TYPE, request.getGrantType());
-        if(TokenRequest.AUTHORIZATION_CODE.equals(request.getGrantType())) {
-            params.put(CODE, ((AuthorizationCodeRequest)request).getAuthCode());
-            params.put(REDIRECT_URI, ((AuthorizationCodeRequest)request).getRedirectUri());
-            String csrf = request.getCsrf();
-            if(csrf != null) {
-                params.put(CSRF, csrf);
-            }
-        }
-        if(TokenRequest.REFRESH_TOKEN.equals(request.getGrantType())) {
-            params.put(REFRESH_TOKEN, ((RefreshTokenRequest)request).getRefreshToken());
-            String csrf = request.getCsrf();
-            if(csrf != null) {
-                params.put(CSRF, csrf);
-            }
-        }
-        if(request.getScope() != null) {
-            params.put(SCOPE, String.join(" ", request.getScope()));
-        }
-        return Http2Client.getFormDataString(params);
-    }
+
 
 }

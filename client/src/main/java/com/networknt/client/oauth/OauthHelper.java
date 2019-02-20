@@ -9,7 +9,6 @@ import com.networknt.httpstring.ContentType;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;
-import com.networknt.service.SingletonServiceFactory;
 import com.networknt.status.Status;
 import io.undertow.UndertowOptions;
 import io.undertow.client.*;
@@ -280,6 +279,30 @@ public class OauthHelper {
         return reference.get().getAttachment(Http2Client.RESPONSE_BODY);
     }
 
+    public static String getEncodedString(TokenRequest request) throws UnsupportedEncodingException {
+        Map<String, String> params = new HashMap<>();
+        params.put(GRANT_TYPE, request.getGrantType());
+        if(TokenRequest.AUTHORIZATION_CODE.equals(request.getGrantType())) {
+            params.put(CODE, ((AuthorizationCodeRequest)request).getAuthCode());
+            params.put(REDIRECT_URI, ((AuthorizationCodeRequest)request).getRedirectUri());
+            String csrf = request.getCsrf();
+            if(csrf != null) {
+                params.put(CSRF, csrf);
+            }
+        }
+        if(TokenRequest.REFRESH_TOKEN.equals(request.getGrantType())) {
+            params.put(REFRESH_TOKEN, ((RefreshTokenRequest)request).getRefreshToken());
+            String csrf = request.getCsrf();
+            if(csrf != null) {
+                params.put(CSRF, csrf);
+            }
+        }
+        if(request.getScope() != null) {
+            params.put(SCOPE, String.join(" ", request.getScope()));
+        }
+        return Http2Client.getFormDataString(params);
+    }
+
     public static String getBasicAuthHeader(String clientId, String clientSecret) {
         return BASIC + " " + encodeCredentials(clientId, clientSecret);
     }
@@ -296,8 +319,6 @@ public class OauthHelper {
         encodedValue = new String(encodedBytes, UTF_8);
         return encodedValue;
     }
-
-
 
     private static Result<TokenResponse> handleResponse(ContentType contentType, String responseBody) {
         TokenResponse tokenResponse;
@@ -498,11 +519,6 @@ public class OauthHelper {
         }
         return escapedXML.toString();
     }
-
-
-
-
-
 }
 
 
