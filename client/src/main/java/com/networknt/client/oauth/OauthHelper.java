@@ -77,8 +77,7 @@ public class OauthHelper {
         }
 
         try {
-            ClientRequestComposable requestComposer = SingletonServiceFactory.getBean(ClientRequestComposable.class);
-            if(requestComposer == null) { requestComposer = new DefaultClientCredentialRequestComposer(); }
+            IClientRequestComposable requestComposer = ClientRequestComposerProvider.getInstance().getComposer(ClientRequestComposerProvider.ClientRequestComposers.CLIENT_CREDENTIAL_REQUEST_COMPOSER);
             final ClientRequest request = requestComposer.ComposeClientRequest(tokenRequest);
             String requestBody = requestComposer.ComposeRequestBody(tokenRequest);
             connection.getIoThread().execute(() -> {
@@ -166,8 +165,7 @@ public class OauthHelper {
             return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR));
         }
         try {
-            ClientRequestComposable requestComposer = SingletonServiceFactory.getBean(ClientRequestComposable.class);
-            if(requestComposer == null) { requestComposer = new DefaultSAMLBearerRequestComposer(); }
+            IClientRequestComposable requestComposer = ClientRequestComposerProvider.getInstance().getComposer(ClientRequestComposerProvider.ClientRequestComposers.SAML_BEARER_REQUEST_COMPOSER);
             final ClientRequest request = requestComposer.ComposeClientRequest(tokenRequest);
             String requestBody = requestComposer.ComposeRequestBody(tokenRequest);
             logger.debug(requestBody);
@@ -299,29 +297,7 @@ public class OauthHelper {
         return encodedValue;
     }
 
-    private static String getEncodedString(TokenRequest request) throws UnsupportedEncodingException {
-        Map<String, String> params = new HashMap<>();
-        params.put(GRANT_TYPE, request.getGrantType());
-        if(TokenRequest.AUTHORIZATION_CODE.equals(request.getGrantType())) {
-            params.put(CODE, ((AuthorizationCodeRequest)request).getAuthCode());
-            params.put(REDIRECT_URI, ((AuthorizationCodeRequest)request).getRedirectUri());
-            String csrf = request.getCsrf();
-            if(csrf != null) {
-                params.put(CSRF, csrf);
-            }
-        }
-        if(TokenRequest.REFRESH_TOKEN.equals(request.getGrantType())) {
-            params.put(REFRESH_TOKEN, ((RefreshTokenRequest)request).getRefreshToken());
-            String csrf = request.getCsrf();
-            if(csrf != null) {
-                params.put(CSRF, csrf);
-            }
-        }
-        if(request.getScope() != null) {
-            params.put(SCOPE, String.join(" ", request.getScope()));
-        }
-        return Http2Client.getFormDataString(params);
-    }
+
 
     private static Result<TokenResponse> handleResponse(ContentType contentType, String responseBody) {
         TokenResponse tokenResponse;
@@ -523,56 +499,9 @@ public class OauthHelper {
         return escapedXML.toString();
     }
 
-    private static class DefaultClientCredentialRequestComposer implements ClientRequestComposable {
 
-        @Override
-        public ClientRequest ComposeClientRequest(TokenRequest tokenRequest) {
-            final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(tokenRequest.getUri());
-            request.getRequestHeaders().put(Headers.HOST, "localhost");
-            request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
-            request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
-            request.getRequestHeaders().put(Headers.AUTHORIZATION, getBasicAuthHeader(tokenRequest.getClientId(), tokenRequest.getClientSecret()));
-            return request;
-        }
 
-        @Override
-        public String ComposeRequestBody(TokenRequest tokenRequest) {
-            try {
-                return getEncodedString(tokenRequest);
-            } catch (UnsupportedEncodingException e) {
-                logger.error("get encoded string from tokenRequest fails: \n {}", e.toString());
-            }
-            return "";
-        }
-    }
 
-    private static class DefaultSAMLBearerRequestComposer implements ClientRequestComposable {
-
-        @Override
-        public ClientRequest ComposeClientRequest(TokenRequest tokenRequest) {
-            ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(tokenRequest.getUri());
-            request.getRequestHeaders().put(Headers.HOST, "localhost");
-            request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
-            request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
-            return request;
-        }
-
-        @Override
-        public String ComposeRequestBody(TokenRequest tokenRequest) {
-            SAMLBearerRequest SamlTokenRequest = (SAMLBearerRequest)tokenRequest;
-            Map<String, String> postBody = new HashMap<>();
-            postBody.put(SAMLBearerRequest.GRANT_TYPE_KEY , SAMLBearerRequest.GRANT_TYPE_VALUE );
-            postBody.put(SAMLBearerRequest.ASSERTION_KEY, SamlTokenRequest.getSamlAssertion());
-            postBody.put(SAMLBearerRequest.CLIENT_ASSERTION_TYPE_KEY, SAMLBearerRequest.CLIENT_ASSERTION_TYPE_VALUE);
-            postBody.put(SAMLBearerRequest.CLIENT_ASSERTION_KEY, SamlTokenRequest.getJwtClientAssertion());
-            try {
-                return Http2Client.getFormDataString(postBody);
-            } catch (UnsupportedEncodingException e) {
-                logger.error("get encoded string from tokenRequest fails: \n {}", e.toString());
-            }
-            return "";
-        }
-    }
 
 }
 
