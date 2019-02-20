@@ -12,7 +12,7 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TestAppStatusStartupHook extends TestCase {
+public class TestMergeStatusConfig extends TestCase {
 
     private Config config = null;
 
@@ -42,8 +42,8 @@ public class TestAppStatusStartupHook extends TestCase {
 
     @Test
     public void testAppStatus() {
-        AppStatusStartupHook appStatusStartupHook = new AppStatusStartupHook();
-        appStatusStartupHook.onStartup();
+        config.clear();
+        Server.mergeStatusConfig();
         Status status = new Status("ERR99999");
         Assert.assertEquals(404, status.getStatusCode());
     }
@@ -51,11 +51,10 @@ public class TestAppStatusStartupHook extends TestCase {
     @Test
     public void testDuplicateStatus() {
         config.clear();
-        AppStatusStartupHook appStatusStartupHook = new AppStatusStartupHook();
         try {
-            appStatusStartupHook.onStartup();
+            Server.mergeStatusConfig();
             // second try to make sure duplication status appear
-            appStatusStartupHook.onStartup();
+            Server.mergeStatusConfig();
             fail();
         } catch (RuntimeException expected) {
             // pass
