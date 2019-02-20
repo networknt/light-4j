@@ -9,6 +9,7 @@ import com.networknt.httpstring.ContentType;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;
+import com.networknt.service.SingletonServiceFactory;
 import com.networknt.status.Status;
 import io.undertow.UndertowOptions;
 import io.undertow.client.*;
@@ -23,6 +24,7 @@ import org.xnio.OptionMap;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -38,6 +40,7 @@ public class OauthHelper {
     static final String BASIC = "Basic";
     static final String GRANT_TYPE = "grant_type";
     static final String CODE = "code";
+    static final String SCOPE = "scope";
     private static final String FAIL_TO_SEND_REQUEST = "ERR10051";
     private static final String GET_TOKEN_ERROR = "ERR10052";
     private static final String ESTABLISH_CONNECTION_ERROR = "ERR10053";
@@ -74,13 +77,11 @@ public class OauthHelper {
         }
 
         try {
-            String requestBody = getEncodedString(tokenRequest);
+            ClientRequestComposable requestComposer = SingletonServiceFactory.getBean(ClientRequestComposable.class);
+            if(requestComposer == null) { requestComposer = new DefaultClientCredentialRequestComposer(); }
+            final ClientRequest request = requestComposer.ComposeClientRequest(tokenRequest);
+            String requestBody = requestComposer.ComposeRequestBody(tokenRequest);
             connection.getIoThread().execute(() -> {
-                final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(tokenRequest.getUri());
-                request.getRequestHeaders().put(Headers.HOST, "localhost");
-                request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
-                request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
-                request.getRequestHeaders().put(Headers.AUTHORIZATION, getBasicAuthHeader(tokenRequest.getClientId(), tokenRequest.getClientSecret()));
                 connection.sendRequest(request, new ClientCallback<ClientExchange>() {
                     @Override
                     public void completed(ClientExchange result) {
@@ -164,21 +165,14 @@ public class OauthHelper {
             logger.error("cannot establish connection: {}", e.getStackTrace());
             return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR));
         }
-
         try {
-            Map<String, String> postBody = new HashMap<String, String>();
-            postBody.put(SAMLBearerRequest.GRANT_TYPE_KEY , SAMLBearerRequest.GRANT_TYPE_VALUE );
-            postBody.put(SAMLBearerRequest.ASSERTION_KEY, tokenRequest.getSamlAssertion());
-            postBody.put(SAMLBearerRequest.CLIENT_ASSERTION_TYPE_KEY, SAMLBearerRequest.CLIENT_ASSERTION_TYPE_VALUE);
-            postBody.put(SAMLBearerRequest.CLIENT_ASSERTION_KEY, tokenRequest.getJwtClientAssertion());
-            String requestBody = Http2Client.getFormDataString(postBody);
+            ClientRequestComposable requestComposer = SingletonServiceFactory.getBean(ClientRequestComposable.class);
+            if(requestComposer == null) { requestComposer = new DefaultSAMLBearerRequestComposer(); }
+            final ClientRequest request = requestComposer.ComposeClientRequest(tokenRequest);
+            String requestBody = requestComposer.ComposeRequestBody(tokenRequest);
             logger.debug(requestBody);
 
             connection.getIoThread().execute(() -> {
-                final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(tokenRequest.getUri());
-                request.getRequestHeaders().put(Headers.HOST, "localhost");
-                request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
-                request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
 
                 connection.sendRequest(request, new ClientCallback<ClientExchange>() {
 
@@ -373,7 +367,7 @@ public class OauthHelper {
      * @param jwt the given jwt needs to renew or populate
      * @return When success return Jwt; When fail return Status.
      */
-    public static Result<Jwt> populateCCToken(Jwt jwt) {
+    public static Result<Jwt> populateCCToken(final Jwt jwt) {
         boolean isInRenewWindow = jwt.getExpire() - System.currentTimeMillis() < jwt.getTokenRenewBeforeExpired();
         logger.trace("isInRenewWindow = " + isInRenewWindow);
         //if not in renew window, return the current jwt.
@@ -425,7 +419,7 @@ public class OauthHelper {
      * When fail, it will swallow the exception, so no need return type to be handled by caller.
      * @param jwt the jwt you want to renew
      */
-    private static void renewCCTokenAsync(Jwt jwt) {
+    private static void renewCCTokenAsync(final Jwt jwt) {
         // Not expired yet, try to renew async but let requests use the old token.
         logger.trace("In renew window but token is not expired yet.");
         if(!jwt.isRenewing() || System.currentTimeMillis() > jwt.getEarlyRetryTimeout()) {
@@ -455,6 +449,7 @@ public class OauthHelper {
      */
     private static Result<Jwt> getCCTokenRemotely(final Jwt jwt) {
         TokenRequest tokenRequest = new ClientCredentialsRequest();
+        tokenRequest.setScope(new ArrayList() {{ addAll(jwt.getScopes()); }});
         Result<TokenResponse> result = OauthHelper.getTokenResult(tokenRequest);
         if(result.isSuccess()) {
             TokenResponse tokenResponse = result.getResult();
@@ -527,4 +522,58 @@ public class OauthHelper {
         }
         return escapedXML.toString();
     }
+
+    private static class DefaultClientCredentialRequestComposer implements ClientRequestComposable {
+
+        @Override
+        public ClientRequest ComposeClientRequest(TokenRequest tokenRequest) {
+            final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(tokenRequest.getUri());
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
+            request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+            request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
+            request.getRequestHeaders().put(Headers.AUTHORIZATION, getBasicAuthHeader(tokenRequest.getClientId(), tokenRequest.getClientSecret()));
+            return request;
+        }
+
+        @Override
+        public String ComposeRequestBody(TokenRequest tokenRequest) {
+            try {
+                return getEncodedString(tokenRequest);
+            } catch (UnsupportedEncodingException e) {
+                logger.error("get encoded string from tokenRequest fails: \n {}", e.toString());
+            }
+            return "";
+        }
+    }
+
+    private static class DefaultSAMLBearerRequestComposer implements ClientRequestComposable {
+
+        @Override
+        public ClientRequest ComposeClientRequest(TokenRequest tokenRequest) {
+            ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(tokenRequest.getUri());
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
+            request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+            request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
+            return request;
+        }
+
+        @Override
+        public String ComposeRequestBody(TokenRequest tokenRequest) {
+            SAMLBearerRequest SamlTokenRequest = (SAMLBearerRequest)tokenRequest;
+            Map<String, String> postBody = new HashMap<>();
+            postBody.put(SAMLBearerRequest.GRANT_TYPE_KEY , SAMLBearerRequest.GRANT_TYPE_VALUE );
+            postBody.put(SAMLBearerRequest.ASSERTION_KEY, SamlTokenRequest.getSamlAssertion());
+            postBody.put(SAMLBearerRequest.CLIENT_ASSERTION_TYPE_KEY, SAMLBearerRequest.CLIENT_ASSERTION_TYPE_VALUE);
+            postBody.put(SAMLBearerRequest.CLIENT_ASSERTION_KEY, SamlTokenRequest.getJwtClientAssertion());
+            try {
+                return Http2Client.getFormDataString(postBody);
+            } catch (UnsupportedEncodingException e) {
+                logger.error("get encoded string from tokenRequest fails: \n {}", e.toString());
+            }
+            return "";
+        }
+    }
+
 }
+
+

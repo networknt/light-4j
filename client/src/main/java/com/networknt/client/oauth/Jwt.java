@@ -2,7 +2,9 @@ package com.networknt.client.oauth;
 
 import com.networknt.config.Config;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * a model class represents a JWT mostly for caching usage so that we don't need to decrypt jwt string to get info.
@@ -14,6 +16,7 @@ public class Jwt {
     private volatile boolean renewing = false;
     private volatile long expiredRetryTimeout;
     private volatile long earlyRetryTimeout;
+    private Set<String> scopes = new HashSet<>();
 
     private static long tokenRenewBeforeExpired;
     private static long expiredRefreshRetryDelay;
@@ -101,5 +104,13 @@ public class Jwt {
 
     public static void setEarlyRefreshRetryDelay(long earlyRefreshRetryDelay) {
         Jwt.earlyRefreshRetryDelay = earlyRefreshRetryDelay;
+    }
+
+    public Set<String> getScopes() {
+        return scopes;
+    }
+
+    public void setScopes(Set<String> scopes) {
+        this.scopes = scopes;
     }
 }
