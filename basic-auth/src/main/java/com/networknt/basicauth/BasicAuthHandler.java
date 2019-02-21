@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package com.networknt.basic;
+package com.networknt.basicauth;
 
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.HeaderMap;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,15 +39,16 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * in most situations as OAuth 2.0 is the standard. In certain cases for example, the server is
  * deployed to IoT devices, basic authentication can be used to replace OAuth 2.0 handlers.
  *
- * There are multiple users that can be defined in basic.yml config file. And access is logged into
- * th audit.log
+ * There are multiple users that can be defined in basic.yml config file. Password can be stored in plain or
+ * encrypted format in basic.yml. In case of password encryption, please remember to add corresponding
+ * com.networknt.utility.Decryptor in service.yml. And access is logged into audit.log if audit middleware is used.
  *
  * @author Steve Hu
  */
 public class BasicAuthHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(BasicAuthHandler.class);
-    static final String CONFIG_NAME = "basic";
-    static final BasicConfig config = (BasicConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, BasicConfig.class);
+    static final String CONFIG_NAME = "basic-auth";
+    static final BasicAuthConfig config = (BasicAuthConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, BasicAuthConfig.class);
 
     static final String MISSING_AUTH_TOKEN = "ERR10002";
     static final String INVALID_BASIC_HEADER = "ERR10046";
@@ -58,7 +57,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
     private volatile HttpHandler next;
 
     public BasicAuthHandler() {
-        if(logger.isInfoEnabled()) logger.info("BasicAuthHandler is constructed.");
+        if(logger.isInfoEnabled()) logger.info("BasicAuthHandler is loaded.");
     }
 
     @Override
@@ -80,7 +79,6 @@ public class BasicAuthHandler implements MiddlewareHandler {
                 if (pos != -1) {
                     String username = credentials.substring(0, pos);
                     String password = credentials.substring(pos + 1);
-                    List<Map<String, Object>> users = config.getUsers();
                     Optional<Map<String, Object>> result = config.getUsers().stream()
                             .filter(user -> user.get("username").equals(username) && user.get("password").equals(password))
                             .findFirst();
@@ -121,7 +119,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
     public void register() {
         // As passwords are in the config file, we need to mask them.
         List<String> masks = new ArrayList<>();
-        masks.add("");
-        ModuleRegistry.registerModule(BasicAuthHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        masks.add("password");
+        ModuleRegistry.registerModule(BasicAuthHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), masks);
     }
 }
