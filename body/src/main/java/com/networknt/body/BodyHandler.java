@@ -36,8 +36,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This is a handler that parses the body into a Map or List if the input content type is JSON.
@@ -69,7 +69,7 @@ public class BodyHandler implements MiddlewareHandler {
     private volatile HttpHandler next;
 
     public BodyHandler() {
-
+        if(logger.isInfoEnabled()) logger.info("BodyHandler is loaded.");
     }
 
     /**
@@ -98,7 +98,7 @@ public class BodyHandler implements MiddlewareHandler {
                 if (s != null) {
                     s = s.trim();
                     if (s.startsWith("{")) {
-                        body = Config.getInstance().getMapper().readValue(s, new TypeReference<HashMap<String, Object>>() {
+                        body = Config.getInstance().getMapper().readValue(s, new TypeReference<Map<String, Object>>() {
                         });
                     } else if (s.startsWith("[")) {
                         body = Config.getInstance().getMapper().readValue(s, new TypeReference<List<Object>>() {
