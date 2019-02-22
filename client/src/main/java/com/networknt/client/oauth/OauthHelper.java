@@ -74,55 +74,10 @@ public class OauthHelper {
             logger.error("cannot establish connection: {}", e.getStackTrace());
             return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR, tokenRequest.getServerUrl()));
         }
-
         try {
             IClientRequestComposable requestComposer = ClientRequestComposerProvider.getInstance().getComposer(ClientRequestComposerProvider.ClientRequestComposers.CLIENT_CREDENTIAL_REQUEST_COMPOSER);
-            final ClientRequest request = requestComposer.ComposeClientRequest(tokenRequest);
-            String requestBody = requestComposer.ComposeRequestBody(tokenRequest);
-            connection.getIoThread().execute(() -> {
-                connection.sendRequest(request, new ClientCallback<ClientExchange>() {
-                    @Override
-                    public void completed(ClientExchange result) {
-                        new StringWriteChannelListener(requestBody).setup(result.getRequestChannel());
-                        result.setResponseListener(new ClientCallback<ClientExchange>() {
-                            @Override
-                            public void completed(ClientExchange result) {
-                                new StringReadChannelListener(Http2Client.BUFFER_POOL) {
 
-                                    @Override
-                                    protected void stringDone(String string) {
-
-                                        logger.debug("getToken response = " + string);
-                                        reference.set(handleResponse(getContentTypeFromExchange(result), string));
-                                        latch.countDown();
-                                    }
-
-                                    @Override
-                                    protected void error(IOException e) {
-                                        logger.error("IOException:", e);
-                                        reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
-                                        latch.countDown();
-                                    }
-                                }.setup(result.getResponseChannel());
-                            }
-
-                            @Override
-                            public void failed(IOException e) {
-                                logger.error("IOException:", e);
-                                reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
-                                latch.countDown();
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void failed(IOException e) {
-                        logger.error("IOException:", e);
-                        reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
-                        latch.countDown();
-                    }
-                });
-            });
+            connection.getIoThread().execute(new TokenRequestAction(tokenRequest, requestComposer, connection, reference, latch));
 
             latch.await(4, TimeUnit.SECONDS);
         } catch (Exception e) {
@@ -165,55 +120,8 @@ public class OauthHelper {
         }
         try {
             IClientRequestComposable requestComposer = ClientRequestComposerProvider.getInstance().getComposer(ClientRequestComposerProvider.ClientRequestComposers.SAML_BEARER_REQUEST_COMPOSER);
-            final ClientRequest request = requestComposer.ComposeClientRequest(tokenRequest);
-            String requestBody = requestComposer.ComposeRequestBody(tokenRequest);
-            logger.debug(requestBody);
 
-            connection.getIoThread().execute(() -> {
-
-                connection.sendRequest(request, new ClientCallback<ClientExchange>() {
-
-                    @Override
-                    public void completed(ClientExchange result) {
-                        new StringWriteChannelListener(requestBody).setup(result.getRequestChannel());
-                        result.setResponseListener(new ClientCallback<ClientExchange>() {
-                            @Override
-                            public void completed(ClientExchange result) {
-                                new StringReadChannelListener(Http2Client.BUFFER_POOL) {
-
-                                    @Override
-                                    protected void stringDone(String string) {
-                                        logger.debug("getToken response = " + string);
-                                        reference.set(handleResponse(getContentTypeFromExchange(result), string));
-                                        latch.countDown();
-                                    }
-
-                                    @Override
-                                    protected void error(IOException e) {
-                                        logger.error("IOException:", e);
-                                        reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
-                                        latch.countDown();
-                                    }
-                                }.setup(result.getResponseChannel());
-                            }
-
-                            @Override
-                            public void failed(IOException e) {
-                                logger.error("IOException:", e);
-                                reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
-                                latch.countDown();
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void failed(IOException e) {
-                        logger.error("IOException:", e);
-                        reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
-                        latch.countDown();
-                    }
-                });
-            });
+            connection.getIoThread().execute(new TokenRequestAction(tokenRequest, requestComposer, connection, reference, latch));
 
             latch.await(4, TimeUnit.SECONDS);
         } catch (Exception e) {
@@ -224,6 +132,70 @@ public class OauthHelper {
         }
         //if reference.get() is null at this point, mostly likely couldn't get token within latch.await() timeout.
         return reference.get() == null ? Failure.of(new Status(GET_TOKEN_TIMEOUT)) : reference.get();
+    }
+
+    private static class TokenRequestAction implements Runnable{
+        private ClientConnection connection;
+        private AtomicReference<Result<TokenResponse>> reference;
+        private CountDownLatch latch;
+        private IClientRequestComposable requestComposer;
+        private TokenRequest tokenRequest;
+
+        TokenRequestAction(TokenRequest tokenRequest, IClientRequestComposable requestComposer, ClientConnection connection, AtomicReference<Result<TokenResponse>> reference, CountDownLatch latch){
+            this.tokenRequest = tokenRequest;
+            this.connection = connection;
+            this.reference = reference;
+            this.latch = latch;
+            this.requestComposer = requestComposer;
+        }
+        @Override
+        public void run() {
+            final ClientRequest request = requestComposer.ComposeClientRequest(tokenRequest);
+            String requestBody = requestComposer.ComposeRequestBody(tokenRequest);
+            logger.debug(requestBody);
+            connection.sendRequest(request, new ClientCallback<ClientExchange>() {
+
+                @Override
+                public void completed(ClientExchange result) {
+                    new StringWriteChannelListener(requestBody).setup(result.getRequestChannel());
+                    result.setResponseListener(new ClientCallback<ClientExchange>() {
+                        @Override
+                        public void completed(ClientExchange result) {
+                            new StringReadChannelListener(Http2Client.BUFFER_POOL) {
+
+                                @Override
+                                protected void stringDone(String string) {
+                                    logger.debug("getToken response = " + string);
+                                    reference.set(handleResponse(getContentTypeFromExchange(result), string));
+                                    latch.countDown();
+                                }
+
+                                @Override
+                                protected void error(IOException e) {
+                                    logger.error("IOException:", e);
+                                    reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
+                                    latch.countDown();
+                                }
+                            }.setup(result.getResponseChannel());
+                        }
+
+                        @Override
+                        public void failed(IOException e) {
+                            logger.error("IOException:", e);
+                            reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
+                            latch.countDown();
+                        }
+                    });
+                }
+
+                @Override
+                public void failed(IOException e) {
+                    logger.error("IOException:", e);
+                    reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
+                    latch.countDown();
+                }
+            });
+        }
     }
 
     public static String getKey(KeyRequest keyRequest) throws ClientException {
