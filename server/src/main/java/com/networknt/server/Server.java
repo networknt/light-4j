@@ -550,10 +550,8 @@ public class Server {
         for (String key : appStatusConfig.keySet()) {
             if (statusConfig.containsKey(key)) {
                 repeatStatusList.add(key);
-                if (logger.isInfoEnabled()) {
-                    logger.error("The status code: " + key + " has already in use by light-4j and cannot be overwritten," +
-                            " please change to another status code in app-status.yml if necessary.");
-                }
+                logger.error("The status code: " + key + " has already in use by light-4j and cannot be overwritten," +
+                        " please change to another status code in app-status.yml if necessary.");
             } else if (repeatStatusList.isEmpty()) {
                 statusConfig.put(key, appStatusConfig.get(key));
             }
