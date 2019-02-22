@@ -1,5 +1,27 @@
 # Change Log
 
+## [1.5.30](https://github.com/networknt/light-4j/tree/1.5.30) (2019-02-21)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.29...1.5.30)
+
+**Implemented enhancements:**
+
+- support a list of config directories in Config module [\#383](https://github.com/networknt/light-4j/issues/383)
+- support absolute path for the config file in Config module [\#381](https://github.com/networknt/light-4j/issues/381)
+- Allow exclusion list of files which should not check/allow for environment variable setting [\#368](https://github.com/networknt/light-4j/issues/368)
+- Environment variable references in the light-4j yaml config files [\#321](https://github.com/networknt/light-4j/issues/321)
+- Read configurations from arbitrary directories [\#309](https://github.com/networknt/light-4j/issues/309)
+
+**Closed issues:**
+
+- Config Module - addressing gaps [\#371](https://github.com/networknt/light-4j/issues/371)
+- Validation of server identify in a CaaS environment [\#358](https://github.com/networknt/light-4j/issues/358)
+- cluster.ServiceToUrl hang sometime [\#303](https://github.com/networknt/light-4j/issues/303)
+
+**Merged pull requests:**
+
+- update basic-auth and some minor update in audit, balance [\#400](https://github.com/networknt/light-4j/pull/400) ([lanphan](https://github.com/lanphan))
+- Fixing backwards incompatible interface change in OauthHelper getToken and getTokenFromSaml [\#399](https://github.com/networknt/light-4j/pull/399) ([NicholasAzar](https://github.com/NicholasAzar))
+
 ## [1.5.29](https://github.com/networknt/light-4j/tree/1.5.29) (2019-02-16)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.28...1.5.29)
 
