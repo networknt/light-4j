@@ -1,7 +1,9 @@
 package com.networknt.client.oauth;
 
 import com.networknt.config.Config;
+import com.networknt.utility.StringUtils;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -40,6 +42,11 @@ public class Jwt {
                 earlyRefreshRetryDelay = (Integer)tokenConfig.get(EARLY_REFRESH_RETRY_DELAY);
             }
         }
+    }
+
+    public Jwt(Set<String> scopes) {
+        this();
+        this.scopes = scopes;
     }
 
     public String getJwt() {
@@ -112,5 +119,12 @@ public class Jwt {
 
     public void setScopes(Set<String> scopes) {
         this.scopes = scopes;
+    }
+
+    public void setScopes(String scopesStr) {
+        this.scopes = this.scopes == null ? new HashSet() : this.scopes;
+        if(StringUtils.isNotBlank(scopesStr)) {
+            scopes.addAll(Arrays.asList(scopesStr.split("(\\s)+")));
+        }
     }
 }
