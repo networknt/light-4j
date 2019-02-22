@@ -1,46 +1,7 @@
 package com.networknt.client;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.InetSocketAddress;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.security.KeyManagementException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
-import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicReference;
-
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
-
-import io.undertow.client.http.Light4jHttp2ClientProvider;
-import io.undertow.client.http.Light4jHttpClientProvider;
-import org.owasp.encoder.Encode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xnio.ChannelListeners;
-import org.xnio.FutureResult;
-import org.xnio.IoFuture;
-import org.xnio.IoUtils;
-import org.xnio.OptionMap;
-import org.xnio.Options;
-import org.xnio.Xnio;
-import org.xnio.XnioIoThread;
-import org.xnio.XnioWorker;
-import org.xnio.channels.StreamSinkChannel;
-import org.xnio.ssl.XnioSsl;
-
 import com.networknt.client.oauth.Jwt;
-import com.networknt.client.oauth.OauthHelper;
+import com.networknt.client.oauth.TokenManager;
 import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
 import com.networknt.client.ssl.TLSConfig;
 import com.networknt.common.DecryptUtil;
@@ -50,13 +11,9 @@ import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.utility.ModuleRegistry;
-
-import io.undertow.client.ClientCallback;
-import io.undertow.client.ClientConnection;
-import io.undertow.client.ClientExchange;
-import io.undertow.client.ClientProvider;
-import io.undertow.client.ClientRequest;
-import io.undertow.client.ClientResponse;
+import io.undertow.client.*;
+import io.undertow.client.http.Light4jHttp2ClientProvider;
+import io.undertow.client.http.Light4jHttpClientProvider;
 import io.undertow.connector.ByteBufferPool;
 import io.undertow.protocols.ssl.UndertowXnioSsl;
 import io.undertow.server.DefaultByteBufferPool;
@@ -65,6 +22,25 @@ import io.undertow.util.AttachmentKey;
 import io.undertow.util.Headers;
 import io.undertow.util.StringReadChannelListener;
 import io.undertow.util.StringWriteChannelListener;
+import org.owasp.encoder.Encode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xnio.*;
+import org.xnio.channels.StreamSinkChannel;
+import org.xnio.ssl.XnioSsl;
+
+import javax.net.ssl.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.security.*;
+import java.security.cert.CertificateException;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * This is a new client module that replaces the old Client module. The old version
@@ -109,7 +85,7 @@ public class Http2Client {
 
     // Cached jwt token for this client.
     private final Jwt cachedJwt = new Jwt();
-    private Map<Set<String>, Jwt> cachedJwts= new HashMap<>();
+    private TokenManager tokenManager = TokenManager.getInstance();
 
     static {
         List<String> masks = new ArrayList<>();
@@ -349,16 +325,7 @@ public class Http2Client {
      * @return Result when fail to get jwt, it will return a Status.
      */
     public Result addCcToken(ClientRequest request) {
-        Result<Jwt> result = OauthHelper.populateCCToken(cachedJwt);
-        if(result.isFailure()) { return Failure.of(result.getError()); }
-        request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + result.getResult().getJwt());
-        return result;
-    }
-
-    public Result addCcToken(ClientRequest request, Set<String> scopes) {
-        Jwt jwt = cachedJwts.get(scopes);
-        Result<Jwt> result = OauthHelper.populateCCToken(jwt);
-        cachedJwts.put(scopes, jwt);
+        Result<Jwt> result = tokenManager.getJwt(request);
         if(result.isFailure()) { return Failure.of(result.getError()); }
         request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + result.getResult().getJwt());
         return result;
@@ -375,7 +342,7 @@ public class Http2Client {
      * @return Result when fail to get jwt, it will return a Status.
      */
     public Result addCcTokenTrace(ClientRequest request, String traceabilityId) {
-        Result<Jwt> result = OauthHelper.populateCCToken(cachedJwt);
+        Result<Jwt> result = tokenManager.getJwt(request);
         if(result.isFailure()) { return Failure.of(result.getError()); }
         request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + result.getResult().getJwt());
         request.getRequestHeaders().put(HttpStringConstants.TRACEABILITY_ID, traceabilityId);
@@ -417,7 +384,7 @@ public class Http2Client {
         } else {
             addAuthToken(request, authToken);
         }
-        Result<Jwt> result = OauthHelper.populateCCToken(cachedJwt);
+        Result<Jwt> result = tokenManager.getJwt(request);
         if(result.isFailure()) { return Failure.of(result.getError()); }
         request.getRequestHeaders().put(HttpStringConstants.CORRELATION_ID, correlationId);
         request.getRequestHeaders().put(HttpStringConstants.SCOPE_TOKEN, "Bearer " + result.getResult().getJwt());

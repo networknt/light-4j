@@ -3,10 +3,7 @@ package com.networknt.client.oauth;
 import com.networknt.config.Config;
 import com.networknt.utility.StringUtils;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * a model class represents a JWT mostly for caching usage so that we don't need to decrypt jwt string to get info.
@@ -19,6 +16,7 @@ public class Jwt {
     private volatile long expiredRetryTimeout;
     private volatile long earlyRetryTimeout;
     private Set<String> scopes = new HashSet<>();
+    private Key key;
 
     private static long tokenRenewBeforeExpired;
     private static long expiredRefreshRetryDelay;
@@ -44,9 +42,9 @@ public class Jwt {
         }
     }
 
-    public Jwt(Set<String> scopes) {
+    public Jwt(Key key) {
         this();
-        this.scopes = scopes;
+        this.key = key;
     }
 
     public String getJwt() {
@@ -125,6 +123,45 @@ public class Jwt {
         this.scopes = this.scopes == null ? new HashSet() : this.scopes;
         if(StringUtils.isNotBlank(scopesStr)) {
             scopes.addAll(Arrays.asList(scopesStr.split("(\\s)+")));
+        }
+    }
+
+    public Key getKey() {
+        return key;
+    }
+
+    public static class Key {
+        private Set<String> scopes;
+        private String serviceId;
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(scopes, serviceId);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return hashCode() == obj.hashCode();
+        }
+
+        public Key(Set<String> scopes) {
+            this.scopes = scopes;
+        }
+
+        public Key(String serviceId) {
+            this.serviceId = serviceId;
+        }
+
+        public Key() {
+            this.scopes = new HashSet<>();
+        }
+
+        public Set<String> getScopes() {
+            return scopes;
+        }
+
+        public String getServiceId() {
+            return serviceId;
         }
     }
 }

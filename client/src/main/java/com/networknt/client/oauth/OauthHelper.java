@@ -40,6 +40,7 @@ public class OauthHelper {
     static final String GRANT_TYPE = "grant_type";
     static final String CODE = "code";
     static final String SCOPE = "scope";
+    static final String SERVICE_ID = "service_id";
     private static final String FAIL_TO_SEND_REQUEST = "ERR10051";
     private static final String GET_TOKEN_ERROR = "ERR10052";
     private static final String ESTABLISH_CONNECTION_ERROR = "ERR10053";
@@ -418,8 +419,8 @@ public class OauthHelper {
      */
     private static Result<Jwt> getCCTokenRemotely(final Jwt jwt) {
         TokenRequest tokenRequest = new ClientCredentialsRequest();
-        //scopes at this point is not trusted because when request a new token, users can set the scopes themselves to identify what scopes they need to be included in jwt. but those scopes may not be registered in oauth server.
-        tokenRequest.setScope(new ArrayList() {{ addAll(jwt.getScopes()); }});
+        //scopes at this point is may not be set yet when issuing a new token.
+        tokenRequest.setScope(new ArrayList() {{ addAll(jwt.getScopes() == null ? jwt.getKey().getScopes() : jwt.getScopes()); }});
         Result<TokenResponse> result = OauthHelper.getTokenResult(tokenRequest);
         if(result.isSuccess()) {
             TokenResponse tokenResponse = result.getResult();
@@ -427,7 +428,7 @@ public class OauthHelper {
             // the expiresIn is seconds and it is converted to millisecond in the future.
             jwt.setExpire(System.currentTimeMillis() + tokenResponse.getExpiresIn() * 1000);
             logger.info("Get client credentials token {} with expire_in {} seconds", jwt, tokenResponse.getExpiresIn());
-            //the scope needs to update from the oauth server because when initial request a new token, the scope may be not accure
+            //set the scope for future usage.
             jwt.setScopes(tokenResponse.getScope());
             return Success.of(jwt);
         } else {
