@@ -1,16 +1,17 @@
 package com.networknt.client.oauth;
 
+import com.networknt.client.oauth.cache.ICacheStrategy;
+import com.networknt.client.oauth.cache.LongestExpireCacheStrategy;
 import com.networknt.monad.Result;
 import io.undertow.client.ClientRequest;
 import io.undertow.util.HeaderValues;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class TokenManager {
 
     private static TokenManager INSTANCE;
-    private Map<Integer, Jwt> cachedJwts = new HashMap<>();
+    private static int CAPACITY = 200;
+
+    private ICacheStrategy cacheStrategy = new LongestExpireCacheStrategy(CAPACITY);
 
     private TokenManager() {}
 
@@ -37,10 +38,10 @@ public class TokenManager {
      * @return a Jwt if successful, otherwise return error Status.
      */
     public Result<Jwt> getJwt(Jwt.Key key) {
-        Jwt cachedJwt = cachedJwts.get(key);
-        Result<Jwt> result = cachedJwt == null ? OauthHelper.populateCCToken(new Jwt(key)) : OauthHelper.populateCCToken(cachedJwt);
+        Jwt cachedJwt = cacheStrategy.getCachedJwt(key);
+        Result<Jwt> result = cachedJwt == null ? OauthHelper.populateCCToken(new Jwt()) : OauthHelper.populateCCToken(cachedJwt);
         if (result.isSuccess()) {
-            cachedJwts.put(key.hashCode(), result.getResult());
+            cacheStrategy.cacheJwt(key, result.getResult());
         }
         return result;
     }
