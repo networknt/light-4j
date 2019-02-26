@@ -58,8 +58,6 @@ public class ConfigInjection {
     private static String[] trueArray = {"y", "Y", "yes", "Yes", "YES", "true", "True", "TRUE", "on", "On", "ON"};
     private static String[] falseArray = {"n", "N", "no", "No", "NO", "false", "False", "FALSE", "off", "Off", "OFF"};
 
-    private static Boolean fileContainsKey = false;
-
     // Method used to generate the values from environment variables or "values.yaml"
     public static Object getInjectValue(String string) {
         Matcher m = pattern.matcher(string);
@@ -68,12 +66,8 @@ public class ConfigInjection {
         while (m.find()) {
             // Get parsing result
             Object value = getValue(m.group(1));
-            // Throw exception when no parsing result found
-            if (value == null && !fileContainsKey) {
-                throw new ConfigException(
-                        "\"${" + m.group(1) + "}\" appears in config file cannot be expanded");
-                // Return directly when the parsing result don't need to be casted to String
-            } else if (!(value instanceof String)) {
+            // Return directly when the parsing result don't need to be casted to String
+            if (!(value instanceof String)) {
                 return value;
             }
             m.appendReplacement(sb, (String) value);
@@ -98,8 +92,6 @@ public class ConfigInjection {
             // Use key of injectionPattern to get value from both environment variables and "values.yaml"
             Object envValue = typeCast(System.getenv(injectionPattern.getKey()));
             Object fileValue = (valueMap != null) ? valueMap.get(injectionPattern.getKey()) : null;
-            // If values.yml contains key, the corresponding value can be empty and will not cause ConfigException
-            fileContainsKey = (valueMap != null) ? valueMap.containsKey(injectionPattern.getKey()) : false;
             // Return different value from different sources based on injection order defined before
             if (INJECTION_ORDER_CODE.equals("2") && envValue != null || (INJECTION_ORDER_CODE.equals("1") && fileValue == null)) {
                 value = envValue;
@@ -116,6 +108,10 @@ public class ConfigInjection {
                         throw new ConfigException(error_text);
                     }
                 }
+            }
+            // Throw exception when no parsing result found
+            if (value == null && valueMap != null && !valueMap.containsKey(injectionPattern.getKey())) {
+                throw new ConfigException("\"${" + content + "}\" appears in config file cannot be expanded");
             }
         }
         return value;
