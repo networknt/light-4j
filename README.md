@@ -4,7 +4,7 @@ A fast, lightweight and cloud-native microservices framework.
 [Documentation](https://www.networknt.com) |
 [Contribution Guide](CONTRIBUTING.md) |
 
-[![Build Status](https://travis-ci.org/networknt/light-4j.svg?branch=master)](https://travis-ci.org/networknt/light-4j)
+[![Build Status](https://travis-ci.org/networknt/light-4j.svg?branch=master)](https://travis-ci.org/networknt/light-4j) [![codecov.io](https://codecov.io/github/networknt/light-4j/coverage.svg?branch=master)](https://codecov.io/github/networknt/light-4j?branch=master)
 
 ## Why called Light 4J
 
