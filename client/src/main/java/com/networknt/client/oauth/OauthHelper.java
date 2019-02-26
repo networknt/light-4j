@@ -441,7 +441,7 @@ public class OauthHelper {
     private static Result<Jwt> getCCTokenRemotely(final Jwt jwt) {
         TokenRequest tokenRequest = new ClientCredentialsRequest();
         //scopes at this point is may not be set yet when issuing a new token.
-        tokenRequest.setScope(new ArrayList<String>() {{ addAll(jwt.getScopes() == null ? jwt.getKey().getScopes() : jwt.getScopes()); }});
+        setScope(tokenRequest, jwt);
         Result<TokenResponse> result = OauthHelper.getTokenResult(tokenRequest);
         if(result.isSuccess()) {
             TokenResponse tokenResponse = result.getResult();
@@ -455,6 +455,23 @@ public class OauthHelper {
         } else {
             logger.info("Get client credentials token fail with status: {}", result.getError().toString());
             return Failure.of(result.getError());
+        }
+    }
+
+    /**
+     * if scopes in jwt itself has value, use this scope
+     * else if scopes in jwt.getKey() has value, use this scope
+     * otherwise remains the default scope value which already inside tokenRequest when create ClientCredentialsRequest;
+     * @param tokenRequest
+     * @param jwt
+     */
+    private static void setScope(TokenRequest tokenRequest, Jwt jwt) {
+        if(!jwt.getScopes().isEmpty()) {
+            tokenRequest.setScope(new ArrayList<String>() {{ addAll(jwt.getScopes()); }});
+        } else {
+            if(jwt.getKey() != null && !jwt.getKey().getScopes().isEmpty()) {
+                tokenRequest.setScope(new ArrayList<String>() {{ addAll(jwt.getKey().getScopes()); }});
+            }
         }
     }
 

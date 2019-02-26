@@ -45,7 +45,7 @@ public class TokenManager {
      */
     public Result<Jwt> getJwt(Jwt.Key key) {
         Jwt cachedJwt = cacheStrategy.getCachedJwt(key);
-        Result<Jwt> result = cachedJwt == null ? OauthHelper.populateCCToken(new Jwt()) : OauthHelper.populateCCToken(cachedJwt);
+        Result<Jwt> result = cachedJwt == null ? OauthHelper.populateCCToken(new Jwt(key)) : OauthHelper.populateCCToken(cachedJwt);
         if (result.isSuccess()) {
             cacheStrategy.cacheJwt(key, result.getResult());
         }

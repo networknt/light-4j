@@ -55,6 +55,7 @@ public class ClientCredentialsRequest extends TokenRequest {
                         setClientId((String)ccConfig.get(CLIENT_ID));
                         setClientSecret((String)secret.get(SecretConstants.CLIENT_CREDENTIALS_CLIENT_SECRET));
                         setUri((String)ccConfig.get(URI));
+                        //set default scope from config.
                         setScope((List<String>)ccConfig.get(SCOPE));
                     }
                 }
