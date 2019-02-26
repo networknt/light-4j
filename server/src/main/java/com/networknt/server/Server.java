@@ -546,18 +546,13 @@ public class Server {
             return;
         }
         Map<String, Object> statusConfig = Config.getInstance().getJsonMapConfig(STATUS_CONFIG_NAME[0]);
-        List<String> repeatStatusList = new ArrayList<>();
-        for (String key : appStatusConfig.keySet()) {
-            if (statusConfig.containsKey(key)) {
-                repeatStatusList.add(key);
-                logger.error("The status code: " + key + " has already in use by light-4j and cannot be overwritten," +
-                        " please change to another status code in app-status.yml if necessary.");
-            } else if (repeatStatusList.isEmpty()) {
-                statusConfig.put(key, appStatusConfig.get(key));
-            }
+        Set<String> duplicatedStatusSet = statusConfig.keySet();
+        duplicatedStatusSet.retainAll(appStatusConfig.keySet());
+        if (!duplicatedStatusSet.isEmpty()) {
+            logger.error("The status code(s): " + duplicatedStatusSet.toString() + " is already in use by light-4j and cannot be overwritten," +
+                    " please change to another status code in app-status.yml if necessary.");
+            throw new RuntimeException("The status code(s): " + duplicatedStatusSet.toString() + " in status.yml and app-status.yml are duplicated.");
         }
-        if (!repeatStatusList.isEmpty()) {
-            throw new RuntimeException("The status codes: " + repeatStatusList.toString() + " in status.yml and app-status.yml are duplicated.");
-        }
+        statusConfig.putAll(appStatusConfig);
     }
 }
