@@ -99,8 +99,7 @@ public class Http2Client {
     static Map<String, Object> tokenConfig;
     static Map<String, Object> secretConfig;
 
-    // Cached jwt token for this client.
-    private final Jwt cachedJwt = new Jwt();
+    // TokenManager is to manage cached jwt tokens for this client.
     private TokenManager tokenManager = TokenManager.getInstance();
 
     static {

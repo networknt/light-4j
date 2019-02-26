@@ -13,10 +13,14 @@ import java.util.Map;
 
 import static com.networknt.client.oauth.ClientRequestComposerProvider.ClientRequestComposers.CLIENT_CREDENTIAL_REQUEST_COMPOSER;
 import static com.networknt.client.oauth.ClientRequestComposerProvider.ClientRequestComposers.SAML_BEARER_REQUEST_COMPOSER;
-import static com.networknt.client.oauth.OauthHelper.CODE;
-import static com.networknt.client.oauth.OauthHelper.GRANT_TYPE;
-import static com.networknt.client.oauth.TokenRequest.*;
 
+/**
+ * This class is a singleton to provide registered IClientRequestComposable composers.
+ * The composer is to compose requests to get {ClientCredential token, SAML token}.
+ * This provider can be extended to support other type tokens.
+ * If not register any IClientRequestComposable composer, it will init default composers(DefaultClientCredentialRequestComposer, DefaultSAMLBearerRequestComposer).
+ * To see composer please check {@link com.networknt.client.oauth.IClientRequestComposable}
+ */
 public class ClientRequestComposerProvider {
     public enum ClientRequestComposers { CLIENT_CREDENTIAL_REQUEST_COMPOSER, SAML_BEARER_REQUEST_COMPOSER }
     private static final ClientRequestComposerProvider INSTANCE = new ClientRequestComposerProvider();
@@ -29,6 +33,11 @@ public class ClientRequestComposerProvider {
         return INSTANCE;
     }
 
+    /**
+     * get IClientRequestComposable based on ClientRequestComposers composer name
+     * @param composerName
+     * @return IClientRequestComposable composer
+     */
     public IClientRequestComposable getComposer(ClientRequestComposers composerName) {
         IClientRequestComposable composer = composersMap.get(composerName);
         if(composer == null) {
@@ -48,10 +57,19 @@ public class ClientRequestComposerProvider {
         }
     }
 
+    /**
+     * register the composer in this provider with Enum ClientRequestComposers name.
+     * after registration, you will get what you've registered with the same Enum ClientRequestComposers name.
+     * @param composerName  ClientRequestComposers composer name
+     * @param composer IClientRequestComposable composer
+     */
     public void registerComposer(ClientRequestComposers composerName, IClientRequestComposable composer) {
         composersMap.put(composerName, composer);
     }
 
+    /**
+     * the default composer to compose a ClientRequest with the given TokenRequest to get SAML token.
+     */
     private static class DefaultSAMLBearerRequestComposer implements IClientRequestComposable {
 
         @Override
@@ -80,6 +98,9 @@ public class ClientRequestComposerProvider {
         }
     }
 
+    /**
+     * the default composer to compose a ClientRequest with the given TokenRequest to get ClientCredential token.
+     */
     private static class DefaultClientCredentialRequestComposer implements IClientRequestComposable {
 
         @Override
@@ -102,7 +123,4 @@ public class ClientRequestComposerProvider {
             return "";
         }
     }
-
-
-
 }

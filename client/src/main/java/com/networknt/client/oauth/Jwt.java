@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Network New Technologies Inc.
+ * Copyright (c) 2019 Network New Technologies Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * You may not use this file except in compliance with the License.
@@ -146,6 +146,10 @@ public class Jwt {
         return key;
     }
 
+    /**
+     * a inner model tight to Jwt, this key is to represent to a Jwt for caching or other usage
+     * for now it's only identified by scopes and serviceId.
+     */
     public static class Key {
         private Set<String> scopes;
         private String serviceId;

@@ -6,9 +6,19 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.PriorityQueue;
 
+/**
+ * This class is to cache Jwts with "LongestExpire" strategy, which means:
+ * When the cache pool meets the capacity and a new jwt with provided key needs to be cached:
+ * the token with the longest expiry time will be the last to be replaced,
+ * the token with the least expiry time will be the first to be replace.
+ *
+ */
 public class LongestExpireCacheStrategy implements ICacheStrategy {
+    //to store the priorities by expiry time.
     private final PriorityQueue<LongestExpireCacheKey> expiryQueue;
+    //to store the actual Jwt based on Jwt.Key.
     private final HashMap<Jwt.Key, Jwt> cachedJwts;
+    //the capacity of the cache pool.
     private int capacity;
     public LongestExpireCacheStrategy(int capacity) {
         this.capacity = capacity;
@@ -25,6 +35,13 @@ public class LongestExpireCacheStrategy implements ICacheStrategy {
         cachedJwts = new HashMap<>();
     }
 
+    /**
+     * This method is to cache a jwt LongestExpireCacheStrategy based on a given Jwt.Key and a Jwt.
+     * Every time it updates the expiry time of a jwt, and shift it up to a proper position.
+     * Since the PriorityQueue is implemented by heap, the average O(n) should be O(log n).
+     * @param cachedKey Jwt.Key the key to be used to cache
+     * @param jwt Jwt the jwt to be cached
+     */
     @Override
     public synchronized void cacheJwt(Jwt.Key cachedKey, Jwt jwt) {
         //update the expire time
@@ -45,6 +62,11 @@ public class LongestExpireCacheStrategy implements ICacheStrategy {
         cachedJwts.put(cachedKey, jwt);
     }
 
+    /**
+     * get Jwt from cache pool based on provided Jwt.Key key
+     * @param key Jwt.Key
+     * @return Jwt jwt
+     */
     @Override
     public Jwt getCachedJwt(Jwt.Key key) {
         return cachedJwts.get(key);

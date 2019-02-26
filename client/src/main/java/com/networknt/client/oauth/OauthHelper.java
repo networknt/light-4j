@@ -91,6 +91,7 @@ public class OauthHelper {
             logger.error("cannot establish connection: {}", e.getStackTrace());
             return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR, tokenRequest.getServerUrl()));
         }
+
         try {
             IClientRequestComposable requestComposer = ClientRequestComposerProvider.getInstance().getComposer(ClientRequestComposerProvider.ClientRequestComposers.CLIENT_CREDENTIAL_REQUEST_COMPOSER);
 
@@ -151,6 +152,11 @@ public class OauthHelper {
         return reference.get() == null ? Failure.of(new Status(GET_TOKEN_TIMEOUT)) : reference.get();
     }
 
+    /**
+     * This private class is to encapsulate the action to send request, and handling response,
+     * because of the way of sending request to get token and handle exceptions are the same for both JWT and SAML.
+     * The only difference is how to compose the request based on TokenRequest model.
+     */
     private static class TokenRequestAction implements Runnable{
         private ClientConnection connection;
         private AtomicReference<Result<TokenResponse>> reference;
@@ -268,6 +274,23 @@ public class OauthHelper {
         return reference.get().getAttachment(Http2Client.RESPONSE_BODY);
     }
 
+    public static String getBasicAuthHeader(String clientId, String clientSecret) {
+        return BASIC + " " + encodeCredentials(clientId, clientSecret);
+    }
+
+    public static String encodeCredentials(String clientId, String clientSecret) {
+        String cred;
+        if(clientSecret != null) {
+            cred = clientId + ":" + clientSecret;
+        } else {
+            cred = clientId;
+        }
+        String encodedValue;
+        byte[] encodedBytes = Base64.encodeBase64(cred.getBytes(UTF_8));
+        encodedValue = new String(encodedBytes, UTF_8);
+        return encodedValue;
+    }
+
     public static String getEncodedString(TokenRequest request) throws UnsupportedEncodingException {
         Map<String, String> params = new HashMap<>();
         params.put(GRANT_TYPE, request.getGrantType());
@@ -290,23 +313,6 @@ public class OauthHelper {
             params.put(SCOPE, String.join(" ", request.getScope()));
         }
         return Http2Client.getFormDataString(params);
-    }
-
-    public static String getBasicAuthHeader(String clientId, String clientSecret) {
-        return BASIC + " " + encodeCredentials(clientId, clientSecret);
-    }
-
-    public static String encodeCredentials(String clientId, String clientSecret) {
-        String cred;
-        if(clientSecret != null) {
-            cred = clientId + ":" + clientSecret;
-        } else {
-            cred = clientId;
-        }
-        String encodedValue;
-        byte[] encodedBytes = Base64.encodeBase64(cred.getBytes(UTF_8));
-        encodedValue = new String(encodedBytes, UTF_8);
-        return encodedValue;
     }
 
     private static Result<TokenResponse> handleResponse(ContentType contentType, String responseBody) {
@@ -358,8 +364,7 @@ public class OauthHelper {
         logger.trace("isInRenewWindow = " + isInRenewWindow);
         //if not in renew window, return the current jwt.
         if(!isInRenewWindow) { return Success.of(jwt); }
-        //block other getting token requests, only once at a time.
-        //Once one request get the token, other requests don't need to get from auth server anymore.
+        //the same jwt shouldn't be renew at the same time. different jwt shouldn't affect each other's renew activity.
         synchronized (jwt) {
             //if token expired, try to renew synchronously
             if(jwt.getExpire() <= System.currentTimeMillis()) {
@@ -388,7 +393,7 @@ public class OauthHelper {
         //the token can be renew when it's not on renewing or current time is lager than retrying interval
         if (!jwt.isRenewing() || System.currentTimeMillis() > jwt.getExpiredRetryTimeout()) {
             jwt.setRenewing(true);
-            jwt.setEarlyRetryTimeout(System.currentTimeMillis() + jwt.getExpiredRefreshRetryDelay());
+            jwt.setEarlyRetryTimeout(System.currentTimeMillis() + Jwt.getExpiredRefreshRetryDelay());
             Result<Jwt> result = getCCTokenRemotely(jwt);
             //set renewing flag to false no mater fail or success
             jwt.setRenewing(false);
@@ -436,7 +441,7 @@ public class OauthHelper {
     private static Result<Jwt> getCCTokenRemotely(final Jwt jwt) {
         TokenRequest tokenRequest = new ClientCredentialsRequest();
         //scopes at this point is may not be set yet when issuing a new token.
-        tokenRequest.setScope(new ArrayList() {{ addAll(jwt.getScopes() == null ? jwt.getKey().getScopes() : jwt.getScopes()); }});
+        tokenRequest.setScope(new ArrayList<String>() {{ addAll(jwt.getScopes() == null ? jwt.getKey().getScopes() : jwt.getScopes()); }});
         Result<TokenResponse> result = OauthHelper.getTokenResult(tokenRequest);
         if(result.isSuccess()) {
             TokenResponse tokenResponse = result.getResult();
@@ -512,5 +517,3 @@ public class OauthHelper {
         return escapedXML.toString();
     }
 }
-
-

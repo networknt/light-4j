@@ -6,6 +6,11 @@ import com.networknt.monad.Result;
 import io.undertow.client.ClientRequest;
 import io.undertow.util.HeaderValues;
 
+/**
+ * This class is a singleton to manage ALL tokens.
+ * This TokenManager provides a simple method to consumer to get a token.
+ * It manages caches based on different cache strategies underneath.
+ */
 public class TokenManager {
 
     private static TokenManager INSTANCE;
@@ -34,6 +39,7 @@ public class TokenManager {
      *      - if the token is not almost expired, just use this token.
      * 2.if a token is not cached with provided key
      *      - get a new jwt from oauth server
+     * 3.after getting the valid token, cache that token no matter if it's already cached or not. The strategy should determine how to cache it.
      * @param key either based on scope or service id
      * @return a Jwt if successful, otherwise return error Status.
      */
@@ -47,7 +53,9 @@ public class TokenManager {
     }
 
     /**
-     * get a Jwt with a provided clientRequest, if the user declared scope in header, it will get jwt based on scope
+     * get a Jwt with a provided clientRequest,
+     * it will get token based on Jwt.Key (either scope or service_id)
+     * if the user declared both scope and service_id in header, it will get jwt based on scope
      * @param clientRequest
      * @return
      */
