@@ -51,6 +51,7 @@ public class LongestExpireCacheStrategy implements ICacheStrategy {
             if(expiryQueue.contains(leCachKey)) {
                 expiryQueue.remove(leCachKey);
             } else {
+                cachedJwts.remove(expiryQueue.peek());
                 expiryQueue.poll();
             }
         } else {
