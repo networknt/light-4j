@@ -34,7 +34,7 @@ public class ClientRequestComposerProvider {
         if(composer == null) {
             initDefaultComposer(composerName);
         }
-        return composer;
+        return composersMap.get(composerName);
     }
 
     private void initDefaultComposer(ClientRequestComposers composerName) {
