@@ -64,10 +64,7 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipEntry;
@@ -87,6 +84,7 @@ public class Server {
     static final Logger logger = LoggerFactory.getLogger(Server.class);
     public static final String CONFIG_NAME = "server";
     public static final String CONFIG_SECRET = "secret";
+    public static final String[] STATUS_CONFIG_NAME = {"status", "app-status"};
 
     static final String DEFAULT_ENV = "test";
     static final String LIGHT_ENV = "light-env";
@@ -125,6 +123,8 @@ public class Server {
         try {
             // load config files from light-config-server if possible.
             loadConfig();
+            // merge status.yml and app-status.yml if app-status.yml is provided
+            mergeStatusConfig();
             start();
         } catch (RuntimeException e) {
             // Handle any exception encountered during server start-up
@@ -537,5 +537,22 @@ public class Server {
         } catch (IOException e) {
             logger.error("IOException", e);
         }
+    }
+
+    // method used to merge status.yml and app-status.yml
+    protected static void mergeStatusConfig() {
+        Map<String, Object> appStatusConfig = Config.getInstance().getJsonMapConfigNoCache(STATUS_CONFIG_NAME[1]);
+        if (appStatusConfig == null) {
+            return;
+        }
+        Map<String, Object> statusConfig = Config.getInstance().getJsonMapConfig(STATUS_CONFIG_NAME[0]);
+        Set<String> duplicatedStatusSet = statusConfig.keySet();
+        duplicatedStatusSet.retainAll(appStatusConfig.keySet());
+        if (!duplicatedStatusSet.isEmpty()) {
+            logger.error("The status code(s): " + duplicatedStatusSet.toString() + " is already in use by light-4j and cannot be overwritten," +
+                    " please change to another status code in app-status.yml if necessary.");
+            throw new RuntimeException("The status code(s): " + duplicatedStatusSet.toString() + " in status.yml and app-status.yml are duplicated.");
+        }
+        statusConfig.putAll(appStatusConfig);
     }
 }
