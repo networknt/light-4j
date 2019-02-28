@@ -32,7 +32,6 @@ import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.representer.Representer;
 import org.yaml.snakeyaml.resolver.Resolver;
@@ -126,7 +125,7 @@ public abstract class Config {
         	
             final Resolver resolver = new Resolver();
             resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
-        	yaml = new Yaml(new DecryptConstructor(), new Representer(), new DumperOptions(), new LoaderOptions(), resolver);
+        	yaml = new Yaml(new DecryptConstructor(), new Representer(), new DumperOptions(), resolver);
         }
 
         private static Config initialize() {

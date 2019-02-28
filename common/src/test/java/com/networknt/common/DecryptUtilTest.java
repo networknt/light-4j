@@ -26,7 +26,7 @@ public class DecryptUtilTest {
     @Test
     public void testDecryptMap() {
         Map<String, Object> secretMap = Config.getInstance().getJsonMapConfig("secret");
-       // DecryptUtil.decryptMap(secretMap);
+        DecryptUtil.decryptMap(secretMap);
         Assert.assertEquals("password", secretMap.get("serverKeystorePass"));
     }
 }
