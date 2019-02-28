@@ -13,7 +13,7 @@ import io.undertow.util.HeaderValues;
  */
 public class TokenManager {
 
-    private static TokenManager INSTANCE;
+    private static volatile TokenManager INSTANCE;
     private static int CAPACITY = 200;
 
     private ICacheStrategy cacheStrategy = new LongestExpireCacheStrategy(CAPACITY);

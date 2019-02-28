@@ -51,7 +51,7 @@ public class LongestExpireCacheStrategy implements ICacheStrategy {
             if(expiryQueue.contains(leCachKey)) {
                 expiryQueue.remove(leCachKey);
             } else {
-                cachedJwts.remove(expiryQueue.peek());
+                cachedJwts.remove(expiryQueue.peek().getCacheKey());
                 expiryQueue.poll();
             }
         } else {
@@ -97,6 +97,10 @@ public class LongestExpireCacheStrategy implements ICacheStrategy {
 
         void setExpiry(long expiry) {
             this.expiry = expiry;
+        }
+
+        public Jwt.Key getCacheKey() {
+            return cacheKey;
         }
     }
 }
