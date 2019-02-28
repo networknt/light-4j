@@ -1,5 +1,8 @@
 package com.networknt.config;
 
+import java.util.List;
+import java.util.Map;
+
 public class SecretConfig {
 	private String serverKeystorePass;
 	private String serverKeyPass;
@@ -11,6 +14,8 @@ public class SecretConfig {
 	private String clientCredentialsClientSecret;
 	private String keyClientSecret;
 	private String emailPassword;
+	private Map<String, String> testMap;
+	private List<String> testArray;
 	
 	public String getServerKeystorePass() {
 		return serverKeystorePass;
@@ -71,5 +76,17 @@ public class SecretConfig {
 	}
 	public void setEmailPassword(String emailPassword) {
 		this.emailPassword = emailPassword;
+	}
+	public Map<String, String> getTestMap() {
+		return testMap;
+	}
+	public void setTestMap(Map<String, String> testMap) {
+		this.testMap = testMap;
+	}
+	public List<String> getTestArray() {
+		return testArray;
+	}
+	public void setTestArray(List<String> testArray) {
+		this.testArray = testArray;
 	}
 }
