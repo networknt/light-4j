@@ -16,25 +16,11 @@
 
 package com.networknt.client.oauth;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
-import com.networknt.client.Http2Client;
-import com.networknt.config.Config;
-import com.networknt.exception.ClientException;
-import com.networknt.httpstring.ContentType;
-import com.networknt.monad.Failure;
-import com.networknt.monad.Result;
-import com.networknt.monad.Success;
-import com.networknt.status.Status;
-import io.undertow.UndertowOptions;
-import io.undertow.client.*;
-import io.undertow.server.HttpServerExchange;
-import io.undertow.util.*;
-import org.apache.commons.codec.binary.Base64;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xnio.IoUtils;
-import org.xnio.OptionMap;
+import static com.networknt.client.oauth.TokenRequest.CSRF;
+import static com.networknt.client.oauth.TokenRequest.REDIRECT_URI;
+import static com.networknt.client.oauth.TokenRequest.REFRESH_TOKEN;
+import static com.networknt.client.oauth.TokenRequest.SCOPE;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -47,8 +33,35 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.networknt.client.oauth.TokenRequest.*;
-import static java.nio.charset.StandardCharsets.UTF_8;
+import org.apache.commons.codec.binary.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xnio.IoUtils;
+import org.xnio.OptionMap;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
+import com.networknt.client.Http2Client;
+import com.networknt.config.Config;
+import com.networknt.exception.ClientException;
+import com.networknt.httpstring.ContentType;
+import com.networknt.monad.Failure;
+import com.networknt.monad.Result;
+import com.networknt.monad.Success;
+import com.networknt.status.Status;
+
+import io.undertow.UndertowOptions;
+import io.undertow.client.ClientCallback;
+import io.undertow.client.ClientConnection;
+import io.undertow.client.ClientExchange;
+import io.undertow.client.ClientRequest;
+import io.undertow.client.ClientResponse;
+import io.undertow.server.HttpServerExchange;
+import io.undertow.util.HeaderValues;
+import io.undertow.util.Headers;
+import io.undertow.util.Methods;
+import io.undertow.util.StringReadChannelListener;
+import io.undertow.util.StringWriteChannelListener;
 
 public class OauthHelper {
     static final String BASIC = "Basic";

@@ -16,9 +16,9 @@
 
 package com.networknt.client.oauth;
 
-import com.networknt.config.Config;
-
 import java.util.Map;
+
+import com.networknt.config.Config;
 
 /**
  * a model class represents a JWT mostly for caching usage so that we don't need to decrypt jwt string to get info.
