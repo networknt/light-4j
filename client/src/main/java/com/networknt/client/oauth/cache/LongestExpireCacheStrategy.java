@@ -3,8 +3,8 @@ package com.networknt.client.oauth.cache;
 import com.networknt.client.oauth.Jwt;
 
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.PriorityQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.PriorityBlockingQueue;
 
 /**
  * This class is to cache Jwts with "LongestExpire" strategy, which means:
@@ -15,9 +15,9 @@ import java.util.PriorityQueue;
  */
 public class LongestExpireCacheStrategy implements ICacheStrategy {
     //to store the priorities by expiry time.
-    private final PriorityQueue<LongestExpireCacheKey> expiryQueue;
+    private final PriorityBlockingQueue<LongestExpireCacheKey> expiryQueue;
     //to store the actual Jwt based on Jwt.Key.
-    private final HashMap<Jwt.Key, Jwt> cachedJwts;
+    private final ConcurrentHashMap<Jwt.Key, Jwt> cachedJwts;
     //the capacity of the cache pool.
     private int capacity;
     public LongestExpireCacheStrategy(int capacity) {
@@ -31,8 +31,8 @@ public class LongestExpireCacheStrategy implements ICacheStrategy {
                 return -1;
             }
         };
-        expiryQueue = new PriorityQueue(capacity, comparator);
-        cachedJwts = new HashMap<>();
+        expiryQueue = new PriorityBlockingQueue(capacity, comparator);
+        cachedJwts = new ConcurrentHashMap<>();
     }
 
     /**
