@@ -13,4 +13,5 @@ module com.networknt.server {
     requires undertow.core;
     requires slf4j.api;
     requires xnio.api;
+    requires json.path;
 }

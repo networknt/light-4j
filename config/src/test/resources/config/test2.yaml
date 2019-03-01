@@ -1,1 +1,7 @@
-value: "default config"
+value: default config
+value1: ${HOME:default}
+value2: ${ESCAPE:$}
+value3: ${TEST.string:default}
+value4: ${TEST.list:default}
+value5: ${TEST.map:default}
+value6: "${NO_ESCAPE: $abc}"

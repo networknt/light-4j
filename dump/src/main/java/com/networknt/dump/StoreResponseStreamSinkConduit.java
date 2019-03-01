@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2016 Network New Technologies Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.networknt.dump;
 
 import io.undertow.UndertowMessages;
@@ -56,7 +72,9 @@ public class StoreResponseStreamSinkConduit extends AbstractStreamSinkConduit<St
         for (int i = 0; i < len; ++i) {
             ByteBuffer buf = srcs[i + offs];
             int pos = starts[i];
-            while (rem > 0 && pos <= buf.position()) {
+            int limit = buf.limit();
+            //buf.position() could be later than buf.limit() due to after read the last byte, position will still move to next, but it's now larger than limit.
+            while (rem > 0 && pos <= buf.position() && pos < limit) {
                 outputStream.write(buf.get(pos));
                 pos++;
                 rem--;
@@ -72,10 +90,6 @@ public class StoreResponseStreamSinkConduit extends AbstractStreamSinkConduit<St
         //without changing ByteBuffer remaining, copy to outputStream
         for (int i = start; i < start + ret; ++i) {
             outputStream.write(src.get(i));
-        }
-        if (!src.hasRemaining()) {
-            exchange.putAttachment(RESPONSE, outputStream.toByteArray());
-            outputStream = null;
         }
         return ret;
     }
@@ -94,20 +108,21 @@ public class StoreResponseStreamSinkConduit extends AbstractStreamSinkConduit<St
         for (int i = 0; i < len; ++i) {
             ByteBuffer buf = srcs[i + offs];
             int pos = starts[i];
-            while (rem > 0 && pos <= buf.position()) {
+            int limit = buf.limit();
+            //buf.position() could be later than buf.limit() due to after read the last byte, position will still move to next, but it's now larger than limit.
+            while (rem > 0 && pos <= buf.position() && pos < limit) {
                 outputStream.write(buf.get(pos));
                 pos++;
                 rem--;
             }
-        }
-        if (toWrite == ret) {
-            exchange.putAttachment(RESPONSE, outputStream.toByteArray());
         }
         return ret;
     }
 
     @Override
     public void terminateWrites() throws IOException {
+        //after finish writes all through conduit, it will reach here, at this time, we put response info
+        exchange.putAttachment(RESPONSE, outputStream.toByteArray());
         outputStream = null;
         super.terminateWrites();
     }

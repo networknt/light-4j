@@ -47,6 +47,7 @@ import org.slf4j.MDC;
 import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 import org.xnio.Options;
+import org.xnio.SslClientAuthMode;
 
 import javax.net.ssl.*;
 import java.io.BufferedInputStream;
@@ -63,10 +64,7 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipEntry;
@@ -86,6 +84,7 @@ public class Server {
     static final Logger logger = LoggerFactory.getLogger(Server.class);
     public static final String CONFIG_NAME = "server";
     public static final String CONFIG_SECRET = "secret";
+    public static final String[] STATUS_CONFIG_NAME = {"status", "app-status"};
 
     static final String DEFAULT_ENV = "test";
     static final String LIGHT_ENV = "light-env";
@@ -124,13 +123,15 @@ public class Server {
         try {
             // load config files from light-config-server if possible.
             loadConfig();
+            // merge status.yml and app-status.yml if app-status.yml is provided
+            mergeStatusConfig();
             start();
         } catch (RuntimeException e) {
             // Handle any exception encountered during server start-up
             logger.error("Server is not operational! Failed with exception", e);
 
             // send a graceful system shutdown
-            System.exit(1);
+//            System.exit(1);
         }
     }
 
@@ -216,6 +217,10 @@ public class Server {
                 builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true);
             }
 
+            if (config.isEnableTwoWayTls()) {
+               builder.setSocketOption(Options.SSL_CLIENT_AUTH_MODE, SslClientAuthMode.REQUIRED);
+            }
+
             server = builder.setBufferSize(1024 * 16).setIoThreads(Runtime.getRuntime().availableProcessors() * 2)
                     // above seems slightly faster in some configurations
                     .setSocketOption(Options.BACKLOG, 10000)
@@ -227,10 +232,18 @@ public class Server {
 
             server.start();
             System.out.println("HOST IP " + System.getenv(STATUS_HOST_IP));
-            // application level service registry. only be used without docker container.
-            if (config.enableRegistry) {
-                // assuming that registry is defined in service.json, otherwise won't start
-                // server.
+        } catch (Exception e) {
+            System.out.println("Failed to bind to port " + port);
+            e.printStackTrace(System.out);
+            if (logger.isInfoEnabled())
+                logger.info("Failed to bind to port " + port);
+            throw new RuntimeException(e.getMessage());
+        }
+        // application level service registry. only be used without docker container.
+        if (config.enableRegistry) {
+            // assuming that registry is defined in service.json, otherwise won't start
+            // server.
+            try {
                 registry = SingletonServiceFactory.getBean(Registry.class);
                 if (registry == null)
                     throw new RuntimeException("Could not find registry instance in service map");
@@ -256,35 +269,35 @@ public class Server {
                 SwitcherUtil.setSwitcherValue(Constants.REGISTRY_HEARTBEAT_SWITCHER, true);
                 if (logger.isInfoEnabled())
                     logger.info("Registry heart beat switcher is on");
-
+                // handle the registration exception separately to eliminate confusion
+            } catch (Exception e) {
+                System.out.println("Failed to register service, the server stopped.");
+                if (logger.isInfoEnabled())
+                    logger.info("Failed to register service, the server stopped.");
+                throw new RuntimeException(e.getMessage());
             }
-
-            if (config.enableHttp) {
-                System.out.println("Http Server started on ip:" + config.getIp() + " Port:" + port);
-                if (logger.isInfoEnabled())
-                    logger.info("Http Server started on ip:" + config.getIp() + " Port:" + port);
-            } else {
-                System.out.println("Http port disabled.");
-                if (logger.isInfoEnabled())
-                    logger.info("Http port disabled.");
-            }
-            if (config.enableHttps) {
-                System.out.println("Https Server started on ip:" + config.getIp() + " Port:" + port);
-                if (logger.isInfoEnabled())
-                    logger.info("Https Server started on ip:" + config.getIp() + " Port:" + port);
-            } else {
-                System.out.println("Https port disabled.");
-                if (logger.isInfoEnabled())
-                    logger.info("Https port disabled.");
-            }
-
-            return true;
-        } catch (Exception e) {
-            System.out.println("Failed to bind to port " + port);
-            if (logger.isInfoEnabled())
-                logger.info("Failed to bind to port " + port);
-            return false;
         }
+
+        if (config.enableHttp) {
+            System.out.println("Http Server started on ip:" + config.getIp() + " Port:" + port);
+            if (logger.isInfoEnabled())
+                logger.info("Http Server started on ip:" + config.getIp() + " Port:" + port);
+        } else {
+            System.out.println("Http port disabled.");
+            if (logger.isInfoEnabled())
+                logger.info("Http port disabled.");
+        }
+        if (config.enableHttps) {
+            System.out.println("Https Server started on ip:" + config.getIp() + " Port:" + port);
+            if (logger.isInfoEnabled())
+                logger.info("Https Server started on ip:" + config.getIp() + " Port:" + port);
+        } else {
+            System.out.println("Https port disabled.");
+            if (logger.isInfoEnabled())
+                logger.info("Https port disabled.");
+        }
+
+        return true;
     }
 
     static public void stop() {
@@ -361,7 +374,7 @@ public class Server {
 
     private static TrustManager[] buildTrustManagers(final KeyStore trustStore) {
         TrustManager[] trustManagers = null;
-        if (trustStore == null) {
+        if (trustStore != null) {
             try {
                 TrustManagerFactory trustManagerFactory = TrustManagerFactory
                         .getInstance(KeyManagerFactory.getDefaultAlgorithm());
@@ -372,6 +385,7 @@ public class Server {
                 throw new RuntimeException("Unable to initialise TrustManager[]", e);
             }
         } else {
+            logger.warn("Unable to find server truststore while Mutual TLS is enabled. Falling back to trust all certs.");
             trustManagers = TRUST_ALL_CERTS;
         }
         return trustManagers;
@@ -523,5 +537,22 @@ public class Server {
         } catch (IOException e) {
             logger.error("IOException", e);
         }
+    }
+
+    // method used to merge status.yml and app-status.yml
+    protected static void mergeStatusConfig() {
+        Map<String, Object> appStatusConfig = Config.getInstance().getJsonMapConfigNoCache(STATUS_CONFIG_NAME[1]);
+        if (appStatusConfig == null) {
+            return;
+        }
+        Map<String, Object> statusConfig = Config.getInstance().getJsonMapConfig(STATUS_CONFIG_NAME[0]);
+        Set<String> duplicatedStatusSet = statusConfig.keySet();
+        duplicatedStatusSet.retainAll(appStatusConfig.keySet());
+        if (!duplicatedStatusSet.isEmpty()) {
+            logger.error("The status code(s): " + duplicatedStatusSet.toString() + " is already in use by light-4j and cannot be overwritten," +
+                    " please change to another status code in app-status.yml if necessary.");
+            throw new RuntimeException("The status code(s): " + duplicatedStatusSet.toString() + " in status.yml and app-status.yml are duplicated.");
+        }
+        statusConfig.putAll(appStatusConfig);
     }
 }

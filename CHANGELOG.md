@@ -1,5 +1,104 @@
 # Change Log
 
+## [1.5.30](https://github.com/networknt/light-4j/tree/1.5.30) (2019-02-21)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.29...1.5.30)
+
+**Implemented enhancements:**
+
+- support a list of config directories in Config module [\#383](https://github.com/networknt/light-4j/issues/383)
+- support absolute path for the config file in Config module [\#381](https://github.com/networknt/light-4j/issues/381)
+- Allow exclusion list of files which should not check/allow for environment variable setting [\#368](https://github.com/networknt/light-4j/issues/368)
+- Environment variable references in the light-4j yaml config files [\#321](https://github.com/networknt/light-4j/issues/321)
+- Read configurations from arbitrary directories [\#309](https://github.com/networknt/light-4j/issues/309)
+
+**Closed issues:**
+
+- Config Module - addressing gaps [\#371](https://github.com/networknt/light-4j/issues/371)
+- Validation of server identify in a CaaS environment [\#358](https://github.com/networknt/light-4j/issues/358)
+- cluster.ServiceToUrl hang sometime [\#303](https://github.com/networknt/light-4j/issues/303)
+
+**Merged pull requests:**
+
+- update basic-auth and some minor update in audit, balance [\#400](https://github.com/networknt/light-4j/pull/400) ([lanphan](https://github.com/lanphan))
+- Fixing backwards incompatible interface change in OauthHelper getToken and getTokenFromSaml [\#399](https://github.com/networknt/light-4j/pull/399) ([NicholasAzar](https://github.com/NicholasAzar))
+
+## [1.5.29](https://github.com/networknt/light-4j/tree/1.5.29) (2019-02-16)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.28...1.5.29)
+
+**Implemented enhancements:**
+
+- support flexible config directory in Config module [\#382](https://github.com/networknt/light-4j/issues/382)
+- Correlation module: add ability to control the generation of the CorrelationID [\#370](https://github.com/networknt/light-4j/issues/370)
+- Feat/\#41 exception handling [\#380](https://github.com/networknt/light-4j/pull/380) ([BalloonWen](https://github.com/BalloonWen))
+
+**Closed issues:**
+
+- Add a default config.yml to the light-4j/Config module [\#394](https://github.com/networknt/light-4j/issues/394)
+- output the stacktrace when server registration fails [\#384](https://github.com/networknt/light-4j/issues/384)
+- upgrade jsonpath to 2.4.0 and exclude json-smart [\#378](https://github.com/networknt/light-4j/issues/378)
+- TechEmpower benchmark [\#369](https://github.com/networknt/light-4j/issues/369)
+- Standardize repo line endings on LF [\#365](https://github.com/networknt/light-4j/issues/365)
+- Add a new constant string in http header for service url [\#362](https://github.com/networknt/light-4j/issues/362)
+- If handler path not implemented/wrong path , it will throw the 404 error code instead of 400. [\#360](https://github.com/networknt/light-4j/issues/360)
+- upgrade to undertow 2.0.16.Final [\#356](https://github.com/networknt/light-4j/issues/356)
+-  Config module build failing on windows environment [\#354](https://github.com/networknt/light-4j/issues/354)
+- Upgrade jackson version to 2.9.8 [\#347](https://github.com/networknt/light-4j/issues/347)
+- jdk11 release to maven central failed [\#344](https://github.com/networknt/light-4j/issues/344)
+- Performance Optimizations for Max Troughput [\#342](https://github.com/networknt/light-4j/issues/342)
+- GraalVM Native Image [\#341](https://github.com/networknt/light-4j/issues/341)
+- codegen-cli generated code does not compile - openapi-3 [\#330](https://github.com/networknt/light-4j/issues/330)
+- \[question\] - grpc adoption within light4j [\#161](https://github.com/networknt/light-4j/issues/161)
+- Warnings with Java 9 [\#103](https://github.com/networknt/light-4j/issues/103)
+
+**Merged pull requests:**
+
+- fix typo, simplify RoundRobinLoadBalanceTest, add license info [\#396](https://github.com/networknt/light-4j/pull/396) ([lanphan](https://github.com/lanphan))
+- Fixes \#394 add a default config.yml file [\#395](https://github.com/networknt/light-4j/pull/395) ([ddobrin](https://github.com/ddobrin))
+- detail unit test to check content of audit log [\#390](https://github.com/networknt/light-4j/pull/390) ([lanphan](https://github.com/lanphan))
+- Feat/\#383 list config directories [\#388](https://github.com/networknt/light-4j/pull/388) ([jiachen1120](https://github.com/jiachen1120))
+- Feat/\#381 support absolute path for config file [\#387](https://github.com/networknt/light-4j/pull/387) ([jiachen1120](https://github.com/jiachen1120))
+- Feat/\#309 read config from arbitrary directories [\#386](https://github.com/networknt/light-4j/pull/386) ([jiachen1120](https://github.com/jiachen1120))
+- fixes \#384 output the stacktrace when server registration fails [\#385](https://github.com/networknt/light-4j/pull/385) ([stevehu](https://github.com/stevehu))
+- fixes \#378 upgrade jsonpath to 2.4.0 and exclude json-smart [\#379](https://github.com/networknt/light-4j/pull/379) ([stevehu](https://github.com/stevehu))
+- Feat/\#41 exception handling [\#377](https://github.com/networknt/light-4j/pull/377) ([BalloonWen](https://github.com/BalloonWen))
+- Fix/config gaps [\#375](https://github.com/networknt/light-4j/pull/375) ([jiachen1120](https://github.com/jiachen1120))
+- Fix/error message when fail registration [\#374](https://github.com/networknt/light-4j/pull/374) ([jiachen1120](https://github.com/jiachen1120))
+- Allowed exclusion list of files which should not check/allow values injection [\#373](https://github.com/networknt/light-4j/pull/373) ([jiachen1120](https://github.com/jiachen1120))
+- Fixing mutual tls on the server side [\#372](https://github.com/networknt/light-4j/pull/372) ([NicholasAzar](https://github.com/NicholasAzar))
+- Fix/line endings LF [\#366](https://github.com/networknt/light-4j/pull/366) ([NicholasAzar](https://github.com/NicholasAzar))
+- -added an error message in status.yml for validating response content [\#364](https://github.com/networknt/light-4j/pull/364) ([BalloonWen](https://github.com/BalloonWen))
+- Fixes \#360 If handler path not implemented/wrong path , it will throw the 404 error code instead of 400. [\#361](https://github.com/networknt/light-4j/pull/361) ([sreenicibc](https://github.com/sreenicibc))
+- Validation of server identify in a CaaS environment \#358 [\#359](https://github.com/networknt/light-4j/pull/359) ([dz-1](https://github.com/dz-1))
+- fixes \#354 [\#355](https://github.com/networknt/light-4j/pull/355) ([chenyan71](https://github.com/chenyan71))
+
+## [1.5.28](https://github.com/networknt/light-4j/tree/1.5.28) (2019-01-13)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.27...1.5.28)
+
+**Fixed bugs:**
+
+- Config module failing if config file has a key which is not a String [\#353](https://github.com/networknt/light-4j/issues/353)
+
+## [1.5.27](https://github.com/networknt/light-4j/tree/1.5.27) (2019-01-12)
+[Full Changelog](https://github.com/networknt/light-4j/compare/2.0.0-BETA2...1.5.27)
+
+**Closed issues:**
+
+- resolve the syntax error in java doc for dump [\#352](https://github.com/networknt/light-4j/issues/352)
+- remove the check exception ConfigException [\#350](https://github.com/networknt/light-4j/issues/350)
+
+**Merged pull requests:**
+
+- \#321 Enhanced config injection to support injecting List and Map [\#349](https://github.com/networknt/light-4j/pull/349) ([jiachen1120](https://github.com/jiachen1120))
+- refactored dump handler, add mask feature to it [\#345](https://github.com/networknt/light-4j/pull/345) ([BalloonWen](https://github.com/BalloonWen))
+
+## [2.0.0-BETA2](https://github.com/networknt/light-4j/tree/2.0.0-BETA2) (2018-12-29)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.25...2.0.0-BETA2)
+
+**Closed issues:**
+
+- add several network related utilities [\#343](https://github.com/networknt/light-4j/issues/343)
+- move JsonMapper from taiji-blockchain to light-4j [\#340](https://github.com/networknt/light-4j/issues/340)
+
 ## [1.5.25](https://github.com/networknt/light-4j/tree/1.5.25) (2018-12-24)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.24...1.5.25)
 
@@ -446,8 +545,8 @@
 
 **Merged pull requests:**
 
-- Upgraded Undertow, Added Utility Interfaces for Header, path, query extraction [\#111](https://github.com/networknt/light-4j/pull/111) ([sachinwalia2k8](https://github.com/sachinwalia2k8))
-- Resolved \#1 Upgrading libraries and other changes [\#107](https://github.com/networknt/light-4j/pull/107) ([sachinwalia2k8](https://github.com/sachinwalia2k8))
+- Upgraded Undertow, Added Utility Interfaces for Header, path, query extraction [\#111](https://github.com/networknt/light-4j/pull/111) ([sachin-walia](https://github.com/sachin-walia))
+- Resolved \#1 Upgrading libraries and other changes [\#107](https://github.com/networknt/light-4j/pull/107) ([sachin-walia](https://github.com/sachin-walia))
 
 ## [1.4.6](https://github.com/networknt/light-4j/tree/1.4.6) (2017-09-22)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.4.5...1.4.6)

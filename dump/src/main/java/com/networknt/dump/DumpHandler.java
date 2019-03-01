@@ -23,29 +23,21 @@ import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
  * Handler that dumps request and response to a log based on the dump.json config
+ * This handler should be after Body Handler, otherwise body handler won't get info from inputstream.
  * <p>
  * Created by steve on 01/09/16.
  * To handle options in request, should name method dumpRequest[OPTION_NAME]
  */
 public class DumpHandler implements MiddlewareHandler {
-    public static final String CONFIG_NAME = "dump";
-    public static final String ENABLED = "enabled";
+    private static final String CONFIG_NAME = "dump";
 
-    private static final String INDENT_SIZE = "indentSize";
-    private static final int DEFAULT_INDENT_SIZE = 4;
-
-    private static final Logger logger = LoggerFactory.getLogger(DumpHandler.class);
-
-    private static Map<String, Object> config =
-            Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
+    private static DumpConfig config = (DumpConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, DumpConfig.class);
 
     private volatile HttpHandler next;
 
@@ -65,13 +57,12 @@ public class DumpHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        Object object = config.get(ENABLED);
-        return object != null && (Boolean) object;
+        return config.isEnabled();
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(DumpHandler.class.getName(), config, null);
+        ModuleRegistry.registerModule(DumpHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
     @Override
@@ -82,38 +73,23 @@ public class DumpHandler implements MiddlewareHandler {
         }
         if(isEnabled()) {
             Map<String, Object> result = new LinkedHashMap<>();
+            //create rootDumper which will do dumping.
+            RootDumper rootDumper = new RootDumper(config, exchange);
             //dump request info into result right away
-            RequestResponseDumper requestDumper = new RequestResponseDumper(config, exchange, IDumpable.HttpMessageType.REQUEST);
-            requestDumper.dump();
-            requestDumper.putResultTo(result);
+            rootDumper.dumpRequest(result);
             //only add response wrapper when response config is not set to "false"
-            if(DumpHelper.checkOptionNotFalse(config.get(DumpConstants.RESPONSE))) {
+            if(config.isResponseEnabled()) {
                 //set Conduit to the conduit chain to store response body
                 exchange.addResponseWrapper((factory, exchange12) -> new StoreResponseStreamSinkConduit(factory.create(), exchange12));
             }
             //when complete exchange, dump response info to result, and log the result.
             exchange.addExchangeCompleteListener((exchange1, nextListener) ->{
-                RequestResponseDumper responseDumper = new RequestResponseDumper(config, exchange, IDumpable.HttpMessageType.RESPONSE);
-                responseDumper.dump();
-                responseDumper.putResultTo(result);
-                DumpHelper.logResult(result, getIndentSize(), checkIfUseJson());
+                rootDumper.dumpResponse(result);
+                //log the result
+                DumpHelper.logResult(result, config);
                 nextListener.proceed();
             });
         }
         Handler.next(exchange, next);
-    }
-
-    private int getIndentSize() {
-        Object indentSize = config.get(INDENT_SIZE);
-        if(indentSize instanceof Integer) {
-            return (int)config.get(INDENT_SIZE);
-        } else {
-            return DEFAULT_INDENT_SIZE;
-        }
-    }
-
-    private boolean checkIfUseJson() {
-        Object useJson = config.get(DumpConstants.USE_JSON);
-        return useJson instanceof Boolean && (Boolean) useJson;
     }
 }

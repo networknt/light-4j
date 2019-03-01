@@ -1,4 +1,5 @@
 module com.networknt.config {
+
     requires com.fasterxml.jackson.annotation;
     requires com.fasterxml.jackson.core;
     requires com.fasterxml.jackson.databind;
@@ -7,5 +8,6 @@ module com.networknt.config {
     requires slf4j.api;
     requires snakeyaml;
 
+    uses com.networknt.config.Config;
     exports com.networknt.config;
 }

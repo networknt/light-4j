@@ -20,12 +20,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.mask.Mask;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
@@ -68,6 +70,7 @@ import java.util.function.Consumer;
  * Created by steve on 17/09/16.
  */
 public class AuditHandler implements MiddlewareHandler {
+    static final Logger logger = LoggerFactory.getLogger(AuditHandler.class);
     public static final String CONFIG_NAME = "audit";
 
     public static final String ENABLED = "enabled";
@@ -78,6 +81,8 @@ public class AuditHandler implements MiddlewareHandler {
     static final String TIMESTAMP = "timestamp";
     static final String AUDIT_ON_ERROR = "auditOnError";
     static final String IS_LOG_LEVEL_ERROR = "logLevelIsError";
+    static final String IS_MASK_ENABLED = "mask";
+    static final String MASK_KEY = "audit";
 
     public static final Map<String, Object> config;
     private static final List<String> headerList;
@@ -86,6 +91,7 @@ public class AuditHandler implements MiddlewareHandler {
     private static boolean statusCode = false;
     private static boolean responseTime = false;
     private static boolean auditOnError = false;
+    private static boolean isMaskEnabled = false;
 
     // A customized logger appender defined in default logback.xml
     static Consumer<String> auditFunc = LoggerFactory.getLogger(Constants.AUDIT_LOGGER)::info;
@@ -119,11 +125,14 @@ public class AuditHandler implements MiddlewareHandler {
         auditFunc = (object != null && (Boolean) object) ?
             LoggerFactory.getLogger(Constants.AUDIT_LOGGER)::error : LoggerFactory.getLogger(Constants.AUDIT_LOGGER)::info;
 
+        // use mask flag
+        object = config.get(IS_MASK_ENABLED);
+        if(object != null && (Boolean) object) {
+            isMaskEnabled = true;
+        }
     }
 
-    public AuditHandler() {
-
-    }
+    public AuditHandler() { if(logger.isInfoEnabled()) logger.info("AuditHandler is loaded."); }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
@@ -135,14 +144,24 @@ public class AuditHandler implements MiddlewareHandler {
         if(auditInfo != null) {
             if(auditList != null && auditList.size() > 0) {
                 for(String name: auditList) {
-                    auditMap.put(name, auditInfo.get(name));
+                    Object value = auditInfo.get(name);
+                    if(isMaskEnabled && value instanceof String) {
+                        auditMap.put(name, Mask.maskRegex((String) value, MASK_KEY, name));
+                    } else {
+                        auditMap.put(name, value);
+                    }
                 }
             }
         }
         // dump headers field according to config
         if(headerList != null && headerList.size() > 0) {
             for(String name: headerList) {
-                auditMap.put(name, exchange.getRequestHeaders().getFirst(name));
+                String value = exchange.getRequestHeaders().getFirst(name);
+                if (isMaskEnabled) {
+                    auditMap.put(name, Mask.maskRegex(value, "requestHeader", name));
+                } else {
+                    auditMap.put(name, value);
+                }
             }
         }
         if(statusCode || responseTime) {

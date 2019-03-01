@@ -16,8 +16,8 @@
   -->
 
 <configuration>
-    TODO create logger for audit only.
-    http://stackoverflow.com/questions/2488558/logback-to-log-different-messages-to-two-files
+    <!-- create logger for audit separately.
+        http://stackoverflow.com/questions/2488558/logback-to-log-different-messages-to-two-files -->
     <turboFilter class="ch.qos.logback.classic.turbo.MarkerFilter">
         <Marker>PROFILER</Marker>
         <!--<OnMatch>DENY</OnMatch>-->

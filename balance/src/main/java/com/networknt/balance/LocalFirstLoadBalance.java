@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2016 Network New Technologies Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.networknt.balance;
 
 import com.networknt.registry.URL;
@@ -14,8 +30,8 @@ import java.util.List;
  * Local first load balance give local service high priority than remote services.
  * If there is no local service available, then it will adapt round robin strategy.
  *
- * With all the services in the list of urls, find local services with IP, Chances are
- * we have multiple local service, then round robin will be used in this case. If
+ * With all the services in the list of urls, find local services with IP. Chances are
+ * we have multiple local services, then round robin will be used in this case. If
  * there is no local service, find the first remote service according to round robin.
  *
  * Created by dan on 2016-12-29
@@ -30,6 +46,10 @@ public class LocalFirstLoadBalance extends RoundRobinLoadBalance {
         InetAddress inetAddress = Util.getInetAddress();
         // get ip address for this host.
         ip = inetAddress.getHostAddress();
+    }
+
+    public LocalFirstLoadBalance() {
+        if(logger.isInfoEnabled()) logger.info("A LocalFirstLoadBalance instance is started");
     }
 
     /**

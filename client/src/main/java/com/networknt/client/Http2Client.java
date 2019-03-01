@@ -1,45 +1,91 @@
+/*
+ * Copyright (c) 2016 Network New Technologies Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.networknt.client;
 
-import com.networknt.client.oauth.ClientCredentialsRequest;
-import com.networknt.client.oauth.OauthHelper;
-import com.networknt.client.oauth.TokenRequest;
-import com.networknt.client.oauth.TokenResponse;
-import com.networknt.common.DecryptUtil;
-import com.networknt.common.SecretConstants;
-import com.networknt.config.Config;
-import com.networknt.status.exception.ApiException;
-import com.networknt.status.exception.ClientException;
-import com.networknt.httpstring.HttpStringConstants;
-import com.networknt.status.Status;
-import com.networknt.utility.ModuleRegistry;
-import io.undertow.client.*;
-import io.undertow.connector.ByteBufferPool;
-import io.undertow.protocols.ssl.UndertowXnioSsl;
-import io.undertow.server.DefaultByteBufferPool;
-import io.undertow.server.HttpServerExchange;
-import io.undertow.util.*;
-import org.owasp.encoder.Encode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xnio.*;
-import org.xnio.channels.StreamSinkChannel;
-import org.xnio.ssl.XnioSsl;
-
-import javax.net.ssl.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URLEncoder;
-import java.security.*;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+
+import com.networknt.client.ssl.Light4jHttp2ClientProvider;
+import com.networknt.client.ssl.Light4jHttpClientProvider;
+import org.owasp.encoder.Encode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xnio.ChannelListeners;
+import org.xnio.FutureResult;
+import org.xnio.IoFuture;
+import org.xnio.IoUtils;
+import org.xnio.OptionMap;
+import org.xnio.Options;
+import org.xnio.Xnio;
+import org.xnio.XnioIoThread;
+import org.xnio.XnioWorker;
+import org.xnio.channels.StreamSinkChannel;
+import org.xnio.ssl.XnioSsl;
+
+import com.networknt.client.oauth.Jwt;
+import com.networknt.client.oauth.OauthHelper;
+import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
+import com.networknt.client.ssl.TLSConfig;
+import com.networknt.common.DecryptUtil;
+import com.networknt.common.SecretConstants;
+import com.networknt.config.Config;
+import com.networknt.httpstring.HttpStringConstants;
+import com.networknt.monad.Failure;
+import com.networknt.monad.Result;
+import com.networknt.utility.ModuleRegistry;
+
+import io.undertow.client.ClientCallback;
+import io.undertow.client.ClientConnection;
+import io.undertow.client.ClientExchange;
+import io.undertow.client.ClientProvider;
+import io.undertow.client.ClientRequest;
+import io.undertow.client.ClientResponse;
+import io.undertow.connector.ByteBufferPool;
+import io.undertow.protocols.ssl.UndertowXnioSsl;
+import io.undertow.server.DefaultByteBufferPool;
+import io.undertow.server.HttpServerExchange;
+import io.undertow.util.AttachmentKey;
+import io.undertow.util.Headers;
+import io.undertow.util.StringReadChannelListener;
+import io.undertow.util.StringWriteChannelListener;
 
 /**
  * This is a new client module that replaces the old Client module. The old version
@@ -64,8 +110,8 @@ public class Http2Client {
     public static int DEFAULT_BUFFER_SIZE = 24; // 24*1024 buffer size will be good for most of the app.
     public static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
 
-    static final String BUFFER_SIZE = "bufferSize";
     static final String TLS = "tls";
+    static final String BUFFER_SIZE = "bufferSize";
     static final String LOAD_TRUST_STORE = "loadTrustStore";
     static final String LOAD_KEY_STORE = "loadKeyStore";
     static final String TRUST_STORE = "trustStore";
@@ -75,24 +121,15 @@ public class Http2Client {
 
     static final String OAUTH = "oauth";
     static final String TOKEN = "token";
-    static final String TOKEN_RENEW_BEFORE_EXPIRED = "tokenRenewBeforeExpired";
-    static final String EXPIRED_REFRESH_RETRY_DELAY = "expiredRefreshRetryDelay";
-    static final String EARLY_REFRESH_RETRY_DELAY = "earlyRefreshRetryDelay";
 
-    static final String STATUS_CLIENT_CREDENTIALS_TOKEN_NOT_AVAILABLE = "ERR10009";
+
 
     static Map<String, Object> config;
     static Map<String, Object> tokenConfig;
     static Map<String, Object> secretConfig;
 
     // Cached jwt token for this client.
-    private String jwt;
-    private long expire;
-    private volatile boolean renewing = false;
-    private volatile long expiredRetryTimeout;
-    private volatile long earlyRetryTimeout;
-
-    private final Object lock = new Object();
+    private final Jwt cachedJwt = new Jwt();
 
     static {
         List<String> masks = new ArrayList<>();
@@ -105,7 +142,7 @@ public class Http2Client {
             bufferSize = (int)bufferSizeObject;
         }
         if(config != null) {
-            Map<String, Object> oauthConfig = (Map<String, Object>)config.get(OAUTH);
+			Map<String, Object> oauthConfig = (Map<String, Object>)config.get(OAUTH);
             if(oauthConfig != null) {
                 tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);
             }
@@ -144,7 +181,7 @@ public class Http2Client {
         final Map<String, ClientProvider> map = new HashMap<>();
         for (ClientProvider provider : providers) {
             for (String scheme : provider.handlesSchemes()) {
-                map.put(scheme, provider);
+            	addProvider(map, scheme, provider);
             }
         }
         this.clientProviders = Collections.unmodifiableMap(map);
@@ -155,6 +192,20 @@ public class Http2Client {
         } catch (Exception e) {
             logger.error("Exception: ", e);
         }
+    }
+
+    private void addProvider(Map<String, ClientProvider> map, String scheme, ClientProvider provider) {
+    	if (System.getProperty("java.version").startsWith("1.8.")) {// Java 8
+        	if (Light4jHttpClientProvider.HTTPS.equalsIgnoreCase(scheme)) {
+        		map.putIfAbsent(scheme, new Light4jHttpClientProvider());
+        	}else if (Light4jHttp2ClientProvider.HTTP2.equalsIgnoreCase(scheme)){
+        		map.putIfAbsent(scheme, new Light4jHttp2ClientProvider());
+        	}else {
+        		map.put(scheme, provider);
+        	}
+    	}else {
+    		map.put(scheme, provider);
+    	}
     }
 
     public IoFuture<ClientConnection> connect(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
@@ -315,12 +366,13 @@ public class Http2Client {
      * or mobile apps.
      *
      * @param request the http request
-     * @throws ClientException client exception
-     * @throws ApiException api exception
+     * @return Result when fail to get jwt, it will return a Status.
      */
-    public void addCcToken(ClientRequest request) throws ClientException, ApiException {
-        checkCCTokenExpired();
-        request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + jwt);
+    public Result addCcToken(ClientRequest request) {
+        Result<Jwt> result = OauthHelper.populateCCToken(cachedJwt);
+        if(result.isFailure()) { return Failure.of(result.getError()); }
+        request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + result.getResult().getJwt());
+        return result;
     }
 
     /**
@@ -331,13 +383,14 @@ public class Http2Client {
      *
      * @param request the http request
      * @param traceabilityId the traceability id
-     * @throws ClientException client exception
-     * @throws ApiException api exception
+     * @return Result when fail to get jwt, it will return a Status.
      */
-    public void addCcTokenTrace(ClientRequest request, String traceabilityId) throws ClientException, ApiException {
-        checkCCTokenExpired();
-        request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + jwt);
+    public Result addCcTokenTrace(ClientRequest request, String traceabilityId) {
+        Result<Jwt> result = OauthHelper.populateCCToken(cachedJwt);
+        if(result.isFailure()) { return Failure.of(result.getError()); }
+        request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + result.getResult().getJwt());
         request.getRequestHeaders().put(HttpStringConstants.TRACEABILITY_ID, traceabilityId);
+        return result;
     }
 
     /**
@@ -348,14 +401,12 @@ public class Http2Client {
      *
      * @param request the http request
      * @param exchange the http server exchange
-     * @throws ClientException client exception
-     * @throws ApiException api exception
      */
-    public void propagateHeaders(ClientRequest request, final HttpServerExchange exchange) throws ClientException, ApiException {
+    public Result propagateHeaders(ClientRequest request, final HttpServerExchange exchange) {
         String tid = exchange.getRequestHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
         String token = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
         String cid = exchange.getRequestHeaders().getFirst(HttpStringConstants.CORRELATION_ID);
-        populateHeader(request, token, cid, tid);
+        return populateHeader(request, token, cid, tid);
     }
 
     /**
@@ -369,88 +420,22 @@ public class Http2Client {
      * @param authToken the authorization token
      * @param correlationId the correlation id
      * @param traceabilityId the traceability id
-     * @throws ClientException client exception
-     * @throws ApiException api exception
+     * @return Result when fail to get jwt, it will return a Status.
      */
-    public void populateHeader(ClientRequest request, String authToken, String correlationId, String traceabilityId) throws ClientException, ApiException {
+    public Result populateHeader(ClientRequest request, String authToken, String correlationId, String traceabilityId) {
         if(traceabilityId != null) {
             addAuthTokenTrace(request, authToken, traceabilityId);
         } else {
             addAuthToken(request, authToken);
         }
+        Result<Jwt> result = OauthHelper.populateCCToken(cachedJwt);
+        if(result.isFailure()) { return Failure.of(result.getError()); }
         request.getRequestHeaders().put(HttpStringConstants.CORRELATION_ID, correlationId);
-        checkCCTokenExpired();
-        request.getRequestHeaders().put(HttpStringConstants.SCOPE_TOKEN, "Bearer " + jwt);
+        request.getRequestHeaders().put(HttpStringConstants.SCOPE_TOKEN, "Bearer " + result.getResult().getJwt());
+        return result;
     }
 
-    private void getCCToken() throws ClientException {
-        TokenRequest tokenRequest = new ClientCredentialsRequest();
-        TokenResponse tokenResponse = OauthHelper.getToken(tokenRequest);
-        synchronized (lock) {
-            jwt = tokenResponse.getAccessToken();
-            // the expiresIn is seconds and it is converted to millisecond in the future.
-            expire = System.currentTimeMillis() + tokenResponse.getExpiresIn() * 1000;
-            logger.info("Get client credentials token {} with expire_in {} seconds", jwt, tokenResponse.getExpiresIn());
-        }
-    }
 
-    private void checkCCTokenExpired() throws ClientException, ApiException {
-        long tokenRenewBeforeExpired = (Integer) tokenConfig.get(TOKEN_RENEW_BEFORE_EXPIRED);
-        long expiredRefreshRetryDelay = (Integer)tokenConfig.get(EXPIRED_REFRESH_RETRY_DELAY);
-        long earlyRefreshRetryDelay = (Integer)tokenConfig.get(EARLY_REFRESH_RETRY_DELAY);
-        boolean isInRenewWindow = expire - System.currentTimeMillis() < tokenRenewBeforeExpired;
-        if(logger.isTraceEnabled()) logger.trace("isInRenewWindow = " + isInRenewWindow);
-        if(isInRenewWindow) {
-            if(expire <= System.currentTimeMillis()) {
-                if(logger.isTraceEnabled()) logger.trace("In renew window and token is expired.");
-                // block other request here to prevent using expired token.
-                synchronized (Http2Client.class) {
-                    if(expire <= System.currentTimeMillis()) {
-                        if(logger.isTraceEnabled()) logger.trace("Within the synch block, check if the current request need to renew token");
-                        if(!renewing || System.currentTimeMillis() > expiredRetryTimeout) {
-                            // if there is no other request is renewing or the renewing flag is true but renewTimeout is passed
-                            renewing = true;
-                            expiredRetryTimeout = System.currentTimeMillis() + expiredRefreshRetryDelay;
-                            if(logger.isTraceEnabled()) logger.trace("Current request is renewing token synchronously as token is expired already");
-                            getCCToken();
-                            renewing = false;
-                        } else {
-                            if(logger.isTraceEnabled()) logger.trace("Circuit breaker is tripped and not timeout yet!");
-                            // reject all waiting requests by thrown an exception.
-                            throw new ApiException(new Status(STATUS_CLIENT_CREDENTIALS_TOKEN_NOT_AVAILABLE));
-                        }
-                    }
-                }
-            } else {
-                // Not expired yet, try to renew async but let requests use the old token.
-                if(logger.isTraceEnabled()) logger.trace("In renew window but token is not expired yet.");
-                synchronized (Http2Client.class) {
-                    if(expire > System.currentTimeMillis()) {
-                        if(!renewing || System.currentTimeMillis() > earlyRetryTimeout) {
-                            renewing = true;
-                            earlyRetryTimeout = System.currentTimeMillis() + earlyRefreshRetryDelay;
-                            if(logger.isTraceEnabled()) logger.trace("Retrieve token async is called while token is not expired yet");
-
-                            ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-
-                            executor.schedule(() -> {
-                                try {
-                                    getCCToken();
-                                    renewing = false;
-                                    if(logger.isTraceEnabled()) logger.trace("Async get token is completed.");
-                                } catch (Exception e) {
-                                    logger.error("Async retrieve token error", e);
-                                    // swallow the exception here as it is on a best effort basis.
-                                }
-                            }, 50, TimeUnit.MILLISECONDS);
-                            executor.shutdown();
-                        }
-                    }
-                }
-            }
-        }
-        if(logger.isTraceEnabled()) logger.trace("Check secondary token is done!");
-    }
 
     private static KeyStore loadKeyStore(final String name, final char[] password) throws IOException {
         final InputStream stream = Config.getInstance().getInputStreamFromFile(name);
@@ -469,10 +454,28 @@ public class Http2Client {
         }
     }
 
+    /**
+     * default method for creating ssl context. trustedNames config is not used.
+     *
+     * @return SSLContext
+     * @throws IOException
+     */
     public static SSLContext createSSLContext() throws IOException {
+    	return createSSLContext(null);
+    }
+
+    /**
+     * create ssl context using specified trustedName config
+     *
+     * @param trustedNamesGroupKey - the trustedName config to be used
+     * @return SSLContext
+     * @throws IOException
+     */
+    @SuppressWarnings("unchecked")
+	public static SSLContext createSSLContext(String trustedNamesGroupKey) throws IOException {
         SSLContext sslContext = null;
         KeyManager[] keyManagers = null;
-        Map<String, Object> tlsMap = (Map)config.get(TLS);
+        Map<String, Object> tlsMap = (Map<String, Object>)config.get(TLS);
         if(tlsMap != null) {
             try {
                 // load key store for client certificate if two way ssl is used.
@@ -508,9 +511,11 @@ public class Http2Client {
                     }
                     if (trustStoreName != null && trustStorePass != null) {
                         KeyStore trustStore = loadKeyStore(trustStoreName, trustStorePass.toCharArray());
+                        TLSConfig tlsConfig = TLSConfig.create(tlsMap, trustedNamesGroupKey);
+
                         TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                         trustManagerFactory.init(trustStore);
-                        trustManagers = trustManagerFactory.getTrustManagers();
+                        trustManagers = ClientX509ExtendedTrustManager.decorate(trustManagerFactory.getTrustManagers(), tlsConfig);
                     }
                 }
             } catch (NoSuchAlgorithmException | KeyStoreException e) {

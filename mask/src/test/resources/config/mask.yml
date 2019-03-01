@@ -13,8 +13,13 @@ regex:
     header2: "(.*)"
   responseHeader:
     header3: "(.*)"
+  requestCookies:
+    userName: "(.*)"
+  responseCookies:
+    sensitiveData: "(.*)"
 json:
   requestBody:
+    "$.*.email": "(.*)"
     "$.product[*].item[*].name": "(.*)"
   responseBody:
     "$.product[*].item[*].name": "(.*)"
@@ -23,5 +28,9 @@ json:
     "$.contact.phone": "(.*)"
     "$.password": "(.*)"
   test2:
-    "$.list": "(.*)"
+    "$.list.*.name": "(.*)"
+    "$.list.*.accounts.*": "(.*)"
+#    should use "$.list.*.accounts.*" instead of using "$.list.*.accounts" because "$.list.*.accounts" will return a list of lists
+#    "$.list.*.accounts": "(.*)"
+    "$.list1": "(.*)"
     "$.password": "(.*)"

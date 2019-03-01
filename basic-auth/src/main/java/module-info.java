@@ -1,5 +1,5 @@
 module com.networknt.basic.auth {
-    exports com.networknt.basic;
+    exports com.networknt.basicauth;
 
     requires com.networknt.config;
     requires com.networknt.handler;

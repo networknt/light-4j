@@ -16,38 +16,72 @@
 
 package com.networknt.audit;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
 import com.networknt.client.Http2Client;
+import com.networknt.config.JsonMapper;
 import com.networknt.correlation.CorrelationHandler;
 import com.networknt.status.exception.ClientException;
 import com.networknt.httpstring.HttpStringConstants;
+import com.networknt.utility.Constants;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
-import io.undertow.client.*;
+import io.undertow.client.ClientConnection;
+import io.undertow.client.ClientRequest;
+import io.undertow.client.ClientResponse;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 /**
  * Created by steve on 01/09/16.
  */
+@RunWith(MockitoJUnitRunner.class)
 public class AuditHandlerTest {
     static final Logger logger = LoggerFactory.getLogger(AuditHandlerTest.class);
 
     static Undertow server = null;
+
+    final ch.qos.logback.classic.Logger auditLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Constants.AUDIT_LOGGER);
+
+    @Mock
+    Appender mockAppender;
+
+    @Captor
+    ArgumentCaptor<ILoggingEvent> captorLoggingEvent;
+
+    String[] requiredKeys = { AuditHandler.TIMESTAMP,
+                                Constants.CORRELATION_ID_STRING,
+                                Constants.TRACEABILITY_ID_STRING,
+                                AuditHandler.STATUS_CODE,
+                                AuditHandler.RESPONSE_TIME };
 
     @BeforeClass
     public static void setUp() {
@@ -89,6 +123,30 @@ public class AuditHandlerTest {
                 .add(Methods.POST, "/pet", exchange -> exchange.getResponseSender().send("OK"));
     }
 
+    @Before
+    public void beforeTest() throws Exception {
+        // inject the mock appender
+        auditLogger.addAppender(mockAppender);
+    }
+
+    @After
+    public void afterTest() throws Exception {
+        // remove the mock appender
+        auditLogger.detachAppender(mockAppender);
+    }
+
+    private void verifyAuditLog(String traceVal) {
+        verify(mockAppender, times(1)).doAppend(captorLoggingEvent.capture());
+        ILoggingEvent event = captorLoggingEvent.getValue();
+        Map<String, Object> mapValue = JsonMapper.string2Map(event.getFormattedMessage());
+
+        Assert.assertEquals(Level.INFO, event.getLevel());
+        Assert.assertTrue(Arrays.stream(requiredKeys).allMatch(mapValue::containsKey));
+        Assert.assertEquals(traceVal, mapValue.get(Constants.TRACEABILITY_ID_STRING));
+        Assert.assertNotNull(mapValue.get(Constants.CORRELATION_ID_STRING));
+        Assert.assertEquals(200, mapValue.get(AuditHandler.STATUS_CODE));
+    }
+
     @Test
     public void testAuditWithTrace() throws Exception {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
@@ -124,6 +182,12 @@ public class AuditHandlerTest {
             IoUtils.safeClose(connection);
         }
         Assert.assertEquals("OK", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException ignored) {
+        }
+        verifyAuditLog("tid");
     }
 
     @Test
@@ -160,5 +224,11 @@ public class AuditHandlerTest {
             IoUtils.safeClose(connection);
         }
         Assert.assertEquals("OK", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException ignored) {
+        }
+        verifyAuditLog(null);
     }
 }

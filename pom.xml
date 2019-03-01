@@ -69,7 +69,7 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <version.jackson>2.9.5</version.jackson>
+        <version.jackson>2.9.8</version.jackson>
         <version.slf4j>1.7.25</version.slf4j>
         <version.jose4j>0.6.3</version.jose4j>
         <version.commons.codec>1.11</version.commons.codec>
@@ -77,13 +77,13 @@
         <version.logback>1.2.3</version.logback>
         <version.junit>4.12</version.junit>
         <version.mockito>2.23.0</version.mockito>
-        <version.undertow>2.0.14.Final</version.undertow>
+        <version.undertow>2.0.16.Final</version.undertow>
         <version.swagger-parser>1.0.34</version.swagger-parser>
         <version.hamcrest>1.3</version.hamcrest>
         <version.assertj>3.8.0</version.assertj>
         <version.hdrhistogram>2.1.10</version.hdrhistogram>
         <version.jsr305>3.0.2</version.jsr305>
-        <version.json-schema-validator>0.1.26</version.json-schema-validator>
+        <version.json-schema-validator>1.0.3</version.json-schema-validator>
         <version.zookeeper>3.5.3-beta</version.zookeeper>
         <version.zkclient>0.3</version.zkclient>
         <version.curator>4.0.1</version.curator>
@@ -99,8 +99,23 @@
         <version.sqlserver>7.0.0.jre10</version.sqlserver>
         <version.httpclient>4.5.6</version.httpclient>
         <versions.maven-version>2.4</versions.maven-version>
+        <version.jsonpath>2.4.0</version.jsonpath>
+        <version.maven-version>2.7</version.maven-version>
+        <version.nexus-staging-maven>1.6.8</version.nexus-staging-maven>
+        <version.maven-source>3.0.1</version.maven-source>
+        <version.maven-surefire>2.19.1</version.maven-surefire>
+        <version.maven-failsafe>2.22.0</version.maven-failsafe>
+        <!--<version.maven-release>2.5.3</version.maven-release>-->
+        <version.maven-javadoc>3.0.1</version.maven-javadoc>
+        <version.jacoco>0.7.9</version.jacoco>
+        <version.maven-compiler>3.6.1</version.maven-compiler>
+        <version.build-helper-maven>1.9.1</version.build-helper-maven>
+        <version.plexus-compiler-javac-errorprone>2.8</version.plexus-compiler-javac-errorprone>
+        <version.error_prone_core>2.0.15</version.error_prone_core>
+        <version.lifecycle-mapping>1.0.0</version.lifecycle-mapping>
+        <version.maven-gpg>1.6</version.maven-gpg>
         <version.javadoc-packagelist-plugin>1.0-SNAPSHOT</version.javadoc-packagelist-plugin>
-        <argLine>-Xmx512m -Djava.net.preferIPv4Stack=true</argLine>
+        <argLine>-Xmx512m</argLine>
     </properties>
 
     <modules>
@@ -396,6 +411,17 @@
                 </exclusions>
             </dependency>
             <dependency>
+                <groupId>com.jayway.jsonpath</groupId>
+                <artifactId>json-path</artifactId>
+                <version>${version.jsonpath}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>net.minidev</groupId>
+                        <artifactId>json-smart</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>${version.slf4j}</version>
@@ -611,12 +637,12 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>versions-maven-plugin</artifactId>
-                <version>${versions.maven-version}</version>
+                <version>${version.maven-version}</version>
             </plugin>
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>1.6.8</version>
+                <version>${version.nexus-staging-maven}</version>
                 <extensions>true</extensions>
                 <configuration>
                     <serverId>ossrh</serverId>
@@ -636,14 +662,13 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-release-plugin</artifactId>
-				<version>2.5.3</version>
+				<version>${version.maven-release}</version>
 			</plugin>
             -->
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>3.0.1</version>
+                <version>${version.maven-source}</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -656,7 +681,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.0.1</version>
+                <version>${version.maven-javadoc}</version>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
@@ -669,21 +694,20 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.19.1</version>
+                <version>${version.maven-surefire}</version>
                 <dependencies>
                     <dependency>
                         <groupId>org.apache.maven.surefire</groupId>
                         <artifactId>surefire-junit47</artifactId>
-                        <version>2.19.1</version>
+                        <version>${version.maven-surefire}</version>
                     </dependency>
                 </dependencies>
             </plugin>
 
-            <!-- FIXME - This is causing the client module test cases to hang. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.0</version>
+                <version>${version.maven-failsafe}</version>
                 <configuration>
                     <encoding>UTF-8</encoding>
                     <forkCount>0</forkCount>
@@ -701,7 +725,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
-                <version>1.9.1</version>
+                <version>${version.build-helper-maven}</version>
                 <executions>
                     <execution>
                         <id>add-test-source</id>
@@ -734,8 +758,9 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.7.9</version>
+                <version>${version.jacoco}</version>
                 <executions>
+                    <!-- The Executions for unit tests -->
                     <execution>
                         <id>pre-unit-test</id>
                         <goals>
@@ -743,6 +768,7 @@
                         </goals>
                         <configuration>
                             <propertyName>surefireArgLine</propertyName>
+                            <!--<destFile>${project.build.directory}/coverage-reports/jacoco-ut.exec</destFile>-->
                         </configuration>
                     </execution>
                     <execution>
@@ -751,7 +777,35 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
+                        <!--<configuration>-->
+                            <!--<dataFile>${project.build.directory}/coverage-reports/jacoco-ut.exec</dataFile>-->
+                            <!--<outputDirectory>${project.reporting.outputDirectory}/jacoco-ut</outputDirectory>-->
+                        <!--</configuration>-->
+                    <!--</execution>-->
+                    <!--&lt;!&ndash; End Executions for unit tests &ndash;&gt;-->
+                    <!--&lt;!&ndash; The Executions for integration tests &ndash;&gt;-->
+                    <!--<execution>-->
+                        <!--<id>pre-integration-test</id>-->
+                        <!--<phase>pre-integration-test</phase>-->
+                        <!--<goals>-->
+                            <!--<goal>prepare-agent</goal>-->
+                        <!--</goals>-->
+                        <!--<configuration>-->
+                            <!--<destFile>${project.build.directory}/coverage-reports/jacoco-it.exec</destFile>-->
+                        <!--</configuration>-->
+                    <!--</execution>-->
+                    <!--<execution>-->
+                        <!--<id>post-integration-test</id>-->
+                        <!--<phase>post-integration-test</phase>-->
+                        <!--<goals>-->
+                            <!--<goal>report</goal>-->
+                        <!--</goals>-->
+                        <!--<configuration>-->
+                            <!--<dataFile>${project.build.directory}/coverage-reports/jacoco-it.exec</dataFile>-->
+                            <!--<outputDirectory>${project.reporting.outputDirectory}/jacoco-it</outputDirectory>-->
+                        <!--</configuration>-->
                     </execution>
+                    <!-- End Executions for integration tests -->
                 </executions>
             </plugin>
             <!-- end JACOCO -->
@@ -763,7 +817,7 @@
         		<plugin>
         			<groupId>org.eclipse.m2e</groupId>
         			<artifactId>lifecycle-mapping</artifactId>
-        			<version>1.0.0</version>
+        			<version>${version.lifecycle-mapping}</version>
         			<configuration>
         				<lifecycleMappingMetadata>
         					<pluginExecutions>
@@ -817,12 +871,57 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>2.20.1</version>
+                <version>${version.maven-surefire}</version>
             </plugin>
         </plugins>
     </reporting>
 
     <profiles>
+        <profile>
+            <id>dev</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <version>${version.jacoco}</version>
+                        <executions>
+                            <!-- The Executions for merging -->
+                            <execution>
+                                <id>merge-results</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>merge</goal>
+                                </goals>
+                                <configuration>
+                                    <fileSets>
+                                        <fileSet>
+                                            <directory>${project.build.directory}/coverage-reports</directory>
+                                            <includes>
+                                                <include>*.exec</include>
+                                            </includes>
+                                        </fileSet>
+                                    </fileSets>
+                                    <destFile>${project.build.directory}/coverage-reports/aggregate.exec</destFile>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>post-merge-report</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>report</goal>
+                                </goals>
+                                <configuration>
+                                    <dataFile>${project.build.directory}/coverage-reports/aggregate.exec</dataFile>
+                                    <outputDirectory>${project.reporting.outputDirectory}/jacoco-aggregate</outputDirectory>
+                                </configuration>
+                            </execution>
+                            <!-- End Executions for merging -->
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <profile>
             <id>release-sign-artifacts</id>
             <activation>
@@ -836,7 +935,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
+                        <version>${version.maven-gpg}</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>

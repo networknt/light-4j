@@ -21,6 +21,7 @@ import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.status.exception.ApiException;
 import com.networknt.status.exception.FrameworkException;
+import com.networknt.status.exception.ClientException;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -95,6 +96,16 @@ public class ExceptionHandler implements MiddlewareHandler {
                         exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
                         exchange.getResponseSender().send(ae.getStatus().toString());
                         logger.error(ae.getStatus().toString(), e);
+                    } else if(e instanceof ClientException){
+                        ClientException ce = (ClientException)e;
+                        if(ce.getStatus().getStatusCode() == 0){
+                            setExchangeStatus(exchange, STATUS_UNCAUGHT_EXCEPTION);
+                        } else {
+                            exchange.setStatusCode(ce.getStatus().getStatusCode());
+                            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+                            exchange.getResponseSender().send(ce.getStatus().toString());
+                        }
+
                     } else {
                         setExchangeStatus(exchange, STATUS_UNCAUGHT_EXCEPTION);
                     }

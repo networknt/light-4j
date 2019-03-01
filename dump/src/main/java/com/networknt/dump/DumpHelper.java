@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2016 Network New Technologies Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.networknt.dump;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -8,22 +24,33 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
+/**
+ * a helper class for com.networknt.dump, contains impl of logging a Map<String, Object>
+ */
 class DumpHelper {
+    private static Logger logger = LoggerFactory.getLogger(DumpHandler.class);
 
-    private static Logger logger = LoggerFactory.getLogger(DumpHelper.class);
-
-    static void logResult(Map<String, Object> result, int indentSize, boolean useJson) {
-        if(useJson) {
-            logResultUsingJson(result);
+    /**
+     * A help method to log result pojo
+     * @param result the map contains info that needs to be logged
+     */
+    static void logResult(Map<String, Object> result, DumpConfig config) {
+        Consumer<String> loggerFunc = getLoggerFuncBasedOnLevel(config.getLogLevel());
+        if(config.isUseJson()) {
+            logResultUsingJson(result, loggerFunc);
         } else {
             int startLevel = -1;
             StringBuilder sb = new StringBuilder("Http request/response information:");
-            _logResult(result, startLevel, indentSize, sb);
-            logger.info(sb.toString());
+            _logResult(result, startLevel, config.getIndentSize(), sb);
+            loggerFunc.accept(sb.toString());
         }
     }
 
+    /**
+     *  this method actually append result to result string
+     */
     private static <T> void _logResult(T result, int level, int indentSize, StringBuilder info) {
         if(result instanceof Map) {
             level += 1;
@@ -42,14 +69,19 @@ class DumpHelper {
             info.append(" ").append(result);
         } else if(result != null) {
             try {
-                logger.info(getTabBasedOnLevel(level, indentSize) + "{}", result);
+                logger.warn(getTabBasedOnLevel(level, indentSize) + "{}", result);
             } catch (Exception e) {
                 logger.error("Cannot handle this type: {}", result.getClass().getTypeName());
             }
         }
     }
 
-    private static void logResultUsingJson(Map<String, Object> result) {
+    /**
+     *
+     * @param result a Map<String, Object> contains http request/response info which needs to be logged.
+     * @param loggerFunc Consuer<T> getLoggerFuncBasedOnLevel(config.getLogLevel())
+     */
+    private static void logResultUsingJson(Map<String, Object> result, Consumer<String> loggerFunc) {
         ObjectMapper mapper = new ObjectMapper();
         String resultJson = "";
         try {
@@ -58,10 +90,14 @@ class DumpHelper {
             logger.error(e.toString());
         }
         if(StringUtils.isNotBlank(resultJson)){
-            logger.info("Dump Info:\n" + resultJson);
+            loggerFunc.accept("Dump Info:\n" + resultJson);
         }
     }
 
+    /**
+     * calculate indent for formatting
+     * @return "   " string of empty spaces
+     */
     private static String getTabBasedOnLevel(int level, int indentSize) {
         StringBuilder sb = new StringBuilder();
         for(int i = 0; i < level; i ++) {
@@ -72,9 +108,22 @@ class DumpHelper {
         return sb.toString();
     }
 
-    //return true when an option is not written as 'true'
-    static Boolean checkOptionNotFalse(Object option) {
-        return (option instanceof Boolean && (Boolean) option)
-                || (!(option instanceof Boolean) && option != null);
+    /**
+     * @param level type: String, the level the logger will log to
+     * @return Consumer<String>
+     */
+    private static Consumer<String> getLoggerFuncBasedOnLevel(String level) {
+        switch(level.toUpperCase()) {
+            case "ERROR":
+                return logger::error;
+            case "INFO":
+                return logger::info;
+            case "DEBUG":
+                return logger::debug;
+            case "WARN":
+                return logger::warn;
+            default:
+                return logger::info;
+        }
     }
 }
