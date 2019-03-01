@@ -377,7 +377,26 @@ ERR10050:
   code: ERR10050
   message: NO_ENCODING_HANDLER
   description: No encoding handler for the required encoder.
-
+ERR10051:
+  statusCode: 401
+  code: ERR10051
+  message: FAIL_TO_SEND_REQUEST
+  description: Fail to send request to target server.
+ERR10052:
+  statusCode: 401
+  code: ERR10052
+  message: GET_TOKEN_ERROR
+  description: "Cannot get valid token: %s."
+ERR10053:
+  statusCode: 401
+  code: ERR10053
+  message: ESTABLISH_CONNECTION_ERROR
+  description: Cannot establish connection for url %s.
+ERR10054:
+  statusCode: 401
+  code: ERR10054
+  message: GET_TOKEN_TIMEOUT
+  description: Cannot get valid token, probably due to a timeout.
 
 # 11000-11500 swagger-validator errors
 ERR11000:
@@ -470,6 +489,11 @@ ERR11017:
   code: ERR11017
   message: VALIDATOR_REQUEST_PARAMETER_HEADER_MISSING
   description: Header parameter %s is required on path %s but not found in request.
+ERR11018:
+  statusCode: 400
+  code: ERR11018
+  message: VALIDATOR_RESPONSE_CONTENT_UNEXPECTED
+  description: No response body content or schema is expected for %s on path %s.
 
 # 11100-11199 Light Code Generator validation errors
 ERR11100:
@@ -938,7 +962,8 @@ ERR12107:
   code: ERR12107
   message: TOKEN_NOT_FOUND
   description: Token %s not found in token_vault table in database %s
-  
+
+
 # 20000-29999 common error codes within your business domain.
 # It is highly recommended to have your error code shared within your organization or your line of business.
 # In that case, all your services can share the same status.yml which in org default config

@@ -8,4 +8,5 @@ module com.networknt.body {
     requires undertow.core;
     requires slf4j.api;
     requires java.logging;
+    requires com.fasterxml.jackson.core;
 }

@@ -1,0 +1,6 @@
+exclusionConfigFileList:
+  - openapi
+  - values
+  - status
+  - test_exclusion
+

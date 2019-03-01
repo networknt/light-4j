@@ -16,6 +16,8 @@
 
 package com.networknt.status.exception;
 
+import com.networknt.status.Status;
+
 /**
  * This is a checked exception used by Client module.
  *
@@ -23,6 +25,7 @@ package com.networknt.status.exception;
  */
 public class ClientException extends Exception {
     private static final long serialVersionUID = 1L;
+    private static Status status = new Status();
 
     public ClientException() {
         super();
@@ -30,6 +33,10 @@ public class ClientException extends Exception {
 
     public ClientException(String message) {
         super(message);
+    }
+
+    public ClientException(Status status) {
+        this.status = status;
     }
 
     public ClientException(String message, Throwable cause) {
@@ -40,4 +47,11 @@ public class ClientException extends Exception {
         super(cause);
     }
 
+    public static Status getStatus() {
+        return status;
+    }
+
+    public static void setStatus(Status status) {
+        ClientException.status = status;
+    }
 }

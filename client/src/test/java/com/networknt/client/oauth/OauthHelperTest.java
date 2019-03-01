@@ -1,7 +1,24 @@
+/*
+ * Copyright (c) 2016 Network New Technologies Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.networknt.client.oauth;
 
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
+import com.networknt.monad.Result;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.util.Headers;
@@ -14,6 +31,7 @@ import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.lang.JoseException;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -192,6 +210,28 @@ public class OauthHelperTest {
     }
 
     @Test
+    public void testGetTokenResult() throws Exception {
+        AuthorizationCodeRequest tokenRequest = new AuthorizationCodeRequest();
+        tokenRequest.setClientId("test_client");
+        tokenRequest.setClientSecret("test_secret");
+        tokenRequest.setGrantType(TokenRequest.AUTHORIZATION_CODE);
+        List<String> list = new ArrayList<>();
+        list.add("test.r");
+        list.add("test.w");
+        tokenRequest.setScope(list);
+        tokenRequest.setServerUrl("http://localhost:8887");
+        tokenRequest.setEnableHttp2(true);
+        tokenRequest.setUri("/oauth2/token");
+        tokenRequest.setRedirectUri("https://localhost:8443/authorize");
+        tokenRequest.setAuthCode("test_code");
+
+        Result<TokenResponse> result = OauthHelper.getTokenResult(tokenRequest);
+        Assert.assertTrue(result.isSuccess());
+        TokenResponse tokenResponse = result.getResult();
+        System.out.println("tokenResponse = " + tokenResponse);
+    }
+
+    @Test
     public void testGetToken() throws Exception {
         AuthorizationCodeRequest tokenRequest = new AuthorizationCodeRequest();
         tokenRequest.setClientId("test_client");
@@ -208,6 +248,7 @@ public class OauthHelperTest {
         tokenRequest.setAuthCode("test_code");
 
         TokenResponse tokenResponse = OauthHelper.getToken(tokenRequest);
+        Assert.assertNotNull(tokenResponse);
         System.out.println("tokenResponse = " + tokenResponse);
     }
 
