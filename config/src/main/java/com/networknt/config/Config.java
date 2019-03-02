@@ -43,7 +43,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public abstract class Config {
     public static final String LIGHT_4J_CONFIG_DIR = "light-4j-config-dir";
-    public enum InternalizedConfigPath {DEFAULT, CLASSPATH}
 
     protected Config() {
     }
@@ -338,36 +337,6 @@ public abstract class Config {
                     logger.info("Config loaded from default folder for " + Encode.forJava(configFilename));
                 }
                 return inStream;
-            }
-            if (configFilename.endsWith(CONFIG_EXT_YML)) {
-                logger.info("Unable to load config " + Encode.forJava(configFilename) + ". Looking for the same file name with extension yaml...");
-            } else if (configFilename.endsWith(CONFIG_EXT_YAML)) {
-                logger.info("Unable to load config " + Encode.forJava(configFilename) + ". Looking for the same file name with extension json...");
-            } else {
-                System.out.println("Unable to load config '" + Encode.forJava(configFilename.substring(0, configFilename.indexOf("."))) + "' with extension yml, yaml and json from external config, application config and module config. Please ignore this message if you are sure that your application is not using this config file.");
-            }
-            return null;
-        }
-
-        // overload method used to get config stream from classpath or default
-        private InputStream getConfigStream(String configFilename, InternalizedConfigPath path) {
-            InputStream inStream = null;
-            if (path.equals(InternalizedConfigPath.CLASSPATH)) {
-                inStream = getClass().getClassLoader().getResourceAsStream(configFilename);
-                if (inStream != null) {
-                    if (logger.isInfoEnabled()) {
-                        logger.info("config loaded from classpath for " + Encode.forJava(configFilename));
-                    }
-                    return inStream;
-                }
-            } else if (path.equals(InternalizedConfigPath.DEFAULT)) {
-                inStream = getClass().getClassLoader().getResourceAsStream("config/" + configFilename);
-                if (inStream != null) {
-                    if (logger.isInfoEnabled()) {
-                        logger.info("Config loaded from default folder for " + Encode.forJava(configFilename));
-                    }
-                    return inStream;
-                }
             }
             if (configFilename.endsWith(CONFIG_EXT_YML)) {
                 logger.info("Unable to load config " + Encode.forJava(configFilename) + ". Looking for the same file name with extension yaml...");
