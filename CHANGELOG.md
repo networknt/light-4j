@@ -1,5 +1,27 @@
 # Change Log
 
+## [1.5.31](https://github.com/networknt/light-4j/tree/1.5.31) (2019-03-02)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.30...1.5.31)
+
+**Fixed bugs:**
+
+- Maven build error on eclipse [\#406](https://github.com/networknt/light-4j/issues/406)
+
+**Closed issues:**
+
+- SSL error - client module - release 1.5.29 [\#398](https://github.com/networknt/light-4j/issues/398)
+- Backwards incompatible changes: client module - release 1.5.29 [\#397](https://github.com/networknt/light-4j/issues/397)
+
+**Merged pull requests:**
+
+- Fixing binding to dynamic ports [\#416](https://github.com/networknt/light-4j/pull/416) ([NicholasAzar](https://github.com/NicholasAzar))
+- fix/\#407 the value in values.yml can be set to empty [\#409](https://github.com/networknt/light-4j/pull/409) ([jiachen1120](https://github.com/jiachen1120))
+- updating iteration of FormData item [\#408](https://github.com/networknt/light-4j/pull/408) ([jefperito](https://github.com/jefperito))
+- add code coverage badge [\#404](https://github.com/networknt/light-4j/pull/404) ([lanphan](https://github.com/lanphan))
+- Feat/\#389 status merge [\#403](https://github.com/networknt/light-4j/pull/403) ([jiachen1120](https://github.com/jiachen1120))
+- add missing license info, remove unused logback setting [\#402](https://github.com/networknt/light-4j/pull/402) ([lanphan](https://github.com/lanphan))
+- body: update and add more unittest [\#401](https://github.com/networknt/light-4j/pull/401) ([lanphan](https://github.com/lanphan))
+
 ## [1.5.30](https://github.com/networknt/light-4j/tree/1.5.30) (2019-02-21)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.29...1.5.30)
 
