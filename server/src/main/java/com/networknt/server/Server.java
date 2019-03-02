@@ -160,20 +160,11 @@ public class Server {
         }
 
         if (config.dynamicPort) {
-            boolean boundToPort = false;
             for (int i = config.minPort; i < config.maxPort; i++) {
-                try {
-                    boundToPort = bind(gracefulShutdownHandler, i);
-                    if (boundToPort) {
-                        break;
-                    }
-                } catch (RuntimeException ignore) {}
-            }
-            if (!boundToPort) {
-                String err = "No ports available to bind to. Tried: " + config.minPort + " to: " + (config.maxPort - 1);
-                System.out.println(err);
-                logger.error(err);
-                throw new RuntimeException(err);
+                boolean b = bind(gracefulShutdownHandler, i);
+                if (b) {
+                    break;
+                }
             }
         } else {
             bind(gracefulShutdownHandler, -1);
@@ -242,11 +233,10 @@ public class Server {
             server.start();
             System.out.println("HOST IP " + System.getenv(STATUS_HOST_IP));
         } catch (Exception e) {
-            System.out.println("Failed to bind to port " + port);
-            e.printStackTrace(System.out);
+            System.out.println("Failed to bind to port " + port + ". Trying " + ++port);
             if (logger.isInfoEnabled())
-                logger.info("Failed to bind to port " + port);
-            throw new RuntimeException(e.getMessage());
+                logger.info("Failed to bind to port " + port + ". Trying " + ++port);
+            return false;
         }
         // application level service registry. only be used without docker container.
         if (config.enableRegistry) {
