@@ -160,11 +160,20 @@ public class Server {
         }
 
         if (config.dynamicPort) {
+            boolean boundToPort = false;
             for (int i = config.minPort; i < config.maxPort; i++) {
-                boolean b = bind(gracefulShutdownHandler, i);
-                if (b) {
-                    break;
-                }
+                try {
+                    boundToPort = bind(gracefulShutdownHandler, i);
+                    if (boundToPort) {
+                        break;
+                    }
+                } catch (RuntimeException ignore) {}
+            }
+            if (!boundToPort) {
+                String err = "No ports available to bind to. Tried: " + config.minPort + " to: " + (config.maxPort - 1);
+                System.out.println(err);
+                logger.error(err);
+                throw new RuntimeException(err);
             }
         } else {
             bind(gracefulShutdownHandler, -1);
