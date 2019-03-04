@@ -5,6 +5,13 @@ import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.representer.Representer;
+import org.yaml.snakeyaml.resolver.Resolver;
+
+import com.networknt.config.yml.DecryptConstructor;
+import com.networknt.config.yml.YmlConstants;
 
 
 public class ConfigDecryptTest {
@@ -60,5 +67,16 @@ public class ConfigDecryptTest {
         for (String s: secretConfig.getTestMap().values()) {
         	Assert.assertEquals(SECRET, s);
         }
+    }
+    
+    @Test
+    public void testDecryptorClass() {
+        final Resolver resolver = new Resolver();
+        resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
+        Yaml yaml = new Yaml(new DecryptConstructor("com.networknt.config.TestDecryptor"), new Representer(), new DumperOptions(), resolver);
+    	
+        Map<String, Object> secret=yaml.load(Config.getInstance().getInputStreamFromFile("secret-map-test2.yml"));
+        
+        Assert.assertEquals(SECRET+"-test", secret.get("serverKeystorePass"));
     }
 }

@@ -94,6 +94,7 @@ public abstract class Config {
     }
 
     private static final class FileConfigImpl extends Config {
+    	static final String CONFIG_NAME = "config";
         static final String CONFIG_EXT_JSON = ".json";
         static final String CONFIG_EXT_YAML = ".yaml";
         static final String CONFIG_EXT_YML = ".yml";
@@ -125,7 +126,45 @@ public abstract class Config {
         	
             final Resolver resolver = new Resolver();
             resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
-        	yaml = new Yaml(new DecryptConstructor(), new Representer(), new DumperOptions(), resolver);
+        	yaml = new Yaml(new DecryptConstructor(getDecryptorClass()), new Representer(), new DumperOptions(), resolver);
+        }
+        
+        private String getDecryptorClass() {
+        	Yaml yml = new Yaml();
+        	
+            Map<String, Object> config = null;
+            for (String extension : configExtensionsOrdered) {
+                String ymlFilename = CONFIG_NAME + extension;
+                try (InputStream inStream = getConfigStream(ymlFilename, "")) {
+                    if (inStream != null) {
+                        config = yml.load(inStream);
+                    }
+                } catch (IOException ioe) {
+                    logger.error("IOException", ioe);
+                }
+                
+                if (config != null) {
+            		if (logger.isDebugEnabled()) {
+            			logger.debug("loaded config from file {}", ymlFilename);
+            		}
+            		
+                	break;
+                }
+            }
+        	
+        	if (null!=config) {
+        		String decryptorClass = (String) config.get(DecryptConstructor.CONFIG_ITEM_DECRYPTOR_CLASS);
+        		
+        		if (logger.isDebugEnabled()) {
+        			logger.debug("found decryptorClass={}", decryptorClass);
+        		}
+        		
+        		return decryptorClass;
+        	}else {
+        		logger.warn("config file cannot be found.");
+        	}
+        	
+        	return null;
         }
 
         private static Config initialize() {
@@ -310,7 +349,8 @@ public abstract class Config {
             }
             return config;
         }
-
+        
+        
         private Map<String, Object> loadMapConfig(String configName, String path) {
             Map<String, Object> config;
             for (String extension : configExtensionsOrdered) {
