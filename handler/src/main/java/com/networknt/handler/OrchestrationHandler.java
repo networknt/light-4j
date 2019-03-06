@@ -16,6 +16,7 @@
 
 package com.networknt.handler;
 
+import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 
 /**
@@ -24,6 +25,14 @@ import io.undertow.server.HttpServerExchange;
 public class OrchestrationHandler implements LightHttpHandler {
 
     static final String MISSING_HANDlER = "ERR10048";
+
+    public OrchestrationHandler() {
+
+    }
+
+    public OrchestrationHandler(HttpHandler lastHandler) {
+        Handler.setLastHandler(lastHandler);
+    }
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
