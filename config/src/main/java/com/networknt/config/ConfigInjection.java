@@ -66,12 +66,8 @@ public class ConfigInjection {
         while (m.find()) {
             // Get parsing result
             Object value = getValue(m.group(1));
-            // Throw exception when no parsing result found
-            if (value == null) {
-                throw new ConfigException(
-                        "\"${" + m.group(1) + "}\" appears in config file cannot be expanded");
-                // Return directly when the parsing result don't need to be casted to String
-            } else if (!(value instanceof String)) {
+            // Return directly when the parsing result don't need to be casted to String
+            if (!(value instanceof String)) {
                 return value;
             }
             m.appendReplacement(sb, (String) value);
@@ -112,6 +108,10 @@ public class ConfigInjection {
                         throw new ConfigException(error_text);
                     }
                 }
+            }
+            // Throw exception when no parsing result found
+            if (value == null && valueMap != null && !valueMap.containsKey(injectionPattern.getKey())) {
+                throw new ConfigException("\"${" + content + "}\" appears in config file cannot be expanded");
             }
         }
         return value;

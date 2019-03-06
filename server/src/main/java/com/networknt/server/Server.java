@@ -545,7 +545,8 @@ public class Server {
             return;
         }
         Map<String, Object> statusConfig = Config.getInstance().getJsonMapConfig(STATUS_CONFIG_NAME[0]);
-        Set<String> duplicatedStatusSet = statusConfig.keySet();
+        // clone the default status config key set
+        Set<String> duplicatedStatusSet = new HashSet<>(statusConfig.keySet());
         duplicatedStatusSet.retainAll(appStatusConfig.keySet());
         if (!duplicatedStatusSet.isEmpty()) {
             logger.error("The status code(s): " + duplicatedStatusSet.toString() + " is already in use by light-4j and cannot be overwritten," +
