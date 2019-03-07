@@ -1,10 +1,14 @@
 package com.networknt.client.oauth;
 
+import com.networknt.client.Http2Client;
 import com.networknt.client.oauth.cache.ICacheStrategy;
 import com.networknt.client.oauth.cache.LongestExpireCacheStrategy;
+import com.networknt.config.Config;
 import com.networknt.monad.Result;
 import io.undertow.client.ClientRequest;
 import io.undertow.util.HeaderValues;
+
+import java.util.Map;
 
 /**
  * This class is a singleton to manage ALL tokens.
@@ -12,13 +16,27 @@ import io.undertow.util.HeaderValues;
  * It manages caches based on different cache strategies underneath.
  */
 public class TokenManager {
+    Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
+    public static final String CACHE = "cache";
+    public static final String CAPACITY_CONFIG = "capacity";
 
     private static volatile TokenManager INSTANCE;
     private static int CAPACITY = 200;
 
-    private ICacheStrategy cacheStrategy = new LongestExpireCacheStrategy(CAPACITY);
+    private ICacheStrategy cacheStrategy;
 
-    private TokenManager() {}
+    private TokenManager() {
+        //set CAPACITY based on config
+        if(clientConfig != null) {
+            Map<String, Object> cacheConfig = (Map<String, Object>)clientConfig.get(CACHE);
+            if(cacheConfig != null) {
+                if(cacheConfig.get(CAPACITY_CONFIG) != null) {
+                    CAPACITY = (Integer)cacheConfig.get(CAPACITY_CONFIG);
+                }
+            }
+        }
+        cacheStrategy = new LongestExpireCacheStrategy(CAPACITY);
+    }
 
     public static TokenManager getInstance() {
         if(INSTANCE == null) {

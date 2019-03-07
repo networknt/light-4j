@@ -16,6 +16,8 @@ tls:
   # key store location
   keyStore: client.keystore
 # settings for OAuth2 server communication
+cache:
+  capacity: 200
 oauth:
   # OAuth 2.0 token endpoint configuration
   token:
