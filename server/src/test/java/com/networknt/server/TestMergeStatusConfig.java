@@ -43,6 +43,9 @@ public class TestMergeStatusConfig extends TestCase {
     @Test
     public void testAppStatus() {
         config.clear();
+        // test default element without merging with app-status
+        Status status0 = new Status("ERR10053");
+        Assert.assertEquals(401, status0.getStatusCode());
         Server.mergeStatusConfig();
         Status status = new Status("ERR99999");
         Assert.assertEquals(404, status.getStatusCode());
