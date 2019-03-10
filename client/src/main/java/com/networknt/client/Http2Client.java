@@ -168,11 +168,11 @@ public class Http2Client {
     @Deprecated
     public static final ByteBufferPool SSL_BUFFER_POOL = BUFFER_POOL;
 
-    private final Map<String, ClientProvider> clientProviders;
+    protected final Map<String, ClientProvider> clientProviders;
 
     private static final Http2Client INSTANCE = new Http2Client();
 
-    private Http2Client() {
+    protected Http2Client() {
         this(Http2Client.class.getClassLoader());
     }
 
