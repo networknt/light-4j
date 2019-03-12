@@ -26,6 +26,7 @@ import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;
 import com.networknt.status.Status;
+import com.networknt.utility.StringUtils;
 import io.undertow.UndertowOptions;
 import io.undertow.client.*;
 import io.undertow.server.HttpServerExchange;
@@ -176,6 +177,7 @@ public class OauthHelper {
             final ClientRequest request = requestComposer.ComposeClientRequest(tokenRequest);
             String requestBody = requestComposer.ComposeRequestBody(tokenRequest);
             logger.debug(requestBody);
+            adjustNoChunkedEncoding(request, requestBody);
             connection.sendRequest(request, new ClientCallback<ClientExchange>() {
 
                 @Override
@@ -238,6 +240,7 @@ public class OauthHelper {
                 request.getRequestHeaders().put(Headers.AUTHORIZATION, getBasicAuthHeader(keyRequest.getClientId(), keyRequest.getClientSecret()));
             }
             request.getRequestHeaders().put(Headers.HOST, "localhost");
+            adjustNoChunkedEncoding(request, "");
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
         } catch (Exception e) {
@@ -459,19 +462,14 @@ public class OauthHelper {
     }
 
     /**
-     * if scopes in jwt itself has value, use this scope
-     * else if scopes in jwt.getKey() has value, use this scope
+     * if scopes in jwt.getKey() has value, use this scope
      * otherwise remains the default scope value which already inside tokenRequest when create ClientCredentialsRequest;
      * @param tokenRequest
      * @param jwt
      */
     private static void setScope(TokenRequest tokenRequest, Jwt jwt) {
-        if(!jwt.getScopes().isEmpty()) {
-            tokenRequest.setScope(new ArrayList<String>() {{ addAll(jwt.getScopes()); }});
-        } else {
-            if(jwt.getKey() != null && !jwt.getKey().getScopes().isEmpty()) {
-                tokenRequest.setScope(new ArrayList<String>() {{ addAll(jwt.getKey().getScopes()); }});
-            }
+        if(jwt.getKey() != null && !jwt.getKey().getScopes().isEmpty()) {
+            tokenRequest.setScope(new ArrayList<String>() {{ addAll(jwt.getKey().getScopes()); }});
         }
     }
 
@@ -532,5 +530,23 @@ public class OauthHelper {
             }
         }
         return escapedXML.toString();
+    }
+
+    //this method is to support sending a server which doesn't support chunked transfer encoding.
+    public static void adjustNoChunkedEncoding(ClientRequest request, String requestBody) {
+        String fixedLengthString = request.getRequestHeaders().getFirst(Headers.CONTENT_LENGTH);
+        String transferEncodingString = request.getRequestHeaders().getLast(Headers.TRANSFER_ENCODING);
+        if(transferEncodingString != null) {
+            request.getRequestHeaders().remove(Headers.TRANSFER_ENCODING);
+        }
+        //if already specify a content-length, should use what they provided
+        if(fixedLengthString != null && Long.parseLong(fixedLengthString) > 0) {
+            return;
+        }
+        if(!StringUtils.isEmpty(requestBody)) {
+            long contentLength = requestBody.getBytes().length;
+            request.getRequestHeaders().put(Headers.CONTENT_LENGTH, contentLength);
+        }
+
     }
 }

@@ -18,6 +18,7 @@ import java.util.Map;
 public class TokenManager {
     Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
     public static final String CACHE = "cache";
+    public static final String OAUTH = "oauth";
     public static final String CAPACITY_CONFIG = "capacity";
 
     private static volatile TokenManager INSTANCE;
@@ -28,10 +29,13 @@ public class TokenManager {
     private TokenManager() {
         //set CAPACITY based on config
         if(clientConfig != null) {
-            Map<String, Object> cacheConfig = (Map<String, Object>)clientConfig.get(CACHE);
-            if(cacheConfig != null) {
-                if(cacheConfig.get(CAPACITY_CONFIG) != null) {
-                    CAPACITY = (Integer)cacheConfig.get(CAPACITY_CONFIG);
+            Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OAUTH);
+            if(oauthConfig != null) {
+                Map<String, Object> cacheConfig = (Map<String, Object>)oauthConfig.get(CACHE);
+                if(cacheConfig != null) {
+                    if(cacheConfig.get(CAPACITY_CONFIG) != null) {
+                        CAPACITY = (Integer)cacheConfig.get(CAPACITY_CONFIG);
+                    }
                 }
             }
         }
