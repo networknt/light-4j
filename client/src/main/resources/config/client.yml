@@ -16,9 +16,9 @@ tls:
   # key store location
   keyStore: client.keystore
 # settings for OAuth2 server communication
-cache:
-  capacity: 200
 oauth:
+  cache:
+    capacity: 200
   # OAuth 2.0 token endpoint configuration
   token:
     # The scope token will be renewed automatically 1 minutes before expiry
