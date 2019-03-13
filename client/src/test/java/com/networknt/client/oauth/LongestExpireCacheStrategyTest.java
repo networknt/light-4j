@@ -7,6 +7,8 @@ import org.junit.Test;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.PriorityBlockingQueue;
 
 public class LongestExpireCacheStrategyTest {
     private static LongestExpireCacheStrategy cacheStrategy =  new LongestExpireCacheStrategy(4);
@@ -24,10 +26,10 @@ public class LongestExpireCacheStrategyTest {
         Assert.assertNotNull(cacheStrategy.getCachedJwt(new Jwt.Key(initJwts.get(0).getScopes())));
         Field field = LongestExpireCacheStrategy.class.getDeclaredField("expiryQueue");
         field.setAccessible(true);
-        PriorityQueue cachedQueue = (PriorityQueue) field.get(cacheStrategy);
+        PriorityBlockingQueue cachedQueue = (PriorityBlockingQueue) field.get(cacheStrategy);
         Field field1 = LongestExpireCacheStrategy.class.getDeclaredField("cachedJwts");
         field1.setAccessible(true);
-        HashMap<Jwt.Key, Jwt> cachedJwts = (HashMap) field1.get(cacheStrategy);
+        ConcurrentHashMap<Jwt.Key, Jwt> cachedJwts = (ConcurrentHashMap) field1.get(cacheStrategy);
         Assert.assertEquals(cachedJwts.size(), 4);
         Assert.assertEquals(cachedQueue.size(), 4);
         ArrayList<Jwt> jwts = createJwts(2, initExpiryTime + 10);
