@@ -231,11 +231,10 @@ public class Server {
             server.start();
             System.out.println("HOST IP " + System.getenv(STATUS_HOST_IP));
         } catch (Exception e) {
-            System.out.println("Failed to bind to port " + port);
-            e.printStackTrace(System.out);
+            System.out.println("Failed to bind to port " + port + ". Trying " + ++port);
             if (logger.isInfoEnabled())
-                logger.info("Failed to bind to port " + port);
-            throw new RuntimeException(e.getMessage());
+                logger.info("Failed to bind to port " + port + ". Trying " + ++port);
+            return false;
         }
         // application level service registry. only be used without docker container.
         if (config.enableRegistry) {
