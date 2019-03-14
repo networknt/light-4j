@@ -160,6 +160,12 @@ public class Server {
         }
 
         if (config.dynamicPort) {
+            if (config.minPort >= config.maxPort) {
+                String errMessage = "No ports available to bind to - the minPort is larger than or equal to the maxPort in server.yml";
+                System.out.println(errMessage);
+                logger.error(errMessage);
+                throw new RuntimeException(errMessage);
+            }
             for (int i = config.minPort; i < config.maxPort; i++) {
                 boolean b = bind(gracefulShutdownHandler, i);
                 if (b) {
