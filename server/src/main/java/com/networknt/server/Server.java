@@ -16,6 +16,8 @@
 
 package com.networknt.server;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
 import com.networknt.common.DecryptUtil;
 import com.networknt.common.SecretConstants;
@@ -82,19 +84,24 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class Server {
 
     static final Logger logger = LoggerFactory.getLogger(Server.class);
-    public static final String CONFIG_NAME = "server";
+    public static final String SERVER_CONFIG_NAME = "server";
+    public static final String STARTUP_CONFIG_NAME = "startup";
     public static final String CONFIG_SECRET = "secret";
     public static final String[] STATUS_CONFIG_NAME = {"status", "app-status"};
 
     static final String DEFAULT_ENV = "test";
     static final String LIGHT_ENV = "light-env";
     static final String LIGHT_CONFIG_SERVER_URI = "light-config-server-uri";
+
+    static final String APIF_CONFIG_SERVER_URI = "apif-config-server-uri";
+    static final String APIF_CONFIG_SERVER_CONTEXT_ROOT = "/config-server/configs";
+
     static final String STATUS_HOST_IP = "STATUS_HOST_IP";
 
     // service_id in slf4j MDC
     static final String SID = "sId";
 
-    public static ServerConfig config = (ServerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME,
+    public static ServerConfig config = (ServerConfig) Config.getInstance().getJsonObjectConfig(SERVER_CONFIG_NAME,
             ServerConfig.class);
     public static Map<String, Object> secret = DecryptUtil
             .decryptMap(Config.getInstance().getJsonMapConfig(CONFIG_SECRET));
@@ -109,6 +116,9 @@ public class Server {
 
     static GracefulShutdownHandler gracefulShutdownHandler;
 
+    // An instance of Jackson ObjectMapper that can be used anywhere else for Json.
+    final static ObjectMapper mapper = new ObjectMapper();
+
     public static void main(final String[] args) {
         init();
     }
@@ -121,8 +131,12 @@ public class Server {
         MDC.put(SID, config.getServiceId());
 
         try {
+            // load config properties from apif-config-server if possible.
+            loadConfigServerConfigs();
+
             // load config files from light-config-server if possible.
             loadConfig();
+
             // merge status.yml and app-status.yml if app-status.yml is provided
             mergeStatusConfig();
             start();
@@ -423,6 +437,73 @@ public class Server {
             logger.error("Unable to create SSLContext", e);
             throw new RuntimeException("Unable to create SSLContext", e);
         }
+    }
+
+    private static void loadConfigServerConfigs(){
+        String env = System.getProperty(LIGHT_ENV);
+        if (env == null) {
+            logger.warn("Warning! No light-env has been passed in from command line. Defaulting to {}",DEFAULT_ENV);
+            env = DEFAULT_ENV;
+        }
+        String configUri = System.getProperty(APIF_CONFIG_SERVER_URI);
+        if (configUri != null) {
+            StartupConfig bootsrapConfig = (StartupConfig) Config.getInstance().getJsonObjectConfig(STARTUP_CONFIG_NAME, StartupConfig.class);
+            StringBuilder configPath = new StringBuilder();
+            configPath.append("/").append(bootsrapConfig.getProjectId());
+            configPath.append("/").append(bootsrapConfig.getServiceId());
+            configPath.append("/").append(bootsrapConfig.getVersion());
+            configPath.append("/").append(env);
+            logger.debug("configPath: {}", configPath);
+
+            Map<String, Object> serviceConfigs = getServiceConfigs(configPath.toString());
+            logger.debug("serviceConfigs: {}", serviceConfigs);
+            Config.getInstance().putInConfigCache(Config.CENTRALIZED_MANAGEMENT, serviceConfigs);
+        }else {
+            logger.info("Property light-config-server-uri is missing in the command line. Using local config files");
+        }
+    }
+
+    private static Map<String, Object> getServiceConfigs(String configPath) {
+        String authorization=System.getenv("Authorization");
+        Map<String, Object> configs = null;
+        String configServerHost = System.getProperty(APIF_CONFIG_SERVER_URI);
+        String configServerPath =  APIF_CONFIG_SERVER_CONTEXT_ROOT + configPath;
+
+        logger.debug("Calling Config Server endpoint:{}{}", configServerHost, configServerPath);
+
+        Http2Client client = Http2Client.getInstance();
+        ClientConnection connection = null;
+        try {
+            connection = client.connect(new URI(configServerHost), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL,
+                    OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+
+            final CountDownLatch latch = new CountDownLatch(1);
+            final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+
+            ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(configServerPath);
+            request.getRequestHeaders().put(Headers.HOST, configServerHost);
+            request.getRequestHeaders().put(Headers.AUTHORIZATION, authorization);
+            connection.sendRequest(request, client.createClientCallback(reference, latch));
+            latch.await();
+
+            int statusCode = reference.get().getResponseCode();
+
+            if (statusCode >= 300) {
+                logger.error("Failed to load configs from config server" + statusCode + ":"
+                        + reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+                throw new Exception("Failed to load configs from config server: " + statusCode);
+            } else {
+                String respBody = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+                Map<String, Object> response = (Map<String, Object>) mapper.readValue(respBody, new TypeReference<Map<String, Object>>() {});
+                configs = (Map<String, Object>) response.get("configProperties");
+            }
+        } catch (Exception e) {
+            logger.error("Exception while calling config server:", e);
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+
+        return configs;
     }
 
     /**
