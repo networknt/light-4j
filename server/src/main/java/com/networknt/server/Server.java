@@ -450,6 +450,7 @@ public class Server {
             StartupConfig bootsrapConfig = (StartupConfig) Config.getInstance().getJsonObjectConfig(STARTUP_CONFIG_NAME, StartupConfig.class);
             StringBuilder configPath = new StringBuilder();
             configPath.append("/").append(bootsrapConfig.getProjectId());
+            configPath.append("/").append(bootsrapConfig.getProjectVersion());
             configPath.append("/").append(bootsrapConfig.getServiceId());
             configPath.append("/").append(bootsrapConfig.getServiceVersion());
             configPath.append("/").append(env);
