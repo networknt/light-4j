@@ -461,7 +461,9 @@ public class Http2Client {
      * @throws IOException
      */
     public static SSLContext createSSLContext() throws IOException {
-    	return createSSLContext(null);
+    	Map<String, Object> tlsMap = (Map<String, Object>)config.get(TLS);
+    	
+    	return null==tlsMap?null:createSSLContext((String)tlsMap.get(TLSConfig.DEFAULT_GROUP_KEY));
     }
 
     /**
