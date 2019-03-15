@@ -1,10 +1,11 @@
 package com.networknt.server;
 
 public class StartupConfig {
-    public static final String CONFIG_NAME = "bootstrap";
+    public static final String CONFIG_NAME = "startup";
     private String projectId;
+    private String projectVersion;
     private String serviceId;
-    private String version;
+    private String serviceVersion;
 
     public String getProjectId() {
         return projectId;
@@ -12,6 +13,14 @@ public class StartupConfig {
 
     public void setProjectId(String projectId) {
         this.projectId = projectId;
+    }
+
+    public String getProjectVersion() {
+        return projectVersion;
+    }
+
+    public void setProjectVersion(String projectVersion) {
+        this.projectVersion = projectVersion;
     }
 
     public String getServiceId() {
@@ -22,12 +31,11 @@ public class StartupConfig {
         this.serviceId = serviceId;
     }
 
-    public String getVersion() {
-        return version;
+    public String getServiceVersion() {
+        return serviceVersion;
     }
 
-    public void setVersion(String version) {
-        this.version = version;
+    public void setServiceVersion(String serviceVersion) {
+        this.serviceVersion = serviceVersion;
     }
-
 }

@@ -451,7 +451,7 @@ public class Server {
             StringBuilder configPath = new StringBuilder();
             configPath.append("/").append(bootsrapConfig.getProjectId());
             configPath.append("/").append(bootsrapConfig.getServiceId());
-            configPath.append("/").append(bootsrapConfig.getVersion());
+            configPath.append("/").append(bootsrapConfig.getServiceVersion());
             configPath.append("/").append(env);
             logger.debug("configPath: {}", configPath);
 
