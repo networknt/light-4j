@@ -367,11 +367,12 @@ public abstract class Config {
         }
 
         private void checkCacheExpiration() {
-            if (System.currentTimeMillis() > cacheExpirationTime) {
+            // We dont have any use case to clear the cache over midnight; so commenting below code for now
+            /*if (System.currentTimeMillis() > cacheExpirationTime) {
                 clear();
                 logger.info("daily config cache refresh");
                 cacheExpirationTime = getNextMidNightTime();
-            }
+            }*/
         }
 
         // private method used to get absolute directory, input path can be absolute or relative

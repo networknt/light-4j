@@ -90,7 +90,7 @@ public class Server {
     public static final String[] STATUS_CONFIG_NAME = {"status", "app-status"};
 
     static final String DEFAULT_ENV = "test";
-    static final String LIGHT_ENV = "light-env";
+    public static String LIGHT_ENV = System.getProperty("light-env");
     static final String LIGHT_CONFIG_SERVER_URI = "light-config-server-uri";
 
     static final String APIF_CONFIG_SERVER_URI = "apif-config-server-uri";
@@ -101,10 +101,8 @@ public class Server {
     // service_id in slf4j MDC
     static final String SID = "sId";
 
-    public static ServerConfig config = (ServerConfig) Config.getInstance().getJsonObjectConfig(SERVER_CONFIG_NAME,
-            ServerConfig.class);
-    public static Map<String, Object> secret = DecryptUtil
-            .decryptMap(Config.getInstance().getJsonMapConfig(CONFIG_SECRET));
+    public static StartupConfig startupConfig = (StartupConfig) Config.getInstance().getJsonObjectConfig(STARTUP_CONFIG_NAME, StartupConfig.class);
+
     public final static TrustManager[] TRUST_ALL_CERTS = new X509TrustManager[]{new DummyTrustManager()};
 
     static protected boolean shutdownRequested = false;
@@ -128,7 +126,7 @@ public class Server {
         // setup system property to redirect undertow logs to slf4j/logback.
         System.setProperty("org.jboss.logging.provider", "slf4j");
         // this will make sure that all log statement will have serviceId
-        MDC.put(SID, config.getServiceId());
+        MDC.put(SID, startupConfig.getServiceId());
 
         try {
             // load config properties from apif-config-server if possible.
@@ -173,8 +171,10 @@ public class Server {
             gracefulShutdownHandler = new GracefulShutdownHandler(new OrchestrationHandler());
         }
 
-        if (config.dynamicPort) {
-            for (int i = config.minPort; i < config.maxPort; i++) {
+        ServerConfig serverConfig = getServerConfig();
+
+        if (serverConfig.dynamicPort) {
+            for (int i = serverConfig.minPort; i < serverConfig.maxPort; i++) {
                 boolean b = bind(gracefulShutdownHandler, i);
                 if (b) {
                     break;
@@ -213,25 +213,27 @@ public class Server {
     }
 
     static private boolean bind(HttpHandler handler, int port) {
+        ServerConfig serverConfig = getServerConfig();
+
         try {
             Undertow.Builder builder = Undertow.builder();
-            if (config.enableHttps) {
-                port = port < 0 ? config.getHttpsPort() : port;
+            if (serverConfig.enableHttps) {
+                port = port < 0 ? serverConfig.getHttpsPort() : port;
                 sslContext = createSSLContext();
-                builder.addHttpsListener(port, config.getIp(), sslContext);
-            } else if (config.enableHttp) {
-                port = port < 0 ? config.getHttpPort() : port;
-                builder.addHttpListener(port, config.getIp());
+                builder.addHttpsListener(port, serverConfig.getIp(), sslContext);
+            } else if (serverConfig.enableHttp) {
+                port = port < 0 ? serverConfig.getHttpPort() : port;
+                builder.addHttpListener(port, serverConfig.getIp());
             } else {
                 throw new RuntimeException(
                         "Unable to start the server as both http and https are disabled in server.yml");
             }
 
-            if (config.enableHttp2) {
+            if (serverConfig.enableHttp2) {
                 builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true);
             }
 
-            if (config.isEnableTwoWayTls()) {
+            if (serverConfig.isEnableTwoWayTls()) {
                builder.setSocketOption(Options.SSL_CLIENT_AUTH_MODE, SslClientAuthMode.REQUIRED);
             }
 
@@ -253,7 +255,7 @@ public class Server {
             return false;
         }
         // application level service registry. only be used without docker container.
-        if (config.enableRegistry) {
+        if (serverConfig.enableRegistry) {
             // assuming that registry is defined in service.json, otherwise won't start
             // server.
             try {
@@ -271,9 +273,9 @@ public class Server {
                     logger.info("Could not find IP from STATUS_HOST_IP, use the InetAddress " + ipAddress);
                 }
                 Map parameters = new HashMap<>();
-                if (config.getEnvironment() != null)
-                    parameters.put("environment", config.getEnvironment());
-                serviceUrl = new URLImpl("light", ipAddress, port, config.getServiceId(), parameters);
+                if (serverConfig.getEnvironment() != null)
+                    parameters.put("environment", serverConfig.getEnvironment());
+                serviceUrl = new URLImpl("light", ipAddress, port, startupConfig.getServiceId(), parameters);
                 registry.register(serviceUrl);
                 if (logger.isInfoEnabled())
                     logger.info("register service: " + serviceUrl.toFullStr());
@@ -291,19 +293,19 @@ public class Server {
             }
         }
 
-        if (config.enableHttp) {
-            System.out.println("Http Server started on ip:" + config.getIp() + " Port:" + port);
+        if (serverConfig.enableHttp) {
+            System.out.println("Http Server started on ip:" + serverConfig.getIp() + " Port:" + port);
             if (logger.isInfoEnabled())
-                logger.info("Http Server started on ip:" + config.getIp() + " Port:" + port);
+                logger.info("Http Server started on ip:" + serverConfig.getIp() + " Port:" + port);
         } else {
             System.out.println("Http port disabled.");
             if (logger.isInfoEnabled())
                 logger.info("Http port disabled.");
         }
-        if (config.enableHttps) {
-            System.out.println("Https Server started on ip:" + config.getIp() + " Port:" + port);
+        if (serverConfig.enableHttps) {
+            System.out.println("Https Server started on ip:" + serverConfig.getIp() + " Port:" + port);
             if (logger.isInfoEnabled())
-                logger.info("Https Server started on ip:" + config.getIp() + " Port:" + port);
+                logger.info("Https Server started on ip:" + serverConfig.getIp() + " Port:" + port);
         } else {
             System.out.println("Https port disabled.");
             if (logger.isInfoEnabled())
@@ -320,9 +322,10 @@ public class Server {
 
     // implement shutdown hook here.
     static public void shutdown() {
+        ServerConfig serverConfig = getServerConfig();
 
         // need to unregister the service
-        if (config.enableRegistry && registry != null) {
+        if (serverConfig.enableRegistry && registry != null) {
             registry.unregister(serviceUrl);
             // Please don't remove the following line. When server is killed, the logback
             // won't work anymore.
@@ -362,10 +365,13 @@ public class Server {
     }
 
     private static KeyStore loadKeyStore() {
-        String name = config.getKeystoreName();
+        ServerConfig serverConfig = getServerConfig();
+        Map<String, Object> secretConfig = DecryptUtil.decryptMap(Config.getInstance().getJsonMapConfig(CONFIG_SECRET));
+
+        String name = serverConfig.getKeystoreName();
         try (InputStream stream = Config.getInstance().getInputStreamFromFile(name)) {
             KeyStore loadedKeystore = KeyStore.getInstance("JKS");
-            loadedKeystore.load(stream, ((String) secret.get(SecretConstants.SERVER_KEYSTORE_PASS)).toCharArray());
+            loadedKeystore.load(stream, ((String) secretConfig.get(SecretConstants.SERVER_KEYSTORE_PASS)).toCharArray());
             return loadedKeystore;
         } catch (Exception e) {
             logger.error("Unable to load keystore " + name, e);
@@ -374,10 +380,13 @@ public class Server {
     }
 
     protected static KeyStore loadTrustStore() {
-        String name = config.getTruststoreName();
+        ServerConfig serverConfig = getServerConfig();
+        Map<String, Object> secretConfig = DecryptUtil.decryptMap(Config.getInstance().getJsonMapConfig(CONFIG_SECRET));
+
+        String name = serverConfig.getTruststoreName();
         try (InputStream stream = Config.getInstance().getInputStreamFromFile(name)) {
             KeyStore loadedKeystore = KeyStore.getInstance("JKS");
-            loadedKeystore.load(stream, ((String) secret.get(SecretConstants.SERVER_TRUSTSTORE_PASS)).toCharArray());
+            loadedKeystore.load(stream, ((String) secretConfig.get(SecretConstants.SERVER_TRUSTSTORE_PASS)).toCharArray());
             return loadedKeystore;
         } catch (Exception e) {
             logger.error("Unable to load truststore " + name, e);
@@ -419,11 +428,14 @@ public class Server {
     }
 
     private static SSLContext createSSLContext() throws RuntimeException {
+        ServerConfig serverConfig = getServerConfig();
+        Map<String, Object> secretConfig = DecryptUtil.decryptMap(Config.getInstance().getJsonMapConfig(CONFIG_SECRET));
+
         try {
             KeyManager[] keyManagers = buildKeyManagers(loadKeyStore(),
-                    ((String) secret.get(SecretConstants.SERVER_KEY_PASS)).toCharArray());
+                    ((String) secretConfig.get(SecretConstants.SERVER_KEY_PASS)).toCharArray());
             TrustManager[] trustManagers;
-            if (config.isEnableTwoWayTls()) {
+            if (serverConfig.isEnableTwoWayTls()) {
                 trustManagers = buildTrustManagers(loadTrustStore());
             } else {
                 trustManagers = buildTrustManagers(null);
@@ -440,20 +452,18 @@ public class Server {
     }
 
     private static void loadConfigServerConfigs(){
-        String env = System.getProperty(LIGHT_ENV);
-        if (env == null) {
+        if (LIGHT_ENV == null) {
             logger.warn("Warning! No light-env has been passed in from command line. Defaulting to {}",DEFAULT_ENV);
-            env = DEFAULT_ENV;
+            LIGHT_ENV = DEFAULT_ENV;
         }
         String configUri = System.getProperty(APIF_CONFIG_SERVER_URI);
         if (configUri != null) {
-            StartupConfig bootsrapConfig = (StartupConfig) Config.getInstance().getJsonObjectConfig(STARTUP_CONFIG_NAME, StartupConfig.class);
             StringBuilder configPath = new StringBuilder();
-            configPath.append("/").append(bootsrapConfig.getProjectId());
-            configPath.append("/").append(bootsrapConfig.getProjectVersion());
-            configPath.append("/").append(bootsrapConfig.getServiceId());
-            configPath.append("/").append(bootsrapConfig.getServiceVersion());
-            configPath.append("/").append(env);
+            configPath.append("/").append(startupConfig.getProjectId());
+            configPath.append("/").append(startupConfig.getProjectVersion());
+            configPath.append("/").append(startupConfig.getServiceId());
+            configPath.append("/").append(startupConfig.getServiceVersion());
+            configPath.append("/").append(LIGHT_ENV);
             logger.debug("configPath: {}", configPath);
 
             Map<String, Object> serviceConfigs = getServiceConfigs(configPath.toString());
@@ -520,10 +530,9 @@ public class Server {
     private static void loadConfig() {
         // if it is necessary to load config files from config server
         // Here we expect at least env(dev/sit/uat/prod) and optional config server url
-        String env = System.getProperty(LIGHT_ENV);
-        if (env == null) {
+        if (LIGHT_ENV == null) {
             logger.warn("Warning! No light-env has been passed in from command line. Default to dev");
-            env = DEFAULT_ENV;
+            LIGHT_ENV = DEFAULT_ENV;
         }
         String configUri = System.getProperty(LIGHT_CONFIG_SERVER_URI);
         if (configUri != null) {
@@ -534,12 +543,12 @@ public class Server {
                 return;
             }
             String version = Util.getJarVersion();
-            String service = config.getServiceId();
+            String service = startupConfig.getServiceId();
             String tempDir = System.getProperty("java.io.tmpdir");
             String zipFile = tempDir + "/config.zip";
             // /v1/config/1.2.4/dev/com.networknt.petstore-1.0.0
 
-            String path = "/v1/config/" + version + "/" + env + "/" + service;
+            String path = "/v1/config/" + version + "/" + LIGHT_ENV + "/" + service;
             Http2Client client = Http2Client.getInstance();
             ClientConnection connection = null;
             try {
@@ -635,5 +644,10 @@ public class Server {
             throw new RuntimeException("The status code(s): " + duplicatedStatusSet.toString() + " in status.yml and app-status.yml are duplicated.");
         }
         statusConfig.putAll(appStatusConfig);
+    }
+
+    public static ServerConfig getServerConfig(){
+        return (ServerConfig) Config.getInstance().getJsonObjectConfig(SERVER_CONFIG_NAME,
+                ServerConfig.class);
     }
 }
