@@ -43,26 +43,21 @@ public class ConsulConstants {
 	 */
 	public static int DEFAULT_PORT = 8500;
 
+    /**
+     * Service Check Interval
+     */
+    public static String INTERVAL = ConsulService.config.checkInterval == null ? "10s" : ConsulService.config.checkInterval;
+
+    /**
+     * Service TCP Check Deregister After
+     */
+    public static String DEREGISTER_AFTER = "2m";
+
 	/**
 	 * Service Time To Live in second. If there is no heart beat with TTL, the service
      * will be marked as unavailable.
 	 */
-	public static int TTL = 30;
-
-	/**
-	 * HEARTBEAT_TTL string format
-	 */
-	public static String TTL_STR = TTL + "s";
-
-	/**
-	 * Service TCP Check Interval
-	 */
-	public static String INTERVAL = "10s";
-
-	/**
-	 * Service TCP Check Deregister After
-	 */
-	public static String DEREGISTER_AFTER = "2m";
+	public static int TTL = Integer.valueOf(INTERVAL.substring(0,INTERVAL.length() - 1));
 
 	/**
 	 * Heart beat circle，2/3 of ttl
