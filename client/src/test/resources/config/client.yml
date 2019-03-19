@@ -2,7 +2,9 @@
 tls:
   # if the server is using self-signed certificate, this need to be false.
   verifyHostname: true
-  # trused hostnames, service names, service Ids, and so on.
+  # The default trustedNames group used to created default SSL context. This is used to create Http2Client.SSL if set.
+  defaultGroupKey: trustedNames.local
+  # trusted hostnames, service names, service Ids, and so on.
   # Note: localhost and 127.0.0.1 are not trustable hostname/ip in general. So, these values should not be used as trusted names in production.
   trustedNames: 
     local: localhost
