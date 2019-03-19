@@ -42,9 +42,6 @@ public class ConsulRegistry extends CommandFailbackRegistry {
     private ConsulClient client;
     private ConsulHeartbeatManager heartbeatManager;
     private int lookupInterval;
-    private Map<String, Object> secret = DecryptUtil.decryptMap(Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET));
-    private String token = secret == null? null : (String)secret.get(SecretConstants.CONSUL_TOKEN);
-    private ConsulConfig config = (ConsulConfig)Config.getInstance().getJsonObjectConfig(ConsulConstants.CONFIG_NAME, ConsulConfig.class);
 
     // service local cache. key: serviceName, value: <service url list>
     private ConcurrentHashMap<String, List<URL>> serviceCache = new ConcurrentHashMap<String, List<URL>>();
@@ -60,8 +57,8 @@ public class ConsulRegistry extends CommandFailbackRegistry {
     public ConsulRegistry(URL url, ConsulClient client) {
         super(url);
         this.client = client;
-        if(config.ttlCheck) {
-            heartbeatManager = new ConsulHeartbeatManager(client, token);
+        if(getConsulConfig().ttlCheck) {
+            heartbeatManager = new ConsulHeartbeatManager(client, getConsulToken());
             heartbeatManager.start();
         }
         lookupInterval = getUrl().getIntParameter(URLParamType.registrySessionTimeout.getName(), ConsulConstants.DEFAULT_LOOKUP_INTERVAL);
@@ -78,21 +75,21 @@ public class ConsulRegistry extends CommandFailbackRegistry {
     @Override
     protected void doRegister(URL url) {
         ConsulService service = ConsulUtils.buildService(url);
-        client.registerService(service, token);
-        if(config.ttlCheck) heartbeatManager.addHeartbeatServcieId(service.getId());
+        client.registerService(service, getConsulToken());
+        if(getConsulConfig().ttlCheck) heartbeatManager.addHeartbeatServcieId(service.getId());
     }
 
     @Override
     protected void doUnregister(URL url) {
         ConsulService service = ConsulUtils.buildService(url);
-        client.unregisterService(service.getId(), token);
-        if(config.ttlCheck) heartbeatManager.removeHeartbeatServiceId(service.getId());
+        client.unregisterService(service.getId(), getConsulToken());
+        if(getConsulConfig().ttlCheck) heartbeatManager.removeHeartbeatServiceId(service.getId());
     }
 
     @Override
     protected void doAvailable(URL url) {
         if (url == null) {
-            if(config.ttlCheck) heartbeatManager.setHeartbeatOpen(true);
+            if(getConsulConfig().ttlCheck) heartbeatManager.setHeartbeatOpen(true);
         } else {
             throw new UnsupportedOperationException("Command consul registry not support available by urls yet");
         }
@@ -101,7 +98,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
     @Override
     protected void doUnavailable(URL url) {
         if (url == null) {
-            if(config.ttlCheck) heartbeatManager.setHeartbeatOpen(false);
+            if(getConsulConfig().ttlCheck) heartbeatManager.setHeartbeatOpen(false);
         } else {
             throw new UnsupportedOperationException("Command consul registry not support unavailable by urls yet");
         }
@@ -219,7 +216,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
      * @return ConsulResponse or null
      */
     private ConsulResponse<List<ConsulService>> lookupConsulService(String serviceName, String tag,  Long lastConsulIndexId) {
-        ConsulResponse<List<ConsulService>> response = client.lookupHealthService(serviceName, tag, lastConsulIndexId, token);
+        ConsulResponse<List<ConsulService>> response = client.lookupHealthService(serviceName, tag, lastConsulIndexId, getConsulToken());
         return response;
     }
 
@@ -318,5 +315,15 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                 logger.debug("need not notify service:" + service);
             }
         }
+    }
+
+    private ConsulConfig getConsulConfig(){
+        return (ConsulConfig)Config.getInstance().getJsonObjectConfig(ConsulConstants.CONFIG_NAME, ConsulConfig.class);
+    }
+
+    private String getConsulToken(){
+        Map<String, Object> secret = DecryptUtil.decryptMap(Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET));
+        String token = secret == null? null : (String)secret.get(SecretConstants.CONSUL_TOKEN);
+        return token;
     }
 }

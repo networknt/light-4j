@@ -89,8 +89,12 @@ public class Server {
     public static final String CONFIG_SECRET = "secret";
     public static final String[] STATUS_CONFIG_NAME = {"status", "app-status"};
 
-    static final String DEFAULT_ENV = "test";
-    public static String LIGHT_ENV = System.getProperty("light-env");
+
+    public static final String ENV_PROPERTY_KEY = "environment";
+    public static final String DEFAULT_ENV = "test";
+
+    public static String lightEnv = System.getProperty("light-env");
+
     static final String LIGHT_CONFIG_SERVER_URI = "light-config-server-uri";
 
     static final String APIF_CONFIG_SERVER_URI = "apif-config-server-uri";
@@ -133,7 +137,7 @@ public class Server {
             loadConfigServerConfigs();
 
             // load config files from light-config-server if possible.
-            loadConfig();
+            //loadConfig();
 
             // merge status.yml and app-status.yml if app-status.yml is provided
             mergeStatusConfig();
@@ -273,8 +277,8 @@ public class Server {
                     logger.info("Could not find IP from STATUS_HOST_IP, use the InetAddress " + ipAddress);
                 }
                 Map parameters = new HashMap<>();
-                if (serverConfig.getEnvironment() != null)
-                    parameters.put("environment", serverConfig.getEnvironment());
+                if (lightEnv != null)
+                    parameters.put(ENV_PROPERTY_KEY, lightEnv);
                 serviceUrl = new URLImpl("light", ipAddress, port, startupConfig.getServiceId(), parameters);
                 registry.register(serviceUrl);
                 if (logger.isInfoEnabled())
@@ -452,9 +456,9 @@ public class Server {
     }
 
     private static void loadConfigServerConfigs(){
-        if (LIGHT_ENV == null) {
+        if (lightEnv == null) {
             logger.warn("Warning! No light-env has been passed in from command line. Defaulting to {}",DEFAULT_ENV);
-            LIGHT_ENV = DEFAULT_ENV;
+            lightEnv = DEFAULT_ENV;
         }
         String configUri = System.getProperty(APIF_CONFIG_SERVER_URI);
         if (configUri != null) {
@@ -463,11 +467,14 @@ public class Server {
             configPath.append("/").append(startupConfig.getProjectVersion());
             configPath.append("/").append(startupConfig.getServiceId());
             configPath.append("/").append(startupConfig.getServiceVersion());
-            configPath.append("/").append(LIGHT_ENV);
+            configPath.append("/").append(lightEnv);
             logger.debug("configPath: {}", configPath);
 
+            //get service configs and put them in config cache
             Map<String, Object> serviceConfigs = getServiceConfigs(configPath.toString());
             logger.debug("serviceConfigs: {}", serviceConfigs);
+            //clear config cache: this is required just in case other classes have already loaded something in cache
+            Config.getInstance().clear();
             Config.getInstance().putInConfigCache(Config.CENTRALIZED_MANAGEMENT, serviceConfigs);
         }else {
             logger.info("Property light-config-server-uri is missing in the command line. Using local config files");
@@ -530,9 +537,9 @@ public class Server {
     private static void loadConfig() {
         // if it is necessary to load config files from config server
         // Here we expect at least env(dev/sit/uat/prod) and optional config server url
-        if (LIGHT_ENV == null) {
+        if (lightEnv == null) {
             logger.warn("Warning! No light-env has been passed in from command line. Default to dev");
-            LIGHT_ENV = DEFAULT_ENV;
+            lightEnv = DEFAULT_ENV;
         }
         String configUri = System.getProperty(LIGHT_CONFIG_SERVER_URI);
         if (configUri != null) {
@@ -548,7 +555,7 @@ public class Server {
             String zipFile = tempDir + "/config.zip";
             // /v1/config/1.2.4/dev/com.networknt.petstore-1.0.0
 
-            String path = "/v1/config/" + version + "/" + LIGHT_ENV + "/" + service;
+            String path = "/v1/config/" + version + "/" + lightEnv + "/" + service;
             Http2Client client = Http2Client.getInstance();
             ClientConnection connection = null;
             try {
