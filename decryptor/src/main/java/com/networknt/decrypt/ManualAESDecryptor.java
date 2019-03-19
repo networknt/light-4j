@@ -11,6 +11,13 @@ import java.security.spec.KeySpec;
 import java.util.Base64;
 import java.util.Scanner;
 
+/**
+ * This decryptor supports retrieving decrypted password of configuration
+ * files from stdin. If password is empty, a runtimeException will be thrown.
+ *
+ * To use this decryptor, adding the following line into config.yml
+ * decryptorClass: com.networknt.decrypt.ManualAESDecryptor
+ */
 public class ManualAESDecryptor implements Decryptor {
     private static char[] PASSWORD;
     private static final byte[] SALT = { (byte) 0x0, (byte) 0x0, (byte) 0x0, (byte) 0x0, (byte) 0x0, (byte) 0x0, (byte) 0x0, (byte) 0x0 };
@@ -55,7 +62,7 @@ public class ManualAESDecryptor implements Decryptor {
             sc.close();
         }
         if (PASSWORD == null) {
-            throw new RuntimeException("The password of config decryption should not be empty");
+            throw new RuntimeException("The decrypted password of configuration files should not be empty");
         }
     }
 

@@ -9,10 +9,20 @@ import javax.crypto.spec.SecretKeySpec;
 import java.security.spec.KeySpec;
 import java.util.Base64;
 
+/**
+ * This decryptor supports retrieving decrypted password of configuration files
+ * from environment variables. If password cannot be found, a runtimeException
+ * will be thrown.
+ *
+ * To use this decryptor, adding the following line into config.yml
+ * decryptorClass: com.networknt.decrypt.AutoAESDecryptor
+ */
 public class AutoAESDecryptor implements Decryptor {
     private static char[] PASSWORD;
     private static final byte[] SALT = { (byte) 0x0, (byte) 0x0, (byte) 0x0, (byte) 0x0, (byte) 0x0, (byte) 0x0, (byte) 0x0, (byte) 0x0 };
     private static final int ITERATIONS = 65536;
+    // environment variable key of decrypted password
+    private static final String CONFIG_PASSWORD = "config_password";
     private static final String STRING_ENCODING = "UTF-8";
     private static final int KEY_SIZE = 128;
 
@@ -43,9 +53,9 @@ public class AutoAESDecryptor implements Decryptor {
     }
 
     private static void init() {
-        String passwordStr = System.getenv("config_password");
+        String passwordStr = System.getenv(CONFIG_PASSWORD);
         if (passwordStr == null) {
-            throw new RuntimeException("Unable to retrieve config decryption password from environment variables");
+            throw new RuntimeException("Unable to retrieve decrypted password of configuration files from environment variables");
         }
         PASSWORD = passwordStr.toCharArray();
     }

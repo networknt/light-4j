@@ -123,10 +123,14 @@ public abstract class Config {
         
         FileConfigImpl(){
         	super();
-        	
-            final Resolver resolver = new Resolver();
-            resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
-        	yaml = new Yaml(new DecryptConstructor(getDecryptorClass()), new Representer(), new DumperOptions(), resolver);
+        	String decryptorClass = getDecryptorClass();
+        	if (decryptorClass == null) {
+        	    yaml = new Yaml();
+            } else {
+                final Resolver resolver = new Resolver();
+                resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
+                yaml = new Yaml(new DecryptConstructor(getDecryptorClass()), new Representer(), new DumperOptions(), resolver);
+            }
         }
         
         private String getDecryptorClass() {
