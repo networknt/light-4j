@@ -20,12 +20,12 @@ public class ConsulConfig {
     String consulUrl;
     int maxReqPerConn;
     String deregisterAfter;
-    //the time period that consul determines health status of the server.
     String checkInterval;
     boolean tcpCheck;
     boolean httpCheck;
     boolean ttlCheck;
     String wait;
+
 
     public String getConsulUrl() {
         return consulUrl;
