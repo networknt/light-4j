@@ -472,18 +472,20 @@ public class Server {
 
             //get service configs and put them in config cache
             Map<String, Object> serviceConfigs = getServiceConfigs(configPath.toString());
+            //set the environment value (the one used to fetch configs) in the serviceConfigs going into configCache
+            serviceConfigs.put(ENV_PROPERTY_KEY,lightEnv);
             logger.debug("serviceConfigs: {}", serviceConfigs);
             //clear config cache: this is required just in case other classes have already loaded something in cache
             Config.getInstance().clear();
             Config.getInstance().putInConfigCache(Config.CENTRALIZED_MANAGEMENT, serviceConfigs);
         }else {
-            logger.info("Property light-config-server-uri is missing in the command line. Using local config files");
+            logger.info("Property {} is missing in the command line. Using local config files",APIF_CONFIG_SERVER_URI);
         }
     }
 
     private static Map<String, Object> getServiceConfigs(String configPath) {
         String authorization=System.getenv("Authorization");
-        Map<String, Object> configs = null;
+        Map<String, Object> configs = new HashMap<>();
         String configServerHost = System.getProperty(APIF_CONFIG_SERVER_URI);
         String configServerPath =  APIF_CONFIG_SERVER_CONTEXT_ROOT + configPath;
 
