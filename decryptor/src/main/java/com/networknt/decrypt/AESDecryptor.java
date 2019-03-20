@@ -62,14 +62,14 @@ public class AESDecryptor implements Decryptor {
 			cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 
 		} catch (Exception e) {
-			throw new RuntimeException("Unable to initialize AESDecryptor", e);
+			throw new RuntimeException("Unable to initialize AESDecryptor.", e);
 		}
 	}
 
     @Override
 	public String decrypt(String input) {
 		if (!input.startsWith(CRYPT_PREFIX)) {
-			throw new RuntimeException("Unable to decrypt, input string does not start with 'CRYPT'");
+			throw new RuntimeException("Unable to decrypt, input string does not start with 'CRYPT'.");
 		}
 
 		try {

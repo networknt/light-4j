@@ -48,14 +48,14 @@ public class AutoAESDecryptor implements Decryptor {
             cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 
         } catch (Exception e) {
-            throw new RuntimeException("Unable to initialize AutoAESDecryptor", e);
+            throw new RuntimeException("Unable to initialize AutoAESDecryptor.", e);
         }
     }
 
     private static void init() {
         String passwordStr = System.getenv(CONFIG_PASSWORD);
-        if (passwordStr == null) {
-            throw new RuntimeException("Unable to retrieve decrypted password of configuration files from environment variables");
+        if (passwordStr == null || passwordStr.trim().equals("")) {
+            throw new RuntimeException("Unable to retrieve decrypted password of configuration files from environment variables.");
         }
         PASSWORD = passwordStr.toCharArray();
     }
@@ -63,7 +63,7 @@ public class AutoAESDecryptor implements Decryptor {
     @Override
     public String decrypt(String input) {
         if (!input.startsWith(CRYPT_PREFIX)) {
-            throw new RuntimeException("Unable to decrypt, input string does not start with 'CRYPT'");
+            throw new RuntimeException("Unable to decrypt, input string does not start with 'CRYPT'.");
         }
 
         try {

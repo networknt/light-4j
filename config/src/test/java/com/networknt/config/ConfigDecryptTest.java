@@ -83,7 +83,7 @@ public class ConfigDecryptTest {
 
     @Test
     public void testAutoDecryptorClass() throws IOException {
-        if (System.getenv("config_password") == null) return;
+        if (System.getenv("config_password") == null || !System.getenv("config_password").equals("light")) return;
         final Resolver resolver = new Resolver();
         resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
         Yaml yaml = new Yaml(new DecryptConstructor("com.networknt.config.TestAutoDecryptor"), new Representer(), new DumperOptions(), resolver);

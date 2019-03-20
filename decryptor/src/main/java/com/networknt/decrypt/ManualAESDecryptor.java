@@ -47,7 +47,7 @@ public class ManualAESDecryptor implements Decryptor {
             cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 
         } catch (Exception e) {
-            throw new RuntimeException("Unable to initialize ManualAESDecryptor", e);
+            throw new RuntimeException("Unable to initialize ManualAESDecryptor.", e);
         }
     }
 
@@ -61,8 +61,8 @@ public class ManualAESDecryptor implements Decryptor {
             PASSWORD = sc.next().toCharArray();
             sc.close();
         }
-        if (PASSWORD == null) {
-            throw new RuntimeException("The decrypted password of configuration files should not be empty");
+        if (PASSWORD == null || PASSWORD.toString().trim().equals("")) {
+            throw new RuntimeException("The decrypted password of configuration files should not be empty.");
         }
     }
 

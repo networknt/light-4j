@@ -37,12 +37,6 @@ public class DecryptConstructor extends Constructor {
 	}
 	
 	private Decryptor createDecryptor(String decryptorClass) {
-		if (null==decryptorClass || decryptorClass.trim().length()==0) {
-			logger.error("decryptorClass cannot be empty.");
-			
-			return null;
-		}
-		
 		if (logger.isDebugEnabled()) {
 			logger.debug("creating decryptor {}", decryptorClass);
 		}
@@ -53,10 +47,11 @@ public class DecryptConstructor extends Constructor {
 			if (!typeClass.isInterface()) {
 				return (Decryptor) typeClass.getConstructor().newInstance();
 			}else {
-				logger.error("Please specify an implementing class of com.networknt.decrypt.Decryptor");
+				logger.error("Please specify an implementing class of com.networknt.decrypt.Decryptor.");
 			}
-		} catch (Throwable t) {
-			logger.error(t.getMessage(), t);
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			throw new RuntimeException("Cannot construct the decryptor.", e);
 		}
 		
 		return null;
