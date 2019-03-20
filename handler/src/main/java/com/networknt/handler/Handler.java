@@ -60,12 +60,12 @@ public class Handler {
 	static final Map<String, List<HttpHandler>> handlerListById = new HashMap<>();
 	static final Map<HttpString, PathTemplateMatcher<String>> methodToMatcherMap = new HashMap<>();
 	static List<HttpHandler> defaultHandlers;
+	// this is the last handler that need to be called when OrchestratorHandler is injected into the beginning of the chain
+	static HttpHandler lastHandler;
 
-//	static {
-//		initHandlers();
-//		initChains();
-//		initPaths();
-//	}
+	public static void setLastHandler(HttpHandler handler) {
+		lastHandler = handler;
+	}
 
 	public static void init() {
 		initHandlers();
@@ -73,7 +73,7 @@ public class Handler {
 		initPaths();
 		initDefaultHandlers();
 	}
-	
+
 	/**
 	 * Construct the named map of handlers. Note: All handlers in use for this
 	 * microservice should be listed in this handlers list
@@ -206,6 +206,8 @@ public class Handler {
 		HttpHandler httpHandler = getNext(httpServerExchange);
 		if (httpHandler != null) {
 			httpHandler.handleRequest(httpServerExchange);
+		} else if(lastHandler != null) {
+			lastHandler.handleRequest(httpServerExchange);
 		}
 	}
 
