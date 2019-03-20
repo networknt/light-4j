@@ -13,7 +13,7 @@ import java.util.Scanner;
 
 /**
  * This decryptor supports retrieving decrypted password of configuration
- * files from stdin. If password is empty, a runtimeException will be thrown.
+ * files from stdin.
  *
  * To use this decryptor, adding the following line into config.yml
  * decryptorClass: com.networknt.decrypt.ManualAESDecryptor
