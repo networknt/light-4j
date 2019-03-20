@@ -51,7 +51,7 @@ public class ManualAESDecryptor implements Decryptor {
         }
     }
 
-    private static void init() throws IOException {
+    private static void init() {
         Console console = System.console();
         if (console != null) {
             PASSWORD = console.readPassword("Password for config decryption: ");
@@ -61,7 +61,7 @@ public class ManualAESDecryptor implements Decryptor {
             PASSWORD = sc.next().toCharArray();
             sc.close();
         }
-        if (PASSWORD == null || PASSWORD.toString().trim().equals("")) {
+        if (PASSWORD == null || PASSWORD.length == 0) {
             throw new RuntimeException("The decrypted password of configuration files should not be empty.");
         }
     }
