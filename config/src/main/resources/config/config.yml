@@ -4,7 +4,7 @@ exclusionConfigFileList:
   - values
   - status
 
-# decryptorClass:
+#decryptorClass:
 #  com.networknt.decrypt.AESDecryptor
 #  com.networknt.decrypt.ManualAESDecryptor
 #  com.networknt.decrypt.AutoAESDecryptor
