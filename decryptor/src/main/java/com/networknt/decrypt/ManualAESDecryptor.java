@@ -81,7 +81,7 @@ public class ManualAESDecryptor implements Decryptor {
             cipher.init(Cipher.DECRYPT_MODE, secret, new IvParameterSpec(iv));
             return new String(cipher.doFinal(data, keylen, data.length - keylen), STRING_ENCODING);
         } catch (Exception e) {
-            throw new RuntimeException("Unable to decrypt.", e);
+            throw new RuntimeException("Unable to decrypt configuration file due to incorrect decryption password input.", e);
         }
     }
 }

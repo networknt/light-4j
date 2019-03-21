@@ -22,7 +22,7 @@ public class AutoAESDecryptor implements Decryptor {
     private static final byte[] SALT = { (byte) 0x0, (byte) 0x0, (byte) 0x0, (byte) 0x0, (byte) 0x0, (byte) 0x0, (byte) 0x0, (byte) 0x0 };
     private static final int ITERATIONS = 65536;
     // environment variable key of decrypted password
-    private static final String CONFIG_PASSWORD = "config_password";
+    private static final String CONFIG_PASSWORD = "light-4j-config-password";
     private static final String STRING_ENCODING = "UTF-8";
     private static final int KEY_SIZE = 128;
 
@@ -75,7 +75,7 @@ public class AutoAESDecryptor implements Decryptor {
             cipher.init(Cipher.DECRYPT_MODE, secret, new IvParameterSpec(iv));
             return new String(cipher.doFinal(data, keylen, data.length - keylen), STRING_ENCODING);
         } catch (Exception e) {
-            throw new RuntimeException("Unable to decrypt.", e);
+            throw new RuntimeException("Unable to decrypt configuration file due to wrong light-4j-config-password.", e);
         }
     }
 }

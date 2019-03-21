@@ -318,7 +318,7 @@ public abstract class Config {
                 }
             } catch (Exception e) {
                 logger.error("Exception", e);
-                throw new RuntimeException("Unable to load " + configName + " as object", e);
+                throw new RuntimeException("Unable to load " + fileName + " as object.", e);
             }
             return config;
         }
@@ -350,8 +350,8 @@ public abstract class Config {
                     }
                 }
             } catch (Exception e) {
-                logger.error("IOException", e);
-                throw new RuntimeException("Unable to load " + configName + " as map", e);
+                logger.error("Exception", e);
+                throw new RuntimeException("Unable to load " + ymlFilename + " as map.", e);
             }
             return config;
         }
