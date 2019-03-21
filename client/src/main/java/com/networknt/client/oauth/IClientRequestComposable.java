@@ -12,12 +12,12 @@ public interface IClientRequestComposable {
      * @param tokenRequest
      * @return ClientRequest
      */
-    ClientRequest ComposeClientRequest(TokenRequest tokenRequest);
+    ClientRequest composeClientRequest(TokenRequest tokenRequest);
 
     /**
      * compose an actual request body based on the given TokenRequest model.
      * @param tokenRequest
      * @return String
      */
-    String ComposeRequestBody(TokenRequest tokenRequest);
+    String composeRequestBody(TokenRequest tokenRequest);
 }

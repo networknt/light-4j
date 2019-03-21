@@ -73,7 +73,7 @@ public class ClientRequestComposerProvider {
     private static class DefaultSAMLBearerRequestComposer implements IClientRequestComposable {
 
         @Override
-        public ClientRequest ComposeClientRequest(TokenRequest tokenRequest) {
+        public ClientRequest composeClientRequest(TokenRequest tokenRequest) {
             ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(tokenRequest.getUri());
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
@@ -82,7 +82,7 @@ public class ClientRequestComposerProvider {
         }
 
         @Override
-        public String ComposeRequestBody(TokenRequest tokenRequest) {
+        public String composeRequestBody(TokenRequest tokenRequest) {
             SAMLBearerRequest SamlTokenRequest = (SAMLBearerRequest)tokenRequest;
             Map<String, String> postBody = new HashMap<>();
             postBody.put(SAMLBearerRequest.GRANT_TYPE_KEY , SAMLBearerRequest.GRANT_TYPE_VALUE );
@@ -104,7 +104,7 @@ public class ClientRequestComposerProvider {
     private static class DefaultClientCredentialRequestComposer implements IClientRequestComposable {
 
         @Override
-        public ClientRequest ComposeClientRequest(TokenRequest tokenRequest) {
+        public ClientRequest composeClientRequest(TokenRequest tokenRequest) {
             final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(tokenRequest.getUri());
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
@@ -114,7 +114,7 @@ public class ClientRequestComposerProvider {
         }
 
         @Override
-        public String ComposeRequestBody(TokenRequest tokenRequest) {
+        public String composeRequestBody(TokenRequest tokenRequest) {
             try {
                 return OauthHelper.getEncodedString(tokenRequest);
             } catch (UnsupportedEncodingException e) {

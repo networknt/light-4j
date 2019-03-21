@@ -174,8 +174,8 @@ public class OauthHelper {
         }
         @Override
         public void run() {
-            final ClientRequest request = requestComposer.ComposeClientRequest(tokenRequest);
-            String requestBody = requestComposer.ComposeRequestBody(tokenRequest);
+            final ClientRequest request = requestComposer.composeClientRequest(tokenRequest);
+            String requestBody = requestComposer.composeRequestBody(tokenRequest);
             logger.debug(requestBody);
             adjustNoChunkedEncoding(request, requestBody);
             connection.sendRequest(request, new ClientCallback<ClientExchange>() {
