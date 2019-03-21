@@ -160,7 +160,13 @@ public class Server {
         }
 
         if (config.dynamicPort) {
-            for (int i = config.minPort; i < config.maxPort; i++) {
+            if (config.minPort > config.maxPort) {
+                String errMessage = "No ports available to bind to - the minPort is larger than the maxPort in server.yml";
+                System.out.println(errMessage);
+                logger.error(errMessage);
+                throw new RuntimeException(errMessage);
+            }
+            for (int i = config.minPort; i <= config.maxPort; i++) {
                 boolean b = bind(gracefulShutdownHandler, i);
                 if (b) {
                     break;
@@ -233,6 +239,13 @@ public class Server {
             server.start();
             System.out.println("HOST IP " + System.getenv(STATUS_HOST_IP));
         } catch (Exception e) {
+            if (!config.dynamicPort || (config.dynamicPort && config.maxPort == port + 1)) {
+                String triedPortsMessage = config.dynamicPort ? config.minPort + " to: " + (config.maxPort - 1) : port + "";
+                String errMessage = "No ports available to bind to. Tried: " + triedPortsMessage;
+                System.out.println(errMessage);
+                logger.error(errMessage);
+                throw new RuntimeException(errMessage, e);
+            }
             System.out.println("Failed to bind to port " + port + ". Trying " + ++port);
             if (logger.isInfoEnabled())
                 logger.info("Failed to bind to port " + port + ". Trying " + ++port);
@@ -545,7 +558,8 @@ public class Server {
             return;
         }
         Map<String, Object> statusConfig = Config.getInstance().getJsonMapConfig(STATUS_CONFIG_NAME[0]);
-        Set<String> duplicatedStatusSet = statusConfig.keySet();
+        // clone the default status config key set
+        Set<String> duplicatedStatusSet = new HashSet<>(statusConfig.keySet());
         duplicatedStatusSet.retainAll(appStatusConfig.keySet());
         if (!duplicatedStatusSet.isEmpty()) {
             logger.error("The status code(s): " + duplicatedStatusSet.toString() + " is already in use by light-4j and cannot be overwritten," +

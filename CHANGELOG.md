@@ -1,5 +1,29 @@
 # Change Log
 
+## [1.5.32](https://github.com/networknt/light-4j/tree/1.5.32) (2019-03-19)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.31...1.5.32)
+
+**Implemented enhancements:**
+
+- original status.yml info in light-4j is overwritten by customer, which will lose errors for light-4j [\#389](https://github.com/networknt/light-4j/issues/389)
+
+**Fixed bugs:**
+
+- Dynamic Port binding not working as expected in light4j [\#415](https://github.com/networknt/light-4j/issues/415)
+- Error happen if there is not value in values.yml for services.yml injection [\#407](https://github.com/networknt/light-4j/issues/407)
+
+**Closed issues:**
+
+- add last handler to Handler class for handler chain inject in the beginning [\#421](https://github.com/networknt/light-4j/issues/421)
+- setup Travis cron to run integration test daily [\#405](https://github.com/networknt/light-4j/issues/405)
+
+**Merged pull requests:**
+
+- Fix/\#425 status merge [\#426](https://github.com/networknt/light-4j/pull/426) ([jiachen1120](https://github.com/jiachen1120))
+- accept defaultGroupKey in Http2Client.SSL - \#423 [\#424](https://github.com/networknt/light-4j/pull/424) ([dz-1](https://github.com/dz-1))
+- fixes \#421 add last handler to Handler class for handler chain inject… [\#422](https://github.com/networknt/light-4j/pull/422) ([stevehu](https://github.com/stevehu))
+- Fix/\#415 dynamic port binding [\#417](https://github.com/networknt/light-4j/pull/417) ([jiachen1120](https://github.com/jiachen1120))
+
 ## [1.5.31](https://github.com/networknt/light-4j/tree/1.5.31) (2019-03-02)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.30...1.5.31)
 
