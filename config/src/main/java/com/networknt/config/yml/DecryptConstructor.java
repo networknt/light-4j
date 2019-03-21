@@ -51,7 +51,7 @@ public class DecryptConstructor extends Constructor {
 			}
 		} catch (Exception e) {
 			logger.error(e.getMessage());
-			throw new RuntimeException("Unable to construct the decryptor due to wrong decryption password.", e);
+			throw new RuntimeException("Unable to construct the decryptor due to lack of decryption password.", e);
 		}
 		
 		return null;
