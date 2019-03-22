@@ -39,6 +39,12 @@ public class ServerConfig {
     boolean dynamicPort;
     int minPort;
     int maxPort;
+    int bufferSize;
+    int ioThreads;
+    int workerThreads;
+    int backlog;
+    boolean alwaysSetDate;
+    String serverString;
 
     public ServerConfig() {
     }
@@ -189,5 +195,57 @@ public class ServerConfig {
 
     public void setMaxPort(int maxPort) {
         this.maxPort = maxPort;
+    }
+
+    public int getBufferSize() {
+        return bufferSize;
+    }
+
+    public void setBufferSize(int bufferSize) {
+        this.bufferSize = bufferSize;
+    }
+
+    public int getIoThreads() {
+        return ioThreads;
+    }
+
+    public void setIoThreads(int ioThreads) {
+        if (ioThreads < 0) {
+            this.ioThreads = Runtime.getRuntime().availableProcessors() * 2;
+        } else {
+            this.ioThreads = ioThreads;
+        }
+    }
+
+    public int getWorkerThreads() {
+        return workerThreads;
+    }
+
+    public void setWorkerThreads(int workerThreads) {
+        this.workerThreads = workerThreads;
+    }
+
+    public int getBacklog() {
+        return backlog;
+    }
+
+    public void setBacklog(int backlog) {
+        this.backlog = backlog;
+    }
+
+    public boolean isAlwaysSetDate() {
+        return alwaysSetDate;
+    }
+
+    public void setAlwaysSetDate(boolean alwaysSetDate) {
+        this.alwaysSetDate = alwaysSetDate;
+    }
+
+    public String getServerString() {
+        return serverString;
+    }
+
+    public void setServerString(String serverString) {
+        this.serverString = serverString;
     }
 }

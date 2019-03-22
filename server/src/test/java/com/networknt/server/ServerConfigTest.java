@@ -30,4 +30,10 @@ public class ServerConfigTest {
         ServerConfig config = (ServerConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServerConfig.class);
         Assert.assertNull(config.getEnvironment());
     }
+
+    public void testDefaultServerOptions() {
+        ServerConfig config = (ServerConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServerConfig.class);
+        Assert.assertEquals(1024*16, config.getBufferSize());
+        //Assert.assertEquals();
+    }
 }

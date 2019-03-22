@@ -227,14 +227,14 @@ public class Server {
                builder.setSocketOption(Options.SSL_CLIENT_AUTH_MODE, SslClientAuthMode.REQUIRED);
             }
 
-            server = builder.setBufferSize(1024 * 16).setIoThreads(Runtime.getRuntime().availableProcessors() * 2)
+            server = builder.setBufferSize(config.getBufferSize()).setIoThreads(config.getIoThreads())
                     // above seems slightly faster in some configurations
-                    .setSocketOption(Options.BACKLOG, 10000)
+                    .setSocketOption(Options.BACKLOG, config.getBacklog())
                     .setServerOption(UndertowOptions.ALWAYS_SET_KEEP_ALIVE, false) // don't send a keep-alive header for
                     // HTTP/1.1 requests, as it is not required
-                    .setServerOption(UndertowOptions.ALWAYS_SET_DATE, true)
+                    .setServerOption(UndertowOptions.ALWAYS_SET_DATE, config.isAlwaysSetDate())
                     .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, false)
-                    .setHandler(Handlers.header(handler, Headers.SERVER_STRING, "L")).setWorkerThreads(200).build();
+                    .setHandler(Handlers.header(handler, Headers.SERVER_STRING, config.getServerString())).setWorkerThreads(config.getWorkerThreads()).build();
 
             server.start();
             System.out.println("HOST IP " + System.getenv(STATUS_HOST_IP));

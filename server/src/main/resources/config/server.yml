@@ -41,3 +41,15 @@ enableRegistry: false
 # Build number, to be set by teams for auditing purposes. 
 # This build number is independent of the API version, and it set by teams according to their release management process
 buildNumber: latest
+
+bufferSize: ${server.bufferSize:16384}
+
+ioThreads: ${server.ioThreads:-1}
+
+workerThreads: ${server.workerThreads:200}
+
+backlog: ${server.backlog:10000}
+
+alwaysSetDate: ${server.alwaysSetDate:true}
+
+serverString: ${server.serverString:L}
