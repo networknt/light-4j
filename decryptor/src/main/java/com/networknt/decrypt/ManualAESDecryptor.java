@@ -12,19 +12,21 @@ import java.util.Scanner;
  */
 public class ManualAESDecryptor extends AESDecryptor {
     @Override
-    protected void init() {
+    protected char[] getPassword() {
+        char[] password = null;
         Console console = System.console();
         if (console != null) {
-            PASSWORD = console.readPassword("Password for config decryption: ");
+            password = console.readPassword("Password for config decryption: ");
         } else {
             // for IDE testing
             System.out.print("Password for config decryption: ");
             Scanner sc = new Scanner(System.in);
-            PASSWORD = sc.next().toCharArray();
+            password = sc.next().toCharArray();
             sc.close();
         }
-        if (PASSWORD == null || PASSWORD.length == 0) {
+        if (password == null || password.length == 0) {
             throw new RuntimeException("The decrypted password of configuration files should not be empty.");
         }
+        return password;
     }
 }

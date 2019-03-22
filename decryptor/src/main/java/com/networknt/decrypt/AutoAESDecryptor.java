@@ -12,11 +12,11 @@ public class AutoAESDecryptor extends AESDecryptor {
     private final static String LIGHT_4J_CONFIG_PASSWORD = "light-4j-config-password";
 
     @Override
-    protected void init() {
+    protected char[] getPassword() {
         String passwordStr = System.getenv(LIGHT_4J_CONFIG_PASSWORD);
         if (passwordStr == null || passwordStr.trim().equals("")) {
             throw new RuntimeException("Unable to retrieve decrypted password of configuration files from environment variables.");
         }
-        PASSWORD = passwordStr.toCharArray();
+        return passwordStr.toCharArray();
     }
 }

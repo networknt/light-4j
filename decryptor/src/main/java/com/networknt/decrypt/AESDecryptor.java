@@ -27,7 +27,6 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class AESDecryptor implements Decryptor {
-	protected static char[] PASSWORD;
 
     private static final int ITERATIONS = 65536;
 
@@ -50,12 +49,11 @@ public class AESDecryptor implements Decryptor {
 
 	public AESDecryptor() {
 		try {
-			init();
 			/* Derive the key, given password and salt. */
 			SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
 			KeySpec spec;
 
-			spec = new PBEKeySpec(PASSWORD, SALT, ITERATIONS, KEY_SIZE);
+			spec = new PBEKeySpec(getPassword(), SALT, ITERATIONS, KEY_SIZE);
 			SecretKey tmp = factory.generateSecret(spec);
 			secret = new SecretKeySpec(tmp.getEncoded(), "AES");
 
@@ -87,7 +85,7 @@ public class AESDecryptor implements Decryptor {
 		}
 	}
 
-	protected void init() {
-		PASSWORD = "light".toCharArray();
+	protected char[] getPassword() {
+		return "light".toCharArray();
 	}
 }
