@@ -1,5 +1,49 @@
 # Change Log
 
+## [2.0.0](https://github.com/networknt/light-4j/tree/2.0.0) (2019-03-24)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.32...2.0.0)
+
+**Implemented enhancements:**
+
+- Add conditional handler in the handler chain [\#300](https://github.com/networknt/light-4j/issues/300)
+
+**Fixed bugs:**
+
+- Fix status merge [\#425](https://github.com/networknt/light-4j/issues/425)
+- Feat/light 4j/\#420 fixed TTL check [\#428](https://github.com/networknt/light-4j/pull/428) ([BalloonWen](https://github.com/BalloonWen))
+
+**Closed issues:**
+
+- accept default group key in Http2Client  [\#423](https://github.com/networknt/light-4j/issues/423)
+
+**Merged pull requests:**
+
+- just improvements [\#419](https://github.com/networknt/light-4j/pull/419) ([jefperito](https://github.com/jefperito))
+
+## [1.5.32](https://github.com/networknt/light-4j/tree/1.5.32) (2019-03-19)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.31...1.5.32)
+
+**Implemented enhancements:**
+
+- original status.yml info in light-4j is overwritten by customer, which will lose errors for light-4j [\#389](https://github.com/networknt/light-4j/issues/389)
+
+**Fixed bugs:**
+
+- Dynamic Port binding not working as expected in light4j [\#415](https://github.com/networknt/light-4j/issues/415)
+- Error happen if there is not value in values.yml for services.yml injection [\#407](https://github.com/networknt/light-4j/issues/407)
+
+**Closed issues:**
+
+- add last handler to Handler class for handler chain inject in the beginning [\#421](https://github.com/networknt/light-4j/issues/421)
+- setup Travis cron to run integration test daily [\#405](https://github.com/networknt/light-4j/issues/405)
+
+**Merged pull requests:**
+
+- Fix/\#425 status merge [\#426](https://github.com/networknt/light-4j/pull/426) ([jiachen1120](https://github.com/jiachen1120))
+- accept defaultGroupKey in Http2Client.SSL - \#423 [\#424](https://github.com/networknt/light-4j/pull/424) ([dz-1](https://github.com/dz-1))
+- fixes \#421 add last handler to Handler class for handler chain inject… [\#422](https://github.com/networknt/light-4j/pull/422) ([stevehu](https://github.com/stevehu))
+- Fix/\#415 dynamic port binding [\#417](https://github.com/networknt/light-4j/pull/417) ([jiachen1120](https://github.com/jiachen1120))
+
 ## [1.5.31](https://github.com/networknt/light-4j/tree/1.5.31) (2019-03-02)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.30...1.5.31)
 
