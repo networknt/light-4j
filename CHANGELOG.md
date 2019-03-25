@@ -1,5 +1,36 @@
 # Change Log
 
+## [1.5.33](https://github.com/networknt/light-4j/tree/1.5.33) (2019-03-25)
+[Full Changelog](https://github.com/networknt/light-4j/compare/2.0.0...1.5.33)
+
+**Closed issues:**
+
+- add status code to status.yml for light-codegen [\#430](https://github.com/networknt/light-4j/issues/430)
+
+**Merged pull requests:**
+
+- fixes \#430 add status code to status.yml for light-codegen [\#431](https://github.com/networknt/light-4j/pull/431) ([stevehu](https://github.com/stevehu))
+
+## [2.0.0](https://github.com/networknt/light-4j/tree/2.0.0) (2019-03-22)
+[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.32...2.0.0)
+
+**Implemented enhancements:**
+
+- Add conditional handler in the handler chain [\#300](https://github.com/networknt/light-4j/issues/300)
+
+**Fixed bugs:**
+
+- Fix status merge [\#425](https://github.com/networknt/light-4j/issues/425)
+- Feat/light 4j/\#420 fixed TTL check [\#428](https://github.com/networknt/light-4j/pull/428) ([BalloonWen](https://github.com/BalloonWen))
+
+**Closed issues:**
+
+- accept default group key in Http2Client  [\#423](https://github.com/networknt/light-4j/issues/423)
+
+**Merged pull requests:**
+
+- just improvements [\#419](https://github.com/networknt/light-4j/pull/419) ([jefperito](https://github.com/jefperito))
+
 ## [1.5.32](https://github.com/networknt/light-4j/tree/1.5.32) (2019-03-19)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.31...1.5.32)
 
