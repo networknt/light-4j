@@ -31,9 +31,14 @@ public class ServerConfigTest {
         Assert.assertNull(config.getEnvironment());
     }
 
+    @Test
     public void testDefaultServerOptions() {
         ServerConfig config = (ServerConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServerConfig.class);
         Assert.assertEquals(1024*16, config.getBufferSize());
-        //Assert.assertEquals();
+        Assert.assertEquals(Runtime.getRuntime().availableProcessors() * 2, config.getIoThreads());
+        Assert.assertEquals(200, config.getWorkerThreads());
+        Assert.assertEquals(10000, config.getBacklog());
+        Assert.assertEquals(true, config.isAlwaysSetDate());
+        Assert.assertEquals("L", config.getServerString());
     }
 }
