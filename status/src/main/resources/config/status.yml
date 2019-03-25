@@ -511,6 +511,31 @@ ERR11102:
   code: ERR11102
   message: INVALID_CONFIG_HTTP_LISTEN_TYPE
   description: enableHttp or enableHttps needs to be set to true, but not both.
+ERR11103:
+  statusCode: 400
+  code: ERR11103
+  message: INVALID_MODEL_URL
+  description: Invalid model URL %s.
+ERR11104:
+  statusCode: 400
+  code: ERR11104
+  message: INVALID_CONFIG_JSON
+  description: Invalid config JSON format.
+ERR11105:
+  statusCode: 400
+  code: ERR11105
+  message: INVALID_CONFIG_URL_EXTENSION
+  description: Invalid config URL extension %s.
+ERR11106:
+  statusCode: 400
+  code: ERR11106
+  message: GENERATOR_EXCEPTION
+  description: Exception occurs during generation %s.
+ERR11107:
+  statusCode: 400
+  code: ERR11107
+  message: COMPRESSION_EXCEPTION
+  description: Exception occurs during compression %s.
 
 
 # 11200 - 11299 light hybrid validation errors
