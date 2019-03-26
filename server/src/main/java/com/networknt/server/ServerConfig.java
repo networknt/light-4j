@@ -210,11 +210,7 @@ public class ServerConfig {
     }
 
     public void setIoThreads(int ioThreads) {
-        if (ioThreads < 0) {
-            this.ioThreads = Runtime.getRuntime().availableProcessors() * 2;
-        } else {
-            this.ioThreads = ioThreads;
-        }
+        this.ioThreads = ioThreads;
     }
 
     public int getWorkerThreads() {
