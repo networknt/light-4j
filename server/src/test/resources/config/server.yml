@@ -56,15 +56,3 @@ maxPort: 2500
 # https://github.com/networknt/light-doc/blob/master/docs/content/design/env-segregation.md
 # This tag should only be set for testing env, not production. The production certification process will enforce it.
 # environment: test1
-
-bufferSize: ${server.bufferSize:16384}
-
-ioThreads: ${server.ioThreads:-1}
-
-workerThreads: ${server.workerThreads:200}
-
-backlog: ${server.backlog:10000}
-
-alwaysSetDate: ${server.alwaysSetDate:true}
-
-serverString: ${server.serverString:L}

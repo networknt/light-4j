@@ -204,6 +204,15 @@ public class Server {
         return handler;
     }
 
+    /**
+     * Method used to initialize server options. If the user has configured a valid server option,
+     * load it into the server configuration, otherwise use the default value
+     */
+    private static void serverOptionInit() {
+        Map<String, Object> mapConfig = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
+        ServerOption.serverOptionInit(mapConfig, config);
+    }
+
     static private boolean bind(HttpHandler handler, int port) {
         try {
             Undertow.Builder builder = Undertow.builder();
@@ -226,6 +235,9 @@ public class Server {
             if (config.isEnableTwoWayTls()) {
                builder.setSocketOption(Options.SSL_CLIENT_AUTH_MODE, SslClientAuthMode.REQUIRED);
             }
+
+            // set and validate server options
+            serverOptionInit();
 
             server = builder.setBufferSize(config.getBufferSize()).setIoThreads(config.getIoThreads())
                     // above seems slightly faster in some configurations
