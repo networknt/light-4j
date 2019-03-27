@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.undertow.client.http;
+package com.networknt.client.http;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -50,7 +50,6 @@ import io.undertow.connector.ByteBufferPool;
  * Customized HttpClientProvider for handling TLS handshake for HTTPS.
  * Created by modifying {@link io.undertow.client.http.HttpClientProvider}
  * 
- * This class needs to be in the package {@link io.undertow.client.http} in order to use HttpClientConnection.
  * 
  *
  */

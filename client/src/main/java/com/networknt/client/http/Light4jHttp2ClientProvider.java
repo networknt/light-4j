@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.undertow.client.http;
+package com.networknt.client.http;
 
 import java.net.InetSocketAddress;
 import java.net.URI;

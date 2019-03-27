@@ -43,8 +43,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
-import io.undertow.client.http.Light4jHttp2ClientProvider;
-import io.undertow.client.http.Light4jHttpClientProvider;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,6 +58,8 @@ import org.xnio.XnioWorker;
 import org.xnio.channels.StreamSinkChannel;
 import org.xnio.ssl.XnioSsl;
 
+import com.networknt.client.http.Light4jHttp2ClientProvider;
+import com.networknt.client.http.Light4jHttpClientProvider;
 import com.networknt.client.oauth.Jwt;
 import com.networknt.client.oauth.OauthHelper;
 import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
