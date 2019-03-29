@@ -23,7 +23,7 @@ import com.networknt.utility.Constants;
  * object for service registry and discovery. This class defines all types of
  * URL parameters that are supported in the framework.
  *
- * @author maijunsheng
+ * @author maijunsheng, Steve Hu
  *
  */
 public enum URLParamType {
