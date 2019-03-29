@@ -77,7 +77,6 @@
         <version.mockito>2.10.0</version.mockito>
         <version.powermock>2.0.0</version.powermock>
         <version.undertow>2.0.16.Final</version.undertow>
-        <version.swagger-parser>1.0.34</version.swagger-parser>
         <version.hamcrest>1.3</version.hamcrest>
         <version.assertj>3.8.0</version.assertj>
         <version.hdrhistogram>2.1.10</version.hdrhistogram>
