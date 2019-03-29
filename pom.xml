@@ -443,11 +443,6 @@
                 <version>${version.undertow}</version>
             </dependency>
             <dependency>
-                <groupId>io.undertow</groupId>
-                <artifactId>undertow-parser-generator</artifactId>
-                <version>${version.undertow}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.hdrhistogram</groupId>
                 <artifactId>HdrHistogram</artifactId>
                 <version>${version.hdrhistogram}</version>
