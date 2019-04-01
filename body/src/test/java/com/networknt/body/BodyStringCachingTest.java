@@ -72,7 +72,7 @@ public class BodyStringCachingTest {
     }
 
     @Test
-    public void testCacheJsonBodyString() throws Exception {
+    public void testEnableCacheRequestBody() throws Exception {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
@@ -108,7 +108,7 @@ public class BodyStringCachingTest {
     }
 
     @Test
-    public void testNoCacheJsonBodyString() throws Exception {
+    public void testDisableCacheRequestBody() throws Exception {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);

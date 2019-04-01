@@ -40,18 +40,18 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This is a handler that parses the body into a Map or List if the input content type is JSON.
- * For other content type, don't parse it. In order to trigger this middleware, the content type
- * must be set in header for post, put and patch.
+ * This is a handler that parses the body into a Map or List if the input content type is "application/json"
+ * or "multipart/form-data" or "application/x-www-form-urlencoded". For other content type, don't parse it.
+ * In order to trigger this middleware, the content type must be set in header for post, put and patch.
+ * <p>
+ * The request body string can be cached into exchange attachment with the attachment key "REQUEST_BODY_STRING"
+ * when the content type is "application/json".
  * <p>
  * Currently, it is only used in light-rest-4j framework as subsequent handler will use the parsed
  * body for further processing. Other frameworks like light-graphql-4j or light-hybrid-4j won't
  * need this middleware handler.
  * <p>
  * Created by steve on 29/09/16.
- * <p>
- * Update on 09/12/18
- * Enhanced the handler that parses the body into a DataForm if the input content type is data-form.
  */
 
 public class BodyHandler implements MiddlewareHandler {
@@ -101,10 +101,15 @@ public class BodyHandler implements MiddlewareHandler {
                     if (config.isCacheRequestBody()) {
                         exchange.putAttachment(REQUEST_BODY_STRING, unparsedRequestBody);
                     }
-                    attachJsonBody(exchange, unparsedRequestBody);
+                    // attach the parsed request body into exchange if the body parser is enabled
+                    if (config.isEnabled()) {
+                        attachJsonBody(exchange, unparsedRequestBody);
+                    }
                 } else if (contentType.startsWith("multipart/form-data") || contentType.startsWith("application/x-www-form-urlencoded")) {
-                    // parse the body to form-data if content type is multipart/form-data or application/x-www-form-urlencoded
-                    attachFormDataBody(exchange);
+                    // attach the parsed request body into exchange if the body parser is enabled
+                    if (config.isEnabled()) {
+                        attachFormDataBody(exchange);
+                    }
                 }
             } catch (IOException e) {
                 logger.error("IOException: ", e);
@@ -172,7 +177,7 @@ public class BodyHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return config.isEnabled() || config.isCacheRequestBody();
     }
 
     @Override
