@@ -21,6 +21,7 @@ package com.networknt.body;
  */
 public class BodyConfig {
     boolean enabled;
+    boolean cacheRequestBody;
 
     public BodyConfig() {
     }
@@ -31,5 +32,13 @@ public class BodyConfig {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean isCacheRequestBody() {
+        return cacheRequestBody;
+    }
+
+    public void setCacheRequestBody(boolean cacheRequestBody) {
+        this.cacheRequestBody = cacheRequestBody;
     }
 }
