@@ -549,5 +549,7 @@ public class BodyHandlerTest {
             IoUtils.safeClose(connection);
         }
         Assert.assertEquals("nobody", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+        // reset config
+        BodyHandler.config.setEnabled(true);
     }
 }
