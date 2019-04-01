@@ -153,6 +153,85 @@ public class OauthHelper {
         return reference.get() == null ? Failure.of(new Status(GET_TOKEN_TIMEOUT)) : reference.get();
     }
 
+    public static Result<TokenResponse> getSignResult(SignRequest signRequest) {
+        final AtomicReference<Result<TokenResponse>> reference = new AtomicReference<>();
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection;
+        try {
+            connection = client.connect(new URI(signRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, signRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+        } catch (Exception e) {
+            logger.error("cannot establish connection: {}", e.getStackTrace());
+            return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR, signRequest.getServerUrl()));
+        }
+
+        try {
+            Map<String, Object> map = new HashMap<>();
+            map.put("expires", signRequest.getExpires());
+            map.put("payload", signRequest.getPayload());
+            String requestBody = Config.getInstance().getMapper().writeValueAsString(map);
+            connection.getIoThread().execute(() -> {
+                final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(signRequest.getUri());
+                request.getRequestHeaders().put(Headers.HOST, "localhost");
+                request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+                request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
+                request.getRequestHeaders().put(Headers.AUTHORIZATION, getBasicAuthHeader(signRequest.getClientId(), signRequest.getClientSecret()));
+                connection.sendRequest(request, new ClientCallback<ClientExchange>() {
+                    @Override
+                    public void completed(ClientExchange result) {
+                        new StringWriteChannelListener(requestBody).setup(result.getRequestChannel());
+                        result.setResponseListener(new ClientCallback<ClientExchange>() {
+                            @Override
+                            public void completed(ClientExchange result) {
+                                new StringReadChannelListener(Http2Client.BUFFER_POOL) {
+
+                                    @Override
+                                    protected void stringDone(String string) {
+
+                                        logger.debug("getToken response = " + string);
+                                        reference.set(handleResponse(getContentTypeFromExchange(result), string));
+                                        latch.countDown();
+                                    }
+
+                                    @Override
+                                    protected void error(IOException e) {
+                                        logger.error("IOException:", e);
+                                        reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
+                                        latch.countDown();
+                                    }
+                                }.setup(result.getResponseChannel());
+                            }
+
+                            @Override
+                            public void failed(IOException e) {
+                                logger.error("IOException:", e);
+                                reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
+                                latch.countDown();
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void failed(IOException e) {
+                        logger.error("IOException:", e);
+                        reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
+                        latch.countDown();
+                    }
+                });
+            });
+
+            latch.await(signRequest.getTimeout(), TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            logger.error("IOException: ", e);
+            return Failure.of(new Status(FAIL_TO_SEND_REQUEST));
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+
+        //if reference.get() is null at this point, mostly likely couldn't get token within latch.await() timeout.
+        return reference.get() == null ? Failure.of(new Status(GET_TOKEN_TIMEOUT)) : reference.get();
+    }
+
     /**
      * @deprecated As of release 1.5.29, replaced with @link #getTokenFromSamlResult(SAMLBearerRequest tokenRequest)
      *
