@@ -105,12 +105,6 @@ public class BodyHandler implements MiddlewareHandler {
                 } else if (contentType.startsWith("multipart/form-data") || contentType.startsWith("application/x-www-form-urlencoded")) {
                     // parse the body to form-data if content type is multipart/form-data or application/x-www-form-urlencoded
                     attachFormDataBody(exchange);
-                    InputStream inputStream = exchange.getInputStream();
-                    String unparsedRequestBody = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
-                    // attach the unparsed request body into exchange if the cacheRequestBody is enabled in body.yml
-                    if (config.isCacheRequestBody()) {
-                        exchange.putAttachment(REQUEST_BODY_STRING, unparsedRequestBody);
-                    }
                 }
             } catch (IOException e) {
                 logger.error("IOException: ", e);
