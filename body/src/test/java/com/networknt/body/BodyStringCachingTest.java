@@ -25,7 +25,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class BodyCachingTest {
+public class BodyStringCachingTest {
     static final Logger logger = LoggerFactory.getLogger(BodyHandlerTest.class);
 
     static Undertow server = null;
@@ -34,7 +34,7 @@ public class BodyCachingTest {
     public static void setUp() {
         if (server == null) {
             logger.info("starting server");
-            HttpHandler handler = getTestBodyCacheHandler();
+            HttpHandler handler = getTestHandler();
             BodyHandler bodyHandler = new BodyHandler();
             bodyHandler.setNext(handler);
             handler = bodyHandler;
@@ -59,7 +59,7 @@ public class BodyCachingTest {
         }
     }
 
-    static RoutingHandler getTestBodyCacheHandler() {
+    static RoutingHandler getTestHandler() {
         return Handlers.routing()
                 .add(Methods.POST, "/post", exchange -> {
                     String bodyString = (String) exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
@@ -72,7 +72,7 @@ public class BodyCachingTest {
     }
 
     @Test
-    public void testCacheJsonBody() throws Exception {
+    public void testCacheJsonBodyString() throws Exception {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
@@ -108,7 +108,7 @@ public class BodyCachingTest {
     }
 
     @Test
-    public void testNoCacheJsonBody() throws Exception {
+    public void testNoCacheJsonBodyString() throws Exception {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
