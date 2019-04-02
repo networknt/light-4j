@@ -62,7 +62,7 @@ public class BodyHandler implements MiddlewareHandler {
     // it could be a map or list. So treat it as Object in the attachment.
     public static final AttachmentKey<Object> REQUEST_BODY = AttachmentKey.create(Object.class);
 
-    public static final AttachmentKey<Object> REQUEST_BODY_STRING = AttachmentKey.create(Object.class);
+    public static final AttachmentKey<String> REQUEST_BODY_STRING = AttachmentKey.create(String.class);
 
     public static final String CONFIG_NAME = "body";
 
@@ -102,14 +102,10 @@ public class BodyHandler implements MiddlewareHandler {
                         exchange.putAttachment(REQUEST_BODY_STRING, unparsedRequestBody);
                     }
                     // attach the parsed request body into exchange if the body parser is enabled
-                    if (config.isEnabled()) {
-                        attachJsonBody(exchange, unparsedRequestBody);
-                    }
+                    attachJsonBody(exchange, unparsedRequestBody);
                 } else if (contentType.startsWith("multipart/form-data") || contentType.startsWith("application/x-www-form-urlencoded")) {
                     // attach the parsed request body into exchange if the body parser is enabled
-                    if (config.isEnabled()) {
-                        attachFormDataBody(exchange);
-                    }
+                    attachFormDataBody(exchange);
                 }
             } catch (IOException e) {
                 logger.error("IOException: ", e);
@@ -177,7 +173,7 @@ public class BodyHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled() || config.isCacheRequestBody();
+        return config.isEnabled();
     }
 
     @Override
