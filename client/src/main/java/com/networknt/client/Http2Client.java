@@ -1,26 +1,29 @@
 /*
- * Copyright (c) 2016 Network New Technologies Inc.
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2014 Red Hat, Inc., and individual contributors
+ * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 package com.networknt.client;
 
+import com.networknt.client.http.Light4jHttp2ClientProvider;
+import com.networknt.client.http.Light4jHttpClientProvider;
 import com.networknt.client.oauth.Jwt;
 import com.networknt.client.oauth.TokenManager;
 import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
 import com.networknt.client.ssl.TLSConfig;
-import com.networknt.common.DecryptUtil;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 import com.networknt.httpstring.HttpStringConstants;
@@ -28,8 +31,6 @@ import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.client.*;
-import io.undertow.client.http.Light4jHttp2ClientProvider;
-import io.undertow.client.http.Light4jHttpClientProvider;
 import io.undertow.connector.ByteBufferPool;
 import io.undertow.protocols.ssl.UndertowXnioSsl;
 import io.undertow.server.DefaultByteBufferPool;
@@ -119,10 +120,8 @@ public class Http2Client {
             }
         }
 
-        Map<String, Object> secretMap = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
-        if(secretMap != null) {
-            secretConfig = DecryptUtil.decryptMap(secretMap);
-        } else {
+        secretConfig = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
+        if(secretConfig == null) {
             throw new ExceptionInInitializerError("Could not locate secret.yml");
         }
     }

@@ -1,22 +1,25 @@
 /*
- * Copyright (c) 2016 Network New Technologies Inc.
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2014 Red Hat, Inc., and individual contributors
+ * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
-package io.undertow.client.http;
+package com.networknt.client.http;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.ArrayList;
@@ -25,6 +28,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xnio.ChannelListener;
 import org.xnio.IoFuture;
 import org.xnio.OptionMap;
@@ -50,11 +55,11 @@ import io.undertow.connector.ByteBufferPool;
  * Customized HttpClientProvider for handling TLS handshake for HTTPS.
  * Created by modifying {@link io.undertow.client.http.HttpClientProvider}
  * 
- * This class needs to be in the package {@link io.undertow.client.http} in order to use HttpClientConnection.
  * 
  *
  */
 public class Light4jHttpClientProvider implements ClientProvider {
+	private static final Logger logger = LoggerFactory.getLogger(Light4jHttpClientProvider.class);
 	public static final String HTTP = "http";
 	public static final String HTTPS = "https";
 
@@ -148,7 +153,7 @@ public class Light4jHttpClientProvider implements ClientProvider {
            Light4jALPNClientSelector.runAlpn((SslConnection) connection, new ChannelListener<SslConnection>() {
                @Override
                public void handleEvent(SslConnection connection) {
-                   listener.completed(new HttpClientConnection(connection, options, bufferPool));
+                   listener.completed(createHttpClientConnection(connection, options, bufferPool));
                }
            }, listener, protocolList.toArray(new ALPNClientSelector.ALPNProtocol[protocolList.size()]));
        } else {
@@ -159,8 +164,28 @@ public class Light4jHttpClientProvider implements ClientProvider {
                    listener.failed((t instanceof IOException) ? (IOException) t : new IOException(t));
                }
            }
-           listener.completed(new HttpClientConnection(connection, options, bufferPool));
+           listener.completed(createHttpClientConnection(connection, options, bufferPool));
        }
    }
+   
+   /*
+    * Create instances of "io.undertow.client.http.HttpClientConnection" using reflections
+    */
+   
+	private ClientConnection createHttpClientConnection(final StreamConnection connection, final OptionMap options, final ByteBufferPool bufferPool) {
+		try {
+			Class<?> cls = Class.forName("io.undertow.client.http.HttpClientConnection");
+			
+			Constructor<?> o = cls.getDeclaredConstructor(StreamConnection.class, OptionMap.class, ByteBufferPool.class);
+			
+			o.setAccessible(true);
+			
+			return (ClientConnection) o.newInstance(connection, options, bufferPool);			
+		}catch(Exception e) {
+			logger.error(e.getMessage(), e);
+		}
+
+		return null;
+	}
 }
 

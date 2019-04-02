@@ -2,7 +2,7 @@
  * Copyright (c) 2016 Network New Technologies Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -17,7 +17,6 @@
 package com.networknt.server;
 
 import com.networknt.client.Http2Client;
-import com.networknt.common.DecryptUtil;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
@@ -96,8 +95,7 @@ public class Server {
 
     public static ServerConfig config = (ServerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME,
             ServerConfig.class);
-    public static Map<String, Object> secret = DecryptUtil
-            .decryptMap(Config.getInstance().getJsonMapConfig(CONFIG_SECRET));
+    public static Map<String, Object> secret = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
     public final static TrustManager[] TRUST_ALL_CERTS = new X509TrustManager[]{new DummyTrustManager()};
 
     static protected boolean shutdownRequested = false;

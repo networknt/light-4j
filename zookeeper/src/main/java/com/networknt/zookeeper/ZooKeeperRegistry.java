@@ -45,7 +45,6 @@ import org.slf4j.LoggerFactory;
 /**
  * The ZooKeeper Registry implementation.
  *
- * @author Steve Hu
  */
 public class ZooKeeperRegistry extends CommandFailbackRegistry {
     private static final Logger logger = LoggerFactory.getLogger(ZooKeeperRegistry.class);
