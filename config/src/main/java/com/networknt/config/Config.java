@@ -16,17 +16,31 @@
 
 package com.networknt.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.ServiceLoader;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.representer.Representer;
+import org.yaml.snakeyaml.resolver.Resolver;
 
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.networknt.config.yml.DecryptConstructor;
+import com.networknt.config.yml.YmlConstants;
 
 /**
  * A injectable singleton config that has default implementation
@@ -80,6 +94,7 @@ public abstract class Config {
     }
 
     private static final class FileConfigImpl extends Config {
+    	static final String CONFIG_NAME = "config";
         static final String CONFIG_EXT_JSON = ".json";
         static final String CONFIG_EXT_YAML = ".yaml";
         static final String CONFIG_EXT_YML = ".yml";
@@ -103,8 +118,60 @@ public abstract class Config {
             mapper.registerModule(new JavaTimeModule());
             mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         }
-
-        final Yaml yaml = new Yaml();
+        
+        final Yaml yaml;
+        
+        FileConfigImpl(){
+        	super();
+        	
+        	String decryptorClass = getDecryptorClass();
+        	
+        	if (null==decryptorClass || decryptorClass.trim().isEmpty()) {
+        		yaml = new Yaml();
+        	}else {
+	            final Resolver resolver = new Resolver();
+	            resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
+	        	yaml = new Yaml(new DecryptConstructor(decryptorClass), new Representer(), new DumperOptions(), resolver);
+        	}
+        }
+        
+        private String getDecryptorClass() {
+        	Yaml yml = new Yaml();
+        	
+            Map<String, Object> config = null;
+            for (String extension : configExtensionsOrdered) {
+                String ymlFilename = CONFIG_NAME + extension;
+                try (InputStream inStream = getConfigStream(ymlFilename, "")) {
+                    if (inStream != null) {
+                        config = yml.load(inStream);
+                    }
+                } catch (IOException ioe) {
+                    logger.error("IOException", ioe);
+                }
+                
+                if (config != null) {
+            		if (logger.isDebugEnabled()) {
+            			logger.debug("loaded config from file {}", ymlFilename);
+            		}
+            		
+                	break;
+                }
+            }
+        	
+        	if (null!=config) {
+        		String decryptorClass = (String) config.get(DecryptConstructor.CONFIG_ITEM_DECRYPTOR_CLASS);
+        		
+        		if (logger.isDebugEnabled()) {
+        			logger.debug("found decryptorClass={}", decryptorClass);
+        		}
+        		
+        		return decryptorClass;
+        	}else {
+        		logger.warn("config file cannot be found.");
+        	}
+        	
+        	return null;
+        }
 
         private static Config initialize() {
             Iterator<Config> it;
@@ -288,7 +355,8 @@ public abstract class Config {
             }
             return config;
         }
-
+        
+        
         private Map<String, Object> loadMapConfig(String configName, String path) {
             Map<String, Object> config;
             for (String extension : configExtensionsOrdered) {

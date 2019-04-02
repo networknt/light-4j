@@ -16,13 +16,12 @@
 
 package com.networknt.client.oauth;
 
-import com.networknt.client.Http2Client;
-import com.networknt.common.DecryptUtil;
-import com.networknt.common.SecretConstants;
-import com.networknt.config.Config;
-
 import java.util.List;
 import java.util.Map;
+
+import com.networknt.client.Http2Client;
+import com.networknt.common.SecretConstants;
+import com.networknt.config.Config;
 
 /**
  * load default values from client.yml for client credentials grant, overwrite by setters
@@ -35,7 +34,7 @@ import java.util.Map;
  * @author Steve Hu
  */
 public class ClientCredentialsRequest extends TokenRequest {
-    static Map<String, Object> secret = DecryptUtil.decryptMap((Map<String, Object>)Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET));
+    static Map<String, Object> secret = (Map<String, Object>)Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
 
 
     public ClientCredentialsRequest() {
