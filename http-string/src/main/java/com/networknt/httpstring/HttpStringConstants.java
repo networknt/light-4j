@@ -2,7 +2,7 @@
  * Copyright (c) 2016 Network New Technologies Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -40,6 +40,7 @@ public class HttpStringConstants {
     public static final HttpString CSRF_TOKEN = new HttpString(Constants.CSRF_TOKEN_STRING);
 
     public static final HttpString SERVICE_ID = new HttpString(Constants.SERVICE_ID_STRING);
+    public static final HttpString SERVICE_URL = new HttpString(Constants.SERVICE_URL_STRING);
     public static final HttpString ENV_TAG = new HttpString(Constants.ENV_TAG_STRING);
     public static final HttpString HASH_KEY = new HttpString(Constants.HASH_KEY_STRING);
 }
