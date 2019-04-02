@@ -45,8 +45,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
-import io.undertow.client.http.Light4jHttp2ClientProvider;
-import io.undertow.client.http.Light4jHttpClientProvider;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +64,6 @@ import com.networknt.client.oauth.Jwt;
 import com.networknt.client.oauth.OauthHelper;
 import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
 import com.networknt.client.ssl.TLSConfig;
-import com.networknt.common.DecryptUtil;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 import com.networknt.httpstring.HttpStringConstants;
@@ -80,6 +77,8 @@ import io.undertow.client.ClientExchange;
 import io.undertow.client.ClientProvider;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
+import io.undertow.client.http.Light4jHttp2ClientProvider;
+import io.undertow.client.http.Light4jHttpClientProvider;
 import io.undertow.connector.ByteBufferPool;
 import io.undertow.protocols.ssl.UndertowXnioSsl;
 import io.undertow.server.DefaultByteBufferPool;
@@ -150,10 +149,8 @@ public class Http2Client {
             }
         }
 
-        Map<String, Object> secretMap = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
-        if(secretMap != null) {
-            secretConfig = DecryptUtil.decryptMap(secretMap);
-        } else {
+        secretConfig = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
+        if(secretConfig == null) {
             throw new ExceptionInInitializerError("Could not locate secret.yml");
         }
     }

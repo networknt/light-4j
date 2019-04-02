@@ -17,7 +17,7 @@
 package com.networknt.common;
 
 import com.networknt.service.SingletonServiceFactory;
-import com.networknt.utility.Decryptor;
+import com.networknt.decrypt.Decryptor;
 
 import java.util.List;
 import java.util.Map;

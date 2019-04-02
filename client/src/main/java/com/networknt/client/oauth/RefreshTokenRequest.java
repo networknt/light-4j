@@ -16,16 +16,15 @@
 
 package com.networknt.client.oauth;
 
-import com.networknt.client.Http2Client;
-import com.networknt.common.DecryptUtil;
-import com.networknt.common.SecretConstants;
-import com.networknt.config.Config;
-
 import java.util.List;
 import java.util.Map;
 
+import com.networknt.client.Http2Client;
+import com.networknt.common.SecretConstants;
+import com.networknt.config.Config;
+
 public class RefreshTokenRequest extends TokenRequest {
-    static Map<String, Object> secret = DecryptUtil.decryptMap((Map<String, Object>)Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET));
+    static Map<String, Object> secret = (Map<String, Object>)Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
 
     String refreshToken;
 

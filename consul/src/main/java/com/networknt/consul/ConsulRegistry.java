@@ -17,7 +17,6 @@
 package com.networknt.consul;
 
 import com.networknt.client.Http2Client;
-import com.networknt.common.DecryptUtil;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 import com.networknt.registry.URLParamType;
@@ -42,7 +41,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
     private ConsulClient client;
     private ConsulHeartbeatManager heartbeatManager;
     private int lookupInterval;
-    private Map<String, Object> secret = DecryptUtil.decryptMap(Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET));
+    private Map<String, Object> secret = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
     private String token = secret == null? null : (String)secret.get(SecretConstants.CONSUL_TOKEN);
     private ConsulConfig config = (ConsulConfig)Config.getInstance().getJsonObjectConfig(ConsulConstants.CONFIG_NAME, ConsulConfig.class);
 

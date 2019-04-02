@@ -35,6 +35,14 @@
             <artifactId>decryptor</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>service</artifactId>
+        </dependency>  
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>utility</artifactId>
+        </dependency>              
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
