@@ -988,6 +988,12 @@ ERR12107:
   message: TOKEN_NOT_FOUND
   description: Token %s not found in token_vault table in database %s
 
+# http2client error 13000-14000
+ERR13001:
+  statusCode: 403
+  code: ERR13001
+  message: UNABLE_PARSE_SCOPES_FROM_HEADER
+  description: Cannot parse scopes from request headers.
 
 # 20000-29999 common error codes within your business domain.
 # It is highly recommended to have your error code shared within your organization or your line of business.
