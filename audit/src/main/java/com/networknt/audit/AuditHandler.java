@@ -21,7 +21,6 @@ import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.mask.Mask;
-import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -31,9 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 /**
  * This is a simple audit handler that dump most important info per request basis. The following
@@ -71,68 +68,25 @@ import java.util.function.Consumer;
  */
 public class AuditHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(AuditHandler.class);
-    public static final String CONFIG_NAME = "audit";
 
     public static final String ENABLED = "enabled";
-    static final String HEADERS = "headers";
-    static final String AUDIT = "audit";
     static final String STATUS_CODE = "statusCode";
     static final String RESPONSE_TIME = "responseTime";
     static final String TIMESTAMP = "timestamp";
-    static final String AUDIT_ON_ERROR = "auditOnError";
-    static final String IS_LOG_LEVEL_ERROR = "logLevelIsError";
-    static final String IS_MASK_ENABLED = "mask";
     static final String MASK_KEY = "audit";
 
-    public static final Map<String, Object> config;
-    private static final List<String> headerList;
-    private static final List<String> auditList;
+    private AuditConfig auditConfig;
 
-    private static boolean statusCode = false;
-    private static boolean responseTime = false;
-    private static boolean auditOnError = false;
-    private static boolean isMaskEnabled = false;
-
-    // A customized logger appender defined in default logback.xml
-    static Consumer<String> auditFunc = LoggerFactory.getLogger(Constants.AUDIT_LOGGER)::info;
 
     // The key to the audit info attachment in exchange. Allow other handlers to set values.
     public static final AttachmentKey<Map> AUDIT_INFO = AttachmentKey.create(Map.class);
 
     private volatile HttpHandler next;
 
-    static {
-        config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
-        headerList = (List<String>)config.get(HEADERS);
-        auditList = (List<String>)config.get(AUDIT);
-        Object object = config.get(STATUS_CODE);
-        if(object != null && (Boolean) object) {
-            statusCode = true;
-        }
-        object = config.get(RESPONSE_TIME);
-        if(object != null && (Boolean) object) {
-            responseTime = true;
-        }
-
-        // audit on error response flag
-        object = config.get(AUDIT_ON_ERROR);
-        if(object != null && (Boolean) object) {
-            auditOnError = true;
-        }
-
-        // set the log level
-        object = config.get(IS_LOG_LEVEL_ERROR);
-        auditFunc = (object != null && (Boolean) object) ?
-            LoggerFactory.getLogger(Constants.AUDIT_LOGGER)::error : LoggerFactory.getLogger(Constants.AUDIT_LOGGER)::info;
-
-        // use mask flag
-        object = config.get(IS_MASK_ENABLED);
-        if(object != null && (Boolean) object) {
-            isMaskEnabled = true;
-        }
+    public AuditHandler() {
+        if(logger.isInfoEnabled()) logger.info("AuditHandler is loaded.");
+        auditConfig = AuditConfig.load();
     }
-
-    public AuditHandler() { if(logger.isInfoEnabled()) logger.info("AuditHandler is loaded."); }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
@@ -140,36 +94,24 @@ public class AuditHandler implements MiddlewareHandler {
         Map<String, Object> auditMap = new LinkedHashMap<>();
         final long start = System.currentTimeMillis();
         auditMap.put(TIMESTAMP, System.currentTimeMillis());
+
         // dump audit info fields according to config
-        if(auditInfo != null) {
-            if(auditList != null && auditList.size() > 0) {
-                for(String name: auditList) {
-                    Object value = auditInfo.get(name);
-                    if(isMaskEnabled && value instanceof String) {
-                        auditMap.put(name, Mask.maskRegex((String) value, MASK_KEY, name));
-                    } else {
-                        auditMap.put(name, value);
-                    }
-                }
-            }
+        boolean needAuditData = auditInfo != null && auditConfig.hasAuditList();
+        if(needAuditData) {
+            auditFields(auditInfo, auditMap);
         }
+
         // dump headers field according to config
-        if(headerList != null && headerList.size() > 0) {
-            for(String name: headerList) {
-                String value = exchange.getRequestHeaders().getFirst(name);
-                if (isMaskEnabled) {
-                    auditMap.put(name, Mask.maskRegex(value, "requestHeader", name));
-                } else {
-                    auditMap.put(name, value);
-                }
-            }
+        if(auditConfig.hasHeaderList()) {
+            auditHeader(exchange, auditMap);
         }
-        if(statusCode || responseTime) {
+
+        if(auditConfig.isStatusCode() || auditConfig.isResponseTime()) {
             exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
-                if (AuditHandler.statusCode) {
+                if (auditConfig.isStatusCode()) {
                     auditMap.put(STATUS_CODE, exchange1.getStatusCode());
                 }
-                if (responseTime) {
+                if (auditConfig.isResponseTime()) {
                     auditMap.put(RESPONSE_TIME, System.currentTimeMillis() - start);
                 }
 
@@ -177,8 +119,8 @@ public class AuditHandler implements MiddlewareHandler {
                 // according to the config
                 //Map<String, Object> auditInfo1 = exchange.getAttachment(AuditHandler.AUDIT_INFO);
                 if(auditInfo != null) {
-                    if(auditList != null && auditList.size() > 0) {
-                        for(String name: auditList) {
+                    if(auditConfig.getAuditList() != null && auditConfig.getAuditList().size() > 0) {
+                        for(String name: auditConfig.getAuditList()) {
                             auditMap.putIfAbsent(name, auditInfo.get(name));
                         }
                     }
@@ -186,11 +128,11 @@ public class AuditHandler implements MiddlewareHandler {
 
                 try {
                     // audit entries only is it is an error, if auditOnError flag is set
-                    if(auditOnError) {
+                    if(auditConfig.isAuditOnError()) {
                         if (exchange1.getStatusCode() >= 400)
-                            auditFunc.accept(Config.getInstance().getMapper().writeValueAsString(auditMap));
+                            auditConfig.getAuditFunc().accept(Config.getInstance().getMapper().writeValueAsString(auditMap));
                     } else {
-                        auditFunc.accept(Config.getInstance().getMapper().writeValueAsString(auditMap));
+                        auditConfig.getAuditFunc().accept(Config.getInstance().getMapper().writeValueAsString(auditMap));
                     }
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
@@ -199,9 +141,28 @@ public class AuditHandler implements MiddlewareHandler {
                 nextListener.proceed();
             });
         } else {
-            auditFunc.accept(Config.getInstance().getMapper().writeValueAsString(auditMap));
+            auditConfig.getAuditFunc().accept(auditConfig.getConfig().getMapper().writeValueAsString(auditMap));
         }
+        next(exchange);
+    }
+
+    private void auditHeader(HttpServerExchange exchange, Map<String, Object> auditMap) {
+        for(String name: auditConfig.getHeaderList()) {
+            String value = exchange.getRequestHeaders().getFirst(name);
+            auditMap.put(name, auditConfig.isMaskEnabled() ? Mask.maskRegex(value, "requestHeader", name) : value);
+        }
+    }
+
+    protected void next(HttpServerExchange exchange) throws Exception {
         Handler.next(exchange, next);
+    }
+
+    private void auditFields(Map<String, Object> auditInfo, Map<String, Object> auditMap) {
+        for(String name: auditConfig.getAuditList()) {
+            Object value = auditInfo.get(name);
+            boolean needApplyMask = auditConfig.isMaskEnabled() && value instanceof String;
+            auditMap.put(name, needApplyMask ? Mask.maskRegex((String) value, MASK_KEY, name) : value);
+        }
     }
 
     @Override
@@ -218,12 +179,12 @@ public class AuditHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        Object object = config.get(ENABLED);
+        Object object = auditConfig.getMappedConfig().get(ENABLED);
         return object != null && (Boolean) object;
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(AuditHandler.class.getName(), config, null);
+        ModuleRegistry.registerModule(AuditHandler.class.getName(), auditConfig.getMappedConfig(), null);
     }
 }

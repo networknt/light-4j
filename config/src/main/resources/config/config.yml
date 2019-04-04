@@ -3,3 +3,5 @@ exclusionConfigFileList:
   - swagger
   - values
   - status
+
+decryptorClass: com.networknt.decrypt.AESDecryptor

@@ -16,7 +16,6 @@
 
 package com.networknt.email;
 
-import com.networknt.common.DecryptUtil;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 import com.sun.mail.util.MailSSLSocketFactory;
@@ -46,7 +45,7 @@ public class EmailSender {
     public static final String CONFIG_SECRET = "secret";
 
     static final EmailConfig emailConfg = (EmailConfig)Config.getInstance().getJsonObjectConfig(CONFIG_EMAIL, EmailConfig.class);
-    static final Map<String, Object> secret = DecryptUtil.decryptMap(Config.getInstance().getJsonMapConfig(CONFIG_SECRET));
+    static final Map<String, Object> secret = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
 
     public EmailSender() {
     }

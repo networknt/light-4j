@@ -16,7 +16,6 @@
 
 package com.networknt.server;
 
-import com.networknt.common.DecryptUtil;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
@@ -339,7 +338,7 @@ public class Server {
 
     private static KeyStore loadKeyStore() {
         ServerConfig serverConfig = getServerConfig();
-        Map<String, Object> secretConfig = DecryptUtil.decryptMap(Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME));
+        Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
 
         String name = serverConfig.getKeystoreName();
         try (InputStream stream = Config.getInstance().getInputStreamFromFile(name)) {
@@ -354,7 +353,7 @@ public class Server {
 
     protected static KeyStore loadTrustStore() {
         ServerConfig serverConfig = getServerConfig();
-        Map<String, Object> secretConfig = DecryptUtil.decryptMap(Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME));
+        Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
 
         String name = serverConfig.getTruststoreName();
         try (InputStream stream = Config.getInstance().getInputStreamFromFile(name)) {
@@ -402,7 +401,7 @@ public class Server {
 
     private static SSLContext createSSLContext() throws RuntimeException {
         ServerConfig serverConfig = getServerConfig();
-        Map<String, Object> secretConfig = DecryptUtil.decryptMap(Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME));
+        Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
 
         try {
             KeyManager[] keyManagers = buildKeyManagers(loadKeyStore(),

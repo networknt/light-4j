@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.networknt.utility;
+package com.networknt.decrypt;
 
 public interface Decryptor {
 

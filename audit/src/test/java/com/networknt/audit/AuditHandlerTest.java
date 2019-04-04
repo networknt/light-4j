@@ -19,10 +19,13 @@ package com.networknt.audit;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
+import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.correlation.CorrelationHandler;
 import com.networknt.exception.ClientException;
+import com.networknt.handler.Handler;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.Constants;
 import io.undertow.Handlers;
@@ -31,20 +34,19 @@ import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
 import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
 import io.undertow.server.RoutingHandler;
+import io.undertow.util.AttachmentKey;
+import io.undertow.util.HeaderMap;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.*;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -56,6 +58,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -63,9 +66,11 @@ import static org.mockito.Mockito.verify;
 /**
  * Created by steve on 01/09/16.
  */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({AuditConfig.class, LoggerFactory.class})
+@PowerMockIgnore({"javax.xml.*", "org.xml.sax.*", "org.apache.log4j.*"})
 public class AuditHandlerTest {
-    static final Logger logger = LoggerFactory.getLogger(AuditHandlerTest.class);
+    static Logger logger = LoggerFactory.getLogger(AuditHandlerTest.class);
 
     static Undertow server = null;
 
@@ -230,5 +235,137 @@ public class AuditHandlerTest {
         } catch (InterruptedException ignored) {
         }
         verifyAuditLog(null);
+    }
+
+    @Test
+    public void shouldAddListenerIfIsStatusCodeAndIsResponseTimeAreTrue() throws Exception {
+        PowerMockito.mockStatic(AuditConfig.class);
+
+        AuditConfig configHandler = Mockito.mock(AuditConfig.class);
+        Mockito.when(configHandler.isResponseTime()).thenReturn(true);
+        Mockito.when(configHandler.isStatusCode()).thenReturn(true);
+
+        Mockito.when(AuditConfig.load()).thenReturn(configHandler);
+
+        HeaderMap headerMap = Mockito.spy(new HeaderMap());
+        HttpServerExchange httpServerExchange = Mockito.mock(HttpServerExchange.class);
+        Mockito.when(httpServerExchange.getRequestHeaders()).thenReturn(headerMap);
+
+        AuditHandler auditHandler = Mockito.spy(new AuditHandler());
+        Mockito.doNothing().when(auditHandler).next(Mockito.any());
+
+        Handler.init();
+
+        auditHandler.handleRequest(httpServerExchange);
+        Mockito.verify(httpServerExchange).addExchangeCompleteListener(Mockito.any());
+    }
+
+    @Test
+    public void shouldAddListenerIfIsStatusCodeIsFalseAndIsResponseTimeIsTrue() throws Exception {
+        PowerMockito.mockStatic(AuditConfig.class);
+
+        AuditConfig configHandler = Mockito.mock(AuditConfig.class);
+        Mockito.when(configHandler.isResponseTime()).thenReturn(true);
+        Mockito.when(configHandler.isStatusCode()).thenReturn(false);
+
+        Mockito.when(AuditConfig.load()).thenReturn(configHandler);
+
+        HeaderMap headerMap = Mockito.spy(new HeaderMap());
+        HttpServerExchange httpServerExchange = Mockito.mock(HttpServerExchange.class);
+        Mockito.when(httpServerExchange.getRequestHeaders()).thenReturn(headerMap);
+
+        AuditHandler auditHandler = Mockito.spy(new AuditHandler());
+        Mockito.doNothing().when(auditHandler).next(Mockito.any());
+
+        Handler.init();
+
+        auditHandler.handleRequest(httpServerExchange);
+        Mockito.verify(httpServerExchange).addExchangeCompleteListener(Mockito.any());
+    }
+
+    @Test
+    public void shouldAddListenerIfIsStatusCodeIsTrueAndIsResponseTimeIsFalse() throws Exception {
+        PowerMockito.mockStatic(AuditConfig.class);
+
+        AuditConfig configHandler = Mockito.mock(AuditConfig.class);
+        Mockito.when(configHandler.isResponseTime()).thenReturn(false);
+        Mockito.when(configHandler.isStatusCode()).thenReturn(true);
+
+        Mockito.when(AuditConfig.load()).thenReturn(configHandler);
+
+        HeaderMap headerMap = Mockito.spy(new HeaderMap());
+        HttpServerExchange httpServerExchange = Mockito.mock(HttpServerExchange.class);
+        Mockito.when(httpServerExchange.getRequestHeaders()).thenReturn(headerMap);
+
+        AuditHandler auditHandler = Mockito.spy(new AuditHandler());
+        Mockito.doNothing().when(auditHandler).next(Mockito.any());
+
+        Handler.init();
+
+        auditHandler.handleRequest(httpServerExchange);
+        Mockito.verify(httpServerExchange).addExchangeCompleteListener(Mockito.any());
+    }
+
+    @Test
+    public void shouldNotAddListenerIfStatusCodeAndResponseTimeAreFalse() throws Exception {
+        PowerMockito.mockStatic(AuditConfig.class);
+        Consumer<String> auditFunc= (Consumer<String>) Mockito.spy(Consumer.class);
+        ObjectMapper objectMapper = Mockito.mock(ObjectMapper.class);
+
+        Config config = Mockito.mock(Config.class);
+        Mockito.when(config.getMapper()).thenReturn(objectMapper);
+
+        AuditConfig configHandler = Mockito.mock(AuditConfig.class);
+        Mockito.when(configHandler.isResponseTime()).thenReturn(false);
+        Mockito.when(configHandler.isStatusCode()).thenReturn(false);
+        Mockito.when(configHandler.getAuditFunc()).thenReturn(auditFunc);
+        Mockito.when(configHandler.getConfig()).thenReturn(config);
+
+        Mockito.when(AuditConfig.load()).thenReturn(configHandler);
+
+        HttpServerExchange httpServerExchange = Mockito.mock(HttpServerExchange.class);
+
+        AuditHandler auditHandler = Mockito.spy(new AuditHandler());
+        Mockito.doNothing().when(auditHandler).next(Mockito.any());
+
+        Handler.init();
+
+        auditHandler.handleRequest(httpServerExchange);
+        Mockito.verify(httpServerExchange, Mockito.never()).addExchangeCompleteListener(Mockito.any());
+        Mockito.verify(auditFunc).accept(Mockito.any());
+        Mockito.verify(objectMapper).writeValueAsString(Mockito.any());
+    }
+
+    private class ArgumentMatcherAuditInfo implements ArgumentMatcher<AttachmentKey<Map>> {
+
+        @Override
+        public boolean matches(AttachmentKey<Map> attachmentKey) {
+            if (attachmentKey == null) {
+                return false;
+            }
+            return attachmentKey.toString().equals("io.undertow.util.SimpleAttachmentKey<java.util.Map>");
+        }
+    }
+
+    private class ArgumentMatcherChainId implements ArgumentMatcher<AttachmentKey<String>> {
+
+        @Override
+        public boolean matches(AttachmentKey<String> attachmentKey) {
+            if (attachmentKey == null) {
+                return false;
+            }
+            return attachmentKey.toString().equals("io.undertow.util.SimpleAttachmentKey<java.lang.String>");
+        }
+    }
+
+    private class ArgumentMatcherChainSeq implements ArgumentMatcher<AttachmentKey<Integer>> {
+
+        @Override
+        public boolean matches(AttachmentKey<Integer> attachmentKey) {
+            if (attachmentKey == null) {
+                return false;
+            }
+            return attachmentKey.toString().equals("io.undertow.util.SimpleAttachmentKey<java.lang.Integer>");
+        }
     }
 }

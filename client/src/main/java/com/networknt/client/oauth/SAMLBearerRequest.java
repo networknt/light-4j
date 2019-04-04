@@ -17,15 +17,13 @@
 package com.networknt.client.oauth;
 
 
-import com.networknt.client.Http2Client;
-import com.networknt.common.DecryptUtil;
-import com.networknt.common.SecretConstants;
-import com.networknt.config.Config;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Map;
+import com.networknt.client.Http2Client;
+import com.networknt.config.Config;
 
 /**
  * This holds values used to call the SAML Bearer grant flow from the OAuth Server.

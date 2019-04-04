@@ -16,7 +16,6 @@
 
 package com.networknt.db;
 
-import com.networknt.common.DecryptUtil;
 import com.networknt.config.Config;
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -65,7 +64,7 @@ public class GenericDataSource {
         Map<String, Object> dataSourceMap = Config.getInstance().getJsonMapConfig(DATASOURCE);
 
         // get the decrypted secret file
-        Map<String, Object> secret = DecryptUtil.decryptMap(Config.getInstance().getJsonMapConfig(SECRET));
+        Map<String, Object> secret = Config.getInstance().getJsonMapConfig(SECRET);
 
         // get the requested datasource
         Map<String, Object> mainParams = (Map<String, Object>) dataSourceMap.get(getDsName());
