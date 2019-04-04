@@ -156,6 +156,7 @@
         <module>ip-whitelist</module>
         <module>encode-decode</module>
         <module>monad-result</module>
+        <module>logging</module>
     </modules>
 
     <dependencyManagement>
@@ -209,6 +210,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>health</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>logging</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
