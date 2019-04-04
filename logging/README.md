@@ -79,10 +79,8 @@ Add the below end points under path.
   
 ```
 
-And also add the logging.yml file in resource folder, which is having one flag "enabled: true" by default enabled.
-if you want disable logging details , you can make this flag as false. 
 
-
-
+By default logging is enabled in logging.yml, if you want to disable it 
+just add the logging.yml file in your resource folder and make that property to false.
 
 
