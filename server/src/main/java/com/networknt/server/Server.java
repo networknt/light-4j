@@ -215,8 +215,8 @@ public class Server {
             server.start();
             System.out.println("HOST IP " + System.getenv(STATUS_HOST_IP));
         } catch (Exception e) {
-            if (!config.dynamicPort || (config.dynamicPort && config.maxPort == port + 1)) {
-                String triedPortsMessage = config.dynamicPort ? config.minPort + " to: " + (config.maxPort - 1) : port + "";
+            if (!serverConfig.dynamicPort || (serverConfig.dynamicPort && serverConfig.maxPort == port + 1)) {
+                String triedPortsMessage = serverConfig.dynamicPort ? serverConfig.minPort + " to: " + (serverConfig.maxPort - 1) : port + "";
                 String errMessage = "No ports available to bind to. Tried: " + triedPortsMessage;
                 System.out.println(errMessage);
                 logger.error(errMessage);
