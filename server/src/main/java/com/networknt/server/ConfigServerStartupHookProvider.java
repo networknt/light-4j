@@ -29,7 +29,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import static com.networknt.server.Server.lightEnv;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 
@@ -43,6 +42,8 @@ public class ConfigServerStartupHookProvider implements StartupHookProvider{
     static final Logger logger = LoggerFactory.getLogger(Server.class);
 
     static final String LIGHT_CONFIG_SERVER_URI = "light-config-server-uri";
+    public static final String DEFAULT_ENV = "test";
+    public static String lightEnv = System.getProperty("light-env");
 
     /**
      * Load config files from light-config-server instance. This is normally only
@@ -57,6 +58,12 @@ public class ConfigServerStartupHookProvider implements StartupHookProvider{
     @Override
     public void onStartup() {
         // if it is necessary to load config files from config server
+        // Here we expect at least env(dev/sit/uat/prod) and optional config server url
+        if (lightEnv == null) {
+            logger.warn("Warning! No light-env has been passed in from command line. Defaulting to {}",DEFAULT_ENV);
+            lightEnv = DEFAULT_ENV;
+        }
+
         String configUri = System.getProperty(LIGHT_CONFIG_SERVER_URI);
         if (configUri != null) {
             // try to get config files from the server.

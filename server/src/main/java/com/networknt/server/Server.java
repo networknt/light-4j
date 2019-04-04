@@ -66,10 +66,7 @@ public class Server {
     public static final String[] STATUS_CONFIG_NAME = {"status", "app-status"};
     
     public static final String ENV_PROPERTY_KEY = "environment";
-    public static final String DEFAULT_ENV = "test";
 
-    public static String lightEnv = System.getProperty("light-env");
-    
     static final String STATUS_HOST_IP = "STATUS_HOST_IP";
 
     // service_id in slf4j MDC
@@ -96,11 +93,6 @@ public class Server {
         System.setProperty("org.jboss.logging.provider", "slf4j");
         // this will make sure that all log statement will have serviceId
         MDC.put(SID, getServerConfig().getServiceId());
-
-        if (lightEnv == null) {
-            logger.warn("Warning! No light-env has been passed in from command line. Defaulting to {}",DEFAULT_ENV);
-            lightEnv = DEFAULT_ENV;
-        }
 
         try {
             start();
@@ -242,8 +234,8 @@ public class Server {
                     logger.info("Could not find IP from STATUS_HOST_IP, use the InetAddress " + ipAddress);
                 }
                 Map parameters = new HashMap<>();
-                if (lightEnv != null)
-                    parameters.put(ENV_PROPERTY_KEY, lightEnv);
+                if (serverConfig.getEnvironment() != null)
+                    parameters.put(ENV_PROPERTY_KEY, serverConfig.getEnvironment());
                 serviceUrl = new URLImpl("light", ipAddress, port, getServerConfig().getServiceId(), parameters);
                 registry.register(serviceUrl);
                 if (logger.isInfoEnabled())
