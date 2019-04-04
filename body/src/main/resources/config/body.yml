@@ -1,3 +1,5 @@
 ---
 # Enable body parse flag
 enabled: true
+# cache request body
+cacheRequestBody: false
