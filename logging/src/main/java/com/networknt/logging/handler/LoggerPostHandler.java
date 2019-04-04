@@ -33,8 +33,7 @@ import java.util.Deque;
 import java.util.Map;
 
 /**
- * If the enableLoggingInfo property is true in logging.yml ,This handler
- * will change the logging level for the given Logger. Ex. ERROR to DEBUG
+ * This handler will change the logging level for the given Logger. Ex. ERROR to DEBUG
  *
  */
 public class LoggerPostHandler implements LightHttpHandler {
@@ -42,6 +41,7 @@ public class LoggerPostHandler implements LightHttpHandler {
     public static final String CONFIG_NAME = "logging";
     private static final String LOGGER_NAME = "loggerName";
     static final String STATUS_LOGGER_INFO_DISABLED = "ERR12108";
+    static final String LOGGER_LEVEL_EMPTY = "ERR12109";
     private static final ObjectMapper mapper = Config.getInstance().getMapper();
 
     public LoggerPostHandler() {
@@ -55,11 +55,14 @@ public class LoggerPostHandler implements LightHttpHandler {
         Map<String, Object> requestBody = (Map<String, Object>) exchange.getAttachment(BodyHandler.REQUEST_BODY);
         LoggerConfig config = (LoggerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, LoggerConfig.class);
 
-        if (config.isEnableLoggingInfo()) {
+        if (config.isEnabled()) {
             ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(loggerName);
             if(requestBody!=null) {
                 String firstKey = requestBody.keySet().stream().findFirst().get();
                 logger.setLevel(Level.valueOf(requestBody.get(firstKey).toString()));
+            }else{
+                logger.error("Logging level is not provided");
+                setExchangeStatus(exchange, LOGGER_LEVEL_EMPTY);
             }
             LoggerInfo loggerInfo = new LoggerInfo();
             loggerInfo.setName(logger.getName());
@@ -70,7 +73,7 @@ public class LoggerPostHandler implements LightHttpHandler {
             exchange.getResponseSender().send(loggerInfo.toString());
 
         } else {
-            logger.error("Logging handler is disabled in logging.yml");
+            logger.error("Logging is disabled in logging.yml");
             setExchangeStatus(exchange, STATUS_LOGGER_INFO_DISABLED);
         }
     }

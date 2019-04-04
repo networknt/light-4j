@@ -31,7 +31,7 @@ import io.undertow.util.Headers;
 import org.slf4j.LoggerFactory;
 
 /**
- * If the enableLoggingInfo property is true in logging.yml,
+ *
  * This handler will provide the logging level for the given Logger.
  */
 public class LoggerGetHandler implements LightHttpHandler {
@@ -51,7 +51,7 @@ public class LoggerGetHandler implements LightHttpHandler {
         String loggerName = parameters.get(LOGGER_NAME).getFirst();
         LoggerConfig config = (LoggerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, LoggerConfig.class);
 
-        if (config.isEnableLoggingInfo()) {
+        if (config.isEnabled()) {
             ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(loggerName);
             LoggerInfo loggerInfo = new LoggerInfo();
             loggerInfo.setName(logger.getName());
@@ -60,7 +60,7 @@ public class LoggerGetHandler implements LightHttpHandler {
             exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, ContentType.APPLICATION_JSON.value());
             exchange.getResponseSender().send(mapper.writeValueAsString(loggerInfo));
         } else {
-            logger.error("Logging handler is disabled in logging.yml");
+            logger.error("Logging is disabled in logging.yml");
             setExchangeStatus(exchange, STATUS_LOGGER_INFO_DISABLED);
         }
     }

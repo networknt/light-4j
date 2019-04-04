@@ -963,10 +963,15 @@ ERR12107:
   message: TOKEN_NOT_FOUND
   description: Token %s not found in token_vault table in database %s
 ERR12108:
-  statusCode: 404
+  statusCode: 400
   code: ERR12108
-  message: LOGGING_HANDLER_DISABLED
-  description: Logging handler is disabled in logging.yml
+  message: LOGGING_DISABLED
+  description: Logging is disabled in logging.yml
+ERR12109:
+  statusCode: 400
+  code: ERR12109
+  message: LOGGING_LEVEL_NOT_PROVIDED
+  description: Logging level is not provided
 
 # 20000-29999 common error codes within your business domain.
 # It is highly recommended to have your error code shared within your organization or your line of business.

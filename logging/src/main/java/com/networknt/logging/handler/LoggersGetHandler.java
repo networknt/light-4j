@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * If the enableLoggingInfo property is true in logging.yml ,
  * This handler will provide all the available logging levels for the all loggers.
  */
 public class LoggersGetHandler implements LightHttpHandler {
@@ -50,7 +49,7 @@ public class LoggersGetHandler implements LightHttpHandler {
         List<LoggerInfo> loggersList = new ArrayList<LoggerInfo>();
         LoggerConfig config = (LoggerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, LoggerConfig.class);
 
-        if (config.isEnableLoggingInfo()) {
+        if (config.isEnabled()) {
             LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
             for (ch.qos.logback.classic.Logger log : lc.getLoggerList()) {
                 if (log.getLevel() != null) {
@@ -63,7 +62,7 @@ public class LoggersGetHandler implements LightHttpHandler {
             exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, ContentType.APPLICATION_JSON.value());
             exchange.getResponseSender().send(mapper.writeValueAsString(loggersList));
         } else {
-            logger.error("Logging handler is disabled in logging.yml");
+            logger.error("Logging is disabled in logging.yml");
             setExchangeStatus(exchange, STATUS_LOGGER_INFO_DISABLED);
         }
     }

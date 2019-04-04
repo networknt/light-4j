@@ -20,17 +20,16 @@ package com.networknt.logging.model;
  * Config class for Logger handlers
  */
 public class LoggerConfig {
-    boolean enableLoggingInfo;
+    boolean enabled;
 
     public LoggerConfig() {
     }
 
-    public boolean isEnableLoggingInfo() {
-        return enableLoggingInfo;
+    public boolean isEnabled() {
+        return enabled;
     }
 
-    public void setEnableLoggingInfo(boolean enableLoggingInfo) {
-        this.enableLoggingInfo = enableLoggingInfo;
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
-
 }

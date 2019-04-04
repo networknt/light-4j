@@ -33,9 +33,8 @@ There are three LoggerHandlers available in logging module.
       
       Example URL    : https://localhost:8443/api/customers/loggers/com.networknt
  
- Note: If you provide the input in request body, it will change
- and return the updated logging level for given logger else it 
- will return the current logging level.
+ Note:Input is mandatory, If you provide the input in request body, it will change
+ and return the updated logging level for given logger else it will throw an error.
            
  
 ### Usage
@@ -80,7 +79,7 @@ Add the below end points under path.
   
 ```
 
-And also add the logging.yml file in resource folder, which is having one flag "enableLoggingInfo: true" by default enabled.
+And also add the logging.yml file in resource folder, which is having one flag "enabled: true" by default enabled.
 if you want disable logging details , you can make this flag as false. 
 
 

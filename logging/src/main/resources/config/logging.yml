@@ -2,4 +2,4 @@
 # Logging endpoint that can output the logger with logging levels.
 
 # Indicate if the logging info is enable or not.
-enableLoggingInfo: true
+enabled: true
