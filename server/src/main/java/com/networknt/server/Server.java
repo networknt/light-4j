@@ -2,7 +2,7 @@
  * Copyright (c) 2016 Network New Technologies Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -132,9 +132,14 @@ public class Server {
             gracefulShutdownHandler = new GracefulShutdownHandler(new OrchestrationHandler());
         }
 
-        ServerConfig serverConfig = getServerConfig();
+       ServerConfig serverConfig = getServerConfig();
 
         if (serverConfig.dynamicPort) {
+            if (serverConfig.minPort > serverConfig.maxPort) {
+                String errMessage = "No ports available to bind to - the minPort is larger than the maxPort in server.yml";
+                logger.error(errMessage);
+                throw new RuntimeException(errMessage);
+            }          
             for (int i = serverConfig.minPort; i < serverConfig.maxPort; i++) {
                 boolean b = bind(gracefulShutdownHandler, i);
                 if (b) {
@@ -210,6 +215,13 @@ public class Server {
             server.start();
             System.out.println("HOST IP " + System.getenv(STATUS_HOST_IP));
         } catch (Exception e) {
+            if (!config.dynamicPort || (config.dynamicPort && config.maxPort == port + 1)) {
+                String triedPortsMessage = config.dynamicPort ? config.minPort + " to: " + (config.maxPort - 1) : port + "";
+                String errMessage = "No ports available to bind to. Tried: " + triedPortsMessage;
+                System.out.println(errMessage);
+                logger.error(errMessage);
+                throw new RuntimeException(errMessage, e);
+            }
             System.out.println("Failed to bind to port " + port + ". Trying " + ++port);
             if (logger.isInfoEnabled())
                 logger.info("Failed to bind to port " + port + ". Trying " + ++port);
@@ -420,7 +432,8 @@ public class Server {
             return;
         }
         Map<String, Object> statusConfig = Config.getInstance().getJsonMapConfig(STATUS_CONFIG_NAME[0]);
-        Set<String> duplicatedStatusSet = statusConfig.keySet();
+        // clone the default status config key set
+        Set<String> duplicatedStatusSet = new HashSet<>(statusConfig.keySet());
         duplicatedStatusSet.retainAll(appStatusConfig.keySet());
         if (!duplicatedStatusSet.isEmpty()) {
             logger.error("The status code(s): " + duplicatedStatusSet.toString() + " is already in use by light-4j and cannot be overwritten," +
