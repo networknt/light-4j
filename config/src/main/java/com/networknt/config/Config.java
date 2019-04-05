@@ -108,7 +108,7 @@ public abstract class Config {
 
         private static final Config DEFAULT = initialize();
 
-        // Memory cache of all the configuration object. Each config will be loaded on the first time is is accessed.
+        // Memory cache of all the configuration object. Each config will be loaded on the first time it is accessed.
         final Map<String, Object> configCache = new ConcurrentHashMap<>(10, 0.9f, 1);
 
         // An instance of Jackson ObjectMapper that can be used anywhere else for Json.
@@ -318,8 +318,9 @@ public abstract class Config {
                         config = CentralizedManagement.mergeObject(configMap, clazz);
                     }
                 }
-            } catch (IOException ioe) {
-                logger.error("IOException", ioe);
+            } catch (Exception e) {
+                logger.error("Exception", e);
+                throw new RuntimeException("Unable to load " + fileName + " as object.", e);
             }
             return config;
         }
@@ -350,8 +351,9 @@ public abstract class Config {
                         CentralizedManagement.mergeMap(config); // mutates the config map in place.
                     }
                 }
-            } catch (IOException ioe) {
-                logger.error("IOException", ioe);
+            } catch (Exception e) {
+                logger.error("Exception", e);
+                throw new RuntimeException("Unable to load " + ymlFilename + " as map.", e);
             }
             return config;
         }

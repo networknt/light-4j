@@ -27,7 +27,7 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class AESDecryptor implements Decryptor {
-	private static final String FRAMEWORK_NAME = "light";
+
     private static final int ITERATIONS = 65536;
 
     private static final String STRING_ENCODING = "UTF-8";
@@ -53,7 +53,7 @@ public class AESDecryptor implements Decryptor {
 			SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
 			KeySpec spec;
 
-			spec = new PBEKeySpec(FRAMEWORK_NAME.toCharArray(), SALT, ITERATIONS, KEY_SIZE);
+			spec = new PBEKeySpec(getPassword(), SALT, ITERATIONS, KEY_SIZE);
 			SecretKey tmp = factory.generateSecret(spec);
 			secret = new SecretKeySpec(tmp.getEncoded(), "AES");
 
@@ -62,14 +62,14 @@ public class AESDecryptor implements Decryptor {
 			cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 
 		} catch (Exception e) {
-			throw new RuntimeException("Unable to initialize AESDecryptor", e);
+			throw new RuntimeException("Unable to initialize " + this.getClass().getName(), e);
 		}
 	}
 
-    @Override
+	@Override
 	public String decrypt(String input) {
 		if (!input.startsWith(CRYPT_PREFIX)) {
-			throw new RuntimeException("Unable to decrypt, input string does not start with 'CRYPT'");
+			throw new RuntimeException("Unable to decrypt, input string does not start with 'CRYPT'.");
 		}
 
 		try {
@@ -81,7 +81,11 @@ public class AESDecryptor implements Decryptor {
 			cipher.init(Cipher.DECRYPT_MODE, secret, new IvParameterSpec(iv));
 			return new String(cipher.doFinal(data, keylen, data.length - keylen), STRING_ENCODING);
 		} catch (Exception e) {
-			throw new RuntimeException("Unable to decrypt.", e);
+			throw new RuntimeException("Unable to decrypt because the decrypted password is incorrect.", e);
 		}
+	}
+
+	protected char[] getPassword() {
+		return "light".toCharArray();
 	}
 }
