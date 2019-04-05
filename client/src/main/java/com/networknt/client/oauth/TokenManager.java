@@ -70,10 +70,23 @@ public class TokenManager {
      * @return a Jwt if successful, otherwise return error Status.
      */
     public Result<Jwt> getJwt(Jwt.Key key) {
-        Jwt cachedJwt = cacheStrategy.getCachedJwt(key);
-        Result<Jwt> result = cachedJwt == null ? OauthHelper.populateCCToken(new Jwt(key)) : OauthHelper.populateCCToken(cachedJwt);
+        Jwt cachedJwt = getJwt(cacheStrategy, key);
+
+        Result<Jwt> result = OauthHelper.populateCCToken(cachedJwt);
+        //update JWT
         if (result.isSuccess()) {
             cacheStrategy.cacheJwt(key, result.getResult());
+        }
+        return result;
+    }
+
+    //cache jwt if not exist
+    private synchronized Jwt getJwt(ICacheStrategy cacheStrategy, Jwt.Key key) {
+        Jwt result = cacheStrategy.getCachedJwt(key);
+        if(result == null) {
+            //cache an empty JWT first.
+            result = new Jwt(key);
+            cacheStrategy.cacheJwt(key, result);
         }
         return result;
     }
