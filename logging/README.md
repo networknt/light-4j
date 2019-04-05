@@ -1,8 +1,7 @@
 # Logging
 
-Logging is a module in Light-4j framework which will use to
- get the loggers and their logging levels and also can able to
- change the logging level for given logger at runtime (Example: Change logging level to DEBUG for “com.networknt” logger for troubleshooting purpose).
+Logging is a module in Light-4j framework which will use to get the loggers and their current logging levels and also can able to
+change the logging level for given logger at runtime (Example: Change logging level to DEBUG for “com.networknt” logger for troubleshooting purpose).
 
 There are three LoggerHandlers available in logging module.
  
@@ -33,7 +32,7 @@ There are three LoggerHandlers available in logging module.
       
       Example URL    : https://localhost:8443/api/customers/loggers/com.networknt
  
- Note:Input is mandatory, If you provide the input in request body, it will change
+ Note : Input is mandatory, If you provide the input in request body, it will change
  and return the updated logging level for given logger else it will throw an error.
            
  
@@ -49,7 +48,7 @@ Add dependency.
 </dependency>
 ```
 
-###### Configuration for handler.yml.
+#### Configuration for handler.yml.
 
 Add these handlers.
 
@@ -80,7 +79,7 @@ Add the below end points under path.
 ```
 
 
-By default logging is enabled in logging.yml, if you want to disable it 
-just add the logging.yml file in your resource folder and make that property to false.
+By default logging is enabled in logging.yml. if you want to disable it,
+just add the logging.yml file in your resource folder and make enabled property to false in logging.yml.
 
 
