@@ -68,7 +68,7 @@ import static org.mockito.Mockito.verify;
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({AuditConfig.class, LoggerFactory.class})
-@PowerMockIgnore({"javax.xml.*", "org.xml.sax.*", "org.apache.log4j.*"})
+@PowerMockIgnore({"javax.*", "org.xml.sax.*", "org.apache.log4j.*"})
 public class AuditHandlerTest {
     static Logger logger = LoggerFactory.getLogger(AuditHandlerTest.class);
 
