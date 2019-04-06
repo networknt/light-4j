@@ -511,6 +511,31 @@ ERR11102:
   code: ERR11102
   message: INVALID_CONFIG_HTTP_LISTEN_TYPE
   description: enableHttp or enableHttps needs to be set to true, but not both.
+ERR11103:
+  statusCode: 400
+  code: ERR11103
+  message: INVALID_MODEL_URL
+  description: Invalid model URL %s.
+ERR11104:
+  statusCode: 400
+  code: ERR11104
+  message: INVALID_CONFIG_JSON
+  description: Invalid config JSON format.
+ERR11105:
+  statusCode: 400
+  code: ERR11105
+  message: INVALID_CONFIG_URL_EXTENSION
+  description: Invalid config URL extension %s.
+ERR11106:
+  statusCode: 400
+  code: ERR11106
+  message: GENERATOR_EXCEPTION
+  description: Exception occurs during generation %s.
+ERR11107:
+  statusCode: 400
+  code: ERR11107
+  message: COMPRESSION_EXCEPTION
+  description: Exception occurs during compression %s.
 
 
 # 11200 - 11299 light hybrid validation errors
@@ -963,6 +988,12 @@ ERR12107:
   message: TOKEN_NOT_FOUND
   description: Token %s not found in token_vault table in database %s
 
+# http2client error 13000-14000
+ERR13001:
+  statusCode: 403
+  code: ERR13001
+  message: UNABLE_PARSE_SCOPES_FROM_HEADER
+  description: Cannot parse scopes from request headers.
 
 # 20000-29999 common error codes within your business domain.
 # It is highly recommended to have your error code shared within your organization or your line of business.

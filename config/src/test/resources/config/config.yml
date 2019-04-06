@@ -4,3 +4,4 @@ exclusionConfigFileList:
   - status
   - test_exclusion
 
+decryptorClass: com.networknt.decrypt.AESDecryptor
