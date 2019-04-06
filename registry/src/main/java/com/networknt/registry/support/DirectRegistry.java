@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * configuration. All instances of the service will be defined in the config
  * as hard-coded url:port along with other parameters.
  *
- * @author Steve Hu
+ * @author axb, Steve Hu
  */
 public class DirectRegistry extends AbstractRegistry {
     private final static String PARSE_DIRECT_URL_ERROR = "ERR10019";
