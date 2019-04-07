@@ -1,5 +1,15 @@
 # Change Log
 
+## [1.5.34](https://github.com/networknt/light-4j/tree/1.5.34) (2019-04-07)
+
+
+**Merged pull requests:**
+
+
+- fixes \#441 detect copy/paste code with PMD 6.12.0 [\#442](https://github.com/networknt/light-4j/pull/442) ([stevehu](https://github.com/stevehu))
+- fixes \#438 add NOTICE.txt for all third party dependencies and licenses [\#439](https://github.com/networknt/light-4j/pull/439) ([stevehu](https://github.com/stevehu))
+- fixes \#434 update copyright and license in source code [\#436](https://github.com/networknt/light-4j/pull/436) ([stevehu](https://github.com/stevehu))
+- Feat/light 4j/\#420 fixed TTL check [\#428](https://github.com/networknt/light-4j/pull/428) ([BalloonWen](https://github.com/BalloonWen))
 ## [1.5.33](https://github.com/networknt/light-4j/tree/1.5.33) (2019-03-25)
 [Full Changelog](https://github.com/networknt/light-4j/compare/2.0.0...1.5.33)
 
