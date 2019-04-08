@@ -4,9 +4,12 @@ import com.networknt.client.Http2Client;
 import com.networknt.client.oauth.cache.ICacheStrategy;
 import com.networknt.client.oauth.cache.LongestExpireCacheStrategy;
 import com.networknt.config.Config;
+import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
+import com.networknt.monad.Success;
 import io.undertow.client.ClientRequest;
 import io.undertow.util.HeaderValues;
+import sun.management.snmp.util.MibLogger;
 
 import java.util.Map;
 
@@ -80,15 +83,25 @@ public class TokenManager {
         return result;
     }
 
-    public Result<Jwt> getJwt(Jwt.Key key, TokenRequest tokenRequest) {
-        Jwt cachedJwt = getJwt(cacheStrategy, key);
+    public Result<String> getJwt(Jwt.Key key, TokenRequest tokenRequest) {
+        if (key.isCachable()) {
+            Jwt cachedJwt = getJwt(cacheStrategy, key);
 
-        Result<Jwt> result = OauthHelper.populateToken(cachedJwt, tokenRequest);
-        //update JWT
-        if (result.isSuccess()) {
-            cacheStrategy.cacheJwt(key, result.getResult());
+            Result<Jwt> result = OauthHelper.populateToken(cachedJwt, tokenRequest);
+            //update JWT
+            if (result.isSuccess()) {
+                cacheStrategy.cacheJwt(key, result.getResult());
+            }
+            return Success.of(result.getResult().getJwt());
+        } else {
+            Result<TokenResponse> tokenResponse = OauthHelper.getTokenResult(tokenRequest);
+            if(tokenResponse.isSuccess()) {
+                String jwt = tokenResponse.getResult().getAccessToken();
+                return Success.of(jwt);
+            } else {
+                return Failure.of(tokenResponse.getError());
+            }
         }
-        return result;
     }
 
     //cache jwt if not exist

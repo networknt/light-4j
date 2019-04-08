@@ -603,20 +603,18 @@ public class OauthHelper {
     }
 
     private static Result<Jwt> getTokenRemotely(final Jwt jwt, TokenRequest tokenRequest) {
-        //scopes at this point is may not be set yet when issuing a new token.
-        setScope(tokenRequest, jwt);
         Result<TokenResponse> result = OauthHelper.getTokenResult(tokenRequest);
         if(result.isSuccess()) {
             TokenResponse tokenResponse = result.getResult();
             jwt.setJwt(tokenResponse.getAccessToken());
             // the expiresIn is seconds and it is converted to millisecond in the future.
             jwt.setExpire(System.currentTimeMillis() + tokenResponse.getExpiresIn() * 1000);
-            logger.info("Get client credentials token {} with expire_in {} seconds", jwt, tokenResponse.getExpiresIn());
+            logger.info("Get token {} with expire_in {} seconds", jwt, tokenResponse.getExpiresIn());
             //set the scope for future usage.
             jwt.setScopes(tokenResponse.getScope());
             return Success.of(jwt);
         } else {
-            logger.info("Get client credentials token fail with status: {}", result.getError().toString());
+            logger.info("Get token fail with status: {}", result.getError().toString());
             return Failure.of(result.getError());
         }
     }

@@ -152,8 +152,10 @@ public class Jwt {
      */
     public static class Key {
         private Set<String> scopes;
-        private String customClaim;
+        private Map<String, Object> customClaim;
         private String serviceId;
+        private String samlAssertion;
+        private boolean cachable;
 
         @Override
         public int hashCode() {
@@ -173,9 +175,8 @@ public class Jwt {
             this.serviceId = serviceId;
         }
 
-        public Key(Set<String> scopes, String customClaim) {
+        public Key(Map<String, Object> customClaim) {
             this.customClaim = customClaim;
-            this.scopes = scopes;
         }
 
         public Key() {
@@ -190,8 +191,36 @@ public class Jwt {
             return serviceId;
         }
 
-        public String getCustomClaim() {
+        public Map<String, Object> getCustomClaim() {
             return customClaim;
+        }
+
+        public void setScopes(Set<String> scopes) {
+            this.scopes = scopes;
+        }
+
+        public void setCustomClaim(Map<String, Object> customClaim) {
+            this.customClaim = customClaim;
+        }
+
+        public void setServiceId(String serviceId) {
+            this.serviceId = serviceId;
+        }
+
+        public String getSamlAssertion() {
+            return samlAssertion;
+        }
+
+        public void setSamlAssertion(String samlAssertion) {
+            this.samlAssertion = samlAssertion;
+        }
+
+        public boolean isCachable() {
+            return cachable;
+        }
+
+        public void setCachable(boolean cachable) {
+            this.cachable = cachable;
         }
     }
 }

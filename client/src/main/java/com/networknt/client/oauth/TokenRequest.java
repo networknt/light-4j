@@ -35,6 +35,7 @@ public class TokenRequest {
     public static String REDIRECT_URI = "redirect_uri";
     public static String SCOPE = "scope";
     public static String CSRF = "csrf";
+    public static String CUSTOM_CLAIM = "custom_claim";
 
     String grantType;
     String serverUrl;
