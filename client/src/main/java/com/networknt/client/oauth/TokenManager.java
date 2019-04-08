@@ -80,6 +80,17 @@ public class TokenManager {
         return result;
     }
 
+    public Result<Jwt> getJwt(Jwt.Key key, TokenRequest tokenRequest) {
+        Jwt cachedJwt = getJwt(cacheStrategy, key);
+
+        Result<Jwt> result = OauthHelper.populateToken(cachedJwt, tokenRequest);
+        //update JWT
+        if (result.isSuccess()) {
+            cacheStrategy.cacheJwt(key, result.getResult());
+        }
+        return result;
+    }
+
     //cache jwt if not exist
     private synchronized Jwt getJwt(ICacheStrategy cacheStrategy, Jwt.Key key) {
         Jwt result = cacheStrategy.getCachedJwt(key);

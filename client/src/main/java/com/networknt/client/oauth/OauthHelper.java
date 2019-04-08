@@ -462,6 +462,68 @@ public class OauthHelper {
         }
     }
 
+    public static Result<Jwt> populateToken(final Jwt jwt, TokenRequest tokenRequest) {
+        boolean isInRenewWindow = jwt.getExpire() - System.currentTimeMillis() < jwt.getTokenRenewBeforeExpired();
+        logger.trace("isInRenewWindow = " + isInRenewWindow);
+        //if not in renew window, return the current jwt.
+        if(!isInRenewWindow) { return Success.of(jwt); }
+        //the same jwt shouldn't be renew at the same time. different jwt shouldn't affect each other's renew activity.
+        synchronized (jwt) {
+            //if token expired, try to renew synchronously
+            if(jwt.getExpire() <= System.currentTimeMillis()) {
+                Result<Jwt> result = renewTokenSync(jwt, tokenRequest);
+                if(logger.isTraceEnabled()) logger.trace("Check secondary token is done!");
+                return result;
+            } else {
+                //otherwise renew token silently
+                renewTokenAsync(jwt, tokenRequest);
+                if(logger.isTraceEnabled()) logger.trace("Check secondary token is done!");
+                return Success.of(jwt);
+            }
+        }
+    }
+
+    private static Result<Jwt> renewTokenSync(final Jwt jwt, TokenRequest tokenRequest) {
+        // Already expired, try to renew getCCTokenSynchronously but let requests use the old token.
+        logger.trace("In renew window and token is already expired.");
+        //the token can be renew when it's not on renewing or current time is lager than retrying interval
+        if (!jwt.isRenewing() || System.currentTimeMillis() > jwt.getExpiredRetryTimeout()) {
+            jwt.setRenewing(true);
+            jwt.setEarlyRetryTimeout(System.currentTimeMillis() + Jwt.getExpiredRefreshRetryDelay());
+            Result<Jwt> result = getTokenRemotely(jwt, tokenRequest);
+            //set renewing flag to false no mater fail or success
+            jwt.setRenewing(false);
+            return result;
+        } else {
+            if(logger.isTraceEnabled()) logger.trace("Circuit breaker is tripped and not timeout yet!");
+            // token is renewing
+            return Failure.of(new Status(STATUS_CLIENT_CREDENTIALS_TOKEN_NOT_AVAILABLE));
+        }
+    }
+
+    private static void renewTokenAsync(final Jwt jwt, TokenRequest tokenRequest) {
+        // Not expired yet, try to renew async but let requests use the old token.
+        logger.trace("In renew window but token is not expired yet.");
+        if(!jwt.isRenewing() || System.currentTimeMillis() > jwt.getEarlyRetryTimeout()) {
+            jwt.setRenewing(true);
+            jwt.setEarlyRetryTimeout(System.currentTimeMillis() + jwt.getEarlyRefreshRetryDelay());
+            logger.trace("Retrieve token async is called while token is not expired yet");
+
+            ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+
+            executor.schedule(() -> {
+                Result<Jwt> result = getTokenRemotely(jwt, tokenRequest);
+                if(result.isFailure()) {
+                    // swallow the exception here as it is on a best effort basis.
+                    logger.error("Async retrieve token error with status: {}", result.getError().toString());
+                }
+                //set renewing flag to false after response, doesn't matter if it's success or fail.
+                jwt.setRenewing(false);
+            }, 50, TimeUnit.MILLISECONDS);
+            executor.shutdown();
+        }
+    }
+
     /**
      * renew Client Credential token synchronously.
      * When success will renew the Jwt jwt passed in.
@@ -522,6 +584,25 @@ public class OauthHelper {
      */
     private static Result<Jwt> getCCTokenRemotely(final Jwt jwt) {
         TokenRequest tokenRequest = new ClientCredentialsRequest();
+        //scopes at this point is may not be set yet when issuing a new token.
+        setScope(tokenRequest, jwt);
+        Result<TokenResponse> result = OauthHelper.getTokenResult(tokenRequest);
+        if(result.isSuccess()) {
+            TokenResponse tokenResponse = result.getResult();
+            jwt.setJwt(tokenResponse.getAccessToken());
+            // the expiresIn is seconds and it is converted to millisecond in the future.
+            jwt.setExpire(System.currentTimeMillis() + tokenResponse.getExpiresIn() * 1000);
+            logger.info("Get client credentials token {} with expire_in {} seconds", jwt, tokenResponse.getExpiresIn());
+            //set the scope for future usage.
+            jwt.setScopes(tokenResponse.getScope());
+            return Success.of(jwt);
+        } else {
+            logger.info("Get client credentials token fail with status: {}", result.getError().toString());
+            return Failure.of(result.getError());
+        }
+    }
+
+    private static Result<Jwt> getTokenRemotely(final Jwt jwt, TokenRequest tokenRequest) {
         //scopes at this point is may not be set yet when issuing a new token.
         setScope(tokenRequest, jwt);
         Result<TokenResponse> result = OauthHelper.getTokenResult(tokenRequest);

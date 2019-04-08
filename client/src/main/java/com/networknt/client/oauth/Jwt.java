@@ -152,6 +152,7 @@ public class Jwt {
      */
     public static class Key {
         private Set<String> scopes;
+        private String customClaim;
         private String serviceId;
 
         @Override
@@ -172,6 +173,11 @@ public class Jwt {
             this.serviceId = serviceId;
         }
 
+        public Key(Set<String> scopes, String customClaim) {
+            this.customClaim = customClaim;
+            this.scopes = scopes;
+        }
+
         public Key() {
             this.scopes = new HashSet<>();
         }
@@ -182,6 +188,10 @@ public class Jwt {
 
         public String getServiceId() {
             return serviceId;
+        }
+
+        public String getCustomClaim() {
+            return customClaim;
         }
     }
 }
