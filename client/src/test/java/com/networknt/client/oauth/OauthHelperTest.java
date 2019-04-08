@@ -232,6 +232,7 @@ public class OauthHelperTest {
     }
 
     @Test
+    @Deprecated
     public void testGetToken() throws Exception {
         AuthorizationCodeRequest tokenRequest = new AuthorizationCodeRequest();
         tokenRequest.setClientId("test_client");
