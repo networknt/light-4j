@@ -33,12 +33,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 
 /**
- * Startup Hook Provider to fetch configs from config server
+ * Default Config Loader to fetch and load configs from config server
  *
- * To use this Startup Hook Provider, please add it to service.yml's singleton section so that {@link Server#start()}
- * method can pick it up and trigger its onStartup method
+ * To use this Config Loader, please add it to startup.yml as configLoaderClass: com.networknt.server.DefaultConfigLoader
+ * so that Server class can find, instantiate and the trigger its init() method.
  */
-public class ConfigServerStartupHookProvider implements StartupHookProvider{
+public class DefaultConfigLoader implements IConfigLoader{
     static final Logger logger = LoggerFactory.getLogger(Server.class);
 
     static final String LIGHT_CONFIG_SERVER_URI = "light-config-server-uri";
@@ -56,7 +56,7 @@ public class ConfigServerStartupHookProvider implements StartupHookProvider{
      * not recommended.
      */
     @Override
-    public void onStartup() {
+    public void init() {
         // if it is necessary to load config files from config server
         // Here we expect at least env(dev/sit/uat/prod) and optional config server url
         if (lightEnv == null) {

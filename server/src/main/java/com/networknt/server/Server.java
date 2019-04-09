@@ -62,6 +62,8 @@ public class Server {
     static final Logger logger = LoggerFactory.getLogger(Server.class);
     public static final String SERVER_CONFIG_NAME = "server";
     public static final String SECRET_CONFIG_NAME = "secret";
+    public static final String STARTUP_CONFIG_NAME = "startup";
+    public static final String CONFIG_LOADER_CLASS = "configLoaderClass";
     public static final String[] STATUS_CONFIG_NAME = {"status", "app-status"};
     
     public static final String ENV_PROPERTY_KEY = "environment";
@@ -94,16 +96,36 @@ public class Server {
         MDC.put(SID, getServerConfig().getServiceId());
 
         try {
-            start();
+
+            loadConfigs();
 
             // merge status.yml and app-status.yml if app-status.yml is provided
             mergeStatusConfig();
+
+            start();
         } catch (RuntimeException e) {
             // Handle any exception encountered during server start-up
             logger.error("Server is not operational! Failed with exception", e);
 
             // send a graceful system shutdown
             System.exit(1);
+        }
+    }
+
+    /**
+     * Locate the Config Loader class, instantiate it and then call init() method on it.
+     */
+    static public void loadConfigs(){
+        Map<String, Object> startupConfig = Config.getInstance().getJsonMapConfig(STARTUP_CONFIG_NAME);
+        String configLoaderClassName = (String) startupConfig.get(CONFIG_LOADER_CLASS);
+        if (configLoaderClassName != null) {
+            try {
+                Class clazz = Class.forName(configLoaderClassName);
+                IConfigLoader configLoader = (IConfigLoader) clazz.getConstructor().newInstance();
+                configLoader.init();
+            } catch (Exception e) {
+                throw new RuntimeException("configLoaderClass mentioned in startup.yml could not be found or constructed", e);
+            }
         }
     }
 
