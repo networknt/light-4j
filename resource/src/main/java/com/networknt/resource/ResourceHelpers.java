@@ -74,7 +74,7 @@ public class ResourceHelpers {
         if (pathResourceProviders != null && pathResourceProviders.length > 0) {
             for (PathResourceProvider pathResourceProvider : pathResourceProviders) {
                 if ((pathResourceProvider.isPrefixPath() && requestPath.startsWith(pathResourceProvider.getPath()))
-                        || !pathResourceProvider.isPrefixPath() && requestPath.equals(pathResourceProvider.getPath())) {
+                        || (!pathResourceProvider.isPrefixPath() && requestPath.equals(pathResourceProvider.getPath()))) {
                     isResourcePath = true;
                 }
             }

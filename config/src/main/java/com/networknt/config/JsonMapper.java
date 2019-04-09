@@ -53,14 +53,6 @@ public class JsonMapper {
         }
     }
 
-    public static <T> T fromJsonByName(String json, String targetType) {
-        try {
-            return objectMapper.readValue(json, (Class<T>) JsonMapper.class.getClassLoader().loadClass(targetType));
-        } catch (IOException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static Map<String, Object> string2Map(String s) {
         try {
             return objectMapper.readValue(s, new TypeReference<Map<String, Object>>(){});
