@@ -44,6 +44,7 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -64,7 +65,7 @@ public class ServerInfoDisabledTest {
         Config.getInstance().clear();
         Map<String, Object> map = new HashMap<>();
         map.put("enableServerInfo", false);
-        Config.getInstance().getYaml().dump(map, new PrintWriter(new File(homeDir + "/info.yml")));
+        Config.getInstance().getYaml().dump(map, new PrintWriter(new File(homeDir + "/info.yml"), Charset.defaultCharset().name()));
         // Add home directory to the classpath of the system class loader.
         addURL(new File(homeDir).toURI().toURL());
 

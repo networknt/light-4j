@@ -21,6 +21,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
@@ -41,6 +42,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.networknt.config.yml.DecryptConstructor;
 import com.networknt.config.yml.YmlConstants;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * A injectable singleton config that has default implementation
@@ -452,7 +455,7 @@ public abstract class Config {
     }
 
     static InputStream convertStringToStream(String string) {
-        return new ByteArrayInputStream(string.getBytes());
+        return new ByteArrayInputStream(string.getBytes(UTF_8));
     }
 }
 

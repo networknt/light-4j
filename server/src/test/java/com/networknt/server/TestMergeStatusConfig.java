@@ -58,7 +58,6 @@ public class TestMergeStatusConfig extends TestCase {
         appStatus.delete();
     }
 
-    @Test
     public void testAppStatus() {
         config.clear();
         // test default element without merging with app-status
@@ -72,7 +71,6 @@ public class TestMergeStatusConfig extends TestCase {
         Assert.assertEquals(401, status1.getStatusCode());
     }
 
-    @Test
     public void testDuplicateStatus() {
         config.clear();
         try {
@@ -85,7 +83,6 @@ public class TestMergeStatusConfig extends TestCase {
         }
     }
 
-    @Test
     public void testWithoutAppStatus() {
         config.clear();
         File appStatus = new File(homeDir + "/app-status.yml");
@@ -99,7 +96,6 @@ public class TestMergeStatusConfig extends TestCase {
         Assert.assertEquals(401, status1.getStatusCode());
     }
 
-    @Test
     public void testEmptyAppStatus() {
         config.clear();
         File appStatus = new File(homeDir + "/app-status.yml");

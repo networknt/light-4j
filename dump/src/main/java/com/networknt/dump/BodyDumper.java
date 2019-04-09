@@ -30,6 +30,8 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
  * BodyDumper is to dump http request/response body info to result.
  * Right now only support json info.
@@ -84,7 +86,7 @@ import java.util.Map;
     public void dumpResponse(Map<String, Object> result) {
         byte[] responseBodyAttachment = exchange.getAttachment(StoreResponseStreamSinkConduit.RESPONSE);
         if(responseBodyAttachment != null) {
-            this.bodyContent = config.isMaskEnabled() ? Mask.maskJson(new ByteArrayInputStream(responseBodyAttachment), "responseBody") : new String(responseBodyAttachment);
+            this.bodyContent = config.isMaskEnabled() ? Mask.maskJson(new ByteArrayInputStream(responseBodyAttachment), "responseBody") : new String(responseBodyAttachment, UTF_8);
         }
         this.putDumpInfoTo(result);
     }
@@ -101,7 +103,7 @@ import java.util.Map;
                 this.bodyContent = Mask.maskJson(inputStream, "requestBody");
             } else {
                 try {
-                    this.bodyContent = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
+                    this.bodyContent = StringUtils.inputStreamToString(inputStream, UTF_8);
                 } catch (IOException e) {
                     logger.error(e.toString());
                 }

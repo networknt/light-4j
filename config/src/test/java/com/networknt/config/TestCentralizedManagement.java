@@ -23,10 +23,12 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.Assert.fail;
+
 /**
  * Created by Nicholas Azar (@NicholasAzar)
  */
-public class TestCentralizedManagement extends TestCase {
+public class TestCentralizedManagement {
 
     @Test
     public void testMap_mergeApplied_mutatesInPlaceCorrectly() {
