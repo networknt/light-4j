@@ -62,6 +62,7 @@ public class ConfigClassPathTest extends TestCase {
         Assert.assertEquals("classpath", configMap.get("value"));
     }
 
+    @SuppressWarnings("unchecked")
     private void addURL(URL url) throws Exception {
         URLClassLoader classLoader
                 = (URLClassLoader) ClassLoader.getSystemClassLoader();

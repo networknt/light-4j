@@ -1,36 +1,28 @@
 # Change Log
 
-## [1.5.33](https://github.com/networknt/light-4j/tree/1.5.33) (2019-03-25)
-[Full Changelog](https://github.com/networknt/light-4j/compare/2.0.0...1.5.33)
+## [1.6.0](https://github.com/networknt/light-4j/tree/1.6.0) (2019-04-05)
 
-**Closed issues:**
-
-- add status code to status.yml for light-codegen [\#430](https://github.com/networknt/light-4j/issues/430)
 
 **Merged pull requests:**
 
+
+- fixes \#454 add test cases for AESDecryptor and DecryptConstructor [\#455](https://github.com/networknt/light-4j/pull/455) ([stevehu](https://github.com/stevehu))
+- fixed caching issue when initlizing multiple token request havenot been tested [\#452](https://github.com/networknt/light-4j/pull/452) ([BalloonWen](https://github.com/BalloonWen))
+- Feat/\#351 server options configurable [\#432](https://github.com/networknt/light-4j/pull/432) ([jiachen1120](https://github.com/jiachen1120))
+- Feat/\#427 config decryption [\#429](https://github.com/networknt/light-4j/pull/429) ([jiachen1120](https://github.com/jiachen1120))
+- Feat/light 4j/\#391 support caching multiple Jwts [\#410](https://github.com/networknt/light-4j/pull/410) ([BalloonWen](https://github.com/BalloonWen))
+- Cache unparsed request body (configurable/ for application/json request) [\#447](https://github.com/networknt/light-4j/pull/447) ([jiachen1120](https://github.com/jiachen1120))
+- fixes \#448 remove broken import statements in Http2Client [\#449](https://github.com/networknt/light-4j/pull/449) ([stevehu](https://github.com/stevehu))
+- move classes in undertow package to networknet packages - \#433 [\#435](https://github.com/networknt/light-4j/pull/435) ([dz-1](https://github.com/dz-1))
+- Integrate decryption module in all retrievals of config - \#413 [\#414](https://github.com/networknt/light-4j/pull/414) ([dz-1](https://github.com/dz-1))
+- fixes \#445 update client module to access signing service [\#446](https://github.com/networknt/light-4j/pull/446) ([stevehu](https://github.com/stevehu))
+- fixes \#443 Add a new constant in http header for service_url [\#444](https://github.com/networknt/light-4j/pull/444) ([stevehu](https://github.com/stevehu))
+- fixes \#441 detect copy/paste code with PMD 6.12.0 [\#442](https://github.com/networknt/light-4j/pull/442) ([stevehu](https://github.com/stevehu))
+- fixes \#438 add NOTICE.txt for all third party dependencies and licenses [\#439](https://github.com/networknt/light-4j/pull/439) ([stevehu](https://github.com/stevehu))
+- fixes \#434 update copyright and license in source code [\#436](https://github.com/networknt/light-4j/pull/436) ([stevehu](https://github.com/stevehu))
 - fixes \#430 add status code to status.yml for light-codegen [\#431](https://github.com/networknt/light-4j/pull/431) ([stevehu](https://github.com/stevehu))
-
-## [2.0.0](https://github.com/networknt/light-4j/tree/2.0.0) (2019-03-22)
-[Full Changelog](https://github.com/networknt/light-4j/compare/1.5.32...2.0.0)
-
-**Implemented enhancements:**
-
-- Add conditional handler in the handler chain [\#300](https://github.com/networknt/light-4j/issues/300)
-
-**Fixed bugs:**
-
-- Fix status merge [\#425](https://github.com/networknt/light-4j/issues/425)
-- Feat/light 4j/\#420 fixed TTL check [\#428](https://github.com/networknt/light-4j/pull/428) ([BalloonWen](https://github.com/BalloonWen))
-
-**Closed issues:**
-
-- accept default group key in Http2Client  [\#423](https://github.com/networknt/light-4j/issues/423)
-
-**Merged pull requests:**
-
 - just improvements [\#419](https://github.com/networknt/light-4j/pull/419) ([jefperito](https://github.com/jefperito))
-
+- Feat/light 4j/\#420 fixed TTL check [\#428](https://github.com/networknt/light-4j/pull/428) ([BalloonWen](https://github.com/BalloonWen))
 ## [1.5.32](https://github.com/networknt/light-4j/tree/1.5.32) (2019-03-19)
 [Full Changelog](https://github.com/networknt/light-4j/compare/1.5.31...1.5.32)
 

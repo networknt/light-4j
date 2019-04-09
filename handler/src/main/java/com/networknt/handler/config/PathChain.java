@@ -69,6 +69,7 @@ public class PathChain {
     /**
      * Validate the settings and raise Exception on error.
      * The origin is used to help locate problems.
+     * @param origin the origin
      */
     public void validate(String origin) {
         List<String> problems = new ArrayList<>();

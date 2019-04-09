@@ -412,7 +412,8 @@ public class Handler {
 		Object handlerOrProviderObject = null;
 		try {
 			handlerOrProviderObject = namedClass.second.newInstance();
-		} catch (InstantiationException | IllegalAccessException e) {
+		} catch (Exception e) {
+			logger.error("Exception:", e);
 			throw new RuntimeException("Could not instantiate handler class: " + namedClass.second);
 		}
 

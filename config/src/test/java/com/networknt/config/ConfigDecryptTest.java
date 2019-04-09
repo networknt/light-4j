@@ -1,5 +1,6 @@
 package com.networknt.config;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -77,6 +78,18 @@ public class ConfigDecryptTest {
     	
         Map<String, Object> secret=yaml.load(Config.getInstance().getInputStreamFromFile("secret-map-test2.yml"));
         
+        Assert.assertEquals(SECRET+"-test", secret.get("serverKeystorePass"));
+    }
+
+    @Test
+    public void testAutoDecryptorClass() throws IOException {
+        if (System.getenv("config_password") == null || !System.getenv("config_password").equals("light")) return;
+        final Resolver resolver = new Resolver();
+        resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
+        Yaml yaml = new Yaml(new DecryptConstructor("com.networknt.config.TestAutoDecryptor"), new Representer(), new DumperOptions(), resolver);
+
+        Map<String, Object> secret=yaml.load(Config.getInstance().getInputStreamFromFile("secret-map-test2.yml"));
+
         Assert.assertEquals(SECRET+"-test", secret.get("serverKeystorePass"));
     }
 }

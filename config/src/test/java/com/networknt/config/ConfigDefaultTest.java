@@ -192,7 +192,7 @@ public class ConfigDefaultTest extends TestCase {
         Assert.assertEquals(null, configMap.get("value"));
     }
 
-    @Test
+    
     public void testInjectionExclusionConfig() {
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test_exclusion");

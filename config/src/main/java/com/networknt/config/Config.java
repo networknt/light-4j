@@ -21,6 +21,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
@@ -41,6 +42,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.networknt.config.yml.DecryptConstructor;
 import com.networknt.config.yml.YmlConstants;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * A injectable singleton config that has default implementation
@@ -111,7 +114,7 @@ public abstract class Config {
 
         private static final Config DEFAULT = initialize();
 
-        // Memory cache of all the configuration object. Each config will be loaded on the first time is is accessed.
+        // Memory cache of all the configuration object. Each config will be loaded on the first time it is accessed.
         final Map<String, Object> configCache = new ConcurrentHashMap<>(10, 0.9f, 1);
 
         // An instance of Jackson ObjectMapper that can be used anywhere else for Json.
@@ -326,8 +329,9 @@ public abstract class Config {
                         config = CentralizedManagement.mergeObject(configMap, clazz);
                     }
                 }
-            } catch (IOException ioe) {
-                logger.error("IOException", ioe);
+            } catch (Exception e) {
+                logger.error("Exception", e);
+                throw new RuntimeException("Unable to load " + fileName + " as object.", e);
             }
             return config;
         }
@@ -358,8 +362,9 @@ public abstract class Config {
                         CentralizedManagement.mergeMap(config); // mutates the config map in place.
                     }
                 }
-            } catch (IOException ioe) {
-                logger.error("IOException", ioe);
+            } catch (Exception e) {
+                logger.error("Exception", e);
+                throw new RuntimeException("Unable to load " + ymlFilename + " as map.", e);
             }
             return config;
         }
@@ -459,7 +464,7 @@ public abstract class Config {
     }
 
     static InputStream convertStringToStream(String string) {
-        return new ByteArrayInputStream(string.getBytes());
+        return new ByteArrayInputStream(string.getBytes(UTF_8));
     }
 }
 
