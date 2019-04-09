@@ -159,7 +159,7 @@ public class Jwt {
 
         @Override
         public int hashCode() {
-            return Objects.hash(scopes, serviceId);
+            return Objects.hash(scopes, serviceId, samlAssertion, customClaim);
         }
 
         @Override
