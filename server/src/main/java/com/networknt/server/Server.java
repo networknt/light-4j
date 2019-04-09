@@ -204,8 +204,8 @@ public class Server {
      * load it into the server configuration, otherwise use the default value
      */
     private static void serverOptionInit() {
-        Map<String, Object> mapConfig = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
-        ServerOption.serverOptionInit(mapConfig, config);
+        Map<String, Object> mapConfig = Config.getInstance().getJsonMapConfigNoCache(SERVER_CONFIG_NAME);
+        ServerOption.serverOptionInit(mapConfig, getServerConfig());
     }
 
     static private boolean bind(HttpHandler handler, int port) {
@@ -236,14 +236,14 @@ public class Server {
             // set and validate server options
             serverOptionInit();
 
-            server = builder.setBufferSize(config.getBufferSize()).setIoThreads(config.getIoThreads())
+            server = builder.setBufferSize(serverConfig.getBufferSize()).setIoThreads(serverConfig.getIoThreads())
                     // above seems slightly faster in some configurations
-                    .setSocketOption(Options.BACKLOG, config.getBacklog())
+                    .setSocketOption(Options.BACKLOG, serverConfig.getBacklog())
                     .setServerOption(UndertowOptions.ALWAYS_SET_KEEP_ALIVE, false) // don't send a keep-alive header for
                     // HTTP/1.1 requests, as it is not required
-                    .setServerOption(UndertowOptions.ALWAYS_SET_DATE, config.isAlwaysSetDate())
+                    .setServerOption(UndertowOptions.ALWAYS_SET_DATE, serverConfig.isAlwaysSetDate())
                     .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, false)
-                    .setHandler(Handlers.header(handler, Headers.SERVER_STRING, config.getServerString())).setWorkerThreads(config.getWorkerThreads()).build();
+                    .setHandler(Handlers.header(handler, Headers.SERVER_STRING, serverConfig.getServerString())).setWorkerThreads(serverConfig.getWorkerThreads()).build();
 
             server.start();
             System.out.println("HOST IP " + System.getenv(STATUS_HOST_IP));
