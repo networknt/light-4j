@@ -244,6 +244,7 @@ public class Server {
                     // HTTP/1.1 requests, as it is not required
                     .setServerOption(UndertowOptions.ALWAYS_SET_DATE, config.isAlwaysSetDate())
                     .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, false)
+                    .setServerOption(UndertowOptions.ALLOW_UNESCAPED_CHARACTERS_IN_URL, config.isAllowUnescapedCharactersInUrl())
                     .setHandler(Handlers.header(handler, Headers.SERVER_STRING, config.getServerString())).setWorkerThreads(config.getWorkerThreads()).build();
 
             server.start();

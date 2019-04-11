@@ -59,6 +59,7 @@ public class ServerConfigTest {
         Assert.assertEquals(10000, serverConfig.getBacklog());
         Assert.assertEquals(false, serverConfig.isAlwaysSetDate());
         Assert.assertEquals("L", serverConfig.getServerString());
+        Assert.assertEquals(true, serverConfig.isAllowUnescapedCharactersInUrl());
     }
 
     @Test
@@ -72,5 +73,6 @@ public class ServerConfigTest {
         Assert.assertEquals(10000, serverConfig.getBacklog());
         Assert.assertEquals(false, serverConfig.isAlwaysSetDate());
         Assert.assertEquals("TEST", serverConfig.getServerString());
+        Assert.assertEquals(false, serverConfig.isAllowUnescapedCharactersInUrl());
     }
 }
