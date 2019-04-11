@@ -114,19 +114,22 @@ public class Server {
 
     /**
      * Locate the Config Loader class, instantiate it and then call init() method on it.
+     * Uses DefaultConfigLoader if startup.yml is missing or configLoaderClass is missing in startup.yml
      */
     static public void loadConfigs(){
+        IConfigLoader configLoader;
         Map<String, Object> startupConfig = Config.getInstance().getJsonMapConfig(STARTUP_CONFIG_NAME);
-        String configLoaderClassName = (String) startupConfig.get(CONFIG_LOADER_CLASS);
-        if (configLoaderClassName != null) {
+        if(startupConfig ==null || startupConfig.get(CONFIG_LOADER_CLASS) ==null){
+            configLoader = new DefaultConfigLoader();
+        }else{
             try {
-                Class clazz = Class.forName(configLoaderClassName);
-                IConfigLoader configLoader = (IConfigLoader) clazz.getConstructor().newInstance();
-                configLoader.init();
+                Class clazz = Class.forName((String) startupConfig.get(CONFIG_LOADER_CLASS));
+                configLoader = (IConfigLoader) clazz.getConstructor().newInstance();
             } catch (Exception e) {
                 throw new RuntimeException("configLoaderClass mentioned in startup.yml could not be found or constructed", e);
             }
         }
+        configLoader.init();
     }
 
     static public void start() {
