@@ -16,13 +16,15 @@
 
 package com.networknt.email;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.mail.MessagingException;
 import java.io.File;
 
 public class EmailSenderTest {
-    //@Test
+    @Test
+    @Ignore
     public void testEmail() {
         EmailSender sender = new EmailSender();
         try {
@@ -32,7 +34,8 @@ public class EmailSenderTest {
         }
     }
 
-    //@Test
+    @Test
+    @Ignore
     public void testEmailWithAttachment() {
         EmailSender sender = new EmailSender();
         try {
