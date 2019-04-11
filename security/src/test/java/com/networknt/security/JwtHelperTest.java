@@ -20,6 +20,7 @@ import com.networknt.config.Config;
 import com.networknt.utility.Constants;
 import org.jose4j.jwt.JwtClaims;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.security.cert.X509Certificate;
@@ -77,7 +78,8 @@ public class JwtHelperTest {
      * This test needs light-oauth2 service to be up and running in order to test it
      * to start the light-oauth2 please refer to https://networknt.github.io/light-oauth2/tutorials/enterprise/
      */
-    //@Test
+    @Test
+    @Ignore
     public void testGetCertFromOauth() {
         X509Certificate certificate = JwtHelper.getCertFromOauth("100");
         System.out.println("certificate = " + certificate);

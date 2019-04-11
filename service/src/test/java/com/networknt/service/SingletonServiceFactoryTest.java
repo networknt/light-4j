@@ -18,6 +18,7 @@ package com.networknt.service;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -80,7 +81,8 @@ public class SingletonServiceFactoryTest {
 
     }
 
-    //@Test
+    @Test
+    @Ignore
     public void testMultipleWithProperties() {
         J[] j = SingletonServiceFactory.getBeans(J.class);
         Arrays.stream(j).forEach(o -> System.out.println(o.getJack()));
