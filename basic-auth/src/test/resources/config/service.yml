@@ -2,5 +2,5 @@
 # singleton service factory configuration
 singletons:
 # HandlerProvider implementation
-- com.networknt.utility.Decryptor:
+- com.networknt.decrypt.Decryptor:
   - com.networknt.decrypt.AESDecryptor

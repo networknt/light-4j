@@ -2,7 +2,7 @@
  * Copyright (c) 2016 Network New Technologies Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * BodyDumper is to dump http request/response body info to result.
@@ -84,7 +86,7 @@ import java.util.Map;
     public void dumpResponse(Map<String, Object> result) {
         byte[] responseBodyAttachment = exchange.getAttachment(StoreResponseStreamSinkConduit.RESPONSE);
         if(responseBodyAttachment != null) {
-            this.bodyContent = config.isMaskEnabled() ? Mask.maskJson(new ByteArrayInputStream(responseBodyAttachment), "responseBody") : new String(responseBodyAttachment);
+            this.bodyContent = config.isMaskEnabled() ? Mask.maskJson(new ByteArrayInputStream(responseBodyAttachment), "responseBody") : new String(responseBodyAttachment, UTF_8);
         }
         this.putDumpInfoTo(result);
     }
@@ -101,7 +103,7 @@ import java.util.Map;
                 this.bodyContent = Mask.maskJson(inputStream, "requestBody");
             } else {
                 try {
-                    this.bodyContent = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
+                    this.bodyContent = StringUtils.inputStreamToString(inputStream, UTF_8);
                 } catch (IOException e) {
                     logger.error(e.toString());
                 }

@@ -997,6 +997,7 @@ ERR12109:
   code: ERR12109
   message: LOGGING_LEVEL_NOT_PROVIDED
   description: Logging level is not provided
+
 # http2client error 13000-14000
 ERR13001:
   statusCode: 403

@@ -2,7 +2,7 @@
  * Copyright (c) 2016 Network New Technologies Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -40,18 +40,18 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This is a handler that parses the body into a Map or List if the input content type is JSON.
- * For other content type, don't parse it. In order to trigger this middleware, the content type
- * must be set in header for post, put and patch.
+ * This is a handler that parses the body into a Map or List if the input content type is "application/json"
+ * or "multipart/form-data" or "application/x-www-form-urlencoded". For other content type, don't parse it.
+ * In order to trigger this middleware, the content type must be set in header for post, put and patch.
+ * <p>
+ * The request body string can be cached into exchange attachment with the attachment key "REQUEST_BODY_STRING"
+ * when the content type is "application/json".
  * <p>
  * Currently, it is only used in light-rest-4j framework as subsequent handler will use the parsed
  * body for further processing. Other frameworks like light-graphql-4j or light-hybrid-4j won't
  * need this middleware handler.
  * <p>
  * Created by steve on 29/09/16.
- * <p>
- * Update on 09/12/18
- * Enhanced the handler that parses the body into a DataForm if the input content type is data-form.
  */
 
 public class BodyHandler implements MiddlewareHandler {
@@ -62,6 +62,8 @@ public class BodyHandler implements MiddlewareHandler {
     // it could be a map or list. So treat it as Object in the attachment.
     public static final AttachmentKey<Object> REQUEST_BODY = AttachmentKey.create(Object.class);
 
+    public static final AttachmentKey<String> REQUEST_BODY_STRING = AttachmentKey.create(String.class);
+
     public static final String CONFIG_NAME = "body";
 
     public static final BodyConfig config = (BodyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, BodyConfig.class);
@@ -69,7 +71,7 @@ public class BodyHandler implements MiddlewareHandler {
     private volatile HttpHandler next;
 
     public BodyHandler() {
-        if(logger.isInfoEnabled()) logger.info("BodyHandler is loaded.");
+        if (logger.isInfoEnabled()) logger.info("BodyHandler is loaded.");
     }
 
     /**
@@ -85,54 +87,27 @@ public class BodyHandler implements MiddlewareHandler {
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         // parse the body to map or list if content type is application/json
         String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
-        if (contentType != null && contentType.startsWith("application/json")) {
+        if (contentType != null) {
             if (exchange.isInIoThread()) {
                 exchange.dispatch(this);
                 return;
             }
             exchange.startBlocking();
-            InputStream is = exchange.getInputStream();
             try {
-                Object body;
-                String s = StringUtils.inputStreamToString(is, StandardCharsets.UTF_8);
-                if (s != null) {
-                    s = s.trim();
-                    if (s.startsWith("{")) {
-                        body = Config.getInstance().getMapper().readValue(s, new TypeReference<Map<String, Object>>() {
-                        });
-                    } else if (s.startsWith("[")) {
-                        body = Config.getInstance().getMapper().readValue(s, new TypeReference<List<Object>>() {
-                        });
-                    } else {
-                        // error here. The content type in head doesn't match the body.
-                        setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, contentType);
-                        return;
+                if (contentType.startsWith("application/json")) {
+                    InputStream inputStream = exchange.getInputStream();
+                    String unparsedRequestBody = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
+                    // attach the unparsed request body into exchange if the cacheRequestBody is enabled in body.yml
+                    if (config.isCacheRequestBody()) {
+                        exchange.putAttachment(REQUEST_BODY_STRING, unparsedRequestBody);
                     }
-                    exchange.putAttachment(REQUEST_BODY, body);
+                    // attach the parsed request body into exchange if the body parser is enabled
+                    attachJsonBody(exchange, unparsedRequestBody);
+                } else if (contentType.startsWith("multipart/form-data") || contentType.startsWith("application/x-www-form-urlencoded")) {
+                    // attach the parsed request body into exchange if the body parser is enabled
+                    attachFormDataBody(exchange);
                 }
             } catch (IOException e) {
-                logger.error("IOException: ", e);
-                setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, contentType);
-                return;
-            }
-            // parse the body to form-data if content type is multipart/form-data or application/x-www-form-urlencoded
-        } else if (contentType != null &&
-                (contentType.startsWith("multipart/form-data") || contentType.startsWith("application/x-www-form-urlencoded"))) {
-            if (exchange.isInIoThread()) {
-                exchange.dispatch(this);
-                return;
-            }
-            exchange.startBlocking();
-            try {
-                Object data;
-                FormParserFactory formParserFactory = FormParserFactory.builder().build();
-                FormDataParser parser = formParserFactory.createParser(exchange);
-                if (parser != null) {
-                    FormData formData = parser.parseBlocking();
-                    data = BodyConverter.convert(formData);
-                    exchange.putAttachment(REQUEST_BODY, data);
-                }
-            } catch (Exception e) {
                 logger.error("IOException: ", e);
                 setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, contentType);
                 return;
@@ -141,51 +116,48 @@ public class BodyHandler implements MiddlewareHandler {
         Handler.next(exchange, next);
     }
 
-    /*
-    // for some reason this implementation is not stable and I need time to figure it out
-    // as of now, let's just block exchange and get the input stream.
-    public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        // parse the body to map or list if content type is application/json
-        String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
-        if (contentType != null && contentType.startsWith("application/json")) {
-            final CountDownLatch latch = new CountDownLatch(1);
-            exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
-                @Override
-                public void handle(HttpServerExchange exchange, byte[] bytes) {
-                    // convert to json and attach the body
-                    try {
-                        if(bytes != null && bytes.length > 0) {
-                            Object body;
-                            if(bytes[0] == 123) { // handle { which is a map
-                                body = Config.getInstance().getMapper().readValue(bytes, new TypeReference<HashMap<String, Object>>() {});
-                            } else if(bytes[0] == 91) {  // handle [ which is an array
-                                body = Config.getInstance().getMapper().readValue(bytes, new TypeReference<List<HashMap<String, Object>>>() {});
-                            } else {
-                                body = null;
-                                System.out.println("content type mismatch!");
-                            }
-                            if(body != null) {
-                                exchange.putAttachment(REQUEST_BODY, body);
-                            }
-                            if(config.keepStream || body == null) {
-                                // put the bytes back to exchange so that subsequent handlers still have the body stream
-                                // also, if the body and header content type is mismatched, put the body back to stream
-                                Connectors.ungetRequestBytes(exchange, new ImmediatePooledByteBuffer(ByteBuffer.wrap(bytes)));
-                            }
-                        }
-                        latch.countDown();
-                    } catch (IOException e) {
-                        logger.error("IOException: ", e);
-                        latch.countDown();
-                    }
-                }
-            });
-            latch.await();
+    /**
+     * Method used to parse the body into FormData and attach it into exchange
+     *
+     * @param exchange exchange to be attached
+     * @throws IOException
+     */
+    private void attachFormDataBody(final HttpServerExchange exchange) throws IOException {
+        Object data;
+        FormParserFactory formParserFactory = FormParserFactory.builder().build();
+        FormDataParser parser = formParserFactory.createParser(exchange);
+        if (parser != null) {
+            FormData formData = parser.parseBlocking();
+            data = BodyConverter.convert(formData);
+            exchange.putAttachment(REQUEST_BODY, data);
         }
-        // if content type is not application/json, then ignore it.
-        next.handleRequest(exchange);
     }
-    */
+
+    /**
+     * Method used to parse the body into a Map or a List and attach it into exchange
+     *
+     * @param exchange exchange to be attached
+     * @param string   unparsed request body
+     * @throws IOException
+     */
+    private void attachJsonBody(final HttpServerExchange exchange, String string) throws IOException {
+        Object body;
+        if (string != null) {
+            string = string.trim();
+            if (string.startsWith("{")) {
+                body = Config.getInstance().getMapper().readValue(string, new TypeReference<Map<String, Object>>() {
+                });
+            } else if (string.startsWith("[")) {
+                body = Config.getInstance().getMapper().readValue(string, new TypeReference<List<Object>>() {
+                });
+            } else {
+                // error here. The content type in head doesn't match the body.
+                setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
+                return;
+            }
+            exchange.putAttachment(REQUEST_BODY, body);
+        }
+    }
 
     @Override
     public HttpHandler getNext() {

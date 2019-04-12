@@ -2,7 +2,7 @@
  * Copyright (c) 2016 Network New Technologies Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -44,6 +44,7 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -64,7 +65,7 @@ public class ServerInfoDisabledTest {
         Config.getInstance().clear();
         Map<String, Object> map = new HashMap<>();
         map.put("enableServerInfo", false);
-        Config.getInstance().getYaml().dump(map, new PrintWriter(new File(homeDir + "/info.yml")));
+        Config.getInstance().getYaml().dump(map, new PrintWriter(new File(homeDir + "/info.yml"), Charset.defaultCharset().name()));
         // Add home directory to the classpath of the system class loader.
         addURL(new File(homeDir).toURI().toURL());
 

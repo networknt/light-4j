@@ -23,6 +23,7 @@ import java.util.Map;
 import com.networknt.utility.Constants;
 import junit.framework.TestCase;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.fail;
@@ -36,7 +37,8 @@ import static org.junit.Assert.fail;
  */
 
 public class URLTest {
-    //@Test
+    @Test
+    @Ignore
     public void testCheckGetMethod() {
         Method[] methods = URL.class.getDeclaredMethods();
         for (Method m : methods) {

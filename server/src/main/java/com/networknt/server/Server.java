@@ -2,7 +2,7 @@
  * Copyright (c) 2016 Network New Technologies Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -17,7 +17,6 @@
 package com.networknt.server;
 
 import com.networknt.client.Http2Client;
-import com.networknt.common.DecryptUtil;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
@@ -96,8 +95,7 @@ public class Server {
 
     public static ServerConfig config = (ServerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME,
             ServerConfig.class);
-    public static Map<String, Object> secret = DecryptUtil
-            .decryptMap(Config.getInstance().getJsonMapConfig(CONFIG_SECRET));
+    public static Map<String, Object> secret = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
     public final static TrustManager[] TRUST_ALL_CERTS = new X509TrustManager[]{new DummyTrustManager()};
 
     static protected boolean shutdownRequested = false;
@@ -160,7 +158,13 @@ public class Server {
         }
 
         if (config.dynamicPort) {
-            for (int i = config.minPort; i < config.maxPort; i++) {
+            if (config.minPort > config.maxPort) {
+                String errMessage = "No ports available to bind to - the minPort is larger than the maxPort in server.yml";
+                System.out.println(errMessage);
+                logger.error(errMessage);
+                throw new RuntimeException(errMessage);
+            }
+            for (int i = config.minPort; i <= config.maxPort; i++) {
                 boolean b = bind(gracefulShutdownHandler, i);
                 if (b) {
                     break;
@@ -198,6 +202,15 @@ public class Server {
         return handler;
     }
 
+    /**
+     * Method used to initialize server options. If the user has configured a valid server option,
+     * load it into the server configuration, otherwise use the default value
+     */
+    private static void serverOptionInit() {
+        Map<String, Object> mapConfig = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
+        ServerOption.serverOptionInit(mapConfig, config);
+    }
+
     static private boolean bind(HttpHandler handler, int port) {
         try {
             Undertow.Builder builder = Undertow.builder();
@@ -221,18 +234,28 @@ public class Server {
                builder.setSocketOption(Options.SSL_CLIENT_AUTH_MODE, SslClientAuthMode.REQUIRED);
             }
 
-            server = builder.setBufferSize(1024 * 16).setIoThreads(Runtime.getRuntime().availableProcessors() * 2)
+            // set and validate server options
+            serverOptionInit();
+
+            server = builder.setBufferSize(config.getBufferSize()).setIoThreads(config.getIoThreads())
                     // above seems slightly faster in some configurations
-                    .setSocketOption(Options.BACKLOG, 10000)
+                    .setSocketOption(Options.BACKLOG, config.getBacklog())
                     .setServerOption(UndertowOptions.ALWAYS_SET_KEEP_ALIVE, false) // don't send a keep-alive header for
                     // HTTP/1.1 requests, as it is not required
-                    .setServerOption(UndertowOptions.ALWAYS_SET_DATE, true)
+                    .setServerOption(UndertowOptions.ALWAYS_SET_DATE, config.isAlwaysSetDate())
                     .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, false)
-                    .setHandler(Handlers.header(handler, Headers.SERVER_STRING, "L")).setWorkerThreads(200).build();
+                    .setHandler(Handlers.header(handler, Headers.SERVER_STRING, config.getServerString())).setWorkerThreads(config.getWorkerThreads()).build();
 
             server.start();
             System.out.println("HOST IP " + System.getenv(STATUS_HOST_IP));
         } catch (Exception e) {
+            if (!config.dynamicPort || (config.dynamicPort && config.maxPort == port + 1)) {
+                String triedPortsMessage = config.dynamicPort ? config.minPort + " to: " + (config.maxPort - 1) : port + "";
+                String errMessage = "No ports available to bind to. Tried: " + triedPortsMessage;
+                System.out.println(errMessage);
+                logger.error(errMessage);
+                throw new RuntimeException(errMessage, e);
+            }
             System.out.println("Failed to bind to port " + port + ". Trying " + ++port);
             if (logger.isInfoEnabled())
                 logger.info("Failed to bind to port " + port + ". Trying " + ++port);
@@ -545,7 +568,8 @@ public class Server {
             return;
         }
         Map<String, Object> statusConfig = Config.getInstance().getJsonMapConfig(STATUS_CONFIG_NAME[0]);
-        Set<String> duplicatedStatusSet = statusConfig.keySet();
+        // clone the default status config key set
+        Set<String> duplicatedStatusSet = new HashSet<>(statusConfig.keySet());
         duplicatedStatusSet.retainAll(appStatusConfig.keySet());
         if (!duplicatedStatusSet.isEmpty()) {
             logger.error("The status code(s): " + duplicatedStatusSet.toString() + " is already in use by light-4j and cannot be overwritten," +

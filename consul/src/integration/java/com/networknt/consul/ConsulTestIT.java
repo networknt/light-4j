@@ -2,7 +2,7 @@
  * Copyright (c) 2016 Network New Technologies Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -20,10 +20,7 @@ import com.networknt.registry.Registry;
 import com.networknt.registry.URL;
 import com.networknt.registry.URLImpl;
 import com.networknt.service.SingletonServiceFactory;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -49,7 +46,8 @@ public class ConsulTestIT {
         registry = null;
     }
 
-    //@Test
+    @Test
+    @Ignore
     public void doRegisterAndAvailable() throws Exception {
         // register
         registry.doRegister(serviceUrl);
@@ -58,7 +56,8 @@ public class ConsulTestIT {
         registry.doUnregister(serviceUrl);
     }
 
-    //@Test
+    @Test
+    @Ignore
     public void discoverService() throws Exception {
         registry.doRegister(serviceUrl);
         List<URL> urls = registry.discoverService(serviceUrl);

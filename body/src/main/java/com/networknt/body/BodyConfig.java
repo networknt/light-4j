@@ -2,7 +2,7 @@
  * Copyright (c) 2016 Network New Technologies Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -21,6 +21,7 @@ package com.networknt.body;
  */
 public class BodyConfig {
     boolean enabled;
+    boolean cacheRequestBody;
 
     public BodyConfig() {
     }
@@ -31,5 +32,13 @@ public class BodyConfig {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean isCacheRequestBody() {
+        return cacheRequestBody;
+    }
+
+    public void setCacheRequestBody(boolean cacheRequestBody) {
+        this.cacheRequestBody = cacheRequestBody;
     }
 }

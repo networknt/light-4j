@@ -1,10 +1,27 @@
+/*
+ * Copyright (c) 2016 Network New Technologies Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.networknt.server;
 
 import com.networknt.config.Config;
 import com.networknt.status.Status;
 import junit.framework.TestCase;
 import org.junit.Assert;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,6 +29,7 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TestMergeStatusConfig extends TestCase {
 
     private Config config = null;
@@ -40,15 +58,19 @@ public class TestMergeStatusConfig extends TestCase {
         appStatus.delete();
     }
 
-    @Test
     public void testAppStatus() {
         config.clear();
+        // test default element without merging with app-status
+        Status status0 = new Status("ERR10053");
+        Assert.assertEquals(401, status0.getStatusCode());
         Server.mergeStatusConfig();
         Status status = new Status("ERR99999");
         Assert.assertEquals(404, status.getStatusCode());
+        // test default element after merging
+        Status status1 = new Status("ERR10053");
+        Assert.assertEquals(401, status1.getStatusCode());
     }
 
-    @Test
     public void testDuplicateStatus() {
         config.clear();
         try {
@@ -59,6 +81,33 @@ public class TestMergeStatusConfig extends TestCase {
         } catch (RuntimeException expected) {
             // pass
         }
+    }
+
+    public void testWithoutAppStatus() {
+        config.clear();
+        File appStatus = new File(homeDir + "/app-status.yml");
+        appStatus.delete();
+        // test default element without merging with app-status
+        Status status0 = new Status("ERR10053");
+        Assert.assertEquals(401, status0.getStatusCode());
+        Server.mergeStatusConfig();
+        // test default element after merging
+        Status status1 = new Status("ERR10053");
+        Assert.assertEquals(401, status1.getStatusCode());
+    }
+
+    public void testEmptyAppStatus() {
+        config.clear();
+        File appStatus = new File(homeDir + "/app-status.yml");
+        appStatus.delete();
+        new File(homeDir + "/app-status.yml");
+        // test default element without merging with app-status
+        Status status0 = new Status("ERR10053");
+        Assert.assertEquals(401, status0.getStatusCode());
+        Server.mergeStatusConfig();
+        // test default element after merging
+        Status status1 = new Status("ERR10053");
+        Assert.assertEquals(401, status1.getStatusCode());
     }
 
     private void setExternalizedConfigDir(String externalizedDir) throws Exception {
