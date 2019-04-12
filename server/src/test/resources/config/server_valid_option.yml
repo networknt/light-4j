@@ -4,4 +4,4 @@ workerThreads: 100
 backlog: 10000
 alwaysSetDate: false
 serverString: TEST
-allowUnescapedCharactersInUrl: false
+allowUnescapedCharactersInUrl: true

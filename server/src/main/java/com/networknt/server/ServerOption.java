@@ -97,7 +97,7 @@ public enum ServerOption {
                 return true;
             case ALLOW_UNESCAPED_CHARACTERS_IN_URL:
                 if (value == null) {
-                    serverConfig.setAllowUnescapedCharactersInUrl(true);
+                    serverConfig.setAllowUnescapedCharactersInUrl(false);
                 }
                 return true;
             default:
