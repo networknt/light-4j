@@ -28,12 +28,8 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.ServiceLoader;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -43,6 +39,9 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
+import io.undertow.UndertowOptions;
+import io.undertow.client.http.Http2ClientCompletableFutureNoRequest;
+import io.undertow.client.http.Http2ClientCompletableFutureWithRequest;
 import io.undertow.client.http.Light4jHttp2ClientProvider;
 import io.undertow.client.http.Light4jHttpClientProvider;
 import org.owasp.encoder.Encode;
@@ -730,6 +729,60 @@ public class Http2Client {
                 latch.countDown();
             }
         };
+    }
+
+    public CompletableFuture<ClientResponse> callService(URI uri, ClientRequest request, Optional<String> requestBody) {
+        CompletableFuture<ClientConnection> futureConnection = this.connectAsync(uri);
+        CompletableFuture<ClientResponse> futureClientResponse = futureConnection.thenComposeAsync(clientConnection -> {
+            if (requestBody.isPresent()) {
+                Http2ClientCompletableFutureWithRequest futureClientResponseWithRequest = new Http2ClientCompletableFutureWithRequest(requestBody.get());
+                try {
+                    clientConnection.sendRequest(request, futureClientResponseWithRequest);
+                } catch (Exception e) {
+                    futureClientResponseWithRequest.completeExceptionally(e);
+                }
+                return futureClientResponseWithRequest;
+            } else {
+                Http2ClientCompletableFutureNoRequest futureClientResponseNoRequest = new Http2ClientCompletableFutureNoRequest();
+                try {
+                    clientConnection.sendRequest(request, futureClientResponseNoRequest);
+                } catch (Exception e) {
+                    futureClientResponseNoRequest.completeExceptionally(e);
+                }
+                return futureClientResponseNoRequest;
+            }
+        });
+        return futureClientResponse;
+    }
+
+    /**
+     * Create async connection with default config value
+     *
+     */
+    public CompletableFuture<ClientConnection> connectAsync(URI uri) {
+        return this.connectAsync((InetSocketAddress) null, uri, com.networknt.client.Http2Client.WORKER, com.networknt.client.Http2Client.SSL, com.networknt.client.Http2Client.BUFFER_POOL,
+                OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+    }
+
+    public CompletableFuture<ClientConnection> connectAsync(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        CompletableFuture<ClientConnection> completableFuture = new CompletableFuture<>();
+        ClientProvider provider = clientProviders.get(uri.getScheme());
+        try {
+            provider.connect(new ClientCallback<ClientConnection>() {
+                @Override
+                public void completed(ClientConnection r) {
+                    completableFuture.complete(r);
+                }
+
+                @Override
+                public void failed(IOException e) {
+                    completableFuture.completeExceptionally(e);
+                }
+            }, bindAddress, uri, worker, ssl, bufferPool, options);
+        } catch (Throwable t) {
+            completableFuture.completeExceptionally(t);
+        }
+        return completableFuture;
     }
 
 }
