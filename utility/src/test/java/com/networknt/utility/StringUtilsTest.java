@@ -17,6 +17,7 @@
 package com.networknt.utility;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -25,7 +26,8 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 public class StringUtilsTest {
-    //@Test
+    @Test
+    @Ignore
     public void testExpandEnvVars() {
         String s = "IP=${DOCKER_HOST_IP}";
         Assert.assertEquals("IP=192.168.1.120", StringUtils.expandEnvVars(s));
