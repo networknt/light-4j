@@ -73,6 +73,8 @@ public class Server {
     // service_id in slf4j MDC
     static final String SID = "sId";
 
+    @Deprecated
+    public static ServerConfig config = getServerConfig(); // there are a lot of users are using the static variable in their code.
     public final static TrustManager[] TRUST_ALL_CERTS = new X509TrustManager[]{new DummyTrustManager()};
 
     static protected boolean shutdownRequested = false;
@@ -161,6 +163,7 @@ public class Server {
         if (serverConfig.dynamicPort) {
             if (serverConfig.minPort > serverConfig.maxPort) {
                 String errMessage = "No ports available to bind to - the minPort is larger than the maxPort in server.yml";
+                System.out.println(errMessage);
                 logger.error(errMessage);
                 throw new RuntimeException(errMessage);
             }          
