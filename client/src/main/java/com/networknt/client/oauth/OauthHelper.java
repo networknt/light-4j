@@ -607,6 +607,7 @@ public class OauthHelper {
         if(result.isSuccess()) {
             TokenResponse tokenResponse = result.getResult();
             jwt.setJwt(tokenResponse.getAccessToken());
+            jwt.setRefreshToken(tokenResponse.getRefreshToken());
             // the expiresIn is seconds and it is converted to millisecond in the future.
             jwt.setExpire(System.currentTimeMillis() + tokenResponse.getExpiresIn() * 1000);
             logger.info("Get token {} with expire_in {} seconds", jwt, tokenResponse.getExpiresIn());

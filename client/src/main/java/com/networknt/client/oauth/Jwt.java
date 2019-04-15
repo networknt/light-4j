@@ -33,6 +33,7 @@ public class Jwt {
     private volatile long earlyRetryTimeout;
     private Set<String> scopes = new HashSet<>();
     private Key key;
+    private String refreshToken;
 
     private static long tokenRenewBeforeExpired;
     private static long expiredRefreshRetryDelay;
@@ -146,8 +147,16 @@ public class Jwt {
         return key;
     }
 
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
     /**
-     * a inner model tight to Jwt, this key is to represent to a Jwt for caching or other usage
+     * an inner model tight to Jwt, this key is to represent to a Jwt for caching or other usage
      * for now it's only identified by scopes and serviceId.
      */
     public static class Key {
@@ -155,11 +164,14 @@ public class Jwt {
         private Map<String, Object> customClaim;
         private String serviceId;
         private String samlAssertion;
-        private boolean cachable;
+        private String authorizationCode;
+        private String refreshToken;
+
+        private boolean cachable = true;
 
         @Override
         public int hashCode() {
-            return Objects.hash(scopes, serviceId, samlAssertion, customClaim);
+            return Objects.hash(scopes, serviceId, samlAssertion, customClaim, authorizationCode, refreshToken);
         }
 
         @Override
@@ -181,6 +193,7 @@ public class Jwt {
 
         public Key() {
             this.scopes = new HashSet<>();
+            this.customClaim = new HashMap<>();
         }
 
         public Set<String> getScopes() {
@@ -213,6 +226,22 @@ public class Jwt {
 
         public void setSamlAssertion(String samlAssertion) {
             this.samlAssertion = samlAssertion;
+        }
+
+        public String getAuthorizationCode() {
+            return authorizationCode;
+        }
+
+        public void setAuthorizationCode(String authorizationCode) {
+            this.authorizationCode = authorizationCode;
+        }
+
+        public String getRefreshToken() {
+            return refreshToken;
+        }
+
+        public void setRefreshToken(String refreshToken) {
+            this.refreshToken = refreshToken;
         }
 
         public boolean isCachable() {

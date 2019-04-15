@@ -83,7 +83,7 @@ public class TokenManager {
         return result;
     }
 
-    public Result<String> getJwt(Jwt.Key key, TokenRequest tokenRequest) {
+    public Result<Jwt> getJwt(Jwt.Key key, TokenRequest tokenRequest) {
         if (key.isCachable()) {
             Jwt cachedJwt = getJwt(cacheStrategy, key);
 
@@ -92,14 +92,19 @@ public class TokenManager {
             if (result.isSuccess()) {
                 cacheStrategy.cacheJwt(key, result.getResult());
             }
-            return Success.of(result.getResult().getJwt());
+            return result;
         } else {
-            Result<TokenResponse> tokenResponse = OauthHelper.getTokenResult(tokenRequest);
-            if(tokenResponse.isSuccess()) {
-                String jwt = tokenResponse.getResult().getAccessToken();
+            // uncached jwt
+            Jwt jwt = new Jwt();
+            Result<TokenResponse> result = OauthHelper.getTokenResult(tokenRequest);
+            if(result.isSuccess()) {
+                TokenResponse tokenResponse = result.getResult();
+                jwt.setJwt(tokenResponse.getAccessToken());
+                jwt.setRefreshToken(tokenResponse.getRefreshToken());
+                jwt.setScopes(tokenResponse.getScope());
                 return Success.of(jwt);
             } else {
-                return Failure.of(tokenResponse.getError());
+                return Failure.of(result.getError());
             }
         }
     }
