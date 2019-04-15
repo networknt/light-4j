@@ -942,7 +942,7 @@ ERR12048:
   description: Provider id %s exists; It has been regristed already
 ERR12049:
   statusCode: 400
-  code: ERR12048
+  code: ERR12049
   message: PROVIDER_ID_INVALID
   description: Provider id invalid
 
