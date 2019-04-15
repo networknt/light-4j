@@ -44,6 +44,7 @@ public class ServerConfig {
     int workerThreads;
     int backlog;
     boolean alwaysSetDate;
+    boolean allowUnescapedCharactersInUrl;
     String serverString;
 
     public ServerConfig() {
@@ -243,5 +244,13 @@ public class ServerConfig {
 
     public void setServerString(String serverString) {
         this.serverString = serverString;
+    }
+
+    public boolean isAllowUnescapedCharactersInUrl() {
+        return allowUnescapedCharactersInUrl;
+    }
+
+    public void setAllowUnescapedCharactersInUrl(boolean allowUnescapedCharactersInUrl) {
+        this.allowUnescapedCharactersInUrl = allowUnescapedCharactersInUrl;
     }
 }

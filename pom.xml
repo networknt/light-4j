@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.networknt</groupId>
     <artifactId>light-4j</artifactId>
-    <version>1.5.33</version>
+    <version>1.6.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Parent POM</name>
     <description>Light 4J Framework Components</description>
@@ -66,6 +66,7 @@
 
     <properties>
         <java.version>1.8</java.version>
+        <javac.version>9+181-r4173-1</javac.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <version.jackson>2.9.8</version.jackson>
         <version.slf4j>1.7.25</version.slf4j>
@@ -81,7 +82,7 @@
         <version.assertj>3.8.0</version.assertj>
         <version.hdrhistogram>2.1.10</version.hdrhistogram>
         <version.jsr305>3.0.2</version.jsr305>
-        <version.json-schema-validator>1.0.5</version.json-schema-validator>
+        <version.json-schema-validator>1.0.6</version.json-schema-validator>
         <version.zookeeper>3.5.3-beta</version.zookeeper>
         <version.zkclient>0.3</version.zkclient>
         <version.curator>4.0.1</version.curator>
@@ -100,12 +101,12 @@
         <version.maven-version>2.7</version.maven-version>
         <version.nexus-staging-maven>1.6.8</version.nexus-staging-maven>
         <version.maven-source>3.0.1</version.maven-source>
-        <version.maven-surefire>2.22.1</version.maven-surefire>
+        <version.maven-surefire>3.0.0-M3</version.maven-surefire>
         <!--<version.maven-release>2.5.3</version.maven-release>-->
-        <version.maven-javadoc>2.10.4</version.maven-javadoc>
-        <version.jacoco>0.7.9</version.jacoco>
+        <version.maven-javadoc>3.1.0</version.maven-javadoc>
+        <version.jacoco>0.8.3</version.jacoco>
         <version.maven-compiler>3.6.1</version.maven-compiler>
-        <version.build-helper-maven>1.9.1</version.build-helper-maven>
+        <version.build-helper-maven>3.0.0</version.build-helper-maven>
         <version.plexus-compiler-javac-errorprone>2.8</version.plexus-compiler-javac-errorprone>
         <version.error_prone_core>2.0.15</version.error_prone_core>
         <version.lifecycle-mapping>1.0.0</version.lifecycle-mapping>
@@ -790,34 +791,22 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>${version.maven-compiler}</version>
+                <version>3.8.0</version>
                 <configuration>
-                    <compilerId>javac-with-errorprone</compilerId>
-                    <showWarnings>true</showWarnings>
-                    <showDeprecation>true</showDeprecation>
+                    <source>8</source>
+                    <target>8</target>
                     <compilerArgs>
-                        <!-- add command line validation here -->
+                        <arg>-XDcompilePolicy=simple</arg>
+                        <arg>-Xplugin:ErrorProne</arg>
                     </compilerArgs>
-                    <forceJavacCompilerUse>true</forceJavacCompilerUse>
-                    <!-- maven-compiler-plugin defaults to targeting Java 5, but our javac
-                         only supports >=6 -->
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>com.google.errorprone</groupId>
+                            <artifactId>error_prone_core</artifactId>
+                            <version>2.3.3</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.codehaus.plexus</groupId>
-                        <artifactId>plexus-compiler-javac-errorprone</artifactId>
-                        <version>${version.plexus-compiler-javac-errorprone}</version>
-                    </dependency>
-                    <!-- override plexus-compiler-javac-errorprone's dependency on
-                         Error Prone with the latest version -->
-                    <dependency>
-                        <groupId>com.google.errorprone</groupId>
-                        <artifactId>error_prone_core</artifactId>
-                        <version>${version.error_prone_core}</version>
-                    </dependency>
-                </dependencies>
             </plugin>
         </plugins>
         <pluginManagement>
@@ -954,6 +943,26 @@
                                 </goals>
                             </execution>
                         </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>jdk8</id>
+            <activation>
+                <jdk>1.8</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <fork>true</fork>
+                            <compilerArgs combine.children="append">
+                                <arg>-J-Xbootclasspath/p:${settings.localRepository}/com/google/errorprone/javac/${javac.version}/javac-${javac.version}.jar</arg>
+                            </compilerArgs>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>

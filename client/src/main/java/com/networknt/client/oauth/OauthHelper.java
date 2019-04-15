@@ -89,7 +89,7 @@ public class OauthHelper {
         try {
             connection = client.connect(new URI(tokenRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, tokenRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
         } catch (Exception e) {
-            logger.error("cannot establish connection: {}", e.getStackTrace());
+            logger.error("cannot establish connection:", e);
             return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR, tokenRequest.getServerUrl()));
         }
 
@@ -118,7 +118,7 @@ public class OauthHelper {
         try {
             connection = client.connect(new URI(signRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, signRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
         } catch (Exception e) {
-            logger.error("cannot establish connection: {}", e.getStackTrace());
+            logger.error("cannot establish connection:", e);
             return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR, signRequest.getServerUrl()));
         }
 
@@ -213,7 +213,7 @@ public class OauthHelper {
         try {
             connection = client.connect(new URI(tokenRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, tokenRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
         } catch (Exception e) {
-            logger.error("cannot establish connection: {}", e.getStackTrace());
+            logger.error("cannot establish connection:", e);
             return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR));
         }
         try {
@@ -702,7 +702,7 @@ public class OauthHelper {
             return;
         }
         if(!StringUtils.isEmpty(requestBody)) {
-            long contentLength = requestBody.getBytes().length;
+            long contentLength = requestBody.getBytes(UTF_8).length;
             request.getRequestHeaders().put(Headers.CONTENT_LENGTH, contentLength);
         }
 

@@ -321,7 +321,11 @@ public class Handler {
 				httpServerExchange.putAttachment(ATTACHMENT_KEY,
 						new io.undertow.util.PathTemplateMatch(result.getMatchedTemplate(), result.getParameters()));
 				for (Map.Entry<String, String> entry : result.getParameters().entrySet()) {
+					// the values shouldn't be added to query param. but this is left as it was to keep backward compatability
 					httpServerExchange.addQueryParam(entry.getKey(), entry.getValue());
+					
+					// put values in path param map
+					httpServerExchange.addPathParam(entry.getKey(), entry.getValue());
 				}
 				String id = result.getValue();
 				httpServerExchange.putAttachment(CHAIN_ID, id);
@@ -412,7 +416,8 @@ public class Handler {
 		Object handlerOrProviderObject = null;
 		try {
 			handlerOrProviderObject = namedClass.second.newInstance();
-		} catch (InstantiationException | IllegalAccessException e) {
+		} catch (Exception e) {
+			logger.error("Exception:", e);
 			throw new RuntimeException("Could not instantiate handler class: " + namedClass.second);
 		}
 
