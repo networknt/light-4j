@@ -60,6 +60,10 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
+import com.networknt.client.oauth.Jwt;
+import com.networknt.client.oauth.TokenManager;
+import com.networknt.client.oauth.TokenRequest;
+import com.networknt.monad.Result;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
@@ -131,7 +135,6 @@ public class Http2ClientTest {
     private static final URI ADDRESS;
 
 
-
     static {
         try {
             ADDRESS = new URI("http://localhost:7777");
@@ -154,7 +157,7 @@ public class Http2ClientTest {
         final XnioWorker xnioWorker = xnio.createWorker(null, Http2Client.DEFAULT_OPTIONS);
         worker = xnioWorker;
 
-        if(server == null) {
+        if (server == null) {
             System.out.println("starting server");
             Undertow.Builder builder = Undertow.builder();
 
@@ -198,7 +201,7 @@ public class Http2ClientTest {
                                 public void handle(HttpServerExchange exchange, String message) {
                                     try {
                                         int sleepTime = randInt(1, 3) * 1000;
-                                        if(sleepTime >= 2000) {
+                                        if (sleepTime >= 2000) {
                                             sleepTime = 3000;
                                         } else {
                                             sleepTime = 1000;
@@ -234,7 +237,7 @@ public class Http2ClientTest {
     @AfterClass
     public static void afterClass() {
         worker.shutdown();
-        if(server != null) {
+        if (server != null) {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException ignored) {
@@ -457,7 +460,7 @@ public class Http2ClientTest {
             connection.sendRequest(request, client.createFullCallback(reference, latch));
             latch.await();
             final AsyncResult<AsyncResponse> ar = reference.get();
-            if(ar.succeeded()) {
+            if (ar.succeeded()) {
                 Assert.assertEquals(message, ar.result().getResponseBody());
                 Assert.assertTrue(ar.result().getResponseTime() > 0);
                 System.out.println("responseTime = " + ar.result().getResponseTime());
@@ -506,9 +509,91 @@ public class Http2ClientTest {
         return reference.get().getAttachment(Http2Client.RESPONSE_BODY);
     }
 
+    /**
+     * Test method used to get Jwt by using:
+     * 1. An empty jwt identified by scopes
+     * 2. An example client credential request
+     *
+     * @param cachable the flag to indicate that whether enable caching mechanism
+     * @return Jwt
+     */
+    private Result<Jwt> getJwtRemotely(String scope, boolean cachable) {
+        Jwt.Key key = new Jwt.Key();
+        key.setScopes(Collections.singleton(scope));
+        key.setCachable(true);
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setGrantType("client_credential");
+        tokenRequest.setServerUrl("http://localhost:7777");
+        tokenRequest.setUri("/oauth2/token");
+        tokenRequest.setClientId("test_client");
+        tokenRequest.setClientSecret("test_secret");
+        tokenRequest.setScope(Collections.singletonList(scope));
+        tokenRequest.setEnableHttp2(true);
+        Result<Jwt> result = TokenManager.getInstance().getJwt(key, tokenRequest);
+        return result;
+    }
+
+    @Test
+    public void testGetJwtWithoutCache() {
+        String scope = "test.w";
+        Result<Jwt> result = getJwtRemotely(scope, false);
+        Assert.assertEquals(result.isSuccess(), true);
+        // generate another jwt with same scope
+        Jwt.Key key = new Jwt.Key("test.w");
+        Assert.assertNull(TokenManager.getInstance().getJwtFromCache(key));
+    }
+
+    @Test
+    public void testGetJwtWithCache() {
+        String scope = "test.w";
+        Result<Jwt> result = getJwtRemotely(scope, true);
+        Assert.assertEquals(result.isSuccess(), true);
+        // generate another jwt with same scope
+        Jwt.Key key = new Jwt.Key();
+        key.setScopes(Collections.singleton(scope));
+        Assert.assertNotNull(TokenManager.getInstance().getJwtFromCache(key));
+        Assert.assertEquals(TokenManager.getInstance().getJwtFromCache(key).getJwt(), result.getResult().getJwt());
+    }
+
+    @Test
+    public void testGetCachedJwtAboutToExpire() {
+        String scope = "test.w";
+        Result<Jwt> result1 = getJwtRemotely(scope,true);
+        Long before = System.currentTimeMillis();
+        Result<Jwt> result2 = getJwtRemotely(scope,true);
+        Long after = System.currentTimeMillis();
+        Assert.assertEquals(result1.isSuccess(), true);
+        Assert.assertEquals(result2.isSuccess(), true);
+        // the second time to get Jwt should only take few milliseconds since the jwt is got from cache directly without call oauth server
+        Assert.assertTrue(after - before < 500);
+    }
+
+    @Test
+    public void testGetJwtMultithread() throws ExecutionException, InterruptedException {
+        List<Result<Jwt>> resultList = callGetJwtMultiThread(10);
+        for (Result<Jwt> result : resultList) {
+            Assert.assertTrue(result.isSuccess());
+        }
+    }
+
+    @Test
+    public void testGetCachedJwtExpired() throws InterruptedException {
+        String scope = "test.w";
+        Result<Jwt> result1 = getJwtRemotely(scope,true);
+        // wait for jwt expire
+        Thread.sleep(5000);
+        Long before = System.currentTimeMillis();
+        Result<Jwt> result2 = getJwtRemotely(scope,true);
+        Long after = System.currentTimeMillis();
+        Assert.assertEquals(result1.isSuccess(), true);
+        Assert.assertEquals(result2.isSuccess(), true);
+        // the Jwt got from cache is expired, refresh the token needs at least 1 seconds
+        Assert.assertTrue(after - before > 1000);
+    }
+
     @Test
     public void testAsyncAboutToExpire() throws InterruptedException, ExecutionException {
-        for(int i = 0; i < 1; i++) {
+        for (int i = 0; i < 1; i++) {
             callApiAsyncMultiThread(4);
             logger.info("called times: " + i);
             try {
@@ -520,7 +605,7 @@ public class Http2ClientTest {
 
     @Test
     public void testAsyncExpired() throws InterruptedException, ExecutionException {
-        for(int i = 0; i < 1; i++) {
+        for (int i = 0; i < 1; i++) {
             callApiAsyncMultiThread(4);
             logger.info("called times: " + i);
             try {
@@ -532,7 +617,7 @@ public class Http2ClientTest {
 
     @Test
     public void testMixed() throws InterruptedException, ExecutionException {
-        for(int i = 0; i < 1; i++) {
+        for (int i = 0; i < 1; i++) {
             callApiAsyncMultiThread(4
             );
             logger.info("called times: " + i);
@@ -559,6 +644,22 @@ public class Http2ClientTest {
             resultList.add(future.get());
         }
         System.out.println("resultList = " + resultList);
+    }
+
+    private List<Result<Jwt>> callGetJwtMultiThread(final int threadCount) throws InterruptedException, ExecutionException {
+        Callable<Result<Jwt>> task = this::getJwtRemotely;
+        List<Callable<Result<Jwt>>> tasks = Collections.nCopies(threadCount, task);
+        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+        List<Future<Result<Jwt>>> futures = executorService.invokeAll(tasks);
+        List<Result<Jwt>> resultList = new ArrayList<>(futures.size());
+        for (Future<Result<Jwt>> future : futures) {
+            resultList.add(future.get());
+        }
+        return resultList;
+    }
+
+    private Result<Jwt> getJwtRemotely() {
+        return getJwtRemotely("test.w", true);
     }
 
     /*
@@ -617,7 +718,7 @@ public class Http2ClientTest {
 
     private static KeyStore loadKeyStore(final String name) throws IOException {
         final InputStream stream = Config.getInstance().getInputStreamFromFile(name);
-        if(stream == null) {
+        if (stream == null) {
             throw new RuntimeException("Could not load keystore");
         }
         try {
@@ -653,7 +754,7 @@ public class Http2ClientTest {
 
         SSLContext sslContext;
         try {
-            if(!client) {
+            if (!client) {
                 sslContext = SSLContext.getInstance("TLS");
             } else {
                 sslContext = SSLContext.getInstance("TLS");
@@ -668,13 +769,13 @@ public class Http2ClientTest {
 
     private static int randInt(int min, int max) {
         Random rand = new Random();
-        return rand.nextInt((max-min) + 1) + min;
+        return rand.nextInt((max - min) + 1) + min;
     }
 
     private static boolean isTokenExpired(String authorization) {
         boolean expired = false;
         String jwt = getJwtFromAuthorization(authorization);
-        if(jwt != null) {
+        if (jwt != null) {
             try {
                 JwtConsumer consumer = new JwtConsumerBuilder()
                         .setSkipAllValidators()
@@ -692,7 +793,7 @@ public class Http2ClientTest {
                 } catch (MalformedClaimException e) {
                     logger.error("MalformedClaimException:", e);
                 }
-            } catch(InvalidJwtException e) {
+            } catch (InvalidJwtException e) {
                 e.printStackTrace();
             }
         }
@@ -725,7 +826,7 @@ public class Http2ClientTest {
 
     public static String getJwtFromAuthorization(String authorization) {
         String jwt = null;
-        if(authorization != null) {
+        if (authorization != null) {
             String[] parts = authorization.split(" ");
             if (parts.length == 2) {
                 String scheme = parts[0];
@@ -787,91 +888,91 @@ public class Http2ClientTest {
 
         return privateKey;
     }
-    
-    
+
+
     @Test
-    public void server_identity_check_positive_case() throws Exception{
-    	final Http2Client client = createClient();
+    public void server_identity_check_positive_case() throws Exception {
+        final Http2Client client = createClient();
         SSLContext context = Http2Client.createSSLContext("trustedNames.local");
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
         final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
-        
+
         assertTrue(connection.isOpen());
-        
+
         IoUtils.safeClose(connection);
     }
 
-    @Test(expected=ClosedChannelException.class)
-    public void server_identity_check_negative_case() throws Exception{
-    	final Http2Client client = createClient();
+    @Test(expected = ClosedChannelException.class)
+    public void server_identity_check_negative_case() throws Exception {
+        final Http2Client client = createClient();
         SSLContext context = Http2Client.createSSLContext("trustedNames.negativeTest");
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
         client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
-        
+
         //should not be reached
         fail();
     }
-    
-    @Test(expected=ClosedChannelException.class)
-    public void standard_https_hostname_check_kicks_in_if_trustednames_are_empty() throws Exception{
-    	final Http2Client client = createClient();
+
+    @Test(expected = ClosedChannelException.class)
+    public void standard_https_hostname_check_kicks_in_if_trustednames_are_empty() throws Exception {
+        final Http2Client client = createClient();
         SSLContext context = Http2Client.createSSLContext("trustedNames.empty");
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
         client.connect(new URI("https://127.0.0.1:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
-        
+
         //should not be reached
         fail();
     }
-    
-    @Test(expected=ClosedChannelException.class)
-    public void standard_https_hostname_check_kicks_in_if_trustednames_are_not_used_or_not_provided() throws Exception{
-    	final Http2Client client = createClient();
+
+    @Test(expected = ClosedChannelException.class)
+    public void standard_https_hostname_check_kicks_in_if_trustednames_are_not_used_or_not_provided() throws Exception {
+        final Http2Client client = createClient();
         SSLContext context = Http2Client.createSSLContext(null);
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
         client.connect(new URI("https://127.0.0.1:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
-        
+
         //should not be reached
         fail();
-    }   
-    
+    }
+
     @Test
-    public void default_group_key_is_used_in_Http2Client_SSL() throws Exception{
-    	final Http2Client client = createClient();
+    public void default_group_key_is_used_in_Http2Client_SSL() throws Exception {
+        final Http2Client client = createClient();
         final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
-        
+
         assertTrue(connection.isOpen());
-        
+
         IoUtils.safeClose(connection);
     }
-    
+
     @Test
-    public void invalid_hostname_is_accepted_if_verifyhostname_is_disabled() throws Exception{
-    	final Http2Client client = createClient();
-    	SSLContext context = createTestSSLContext(false, null);
-    	
+    public void invalid_hostname_is_accepted_if_verifyhostname_is_disabled() throws Exception {
+        final Http2Client client = createClient();
+        SSLContext context = createTestSSLContext(false, null);
+
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
         final ClientConnection connection = client.connect(new URI("https://127.0.0.1:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
-        
+
         assertTrue(connection.isOpen());
-        IoUtils.safeClose(connection);  	
+        IoUtils.safeClose(connection);
     }
-    
+
     private static SSLContext createTestSSLContext(boolean verifyHostName, String trustedNamesGroupKey) throws IOException {
         SSLContext sslContext = null;
         KeyManager[] keyManagers = null;
-        Map<String, Object> tlsMap = (Map<String, Object>)Http2Client.config.get(Http2Client.TLS);
-        if(tlsMap != null) {
+        Map<String, Object> tlsMap = (Map<String, Object>) Http2Client.config.get(Http2Client.TLS);
+        if (tlsMap != null) {
             try {
                 // load key store for client certificate if two way ssl is used.
                 Boolean loadKeyStore = (Boolean) tlsMap.get(Http2Client.LOAD_KEY_STORE);
                 if (loadKeyStore != null && loadKeyStore) {
-                    String keyStoreName = (String)tlsMap.get(Http2Client.KEY_STORE);
-                    String keyPass = (String)Http2Client.secretConfig.get(SecretConstants.CLIENT_KEY_PASS);
+                    String keyStoreName = (String) tlsMap.get(Http2Client.KEY_STORE);
+                    String keyPass = (String) Http2Client.secretConfig.get(SecretConstants.CLIENT_KEY_PASS);
                     KeyStore keyStore = loadKeyStore(keyStoreName);
                     KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                     keyManagerFactory.init(keyStore, keyPass.toCharArray());
@@ -891,22 +992,24 @@ public class Http2ClientTest {
                     String trustStoreName = System.getProperty(Http2Client.TRUST_STORE_PROPERTY);
                     String trustStorePass = System.getProperty(Http2Client.TRUST_STORE_PASSWORD_PROPERTY);
                     if (trustStoreName != null && trustStorePass != null) {
-                        if(logger.isInfoEnabled()) logger.info("Loading trust store from system property at " + Encode.forJava(trustStoreName));
+                        if (logger.isInfoEnabled())
+                            logger.info("Loading trust store from system property at " + Encode.forJava(trustStoreName));
                     } else {
                         trustStoreName = (String) tlsMap.get(Http2Client.TRUST_STORE);
-                        trustStorePass = (String)Http2Client.secretConfig.get(SecretConstants.CLIENT_TRUSTSTORE_PASS);
-                        if(logger.isInfoEnabled()) logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
+                        trustStorePass = (String) Http2Client.secretConfig.get(SecretConstants.CLIENT_TRUSTSTORE_PASS);
+                        if (logger.isInfoEnabled())
+                            logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
                     }
                     if (trustStoreName != null && trustStorePass != null) {
                         KeyStore trustStore = loadKeyStore(trustStoreName);
-                        
+
                         Map<String, Object> tlsMapClone = new HashMap<>();
                         tlsMapClone.putAll(tlsMap);
-                        
-                        
+
+
                         tlsMapClone.put(TLSConfig.VERIFY_HOSTNAME, verifyHostName);
                         TLSConfig tlsConfig = TLSConfig.create(tlsMapClone, trustedNamesGroupKey);
-                        
+
                         TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                         trustManagerFactory.init(trustStore);
                         trustManagers = ClientX509ExtendedTrustManager.decorate(trustManagerFactory.getTrustManagers(), tlsConfig);
@@ -919,7 +1022,7 @@ public class Http2ClientTest {
             try {
                 sslContext = SSLContext.getInstance("TLS");
                 sslContext.init(keyManagers, trustManagers, null);
-                
+
             } catch (NoSuchAlgorithmException | KeyManagementException e) {
                 throw new IOException("Unable to create and initialise the SSLContext", e);
             }

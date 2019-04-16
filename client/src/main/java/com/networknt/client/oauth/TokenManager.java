@@ -149,4 +149,9 @@ public class TokenManager {
         }
         return getJwt(new Jwt.Key());
     }
+
+    public Jwt getJwtFromCache(Jwt.Key key) {
+        Jwt result = cacheStrategy.getCachedJwt(key);
+        return result;
+    }
 }
