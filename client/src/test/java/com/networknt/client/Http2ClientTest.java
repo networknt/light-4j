@@ -556,6 +556,25 @@ public class Http2ClientTest {
     }
 
     @Test
+    public void testGetJwtWithClientClaimCache() {
+        Map<String, Object> validCustomClaimsMap = new HashMap<>();
+        validCustomClaimsMap.put("123", "456");
+        Jwt.Key key = new Jwt.Key();
+        key.setCustomClaim(validCustomClaimsMap);
+        key.setCachable(true);
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setGrantType("client_credential");
+        tokenRequest.setServerUrl("http://localhost:7777");
+        tokenRequest.setUri("/oauth2/token");
+        tokenRequest.setClientId("test_client");
+        tokenRequest.setClientSecret("test_secret");
+        tokenRequest.setEnableHttp2(true);
+        Result<Jwt> result = TokenManager.getInstance().getJwt(key, tokenRequest);
+        Assert.assertTrue(result.isSuccess());
+        Assert.assertEquals(TokenManager.getInstance().getJwtFromCache(key).getJwt(), result.getResult().getJwt());
+    }
+
+    @Test
     public void testGetCachedJwtAboutToExpire() {
         String scope = "test.w";
         Result<Jwt> result1 = getJwtRemotely(scope,true);
