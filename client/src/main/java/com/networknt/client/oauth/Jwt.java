@@ -172,7 +172,8 @@ public class Jwt {
 
     /**
      * an inner model tight to Jwt, this key is to represent to a Jwt for caching or other usage
-     * for now it's only identified by scopes and serviceId.
+     * for now it's only identified by scopes, serviceId, samlAssertion, authorizationCode,
+     * refreshToken, customClaims.
      */
     public static class Key {
         private Set<String> scopes;
