@@ -19,6 +19,7 @@ package com.networknt.client.oauth;
 import com.networknt.config.Config;
 import com.networknt.utility.StringUtils;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -32,6 +33,7 @@ public class Jwt {
     private volatile long expiredRetryTimeout;
     private volatile long earlyRetryTimeout;
     private Set<String> scopes = new HashSet<>();
+    private Map<String, String> customClaims = new HashMap<>();
     private Key key;
     private String refreshToken;
 
@@ -141,6 +143,19 @@ public class Jwt {
         if(StringUtils.isNotBlank(scopesStr)) {
             scopes.addAll(Arrays.asList(scopesStr.split("(\\s)+")));
         }
+    }
+
+    public Map<String, String> getCustomClaims() {
+        return customClaims;
+    }
+
+    public void setCustomClaims(Map<String, String> customClaims) {
+        this.customClaims = customClaims;
+    }
+
+    public void setCustomClaims(String customClaimStr) throws IOException {
+        byte[] decodedCustomClaim = Base64.getDecoder().decode(customClaimStr);
+        this.customClaims = Config.getInstance().getMapper().readValue(decodedCustomClaim, Map.class);
     }
 
     public Key getKey() {
