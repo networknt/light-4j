@@ -132,8 +132,7 @@ public class TokenManager {
 
     /**
      * get a Jwt with a provided clientRequest,
-     * it will get token based on Jwt.Key (either scope or service_id)
-     * if the user declared both scope and service_id in header, it will get jwt based on scope
+     * it will get token based on Jwt.Key (composed by service_id, scopes and custom claims)
      *
      * @param clientRequest
      * @return
