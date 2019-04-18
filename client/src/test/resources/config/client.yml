@@ -41,6 +41,9 @@ oauth:
       scope:
       - test.r
       - test.w
+      custom_claims:
+        test1: value1
+        test2: value2
   key:
     # if there is no service discovery and you have OAuth2 server deployed on VM
     # and there is load balance in front of these service instances.

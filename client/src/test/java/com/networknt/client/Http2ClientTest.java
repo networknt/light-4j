@@ -508,7 +508,7 @@ public class Http2ClientTest {
     }
 
     @Test
-    public void testAddCcToken() {
+    public void testAddCcTokenWithoutReadingFromConfig() {
         final Http2Client client = createClient();
         ClientRequest request = new ClientRequest();
         // encoded custom claims
@@ -535,6 +535,14 @@ public class Http2ClientTest {
         key.setScopes("test.r test.w test.w");
         Jwt jwt = TokenManager.getInstance().getJwtFromCache(key);
         Assert.assertEquals(result.getResult().getJwt(), jwt.getJwt());
+    }
+
+    @Test
+    public void testAddCcTokenWithDefaultConfig() {
+        final Http2Client client = createClient();
+        ClientRequest request = new ClientRequest();
+        Result<Jwt> result = (Result<Jwt>) client.addCcToken(request);
+        Assert.assertTrue(result.isSuccess());
     }
 
     /**

@@ -18,10 +18,13 @@
 
 package com.networknt.client;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.http.Light4jHttp2ClientProvider;
 import com.networknt.client.http.Light4jHttpClientProvider;
 import com.networknt.client.oauth.Jwt;
 import com.networknt.client.oauth.TokenManager;
+import com.networknt.client.oauth.TokenRequest;
 import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
 import com.networknt.client.ssl.TLSConfig;
 import com.networknt.common.SecretConstants;
@@ -35,10 +38,7 @@ import io.undertow.connector.ByteBufferPool;
 import io.undertow.protocols.ssl.UndertowXnioSsl;
 import io.undertow.server.DefaultByteBufferPool;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.AttachmentKey;
-import io.undertow.util.Headers;
-import io.undertow.util.StringReadChannelListener;
-import io.undertow.util.StringWriteChannelListener;
+import io.undertow.util.*;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -339,6 +339,27 @@ public class Http2Client {
      * @return Result when fail to get jwt, it will return a Status.
      */
     public Result addCcToken(ClientRequest request) {
+        Map<String, Object> customClaims = getDefaultCustomClaims();
+        List<String> scopes = getDefaultScopes();
+        return addCcToken(request, scopes, customClaims);
+    }
+
+    public Result addCcToken(ClientRequest request, List<String> scopes, Map<String, Object> customClaims) {
+        if (scopes != null && !scopes.isEmpty() && request.getRequestHeaders().get("scope") == null) {
+            String scopeStr = String.join(" ", scopes);
+            request.getRequestHeaders().put(HttpString.tryFromString("scope"), scopeStr);
+        }
+        if (customClaims != null && !customClaims.isEmpty() && request.getRequestHeaders().get("custom_claims") == null) {
+            String json = null;
+            try {
+                json = new ObjectMapper().writeValueAsString(customClaims);
+            } catch (JsonProcessingException e) {
+                logger.error("The custom claims can not be encoded");
+                throw new RuntimeException("The custom claims can not be encoded", e);
+            }
+            String customClaimsStr = Base64.getEncoder().encodeToString(json.getBytes());
+            request.getRequestHeaders().put(HttpString.tryFromString("custom_claims"), customClaimsStr);
+        }
         Result<Jwt> result = tokenManager.getJwt(request);
         if(result.isFailure()) { return Failure.of(result.getError()); }
         request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + result.getResult().getJwt());
@@ -704,4 +725,39 @@ public class Http2Client {
         };
     }
 
+    private List<String> getDefaultScopes() {
+        Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
+        // client_secret is in secret.yml instead of client.yml
+        if (clientConfig != null) {
+            Map<String, Object> oauthConfig = (Map<String, Object>) clientConfig.get(TokenRequest.OAUTH);
+            if (oauthConfig != null) {
+                Map<String, Object> tokenConfig = (Map<String, Object>) oauthConfig.get(TokenRequest.TOKEN);
+                if (tokenConfig != null) {
+                    Map<String, Object> ccConfig = (Map<String, Object>) tokenConfig.get(TokenRequest.CLIENT_CREDENTIALS);
+                    if (ccConfig != null) {
+                        return (List<String>) ccConfig.get(TokenRequest.SCOPE);
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private Map<String, Object> getDefaultCustomClaims() {
+        Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
+        // client_secret is in secret.yml instead of client.yml
+        if (clientConfig != null) {
+            Map<String, Object> oauthConfig = (Map<String, Object>) clientConfig.get(TokenRequest.OAUTH);
+            if (oauthConfig != null) {
+                Map<String, Object> tokenConfig = (Map<String, Object>) oauthConfig.get(TokenRequest.TOKEN);
+                if (tokenConfig != null) {
+                    Map<String, Object> ccConfig = (Map<String, Object>) tokenConfig.get(TokenRequest.CLIENT_CREDENTIALS);
+                    if (ccConfig != null) {
+                        return (Map<String, Object>) ccConfig.get(TokenRequest.CUSTOM_CLAIMS);
+                    }
+                }
+            }
+        }
+        return null;
+    }
 }
