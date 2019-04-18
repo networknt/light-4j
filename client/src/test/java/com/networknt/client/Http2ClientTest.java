@@ -510,7 +510,7 @@ public class Http2ClientTest {
     @Test
     public void testAddCcToken() {
         final Http2Client client = createClient();
-        ClientRequest request = new ClientRequest().setPath(API).setMethod(Methods.GET);
+        ClientRequest request = new ClientRequest();
         // encoded custom claims
         Map<String, Object> customClaimsMap = new HashMap<>();
         customClaimsMap.put("key1", "value1");
@@ -534,7 +534,7 @@ public class Http2ClientTest {
         // different order and amount of scopes, should be reorganized as same as used above
         key.setScopes("test.r test.w test.w");
         Jwt jwt = TokenManager.getInstance().getJwtFromCache(key);
-        Assert.assertNotNull(jwt);
+        Assert.assertEquals(result.getResult().getJwt(), jwt.getJwt());
     }
 
     /**
@@ -617,7 +617,7 @@ public class Http2ClientTest {
 
     @Test
     public void testGetJwtMultithread() throws ExecutionException, InterruptedException {
-        List<Result<Jwt>> resultList = callGetJwtMultiThread(10);
+        List<Result<Jwt>> resultList = callGetJwtMultiThread(4);
         for (Result<Jwt> result : resultList) {
             Assert.assertTrue(result.isSuccess());
         }
