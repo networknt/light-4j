@@ -140,14 +140,19 @@ public class TokenManager {
      */
     public Result<Jwt> getJwt(ClientRequest clientRequest) {
         HeaderValues scope = clientRequest.getRequestHeaders().get(OauthHelper.SCOPE);
-        if (scope != null) {
-            return getJwt(new Jwt.Key(scope.getFirst()));
-        }
+        HeaderValues customClaims = clientRequest.getRequestHeaders().get(OauthHelper.CUSTOM_CLAIMS);
         HeaderValues serviceId = clientRequest.getRequestHeaders().get(OauthHelper.SERVICE_ID);
-        if (serviceId != null) {
-            return getJwt(new Jwt.Key(serviceId.getFirst()));
+        Jwt.Key key = new Jwt.Key();
+        if (scope != null) {
+            key.setScopes(scope.getFirst());
         }
-        return getJwt(new Jwt.Key());
+        if (customClaims != null) {
+            key.setCustomClaims(customClaims.getFirst());
+        }
+        if (serviceId != null) {
+            key.setServiceId(serviceId.getFirst());
+        }
+        return getJwt(key);
     }
 
     public Jwt getJwtFromCache(Jwt.Key key) {

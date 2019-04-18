@@ -17,6 +17,7 @@
 package com.networknt.client.oauth;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
@@ -57,6 +58,7 @@ public class OauthHelper {
     static final String GRANT_TYPE = "grant_type";
     static final String CODE = "code";
     static final String SCOPE = "scope";
+    static final String CUSTOM_CLAIMS = "custom_claims";
     static final String SERVICE_ID = "service_id";
     private static final String FAIL_TO_SEND_REQUEST = "ERR10051";
     private static final String GET_TOKEN_ERROR = "ERR10052";
@@ -394,6 +396,17 @@ public class OauthHelper {
         if(request.getScope() != null) {
             params.put(SCOPE, String.join(" ", request.getScope()));
         }
+        if (request.getCustomClaims() != null) {
+            String json = null;
+            try {
+                json = new ObjectMapper().writeValueAsString(request.getCustomClaims());
+            } catch (JsonProcessingException e) {
+                logger.error("The custom claims cannot be encoded.");
+                throw new RuntimeException("The custom claims cannot be encoded.", e);
+            }
+            String customClaimsStr = java.util.Base64.getEncoder().encodeToString(json.getBytes());
+            params.put(CUSTOM_CLAIMS, customClaimsStr);
+        }
         return Http2Client.getFormDataString(params);
     }
 
@@ -586,6 +599,7 @@ public class OauthHelper {
         TokenRequest tokenRequest = new ClientCredentialsRequest();
         //scopes at this point is may not be set yet when issuing a new token.
         setScope(tokenRequest, jwt);
+        setCustomClaims(tokenRequest, jwt);
         Result<TokenResponse> result = OauthHelper.getTokenResult(tokenRequest);
         if(result.isSuccess()) {
             TokenResponse tokenResponse = result.getResult();
@@ -629,6 +643,12 @@ public class OauthHelper {
     private static void setScope(TokenRequest tokenRequest, Jwt jwt) {
         if(jwt.getKey() != null && !jwt.getKey().getScopes().isEmpty()) {
             tokenRequest.setScope(new ArrayList<String>() {{ addAll(jwt.getKey().getScopes()); }});
+        }
+    }
+
+    private static void setCustomClaims(TokenRequest tokenRequest, Jwt jwt) {
+        if (jwt.getKey() != null && !jwt.getKey().getCustomClaims().isEmpty()) {
+            tokenRequest.setCustomClaims(new HashMap<String, Object>() {{putAll(jwt.getKey().getCustomClaims());}});
         }
     }
 

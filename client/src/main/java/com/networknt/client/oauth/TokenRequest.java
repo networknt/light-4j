@@ -17,6 +17,7 @@
 package com.networknt.client.oauth;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by steve on 02/09/16.
@@ -35,6 +36,7 @@ public class TokenRequest {
     public static String REDIRECT_URI = "redirect_uri";
     public static String SCOPE = "scope";
     public static String CSRF = "csrf";
+    public static String CUSTOM_CLAIMS = "custom_claims";
 
     String grantType;
     String serverUrl;
@@ -43,6 +45,7 @@ public class TokenRequest {
     String clientId;
     String clientSecret;
     List<String> scope;
+    Map<String, Object>  customClaims;
     // put csrf here as both authorization code and refresh token need it.
     String csrf;
 
@@ -104,4 +107,12 @@ public class TokenRequest {
     public String getCsrf() { return csrf; }
 
     public void setCsrf(String csrf) { this.csrf = csrf; }
+
+    public Map<String, Object> getCustomClaims() {
+        return customClaims;
+    }
+
+    public void setCustomClaims(Map<String, Object> customClaims) {
+        this.customClaims = customClaims;
+    }
 }

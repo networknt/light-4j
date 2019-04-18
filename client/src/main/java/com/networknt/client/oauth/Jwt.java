@@ -18,6 +18,8 @@ package com.networknt.client.oauth;
 
 import com.networknt.config.Config;
 import com.networknt.utility.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
@@ -33,9 +35,11 @@ public class Jwt {
     private volatile long expiredRetryTimeout;
     private volatile long earlyRetryTimeout;
     private Set<String> scopes = new HashSet<>();
-    private Map<String, String> customClaims = new HashMap<>();
+    private Map<String, Object> customClaims = new HashMap<>();
     private Key key;
     private String refreshToken;
+
+    static final Logger logger = LoggerFactory.getLogger(Jwt.class);
 
     private static long tokenRenewBeforeExpired;
     private static long expiredRefreshRetryDelay;
@@ -145,11 +149,11 @@ public class Jwt {
         }
     }
 
-    public Map<String, String> getCustomClaims() {
+    public Map<String, Object> getCustomClaims() {
         return customClaims;
     }
 
-    public void setCustomClaims(Map<String, String> customClaims) {
+    public void setCustomClaims(Map<String, Object> customClaims) {
         this.customClaims = customClaims;
     }
 
@@ -177,7 +181,7 @@ public class Jwt {
      */
     public static class Key {
         private Set<String> scopes;
-        private Map<String, Object> customClaim;
+        private Map<String, Object> customClaims;
         private String serviceId;
         private String samlAssertion;
         private String authorizationCode;
@@ -187,7 +191,7 @@ public class Jwt {
 
         @Override
         public int hashCode() {
-            return Objects.hash(scopes, serviceId, samlAssertion, customClaim, authorizationCode, refreshToken);
+            return Objects.hash(scopes, serviceId, samlAssertion, customClaims, authorizationCode, refreshToken);
         }
 
         @Override
@@ -203,13 +207,13 @@ public class Jwt {
             this.serviceId = serviceId;
         }
 
-        public Key(Map<String, Object> customClaim) {
-            this.customClaim = customClaim;
+        public Key(Map<String, Object> customClaims) {
+            this.customClaims = customClaims;
         }
 
         public Key() {
             this.scopes = new HashSet<>();
-            this.customClaim = new HashMap<>();
+            this.customClaims = new HashMap<>();
         }
 
         public Set<String> getScopes() {
@@ -220,16 +224,33 @@ public class Jwt {
             return serviceId;
         }
 
-        public Map<String, Object> getCustomClaim() {
-            return customClaim;
+        public Map<String, Object> getCustomClaims() {
+            return customClaims;
         }
 
         public void setScopes(Set<String> scopes) {
             this.scopes = scopes;
         }
 
-        public void setCustomClaim(Map<String, Object> customClaim) {
-            this.customClaim = customClaim;
+        public void setScopes(String scopesStr) {
+            this.scopes = this.scopes == null ? new HashSet() : this.scopes;
+            if(StringUtils.isNotBlank(scopesStr)) {
+                scopes.addAll(Arrays.asList(scopesStr.split("(\\s)+")));
+            }
+        }
+
+        public void setCustomClaims(Map<String, Object> customClaims) {
+            this.customClaims = customClaims;
+        }
+
+        public void setCustomClaims(String customClaimStr) {
+            byte[] decodedCustomClaim = Base64.getDecoder().decode(customClaimStr);
+            try {
+                this.customClaims = Config.getInstance().getMapper().readValue(decodedCustomClaim, Map.class);
+            } catch (IOException e) {
+                logger.error("The custom claims in request header cannot be decoded.");
+                throw new RuntimeException("The custom claims in request header cannot be decoded.", e);
+            }
         }
 
         public void setServiceId(String serviceId) {

@@ -60,10 +60,13 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.oauth.Jwt;
 import com.networknt.client.oauth.TokenManager;
 import com.networknt.client.oauth.TokenRequest;
 import com.networknt.monad.Result;
+import io.undertow.util.*;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
@@ -106,11 +109,6 @@ import io.undertow.io.Sender;
 import io.undertow.protocols.ssl.UndertowXnioSsl;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.PathHandler;
-import io.undertow.util.Headers;
-import io.undertow.util.Methods;
-import io.undertow.util.StatusCodes;
-import io.undertow.util.StringReadChannelListener;
-import io.undertow.util.StringWriteChannelListener;
 
 public class Http2ClientTest {
     static final Logger logger = LoggerFactory.getLogger(Http2ClientTest.class);
@@ -509,6 +507,36 @@ public class Http2ClientTest {
         return reference.get().getAttachment(Http2Client.RESPONSE_BODY);
     }
 
+    @Test
+    public void testAddCcToken() {
+        final Http2Client client = createClient();
+        ClientRequest request = new ClientRequest().setPath(API).setMethod(Methods.GET);
+        // encoded custom claims
+        Map<String, Object> customClaimsMap = new HashMap<>();
+        customClaimsMap.put("key1", "value1");
+        customClaimsMap.put("key2", "value2");
+        String json = null;
+        try {
+            json = new ObjectMapper().writeValueAsString(customClaimsMap);
+        } catch (JsonProcessingException e) {
+            logger.error("The custom claims cannot be encoded.");
+            throw new RuntimeException("The custom claims cannot be encoded.", e);
+        }
+        String customClaimsStr = java.util.Base64.getEncoder().encodeToString(json.getBytes());
+        // set scopes and custom claims into request header
+        request.getRequestHeaders().put(HttpString.tryFromString("scope"), "test.w test.r");
+        request.getRequestHeaders().put(HttpString.tryFromString("custom_claims"), customClaimsStr);
+        Result<Jwt> result = (Result<Jwt>) client.addCcToken(request);
+        Assert.assertTrue(result.isSuccess());
+        // test caching mechanism
+        Jwt.Key key = new Jwt.Key();
+        key.setCustomClaims(customClaimsStr);
+        // different order and amount of scopes, should be reorganized as same as used above
+        key.setScopes("test.r test.w test.w");
+        Jwt jwt = TokenManager.getInstance().getJwtFromCache(key);
+        Assert.assertEquals(result.getResult().getJwt(), jwt.getJwt());
+    }
+
     /**
      * Test method used to get Jwt by using:
      * 1. An empty jwt identified by scopes
@@ -560,7 +588,7 @@ public class Http2ClientTest {
         Map<String, Object> validCustomClaimsMap = new HashMap<>();
         validCustomClaimsMap.put("123", "456");
         Jwt.Key key = new Jwt.Key();
-        key.setCustomClaim(validCustomClaimsMap);
+        key.setCustomClaims(validCustomClaimsMap);
         key.setCachable(true);
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setGrantType("client_credential");
