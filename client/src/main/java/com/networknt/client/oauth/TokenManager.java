@@ -61,7 +61,7 @@ public class TokenManager {
     }
 
     /**
-     * get a Jwt with a provided Key (Key is either scope or a service id inputted by user, for caching usage):
+     * get a Jwt with a provided Key (Key is composed by service_id, scopes and custom claims, for caching usage):
      * 1.if a token is cached with provided key
      * - if the token is expired, renew it right away.
      * - if the token is almost expired, use this token and renew it silently.
