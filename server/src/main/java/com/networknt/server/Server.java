@@ -73,7 +73,9 @@ public class Server {
     // service_id in slf4j MDC
     static final String SID = "sId";
 
-    public static ServerConfig config = getServerConfig(); // there are a lot of users are using the static variable in their code.
+    @Deprecated //use getServerConfig() method instead
+    public static ServerConfig config; // there are a lot of users are using the static variable in their code.
+
     public final static TrustManager[] TRUST_ALL_CERTS = new X509TrustManager[]{new DummyTrustManager()};
     /** a list of service ids populated by startup hooks that want to register to the service registry */
     public static List<String> serviceIds = new ArrayList<>();
@@ -95,12 +97,16 @@ public class Server {
         logger.info("server starts");
         // setup system property to redirect undertow logs to slf4j/logback.
         System.setProperty("org.jboss.logging.provider", "slf4j");
-        // this will make sure that all log statement will have serviceId
-        MDC.put(SID, config.getServiceId());
 
         try {
 
             loadConfigs();
+
+            // Initialize server configs now using the config values loaded by loadConfigs()
+            config = getServerConfig();
+
+            // this will make sure that all log statement will have serviceId
+            MDC.put(SID, config.getServiceId());
 
             // merge status.yml and app-status.yml if app-status.yml is provided
             mergeStatusConfig();
@@ -159,14 +165,15 @@ public class Server {
             gracefulShutdownHandler = new GracefulShutdownHandler(new OrchestrationHandler());
         }
 
-        if (config.dynamicPort) {
-            if (config.minPort > config.maxPort) {
+        ServerConfig serverConfig = getServerConfig();
+        if (serverConfig.dynamicPort) {
+            if (serverConfig.minPort > serverConfig.maxPort) {
                 String errMessage = "No ports available to bind to - the minPort is larger than the maxPort in server.yml";
                 System.out.println(errMessage);
                 logger.error(errMessage);
                 throw new RuntimeException(errMessage);
             }          
-            for (int i = config.minPort; i < config.maxPort; i++) {
+            for (int i = serverConfig.minPort; i < serverConfig.maxPort; i++) {
                 boolean b = bind(gracefulShutdownHandler, i);
                 if (b) {
                     break;
@@ -210,51 +217,51 @@ public class Server {
      */
     private static void serverOptionInit() {
         Map<String, Object> mapConfig = Config.getInstance().getJsonMapConfigNoCache(SERVER_CONFIG_NAME);
-        ServerOption.serverOptionInit(mapConfig, config);
+        ServerOption.serverOptionInit(mapConfig, getServerConfig());
     }
 
     static private boolean bind(HttpHandler handler, int port) {
-
+        ServerConfig serverConfig = getServerConfig();
         try {
             Undertow.Builder builder = Undertow.builder();
-            if (config.enableHttps) {
-                port = port < 0 ? config.getHttpsPort() : port;
+            if (serverConfig.enableHttps) {
+                port = port < 0 ? serverConfig.getHttpsPort() : port;
                 sslContext = createSSLContext();
-                builder.addHttpsListener(port, config.getIp(), sslContext);
-            } else if (config.enableHttp) {
-                port = port < 0 ? config.getHttpPort() : port;
-                builder.addHttpListener(port, config.getIp());
+                builder.addHttpsListener(port, serverConfig.getIp(), sslContext);
+            } else if (serverConfig.enableHttp) {
+                port = port < 0 ? serverConfig.getHttpPort() : port;
+                builder.addHttpListener(port, serverConfig.getIp());
             } else {
                 throw new RuntimeException(
                         "Unable to start the server as both http and https are disabled in server.yml");
             }
 
-            if (config.enableHttp2) {
+            if (serverConfig.enableHttp2) {
                 builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true);
             }
 
-            if (config.isEnableTwoWayTls()) {
+            if (serverConfig.isEnableTwoWayTls()) {
                builder.setSocketOption(Options.SSL_CLIENT_AUTH_MODE, SslClientAuthMode.REQUIRED);
             }
 
             // set and validate server options
             serverOptionInit();
 
-            server = builder.setBufferSize(config.getBufferSize()).setIoThreads(config.getIoThreads())
+            server = builder.setBufferSize(serverConfig.getBufferSize()).setIoThreads(serverConfig.getIoThreads())
                     // above seems slightly faster in some configurations
-                    .setSocketOption(Options.BACKLOG, config.getBacklog())
+                    .setSocketOption(Options.BACKLOG, serverConfig.getBacklog())
                     .setServerOption(UndertowOptions.ALWAYS_SET_KEEP_ALIVE, false) // don't send a keep-alive header for
                     // HTTP/1.1 requests, as it is not required
-                    .setServerOption(UndertowOptions.ALWAYS_SET_DATE, config.isAlwaysSetDate())
+                    .setServerOption(UndertowOptions.ALWAYS_SET_DATE, serverConfig.isAlwaysSetDate())
                     .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, false)
-                    .setServerOption(UndertowOptions.ALLOW_UNESCAPED_CHARACTERS_IN_URL, config.isAllowUnescapedCharactersInUrl())
-                    .setHandler(Handlers.header(handler, Headers.SERVER_STRING, config.getServerString())).setWorkerThreads(config.getWorkerThreads()).build();
+                    .setServerOption(UndertowOptions.ALLOW_UNESCAPED_CHARACTERS_IN_URL, serverConfig.isAllowUnescapedCharactersInUrl())
+                    .setHandler(Handlers.header(handler, Headers.SERVER_STRING, serverConfig.getServerString())).setWorkerThreads(serverConfig.getWorkerThreads()).build();
 
             server.start();
             System.out.println("HOST IP " + System.getenv(STATUS_HOST_IP));
         } catch (Exception e) {
-            if (!config.dynamicPort || (config.dynamicPort && config.maxPort == port + 1)) {
-                String triedPortsMessage = config.dynamicPort ? config.minPort + " to: " + (config.maxPort - 1) : port + "";
+            if (!serverConfig.dynamicPort || (serverConfig.dynamicPort && serverConfig.maxPort == port + 1)) {
+                String triedPortsMessage = serverConfig.dynamicPort ? serverConfig.minPort + " to: " + (serverConfig.maxPort - 1) : port + "";
                 String errMessage = "No ports available to bind to. Tried: " + triedPortsMessage;
                 System.out.println(errMessage);
                 logger.error(errMessage);
@@ -266,10 +273,10 @@ public class Server {
             return false;
         }
         // application level service registry. only be used without docker container.
-        if (config.enableRegistry) {
+        if (serverConfig.enableRegistry) {
             // assuming that registry is defined in service.json, otherwise won't start the server.
             serviceUrls = new ArrayList<>();
-            serviceUrls.add(register(config.getServiceId(), port));
+            serviceUrls.add(register(serverConfig.getServiceId(), port));
             // check if any serviceIds from startup hook that need to be registered.
             if(serviceIds.size() > 0) {
                 for(String id: serviceIds) {
@@ -281,19 +288,19 @@ public class Server {
             if (logger.isInfoEnabled()) logger.info("Registry heart beat switcher is on");
         }
 
-        if (config.enableHttp) {
-            System.out.println("Http Server started on ip:" + config.getIp() + " Port:" + port);
+        if (serverConfig.enableHttp) {
+            System.out.println("Http Server started on ip:" + serverConfig.getIp() + " Port:" + port);
             if (logger.isInfoEnabled())
-                logger.info("Http Server started on ip:" + config.getIp() + " Port:" + port);
+                logger.info("Http Server started on ip:" + serverConfig.getIp() + " Port:" + port);
         } else {
             System.out.println("Http port disabled.");
             if (logger.isInfoEnabled())
                 logger.info("Http port disabled.");
         }
-        if (config.enableHttps) {
-            System.out.println("Https Server started on ip:" + config.getIp() + " Port:" + port);
+        if (serverConfig.enableHttps) {
+            System.out.println("Https Server started on ip:" + serverConfig.getIp() + " Port:" + port);
             if (logger.isInfoEnabled())
-                logger.info("Https Server started on ip:" + config.getIp() + " Port:" + port);
+                logger.info("Https Server started on ip:" + serverConfig.getIp() + " Port:" + port);
         } else {
             System.out.println("Https port disabled.");
             if (logger.isInfoEnabled())
@@ -312,7 +319,7 @@ public class Server {
     static public void shutdown() {
 
         // need to unregister the service
-        if (config.enableRegistry && registry != null && serviceUrls != null) {
+        if (getServerConfig().enableRegistry && registry != null && serviceUrls != null) {
             for(URL serviceUrl: serviceUrls) {
                 registry.unregister(serviceUrl);
                 // Please don't remove the following line. When server is killed, the logback won't work anymore.
@@ -354,7 +361,7 @@ public class Server {
     private static KeyStore loadKeyStore() {
         Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
 
-        String name = config.getKeystoreName();
+        String name = getServerConfig().getKeystoreName();
         try (InputStream stream = Config.getInstance().getInputStreamFromFile(name)) {
             KeyStore loadedKeystore = KeyStore.getInstance("JKS");
             loadedKeystore.load(stream, ((String) secretConfig.get(SecretConstants.SERVER_KEYSTORE_PASS)).toCharArray());
@@ -368,7 +375,7 @@ public class Server {
     protected static KeyStore loadTrustStore() {
         Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
 
-        String name = config.getTruststoreName();
+        String name = getServerConfig().getTruststoreName();
         try (InputStream stream = Config.getInstance().getInputStreamFromFile(name)) {
             KeyStore loadedKeystore = KeyStore.getInstance("JKS");
             loadedKeystore.load(stream, ((String) secretConfig.get(SecretConstants.SERVER_TRUSTSTORE_PASS)).toCharArray());
@@ -419,7 +426,7 @@ public class Server {
             KeyManager[] keyManagers = buildKeyManagers(loadKeyStore(),
                     ((String) secretConfig.get(SecretConstants.SERVER_KEY_PASS)).toCharArray());
             TrustManager[] trustManagers;
-            if (config.isEnableTwoWayTls()) {
+            if (getServerConfig().isEnableTwoWayTls()) {
                 trustManagers = buildTrustManagers(loadTrustStore());
             } else {
                 trustManagers = buildTrustManagers(null);
@@ -481,9 +488,11 @@ public class Server {
                 ipAddress = inetAddress.getHostAddress();
                 logger.info("Could not find IP from STATUS_HOST_IP, use the InetAddress " + ipAddress);
             }
+
+            ServerConfig serverConfig = getServerConfig();
             Map parameters = new HashMap<>();
-            if (config.getEnvironment() != null)
-                parameters.put(ENV_PROPERTY_KEY, config.getEnvironment());
+            if (serverConfig.getEnvironment() != null)
+                parameters.put(ENV_PROPERTY_KEY, serverConfig.getEnvironment());
             URL serviceUrl = new URLImpl("light", ipAddress, port, serviceId, parameters);
             if (logger.isInfoEnabled()) logger.info("register service: " + serviceUrl.toFullStr());
             registry.register(serviceUrl);
