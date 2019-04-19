@@ -12,7 +12,6 @@ import java.util.concurrent.TimeoutException;
 public class CircuitBreaker {
 
     private final CompletableFuture<ClientResponse> supplier;
-    private State state;
     private int timeoutCount;
     private long lastErrorTime;
 
@@ -22,7 +21,7 @@ public class CircuitBreaker {
     }
 
     public ClientResponse call() throws TimeoutException, ExecutionException, InterruptedException {
-        checkState();
+        State state = checkState();
 
         try {
             if (State.OPEN == state) {
@@ -42,20 +41,18 @@ public class CircuitBreaker {
         }
     }
 
-    private void checkState() {
+    private State checkState() {
         ClientConfig clientConfig = ClientConfig.get();
 
         boolean isExtrapolatedResetTimeout = Instant.now().toEpochMilli() - lastErrorTime > clientConfig.getResetTimeout();
         boolean isExtrapolatedErrorThreshold = timeoutCount >= clientConfig.getErrorThreshold();
         if (isExtrapolatedErrorThreshold && isExtrapolatedResetTimeout) {
-            state = State.HALF_OPEN;
-            return;
+            return State.HALF_OPEN;
         }
         if (timeoutCount >= clientConfig.getErrorThreshold()) {
-            state = State.OPEN;
-            return;
+            return State.OPEN;
         }
-        state = State.CLOSE;
+        return State.CLOSE;
     }
 
     private void recordTimeout() {
