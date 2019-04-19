@@ -21,25 +21,25 @@ public class CircuitBreaker {
         this.timeoutCount = 0;
     }
 
-    public ClientResponse call() {
+    public ClientResponse call() throws TimeoutException, ExecutionException, InterruptedException {
         checkState();
 
         try {
             if (State.OPEN == state) {
                 throw new IllegalStateException("circuit is opened.");
             }
-            if (State.CLOSE == state || State.HALF_OPEN == state) {
-                ClientResponse clientResponse = supplier.get(ClientConfig.get().getTimeout(), TimeUnit.MILLISECONDS);
-                timeoutCount = 0;
 
-                return clientResponse;
-            }
+            ClientResponse clientResponse = supplier.get(ClientConfig.get().getTimeout(), TimeUnit.MILLISECONDS);
+            timeoutCount = 0;
+
+            return clientResponse;
         } catch (InterruptedException | ExecutionException e) {
             // wrap in a default light-4j exception
+            throw e;
         } catch (TimeoutException e) {
             recordTimeout();
+            throw e;
         }
-        return null;
     }
 
     private void checkState() {
