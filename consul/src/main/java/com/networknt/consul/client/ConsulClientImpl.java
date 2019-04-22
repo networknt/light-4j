@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -52,6 +53,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class ConsulClientImpl implements ConsulClient {
 	private static final Logger logger = LoggerFactory.getLogger(ConsulClientImpl.class);
 	private static final ConsulConfig config = (ConsulConfig)Config.getInstance().getJsonObjectConfig(ConsulConstants.CONFIG_NAME, ConsulConfig.class);
+	private static AtomicInteger reqCounter = new AtomicInteger(0);
 
 	// Single Factory Object so just like static.
 	Http2Client client = Http2Client.getInstance();
@@ -62,7 +64,6 @@ public class ConsulClientImpl implements ConsulClient {
 	OptionMap optionMap;
 	URI uri;
 	int maxReqPerConn;
-	int reqCounter = 0;
 	String wait = "600s";
 
 	/**
@@ -93,17 +94,17 @@ public class ConsulClientImpl implements ConsulClient {
 		final CountDownLatch latch = new CountDownLatch(1);
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
-			if(connection == null || !connection.isOpen() || reqCounter >= maxReqPerConn) {
+			if(connection == null || !connection.isOpen() || reqCounter.get() >= maxReqPerConn) {
 				if(logger.isDebugEnabled()) logger.debug("connection is closed with counter " + reqCounter + ", reconnecting...");
 				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
-				reqCounter = 0;
+				reqCounter = new AtomicInteger(0);
 			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
 			if(token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
-			reqCounter++;
+			reqCounter.getAndIncrement();
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= 300){
 				logger.error("Failed to checkPass on Consul: " + statusCode + ":" + reference.get().getAttachment(Http2Client.RESPONSE_BODY));
@@ -121,17 +122,17 @@ public class ConsulClientImpl implements ConsulClient {
 		final CountDownLatch latch = new CountDownLatch(1);
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
-			if(connection == null || !connection.isOpen() || reqCounter >= maxReqPerConn) {
+			if(connection == null || !connection.isOpen() || reqCounter.get() >= maxReqPerConn) {
 				if(logger.isDebugEnabled()) logger.debug("connection is closed with counter " + reqCounter + ", reconnecting...");
 				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
-				reqCounter = 0;
+				reqCounter = new AtomicInteger(0);
 			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
 			if(token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
-			reqCounter++;
+			reqCounter.getAndIncrement();
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= 300){
 				logger.error("Failed to checkPass on Consul: " + statusCode + ":" + reference.get().getAttachment(Http2Client.RESPONSE_BODY));
@@ -149,10 +150,10 @@ public class ConsulClientImpl implements ConsulClient {
 		final CountDownLatch latch = new CountDownLatch(1);
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
-			if(connection == null || !connection.isOpen() || reqCounter >= maxReqPerConn) {
+			if(connection == null || !connection.isOpen() || reqCounter.get() >= maxReqPerConn) {
 				if(logger.isDebugEnabled()) logger.debug("connection is closed with counter " + reqCounter + ", reconnecting...");
 				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
-				reqCounter = 0;
+				reqCounter = new AtomicInteger(0);
 			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
 			if(token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
@@ -160,7 +161,7 @@ public class ConsulClientImpl implements ConsulClient {
 			request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
 			connection.sendRequest(request, client.createClientCallback(reference, latch, json));
 			latch.await();
-			reqCounter++;
+			reqCounter.getAndIncrement();
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= 300){
 				throw new Exception("Failed to register on Consul: " + statusCode);
@@ -177,10 +178,10 @@ public class ConsulClientImpl implements ConsulClient {
 		final CountDownLatch latch = new CountDownLatch(1);
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
-			if(connection == null || !connection.isOpen() || reqCounter >= maxReqPerConn) {
+			if(connection == null || !connection.isOpen() || reqCounter.get() >= maxReqPerConn) {
 				if(logger.isDebugEnabled()) logger.debug("connection is closed with counter " + reqCounter + ", reconnecting...");
 				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
-				reqCounter = 0;
+				reqCounter = new AtomicInteger(0);
 			}
 
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
@@ -188,7 +189,7 @@ public class ConsulClientImpl implements ConsulClient {
 			if(token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
-			reqCounter++;
+			reqCounter.getAndIncrement();
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= 300){
 				System.out.println("body = " + reference.get().getAttachment(Http2Client.RESPONSE_BODY));
@@ -211,17 +212,17 @@ public class ConsulClientImpl implements ConsulClient {
 		final CountDownLatch latch = new CountDownLatch(1);
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
-			if(connection == null || !connection.isOpen() || reqCounter >= maxReqPerConn) {
+			if(connection == null || !connection.isOpen() || reqCounter.get() >= maxReqPerConn) {
 				if(logger.isDebugEnabled()) logger.debug("connection is closed with counter " + reqCounter + ", reconnecting...");
 				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
-				reqCounter = 0;
+				reqCounter = new AtomicInteger(0);
 			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(path);
 			if(token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
-			reqCounter++;
+			reqCounter.getAndIncrement();
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= 300){
 				if(logger.isDebugEnabled()) logger.debug("body = " + reference.get().getAttachment(Http2Client.RESPONSE_BODY));
