@@ -61,6 +61,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public abstract class Config {
     public static final String LIGHT_4J_CONFIG_DIR = "light-4j-config-dir";
+    public static final String CENTRALIZED_MANAGEMENT = "values";
 
     protected Config() {
     }
@@ -92,6 +93,8 @@ public abstract class Config {
     public abstract Yaml getYaml();
 
     public abstract void clear();
+
+    public abstract void putInConfigCache(String configName, Object config);
 
     public static Config getInstance() {
         return FileConfigImpl.DEFAULT;
@@ -197,6 +200,11 @@ public abstract class Config {
         @Override
         public void clear() {
             configCache.clear();
+        }
+
+        @Override
+        public void putInConfigCache(String configName, Object config){
+            configCache.put(configName,config);
         }
 
         @Override
@@ -433,11 +441,12 @@ public abstract class Config {
         }
 
         private void checkCacheExpiration() {
-            if (System.currentTimeMillis() > cacheExpirationTime) {
+            // We dont have any use case to clear the cache over midnight; so commenting below code for now
+            /*if (System.currentTimeMillis() > cacheExpirationTime) {
                 clear();
                 logger.info("daily config cache refresh");
                 cacheExpirationTime = getNextMidNightTime();
-            }
+            }*/
         }
 
         // private method used to get absolute directory, input path can be absolute or relative
