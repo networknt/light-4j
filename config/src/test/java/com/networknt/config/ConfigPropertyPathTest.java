@@ -28,7 +28,7 @@ import org.junit.Assert;
 
 public class ConfigPropertyPathTest extends TestCase {
 
-    private Config config = null;
+    private static Config config = null;
 
     private static final String homeDir = System.getProperty("user.home");
     
@@ -59,6 +59,8 @@ public class ConfigPropertyPathTest extends TestCase {
         test3.delete();
         testFolder1.delete();
         testFolder2.delete();
+        
+        setExternalizedConfigDir("");
     }
 
     // test getting config from light-4j-config-dir
