@@ -16,21 +16,22 @@
 
 package com.networknt.config;
 
-import junit.framework.TestCase;
-import org.junit.Assert;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
+import junit.framework.TestCase;
+
+import org.junit.Assert;
+
 public class ConfigPropertyPathTest extends TestCase {
 
     private Config config = null;
 
-    final String homeDir = System.getProperty("user.home");
-
+    private static final String homeDir = System.getProperty("user.home");
+    
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -68,7 +69,8 @@ public class ConfigPropertyPathTest extends TestCase {
     }
 
     // test getting config from absolute path "/homeDir/src"
-    public void testGetConfigFromAbsPath() {
+    public void testGetConfigFromAbsPath() throws Exception {
+    	setExternalizedConfigDir("");
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test", homeDir + "/dir1");
         Assert.assertEquals("externalized dir1", configMap.get("value"));
@@ -82,7 +84,8 @@ public class ConfigPropertyPathTest extends TestCase {
     }
 
     // test getting config from absolute path "/homeDir/src"
-    public void testGetObjectConfigFromAbsPath() {
+    public void testGetObjectConfigFromAbsPath() throws Exception {
+    	setExternalizedConfigDir("");
         config.clear();
         TestConfig configObject = (TestConfig) config.getJsonObjectConfig("test", TestConfig.class, homeDir + "/dir1");
         Assert.assertEquals("externalized dir1", configObject.getValue());
@@ -98,7 +101,7 @@ public class ConfigPropertyPathTest extends TestCase {
     // test getting config when the config dir is a list
     public void testGetMapConfigFromMultiPath() throws Exception {
         config.clear();
-        setExternalizedConfigDir(homeDir + ":" + homeDir + "/dir1:"+ homeDir + "/dir2");
+        setExternalizedConfigDir(homeDir + File.pathSeparator + homeDir + "/dir1"+ File.pathSeparator + homeDir + "/dir2");
         Map<String, Object> configMap = config.getJsonMapConfig("test");
         Assert.assertEquals("externalized dir2", configMap.get("value"));
     }
@@ -106,7 +109,7 @@ public class ConfigPropertyPathTest extends TestCase {
     private void setExternalizedConfigDir(String externalizedDir) throws Exception {
         Field f1 = config.getClass().getDeclaredField("EXTERNALIZED_PROPERTY_DIR");
         f1.setAccessible(true);
-        f1.set(config, externalizedDir.split(":"));
+        f1.set(config, externalizedDir.split(File.pathSeparator));
     }
 
     private void writeConfigFile(String key, String value, String path) throws IOException {
