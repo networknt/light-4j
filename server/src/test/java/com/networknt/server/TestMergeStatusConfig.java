@@ -61,13 +61,13 @@ public class TestMergeStatusConfig extends TestCase {
     public void testAppStatus() {
         config.clear();
         // test default element without merging with app-status
-        Status status0 = new Status("ERR10053");
+        Status status0 = new Status("ERR10053", "url");
         Assert.assertEquals(401, status0.getStatusCode());
         Server.mergeStatusConfig();
         Status status = new Status("ERR99999");
         Assert.assertEquals(404, status.getStatusCode());
         // test default element after merging
-        Status status1 = new Status("ERR10053");
+        Status status1 = new Status("ERR10053", "url");
         Assert.assertEquals(401, status1.getStatusCode());
     }
 
@@ -88,11 +88,11 @@ public class TestMergeStatusConfig extends TestCase {
         File appStatus = new File(homeDir + "/app-status.yml");
         appStatus.delete();
         // test default element without merging with app-status
-        Status status0 = new Status("ERR10053");
+        Status status0 = new Status("ERR10053", "url");
         Assert.assertEquals(401, status0.getStatusCode());
         Server.mergeStatusConfig();
         // test default element after merging
-        Status status1 = new Status("ERR10053");
+        Status status1 = new Status("ERR10053", "url");
         Assert.assertEquals(401, status1.getStatusCode());
     }
 
@@ -102,11 +102,11 @@ public class TestMergeStatusConfig extends TestCase {
         appStatus.delete();
         new File(homeDir + "/app-status.yml");
         // test default element without merging with app-status
-        Status status0 = new Status("ERR10053");
+        Status status0 = new Status("ERR10053", "url");
         Assert.assertEquals(401, status0.getStatusCode());
         Server.mergeStatusConfig();
         // test default element after merging
-        Status status1 = new Status("ERR10053");
+        Status status1 = new Status("ERR10053", "url");
         Assert.assertEquals(401, status1.getStatusCode());
     }
 
