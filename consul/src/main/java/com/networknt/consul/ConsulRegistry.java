@@ -19,11 +19,11 @@ package com.networknt.consul;
 import com.networknt.client.Http2Client;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
-import com.networknt.registry.URLParamType;
 import com.networknt.consul.client.ConsulClient;
+import com.networknt.registry.URL;
+import com.networknt.registry.URLParamType;
 import com.networknt.registry.support.command.CommandFailbackRegistry;
 import com.networknt.registry.support.command.ServiceListener;
-import com.networknt.registry.URL;
 import com.networknt.utility.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -117,11 +117,10 @@ public class ConsulRegistry extends CommandFailbackRegistry {
      */
     private void startListenerThreadIfNewService(URL url) {
         String serviceName = url.getPath();
-        String tag = url.getParameter(Constants.TAG_ENVIRONMENT);
         if (!lookupServices.containsKey(serviceName)) {
             Long value = lookupServices.putIfAbsent(serviceName, 0L);
             if (value == null) {
-                ServiceLookupThread lookupThread = new ServiceLookupThread(serviceName, tag);
+                ServiceLookupThread lookupThread = new ServiceLookupThread(serviceName);
                 lookupThread.setDaemon(true);
                 lookupThread.start();
             }
@@ -161,7 +160,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
             synchronized (serviceName.intern()) {
                 urls = serviceCache.get(serviceName);
                 if (urls == null) {
-                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(serviceName, tag);
+                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(serviceName);
                     updateServiceCache(serviceName, serviceUrls, false);
                     urls = serviceCache.get(serviceName);
                 }
@@ -170,10 +169,10 @@ public class ConsulRegistry extends CommandFailbackRegistry {
         return urls;
     }
 
-    private ConcurrentHashMap<String, List<URL>> lookupServiceUpdate(String serviceName, String tag) {
+    private ConcurrentHashMap<String, List<URL>> lookupServiceUpdate(String serviceName) {
         Long lastConsulIndexId = lookupServices.get(serviceName) == null ? 0L : lookupServices.get(serviceName);
-        if(logger.isDebugEnabled()) logger.debug("serviceName = " + serviceName + " tag = " + tag + " lastConsulIndexId = " + lastConsulIndexId);
-        ConsulResponse<List<ConsulService>> response = lookupConsulService(serviceName, tag, lastConsulIndexId);
+        if(logger.isDebugEnabled()) logger.debug("serviceName = " + serviceName + " lastConsulIndexId = " + lastConsulIndexId);
+        ConsulResponse<List<ConsulService>> response = lookupConsulService(serviceName, lastConsulIndexId);
         if(logger.isDebugEnabled()) {
             try {
                 logger.debug("response = " + Config.getInstance().getMapper().writeValueAsString(response));
@@ -214,8 +213,8 @@ public class ConsulRegistry extends CommandFailbackRegistry {
      * @param serviceName
      * @return ConsulResponse or null
      */
-    private ConsulResponse<List<ConsulService>> lookupConsulService(String serviceName, String tag,  Long lastConsulIndexId) {
-        ConsulResponse<List<ConsulService>> response = client.lookupHealthService(serviceName, tag, lastConsulIndexId, getConsulToken());
+    private ConsulResponse<List<ConsulService>> lookupConsulService(String serviceName, Long lastConsulIndexId) {
+        ConsulResponse<List<ConsulService>> response = client.lookupHealthService(serviceName, null, lastConsulIndexId, getConsulToken());
         return response;
     }
 
@@ -265,20 +264,18 @@ public class ConsulRegistry extends CommandFailbackRegistry {
 
     private class ServiceLookupThread extends Thread {
         private String serviceName;
-        private String tag;
 
-        public ServiceLookupThread(String serviceName, String tag) {
+        public ServiceLookupThread(String serviceName) {
             this.serviceName = serviceName;
-            this.tag = tag;
         }
 
         @Override
         public void run() {
-            logger.info("start service lookup thread. lookup interval: " + lookupInterval + "ms, service: " + serviceName + ", tag: " + tag);
+            logger.info("start service lookup thread. lookup interval: " + lookupInterval + "ms, service: " + serviceName);
             while (true) {
                 try {
                     sleep(lookupInterval);
-                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(serviceName, tag);
+                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(serviceName);
                     updateServiceCache(serviceName, serviceUrls, true);
                 } catch (Throwable e) {
                     logger.error("service lookup thread fail!", e);
@@ -325,4 +322,5 @@ public class ConsulRegistry extends CommandFailbackRegistry {
         String token = secret == null? null : (String)secret.get(SecretConstants.CONSUL_TOKEN);
         return token;
     }
+
 }
