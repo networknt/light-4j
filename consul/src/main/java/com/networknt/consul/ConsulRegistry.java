@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -43,7 +44,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
     private int lookupInterval;
 
     // service local cache. key: serviceName, value: <service url list>
-    private ConcurrentHashMap<String, List<URL>> serviceCache = new ConcurrentHashMap<String, List<URL>>();
+    private ConcurrentHashMap<ServiceDicoveryKey, List<URL>> serviceCache = new ConcurrentHashMap<ServiceDicoveryKey, List<URL>>();
 
     // record lookup service thread, ensure each serviceName start only one thread, <serviceName, lastConsulIndexId>
     private ConcurrentHashMap<String, Long> lookupServices = new ConcurrentHashMap<String, Long>();
@@ -155,15 +156,16 @@ public class ConsulRegistry extends CommandFailbackRegistry {
     protected List<URL> discoverService(URL url) {
         String serviceName = url.getPath();
         String tag = url.getParameter(Constants.TAG_ENVIRONMENT);
+        ServiceDicoveryKey serviceDicoveryKey = new ServiceDicoveryKey(serviceName, tag);
         if(logger.isDebugEnabled()) logger.debug("serviceName = " + serviceName + " tag = " + tag);
-        List<URL> urls = serviceCache.get(serviceName);
+        List<URL> urls = serviceCache.get(serviceDicoveryKey);
         if (urls == null) {
             synchronized (serviceName.intern()) {
-                urls = serviceCache.get(serviceName);
+                urls = serviceCache.get(serviceDicoveryKey);
                 if (urls == null) {
                     ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(serviceName, tag);
-                    updateServiceCache(serviceName, serviceUrls, false);
-                    urls = serviceCache.get(serviceName);
+                    updateServiceCache(serviceDicoveryKey, serviceUrls, false);
+                    urls = serviceCache.get(serviceDicoveryKey);
                 }
             }
         }
@@ -224,13 +226,13 @@ public class ConsulRegistry extends CommandFailbackRegistry {
      * update local cache when service list changed,
      * if need notify, notify service
      *
-     * @param serviceName
+     * @param serviceDicoveryKey
      * @param serviceUrls
      * @param needNotify
      */
-    private void updateServiceCache(String serviceName, ConcurrentHashMap<String, List<URL>> serviceUrls, boolean needNotify) {
+    private void updateServiceCache(ServiceDicoveryKey serviceDicoveryKey, ConcurrentHashMap<String, List<URL>> serviceUrls, boolean needNotify) {
         if (serviceUrls != null && !serviceUrls.isEmpty()) {
-            List<URL> urls = serviceCache.get(serviceName);
+            List<URL> urls = serviceCache.get(serviceDicoveryKey);
             if (urls == null) {
                 if(logger.isDebugEnabled()) {
                     try {
@@ -238,7 +240,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                     } catch(Exception e) {
                     }
                 }
-                serviceCache.put(serviceName, serviceUrls.get(serviceName));
+                serviceCache.put(serviceDicoveryKey, serviceUrls.get(serviceDicoveryKey.getServiceName()));
             }
             for (Map.Entry<String, List<URL>> entry : serviceUrls.entrySet()) {
                 boolean change = true;
@@ -247,7 +249,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                     if (newUrls == null || newUrls.isEmpty() || ConsulUtils.isSame(newUrls, urls)) {
                         change = false;
                     } else {
-                        serviceCache.put(serviceName, newUrls);
+                        serviceCache.put(serviceDicoveryKey, newUrls);
                     }
                 }
                 if (change && needNotify) {
@@ -279,7 +281,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                 try {
                     sleep(lookupInterval);
                     ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(serviceName, tag);
-                    updateServiceCache(serviceName, serviceUrls, true);
+                    updateServiceCache(new ServiceDicoveryKey(serviceName, tag), serviceUrls, true);
                 } catch (Throwable e) {
                     logger.error("service lookup thread fail!", e);
                     try {
@@ -324,5 +326,44 @@ public class ConsulRegistry extends CommandFailbackRegistry {
         Map<String, Object> secret = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
         String token = secret == null? null : (String)secret.get(SecretConstants.CONSUL_TOKEN);
         return token;
+    }
+
+    private class ServiceDicoveryKey {
+        String serviceName;
+        String tag;
+        public ServiceDicoveryKey(String serviceName, String tag) {
+            this.serviceName = serviceName;
+            this.tag = tag;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof ServiceDicoveryKey)) return false;
+            ServiceDicoveryKey that = (ServiceDicoveryKey) o;
+            return Objects.equals(serviceName, that.serviceName) &&
+                    Objects.equals(tag, that.tag);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(serviceName, tag);
+        }
+
+        public String getServiceName() {
+            return serviceName;
+        }
+
+        public void setServiceName(String serviceName) {
+            this.serviceName = serviceName;
+        }
+
+        public String getTag() {
+            return tag;
+        }
+
+        public void setTag(String tag) {
+            this.tag = tag;
+        }
     }
 }

@@ -29,10 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -49,7 +46,7 @@ public class LightCluster implements Cluster {
     private static Registry registry = SingletonServiceFactory.getBean(Registry.class);
     private static LoadBalance loadBalance = SingletonServiceFactory.getBean(LoadBalance.class);
     private static Set<URL> subscribedSet = new ConcurrentHashSet<>();
-    private static Map<String, List<URL>> serviceMap = new ConcurrentHashMap<>();
+    private static Map<ServiceDicoveryKey, List<URL>> serviceMap = new ConcurrentHashMap<>();
 
     public LightCluster() {
         if(logger.isInfoEnabled()) logger.info("A LightCluster instance is started");
@@ -89,7 +86,7 @@ public class LightCluster implements Cluster {
     private List<URL> discovery(String protocol, String serviceId, String tag) {
         if(logger.isDebugEnabled()) logger.debug("protocol = " + protocol + " serviceId = " + serviceId);
         // lookup in serviceMap first, if not there, then subscribe and discover.
-        List<URL> urls = serviceMap.get(serviceId);
+        List<URL> urls = serviceMap.get(new ServiceDicoveryKey(serviceId, tag));
         if(logger.isDebugEnabled()) logger.debug("cached serviceId " + serviceId + " urls = " + urls);
         if(urls == null) {
             URL subscribeUrl = URLImpl.valueOf(protocol + "://localhost/" + serviceId);
@@ -122,7 +119,48 @@ public class LightCluster implements Cluster {
         @Override
         public void notify(URL registryUrl, List<URL> urls) {
             if(logger.isDebugEnabled()) logger.debug("notify is called in ClusterNotifyListener registryUrl = " + registryUrl + " urls = " + urls);
-            if(urls != null && urls.size() > 0) serviceMap.put(urls.get(0).getPath(), urls);
+            String serviceName = urls.get(0).getPath();
+            String tag = registryUrl.getParameter(Constants.TAG_ENVIRONMENT);
+            if(urls != null && urls.size() > 0) serviceMap.put(new ServiceDicoveryKey(serviceName, tag), urls);
+        }
+    }
+
+    private static class ServiceDicoveryKey {
+        String serviceName;
+        String tag;
+        public ServiceDicoveryKey(String serviceName, String tag) {
+            this.serviceName = serviceName;
+            this.tag = tag;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof ServiceDicoveryKey)) return false;
+            ServiceDicoveryKey that = (ServiceDicoveryKey) o;
+            return Objects.equals(serviceName, that.serviceName) &&
+                    Objects.equals(tag, that.tag);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(serviceName, tag);
+        }
+
+        public String getServiceName() {
+            return serviceName;
+        }
+
+        public void setServiceName(String serviceName) {
+            this.serviceName = serviceName;
+        }
+
+        public String getTag() {
+            return tag;
+        }
+
+        public void setTag(String tag) {
+            this.tag = tag;
         }
     }
 }
