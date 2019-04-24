@@ -85,13 +85,15 @@ public class ClientConfigTest {
         HashMap<String, Object> oauthConfig = new HashMap<>();
         oauthConfig.put("token", new HashMap<String, Object>());
 
+        HashMap<String, Object> configMap = new HashMap<>();
+        configMap.put("errorThreshold", 3);
+        configMap.put("timeout", 2000);
+        configMap.put("resetTimeout", 3600000);
+
         HashMap<String, Object> map = new HashMap<>();
         map.put("bufferSize", 1024);
-        map.put("errorThreshold", 3);
-        map.put("timeout", 2000);
-        map.put("resetTimeout", 3600000);
         map.put("oauth", oauthConfig);
-
+        map.put("request", configMap);
         return map;
     }
 }

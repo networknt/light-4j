@@ -8,14 +8,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
 public class CircuitBreaker {
 
-    private final CompletableFuture<ClientResponse> supplier;
+    private Supplier<CompletableFuture<ClientResponse>> supplier;
     private int timeoutCount;
     private long lastErrorTime;
 
-    public CircuitBreaker(CompletableFuture<ClientResponse> supplier) {
+    public CircuitBreaker(Supplier<CompletableFuture<ClientResponse>> supplier) {
         this.supplier = supplier;
         this.timeoutCount = 0;
     }
@@ -28,12 +29,11 @@ public class CircuitBreaker {
                 throw new IllegalStateException("circuit is opened.");
             }
 
-            ClientResponse clientResponse = supplier.get(ClientConfig.get().getTimeout(), TimeUnit.MILLISECONDS);
+            ClientResponse clientResponse = supplier.get().get(ClientConfig.get().getTimeout(), TimeUnit.MILLISECONDS);
             timeoutCount = 0;
 
             return clientResponse;
         } catch (InterruptedException | ExecutionException e) {
-            // wrap in a default light-4j exception
             throw e;
         } catch (TimeoutException e) {
             recordTimeout();

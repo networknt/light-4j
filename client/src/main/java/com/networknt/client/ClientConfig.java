@@ -10,10 +10,11 @@ public final class ClientConfig {
 
     public static final String CONFIG_NAME = "client";
     public static final String CONFIG_SECRET = "secret";
+    public static final String REQUEST = "request";
     public static int DEFAULT_BUFFER_SIZE = 24; // 24*1024 buffer size will be good for most of the app.
-    static final int DEFAULT_ERROR_THRESHOLD = 5;
-    static final int DEFAULT_TIMEOUT = 10000;
-    static final int DEFAULT_RESET_TIMEOUT = 600000;
+    public static final int DEFAULT_ERROR_THRESHOLD = 5;
+    public static final int DEFAULT_TIMEOUT = 3000;
+    public static final int DEFAULT_RESET_TIMEOUT = 600000;
     private static final String BUFFER_SIZE = "bufferSize";
     private static final String ERROR_THRESHOLD = "errorThreshold";
     private static final String TIMEOUT = "timeout";
@@ -41,9 +42,7 @@ public final class ClientConfig {
             setBufferSize();
             setTokenConfig();
             setSecretConfig();
-            setErrorThreshold();
-            setTimeout();
-            setResetTimeout();
+            setRequestConfig();
         }
     }
 
@@ -70,21 +69,20 @@ public final class ClientConfig {
         }
     }
 
-    private void setResetTimeout() {
-        if (mappedConfig.containsKey(RESET_TIMEOUT)) {
-            resetTimeout = (int) mappedConfig.get(RESET_TIMEOUT);
+    private void setRequestConfig() {
+        if (!mappedConfig.containsKey(REQUEST)) {
+            return;
         }
-    }
+        Map<String, Object> requestConfig = (Map<String, Object>) mappedConfig.get(REQUEST);
 
-    private void setTimeout() {
-        if (mappedConfig.containsKey(TIMEOUT)) {
-            timeout = (int) mappedConfig.get(TIMEOUT);
+        if (requestConfig.containsKey(RESET_TIMEOUT)) {
+            resetTimeout = (int) requestConfig.get(RESET_TIMEOUT);
         }
-    }
-
-    private void setErrorThreshold() {
-        if (mappedConfig.containsKey(ERROR_THRESHOLD)) {
-            errorThreshold = (int) mappedConfig.get(ERROR_THRESHOLD);
+        if (requestConfig.containsKey(ERROR_THRESHOLD)) {
+            errorThreshold = (int) requestConfig.get(ERROR_THRESHOLD);
+        }
+        if (requestConfig.containsKey(TIMEOUT)) {
+            timeout = (int) requestConfig.get(TIMEOUT);
         }
     }
 

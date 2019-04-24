@@ -39,6 +39,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
+import com.networknt.client.circuitbreaker.CircuitBreaker;
 import io.undertow.UndertowOptions;
 import io.undertow.client.http.Http2ClientCompletableFutureNoRequest;
 import io.undertow.client.http.Http2ClientCompletableFutureWithRequest;
@@ -63,7 +64,6 @@ import com.networknt.client.oauth.Jwt;
 import com.networknt.client.oauth.OauthHelper;
 import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
 import com.networknt.client.ssl.TLSConfig;
-import com.networknt.common.DecryptUtil;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 import com.networknt.httpstring.HttpStringConstants;
@@ -698,6 +698,10 @@ public class Http2Client {
         };
     }
 
+    public CircuitBreaker getRequestService(URI uri, ClientRequest request, Optional<String> requestBody) {
+        return new CircuitBreaker(() -> callService(uri, request, requestBody));
+    }
+
     public CompletableFuture<ClientResponse> callService(URI uri, ClientRequest request, Optional<String> requestBody) {
         CompletableFuture<ClientConnection> futureConnection = this.connectAsync(uri);
         CompletableFuture<ClientResponse> futureClientResponse = futureConnection.thenComposeAsync(clientConnection -> {
@@ -727,7 +731,7 @@ public class Http2Client {
      *
      */
     public CompletableFuture<ClientConnection> connectAsync(URI uri) {
-        return this.connectAsync((InetSocketAddress) null, uri, com.networknt.client.Http2Client.WORKER, com.networknt.client.Http2Client.SSL, com.networknt.client.Http2Client.BUFFER_POOL,
+        return this.connectAsync(null, uri, com.networknt.client.Http2Client.WORKER, com.networknt.client.Http2Client.SSL, com.networknt.client.Http2Client.BUFFER_POOL,
                 OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
     }
 
