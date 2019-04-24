@@ -150,6 +150,11 @@ abstract class AbstractRegistry implements Registry {
         return registryUrl;
     }
 
+    public URL getUrl(String tag) {
+        registryUrl.addParameter(Constants.TAG_ENVIRONMENT, tag);
+        return registryUrl;
+    }
+
     @Override
     public Collection<URL> getRegisteredServiceUrls() {
         return registeredServiceUrls;
@@ -240,6 +245,7 @@ abstract class AbstractRegistry implements Registry {
         }
 
         Map<String, List<URL>> curls = subscribedCategoryResponses.get(refUrl);
+        String tag = refUrl.getParameter(Constants.TAG_ENVIRONMENT);
         if (curls == null) {
             subscribedCategoryResponses.putIfAbsent(refUrl, new ConcurrentHashMap<>());
             curls = subscribedCategoryResponses.get(refUrl);
@@ -251,7 +257,7 @@ abstract class AbstractRegistry implements Registry {
         }
 
         for (List<URL> us : serviceNameUrls.values()) {
-            listener.notify(getUrl(), us);
+            listener.notify(getUrl(tag), us);
         }
     }
 
