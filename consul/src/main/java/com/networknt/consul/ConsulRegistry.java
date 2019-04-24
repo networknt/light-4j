@@ -121,7 +121,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
         if (!lookupServices.containsKey(serviceName)) {
             Long value = lookupServices.putIfAbsent(serviceName, 0L);
             if (value == null) {
-                ServiceLookupThread lookupThread = new ServiceLookupThread(serviceName, tag);
+                ServiceLookupThread lookupThread = new ServiceLookupThread(serviceName);
                 lookupThread.setDaemon(true);
                 lookupThread.start();
             }
@@ -161,7 +161,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
             synchronized (serviceName.intern()) {
                 urls = serviceCache.get(serviceName);
                 if (urls == null) {
-                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(serviceName, tag);
+                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(serviceName);
                     updateServiceCache(serviceName, serviceUrls, false);
                     urls = serviceCache.get(serviceName);
                 }
@@ -170,11 +170,10 @@ public class ConsulRegistry extends CommandFailbackRegistry {
         return urls;
     }
 
-    private ConcurrentHashMap<String, List<URL>> lookupServiceUpdate(String serviceName, String tag) {
-        tag = null;
+    private ConcurrentHashMap<String, List<URL>> lookupServiceUpdate(String serviceName) {
         Long lastConsulIndexId = lookupServices.get(serviceName) == null ? 0L : lookupServices.get(serviceName);
-        if(logger.isDebugEnabled()) logger.debug("serviceName = " + serviceName + " tag = " + tag + " lastConsulIndexId = " + lastConsulIndexId);
-        ConsulResponse<List<ConsulService>> response = lookupConsulService(serviceName, tag, lastConsulIndexId);
+        if(logger.isDebugEnabled()) logger.debug("serviceName = " + serviceName + " lastConsulIndexId = " + lastConsulIndexId);
+        ConsulResponse<List<ConsulService>> response = lookupConsulService(serviceName, lastConsulIndexId);
         if(logger.isDebugEnabled()) {
             try {
                 logger.debug("response = " + Config.getInstance().getMapper().writeValueAsString(response));
@@ -215,8 +214,8 @@ public class ConsulRegistry extends CommandFailbackRegistry {
      * @param serviceName
      * @return ConsulResponse or null
      */
-    private ConsulResponse<List<ConsulService>> lookupConsulService(String serviceName, String tag,  Long lastConsulIndexId) {
-        ConsulResponse<List<ConsulService>> response = client.lookupHealthService(serviceName, tag, lastConsulIndexId, getConsulToken());
+    private ConsulResponse<List<ConsulService>> lookupConsulService(String serviceName, Long lastConsulIndexId) {
+        ConsulResponse<List<ConsulService>> response = client.lookupHealthService(serviceName, null, lastConsulIndexId, getConsulToken());
         return response;
     }
 
@@ -266,20 +265,18 @@ public class ConsulRegistry extends CommandFailbackRegistry {
 
     private class ServiceLookupThread extends Thread {
         private String serviceName;
-        private String tag;
 
-        public ServiceLookupThread(String serviceName, String tag) {
+        public ServiceLookupThread(String serviceName) {
             this.serviceName = serviceName;
-            this.tag = tag;
         }
 
         @Override
         public void run() {
-            logger.info("start service lookup thread. lookup interval: " + lookupInterval + "ms, service: " + serviceName + ", tag: " + tag);
+            logger.info("start service lookup thread. lookup interval: " + lookupInterval + "ms, service: " + serviceName);
             while (true) {
                 try {
                     sleep(lookupInterval);
-                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(serviceName, tag);
+                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(serviceName);
                     updateServiceCache(serviceName, serviceUrls, true);
                 } catch (Throwable e) {
                     logger.error("service lookup thread fail!", e);
