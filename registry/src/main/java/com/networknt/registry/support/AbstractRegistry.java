@@ -150,6 +150,7 @@ abstract class AbstractRegistry implements Registry {
         return registryUrl;
     }
 
+
     @Override
     public Collection<URL> getRegisteredServiceUrls() {
         return registeredServiceUrls;
