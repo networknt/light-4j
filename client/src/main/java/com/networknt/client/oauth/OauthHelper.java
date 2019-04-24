@@ -2,7 +2,7 @@
  * Copyright (c) 2016 Network New Technologies Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -26,6 +26,7 @@ import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;
 import com.networknt.status.Status;
+import com.networknt.utility.StringUtils;
 import io.undertow.UndertowOptions;
 import io.undertow.client.*;
 import io.undertow.server.HttpServerExchange;
@@ -39,6 +40,7 @@ import org.xnio.OptionMap;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -54,6 +56,8 @@ public class OauthHelper {
     static final String BASIC = "Basic";
     static final String GRANT_TYPE = "grant_type";
     static final String CODE = "code";
+    static final String SCOPE = "scope";
+    static final String SERVICE_ID = "service_id";
     private static final String FAIL_TO_SEND_REQUEST = "ERR10051";
     private static final String GET_TOKEN_ERROR = "ERR10052";
     private static final String ESTABLISH_CONNECTION_ERROR = "ERR10053";
@@ -85,18 +89,50 @@ public class OauthHelper {
         try {
             connection = client.connect(new URI(tokenRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, tokenRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
         } catch (Exception e) {
-            logger.error("cannot establish connection: {}", e.getStackTrace());
+            logger.error("cannot establish connection:", e);
             return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR, tokenRequest.getServerUrl()));
         }
 
         try {
-            String requestBody = getEncodedString(tokenRequest);
+            IClientRequestComposable requestComposer = ClientRequestComposerProvider.getInstance().getComposer(ClientRequestComposerProvider.ClientRequestComposers.CLIENT_CREDENTIAL_REQUEST_COMPOSER);
+
+            connection.getIoThread().execute(new TokenRequestAction(tokenRequest, requestComposer, connection, reference, latch));
+
+            latch.await(4, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            logger.error("IOException: ", e);
+            return Failure.of(new Status(FAIL_TO_SEND_REQUEST));
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+
+        //if reference.get() is null at this point, mostly likely couldn't get token within latch.await() timeout.
+        return reference.get() == null ? Failure.of(new Status(GET_TOKEN_TIMEOUT)) : reference.get();
+    }
+
+    public static Result<TokenResponse> getSignResult(SignRequest signRequest) {
+        final AtomicReference<Result<TokenResponse>> reference = new AtomicReference<>();
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection;
+        try {
+            connection = client.connect(new URI(signRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, signRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+        } catch (Exception e) {
+            logger.error("cannot establish connection:", e);
+            return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR, signRequest.getServerUrl()));
+        }
+
+        try {
+            Map<String, Object> map = new HashMap<>();
+            map.put("expires", signRequest.getExpires());
+            map.put("payload", signRequest.getPayload());
+            String requestBody = Config.getInstance().getMapper().writeValueAsString(map);
             connection.getIoThread().execute(() -> {
-                final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(tokenRequest.getUri());
+                final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(signRequest.getUri());
                 request.getRequestHeaders().put(Headers.HOST, "localhost");
                 request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
                 request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
-                request.getRequestHeaders().put(Headers.AUTHORIZATION, getBasicAuthHeader(tokenRequest.getClientId(), tokenRequest.getClientSecret()));
+                request.getRequestHeaders().put(Headers.AUTHORIZATION, getBasicAuthHeader(signRequest.getClientId(), signRequest.getClientSecret()));
                 connection.sendRequest(request, new ClientCallback<ClientExchange>() {
                     @Override
                     public void completed(ClientExchange result) {
@@ -141,7 +177,7 @@ public class OauthHelper {
                 });
             });
 
-            latch.await(4, TimeUnit.SECONDS);
+            latch.await(signRequest.getTimeout(), TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             logger.error("IOException: ", e);
             return Failure.of(new Status(FAIL_TO_SEND_REQUEST));
@@ -177,68 +213,13 @@ public class OauthHelper {
         try {
             connection = client.connect(new URI(tokenRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, tokenRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
         } catch (Exception e) {
-            logger.error("cannot establish connection: {}", e.getStackTrace());
+            logger.error("cannot establish connection:", e);
             return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR));
         }
-
         try {
-            Map<String, String> postBody = new HashMap<String, String>();
-            postBody.put(SAMLBearerRequest.GRANT_TYPE_KEY , SAMLBearerRequest.GRANT_TYPE_VALUE );
-            postBody.put(SAMLBearerRequest.ASSERTION_KEY, tokenRequest.getSamlAssertion());
-            postBody.put(SAMLBearerRequest.CLIENT_ASSERTION_TYPE_KEY, SAMLBearerRequest.CLIENT_ASSERTION_TYPE_VALUE);
-            postBody.put(SAMLBearerRequest.CLIENT_ASSERTION_KEY, tokenRequest.getJwtClientAssertion());
-            String requestBody = Http2Client.getFormDataString(postBody);
-            logger.debug(requestBody);
+            IClientRequestComposable requestComposer = ClientRequestComposerProvider.getInstance().getComposer(ClientRequestComposerProvider.ClientRequestComposers.SAML_BEARER_REQUEST_COMPOSER);
 
-            connection.getIoThread().execute(() -> {
-                final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(tokenRequest.getUri());
-                request.getRequestHeaders().put(Headers.HOST, "localhost");
-                request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
-                request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
-
-                connection.sendRequest(request, new ClientCallback<ClientExchange>() {
-
-                    @Override
-                    public void completed(ClientExchange result) {
-                        new StringWriteChannelListener(requestBody).setup(result.getRequestChannel());
-                        result.setResponseListener(new ClientCallback<ClientExchange>() {
-                            @Override
-                            public void completed(ClientExchange result) {
-                                new StringReadChannelListener(Http2Client.BUFFER_POOL) {
-
-                                    @Override
-                                    protected void stringDone(String string) {
-                                        logger.debug("getToken response = " + string);
-                                        reference.set(handleResponse(getContentTypeFromExchange(result), string));
-                                        latch.countDown();
-                                    }
-
-                                    @Override
-                                    protected void error(IOException e) {
-                                        logger.error("IOException:", e);
-                                        reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
-                                        latch.countDown();
-                                    }
-                                }.setup(result.getResponseChannel());
-                            }
-
-                            @Override
-                            public void failed(IOException e) {
-                                logger.error("IOException:", e);
-                                reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
-                                latch.countDown();
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void failed(IOException e) {
-                        logger.error("IOException:", e);
-                        reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
-                        latch.countDown();
-                    }
-                });
-            });
+            connection.getIoThread().execute(new TokenRequestAction(tokenRequest, requestComposer, connection, reference, latch));
 
             latch.await(4, TimeUnit.SECONDS);
         } catch (Exception e) {
@@ -249,6 +230,76 @@ public class OauthHelper {
         }
         //if reference.get() is null at this point, mostly likely couldn't get token within latch.await() timeout.
         return reference.get() == null ? Failure.of(new Status(GET_TOKEN_TIMEOUT)) : reference.get();
+    }
+
+    /**
+     * This private class is to encapsulate the action to send request, and handling response,
+     * because of the way of sending request to get token and handle exceptions are the same for both JWT and SAML.
+     * The only difference is how to compose the request based on TokenRequest model.
+     */
+    private static class TokenRequestAction implements Runnable{
+        private ClientConnection connection;
+        private AtomicReference<Result<TokenResponse>> reference;
+        private CountDownLatch latch;
+        private IClientRequestComposable requestComposer;
+        private TokenRequest tokenRequest;
+
+        TokenRequestAction(TokenRequest tokenRequest, IClientRequestComposable requestComposer, ClientConnection connection, AtomicReference<Result<TokenResponse>> reference, CountDownLatch latch){
+            this.tokenRequest = tokenRequest;
+            this.connection = connection;
+            this.reference = reference;
+            this.latch = latch;
+            this.requestComposer = requestComposer;
+        }
+        @Override
+        public void run() {
+            final ClientRequest request = requestComposer.composeClientRequest(tokenRequest);
+            String requestBody = requestComposer.composeRequestBody(tokenRequest);
+            logger.debug(requestBody);
+            adjustNoChunkedEncoding(request, requestBody);
+            connection.sendRequest(request, new ClientCallback<ClientExchange>() {
+
+                @Override
+                public void completed(ClientExchange result) {
+                    new StringWriteChannelListener(requestBody).setup(result.getRequestChannel());
+                    result.setResponseListener(new ClientCallback<ClientExchange>() {
+                        @Override
+                        public void completed(ClientExchange result) {
+                            new StringReadChannelListener(Http2Client.BUFFER_POOL) {
+
+                                @Override
+                                protected void stringDone(String string) {
+                                    logger.debug("getToken response = " + string);
+                                    reference.set(handleResponse(getContentTypeFromExchange(result), string));
+                                    latch.countDown();
+                                }
+
+                                @Override
+                                protected void error(IOException e) {
+                                    logger.error("IOException:", e);
+                                    reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
+                                    latch.countDown();
+                                }
+                            }.setup(result.getResponseChannel());
+                        }
+
+                        @Override
+                        public void failed(IOException e) {
+                            logger.error("IOException:", e);
+                            reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
+                            latch.countDown();
+                        }
+                    });
+                }
+
+                @Override
+                public void failed(IOException e) {
+                    logger.error("IOException:", e);
+                    reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
+                    latch.countDown();
+                }
+            });
+        }
     }
 
     public static String getKey(KeyRequest keyRequest) throws ClientException {
@@ -268,6 +319,7 @@ public class OauthHelper {
                 request.getRequestHeaders().put(Headers.AUTHORIZATION, getBasicAuthHeader(keyRequest.getClientId(), keyRequest.getClientSecret()));
             }
             request.getRequestHeaders().put(Headers.HOST, "localhost");
+            adjustNoChunkedEncoding(request, "");
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
         } catch (Exception e) {
@@ -321,7 +373,7 @@ public class OauthHelper {
         return encodedValue;
     }
 
-    private static String getEncodedString(TokenRequest request) throws UnsupportedEncodingException {
+    public static String getEncodedString(TokenRequest request) throws UnsupportedEncodingException {
         Map<String, String> params = new HashMap<>();
         params.put(GRANT_TYPE, request.getGrantType());
         if(TokenRequest.AUTHORIZATION_CODE.equals(request.getGrantType())) {
@@ -389,14 +441,13 @@ public class OauthHelper {
      * @param jwt the given jwt needs to renew or populate
      * @return When success return Jwt; When fail return Status.
      */
-    public static Result<Jwt> populateCCToken(Jwt jwt) {
+    public static Result<Jwt> populateCCToken(final Jwt jwt) {
         boolean isInRenewWindow = jwt.getExpire() - System.currentTimeMillis() < jwt.getTokenRenewBeforeExpired();
         logger.trace("isInRenewWindow = " + isInRenewWindow);
         //if not in renew window, return the current jwt.
         if(!isInRenewWindow) { return Success.of(jwt); }
-        //block other getting token requests, only once at a time.
-        //Once one request get the token, other requests don't need to get from auth server anymore.
-        synchronized (OauthHelper.class) {
+        //the same jwt shouldn't be renew at the same time. different jwt shouldn't affect each other's renew activity.
+        synchronized (jwt) {
             //if token expired, try to renew synchronously
             if(jwt.getExpire() <= System.currentTimeMillis()) {
                 Result<Jwt> result = renewCCTokenSync(jwt);
@@ -424,7 +475,7 @@ public class OauthHelper {
         //the token can be renew when it's not on renewing or current time is lager than retrying interval
         if (!jwt.isRenewing() || System.currentTimeMillis() > jwt.getExpiredRetryTimeout()) {
             jwt.setRenewing(true);
-            jwt.setEarlyRetryTimeout(System.currentTimeMillis() + jwt.getExpiredRefreshRetryDelay());
+            jwt.setEarlyRetryTimeout(System.currentTimeMillis() + Jwt.getExpiredRefreshRetryDelay());
             Result<Jwt> result = getCCTokenRemotely(jwt);
             //set renewing flag to false no mater fail or success
             jwt.setRenewing(false);
@@ -441,7 +492,7 @@ public class OauthHelper {
      * When fail, it will swallow the exception, so no need return type to be handled by caller.
      * @param jwt the jwt you want to renew
      */
-    private static void renewCCTokenAsync(Jwt jwt) {
+    private static void renewCCTokenAsync(final Jwt jwt) {
         // Not expired yet, try to renew async but let requests use the old token.
         logger.trace("In renew window but token is not expired yet.");
         if(!jwt.isRenewing() || System.currentTimeMillis() > jwt.getEarlyRetryTimeout()) {
@@ -471,6 +522,8 @@ public class OauthHelper {
      */
     private static Result<Jwt> getCCTokenRemotely(final Jwt jwt) {
         TokenRequest tokenRequest = new ClientCredentialsRequest();
+        //scopes at this point is may not be set yet when issuing a new token.
+        setScope(tokenRequest, jwt);
         Result<TokenResponse> result = OauthHelper.getTokenResult(tokenRequest);
         if(result.isSuccess()) {
             TokenResponse tokenResponse = result.getResult();
@@ -478,10 +531,24 @@ public class OauthHelper {
             // the expiresIn is seconds and it is converted to millisecond in the future.
             jwt.setExpire(System.currentTimeMillis() + tokenResponse.getExpiresIn() * 1000);
             logger.info("Get client credentials token {} with expire_in {} seconds", jwt, tokenResponse.getExpiresIn());
+            //set the scope for future usage.
+            jwt.setScopes(tokenResponse.getScope());
             return Success.of(jwt);
         } else {
             logger.info("Get client credentials token fail with status: {}", result.getError().toString());
             return Failure.of(result.getError());
+        }
+    }
+
+    /**
+     * if scopes in jwt.getKey() has value, use this scope
+     * otherwise remains the default scope value which already inside tokenRequest when create ClientCredentialsRequest;
+     * @param tokenRequest
+     * @param jwt
+     */
+    private static void setScope(TokenRequest tokenRequest, Jwt jwt) {
+        if(jwt.getKey() != null && !jwt.getKey().getScopes().isEmpty()) {
+            tokenRequest.setScope(new ArrayList<String>() {{ addAll(jwt.getKey().getScopes()); }});
         }
     }
 
@@ -542,5 +609,23 @@ public class OauthHelper {
             }
         }
         return escapedXML.toString();
+    }
+
+    //this method is to support sending a server which doesn't support chunked transfer encoding.
+    public static void adjustNoChunkedEncoding(ClientRequest request, String requestBody) {
+        String fixedLengthString = request.getRequestHeaders().getFirst(Headers.CONTENT_LENGTH);
+        String transferEncodingString = request.getRequestHeaders().getLast(Headers.TRANSFER_ENCODING);
+        if(transferEncodingString != null) {
+            request.getRequestHeaders().remove(Headers.TRANSFER_ENCODING);
+        }
+        //if already specify a content-length, should use what they provided
+        if(fixedLengthString != null && Long.parseLong(fixedLengthString) > 0) {
+            return;
+        }
+        if(!StringUtils.isEmpty(requestBody)) {
+            long contentLength = requestBody.getBytes(UTF_8).length;
+            request.getRequestHeaders().put(Headers.CONTENT_LENGTH, contentLength);
+        }
+
     }
 }

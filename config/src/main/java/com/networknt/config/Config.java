@@ -2,7 +2,7 @@
  * Copyright (c) 2016 Network New Technologies Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -16,17 +16,34 @@
 
 package com.networknt.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.ServiceLoader;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.representer.Representer;
+import org.yaml.snakeyaml.resolver.Resolver;
 
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.networknt.config.yml.DecryptConstructor;
+import com.networknt.config.yml.YmlConstants;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * A injectable singleton config that has default implementation
@@ -43,6 +60,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public abstract class Config {
     public static final String LIGHT_4J_CONFIG_DIR = "light-4j-config-dir";
+    public static final String CENTRALIZED_MANAGEMENT = "values";
 
     protected Config() {
     }
@@ -75,11 +93,14 @@ public abstract class Config {
 
     public abstract void clear();
 
+    public abstract void putInConfigCache(String configName, Object config);
+
     public static Config getInstance() {
         return FileConfigImpl.DEFAULT;
     }
 
     private static final class FileConfigImpl extends Config {
+    	static final String CONFIG_NAME = "config";
         static final String CONFIG_EXT_JSON = ".json";
         static final String CONFIG_EXT_YAML = ".yaml";
         static final String CONFIG_EXT_YML = ".yml";
@@ -93,7 +114,7 @@ public abstract class Config {
 
         private static final Config DEFAULT = initialize();
 
-        // Memory cache of all the configuration object. Each config will be loaded on the first time is is accessed.
+        // Memory cache of all the configuration object. Each config will be loaded on the first time it is accessed.
         final Map<String, Object> configCache = new ConcurrentHashMap<>(10, 0.9f, 1);
 
         // An instance of Jackson ObjectMapper that can be used anywhere else for Json.
@@ -103,8 +124,60 @@ public abstract class Config {
             mapper.registerModule(new JavaTimeModule());
             mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         }
-
-        final Yaml yaml = new Yaml();
+        
+        final Yaml yaml;
+        
+        FileConfigImpl(){
+        	super();
+        	
+        	String decryptorClass = getDecryptorClass();
+        	
+        	if (null==decryptorClass || decryptorClass.trim().isEmpty()) {
+        		yaml = new Yaml();
+        	}else {
+	            final Resolver resolver = new Resolver();
+	            resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
+	        	yaml = new Yaml(new DecryptConstructor(decryptorClass), new Representer(), new DumperOptions(), resolver);
+        	}
+        }
+        
+        private String getDecryptorClass() {
+        	Yaml yml = new Yaml();
+        	
+            Map<String, Object> config = null;
+            for (String extension : configExtensionsOrdered) {
+                String ymlFilename = CONFIG_NAME + extension;
+                try (InputStream inStream = getConfigStream(ymlFilename, "")) {
+                    if (inStream != null) {
+                        config = yml.load(inStream);
+                    }
+                } catch (IOException ioe) {
+                    logger.error("IOException", ioe);
+                }
+                
+                if (config != null) {
+            		if (logger.isDebugEnabled()) {
+            			logger.debug("loaded config from file {}", ymlFilename);
+            		}
+            		
+                	break;
+                }
+            }
+        	
+        	if (null!=config) {
+        		String decryptorClass = (String) config.get(DecryptConstructor.CONFIG_ITEM_DECRYPTOR_CLASS);
+        		
+        		if (logger.isDebugEnabled()) {
+        			logger.debug("found decryptorClass={}", decryptorClass);
+        		}
+        		
+        		return decryptorClass;
+        	}else {
+        		logger.warn("config file cannot be found.");
+        	}
+        	
+        	return null;
+        }
 
         private static Config initialize() {
             Iterator<Config> it;
@@ -126,6 +199,11 @@ public abstract class Config {
         @Override
         public void clear() {
             configCache.clear();
+        }
+
+        @Override
+        public void putInConfigCache(String configName, Object config){
+            configCache.put(configName,config);
         }
 
         @Override
@@ -251,8 +329,9 @@ public abstract class Config {
                         config = CentralizedManagement.mergeObject(configMap, clazz);
                     }
                 }
-            } catch (IOException ioe) {
-                logger.error("IOException", ioe);
+            } catch (Exception e) {
+                logger.error("Exception", e);
+                throw new RuntimeException("Unable to load " + fileName + " as object.", e);
             }
             return config;
         }
@@ -283,12 +362,14 @@ public abstract class Config {
                         CentralizedManagement.mergeMap(config); // mutates the config map in place.
                     }
                 }
-            } catch (IOException ioe) {
-                logger.error("IOException", ioe);
+            } catch (Exception e) {
+                logger.error("Exception", e);
+                throw new RuntimeException("Unable to load " + ymlFilename + " as map.", e);
             }
             return config;
         }
-
+        
+        
         private Map<String, Object> loadMapConfig(String configName, String path) {
             Map<String, Object> config;
             for (String extension : configExtensionsOrdered) {
@@ -359,11 +440,12 @@ public abstract class Config {
         }
 
         private void checkCacheExpiration() {
-            if (System.currentTimeMillis() > cacheExpirationTime) {
+            // We dont have any use case to clear the cache over midnight; so commenting below code for now
+            /*if (System.currentTimeMillis() > cacheExpirationTime) {
                 clear();
                 logger.info("daily config cache refresh");
                 cacheExpirationTime = getNextMidNightTime();
-            }
+            }*/
         }
 
         // private method used to get absolute directory, input path can be absolute or relative
@@ -382,7 +464,7 @@ public abstract class Config {
     }
 
     static InputStream convertStringToStream(String string) {
-        return new ByteArrayInputStream(string.getBytes());
+        return new ByteArrayInputStream(string.getBytes(UTF_8));
     }
 }
 

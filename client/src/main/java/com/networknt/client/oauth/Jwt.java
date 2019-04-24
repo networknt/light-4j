@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2016 Network New Technologies Inc.
+ * Copyright (c) 2019 Network New Technologies Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -17,8 +17,9 @@
 package com.networknt.client.oauth;
 
 import com.networknt.config.Config;
+import com.networknt.utility.StringUtils;
 
-import java.util.Map;
+import java.util.*;
 
 /**
  * a model class represents a JWT mostly for caching usage so that we don't need to decrypt jwt string to get info.
@@ -30,6 +31,8 @@ public class Jwt {
     private volatile boolean renewing = false;
     private volatile long expiredRetryTimeout;
     private volatile long earlyRetryTimeout;
+    private Set<String> scopes = new HashSet<>();
+    private Key key;
 
     private static long tokenRenewBeforeExpired;
     private static long expiredRefreshRetryDelay;
@@ -53,6 +56,11 @@ public class Jwt {
                 earlyRefreshRetryDelay = (Integer)tokenConfig.get(EARLY_REFRESH_RETRY_DELAY);
             }
         }
+    }
+
+    public Jwt(Key key) {
+        this();
+        this.key = key;
     }
 
     public String getJwt() {
@@ -117,5 +125,63 @@ public class Jwt {
 
     public static void setEarlyRefreshRetryDelay(long earlyRefreshRetryDelay) {
         Jwt.earlyRefreshRetryDelay = earlyRefreshRetryDelay;
+    }
+
+    public Set<String> getScopes() {
+        return scopes;
+    }
+
+    public void setScopes(Set<String> scopes) {
+        this.scopes = scopes;
+    }
+
+    public void setScopes(String scopesStr) {
+        this.scopes = this.scopes == null ? new HashSet() : this.scopes;
+        if(StringUtils.isNotBlank(scopesStr)) {
+            scopes.addAll(Arrays.asList(scopesStr.split("(\\s)+")));
+        }
+    }
+
+    public Key getKey() {
+        return key;
+    }
+
+    /**
+     * a inner model tight to Jwt, this key is to represent to a Jwt for caching or other usage
+     * for now it's only identified by scopes and serviceId.
+     */
+    public static class Key {
+        private Set<String> scopes;
+        private String serviceId;
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(scopes, serviceId);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return hashCode() == obj.hashCode();
+        }
+
+        public Key(Set<String> scopes) {
+            this.scopes = scopes;
+        }
+
+        public Key(String serviceId) {
+            this.serviceId = serviceId;
+        }
+
+        public Key() {
+            this.scopes = new HashSet<>();
+        }
+
+        public Set<String> getScopes() {
+            return scopes;
+        }
+
+        public String getServiceId() {
+            return serviceId;
+        }
     }
 }

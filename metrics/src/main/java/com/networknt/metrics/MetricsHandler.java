@@ -2,7 +2,7 @@
  * Copyright (c) 2016 Network New Technologies Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -89,8 +89,8 @@ public class MetricsHandler implements MiddlewareHandler {
     Map<String, String> commonTags = new HashMap<>();
 
     public MetricsHandler() {
-        commonTags.put("apiName", Server.config.getServiceId());
-        commonTags.put("environment", Server.config.getEnvironment());
+        commonTags.put("apiName", Server.getServerConfig().getServiceId());
+        commonTags.put("environment", Server.getServerConfig().getEnvironment());
         InetAddress inetAddress = Util.getInetAddress();
         // On Docker for Mac, inetAddress will be null as there is a bug.
         commonTags.put("ipAddress", inetAddress == null ? "unknown" : inetAddress.getHostAddress());

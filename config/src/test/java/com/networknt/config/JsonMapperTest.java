@@ -2,7 +2,7 @@
  * Copyright (c) 2016 Network New Technologies Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -33,8 +33,8 @@ public class JsonMapperTest {
         map.put("string", "hello");
         map.put("long", 111L);
         map.put("int", 111);
-        map.put("Long", new Long(111));
-        map.put("Integer", new Integer(111));
+        map.put("Long", Long.valueOf(111));
+        map.put("Integer", Integer.valueOf(111));
         String s = JsonMapper.toJson(map);
         System.out.println("s = " + s);
         Map<String, Object> newMap = JsonMapper.string2Map(s);

@@ -2,7 +2,7 @@
  * Copyright (c) 2016 Network New Technologies Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -16,21 +16,27 @@
 
 package com.networknt.common;
 
-import com.networknt.utility.Constants;
-import sun.misc.BASE64Encoder;
+import static com.networknt.decrypt.Decryptor.CRYPT_PREFIX;
+import static java.lang.System.exit;
 
-import javax.crypto.*;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
 import java.security.AlgorithmParameters;
 import java.security.InvalidKeyException;
 import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
 
-import static com.networknt.utility.Decryptor.CRYPT_PREFIX;
-import static java.lang.System.exit;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
+
+import com.networknt.utility.Constants;
+
+import sun.misc.BASE64Encoder;
 
 public class AESEncryptor {
     public static void main(String [] args) {

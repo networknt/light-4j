@@ -2,7 +2,7 @@
  * Copyright (c) 2016 Network New Technologies Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -17,6 +17,7 @@
 package com.networknt.utility;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -25,7 +26,8 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 public class StringUtilsTest {
-    //@Test
+    @Test
+    @Ignore
     public void testExpandEnvVars() {
         String s = "IP=${DOCKER_HOST_IP}";
         Assert.assertEquals("IP=192.168.1.120", StringUtils.expandEnvVars(s));

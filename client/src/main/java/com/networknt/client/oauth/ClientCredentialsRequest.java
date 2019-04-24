@@ -2,7 +2,7 @@
  * Copyright (c) 2016 Network New Technologies Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -16,13 +16,12 @@
 
 package com.networknt.client.oauth;
 
-import com.networknt.client.Http2Client;
-import com.networknt.common.DecryptUtil;
-import com.networknt.common.SecretConstants;
-import com.networknt.config.Config;
-
 import java.util.List;
 import java.util.Map;
+
+import com.networknt.client.Http2Client;
+import com.networknt.common.SecretConstants;
+import com.networknt.config.Config;
 
 /**
  * load default values from client.yml for client credentials grant, overwrite by setters
@@ -35,7 +34,7 @@ import java.util.Map;
  * @author Steve Hu
  */
 public class ClientCredentialsRequest extends TokenRequest {
-    static Map<String, Object> secret = DecryptUtil.decryptMap((Map<String, Object>)Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET));
+    static Map<String, Object> secret = (Map<String, Object>)Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
 
 
     public ClientCredentialsRequest() {
@@ -55,6 +54,7 @@ public class ClientCredentialsRequest extends TokenRequest {
                         setClientId((String)ccConfig.get(CLIENT_ID));
                         setClientSecret((String)secret.get(SecretConstants.CLIENT_CREDENTIALS_CLIENT_SECRET));
                         setUri((String)ccConfig.get(URI));
+                        //set default scope from config.
                         setScope((List<String>)ccConfig.get(SCOPE));
                     }
                 }

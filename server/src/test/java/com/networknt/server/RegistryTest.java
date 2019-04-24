@@ -2,7 +2,7 @@
  * Copyright (c) 2016 Network New Technologies Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -17,10 +17,7 @@
 package com.networknt.server;
 
 import com.networknt.config.Config;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,7 +99,8 @@ public class RegistryTest {
 
     }
 
-    //@Test
+    @Test
+    @Ignore
     public void testServer() {
         // server cannot be started as there is no spi routing handler provider
         Assert.assertNull(server);

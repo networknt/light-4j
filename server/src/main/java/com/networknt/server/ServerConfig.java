@@ -2,7 +2,7 @@
  * Copyright (c) 2016 Network New Technologies Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -39,6 +39,13 @@ public class ServerConfig {
     boolean dynamicPort;
     int minPort;
     int maxPort;
+    int bufferSize;
+    int ioThreads;
+    int workerThreads;
+    int backlog;
+    boolean alwaysSetDate;
+    boolean allowUnescapedCharactersInUrl;
+    String serverString;
 
     public ServerConfig() {
     }
@@ -189,5 +196,61 @@ public class ServerConfig {
 
     public void setMaxPort(int maxPort) {
         this.maxPort = maxPort;
+    }
+
+    public int getBufferSize() {
+        return bufferSize;
+    }
+
+    public void setBufferSize(int bufferSize) {
+        this.bufferSize = bufferSize;
+    }
+
+    public int getIoThreads() {
+        return ioThreads;
+    }
+
+    public void setIoThreads(int ioThreads) {
+        this.ioThreads = ioThreads;
+    }
+
+    public int getWorkerThreads() {
+        return workerThreads;
+    }
+
+    public void setWorkerThreads(int workerThreads) {
+        this.workerThreads = workerThreads;
+    }
+
+    public int getBacklog() {
+        return backlog;
+    }
+
+    public void setBacklog(int backlog) {
+        this.backlog = backlog;
+    }
+
+    public boolean isAlwaysSetDate() {
+        return alwaysSetDate;
+    }
+
+    public void setAlwaysSetDate(boolean alwaysSetDate) {
+        this.alwaysSetDate = alwaysSetDate;
+    }
+
+    public String getServerString() {
+        return serverString;
+    }
+
+    public void setServerString(String serverString) {
+        this.serverString = serverString;
+    }
+
+    public boolean isAllowUnescapedCharactersInUrl() {
+        return allowUnescapedCharactersInUrl;
+    }
+
+    public void setAllowUnescapedCharactersInUrl(boolean allowUnescapedCharactersInUrl) {
+        this.allowUnescapedCharactersInUrl = allowUnescapedCharactersInUrl;
     }
 }

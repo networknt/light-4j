@@ -2,7 +2,7 @@
  * Copyright (c) 2016 Network New Technologies Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -37,8 +37,13 @@ import com.networknt.utility.StringUtils;
 public class TLSConfig {
 	private static final Logger logger = LoggerFactory.getLogger(TLSConfig.class);
 	private static final Map<String, TLSConfig> memcache = new ConcurrentHashMap<>();
-	
+	// config item that specifies whether hostname verification should be enabled or not
     public static final String VERIFY_HOSTNAME="verifyHostname";
+    // config item that specifies the default trustedNames group used to created default SSL context. 
+    // This is used to create Http2Client.SSL if set.
+    public static final String DEFAULT_GROUP_KEY="defaultGroupKey";
+    //trusted hostnames, service names, service Ids, and so on.
+    // Note: localhost and 127.0.0.1 are not trustable hostname/ip in general. So, these values should not be used as trusted names in production.
     public static final String TRUSTED_NAMES="trustedNames";
     public static final String CONFIG_LEVEL_DELIMITER = "\\.";
     

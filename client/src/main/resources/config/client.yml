@@ -19,6 +19,9 @@ tls:
 oauth:
   # OAuth 2.0 token endpoint configuration
   token:
+    cache:
+      #capacity of caching TOKENs
+      capacity: 200
     # The scope token will be renewed automatically 1 minutes before expiry
     tokenRenewBeforeExpired: 60000
     # if scope token is expired, we need short delay so that we can retry faster.
@@ -62,6 +65,20 @@ oauth:
       scope:
       - petstore.r
       - petstore.w
+  # sign endpoint configuration
+  sign:
+    # token server url. The default port number for token service is 6882.
+    server_url: https://localhost:6882
+    # signing endpoint for the sign request
+    uri: "/oauth2/token"
+    # timeout in milliseconds
+    timeout: 2000
+    # set to true if the oauth2 provider supports HTTP/2
+    enableHttp2: true
+    # client_id for client authentication
+    client_id: f7d42348-c647-4efb-a52d-4c5787421e72
+    # client secret for client authentication and it can be encrypted here.
+    client_secret: f6h1FTI8Q3-7UScPZDzfXA
   # light-oauth2 key distribution endpoint configuration
   key:
     # key distribution server url

@@ -2,7 +2,7 @@
  * Copyright (c) 2016 Network New Technologies Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -74,7 +74,7 @@ public class ResourceHelpers {
         if (pathResourceProviders != null && pathResourceProviders.length > 0) {
             for (PathResourceProvider pathResourceProvider : pathResourceProviders) {
                 if ((pathResourceProvider.isPrefixPath() && requestPath.startsWith(pathResourceProvider.getPath()))
-                        || !pathResourceProvider.isPrefixPath() && requestPath.equals(pathResourceProvider.getPath())) {
+                        || (!pathResourceProvider.isPrefixPath() && requestPath.equals(pathResourceProvider.getPath()))) {
                     isResourcePath = true;
                 }
             }
