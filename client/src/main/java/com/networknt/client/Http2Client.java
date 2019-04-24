@@ -105,12 +105,9 @@ public class Http2Client {
             .set(Options.WORKER_NAME, "Client").getMap();
     public static XnioWorker WORKER;
     public static XnioSsl SSL;
-    public static int bufferSize;
-    public static int DEFAULT_BUFFER_SIZE = 24; // 24*1024 buffer size will be good for most of the app.
     public static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
 
     static final String TLS = "tls";
-    static final String BUFFER_SIZE = "bufferSize";
     static final String LOAD_TRUST_STORE = "loadTrustStore";
     static final String LOAD_KEY_STORE = "loadKeyStore";
     static final String TRUST_STORE = "trustStore";
@@ -118,44 +115,14 @@ public class Http2Client {
     static final String TRUST_STORE_PROPERTY = "javax.net.ssl.trustStore";
     static final String TRUST_STORE_PASSWORD_PROPERTY = "javax.net.ssl.trustStorePassword";
 
-    static final String OAUTH = "oauth";
-    static final String TOKEN = "token";
-
-
-
-    static Map<String, Object> config;
-    static Map<String, Object> tokenConfig;
-    static Map<String, Object> secretConfig;
-
-    // Cached jwt token for this client.
     private final Jwt cachedJwt = new Jwt();
 
     static {
         List<String> masks = new ArrayList<>();
         ModuleRegistry.registerModule(Http2Client.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), masks);
-        config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
-        Object bufferSizeObject = config.get(BUFFER_SIZE);
-        if(bufferSizeObject == null) {
-            bufferSize = DEFAULT_BUFFER_SIZE;
-        } else {
-            bufferSize = (int)bufferSizeObject;
-        }
-        if(config != null) {
-			Map<String, Object> oauthConfig = (Map<String, Object>)config.get(OAUTH);
-            if(oauthConfig != null) {
-                tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);
-            }
-        }
-
-        Map<String, Object> secretMap = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
-        if(secretMap != null) {
-            secretConfig = DecryptUtil.decryptMap(secretMap);
-        } else {
-            throw new ExceptionInInitializerError("Could not locate secret.yml");
-        }
     }
 
-    public static final ByteBufferPool BUFFER_POOL = new DefaultByteBufferPool(true, bufferSize * 1024);
+    public static final ByteBufferPool BUFFER_POOL = new DefaultByteBufferPool(true, ClientConfig.get().getBufferSize() * 1024);
     /**
      * @deprecated Use BUFFER_POOL instead!
      */
@@ -474,15 +441,15 @@ public class Http2Client {
 	public static SSLContext createSSLContext(String trustedNamesGroupKey) throws IOException {
         SSLContext sslContext = null;
         KeyManager[] keyManagers = null;
-        Map<String, Object> tlsMap = (Map<String, Object>)config.get(TLS);
+        Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(TLS);
         if(tlsMap != null) {
             try {
                 // load key store for client certificate if two way ssl is used.
                 Boolean loadKeyStore = (Boolean) tlsMap.get(LOAD_KEY_STORE);
                 if (loadKeyStore != null && loadKeyStore) {
                     String keyStoreName = (String)tlsMap.get(KEY_STORE);
-                    String keyStorePass = (String)secretConfig.get(SecretConstants.CLIENT_KEYSTORE_PASS);
-                    String keyPass = (String)secretConfig.get(SecretConstants.CLIENT_KEY_PASS);
+                    String keyStorePass = (String)ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_KEYSTORE_PASS);
+                    String keyPass = (String)ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_KEY_PASS);
                     KeyStore keyStore = loadKeyStore(keyStoreName, keyStorePass.toCharArray());
                     KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                     keyManagerFactory.init(keyStore, keyPass.toCharArray());
@@ -505,7 +472,7 @@ public class Http2Client {
                         if(logger.isInfoEnabled()) logger.info("Loading trust store from system property at " + Encode.forJava(trustStoreName));
                     } else {
                         trustStoreName = (String) tlsMap.get(TRUST_STORE);
-                        trustStorePass = (String)secretConfig.get(SecretConstants.CLIENT_TRUSTSTORE_PASS);
+                        trustStorePass = (String)ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_TRUSTSTORE_PASS);
                         if(logger.isInfoEnabled()) logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
                     }
                     if (trustStoreName != null && trustStorePass != null) {

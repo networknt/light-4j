@@ -6,7 +6,7 @@ import com.networknt.config.Config;
 import java.util.Map;
 
 
-public class ClientConfig {
+public final class ClientConfig {
 
     public static final String CONFIG_NAME = "client";
     public static final String CONFIG_SECRET = "secret";
@@ -108,6 +108,10 @@ public class ClientConfig {
 
     public Config getConfig() {
         return config;
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
     }
 
     public Map<String, Object> getTokenConfig() {
