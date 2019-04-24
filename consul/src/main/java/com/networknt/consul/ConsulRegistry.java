@@ -117,7 +117,6 @@ public class ConsulRegistry extends CommandFailbackRegistry {
      */
     private void startListenerThreadIfNewService(URL url) {
         String serviceName = url.getPath();
-        String tag = url.getParameter(Constants.TAG_ENVIRONMENT);
         if (!lookupServices.containsKey(serviceName)) {
             Long value = lookupServices.putIfAbsent(serviceName, 0L);
             if (value == null) {
