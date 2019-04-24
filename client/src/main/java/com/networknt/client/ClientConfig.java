@@ -61,12 +61,7 @@ public final class ClientConfig {
     }
 
     private void setSecretConfig() {
-        Map<String, Object> secretMap = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
-        if(secretMap != null) {
-            secretConfig = DecryptUtil.decryptMap(secretMap);
-        } else {
-            throw new ExceptionInInitializerError("Could not locate secret.yml");
-        }
+        secretConfig = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
     }
 
     private void setRequestConfig() {
