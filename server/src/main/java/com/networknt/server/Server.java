@@ -73,15 +73,18 @@ public class Server {
     // service_id in slf4j MDC
     static final String SID = "sId";
 
-    @Deprecated
-    public static ServerConfig config = getServerConfig(); // there are a lot of users are using the static variable in their code.
+    @Deprecated //use getServerConfig() method instead
+    public static ServerConfig config; // there are a lot of users are using the static variable in their code.
+
     public final static TrustManager[] TRUST_ALL_CERTS = new X509TrustManager[]{new DummyTrustManager()};
+    /** a list of service ids populated by startup hooks that want to register to the service registry */
+    public static List<String> serviceIds = new ArrayList<>();
+    /** a list of service urls kept in memory so that they can be unregistered during server shutdown */
+    public static List<URL> serviceUrls;
 
     static protected boolean shutdownRequested = false;
     static Undertow server = null;
-    static URL serviceUrl;
     static Registry registry;
-
     static SSLContext sslContext;
 
     static GracefulShutdownHandler gracefulShutdownHandler;
@@ -94,12 +97,16 @@ public class Server {
         logger.info("server starts");
         // setup system property to redirect undertow logs to slf4j/logback.
         System.setProperty("org.jboss.logging.provider", "slf4j");
-        // this will make sure that all log statement will have serviceId
-        MDC.put(SID, getServerConfig().getServiceId());
 
         try {
 
             loadConfigs();
+
+            // Initialize server configs now using the config values loaded by loadConfigs()
+            config = getServerConfig();
+
+            // this will make sure that all log statement will have serviceId
+            MDC.put(SID, config.getServiceId());
 
             // merge status.yml and app-status.yml if app-status.yml is provided
             mergeStatusConfig();
@@ -158,8 +165,7 @@ public class Server {
             gracefulShutdownHandler = new GracefulShutdownHandler(new OrchestrationHandler());
         }
 
-       ServerConfig serverConfig = getServerConfig();
-
+        ServerConfig serverConfig = getServerConfig();
         if (serverConfig.dynamicPort) {
             if (serverConfig.minPort > serverConfig.maxPort) {
                 String errMessage = "No ports available to bind to - the minPort is larger than the maxPort in server.yml";
@@ -216,7 +222,6 @@ public class Server {
 
     static private boolean bind(HttpHandler handler, int port) {
         ServerConfig serverConfig = getServerConfig();
-
         try {
             Undertow.Builder builder = Undertow.builder();
             if (serverConfig.enableHttps) {
@@ -269,41 +274,18 @@ public class Server {
         }
         // application level service registry. only be used without docker container.
         if (serverConfig.enableRegistry) {
-            // assuming that registry is defined in service.json, otherwise won't start
-            // server.
-            try {
-                registry = SingletonServiceFactory.getBean(Registry.class);
-                if (registry == null)
-                    throw new RuntimeException("Could not find registry instance in service map");
-                // in kubernetes pod, the hostIP is passed in as STATUS_HOST_IP environment
-                // variable. If this is null
-                // then get the current server IP as it is not running in Kubernetes.
-                String ipAddress = System.getenv(STATUS_HOST_IP);
-                logger.info("Registry IP from STATUS_HOST_IP is " + ipAddress);
-                if (ipAddress == null) {
-                    InetAddress inetAddress = Util.getInetAddress();
-                    ipAddress = inetAddress.getHostAddress();
-                    logger.info("Could not find IP from STATUS_HOST_IP, use the InetAddress " + ipAddress);
+            // assuming that registry is defined in service.json, otherwise won't start the server.
+            serviceUrls = new ArrayList<>();
+            serviceUrls.add(register(serverConfig.getServiceId(), port));
+            // check if any serviceIds from startup hook that need to be registered.
+            if(serviceIds.size() > 0) {
+                for(String id: serviceIds) {
+                    serviceUrls.add(register(id, port));
                 }
-                Map parameters = new HashMap<>();
-                if (serverConfig.getEnvironment() != null)
-                    parameters.put(ENV_PROPERTY_KEY, serverConfig.getEnvironment());
-                serviceUrl = new URLImpl("light", ipAddress, port, getServerConfig().getServiceId(), parameters);
-                registry.register(serviceUrl);
-                if (logger.isInfoEnabled())
-                    logger.info("register service: " + serviceUrl.toFullStr());
-
-                // start heart beat if registry is enabled
-                SwitcherUtil.setSwitcherValue(Constants.REGISTRY_HEARTBEAT_SWITCHER, true);
-                if (logger.isInfoEnabled())
-                    logger.info("Registry heart beat switcher is on");
-                // handle the registration exception separately to eliminate confusion
-            } catch (Exception e) {
-                System.out.println("Failed to register service, the server stopped.");
-                if (logger.isInfoEnabled())
-                    logger.info("Failed to register service, the server stopped.");
-                throw new RuntimeException(e.getMessage());
             }
+            // start heart beat if registry is enabled
+            SwitcherUtil.setSwitcherValue(Constants.REGISTRY_HEARTBEAT_SWITCHER, true);
+            if (logger.isInfoEnabled()) logger.info("Registry heart beat switcher is on");
         }
 
         if (serverConfig.enableHttp) {
@@ -335,18 +317,17 @@ public class Server {
 
     // implement shutdown hook here.
     static public void shutdown() {
-        ServerConfig serverConfig = getServerConfig();
 
         // need to unregister the service
-        if (serverConfig.enableRegistry && registry != null) {
-            registry.unregister(serviceUrl);
-            // Please don't remove the following line. When server is killed, the logback
-            // won't work anymore.
-            // Even debugger won't reach this point; however, the logic is executed
-            // successfully here.
-            System.out.println("unregister serviceUrl " + serviceUrl);
-            if (logger.isInfoEnabled())
-                logger.info("unregister serviceUrl " + serviceUrl);
+        if (getServerConfig().enableRegistry && registry != null && serviceUrls != null) {
+            for(URL serviceUrl: serviceUrls) {
+                registry.unregister(serviceUrl);
+                // Please don't remove the following line. When server is killed, the logback won't work anymore.
+                // Even debugger won't reach this point; however, the logic is executed successfully here.
+                System.out.println("unregister serviceUrl " + serviceUrl);
+                if (logger.isInfoEnabled())
+                    logger.info("unregister serviceUrl " + serviceUrl);
+            }
         }
 
         if (gracefulShutdownHandler != null) {
@@ -378,10 +359,9 @@ public class Server {
     }
 
     private static KeyStore loadKeyStore() {
-        ServerConfig serverConfig = getServerConfig();
         Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
 
-        String name = serverConfig.getKeystoreName();
+        String name = getServerConfig().getKeystoreName();
         try (InputStream stream = Config.getInstance().getInputStreamFromFile(name)) {
             KeyStore loadedKeystore = KeyStore.getInstance("JKS");
             loadedKeystore.load(stream, ((String) secretConfig.get(SecretConstants.SERVER_KEYSTORE_PASS)).toCharArray());
@@ -393,10 +373,9 @@ public class Server {
     }
 
     protected static KeyStore loadTrustStore() {
-        ServerConfig serverConfig = getServerConfig();
         Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
 
-        String name = serverConfig.getTruststoreName();
+        String name = getServerConfig().getTruststoreName();
         try (InputStream stream = Config.getInstance().getInputStreamFromFile(name)) {
             KeyStore loadedKeystore = KeyStore.getInstance("JKS");
             loadedKeystore.load(stream, ((String) secretConfig.get(SecretConstants.SERVER_TRUSTSTORE_PASS)).toCharArray());
@@ -441,14 +420,13 @@ public class Server {
     }
 
     private static SSLContext createSSLContext() throws RuntimeException {
-        ServerConfig serverConfig = getServerConfig();
         Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
 
         try {
             KeyManager[] keyManagers = buildKeyManagers(loadKeyStore(),
                     ((String) secretConfig.get(SecretConstants.SERVER_KEY_PASS)).toCharArray());
             TrustManager[] trustManagers;
-            if (serverConfig.isEnableTwoWayTls()) {
+            if (getServerConfig().isEnableTwoWayTls()) {
                 trustManagers = buildTrustManagers(loadTrustStore());
             } else {
                 trustManagers = buildTrustManagers(null);
@@ -486,5 +464,47 @@ public class Server {
     public static ServerConfig getServerConfig(){
         return (ServerConfig) Config.getInstance().getJsonObjectConfig(SERVER_CONFIG_NAME,
                 ServerConfig.class);
+    }
+
+    /**
+     * Register the service to the Consul or other service registry. Make it as a separate static method so that it
+     * can be called from light-hybrid-4j to register individual service.
+     *
+     * @param serviceId Service Id that is registered
+     * @param port Port number of the service
+     */
+    public static URL register(String serviceId, int port) {
+        try {
+            registry = SingletonServiceFactory.getBean(Registry.class);
+            if (registry == null)
+                throw new RuntimeException("Could not find registry instance in service map");
+            // in kubernetes pod, the hostIP is passed in as STATUS_HOST_IP environment
+            // variable. If this is null
+            // then get the current server IP as it is not running in Kubernetes.
+            String ipAddress = System.getenv(STATUS_HOST_IP);
+            logger.info("Registry IP from STATUS_HOST_IP is " + ipAddress);
+            if (ipAddress == null) {
+                InetAddress inetAddress = Util.getInetAddress();
+                ipAddress = inetAddress.getHostAddress();
+                logger.info("Could not find IP from STATUS_HOST_IP, use the InetAddress " + ipAddress);
+            }
+
+            ServerConfig serverConfig = getServerConfig();
+            Map parameters = new HashMap<>();
+            if (serverConfig.getEnvironment() != null)
+                parameters.put(ENV_PROPERTY_KEY, serverConfig.getEnvironment());
+            URL serviceUrl = new URLImpl("light", ipAddress, port, serviceId, parameters);
+            if (logger.isInfoEnabled()) logger.info("register service: " + serviceUrl.toFullStr());
+            registry.register(serviceUrl);
+            return serviceUrl;
+            // handle the registration exception separately to eliminate confusion
+        } catch (Exception e) {
+            System.out.println("Failed to register service, the server stopped.");
+            e.printStackTrace();
+            if (logger.isInfoEnabled())
+                logger.info("Failed to register service, the server stopped.", e);
+            throw new RuntimeException(e.getMessage());
+        }
+
     }
 }
