@@ -78,7 +78,9 @@ public class ConsulUtils {
             //String group = service.getName();
             //params.put(URLParamType.group.getName(), group);
             //params.put(URLParamType.nodeType.getName(), Constants.NODE_TYPE_SERVICE);
-            params.put(URLParamType.environment.getName(), service.getTags().get(0));
+            if (!service.getTags().isEmpty()) {
+                params.put(URLParamType.environment.getName(), service.getTags().get(0));
+            }
             url = new URLImpl(ConsulConstants.DEFAULT_PROTOCOL, service.getAddress(), service.getPort(),
                     ConsulUtils.getPathFromServiceId(service.getId()), params);
         }
