@@ -19,11 +19,11 @@ package com.networknt.consul;
 import com.networknt.client.Http2Client;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
-import com.networknt.registry.URLParamType;
 import com.networknt.consul.client.ConsulClient;
+import com.networknt.registry.URL;
+import com.networknt.registry.URLParamType;
 import com.networknt.registry.support.command.CommandFailbackRegistry;
 import com.networknt.registry.support.command.ServiceListener;
-import com.networknt.registry.URL;
 import com.networknt.utility.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -172,6 +171,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
     }
 
     private ConcurrentHashMap<String, List<URL>> lookupServiceUpdate(String serviceName, String tag) {
+        tag = null;
         Long lastConsulIndexId = lookupServices.get(serviceName) == null ? 0L : lookupServices.get(serviceName);
         if(logger.isDebugEnabled()) logger.debug("serviceName = " + serviceName + " tag = " + tag + " lastConsulIndexId = " + lastConsulIndexId);
         ConsulResponse<List<ConsulService>> response = lookupConsulService(serviceName, tag, lastConsulIndexId);

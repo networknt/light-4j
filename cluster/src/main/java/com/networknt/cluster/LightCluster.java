@@ -17,10 +17,7 @@
 package com.networknt.cluster;
 
 import com.networknt.balance.LoadBalance;
-import com.networknt.registry.NotifyListener;
-import com.networknt.registry.Registry;
-import com.networknt.registry.URL;
-import com.networknt.registry.URLImpl;
+import com.networknt.registry.*;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.ConcurrentHashSet;
 import com.networknt.utility.Constants;
@@ -101,6 +98,15 @@ public class LightCluster implements Cluster {
             }
             urls = registry.discover(subscribeUrl);
             if(logger.isDebugEnabled()) logger.debug("discovered urls = " + urls);
+        }
+        //if doesn't specify envTag at all, return all the urls
+        if(tag == null) {return urls;}
+        //otherwise return corresponding urls, especially, when don't register with an envTag, envTag should be "" instead of null;
+        if(urls != null) {
+            return urls.stream()
+                    .filter(url -> url.getParameter(URLParamType.environment.getName()) != null
+                            && url.getParameter(URLParamType.environment.getName()).equals(tag))
+                    .collect(Collectors.toList());
         }
         return urls;
     }
