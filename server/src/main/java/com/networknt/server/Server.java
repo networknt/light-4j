@@ -74,7 +74,7 @@ public class Server {
     static final String SID = "sId";
 
     @Deprecated //use getServerConfig() method instead
-    public static ServerConfig config; // there are a lot of users are using the static variable in their code.
+    public static ServerConfig config = getServerConfig(); // there are a lot of users are using the static variable in their code.
 
     public final static TrustManager[] TRUST_ALL_CERTS = new X509TrustManager[]{new DummyTrustManager()};
     /** a list of service ids populated by startup hooks that want to register to the service registry */
@@ -101,9 +101,6 @@ public class Server {
         try {
 
             loadConfigs();
-
-            // Initialize server configs now using the config values loaded by loadConfigs()
-            config = getServerConfig();
 
             // this will make sure that all log statement will have serviceId
             MDC.put(SID, config.getServiceId());
