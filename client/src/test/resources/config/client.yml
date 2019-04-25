@@ -61,4 +61,7 @@ oauth:
     uri: "/oauth2/deref"
     # client_id used to access key distribution service. It can be the same client_id with token service or not.
     client_id: f7d42348-c647-4efb-a52d-4c5787421e72
-
+request:
+  errorThreshold: 2
+  timeout: 3000
+  resetTimeout: 7000

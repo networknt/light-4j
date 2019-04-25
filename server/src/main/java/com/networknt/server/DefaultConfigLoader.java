@@ -73,7 +73,7 @@ public class DefaultConfigLoader implements IConfigLoader{
                 return;
             }
             String version = Util.getJarVersion();
-            String service = Server.getServerConfig().getServiceId();
+            String service = Server.config.getServiceId();
             String tempDir = System.getProperty("java.io.tmpdir");
             String zipFile = tempDir + "/config.zip";
             // /v1/config/1.2.4/dev/com.networknt.petstore-1.0.0
