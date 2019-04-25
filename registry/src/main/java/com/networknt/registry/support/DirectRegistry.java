@@ -51,7 +51,7 @@ public class DirectRegistry extends AbstractRegistry {
                 if(entry.getValue().contains(",")) {
                     String[] directUrlArray = entry.getValue().split(",");
                     for (String directUrl : directUrlArray) {
-                        urls.add(addGeneralTag(URLImpl.valueOf(directUrl + "/" + entry.getKey())));
+                        urls.add(addGeneralTag(URLImpl.valueOf(directUrl.trim() + "/" + entry.getKey())));
                     }
                 } else {
                     urls.add(addGeneralTag(URLImpl.valueOf(entry.getValue() + "/" + entry.getKey())));
