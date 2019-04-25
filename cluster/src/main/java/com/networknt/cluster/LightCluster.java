@@ -39,6 +39,8 @@ import java.util.stream.Collectors;
  * Created by stevehu on 2017-01-27.
  */
 public class LightCluster implements Cluster {
+    private final static String GENERAL_TAG = "*";
+
     private static Logger logger = LoggerFactory.getLogger(LightCluster.class);
     private static Registry registry = SingletonServiceFactory.getBean(Registry.class);
     private static LoadBalance loadBalance = SingletonServiceFactory.getBean(LoadBalance.class);
@@ -105,7 +107,7 @@ public class LightCluster implements Cluster {
         if(urls != null) {
             return urls.stream()
                     .filter(url -> url.getParameter(URLParamType.environment.getName()) != null
-                            && url.getParameter(URLParamType.environment.getName()).equals(tag))
+                            && (url.getParameter(URLParamType.environment.getName()).equals(tag) || url.getParameter(URLParamType.environment.getName()).equals(GENERAL_TAG)))
                     .collect(Collectors.toList());
         }
         return urls;
