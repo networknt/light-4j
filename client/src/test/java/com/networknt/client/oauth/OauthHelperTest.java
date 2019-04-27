@@ -254,15 +254,28 @@ public class OauthHelperTest {
     }
 
     @Test
-    public void testGetKey() throws Exception {
-        KeyRequest keyRequest = new KeyRequest("100");
-        keyRequest.setClientId("test_client");
-        keyRequest.setClientSecret("test_secret");
-        keyRequest.setServerUrl("http://localhost:8887");
-        keyRequest.setUri("/oauth2/key");
-        keyRequest.setEnableHttp2(true);
+    public void testGetSignKey() throws Exception {
+        SignKeyRequest request = new SignKeyRequest("100");
+        request.setClientId("test_client");
+        request.setClientSecret("test_secret");
+        request.setServerUrl("http://localhost:8887");
+        request.setUri("/oauth2/key");
+        request.setEnableHttp2(true);
 
-        String key = OauthHelper.getKey(keyRequest);
+        String key = OauthHelper.getKey(request);
+        System.out.println("key = " + key);
+    }
+
+    @Test
+    public void testGetTokenKey() throws Exception {
+        TokenKeyRequest request = new TokenKeyRequest("100");
+        request.setClientId("test_client");
+        request.setClientSecret("test_secret");
+        request.setServerUrl("http://localhost:8887");
+        request.setUri("/oauth2/key");
+        request.setEnableHttp2(true);
+
+        String key = OauthHelper.getKey(request);
         System.out.println("key = " + key);
     }
 

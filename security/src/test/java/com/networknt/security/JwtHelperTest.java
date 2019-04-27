@@ -74,14 +74,72 @@ public class JwtHelperTest {
         System.out.println("jwtClaims = " + claims);
     }
 
+    @Test
+    public void testVerifyToken() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"));
+        String jwt = JwtIssuer.getJwt(claims);
+        claims = null;
+        Assert.assertNotNull(jwt);
+        try {
+            claims = JwtHelper.verifyJwt(jwt, false, true);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Assert.assertNotNull(claims);
+        Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
+
+        try {
+            claims = JwtHelper.verifyJwt(jwt, false, true);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("jwtClaims = " + claims);
+    }
+
+    @Test
+    public void testVerifySign() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"));
+        String jwt = JwtIssuer.getJwt(claims);
+        claims = null;
+        Assert.assertNotNull(jwt);
+        try {
+            claims = JwtHelper.verifyJwt(jwt, false, false);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Assert.assertNotNull(claims);
+        Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
+
+        try {
+            claims = JwtHelper.verifyJwt(jwt, false, false);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("jwtClaims = " + claims);
+    }
+
     /**
      * This test needs light-oauth2 service to be up and running in order to test it
-     * to start the light-oauth2 please refer to https://networknt.github.io/light-oauth2/tutorials/enterprise/
+     * to start the light-oauth2 please refer to https://networknt.github.io/light-oauth2/tutorials
      */
     @Test
     @Ignore
-    public void testGetCertFromOauth() {
-        X509Certificate certificate = JwtHelper.getCertFromOauth("100");
+    public void testGetCertForToken() {
+        X509Certificate certificate = JwtHelper.getCertForToken("100");
+        System.out.println("certificate = " + certificate);
+        Assert.assertNotNull(certificate);
+    }
+
+    /**
+     * This test needs light-oauth2 service to be up and running in order to test it
+     * to start the light-oauth2 please refer to https://networknt.github.io/light-oauth2/tutorials
+     */
+    @Test
+    @Ignore
+    public void testGetCertForSign() {
+        X509Certificate certificate = JwtHelper.getCertForSign("100");
         System.out.println("certificate = " + certificate);
         Assert.assertNotNull(certificate);
     }
