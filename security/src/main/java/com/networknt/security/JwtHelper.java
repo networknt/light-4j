@@ -19,6 +19,8 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.networknt.client.oauth.KeyRequest;
 import com.networknt.client.oauth.OauthHelper;
+import com.networknt.client.oauth.SignKeyRequest;
+import com.networknt.client.oauth.TokenKeyRequest;
 import com.networknt.config.Config;
 import com.networknt.exception.ExpiredTokenException;
 import com.networknt.utility.FingerPrintUtil;
@@ -169,8 +171,29 @@ public class JwtHelper {
      * @return JwtClaims object
      * @throws InvalidJwtException InvalidJwtException
      * @throws ExpiredTokenException ExpiredTokenException
+     * @deprecated Use verifyToken instead.
      */
+    @Deprecated
     public static JwtClaims verifyJwt(String jwt, boolean ignoreExpiry) throws InvalidJwtException, ExpiredTokenException {
+        return verifyJwt(jwt, ignoreExpiry, true);
+    }
+
+    /**
+     * Verify JWT token format and signature. If ignoreExpiry is true, skip expiry verification, otherwise
+     * verify the expiry before signature verification.
+     *
+     * In most cases, we need to verify the expiry of the jwt token. The only time we need to ignore expiry
+     * verification is in SPA middleware handlers which need to verify csrf token in jwt against the csrf
+     * token in the request header to renew the expired token.
+     *
+     * @param jwt String of Json web token
+     * @param ignoreExpiry If true, don't verify if the token is expired.
+     * @param isToken True if the jwt is an OAuth 2.0 access token
+     * @return JwtClaims object
+     * @throws InvalidJwtException InvalidJwtException
+     * @throws ExpiredTokenException ExpiredTokenException
+     */
+    public static JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken) throws InvalidJwtException, ExpiredTokenException {
         JwtClaims claims;
 
         if(Boolean.TRUE.equals(enableJwtCache)) {
@@ -226,7 +249,7 @@ public class JwtHelper {
         // go to OAuth2 server /oauth2/key endpoint to get the public key certificate with kid as parameter.
         X509Certificate certificate = certMap == null? null : certMap.get(kid);
         if(certificate == null) {
-            certificate = getCertFromOauth(kid);
+            certificate = isToken? getCertForToken(kid) : getCertForSign(kid);
             if(certMap == null) certMap = new HashMap<>();  // null if bootstrapFromKeyService is true
             certMap.put(kid, certificate);
         }
@@ -249,9 +272,23 @@ public class JwtHelper {
         return claims;
     }
 
-    public static X509Certificate getCertFromOauth(String kid) {
+    public static X509Certificate getCertForToken(String kid) {
         X509Certificate certificate = null;
-        KeyRequest keyRequest = new KeyRequest(kid);
+        TokenKeyRequest keyRequest = new TokenKeyRequest(kid);
+        try {
+            String key = OauthHelper.getKey(keyRequest);
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            certificate = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(key.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw new RuntimeException(e);
+        }
+        return certificate;
+    }
+
+    public static X509Certificate getCertForSign(String kid) {
+        X509Certificate certificate = null;
+        SignKeyRequest keyRequest = new SignKeyRequest(kid);
         try {
             String key = OauthHelper.getKey(keyRequest);
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
