@@ -17,6 +17,7 @@
 package com.networknt.config;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -108,7 +109,7 @@ public abstract class Config {
 
         static final Logger logger = LoggerFactory.getLogger(Config.class);
 
-        public final String[] EXTERNALIZED_PROPERTY_DIR = System.getProperty(LIGHT_4J_CONFIG_DIR, "").split(":");
+        public final String[] EXTERNALIZED_PROPERTY_DIR = System.getProperty(LIGHT_4J_CONFIG_DIR, "").split(File.pathSeparator);
 
         private long cacheExpirationTime = 0L;
 
