@@ -36,21 +36,8 @@ import java.security.PrivateKey;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.interfaces.RSAPrivateKey;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
@@ -60,6 +47,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
+import com.networknt.client.circuitbreaker.CircuitBreaker;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
@@ -70,10 +58,8 @@ import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.jwt.consumer.JwtContext;
 import org.jose4j.lang.JoseException;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
+import org.junit.rules.ExpectedException;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,6 +96,7 @@ import io.undertow.util.StringWriteChannelListener;
 
 public class Http2ClientTest {
     static final Logger logger = LoggerFactory.getLogger(Http2ClientTest.class);
+    public static final String SLOW = "/slow";
     static Undertow server = null;
     static SSLContext sslContext;
     private static final String message = "Hello World!";
@@ -130,8 +117,6 @@ public class Http2ClientTest {
 
     private static final URI ADDRESS;
 
-
-
     static {
         try {
             ADDRESS = new URI("http://localhost:7777");
@@ -140,11 +125,21 @@ public class Http2ClientTest {
         }
     }
 
+    private static int slowCount;
+
     static void sendMessage(final HttpServerExchange exchange) {
         exchange.setStatusCode(StatusCodes.OK);
         exchange.getResponseHeaders().put(Headers.CONTENT_LENGTH, message.length() + "");
         final Sender sender = exchange.getResponseSender();
         sender.send(message);
+    }
+
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
+
+    @Before
+    public void setUp() {
+        slowCount = 0;
     }
 
     @BeforeClass
@@ -223,6 +218,15 @@ public class Http2ClientTest {
                                 public void handle(HttpServerExchange exchange, String message) {
                                     exchange.getResponseSender().send(message);
                                 }
+                            }))
+                            .addExactPath(SLOW, exchange -> exchange.getRequestReceiver().receiveFullString((exchange2, message) -> {
+                                try {
+                                    if (slowCount < 2) {
+                                        Thread.sleep(4000);
+                                    }
+                                } catch (InterruptedException e) {
+                                }
+                                exchange2.getResponseSender().send(message);
                             })))
                     .setWorkerThreads(200)
                     .build();
@@ -271,6 +275,80 @@ public class Http2ClientTest {
         final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(POST);
         client.addAuthToken(request, "token");
         Assert.assertEquals("Bearer token", request.getRequestHeaders().getFirst(Headers.AUTHORIZATION));
+    }
+
+    @Test(expected = TimeoutException.class)
+    public void shouldThrowTimeoutExceptionIfTimeoutHasBeenReached() throws URISyntaxException, ExecutionException, InterruptedException, TimeoutException {
+        Http2Client client = createClient();
+
+        final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(SLOW);
+        request.getRequestHeaders().put(Headers.HOST, "localhost");
+        request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+
+        client.getRequestService(new URI("https://localhost:7778"), request, Optional.empty()).call();
+    }
+
+    @Test
+    public void shouldCircuitBeOpenIfThresholdIsReached() throws URISyntaxException, ExecutionException, InterruptedException, TimeoutException {
+        expectedException.expect(IllegalStateException.class);
+        expectedException.expectMessage("circuit is opened.");
+
+        Http2Client client = createClient();
+
+        final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(SLOW);
+        request.getRequestHeaders().put(Headers.HOST, "localhost");
+        request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+
+        CircuitBreaker service = client.getRequestService(new URI("https://localhost:7778"), request, Optional.empty());
+        try {
+            service.call();
+            fail();
+        } catch (TimeoutException e) {
+            try {
+                service.call();
+                fail();
+            } catch (TimeoutException ex) {
+                service.call();
+            }
+        }
+    }
+
+
+    @Test
+    public void shouldCircuitBeCloseIfResetTimeoutIsReached() throws URISyntaxException, ExecutionException, InterruptedException, TimeoutException {
+        Http2Client client = createClient();
+
+        final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(SLOW);
+        request.getRequestHeaders().put(Headers.HOST, "localhost");
+        request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+
+        CircuitBreaker service = client.getRequestService(new URI("https://localhost:7778"), request, Optional.empty());
+        try {
+            service.call();
+            fail();
+        } catch (TimeoutException e) {
+            slowCount++;
+            try {
+                service.call();
+                fail();
+            } catch (TimeoutException ex) {
+                slowCount++;
+                Thread.sleep(7100);
+                service.call();
+            }
+        }
+    }
+
+    @Test
+    public void shouldCallRequestAsync() throws URISyntaxException, ExecutionException, InterruptedException, TimeoutException {
+        Http2Client client = createClient();
+
+        final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(POST);
+        request.getRequestHeaders().put(Headers.HOST, "localhost");
+        request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+
+        ClientResponse clientResponse = client.getRequestService(new URI("https://localhost:7778"), request, Optional.empty()).call();
+        Assert.assertEquals(200, clientResponse.getResponseCode());
     }
 
     @Test
@@ -864,14 +942,14 @@ public class Http2ClientTest {
     private static SSLContext createTestSSLContext(boolean verifyHostName, String trustedNamesGroupKey) throws IOException {
         SSLContext sslContext = null;
         KeyManager[] keyManagers = null;
-        Map<String, Object> tlsMap = (Map<String, Object>)Http2Client.config.get(Http2Client.TLS);
+        Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
         if(tlsMap != null) {
             try {
                 // load key store for client certificate if two way ssl is used.
                 Boolean loadKeyStore = (Boolean) tlsMap.get(Http2Client.LOAD_KEY_STORE);
                 if (loadKeyStore != null && loadKeyStore) {
                     String keyStoreName = (String)tlsMap.get(Http2Client.KEY_STORE);
-                    String keyPass = (String)Http2Client.secretConfig.get(SecretConstants.CLIENT_KEY_PASS);
+                    String keyPass = (String) ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_KEY_PASS);
                     KeyStore keyStore = loadKeyStore(keyStoreName);
                     KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                     keyManagerFactory.init(keyStore, keyPass.toCharArray());
@@ -894,7 +972,7 @@ public class Http2ClientTest {
                         if(logger.isInfoEnabled()) logger.info("Loading trust store from system property at " + Encode.forJava(trustStoreName));
                     } else {
                         trustStoreName = (String) tlsMap.get(Http2Client.TRUST_STORE);
-                        trustStorePass = (String)Http2Client.secretConfig.get(SecretConstants.CLIENT_TRUSTSTORE_PASS);
+                        trustStorePass = (String)ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_TRUSTSTORE_PASS);
                         if(logger.isInfoEnabled()) logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
                     }
                     if (trustStoreName != null && trustStorePass != null) {

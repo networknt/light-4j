@@ -16,48 +16,29 @@
 
 package com.networknt.client.oauth;
 
-import java.util.Map;
-
-import com.networknt.client.Http2Client;
-import com.networknt.common.SecretConstants;
-import com.networknt.config.Config;
-
+/**
+ * This is the generic key request with an id and interface.
+ */
 public class KeyRequest {
     public static String OAUTH = "oauth";
     public static String KEY = "key";
     public static String SERVER_URL = "server_url";
     public static String URI = "uri";
     public static String CLIENT_ID = "client_id";
+    public static String CLIENT_SECRET = "client_secret";
     public static String ENABLE_HTTP2 = "enableHttp2";
 
-    static Map<String, Object> secret = (Map<String, Object>)Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
 
     String serverUrl;
     String uri;
     String clientId;
     String clientSecret;
     boolean enableHttp2;
+    String kid;
 
     public KeyRequest(String kid) {
-        Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
-        // client_secret is in secret.yml instead of client.yml
-        if(clientConfig != null) {
-            Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OAUTH);
-            if(oauthConfig != null) {
-                Map<String, Object> keyConfig = (Map<String, Object>)oauthConfig.get(KEY);
-                if(keyConfig != null) {
-                    setServerUrl((String)keyConfig.get(SERVER_URL));
-                    Object object = keyConfig.get(ENABLE_HTTP2);
-                    setEnableHttp2(object != null && (Boolean) object);
-                    setUri(keyConfig.get(URI) + "/" + kid);
-                    setClientId((String)keyConfig.get(CLIENT_ID));
-                    setClientSecret((String)secret.get(SecretConstants.KEY_CLIENT_SECRET));
-                }
-            }
-        }
+        this.kid = kid;
     }
-
-    public KeyRequest() { }
 
     public String getUri() {
         return uri;
@@ -94,4 +75,12 @@ public class KeyRequest {
     public boolean isEnableHttp2() { return enableHttp2; }
 
     public void setEnableHttp2(boolean enableHttp2) { this.enableHttp2 = enableHttp2; }
+
+    public String getKid() {
+        return kid;
+    }
+
+    public void setKid(String kid) {
+        this.kid = kid;
+    }
 }

@@ -17,10 +17,7 @@
 package com.networknt.cluster;
 
 import com.networknt.balance.LoadBalance;
-import com.networknt.registry.NotifyListener;
-import com.networknt.registry.Registry;
-import com.networknt.registry.URL;
-import com.networknt.registry.URLImpl;
+import com.networknt.registry.*;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.ConcurrentHashSet;
 import com.networknt.utility.Constants;
@@ -29,10 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -45,6 +39,8 @@ import java.util.stream.Collectors;
  * Created by stevehu on 2017-01-27.
  */
 public class LightCluster implements Cluster {
+    private final static String GENERAL_TAG = "*";
+
     private static Logger logger = LoggerFactory.getLogger(LightCluster.class);
     private static Registry registry = SingletonServiceFactory.getBean(Registry.class);
     private static LoadBalance loadBalance = SingletonServiceFactory.getBean(LoadBalance.class);
@@ -104,6 +100,15 @@ public class LightCluster implements Cluster {
             }
             urls = registry.discover(subscribeUrl);
             if(logger.isDebugEnabled()) logger.debug("discovered urls = " + urls);
+        }
+        //if doesn't specify envTag at all, return all the urls
+        if(tag == null) {return urls;}
+        //otherwise return corresponding urls, especially, when don't register with an envTag, envTag should be "" instead of null;
+        if(urls != null) {
+            return urls.stream()
+                    .filter(url -> url.getParameter(URLParamType.environment.getName()) != null
+                            && (url.getParameter(URLParamType.environment.getName()).equals(tag) || url.getParameter(URLParamType.environment.getName()).equals(GENERAL_TAG)))
+                    .collect(Collectors.toList());
         }
         return urls;
     }

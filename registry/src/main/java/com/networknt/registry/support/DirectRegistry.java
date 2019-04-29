@@ -20,6 +20,7 @@ import com.networknt.status.Status;
 import com.networknt.exception.FrameworkException;
 import com.networknt.registry.NotifyListener;
 import com.networknt.registry.URL;
+import com.networknt.utility.Constants;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,6 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class DirectRegistry extends AbstractRegistry {
     private final static String PARSE_DIRECT_URL_ERROR = "ERR10019";
+    private final static String GENERAL_TAG = "*";
     private ConcurrentHashMap<URL, Object> subscribeUrls = new ConcurrentHashMap();
     private Map<String, List<URL>> directUrls = new HashMap();
 
@@ -49,10 +51,10 @@ public class DirectRegistry extends AbstractRegistry {
                 if(entry.getValue().contains(",")) {
                     String[] directUrlArray = entry.getValue().split(",");
                     for (String directUrl : directUrlArray) {
-                        urls.add(URLImpl.valueOf(directUrl + "/" + entry.getKey()));
+                        urls.add(addGeneralTag(URLImpl.valueOf(directUrl.trim() + "/" + entry.getKey())));
                     }
                 } else {
-                    urls.add(URLImpl.valueOf(entry.getValue() + "/" + entry.getKey()));
+                    urls.add(addGeneralTag(URLImpl.valueOf(entry.getValue() + "/" + entry.getKey())));
                 }
             } catch (Exception e) {
                 throw new FrameworkException(new Status(PARSE_DIRECT_URL_ERROR, url.toString()));
@@ -101,5 +103,10 @@ public class DirectRegistry extends AbstractRegistry {
     @Override
     protected void doUnavailable(URL url) {
         // do nothing
+    }
+
+    private URL addGeneralTag(URL url) {
+        url.addParameter(Constants.TAG_ENVIRONMENT, GENERAL_TAG);
+        return url;
     }
 }
