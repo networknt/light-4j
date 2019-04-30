@@ -46,6 +46,7 @@ public class TokenKeyRequest extends KeyRequest {
                 Map<String, Object> keyConfig = (Map<String, Object>)oauthConfig.get(KEY);
                 if(keyConfig != null) {
                     setServerUrl((String)keyConfig.get(SERVER_URL));
+                    setServiceId((String)keyConfig.get(SERVICE_ID));
                     Object object = keyConfig.get(ENABLE_HTTP2);
                     setEnableHttp2(object != null && (Boolean) object);
                     setUri(keyConfig.get(URI) + "/" + kid);
@@ -59,6 +60,7 @@ public class TokenKeyRequest extends KeyRequest {
                         keyConfig = (Map<String, Object>)tokenConfig.get(KEY);
                         if(keyConfig != null) {
                             setServerUrl((String)keyConfig.get(SERVER_URL));
+                            setServiceId((String)keyConfig.get(SERVICE_ID));
                             Object object = keyConfig.get(ENABLE_HTTP2);
                             setEnableHttp2(object != null && (Boolean) object);
                             setUri(keyConfig.get(URI) + "/" + kid);
