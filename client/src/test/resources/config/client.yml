@@ -23,9 +23,10 @@ oauth:
     tokenRenewBeforeExpired: 4000
     expiredRefreshRetryDelay: 5000
     earlyRefreshRetryDelay: 30000
+    # static token service url in case the service is deployed to a VM. It will be used if it is configured here.
     server_url: http://localhost:7777
-    # you find oauth2 server from ether server_url or consul service discovery.
-    # serviceId: com.networknt.oauth2-token-1.0.0
+    # serviceId for the token service, it will be used to do the lookup if above server_url is not configured.
+    serviceId: com.networknt.oauth2-token-1.0.0
     authorization_code:
       uri: "/oauth2/token"
       client_id: test_client
@@ -43,9 +44,9 @@ oauth:
       - test.w
     # light-oauth2 key distribution endpoint configuration for token verification
     key:
-      # key distribution server url
+      # key distribution server url for token verification. It will be used if it is configured.
       server_url: https://localhost:6886
-      # the unique service id for key distribution service
+      # key serviceId for key distribution service, it will be used if above server_url is not configured.
       serviceId: com.networknt.oauth2-key-1.0.0
       # the path for the key distribution endpoint
       uri: "/oauth2/key"
@@ -57,8 +58,10 @@ oauth:
       enableHttp2: true
   # sign endpoint configuration
   sign:
-    # token server url. The default port number for token service is 6882.
+    # token server url. The default port number for token service is 6882. If this url exists, it will be used.
     server_url: https://localhost:6882
+    # token serviceId. If server_url doesn't exist, the serviceId will be used to lookup the token service.
+    serviceId: com.networknt.oauth2-token-1.0.0
     # signing endpoint for the sign request
     uri: "/oauth2/token"
     # timeout in milliseconds
@@ -71,9 +74,9 @@ oauth:
     client_secret: f6h1FTI8Q3-7UScPZDzfXA
     # the key distribution sever config for sign. It can be different then token key distribution server.
     key:
-      # key distribution server url
+      # key distribution server url. It will be used to establish connection if it exists.
       server_url: https://localhost:6886
-      # the unique service id for key distribution service
+      # the unique service id for key distribution service, it will be used to lookup key service if above url doesn't exist.
       serviceId: com.networknt.oauth2-key-1.0.0
       # the path for the key distribution endpoint
       uri: "/oauth2/key"
@@ -85,9 +88,9 @@ oauth:
       enableHttp2: true
   # de-ref by reference token to JWT token. It is separate service as it might be the external OAuth 2.0 provider.
   deref:
-    # Token service server url, this might be different than the above token server url.
+    # Token service server url, this might be different than the above token server url. The static url will be used if it is configured.
     server_url: https://localhost:6882
-    # token service unique id for OAuth 2.0 provider. Need for service lookup/discovery.
+    # token service unique id for OAuth 2.0 provider. Need for service lookup/discovery. It will be used if above server_url is not configured.
     serviceId: com.networknt.oauth2-token-1.0.0
     # set to true if the oauth2 provider supports HTTP/2
     enableHttp2: true
