@@ -46,6 +46,7 @@ public class AuthorizationCodeRequest extends TokenRequest {
                 Map<String, Object> tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);
                 if(tokenConfig != null) {
                     setServerUrl((String)tokenConfig.get(SERVER_URL));
+                    setServiceId((String)tokenConfig.get(SERVICE_ID));
                     Object object = tokenConfig.get(ENABLE_HTTP2);
                     setEnableHttp2(object != null && (Boolean) object);
                     Map<String, Object> acConfig = (Map<String, Object>) tokenConfig.get(AUTHORIZATION_CODE);
