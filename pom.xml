@@ -111,6 +111,7 @@
         <version.error_prone_core>2.0.15</version.error_prone_core>
         <version.lifecycle-mapping>1.0.0</version.lifecycle-mapping>
         <version.maven-gpg>1.6</version.maven-gpg>
+        <version.testcontainers>1.8.0</version.testcontainers>
         <argLine>-Xmx512m</argLine>
     </properties>
 
@@ -596,6 +597,12 @@
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpclient</artifactId>
                 <version>${version.httpclient}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers</artifactId>
+                <version>${version.testcontainers}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>
