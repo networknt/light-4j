@@ -45,6 +45,7 @@ public class SignKeyRequest extends KeyRequest {
                     Map<String, Object> keyConfig = (Map<String, Object>)signConfig.get(KEY);
                     if(keyConfig != null) {
                         setServerUrl((String)keyConfig.get(SERVER_URL));
+                        setServiceId((String)keyConfig.get(SERVICE_ID));
                         Object object = keyConfig.get(ENABLE_HTTP2);
                         setEnableHttp2(object != null && (Boolean) object);
                         setUri(keyConfig.get(URI) + "/" + kid);

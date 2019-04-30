@@ -17,12 +17,19 @@
 package com.networknt.client.oauth;
 
 /**
- * This is the generic key request with an id and interface.
+ * This is the generic key request with an id as parameter. The static serverUrl will be used if
+ * available. Otherwise, the serviceId will be used to lookup the key service. There are two sub
+ * classes for signature verification and access token verification with different configurations
+ * in the client.yml file.
+ *
+ * @author Steve Hu
+ *
  */
 public class KeyRequest {
     public static String OAUTH = "oauth";
     public static String KEY = "key";
     public static String SERVER_URL = "server_url";
+    public static String SERVICE_ID = "serviceId";
     public static String URI = "uri";
     public static String CLIENT_ID = "client_id";
     public static String CLIENT_SECRET = "client_secret";
@@ -30,6 +37,7 @@ public class KeyRequest {
 
 
     String serverUrl;
+    String serviceId;
     String uri;
     String clientId;
     String clientSecret;
@@ -70,6 +78,14 @@ public class KeyRequest {
 
     public void setServerUrl(String serverUrl) {
         this.serverUrl = serverUrl;
+    }
+
+    public String getServiceId() {
+        return serviceId;
+    }
+
+    public void setServiceId(String serviceId) {
+        this.serviceId = serviceId;
     }
 
     public boolean isEnableHttp2() { return enableHttp2; }

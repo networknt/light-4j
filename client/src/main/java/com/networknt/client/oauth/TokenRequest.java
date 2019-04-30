@@ -25,6 +25,7 @@ public class TokenRequest {
     public static String OAUTH = "oauth";
     public static String TOKEN = "token";
     public static String SERVER_URL = "server_url";
+    public static String SERVICE_ID = "serviceId";
     public static String ENABLE_HTTP2 = "enableHttp2";
     public static String AUTHORIZATION_CODE = "authorization_code";
     public static String CLIENT_CREDENTIALS = "client_credentials";
@@ -38,6 +39,7 @@ public class TokenRequest {
 
     String grantType;
     String serverUrl;
+    String serviceId;
     boolean enableHttp2;
     String uri;
     String clientId;
@@ -99,6 +101,14 @@ public class TokenRequest {
 
     public void setServerUrl(String serverUrl) {
         this.serverUrl = serverUrl;
+    }
+
+    public String getServiceId() {
+        return serviceId;
+    }
+
+    public void setServiceId(String serviceId) {
+        this.serviceId = serviceId;
     }
 
     public String getCsrf() { return csrf; }

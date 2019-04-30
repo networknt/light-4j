@@ -26,6 +26,7 @@ public class DerefRequest {
     public static String OAUTH = "oauth";
     public static String DEREF = "deref";
     public static String SERVER_URL = "server_url";
+    public static String SERVICE_ID = "serviceId";
     public static String URI = "uri";
     public static String CLIENT_ID = "client_id";
     public static String ENABLE_HTTP2 = "enableHttp2";
@@ -33,6 +34,7 @@ public class DerefRequest {
     static Map<String, Object> secret = (Map<String, Object>)Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
 
     String serverUrl;
+    String serviceId;
     String uri;
     String clientId;
     String clientSecret;
@@ -47,6 +49,7 @@ public class DerefRequest {
                 Map<String, Object> derefConfig = (Map<String, Object>)oauthConfig.get(DEREF);
                 if(derefConfig != null) {
                     setServerUrl((String)derefConfig.get(SERVER_URL));
+                    setServiceId((String)derefConfig.get(SERVICE_ID));
                     Object object = derefConfig.get(ENABLE_HTTP2);
                     setEnableHttp2(object != null && (Boolean) object);
                     setUri(derefConfig.get(URI) + "/" + token);
@@ -87,6 +90,14 @@ public class DerefRequest {
 
     public void setServerUrl(String serverUrl) {
         this.serverUrl = serverUrl;
+    }
+
+    public String getServiceId() {
+        return serviceId;
+    }
+
+    public void setServiceId(String serviceId) {
+        this.serviceId = serviceId;
     }
 
     public boolean isEnableHttp2() { return enableHttp2; }
