@@ -67,11 +67,11 @@ public class ConsulUtils {
 
     /**
      * build url from service
-     *
+     * @param protocol the protocol of the service
      * @param service consul service
      * @return URL object
      */
-    public static URL buildUrl(ConsulService service) {
+    public static URL buildUrl(String protocol, ConsulService service) {
         URL url = null;
         if (url == null) {
             Map<String, String> params = new HashMap<String, String>();
@@ -81,7 +81,7 @@ public class ConsulUtils {
             if (!service.getTags().isEmpty()) {
                 params.put(URLParamType.environment.getName(), service.getTags().get(0));
             }
-            url = new URLImpl(ConsulConstants.DEFAULT_PROTOCOL, service.getAddress(), service.getPort(),
+            url = new URLImpl(protocol, service.getAddress(), service.getPort(),
                     ConsulUtils.getPathFromServiceId(service.getId()), params);
         }
         return url;

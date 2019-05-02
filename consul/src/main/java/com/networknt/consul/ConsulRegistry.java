@@ -117,10 +117,11 @@ public class ConsulRegistry extends CommandFailbackRegistry {
      */
     private void startListenerThreadIfNewService(URL url) {
         String serviceName = url.getPath();
+        String protocol = url.getProtocol();
         if (!lookupServices.containsKey(serviceName)) {
             Long value = lookupServices.putIfAbsent(serviceName, 0L);
             if (value == null) {
-                ServiceLookupThread lookupThread = new ServiceLookupThread(serviceName);
+                ServiceLookupThread lookupThread = new ServiceLookupThread(protocol, serviceName);
                 lookupThread.setDaemon(true);
                 lookupThread.start();
             }
@@ -139,7 +140,6 @@ public class ConsulRegistry extends CommandFailbackRegistry {
         }
     }
 
-
     @Override
     protected void unsubscribeService(URL url, ServiceListener listener) {
         ConcurrentHashMap<URL, ServiceListener> listeners = serviceListeners.get(ConsulUtils.getUrlClusterInfo(url));
@@ -154,13 +154,14 @@ public class ConsulRegistry extends CommandFailbackRegistry {
     protected List<URL> discoverService(URL url) {
         String serviceName = url.getPath();
         String tag = url.getParameter(Constants.TAG_ENVIRONMENT);
-        if(logger.isDebugEnabled()) logger.debug("serviceName = " + serviceName + " tag = " + tag);
+        String protocol = url.getProtocol();
+        if(logger.isDebugEnabled()) logger.debug("protocol = " + protocol + " serviceName = " + serviceName + " tag = " + tag);
         List<URL> urls = serviceCache.get(serviceName);
         if (urls == null) {
             synchronized (serviceName.intern()) {
                 urls = serviceCache.get(serviceName);
                 if (urls == null) {
-                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(serviceName);
+                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(protocol, serviceName);
                     updateServiceCache(serviceName, serviceUrls, false);
                     urls = serviceCache.get(serviceName);
                 }
@@ -169,7 +170,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
         return urls;
     }
 
-    private ConcurrentHashMap<String, List<URL>> lookupServiceUpdate(String serviceName) {
+    private ConcurrentHashMap<String, List<URL>> lookupServiceUpdate(String protocol, String serviceName) {
         Long lastConsulIndexId = lookupServices.get(serviceName) == null ? 0L : lookupServices.get(serviceName);
         if(logger.isDebugEnabled()) logger.debug("serviceName = " + serviceName + " lastConsulIndexId = " + lastConsulIndexId);
         ConsulResponse<List<ConsulService>> response = lookupConsulService(serviceName, lastConsulIndexId);
@@ -186,7 +187,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                 ConcurrentHashMap<String, List<URL>> serviceUrls = new ConcurrentHashMap<String, List<URL>>();
                 for (ConsulService service : services) {
                     try {
-                        URL url = ConsulUtils.buildUrl(service);
+                        URL url = ConsulUtils.buildUrl(protocol, service);
                         List<URL> urlList = serviceUrls.get(serviceName);
                         if (urlList == null) {
                             urlList = new ArrayList<>();
@@ -263,9 +264,11 @@ public class ConsulRegistry extends CommandFailbackRegistry {
     }
 
     private class ServiceLookupThread extends Thread {
-        private String serviceName;
+       private String protocol;
+       private String serviceName;
 
-        public ServiceLookupThread(String serviceName) {
+        public ServiceLookupThread(String protocol, String serviceName) {
+            this.protocol = protocol;
             this.serviceName = serviceName;
         }
 
@@ -275,7 +278,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
             while (true) {
                 try {
                     sleep(lookupInterval);
-                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(serviceName);
+                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(protocol, serviceName);
                     updateServiceCache(serviceName, serviceUrls, true);
                 } catch (Throwable e) {
                     logger.error("service lookup thread fail!", e);
