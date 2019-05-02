@@ -44,7 +44,7 @@ public class RegistryTest {
 
     static Server server = null;
 
-    //@BeforeClass
+    @BeforeClass
     public static void setUp() throws Exception {
         // inject server config here.
         Config config = Config.getInstance();
