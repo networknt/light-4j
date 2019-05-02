@@ -172,12 +172,12 @@ public abstract class Config {
         			logger.debug("found decryptorClass={}", decryptorClass);
         		}
         		
-        		return decryptorClass;
+        		return decryptorClass == null ? DecryptConstructor.DEFAULT_DECRYPTOR_CLASS : decryptorClass;
         	}else {
         		logger.warn("config file cannot be found.");
         	}
         	
-        	return null;
+        	return DecryptConstructor.DEFAULT_DECRYPTOR_CLASS;
         }
 
         private static Config initialize() {
