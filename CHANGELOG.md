@@ -1,5 +1,34 @@
 # Change Log
 
+## [1.6.1](https://github.com/networknt/light-4j/tree/1.6.1) (2019-05-03)
+
+
+**Merged pull requests:**
+
+
+- Feat/default decryptor [\#501](https://github.com/networknt/light-4j/pull/501) ([jiachen1120](https://github.com/jiachen1120))
+- fixes \#499 ConsulRegistry discoverService returns http always [\#500](https://github.com/networknt/light-4j/pull/500) ([stevehu](https://github.com/stevehu))
+- fixes \#497 implement service discovery in OauthHelper [\#498](https://github.com/networknt/light-4j/pull/498) ([stevehu](https://github.com/stevehu))
+- fix path separator - \#483 [\#484](https://github.com/networknt/light-4j/pull/484) ([dz-1](https://github.com/dz-1))
+- fixes \#495 support multiple key servers for token and sign [\#496](https://github.com/networknt/light-4j/pull/496) ([stevehu](https://github.com/stevehu))
+- fixes \#493 update timeoutCount to AtomicInteger in circuit breaker [\#494](https://github.com/networknt/light-4j/pull/494) ([stevehu](https://github.com/stevehu))
+- Fix/\#491 direct registry with env [\#492](https://github.com/networknt/light-4j/pull/492) ([jiachen1120](https://github.com/jiachen1120))
+- \#240 timeout feature \#241 circuit breaker [\#485](https://github.com/networknt/light-4j/pull/485) ([jefperito](https://github.com/jefperito))
+- Fix/\#482 consul service discovery caching [\#486](https://github.com/networknt/light-4j/pull/486) ([BalloonWen](https://github.com/BalloonWen))
+- fixes \#489 need to rollback the lazy init of config in Server [\#490](https://github.com/networknt/light-4j/pull/490) ([stevehu](https://github.com/stevehu))
+- fixes \#487 resolve test case failure in the server module [\#488](https://github.com/networknt/light-4j/pull/488) ([stevehu](https://github.com/stevehu))
+- fixes \#474 register light-hybrid-4j services in Server module [\#475](https://github.com/networknt/light-4j/pull/475) ([stevehu](https://github.com/stevehu))
+- fixes issue \#480 [\#481](https://github.com/networknt/light-4j/pull/481) ([chenyan71](https://github.com/chenyan71))
+- fixes \#478 service getting unregistered from consul after a while [\#479](https://github.com/networknt/light-4j/pull/479) ([stevehu](https://github.com/stevehu))
+- Fixed the scope caching error [\#477](https://github.com/networknt/light-4j/pull/477) ([jiachen1120](https://github.com/jiachen1120))
+- fixes \#468 resolve backward compatible issue for server.config [\#469](https://github.com/networknt/light-4j/pull/469) ([stevehu](https://github.com/stevehu))
+- fixes \#466 Incorrect status code [\#467](https://github.com/networknt/light-4j/pull/467) ([stevehu](https://github.com/stevehu))
+- fixes \#464 update license and copyright headers [\#465](https://github.com/networknt/light-4j/pull/465) ([stevehu](https://github.com/stevehu))
+- Pluggable config server feature RFC\#0019 [\#451](https://github.com/networknt/light-4j/pull/451) ([santoshaherkar](https://github.com/santoshaherkar))
+- Added new server option ALLOW_UNESCAPED_CHARACTERS_IN_URL [\#462](https://github.com/networknt/light-4j/pull/462) ([jiachen1120](https://github.com/jiachen1120))
+-  populate path params - \#light-rest-4j/issues/67 [\#463](https://github.com/networknt/light-4j/pull/463) ([dz-1](https://github.com/dz-1))
+- fixes \#460 upgrade maven plugins to the latest versions [\#461](https://github.com/networknt/light-4j/pull/461) ([stevehu](https://github.com/stevehu))
+- fixes \#456 resolve warnnings from errorprone [\#457](https://github.com/networknt/light-4j/pull/457) ([stevehu](https://github.com/stevehu))
 ## [1.6.0](https://github.com/networknt/light-4j/tree/1.6.0) (2019-04-05)
 
 
