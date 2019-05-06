@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2016 Network New Technologies Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.networknt.client.oauth;
 
 import com.networknt.client.Http2Client;
@@ -5,10 +21,20 @@ import com.networknt.config.Config;
 
 import java.util.Map;
 
+/**
+ * Construct a signing request for token service based on the sign configuration section in
+ * client.yml file. If serverUrl is available, the static url will be used. Otherwise, the
+ * serviceId will be used to do service discovery when establish a connection to the token
+ * service.
+ *
+ * @author Steve Hu
+ *
+ */
 public class SignRequest {
     public static String OAUTH = "oauth";
     public static String SIGN = "sign";
     public static String SERVER_URL = "server_url";
+    public static String SERVICE_ID = "serviceId";
     public static String URI = "uri";
     public static String ENABLE_HTTP2 = "enableHttp2";
     public static String TIMEOUT = "timeout";
@@ -16,6 +42,7 @@ public class SignRequest {
     public static String CLIENT_SECRET = "client_secret";
 
     String serverUrl;
+    String serviceId;
     boolean enableHttp2;
     String uri;
     int timeout;
@@ -32,6 +59,7 @@ public class SignRequest {
                 Map<String, Object> signConfig = (Map<String, Object>)oauthConfig.get(SIGN);
                 if(signConfig != null) {
                     setServerUrl((String)signConfig.get(SERVER_URL));
+                    setServiceId((String)signConfig.get(SERVICE_ID));
                     setUri((String)signConfig.get(URI));
                     timeout = (Integer) signConfig.get(TIMEOUT);
                     Object object = signConfig.get(ENABLE_HTTP2);
@@ -49,6 +77,14 @@ public class SignRequest {
 
     public void setServerUrl(String serverUrl) {
         this.serverUrl = serverUrl;
+    }
+
+    public String getServiceId() {
+        return serviceId;
+    }
+
+    public void setServiceId(String serviceId) {
+        this.serviceId = serviceId;
     }
 
     public boolean isEnableHttp2() {

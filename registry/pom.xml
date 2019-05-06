@@ -21,7 +21,7 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>1.6.1-SNAPSHOT</version>
+        <version>1.6.2-SNAPSHOT</version>
         <relativePath>..</relativePath>
     </parent>
 
@@ -41,10 +41,6 @@
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>status</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>exception</artifactId>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
