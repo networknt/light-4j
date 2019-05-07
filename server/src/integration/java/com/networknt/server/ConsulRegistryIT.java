@@ -44,8 +44,9 @@ import static org.junit.Assert.fail;
  * This test is an automatic test for real consul registry and discovery by using testContainers.
  * Since it depends on docker so it should be disabled all the time unless it is used.
  */
-public class ConsulContainerTest {
-    static final Logger logger = LoggerFactory.getLogger(ConsulContainerTest.class);
+@Ignore
+public class ConsulRegistryIT {
+    static final Logger logger = LoggerFactory.getLogger(ConsulRegistryIT.class);
     static ConsulRegistry registry;
     static LightCluster lightCluster;
     static String serviceId = "com.networknt.petstore-1.0.0";
