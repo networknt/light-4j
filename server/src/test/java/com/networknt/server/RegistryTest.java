@@ -80,8 +80,8 @@ public class RegistryTest {
             }
             Server.stop();
             logger.info("The server is stopped.");
-            }
         }
+    }
 
     public static void addURL(URL url) throws Exception {
         URLClassLoader classLoader
