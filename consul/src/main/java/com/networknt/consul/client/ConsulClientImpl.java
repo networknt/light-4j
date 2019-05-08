@@ -109,7 +109,7 @@ public class ConsulClientImpl implements ConsulClient {
 			latch.await();
 			reqCounter.getAndIncrement();
 			if(logger.isDebugEnabled()) {
-				logger.debug("The response from consul: {} = {}", uri.toString(), reference.get().toString());
+				logger.debug("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
 			}
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= 300){
@@ -143,7 +143,7 @@ public class ConsulClientImpl implements ConsulClient {
 			latch.await();
 			reqCounter.getAndIncrement();
 			if(logger.isDebugEnabled()) {
-				logger.debug("The response from consul: {} = {}", uri.toString(), reference.get().toString());
+				logger.debug("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
 			}
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= 300){
@@ -178,7 +178,7 @@ public class ConsulClientImpl implements ConsulClient {
 			latch.await();
 			reqCounter.getAndIncrement();
 			if(logger.isDebugEnabled()) {
-				logger.debug("The response from consul: {} = {}", uri.toString(), reference.get().toString());
+				logger.debug("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
 			}
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= 300){
@@ -212,7 +212,7 @@ public class ConsulClientImpl implements ConsulClient {
 			latch.await();
 			reqCounter.getAndIncrement();
 			if(logger.isDebugEnabled()) {
-				logger.debug("The response from consul: {} = {}", uri.toString(), reference.get().toString());
+				logger.debug("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
 			}
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= 300){
@@ -251,7 +251,7 @@ public class ConsulClientImpl implements ConsulClient {
 			latch.await();
 			reqCounter.getAndIncrement();
 			if(logger.isDebugEnabled()) {
-				logger.debug("The response from consul: {} = {}", uri.toString(), reference.get().toString());
+				logger.debug("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
 			}
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= 300){
