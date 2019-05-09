@@ -42,7 +42,7 @@
         <appender-ref ref="stdout"/>
     </root>
 
-    <logger name="com.networknt" level="warn">
+    <logger name="com.networknt" level="trace">
         <appender-ref ref="log"/>
     </logger>
 

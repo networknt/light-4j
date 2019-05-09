@@ -706,9 +706,9 @@ public class Http2Client {
         CompletableFuture<ClientConnection> futureConnection = this.connectAsync(uri);
         CompletableFuture<ClientResponse> futureClientResponse = futureConnection.thenComposeAsync(clientConnection -> {
             if (requestBody.isPresent()) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug("The request sent to {} = request header: {}, request body: {}", uri.toString(), request.getRequestHeaders().toString(), requestBody.get());
-                }
+//                if (logger.isDebugEnabled()) {
+//                    logger.debug("The request sent to {} = request header: {}, request body: {}", uri.toString(), request.getRequestHeaders().toString(), requestBody.get());
+//                }
                 Http2ClientCompletableFutureWithRequest futureClientResponseWithRequest = new Http2ClientCompletableFutureWithRequest(requestBody.get());
                 try {
                     clientConnection.sendRequest(request, futureClientResponseWithRequest);
@@ -717,9 +717,9 @@ public class Http2Client {
                 }
                 return futureClientResponseWithRequest;
             } else {
-                if (logger.isDebugEnabled()) {
-                    logger.debug("The request sent to {} = request header: {}, request body is empty", uri.toString(), request.getRequestHeaders().toString());
-                }
+//                if (logger.isDebugEnabled()) {
+//                    logger.debug("The request sent to {} = request header: {}, request body is empty", uri.toString(), request.getRequestHeaders().toString());
+//                }
                 Http2ClientCompletableFutureNoRequest futureClientResponseNoRequest = new Http2ClientCompletableFutureNoRequest();
                 try {
                     clientConnection.sendRequest(request, futureClientResponseNoRequest);
