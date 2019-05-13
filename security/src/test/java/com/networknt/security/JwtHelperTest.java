@@ -18,11 +18,20 @@ package com.networknt.security;
 
 import com.networknt.config.Config;
 import com.networknt.utility.Constants;
+import org.jose4j.jwk.JsonWebKey;
+import org.jose4j.jwk.PublicJsonWebKey;
+import org.jose4j.jws.AlgorithmIdentifiers;
+import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
+import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
+import org.jose4j.lang.JoseException;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.security.Key;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -72,6 +81,71 @@ public class JwtHelperTest {
         }
 
         System.out.println("jwtClaims = " + claims);
+    }
+
+    @Test
+    public void testVerifyJwtByJsonWebKeys() throws Exception {
+        Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(JwtIssuer.SECRET_CONFIG);
+        JwtConfig jwtConfig = (JwtConfig) Config.getInstance().getJsonObjectConfig(JwtIssuer.JWT_CONFIG, JwtConfig.class);
+
+        String fileName = jwtConfig.getKey().getFilename();
+        String alias = jwtConfig.getKey().getKeyName();
+
+        KeyStore ks = loadKeystore(fileName, (String)secretConfig.get(JwtIssuer.JWT_PRIVATE_KEY_PASSWORD));
+        Key privateKey = ks.getKey(alias, ((String) secretConfig.get(JwtIssuer.JWT_PRIVATE_KEY_PASSWORD)).toCharArray());
+
+        JsonWebSignature jws = new JsonWebSignature();
+
+        String iss = "my.test.iss";
+        JwtClaims jwtClaims = JwtClaims.parse("{\n" +
+                "  \"sub\": \"5745ed4b-0158-45ff-89af-4ce99bc6f4de\",\n" +
+                "  \"iss\": \"" + iss  +"\",\n" +
+                "  \"subject_type\": \"client-id\",\n" +
+                "  \"exp\": 1557419531,\n" +
+                "  \"iat\": 1557419231,\n" +
+                "  \"scope\": [\n" +
+                "    \"my.test.scope.read\",\n" +
+                "    \"my.test.scope.write\",\n" +
+                "  ],\n" +
+                "  \"consumer_application_id\": \"389\",\n" +
+                "  \"request_transit\": \"63092\"\n" +
+                "}");
+
+        // The payload of the JWS is JSON content of the JWT Claims
+        jws.setPayload(jwtClaims.toJson());
+
+        // use private key to sign the JWT
+        jws.setKey(privateKey);
+
+        jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.RSA_USING_SHA256);
+
+        String jwt = jws.getCompactSerialization();
+
+        Assert.assertNotNull(jwt);
+
+        System.out.print("JWT = " + jwt);
+
+        JwtClaims claims = JwtHelper.verifyJwt(jwt, true, true, (kId, isToken) -> {
+            try {
+                // use public key to create the the JsonWebKey
+                Key publicKey = ks.getCertificate(alias).getPublicKey();
+                PublicJsonWebKey jwk = PublicJsonWebKey.Factory.newPublicJwk(publicKey);
+                List<JsonWebKey> jwkList = Arrays.asList(jwk);
+                return new JwksVerificationKeyResolver(jwkList);
+            } catch (JoseException | KeyStoreException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        Assert.assertNotNull(claims);
+        Assert.assertEquals(iss, claims.getStringClaimValue("iss"));
+    }
+
+    private static KeyStore loadKeystore(String fileName, String keyStorePass) throws Exception {
+        KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+        char[] passwd = keyStorePass.toCharArray();
+        keystore.load(Config.getInstance().getInputStreamFromFile(fileName), passwd);
+        return keystore;
     }
 
     @Test
