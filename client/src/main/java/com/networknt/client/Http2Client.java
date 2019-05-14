@@ -90,6 +90,8 @@ public class Http2Client {
     static final String LOAD_KEY_STORE = "loadKeyStore";
     static final String TRUST_STORE = "trustStore";
     static final String KEY_STORE = "keyStore";
+    static final String KEY_STORE_PROPERTY = "javax.net.ssl.keyStore";
+    static final String KEY_STORE_PASSWORD_PROPERTY = "javax.net.ssl.keyStorePassword";
     static final String TRUST_STORE_PROPERTY = "javax.net.ssl.trustStore";
     static final String TRUST_STORE_PASSWORD_PROPERTY = "javax.net.ssl.trustStorePassword";
 
@@ -428,13 +430,22 @@ public class Http2Client {
                 // load key store for client certificate if two way ssl is used.
                 Boolean loadKeyStore = (Boolean) tlsMap.get(LOAD_KEY_STORE);
                 if (loadKeyStore != null && loadKeyStore) {
-                    String keyStoreName = (String)tlsMap.get(KEY_STORE);
-                    String keyStorePass = (String)ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_KEYSTORE_PASS);
-                    String keyPass = (String)ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_KEY_PASS);
-                    KeyStore keyStore = loadKeyStore(keyStoreName, keyStorePass.toCharArray());
-                    KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-                    keyManagerFactory.init(keyStore, keyPass.toCharArray());
-                    keyManagers = keyManagerFactory.getKeyManagers();
+                    String keyStoreName = System.getProperty(KEY_STORE_PROPERTY);
+                    String keyStorePass = System.getProperty(KEY_STORE_PASSWORD_PROPERTY);
+                    if (keyStoreName != null && keyStorePass != null) {
+                        if(logger.isInfoEnabled()) logger.info("Loading key store from system property at " + Encode.forJava(keyStoreName));
+                    } else {
+                        keyStoreName = (String) tlsMap.get(KEY_STORE);
+                        keyStorePass = (String) ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_KEYSTORE_PASS);
+                        if(logger.isInfoEnabled()) logger.info("Loading key store from config at " + Encode.forJava(keyStoreName));
+                    }
+                    if (keyStoreName != null && keyStorePass != null) {
+                        String keyPass = (String) ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_KEY_PASS);
+                        KeyStore keyStore = loadKeyStore(keyStoreName, keyStorePass.toCharArray());
+                        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                        keyManagerFactory.init(keyStore, keyPass.toCharArray());
+                        keyManagers = keyManagerFactory.getKeyManagers();
+                    }
                 }
             } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
                 throw new IOException("Unable to initialise KeyManager[]", e);
