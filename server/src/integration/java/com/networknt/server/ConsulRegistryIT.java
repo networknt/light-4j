@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
 
 import java.net.InetAddress;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -51,7 +50,6 @@ public class ConsulRegistryIT {
 
     static ConsulConfig consulConfig = null;
     static ServerConfig serverConfig = null;
-    static ServiceConfig serviceConfig = null;
 
     static Server server1 = null;
     static Server server2 = null;
