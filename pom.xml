@@ -113,6 +113,7 @@
         <version.maven-gpg>1.6</version.maven-gpg>
         <version.testcontainers>1.8.0</version.testcontainers>
         <argLine>-Xmx512m</argLine>
+        <skipITs>true</skipITs>
     </properties>
 
     <modules>
@@ -698,6 +699,7 @@
                 <version>${version.maven-surefire}</version>
                 <configuration>
                     <encoding>UTF-8</encoding>
+                    <skipITs>${skipITs}</skipITs>
                 </configuration>
                 <executions>
                     <execution>
