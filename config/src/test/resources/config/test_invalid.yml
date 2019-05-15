@@ -1,1 +1,1 @@
-value: ${TEST.invalid}
+value: ${TEST.invalid:dev}
