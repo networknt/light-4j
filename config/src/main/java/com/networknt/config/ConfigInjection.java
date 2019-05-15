@@ -88,6 +88,7 @@ public class ConfigInjection {
         InjectionPattern injectionPattern = getInjectionPattern(content);
         Object value = null;
         if (injectionPattern != null) {
+            Boolean skipNoneValidation = false;
             // Use key of injectionPattern to get value from both environment variables and "values.yaml"
             Object envValue = typeCast(System.getenv(injectionPattern.getKey()));
             Map<String, Object> valueMap = Config.getInstance().getJsonMapConfig(CENTRALIZED_MANAGEMENT);
@@ -97,9 +98,13 @@ public class ConfigInjection {
                 value = envValue;
             } else {
                 value = fileValue;
+                // Skip none validation to inject null or empty string directly when the corresponding field is presented in value.yml
+                if (valueMap != null && valueMap.containsKey(injectionPattern.getKey())) {
+                    skipNoneValidation = true;
+                }
             }
             // Return default value when no matched value found from environment variables and "values.yaml"
-            if (value == null || value.equals("")) {
+            if ((value == null || value.equals("")) && !skipNoneValidation) {
                 value = typeCast(injectionPattern.getDefaultValue());
                 // Throw exception when error text provided
                 if (value == null || value.equals("")) {
@@ -110,7 +115,7 @@ public class ConfigInjection {
                 }
             }
             // Throw exception when no parsing result found
-            if (value == null && valueMap != null && !valueMap.containsKey(injectionPattern.getKey())) {
+            if (value == null && !skipNoneValidation) {
                 throw new ConfigException("\"${" + content + "}\" appears in config file cannot be expanded");
             }
         }

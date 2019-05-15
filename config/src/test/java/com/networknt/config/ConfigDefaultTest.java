@@ -199,6 +199,14 @@ public class ConfigDefaultTest extends TestCase {
         Assert.assertEquals("${TEST.string}", configMap.get("key"));
     }
 
+    public void testInvalidValueJsonMapConfig() {
+        config.clear();
+        try {
+            config.getJsonMapConfig("test_invalid");
+            fail();
+        } catch(Exception e) {}
+    }
+
     public void testGetInputStream() throws Exception {
         try (InputStream is = config.getInputStreamFromFile("test.json")) {
             Assert.assertNotNull(is);
