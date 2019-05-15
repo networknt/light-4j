@@ -106,7 +106,7 @@ public class ConfigInjection {
                 containsField = true;
             }
             // Return default value when no matched value found from environment variables and "values.yaml"
-            if ((value == null || value.equals("")) && !containsField) {
+            if (value == null && !containsField) {
                 value = typeCast(injectionPattern.getDefaultValue());
                 // Throw exception when error text provided
                 if (value == null || value.equals("")) {
@@ -114,11 +114,9 @@ public class ConfigInjection {
                     if (error_text != null && !error_text.equals("")) {
                         throw new ConfigException(error_text);
                     }
+                    // Throw exception when no parsing result found
+                    throw new ConfigException("\"${" + content + "}\" appears in config file cannot be expanded");
                 }
-            }
-            // Throw exception when no parsing result found
-            if (value == null && !containsField) {
-                throw new ConfigException("\"${" + content + "}\" appears in config file cannot be expanded");
             }
         }
         return value;
