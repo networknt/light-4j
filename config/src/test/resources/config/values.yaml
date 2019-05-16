@@ -6,3 +6,4 @@ TEST.map:
   key1: element1
   key2: element2
 TEST.null:
+TEST.emptyString: ""
