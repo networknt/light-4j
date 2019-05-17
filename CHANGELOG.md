@@ -1,5 +1,16 @@
 # Change Log
 
+## [1.6.2](https://github.com/networknt/light-4j/tree/1.6.2) (2019-05-17)
+
+
+**Merged pull requests:**
+
+
+- Add JsonWebKey support in JWT key verification [\#511](https://github.com/networknt/light-4j/pull/511) ([jsu216](https://github.com/jsu216))
+- Fix/\#512 config overwritten [\#516](https://github.com/networknt/light-4j/pull/516) ([jiachen1120](https://github.com/jiachen1120))
+- fixes \#513 disable sanitizer handler by default [\#515](https://github.com/networknt/light-4j/pull/515) ([stevehu](https://github.com/stevehu))
+- Fix/\#504 read keystore from system property [\#505](https://github.com/networknt/light-4j/pull/505) ([jiachen1120](https://github.com/jiachen1120))
+- fixes \#508 associate the correlationId with the traceabilityId when c… [\#509](https://github.com/networknt/light-4j/pull/509) ([stevehu](https://github.com/stevehu))
 ## [1.6.1](https://github.com/networknt/light-4j/tree/1.6.1) (2019-05-03)
 
 
