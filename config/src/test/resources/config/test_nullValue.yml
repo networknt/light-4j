@@ -1,1 +1,1 @@
-value: ${TEST.null}
+value: ${TEST.null:dev}
