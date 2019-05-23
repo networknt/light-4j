@@ -611,6 +611,10 @@
                 <includes>
                     <include>**/*</include>
                 </includes>
+                <excludes>
+                    <exclude>**/*.keystore</exclude>
+                    <exclude>**/*.truststore</exclude>
+                </excludes>
             </resource>
         </resources>
         <testResources>
