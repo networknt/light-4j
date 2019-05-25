@@ -261,8 +261,6 @@ public class SanitizerHandlerTest {
         String s2 = "text/html";
         Assert.assertEquals(Encode.forJavaScriptSource(s1), s1);
         Assert.assertEquals(Encode.forJavaScriptSource(s2), s2);
-        //Assert.assertEquals(Encode.forJavaScriptBlock(s1), s1);
-        //Assert.assertEquals(Encode.forJavaScriptBlock(s2), s2);
 
         String s3 = "<script>alert('test')</script>";
         String e3 = Encode.forJavaScriptSource(s3);

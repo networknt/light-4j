@@ -41,23 +41,16 @@ import java.util.*;
 public class SanitizerHandler implements MiddlewareHandler {
     public static final String CONFIG_NAME = "sanitizer";
 
-
-    static final Logger logger = LoggerFactory.getLogger(SanitizerHandler.class);
-
     static SanitizerConfig config = (SanitizerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, SanitizerConfig.class);
 
     private volatile HttpHandler next;
 
-    public SanitizerHandler() {
-
-    }
-
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         String method = exchange.getRequestMethod().toString();
-        if(config.isSanitizeHeader()) {
+        if (config.isSanitizeHeader()) {
             HeaderMap headerMap = exchange.getRequestHeaders();
-            if(headerMap != null) {
+            if (headerMap != null) {
                 for (HeaderValues values : headerMap) {
                     if (values != null) {
                         ListIterator<String> itValues = values.listIterator();
@@ -69,30 +62,12 @@ public class SanitizerHandler implements MiddlewareHandler {
                 }
             }
         }
-        /*
-        It looks like undertow has done a lot of things to prevent passing in invalid query parameters,
-        Until there are some use cases, this is not implemented.
 
-        if(config.isSanitizeParameter()) {
-            if (!exchange.getQueryString().isEmpty()) {
-                final TreeMap<String, Deque<String>> newParams = new TreeMap<>();
-                for (Map.Entry<String, Deque<String>> param : exchange.getQueryParameters().entrySet()) {
-                    final Deque<String> newVales = new ArrayDeque<>(param.getValue().size());
-                    for (String val : param.getValue()) {
-                        newVales.add(Encode.forJavaScriptSource(val));
-                    }
-                    newParams.put(param.getKey(), newVales);
-                }
-                exchange.getQueryParameters().clear();
-                exchange.getQueryParameters().putAll(newParams);
-            }
-        }
-        */
-        if(config.isSanitizeBody() && ("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method) || "PATCH".equalsIgnoreCase(method))) {
+        if (config.isSanitizeBody() && ("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method) || "PATCH".equalsIgnoreCase(method))) {
             // assume that body parser is installed before this middleware and body is parsed as a map.
             // we are talking about JSON api now.
             Object body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
-            if(body != null) {
+            if (body != null) {
                 if(body instanceof List) {
                     encodeList((List<Map<String, Object>>)body);
                 } else {
