@@ -20,6 +20,7 @@ import com.networknt.body.BodyHandler;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.sanitizer.enconding.Encoding;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -43,6 +44,8 @@ public class SanitizerHandler implements MiddlewareHandler {
 
     static SanitizerConfig config = (SanitizerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, SanitizerConfig.class);
 
+    Encoding encoding = new Encoding(config.getEncodingStrategy());
+
     private volatile HttpHandler next;
 
     @Override
@@ -55,7 +58,7 @@ public class SanitizerHandler implements MiddlewareHandler {
                     if (values != null) {
                         ListIterator<String> itValues = values.listIterator();
                         while (itValues.hasNext()) {
-                            String value = Encode.forJavaScriptSource(itValues.next());
+                            String value = encoding.applyEncoding(itValues.next());
                             itValues.set(value);
                         }
                     }
@@ -69,10 +72,10 @@ public class SanitizerHandler implements MiddlewareHandler {
             Object body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
             if (body != null) {
                 if(body instanceof List) {
-                    encodeList((List<Map<String, Object>>)body);
+                    encoding.encodeList((List<Map<String, Object>>)body);
                 } else {
                     // assume it is a map here.
-                    encodeNode((Map<String, Object>)body);
+                    encoding.encodeNode((Map<String, Object>)body);
                 }
             }
         }
@@ -99,32 +102,6 @@ public class SanitizerHandler implements MiddlewareHandler {
     @Override
     public void register() {
         ModuleRegistry.registerModule(SanitizerHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
-    }
-
-    public void encodeNode(Map<String, Object> map) {
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            String key = entry.getKey();
-            Object value = entry.getValue();
-            if (value instanceof String)
-                map.put(key, Encode.forJavaScriptSource((String) value));
-            else if (value instanceof Map)
-                encodeNode((Map) value);
-            else if (value instanceof List) {
-                encodeList((List)value);
-            }
-        }
-    }
-
-    public void encodeList(List list) {
-        for (int i = 0; i < list.size(); i++) {
-            if (list.get(i) instanceof String) {
-                list.set(i, Encode.forJavaScriptSource((String)list.get(i)));
-            } else if(list.get(i) instanceof Map) {
-                encodeNode((Map<String, Object>)list.get(i));
-            } else if(list.get(i) instanceof List) {
-                encodeList((List)list.get(i));
-            }
-        }
     }
 
 }

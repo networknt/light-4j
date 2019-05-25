@@ -55,6 +55,9 @@ public class SanitizerConfig {
     }
 
     public EncodingStrategy getEncodingStrategy() {
+        if (encodingStrategy == null) {
+            encodingStrategy = EncodingStrategy.DEFAULT;
+        }
         return encodingStrategy;
     }
 
