@@ -1,10 +1,76 @@
 package com.networknt.sanitizer;
 
+import com.networknt.sanitizer.enconding.Encoder;
+import com.networknt.sanitizer.enconding.Encoding;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.owasp.encoder.Encode;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class EncoderTest {
     String s = "A'NDERSONoô";
+    private String value = "anyValue";
+
+    @Test
+    public void shouldApplyEncodingInValueStrings() {
+        testEncodingFor(createMapOfString());
+    }
+
+    private Map<String, Object> createMapOfString() {
+        Map<String, Object> mapOfString = new HashMap<>();
+        mapOfString.put("data", value);
+        return mapOfString;
+    }
+
+    @Test
+    public void shouldApplyEncodingInMapOfMapInYoursValues() {
+        testEncodingFor(createMapOfMap());
+    }
+
+    private Map<String, Object> createMapOfMap() {
+        Map<String, Object> mapOfMap = new HashMap<>();
+        mapOfMap.put("parent", createMapOfString());
+        return mapOfMap;
+    }
+
+    @Test
+    public void shouldApplyEncodingInMapOfListInYoursElements() {
+        testEncodingFor(createMapOfList());
+    }
+
+    private Map<String, Object> createMapOfList() {
+        Map<String, Object> mapOfList = new HashMap<>();
+        mapOfList.put("data", Arrays.asList(value));
+
+        return mapOfList;
+    }
+
+    @Test
+    public void shouldApplyEncodingInMapOfListOfMapInYoursValues() {
+        testEncodingFor(createMapOfListOfMap());
+    }
+
+    private Map<String, Object> createMapOfListOfMap() {
+        Map<String, Object> mapOfListOfMap = new HashMap<>();
+
+        mapOfListOfMap.put("parent", Arrays.asList(createMapOfString()));
+        return mapOfListOfMap;
+    }
+
+    @Test
+    public void shouldApplyEncodingInMapOfListOfList() {
+        testEncodingFor(createMapOfListOfList());
+    }
+
+    private Map<String, Object> createMapOfListOfList() {
+        Map<String, Object> mapOfListOfList = new HashMap<>();
+
+        mapOfListOfList.put("data", Arrays.asList(Arrays.asList(value)));
+        return mapOfListOfList;
+    }
 
     @Test
     public void testForJavaScript() {
@@ -30,4 +96,13 @@ public class EncoderTest {
         System.out.println("JavaScriptSource: " + result);
     }
 
+    private void testEncodingFor(Map<String, Object> structure) {
+        Encoding encoding = value -> value;
+        Encoder encoder = Mockito.spy(new Encoder(encoding));
+
+        encoder.encodeNode(structure);
+
+        Mockito.verify(encoder).applyEncoding(value);
+        Mockito.verify(encoder).applyEncoding(Mockito.any());
+    }
 }
