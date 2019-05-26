@@ -20,16 +20,13 @@ import com.networknt.body.BodyHandler;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.sanitizer.enconding.Encoding;
+import com.networknt.sanitizer.enconding.Encoder;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderMap;
 import io.undertow.util.HeaderValues;
-import org.owasp.encoder.Encode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -44,7 +41,7 @@ public class SanitizerHandler implements MiddlewareHandler {
 
     static SanitizerConfig config = (SanitizerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, SanitizerConfig.class);
 
-    Encoding encoding = new Encoding(config.getEncodingStrategy());
+    Encoder encoding = new Encoder(config.getEncoding());
 
     private volatile HttpHandler next;
 

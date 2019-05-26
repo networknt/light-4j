@@ -16,6 +16,9 @@
 
 package com.networknt.sanitizer;
 
+import com.networknt.sanitizer.enconding.Encoding;
+import com.networknt.sanitizer.enconding.EncodingStrategy;
+
 import java.util.List;
 
 /**
@@ -28,7 +31,7 @@ public class SanitizerConfig {
     private boolean sanitizeBody;
     private boolean sanitizeHeader;
     private List<String> attributesToIgnore;
-    private EncodingStrategy encodingStrategy;
+    private String encoding;
 
     public boolean isEnabled() {
         return enabled;
@@ -54,15 +57,12 @@ public class SanitizerConfig {
         this.sanitizeHeader = sanitizeHeader;
     }
 
-    public EncodingStrategy getEncodingStrategy() {
-        if (encodingStrategy == null) {
-            encodingStrategy = EncodingStrategy.DEFAULT;
-        }
-        return encodingStrategy;
+    public Encoding getEncoding() {
+        return EncodingStrategy.of(encoding);
     }
 
-    public void setEncodingStrategy(EncodingStrategy encodingStrategy) {
-        this.encodingStrategy = encodingStrategy;
+    public void setEncoding(String encoding) {
+        this.encoding = encoding;
     }
 
     public List<String> getAttributesToIgnore() {
