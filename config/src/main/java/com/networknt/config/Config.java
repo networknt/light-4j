@@ -61,7 +61,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public abstract class Config {
     public static final String LIGHT_4J_CONFIG_DIR = "light-4j-config-dir";
-    public static final String CENTRALIZED_MANAGEMENT = "values";
 
     protected Config() {
     }
@@ -105,6 +104,8 @@ public abstract class Config {
         static final String CONFIG_EXT_JSON = ".json";
         static final String CONFIG_EXT_YAML = ".yaml";
         static final String CONFIG_EXT_YML = ".yml";
+        static final String CONFIG_EXT_KEYSTORE = ".keystore";
+        static final String CONFIG_EXT_TRUSTSTORE = ".truststore";
         static final String[] configExtensionsOrdered = {CONFIG_EXT_YML, CONFIG_EXT_YAML, CONFIG_EXT_JSON};
 
         static final Logger logger = LoggerFactory.getLogger(Config.class);
@@ -424,6 +425,12 @@ public abstract class Config {
                 logger.info("Unable to load config " + Encode.forJava(configFilename) + ". Looking for the same file name with extension yaml...");
             } else if (configFilename.endsWith(CONFIG_EXT_YAML)) {
                 logger.info("Unable to load config " + Encode.forJava(configFilename) + ". Looking for the same file name with extension json...");
+            } else if (configFilename.endsWith(CONFIG_EXT_KEYSTORE) || configFilename.endsWith(CONFIG_EXT_TRUSTSTORE)) {
+                String message = "Unable to load '" + configFilename + ", please provide the keystore/truststore matching the configuration in client.yml/server.yml to enable ssl.";
+                if (logger.isErrorEnabled()) {
+                    logger.error(message);
+                }
+                throw new ConfigException(message);
             } else {
                 System.out.println("Unable to load config '" + Encode.forJava(configFilename.substring(0, configFilename.indexOf("."))) + "' with extension yml, yaml and json from external config, application config and module config. Please ignore this message if you are sure that your application is not using this config file.");
             }
