@@ -25,6 +25,7 @@ public class ConsulConfig {
     boolean tcpCheck;
     boolean httpCheck;
     boolean ttlCheck;
+    boolean enbaleHttp2;
     String wait;
 
     public String getConsulUrl() {
@@ -84,5 +85,13 @@ public class ConsulConfig {
 
     public void setWait(String wait) {
         this.wait = wait;
+    }
+
+    public boolean isEnbaleHttp2() {
+        return enbaleHttp2;
+    }
+
+    public void setEnbaleHttp2(boolean enbaleHttp2) {
+        this.enbaleHttp2 = enbaleHttp2;
     }
 }

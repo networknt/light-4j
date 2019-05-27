@@ -24,7 +24,6 @@ import com.networknt.consul.ConsulConstants;
 import com.networknt.consul.ConsulResponse;
 import com.networknt.consul.ConsulService;
 import com.networknt.httpstring.HttpStringConstants;
-import com.networknt.utility.Constants;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
@@ -74,7 +73,7 @@ public class ConsulClientImpl implements ConsulClient {
 	public ConsulClientImpl() {
 		// Will use http/2 connection if tls is enabled as Consul only support HTTP/2 with TLS.
 		String consulUrl = config.getConsulUrl().toLowerCase();
-		optionMap =  consulUrl.startsWith("https") ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY;
+		optionMap =  config.isEnbaleHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY;
 		if(logger.isDebugEnabled()) logger.debug("url = " + consulUrl);
 		if(config.getWait() != null && config.getWait().length() > 2) wait = config.getWait();
 		if(logger.isDebugEnabled()) logger.debug("wait = " + wait);

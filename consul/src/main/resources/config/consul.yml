@@ -24,3 +24,5 @@ ttlCheck: true
 # This is limited to 10 minutes.This value can be specified in the form of "10s" or "5m" (i.e., 10 seconds or 5 minutes,
 # respectively).
 wait: 600s
+# enable HTTP/2
+enbaleHttp2: false
