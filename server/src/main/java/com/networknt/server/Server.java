@@ -396,6 +396,7 @@ public class Server {
                 throw new RuntimeException("Unable to initialise TrustManager[]", e);
             }
         } else {
+            // Mutual Tls is disabled, trust all the certs
             trustManagers = TRUST_ALL_CERTS;
         }
         return trustManagers;

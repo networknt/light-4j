@@ -426,7 +426,7 @@ public abstract class Config {
             } else if (configFilename.endsWith(CONFIG_EXT_YAML)) {
                 logger.info("Unable to load config " + Encode.forJava(configFilename) + ". Looking for the same file name with extension json...");
             } else if (configFilename.endsWith(CONFIG_EXT_KEYSTORE) || configFilename.endsWith(CONFIG_EXT_TRUSTSTORE)) {
-                String message = "Unable to load '" + configFilename + ", please provide the keystore/truststore matching the configuration in client.yml/server.yml to enable TLS connection.";
+                String message = "Unable to load '" + configFilename + "', please provide the keystore/truststore matching the configuration in client.yml/server.yml to enable TLS connection.";
                 if (logger.isErrorEnabled()) {
                     logger.error(message);
                 }
