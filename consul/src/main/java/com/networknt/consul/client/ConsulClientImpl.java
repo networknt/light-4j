@@ -204,10 +204,10 @@ public class ConsulClientImpl implements ConsulClient {
 	@Override
 	public ConsulResponse<List<ConsulService>> lookupHealthService(String serviceName, String tag, long lastConsulIndex, String token) {
 		ClientConnection targetConnection;
-		if(lastConsulIndex == 0) {
-			targetConnection = this.connection;
-		} else {
+		if(!isConsulUsingHttp2()) {
 			targetConnection = connectionPool.get(serviceName);
+		} else {
+			targetConnection = this.connection;
 		}
 		return lookupHealthService(serviceName, tag, lastConsulIndex, token, targetConnection);
 	}
@@ -227,7 +227,9 @@ public class ConsulClientImpl implements ConsulClient {
 				if(logger.isDebugEnabled()) logger.debug("connection is closed with counter " + reqCounter + ", reconnecting...");
 				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
 				reqCounter = new AtomicInteger(0);
-				connectionPool.put(serviceName, connection);
+				if(!isConsulUsingHttp2()) {
+					connectionPool.put(serviceName, connection);
+				}
 			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(path);
 			if(token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
@@ -271,5 +273,9 @@ public class ConsulClientImpl implements ConsulClient {
 		service.setPort((Integer)serviceMap.get("Port"));
 		service.setTags((List)serviceMap.get("Tags"));
 		return service;
+	}
+
+	private boolean isConsulUsingHttp2() {
+		return config.getConsulUrl().toLowerCase().startsWith("https");
 	}
 }
