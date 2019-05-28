@@ -1,25 +1,33 @@
 package com.networknt.sanitizer.enconding;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class Encoder {
 
     private final Encoding encoding;
+    private final List<String> attributesToIgnore;
 
-    public Encoder(Encoding encoding) {
+    public Encoder(Encoding encoding, List<String> attributesToIgnore) {
         this.encoding = encoding;
+        this.attributesToIgnore = attributesToIgnore == null ? new ArrayList<>() : attributesToIgnore;
     }
 
     public void encodeNode(Map<String, Object> map) {
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             String key = entry.getKey();
+            if (attributesToIgnore.contains(key)) {
+                continue;
+            }
+
             Object value = entry.getValue();
+
             if (value instanceof String) {
                 map.put(key, applyEncoding((String) value));
             } else if (value instanceof Map) {
                 encodeNode((Map) value);
-        } else if (value instanceof List) {
+            } else if (value instanceof List) {
                 encodeList((List)value);
             }
         }

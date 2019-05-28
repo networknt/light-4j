@@ -41,7 +41,7 @@ public class SanitizerHandler implements MiddlewareHandler {
 
     static SanitizerConfig config = (SanitizerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, SanitizerConfig.class);
 
-    Encoder encoding = new Encoder(config.getEncoding());
+    Encoder encoding = new Encoder(config.getEncoding(), config.getAttributesToIgnore());
 
     private volatile HttpHandler next;
 

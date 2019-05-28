@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class EncoderTest {
-    String s = "A'NDERSONoô";
+    private String s = "A'NDERSONoô";
     private String value = "anyValue";
 
     @Test
@@ -73,6 +73,25 @@ public class EncoderTest {
     }
 
     @Test
+    public void shouldIgnorePropertyIfItIsInPropertiesToIgnoreList() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("data1", "value1");
+        map.put("data2", "value2");
+        map.put("data3", "value3");
+        map.put("data4", "value4");
+        Encoding encoding = value -> value;
+        Encoder encoder = Mockito.spy(new Encoder(encoding, Arrays.asList("data2", "data4")));
+
+        encoder.encodeNode(map);
+
+        Mockito.verify(encoder).applyEncoding("value1");
+        Mockito.verify(encoder).applyEncoding("value3");
+        Mockito.verify(encoder, Mockito.never()).applyEncoding("value2");
+        Mockito.verify(encoder, Mockito.never()).applyEncoding("value4");
+        Mockito.verify(encoder, Mockito.times(2)).applyEncoding(Mockito.any());
+    }
+
+    @Test
     public void testForJavaScript() {
         String result = Encode.forJavaScript(s);
         System.out.println("JavaScript: " + result);
@@ -98,7 +117,7 @@ public class EncoderTest {
 
     private void testEncodingFor(Map<String, Object> structure) {
         Encoding encoding = value -> value;
-        Encoder encoder = Mockito.spy(new Encoder(encoding));
+        Encoder encoder = Mockito.spy(new Encoder(encoding, null));
 
         encoder.encodeNode(structure);
 
