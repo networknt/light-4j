@@ -25,7 +25,7 @@ public class ConsulConfig {
     boolean tcpCheck;
     boolean httpCheck;
     boolean ttlCheck;
-    boolean enbaleHttp2;
+    boolean enableHttp2;
     String wait;
 
     public String getConsulUrl() {
@@ -87,11 +87,11 @@ public class ConsulConfig {
         this.wait = wait;
     }
 
-    public boolean isEnbaleHttp2() {
-        return enbaleHttp2;
+    public boolean isEnableHttp2() {
+        return enableHttp2;
     }
 
-    public void setEnbaleHttp2(boolean enbaleHttp2) {
-        this.enbaleHttp2 = enbaleHttp2;
+    public void setEnableHttp2(boolean enableHttp2) {
+        this.enableHttp2 = enableHttp2;
     }
 }

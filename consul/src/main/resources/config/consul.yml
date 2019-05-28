@@ -25,4 +25,4 @@ ttlCheck: true
 # respectively).
 wait: 600s
 # enable HTTP/2
-enbaleHttp2: false
+enableHttp2: false
