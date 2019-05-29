@@ -79,7 +79,7 @@ public class EncoderTest {
         map.put("data2", "value2");
         map.put("data3", "value3");
         map.put("data4", "value4");
-        Encoding encoding = value -> value;
+        Encoding encoding = new FakeEncoding();
         Encoder encoder = Mockito.spy(new Encoder(encoding, Arrays.asList("data2", "data4")));
 
         encoder.encodeNode(map);
@@ -116,12 +116,25 @@ public class EncoderTest {
     }
 
     private void testEncodingFor(Map<String, Object> structure) {
-        Encoding encoding = value -> value;
+        Encoding encoding = new FakeEncoding();
         Encoder encoder = Mockito.spy(new Encoder(encoding, null));
 
         encoder.encodeNode(structure);
 
         Mockito.verify(encoder).applyEncoding(value);
         Mockito.verify(encoder).applyEncoding(Mockito.any());
+    }
+
+    private class FakeEncoding implements Encoding {
+
+        @Override
+        public String getId() {
+            return null;
+        }
+
+        @Override
+        public String apply(String data) {
+            return null;
+        }
     }
 }

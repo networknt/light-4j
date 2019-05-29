@@ -1,7 +1,8 @@
 package com.networknt.sanitizer.enconding;
 
-@FunctionalInterface
 public interface Encoding {
+
+    String getId();
 
     String apply(String data);
 }
