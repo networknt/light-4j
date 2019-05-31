@@ -124,17 +124,4 @@ public class EncoderTest {
         Mockito.verify(encoder).applyEncoding(value);
         Mockito.verify(encoder).applyEncoding(Mockito.any());
     }
-
-    private class FakeEncoding implements Encoding {
-
-        @Override
-        public String getId() {
-            return null;
-        }
-
-        @Override
-        public String apply(String data) {
-            return null;
-        }
-    }
 }
