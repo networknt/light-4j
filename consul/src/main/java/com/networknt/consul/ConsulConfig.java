@@ -25,6 +25,7 @@ public class ConsulConfig {
     boolean tcpCheck;
     boolean httpCheck;
     boolean ttlCheck;
+    boolean enableHttp2;
     String wait;
 
     public String getConsulUrl() {
@@ -84,5 +85,13 @@ public class ConsulConfig {
 
     public void setWait(String wait) {
         this.wait = wait;
+    }
+
+    public boolean isEnableHttp2() {
+        return enableHttp2;
+    }
+
+    public void setEnableHttp2(boolean enableHttp2) {
+        this.enableHttp2 = enableHttp2;
     }
 }
