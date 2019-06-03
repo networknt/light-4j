@@ -237,7 +237,7 @@ public class ConsulClientImpl implements ConsulClient {
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
 			reqCounter.getAndIncrement();
-			int	 statusCode = reference.get().getResponseCode();
+			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= 300){
 				if(logger.isDebugEnabled()) logger.debug("body = " + reference.get().getAttachment(Http2Client.RESPONSE_BODY));
 				throw new Exception("Failed to unregister on Consul: " + statusCode);
