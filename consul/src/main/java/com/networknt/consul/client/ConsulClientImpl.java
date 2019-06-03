@@ -103,9 +103,15 @@ public class ConsulClientImpl implements ConsulClient {
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
 			if(token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
+			if (logger.isDebugEnabled()) {
+				logger.debug("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
+			}
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
 			reqCounter.getAndIncrement();
+			if(logger.isDebugEnabled()) {
+				logger.debug("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
+			}
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= 300){
 				logger.error("Failed to checkPass on Consul: " + statusCode + ":" + reference.get().getAttachment(Http2Client.RESPONSE_BODY));
@@ -131,9 +137,15 @@ public class ConsulClientImpl implements ConsulClient {
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
 			if(token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
+			if (logger.isDebugEnabled()) {
+				logger.debug("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
+			}
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
 			reqCounter.getAndIncrement();
+			if(logger.isDebugEnabled()) {
+				logger.debug("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
+			}
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= 300){
 				logger.error("Failed to checkPass on Consul: " + statusCode + ":" + reference.get().getAttachment(Http2Client.RESPONSE_BODY));
@@ -160,9 +172,15 @@ public class ConsulClientImpl implements ConsulClient {
 			if(token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
 			request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+			if (logger.isDebugEnabled()) {
+				logger.debug("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
+			}
 			connection.sendRequest(request, client.createClientCallback(reference, latch, json));
 			latch.await();
 			reqCounter.getAndIncrement();
+			if(logger.isDebugEnabled()) {
+				logger.debug("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
+			}
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= 300){
 				throw new Exception("Failed to register on Consul: " + statusCode);
@@ -188,9 +206,15 @@ public class ConsulClientImpl implements ConsulClient {
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
 			if(token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
+			if (logger.isDebugEnabled()) {
+				logger.debug("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
+			}
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
 			reqCounter.getAndIncrement();
+			if(logger.isDebugEnabled()) {
+				logger.debug("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
+			}
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= 300){
 				System.out.println("body = " + reference.get().getAttachment(Http2Client.RESPONSE_BODY));
@@ -234,9 +258,15 @@ public class ConsulClientImpl implements ConsulClient {
 			ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(path);
 			if(token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
+			if (logger.isDebugEnabled()) {
+				logger.debug("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
+			}
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
 			reqCounter.getAndIncrement();
+			if(logger.isDebugEnabled()) {
+				logger.debug("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
+			}
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= 300){
 				if(logger.isDebugEnabled()) logger.debug("body = " + reference.get().getAttachment(Http2Client.RESPONSE_BODY));
