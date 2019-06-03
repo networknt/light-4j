@@ -1,7 +1,7 @@
 package com.networknt.sanitizer;
 
 import com.networknt.sanitizer.enconding.DefaultEncoding;
-import com.networknt.sanitizer.enconding.EncodingRegistry;
+import com.networknt.sanitizer.enconding.EncoderRegistry;
 import com.networknt.sanitizer.enconding.EncodingStrategy;
 import org.junit.Assert;
 import org.junit.Before;
@@ -16,7 +16,7 @@ public class EncodingStrategyTest {
 
     @Before
     public void setUp() {
-        EncodingRegistry.reset();
+        EncoderRegistry.reset();
     }
 
     @Test
@@ -40,7 +40,7 @@ public class EncodingStrategyTest {
     @Test
     public void shouldGetEncodingFromRegistry() {
         FakeEncoding encoding = new FakeEncoding();
-        EncodingRegistry.registry(encoding);
+        EncoderRegistry.registry(encoding);
 
         Assert.assertSame(encoding, EncodingStrategy.of(encoding.getId()));
     }

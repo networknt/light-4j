@@ -1,12 +1,12 @@
 package com.networknt.sanitizer.enconding;
 
 
-public class EncodingRegistry {
+public class EncoderRegistry {
 
     private static Encoding encoding;
 
     public static void registry(Encoding encoding) {
-        EncodingRegistry.encoding = encoding;
+        EncoderRegistry.encoding = encoding;
     }
 
     public static boolean hasEncodingsRegistered() {

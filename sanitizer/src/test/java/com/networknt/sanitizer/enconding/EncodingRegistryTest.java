@@ -9,28 +9,28 @@ public class EncodingRegistryTest {
 
     @Before
     public void setUp() {
-        EncodingRegistry.reset();
+        EncoderRegistry.reset();
     }
 
     @Test
     public void shouldRegisterEncoding() {
         FakeEncoding encoding = new FakeEncoding();
-        EncodingRegistry.registry(encoding);
+        EncoderRegistry.registry(encoding);
 
-        Assert.assertSame(encoding, EncodingRegistry.getEncoding());
+        Assert.assertSame(encoding, EncoderRegistry.getEncoding());
     }
 
     @Test
     public void shouldHasEncodingIfWasRegisteredAEncoding() {
         FakeEncoding encoding = new FakeEncoding();
-        EncodingRegistry.registry(encoding);
+        EncoderRegistry.registry(encoding);
 
-        Assert.assertTrue(EncodingRegistry.hasEncodingsRegistered());
+        Assert.assertTrue(EncoderRegistry.hasEncodingsRegistered());
     }
 
 
     @Test
     public void shouldHasNotEncodingIfWasRegisteredAEncoding() {
-        Assert.assertFalse(EncodingRegistry.hasEncodingsRegistered());
+        Assert.assertFalse(EncoderRegistry.hasEncodingsRegistered());
     }
 }

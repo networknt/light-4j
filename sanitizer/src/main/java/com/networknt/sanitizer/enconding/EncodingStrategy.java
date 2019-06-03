@@ -3,9 +3,9 @@ package com.networknt.sanitizer.enconding;
 public class EncodingStrategy {
 
     public static Encoding of(String value) {
-        if (EncodingRegistry.hasEncodingsRegistered()) {
-            if (EncodingRegistry.getEncoding().getId().equals(value)) {
-                return EncodingRegistry.getEncoding();
+        if (EncoderRegistry.hasEncodingsRegistered()) {
+            if (EncoderRegistry.getEncoding().getId().equals(value)) {
+                return EncoderRegistry.getEncoding();
             }
         }
 
