@@ -317,7 +317,9 @@ public class OauthHelper {
         public void run() {
             final ClientRequest request = requestComposer.composeClientRequest(tokenRequest);
             String requestBody = requestComposer.composeRequestBody(tokenRequest);
-            logger.debug(requestBody);
+            if (logger.isDebugEnabled()) {
+                logger.debug("The request sent to the oauth server = request header(s): {}, request body: {}", request.getRequestHeaders().toString(), requestBody);
+            }
             adjustNoChunkedEncoding(request, requestBody);
             connection.sendRequest(request, new ClientCallback<ClientExchange>() {
 
@@ -331,7 +333,9 @@ public class OauthHelper {
 
                                 @Override
                                 protected void stringDone(String string) {
-                                    logger.debug("getToken response = " + string);
+                                    if (logger.isDebugEnabled()) {
+                                        logger.debug("getToken response = " + string);
+                                    }
                                     reference.set(handleResponse(getContentTypeFromExchange(result), string));
                                     latch.countDown();
                                 }
