@@ -39,6 +39,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -60,6 +61,7 @@ public class ConsulClientImpl implements ConsulClient {
 	// be for dev testing only and one connection should be fine. For production, https must be used and it
 	// supports multiplex.
 	ClientConnection connection;
+	ConcurrentHashMap<String, ClientConnection> connectionPool = new ConcurrentHashMap<>();
 	OptionMap optionMap;
 	URI uri;
 	int maxReqPerConn;
@@ -201,6 +203,16 @@ public class ConsulClientImpl implements ConsulClient {
 
 	@Override
 	public ConsulResponse<List<ConsulService>> lookupHealthService(String serviceName, String tag, long lastConsulIndex, String token) {
+		ClientConnection targetConnection;
+		if(!config.isEnableHttp2()) {
+			targetConnection = connectionPool.get(serviceName);
+		} else {
+			targetConnection = this.connection;
+		}
+		return lookupHealthService(serviceName, tag, lastConsulIndex, token, targetConnection);
+	}
+
+	private ConsulResponse<List<ConsulService>> lookupHealthService(String serviceName, String tag, long lastConsulIndex, String token, ClientConnection connection) {
 		ConsulResponse<List<ConsulService>> newResponse = null;
 
 		String path = "/v1/health/service/" + serviceName + "?passing&wait="+wait+"&index=" + lastConsulIndex;
@@ -215,6 +227,9 @@ public class ConsulClientImpl implements ConsulClient {
 				if(logger.isDebugEnabled()) logger.debug("connection is closed with counter " + reqCounter + ", reconnecting...");
 				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
 				reqCounter = new AtomicInteger(0);
+				if(!config.isEnableHttp2()) {
+					connectionPool.put(serviceName, connection);
+				}
 			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(path);
 			if(token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
