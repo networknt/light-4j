@@ -24,6 +24,9 @@ public class Http2ClientCompletableFutureNoRequest extends CompletableFuture<Cli
 
                     @Override
                     protected void stringDone(String string) {
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Service call response = {}", string);
+                        }
                         result.getResponse().putAttachment(com.networknt.client.Http2Client.RESPONSE_BODY, string);
                         Http2ClientCompletableFutureNoRequest.super.complete(result.getResponse());
                     }
