@@ -22,7 +22,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
@@ -104,8 +103,6 @@ public abstract class Config {
         static final String CONFIG_EXT_JSON = ".json";
         static final String CONFIG_EXT_YAML = ".yaml";
         static final String CONFIG_EXT_YML = ".yml";
-        static final String CONFIG_EXT_KEYSTORE = ".keystore";
-        static final String CONFIG_EXT_TRUSTSTORE = ".truststore";
         static final String[] configExtensionsOrdered = {CONFIG_EXT_YML, CONFIG_EXT_YAML, CONFIG_EXT_JSON};
 
         static final Logger logger = LoggerFactory.getLogger(Config.class);
@@ -425,13 +422,7 @@ public abstract class Config {
                 logger.info("Unable to load config " + Encode.forJava(configFilename) + ". Looking for the same file name with extension yaml...");
             } else if (configFilename.endsWith(CONFIG_EXT_YAML)) {
                 logger.info("Unable to load config " + Encode.forJava(configFilename) + ". Looking for the same file name with extension json...");
-            } else if (configFilename.endsWith(CONFIG_EXT_KEYSTORE) || configFilename.endsWith(CONFIG_EXT_TRUSTSTORE)) {
-                String message = "Unable to load '" + configFilename + "', please provide the keystore/truststore matching the configuration in client.yml/server.yml to enable TLS connection.";
-                if (logger.isErrorEnabled()) {
-                    logger.error(message);
-                }
-                throw new ConfigException(message);
-            } else {
+            } else if (configFilename.endsWith(CONFIG_EXT_JSON)) {
                 System.out.println("Unable to load config '" + Encode.forJava(configFilename.substring(0, configFilename.indexOf("."))) + "' with extension yml, yaml and json from external config, application config and module config. Please ignore this message if you are sure that your application is not using this config file.");
             }
             return null;

@@ -31,6 +31,7 @@ import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.utility.ModuleRegistry;
+import com.networknt.utility.TlsUtil;
 import io.undertow.UndertowOptions;
 import io.undertow.client.*;
 import com.networknt.client.http.*;
@@ -381,25 +382,6 @@ public class Http2Client {
         return result;
     }
 
-
-
-    private static KeyStore loadKeyStore(final String name, final char[] password) throws IOException {
-        final InputStream stream = Config.getInstance().getInputStreamFromFile(name);
-        if(stream == null) {
-            throw new RuntimeException("Could not load keystore");
-        }
-        try {
-            KeyStore loadedKeystore = KeyStore.getInstance("JKS");
-            loadedKeystore.load(stream, password);
-
-            return loadedKeystore;
-        } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException e) {
-            throw new IOException(String.format("Unable to load KeyStore %s", name), e);
-        } finally {
-            IoUtils.safeClose(stream);
-        }
-    }
-
     /**
      * default method for creating ssl context. trustedNames config is not used.
      *
@@ -440,7 +422,7 @@ public class Http2Client {
                     }
                     if (keyStoreName != null && keyStorePass != null) {
                         String keyPass = (String) ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_KEY_PASS);
-                        KeyStore keyStore = loadKeyStore(keyStoreName, keyStorePass.toCharArray());
+                        KeyStore keyStore = TlsUtil.loadKeyStore(keyStoreName, keyStorePass.toCharArray());
                         KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                         keyManagerFactory.init(keyStore, keyPass.toCharArray());
                         keyManagers = keyManagerFactory.getKeyManagers();
@@ -467,7 +449,7 @@ public class Http2Client {
                         if(logger.isInfoEnabled()) logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
                     }
                     if (trustStoreName != null && trustStorePass != null) {
-                        KeyStore trustStore = loadKeyStore(trustStoreName, trustStorePass.toCharArray());
+                        KeyStore trustStore = TlsUtil.loadTrustStore(trustStoreName, trustStorePass.toCharArray());
                         TLSConfig tlsConfig = TLSConfig.create(tlsMap, trustedNamesGroupKey);
 
                         TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
