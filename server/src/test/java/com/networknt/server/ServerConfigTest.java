@@ -33,6 +33,7 @@ public class ServerConfigTest {
         // ensure that env is null if it is missing in the server.yml
         ServerConfig serverConfig = (ServerConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServerConfig.class);
         Assert.assertNull(serverConfig.getEnvironment());
+        Assert.assertEquals("petstore", serverConfig.getServiceName());
     }
 
     @Test
