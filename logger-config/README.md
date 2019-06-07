@@ -1,6 +1,6 @@
-# Logging
+# Logger-Config
 
-Logging is a module in Light-4j framework which will use to get the loggers and their current logging levels, And also can able to
+Logger-config is a module in Light-4j framework which will use to get the loggers and their current logging levels, And also can able to
 change the logging level for given logger at runtime (Example: Change logging level to DEBUG for “com.networknt” logger for troubleshooting purpose).
 
 There are three LoggerHandlers available in logging module.
@@ -43,7 +43,7 @@ Add dependency.
 ```xml
 <dependency>
   <groupId>com.networknt</groupId>
-  <artifactId>logging</artifactId>
+  <artifactId>logger-config</artifactId>
   <version>${version.light-4j}</version>
 </dependency>
 ```
@@ -79,7 +79,7 @@ Add the below end points under path.
 ```
 
 
-By default logging is enabled in logging.yml. if you want to disable it,
-just add the logging.yml file in your resource folder and make enabled property to false in logging.yml.
+By default logging is enabled in logger-config.yml. if you want to disable it,
+just add the logger-config.yml file in your resource folder and make enabled property to false in logger-config.yml.
 
 
