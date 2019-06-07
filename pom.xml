@@ -157,7 +157,7 @@
         <module>ip-whitelist</module>
         <module>encode-decode</module>
         <module>monad-result</module>
-        <module>logging</module>
+        <module>logger-config</module>
     </modules>
 
     <dependencyManagement>
@@ -518,14 +518,13 @@
                 <artifactId>HikariCP</artifactId>
                 <version>${version.hikaricp}</version>
             </dependency>
-
-            <!-- Test dependencies -->
             <dependency>
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
                 <version>${version.logback}</version>
-                <scope>test</scope>
             </dependency>
+
+            <!-- Test dependencies -->
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
