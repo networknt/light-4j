@@ -18,6 +18,7 @@
 
 package com.networknt.client;
 
+import com.networknt.client.circuitbreaker.CircuitBreaker;
 import com.networknt.client.http.Light4jHttp2ClientProvider;
 import com.networknt.client.http.Light4jHttpClientProvider;
 import java.io.IOException;
@@ -72,7 +73,9 @@ import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.utility.ModuleRegistry;
+import io.undertow.UndertowOptions;
 import io.undertow.client.*;
+import com.networknt.client.http.*;
 import io.undertow.connector.ByteBufferPool;
 import io.undertow.protocols.ssl.UndertowXnioSsl;
 import io.undertow.server.DefaultByteBufferPool;
@@ -98,6 +101,7 @@ import java.net.URLEncoder;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -120,27 +124,17 @@ public class Http2Client {
             .set(Options.WORKER_NAME, "Client").getMap();
     public static XnioWorker WORKER;
     public static XnioSsl SSL;
-    public static int bufferSize;
-    public static int DEFAULT_BUFFER_SIZE = 24; // 24*1024 buffer size will be good for most of the app.
     public static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
 
     static final String TLS = "tls";
-    static final String BUFFER_SIZE = "bufferSize";
     static final String LOAD_TRUST_STORE = "loadTrustStore";
     static final String LOAD_KEY_STORE = "loadKeyStore";
     static final String TRUST_STORE = "trustStore";
     static final String KEY_STORE = "keyStore";
+    static final String KEY_STORE_PROPERTY = "javax.net.ssl.keyStore";
+    static final String KEY_STORE_PASSWORD_PROPERTY = "javax.net.ssl.keyStorePassword";
     static final String TRUST_STORE_PROPERTY = "javax.net.ssl.trustStore";
     static final String TRUST_STORE_PASSWORD_PROPERTY = "javax.net.ssl.trustStorePassword";
-
-    static final String OAUTH = "oauth";
-    static final String TOKEN = "token";
-
-
-
-    static Map<String, Object> config;
-    static Map<String, Object> tokenConfig;
-    static Map<String, Object> secretConfig;
 
     // TokenManager is to manage cached jwt tokens for this client.
     private TokenManager tokenManager = TokenManager.getInstance();
@@ -148,27 +142,9 @@ public class Http2Client {
     static {
         List<String> masks = new ArrayList<>();
         ModuleRegistry.registerModule(Http2Client.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), masks);
-        config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
-        Object bufferSizeObject = config.get(BUFFER_SIZE);
-        if(bufferSizeObject == null) {
-            bufferSize = DEFAULT_BUFFER_SIZE;
-        } else {
-            bufferSize = (int)bufferSizeObject;
-        }
-        if(config != null) {
-			Map<String, Object> oauthConfig = (Map<String, Object>)config.get(OAUTH);
-            if(oauthConfig != null) {
-                tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);
-            }
-        }
-
-        secretConfig = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
-        if(secretConfig == null) {
-            throw new ExceptionInInitializerError("Could not locate secret.yml");
-        }
     }
 
-    public static final ByteBufferPool BUFFER_POOL = new DefaultByteBufferPool(true, bufferSize * 1024);
+    public static final ByteBufferPool BUFFER_POOL = new DefaultByteBufferPool(true, ClientConfig.get().getBufferSize() * 1024);
     /**
      * @deprecated Use BUFFER_POOL instead!
      */
@@ -180,11 +156,11 @@ public class Http2Client {
     @Deprecated
     public static final ByteBufferPool SSL_BUFFER_POOL = BUFFER_POOL;
 
-    private final Map<String, ClientProvider> clientProviders;
+    protected final Map<String, ClientProvider> clientProviders;
 
     private static final Http2Client INSTANCE = new Http2Client();
 
-    private Http2Client() {
+    protected Http2Client() {
         this(Http2Client.class.getClassLoader());
     }
 
@@ -473,7 +449,7 @@ public class Http2Client {
      * @throws IOException
      */
     public static SSLContext createSSLContext() throws IOException {
-    	Map<String, Object> tlsMap = (Map<String, Object>)config.get(TLS);
+    	Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(TLS);
     	
     	return null==tlsMap?null:createSSLContext((String)tlsMap.get(TLSConfig.DEFAULT_GROUP_KEY));
     }
@@ -489,19 +465,28 @@ public class Http2Client {
 	public static SSLContext createSSLContext(String trustedNamesGroupKey) throws IOException {
         SSLContext sslContext = null;
         KeyManager[] keyManagers = null;
-        Map<String, Object> tlsMap = (Map<String, Object>)config.get(TLS);
+        Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(TLS);
         if(tlsMap != null) {
             try {
                 // load key store for client certificate if two way ssl is used.
                 Boolean loadKeyStore = (Boolean) tlsMap.get(LOAD_KEY_STORE);
                 if (loadKeyStore != null && loadKeyStore) {
-                    String keyStoreName = (String)tlsMap.get(KEY_STORE);
-                    String keyStorePass = (String)secretConfig.get(SecretConstants.CLIENT_KEYSTORE_PASS);
-                    String keyPass = (String)secretConfig.get(SecretConstants.CLIENT_KEY_PASS);
-                    KeyStore keyStore = loadKeyStore(keyStoreName, keyStorePass.toCharArray());
-                    KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-                    keyManagerFactory.init(keyStore, keyPass.toCharArray());
-                    keyManagers = keyManagerFactory.getKeyManagers();
+                    String keyStoreName = System.getProperty(KEY_STORE_PROPERTY);
+                    String keyStorePass = System.getProperty(KEY_STORE_PASSWORD_PROPERTY);
+                    if (keyStoreName != null && keyStorePass != null) {
+                        if(logger.isInfoEnabled()) logger.info("Loading key store from system property at " + Encode.forJava(keyStoreName));
+                    } else {
+                        keyStoreName = (String) tlsMap.get(KEY_STORE);
+                        keyStorePass = (String) ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_KEYSTORE_PASS);
+                        if(logger.isInfoEnabled()) logger.info("Loading key store from config at " + Encode.forJava(keyStoreName));
+                    }
+                    if (keyStoreName != null && keyStorePass != null) {
+                        String keyPass = (String) ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_KEY_PASS);
+                        KeyStore keyStore = loadKeyStore(keyStoreName, keyStorePass.toCharArray());
+                        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                        keyManagerFactory.init(keyStore, keyPass.toCharArray());
+                        keyManagers = keyManagerFactory.getKeyManagers();
+                    }
                 }
             } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
                 throw new IOException("Unable to initialise KeyManager[]", e);
@@ -520,7 +505,7 @@ public class Http2Client {
                         if(logger.isInfoEnabled()) logger.info("Loading trust store from system property at " + Encode.forJava(trustStoreName));
                     } else {
                         trustStoreName = (String) tlsMap.get(TRUST_STORE);
-                        trustStorePass = (String)secretConfig.get(SecretConstants.CLIENT_TRUSTSTORE_PASS);
+                        trustStorePass = (String)ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_TRUSTSTORE_PASS);
                         if(logger.isInfoEnabled()) logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
                     }
                     if (trustStoreName != null && trustStorePass != null) {
@@ -576,6 +561,9 @@ public class Http2Client {
 
                             @Override
                             protected void stringDone(String string) {
+                                if (logger.isDebugEnabled()) {
+                                    logger.debug("Service call response = {}", string);
+                                }
                                 result.getResponse().putAttachment(RESPONSE_BODY, string);
                                 latch.countDown();
                             }
@@ -626,6 +614,9 @@ public class Http2Client {
                         new StringReadChannelListener(BUFFER_POOL) {
                             @Override
                             protected void stringDone(String string) {
+                                if (logger.isDebugEnabled()) {
+                                    logger.debug("Service call response = {}", string);
+                                }
                                 result.getResponse().putAttachment(RESPONSE_BODY, string);
                                 latch.countDown();
                             }
@@ -666,6 +657,9 @@ public class Http2Client {
 
                             @Override
                             protected void stringDone(String string) {
+                                if (logger.isDebugEnabled()) {
+                                    logger.debug("Service call response = {}", string);
+                                }
                                 AsyncResponse ar = new AsyncResponse(result.getResponse(), string, System.currentTimeMillis() - startTime);
                                 reference.set(DefaultAsyncResult.succeed(ar));
                                 latch.countDown();
@@ -673,6 +667,7 @@ public class Http2Client {
 
                             @Override
                             protected void error(IOException e) {
+                                logger.error("IOException:", e);
                                 reference.set(DefaultAsyncResult.fail(e));
                                 latch.countDown();
                             }
@@ -681,6 +676,7 @@ public class Http2Client {
 
                     @Override
                     public void failed(IOException e) {
+                        logger.error("IOException:", e);
                         reference.set(DefaultAsyncResult.fail(e));
                         latch.countDown();
                     }
@@ -692,6 +688,7 @@ public class Http2Client {
                         result.getRequestChannel().resumeWrites();
                     }
                 } catch (IOException e) {
+                    logger.error("IOException:", e);
                     reference.set(DefaultAsyncResult.fail(e));
                     latch.countDown();
                 }
@@ -699,6 +696,7 @@ public class Http2Client {
 
             @Override
             public void failed(IOException e) {
+                logger.error("IOException:", e);
                 reference.set(DefaultAsyncResult.fail(e));
                 latch.countDown();
             }
@@ -717,6 +715,9 @@ public class Http2Client {
                         new StringReadChannelListener(BUFFER_POOL) {
                             @Override
                             protected void stringDone(String string) {
+                                if (logger.isDebugEnabled()) {
+                                    logger.debug("Service call response = {}", string);
+                                }
                                 AsyncResponse ar = new AsyncResponse(result.getResponse(), string, System.currentTimeMillis() - startTime);
                                 reference.set(DefaultAsyncResult.succeed(ar));
                                 latch.countDown();
@@ -724,6 +725,7 @@ public class Http2Client {
 
                             @Override
                             protected void error(IOException e) {
+                                logger.error("IOException:", e);
                                 reference.set(DefaultAsyncResult.fail(e));
                                 latch.countDown();
                             }
@@ -732,6 +734,7 @@ public class Http2Client {
 
                     @Override
                     public void failed(IOException e) {
+                        logger.error("IOException:", e);
                         reference.set(DefaultAsyncResult.fail(e));
                         latch.countDown();
                     }
@@ -740,10 +743,75 @@ public class Http2Client {
 
             @Override
             public void failed(IOException e) {
+                logger.error("IOException:", e);
                 reference.set(DefaultAsyncResult.fail(e));
                 latch.countDown();
             }
         };
+    }
+
+    public CircuitBreaker getRequestService(URI uri, ClientRequest request, Optional<String> requestBody) {
+        return new CircuitBreaker(() -> callService(uri, request, requestBody));
+    }
+
+    public CompletableFuture<ClientResponse> callService(URI uri, ClientRequest request, Optional<String> requestBody) {
+        CompletableFuture<ClientConnection> futureConnection = this.connectAsync(uri);
+        CompletableFuture<ClientResponse> futureClientResponse = futureConnection.thenComposeAsync(clientConnection -> {
+            if (requestBody.isPresent()) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("The request sent to {} = request header: {}, request body: {}", uri.toString(), request.getRequestHeaders().toString(), requestBody.get());
+                }
+                Http2ClientCompletableFutureWithRequest futureClientResponseWithRequest = new Http2ClientCompletableFutureWithRequest(requestBody.get());
+                try {
+                    clientConnection.sendRequest(request, futureClientResponseWithRequest);
+                } catch (Exception e) {
+                    futureClientResponseWithRequest.completeExceptionally(e);
+                }
+                return futureClientResponseWithRequest;
+            } else {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("The request sent to {} = request header: {}, request body is empty", uri.toString(), request.getRequestHeaders().toString());
+                }
+                Http2ClientCompletableFutureNoRequest futureClientResponseNoRequest = new Http2ClientCompletableFutureNoRequest();
+                try {
+                    clientConnection.sendRequest(request, futureClientResponseNoRequest);
+                } catch (Exception e) {
+                    futureClientResponseNoRequest.completeExceptionally(e);
+                }
+                return futureClientResponseNoRequest;
+            }
+        });
+        return futureClientResponse;
+    }
+
+    /**
+     * Create async connection with default config value
+     *
+     */
+    public CompletableFuture<ClientConnection> connectAsync(URI uri) {
+        return this.connectAsync(null, uri, com.networknt.client.Http2Client.WORKER, com.networknt.client.Http2Client.SSL, com.networknt.client.Http2Client.BUFFER_POOL,
+                OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+    }
+
+    public CompletableFuture<ClientConnection> connectAsync(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        CompletableFuture<ClientConnection> completableFuture = new CompletableFuture<>();
+        ClientProvider provider = clientProviders.get(uri.getScheme());
+        try {
+            provider.connect(new ClientCallback<ClientConnection>() {
+                @Override
+                public void completed(ClientConnection r) {
+                    completableFuture.complete(r);
+                }
+
+                @Override
+                public void failed(IOException e) {
+                    completableFuture.completeExceptionally(e);
+                }
+            }, bindAddress, uri, worker, ssl, bufferPool, options);
+        } catch (Throwable t) {
+            completableFuture.completeExceptionally(t);
+        }
+        return completableFuture;
     }
 
 }

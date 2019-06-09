@@ -7,7 +7,7 @@ module com.networknt.config {
     requires com.fasterxml.jackson.databind;
     requires com.fasterxml.jackson.datatype.jsr310;
     requires encoder;
-    requires slf4j.api;
+    requires org.slf4j;
     requires snakeyaml;
 
     uses com.networknt.config.Config;

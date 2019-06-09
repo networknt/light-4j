@@ -9,5 +9,6 @@ module com.networknt.dump {
     requires com.networknt.body;
 
     requires xnio.api;
+    requires org.slf4j;
     requires java.logging;
 }

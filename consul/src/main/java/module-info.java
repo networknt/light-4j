@@ -8,5 +8,7 @@ module com.networknt.consul {
     requires com.networknt.common;
     requires com.networknt.http.string;
 
-    requires slf4j.api;
+    requires org.slf4j;
+    requires undertow.core;
+
 }

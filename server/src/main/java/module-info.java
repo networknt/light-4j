@@ -11,7 +11,7 @@ module com.networknt.server {
     requires com.networknt.switcher;
 
     requires undertow.core;
-    requires slf4j.api;
+    requires org.slf4j;
     requires xnio.api;
     requires json.path;
 }

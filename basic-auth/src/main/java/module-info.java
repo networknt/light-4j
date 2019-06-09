@@ -8,6 +8,6 @@ module com.networknt.basic.auth {
     requires com.networknt.common;
 
     requires undertow.core;
-    requires slf4j.api;
+    requires org.slf4j;
     requires java.logging;
 }

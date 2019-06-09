@@ -6,6 +6,6 @@ module com.networknt.header {
     requires com.networknt.utility;
 
     requires undertow.core;
-    requires slf4j.api;
+    requires org.slf4j;
     requires java.logging;
 }

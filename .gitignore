@@ -7,6 +7,7 @@ dist/
 .project
 .classpath
 .settings
+.attach_*
 .metadata/
 *.iml
 *.log

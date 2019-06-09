@@ -2,7 +2,7 @@
 # Sanitize request for cross site scripting during runtime
 
 # indicate if sanitizer is enabled or not
-enabled: true
+enabled: false
 
 # if it is enabled, does body need to be sanitized
 sanitizeBody: true

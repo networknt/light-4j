@@ -20,10 +20,7 @@ import com.networknt.registry.Registry;
 import com.networknt.registry.URL;
 import com.networknt.registry.URLImpl;
 import com.networknt.service.SingletonServiceFactory;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -49,7 +46,8 @@ public class ConsulTestIT {
         registry = null;
     }
 
-    //@Test
+    @Test
+    @Ignore
     public void doRegisterAndAvailable() throws Exception {
         // register
         registry.doRegister(serviceUrl);
@@ -58,7 +56,8 @@ public class ConsulTestIT {
         registry.doUnregister(serviceUrl);
     }
 
-    //@Test
+    @Test
+    @Ignore
     public void discoverService() throws Exception {
         registry.doRegister(serviceUrl);
         List<URL> urls = registry.discoverService(serviceUrl);

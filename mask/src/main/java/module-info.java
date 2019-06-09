@@ -4,6 +4,6 @@ module com.networknt.mask {
     requires com.networknt.config;
     requires com.networknt.utility;
 
-    requires slf4j.api;
+    requires org.slf4j;
     requires json.path;
 }

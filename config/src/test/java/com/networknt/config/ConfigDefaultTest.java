@@ -186,17 +186,31 @@ public class ConfigDefaultTest extends TestCase {
         Assert.assertEquals("$abc", tc.getValue6());
     }
 
-    public void testGetNullValueJsonMapConfig() throws Exception {
+    public void testGetNullValueJsonMapConfig() {
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test_nullValue");
         Assert.assertEquals(null, configMap.get("value"));
     }
 
-    @Test
+    public void testEmptyStringValueJsonMapConfig() {
+        config.clear();
+        Map<String, Object> configMap = config.getJsonMapConfig("test_emptyString");
+        Assert.assertEquals("", configMap.get("value"));
+    }
+
+    
     public void testInjectionExclusionConfig() {
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test_exclusion");
         Assert.assertEquals("${TEST.string}", configMap.get("key"));
+    }
+
+    public void testInvalidValueJsonMapConfig() {
+        config.clear();
+        try {
+            config.getJsonMapConfig("test_invalid");
+            fail();
+        } catch(Exception e) {}
     }
 
     public void testGetInputStream() throws Exception {

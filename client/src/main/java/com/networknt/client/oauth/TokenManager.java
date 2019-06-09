@@ -8,7 +8,10 @@ import com.networknt.monad.Result;
 import io.undertow.client.ClientRequest;
 import io.undertow.util.HeaderValues;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This class is a singleton to manage ALL tokens.
@@ -101,7 +104,10 @@ public class TokenManager {
     public Result<Jwt> getJwt(ClientRequest clientRequest) {
         HeaderValues scope = clientRequest.getRequestHeaders().get(OauthHelper.SCOPE);
         if(scope != null) {
-            return getJwt(new Jwt.Key(scope.getFirst()));
+            String scopeStr = scope.getFirst();
+            Set<String> scopeSet = new HashSet<>();
+            scopeSet.addAll(Arrays.asList(scopeStr.split(" ")));
+            return getJwt(new Jwt.Key(scopeSet));
         }
         HeaderValues serviceId = clientRequest.getRequestHeaders().get(OauthHelper.SERVICE_ID);
         if(serviceId != null) {

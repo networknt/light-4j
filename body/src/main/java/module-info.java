@@ -6,7 +6,7 @@ module com.networknt.body {
     requires com.networknt.utility;
 
     requires undertow.core;
-    requires slf4j.api;
+    requires org.slf4j;
     requires java.logging;
     requires com.fasterxml.jackson.core;
 }

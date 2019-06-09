@@ -11,5 +11,5 @@ module com.networknt.prometheus {
     requires simpleclient.common;
     requires com.fasterxml.jackson.annotation;
     requires undertow.core;
-    requires slf4j.api;
+    requires org.slf4j;
 }

@@ -68,13 +68,14 @@
         <java.version>11</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
+        <javac.version>9+181-r4173-1</javac.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <version.jackson>2.9.8</version.jackson>
-        <version.slf4j>1.7.25</version.slf4j>
+        <version.jackson>2.9.9</version.jackson>
+        <version.slf4j>1.8.0-beta1</version.slf4j>
         <version.jose4j>0.6.3</version.jose4j>
         <version.commons.codec>1.11</version.commons.codec>
         <version.encoder>1.2.1</version.encoder>
-        <version.logback>1.2.3</version.logback>
+        <version.logback>1.3.0-alpha4</version.logback>
         <version.junit>4.12</version.junit>
         <version.mockito>2.23.0</version.mockito>
         <version.powermock>2.0.0</version.powermock>
@@ -83,7 +84,7 @@
         <version.assertj>3.8.0</version.assertj>
         <version.hdrhistogram>2.1.10</version.hdrhistogram>
         <version.jsr305>3.0.2</version.jsr305>
-        <version.json-schema-validator>1.0.5</version.json-schema-validator>
+        <version.json-schema-validator>1.0.14</version.json-schema-validator>
         <version.zookeeper>3.5.3-beta</version.zookeeper>
         <version.zkclient>0.3</version.zkclient>
         <version.curator>4.0.1</version.curator>
@@ -105,13 +106,10 @@
         <version.maven-source>3.0.1</version.maven-source>
         <version.maven-surefire>2.19.1</version.maven-surefire>
         <version.maven-failsafe>2.22.0</version.maven-failsafe>
-        <!--<version.maven-release>2.5.3</version.maven-release>-->
-        <version.maven-javadoc>3.0.1</version.maven-javadoc>
-        <version.jacoco>0.7.9</version.jacoco>
+        <version.maven-javadoc>3.1.0</version.maven-javadoc>
+        <version.jacoco>0.8.3</version.jacoco>
         <version.maven-compiler>3.6.1</version.maven-compiler>
-        <version.build-helper-maven>1.9.1</version.build-helper-maven>
-        <version.plexus-compiler-javac-errorprone>2.8</version.plexus-compiler-javac-errorprone>
-        <version.error_prone_core>2.0.15</version.error_prone_core>
+        <version.build-helper-maven>3.0.0</version.build-helper-maven>
         <version.lifecycle-mapping>1.0.0</version.lifecycle-mapping>
         <version.maven-gpg>1.6</version.maven-gpg>
         <version.javadoc-packagelist-plugin>1.0-SNAPSHOT</version.javadoc-packagelist-plugin>
@@ -161,6 +159,7 @@
         <module>ip-whitelist</module>
         <module>encode-decode</module>
         <module>monad-result</module>
+        <module>logger-config</module>
     </modules>
 
     <dependencyManagement>
@@ -214,6 +213,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>health</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>logger-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -521,14 +525,13 @@
                 <artifactId>HikariCP</artifactId>
                 <version>${version.hikaricp}</version>
             </dependency>
-
-            <!-- Test dependencies -->
             <dependency>
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
                 <version>${version.logback}</version>
-                <scope>test</scope>
             </dependency>
+
+            <!-- Test dependencies -->
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
@@ -789,39 +792,19 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
-                        <!--<configuration>-->
-                            <!--<dataFile>${project.build.directory}/coverage-reports/jacoco-ut.exec</dataFile>-->
-                            <!--<outputDirectory>${project.reporting.outputDirectory}/jacoco-ut</outputDirectory>-->
-                        <!--</configuration>-->
-                    <!--</execution>-->
-                    <!--&lt;!&ndash; End Executions for unit tests &ndash;&gt;-->
-                    <!--&lt;!&ndash; The Executions for integration tests &ndash;&gt;-->
-                    <!--<execution>-->
-                        <!--<id>pre-integration-test</id>-->
-                        <!--<phase>pre-integration-test</phase>-->
-                        <!--<goals>-->
-                            <!--<goal>prepare-agent</goal>-->
-                        <!--</goals>-->
-                        <!--<configuration>-->
-                            <!--<destFile>${project.build.directory}/coverage-reports/jacoco-it.exec</destFile>-->
-                        <!--</configuration>-->
-                    <!--</execution>-->
-                    <!--<execution>-->
-                        <!--<id>post-integration-test</id>-->
-                        <!--<phase>post-integration-test</phase>-->
-                        <!--<goals>-->
-                            <!--<goal>report</goal>-->
-                        <!--</goals>-->
-                        <!--<configuration>-->
-                            <!--<dataFile>${project.build.directory}/coverage-reports/jacoco-it.exec</dataFile>-->
-                            <!--<outputDirectory>${project.reporting.outputDirectory}/jacoco-it</outputDirectory>-->
-                        <!--</configuration>-->
                     </execution>
                     <!-- End Executions for integration tests -->
                 </executions>
             </plugin>
             <!-- end JACOCO -->
-
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.0</version>
+                <configuration>
+                    <release>${java.version}</release>
+                </configuration>
+            </plugin>
         </plugins>
         <pluginManagement>
         	<plugins>

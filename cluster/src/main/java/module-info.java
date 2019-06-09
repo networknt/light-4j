@@ -6,5 +6,5 @@ module com.networknt.cluster {
     requires com.networknt.service;
     requires com.networknt.utility;
 
-    requires slf4j.api;
+    requires org.slf4j;
 }

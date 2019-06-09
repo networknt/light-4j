@@ -6,6 +6,6 @@ module com.networknt.monadresult {
     requires com.networknt.utility;
 
     requires java.management;
-    requires slf4j.api;
+    requires org.slf4j;
     requires jdk.unsupported;
 }

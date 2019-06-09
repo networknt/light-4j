@@ -15,7 +15,7 @@ module com.networknt.metrics {
     requires java.management;
     requires HdrHistogram;
     requires undertow.core;
-    requires slf4j.api;
+    requires org.slf4j;
     requires jdk.unsupported;
     requires jsr305;
 }

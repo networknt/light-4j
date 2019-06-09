@@ -17,10 +17,12 @@
 package com.networknt.config;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
@@ -42,6 +44,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.networknt.config.yml.DecryptConstructor;
 import com.networknt.config.yml.YmlConstants;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
  * A injectable singleton config that has default implementation
  * based on FileSystem json files. It can be extended to
@@ -57,6 +61,7 @@ import com.networknt.config.yml.YmlConstants;
  */
 public abstract class Config {
     public static final String LIGHT_4J_CONFIG_DIR = "light-4j-config-dir";
+    public static final String CENTRALIZED_MANAGEMENT = "values";
 
     protected Config() {
     }
@@ -91,6 +96,8 @@ public abstract class Config {
 
     public abstract void setClassLoader(ClassLoader urlClassLoader);
 
+    public abstract void putInConfigCache(String configName, Object config);
+
     public static Config getInstance() {
         return FileConfigImpl.DEFAULT;
     }
@@ -104,7 +111,7 @@ public abstract class Config {
 
         static final Logger logger = LoggerFactory.getLogger(Config.class);
 
-        public final String[] EXTERNALIZED_PROPERTY_DIR = System.getProperty(LIGHT_4J_CONFIG_DIR, "").split(":");
+        public final String[] EXTERNALIZED_PROPERTY_DIR = System.getProperty(LIGHT_4J_CONFIG_DIR, "").split(File.pathSeparator);
 
         private long cacheExpirationTime = 0L;
 
@@ -167,12 +174,12 @@ public abstract class Config {
         			logger.debug("found decryptorClass={}", decryptorClass);
         		}
         		
-        		return decryptorClass;
+        		return decryptorClass == null ? DecryptConstructor.DEFAULT_DECRYPTOR_CLASS : decryptorClass;
         	}else {
         		logger.warn("config file cannot be found.");
         	}
         	
-        	return null;
+        	return DecryptConstructor.DEFAULT_DECRYPTOR_CLASS;
         }
 
         private ClassLoader classLoader;
@@ -208,6 +215,9 @@ public abstract class Config {
                 return this.classLoader;
             }
             return getClass().getClassLoader();
+        }
+        public void putInConfigCache(String configName, Object config) {
+            configCache.put(configName,config);
         }
 
         @Override
@@ -444,11 +454,12 @@ public abstract class Config {
         }
 
         private void checkCacheExpiration() {
-            if (System.currentTimeMillis() > cacheExpirationTime) {
+            // We dont have any use case to clear the cache over midnight; so commenting below code for now
+            /*if (System.currentTimeMillis() > cacheExpirationTime) {
                 clear();
                 logger.info("daily config cache refresh");
                 cacheExpirationTime = getNextMidNightTime();
-            }
+            }*/
         }
 
         // private method used to get absolute directory, input path can be absolute or relative
@@ -467,7 +478,7 @@ public abstract class Config {
     }
 
     static InputStream convertStringToStream(String string) {
-        return new ByteArrayInputStream(string.getBytes());
+        return new ByteArrayInputStream(string.getBytes(UTF_8));
     }
 }
 

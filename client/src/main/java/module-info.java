@@ -9,11 +9,13 @@ open module com.networknt.client {
     requires com.networknt.utility;
     requires com.networknt.http.string;
     requires com.networknt.monadresult;
+    requires com.networknt.cluster;
+    requires com.networknt.service;
 
     requires java.sql;
     requires com.fasterxml.jackson.annotation;
     requires undertow.core;
-    requires slf4j.api;
+    requires org.slf4j;
     requires encoder;
     requires org.apache.commons.codec;
     requires xnio.api;

@@ -7,5 +7,5 @@ module com.networknt.email.sender {
     
     requires java.mail;
     requires activation;
-    requires slf4j.api;
+    requires org.slf4j;
 }

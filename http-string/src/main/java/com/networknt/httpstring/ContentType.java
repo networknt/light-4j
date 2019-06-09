@@ -25,7 +25,7 @@ public enum ContentType {
     XML("text/xml"),
     ANY_TYPE("*/*");
 
-    private String value;
+    private final String value;
 
     ContentType(String contentType) {
         this.value = contentType;

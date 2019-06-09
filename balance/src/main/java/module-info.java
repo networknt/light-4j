@@ -4,5 +4,5 @@ module com.networknt.balance {
     requires com.networknt.registry;
     requires com.networknt.utility;
 
-    requires slf4j.api;
+    requires org.slf4j;
 }

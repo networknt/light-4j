@@ -24,7 +24,6 @@ import com.networknt.consul.ConsulConstants;
 import com.networknt.consul.ConsulResponse;
 import com.networknt.consul.ConsulService;
 import com.networknt.httpstring.HttpStringConstants;
-import com.networknt.utility.Constants;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
@@ -40,7 +39,9 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -52,6 +53,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class ConsulClientImpl implements ConsulClient {
 	private static final Logger logger = LoggerFactory.getLogger(ConsulClientImpl.class);
 	private static final ConsulConfig config = (ConsulConfig)Config.getInstance().getJsonObjectConfig(ConsulConstants.CONFIG_NAME, ConsulConfig.class);
+	private static AtomicInteger reqCounter = new AtomicInteger(0);
 
 	// Single Factory Object so just like static.
 	Http2Client client = Http2Client.getInstance();
@@ -59,10 +61,10 @@ public class ConsulClientImpl implements ConsulClient {
 	// be for dev testing only and one connection should be fine. For production, https must be used and it
 	// supports multiplex.
 	ClientConnection connection;
+	ConcurrentHashMap<String, ClientConnection> connectionPool = new ConcurrentHashMap<>();
 	OptionMap optionMap;
 	URI uri;
 	int maxReqPerConn;
-	int reqCounter = 0;
 	String wait = "600s";
 
 	/**
@@ -73,7 +75,7 @@ public class ConsulClientImpl implements ConsulClient {
 	public ConsulClientImpl() {
 		// Will use http/2 connection if tls is enabled as Consul only support HTTP/2 with TLS.
 		String consulUrl = config.getConsulUrl().toLowerCase();
-		optionMap =  consulUrl.startsWith("https") ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY;
+		optionMap =  config.isEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY;
 		if(logger.isDebugEnabled()) logger.debug("url = " + consulUrl);
 		if(config.getWait() != null && config.getWait().length() > 2) wait = config.getWait();
 		if(logger.isDebugEnabled()) logger.debug("wait = " + wait);
@@ -93,17 +95,23 @@ public class ConsulClientImpl implements ConsulClient {
 		final CountDownLatch latch = new CountDownLatch(1);
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
-			if(connection == null || !connection.isOpen() || reqCounter >= maxReqPerConn) {
+			if(connection == null || !connection.isOpen() || reqCounter.get() >= maxReqPerConn) {
 				if(logger.isDebugEnabled()) logger.debug("connection is closed with counter " + reqCounter + ", reconnecting...");
 				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
-				reqCounter = 0;
+				reqCounter = new AtomicInteger(0);
 			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
 			if(token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
+			if (logger.isDebugEnabled()) {
+				logger.debug("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
+			}
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
-			reqCounter++;
+			reqCounter.getAndIncrement();
+			if(logger.isDebugEnabled()) {
+				logger.debug("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
+			}
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= 300){
 				logger.error("Failed to checkPass on Consul: " + statusCode + ":" + reference.get().getAttachment(Http2Client.RESPONSE_BODY));
@@ -121,17 +129,23 @@ public class ConsulClientImpl implements ConsulClient {
 		final CountDownLatch latch = new CountDownLatch(1);
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
-			if(connection == null || !connection.isOpen() || reqCounter >= maxReqPerConn) {
+			if(connection == null || !connection.isOpen() || reqCounter.get() >= maxReqPerConn) {
 				if(logger.isDebugEnabled()) logger.debug("connection is closed with counter " + reqCounter + ", reconnecting...");
 				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
-				reqCounter = 0;
+				reqCounter = new AtomicInteger(0);
 			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
 			if(token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
+			if (logger.isDebugEnabled()) {
+				logger.debug("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
+			}
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
-			reqCounter++;
+			reqCounter.getAndIncrement();
+			if(logger.isDebugEnabled()) {
+				logger.debug("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
+			}
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= 300){
 				logger.error("Failed to checkPass on Consul: " + statusCode + ":" + reference.get().getAttachment(Http2Client.RESPONSE_BODY));
@@ -149,18 +163,24 @@ public class ConsulClientImpl implements ConsulClient {
 		final CountDownLatch latch = new CountDownLatch(1);
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
-			if(connection == null || !connection.isOpen() || reqCounter >= maxReqPerConn) {
+			if(connection == null || !connection.isOpen() || reqCounter.get() >= maxReqPerConn) {
 				if(logger.isDebugEnabled()) logger.debug("connection is closed with counter " + reqCounter + ", reconnecting...");
 				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
-				reqCounter = 0;
+				reqCounter = new AtomicInteger(0);
 			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
 			if(token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
 			request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+			if (logger.isDebugEnabled()) {
+				logger.debug("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
+			}
 			connection.sendRequest(request, client.createClientCallback(reference, latch, json));
 			latch.await();
-			reqCounter++;
+			reqCounter.getAndIncrement();
+			if(logger.isDebugEnabled()) {
+				logger.debug("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
+			}
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= 300){
 				throw new Exception("Failed to register on Consul: " + statusCode);
@@ -177,18 +197,24 @@ public class ConsulClientImpl implements ConsulClient {
 		final CountDownLatch latch = new CountDownLatch(1);
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
-			if(connection == null || !connection.isOpen() || reqCounter >= maxReqPerConn) {
+			if(connection == null || !connection.isOpen() || reqCounter.get() >= maxReqPerConn) {
 				if(logger.isDebugEnabled()) logger.debug("connection is closed with counter " + reqCounter + ", reconnecting...");
 				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
-				reqCounter = 0;
+				reqCounter = new AtomicInteger(0);
 			}
 
 			ClientRequest request = new ClientRequest().setMethod(Methods.PUT).setPath(path);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
 			if(token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
+			if (logger.isDebugEnabled()) {
+				logger.debug("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
+			}
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
-			reqCounter++;
+			reqCounter.getAndIncrement();
+			if(logger.isDebugEnabled()) {
+				logger.debug("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
+			}
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= 300){
 				System.out.println("body = " + reference.get().getAttachment(Http2Client.RESPONSE_BODY));
@@ -201,6 +227,16 @@ public class ConsulClientImpl implements ConsulClient {
 
 	@Override
 	public ConsulResponse<List<ConsulService>> lookupHealthService(String serviceName, String tag, long lastConsulIndex, String token) {
+		ClientConnection targetConnection;
+		if(!config.isEnableHttp2()) {
+			targetConnection = connectionPool.get(serviceName);
+		} else {
+			targetConnection = this.connection;
+		}
+		return lookupHealthService(serviceName, tag, lastConsulIndex, token, targetConnection);
+	}
+
+	private ConsulResponse<List<ConsulService>> lookupHealthService(String serviceName, String tag, long lastConsulIndex, String token, ClientConnection connection) {
 		ConsulResponse<List<ConsulService>> newResponse = null;
 
 		String path = "/v1/health/service/" + serviceName + "?passing&wait="+wait+"&index=" + lastConsulIndex;
@@ -211,17 +247,26 @@ public class ConsulClientImpl implements ConsulClient {
 		final CountDownLatch latch = new CountDownLatch(1);
 		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		try {
-			if(connection == null || !connection.isOpen() || reqCounter >= maxReqPerConn) {
+			if(connection == null || !connection.isOpen() || reqCounter.get() >= maxReqPerConn) {
 				if(logger.isDebugEnabled()) logger.debug("connection is closed with counter " + reqCounter + ", reconnecting...");
 				connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
-				reqCounter = 0;
+				reqCounter = new AtomicInteger(0);
+				if(!config.isEnableHttp2()) {
+					connectionPool.put(serviceName, connection);
+				}
 			}
 			ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(path);
 			if(token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
+			if (logger.isDebugEnabled()) {
+				logger.debug("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
+			}
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 			latch.await();
-			reqCounter++;
+			reqCounter.getAndIncrement();
+			if(logger.isDebugEnabled()) {
+				logger.debug("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
+			}
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= 300){
 				if(logger.isDebugEnabled()) logger.debug("body = " + reference.get().getAttachment(Http2Client.RESPONSE_BODY));

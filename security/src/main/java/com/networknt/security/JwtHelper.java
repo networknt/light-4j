@@ -17,16 +17,21 @@ package com.networknt.security;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.networknt.client.oauth.KeyRequest;
 import com.networknt.client.oauth.OauthHelper;
+import com.networknt.client.oauth.SignKeyRequest;
+import com.networknt.client.oauth.TokenKeyRequest;
 import com.networknt.config.Config;
 import com.networknt.status.exception.ExpiredTokenException;
 import com.networknt.utility.FingerPrintUtil;
+import org.jose4j.jwk.JsonWebKey;
+import org.jose4j.jwk.JsonWebKeySet;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.NumericDate;
 import org.jose4j.jwt.consumer.*;
 import org.jose4j.jwx.JsonWebStructure;
+import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
+import org.jose4j.keys.resolvers.VerificationKeyResolver;
 import org.jose4j.keys.resolvers.X509VerificationKeyResolver;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
@@ -43,6 +48,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.regex.Pattern;
 
 /**
@@ -61,8 +67,13 @@ public class JwtHelper {
     private static final String ENABLE_JWT_CACHE = "enableJwtCache";
     private static final String BOOTSTRAP_FROM_KEY_SERVICE = "bootstrapFromKeyService";
     private static final int CACHE_EXPIRED_IN_MINUTES = 15;
+
+    public static final String JWT_KEY_RESOLVER = "keyResolver";
+    public static final String JWT_KEY_RESOLVER_X509CERT = "X509Certificate";
+    public static final String JWT_KEY_RESOLVER_JWKS = "JsonWebKeySet";
     
     static Map<String, X509Certificate> certMap;
+    static Map<String, List<JsonWebKey>> jwksMap;
     static List<String> fingerPrints;
 
     static Map<String, Object> securityConfig = (Map)Config.getInstance().getJsonMapConfig(SECURITY_CONFIG);
@@ -116,21 +127,31 @@ public class JwtHelper {
     }
 
     static {
-        // load local public key certificates only if bootstrapFromKeyService is false
-        if(bootstrapFromKeyService == null || Boolean.FALSE.equals(bootstrapFromKeyService)) {
-            certMap = new HashMap<>();
-            fingerPrints = new ArrayList<>();
-            Map<String, Object> keyMap = (Map<String, Object>) securityJwtConfig.get(JwtHelper.JWT_CERTIFICATE);
-            for(String kid: keyMap.keySet()) {
-                X509Certificate cert = null;
-                try {
-                    cert = JwtHelper.readCertificate((String)keyMap.get(kid));
-                } catch (Exception e) {
-                    logger.error("Exception:", e);
+        switch ((String) securityJwtConfig.getOrDefault(JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT)) {
+            case JWT_KEY_RESOLVER_JWKS:
+                jwksMap = new HashMap<>();
+                break;
+            default:
+                logger.info("{} not found or not recognized in jwt config. Use {} as default {}",
+                        JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT, JWT_KEY_RESOLVER);
+            case JWT_KEY_RESOLVER_X509CERT:
+                // load local public key certificates only if bootstrapFromKeyService is false
+                if(bootstrapFromKeyService == null || Boolean.FALSE.equals(bootstrapFromKeyService)) {
+                    certMap = new HashMap<>();
+                    fingerPrints = new ArrayList<>();
+                    Map<String, Object> keyMap = (Map<String, Object>) securityJwtConfig.get(JwtHelper.JWT_CERTIFICATE);
+                    for(String kid: keyMap.keySet()) {
+                        X509Certificate cert = null;
+                        try {
+                            cert = JwtHelper.readCertificate((String)keyMap.get(kid));
+                        } catch (Exception e) {
+                            logger.error("Exception:", e);
+                        }
+                        certMap.put(kid, cert);
+                        fingerPrints.add(FingerPrintUtil.getCertFingerPrint(cert));
+                    }
                 }
-                certMap.put(kid, cert);
-                fingerPrints.add(FingerPrintUtil.getCertFingerPrint(cert));
-            }
+                break;
         }
     }
 
@@ -169,8 +190,44 @@ public class JwtHelper {
      * @return JwtClaims object
      * @throws InvalidJwtException InvalidJwtException
      * @throws ExpiredTokenException ExpiredTokenException
+     * @deprecated Use verifyToken instead.
      */
+    @Deprecated
     public static JwtClaims verifyJwt(String jwt, boolean ignoreExpiry) throws InvalidJwtException, ExpiredTokenException {
+        return verifyJwt(jwt, ignoreExpiry, true);
+    }
+
+    /**
+     * This method is to keep backward compatible for those call without VerificationKeyResolver.
+     * @param jwt
+     * @param ignoreExpiry
+     * @param isToken
+     * @return
+     * @throws InvalidJwtException
+     * @throws ExpiredTokenException
+     */
+    public static JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken) throws InvalidJwtException, ExpiredTokenException {
+        return verifyJwt(jwt, ignoreExpiry, isToken, JwtHelper::getKeyResolver);
+    }
+
+    /**
+     * Verify JWT token format and signature. If ignoreExpiry is true, skip expiry verification, otherwise
+     * verify the expiry before signature verification.
+     *
+     * In most cases, we need to verify the expiry of the jwt token. The only time we need to ignore expiry
+     * verification is in SPA middleware handlers which need to verify csrf token in jwt against the csrf
+     * token in the request header to renew the expired token.
+     *
+     * @param jwt String of Json web token
+     * @param ignoreExpiry If true, don't verify if the token is expired.
+     * @param isToken True if the jwt is an OAuth 2.0 access token
+     * @param getKeyResolver How to get VerificationKeyResolver
+     * @return JwtClaims object
+     * @throws InvalidJwtException InvalidJwtException
+     * @throws ExpiredTokenException ExpiredTokenException
+     */
+    public static JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken, BiFunction<String, Boolean, VerificationKeyResolver> getKeyResolver)
+            throws InvalidJwtException, ExpiredTokenException {
         JwtClaims claims;
 
         if(Boolean.TRUE.equals(enableJwtCache)) {
@@ -222,22 +279,11 @@ public class JwtHelper {
             }
         }
 
-        // get the public key certificate from the cache that is loaded from security.yml if it is not there,
-        // go to OAuth2 server /oauth2/key endpoint to get the public key certificate with kid as parameter.
-        X509Certificate certificate = certMap == null? null : certMap.get(kid);
-        if(certificate == null) {
-            certificate = getCertFromOauth(kid);
-            if(certMap == null) certMap = new HashMap<>();  // null if bootstrapFromKeyService is true
-            certMap.put(kid, certificate);
-        }
-        X509VerificationKeyResolver x509VerificationKeyResolver = new X509VerificationKeyResolver(certificate);
-
-        x509VerificationKeyResolver.setTryAllOnNoThumbHeader(true);
         consumer = new JwtConsumerBuilder()
                 .setRequireExpirationTime()
                 .setAllowedClockSkewInSeconds(315360000) // use seconds of 10 years to skip expiration validation as we need skip it in some cases.
                 .setSkipDefaultAudienceValidation()
-                .setVerificationKeyResolver(x509VerificationKeyResolver)
+                .setVerificationKeyResolver(getKeyResolver.apply(kid, isToken))
                 .build();
 
         // Validate the JWT and process it to the Claims
@@ -249,9 +295,93 @@ public class JwtHelper {
         return claims;
     }
 
-    public static X509Certificate getCertFromOauth(String kid) {
+    /**
+     * Get VerificationKeyResolver based on the configuration settings
+     * @param kid
+     * @param isToken
+     * @return
+     */
+    private static VerificationKeyResolver getKeyResolver(String kid, boolean isToken) {
+
+        VerificationKeyResolver verificationKeyResolver = null;
+        String keyResolver = (String) securityJwtConfig.getOrDefault(JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT);
+        switch (keyResolver) {
+            default:
+            case JWT_KEY_RESOLVER_X509CERT:
+                // get the public key certificate from the cache that is loaded from security.yml if it is not there,
+                // go to OAuth2 server /oauth2/key endpoint to get the public key certificate with kid as parameter.
+                X509Certificate certificate = certMap == null? null : certMap.get(kid);
+                if(certificate == null) {
+                    certificate = isToken? getCertForToken(kid) : getCertForSign(kid);
+                    if(certMap == null) certMap = new HashMap<>();  // null if bootstrapFromKeyService is true
+                    certMap.put(kid, certificate);
+                } else {
+                    logger.debug("Got raw certificate for kid: {} from local cache", kid);
+                }
+                X509VerificationKeyResolver x509VerificationKeyResolver = new X509VerificationKeyResolver(certificate);
+
+                x509VerificationKeyResolver.setTryAllOnNoThumbHeader(true);
+
+                verificationKeyResolver = x509VerificationKeyResolver;
+                break;
+            case JWT_KEY_RESOLVER_JWKS:
+                List<JsonWebKey> jwkList = jwksMap == null ? null : jwksMap.get(kid);
+                if (jwkList == null) {
+                    jwkList = getJsonWebKeySetForToken(kid);
+                    if (jwkList != null) {
+                        if (jwksMap == null) jwksMap = new HashMap<>();  // null if bootstrapFromKeyService is true
+                        jwksMap.put(kid, jwkList);
+                    }
+                } else {
+                    logger.debug("Got Json web key set for kid: {} from local cache", kid);
+                }
+                if (jwkList != null) {
+                    verificationKeyResolver = new JwksVerificationKeyResolver(jwkList);
+                }
+                break;
+        }
+        return verificationKeyResolver;
+    }
+
+    /**
+     * Retrieve JWK set from oauth server with the given kid
+     * @param kid
+     * @return
+     */
+    private static List<JsonWebKey> getJsonWebKeySetForToken(String kid) {
+
+        TokenKeyRequest keyRequest = new TokenKeyRequest(kid);
+        try {
+            logger.debug("Getting Json Web Key for kid: {} from {}", kid, keyRequest.getServerUrl());
+            String key = OauthHelper.getKey(keyRequest);
+            logger.debug("Got Json Web Key '{}' for kid: {}", key, kid);
+            return new JsonWebKeySet(key).getJsonWebKeys();
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    public static X509Certificate getCertForToken(String kid) {
         X509Certificate certificate = null;
-        KeyRequest keyRequest = new KeyRequest(kid);
+        TokenKeyRequest keyRequest = new TokenKeyRequest(kid);
+        try {
+            logger.warn("<Deprecated: use JsonWebKeySet instead> Getting raw certificate for kid: {} from {}", kid, keyRequest.getServerUrl());
+            String key = OauthHelper.getKey(keyRequest);
+            logger.warn("<Deprecated: use JsonWebKeySet instead> Got raw certificate {} for kid: {}", key, kid);
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            certificate = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(key.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw new RuntimeException(e);
+        }
+        return certificate;
+    }
+
+    public static X509Certificate getCertForSign(String kid) {
+        X509Certificate certificate = null;
+        SignKeyRequest keyRequest = new SignKeyRequest(kid);
         try {
             String key = OauthHelper.getKey(keyRequest);
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
