@@ -942,7 +942,7 @@ ERR12048:
   description: Provider id %s exists; It has been regristed already
 ERR12049:
   statusCode: 400
-  code: ERR12048
+  code: ERR12049
   message: PROVIDER_ID_INVALID
   description: Provider id invalid
 
@@ -987,6 +987,16 @@ ERR12107:
   code: ERR12107
   message: TOKEN_NOT_FOUND
   description: Token %s not found in token_vault table in database %s
+ERR12108:
+  statusCode: 400
+  code: ERR12108
+  message: LOGGING_DISABLED
+  description: Logging is disabled in logging.yml
+ERR12109:
+  statusCode: 400
+  code: ERR12109
+  message: LOGGING_LEVEL_NOT_PROVIDED
+  description: Logging level is not provided
 
 # http2client error 13000-14000
 ERR13001:

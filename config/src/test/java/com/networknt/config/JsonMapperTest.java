@@ -33,8 +33,8 @@ public class JsonMapperTest {
         map.put("string", "hello");
         map.put("long", 111L);
         map.put("int", 111);
-        map.put("Long", new Long(111));
-        map.put("Integer", new Integer(111));
+        map.put("Long", Long.valueOf(111));
+        map.put("Integer", Integer.valueOf(111));
         String s = JsonMapper.toJson(map);
         System.out.println("s = " + s);
         Map<String, Object> newMap = JsonMapper.string2Map(s);

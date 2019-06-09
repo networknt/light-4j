@@ -21,7 +21,8 @@ public enum ServerOption {
     BUFFER_SIZE("bufferSize"),
     BACKLOG("backlog"),
     SERVER_STRING("serverString"),
-    ALWAYS_SET_DATE("alwaysSetDate");
+    ALWAYS_SET_DATE("alwaysSetDate"),
+    ALLOW_UNESCAPED_CHARACTERS_IN_URL("allowUnescapedCharactersInUrl");
 
     private final String value;
 
@@ -92,6 +93,11 @@ public enum ServerOption {
             case ALWAYS_SET_DATE:
                 if (value == null) {
                     serverConfig.setAlwaysSetDate(true);
+                }
+                return true;
+            case ALLOW_UNESCAPED_CHARACTERS_IN_URL:
+                if (value == null) {
+                    serverConfig.setAllowUnescapedCharactersInUrl(false);
                 }
                 return true;
             default:

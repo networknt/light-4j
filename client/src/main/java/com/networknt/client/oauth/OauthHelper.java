@@ -2,7 +2,7 @@
  * Copyright (c) 2016 Network New Technologies Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * You may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -19,12 +19,14 @@ package com.networknt.client.oauth;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.networknt.client.Http2Client;
+import com.networknt.cluster.Cluster;
 import com.networknt.config.Config;
 import com.networknt.status.exception.ClientException;
 import com.networknt.httpstring.ContentType;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;
+import com.networknt.service.SingletonServiceFactory;
 import com.networknt.status.Status;
 import com.networknt.utility.StringUtils;
 import io.undertow.UndertowOptions;
@@ -81,16 +83,45 @@ public class OauthHelper {
         throw new ClientException(responseResult.getError());
     }
 
+    /**
+     * Get an access token from the token service. A Result of TokenResponse will be returned if the invocation is successfully.
+     * Otherwise, a Result of Status will be returned.
+     *
+     * @param tokenRequest token request constructed from the client.yml token section.
+     * @return Result of TokenResponse or error Status.
+     */
     public static Result<TokenResponse> getTokenResult(TokenRequest tokenRequest) {
+        return getTokenResult(tokenRequest, null);
+    }
+
+    /**
+     * Get an access token from the token service. A Result of TokenResponse will be returned if the invocation is successfully.
+     * Otherwise, a Result of Status will be returned.
+     *
+     * @param tokenRequest token request constructed from the client.yml token section.
+     * @param envTag the environment tag from the server.yml for service lookup.
+     * @return Result of TokenResponse or error Status.
+     */
+    public static Result<TokenResponse> getTokenResult(TokenRequest tokenRequest, String envTag) {
         final AtomicReference<Result<TokenResponse>> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
         try {
-            connection = client.connect(new URI(tokenRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, tokenRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+            if(tokenRequest.getServerUrl() != null) {
+                connection = client.connect(new URI(tokenRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, tokenRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+            } else if(tokenRequest.getServiceId() != null) {
+                Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
+                String url = cluster.serviceToUrl("https", tokenRequest.getServiceId(), envTag, null);
+                connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, tokenRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+            } else {
+                // both server_url and serviceId are empty in the config.
+                logger.error("Error: both server_url and serviceId are not configured in client.yml for " + tokenRequest.getClass());
+                throw new ClientException("both server_url and serviceId are not configured in client.yml for " + tokenRequest.getClass());
+            }
         } catch (Exception e) {
-            logger.error("cannot establish connection: {}", e.getStackTrace());
-            return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR, tokenRequest.getServerUrl()));
+            logger.error("cannot establish connection:", e);
+            return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR, tokenRequest.getServerUrl() != null? tokenRequest.getServerUrl() : tokenRequest.getServiceId()));
         }
 
         try {
@@ -110,16 +141,47 @@ public class OauthHelper {
         return reference.get() == null ? Failure.of(new Status(GET_TOKEN_TIMEOUT)) : reference.get();
     }
 
+    /**
+     * Get a signed JWT token from token service to ensure that nobody can modify the payload when the token
+     * is passed from service to service. Unlike the access JWT token, this token is ensure the data integrity
+     * with signature.
+     *
+     * @param signRequest SignRequest that is constructed from the client.yml sign section
+     * @return Result that contains TokenResponse or error status when failed.
+     */
     public static Result<TokenResponse> getSignResult(SignRequest signRequest) {
+        return getSignResult(signRequest, null);
+    }
+
+    /**
+     * Get a signed JWT token from token service to ensure that nobody can modify the payload when the token
+     * is passed from service to service. Unlike the access JWT token, this token is ensure the data integrity
+     * with signature.
+     *
+     * @param signRequest SignRequest that is constructed from the client.yml sign section
+     * @param envTag environment tag that is used for service lookup if serviceId is used.
+     * @return Result that contains TokenResponse or error status when failed.
+     */
+    public static Result<TokenResponse> getSignResult(SignRequest signRequest, String envTag) {
         final AtomicReference<Result<TokenResponse>> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
         try {
-            connection = client.connect(new URI(signRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, signRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+            if(signRequest.getServerUrl() != null) {
+                connection = client.connect(new URI(signRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, signRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+            } else if(signRequest.getServiceId() != null) {
+                Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
+                String url = cluster.serviceToUrl("https", signRequest.getServiceId(), envTag, null);
+                connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, signRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+            } else {
+                // both server_url and serviceId are empty in the config.
+                logger.error("Error: both server_url and serviceId are not configured in client.yml for " + signRequest.getClass());
+                throw new ClientException("both server_url and serviceId are not configured in client.yml for " + signRequest.getClass());
+            }
         } catch (Exception e) {
-            logger.error("cannot establish connection: {}", e.getStackTrace());
-            return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR, signRequest.getServerUrl()));
+            logger.error("cannot establish connection:", e);
+            return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR, signRequest.getServerUrl() != null ? signRequest.getServerUrl() : signRequest.getServiceId()));
         }
 
         try {
@@ -213,7 +275,7 @@ public class OauthHelper {
         try {
             connection = client.connect(new URI(tokenRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, tokenRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
         } catch (Exception e) {
-            logger.error("cannot establish connection: {}", e.getStackTrace());
+            logger.error("cannot establish connection:", e);
             return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR));
         }
         try {
@@ -255,7 +317,9 @@ public class OauthHelper {
         public void run() {
             final ClientRequest request = requestComposer.composeClientRequest(tokenRequest);
             String requestBody = requestComposer.composeRequestBody(tokenRequest);
-            logger.debug(requestBody);
+            if (logger.isDebugEnabled()) {
+                logger.debug("The request sent to the oauth server = request header(s): {}, request body: {}", request.getRequestHeaders().toString(), requestBody);
+            }
             adjustNoChunkedEncoding(request, requestBody);
             connection.sendRequest(request, new ClientCallback<ClientExchange>() {
 
@@ -269,7 +333,9 @@ public class OauthHelper {
 
                                 @Override
                                 protected void stringDone(String string) {
-                                    logger.debug("getToken response = " + string);
+                                    if (logger.isDebugEnabled()) {
+                                        logger.debug("getToken response = " + string);
+                                    }
                                     reference.set(handleResponse(getContentTypeFromExchange(result), string));
                                     latch.countDown();
                                 }
@@ -302,12 +368,41 @@ public class OauthHelper {
         }
     }
 
+    /**
+     * Get the certificate from key distribution service of OAuth 2.0 provider with the kid.
+     *
+     * @param keyRequest One of the sub classes to get the key for access token or sign token.
+     * @return String of the certificate
+     * @throws ClientException throw exception if communication with the service fails.
+     */
     public static String getKey(KeyRequest keyRequest) throws ClientException {
+        return getKey(keyRequest, null);
+    }
+
+    /**
+     * Get the certificate from key distribution service of OAuth 2.0 provider with the kid.
+     *
+     * @param keyRequest One of the sub classes to get the key for access token or sign token.
+     * @param envTag the environment tag from the server.yml for the cluster lookup.
+     * @return String of the certificate
+     * @throws ClientException throw exception if communication with the service fails.
+     */
+    public static String getKey(KeyRequest keyRequest, String envTag) throws ClientException {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
         try {
-            connection = client.connect(new URI(keyRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, keyRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+            if(keyRequest.getServerUrl() != null) {
+                connection = client.connect(new URI(keyRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, keyRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+            } else if(keyRequest.getServiceId() != null) {
+                Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
+                String url = cluster.serviceToUrl("https", keyRequest.getServiceId(), envTag, null);
+                connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, keyRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+            } else {
+                // both server_url and serviceId are empty in the config.
+                logger.error("Error: both server_url and serviceId are not configured in client.yml for " + keyRequest.getClass());
+                throw new ClientException("both server_url and serviceId are not configured in client.yml for " + keyRequest.getClass());
+            }
         } catch (Exception e) {
             throw new ClientException(e);
         }
@@ -331,13 +426,43 @@ public class OauthHelper {
         return reference.get().getAttachment(Http2Client.RESPONSE_BODY);
     }
 
+    /**
+     * De-reference a simple web token to JWT token from OAuth 2.0 provider. This is normally called from the light-router.
+     *
+     * @param derefRequest a DerefRequest object that is constructed from the client.yml file.
+     * @return String of JWT token
+     * @throws ClientException when error occurs.
+     */
     public static String derefToken(DerefRequest derefRequest) throws ClientException {
+        return derefToken(derefRequest, null);
+    }
+
+    /**
+     * De-reference a simple web token to JWT token from OAuth 2.0 provider. This is normally called from the light-router.
+     *
+     * @param derefRequest a DerefRequest object that is constructed from the client.yml file.
+     * @param envTag an environment tag from the server.yml for cluster service lookup.
+     * @return String of JWT token
+     * @throws ClientException when error occurs.
+     */
+    public static String derefToken(DerefRequest derefRequest, String envTag) throws ClientException {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
         try {
-            connection = client.connect(new URI(derefRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, derefRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+            if(derefRequest.getServerUrl() != null) {
+                connection = client.connect(new URI(derefRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, derefRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+            } else if(derefRequest.getServiceId() != null) {
+                Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
+                String url = cluster.serviceToUrl("https", derefRequest.getServiceId(), envTag, null);
+                connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, derefRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+            } else {
+                // both server_url and serviceId are empty in the config.
+                logger.error("Error: both server_url and serviceId are not configured in client.yml for " + derefRequest.getClass());
+                throw new ClientException("both server_url and serviceId are not configured in client.yml for " + derefRequest.getClass());
+            }
         } catch (Exception e) {
+            logger.error("Exception: ", e);
             throw new ClientException(e);
         }
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
@@ -623,7 +748,7 @@ public class OauthHelper {
             return;
         }
         if(!StringUtils.isEmpty(requestBody)) {
-            long contentLength = requestBody.getBytes().length;
+            long contentLength = requestBody.getBytes(UTF_8).length;
             request.getRequestHeaders().put(Headers.CONTENT_LENGTH, contentLength);
         }
 

@@ -65,6 +65,10 @@ public class CorrelationHandler implements MiddlewareHandler {
 	            // generate a UUID and put it into the request header
 	            cId = Util.getUUID();
 	            exchange.getRequestHeaders().put(HttpStringConstants.CORRELATION_ID, cId);
+	            String tId = exchange.getRequestHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
+	            if(tId != null && logger.isInfoEnabled()) {
+	                logger.info("Associate traceability Id " + tId + " with correlation Id " + cId);
+                }
         	} 
         }
         // Add the cId into MDC so that all log statement will have cId as part of it.

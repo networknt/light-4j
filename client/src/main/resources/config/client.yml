@@ -1,7 +1,5 @@
 # This is the configuration file for Http2Client.
 ---
-# Buffer Size in the buffer pool in KB. If should be bigger than your request or response body size.
-bufferSize: 24
 # Settings for TLS
 tls:
   # if the server is using self-signed certificate, this need to be false. If true, you have to use CA signed certificate
@@ -65,6 +63,20 @@ oauth:
       scope:
       - petstore.r
       - petstore.w
+    # light-oauth2 key distribution endpoint configuration for token verification
+    key:
+      # key distribution server url
+      server_url: https://localhost:6886
+      # the unique service id for key distribution service
+      serviceId: com.networknt.oauth2-key-1.0.0
+      # the path for the key distribution endpoint
+      uri: "/oauth2/key"
+      # client_id used to access key distribution service. It can be the same client_id with token service or not.
+      client_id: f7d42348-c647-4efb-a52d-4c5787421e72
+      # client secret used to access the key distribution service.
+      client_secret: f6h1FTI8Q3-7UScPZDzfXA
+      # set to true if the oauth2 provider supports HTTP/2
+      enableHttp2: true
   # sign endpoint configuration
   sign:
     # token server url. The default port number for token service is 6882.
@@ -79,18 +91,20 @@ oauth:
     client_id: f7d42348-c647-4efb-a52d-4c5787421e72
     # client secret for client authentication and it can be encrypted here.
     client_secret: f6h1FTI8Q3-7UScPZDzfXA
-  # light-oauth2 key distribution endpoint configuration
-  key:
-    # key distribution server url
-    server_url: https://localhost:6886
-    # the unique service id for key distribution service
-    serviceId: com.networknt.oauth2-key-1.0.0
-    # the path for the key distribution endpoint
-    uri: "/oauth2/key"
-    # client_id used to access key distribution service. It can be the same client_id with token service or not.
-    client_id: f7d42348-c647-4efb-a52d-4c5787421e72
-    # set to true if the oauth2 provider supports HTTP/2
-    enableHttp2: true
+    # the key distribution sever config for sign. It can be different then token key distribution server.
+    key:
+      # key distribution server url
+      server_url: https://localhost:6886
+      # the unique service id for key distribution service
+      serviceId: com.networknt.oauth2-key-1.0.0
+      # the path for the key distribution endpoint
+      uri: "/oauth2/key"
+      # client_id used to access key distribution service. It can be the same client_id with token service or not.
+      client_id: f7d42348-c647-4efb-a52d-4c5787421e72
+      # client secret used to access the key distribution service.
+      client_secret: f6h1FTI8Q3-7UScPZDzfXA
+      # set to true if the oauth2 provider supports HTTP/2
+      enableHttp2: true
   # de-ref by reference token to JWT token. It is separate service as it might be the external OAuth 2.0 provider.
   deref:
     # Token service server url, this might be different than the above token server url.
@@ -103,4 +117,11 @@ oauth:
     uri: "/oauth2/deref"
     # client_id used to access key distribution service. It can be the same client_id with token service or not.
     client_id: f7d42348-c647-4efb-a52d-4c5787421e72
-
+# circuit breaker configuration for the client
+request:
+  # number of timeouts/errors to break the circuit
+  errorThreshold: 2
+  # timeout in millisecond to indicate a client error.
+  timeout: 3000
+  # reset the circuit after this timeout in millisecond
+  resetTimeout: 7000

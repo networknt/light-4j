@@ -20,7 +20,9 @@ import junit.framework.TestCase;
 import org.junit.Assert;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -60,5 +62,17 @@ public class ConfigClassPathTest extends TestCase {
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test");
         Assert.assertEquals("classpath", configMap.get("value"));
+    }
+
+    @SuppressWarnings("unchecked")
+    private void addURL(URL url) throws Exception {
+        URLClassLoader classLoader
+                = (URLClassLoader) ClassLoader.getSystemClassLoader();
+        Class clazz= URLClassLoader.class;
+
+        // Use reflection
+        Method method= clazz.getDeclaredMethod("addURL", URL.class);
+        method.setAccessible(true);
+        method.invoke(classLoader, url);
     }
 }

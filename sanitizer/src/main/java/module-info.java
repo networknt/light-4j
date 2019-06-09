@@ -8,6 +8,6 @@ module com.networknt.sanitizer {
 
     requires undertow.core;
     requires encoder;
-    requires slf4j.api;
+    requires org.slf4j;
     requires com.fasterxml.jackson.annotation;
 }

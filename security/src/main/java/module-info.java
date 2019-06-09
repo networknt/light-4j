@@ -10,7 +10,7 @@ module com.networknt.security {
     requires com.networknt.status;
 
     requires undertow.core;
-    requires slf4j.api;
+    requires org.slf4j;
     requires jose4j;
     requires com.github.benmanes.caffeine;
 }

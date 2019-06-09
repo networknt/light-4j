@@ -7,5 +7,5 @@ module com.networknt.handler {
     requires com.networknt.service;
 
     requires undertow.core;
-    requires slf4j.api;
+    requires org.slf4j;
 }

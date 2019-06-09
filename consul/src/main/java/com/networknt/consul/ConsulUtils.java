@@ -16,11 +16,10 @@
 
 package com.networknt.consul;
 
-import com.networknt.registry.URLImpl;
-import com.networknt.utility.Constants;
-import com.networknt.registry.URLParamType;
 import com.networknt.registry.URL;
-import com.networknt.utility.Util;
+import com.networknt.registry.URLImpl;
+import com.networknt.registry.URLParamType;
+import com.networknt.utility.Constants;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -68,18 +67,21 @@ public class ConsulUtils {
 
     /**
      * build url from service
-     *
+     * @param protocol the protocol of the service
      * @param service consul service
      * @return URL object
      */
-    public static URL buildUrl(ConsulService service) {
+    public static URL buildUrl(String protocol, ConsulService service) {
         URL url = null;
         if (url == null) {
             Map<String, String> params = new HashMap<String, String>();
             //String group = service.getName();
             //params.put(URLParamType.group.getName(), group);
             //params.put(URLParamType.nodeType.getName(), Constants.NODE_TYPE_SERVICE);
-            url = new URLImpl(ConsulConstants.DEFAULT_PROTOCOL, service.getAddress(), service.getPort(),
+            if (!service.getTags().isEmpty()) {
+                params.put(URLParamType.environment.getName(), service.getTags().get(0));
+            }
+            url = new URLImpl(protocol, service.getAddress(), service.getPort(),
                     ConsulUtils.getPathFromServiceId(service.getId()), params);
         }
         return url;

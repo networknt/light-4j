@@ -36,6 +36,9 @@ public class ServiceUtil {
      * If the configuration is a map, assume keyed by class name, with values being one of 2 options:
      *  - map: keys are field names, values are field values.
      *  - list: items are each maps of type to value, constructor is called with given set.
+     * @param something parameter that can be a string or a map.
+     * @return constructed object
+     * @throws Exception when construction fails.
      */
     public static Object construct(Object something) throws Exception {
         if (something instanceof String) {
@@ -58,7 +61,7 @@ public class ServiceUtil {
      * @param clazz The class to be created.
      * @param params A map of the parameters.
      * @return An instantiated object.
-     * @throws Exception
+     * @throws Exception when constructor fails.
      */
     public static Object constructByNamedParams(Class clazz, Map params) throws Exception {
         Object obj = clazz.getDeclaredConstructor().newInstance();
@@ -84,7 +87,7 @@ public class ServiceUtil {
      * @param clazz The class to be created.
      * @param parameters A list of single element maps of object type to value.
      * @return An instantiated parameters.
-     * @throws Exception
+     * @throws Exception when no instance can be created
      */
     public static Object constructByParameterizedConstructor(Class clazz, List parameters) throws Exception {
         // find out how many constructors this class has and match the one with the same sequence of

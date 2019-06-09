@@ -33,6 +33,7 @@ public class ServerConfigTest {
         // ensure that env is null if it is missing in the server.yml
         ServerConfig serverConfig = (ServerConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServerConfig.class);
         Assert.assertNull(serverConfig.getEnvironment());
+        Assert.assertEquals("petstore", serverConfig.getServiceName());
     }
 
     @Test
@@ -59,6 +60,7 @@ public class ServerConfigTest {
         Assert.assertEquals(10000, serverConfig.getBacklog());
         Assert.assertEquals(false, serverConfig.isAlwaysSetDate());
         Assert.assertEquals("L", serverConfig.getServerString());
+        Assert.assertEquals(false, serverConfig.isAllowUnescapedCharactersInUrl());
     }
 
     @Test
@@ -72,5 +74,6 @@ public class ServerConfigTest {
         Assert.assertEquals(10000, serverConfig.getBacklog());
         Assert.assertEquals(false, serverConfig.isAlwaysSetDate());
         Assert.assertEquals("TEST", serverConfig.getServerString());
+        Assert.assertEquals(true, serverConfig.isAllowUnescapedCharactersInUrl());
     }
 }

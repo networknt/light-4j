@@ -4,9 +4,8 @@ module com.networknt.zookeeper {
     requires com.networknt.registry;
     requires com.networknt.status;
     requires com.networknt.utility;
-    requires com.networknt.exception;
 
     requires zkclient;
-    requires slf4j.api;
+    requires org.slf4j;
     requires zookeeper;
 }

@@ -34,6 +34,10 @@ truststoreName: server.truststore
 # Unique service identifier. Used in service registration and discovery etc.
 serviceId: com.networknt.petstore-1.0.0
 
+# Unique service name. Used in microservices to associate a given name to a service with configuration 
+# or as a key within the configuration of a particular domain
+serviceName: petstore 
+
 # Flag to enable self service registration. This should be turned on on official test and production. And
 # dyanmicPort should be enabled if any orchestration tool is used like Kubernetes.
 enableRegistry: false

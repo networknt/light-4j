@@ -49,7 +49,6 @@ public class ConfigInjection {
     private static final String SCALABLE_CONFIG = "config";
     private static final String EXCLUSION_CONFIG_FILE_LIST = "exclusionConfigFileList";
 
-    private static final Map<String, Object> valueMap = Config.getInstance().getJsonMapConfig(CENTRALIZED_MANAGEMENT);
     private static final Map<String, Object> exclusionMap = Config.getInstance().getJsonMapConfig(SCALABLE_CONFIG);
 
     // Define the injection pattern which represents the injection points
@@ -89,17 +88,25 @@ public class ConfigInjection {
         InjectionPattern injectionPattern = getInjectionPattern(content);
         Object value = null;
         if (injectionPattern != null) {
+            // Flag to validate whether the environment or values.yml contains the corresponding field
+            Boolean containsField = false;
             // Use key of injectionPattern to get value from both environment variables and "values.yaml"
             Object envValue = typeCast(System.getenv(injectionPattern.getKey()));
+            Map<String, Object> valueMap = Config.getInstance().getJsonMapConfig(CENTRALIZED_MANAGEMENT);
             Object fileValue = (valueMap != null) ? valueMap.get(injectionPattern.getKey()) : null;
             // Return different value from different sources based on injection order defined before
-            if (INJECTION_ORDER_CODE.equals("2") && envValue != null || (INJECTION_ORDER_CODE.equals("1") && fileValue == null)) {
+            if ((INJECTION_ORDER_CODE.equals("2") && envValue != null) || (INJECTION_ORDER_CODE.equals("1") && fileValue == null)) {
                 value = envValue;
             } else {
                 value = fileValue;
             }
+            // Skip none validation to inject null or empty string directly when the corresponding field is presented in value.yml or environment
+            if ((valueMap != null && valueMap.containsKey(injectionPattern.getKey())) ||
+                    (System.getenv() != null && System.getenv().containsKey(injectionPattern.getKey()))) {
+                containsField = true;
+            }
             // Return default value when no matched value found from environment variables and "values.yaml"
-            if (value == null || value.equals("")) {
+            if (value == null && !containsField) {
                 value = typeCast(injectionPattern.getDefaultValue());
                 // Throw exception when error text provided
                 if (value == null || value.equals("")) {
@@ -107,11 +114,9 @@ public class ConfigInjection {
                     if (error_text != null && !error_text.equals("")) {
                         throw new ConfigException(error_text);
                     }
+                    // Throw exception when no parsing result found
+                    throw new ConfigException("\"${" + content + "}\" appears in config file cannot be expanded");
                 }
-            }
-            // Throw exception when no parsing result found
-            if (value == null && valueMap != null && !valueMap.containsKey(injectionPattern.getKey())) {
-                throw new ConfigException("\"${" + content + "}\" appears in config file cannot be expanded");
             }
         }
         return value;

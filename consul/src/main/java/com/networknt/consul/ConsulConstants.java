@@ -32,12 +32,6 @@ public class ConsulConstants {
 	 */
 	public static final String CONSUL_LIGHT_COMMAND = "light/command/";
 
-
-	/**
-	 * Default protocol
-	 */
-	public static final String DEFAULT_PROTOCOL = "http";
-
 	/**
 	 * Default consul agent port
 	 */
