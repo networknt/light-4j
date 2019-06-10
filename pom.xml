@@ -112,7 +112,7 @@
         <version.build-helper-maven>3.0.0</version.build-helper-maven>
         <version.lifecycle-mapping>1.0.0</version.lifecycle-mapping>
         <version.maven-gpg>1.6</version.maven-gpg>
-        <version.javadoc-packagelist-plugin>1.0-SNAPSHOT</version.javadoc-packagelist-plugin>
+        <version.javadoc-packagelist-plugin>1.0.0</version.javadoc-packagelist-plugin>
         <argLine>-Xmx512m</argLine>
     </properties>
 
