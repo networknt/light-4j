@@ -113,7 +113,9 @@
         <version.maven-gpg>1.6</version.maven-gpg>
         <version.testcontainers>1.8.0</version.testcontainers>
         <argLine>-Xmx512m</argLine>
-        <skipITs>true</skipITs>
+        <skipIT>true</skipIT>
+        <skip.unit.tests>false</skip.unit.tests>
+        <filter.original.test.resource>false</filter.original.test.resource>
     </properties>
 
     <modules>
@@ -623,11 +625,11 @@
         </resources>
         <testResources>
             <testResource>
-                <filtering>false</filtering>
+                <filtering>${filter.original.test.resource}</filtering>
                 <directory>${basedir}/src/test/resources</directory>
-                <includes>
-                    <include>**/*</include>
-                </includes>
+                <excludes>
+                    <exclude>**/*</exclude>
+                </excludes>
             </testResource>
         </testResources>
 
@@ -692,22 +694,37 @@
                         <version>${version.maven-surefire}</version>
                     </dependency>
                 </dependencies>
+                <configuration>
+                    <!-- Skips unit tests if the value of skip.unit.tests property is true -->
+                    <skipTests>${skip.unit.tests}</skipTests>
+                    <!-- Excludes integration tests when unit tests are run -->
+                    <excludes>
+                        <exclude>**/*IT.java</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <version>${version.maven-surefire}</version>
-                <configuration>
-                    <encoding>UTF-8</encoding>
-                    <skipITs>${skipITs}</skipITs>
-                </configuration>
                 <executions>
+                    <!--
+                        Invokes both the integration-test and the verify goals of the
+                        Failsafe Maven plugin
+                    -->
                     <execution>
-                        <id>integration-test</id>
+                        <id>integration-tests</id>
                         <goals>
                             <goal>integration-test</goal>
                             <goal>verify</goal>
                         </goals>
+                        <configuration>
+                            <!--
+                                Skips integration tests if the value of skip.integration.tests
+                                property is true
+                            -->
+                            <skipTests>${skipIT}</skipTests>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -717,18 +734,20 @@
                 <version>${version.build-helper-maven}</version>
                 <executions>
                     <execution>
-                        <id>add-test-source</id>
+                        <id>add-integration-test-source</id>
+                        <phase>generate-test-sources</phase>
                         <goals>
                             <goal>add-test-source</goal>
                         </goals>
                         <configuration>
                             <sources>
-                                <source>${project.basedir}\src\integration\java</source>
+                                <source>${project.basedir}/src/integration/java</source>
                             </sources>
                         </configuration>
                     </execution>
                     <execution>
-                        <id>add-test-resource</id>
+                        <id>add-integration-test-resource</id>
+                        <phase>generate-test-sources</phase>
                         <goals>
                             <goal>add-test-resource</goal>
                         </goals>
@@ -736,7 +755,8 @@
                             <resources>
                                 <resource>
                                     <!-- Don't forget <directory> label -->
-                                    <directory>${project.basedir}\src\integration\resources</directory>
+                                    <directory>${project.basedir}/src/integration/resources</directory>
+                                    <!--<targetPath>test-configs</targetPath>-->
                                 </resource>
                             </resources>
                         </configuration>
@@ -886,6 +906,13 @@
     <profiles>
         <profile>
             <id>dev</id>
+            <properties>
+                <!--
+                    Only unit tests are run when the development profile is active
+                -->
+                <skipIT>true</skipIT>
+                <skip.unit.tests>false</skip.unit.tests>
+            </properties>
             <build>
                 <plugins>
                     <plugin>
@@ -975,6 +1002,18 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+        <!-- The Configuration of the integration-test profile -->
+        <profile>
+            <id>integration-test</id>
+            <properties>
+                <!--
+                    Only integration tests are run when the integration-test profile is active
+                -->
+                <skipIT>false</skipIT>
+                <skip.unit.tests>true</skip.unit.tests>
+                <filter.original.test.resource>true</filter.original.test.resource>
+            </properties>
         </profile>
     </profiles>
 </project>
