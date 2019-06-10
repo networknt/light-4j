@@ -34,6 +34,7 @@ public class ServerConfig {
     String truststoreName;
     boolean enableRegistry;
     String serviceId;
+    String serviceName;    
     String environment;
     String buildNumber;
     boolean dynamicPort;
@@ -47,7 +48,7 @@ public class ServerConfig {
     boolean allowUnescapedCharactersInUrl;
     String serverString;
 
-    public ServerConfig() {
+	public ServerConfig() {
     }
 
     public String getIp() {
@@ -150,6 +151,14 @@ public class ServerConfig {
         this.serviceId = serviceId;
     }
 
+    public String getServiceName() {
+		return serviceName;
+	}
+
+	public void setServiceName(String serviceName) {
+		this.serviceName = serviceName;
+	}   
+	
     public boolean isEnableHttp2() {
         return enableHttp2;
     }
@@ -252,5 +261,5 @@ public class ServerConfig {
 
     public void setAllowUnescapedCharactersInUrl(boolean allowUnescapedCharactersInUrl) {
         this.allowUnescapedCharactersInUrl = allowUnescapedCharactersInUrl;
-    }
+    }    
 }

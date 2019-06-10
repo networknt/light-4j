@@ -1,5 +1,30 @@
 # Change Log
 
+## [1.6.4](https://github.com/networknt/light-4j/tree/1.6.4) (2019-06-10)
+
+
+**Merged pull requests:**
+
+
+- fixes \#532 rename logging to logger-config and clean up the dependencies [\#533](https://github.com/networknt/light-4j/pull/533) ([stevehu](https://github.com/stevehu))
+- Fixes \#530 - Add service name to Server configuration [\#531](https://github.com/networknt/light-4j/pull/531) ([ddobrin](https://github.com/ddobrin))
+- fixes \#528 The config module blindly convert string 0000 to 0 for env… [\#529](https://github.com/networknt/light-4j/pull/529) ([stevehu](https://github.com/stevehu))
+- Feat/\#506 add debug logging [\#507](https://github.com/networknt/light-4j/pull/507) ([jiachen1120](https://github.com/jiachen1120))
+- removed io.undertow.client.http package due to classes in this package were already moved to com.networknt.client package [\#527](https://github.com/networknt/light-4j/pull/527) ([BalloonWen](https://github.com/BalloonWen))
+- Add logging module for light 4j   RFC\#29 [\#453](https://github.com/networknt/light-4j/pull/453) ([sreenicibc](https://github.com/sreenicibc))
+- bug when using consul with http1.1 [\#524](https://github.com/networknt/light-4j/pull/524) ([BalloonWen](https://github.com/BalloonWen))
+- Feat/\#521 enbale http2 consul config [\#522](https://github.com/networknt/light-4j/pull/522) ([jiachen1120](https://github.com/jiachen1120))
+## [1.6.2](https://github.com/networknt/light-4j/tree/1.6.2) (2019-05-17)
+
+
+**Merged pull requests:**
+
+
+- Add JsonWebKey support in JWT key verification [\#511](https://github.com/networknt/light-4j/pull/511) ([jsu216](https://github.com/jsu216))
+- Fix/\#512 config overwritten [\#516](https://github.com/networknt/light-4j/pull/516) ([jiachen1120](https://github.com/jiachen1120))
+- fixes \#513 disable sanitizer handler by default [\#515](https://github.com/networknt/light-4j/pull/515) ([stevehu](https://github.com/stevehu))
+- Fix/\#504 read keystore from system property [\#505](https://github.com/networknt/light-4j/pull/505) ([jiachen1120](https://github.com/jiachen1120))
+- fixes \#508 associate the correlationId with the traceabilityId when c… [\#509](https://github.com/networknt/light-4j/pull/509) ([stevehu](https://github.com/stevehu))
 ## [1.6.1](https://github.com/networknt/light-4j/tree/1.6.1) (2019-05-03)
 
 

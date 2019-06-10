@@ -33,8 +33,7 @@ import com.networknt.monad.Result;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.UndertowOptions;
 import io.undertow.client.*;
-import io.undertow.client.http.Http2ClientCompletableFutureNoRequest;
-import io.undertow.client.http.Http2ClientCompletableFutureWithRequest;
+import com.networknt.client.http.*;
 import io.undertow.connector.ByteBufferPool;
 import io.undertow.protocols.ssl.UndertowXnioSsl;
 import io.undertow.server.DefaultByteBufferPool;
@@ -520,6 +519,9 @@ public class Http2Client {
 
                             @Override
                             protected void stringDone(String string) {
+                                if (logger.isDebugEnabled()) {
+                                    logger.debug("Service call response = {}", string);
+                                }
                                 result.getResponse().putAttachment(RESPONSE_BODY, string);
                                 latch.countDown();
                             }
@@ -570,6 +572,9 @@ public class Http2Client {
                         new StringReadChannelListener(BUFFER_POOL) {
                             @Override
                             protected void stringDone(String string) {
+                                if (logger.isDebugEnabled()) {
+                                    logger.debug("Service call response = {}", string);
+                                }
                                 result.getResponse().putAttachment(RESPONSE_BODY, string);
                                 latch.countDown();
                             }
@@ -610,6 +615,9 @@ public class Http2Client {
 
                             @Override
                             protected void stringDone(String string) {
+                                if (logger.isDebugEnabled()) {
+                                    logger.debug("Service call response = {}", string);
+                                }
                                 AsyncResponse ar = new AsyncResponse(result.getResponse(), string, System.currentTimeMillis() - startTime);
                                 reference.set(DefaultAsyncResult.succeed(ar));
                                 latch.countDown();
@@ -617,6 +625,7 @@ public class Http2Client {
 
                             @Override
                             protected void error(IOException e) {
+                                logger.error("IOException:", e);
                                 reference.set(DefaultAsyncResult.fail(e));
                                 latch.countDown();
                             }
@@ -625,6 +634,7 @@ public class Http2Client {
 
                     @Override
                     public void failed(IOException e) {
+                        logger.error("IOException:", e);
                         reference.set(DefaultAsyncResult.fail(e));
                         latch.countDown();
                     }
@@ -636,6 +646,7 @@ public class Http2Client {
                         result.getRequestChannel().resumeWrites();
                     }
                 } catch (IOException e) {
+                    logger.error("IOException:", e);
                     reference.set(DefaultAsyncResult.fail(e));
                     latch.countDown();
                 }
@@ -643,6 +654,7 @@ public class Http2Client {
 
             @Override
             public void failed(IOException e) {
+                logger.error("IOException:", e);
                 reference.set(DefaultAsyncResult.fail(e));
                 latch.countDown();
             }
@@ -661,6 +673,9 @@ public class Http2Client {
                         new StringReadChannelListener(BUFFER_POOL) {
                             @Override
                             protected void stringDone(String string) {
+                                if (logger.isDebugEnabled()) {
+                                    logger.debug("Service call response = {}", string);
+                                }
                                 AsyncResponse ar = new AsyncResponse(result.getResponse(), string, System.currentTimeMillis() - startTime);
                                 reference.set(DefaultAsyncResult.succeed(ar));
                                 latch.countDown();
@@ -668,6 +683,7 @@ public class Http2Client {
 
                             @Override
                             protected void error(IOException e) {
+                                logger.error("IOException:", e);
                                 reference.set(DefaultAsyncResult.fail(e));
                                 latch.countDown();
                             }
@@ -676,6 +692,7 @@ public class Http2Client {
 
                     @Override
                     public void failed(IOException e) {
+                        logger.error("IOException:", e);
                         reference.set(DefaultAsyncResult.fail(e));
                         latch.countDown();
                     }
@@ -684,6 +701,7 @@ public class Http2Client {
 
             @Override
             public void failed(IOException e) {
+                logger.error("IOException:", e);
                 reference.set(DefaultAsyncResult.fail(e));
                 latch.countDown();
             }
@@ -698,6 +716,9 @@ public class Http2Client {
         CompletableFuture<ClientConnection> futureConnection = this.connectAsync(uri);
         CompletableFuture<ClientResponse> futureClientResponse = futureConnection.thenComposeAsync(clientConnection -> {
             if (requestBody.isPresent()) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("The request sent to {} = request header: {}, request body: {}", uri.toString(), request.getRequestHeaders().toString(), requestBody.get());
+                }
                 Http2ClientCompletableFutureWithRequest futureClientResponseWithRequest = new Http2ClientCompletableFutureWithRequest(requestBody.get());
                 try {
                     clientConnection.sendRequest(request, futureClientResponseWithRequest);
@@ -706,6 +727,9 @@ public class Http2Client {
                 }
                 return futureClientResponseWithRequest;
             } else {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("The request sent to {} = request header: {}, request body is empty", uri.toString(), request.getRequestHeaders().toString());
+                }
                 Http2ClientCompletableFutureNoRequest futureClientResponseNoRequest = new Http2ClientCompletableFutureNoRequest();
                 try {
                     clientConnection.sendRequest(request, futureClientResponseNoRequest);

@@ -73,4 +73,20 @@ public class TestCentralizedManagement {
         CentralizedManagement.mergeMap(testMap);
         Assert.assertTrue(testMap.get("key") instanceof Boolean);
     }
+
+    @Test
+    public void testMap_allowNullOverwrite() {
+        Map<String, Object> testMap = new HashMap<>();
+        testMap.put("key", "${TEST.null: value}");
+        CentralizedManagement.mergeMap(testMap);
+        Assert.assertNull(testMap.get("key"));
+    }
+
+    @Test
+    public void testMap_allowEmptyStringOverwrite() {
+        Map<String, Object> testMap = new HashMap<>();
+        testMap.put("key", "${TEST.emptyString: value}");
+        CentralizedManagement.mergeMap(testMap);
+        Assert.assertEquals("", testMap.get("key"));
+    }
 }
