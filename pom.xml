@@ -105,7 +105,7 @@
         <version.maven-failsafe>2.22.0</version.maven-failsafe>
         <version.maven-javadoc>3.1.0</version.maven-javadoc>
         <version.jacoco>0.8.3</version.jacoco>
-        <version.maven-compiler>3.6.1</version.maven-compiler>
+        <version.maven-compiler>3.8.0</version.maven-compiler>
         <version.build-helper-maven>3.0.0</version.build-helper-maven>
         <version.lifecycle-mapping>1.0.0</version.lifecycle-mapping>
         <version.maven-gpg>1.6</version.maven-gpg>
@@ -665,9 +665,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.0</version>
+                <version>${version.maven-compiler}</version>
                 <configuration>
-                    <release>11</release>
+                    <release>${java.version}</release>
                 </configuration>
             </plugin>
             <!--
@@ -794,14 +794,6 @@
                 </executions>
             </plugin>
             <!-- end JACOCO -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.0</version>
-                <configuration>
-                    <release>${java.version}</release>
-                </configuration>
-            </plugin>
         </plugins>
         <pluginManagement>
         	<plugins>
