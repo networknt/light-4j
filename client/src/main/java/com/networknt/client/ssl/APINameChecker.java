@@ -47,9 +47,9 @@ public class APINameChecker {
 	/**
 	 * Perform server identify check using given name and throw CertificateException if the check fails.
 	 * 
-	 * @param name
-	 * @param cert
-	 * @throws CertificateException
+	 * @param name string
+	 * @param cert X509Certificate
+	 * @throws CertificateException CertificateException
 	 */
 	public static void verifyAndThrow(final String name, final X509Certificate cert) throws CertificateException{
 		if (!verify(name, cert)) {

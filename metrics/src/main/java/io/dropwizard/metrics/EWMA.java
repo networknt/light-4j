@@ -19,7 +19,7 @@ package io.dropwizard.metrics;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.Math.exp;
-
+import java.util.concurrent.atomic.LongAdder;
 /**
  * An exponentially-weighted moving average.
  *
@@ -42,7 +42,7 @@ public class EWMA {
     private volatile boolean initialized = false;
     private volatile double rate = 0.0;
 
-    private final LongAdder uncounted = LongAdderFactory.create();
+    private final LongAdder uncounted = new LongAdder();
     private final double alpha, interval;
 
     /**
