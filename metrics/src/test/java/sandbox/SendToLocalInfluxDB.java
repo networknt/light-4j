@@ -53,7 +53,7 @@ public final class SendToLocalInfluxDB {
             }
         } catch (Exception exc) {
             exc.printStackTrace();
-            System.exit(1);
+//            System.exit(1);
         } finally {
             if (context != null) {
                 context.stop();
