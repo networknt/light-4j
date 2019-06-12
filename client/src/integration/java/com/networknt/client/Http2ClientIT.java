@@ -83,6 +83,8 @@ public class Http2ClientIT {
 
     private static XnioWorker worker;
 
+    private static ThreadGroup threadGroup = new ThreadGroup("http2-client-test");
+
     private static final URI ADDRESS;
 
 
@@ -100,14 +102,14 @@ public class Http2ClientIT {
         exchange.getResponseHeaders().put(Headers.CONTENT_LENGTH, message.length() + "");
         final Sender sender = exchange.getResponseSender();
         sender.send(message);
+        sender.close();
     }
 
     @BeforeClass
     public static void beforeClass() throws IOException {
         // Create xnio worker
         final Xnio xnio = Xnio.getInstance();
-        final XnioWorker xnioWorker = xnio.createWorker(null, Http2Client.DEFAULT_OPTIONS);
-        worker = xnioWorker;
+        worker = xnio.createWorker(threadGroup, Http2Client.DEFAULT_OPTIONS);
 
         if(server == null) {
             System.out.println("starting server");
@@ -127,6 +129,7 @@ public class Http2ClientIT {
                     .setServerOption(UndertowOptions.ALWAYS_SET_KEEP_ALIVE, false) //don't send a keep-alive header for HTTP/1.1 requests, as it is not required
                     .setServerOption(UndertowOptions.ALWAYS_SET_DATE, true)
                     .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, false)
+                    .setSocketOption(Options.SSL_ENABLED_PROTOCOLS, Sequence.of("TLSv1.2"))
                     .setHandler(new PathHandler()
                             .addExactPath(MESSAGE, exchange -> sendMessage(exchange))
                             .addExactPath(KEY, exchange -> sendMessage(exchange))
@@ -190,13 +193,10 @@ public class Http2ClientIT {
     public static void afterClass() {
         worker.shutdown();
         if(server != null) {
+            System.out.println("Stopping server.");
             try {
-                Thread.sleep(100);
-            } catch (InterruptedException ignored) {
-            }
-            server.stop();
-            System.out.println("The server is stopped.");
-            try {
+                server.stop();
+                System.out.println("The server is stopped.");
                 Thread.sleep(100);
             } catch (InterruptedException ignored) {
             }
@@ -431,7 +431,7 @@ public class Http2ClientIT {
 
         final List<AtomicReference<ClientResponse>> references = new CopyOnWriteArrayList<>();
         final CountDownLatch latch = new CountDownLatch(10);
-        SSLContext context = client.createSSLContext();
+        SSLContext context = Http2Client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
         final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
@@ -458,12 +458,7 @@ public class Http2ClientIT {
                 Assert.assertEquals("HTTP/1.1", reference.get().getProtocol().toString());
             }
         } finally {
-            connection.getIoThread().execute(new Runnable() {
-                @Override
-                public void run() {
-                    IoUtils.safeClose(connection);
-                }
-            });
+            IoUtils.safeClose(connection);
         }
     }
 

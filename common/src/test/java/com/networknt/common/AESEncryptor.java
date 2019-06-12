@@ -24,6 +24,7 @@ import java.security.AlgorithmParameters;
 import java.security.InvalidKeyException;
 import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
+import java.util.Base64;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -36,7 +37,6 @@ import javax.crypto.spec.SecretKeySpec;
 
 import com.networknt.utility.Constants;
 
-import sun.misc.BASE64Encoder;
 
 public class AESEncryptor {
     public static void main(String [] args) {
@@ -54,7 +54,7 @@ public class AESEncryptor {
     private static final String STRING_ENCODING = "UTF-8";
     private SecretKeySpec secret;
     private Cipher cipher;
-    private BASE64Encoder base64Encoder;
+    private Base64.Encoder base64Encoder;
 
     public AESEncryptor() {
         try {
@@ -71,7 +71,7 @@ public class AESEncryptor {
             cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 
             // For production use commons base64 encoder
-            base64Encoder = new BASE64Encoder();
+            base64Encoder = Base64.getEncoder();
         } catch (Exception e) {
             throw new RuntimeException("Unable to initialize", e);
         }
@@ -98,7 +98,7 @@ public class AESEncryptor {
             byte[] out = new byte[iv.length + ciphertext.length];
             System.arraycopy(iv, 0, out, 0, iv.length);
             System.arraycopy(ciphertext, 0, out, iv.length, ciphertext.length);
-            return CRYPT_PREFIX + ":" + base64Encoder.encode(out);
+            return CRYPT_PREFIX + ":" + base64Encoder.encodeToString(out);
         } catch (IllegalBlockSizeException e) {
             throw new RuntimeException("Unable to encrypt", e);
         } catch (BadPaddingException e) {

@@ -35,7 +35,7 @@ public class ClientRequestComposerProvider {
 
     /**
      * get IClientRequestComposable based on ClientRequestComposers composer name
-     * @param composerName
+     * @param composerName composer name
      * @return IClientRequestComposable composer
      */
     public IClientRequestComposable getComposer(ClientRequestComposers composerName) {

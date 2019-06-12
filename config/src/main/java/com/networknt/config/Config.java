@@ -94,6 +94,8 @@ public abstract class Config {
 
     public abstract void clear();
 
+    public abstract void setClassLoader(ClassLoader urlClassLoader);
+
     public abstract void putInConfigCache(String configName, Object config);
 
     public static Config getInstance() {
@@ -180,6 +182,8 @@ public abstract class Config {
         	return DecryptConstructor.DEFAULT_DECRYPTOR_CLASS;
         }
 
+        private ClassLoader classLoader;
+
         private static Config initialize() {
             Iterator<Config> it;
             it = ServiceLoader.load(Config.class).iterator();
@@ -203,7 +207,16 @@ public abstract class Config {
         }
 
         @Override
-        public void putInConfigCache(String configName, Object config){
+        public void setClassLoader(ClassLoader classLoader) {
+            this.classLoader = classLoader;
+        }
+        private ClassLoader getClassLoader() {
+            if (this.classLoader != null) {
+                return this.classLoader;
+            }
+            return getClass().getClassLoader();
+        }
+        public void putInConfigCache(String configName, Object config) {
             configCache.put(configName,config);
         }
 
@@ -406,14 +419,14 @@ public abstract class Config {
             if (logger.isInfoEnabled()) {
                 logger.info("Trying to load config from classpath directory for file " + Encode.forJava(configFilename));
             }
-            inStream = getClass().getClassLoader().getResourceAsStream(configFilename);
+            inStream = this.getClassLoader().getResourceAsStream(configFilename);
             if (inStream != null) {
                 if (logger.isInfoEnabled()) {
                     logger.info("config loaded from classpath for " + Encode.forJava(configFilename));
                 }
                 return inStream;
             }
-            inStream = getClass().getClassLoader().getResourceAsStream("config/" + configFilename);
+            inStream = this.getClassLoader().getResourceAsStream("config/" + configFilename);
             if (inStream != null) {
                 if (logger.isInfoEnabled()) {
                     logger.info("Config loaded from default folder for " + Encode.forJava(configFilename));
