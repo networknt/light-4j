@@ -16,6 +16,8 @@
 
 package io.dropwizard.metrics;
 
+import java.util.concurrent.atomic.LongAdder;
+
 /**
  * An incrementing and decrementing counter metric.
  */
@@ -23,7 +25,7 @@ public class Counter implements Metric, Counting {
     private final LongAdder count;
 
     public Counter() {
-        this.count = LongAdderFactory.create();
+        this.count = new LongAdder();
     }
 
     /**
