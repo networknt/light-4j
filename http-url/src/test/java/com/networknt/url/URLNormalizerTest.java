@@ -339,6 +339,7 @@ public class URLNormalizerTest {
     public void testReplaceIPWithDomainName() {
         s = "http://208.80.154.224/wiki/Main_Page";
         t = null;
+//        System.out.println("Result: " + n(s).replaceIPWithDomainName().toString());
         Assert.assertTrue(
                 n(s).replaceIPWithDomainName().toString().contains("wikimedia"));
         s = "http://wikipedia.org/wiki/Main_Page";

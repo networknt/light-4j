@@ -21,3 +21,4 @@ hs_err_pid*
 !rest.zip
 
 .DS_Store
+build.out

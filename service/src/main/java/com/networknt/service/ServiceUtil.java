@@ -64,7 +64,7 @@ public class ServiceUtil {
      * @throws Exception when constructor fails.
      */
     public static Object constructByNamedParams(Class clazz, Map params) throws Exception {
-        Object obj = clazz.getConstructor().newInstance();
+        Object obj = clazz.getDeclaredConstructor().newInstance();
 
         Method[] allMethods = clazz.getMethods();
         for(Method method : allMethods) {
@@ -134,7 +134,7 @@ public class ServiceUtil {
             return instance;
         } else {
             if(hasDefaultConstructor) {
-                return clazz.getConstructor().newInstance();
+                return clazz.getDeclaredConstructor().newInstance();
             } else {
                 // error that no instance can be created.
                 throw new Exception("No instance can be created for class " + clazz);
