@@ -43,7 +43,7 @@
 - fixes \#460 upgrade maven plugins to the latest versions [\#461](https://github.com/networknt/light-4j/pull/461) ([stevehu](https://github.com/stevehu))
 - fixes \#456 resolve warnnings from errorprone [\#457](https://github.com/networknt/light-4j/pull/457) ([stevehu](https://github.com/stevehu))
 - fixes \#454 add test cases for AESDecryptor and DecryptConstructor [\#455](https://github.com/networknt/light-4j/pull/455) ([stevehu](https://github.com/stevehu))
-- fixed caching issue when initlizing multiple token request haven't been tested [\#452](https://github.com/networknt/light-4j/pull/452) ([BalloonWen](https://github.com/BalloonWen))
+- fixed caching issue when initlizing multiple token request havenot been tested [\#452](https://github.com/networknt/light-4j/pull/452) ([BalloonWen](https://github.com/BalloonWen))
 - Feat/\#351 server options configurable [\#432](https://github.com/networknt/light-4j/pull/432) ([jiachen1120](https://github.com/jiachen1120))
 - Feat/\#427 config decryption [\#429](https://github.com/networknt/light-4j/pull/429) ([jiachen1120](https://github.com/jiachen1120))
 - Feat/light 4j/\#391 support caching multiple Jwts [\#410](https://github.com/networknt/light-4j/pull/410) ([BalloonWen](https://github.com/BalloonWen))
