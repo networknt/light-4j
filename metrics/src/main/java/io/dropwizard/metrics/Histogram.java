@@ -19,6 +19,7 @@ package io.dropwizard.metrics;
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * A metric which calculates the distribution of a value.
@@ -38,7 +39,7 @@ public class Histogram implements Metric, Sampling, Counting {
      */
     public Histogram(Reservoir reservoir) {
         this.reservoir = reservoir;
-        this.count = LongAdderFactory.create();
+        this.count = new LongAdder();
     }
 
     /**
