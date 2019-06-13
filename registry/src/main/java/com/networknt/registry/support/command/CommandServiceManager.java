@@ -16,7 +16,7 @@
 
 package com.networknt.registry.support.command;
 
-import com.networknt.status.exception.FrameworkException;
+import com.networknt.exception.FrameworkException;
 import com.networknt.registry.NotifyListener;
 import com.networknt.registry.URL;
 import com.networknt.registry.URLImpl;

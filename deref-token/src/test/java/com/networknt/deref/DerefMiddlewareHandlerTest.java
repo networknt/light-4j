@@ -16,7 +16,7 @@
 package com.networknt.deref;
 
 import com.networknt.client.Http2Client;
-import com.networknt.status.exception.ClientException;
+import com.networknt.exception.ClientException;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.client.ClientConnection;

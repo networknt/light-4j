@@ -19,7 +19,7 @@ package com.networknt.zookeeper;
 
 import com.networknt.status.Status;
 import com.networknt.utility.Constants;
-import com.networknt.status.exception.FrameworkException;
+import com.networknt.exception.FrameworkException;
 import com.networknt.registry.URL;
 
 /**

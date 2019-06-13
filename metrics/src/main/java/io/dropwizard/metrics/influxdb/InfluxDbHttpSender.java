@@ -17,7 +17,7 @@
 package io.dropwizard.metrics.influxdb;
 
 import com.networknt.client.Http2Client;
-import com.networknt.status.exception.ClientException;
+import com.networknt.exception.ClientException;
 import com.networknt.mask.Mask;
 import io.dropwizard.metrics.influxdb.data.InfluxDbPoint;
 import io.dropwizard.metrics.influxdb.data.InfluxDbWriteObject;

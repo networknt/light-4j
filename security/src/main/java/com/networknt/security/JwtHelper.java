@@ -21,7 +21,7 @@ import com.networknt.client.oauth.OauthHelper;
 import com.networknt.client.oauth.SignKeyRequest;
 import com.networknt.client.oauth.TokenKeyRequest;
 import com.networknt.config.Config;
-import com.networknt.status.exception.ExpiredTokenException;
+import com.networknt.exception.ExpiredTokenException;
 import com.networknt.utility.FingerPrintUtil;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.JsonWebKeySet;
