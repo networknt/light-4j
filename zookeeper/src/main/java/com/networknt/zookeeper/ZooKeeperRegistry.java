@@ -32,7 +32,7 @@ import org.I0Itec.zkclient.IZkStateListener;
 import org.apache.zookeeper.Watcher;
 
 import com.networknt.utility.Constants;
-import com.networknt.status.exception.FrameworkException;
+import com.networknt.exception.FrameworkException;
 import com.networknt.registry.support.command.CommandFailbackRegistry;
 import com.networknt.registry.support.command.ServiceListener;
 import com.networknt.registry.URL;

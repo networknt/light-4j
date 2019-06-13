@@ -24,7 +24,7 @@ import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.correlation.CorrelationHandler;
-import com.networknt.status.exception.ClientException;
+import com.networknt.exception.ClientException;
 import com.networknt.handler.Handler;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.Constants;

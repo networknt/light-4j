@@ -14,44 +14,34 @@
  * limitations under the License.
  */
 
-package com.networknt.status.exception;
-
-import com.networknt.status.Status;
+package com.networknt.exception;
 
 /**
- * This is a checked exception used by Client module.
+ * This is a checked exception used by JWT verification and it is thrown if
+ * the JWT token is expired. Used by Security module only to work around Jose4j
+ * only return InvalidTokenException without differentiating expiry or incorrect
+ * signature. The security module needs to respond differently to consumer in
+ * case of token expiry so that caller will try to renew the token reactively.
  *
  * @author Steve Hu
  */
-public class ClientException extends Exception {
+public class ExpiredTokenException extends Exception {
     private static final long serialVersionUID = 1L;
-    private static Status status = new Status();
 
-    public ClientException() {
+    public ExpiredTokenException() {
         super();
     }
 
-    public ClientException(String message) {
+    public ExpiredTokenException(String message) {
         super(message);
     }
 
-    public ClientException(Status status) {
-        this.status = status;
-    }
-
-    public ClientException(String message, Throwable cause) {
+    public ExpiredTokenException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public ClientException(Throwable cause) {
+    public ExpiredTokenException(Throwable cause) {
         super(cause);
     }
 
-    public static Status getStatus() {
-        return status;
-    }
-
-    public static void setStatus(Status status) {
-        ClientException.status = status;
-    }
 }

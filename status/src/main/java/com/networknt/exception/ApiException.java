@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 
-package com.networknt.status.exception;
+package com.networknt.exception;
 
 import com.networknt.status.Status;
 
 /**
- * This is similar exception like ApiException but it is RuntimeException.
- * It should be used not against consumer request but only internally in
- * the framework. For example, check if the passed in parameter is null etc.
+ * This is a checked exception that can wrap Status object to give consume a uniform
+ * response. It is recommended that the business handler to catch this exception and
+ * respond to the request; however, the ExceptionHandler in this module will capture
+ * it and translate into a meaningful error response.
  *
- * The FrameworkException will be handled by ExceptionHandler before the
- * exchange ends and a meaningful status will be returned to the consumer.
+ * Note that ExceptionHandler is a middleware handler and it is plugged in by default
+ * and can be turned off via configuration.
  *
  * @author Steve Hu
  */
-public class FrameworkException extends RuntimeException {
+public class ApiException extends Exception {
     private static final long serialVersionUID = 1L;
     private final Status status;
 
@@ -36,14 +37,13 @@ public class FrameworkException extends RuntimeException {
         return status;
     }
 
-    public FrameworkException(Status status) {
+    public ApiException(Status status) {
         super(status.toString());
         this.status = status;
     }
 
-    public FrameworkException(Status status, Throwable cause) {
+    public ApiException(Status status, Throwable cause) {
         super(status.toString(), cause);
         this.status = status;
     }
-
 }
