@@ -17,7 +17,6 @@
 package com.networknt.handler;
 
 import com.networknt.status.Status;
-import com.sun.net.httpserver.HttpServer;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;

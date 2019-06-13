@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.networknt</groupId>
     <artifactId>light-4j</artifactId>
-    <version>1.6.5-SNAPSHOT</version>
+    <version>2.0.2-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Parent POM</name>
     <description>Light 4J Framework Components</description>
@@ -65,8 +65,7 @@
     </distributionManagement>
 
     <properties>
-        <java.version>8</java.version>
-        <javac.version>9+181-r4173-1</javac.version>
+        <java.version>11</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <version.jackson>2.9.9</version.jackson>
         <version.slf4j>1.7.25</version.slf4j>
@@ -90,27 +89,27 @@
         <version.caffeine>2.6.2</version.caffeine>
         <version.prometheus>0.3.0</version.prometheus>
         <version.javamail>1.6.1</version.javamail>
-        <version.hikaricp>3.1.0</version.hikaricp>
+        <version.hikaricp>3.2.0</version.hikaricp>
         <version.h2>1.4.196</version.h2>
         <version.mysql>6.0.5</version.mysql>
         <version.postgres>9.4.1211</version.postgres>
         <version.oracle>11.2.0.3</version.oracle>
-        <version.sqlserver>6.5.1.jre8-preview</version.sqlserver>
+        <version.sqlserver>7.0.0.jre10</version.sqlserver>
         <version.httpclient>4.5.6</version.httpclient>
+        <versions.maven-version>2.4</versions.maven-version>
         <version.jsonpath>2.4.0</version.jsonpath>
         <version.maven-version>2.7</version.maven-version>
         <version.nexus-staging-maven>1.6.8</version.nexus-staging-maven>
         <version.maven-source>3.0.1</version.maven-source>
-        <version.maven-surefire>3.0.0-M3</version.maven-surefire>
-        <!--<version.maven-release>2.5.3</version.maven-release>-->
-        <version.maven-javadoc>3.1.0</version.maven-javadoc>
+        <version.maven-surefire>2.19.1</version.maven-surefire>
+        <version.maven-failsafe>2.22.0</version.maven-failsafe>
         <version.jacoco>0.8.3</version.jacoco>
-        <version.maven-compiler>3.6.1</version.maven-compiler>
+        <version.maven-compiler>3.8.0</version.maven-compiler>
         <version.build-helper-maven>3.0.0</version.build-helper-maven>
-        <version.plexus-compiler-javac-errorprone>2.8</version.plexus-compiler-javac-errorprone>
-        <version.error_prone_core>2.0.15</version.error_prone_core>
         <version.lifecycle-mapping>1.0.0</version.lifecycle-mapping>
         <version.maven-gpg>1.6</version.maven-gpg>
+        <version.javadoc-packagelist-plugin>1.0.0</version.javadoc-packagelist-plugin>
+        <version.maven-javadoc>3.1.0</version.maven-javadoc>
     </properties>
 
     <modules>
@@ -214,7 +213,7 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
-                <artifactId>logging</artifactId>
+                <artifactId>logger-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -634,6 +633,19 @@
 
         <plugins>
             <plugin>
+                <groupId>com.networknt</groupId>
+                <artifactId>javadoc-packagelist-maven-plugin</artifactId>
+                <version>${version.javadoc-packagelist-plugin}</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>gen-package-list</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>versions-maven-plugin</artifactId>
                 <version>${version.maven-version}</version>
@@ -647,6 +659,14 @@
                     <serverId>ossrh</serverId>
                     <nexusUrl>https://oss.sonatype.org/</nexusUrl>
                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${version.maven-compiler}</version>
+                <configuration>
+                    <release>${java.version}</release>
                 </configuration>
             </plugin>
             <!--
@@ -694,12 +714,14 @@
                     </dependency>
                 </dependencies>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>${version.maven-surefire}</version>
+                <version>${version.maven-failsafe}</version>
                 <configuration>
                     <encoding>UTF-8</encoding>
+                    <forkCount>0</forkCount>
                 </configuration>
                 <executions>
                     <execution>
@@ -756,7 +778,8 @@
                             <goal>prepare-agent</goal>
                         </goals>
                         <configuration>
-                            <destFile>${project.build.directory}/coverage-reports/jacoco-ut.exec</destFile>
+                            <propertyName>surefireArgLine</propertyName>
+                            <!--<destFile>${project.build.directory}/coverage-reports/jacoco-ut.exec</destFile>-->
                         </configuration>
                     </execution>
                     <execution>
@@ -765,58 +788,11 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
-                        <configuration>
-                            <dataFile>${project.build.directory}/coverage-reports/jacoco-ut.exec</dataFile>
-                            <outputDirectory>${project.reporting.outputDirectory}/jacoco-ut</outputDirectory>
-                        </configuration>
-                    </execution>
-                    <!-- End Executions for unit tests -->
-                    <!-- The Executions for integration tests -->
-                    <execution>
-                        <id>pre-integration-test</id>
-                        <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                        <configuration>
-                            <destFile>${project.build.directory}/coverage-reports/jacoco-it.exec</destFile>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>post-integration-test</id>
-                        <phase>post-integration-test</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                        <configuration>
-                            <dataFile>${project.build.directory}/coverage-reports/jacoco-it.exec</dataFile>
-                            <outputDirectory>${project.reporting.outputDirectory}/jacoco-it</outputDirectory>
-                        </configuration>
                     </execution>
                     <!-- End Executions for integration tests -->
                 </executions>
             </plugin>
             <!-- end JACOCO -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.0</version>
-                <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
-                    <compilerArgs>
-                        <arg>-XDcompilePolicy=simple</arg>
-                        <arg>-Xplugin:ErrorProne</arg>
-                    </compilerArgs>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>com.google.errorprone</groupId>
-                            <artifactId>error_prone_core</artifactId>
-                            <version>2.3.3</version>
-                        </path>
-                    </annotationProcessorPaths>
-                </configuration>
-            </plugin>
         </plugins>
         <pluginManagement>
         	<plugins>
@@ -952,26 +928,6 @@
                                 </goals>
                             </execution>
                         </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>jdk8</id>
-            <activation>
-                <jdk>1.8</jdk>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <configuration>
-                            <fork>true</fork>
-                            <compilerArgs combine.children="append">
-                                <arg>-J-Xbootclasspath/p:${settings.localRepository}/com/google/errorprone/javac/${javac.version}/javac-${javac.version}.jar</arg>
-                            </compilerArgs>
-                        </configuration>
                     </plugin>
                 </plugins>
             </build>
