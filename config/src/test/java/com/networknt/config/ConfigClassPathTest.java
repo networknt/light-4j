@@ -45,7 +45,9 @@ public class ConfigClassPathTest extends TestCase {
         config.getMapper().writeValue(new File(homeDir + "/test.json"), map);
 
         // Add home directory to the classpath of the system class loader.
-        addURL(new File(homeDir).toURI().toURL());
+        AppURLClassLoader classLoader = new AppURLClassLoader(new URL[0], ClassLoader.getSystemClassLoader());
+        classLoader.addURL(new File(homeDir).toURI().toURL());
+        config.setClassLoader(classLoader);
     }
 
     @Override

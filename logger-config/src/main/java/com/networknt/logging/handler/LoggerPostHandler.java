@@ -20,7 +20,6 @@ import ch.qos.logback.classic.Level;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.body.BodyHandler;
 import com.networknt.config.Config;
-import com.networknt.exception.ClientException;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.httpstring.ContentType;
 import com.networknt.logging.model.LoggerConfig;
