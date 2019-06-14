@@ -80,7 +80,7 @@ public class EncoderTest {
         map.put("data3", "value3");
         map.put("data4", "value4");
         Encoding encoding = new FakeEncoding();
-        Encoder encoder = Mockito.spy(new Encoder(encoding, Arrays.asList("data2", "data4")));
+        Encoder encoder = Mockito.spy(new Encoder(encoding, Arrays.asList("data2", "data4"), null));
 
         encoder.encodeNode(map);
 
@@ -89,6 +89,24 @@ public class EncoderTest {
         Mockito.verify(encoder, Mockito.never()).applyEncoding("value2");
         Mockito.verify(encoder, Mockito.never()).applyEncoding("value4");
         Mockito.verify(encoder, Mockito.times(2)).applyEncoding(Mockito.any());
+    }
+
+    @Test
+    public void shouldApplyEncodingIfAttributesToAppreciateIsNotEmpty() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("data1", "value1");
+        map.put("data2", "value2");
+        map.put("data3", "value3");
+        map.put("data4", "value4");
+        Encoding encoding = new FakeEncoding();
+        Encoder encoder = Mockito.spy(new Encoder(encoding, null, Arrays.asList("data3")));
+
+        encoder.encodeNode(map);
+
+        Mockito.verify(encoder, Mockito.never()).applyEncoding("value1");
+        Mockito.verify(encoder).applyEncoding("value3");
+        Mockito.verify(encoder, Mockito.never()).applyEncoding("value2");
+        Mockito.verify(encoder, Mockito.never()).applyEncoding("value4");
     }
 
     @Test
@@ -117,7 +135,7 @@ public class EncoderTest {
 
     private void testEncodingFor(Map<String, Object> structure) {
         Encoding encoding = new FakeEncoding();
-        Encoder encoder = Mockito.spy(new Encoder(encoding, null));
+        Encoder encoder = Mockito.spy(new Encoder(encoding, null, null));
 
         encoder.encodeNode(structure);
 

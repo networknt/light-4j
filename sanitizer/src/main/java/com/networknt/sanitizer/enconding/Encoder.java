@@ -8,16 +8,21 @@ public class Encoder {
 
     private final Encoding encoding;
     private final List<String> attributesToIgnore;
+    private final List<String> attributesToAppreciate;
 
-    public Encoder(Encoding encoding, List<String> attributesToIgnore) {
+    public Encoder(Encoding encoding, List<String> attributesToIgnore, List<String> attributesToAppreciate) {
         this.encoding = encoding;
         this.attributesToIgnore = attributesToIgnore == null ? new ArrayList<>() : attributesToIgnore;
+        this.attributesToAppreciate = attributesToAppreciate == null ? new ArrayList<>() : attributesToAppreciate;
     }
 
     public void encodeNode(Map<String, Object> map) {
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             String key = entry.getKey();
             if (attributesToIgnore.contains(key)) {
+                continue;
+            }
+            if (!attributesToAppreciate.isEmpty() && !attributesToAppreciate.contains(key)) {
                 continue;
             }
 

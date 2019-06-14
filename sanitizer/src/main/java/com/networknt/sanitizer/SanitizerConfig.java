@@ -31,6 +31,7 @@ public class SanitizerConfig {
     private boolean sanitizeBody;
     private boolean sanitizeHeader;
     private List<String> attributesToIgnore;
+    private List<String> attributesToAppreciate;
     private String encoding;
 
     public boolean isEnabled() {
@@ -71,5 +72,13 @@ public class SanitizerConfig {
 
     public void setAttributesToIgnore(List<String> attributesToIgnore) {
         this.attributesToIgnore = attributesToIgnore;
+    }
+
+    public List<String> getAttributesToAppreciate() {
+        return attributesToAppreciate;
+    }
+
+    public void setAttributesToAppreciate(List<String> attributesToAppreciate) {
+        this.attributesToAppreciate = attributesToAppreciate;
     }
 }
