@@ -48,6 +48,9 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
+import io.opentracing.Tracer;
+import io.opentracing.propagation.Format;
+import io.opentracing.tag.Tags;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -330,6 +333,33 @@ public class Http2Client {
     }
 
     /**
+     * Add Authorization Code grant token the caller app gets from OAuth2 server and inject OpenTracing context
+     *
+     * This is the method called from client like web server that want to have Tracer context pass through.
+     *
+     * @param request the http request
+     * @param token the bearer token
+     * @param tracer the OpenTracing tracer
+     */
+    public void addAuthTokenTrace(ClientRequest request, String token, Tracer tracer) {
+        if(token != null && !token.startsWith("Bearer ")) {
+            if(token.toUpperCase().startsWith("BEARER ")) {
+                // other cases of Bearer
+                token = "Bearer " + token.substring(7);
+            } else {
+                token = "Bearer " + token;
+            }
+        }
+        request.getRequestHeaders().put(Headers.AUTHORIZATION, token);
+        if(tracer != null) {
+            Tags.SPAN_KIND.set(tracer.activeSpan(), Tags.SPAN_KIND_CLIENT);
+            Tags.HTTP_METHOD.set(tracer.activeSpan(), request.getMethod().toString());
+            Tags.HTTP_URL.set(tracer.activeSpan(), request.getPath());
+            tracer.inject(tracer.activeSpan().context(), Format.Builtin.HTTP_HEADERS, new ClientRequestCarrier(request));
+        }
+    }
+
+    /**
      * Add Client Credentials token cached in the client for standalone application
      *
      * This is the method called from standalone application like enterprise scheduler for batch jobs
@@ -402,6 +432,31 @@ public class Http2Client {
         Result<Jwt> result = tokenManager.getJwt(request);
         if(result.isFailure()) { return Failure.of(result.getError()); }
         request.getRequestHeaders().put(HttpStringConstants.CORRELATION_ID, correlationId);
+        request.getRequestHeaders().put(HttpStringConstants.SCOPE_TOKEN, "Bearer " + result.getResult().getJwt());
+        return result;
+    }
+
+    /**
+     * Support API to API calls with scope token. The token is the original token from consumer and
+     * the client credentials token of caller API is added from cache. This method doesn't have correlationId
+     * and traceabilityId but has a Tracer for OpenTracing context passing. For standalone client, you create
+     * the Tracer instance and in the service to service call, the Tracer can be found in the JaegerStartupHookProvider
+     *
+     * This method is used in API to API call
+     *
+     * @param request the http request
+     * @param authToken the authorization token
+     * @param tracer the OpenTracing Tracer
+     * @return Result when fail to get jwt, it will return a Status.
+     */
+    public Result populateHeader(ClientRequest request, String authToken, Tracer tracer) {
+        if(tracer != null) {
+            addAuthTokenTrace(request, authToken, tracer);
+        } else {
+            addAuthToken(request, authToken);
+        }
+        Result<Jwt> result = tokenManager.getJwt(request);
+        if(result.isFailure()) { return Failure.of(result.getError()); }
         request.getRequestHeaders().put(HttpStringConstants.SCOPE_TOKEN, "Bearer " + result.getResult().getJwt());
         return result;
     }

@@ -109,6 +109,7 @@
         <version.lifecycle-mapping>1.0.0</version.lifecycle-mapping>
         <version.maven-gpg>1.6</version.maven-gpg>
         <version.testcontainers>1.8.0</version.testcontainers>
+        <version.jaeger>0.35.2</version.jaeger>
         <skip.unit.tests>false</skip.unit.tests>
         <matched.test.resources>**/*</matched.test.resources>
         <version.javadoc-packagelist-plugin>1.0.0</version.javadoc-packagelist-plugin>
@@ -159,6 +160,7 @@
         <module>encode-decode</module>
         <module>monad-result</module>
         <module>logger-config</module>
+        <module>jaeger-tracing</module>
     </modules>
 
     <dependencyManagement>
@@ -529,7 +531,11 @@
                 <artifactId>logback-classic</artifactId>
                 <version>${version.logback}</version>
             </dependency>
-
+            <dependency>
+                <groupId>io.jaegertracing</groupId>
+                <artifactId>jaeger-client</artifactId>
+                <version>${version.jaeger}</version>
+            </dependency>
             <!-- Test dependencies -->
             <dependency>
                 <groupId>junit</groupId>

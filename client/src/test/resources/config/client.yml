@@ -102,3 +102,4 @@ request:
   errorThreshold: 2
   timeout: 3000
   resetTimeout: 7000
+  injectOpenTracing: false

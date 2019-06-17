@@ -17,6 +17,7 @@ import static com.networknt.client.ClientConfig.CONFIG_NAME;
 import static com.networknt.client.ClientConfig.CONFIG_SECRET;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 
 @RunWith(PowerMockRunner.class)
@@ -47,6 +48,7 @@ public class ClientConfigTest {
         assertEquals(ClientConfig.DEFAULT_RESET_TIMEOUT, clientConfig.getResetTimeout());
         assertEquals(ClientConfig.DEFAULT_TIMEOUT, clientConfig.getTimeout());
         assertEquals(ClientConfig.DEFAULT_BUFFER_SIZE, clientConfig.getBufferSize());
+        assertFalse(clientConfig.isInjectOpenTracing());
         assertNull(clientConfig.getSecretConfig());
         assertNull(clientConfig.getTokenConfig());
     }
@@ -63,6 +65,7 @@ public class ClientConfigTest {
         assertEquals(ClientConfig.DEFAULT_RESET_TIMEOUT, clientConfig.getResetTimeout());
         assertEquals(ClientConfig.DEFAULT_TIMEOUT, clientConfig.getTimeout());
         assertEquals(ClientConfig.DEFAULT_BUFFER_SIZE, clientConfig.getBufferSize());
+        assertFalse(clientConfig.isInjectOpenTracing());
         assertTrue(clientConfig.getSecretConfig() instanceof HashMap);
         assertNull(clientConfig.getTokenConfig());
     }
@@ -77,6 +80,7 @@ public class ClientConfigTest {
         assertEquals(3600000, clientConfig.getResetTimeout());
         assertEquals(2000, clientConfig.getTimeout());
         assertEquals(1024, clientConfig.getBufferSize());
+        assertTrue(clientConfig.isInjectOpenTracing());
         assertTrue(clientConfig.getSecretConfig() instanceof HashMap);
         assertTrue(clientConfig.getTokenConfig() instanceof HashMap);
     }
@@ -89,6 +93,7 @@ public class ClientConfigTest {
         configMap.put("errorThreshold", 3);
         configMap.put("timeout", 2000);
         configMap.put("resetTimeout", 3600000);
+        configMap.put("injectOpenTracing", true);
 
         HashMap<String, Object> map = new HashMap<>();
         map.put("bufferSize", 1024);
