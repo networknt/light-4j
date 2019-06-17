@@ -625,9 +625,10 @@
             <resource>
                 <filtering>false</filtering>
                 <directory>${basedir}/src/main/resources</directory>
-                <includes>
-                    <include>**/*</include>
-                </includes>
+                <excludes>
+                    <exclude>**/*.keystore</exclude>
+                    <exclude>**/*.truststore</exclude>
+                </excludes>
             </resource>
         </resources>
         <testResources>
