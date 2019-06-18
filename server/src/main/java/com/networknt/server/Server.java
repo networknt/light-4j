@@ -28,6 +28,7 @@ import com.networknt.registry.URLImpl;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.switcher.SwitcherUtil;
 import com.networknt.utility.Constants;
+import com.networknt.utility.NetUtils;
 import com.networknt.utility.TlsUtil;
 import com.networknt.utility.Util;
 import io.undertow.Handlers;
@@ -473,7 +474,7 @@ public class Server {
             String ipAddress = System.getenv(STATUS_HOST_IP);
             logger.info("Registry IP from STATUS_HOST_IP is " + ipAddress);
             if (ipAddress == null) {
-                InetAddress inetAddress = Util.getInetAddress();
+                InetAddress inetAddress = NetUtils.getLocalAddress();
                 ipAddress = inetAddress.getHostAddress();
                 logger.info("Could not find IP from STATUS_HOST_IP, use the InetAddress " + ipAddress);
             }
