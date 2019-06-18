@@ -77,13 +77,13 @@ public class KeyRequest {
     @Deprecated
     public static String ENABLE_HTTP2 = "enableHttp2";
 
-    String serverUrl;
-    String serviceId;
-    String uri;
-    String clientId;
-    String clientSecret;
-    boolean enableHttp2;
-    String kid;
+    protected String serverUrl;
+    protected String serviceId;
+    protected String uri;
+    protected String clientId;
+    protected String clientSecret;
+    protected boolean enableHttp2;
+    protected String kid;
 
     public KeyRequest(String kid) {
         this.kid = kid;

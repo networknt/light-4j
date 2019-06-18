@@ -22,7 +22,7 @@ public class DefaultAsyncResult<T> implements AsyncResult<T> {
     private T result;
 
     /**
-     * @deprecated should be created use {@link #succeed(T result)} or {@link #fail(Throwable)}
+     * @deprecated should be created use {@link #succeed(Object)} or {@link #fail(Throwable)}
      * @param cause Throwable throwable exceptions
      * @param result result
      */

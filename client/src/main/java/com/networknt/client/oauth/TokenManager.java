@@ -21,9 +21,28 @@ import java.util.Set;
  */
 public class TokenManager {
     private Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
+    /**
+     * @deprecated will be moved to {@link OauthConfigConstants#CACHE}
+     */
+    @Deprecated
     public static final String CACHE = "cache";
+
+    /**
+     * @deprecated will be moved to {@link OauthConfigConstants#OAUTH}
+     */
+    @Deprecated
     public static final String OAUTH = "oauth";
+
+    /**
+     * @deprecated will be moved to {@link OauthConfigConstants#TOKEN}
+     */
+    @Deprecated
     public static final String TOKEN = "token";
+
+    /**
+     * @deprecated will be moved to {@link OauthConfigConstants#CAPACITY}
+     */
+    @Deprecated
     public static final String CAPACITY_CONFIG = "capacity";
 
     private static volatile TokenManager INSTANCE;
@@ -34,11 +53,11 @@ public class TokenManager {
     private TokenManager() {
         //set CAPACITY based on config
         if(clientConfig != null) {
-            Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OAUTH);
+            Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OauthConfigConstants.OAUTH);
             if(oauthConfig != null) {
-                Map<String, Object> tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);
+                Map<String, Object> tokenConfig = (Map<String, Object>)oauthConfig.get(OauthConfigConstants.TOKEN);
                 if(tokenConfig != null) {
-                    Map<String, Object> cacheConfig = (Map<String, Object>)tokenConfig.get(CACHE);
+                    Map<String, Object> cacheConfig = (Map<String, Object>)tokenConfig.get(OauthConfigConstants.CACHE);
                     if(cacheConfig != null) {
                         if(cacheConfig.get(CAPACITY_CONFIG) != null) {
                             CAPACITY = (Integer)cacheConfig.get(CAPACITY_CONFIG);

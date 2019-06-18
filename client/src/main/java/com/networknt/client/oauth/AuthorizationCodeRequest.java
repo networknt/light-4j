@@ -17,6 +17,7 @@
 package com.networknt.client.oauth;
 
 import com.networknt.client.Http2Client;
+import com.networknt.client.oauth.constant.OauthConfigConstants;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 
@@ -27,7 +28,7 @@ import java.util.Map;
  * Created by steve on 02/09/16.
  */
 public class AuthorizationCodeRequest extends TokenRequest {
-    private static Map<String, Object> secret = (Map<String, Object>)Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
+    private static Map<String, Object> secret = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
 
     private String authCode;
     private String redirectUri;
@@ -37,25 +38,25 @@ public class AuthorizationCodeRequest extends TokenRequest {
      * in case you want to change it at runtime.
      */
     public AuthorizationCodeRequest() {
-        setGrantType(AUTHORIZATION_CODE);
+        setGrantType(OauthConfigConstants.AUTHORIZATION_CODE);
         Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
         // client_secret is in secret.yml instead of client.yml
         if(clientConfig != null) {
-            Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OAUTH);
+            Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OauthConfigConstants.OAUTH);
             if(oauthConfig != null) {
-                Map<String, Object> tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);
+                Map<String, Object> tokenConfig = (Map<String, Object>)oauthConfig.get(OauthConfigConstants.TOKEN);
                 if(tokenConfig != null) {
-                    setServerUrl((String)tokenConfig.get(SERVER_URL));
-                    setServiceId((String)tokenConfig.get(SERVICE_ID));
-                    Object object = tokenConfig.get(ENABLE_HTTP2);
+                    setServerUrl((String)tokenConfig.get(OauthConfigConstants.SERVER_URL));
+                    setServiceId((String)tokenConfig.get(OauthConfigConstants.SERVICE_ID));
+                    Object object = tokenConfig.get(OauthConfigConstants.ENABLE_HTTP2);
                     setEnableHttp2(object != null && (Boolean) object);
-                    Map<String, Object> acConfig = (Map<String, Object>) tokenConfig.get(AUTHORIZATION_CODE);
+                    Map<String, Object> acConfig = (Map<String, Object>) tokenConfig.get(OauthConfigConstants.AUTHORIZATION_CODE);
                     if(acConfig != null) {
-                        setClientId((String)acConfig.get(CLIENT_ID));
+                        setClientId((String)acConfig.get(OauthConfigConstants.CLIENT_ID));
                         setClientSecret((String)secret.get(SecretConstants.AUTHORIZATION_CODE_CLIENT_SECRET));
-                        setUri((String)acConfig.get(URI));
-                        setScope((List<String>)acConfig.get(SCOPE));
-                        setRedirectUri((String)acConfig.get(REDIRECT_URI));
+                        setUri((String)acConfig.get(OauthConfigConstants.URI));
+                        setScope((List<String>)acConfig.get(OauthConfigConstants.SCOPE));
+                        setRedirectUri((String)acConfig.get(OauthConfigConstants.REDIRECT_URI));
                     }
                 }
             }

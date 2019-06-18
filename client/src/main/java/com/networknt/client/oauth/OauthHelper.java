@@ -120,11 +120,11 @@ public class OauthHelper {
         final ClientConnection connection;
         try {
             if(tokenRequest.getServerUrl() != null) {
-                connection = client.connect(new URI(tokenRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, tokenRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+                connection = client.connect(new URI(tokenRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, tokenRequest.isEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
             } else if(tokenRequest.getServiceId() != null) {
                 Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
                 String url = cluster.serviceToUrl("https", tokenRequest.getServiceId(), envTag, null);
-                connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, tokenRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+                connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, tokenRequest.isEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
             } else {
                 // both server_url and serviceId are empty in the config.
                 logger.error("Error: both server_url and serviceId are not configured in client.yml for " + tokenRequest.getClass());
@@ -180,11 +180,11 @@ public class OauthHelper {
         final ClientConnection connection;
         try {
             if(signRequest.getServerUrl() != null) {
-                connection = client.connect(new URI(signRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, signRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+                connection = client.connect(new URI(signRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, signRequest.isEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
             } else if(signRequest.getServiceId() != null) {
                 Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
                 String url = cluster.serviceToUrl("https", signRequest.getServiceId(), envTag, null);
-                connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, signRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+                connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, signRequest.isEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
             } else {
                 // both server_url and serviceId are empty in the config.
                 logger.error("Error: both server_url and serviceId are not configured in client.yml for " + signRequest.getClass());
@@ -284,7 +284,7 @@ public class OauthHelper {
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
         try {
-            connection = client.connect(new URI(tokenRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, tokenRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+            connection = client.connect(new URI(tokenRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, tokenRequest.isEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
         } catch (Exception e) {
             logger.error("cannot establish connection:", e);
             return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR));
@@ -749,6 +749,8 @@ public class OauthHelper {
 
     /**
      * this method is to support sending a server which doesn't support chunked transfer encoding.
+     * @param request ClientRequest
+     * @param requestBody String
      */
     public static void adjustNoChunkedEncoding(ClientRequest request, String requestBody) {
         String fixedLengthString = request.getRequestHeaders().getFirst(Headers.CONTENT_LENGTH);

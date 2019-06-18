@@ -33,7 +33,12 @@ import java.util.Map;
  * @author Steve Hu
  */
 public class TokenKeyRequest extends KeyRequest {
-    public static Logger logger = LoggerFactory.getLogger(TokenKeyRequest.class);
+    private static Logger logger = LoggerFactory.getLogger(TokenKeyRequest.class);
+
+    /**
+     * @deprecated will be moved to {@link OauthConfigConstants#TOKEN}
+     */
+    @Deprecated
     public static String TOKEN = "token";
 
     public TokenKeyRequest(String kid) {
@@ -56,7 +61,7 @@ public class TokenKeyRequest extends KeyRequest {
                     setClientSecret((String)secret.get(SecretConstants.KEY_CLIENT_SECRET));
                 } else {
                     // there is no key section under oauth. look up in the oauth/token section for key
-                    Map<String, Object> tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);
+                    Map<String, Object> tokenConfig = (Map<String, Object>)oauthConfig.get(OauthConfigConstants.TOKEN);
                     if(tokenConfig != null) {
                         keyConfig = (Map<String, Object>)tokenConfig.get(OauthConfigConstants.KEY);
                         if(keyConfig != null) {

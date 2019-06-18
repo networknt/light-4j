@@ -28,6 +28,8 @@ import java.util.*;
  */
 public class Jwt {
 
+    protected Set<String> scopes = new HashSet<>();
+    protected Key key;
     /**
      * the cached jwt token for client credentials grant type
      */
@@ -40,48 +42,9 @@ public class Jwt {
     private volatile boolean renewing = false;
     private volatile long expiredRetryTimeout;
     private volatile long earlyRetryTimeout;
-    protected Set<String> scopes = new HashSet<>();
-    protected Key key;
-
     private static long tokenRenewBeforeExpired;
     private static long expiredRefreshRetryDelay;
     private static long earlyRefreshRetryDelay;
-
-    /**
-     * @deprecated will be moved to {@link OauthConfigConstants#OAUTH}
-     */
-    @Deprecated
-    static final String OAUTH = "oauth";
-
-    /**
-     * @deprecated will be moved to {@link OauthConfigConstants#TOKEN}
-     */
-    @Deprecated
-    static final String TOKEN = "token";
-
-    /**
-     * @deprecated will be moved to {@link OauthConfigConstants#TOKEN_RENEW_BEFORE_EXPIRED}
-     */
-    @Deprecated
-    static final String TOKEN_RENEW_BEFORE_EXPIRED = "tokenRenewBeforeExpired";
-
-    /**
-     * @deprecated will be moved to {@link OauthConfigConstants#EXPIRED_REFRESH_RETRY_DELAY}
-     */
-    @Deprecated
-    static final String EXPIRED_REFRESH_RETRY_DELAY = "expiredRefreshRetryDelay";
-
-    /**
-     * @deprecated will be moved to {@link OauthConfigConstants#EARLY_REFRESH_RETRY_DELAY}
-     */
-    @Deprecated
-    static final String EARLY_REFRESH_RETRY_DELAY = "earlyRefreshRetryDelay";
-
-    /**
-     * @deprecated will be moved to {@link OauthConfigConstants#CLIENT_CONFIG_NAME}
-     */
-    @Deprecated
-    public static final String CLIENT_CONFIG_NAME = "client";
 
     public Jwt() {
         Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(OauthConfigConstants.CLIENT_CONFIG_NAME);

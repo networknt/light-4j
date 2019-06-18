@@ -125,11 +125,11 @@ public class Light4jHttp2ClientProvider implements ClientProvider {
 
     /**
      * @deprecated will be change to protected in future TODO: not sure if this should be public
-     * @param listener
-     * @param uri
-     * @param bufferPool
-     * @param options
-     * @return
+     * @param listener {@link ClientCallback}
+     * @param uri URI
+     * @param bufferPool ByteBufferPool
+     * @param options OptionMap
+     * @return ALPNClientSelector.ALPNProtocol
      */
     @Deprecated
     public static ALPNClientSelector.ALPNProtocol alpnProtocol(final ClientCallback<ClientConnection> listener, URI uri, ByteBufferPool bufferPool, OptionMap options) {

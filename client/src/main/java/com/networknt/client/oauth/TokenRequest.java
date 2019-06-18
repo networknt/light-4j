@@ -16,6 +16,7 @@
 
 package com.networknt.client.oauth;
 
+import com.networknt.client.oauth.constant.OauthConfigConstants;
 import java.util.List;
 
 /**
@@ -28,30 +29,97 @@ public class TokenRequest {
      */
     @Deprecated
     public static String OAUTH = "oauth";
+
+    /**
+     * @deprecated will be move to {@link OauthConfigConstants#TOKEN}
+     */
+    @Deprecated
     public static String TOKEN = "token";
+
+    /**
+     * @deprecated will be move to {@link OauthConfigConstants#SERVER_URL}
+     */
+    @Deprecated
     public static String SERVER_URL = "server_url";
+
+    /**
+     * @deprecated will be move to {@link OauthConfigConstants#SERVICE_ID}
+     */
+    @Deprecated
     public static String SERVICE_ID = "serviceId";
+
+    /**
+     * @deprecated will be move to {@link OauthConfigConstants#ENABLE_HTTP2}
+     */
+    @Deprecated
     public static String ENABLE_HTTP2 = "enableHttp2";
+
+    /**
+     * @deprecated will be move to {@link OauthConfigConstants#AUTHORIZATION_CODE}
+     */
+    @Deprecated
     public static String AUTHORIZATION_CODE = "authorization_code";
+
+    /**
+     * @deprecated will be move to {@link OauthConfigConstants#CLIENT_CREDENTIALS}
+     */
+    @Deprecated
     public static String CLIENT_CREDENTIALS = "client_credentials";
+
+    /**
+     * @deprecated will be move to {@link OauthConfigConstants#SAML_BEARER}
+     */
+    @Deprecated
     public static String SAML_BEARER = "saml_bearer";
+
+    /**
+     * @deprecated will be move to {@link OauthConfigConstants#REFRESH_TOKEN}
+     */
+    @Deprecated
     public static String REFRESH_TOKEN = "refresh_token";
+
+    /**
+     * @deprecated will be move to {@link OauthConfigConstants#URI}
+     */
+    @Deprecated
     public static String URI = "uri";
+
+    /**
+     * @deprecated will be move to {@link OauthConfigConstants#CLIENT_ID}
+     */
+    @Deprecated
     public static String CLIENT_ID = "client_id";
+
+    /**
+     * @deprecated will be move to {@link OauthConfigConstants#REDIRECT_URI}
+     */
+    @Deprecated
     public static String REDIRECT_URI = "redirect_uri";
+
+    /**
+     * @deprecated will be move to {@link OauthConfigConstants#SCOPE}
+     */
+    @Deprecated
     public static String SCOPE = "scope";
+
+    /**
+     * @deprecated will be move to {@link OauthConfigConstants#CSRF}
+     */
+    @Deprecated
     public static String CSRF = "csrf";
 
-    String grantType;
-    String serverUrl;
-    String serviceId;
-    boolean enableHttp2;
-    String uri;
-    String clientId;
-    String clientSecret;
-    List<String> scope;
-    // put csrf here as both authorization code and refresh token need it.
-    String csrf;
+    private String grantType;
+    private String serverUrl;
+    private String serviceId;
+    private boolean enableHttp2;
+    private String uri;
+    private String clientId;
+    private String clientSecret;
+    private List<String> scope;
+    /**
+     * put csrf here as both authorization code and refresh token need it.
+     */
+    private String csrf;
 
     public TokenRequest() {
     }
