@@ -22,6 +22,11 @@ import java.util.List;
  * Created by steve on 02/09/16.
  */
 public class TokenRequest {
+
+    /**
+     * @deprecated will be move to {@link OauthConfigConstants#OAUTH}
+     */
+    @Deprecated
     public static String OAUTH = "oauth";
     public static String TOKEN = "token";
     public static String SERVER_URL = "server_url";

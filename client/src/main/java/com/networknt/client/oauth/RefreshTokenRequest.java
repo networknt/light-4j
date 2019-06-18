@@ -16,17 +16,17 @@
 
 package com.networknt.client.oauth;
 
-import java.util.List;
-import java.util.Map;
-
 import com.networknt.client.Http2Client;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 
-public class RefreshTokenRequest extends TokenRequest {
-    static Map<String, Object> secret = (Map<String, Object>)Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
+import java.util.List;
+import java.util.Map;
 
-    String refreshToken;
+public class RefreshTokenRequest extends TokenRequest {
+    private static Map<String, Object> secret = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
+
+    private String refreshToken;
 
     public RefreshTokenRequest() {
         setGrantType(REFRESH_TOKEN);

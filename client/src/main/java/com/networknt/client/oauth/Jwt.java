@@ -16,6 +16,7 @@
 
 package com.networknt.client.oauth;
 
+import com.networknt.client.oauth.constant.OauthConfigConstants;
 import com.networknt.config.Config;
 import com.networknt.utility.StringUtils;
 
@@ -26,34 +27,71 @@ import java.util.*;
  * it will load config from client.yml/oauth/token
  */
 public class Jwt {
-    private String jwt;    // the cached jwt token for client credentials grant type
-    private long expire;   // jwt expire time in millisecond so that we don't need to parse the jwt.
+
+    /**
+     * the cached jwt token for client credentials grant type
+     */
+    private String jwt;
+
+    /**
+     * jwt expire time in millisecond so that we don't need to parse the jwt.
+     */
+    private long expire;
     private volatile boolean renewing = false;
     private volatile long expiredRetryTimeout;
     private volatile long earlyRetryTimeout;
-    private Set<String> scopes = new HashSet<>();
-    private Key key;
+    protected Set<String> scopes = new HashSet<>();
+    protected Key key;
 
     private static long tokenRenewBeforeExpired;
     private static long expiredRefreshRetryDelay;
     private static long earlyRefreshRetryDelay;
 
+    /**
+     * @deprecated will be moved to {@link OauthConfigConstants#OAUTH}
+     */
+    @Deprecated
     static final String OAUTH = "oauth";
+
+    /**
+     * @deprecated will be moved to {@link OauthConfigConstants#TOKEN}
+     */
+    @Deprecated
     static final String TOKEN = "token";
+
+    /**
+     * @deprecated will be moved to {@link OauthConfigConstants#TOKEN_RENEW_BEFORE_EXPIRED}
+     */
+    @Deprecated
     static final String TOKEN_RENEW_BEFORE_EXPIRED = "tokenRenewBeforeExpired";
+
+    /**
+     * @deprecated will be moved to {@link OauthConfigConstants#EXPIRED_REFRESH_RETRY_DELAY}
+     */
+    @Deprecated
     static final String EXPIRED_REFRESH_RETRY_DELAY = "expiredRefreshRetryDelay";
+
+    /**
+     * @deprecated will be moved to {@link OauthConfigConstants#EARLY_REFRESH_RETRY_DELAY}
+     */
+    @Deprecated
     static final String EARLY_REFRESH_RETRY_DELAY = "earlyRefreshRetryDelay";
+
+    /**
+     * @deprecated will be moved to {@link OauthConfigConstants#CLIENT_CONFIG_NAME}
+     */
+    @Deprecated
     public static final String CLIENT_CONFIG_NAME = "client";
 
     public Jwt() {
-        Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(CLIENT_CONFIG_NAME);
+        Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(OauthConfigConstants.CLIENT_CONFIG_NAME);
         if(clientConfig != null) {
-            Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OAUTH);
+            Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OauthConfigConstants.OAUTH);
             if(oauthConfig != null) {
-                Map<String, Object> tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);
-                tokenRenewBeforeExpired = (Integer) tokenConfig.get(TOKEN_RENEW_BEFORE_EXPIRED);
-                expiredRefreshRetryDelay = (Integer)tokenConfig.get(EXPIRED_REFRESH_RETRY_DELAY);
-                earlyRefreshRetryDelay = (Integer)tokenConfig.get(EARLY_REFRESH_RETRY_DELAY);
+                Map<String, Object> tokenConfig = (Map<String, Object>)oauthConfig.get(OauthConfigConstants.TOKEN);
+                tokenRenewBeforeExpired = (Integer) tokenConfig.get(OauthConfigConstants.TOKEN_RENEW_BEFORE_EXPIRED);
+                expiredRefreshRetryDelay = (Integer)tokenConfig.get(OauthConfigConstants.EXPIRED_REFRESH_RETRY_DELAY);
+                earlyRefreshRetryDelay = (Integer)tokenConfig.get(OauthConfigConstants.EARLY_REFRESH_RETRY_DELAY);
             }
         }
     }
@@ -151,8 +189,14 @@ public class Jwt {
      * for now it's only identified by scopes and serviceId.
      */
     public static class Key {
-        private Set<String> scopes;
-        private String serviceId;
+        /**
+         * scopes should be extendable by its children
+         */
+        protected Set<String> scopes;
+        /**
+         * serviceId should be extendable by its children
+         */
+        protected String serviceId;
 
         @Override
         public int hashCode() {

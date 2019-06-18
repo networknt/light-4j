@@ -3,6 +3,7 @@ package com.networknt.client.oauth;
 import com.networknt.client.Http2Client;
 import com.networknt.client.oauth.cache.ICacheStrategy;
 import com.networknt.client.oauth.cache.LongestExpireCacheStrategy;
+import com.networknt.client.oauth.constant.OauthConfigConstants;
 import com.networknt.config.Config;
 import com.networknt.monad.Result;
 import io.undertow.client.ClientRequest;
@@ -19,7 +20,7 @@ import java.util.Set;
  * It manages caches based on different cache strategies underneath.
  */
 public class TokenManager {
-    Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
+    private Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
     public static final String CACHE = "cache";
     public static final String OAUTH = "oauth";
     public static final String TOKEN = "token";
@@ -83,7 +84,9 @@ public class TokenManager {
         return result;
     }
 
-    //cache jwt if not exist
+    /**
+     * cache jwt if not exist
+     */
     private synchronized Jwt getJwt(ICacheStrategy cacheStrategy, Jwt.Key key) {
         Jwt result = cacheStrategy.getCachedJwt(key);
         if(result == null) {
@@ -102,14 +105,14 @@ public class TokenManager {
      * @return Result
      */
     public Result<Jwt> getJwt(ClientRequest clientRequest) {
-        HeaderValues scope = clientRequest.getRequestHeaders().get(OauthHelper.SCOPE);
+        HeaderValues scope = clientRequest.getRequestHeaders().get(OauthConfigConstants.SCOPE);
         if(scope != null) {
             String scopeStr = scope.getFirst();
             Set<String> scopeSet = new HashSet<>();
             scopeSet.addAll(Arrays.asList(scopeStr.split(" ")));
             return getJwt(new Jwt.Key(scopeSet));
         }
-        HeaderValues serviceId = clientRequest.getRequestHeaders().get(OauthHelper.SERVICE_ID);
+        HeaderValues serviceId = clientRequest.getRequestHeaders().get(OauthConfigConstants.SERVICE_ID);
         if(serviceId != null) {
             return getJwt(new Jwt.Key(serviceId.getFirst()));
         }

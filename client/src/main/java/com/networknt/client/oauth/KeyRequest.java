@@ -16,6 +16,8 @@
 
 package com.networknt.client.oauth;
 
+import com.networknt.client.oauth.constant.OauthConfigConstants;
+
 /**
  * This is the generic key request with an id as parameter. The static serverUrl will be used if
  * available. Otherwise, the serviceId will be used to lookup the key service. There are two sub
@@ -26,15 +28,54 @@ package com.networknt.client.oauth;
  *
  */
 public class KeyRequest {
-    public static String OAUTH = "oauth";
-    public static String KEY = "key";
-    public static String SERVER_URL = "server_url";
-    public static String SERVICE_ID = "serviceId";
-    public static String URI = "uri";
-    public static String CLIENT_ID = "client_id";
-    public static String CLIENT_SECRET = "client_secret";
-    public static String ENABLE_HTTP2 = "enableHttp2";
 
+    /**
+     * @deprecated will be move to {@link OauthConfigConstants#OAUTH}
+     */
+    @Deprecated
+    public static String OAUTH = "oauth";
+
+    /**
+     * @deprecated will be move to {@link OauthConfigConstants#KEY}
+     */
+    @Deprecated
+    public static String KEY = "key";
+
+    /**
+     * @deprecated will be move to {@link OauthConfigConstants#SERVER_URL}
+     */
+    @Deprecated
+    public static String SERVER_URL = "server_url";
+
+    /**
+     * @deprecated will be move to {@link OauthConfigConstants#SERVICE_ID}
+     */
+    @Deprecated
+    public static String SERVICE_ID = "serviceId";
+
+    /**
+     * @deprecated will be move to {@link OauthConfigConstants#URI}
+     */
+    @Deprecated
+    public static String URI = "uri";
+
+    /**
+     * @deprecated will be move to {@link OauthConfigConstants#CLIENT_ID}
+     */
+    @Deprecated
+    public static String CLIENT_ID = "client_id";
+
+    /**
+     * @deprecated will be move to {@link OauthConfigConstants#CLIENT_SECRET}
+     */
+    @Deprecated
+    public static String CLIENT_SECRET = "client_secret";
+
+    /**
+     * @deprecated will be move to {@link OauthConfigConstants#ENABLE_HTTP2}
+     */
+    @Deprecated
+    public static String ENABLE_HTTP2 = "enableHttp2";
 
     String serverUrl;
     String serviceId;

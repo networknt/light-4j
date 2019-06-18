@@ -16,21 +16,21 @@
 
 package com.networknt.client.oauth;
 
-import java.util.List;
-import java.util.Map;
-
 import com.networknt.client.Http2Client;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by steve on 02/09/16.
  */
 public class AuthorizationCodeRequest extends TokenRequest {
-    static Map<String, Object> secret = (Map<String, Object>)Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
+    private static Map<String, Object> secret = (Map<String, Object>)Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
 
-    String authCode;
-    String redirectUri;
+    private String authCode;
+    private String redirectUri;
 
     /**
      * load default values from client.json for authorization code grant, overwrite by setters

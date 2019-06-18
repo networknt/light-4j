@@ -17,6 +17,7 @@
 package com.networknt.consul.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.networknt.client.AsyncResult;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.consul.ConsulConfig;
@@ -73,6 +74,27 @@ public class ConsulClientImpl implements ConsulClient {
 	 *
 	 */
 	public ConsulClientImpl() {
+		AsyncResult result = new AsyncResult() {
+			@Override
+			public Object result() {
+				return null;
+			}
+
+			@Override
+			public Throwable cause() {
+				return null;
+			}
+
+			@Override
+			public boolean succeeded() {
+				return false;
+			}
+
+			@Override
+			public boolean failed() {
+				return false;
+			}
+		};
 		// Will use http/2 connection if tls is enabled as Consul only support HTTP/2 with TLS.
 		String consulUrl = config.getConsulUrl().toLowerCase();
 		optionMap =  config.isEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY;

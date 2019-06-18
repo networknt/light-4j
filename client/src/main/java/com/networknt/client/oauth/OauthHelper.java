@@ -19,6 +19,7 @@ package com.networknt.client.oauth;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.networknt.client.Http2Client;
+import com.networknt.client.oauth.constant.OauthConfigConstants;
 import com.networknt.cluster.Cluster;
 import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
@@ -55,10 +56,20 @@ import static com.networknt.client.oauth.TokenRequest.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class OauthHelper {
-    static final String BASIC = "Basic";
-    static final String GRANT_TYPE = "grant_type";
-    static final String CODE = "code";
+    private static final String BASIC = "Basic";
+    private static final String GRANT_TYPE = "grant_type";
+    private static final String CODE = "code";
+
+    /**
+     * @deprecated will be moved to {@link OauthConfigConstants#SCOPE}
+     */
+    @Deprecated
     static final String SCOPE = "scope";
+
+    /**
+     * @deprecated will be moved to {@link OauthConfigConstants#SERVICE_ID}
+     */
+    @Deprecated
     static final String SERVICE_ID = "service_id";
     private static final String FAIL_TO_SEND_REQUEST = "ERR10051";
     private static final String GET_TOKEN_ERROR = "ERR10052";
@@ -66,7 +77,7 @@ public class OauthHelper {
     private static final String GET_TOKEN_TIMEOUT = "ERR10054";
     public static final String STATUS_CLIENT_CREDENTIALS_TOKEN_NOT_AVAILABLE = "ERR10009";
 
-    static final Logger logger = LoggerFactory.getLogger(OauthHelper.class);
+    private static final Logger logger = LoggerFactory.getLogger(OauthHelper.class);
 
     /**
      * @deprecated As of release 1.5.29, replaced with @link #getTokenResult(TokenRequest tokenRequest)
@@ -451,11 +462,11 @@ public class OauthHelper {
         final ClientConnection connection;
         try {
             if(derefRequest.getServerUrl() != null) {
-                connection = client.connect(new URI(derefRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, derefRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+                connection = client.connect(new URI(derefRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, derefRequest.isEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
             } else if(derefRequest.getServiceId() != null) {
                 Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
                 String url = cluster.serviceToUrl("https", derefRequest.getServiceId(), envTag, null);
-                connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, derefRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+                connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, derefRequest.isEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
             } else {
                 // both server_url and serviceId are empty in the config.
                 logger.error("Error: both server_url and serviceId are not configured in client.yml for " + derefRequest.getClass());
@@ -517,7 +528,7 @@ public class OauthHelper {
             }
         }
         if(request.getScope() != null) {
-            params.put(SCOPE, String.join(" ", request.getScope()));
+            params.put(OauthConfigConstants.SCOPE, String.join(" ", request.getScope()));
         }
         return Http2Client.getFormDataString(params);
     }
@@ -567,7 +578,7 @@ public class OauthHelper {
      * @return When success return Jwt; When fail return Status.
      */
     public static Result<Jwt> populateCCToken(final Jwt jwt) {
-        boolean isInRenewWindow = jwt.getExpire() - System.currentTimeMillis() < jwt.getTokenRenewBeforeExpired();
+        boolean isInRenewWindow = jwt.getExpire() - System.currentTimeMillis() < Jwt.getTokenRenewBeforeExpired();
         logger.trace("isInRenewWindow = " + isInRenewWindow);
         //if not in renew window, return the current jwt.
         if(!isInRenewWindow) { return Success.of(jwt); }
@@ -622,7 +633,7 @@ public class OauthHelper {
         logger.trace("In renew window but token is not expired yet.");
         if(!jwt.isRenewing() || System.currentTimeMillis() > jwt.getEarlyRetryTimeout()) {
             jwt.setRenewing(true);
-            jwt.setEarlyRetryTimeout(System.currentTimeMillis() + jwt.getEarlyRefreshRetryDelay());
+            jwt.setEarlyRetryTimeout(System.currentTimeMillis() + Jwt.getEarlyRefreshRetryDelay());
             logger.trace("Retrieve token async is called while token is not expired yet");
 
             ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
@@ -736,7 +747,9 @@ public class OauthHelper {
         return escapedXML.toString();
     }
 
-    //this method is to support sending a server which doesn't support chunked transfer encoding.
+    /**
+     * this method is to support sending a server which doesn't support chunked transfer encoding.
+     */
     public static void adjustNoChunkedEncoding(ClientRequest request, String requestBody) {
         String fixedLengthString = request.getRequestHeaders().getFirst(Headers.CONTENT_LENGTH);
         String transferEncodingString = request.getRequestHeaders().getLast(Headers.TRANSFER_ENCODING);
