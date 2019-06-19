@@ -1,6 +1,5 @@
 package com.networknt.client;
 
-import com.networknt.common.DecryptUtil;
 import com.networknt.config.Config;
 
 import java.util.Map;
@@ -11,16 +10,39 @@ public final class ClientConfig {
     public static final String CONFIG_NAME = "client";
     public static final String CONFIG_SECRET = "secret";
     public static final String REQUEST = "request";
-    public static int DEFAULT_BUFFER_SIZE = 24; // 24*1024 buffer size will be good for most of the app.
+    public static final String SERVER_URL = "server_url";
+    public static final String SERVICE_ID = "serviceId";
+    public static final String URI = "uri";
+    public static final String CLIENT_ID = "client_id";
+    public static final String SCOPE = "scope";
+    public static final String CSRF = "csrf";
+    public static final String REDIRECT_URI = "redirect_uri";
+    public static final String REFRESH_TOKEN = "refresh_token";
+    public static final String SAML_BEARER = "saml_bearer";
+    public static final String CLIENT_CREDENTIALS = "client_credentials";
+    public static final String AUTHORIZATION_CODE = "authorization_code";
+    public static final String CACHE = "cache";
+    public static final String CAPACITY = "capacity";
+    public static final String CLIENT_CONFIG_NAME = "client";
+    public static final String OAUTH = "oauth";
+    public static final String KEY = "key";
+    public static final String CLIENT_SECRET = "client_secret";
+    public static final String DEREF = "deref";
+    public static final String SIGN = "sign";
+    public static final String ENABLE_HTTP2 = "enableHttp2";
+    public static final String TIMEOUT = "timeout";
+    public static final String TOKEN = "token";
+    public static final String TOKEN_RENEW_BEFORE_EXPIRED = "tokenRenewBeforeExpired";
+    public static final String EXPIRED_REFRESH_RETRY_DELAY = "expiredRefreshRetryDelay";
+    public static final String EARLY_REFRESH_RETRY_DELAY = "earlyRefreshRetryDelay";
+    public static final int DEFAULT_BUFFER_SIZE = 24; // 24*1024 buffer size will be good for most of the app.
     public static final int DEFAULT_ERROR_THRESHOLD = 5;
     public static final int DEFAULT_TIMEOUT = 3000;
     public static final int DEFAULT_RESET_TIMEOUT = 600000;
+
     private static final String BUFFER_SIZE = "bufferSize";
     private static final String ERROR_THRESHOLD = "errorThreshold";
-    private static final String TIMEOUT = "timeout";
     private static final String RESET_TIMEOUT = "resetTimeout";
-    private static final String OAUTH = "oauth";
-    private static final String TOKEN = "token";
 
     private final Config config;
     private final Map<String, Object> mappedConfig;

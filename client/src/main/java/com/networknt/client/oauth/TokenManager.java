@@ -1,9 +1,9 @@
 package com.networknt.client.oauth;
 
+import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.client.oauth.cache.ICacheStrategy;
 import com.networknt.client.oauth.cache.LongestExpireCacheStrategy;
-import com.networknt.client.oauth.constant.OauthConfigConstants;
 import com.networknt.config.Config;
 import com.networknt.monad.Result;
 import io.undertow.client.ClientRequest;
@@ -22,25 +22,25 @@ import java.util.Set;
 public class TokenManager {
     private Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
     /**
-     * @deprecated will be moved to {@link OauthConfigConstants#CACHE}
+     * @deprecated will be moved to {@link ClientConfig#CACHE}
      */
     @Deprecated
     public static final String CACHE = "cache";
 
     /**
-     * @deprecated will be moved to {@link OauthConfigConstants#OAUTH}
+     * @deprecated will be moved to {@link ClientConfig#OAUTH}
      */
     @Deprecated
     public static final String OAUTH = "oauth";
 
     /**
-     * @deprecated will be moved to {@link OauthConfigConstants#TOKEN}
+     * @deprecated will be moved to {@link ClientConfig#TOKEN}
      */
     @Deprecated
     public static final String TOKEN = "token";
 
     /**
-     * @deprecated will be moved to {@link OauthConfigConstants#CAPACITY}
+     * @deprecated will be moved to {@link ClientConfig#CAPACITY}
      */
     @Deprecated
     public static final String CAPACITY_CONFIG = "capacity";
@@ -53,11 +53,11 @@ public class TokenManager {
     private TokenManager() {
         //set CAPACITY based on config
         if(clientConfig != null) {
-            Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OauthConfigConstants.OAUTH);
+            Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(ClientConfig.OAUTH);
             if(oauthConfig != null) {
-                Map<String, Object> tokenConfig = (Map<String, Object>)oauthConfig.get(OauthConfigConstants.TOKEN);
+                Map<String, Object> tokenConfig = (Map<String, Object>)oauthConfig.get(ClientConfig.TOKEN);
                 if(tokenConfig != null) {
-                    Map<String, Object> cacheConfig = (Map<String, Object>)tokenConfig.get(OauthConfigConstants.CACHE);
+                    Map<String, Object> cacheConfig = (Map<String, Object>)tokenConfig.get(ClientConfig.CACHE);
                     if(cacheConfig != null) {
                         if(cacheConfig.get(CAPACITY_CONFIG) != null) {
                             CAPACITY = (Integer)cacheConfig.get(CAPACITY_CONFIG);
@@ -124,14 +124,14 @@ public class TokenManager {
      * @return Result
      */
     public Result<Jwt> getJwt(ClientRequest clientRequest) {
-        HeaderValues scope = clientRequest.getRequestHeaders().get(OauthConfigConstants.SCOPE);
+        HeaderValues scope = clientRequest.getRequestHeaders().get(ClientConfig.SCOPE);
         if(scope != null) {
             String scopeStr = scope.getFirst();
             Set<String> scopeSet = new HashSet<>();
             scopeSet.addAll(Arrays.asList(scopeStr.split(" ")));
             return getJwt(new Jwt.Key(scopeSet));
         }
-        HeaderValues serviceId = clientRequest.getRequestHeaders().get(OauthConfigConstants.SERVICE_ID);
+        HeaderValues serviceId = clientRequest.getRequestHeaders().get(ClientConfig.SERVICE_ID);
         if(serviceId != null) {
             return getJwt(new Jwt.Key(serviceId.getFirst()));
         }

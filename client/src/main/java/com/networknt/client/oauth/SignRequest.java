@@ -16,8 +16,8 @@
 
 package com.networknt.client.oauth;
 
+import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
-import com.networknt.client.oauth.constant.OauthConfigConstants;
 import com.networknt.config.Config;
 
 import java.util.Map;
@@ -33,55 +33,55 @@ import java.util.Map;
  */
 public class SignRequest {
     /**
-     * @deprecated will be moved to {@link OauthConfigConstants#OAUTH}
+     * @deprecated will be moved to {@link ClientConfig#OAUTH}
      */
     @Deprecated
     public static String OAUTH = "oauth";
 
     /**
-     * @deprecated will be moved to {@link OauthConfigConstants#SIGN}
+     * @deprecated will be moved to {@link ClientConfig#SIGN}
      */
     @Deprecated
     public static String SIGN = "sign";
 
     /**
-     * @deprecated will be moved to {@link OauthConfigConstants#SERVER_URL}
+     * @deprecated will be moved to {@link ClientConfig#SERVER_URL}
      */
     @Deprecated
     public static String SERVER_URL = "server_url";
 
     /**
-     * @deprecated will be moved to {@link OauthConfigConstants#SERVICE_ID}
+     * @deprecated will be moved to {@link ClientConfig#SERVICE_ID}
      */
     @Deprecated
     public static String SERVICE_ID = "serviceId";
 
     /**
-     * @deprecated will be moved to {@link OauthConfigConstants#URI}
+     * @deprecated will be moved to {@link ClientConfig#URI}
      */
     @Deprecated
     public static String URI = "uri";
 
     /**
-     * @deprecated will be moved to {@link OauthConfigConstants#ENABLE_HTTP2}
+     * @deprecated will be moved to {@link ClientConfig#ENABLE_HTTP2}
      */
     @Deprecated
     public static String ENABLE_HTTP2 = "enableHttp2";
 
     /**
-     * @deprecated will be moved to {@link OauthConfigConstants#TIMEOUT}
+     * @deprecated will be moved to {@link ClientConfig#TIMEOUT}
      */
     @Deprecated
     public static String TIMEOUT = "timeout";
 
     /**
-     * @deprecated will be moved to {@link OauthConfigConstants#CLIENT_ID}
+     * @deprecated will be moved to {@link ClientConfig#CLIENT_ID}
      */
     @Deprecated
     public static String CLIENT_ID = "client_id";
 
     /**
-     * @deprecated will be moved to {@link OauthConfigConstants#CLIENT_SECRET}
+     * @deprecated will be moved to {@link ClientConfig#CLIENT_SECRET}
      */
     @Deprecated
     public static String CLIENT_SECRET = "client_secret";
@@ -99,18 +99,18 @@ public class SignRequest {
     public SignRequest() {
         Map<String, Object> config = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
         if(config != null) {
-            Map<String, Object> oauthConfig = (Map<String, Object>)config.get(OauthConfigConstants.OAUTH);
+            Map<String, Object> oauthConfig = (Map<String, Object>)config.get(ClientConfig.OAUTH);
             if(oauthConfig != null) {
-                Map<String, Object> signConfig = (Map<String, Object>)oauthConfig.get(OauthConfigConstants.SIGN);
+                Map<String, Object> signConfig = (Map<String, Object>)oauthConfig.get(ClientConfig.SIGN);
                 if(signConfig != null) {
-                    setServerUrl((String)signConfig.get(OauthConfigConstants.SERVER_URL));
-                    setServiceId((String)signConfig.get(OauthConfigConstants.SERVICE_ID));
-                    setUri((String)signConfig.get(OauthConfigConstants.URI));
-                    timeout = (Integer) signConfig.get(OauthConfigConstants.TIMEOUT);
-                    Object object = signConfig.get(OauthConfigConstants.ENABLE_HTTP2);
+                    setServerUrl((String)signConfig.get(ClientConfig.SERVER_URL));
+                    setServiceId((String)signConfig.get(ClientConfig.SERVICE_ID));
+                    setUri((String)signConfig.get(ClientConfig.URI));
+                    timeout = (Integer) signConfig.get(ClientConfig.TIMEOUT);
+                    Object object = signConfig.get(ClientConfig.ENABLE_HTTP2);
                     setEnableHttp2(object != null && (Boolean) object);
-                    setClientId((String)signConfig.get(OauthConfigConstants.CLIENT_ID));
-                    setClientSecret((String)signConfig.get(OauthConfigConstants.CLIENT_SECRET));
+                    setClientId((String)signConfig.get(ClientConfig.CLIENT_ID));
+                    setClientSecret((String)signConfig.get(ClientConfig.CLIENT_SECRET));
                 }
             }
         }

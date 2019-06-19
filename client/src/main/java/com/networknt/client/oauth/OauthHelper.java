@@ -18,8 +18,8 @@ package com.networknt.client.oauth;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
+import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
-import com.networknt.client.oauth.constant.OauthConfigConstants;
 import com.networknt.cluster.Cluster;
 import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
@@ -61,13 +61,13 @@ public class OauthHelper {
     private static final String CODE = "code";
 
     /**
-     * @deprecated will be moved to {@link OauthConfigConstants#SCOPE}
+     * @deprecated will be moved to {@link ClientConfig#SCOPE}
      */
     @Deprecated
     static final String SCOPE = "scope";
 
     /**
-     * @deprecated will be moved to {@link OauthConfigConstants#SERVICE_ID}
+     * @deprecated will be moved to {@link ClientConfig#SERVICE_ID}
      */
     @Deprecated
     static final String SERVICE_ID = "service_id";
@@ -528,7 +528,7 @@ public class OauthHelper {
             }
         }
         if(request.getScope() != null) {
-            params.put(OauthConfigConstants.SCOPE, String.join(" ", request.getScope()));
+            params.put(ClientConfig.SCOPE, String.join(" ", request.getScope()));
         }
         return Http2Client.getFormDataString(params);
     }

@@ -16,7 +16,8 @@
 
 package com.networknt.client.oauth;
 
-import com.networknt.client.oauth.constant.OauthConfigConstants;
+import com.networknt.client.ClientConfig;
+
 import java.util.List;
 
 /**
@@ -25,85 +26,85 @@ import java.util.List;
 public class TokenRequest {
 
     /**
-     * @deprecated will be move to {@link OauthConfigConstants#OAUTH}
+     * @deprecated will be move to {@link ClientConfig#OAUTH}
      */
     @Deprecated
     public static String OAUTH = "oauth";
 
     /**
-     * @deprecated will be move to {@link OauthConfigConstants#TOKEN}
+     * @deprecated will be move to {@link ClientConfig#TOKEN}
      */
     @Deprecated
     public static String TOKEN = "token";
 
     /**
-     * @deprecated will be move to {@link OauthConfigConstants#SERVER_URL}
+     * @deprecated will be move to {@link ClientConfig#SERVER_URL}
      */
     @Deprecated
     public static String SERVER_URL = "server_url";
 
     /**
-     * @deprecated will be move to {@link OauthConfigConstants#SERVICE_ID}
+     * @deprecated will be move to {@link ClientConfig#SERVICE_ID}
      */
     @Deprecated
     public static String SERVICE_ID = "serviceId";
 
     /**
-     * @deprecated will be move to {@link OauthConfigConstants#ENABLE_HTTP2}
+     * @deprecated will be move to {@link ClientConfig#ENABLE_HTTP2}
      */
     @Deprecated
     public static String ENABLE_HTTP2 = "enableHttp2";
 
     /**
-     * @deprecated will be move to {@link OauthConfigConstants#AUTHORIZATION_CODE}
+     * @deprecated will be move to {@link ClientConfig#AUTHORIZATION_CODE}
      */
     @Deprecated
     public static String AUTHORIZATION_CODE = "authorization_code";
 
     /**
-     * @deprecated will be move to {@link OauthConfigConstants#CLIENT_CREDENTIALS}
+     * @deprecated will be move to {@link ClientConfig#CLIENT_CREDENTIALS}
      */
     @Deprecated
     public static String CLIENT_CREDENTIALS = "client_credentials";
 
     /**
-     * @deprecated will be move to {@link OauthConfigConstants#SAML_BEARER}
+     * @deprecated will be move to {@link ClientConfig#SAML_BEARER}
      */
     @Deprecated
     public static String SAML_BEARER = "saml_bearer";
 
     /**
-     * @deprecated will be move to {@link OauthConfigConstants#REFRESH_TOKEN}
+     * @deprecated will be move to {@link ClientConfig#REFRESH_TOKEN}
      */
     @Deprecated
     public static String REFRESH_TOKEN = "refresh_token";
 
     /**
-     * @deprecated will be move to {@link OauthConfigConstants#URI}
+     * @deprecated will be move to {@link ClientConfig#URI}
      */
     @Deprecated
     public static String URI = "uri";
 
     /**
-     * @deprecated will be move to {@link OauthConfigConstants#CLIENT_ID}
+     * @deprecated will be move to {@link ClientConfig#CLIENT_ID}
      */
     @Deprecated
     public static String CLIENT_ID = "client_id";
 
     /**
-     * @deprecated will be move to {@link OauthConfigConstants#REDIRECT_URI}
+     * @deprecated will be move to {@link ClientConfig#REDIRECT_URI}
      */
     @Deprecated
     public static String REDIRECT_URI = "redirect_uri";
 
     /**
-     * @deprecated will be move to {@link OauthConfigConstants#SCOPE}
+     * @deprecated will be move to {@link ClientConfig#SCOPE}
      */
     @Deprecated
     public static String SCOPE = "scope";
 
     /**
-     * @deprecated will be move to {@link OauthConfigConstants#CSRF}
+     * @deprecated will be move to {@link ClientConfig#CSRF}
      */
     @Deprecated
     public static String CSRF = "csrf";
