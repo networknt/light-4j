@@ -33,6 +33,7 @@ public class TokenRequest {
     public static String REFRESH_TOKEN = "refresh_token";
     public static String URI = "uri";
     public static String CLIENT_ID = "client_id";
+    public static String CLIENT_SECRET = "client_secret";
     public static String REDIRECT_URI = "redirect_uri";
     public static String SCOPE = "scope";
     public static String CSRF = "csrf";

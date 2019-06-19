@@ -24,14 +24,12 @@ import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 
 public class RefreshTokenRequest extends TokenRequest {
-    static Map<String, Object> secret = (Map<String, Object>)Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
 
     String refreshToken;
 
     public RefreshTokenRequest() {
         setGrantType(REFRESH_TOKEN);
         Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
-        // client_secret is in secret.yml instead of client.yml
         if(clientConfig != null) {
             Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OAUTH);
             if(oauthConfig != null) {
@@ -44,7 +42,13 @@ public class RefreshTokenRequest extends TokenRequest {
                     Map<String, Object> rtConfig = (Map<String, Object>) tokenConfig.get(REFRESH_TOKEN);
                     if(rtConfig != null) {
                         setClientId((String)rtConfig.get(CLIENT_ID));
-                        setClientSecret((String)secret.get(SecretConstants.REFRESH_TOKEN_CLIENT_SECRET));
+                        // load client secret from client.yml and fallback to secret.yml
+                        if(rtConfig.get(CLIENT_SECRET) != null) {
+                            setClientSecret((String)rtConfig.get(CLIENT_SECRET));
+                        } else {
+                            Map<String, Object> secret = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
+                            setClientSecret((String)secret.get(SecretConstants.REFRESH_TOKEN_CLIENT_SECRET));
+                        }
                         setUri((String)rtConfig.get(URI));
                         setScope((List<String>)rtConfig.get(SCOPE));
                     }
