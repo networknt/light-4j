@@ -17,14 +17,12 @@ package com.networknt.deref;
 
 import com.networknt.client.Http2Client;
 import com.networknt.exception.ClientException;
-import com.networknt.utility.Constants;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
 import io.undertow.server.HttpHandler;
-import io.undertow.server.RoutingHandler;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;

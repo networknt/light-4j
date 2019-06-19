@@ -39,7 +39,6 @@ public class AuthorizationCodeRequest extends TokenRequest {
      */
     public AuthorizationCodeRequest() {
         setGrantType(ClientConfig.AUTHORIZATION_CODE);
-        // client_secret is in secret.yml instead of client.yml
         Map<String, Object> tokenConfig = ClientConfig.get().getTokenConfig();
         if(tokenConfig != null) {
             setServerUrl((String)tokenConfig.get(ClientConfig.SERVER_URL));
@@ -49,7 +48,13 @@ public class AuthorizationCodeRequest extends TokenRequest {
             Map<String, Object> acConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.AUTHORIZATION_CODE);
             if(acConfig != null) {
                 setClientId((String)acConfig.get(ClientConfig.CLIENT_ID));
-                setClientSecret((String)secret.get(SecretConstants.AUTHORIZATION_CODE_CLIENT_SECRET));
+                // load client secret from client.yml and fallback to secret.yml
+                if(acConfig.get(ClientConfig.CLIENT_SECRET) != null) {
+                    setClientSecret((String)acConfig.get(ClientConfig.CLIENT_SECRET));
+                } else {
+                    Map<String, Object> secret = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
+                    setClientSecret((String)secret.get(SecretConstants.AUTHORIZATION_CODE_CLIENT_SECRET));
+                }
                 setUri((String)acConfig.get(ClientConfig.URI));
                 setScope((List<String>)acConfig.get(ClientConfig.SCOPE));
                 setRedirectUri((String)acConfig.get(ClientConfig.REDIRECT_URI));

@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.networknt</groupId>
     <artifactId>light-4j</artifactId>
-    <version>1.6.5-SNAPSHOT</version>
+    <version>2.0.2-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Parent POM</name>
     <description>Light 4J Framework Components</description>
@@ -65,8 +65,7 @@
     </distributionManagement>
 
     <properties>
-        <java.version>8</java.version>
-        <javac.version>9+181-r4173-1</javac.version>
+        <java.version>11</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <version.jackson>2.9.9</version.jackson>
         <version.slf4j>1.7.25</version.slf4j>
@@ -77,12 +76,12 @@
         <version.junit>4.12</version.junit>
         <version.mockito>2.23.0</version.mockito>
         <version.powermock>2.0.2</version.powermock>
-        <version.undertow>2.0.16.Final</version.undertow>
+        <version.undertow>2.0.21.Final</version.undertow>
         <version.hamcrest>1.3</version.hamcrest>
         <version.assertj>3.8.0</version.assertj>
         <version.hdrhistogram>2.1.10</version.hdrhistogram>
         <version.jsr305>3.0.2</version.jsr305>
-        <version.json-schema-validator>1.0.14</version.json-schema-validator>
+        <version.json-schema-validator>1.0.15</version.json-schema-validator>
         <version.zookeeper>3.5.3-beta</version.zookeeper>
         <version.zkclient>0.3</version.zkclient>
         <version.curator>4.0.1</version.curator>
@@ -90,27 +89,30 @@
         <version.caffeine>2.6.2</version.caffeine>
         <version.prometheus>0.3.0</version.prometheus>
         <version.javamail>1.6.1</version.javamail>
-        <version.hikaricp>3.1.0</version.hikaricp>
+        <version.hikaricp>3.2.0</version.hikaricp>
         <version.h2>1.4.196</version.h2>
         <version.mysql>6.0.5</version.mysql>
         <version.postgres>9.4.1211</version.postgres>
         <version.oracle>11.2.0.3</version.oracle>
-        <version.sqlserver>6.5.1.jre8-preview</version.sqlserver>
+        <version.sqlserver>7.0.0.jre10</version.sqlserver>
         <version.httpclient>4.5.6</version.httpclient>
+        <versions.maven-version>2.4</versions.maven-version>
         <version.jsonpath>2.4.0</version.jsonpath>
         <version.maven-version>2.7</version.maven-version>
         <version.nexus-staging-maven>1.6.8</version.nexus-staging-maven>
         <version.maven-source>3.0.1</version.maven-source>
-        <version.maven-surefire>3.0.0-M3</version.maven-surefire>
-        <!--<version.maven-release>2.5.3</version.maven-release>-->
-        <version.maven-javadoc>3.1.0</version.maven-javadoc>
+        <version.maven-surefire>2.19.1</version.maven-surefire>
+        <version.maven-failsafe>2.22.0</version.maven-failsafe>
         <version.jacoco>0.8.3</version.jacoco>
-        <version.maven-compiler>3.6.1</version.maven-compiler>
+        <version.maven-compiler>3.8.0</version.maven-compiler>
         <version.build-helper-maven>3.0.0</version.build-helper-maven>
-        <version.plexus-compiler-javac-errorprone>2.8</version.plexus-compiler-javac-errorprone>
-        <version.error_prone_core>2.0.15</version.error_prone_core>
         <version.lifecycle-mapping>1.0.0</version.lifecycle-mapping>
         <version.maven-gpg>1.6</version.maven-gpg>
+        <version.testcontainers>1.8.0</version.testcontainers>
+        <skip.unit.tests>false</skip.unit.tests>
+        <matched.test.resources>**/*</matched.test.resources>
+        <version.javadoc-packagelist-plugin>1.0.0</version.javadoc-packagelist-plugin>
+        <version.maven-javadoc>3.1.0</version.maven-javadoc>
     </properties>
 
     <modules>
@@ -214,7 +216,7 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
-                <artifactId>logging</artifactId>
+                <artifactId>logger-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -471,7 +473,7 @@
                 <groupId>io.prometheus</groupId>
                 <artifactId>simpleclient_common</artifactId>
                 <version>${version.prometheus}</version>
-            </dependency>          
+            </dependency>
             <dependency>
                 <groupId>org.apache.zookeeper</groupId>
                 <artifactId>zookeeper</artifactId>
@@ -607,6 +609,12 @@
                 <version>${version.httpclient}</version>
                 <scope>test</scope>
             </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers</artifactId>
+                <version>${version.testcontainers}</version>
+                <scope>test</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -617,9 +625,10 @@
             <resource>
                 <filtering>false</filtering>
                 <directory>${basedir}/src/main/resources</directory>
-                <includes>
-                    <include>**/*</include>
-                </includes>
+                <excludes>
+                    <exclude>**/*.keystore</exclude>
+                    <exclude>**/*.truststore</exclude>
+                </excludes>
             </resource>
         </resources>
         <testResources>
@@ -627,12 +636,25 @@
                 <filtering>false</filtering>
                 <directory>${basedir}/src/test/resources</directory>
                 <includes>
-                    <include>**/*</include>
+                    <include>${matched.test.resources}</include>
                 </includes>
             </testResource>
         </testResources>
 
         <plugins>
+            <plugin>
+                <groupId>com.networknt</groupId>
+                <artifactId>javadoc-packagelist-maven-plugin</artifactId>
+                <version>${version.javadoc-packagelist-plugin}</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>gen-package-list</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>versions-maven-plugin</artifactId>
@@ -647,6 +669,14 @@
                     <serverId>ossrh</serverId>
                     <nexusUrl>https://oss.sonatype.org/</nexusUrl>
                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${version.maven-compiler}</version>
+                <configuration>
+                    <release>${java.version}</release>
                 </configuration>
             </plugin>
             <!--
@@ -693,55 +723,24 @@
                         <version>${version.maven-surefire}</version>
                     </dependency>
                 </dependencies>
+                <configuration>
+                    <!-- Skips unit tests if the value of skip.unit.tests property is true -->
+                    <skipTests>${skip.unit.tests}</skipTests>
+                    <!-- Excludes integration tests when unit tests are run -->
+                    <excludes>
+                        <exclude>**/*IT.java</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>${version.maven-surefire}</version>
+                <version>${version.maven-failsafe}</version>
                 <configuration>
                     <encoding>UTF-8</encoding>
+                    <forkCount>0</forkCount>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>integration-test</id>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>${version.build-helper-maven}</version>
-                <executions>
-                    <execution>
-                        <id>add-test-source</id>
-                        <goals>
-                            <goal>add-test-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>${project.basedir}\src\integration\java</source>
-                            </sources>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>add-test-resource</id>
-                        <goals>
-                            <goal>add-test-resource</goal>
-                        </goals>
-                        <configuration>
-                            <resources>
-                                <resource>
-                                    <!-- Don't forget <directory> label -->
-                                    <directory>${project.basedir}\src\integration\resources</directory>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
             <!-- JACOCO added for code coverage -->
             <plugin>
@@ -756,7 +755,8 @@
                             <goal>prepare-agent</goal>
                         </goals>
                         <configuration>
-                            <destFile>${project.build.directory}/coverage-reports/jacoco-ut.exec</destFile>
+                            <propertyName>surefireArgLine</propertyName>
+                            <!--<destFile>${project.build.directory}/coverage-reports/jacoco-ut.exec</destFile>-->
                         </configuration>
                     </execution>
                     <execution>
@@ -765,58 +765,11 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
-                        <configuration>
-                            <dataFile>${project.build.directory}/coverage-reports/jacoco-ut.exec</dataFile>
-                            <outputDirectory>${project.reporting.outputDirectory}/jacoco-ut</outputDirectory>
-                        </configuration>
-                    </execution>
-                    <!-- End Executions for unit tests -->
-                    <!-- The Executions for integration tests -->
-                    <execution>
-                        <id>pre-integration-test</id>
-                        <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                        <configuration>
-                            <destFile>${project.build.directory}/coverage-reports/jacoco-it.exec</destFile>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>post-integration-test</id>
-                        <phase>post-integration-test</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                        <configuration>
-                            <dataFile>${project.build.directory}/coverage-reports/jacoco-it.exec</dataFile>
-                            <outputDirectory>${project.reporting.outputDirectory}/jacoco-it</outputDirectory>
-                        </configuration>
                     </execution>
                     <!-- End Executions for integration tests -->
                 </executions>
             </plugin>
             <!-- end JACOCO -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.0</version>
-                <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
-                    <compilerArgs>
-                        <arg>-XDcompilePolicy=simple</arg>
-                        <arg>-Xplugin:ErrorProne</arg>
-                    </compilerArgs>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>com.google.errorprone</groupId>
-                            <artifactId>error_prone_core</artifactId>
-                            <version>2.3.3</version>
-                        </path>
-                    </annotationProcessorPaths>
-                </configuration>
-            </plugin>
         </plugins>
         <pluginManagement>
         	<plugins>
@@ -886,6 +839,12 @@
     <profiles>
         <profile>
             <id>dev</id>
+            <properties>
+                <!--
+                    Only unit tests are run when the development profile is active
+                -->
+                <skip.unit.tests>false</skip.unit.tests>
+            </properties>
             <build>
                 <plugins>
                     <plugin>
@@ -956,22 +915,76 @@
                 </plugins>
             </build>
         </profile>
+        <!-- The Configuration of the integration-test profile -->
         <profile>
-            <id>jdk8</id>
-            <activation>
-                <jdk>1.8</jdk>
-            </activation>
+            <id>integration-test</id>
+            <properties>
+                <!--
+                    Only integration tests are run when the integration-test profile is active
+                -->
+                <skip.unit.tests>true</skip.unit.tests>
+                <!--to include nothing for regular unit resources-->
+                <matched.test.resources>a^</matched.test.resources>
+            </properties>
             <build>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <configuration>
-                            <fork>true</fork>
-                            <compilerArgs combine.children="append">
-                                <arg>-J-Xbootclasspath/p:${settings.localRepository}/com/google/errorprone/javac/${javac.version}/javac-${javac.version}.jar</arg>
-                            </compilerArgs>
-                        </configuration>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>${version.maven-surefire}</version>
+                        <executions>
+                            <!--
+                                Invokes both the integration-test and the verify goals of the
+                                Failsafe Maven plugin
+                            -->
+                            <execution>
+                                <id>integration-tests</id>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                                <configuration>
+                                    <!--
+                                        Skips integration tests if the value of skip.integration.tests
+                                        property is true
+                                    -->
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <version>${version.build-helper-maven}</version>
+                        <executions>
+                            <execution>
+                                <id>add-integration-test-source</id>
+                                <phase>generate-test-sources</phase>
+                                <goals>
+                                    <goal>add-test-source</goal>
+                                </goals>
+                                <configuration>
+                                    <sources>
+                                        <source>${project.basedir}/src/integration/java</source>
+                                    </sources>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>add-integration-test-resource</id>
+                                <phase>generate-test-sources</phase>
+                                <goals>
+                                    <goal>add-test-resource</goal>
+                                </goals>
+                                <configuration>
+                                    <resources>
+                                        <resource>
+                                            <!-- Don't forget <directory> label -->
+                                            <directory>${project.basedir}/src/integration/resources</directory>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>

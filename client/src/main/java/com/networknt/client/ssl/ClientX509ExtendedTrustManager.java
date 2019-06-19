@@ -16,13 +16,19 @@
 
 package com.networknt.client.ssl;
 
-import javax.net.ssl.*;
 import java.net.Socket;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509ExtendedTrustManager;
+import javax.net.ssl.X509TrustManager;
 
 /**
  * Customized implementation of {@link javax.net.ssl.X509ExtendedTrustManager} to support validation of server identity using given trusted names.
@@ -162,8 +168,8 @@ public class ClientX509ExtendedTrustManager extends X509ExtendedTrustManager imp
 	 * 
 	 * This method can be applied to both clients and servers.
 	 * 
-	 * @param session SSLSession
-	 * @param cert X509Certificate
+	 * @param session
+	 * @param cert
 	 * @throws CertificateException
 	 */
 	private void checkIdentity(SSLSession session, X509Certificate cert) throws CertificateException {
@@ -180,9 +186,9 @@ public class ClientX509ExtendedTrustManager extends X509ExtendedTrustManager imp
 	/**
 	 * This method converts existing X509TrustManagers to ClientX509ExtendedTrustManagers. 
 	 * 
-	 * @param trustManagers TrustManager[]
+	 * @param trustManagers array of TrustManagers
 	 * @param tlsConfig TLSConfig
-	 * @return TrustManager[]
+	 * @return TrustManager array
 	 */
 	public static TrustManager[] decorate(TrustManager[] trustManagers, TLSConfig tlsConfig) {
 		if (null!=trustManagers && trustManagers.length>0) {

@@ -30,6 +30,7 @@ import io.undertow.util.PathTemplateMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -147,7 +148,7 @@ public class Handler {
 	private static void addSourceChain(PathChain sourceChain) {
 		try {
 			Class sourceClass = Class.forName(sourceChain.getSource());
-			EndpointSource source = (EndpointSource)sourceClass.newInstance();
+			EndpointSource source = (EndpointSource)(sourceClass.getDeclaredConstructor().newInstance());
 			for (EndpointSource.Endpoint endpoint : source.listEndpoints()) {
 				PathChain sourcedPath = new PathChain();
 				sourcedPath.setPath(endpoint.getPath());
@@ -415,9 +416,8 @@ public class Handler {
 		// create an instance of the handler
 		Object handlerOrProviderObject = null;
 		try {
-			handlerOrProviderObject = namedClass.second.newInstance();
-		} catch (Exception e) {
-			logger.error("Exception:", e);
+			handlerOrProviderObject = namedClass.second.getDeclaredConstructor().newInstance();
+		} catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
 			throw new RuntimeException("Could not instantiate handler class: " + namedClass.second);
 		}
 
