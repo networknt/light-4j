@@ -27,7 +27,6 @@ import com.networknt.config.Config;
  * Created by steve on 02/09/16.
  */
 public class AuthorizationCodeRequest extends TokenRequest {
-    static Map<String, Object> secret = (Map<String, Object>)Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
 
     String authCode;
     String redirectUri;
@@ -39,7 +38,6 @@ public class AuthorizationCodeRequest extends TokenRequest {
     public AuthorizationCodeRequest() {
         setGrantType(AUTHORIZATION_CODE);
         Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
-        // client_secret is in secret.yml instead of client.yml
         if(clientConfig != null) {
             Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OAUTH);
             if(oauthConfig != null) {
@@ -52,7 +50,13 @@ public class AuthorizationCodeRequest extends TokenRequest {
                     Map<String, Object> acConfig = (Map<String, Object>) tokenConfig.get(AUTHORIZATION_CODE);
                     if(acConfig != null) {
                         setClientId((String)acConfig.get(CLIENT_ID));
-                        setClientSecret((String)secret.get(SecretConstants.AUTHORIZATION_CODE_CLIENT_SECRET));
+                        // load client secret from client.yml and fallback to secret.yml
+                        if(acConfig.get(CLIENT_SECRET) != null) {
+                            setClientSecret((String)acConfig.get(CLIENT_SECRET));
+                        } else {
+                            Map<String, Object> secret = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
+                            setClientSecret((String)secret.get(SecretConstants.AUTHORIZATION_CODE_CLIENT_SECRET));
+                        }
                         setUri((String)acConfig.get(URI));
                         setScope((List<String>)acConfig.get(SCOPE));
                         setRedirectUri((String)acConfig.get(REDIRECT_URI));
