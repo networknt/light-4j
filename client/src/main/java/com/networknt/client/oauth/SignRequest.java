@@ -17,8 +17,6 @@
 package com.networknt.client.oauth;
 
 import com.networknt.client.ClientConfig;
-import com.networknt.client.Http2Client;
-import com.networknt.config.Config;
 
 import java.util.Map;
 
@@ -97,22 +95,16 @@ public class SignRequest {
     private Map<String, Object> payload;
 
     public SignRequest() {
-        Map<String, Object> config = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
-        if(config != null) {
-            Map<String, Object> oauthConfig = (Map<String, Object>)config.get(ClientConfig.OAUTH);
-            if(oauthConfig != null) {
-                Map<String, Object> signConfig = (Map<String, Object>)oauthConfig.get(ClientConfig.SIGN);
-                if(signConfig != null) {
-                    setServerUrl((String)signConfig.get(ClientConfig.SERVER_URL));
-                    setServiceId((String)signConfig.get(ClientConfig.SERVICE_ID));
-                    setUri((String)signConfig.get(ClientConfig.URI));
-                    timeout = (Integer) signConfig.get(ClientConfig.TIMEOUT);
-                    Object object = signConfig.get(ClientConfig.ENABLE_HTTP2);
-                    setEnableHttp2(object != null && (Boolean) object);
-                    setClientId((String)signConfig.get(ClientConfig.CLIENT_ID));
-                    setClientSecret((String)signConfig.get(ClientConfig.CLIENT_SECRET));
-                }
-            }
+        Map<String, Object> signConfig = ClientConfig.get().getSignConfig();
+        if(signConfig != null) {
+            setServerUrl((String)signConfig.get(ClientConfig.SERVER_URL));
+            setServiceId((String)signConfig.get(ClientConfig.SERVICE_ID));
+            setUri((String)signConfig.get(ClientConfig.URI));
+            timeout = (Integer) signConfig.get(ClientConfig.TIMEOUT);
+            Object object = signConfig.get(ClientConfig.ENABLE_HTTP2);
+            setEnableHttp2(object != null && (Boolean) object);
+            setClientId((String)signConfig.get(ClientConfig.CLIENT_ID));
+            setClientSecret((String)signConfig.get(ClientConfig.CLIENT_SECRET));
         }
     }
 

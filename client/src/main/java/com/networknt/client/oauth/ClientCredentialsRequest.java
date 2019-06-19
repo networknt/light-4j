@@ -40,26 +40,20 @@ public class ClientCredentialsRequest extends TokenRequest {
 
     public ClientCredentialsRequest() {
         setGrantType(ClientConfig.CLIENT_CREDENTIALS);
-        Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
         // client_secret is in secret.yml instead of client.yml
-        if(clientConfig != null) {
-            Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(ClientConfig.OAUTH);
-            if(oauthConfig != null) {
-                Map<String, Object> tokenConfig = (Map<String, Object>)oauthConfig.get(ClientConfig.TOKEN);
-                if(tokenConfig != null) {
-                    setServerUrl((String)tokenConfig.get(ClientConfig.SERVER_URL));
-                    setServiceId((String)tokenConfig.get(ClientConfig.SERVICE_ID));
-                    Object object = tokenConfig.get(ClientConfig.ENABLE_HTTP2);
-                    setEnableHttp2(object != null && (Boolean) object);
-                    Map<String, Object> ccConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.CLIENT_CREDENTIALS);
-                    if(ccConfig != null) {
-                        setClientId((String)ccConfig.get(ClientConfig.CLIENT_ID));
-                        setClientSecret((String)secret.get(SecretConstants.CLIENT_CREDENTIALS_CLIENT_SECRET));
-                        setUri((String)ccConfig.get(ClientConfig.URI));
-                        //set default scope from config.
-                        setScope((List<String>)ccConfig.get(ClientConfig.SCOPE));
-                    }
-                }
+        Map<String, Object> tokenConfig = ClientConfig.get().getTokenConfig();
+        if(tokenConfig != null) {
+            setServerUrl((String)tokenConfig.get(ClientConfig.SERVER_URL));
+            setServiceId((String)tokenConfig.get(ClientConfig.SERVICE_ID));
+            Object object = tokenConfig.get(ClientConfig.ENABLE_HTTP2);
+            setEnableHttp2(object != null && (Boolean) object);
+            Map<String, Object> ccConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.CLIENT_CREDENTIALS);
+            if(ccConfig != null) {
+                setClientId((String)ccConfig.get(ClientConfig.CLIENT_ID));
+                setClientSecret((String)secret.get(SecretConstants.CLIENT_CREDENTIALS_CLIENT_SECRET));
+                setUri((String)ccConfig.get(ClientConfig.URI));
+                //set default scope from config.
+                setScope((List<String>)ccConfig.get(ClientConfig.SCOPE));
             }
         }
     }

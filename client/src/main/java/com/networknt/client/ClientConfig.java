@@ -49,6 +49,8 @@ public final class ClientConfig {
 
     private Map<String, Object> tokenConfig;
     private Map<String, Object> secretConfig;
+    private Map<String, Object> derefConfig;
+    private Map<String, Object> signConfig;
     private int bufferSize = DEFAULT_BUFFER_SIZE;
     private int resetTimeout = DEFAULT_RESET_TIMEOUT;
     private int timeout = DEFAULT_TIMEOUT;
@@ -65,6 +67,7 @@ public final class ClientConfig {
             setTokenConfig();
             setSecretConfig();
             setRequestConfig();
+            setDerefConfig();
         }
     }
 
@@ -117,6 +120,20 @@ public final class ClientConfig {
         }
     }
 
+    private void setDerefConfig() {
+        Map<String, Object> oauthConfig = (Map<String, Object>)mappedConfig.get(OAUTH);
+        if (oauthConfig != null) {
+            derefConfig = (Map<String, Object>)oauthConfig.get(DEREF);
+        }
+    }
+
+    private void setSignfConfig() {
+        Map<String, Object> oauthConfig = (Map<String, Object>)mappedConfig.get(OAUTH);
+        if (oauthConfig != null) {
+            signConfig = (Map<String, Object>)oauthConfig.get(SIGN);
+        }
+    }
+
     public int getBufferSize() {
         return bufferSize;
     }
@@ -137,6 +154,14 @@ public final class ClientConfig {
         return secretConfig;
     }
 
+    public Map<String, Object> getDerefConfig() {
+        return derefConfig;
+    }
+
+    public Map<String, Object> getSignConfig() {
+        return signConfig;
+    }
+
     public int getTimeout() {
         return timeout;
     }
@@ -147,5 +172,9 @@ public final class ClientConfig {
 
     public int getErrorThreshold() {
         return errorThreshold;
+    }
+
+    public class OauthConfig {
+
     }
 }

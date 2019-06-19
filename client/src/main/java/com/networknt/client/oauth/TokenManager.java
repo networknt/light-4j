@@ -52,17 +52,12 @@ public class TokenManager {
 
     private TokenManager() {
         //set CAPACITY based on config
-        if(clientConfig != null) {
-            Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(ClientConfig.OAUTH);
-            if(oauthConfig != null) {
-                Map<String, Object> tokenConfig = (Map<String, Object>)oauthConfig.get(ClientConfig.TOKEN);
-                if(tokenConfig != null) {
-                    Map<String, Object> cacheConfig = (Map<String, Object>)tokenConfig.get(ClientConfig.CACHE);
-                    if(cacheConfig != null) {
-                        if(cacheConfig.get(CAPACITY_CONFIG) != null) {
-                            CAPACITY = (Integer)cacheConfig.get(CAPACITY_CONFIG);
-                        }
-                    }
+        Map<String, Object> tokenConfig = ClientConfig.get().getTokenConfig();
+        if(tokenConfig != null) {
+            Map<String, Object> cacheConfig = (Map<String, Object>)tokenConfig.get(ClientConfig.CACHE);
+            if(cacheConfig != null) {
+                if(cacheConfig.get(ClientConfig.CAPACITY) != null) {
+                    CAPACITY = (Integer)cacheConfig.get(ClientConfig.CAPACITY);
                 }
             }
         }

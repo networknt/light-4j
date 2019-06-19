@@ -43,34 +43,24 @@ public class TokenKeyRequest extends KeyRequest {
 
     public TokenKeyRequest(String kid) {
         super(kid);
-        Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
+        Map<String, Object> clientConfig = ClientConfig.get().getMappedConfig();
         // client_secret is in secret.yml instead of client.yml
         if(clientConfig != null) {
-            Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OAUTH);
+            Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(ClientConfig.OAUTH);
             if(oauthConfig != null) {
                 // for backward compatible here, should be moved to the token section.
-                Map<String, Object> keyConfig = (Map<String, Object>)oauthConfig.get(KEY);
+                Map<String, Object> keyConfig = (Map<String, Object>)oauthConfig.get(ClientConfig.KEY);
                 if(keyConfig != null) {
-                    setServerUrl((String)keyConfig.get(ClientConfig.SERVER_URL));
-                    setServiceId((String)keyConfig.get(ClientConfig.SERVICE_ID));
-                    Object object = keyConfig.get(ClientConfig.ENABLE_HTTP2);
-                    setEnableHttp2(object != null && (Boolean) object);
-                    setUri(keyConfig.get(ClientConfig.URI) + "/" + kid);
-                    setClientId((String)keyConfig.get(ClientConfig.CLIENT_ID));
+                    setKeyOptions(keyConfig);
                     Map<String, Object> secret = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
                     setClientSecret((String)secret.get(SecretConstants.KEY_CLIENT_SECRET));
                 } else {
                     // there is no key section under oauth. look up in the oauth/token section for key
-                    Map<String, Object> tokenConfig = (Map<String, Object>)oauthConfig.get(ClientConfig.TOKEN);
+                    Map<String, Object> tokenConfig = ClientConfig.get().getTokenConfig();
                     if(tokenConfig != null) {
                         keyConfig = (Map<String, Object>)tokenConfig.get(ClientConfig.KEY);
                         if(keyConfig != null) {
-                            setServerUrl((String)keyConfig.get(ClientConfig.SERVER_URL));
-                            setServiceId((String)keyConfig.get(ClientConfig.SERVICE_ID));
-                            Object object = keyConfig.get(ClientConfig.ENABLE_HTTP2);
-                            setEnableHttp2(object != null && (Boolean) object);
-                            setUri(keyConfig.get(ClientConfig.URI) + "/" + kid);
-                            setClientId((String)keyConfig.get(ClientConfig.CLIENT_ID));
+                            setKeyOptions(keyConfig);
                             setClientSecret((String)keyConfig.get(ClientConfig.CLIENT_SECRET));
                         } else {
                             logger.error("Error: could not find key section in token of oauth in client.yml");
@@ -85,6 +75,15 @@ public class TokenKeyRequest extends KeyRequest {
         } else {
             logger.error("Error: could not load client.yml for Token Key");
         }
+    }
+
+    private void setKeyOptions(Map<String, Object> keyConfig) {
+        setServerUrl((String)keyConfig.get(ClientConfig.SERVER_URL));
+        setServiceId((String)keyConfig.get(ClientConfig.SERVICE_ID));
+        Object object = keyConfig.get(ClientConfig.ENABLE_HTTP2);
+        setEnableHttp2(object != null && (Boolean) object);
+        setUri(keyConfig.get(ClientConfig.URI) + "/" + kid);
+        setClientId((String)keyConfig.get(ClientConfig.CLIENT_ID));
     }
 
 }
