@@ -562,6 +562,12 @@ public class OauthHelper {
         return result;
     }
 
+    /**
+     * @deprecated
+     * @param exchange each handler should use LightHttpHandler#setExchangeStatus
+     * @param status Status
+     */
+    @Deprecated
     public static void sendStatusToResponse(HttpServerExchange exchange, Status status) {
         exchange.setStatusCode(status.getStatusCode());
         exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");

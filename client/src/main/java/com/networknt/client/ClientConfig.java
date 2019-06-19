@@ -68,6 +68,7 @@ public final class ClientConfig {
             setSecretConfig();
             setRequestConfig();
             setDerefConfig();
+            setSignConfig();
         }
     }
 
@@ -127,7 +128,7 @@ public final class ClientConfig {
         }
     }
 
-    private void setSignfConfig() {
+    private void setSignConfig() {
         Map<String, Object> oauthConfig = (Map<String, Object>)mappedConfig.get(OAUTH);
         if (oauthConfig != null) {
             signConfig = (Map<String, Object>)oauthConfig.get(SIGN);
@@ -174,7 +175,4 @@ public final class ClientConfig {
         return errorThreshold;
     }
 
-    public class OauthConfig {
-
-    }
 }
