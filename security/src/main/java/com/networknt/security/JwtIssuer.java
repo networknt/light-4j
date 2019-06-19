@@ -36,25 +36,9 @@ import java.util.Map;
  */
 public class JwtIssuer {
     private static final Logger logger = LoggerFactory.getLogger(JwtIssuer.class);
-
-    @Deprecated
-    /**
-     * @deprecated will be change to private in future
-     */
     public static final String JWT_CONFIG = "jwt";
-
-    @Deprecated
-    /**
-     * @deprecated will be change to private in future
-     */
     public static final String SECRET_CONFIG = "secret";
-
-    @Deprecated
-    /**
-     * @deprecated will be change to private in future
-     */
     public static final String JWT_PRIVATE_KEY_PASSWORD = "jwtPrivateKeyPassword";
-
     private static JwtConfig jwtConfig = (JwtConfig) Config.getInstance().getJsonObjectConfig(JWT_CONFIG, JwtConfig.class);
     private static Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG);
 

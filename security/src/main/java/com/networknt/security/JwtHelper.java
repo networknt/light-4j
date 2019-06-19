@@ -57,82 +57,32 @@ import java.util.regex.Pattern;
  * @author Steve Hu
  */
 public class JwtHelper {
-
-    private static final Logger logger = LoggerFactory.getLogger(JwtHelper.class);
-
-    @Deprecated
-    /**
-     * @deprecated will be removed since no usage
-     */
+    static final Logger logger = LoggerFactory.getLogger(JwtHelper.class);
     public static final String KID = "kid";
-
-    @Deprecated
-    /**
-     * @deprecated will be change to private in future
-     */
     public static final String JWT_CONFIG = "jwt";
-
-    @Deprecated
-    /**
-     * @deprecated will be change to package-private in future
-     */
     public static final String SECURITY_CONFIG = "security";
-
-    @Deprecated
-    /**
-     * @deprecated will be change to package-private in future
-     */
     public static final String JWT_CERTIFICATE = "certificate";
-
-    @Deprecated
-    /**
-     * @deprecated will be change to private in future
-     */
     public static final String JWT_CLOCK_SKEW_IN_SECONDS = "clockSkewInSeconds";
-
     public static final String ENABLE_VERIFY_JWT = "enableVerifyJwt";
-
     private static final String ENABLE_JWT_CACHE = "enableJwtCache";
-
     private static final String BOOTSTRAP_FROM_KEY_SERVICE = "bootstrapFromKeyService";
-
     private static final int CACHE_EXPIRED_IN_MINUTES = 15;
 
-    @Deprecated
-    /**
-     * @deprecated will be change to private in future
-     */
     public static final String JWT_KEY_RESOLVER = "keyResolver";
-
-    @Deprecated
-    /**
-     * @deprecated will be change to private in future
-     */
     public static final String JWT_KEY_RESOLVER_X509CERT = "X509Certificate";
-
-    @Deprecated
-    /**
-     * @deprecated will be change to private in future
-     */
     public static final String JWT_KEY_RESOLVER_JWKS = "JsonWebKeySet";
 
-    private static Map<String, X509Certificate> certMap;
+    static Map<String, X509Certificate> certMap;
+    static Map<String, List<JsonWebKey>> jwksMap;
+    static List<String> fingerPrints;
 
-    private static Map<String, List<JsonWebKey>> jwksMap;
+    static Map<String, Object> securityConfig = (Map)Config.getInstance().getJsonMapConfig(SECURITY_CONFIG);
+    static Map<String, Object> securityJwtConfig = (Map)securityConfig.get(JWT_CONFIG);
+    static int secondsOfAllowedClockSkew = (Integer) securityJwtConfig.get(JWT_CLOCK_SKEW_IN_SECONDS);
+    static Boolean enableJwtCache = (Boolean)securityConfig.get(ENABLE_JWT_CACHE);
+    static Boolean bootstrapFromKeyService = (Boolean)securityConfig.get(BOOTSTRAP_FROM_KEY_SERVICE);
 
-    private static List<String> fingerPrints;
-
-    private static Map<String, Object> securityConfig = (Map)Config.getInstance().getJsonMapConfig(SECURITY_CONFIG);
-
-    private static Map<String, Object> securityJwtConfig = (Map)securityConfig.get(JWT_CONFIG);
-
-    private static int secondsOfAllowedClockSkew = (Integer) securityJwtConfig.get(JWT_CLOCK_SKEW_IN_SECONDS);
-
-    private static Boolean enableJwtCache = (Boolean)securityConfig.get(ENABLE_JWT_CACHE);
-
-    private static Boolean bootstrapFromKeyService = (Boolean)securityConfig.get(BOOTSTRAP_FROM_KEY_SERVICE);
-
-    private static Cache<String, JwtClaims> cache;
+    static Cache<String, JwtClaims> cache;
 
     static {
         if(Boolean.TRUE.equals(enableJwtCache)) {
