@@ -35,13 +35,13 @@ oauth:
       #capacity of caching TOKENs
       capacity: 200
     # The scope token will be renewed automatically 1 minutes before expiry
-    tokenRenewBeforeExpired: 60000
+    tokenRenewBeforeExpired: 4000
     # if scope token is expired, we need short delay so that we can retry faster.
-    expiredRefreshRetryDelay: 2000
+    expiredRefreshRetryDelay: 5000
     # if scope token is not expired but in renew windown, we need slow retry delay.
-    earlyRefreshRetryDelay: 4000
+    earlyRefreshRetryDelay: 30000
     # token server url. The default port number for token service is 6882.
-    server_url: https://localhost:6882
+    server_url: http://localhost:7777
     # token service unique id for OAuth 2.0 provider
     serviceId: com.networknt.oauth2-token-1.0.0
     # set to true if the oauth2 provider supports HTTP/2
@@ -51,27 +51,27 @@ oauth:
       # token endpoint for authorization code grant
       uri: "/oauth2/token"
       # client_id for authorization code grant flow.
-      client_id: f7d42348-c647-4efb-a52d-4c5787421e72
+      client_id: test_client
       # client_secret for authorization code grant flow.
-      client_secret: f6h1FTI8Q3-7UScPZDzfXA
+      client_secret: test_secret
       # the web server uri that will receive the redirected authorization code
       redirect_uri: https://localhost:8080/authorization_code
       # optional scope, default scope in the client registration will be used if not defined.
       scope:
-      - petstore.r
-      - petstore.w
+      - test.r
+      - test.w
     # the following section defines uri and parameters for client credentials grant type
     client_credentials:
       # token endpoint for client credentials grant
       uri: "/oauth2/token"
       # client_id for client credentials grant flow. client_secret is in secret.yml
-      client_id: f7d42348-c647-4efb-a52d-4c5787421e72
+      client_id: test_client
       # client_secret for client credentials grant flow.
-      client_secret: f6h1FTI8Q3-7UScPZDzfXA
+      client_secret: test_secret
       # optional scope, default scope in the client registration will be used if not defined.
       scope:
-      - petstore.r
-      - petstore.w
+      - test.r
+      - test.w
     refresh_token:
       # token endpoint for refresh token grant
       uri: "/oauth2/token"
@@ -86,7 +86,7 @@ oauth:
     # light-oauth2 key distribution endpoint configuration for token verification
     key:
       # key distribution server url for token verification. It will be used if it is configured.
-      server_url: https://localhost:6886
+      server_url: https://localhost:7777
       # key serviceId for key distribution service, it will be used if above server_url is not configured.
       serviceId: com.networknt.oauth2-key-1.0.0
       # the path for the key distribution endpoint
