@@ -361,19 +361,23 @@ public class Server {
     }
 
     protected static KeyStore loadKeyStore() {
-        Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
-
         String name = getServerConfig().getKeystoreName();
-        char[] password = ((String) secretConfig.get(SecretConstants.SERVER_KEYSTORE_PASS)).toCharArray();
-        return TlsUtil.loadKeyStore(name, password);
+        String pass = getServerConfig().getKeystorePass();
+        if(pass == null) {
+            Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
+            pass = (String) secretConfig.get(SecretConstants.SERVER_KEYSTORE_PASS);
+        }
+        return TlsUtil.loadKeyStore(name, pass.toCharArray());
     }
 
     protected static KeyStore loadTrustStore() {
-        Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
-
         String name = getServerConfig().getTruststoreName();
-        char[] password = ((String) secretConfig.get(SecretConstants.SERVER_TRUSTSTORE_PASS)).toCharArray();
-        return TlsUtil.loadTrustStore(name, password);
+        String pass = getServerConfig().getTruststorePass();
+        if(pass == null) {
+            Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
+            pass = (String) secretConfig.get(SecretConstants.SERVER_TRUSTSTORE_PASS);
+        }
+        return TlsUtil.loadTrustStore(name, pass.toCharArray());
     }
 
     private static TrustManager[] buildTrustManagers(final KeyStore trustStore) {
@@ -410,11 +414,14 @@ public class Server {
     }
 
     private static SSLContext createSSLContext() throws RuntimeException {
-        Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
 
         try {
-            KeyManager[] keyManagers = buildKeyManagers(loadKeyStore(),
-                    ((String) secretConfig.get(SecretConstants.SERVER_KEY_PASS)).toCharArray());
+            String keyPass = getServerConfig().getKeyPass();
+            if(keyPass == null) {
+                Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
+                keyPass = (String) secretConfig.get(SecretConstants.SERVER_KEY_PASS);
+            }
+            KeyManager[] keyManagers = buildKeyManagers(loadKeyStore(), keyPass.toCharArray());
             TrustManager[] trustManagers;
             if (getServerConfig().isEnableTwoWayTls()) {
                 trustManagers = buildTrustManagers(loadTrustStore());
