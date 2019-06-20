@@ -180,9 +180,9 @@ public class ClientX509ExtendedTrustManager extends X509ExtendedTrustManager imp
 	/**
 	 * This method converts existing X509TrustManagers to ClientX509ExtendedTrustManagers. 
 	 * 
-	 * @param trustManagers TrustManager[]
+	 * @param trustManagers array of TrustManagers
 	 * @param tlsConfig TLSConfig
-	 * @return TrustManager[]
+	 * @return TrustManager array
 	 */
 	public static TrustManager[] decorate(TrustManager[] trustManagers, TLSConfig tlsConfig) {
 		if (null!=trustManagers && trustManagers.length>0) {
