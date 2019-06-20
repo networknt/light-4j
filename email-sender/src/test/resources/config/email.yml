@@ -6,6 +6,8 @@ host: mail.lightapi.net
 port: 587
 # Email user or sender address.
 user: noreply@lightapi.net
+# Email password
+pass: change-to-real-password
 # Enable debug. Default to false.
 debug: true
 # Enable Authentication. Default to true.

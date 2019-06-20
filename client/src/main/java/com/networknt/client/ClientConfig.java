@@ -117,6 +117,13 @@ public final class ClientConfig {
         return tokenConfig;
     }
 
+    /**
+     *
+     * The secret has been moved back to client.yml
+     *
+     * @return Map of secret config
+     */
+    @Deprecated
     public Map<String, Object> getSecretConfig() {
         return secretConfig;
     }
