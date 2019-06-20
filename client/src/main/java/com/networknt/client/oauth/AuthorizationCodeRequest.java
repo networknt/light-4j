@@ -28,7 +28,6 @@ import java.util.Map;
  * Created by steve on 02/09/16.
  */
 public class AuthorizationCodeRequest extends TokenRequest {
-    private static Map<String, Object> secret = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
 
     private String authCode;
     private String redirectUri;

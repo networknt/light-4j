@@ -181,5 +181,4 @@ public final class ClientConfig {
     public int getErrorThreshold() {
         return errorThreshold;
     }
-
 }

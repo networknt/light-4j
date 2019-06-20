@@ -35,6 +35,7 @@ import java.util.Map;
  * @author Steve Hu
  */
 public class ClientCredentialsRequest extends TokenRequest {
+
     public ClientCredentialsRequest() {
         setGrantType(ClientConfig.CLIENT_CREDENTIALS);
         Map<String, Object> tokenConfig = ClientConfig.get().getTokenConfig();
