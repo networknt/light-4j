@@ -1,5 +1,5 @@
 # Consul URL for accessing APIs
-consulUrl: https://localhost:8500
+consulUrl: http://localhost:8500
 # access token to the consul server
 consulToken: the_one_ring
 # number of requests before reset the shared connection.
