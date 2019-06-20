@@ -110,6 +110,24 @@ public class EncoderTest {
     }
 
     @Test
+    public void shouldIgnoreListOfAttributesToIgnoreIfThereIsAListOfAttributesToAppreciate() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("data1", "value1");
+        map.put("data2", "value2");
+        map.put("data3", "value3");
+        map.put("data4", "value4");
+        Encoding encoding = new FakeEncoding();
+        Encoder encoder = Mockito.spy(new Encoder(encoding, Arrays.asList("data2"), Arrays.asList("data3")));
+
+        encoder.encodeNode(map);
+
+        Mockito.verify(encoder, Mockito.never()).applyEncoding("value1");
+        Mockito.verify(encoder).applyEncoding("value3");
+        Mockito.verify(encoder, Mockito.never()).applyEncoding("value2");
+        Mockito.verify(encoder, Mockito.never()).applyEncoding("value4");
+    }
+
+    @Test
     public void testForJavaScript() {
         String result = Encode.forJavaScript(s);
         System.out.println("JavaScript: " + result);
