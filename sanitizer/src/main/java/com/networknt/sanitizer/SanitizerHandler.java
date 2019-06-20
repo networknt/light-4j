@@ -39,11 +39,21 @@ import java.util.*;
 public class SanitizerHandler implements MiddlewareHandler {
     public static final String CONFIG_NAME = "sanitizer";
 
-    static SanitizerConfig config = (SanitizerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, SanitizerConfig.class);
+    static SanitizerConfig config;
 
-    Encoder encoding = new Encoder(config.getEncoding(), config.getAttributesToIgnore(), config.getAttributesToAppreciate());
-
+    Encoder encoding;
     private volatile HttpHandler next;
+
+    public SanitizerHandler() {
+        config = (SanitizerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, SanitizerConfig.class);
+        encoding = new Encoder(config.getEncoding(), config.getAttributesToIgnore(), config.getAttributesToAppreciate());
+    }
+
+    // integration test purpose
+    public SanitizerHandler(String configName) {
+        config = (SanitizerConfig) Config.getInstance().getJsonObjectConfig(configName, SanitizerConfig.class);
+        encoding = new Encoder(config.getEncoding(), config.getAttributesToIgnore(), config.getAttributesToAppreciate());
+    }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {

@@ -17,15 +17,11 @@
 package com.networknt.sanitizer;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.networknt.body.BodyHandler;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
-import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.client.*;
-import io.undertow.server.HttpHandler;
-import io.undertow.server.RoutingHandler;
 import io.undertow.util.*;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -37,10 +33,8 @@ import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -60,26 +54,13 @@ public class SanitizerHandlerTest {
     public static void setUp() {
         if(server == null) {
             logger.info("starting server");
-            HttpHandler handler = getTestHandler();
-
-            SanitizerHandler sanitizerHandler = new SanitizerHandler();
-            sanitizerHandler.setNext(handler);
-            handler = sanitizerHandler;
-
-            BodyHandler bodyHandler = new BodyHandler();
-            bodyHandler.setNext(handler);
-            handler = bodyHandler;
-
-            server = Undertow.builder()
-                    .addHttpListener(8080, "localhost")
-                    .setHandler(handler)
-                    .build();
+            server = ServerBuilder.newServer().build();
             server.start();
         }
     }
 
     @AfterClass
-    public static void tearDown() throws Exception {
+    public static void tearDown() {
         if(server != null) {
             try {
                 Thread.sleep(100);
@@ -89,34 +70,6 @@ public class SanitizerHandlerTest {
             server.stop();
             logger.info("The server is stopped.");
         }
-    }
-
-    static RoutingHandler getTestHandler() {
-        return Handlers.routing()
-                .add(Methods.GET, "/parameter", exchange -> {
-                    Map<String, Deque<String>> parameter = exchange.getQueryParameters();
-                    if(parameter != null) {
-                        exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(parameter));
-                    }
-                })
-                .add(Methods.GET, "/header", exchange -> {
-                    HeaderMap headerMap = exchange.getRequestHeaders();
-                    if(headerMap != null) {
-                        exchange.getResponseSender().send(headerMap.toString());
-                    }
-                })
-                .add(Methods.POST, "/body", exchange -> {
-                    Object body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
-                    if(body != null) {
-                        exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(body));
-                    }
-                })
-                .add(Methods.POST, "/header", exchange -> {
-                    HeaderMap headerMap = exchange.getRequestHeaders();
-                    if(headerMap != null) {
-                        exchange.getResponseSender().send(headerMap.toString());
-                    }
-                });
     }
 
     @Test
