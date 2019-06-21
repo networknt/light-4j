@@ -6,6 +6,7 @@ cache:
 
 jdk:
    - openjdk11
+   - oraclejdk11
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
