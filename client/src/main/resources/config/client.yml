@@ -149,3 +149,5 @@ request:
   timeout: 3000
   # reset the circuit after this timeout in millisecond
   resetTimeout: 7000
+  # if open tracing is enable. traceability, correlation and metrics should not be in the chain if opentracing is used.
+  injectOpenTracing: false

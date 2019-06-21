@@ -149,3 +149,4 @@ request:
   timeout: 3000
   # reset the circuit after this timeout in millisecond
   resetTimeout: 7000
+  injectOpenTracing: false
