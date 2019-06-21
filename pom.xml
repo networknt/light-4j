@@ -110,6 +110,7 @@
         <version.maven-gpg>1.6</version.maven-gpg>
         <version.testcontainers>1.8.0</version.testcontainers>
         <version.jaeger>0.35.2</version.jaeger>
+        <version.opentracing>0.32.0</version.opentracing>
         <skip.unit.tests>false</skip.unit.tests>
         <matched.test.resources>**/*</matched.test.resources>
         <version.javadoc-packagelist-plugin>1.0.0</version.javadoc-packagelist-plugin>
@@ -373,6 +374,11 @@
                 <artifactId>server</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>jaeger-tracing</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <!-- External dependencies -->
 
             <dependency>
@@ -536,6 +542,12 @@
                 <artifactId>jaeger-client</artifactId>
                 <version>${version.jaeger}</version>
             </dependency>
+            <dependency>
+                <groupId>io.opentracing</groupId>
+                <artifactId>opentracing-api</artifactId>
+                <version>${version.opentracing}</version>
+            </dependency>
+
             <!-- Test dependencies -->
             <dependency>
                 <groupId>junit</groupId>

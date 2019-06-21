@@ -48,6 +48,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
+import com.networknt.httpstring.AttachmentConstants;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
@@ -408,10 +409,16 @@ public class Http2Client {
      * @return Result
      */
     public Result propagateHeaders(ClientRequest request, final HttpServerExchange exchange) {
-        String tid = exchange.getRequestHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
         String token = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
-        String cid = exchange.getRequestHeaders().getFirst(HttpStringConstants.CORRELATION_ID);
-        return populateHeader(request, token, cid, tid);
+        boolean injectOpenTracing = ClientConfig.get().isInjectOpenTracing();
+        if(injectOpenTracing) {
+            Tracer tracer = exchange.getAttachment(AttachmentConstants.EXCHANGE_TRACER);
+            return populateHeader(request, token, tracer);
+        } else {
+            String tid = exchange.getRequestHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
+            String cid = exchange.getRequestHeaders().getFirst(HttpStringConstants.CORRELATION_ID);
+            return populateHeader(request, token, cid, tid);
+        }
     }
 
     /**

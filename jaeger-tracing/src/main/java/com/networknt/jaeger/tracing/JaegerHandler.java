@@ -28,12 +28,10 @@ import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMap;
 import io.opentracing.propagation.TextMapAdapter;
-import io.opentracing.propagation.TextMapExtractAdapter;
 import io.opentracing.tag.Tags;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.AttachmentKey;
 import io.undertow.util.HeaderMap;
 import io.undertow.util.HttpString;
 import org.slf4j.Logger;
@@ -41,8 +39,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
+import static com.networknt.httpstring.AttachmentConstants.ROOT_SPAN;
+import static com.networknt.httpstring.AttachmentConstants.EXCHANGE_TRACER;
 import static com.networknt.jaeger.tracing.JaegerStartupHookProvider.tracer;
 
 /**
@@ -55,8 +54,6 @@ public class JaegerHandler implements MiddlewareHandler {
 
     static JaegerConfig jaegerConfig = (JaegerConfig) Config.getInstance().getJsonObjectConfig(JaegerConfig.CONFIG_NAME, JaegerConfig.class);
 
-    // The key to the root span for this particular request attachment in exchange.
-    public static final AttachmentKey<Span> ROOT_SPAN = AttachmentKey.create(Span.class);
 
     private volatile HttpHandler next;
 
@@ -101,8 +98,11 @@ public class JaegerHandler implements MiddlewareHandler {
             spanBuilder = tracer.buildSpan(endpoint);
         }
         Span rootSpan = spanBuilder.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER).start();
+        tracer.activateSpan(rootSpan);
         // This can be retrieved in the business handler to add tags and logs for tracing.
         exchange.putAttachment(ROOT_SPAN, rootSpan);
+        // The client module can use this to inject tracer.
+        exchange.putAttachment(EXCHANGE_TRACER, tracer);
 
         // add an exchange complete listener to close the Root Span for the request.
         exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
