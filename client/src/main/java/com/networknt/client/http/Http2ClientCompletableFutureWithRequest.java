@@ -29,6 +29,9 @@ public class Http2ClientCompletableFutureWithRequest extends CompletableFuture<C
                 new StringReadChannelListener(com.networknt.client.Http2Client.BUFFER_POOL) {
                     @Override
                     protected void stringDone(String string) {
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Service call response = {}", string);
+                        }
                         result.getResponse().putAttachment(com.networknt.client.Http2Client.RESPONSE_BODY, string);
                         complete(result.getResponse());
                     }

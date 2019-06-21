@@ -28,6 +28,7 @@ import com.networknt.registry.URLImpl;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.switcher.SwitcherUtil;
 import com.networknt.utility.Constants;
+import com.networknt.utility.TlsUtil;
 import com.networknt.utility.Util;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
@@ -39,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.xnio.Options;
+import org.xnio.Sequence;
 import org.xnio.SslClientAuthMode;
 
 import javax.net.ssl.*;
@@ -114,7 +116,7 @@ public class Server {
             logger.error("Server is not operational! Failed with exception", e);
 
             // send a graceful system shutdown
-            System.exit(1);
+//            System.exit(1);
         }
     }
 
@@ -252,6 +254,8 @@ public class Server {
                     .setServerOption(UndertowOptions.ALWAYS_SET_DATE, serverConfig.isAlwaysSetDate())
                     .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, false)
                     .setServerOption(UndertowOptions.ALLOW_UNESCAPED_CHARACTERS_IN_URL, serverConfig.isAllowUnescapedCharactersInUrl())
+                    // This is to overcome a bug in JDK 11.0.1, 11.0.2. For more info https://issues.jboss.org/browse/UNDERTOW-1422
+                    .setSocketOption(Options.SSL_ENABLED_PROTOCOLS, Sequence.of("TLSv1.2"))
                     .setHandler(Handlers.header(handler, Headers.SERVER_STRING, serverConfig.getServerString())).setWorkerThreads(serverConfig.getWorkerThreads()).build();
 
             server.start();
@@ -355,32 +359,20 @@ public class Server {
         });
     }
 
-    private static KeyStore loadKeyStore() {
+    protected static KeyStore loadKeyStore() {
         Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
 
         String name = getServerConfig().getKeystoreName();
-        try (InputStream stream = Config.getInstance().getInputStreamFromFile(name)) {
-            KeyStore loadedKeystore = KeyStore.getInstance("JKS");
-            loadedKeystore.load(stream, ((String) secretConfig.get(SecretConstants.SERVER_KEYSTORE_PASS)).toCharArray());
-            return loadedKeystore;
-        } catch (Exception e) {
-            logger.error("Unable to load keystore " + name, e);
-            throw new RuntimeException("Unable to load keystore " + name, e);
-        }
+        char[] password = ((String) secretConfig.get(SecretConstants.SERVER_KEYSTORE_PASS)).toCharArray();
+        return TlsUtil.loadKeyStore(name, password);
     }
 
     protected static KeyStore loadTrustStore() {
         Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
 
         String name = getServerConfig().getTruststoreName();
-        try (InputStream stream = Config.getInstance().getInputStreamFromFile(name)) {
-            KeyStore loadedKeystore = KeyStore.getInstance("JKS");
-            loadedKeystore.load(stream, ((String) secretConfig.get(SecretConstants.SERVER_TRUSTSTORE_PASS)).toCharArray());
-            return loadedKeystore;
-        } catch (Exception e) {
-            logger.error("Unable to load truststore " + name, e);
-            throw new RuntimeException("Unable to load truststore " + name, e);
-        }
+        char[] password = ((String) secretConfig.get(SecretConstants.SERVER_TRUSTSTORE_PASS)).toCharArray();
+        return TlsUtil.loadTrustStore(name, password);
     }
 
     private static TrustManager[] buildTrustManagers(final KeyStore trustStore) {
@@ -396,7 +388,7 @@ public class Server {
                 throw new RuntimeException("Unable to initialise TrustManager[]", e);
             }
         } else {
-            logger.warn("Unable to find server truststore while Mutual TLS is enabled. Falling back to trust all certs.");
+            // Mutual Tls is disabled, trust all the certs
             trustManagers = TRUST_ALL_CERTS;
         }
         return trustManagers;

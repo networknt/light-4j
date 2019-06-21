@@ -138,8 +138,8 @@ public class ClientX509ExtendedTrustManager extends X509ExtendedTrustManager imp
 	 * 
 	 * Notes: this method should only be applied to verify server certificates on the client side.
 	 * 
-	 * @param cert
-	 * @throws CertificateException
+	 * @param cert X509Certificate
+	 * @throws CertificateException CertificateException
 	 */
 	private void doCustomServerIdentityCheck(X509Certificate cert) throws CertificateException{
 		if (EndpointIdentificationAlgorithm.APIS == identityAlg) {

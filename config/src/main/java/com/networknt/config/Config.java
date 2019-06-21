@@ -22,7 +22,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
@@ -61,7 +60,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public abstract class Config {
     public static final String LIGHT_4J_CONFIG_DIR = "light-4j-config-dir";
-    public static final String CENTRALIZED_MANAGEMENT = "values";
 
     protected Config() {
     }
@@ -93,6 +91,8 @@ public abstract class Config {
     public abstract Yaml getYaml();
 
     public abstract void clear();
+
+    public abstract void setClassLoader(ClassLoader urlClassLoader);
 
     public abstract void putInConfigCache(String configName, Object config);
 
@@ -180,6 +180,8 @@ public abstract class Config {
         	return DecryptConstructor.DEFAULT_DECRYPTOR_CLASS;
         }
 
+        private ClassLoader classLoader;
+
         private static Config initialize() {
             Iterator<Config> it;
             it = ServiceLoader.load(Config.class).iterator();
@@ -203,7 +205,16 @@ public abstract class Config {
         }
 
         @Override
-        public void putInConfigCache(String configName, Object config){
+        public void setClassLoader(ClassLoader classLoader) {
+            this.classLoader = classLoader;
+        }
+        private ClassLoader getClassLoader() {
+            if (this.classLoader != null) {
+                return this.classLoader;
+            }
+            return getClass().getClassLoader();
+        }
+        public void putInConfigCache(String configName, Object config) {
             configCache.put(configName,config);
         }
 
@@ -406,14 +417,14 @@ public abstract class Config {
             if (logger.isInfoEnabled()) {
                 logger.info("Trying to load config from classpath directory for file " + Encode.forJava(configFilename));
             }
-            inStream = getClass().getClassLoader().getResourceAsStream(configFilename);
+            inStream = this.getClassLoader().getResourceAsStream(configFilename);
             if (inStream != null) {
                 if (logger.isInfoEnabled()) {
                     logger.info("config loaded from classpath for " + Encode.forJava(configFilename));
                 }
                 return inStream;
             }
-            inStream = getClass().getClassLoader().getResourceAsStream("config/" + configFilename);
+            inStream = this.getClassLoader().getResourceAsStream("config/" + configFilename);
             if (inStream != null) {
                 if (logger.isInfoEnabled()) {
                     logger.info("Config loaded from default folder for " + Encode.forJava(configFilename));
@@ -424,7 +435,7 @@ public abstract class Config {
                 logger.info("Unable to load config " + Encode.forJava(configFilename) + ". Looking for the same file name with extension yaml...");
             } else if (configFilename.endsWith(CONFIG_EXT_YAML)) {
                 logger.info("Unable to load config " + Encode.forJava(configFilename) + ". Looking for the same file name with extension json...");
-            } else {
+            } else if (configFilename.endsWith(CONFIG_EXT_JSON)) {
                 System.out.println("Unable to load config '" + Encode.forJava(configFilename.substring(0, configFilename.indexOf("."))) + "' with extension yml, yaml and json from external config, application config and module config. Please ignore this message if you are sure that your application is not using this config file.");
             }
             return null;
