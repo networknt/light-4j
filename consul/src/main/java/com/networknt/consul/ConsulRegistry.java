@@ -320,9 +320,13 @@ public class ConsulRegistry extends CommandFailbackRegistry {
         return (ConsulConfig)Config.getInstance().getJsonObjectConfig(ConsulConstants.CONFIG_NAME, ConsulConfig.class);
     }
 
-    private String getConsulToken(){
-        Map<String, Object> secret = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
-        String token = secret == null? null : (String)secret.get(SecretConstants.CONSUL_TOKEN);
+    private String getConsulToken() {
+        ConsulConfig consulConfig = getConsulConfig();
+        String token = consulConfig.getConsulToken();
+        if(token == null) {
+            Map<String, Object> secret = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
+            token = secret == null? null : (String)secret.get(SecretConstants.CONSUL_TOKEN);
+        }
         return token;
     }
 
