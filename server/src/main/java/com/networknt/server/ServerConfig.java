@@ -30,10 +30,14 @@ public class ServerConfig {
     boolean enableHttps;
     boolean enableHttp2;
     String keystoreName;
+    String keystorePass;
+    String keyPass;
     boolean enableTwoWayTls;
     String truststoreName;
+    String truststorePass;
     boolean enableRegistry;
     String serviceId;
+    String serviceName;    
     String environment;
     String buildNumber;
     boolean dynamicPort;
@@ -47,7 +51,7 @@ public class ServerConfig {
     boolean allowUnescapedCharactersInUrl;
     String serverString;
 
-    public ServerConfig() {
+	public ServerConfig() {
     }
 
     public String getIp() {
@@ -126,6 +130,30 @@ public class ServerConfig {
         this.truststoreName = truststoreName;
     }
 
+    public String getKeystorePass() {
+        return keystorePass;
+    }
+
+    public void setKeystorePass(String keystorePass) {
+        this.keystorePass = keystorePass;
+    }
+
+    public String getKeyPass() {
+        return keyPass;
+    }
+
+    public void setKeyPass(String keyPass) {
+        this.keyPass = keyPass;
+    }
+
+    public String getTruststorePass() {
+        return truststorePass;
+    }
+
+    public void setTruststorePass(String truststorePass) {
+        this.truststorePass = truststorePass;
+    }
+
     public boolean isEnableTwoWayTls() {
         return enableTwoWayTls;
     }
@@ -150,6 +178,14 @@ public class ServerConfig {
         this.serviceId = serviceId;
     }
 
+    public String getServiceName() {
+		return serviceName;
+	}
+
+	public void setServiceName(String serviceName) {
+		this.serviceName = serviceName;
+	}   
+	
     public boolean isEnableHttp2() {
         return enableHttp2;
     }
@@ -252,5 +288,5 @@ public class ServerConfig {
 
     public void setAllowUnescapedCharactersInUrl(boolean allowUnescapedCharactersInUrl) {
         this.allowUnescapedCharactersInUrl = allowUnescapedCharactersInUrl;
-    }
+    }    
 }

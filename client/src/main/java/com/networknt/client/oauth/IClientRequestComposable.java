@@ -9,14 +9,14 @@ import io.undertow.client.ClientRequest;
 public interface IClientRequestComposable {
     /**
      * compose an actual ClientRequest based on the given TokenRequest model.
-     * @param tokenRequest
+     * @param tokenRequest token request
      * @return ClientRequest
      */
     ClientRequest composeClientRequest(TokenRequest tokenRequest);
 
     /**
      * compose an actual request body based on the given TokenRequest model.
-     * @param tokenRequest
+     * @param tokenRequest token request
      * @return String
      */
     String composeRequestBody(TokenRequest tokenRequest);

@@ -29,9 +29,8 @@ public class DerefRequest {
     public static String SERVICE_ID = "serviceId";
     public static String URI = "uri";
     public static String CLIENT_ID = "client_id";
+    public static String CLIENT_SECRET = "client_secret";
     public static String ENABLE_HTTP2 = "enableHttp2";
-
-    static Map<String, Object> secret = (Map<String, Object>)Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
 
     String serverUrl;
     String serviceId;
@@ -42,7 +41,6 @@ public class DerefRequest {
 
     public DerefRequest(String token) {
         Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
-        // client_secret is in secret.yml instead of client.yml
         if(clientConfig != null) {
             Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OAUTH);
             if(oauthConfig != null) {
@@ -54,7 +52,13 @@ public class DerefRequest {
                     setEnableHttp2(object != null && (Boolean) object);
                     setUri(derefConfig.get(URI) + "/" + token);
                     setClientId((String)derefConfig.get(CLIENT_ID));
-                    setClientSecret((String)secret.get(SecretConstants.DEREF_CLIENT_SECRET));
+                    // load client secret from client.yml and fallback to secret.yml
+                    if(derefConfig.get(CLIENT_SECRET) != null) {
+                        setClientSecret((String)derefConfig.get(CLIENT_SECRET));
+                    } else {
+                        Map<String, Object> secret = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
+                        setClientSecret((String)secret.get(SecretConstants.DEREF_CLIENT_SECRET));
+                    }
                 }
             }
         }

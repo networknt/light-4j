@@ -18,6 +18,7 @@ package com.networknt.consul;
 
 public class ConsulConfig {
     String consulUrl;
+    String consulToken;
     int maxReqPerConn;
     String deregisterAfter;
     //the time period that consul determines health status of the server.
@@ -25,6 +26,7 @@ public class ConsulConfig {
     boolean tcpCheck;
     boolean httpCheck;
     boolean ttlCheck;
+    boolean enableHttp2;
     String wait;
 
     public String getConsulUrl() {
@@ -33,6 +35,14 @@ public class ConsulConfig {
 
     public void setConsulUrl(String consulUrl) {
         this.consulUrl = consulUrl;
+    }
+
+    public String getConsulToken() {
+        return consulToken;
+    }
+
+    public void setConsulToken(String consulToken) {
+        this.consulToken = consulToken;
     }
 
     public int getMaxReqPerConn() { return maxReqPerConn; }
@@ -84,5 +94,13 @@ public class ConsulConfig {
 
     public void setWait(String wait) {
         this.wait = wait;
+    }
+
+    public boolean isEnableHttp2() {
+        return enableHttp2;
+    }
+
+    public void setEnableHttp2(boolean enableHttp2) {
+        this.enableHttp2 = enableHttp2;
     }
 }

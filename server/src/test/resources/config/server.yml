@@ -25,14 +25,27 @@ enableHttp2: true
 # Keystore file name in config folder. KeystorePass is in secret.yml to access it.
 keystoreName: server.keystore
 
+# Keystore password
+keystorePass: password
+
+# Private key password
+keyPass: password
+
 # Flag that indicate if two way TLS is enabled. Not recommended in docker container.
 enableTwoWayTls: false
 
 # Truststore file name in config folder. TruststorePass is in secret.yml to access it.
 truststoreName: server.truststore
 
+# Truststore password
+truststorePass: password
+
 # Unique service identifier. Used in service registration and discovery etc.
 serviceId: com.networknt.petstore-1.0.0
+
+# Unique service name. Used in microservices to associate a given name to a service with configuration 
+# or as a key within the configuration of a particular domain
+serviceName: petstore 
 
 # Flag to enable self service registration. This should be turned on on official test and production. And
 # dyanmicPort should be enabled if any orchestration tool is used like Kubernetes.

@@ -80,6 +80,7 @@ public class Util {
     /**
      * Get InetAddress
      * @return The InetAddress object
+     * @deprecated
      */
     public static InetAddress getInetAddress() {
         InetAddress inetAddress = null;

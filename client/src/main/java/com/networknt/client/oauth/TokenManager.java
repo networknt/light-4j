@@ -98,8 +98,8 @@ public class TokenManager {
      * get a Jwt with a provided clientRequest,
      * it will get token based on Jwt.Key (either scope or service_id)
      * if the user declared both scope and service_id in header, it will get jwt based on scope
-     * @param clientRequest
-     * @return
+     * @param clientRequest client request
+     * @return Result
      */
     public Result<Jwt> getJwt(ClientRequest clientRequest) {
         HeaderValues scope = clientRequest.getRequestHeaders().get(OauthHelper.SCOPE);

@@ -1,0 +1,22 @@
+---
+# singleton service factory configuration
+singletons:
+  - com.networknt.registry.URL:
+      - com.networknt.registry.URLImpl:
+          protocol: http
+          host: localhost
+          port: ${container.port}
+          path: ''
+          parameters:
+            registryRetryPeriod: '30000'
+  - com.networknt.consul.client.ConsulClient:
+      - com.networknt.consul.client.ConsulClientImpl:
+          - java.lang.String: http
+          - java.lang.String: localhost
+          - int: ${container.port}
+  - com.networknt.registry.Registry:
+      - com.networknt.consul.ConsulRegistry
+  - com.networknt.balance.LoadBalance:
+      - com.networknt.balance.RoundRobinLoadBalance
+  - com.networknt.cluster.Cluster:
+      - com.networknt.cluster.LightCluster
