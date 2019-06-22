@@ -1,4 +1,4 @@
-package com.networknt.sanitizer;
+package com.networknt.sanitizer.builder;
 
 import com.networknt.body.BodyHandler;
 import com.networknt.config.Config;

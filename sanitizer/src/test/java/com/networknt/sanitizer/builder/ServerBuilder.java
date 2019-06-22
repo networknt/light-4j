@@ -1,6 +1,7 @@
-package com.networknt.sanitizer;
+package com.networknt.sanitizer.builder;
 
 import com.networknt.body.BodyHandler;
+import com.networknt.sanitizer.SanitizerHandler;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 

@@ -11,6 +11,6 @@ public class FakeEncoding implements Encoding {
 
     @Override
     public String apply(String data) {
-        return null;
+        return data.replace("alert", "example");
     }
 }

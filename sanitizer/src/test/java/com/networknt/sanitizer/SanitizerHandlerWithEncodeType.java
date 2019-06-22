@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
+import com.networknt.sanitizer.builder.ServerBuilder;
 import com.networknt.sanitizer.enconding.EncoderRegistry;
 import com.networknt.sanitizer.enconding.Encoding;
 import io.undertow.Undertow;
@@ -36,7 +37,7 @@ public class SanitizerHandlerWithEncodeType {
 
     @BeforeClass
     public static void setUp() {
-        EncoderRegistry.registry(new ExampleEncode());
+        EncoderRegistry.registry(new FakeEncoding());
 
         if(server == null) {
             LOGGER.info("starting server");
@@ -98,19 +99,6 @@ public class SanitizerHandlerWithEncodeType {
             Assert.assertNotNull(body);
             Map map = Config.getInstance().getMapper().readValue(body, new TypeReference<HashMap<String, Object>>() {});
             Assert.assertEquals("<script>example('test')</script>", map.get("key"));
-        }
-    }
-
-    static class ExampleEncode implements Encoding {
-
-        @Override
-        public String getId() {
-            return "example";
-        }
-
-        @Override
-        public String apply(String data) {
-            return data.replace("alert", "example");
         }
     }
 }
