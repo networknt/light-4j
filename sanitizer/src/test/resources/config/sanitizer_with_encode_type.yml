@@ -10,6 +10,4 @@ sanitizeBody: true
 # if it is enabled, does header need to be sanitized
 sanitizeHeader: true
 
-encoding: 'default'
-
-attributesToAppreciate: ['key']
+encoding: 'example'

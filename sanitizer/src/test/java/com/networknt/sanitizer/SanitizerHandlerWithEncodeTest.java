@@ -26,9 +26,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class SanitizerHandlerWithAppreciateTest {
+public class SanitizerHandlerWithEncodeTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SanitizerHandlerWithAppreciateTest.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SanitizerHandlerWithEncodeTest.class);
 
     private static Undertow server = null;
 
@@ -36,7 +36,7 @@ public class SanitizerHandlerWithAppreciateTest {
     public static void setUp() {
         if(server == null) {
             LOGGER.info("starting server");
-            server = ServerBuilder.newServer().withConfigName("sanitizer_with_appreciate").build();
+            server = ServerBuilder.newServer().withConfigName("sanitizer_with_encode").build();
             server.start();
         }
     }

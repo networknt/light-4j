@@ -46,13 +46,13 @@ public class SanitizerHandler implements MiddlewareHandler {
 
     public SanitizerHandler() {
         config = (SanitizerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, SanitizerConfig.class);
-        encoding = new Encoder(config.getEncoding(), config.getAttributesToIgnore(), config.getAttributesToAppreciate());
+        encoding = new Encoder(config.getEncoding(), config.getAttributesToIgnore(), config.getAttributesToEncode());
     }
 
     // integration test purpose
     public SanitizerHandler(String configName) {
         config = (SanitizerConfig) Config.getInstance().getJsonObjectConfig(configName, SanitizerConfig.class);
-        encoding = new Encoder(config.getEncoding(), config.getAttributesToIgnore(), config.getAttributesToAppreciate());
+        encoding = new Encoder(config.getEncoding(), config.getAttributesToIgnore(), config.getAttributesToEncode());
     }
 
     @Override
