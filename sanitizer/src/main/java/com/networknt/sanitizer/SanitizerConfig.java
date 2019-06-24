@@ -16,18 +16,23 @@
 
 package com.networknt.sanitizer;
 
+import com.networknt.sanitizer.enconding.Encoding;
+import com.networknt.sanitizer.enconding.EncodingStrategy;
+
+import java.util.List;
+
 /**
  * Sanitizer configuration class
  *
  * @author Steve Hu
  */
 public class SanitizerConfig {
-    boolean enabled;
-    boolean sanitizeBody;
-    boolean sanitizeHeader;
-
-    public SanitizerConfig() {
-    }
+    private boolean enabled;
+    private boolean sanitizeBody;
+    private boolean sanitizeHeader;
+    private List<String> attributesToIgnore;
+    private List<String> attributesToEncode;
+    private String encoding;
 
     public boolean isEnabled() {
         return enabled;
@@ -53,4 +58,27 @@ public class SanitizerConfig {
         this.sanitizeHeader = sanitizeHeader;
     }
 
+    public Encoding getEncoding() {
+        return EncodingStrategy.of(encoding);
+    }
+
+    public void setEncoding(String encoding) {
+        this.encoding = encoding;
+    }
+
+    public List<String> getAttributesToIgnore() {
+        return attributesToIgnore;
+    }
+
+    public void setAttributesToIgnore(List<String> attributesToIgnore) {
+        this.attributesToIgnore = attributesToIgnore;
+    }
+
+    public List<String> getAttributesToEncode() {
+        return attributesToEncode;
+    }
+
+    public void setAttributesToEncode(List<String> attributesToEncode) {
+        this.attributesToEncode = attributesToEncode;
+    }
 }
