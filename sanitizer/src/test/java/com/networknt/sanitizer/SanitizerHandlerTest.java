@@ -17,15 +17,12 @@
 package com.networknt.sanitizer;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.networknt.body.BodyHandler;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
-import io.undertow.Handlers;
+import com.networknt.sanitizer.builder.ServerBuilder;
 import io.undertow.Undertow;
 import io.undertow.client.*;
-import io.undertow.server.HttpHandler;
-import io.undertow.server.RoutingHandler;
 import io.undertow.util.*;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -39,7 +36,6 @@ import org.xnio.OptionMap;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -59,26 +55,13 @@ public class SanitizerHandlerTest {
     public static void setUp() {
         if(server == null) {
             logger.info("starting server");
-            HttpHandler handler = getTestHandler();
-
-            SanitizerHandler sanitizerHandler = new SanitizerHandler();
-            sanitizerHandler.setNext(handler);
-            handler = sanitizerHandler;
-
-            BodyHandler bodyHandler = new BodyHandler();
-            bodyHandler.setNext(handler);
-            handler = bodyHandler;
-
-            server = Undertow.builder()
-                    .addHttpListener(8080, "localhost")
-                    .setHandler(handler)
-                    .build();
+            server = ServerBuilder.newServer().build();
             server.start();
         }
     }
 
     @AfterClass
-    public static void tearDown() throws Exception {
+    public static void tearDown() {
         if(server != null) {
             try {
                 Thread.sleep(100);
@@ -88,34 +71,6 @@ public class SanitizerHandlerTest {
             server.stop();
             logger.info("The server is stopped.");
         }
-    }
-
-    static RoutingHandler getTestHandler() {
-        return Handlers.routing()
-                .add(Methods.GET, "/parameter", exchange -> {
-                    Map<String, Deque<String>> parameter = exchange.getQueryParameters();
-                    if(parameter != null) {
-                        exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(parameter));
-                    }
-                })
-                .add(Methods.GET, "/header", exchange -> {
-                    HeaderMap headerMap = exchange.getRequestHeaders();
-                    if(headerMap != null) {
-                        exchange.getResponseSender().send(headerMap.toString());
-                    }
-                })
-                .add(Methods.POST, "/body", exchange -> {
-                    Object body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
-                    if(body != null) {
-                        exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(body));
-                    }
-                })
-                .add(Methods.POST, "/header", exchange -> {
-                    HeaderMap headerMap = exchange.getRequestHeaders();
-                    if(headerMap != null) {
-                        exchange.getResponseSender().send(headerMap.toString());
-                    }
-                });
     }
 
     @Test
@@ -236,7 +191,7 @@ public class SanitizerHandlerTest {
         String data = "{\"s1\":\"<script>alert('test1')</script>\",\"s2\":[\"abc\",\"<script>alert('test2')</script>\"],\"s3\":{\"s4\":\"def\",\"s5\":\"<script>alert('test5')</script>\"},\"s6\":[{\"s7\":\"<script>alert('test7')</script>\"},{\"s8\":\"ghi\"}],\"s9\":[[\"<script>alert('test9')</script>\"],[\"jkl\"]]}";
         HashMap<String, Object> jsonMap = Config.getInstance().getMapper().readValue(data,new TypeReference<HashMap<String, Object>>(){});
         SanitizerHandler handler = new SanitizerHandler();
-        handler.encodeNode(jsonMap);
+        handler.encoding.encodeNode(jsonMap);
         Assert.assertEquals(jsonMap.get("s1"), "<script>alert(\\'test1\\')</script>");
         ArrayList l2 = (ArrayList)jsonMap.get("s2");
         String s2 = (String)l2.get(1);
@@ -260,8 +215,6 @@ public class SanitizerHandlerTest {
         String s2 = "text/html";
         Assert.assertEquals(Encode.forJavaScriptSource(s1), s1);
         Assert.assertEquals(Encode.forJavaScriptSource(s2), s2);
-        //Assert.assertEquals(Encode.forJavaScriptBlock(s1), s1);
-        //Assert.assertEquals(Encode.forJavaScriptBlock(s2), s2);
 
         String s3 = "<script>alert('test')</script>";
         String e3 = Encode.forJavaScriptSource(s3);

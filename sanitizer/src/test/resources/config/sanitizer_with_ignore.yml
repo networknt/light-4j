@@ -11,3 +11,5 @@ sanitizeBody: true
 sanitizeHeader: true
 
 encoding: 'default'
+
+attributesToIgnore: ['key']
