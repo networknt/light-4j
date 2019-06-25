@@ -3,3 +3,6 @@
 
 # If metrics handler is enabled or not
 enabled: false
+# If the Prometheus hotspot is enabled or not.
+# hotspot include thread, memory, classloader,...
+enableHotspot: false
