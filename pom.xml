@@ -162,6 +162,7 @@
         <module>monad-result</module>
         <module>logger-config</module>
         <module>jaeger-tracing</module>
+        <module>acme-client</module>
     </modules>
 
     <dependencyManagement>
@@ -377,6 +378,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>jaeger-tracing</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>acme-client</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <!-- External dependencies -->
