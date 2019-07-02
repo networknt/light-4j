@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  */
 public class PrometheusConfig {
     boolean enabled;
+    boolean enableHotspot;
 
 
 
@@ -43,7 +44,13 @@ public class PrometheusConfig {
         this.enabled = enabled;
     }
 
+    public boolean isEnableHotspot() {
+        return enableHotspot;
+    }
 
+    public void setEnableHotspot(boolean enableHotspot) {
+        this.enableHotspot = enableHotspot;
+    }
 
     public String getDescription() {
         return description;
