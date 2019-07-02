@@ -87,7 +87,7 @@
         <version.curator>4.0.1</version.curator>
         <version.snakeyaml>1.20</version.snakeyaml>
         <version.caffeine>2.6.2</version.caffeine>
-        <version.prometheus>0.3.0</version.prometheus>
+        <version.prometheus>0.6.0</version.prometheus>
         <version.javamail>1.6.1</version.javamail>
         <version.hikaricp>3.2.0</version.hikaricp>
         <version.h2>1.4.196</version.h2>
@@ -480,6 +480,11 @@
             <dependency>
                 <groupId>io.prometheus</groupId>
                 <artifactId>simpleclient_common</artifactId>
+                <version>${version.prometheus}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.prometheus</groupId>
+                <artifactId>simpleclient_hotspot</artifactId>
                 <version>${version.prometheus}</version>
             </dependency>
             <dependency>
