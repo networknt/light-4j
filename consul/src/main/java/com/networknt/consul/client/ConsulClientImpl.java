@@ -299,6 +299,7 @@ public class ConsulClientImpl implements ConsulClient {
 			if(StringUtils.isBlank(json)) {
 				connection.sendRequest(request, client.createClientCallback(reference, latch));
 			} else {
+                request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
 				connection.sendRequest(request, client.createClientCallback(reference, latch, json));
 			}
 
