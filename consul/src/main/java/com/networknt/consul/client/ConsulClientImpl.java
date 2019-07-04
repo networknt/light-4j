@@ -85,7 +85,6 @@ public class ConsulClientImpl implements ConsulClient {
 	 * just for backward compatibility.
 	 */
 	public ConsulClientImpl() {
-		// Will use http/2 connection if tls is enabled as Consul only support HTTP/2 with TLS.
 		String consulUrl = config.getConsulUrl().toLowerCase();
 		optionMap =  config.isEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY;
 		logger.debug("url = {}", consulUrl);
@@ -321,7 +320,8 @@ public class ConsulClientImpl implements ConsulClient {
 			} catch (IOException e) {
 				logger.error("cannot create connection to consul {} due to: {}", uri, e.getMessage());
 			}
-
+			//whenever init/reconnect, reset request to 0
+			reqCounter.set(0);
 			return newConnection;
 		}
 	}
