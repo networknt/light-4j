@@ -236,7 +236,8 @@ public class ConsulClientImpl implements ConsulClient {
 	 */
 	private ConsulConnection getConnection(String cacheKey) {
 		//the case when enable http2 support use the class level ConsulConnection
-		if(config.isEnableHttp2()) {
+        // will use http/2 connection only if tls is enabled as Consul only support HTTP/2 with TLS.
+		if(config.isEnableHttp2() && config.getConsulUrl().toLowerCase().startsWith("https")) {
 			return this.http2Connection;
 		} else {
 			ConsulConnection cachedConsulConnection = connectionPool.get(cacheKey);
