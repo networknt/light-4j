@@ -5,12 +5,15 @@ import java.util.Map;
 public class TestConfigLoader implements ConfigLoader {
     private final static String APPLICATION_CONFIG = "application";
 
-    private Map<String, Object> applicationConfigMap = Config.getInstance().getDefaultJsonMapConfig(APPLICATION_CONFIG);
+    private Map<String, Object> applicationConfigMap;
 
     @Override
     public Map<String, Object> loadMapConfig(String configName, String path) {
+        if (applicationConfigMap == null) {
+            applicationConfigMap = Config.getInstance().getDefaultJsonMapConfig(APPLICATION_CONFIG, path);
+        }
         Map<String, Object> mapConfig = (Map<String, Object>) applicationConfigMap.get(configName);
-        Map<String, Object> defaultConfig = Config.getInstance().getDefaultJsonMapConfig(configName, path);
+        Map<String, Object> defaultConfig = Config.getInstance().getDefaultJsonMapConfigNoCache(configName, path);
         if (defaultConfig != null && mapConfig != null) {
             defaultConfig.putAll(mapConfig);
         }

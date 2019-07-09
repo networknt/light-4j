@@ -218,6 +218,14 @@ public abstract class Config {
             return getConfigStream(filename, "");
         }
 
+        /**
+         * Method used to load the configuration file as a given Object based on the config loader class configured in config.yml and cache it.
+         * If no config loader is configured, file will be loaded by default loading method.
+         * @param configName    The name of the config file, without an extension
+         * @param clazz         The class that the object will be deserialized into
+         * @param path          The relative directory or absolute directory that config will be loaded from
+         * @return An instance of the object if possible, null otherwise. IOExceptions smothered.
+         */
         @Override
         public Object getJsonObjectConfig(String configName, Class clazz, String path) {
             Object config = configCache.get(configName);
@@ -233,6 +241,13 @@ public abstract class Config {
             return config;
         }
 
+        /**
+         * Method used to load the configuration file as a given Object by using default loading method and cache it.
+         * @param configName    The name of the config file, without an extension
+         * @param clazz         The class that the object will be deserialized into
+         * @param path          The relative directory or absolute directory that config will be loaded from
+         * @return An instance of the object if possible, null otherwise. IOExceptions smothered.
+         */
         @Override
         public Object getDefaultJsonObjectConfig(String configName, Class clazz, String path) {
             Object config = configCache.get(configName);
@@ -248,16 +263,36 @@ public abstract class Config {
             return config;
         }
 
+        /**
+         * Method used to load the configuration file as a given Object based on the config loader class configured in config.yml and cache it.
+         * If no config loader is configured, file will be loaded by default loading method.
+         * @param configName    The name of the config file, without an extension
+         * @param clazz         The class that the object will be deserialized into
+         * @return An instance of the object if possible, null otherwise. IOExceptions smothered.
+         */
         @Override
         public Object getJsonObjectConfig(String configName, Class clazz) {
             return getJsonObjectConfig(configName, clazz, "");
         }
 
+        /**
+         * Method used to load the configuration file as a given Object by using default loading method and cache it.
+         * @param configName    The name of the config file, without an extension
+         * @param clazz         The class that the object will be deserialized into
+         * @return An instance of the object if possible, null otherwise. IOExceptions smothered.
+         */
         @Override
         public Object getDefaultJsonObjectConfig(String configName, Class clazz) {
             return getDefaultJsonObjectConfig(configName, clazz, "");
         }
 
+        /**
+         * Method used to load the configuration file as a map based on the config loader class configured in config.yml and cache it.
+         * If no config loader is configured, file will be loaded by default loading method.
+         * @param configName    The name of the config file, without an extension
+         * @param path          The relative directory or absolute directory that config will be loaded from
+         * @return A map of the config fields if possible, null otherwise. IOExceptions smothered.
+         */
         @Override
         public Map<String, Object> getJsonMapConfig(String configName, String path) {
             Map<String, Object> config = (Map<String, Object>) configCache.get(configName);
@@ -273,6 +308,12 @@ public abstract class Config {
             return config;
         }
 
+        /**
+         * Method used to load the configuration file as a map by using default loading method and cache it.
+         * @param configName    The name of the config file, without an extension
+         * @param path          The relative directory or absolute directory that config will be loaded from
+         * @return A map of the config fields if possible, null otherwise. IOExceptions smothered.
+         */
         @Override
         public Map<String, Object> getDefaultJsonMapConfig(String configName, String path) {
             Map<String, Object> config = (Map<String, Object>) configCache.get(configName);
@@ -288,31 +329,66 @@ public abstract class Config {
             return config;
         }
 
+        /**
+         * Method used to load the configuration file as a map based on the config loader class configured in config.yml and cache it.
+         * If no config loader is configured, file will be loaded by default loading method.
+         * @param configName    The name of the config file, without an extension
+         * @return A map of the config fields if possible, null otherwise. IOExceptions smothered.
+         */
         @Override
         public Map<String, Object> getJsonMapConfig(String configName) {
             return getJsonMapConfig(configName, "");
         }
 
+        /**
+         * Method used to load the configuration file as a map by using default loading method and cache it.
+         * @param configName    The name of the config file, without an extension
+         * @return A map of the config fields if possible, null otherwise. IOExceptions smothered.
+         */
         @Override
         public Map<String, Object> getDefaultJsonMapConfig(String configName) {
             return getDefaultJsonMapConfig(configName, "");
         }
 
+        /**
+         * Method used to load the configuration file as a map based on the config loader class configured in config.yml without caching.
+         * If no config loader is configured, file will be loaded by default loading method.
+         * @param configName    The name of the config file, without an extension
+         * @param path          The relative directory or absolute directory that config will be loaded from
+         * @return A map of the config fields if possible, null otherwise. IOExceptions smothered.
+         */
         @Override
         public Map<String, Object> getJsonMapConfigNoCache(String configName, String path) {
             return loadJsonMapConfigWithSpecificConfigLoader(configName, path);
         }
 
+        /**
+         * Method used to load the configuration file as a map by using default loading method without caching.
+         * @param configName    The name of the config file, without an extension
+         * @param path          The relative directory or absolute directory that config will be loaded from
+         * @return A map of the config fields if possible, null otherwise. IOExceptions smothered.
+         */
         @Override
         public Map<String, Object> getDefaultJsonMapConfigNoCache(String configName, String path) {
             return loadMapConfig(configName, path);
         }
 
+        /**
+         * Method used to load the configuration file as a map based on the config loader class configured in config.yml without caching.
+         * If no config loader is configured, file will be loaded by default loading method.
+         * @param configName    The name of the config file, without an extension
+         * @return A map of the config fields if possible, null otherwise. IOExceptions smothered.
+         */
         @Override
         public Map<String, Object> getJsonMapConfigNoCache(String configName) {
             return getJsonMapConfigNoCache(configName, "");
         }
 
+        /**
+         * Method used to load the configuration file as a map by using default loading method without caching.
+         * @param configName    The name of the config file, without an extension
+         * @return A map of the config fields if possible, null otherwise. IOExceptions smothered.
+         */
         @Override
         public Map<String, Object> getDefaultJsonMapConfigNoCache(String configName) {
             return getDefaultJsonMapConfigNoCache(configName, "");

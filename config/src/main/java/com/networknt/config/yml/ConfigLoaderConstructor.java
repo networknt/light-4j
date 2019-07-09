@@ -5,6 +5,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.constructor.Constructor;
 
+/**
+ * This class is used to construct the config loader according to given config loader class name.
+ *
+ * @author Jiachen Sun
+ */
 public class ConfigLoaderConstructor extends Constructor {
     private static final Logger logger = LoggerFactory.getLogger(ConfigLoaderConstructor.class);
     public static final String CONFIG_LOADER_CLASS = "configLoaderClass";

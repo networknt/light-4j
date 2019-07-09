@@ -2,6 +2,7 @@ package com.networknt.config;
 
 import junit.framework.TestCase;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -11,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Ignore
 public class PluggableConfigLoaderTest extends TestCase {
 
     private Config config = null;
@@ -46,5 +48,11 @@ public class PluggableConfigLoaderTest extends TestCase {
     public void testGetMapConfigByPluggableConfigLoader() {
         Map<String, Object> map = Config.getInstance().getJsonMapConfig("consul");
         Assert.assertEquals(map.get("ttlCheck"), false);
+    }
+
+    @Test
+    public void testGetObjectConfigByPluggableConfigloader() {
+        TestConsulConfig config = (TestConsulConfig)Config.getInstance().getJsonObjectConfig("consul", TestConsulConfig.class);
+        Assert.assertEquals(config.isTtlCheck(), false);
     }
 }
