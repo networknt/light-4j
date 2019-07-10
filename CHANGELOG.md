@@ -1,5 +1,23 @@
 # Change Log
 
+## [2.0.2](https://github.com/networknt/light-4j/tree/2.0.2) (2019-07-10)
+
+
+**Merged pull requests:**
+
+
+- add Prometheus hotspot monitor [\#567](https://github.com/networknt/light-4j/pull/567) ([chenyan71](https://github.com/chenyan71))
+- 514 sanitizer new config properties [\#563](https://github.com/networknt/light-4j/pull/563) ([jefperito](https://github.com/jefperito))
+- Add OpenTracing support for observability [\#549](https://github.com/networknt/light-4j/pull/549) ([stevehu](https://github.com/stevehu))
+- reverted some values of client.yml for testing [\#558](https://github.com/networknt/light-4j/pull/558) ([BalloonWen](https://github.com/BalloonWen))
+- fixes \#559 update default consulUrl to http instead of https [\#560](https://github.com/networknt/light-4j/pull/560) ([stevehu](https://github.com/stevehu))
+- fixes \#556 remove dependency on secret.yml from server and email modules [\#557](https://github.com/networknt/light-4j/pull/557) ([stevehu](https://github.com/stevehu))
+- fixes \#554 move the consul token to the consul.yml from the secret.yml [\#555](https://github.com/networknt/light-4j/pull/555) ([stevehu](https://github.com/stevehu))
+- fixes \#552 get client_secret from client.yml instead of secret.yml [\#553](https://github.com/networknt/light-4j/pull/553) ([stevehu](https://github.com/stevehu))
+- fixes \#550 loopback address is used when register to Consul from a st… [\#551](https://github.com/networknt/light-4j/pull/551) ([stevehu](https://github.com/stevehu))
+- Fix/\#519 keystore fall back [\#525](https://github.com/networknt/light-4j/pull/525) ([jiachen1120](https://github.com/jiachen1120))
+- Feat/\#502 consul integrate test [\#503](https://github.com/networknt/light-4j/pull/503) ([jiachen1120](https://github.com/jiachen1120))
+- fixes \#539 sync jdk11 branch to 1.6.x to ensure code similarity [\#540](https://github.com/networknt/light-4j/pull/540) ([stevehu](https://github.com/stevehu))
 ## [2.0.1](https://github.com/networknt/light-4j/tree/2.0.1) (2019-06-13)
 
 **Merged pull requests:**
