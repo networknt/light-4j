@@ -1,39 +1,28 @@
 package com.networknt.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import junit.framework.TestCase;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
-import java.net.URL;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Ignore
 public class PluggableConfigLoaderTest extends TestCase {
 
-    private Config config = null;
     private final String homeDir = System.getProperty("user.home");
+
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        config = Config.getInstance();
-        config.clear();
-        // write a config file into the user home directory.
-        Map<String, Object> map = new HashMap<>();
-        List<String> excludedList = Arrays.asList(new String[] {"openapi", "values", "status", "test_exclusion"});
-        map.put("configLoaderClass", "com.networknt.config.TestConfigLoader");
-        map.put("exclusionConfigFileList", excludedList);
-        config.getMapper().writeValue(new File(homeDir + "/config.yml"), map);
-
-        // Add home directory to the classpath of the system class loader.
-        AppURLClassLoader classLoader = new AppURLClassLoader(new URL[0], ClassLoader.getSystemClassLoader());
-        classLoader.addURL(new File(homeDir).toURI().toURL());
-        config.setClassLoader(classLoader);
+        System.setProperty(Config.LIGHT_4J_CONFIG_DIR, homeDir);
     }
 
     @Override
@@ -45,14 +34,94 @@ public class PluggableConfigLoaderTest extends TestCase {
     }
 
     @Test
-    public void testGetMapConfigByPluggableConfigLoader() {
-        Map<String, Object> map = Config.getInstance().getJsonMapConfig("consul");
-        Assert.assertEquals(map.get("ttlCheck"), false);
+    public void testGetMapConfigWithoutPluggableConfigLoader() throws Exception {
+        // Write invalid config loader
+        Map<String, Object> map = new HashMap<>();
+        List<String> excludedList = Arrays.asList(new String[]{"openapi", "values", "status", "test_exclusion"});
+        map.put("configLoaderClass", null);
+        map.put("exclusionConfigFileList", excludedList);
+
+        writeConfigFile(map, homeDir);
+
+        // Construct config instance
+        Class<? extends Config> c = Config.getInstance().getClass();
+        Constructor<? extends Config> ctr = c.getDeclaredConstructor();
+        ctr.setAccessible(true);
+        Config config = (Config) ctr.newInstance();
+
+        Map<String, Object> mapConfig = config.getJsonMapConfig("consul");
+        Assert.assertEquals(mapConfig.get("ttlCheck"), true);
     }
 
     @Test
-    public void testGetObjectConfigByPluggableConfigloader() {
-        TestConsulConfig config = (TestConsulConfig)Config.getInstance().getJsonObjectConfig("consul", TestConsulConfig.class);
-        Assert.assertEquals(config.isTtlCheck(), false);
+    public void testGetMapConfigByPluggableConfigLoader() throws Exception {
+        // Write a config.yml
+        Map<String, Object> map = new HashMap<>();
+        List<String> excludedList = Arrays.asList(new String[]{"openapi", "values", "status", "test_exclusion"});
+        map.put("configLoaderClass", "com.networknt.config.TestConfigLoader");
+        map.put("exclusionConfigFileList", excludedList);
+
+        writeConfigFile(map, homeDir);
+
+        // Construct config instance
+        Class<? extends Config> c = Config.getInstance().getClass();
+        Constructor<? extends Config> ctr = c.getDeclaredConstructor();
+        ctr.setAccessible(true);
+        Config config = (Config) ctr.newInstance();
+
+        Map<String, Object> mapConfig = config.getJsonMapConfig("consul");
+        Assert.assertEquals(mapConfig.get("ttlCheck"), false);
+    }
+
+    @Test
+    public void testGetObjectConfigByPluggableConfigloader() throws Exception {
+        // Write a config.yml
+        Map<String, Object> map = new HashMap<>();
+        List<String> excludedList = Arrays.asList(new String[]{"openapi", "values", "status", "test_exclusion"});
+        map.put("configLoaderClass", "com.networknt.config.TestConfigLoader");
+        map.put("exclusionConfigFileList", excludedList);
+
+        writeConfigFile(map, homeDir);
+
+        // Construct config instance
+        Class<? extends Config> c = Config.getInstance().getClass();
+        Constructor<? extends Config> ctr = c.getDeclaredConstructor();
+        ctr.setAccessible(true);
+        Config config = (Config) ctr.newInstance();
+
+        TestConsulConfig objectConfig = (TestConsulConfig) config.getJsonObjectConfig("consul", TestConsulConfig.class);
+        Assert.assertEquals(objectConfig.isTtlCheck(), false);
+    }
+
+    @Test
+    public void testInvalidConfigLoader() throws Exception {
+        // Write a config.yml with invalid config loader
+        Map<String, Object> map = new HashMap<>();
+        List<String> excludedList = Arrays.asList(new String[]{"openapi", "values", "status", "test_exclusion"});
+        map.put("configLoaderClass", "com.networknt.config.InvalidConfigLoader");
+        map.put("exclusionConfigFileList", excludedList);
+
+        writeConfigFile(map, homeDir);
+
+        // Construct config instance
+        Class<? extends Config> c = Config.getInstance().getClass();
+        Constructor<? extends Config> ctr = c.getDeclaredConstructor();
+        ctr.setAccessible(true);
+        Config config = (Config) ctr.newInstance();
+
+        try {
+            Map<String, Object> mapConfig = config.getJsonMapConfig("consul");
+            Assert.fail();
+        } catch (Exception e) {
+        }
+    }
+
+    private static void writeConfigFile(Map<String, Object> configMap, String path) throws IOException {
+        if (path.equals("")) {
+            mapper.writeValue(new File(path), configMap);
+        } else {
+            new File(path).mkdirs();
+            mapper.writeValue(new File(path + "/config.yml"), configMap);
+        }
     }
 }

@@ -124,6 +124,8 @@ public abstract class Config {
 
         private long cacheExpirationTime = 0L;
 
+        private String configLoaderClass;
+
         private ConfigLoader configLoader;
 
         private ClassLoader classLoader;
@@ -146,6 +148,7 @@ public abstract class Config {
         FileConfigImpl(){
         	super();
         	String decryptorClass = getDecryptorClass();
+        	configLoaderClass = getConfigLoaderClass();
         	if (null==decryptorClass || decryptorClass.trim().isEmpty()) {
         		yaml = new Yaml();
         	}else {
@@ -628,14 +631,11 @@ public abstract class Config {
         private Map<String, Object> loadJsonMapConfigWithSpecificConfigLoader(String configName, String path) {
             Map<String, Object> config = null;
             // Initialize config loader
-            if (this.configLoader == null) {
-                String configLoaderClass = getConfigLoaderClass();
-                if (configLoaderClass != null) {
-                    this.configLoader = new ConfigLoaderConstructor(configLoaderClass).getConfigLoader();
-                }
+            if (configLoaderClass != null && this.configLoader == null) {
+                this.configLoader = new ConfigLoaderConstructor(configLoaderClass).getConfigLoader();
             }
             if (configLoader != null) {
-                logger.info("Trying to load config by using ConfigLoader: {}.", configLoader.getClass().getName());
+                logger.info("Trying to load {} with extension yaml, yml or json by using ConfigLoader: {}.", configName, configLoader.getClass().getName());
                 if (path == null || path.equals("")) {
                     config = configLoader.loadMapConfig(configName);
                 } else {
@@ -644,7 +644,7 @@ public abstract class Config {
             }
             // Fall back to default loading method if the configuration cannot be loaded by specific config loader
             if (config == null) {
-                logger.info("Trying to load config by using default loading method.");
+                logger.info("Trying to load {} with extension yaml, yml or json by using default loading method.", configName);
                 config = loadMapConfig(configName, path);
             }
             return config;
@@ -653,14 +653,11 @@ public abstract class Config {
         private Object loadJsonObjectConfigWithSpecificConfigLoader(String configName, Class clazz, String path) {
             Object config = null;
             // Initialize config loader
-            if (this.configLoader == null) {
-                String configLoaderClass = getConfigLoaderClass();
-                if (configLoaderClass != null) {
-                    this.configLoader = new ConfigLoaderConstructor(configLoaderClass).getConfigLoader();
-                }
+            if (configLoaderClass != null && this.configLoader == null) {
+                this.configLoader = new ConfigLoaderConstructor(configLoaderClass).getConfigLoader();
             }
             if (this.configLoader != null) {
-                logger.info("Loading config by using ConfigLoader: {}.", classLoader.getClass().getCanonicalName());
+                logger.info("Trying to load {} with extension yaml, yml or json by using ConfigLoader: {}.", configName, configLoader.getClass().getName());
                 if (path == null || path.equals("")) {
                     config = configLoader.loadObjectConfig(configName, clazz);
                 } else {
@@ -669,7 +666,7 @@ public abstract class Config {
             }
             // Fall back to default loading method if the configuration cannot be loaded by specific config loader
             if (config == null) {
-                logger.info("Trying to load config by using default loading method.");
+                logger.info("Trying to load {} with extension yaml, yml or json by using default loading method.", configName);
                 config = loadObjectConfig(configName, clazz, path);
             }
             return config;
