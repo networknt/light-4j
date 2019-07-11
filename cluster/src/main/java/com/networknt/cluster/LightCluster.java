@@ -21,6 +21,7 @@ import com.networknt.registry.*;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.ConcurrentHashSet;
 import com.networknt.utility.Constants;
+import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,7 +96,7 @@ public class LightCluster implements Cluster {
             if(logger.isDebugEnabled()) logger.debug("subscribeUrl = " + subscribeUrl);
             // you only need to subscribe once.
             if(!subscribedSet.contains(subscribeUrl)) {
-                registry.subscribe(subscribeUrl, new ClusterNotifyListener());
+                registry.subscribe(subscribeUrl, new ClusterNotifyListener(serviceId));
                 subscribedSet.add(subscribeUrl);
             }
             urls = registry.discover(subscribeUrl);
@@ -124,10 +125,19 @@ public class LightCluster implements Cluster {
     }
 
     static class ClusterNotifyListener implements NotifyListener {
+        private String serviceId;
+
+        ClusterNotifyListener(String serviceId) {
+            this.serviceId = serviceId;
+        }
+
         @Override
         public void notify(URL registryUrl, List<URL> urls) {
-            if(logger.isDebugEnabled()) logger.debug("notify is called in ClusterNotifyListener registryUrl = " + registryUrl + " urls = " + urls);
-            if(urls != null && urls.size() > 0) serviceMap.put(urls.get(0).getPath(), urls);
+            logger.debug("registryUrl is: {}", registryUrl);
+            logger.debug("notify service: {} with updated urls: {}", serviceId, urls.toString());
+            if(StringUtils.isNotBlank(serviceId)) {
+                serviceMap.put(serviceId, urls == null ? new ArrayList<>() : urls);
+            }
         }
     }
 }
