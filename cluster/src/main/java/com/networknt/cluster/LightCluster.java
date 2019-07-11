@@ -57,7 +57,7 @@ public class LightCluster implements Cluster {
      * @param protocol either http or https
      * @param serviceId unique service identifier
      * @param requestKey String
-     * @return Url discovered after the load balancing. Return null if the corresponding service cannot be discovered
+     * @return Url discovered after the load balancing. Return null if the corresponding service cannot be found
      */
     @Override
     public String serviceToUrl(String protocol, String serviceId, String tag, String requestKey) {
@@ -67,7 +67,7 @@ public class LightCluster implements Cluster {
             // construct a url in string
             return protocol + "://" + url.getHost() + ":" + url.getPort();
         } else {
-            logger.debug("The service: {} cannot be discovered.", serviceId);
+            logger.debug("The service: {} cannot be found from service discovery.", serviceId);
             return null;
         }
     }
