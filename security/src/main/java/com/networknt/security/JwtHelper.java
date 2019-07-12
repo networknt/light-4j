@@ -71,7 +71,7 @@ public class JwtHelper {
     public static final String JWT_KEY_RESOLVER = "keyResolver";
     public static final String JWT_KEY_RESOLVER_X509CERT = "X509Certificate";
     public static final String JWT_KEY_RESOLVER_JWKS = "JsonWebKeySet";
-    
+
     static Map<String, X509Certificate> certMap;
     static Map<String, List<JsonWebKey>> jwksMap;
     static List<String> fingerPrints;
