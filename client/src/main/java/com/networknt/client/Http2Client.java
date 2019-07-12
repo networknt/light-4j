@@ -29,11 +29,15 @@ import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
 import com.networknt.client.ssl.TLSConfig;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
+import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.TlsUtil;
+import io.opentracing.Tracer;
+import io.opentracing.propagation.Format;
+import io.opentracing.tag.Tags;
 import io.undertow.UndertowOptions;
 import io.undertow.client.*;
 import io.undertow.connector.ByteBufferPool;
@@ -53,11 +57,13 @@ import org.xnio.ssl.XnioSsl;
 
 import javax.net.ssl.*;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.security.*;
+import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -309,6 +315,33 @@ public class Http2Client {
     }
 
     /**
+     * Add Authorization Code grant token the caller app gets from OAuth2 server and inject OpenTracing context
+     *
+     * This is the method called from client like web server that want to have Tracer context pass through.
+     *
+     * @param request the http request
+     * @param token the bearer token
+     * @param tracer the OpenTracing tracer
+     */
+    public void addAuthTokenTrace(ClientRequest request, String token, Tracer tracer) {
+        if(token != null && !token.startsWith("Bearer ")) {
+            if(token.toUpperCase().startsWith("BEARER ")) {
+                // other cases of Bearer
+                token = "Bearer " + token.substring(7);
+            } else {
+                token = "Bearer " + token;
+            }
+        }
+        request.getRequestHeaders().put(Headers.AUTHORIZATION, token);
+        if(tracer != null) {
+            Tags.SPAN_KIND.set(tracer.activeSpan(), Tags.SPAN_KIND_CLIENT);
+            Tags.HTTP_METHOD.set(tracer.activeSpan(), request.getMethod().toString());
+            Tags.HTTP_URL.set(tracer.activeSpan(), request.getPath());
+            tracer.inject(tracer.activeSpan().context(), Format.Builtin.HTTP_HEADERS, new ClientRequestCarrier(request));
+        }
+    }
+
+    /**
      * Add Client Credentials token cached in the client for standalone application
      *
      * This is the method called from standalone application like enterprise scheduler for batch jobs
@@ -353,10 +386,16 @@ public class Http2Client {
      * @return Result
      */
     public Result propagateHeaders(ClientRequest request, final HttpServerExchange exchange) {
-        String tid = exchange.getRequestHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
         String token = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
-        String cid = exchange.getRequestHeaders().getFirst(HttpStringConstants.CORRELATION_ID);
-        return populateHeader(request, token, cid, tid);
+        boolean injectOpenTracing = ClientConfig.get().isInjectOpenTracing();
+        if(injectOpenTracing) {
+            Tracer tracer = exchange.getAttachment(AttachmentConstants.EXCHANGE_TRACER);
+            return populateHeader(request, token, tracer);
+        } else {
+            String tid = exchange.getRequestHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
+            String cid = exchange.getRequestHeaders().getFirst(HttpStringConstants.CORRELATION_ID);
+            return populateHeader(request, token, cid, tid);
+        }
     }
 
     /**
@@ -383,6 +422,50 @@ public class Http2Client {
         request.getRequestHeaders().put(HttpStringConstants.CORRELATION_ID, correlationId);
         request.getRequestHeaders().put(HttpStringConstants.SCOPE_TOKEN, "Bearer " + result.getResult().getJwt());
         return result;
+    }
+
+    /**
+     * Support API to API calls with scope token. The token is the original token from consumer and
+     * the client credentials token of caller API is added from cache. This method doesn't have correlationId
+     * and traceabilityId but has a Tracer for OpenTracing context passing. For standalone client, you create
+     * the Tracer instance and in the service to service call, the Tracer can be found in the JaegerStartupHookProvider
+     *
+     * This method is used in API to API call
+     *
+     * @param request the http request
+     * @param authToken the authorization token
+     * @param tracer the OpenTracing Tracer
+     * @return Result when fail to get jwt, it will return a Status.
+     */
+    public Result populateHeader(ClientRequest request, String authToken, Tracer tracer) {
+        if(tracer != null) {
+            addAuthTokenTrace(request, authToken, tracer);
+        } else {
+            addAuthToken(request, authToken);
+        }
+        Result<Jwt> result = tokenManager.getJwt(request);
+        if(result.isFailure()) { return Failure.of(result.getError()); }
+        request.getRequestHeaders().put(HttpStringConstants.SCOPE_TOKEN, "Bearer " + result.getResult().getJwt());
+        return result;
+    }
+
+
+
+    private static KeyStore loadKeyStore(final String name, final char[] password) throws IOException {
+        final InputStream stream = Config.getInstance().getInputStreamFromFile(name);
+        if(stream == null) {
+            throw new RuntimeException("Could not load keystore");
+        }
+        try {
+            KeyStore loadedKeystore = KeyStore.getInstance("JKS");
+            loadedKeystore.load(stream, password);
+
+            return loadedKeystore;
+        } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException e) {
+            throw new IOException(String.format("Unable to load KeyStore %s", name), e);
+        } finally {
+            IoUtils.safeClose(stream);
+        }
     }
 
     /**

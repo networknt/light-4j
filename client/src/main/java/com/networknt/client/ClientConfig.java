@@ -23,7 +23,6 @@ public final class ClientConfig {
     public static final String AUTHORIZATION_CODE = "authorization_code";
     public static final String CACHE = "cache";
     public static final String CAPACITY = "capacity";
-    public static final String CLIENT_CONFIG_NAME = "client";
     public static final String OAUTH = "oauth";
     public static final String KEY = "key";
     public static final String CLIENT_SECRET = "client_secret";
@@ -39,10 +38,11 @@ public final class ClientConfig {
     public static final int DEFAULT_ERROR_THRESHOLD = 5;
     public static final int DEFAULT_TIMEOUT = 3000;
     public static final int DEFAULT_RESET_TIMEOUT = 600000;
-
+    public static final boolean DEFAULT_INJECT_OPEN_TRACING = false;
     private static final String BUFFER_SIZE = "bufferSize";
     private static final String ERROR_THRESHOLD = "errorThreshold";
     private static final String RESET_TIMEOUT = "resetTimeout";
+    private static final String INJECT_OPEN_TRACING = "injectOpenTracing";
 
     private final Config config;
     private final Map<String, Object> mappedConfig;
@@ -55,6 +55,7 @@ public final class ClientConfig {
     private int resetTimeout = DEFAULT_RESET_TIMEOUT;
     private int timeout = DEFAULT_TIMEOUT;
     private int errorThreshold = DEFAULT_ERROR_THRESHOLD;
+    private boolean injectOpenTracing = DEFAULT_INJECT_OPEN_TRACING;
 
     private static ClientConfig instance;
 
@@ -104,6 +105,9 @@ public final class ClientConfig {
         }
         if (requestConfig.containsKey(TIMEOUT)) {
             timeout = (int) requestConfig.get(TIMEOUT);
+        }
+        if(requestConfig.containsKey(INJECT_OPEN_TRACING)) {
+            injectOpenTracing = (Boolean) requestConfig.get(INJECT_OPEN_TRACING);
         }
     }
 
@@ -181,4 +185,6 @@ public final class ClientConfig {
     public int getErrorThreshold() {
         return errorThreshold;
     }
+
+    public boolean isInjectOpenTracing() { return injectOpenTracing; }
 }

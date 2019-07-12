@@ -1,0 +1,13 @@
+---
+# Sanitize request for cross site scripting during runtime
+
+# indicate if sanitizer is enabled or not
+enabled: true
+
+# if it is enabled, does body need to be sanitized
+sanitizeBody: true
+
+# if it is enabled, does header need to be sanitized
+sanitizeHeader: true
+
+encoding: 'fake'

@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.networknt</groupId>
     <artifactId>light-4j</artifactId>
-    <version>2.0.2-SNAPSHOT</version>
+    <version>2.0.2</version>
     <packaging>pom</packaging>
     <name>Parent POM</name>
     <description>Light 4J Framework Components</description>
@@ -87,7 +87,7 @@
         <version.curator>4.0.1</version.curator>
         <version.snakeyaml>1.20</version.snakeyaml>
         <version.caffeine>2.6.2</version.caffeine>
-        <version.prometheus>0.3.0</version.prometheus>
+        <version.prometheus>0.6.0</version.prometheus>
         <version.javamail>1.6.1</version.javamail>
         <version.hikaricp>3.2.0</version.hikaricp>
         <version.h2>1.4.196</version.h2>
@@ -109,6 +109,8 @@
         <version.lifecycle-mapping>1.0.0</version.lifecycle-mapping>
         <version.maven-gpg>1.6</version.maven-gpg>
         <version.testcontainers>1.8.0</version.testcontainers>
+        <version.jaeger>0.35.2</version.jaeger>
+        <version.opentracing>0.32.0</version.opentracing>
         <skip.unit.tests>false</skip.unit.tests>
         <matched.test.resources>**/*</matched.test.resources>
         <version.javadoc-packagelist-plugin>1.0.0</version.javadoc-packagelist-plugin>
@@ -159,6 +161,7 @@
         <module>encode-decode</module>
         <module>monad-result</module>
         <module>logger-config</module>
+        <module>jaeger-tracing</module>
     </modules>
 
     <dependencyManagement>
@@ -371,6 +374,11 @@
                 <artifactId>server</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>jaeger-tracing</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <!-- External dependencies -->
 
             <dependency>
@@ -475,6 +483,11 @@
                 <version>${version.prometheus}</version>
             </dependency>
             <dependency>
+                <groupId>io.prometheus</groupId>
+                <artifactId>simpleclient_hotspot</artifactId>
+                <version>${version.prometheus}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.zookeeper</groupId>
                 <artifactId>zookeeper</artifactId>
                 <version>${version.zookeeper}</version>
@@ -528,6 +541,16 @@
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
                 <version>${version.logback}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jaegertracing</groupId>
+                <artifactId>jaeger-client</artifactId>
+                <version>${version.jaeger}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.opentracing</groupId>
+                <artifactId>opentracing-api</artifactId>
+                <version>${version.opentracing}</version>
             </dependency>
 
             <!-- Test dependencies -->
