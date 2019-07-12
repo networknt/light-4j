@@ -1,5 +1,19 @@
 # Change Log
 
+## [1.6.5](https://github.com/networknt/light-4j/tree/1.6.5) (2019-07-12)
+
+
+**Merged pull requests:**
+
+
+- fixes \#578 to use a hashset to track used ports [\#582](https://github.com/networknt/light-4j/pull/582) ([stevehu](https://github.com/stevehu))
+- fixes \#579 when all instances are down and restarted, the client disc… [\#580](https://github.com/networknt/light-4j/pull/580) ([stevehu](https://github.com/stevehu))
+- randomly pick up port number for dynamic registry [\#578](https://github.com/networknt/light-4j/pull/578) ([stevehu](https://github.com/stevehu))
+- Fix/\#573 consul registry notify [\#577](https://github.com/networknt/light-4j/pull/577) ([BalloonWen](https://github.com/BalloonWen))
+- Fix/\#523 consul http https connection [\#570](https://github.com/networknt/light-4j/pull/570) ([BalloonWen](https://github.com/BalloonWen))
+- Fix/npe service to url [\#576](https://github.com/networknt/light-4j/pull/576) ([jiachen1120](https://github.com/jiachen1120))
+- Fixes merge to 1.6.x [\#564](https://github.com/networknt/light-4j/pull/564) ([BalloonWen](https://github.com/BalloonWen))
+- fixes \#539 sync jdk11 branch to 1.6.x to ensure code similarity [\#540](https://github.com/networknt/light-4j/pull/540) ([stevehu](https://github.com/stevehu))
 ## [1.6.4](https://github.com/networknt/light-4j/tree/1.6.4) (2019-06-10)
 
 
