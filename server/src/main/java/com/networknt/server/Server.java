@@ -29,7 +29,6 @@ import com.networknt.service.SingletonServiceFactory;
 import com.networknt.switcher.SwitcherUtil;
 import com.networknt.utility.Constants;
 import com.networknt.utility.TlsUtil;
-import com.networknt.utility.Util;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
@@ -43,13 +42,13 @@ import org.xnio.Options;
 import org.xnio.SslClientAuthMode;
 
 import javax.net.ssl.*;
-import java.io.InputStream;
 import java.net.InetAddress;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * This is the entry point of the framework. It wrapped Undertow Core HTTP
@@ -89,7 +88,10 @@ public class Server {
     static SSLContext sslContext;
 
     static GracefulShutdownHandler gracefulShutdownHandler;
-    
+
+    // How many times the server is tried to bind a port in a range for dynamic port.
+    private static int bindCounter = 0;
+
     public static void main(final String[] args) {
         init();
     }
@@ -171,8 +173,13 @@ public class Server {
                 logger.error(errMessage);
                 throw new RuntimeException(errMessage);
             }          
-            for (int i = serverConfig.minPort; i < serverConfig.maxPort; i++) {
-                boolean b = bind(gracefulShutdownHandler, i);
+            while(true) {
+                bindCounter++;
+                if(bindCounter > (serverConfig.maxPort - serverConfig.minPort)) {
+                    break;
+                }
+                int randomPort = ThreadLocalRandom.current().nextInt(serverConfig.minPort, serverConfig.maxPort + 1);
+                boolean b = bind(gracefulShutdownHandler, randomPort);
                 if (b) {
                     break;
                 }
@@ -258,8 +265,8 @@ public class Server {
             server.start();
             System.out.println("HOST IP " + System.getenv(STATUS_HOST_IP));
         } catch (Exception e) {
-            if (!serverConfig.dynamicPort || (serverConfig.dynamicPort && serverConfig.maxPort == port + 1)) {
-                String triedPortsMessage = serverConfig.dynamicPort ? serverConfig.minPort + " to: " + (serverConfig.maxPort - 1) : port + "";
+            if (!serverConfig.dynamicPort || bindCounter > (serverConfig.maxPort - serverConfig.minPort)) {
+                String triedPortsMessage = serverConfig.dynamicPort ? serverConfig.minPort + " to " + (serverConfig.maxPort) : port + "";
                 String errMessage = "No ports available to bind to. Tried: " + triedPortsMessage;
                 System.out.println(errMessage);
                 logger.error(errMessage);
@@ -458,6 +465,7 @@ public class Server {
      *
      * @param serviceId Service Id that is registered
      * @param port Port number of the service
+     * @return URL
      */
     public static URL register(String serviceId, int port) {
         try {
