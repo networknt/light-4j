@@ -1,5 +1,6 @@
 package com.networknt.client.oauth;
 
+import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.client.oauth.cache.ICacheStrategy;
 import com.networknt.client.oauth.cache.LongestExpireCacheStrategy;
@@ -19,10 +20,29 @@ import java.util.Set;
  * It manages caches based on different cache strategies underneath.
  */
 public class TokenManager {
-    Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
+    private Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
+    /**
+     * @deprecated will be moved to {@link ClientConfig#CACHE}
+     */
+    @Deprecated
     public static final String CACHE = "cache";
+
+    /**
+     * @deprecated will be moved to {@link ClientConfig#OAUTH}
+     */
+    @Deprecated
     public static final String OAUTH = "oauth";
+
+    /**
+     * @deprecated will be moved to {@link ClientConfig#TOKEN}
+     */
+    @Deprecated
     public static final String TOKEN = "token";
+
+    /**
+     * @deprecated will be moved to {@link ClientConfig#CAPACITY}
+     */
+    @Deprecated
     public static final String CAPACITY_CONFIG = "capacity";
 
     private static volatile TokenManager INSTANCE;
@@ -32,17 +52,12 @@ public class TokenManager {
 
     private TokenManager() {
         //set CAPACITY based on config
-        if(clientConfig != null) {
-            Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OAUTH);
-            if(oauthConfig != null) {
-                Map<String, Object> tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);
-                if(tokenConfig != null) {
-                    Map<String, Object> cacheConfig = (Map<String, Object>)tokenConfig.get(CACHE);
-                    if(cacheConfig != null) {
-                        if(cacheConfig.get(CAPACITY_CONFIG) != null) {
-                            CAPACITY = (Integer)cacheConfig.get(CAPACITY_CONFIG);
-                        }
-                    }
+        Map<String, Object> tokenConfig = ClientConfig.get().getTokenConfig();
+        if(tokenConfig != null) {
+            Map<String, Object> cacheConfig = (Map<String, Object>)tokenConfig.get(ClientConfig.CACHE);
+            if(cacheConfig != null) {
+                if(cacheConfig.get(ClientConfig.CAPACITY) != null) {
+                    CAPACITY = (Integer)cacheConfig.get(ClientConfig.CAPACITY);
                 }
             }
         }
@@ -83,7 +98,9 @@ public class TokenManager {
         return result;
     }
 
-    //cache jwt if not exist
+    /**
+     * cache jwt if not exist
+     */
     private synchronized Jwt getJwt(ICacheStrategy cacheStrategy, Jwt.Key key) {
         Jwt result = cacheStrategy.getCachedJwt(key);
         if(result == null) {
@@ -102,14 +119,14 @@ public class TokenManager {
      * @return Result
      */
     public Result<Jwt> getJwt(ClientRequest clientRequest) {
-        HeaderValues scope = clientRequest.getRequestHeaders().get(OauthHelper.SCOPE);
+        HeaderValues scope = clientRequest.getRequestHeaders().get(ClientConfig.SCOPE);
         if(scope != null) {
             String scopeStr = scope.getFirst();
             Set<String> scopeSet = new HashSet<>();
             scopeSet.addAll(Arrays.asList(scopeStr.split(" ")));
             return getJwt(new Jwt.Key(scopeSet));
         }
-        HeaderValues serviceId = clientRequest.getRequestHeaders().get(OauthHelper.SERVICE_ID);
+        HeaderValues serviceId = clientRequest.getRequestHeaders().get(ClientConfig.SERVICE_ID);
         if(serviceId != null) {
             return getJwt(new Jwt.Key(serviceId.getFirst()));
         }
