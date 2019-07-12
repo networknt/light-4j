@@ -93,7 +93,7 @@ public class LightCluster implements Cluster {
         // lookup in serviceMap first, if not there, then subscribe and discover.
         List<URL> urls = serviceMap.get(serviceId);
         if(logger.isDebugEnabled()) logger.debug("cached serviceId " + serviceId + " urls = " + urls);
-        if(urls == null) {
+        if((urls == null) || (urls.isEmpty())) {
             URL subscribeUrl = URLImpl.valueOf(protocol + "://localhost/" + serviceId);
             if(tag != null) {
                 subscribeUrl.addParameter(Constants.TAG_ENVIRONMENT, tag);
