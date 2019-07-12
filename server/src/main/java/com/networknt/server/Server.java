@@ -119,7 +119,7 @@ public class Server {
             logger.error("Server is not operational! Failed with exception", e);
 
             // send a graceful system shutdown
-//            System.exit(1);
+            System.exit(1);
         }
     }
 
