@@ -69,8 +69,6 @@ public class LightCluster implements Cluster {
             return protocol + "://" + url.getHost() + ":" + url.getPort();
         } else {
             logger.debug("The service: {} cannot be found from service discovery.", serviceId);
-            // remove the empty list if exists to force discovery in the next call
-            serviceMap.remove(serviceId);
             return null;
         }
     }
