@@ -102,6 +102,7 @@
         <version.nexus-staging-maven>1.6.8</version.nexus-staging-maven>
         <version.maven-source>3.0.1</version.maven-source>
         <version.maven-surefire>3.0.0-M3</version.maven-surefire>
+        <version.maven-failsafe>2.22.0</version.maven-failsafe>
         <!--<version.maven-release>2.5.3</version.maven-release>-->
         <version.maven-javadoc>3.1.0</version.maven-javadoc>
         <version.jacoco>0.8.3</version.jacoco>
@@ -111,6 +112,9 @@
         <version.error_prone_core>2.0.15</version.error_prone_core>
         <version.lifecycle-mapping>1.0.0</version.lifecycle-mapping>
         <version.maven-gpg>1.6</version.maven-gpg>
+        <version.testcontainers>1.8.0</version.testcontainers>
+        <skip.unit.tests>false</skip.unit.tests>
+        <matched.test.resources>**/*</matched.test.resources>
     </properties>
 
     <modules>
@@ -607,6 +611,12 @@
                 <version>${version.httpclient}</version>
                 <scope>test</scope>
             </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers</artifactId>
+                <version>${version.testcontainers}</version>
+                <scope>test</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -617,9 +627,10 @@
             <resource>
                 <filtering>false</filtering>
                 <directory>${basedir}/src/main/resources</directory>
-                <includes>
-                    <include>**/*</include>
-                </includes>
+                <excludes>
+                    <exclude>**/*.keystore</exclude>
+                    <exclude>**/*.truststore</exclude>
+                </excludes>
             </resource>
         </resources>
         <testResources>
@@ -627,7 +638,7 @@
                 <filtering>false</filtering>
                 <directory>${basedir}/src/test/resources</directory>
                 <includes>
-                    <include>**/*</include>
+                    <include>${matched.test.resources}</include>
                 </includes>
             </testResource>
         </testResources>
@@ -693,23 +704,24 @@
                         <version>${version.maven-surefire}</version>
                     </dependency>
                 </dependencies>
+                <configuration>
+                    <!-- Skips unit tests if the value of skip.unit.tests property is true -->
+                    <skipTests>${skip.unit.tests}</skipTests>
+                    <!-- Excludes integration tests when unit tests are run -->
+                    <excludes>
+                        <exclude>**/*IT.java</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>${version.maven-surefire}</version>
+                <version>${version.maven-failsafe}</version>
                 <configuration>
                     <encoding>UTF-8</encoding>
+                    <forkCount>0</forkCount>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>integration-test</id>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -886,6 +898,12 @@
     <profiles>
         <profile>
             <id>dev</id>
+            <properties>
+                <!--
+                    Only unit tests are run when the development profile is active
+                -->
+                <skip.unit.tests>false</skip.unit.tests>
+            </properties>
             <build>
                 <plugins>
                     <plugin>
@@ -950,6 +968,80 @@
                                 <goals>
                                     <goal>sign</goal>
                                 </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <!-- The Configuration of the integration-test profile -->
+        <profile>
+            <id>integration-test</id>
+            <properties>
+                <!--
+                    Only integration tests are run when the integration-test profile is active
+                -->
+                <skip.unit.tests>true</skip.unit.tests>
+                <!--to include nothing for regular unit resources-->
+                <matched.test.resources>a^</matched.test.resources>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>${version.maven-surefire}</version>
+                        <executions>
+                            <!--
+                                Invokes both the integration-test and the verify goals of the
+                                Failsafe Maven plugin
+                            -->
+                            <execution>
+                                <id>integration-tests</id>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                                <configuration>
+                                    <!--
+                                        Skips integration tests if the value of skip.integration.tests
+                                        property is true
+                                    -->
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <version>${version.build-helper-maven}</version>
+                        <executions>
+                            <execution>
+                                <id>add-integration-test-source</id>
+                                <phase>generate-test-sources</phase>
+                                <goals>
+                                    <goal>add-test-source</goal>
+                                </goals>
+                                <configuration>
+                                    <sources>
+                                        <source>${project.basedir}/src/integration/java</source>
+                                    </sources>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>add-integration-test-resource</id>
+                                <phase>generate-test-sources</phase>
+                                <goals>
+                                    <goal>add-test-resource</goal>
+                                </goals>
+                                <configuration>
+                                    <resources>
+                                        <resource>
+                                            <!-- Don't forget <directory> label -->
+                                            <directory>${project.basedir}/src/integration/resources</directory>
+                                        </resource>
+                                    </resources>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
