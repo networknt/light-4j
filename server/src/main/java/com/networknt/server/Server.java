@@ -92,8 +92,8 @@ public class Server {
 
     static GracefulShutdownHandler gracefulShutdownHandler;
 
-    // How many times the server is tried to bind a port in a range for dynamic port.
-    private static int bindCounter = 0;
+    // When dynamic port is used, this HashSet contains used port so that we just need to check here instead of trying bind.
+    private static Set usedPorts;
 
     public static void main(final String[] args) {
         init();
@@ -176,15 +176,19 @@ public class Server {
                 logger.error(errMessage);
                 throw new RuntimeException(errMessage);
             }          
-            while(true) {
-                bindCounter++;
-                if(bindCounter > (serverConfig.maxPort - serverConfig.minPort)) {
-                    break;
-                }
+            // init usedPort here before starting the loop.
+            int capacity = serverConfig.maxPort - serverConfig.minPort + 1;
+            usedPorts = new HashSet(capacity);
+            while(usedPorts.size() < capacity) {
                 int randomPort = ThreadLocalRandom.current().nextInt(serverConfig.minPort, serverConfig.maxPort + 1);
+                // check if this port is used already in the usedPorts HashSet.
+                if(usedPorts.contains(randomPort)) continue;
                 boolean b = bind(gracefulShutdownHandler, randomPort);
                 if (b) {
+                    usedPorts = null;
                     break;
+                } else {
+                    usedPorts.add(randomPort);
                 }
             }
         } else {
@@ -270,7 +274,7 @@ public class Server {
             server.start();
             System.out.println("HOST IP " + System.getenv(STATUS_HOST_IP));
         } catch (Exception e) {
-            if (!serverConfig.dynamicPort || bindCounter > (serverConfig.maxPort - serverConfig.minPort)) {
+            if (!serverConfig.dynamicPort || usedPorts.size() >= (serverConfig.maxPort - serverConfig.minPort)) {
                 String triedPortsMessage = serverConfig.dynamicPort ? serverConfig.minPort + " to " + (serverConfig.maxPort) : port + "";
                 String errMessage = "No ports available to bind to. Tried: " + triedPortsMessage;
                 System.out.println(errMessage);
