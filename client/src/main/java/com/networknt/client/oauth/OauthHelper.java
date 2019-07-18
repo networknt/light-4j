@@ -543,10 +543,11 @@ public class OauthHelper {
             }
             if (responseBody != null && responseBody.length() > 0) {
                 tokenResponse = Config.getInstance().getMapper().readValue(responseBody, TokenResponse.class);
-                if(tokenResponse != null) {
+                // sometimes, the token response contains an error status instead of the access token.
+                if(tokenResponse != null && tokenResponse.getAccessToken() != null) {
                     result = Success.of(tokenResponse);
                 } else {
-                    result = Failure.of(new Status(GET_TOKEN_ERROR, responseBody));
+                    result = Failure.of(new Status(tokenResponse.getStatusCode(), tokenResponse.getCode(), tokenResponse.getMessage(), tokenResponse.getDescription(), tokenResponse.getSeverity()));
                 }
             } else {
                 result = Failure.of(new Status(GET_TOKEN_ERROR, "no auth server response"));
