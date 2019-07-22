@@ -18,39 +18,26 @@
 
 package com.networknt.client.http;
 
-import java.net.InetSocketAddress;
-import java.net.URI;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
-import org.xnio.ChannelListener;
-import org.xnio.IoFuture;
-import org.xnio.IoUtils;
-import org.xnio.OptionMap;
-import org.xnio.Options;
-import org.xnio.StreamConnection;
-import org.xnio.XnioIoThread;
-import org.xnio.XnioWorker;
-import org.xnio.ssl.SslConnection;
-import org.xnio.ssl.XnioSsl;
-
 import com.networknt.client.ssl.Light4jALPNClientSelector;
-
 import io.undertow.UndertowLogger;
 import io.undertow.UndertowMessages;
 import io.undertow.UndertowOptions;
-import io.undertow.client.ALPNClientSelector;
-import io.undertow.client.ClientCallback;
-import io.undertow.client.ClientConnection;
-import io.undertow.client.ClientProvider;
-import io.undertow.client.ClientStatistics;
+import io.undertow.client.*;
 import io.undertow.client.http2.Http2ClientConnection;
 import io.undertow.conduits.ByteActivityCallback;
 import io.undertow.conduits.BytesReceivedStreamSourceConduit;
 import io.undertow.conduits.BytesSentStreamSinkConduit;
 import io.undertow.connector.ByteBufferPool;
 import io.undertow.protocols.http2.Http2Channel;
+import org.xnio.*;
+import org.xnio.ssl.SslConnection;
+import org.xnio.ssl.XnioSsl;
+
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Customized HttpClientProvider for handling TLS handshake for HTTP2.
@@ -136,6 +123,15 @@ public class Light4jHttp2ClientProvider implements ClientProvider {
         };
     }
 
+    /**
+     * @deprecated will be change to protected in future TODO: not sure if this should be public
+     * @param listener {@link ClientCallback}
+     * @param uri URI
+     * @param bufferPool ByteBufferPool
+     * @param options OptionMap
+     * @return ALPNClientSelector.ALPNProtocol
+     */
+    @Deprecated
     public static ALPNClientSelector.ALPNProtocol alpnProtocol(final ClientCallback<ClientConnection> listener, URI uri, ByteBufferPool bufferPool, OptionMap options) {
         return new ALPNClientSelector.ALPNProtocol(new ChannelListener<SslConnection>() {
             @Override

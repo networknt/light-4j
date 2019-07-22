@@ -13,9 +13,9 @@ import java.util.concurrent.CompletableFuture;
 
 public class Http2ClientCompletableFutureWithRequest extends CompletableFuture<ClientResponse> implements ClientCallback<ClientExchange> {
 
-    Logger logger = LoggerFactory.getLogger(Http2ClientCompletableFutureWithRequest.class);
+    private Logger logger = LoggerFactory.getLogger(Http2ClientCompletableFutureWithRequest.class);
 
-    String requestBody;
+    private String requestBody;
     public Http2ClientCompletableFutureWithRequest(String requestBody) {
         this.requestBody = requestBody;
     }

@@ -16,39 +16,34 @@
 
 package com.networknt.client.oauth;
 
-import java.util.List;
-import java.util.Map;
-
+import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 
-public class RefreshTokenRequest extends TokenRequest {
-    static Map<String, Object> secret = (Map<String, Object>)Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
+import java.util.List;
+import java.util.Map;
 
-    String refreshToken;
+public class RefreshTokenRequest extends TokenRequest {
+    private static Map<String, Object> secret = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
+
+    private String refreshToken;
 
     public RefreshTokenRequest() {
-        setGrantType(REFRESH_TOKEN);
-        Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
+        setGrantType(ClientConfig.REFRESH_TOKEN);
         // client_secret is in secret.yml instead of client.yml
-        if(clientConfig != null) {
-            Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OAUTH);
-            if(oauthConfig != null) {
-                Map<String, Object> tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);
-                if(tokenConfig != null) {
-                    setServerUrl((String)tokenConfig.get(SERVER_URL));
-                    setServiceId((String)tokenConfig.get(SERVICE_ID));
-                    Object object = tokenConfig.get(ENABLE_HTTP2);
-                    setEnableHttp2(object != null && (Boolean) object);
-                    Map<String, Object> rtConfig = (Map<String, Object>) tokenConfig.get(REFRESH_TOKEN);
-                    if(rtConfig != null) {
-                        setClientId((String)rtConfig.get(CLIENT_ID));
-                        setClientSecret((String)secret.get(SecretConstants.REFRESH_TOKEN_CLIENT_SECRET));
-                        setUri((String)rtConfig.get(URI));
-                        setScope((List<String>)rtConfig.get(SCOPE));
-                    }
-                }
+        Map<String, Object> tokenConfig = ClientConfig.get().getTokenConfig();
+        if(tokenConfig != null) {
+            setServerUrl((String)tokenConfig.get(ClientConfig.SERVER_URL));
+            setServiceId((String)tokenConfig.get(ClientConfig.SERVICE_ID));
+            Object object = tokenConfig.get(ClientConfig.ENABLE_HTTP2);
+            setEnableHttp2(object != null && (Boolean) object);
+            Map<String, Object> rtConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.REFRESH_TOKEN);
+            if(rtConfig != null) {
+                setClientId((String)rtConfig.get(ClientConfig.CLIENT_ID));
+                setClientSecret((String)secret.get(SecretConstants.REFRESH_TOKEN_CLIENT_SECRET));
+                setUri((String)rtConfig.get(ClientConfig.URI));
+                setScope((List<String>)rtConfig.get(ClientConfig.SCOPE));
             }
         }
     }

@@ -14,12 +14,21 @@ import java.util.concurrent.PriorityBlockingQueue;
  *
  */
 public class LongestExpireCacheStrategy implements ICacheStrategy {
-    //to store the priorities by expiry time.
+    /**
+     * to store the priorities by expiry time.
+     */
     private final PriorityBlockingQueue<LongestExpireCacheKey> expiryQueue;
-    //to store the actual Jwt based on Jwt.Key.
+
+    /**
+     * to store the actual Jwt based on Jwt.Key.
+     */
     private final ConcurrentHashMap<Jwt.Key, Jwt> cachedJwts;
-    //the capacity of the cache pool.
+
+    /**
+     * the capacity of the cache pool.
+     */
     private int capacity;
+
     public LongestExpireCacheStrategy(int capacity) {
         this.capacity = capacity;
         Comparator<LongestExpireCacheKey> comparator = (o1, o2) -> {
@@ -99,7 +108,7 @@ public class LongestExpireCacheStrategy implements ICacheStrategy {
             this.expiry = expiry;
         }
 
-        public Jwt.Key getCacheKey() {
+        Jwt.Key getCacheKey() {
             return cacheKey;
         }
     }
