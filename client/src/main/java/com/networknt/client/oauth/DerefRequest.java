@@ -16,47 +16,77 @@
 
 package com.networknt.client.oauth;
 
-import java.util.Map;
-
+import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 
+import java.util.Map;
+
 public class DerefRequest {
+
+    /**
+     * @deprecated will be move to {@link ClientConfig#OAUTH}
+     */
+    @Deprecated
     public static String OAUTH = "oauth";
+
+    /**
+     * @deprecated will be move to {@link ClientConfig#DEREF}
+     */
+    @Deprecated
     public static String DEREF = "deref";
+
+    /**
+     * @deprecated will be move to {@link ClientConfig#SERVER_URL}
+     */
+    @Deprecated
     public static String SERVER_URL = "server_url";
+
+    /**
+     * @deprecated will be move to {@link ClientConfig#SERVICE_ID}
+     */
+    @Deprecated
     public static String SERVICE_ID = "serviceId";
+
+    /**
+     * @deprecated will be move to {@link ClientConfig#URI}
+     */
+    @Deprecated
     public static String URI = "uri";
+
+    /**
+     * @deprecated will be move to {@link ClientConfig#CLIENT_ID}
+     */
+    @Deprecated
     public static String CLIENT_ID = "client_id";
+
+    /**
+     * @deprecated will be move to {@link ClientConfig#ENABLE_HTTP2}
+     */
+    @Deprecated
     public static String ENABLE_HTTP2 = "enableHttp2";
 
-    static Map<String, Object> secret = (Map<String, Object>)Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
+    private static Map<String, Object> secret = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
 
-    String serverUrl;
-    String serviceId;
-    String uri;
-    String clientId;
-    String clientSecret;
-    boolean enableHttp2;
+    private String serverUrl;
+    private String serviceId;
+    private String uri;
+    private String clientId;
+    private String clientSecret;
+    private boolean enableHttp2;
 
     public DerefRequest(String token) {
-        Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
         // client_secret is in secret.yml instead of client.yml
-        if(clientConfig != null) {
-            Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OAUTH);
-            if(oauthConfig != null) {
-                Map<String, Object> derefConfig = (Map<String, Object>)oauthConfig.get(DEREF);
-                if(derefConfig != null) {
-                    setServerUrl((String)derefConfig.get(SERVER_URL));
-                    setServiceId((String)derefConfig.get(SERVICE_ID));
-                    Object object = derefConfig.get(ENABLE_HTTP2);
-                    setEnableHttp2(object != null && (Boolean) object);
-                    setUri(derefConfig.get(URI) + "/" + token);
-                    setClientId((String)derefConfig.get(CLIENT_ID));
-                    setClientSecret((String)secret.get(SecretConstants.DEREF_CLIENT_SECRET));
-                }
-            }
+        Map<String, Object> derefConfig = ClientConfig.get().getDerefConfig();
+        if(derefConfig != null) {
+            setServerUrl((String)derefConfig.get(ClientConfig.SERVER_URL));
+            setServiceId((String)derefConfig.get(ClientConfig.SERVICE_ID));
+            Object object = derefConfig.get(ClientConfig.ENABLE_HTTP2);
+            setEnableHttp2(object != null && (Boolean) object);
+            setUri(derefConfig.get(ClientConfig.URI) + "/" + token);
+            setClientId((String)derefConfig.get(ClientConfig.CLIENT_ID));
+            setClientSecret((String)secret.get(SecretConstants.DEREF_CLIENT_SECRET));
         }
     }
 
@@ -103,5 +133,4 @@ public class DerefRequest {
     public boolean isEnableHttp2() { return enableHttp2; }
 
     public void setEnableHttp2(boolean enableHttp2) { this.enableHttp2 = enableHttp2; }
-
 }
