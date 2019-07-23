@@ -23,16 +23,15 @@ import java.util.*;
 /**
  * To convert the form into a map, we first convert the formValue into a String and then put into the map.
  * For the same form key, there might be multiple form values, we handle it differently based on the size.
- *
  */
 public class BodyConverter {
     static Map<String, Object> convert(FormData data) {
         Map<String, Object> map = new HashMap<>();
         for (String key : data) {
-            if(data.get(key).size() == 1) {
+            if (data.get(key).size() == 1) {
                 String value = data.getFirst(key).getValue();
                 map.put(key, value);
-            } else if(data.get(key).size() > 1){
+            } else if (data.get(key).size() > 1) {
                 List<Object> list = new ArrayList<>();
                 for (FormData.FormValue value : data.get(key)) {
                     list.add(value.getValue());
