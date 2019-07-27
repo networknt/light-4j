@@ -124,6 +124,7 @@ public class OauthHelper {
             } else if(tokenRequest.getServiceId() != null) {
                 Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
                 String url = cluster.serviceToUrl("https", tokenRequest.getServiceId(), envTag, null);
+                if(logger.isDebugEnabled()) logger.debug("discovered url = " + url);
                 connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, tokenRequest.isEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
             } else {
                 // both server_url and serviceId are empty in the config.
