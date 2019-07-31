@@ -6,6 +6,13 @@
 **Merged pull requests:**
 
 
+- fixes \#596 useJson default to false to ensure backward compatibility [\#597](https://github.com/networknt/light-4j/pull/597) ([stevehu](https://github.com/stevehu))
+- API-189: Return Json format result from HealthGetHandler [\#589](https://github.com/networknt/light-4j/pull/589) ([jsu216](https://github.com/jsu216))
+- fixes \#586 FormData.FormValue cannot be handled by Jackson JSON parser [\#587](https://github.com/networknt/light-4j/pull/587) ([stevehu](https://github.com/stevehu))
+- Merge to 1.6.x/\#547 deprecate apis [\#562](https://github.com/networknt/light-4j/pull/562) ([BalloonWen](https://github.com/BalloonWen))
+- fixes \#583 Success result is returned even light-oauth2 returns an er… [\#585](https://github.com/networknt/light-4j/pull/585) ([stevehu](https://github.com/stevehu))
+
+
 ## [1.6.5](https://github.com/networknt/light-4j/tree/1.6.5) (2019-07-12)
 
 
