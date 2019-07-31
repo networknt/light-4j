@@ -5,4 +5,4 @@
 enabled: true
 
 # true to return Json format message
-useJson: true
+useJson: false
