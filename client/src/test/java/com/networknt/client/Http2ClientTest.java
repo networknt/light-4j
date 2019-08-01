@@ -584,18 +584,18 @@ public class Http2ClientTest {
         ClientConfig.get().setRequestEnableHttp2(false);
         CountDownLatch latch = new CountDownLatch(asyncRequestNumber);
         for (int i = 0; i < asyncRequestNumber; i++) {
-            client.callService(new URI("https://localhost:7778"), request, Optional.empty()).thenAcceptAsync(clientResponse -> {
+            client.callService(ADDRESS, request, Optional.empty()).thenAcceptAsync(clientResponse -> {
                 Assert.assertEquals(clientResponse.getAttachment(Http2Client.RESPONSE_BODY), "Hello World!");
                 countComplete.getAndIncrement();
                 latch.countDown();
             });
-            Thread.sleep(10);
+            Thread.sleep(5);
         }
         latch.await(5, TimeUnit.SECONDS);
 
-        Assert.assertTrue(Http2ClientConnectionPool.getInstance().size() > 1);
+        Assert.assertTrue(Http2ClientConnectionPool.getInstance().numberOfConnections() > 1);
 
-        System.out.println("Connection pool size: " + Http2ClientConnectionPool.getInstance().size());
+        System.out.println("Number of connections: " + Http2ClientConnectionPool.getInstance().numberOfConnections());
         System.out.println("Completed: " + countComplete.get());
 
         // Reset to default
@@ -622,9 +622,9 @@ public class Http2ClientTest {
         }
         latch.await(5, TimeUnit.SECONDS);
 
-        Assert.assertTrue(Http2ClientConnectionPool.getInstance().size() == 1);
+        Assert.assertTrue(Http2ClientConnectionPool.getInstance().numberOfConnections() == 1);
 
-        System.out.println("Connection pool size: " + Http2ClientConnectionPool.getInstance().size());
+        System.out.println("Number of connections: " + Http2ClientConnectionPool.getInstance().numberOfConnections());
         System.out.println("Completed: " + countComplete.get());
     }
 

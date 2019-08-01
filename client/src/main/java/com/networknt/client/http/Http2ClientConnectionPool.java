@@ -161,7 +161,7 @@ public class Http2ClientConnectionPool {
         }
     }
 
-    public int size() {
+    public int numberOfConnections() {
         return connectionCount.get();
     }
 
