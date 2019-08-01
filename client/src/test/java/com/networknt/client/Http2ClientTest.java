@@ -18,29 +18,22 @@
 
 package com.networknt.client;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.ByteBuffer;
-import java.nio.channels.ClosedChannelException;
-import java.security.KeyManagementException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
-import java.security.interfaces.RSAPrivateKey;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Pattern;
-
-import javax.net.ssl.*;
-
 import com.networknt.client.circuitbreaker.CircuitBreaker;
+import com.networknt.client.http.Http2ClientConnectionPool;
+import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
+import com.networknt.client.ssl.TLSConfig;
+import com.networknt.common.SecretConstants;
+import com.networknt.config.Config;
+import com.networknt.httpstring.HttpStringConstants;
+import io.undertow.Undertow;
+import io.undertow.UndertowOptions;
+import io.undertow.client.*;
+import io.undertow.io.Receiver;
+import io.undertow.io.Sender;
+import io.undertow.protocols.ssl.UndertowXnioSsl;
+import io.undertow.server.HttpServerExchange;
+import io.undertow.server.handlers.PathHandler;
+import io.undertow.util.*;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
@@ -56,38 +49,28 @@ import org.junit.rules.ExpectedException;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xnio.IoUtils;
-import org.xnio.OptionMap;
-import org.xnio.Options;
-import org.xnio.Xnio;
-import org.xnio.XnioWorker;
+import org.xnio.*;
 import org.xnio.ssl.XnioSsl;
 
-import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
-import com.networknt.client.ssl.TLSConfig;
-import com.networknt.common.SecretConstants;
-import com.networknt.config.Config;
-import com.networknt.httpstring.HttpStringConstants;
+import javax.net.ssl.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
+import java.security.*;
+import java.security.cert.CertificateException;
+import java.security.interfaces.RSAPrivateKey;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 
-import io.undertow.Undertow;
-import io.undertow.UndertowOptions;
-import io.undertow.client.ClientCallback;
-import io.undertow.client.ClientConnection;
-import io.undertow.client.ClientExchange;
-import io.undertow.client.ClientRequest;
-import io.undertow.client.ClientResponse;
-import io.undertow.io.Receiver;
-import io.undertow.io.Sender;
-import io.undertow.protocols.ssl.UndertowXnioSsl;
-import io.undertow.server.HttpServerExchange;
-import io.undertow.server.handlers.PathHandler;
-import io.undertow.util.Headers;
-import io.undertow.util.Methods;
-import io.undertow.util.StatusCodes;
-import io.undertow.util.StringReadChannelListener;
-import io.undertow.util.StringWriteChannelListener;
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class Http2ClientTest {
     static final Logger logger = LoggerFactory.getLogger(Http2ClientTest.class);
@@ -96,6 +79,7 @@ public class Http2ClientTest {
     static SSLContext sslContext;
     private static final String message = "Hello World!";
     public static final String MESSAGE = "/message";
+    public static final String SLOW_MESSAGE = "/slowMessage";
     public static final String POST = "/post";
     public static final String FORM = "/form";
     public static final String TOKEN = "/oauth2/token";
@@ -163,7 +147,13 @@ public class Http2ClientTest {
                     .setServerOption(UndertowOptions.ALWAYS_SET_DATE, true)
                     .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, false)
                     .setHandler(new PathHandler()
-                            .addExactPath(MESSAGE, exchange -> sendMessage(exchange))
+                            .addExactPath(MESSAGE, exchange -> {
+                                sendMessage(exchange);
+                            })
+                            .addExactPath(SLOW_MESSAGE, exchange -> {
+                                Thread.sleep(20);
+                                sendMessage(exchange);
+                            })
                             .addExactPath(KEY, exchange -> sendMessage(exchange))
                             .addExactPath(API, (exchange) -> {
                                 boolean hasScopeToken = exchange.getRequestHeaders().contains(HttpStringConstants.SCOPE_TOKEN);
@@ -274,6 +264,7 @@ public class Http2ClientTest {
 
     @Test(expected = TimeoutException.class)
     public void shouldThrowTimeoutExceptionIfTimeoutHasBeenReached() throws URISyntaxException, ExecutionException, InterruptedException, TimeoutException {
+        Http2ClientConnectionPool.getInstance().clear();
         Http2Client client = createClient();
 
         final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(SLOW);
@@ -288,6 +279,7 @@ public class Http2ClientTest {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("circuit is opened.");
 
+        Http2ClientConnectionPool.getInstance().clear();
         Http2Client client = createClient();
 
         final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(SLOW);
@@ -311,6 +303,7 @@ public class Http2ClientTest {
 
     @Test
     public void shouldCircuitBeCloseIfResetTimeoutIsReached() throws URISyntaxException, ExecutionException, InterruptedException, TimeoutException {
+        Http2ClientConnectionPool.getInstance().clear();
         Http2Client client = createClient();
 
         final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(SLOW);
@@ -336,6 +329,7 @@ public class Http2ClientTest {
 
     @Test
     public void shouldCallRequestAsync() throws URISyntaxException, ExecutionException, InterruptedException, TimeoutException {
+        Http2ClientConnectionPool.getInstance().clear();
         Http2Client client = createClient();
 
         final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(POST);
@@ -348,7 +342,6 @@ public class Http2ClientTest {
 
     @Test
     public void testSingleHttp2PostSsl() throws Exception {
-        //
         final Http2Client client = createClient();
         final String postMessage = "This is a post request";
 
@@ -577,6 +570,62 @@ public class Http2ClientTest {
             IoUtils.safeClose(connection);
         }
         return reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+    }
+
+    @Test
+    public void callApiWithHttpConnectionPoolAsync() throws Exception {
+        Http2ClientConnectionPool.getInstance().clear();
+
+        int asyncRequestNumber = 100;
+        final Http2Client client = createClient();
+        AtomicInteger countComplete = new AtomicInteger(0);
+        ClientRequest request = new ClientRequest().setPath(SLOW_MESSAGE).setMethod(Methods.GET);
+        request.getRequestHeaders().put(Headers.HOST, "localhost");
+        ClientConfig.get().setRequestEnableHttp2(false);
+        CountDownLatch latch = new CountDownLatch(asyncRequestNumber);
+        for (int i = 0; i < asyncRequestNumber; i++) {
+            client.callService(new URI("https://localhost:7778"), request, Optional.empty()).thenAcceptAsync(clientResponse -> {
+                Assert.assertEquals(clientResponse.getAttachment(Http2Client.RESPONSE_BODY), "Hello World!");
+                countComplete.getAndIncrement();
+                latch.countDown();
+            });
+            Thread.sleep(10);
+        }
+        latch.await(5, TimeUnit.SECONDS);
+
+        Assert.assertTrue(Http2ClientConnectionPool.getInstance().size() > 1);
+
+        System.out.println("Connection pool size: " + Http2ClientConnectionPool.getInstance().size());
+        System.out.println("Completed: " + countComplete.get());
+
+        // Reset to default
+        ClientConfig.get().setRequestEnableHttp2(true);
+    }
+
+    @Test
+    public void callApiWithHttp2ConnectionPoolAsync() throws Exception {
+        Http2ClientConnectionPool.getInstance().clear();
+
+        int asyncRequestNumber = 100;
+        final Http2Client client = createClient();
+        AtomicInteger countComplete = new AtomicInteger(0);
+        ClientRequest request = new ClientRequest().setPath(SLOW_MESSAGE).setMethod(Methods.GET);
+        request.getRequestHeaders().put(Headers.HOST, "localhost");
+        CountDownLatch latch = new CountDownLatch(asyncRequestNumber);
+        for (int i = 0; i < asyncRequestNumber; i++) {
+            client.callService(new URI("https://localhost:7778"), request, Optional.empty()).thenAcceptAsync(clientResponse -> {
+                Assert.assertEquals(clientResponse.getAttachment(Http2Client.RESPONSE_BODY), "Hello World!");
+                countComplete.getAndIncrement();
+                latch.countDown();
+            });
+            Thread.sleep(10);
+        }
+        latch.await(5, TimeUnit.SECONDS);
+
+        Assert.assertTrue(Http2ClientConnectionPool.getInstance().size() == 1);
+
+        System.out.println("Connection pool size: " + Http2ClientConnectionPool.getInstance().size());
+        System.out.println("Completed: " + countComplete.get());
     }
 
     @Test

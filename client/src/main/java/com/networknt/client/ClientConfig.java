@@ -39,10 +39,15 @@ public final class ClientConfig {
     public static final int DEFAULT_ERROR_THRESHOLD = 5;
     public static final int DEFAULT_TIMEOUT = 3000;
     public static final int DEFAULT_RESET_TIMEOUT = 600000;
+    public static final int DEFAULT_CONNECTION_POOL_SIZE = 1000;
+    public static final boolean DEFAULT_REQUEST_ENABLE_HTTP2 = true;
+    public static final int DEFAULT_MAX_REQUEST_PER_CONNECTION = 1000000;
 
     private static final String BUFFER_SIZE = "bufferSize";
     private static final String ERROR_THRESHOLD = "errorThreshold";
     private static final String RESET_TIMEOUT = "resetTimeout";
+    private static final String CONNECTION_POLL_SIZE = "connectionPoolSize";
+    private static final String MAX_REQUEST_PER_CONNECTION = "maxReqPerConn";
 
     private final Config config;
     private final Map<String, Object> mappedConfig;
@@ -55,6 +60,9 @@ public final class ClientConfig {
     private int resetTimeout = DEFAULT_RESET_TIMEOUT;
     private int timeout = DEFAULT_TIMEOUT;
     private int errorThreshold = DEFAULT_ERROR_THRESHOLD;
+    private int connectionPoolSize = DEFAULT_CONNECTION_POOL_SIZE;
+    private int maxReqPerConn = DEFAULT_MAX_REQUEST_PER_CONNECTION;
+    private boolean requestEnableHttp2 = DEFAULT_REQUEST_ENABLE_HTTP2;
 
     private static ClientConfig instance;
 
@@ -104,6 +112,15 @@ public final class ClientConfig {
         }
         if (requestConfig.containsKey(TIMEOUT)) {
             timeout = (int) requestConfig.get(TIMEOUT);
+        }
+        if (requestConfig.containsKey(CONNECTION_POLL_SIZE)) {
+            connectionPoolSize = (int) requestConfig.get(CONNECTION_POLL_SIZE);
+        }
+        if (requestConfig.containsKey(ENABLE_HTTP2)) {
+            requestEnableHttp2 = (boolean) requestConfig.get(ENABLE_HTTP2);
+        }
+        if (requestConfig.containsKey(MAX_REQUEST_PER_CONNECTION)) {
+            maxReqPerConn = (int) requestConfig.get(MAX_REQUEST_PER_CONNECTION);
         }
     }
 
@@ -173,5 +190,25 @@ public final class ClientConfig {
 
     public int getErrorThreshold() {
         return errorThreshold;
+    }
+
+    public int getConnectionPoolSize() {
+        return connectionPoolSize;
+    }
+
+    public boolean getRequestEnableHttp2() {
+        return requestEnableHttp2;
+    }
+
+    public int getMaxRequestPerConnection() {
+        return maxReqPerConn;
+    }
+
+    protected void setRequestEnableHttp2(boolean isRequestEnableHttp2) {
+        this.requestEnableHttp2 = isRequestEnableHttp2;
+    }
+
+    protected void setConnectionPoolSize(int size) {
+        this.connectionPoolSize = size;
     }
 }

@@ -102,3 +102,6 @@ request:
   errorThreshold: 2
   timeout: 3000
   resetTimeout: 7000
+  enableHttp2: true
+  connectionPoolSize: 1000
+  maxReqPerConn: 1000000
