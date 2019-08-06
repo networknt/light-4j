@@ -182,13 +182,16 @@ public class Http2ClientConnectionPool {
         }
 
         public boolean isOpen() {
-            if (requestCount.get() >= maxReqCount && maxReqCount != -1) {
-                logger.debug("Connection expired.");
-                try {
-                    this.clientConnection.close();
-                } catch (Exception ignored) {
+            // Only the http2 connections have the maximum request limitation
+            if (clientConnection.isMultiplexingSupported()) {
+                if (requestCount.get() >= maxReqCount && maxReqCount != -1) {
+                    logger.debug("Connection expired.");
+                    try {
+                        this.clientConnection.close();
+                    } catch (Exception ignored) {
+                    }
+                    return false;
                 }
-                return false;
             }
             return this.clientConnection.isOpen();
         }
