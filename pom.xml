@@ -113,7 +113,7 @@
         <version.lifecycle-mapping>1.0.0</version.lifecycle-mapping>
         <version.maven-gpg>1.6</version.maven-gpg>
         <version.testcontainers>1.8.0</version.testcontainers>
-        <skip.unit.tests>false</skip.unit.tests>
+        <skipTests>false</skipTests>
         <matched.test.resources>**/*</matched.test.resources>
     </properties>
 
@@ -475,7 +475,7 @@
                 <groupId>io.prometheus</groupId>
                 <artifactId>simpleclient_common</artifactId>
                 <version>${version.prometheus}</version>
-            </dependency>          
+            </dependency>
             <dependency>
                 <groupId>org.apache.zookeeper</groupId>
                 <artifactId>zookeeper</artifactId>
@@ -705,8 +705,8 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <!-- Skips unit tests if the value of skip.unit.tests property is true -->
-                    <skipTests>${skip.unit.tests}</skipTests>
+                    <!-- Skips unit tests if the value of skipTests property is true -->
+                    <skipTests>${skipTests}</skipTests>
                     <!-- Excludes integration tests when unit tests are run -->
                     <excludes>
                         <exclude>**/*IT.java</exclude>
@@ -831,57 +831,57 @@
             </plugin>
         </plugins>
         <pluginManagement>
-        	<plugins>
-        		<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
-        		<plugin>
-        			<groupId>org.eclipse.m2e</groupId>
-        			<artifactId>lifecycle-mapping</artifactId>
-        			<version>${version.lifecycle-mapping}</version>
-        			<configuration>
-        				<lifecycleMappingMetadata>
-        					<pluginExecutions>
-        						<pluginExecution>
-        							<pluginExecutionFilter>
-        								<groupId>
-        									org.apache.maven.plugins
-        								</groupId>
-        								<artifactId>
-        									maven-compiler-plugin
-        								</artifactId>
-        								<versionRange>
-        									[3.3,)
-        								</versionRange>
-        								<goals>
-        									<goal>compile</goal>
-        									<goal>testCompile</goal>
-        								</goals>
-        							</pluginExecutionFilter>
-        							<action>
-        								<ignore></ignore>
-        							</action>
-        						</pluginExecution>
-        						<pluginExecution>
-        							<pluginExecutionFilter>
-        								<groupId>org.jacoco</groupId>
-        								<artifactId>
-        									jacoco-maven-plugin
-        								</artifactId>
-        								<versionRange>
-        									[0.7.4.201502262128,)
-        								</versionRange>
-        								<goals>
-        									<goal>prepare-agent</goal>
-        								</goals>
-        							</pluginExecutionFilter>
-        							<action>
-        								<ignore></ignore>
-        							</action>
-        						</pluginExecution>
-        					</pluginExecutions>
-        				</lifecycleMappingMetadata>
-        			</configuration>
-        		</plugin>
-        	</plugins>
+            <plugins>
+                <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+                <plugin>
+                    <groupId>org.eclipse.m2e</groupId>
+                    <artifactId>lifecycle-mapping</artifactId>
+                    <version>${version.lifecycle-mapping}</version>
+                    <configuration>
+                        <lifecycleMappingMetadata>
+                            <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>
+                                            org.apache.maven.plugins
+                                        </groupId>
+                                        <artifactId>
+                                            maven-compiler-plugin
+                                        </artifactId>
+                                        <versionRange>
+                                            [3.3,)
+                                        </versionRange>
+                                        <goals>
+                                            <goal>compile</goal>
+                                            <goal>testCompile</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore></ignore>
+                                    </action>
+                                </pluginExecution>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>org.jacoco</groupId>
+                                        <artifactId>
+                                            jacoco-maven-plugin
+                                        </artifactId>
+                                        <versionRange>
+                                            [0.7.4.201502262128,)
+                                        </versionRange>
+                                        <goals>
+                                            <goal>prepare-agent</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore></ignore>
+                                    </action>
+                                </pluginExecution>
+                            </pluginExecutions>
+                        </lifecycleMappingMetadata>
+                    </configuration>
+                </plugin>
+            </plugins>
         </pluginManagement>
     </build>
 
@@ -902,7 +902,7 @@
                 <!--
                     Only unit tests are run when the development profile is active
                 -->
-                <skip.unit.tests>false</skip.unit.tests>
+                <skipTests>false</skipTests>
             </properties>
             <build>
                 <plugins>
@@ -981,7 +981,7 @@
                 <!--
                     Only integration tests are run when the integration-test profile is active
                 -->
-                <skip.unit.tests>true</skip.unit.tests>
+                <skipTests>true</skipTests>
                 <!--to include nothing for regular unit resources-->
                 <matched.test.resources>a^</matched.test.resources>
             </properties>
@@ -1003,10 +1003,8 @@
                                     <goal>verify</goal>
                                 </goals>
                                 <configuration>
-                                    <!--
-                                        Skips integration tests if the value of skip.integration.tests
-                                        property is true
-                                    -->
+                                    <!--to avoid be overridden by skipTests-->
+                                    <skipTests>false</skipTests>
                                 </configuration>
                             </execution>
                         </executions>
