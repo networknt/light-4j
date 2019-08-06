@@ -205,7 +205,9 @@ public class Http2ClientConnectionPool {
         }
 
         protected void incrementRequestCount() {
-            this.requestCount.getAndIncrement();
+            if (clientConnection.isMultiplexingSupported()) {
+                this.requestCount.getAndIncrement();
+            }
         }
     }
 }
