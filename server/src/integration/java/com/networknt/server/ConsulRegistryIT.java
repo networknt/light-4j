@@ -21,6 +21,8 @@ import com.networknt.cluster.LightCluster;
 import com.networknt.config.Config;
 import com.networknt.consul.ConsulConfig;
 import com.networknt.service.SingletonServiceFactory;
+import com.networknt.switcher.SwitcherUtil;
+import com.networknt.utility.Constants;
 import com.networknt.utility.Util;
 import org.junit.*;
 import org.slf4j.Logger;
@@ -193,6 +195,7 @@ public class ConsulRegistryIT {
     }
 
     private static void startServer(int port, String envTag, Server server) throws InterruptedException {
+        SwitcherUtil.setSwitcherValue(Constants.REGISTRY_HEARTBEAT_SWITCHER, false);
         serverConfig.setHttpsPort(port);
         serverConfig.setEnvironment(envTag);
         logger.info("starting server");
