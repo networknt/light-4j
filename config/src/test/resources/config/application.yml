@@ -1,0 +1,128 @@
+consul:
+  # Consul URL for accessing APIs
+  consulUrl: "${consul.url:https://consul.mcc.np.api.cibc.com:8443}"
+  # number of requests before reset the shared connection.
+  maxReqPerConn: 1000000
+  # deregister the service after the amount of time after health check failed.
+  deregisterAfter: 2m
+  # health check interval for TCP or HTTP check. Or it will be the TTL for TTL check. Every 10 seconds,
+  # TCP or HTTP check request will be sent. Or if there is no heart beat request from service after 10 seconds,
+  # then mark the service is critical.
+  checkInterval: 30s
+  # One of the following health check approach will be selected. Two passive (TCP and HTTP) and one active (TTL)
+  # enable health check TCP. Ping the IP/port to ensure that the service is up. This should be used for most of
+  # the services with simple dependencies. If the port is open on the address, it indicates that the service is up.
+  tcpCheck: false
+  # enable health check HTTP. A http get request will be sent to the service to ensure that 200 response status is
+  # coming back. This is suitable for service that depending on database or other infrastructure services. You should
+  # implement a customized health check handler that checks dependencies. i.e. if db is down, return status 400.
+  httpCheck: false
+  # enable health check TTL. When this is enabled, Consul won't actively check your service to ensure it is healthy,
+  # but your service will call check endpoint with heart beat to indicate it is alive. This requires that the service
+  # is built on top of light-4j and the above options are not available. For example, your service is behind NAT.
+  ttlCheck: false
+  #wait: 200s
+client:
+  tls:
+    # if the server is using self-signed certificate, this need to be false.
+    verifyHostname: true
+    # The default trustedNames group used to created default SSL context. This is used to create Http2Client.SSL if set.
+    defaultGroupKey: trustedNames.local
+    # trusted hostnames, service names, service Ids, and so on.
+    # Note: localhost and 127.0.0.1 are not trustable hostname/ip in general. So, these values should not be used as trusted names in production.
+    trustedNames:
+      local: localhost
+      negativeTest: invalidhost
+      empty:
+    # trust store contains certifictes that server needs. Enable if tls is used.
+    loadTrustStore: true
+    # trust store location can be specified here or system properties javax.net.ssl.trustStore and password javax.net.ssl.trustStorePassword
+    trustStore: client.truststore
+    # key store contains client key and it should be loaded if two-way ssl is uesed.
+    loadKeyStore: true
+    # key store location
+    keyStore: client.keystore
+  oauth:
+    token:
+      tokenRenewBeforeExpired: 4000
+      expiredRefreshRetryDelay: 5000
+      earlyRefreshRetryDelay: 30000
+      # static token service url in case the service is deployed to a VM. It will be used if it is configured here.
+      server_url: http://localhost:7777
+      # serviceId for the token service, it will be used to do the lookup if above server_url is not configured.
+      serviceId: com.networknt.oauth2-token-1.0.0
+      authorization_code:
+        uri: "/oauth2/token"
+        client_id: test_client
+        client_secret: test_secret
+        redirect_uri: https://localhost:8080/authorization_code
+        scope:
+          - test.r
+          - test.w
+      client_credentials:
+        uri: "/oauth2/token"
+        client_id: test_client
+        client_secret: test_secret
+        scope:
+          - test.r
+          - test.w
+      # light-oauth2 key distribution endpoint configuration for token verification
+      key:
+        # key distribution server url for token verification. It will be used if it is configured.
+        server_url: https://localhost:6886
+        # key serviceId for key distribution service, it will be used if above server_url is not configured.
+        serviceId: com.networknt.oauth2-key-1.0.0
+        # the path for the key distribution endpoint
+        uri: "/oauth2/key"
+        # client_id used to access key distribution service. It can be the same client_id with token service or not.
+        client_id: f7d42348-c647-4efb-a52d-4c5787421e72
+        # client secret used to access the key distribution service.
+        client_secret: f6h1FTI8Q3-7UScPZDzfXA
+        # set to true if the oauth2 provider supports HTTP/2
+        enableHttp2: true
+    # sign endpoint configuration
+    sign:
+      # token server url. The default port number for token service is 6882. If this url exists, it will be used.
+      server_url: https://localhost:6882
+      # token serviceId. If server_url doesn't exist, the serviceId will be used to lookup the token service.
+      serviceId: com.networknt.oauth2-token-1.0.0
+      # signing endpoint for the sign request
+      uri: "/oauth2/token"
+      # timeout in milliseconds
+      timeout: 2000
+      # set to true if the oauth2 provider supports HTTP/2
+      enableHttp2: true
+      # client_id for client authentication
+      client_id: f7d42348-c647-4efb-a52d-4c5787421e72
+      # client secret for client authentication and it can be encrypted here.
+      client_secret: f6h1FTI8Q3-7UScPZDzfXA
+      # the key distribution sever config for sign. It can be different then token key distribution server.
+      key:
+        # key distribution server url. It will be used to establish connection if it exists.
+        server_url: https://localhost:6886
+        # the unique service id for key distribution service, it will be used to lookup key service if above url doesn't exist.
+        serviceId: com.networknt.oauth2-key-1.0.0
+        # the path for the key distribution endpoint
+        uri: "/oauth2/key"
+        # client_id used to access key distribution service. It can be the same client_id with token service or not.
+        client_id: f7d42348-c647-4efb-a52d-4c5787421e72
+        # client secret used to access the key distribution service.
+        client_secret: f6h1FTI8Q3-7UScPZDzfXA
+        # set to true if the oauth2 provider supports HTTP/2
+        enableHttp2: true
+    # de-ref by reference token to JWT token. It is separate service as it might be the external OAuth 2.0 provider.
+    deref:
+      # Token service server url, this might be different than the above token server url. The static url will be used if it is configured.
+      server_url: https://localhost:6882
+      # token service unique id for OAuth 2.0 provider. Need for service lookup/discovery. It will be used if above server_url is not configured.
+      serviceId: com.networknt.oauth2-token-1.0.0
+      # set to true if the oauth2 provider supports HTTP/2
+      enableHttp2: true
+      # the path for the key distribution endpoint
+      uri: "/oauth2/deref"
+      # client_id used to access key distribution service. It can be the same client_id with token service or not.
+      client_id: f7d42348-c647-4efb-a52d-4c5787421e72
+  request:
+    errorThreshold: 2
+    timeout: 3000
+    resetTimeout: 7000
