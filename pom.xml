@@ -68,7 +68,8 @@
         <java.version>8</java.version>
         <javac.version>9+181-r4173-1</javac.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <version.jackson>2.9.9</version.jackson>
+        <version.jackson-core>2.9.9</version.jackson-core>
+        <version.jackson-databind>2.9.9.3</version.jackson-databind>
         <version.slf4j>1.7.25</version.slf4j>
         <version.jose4j>0.6.3</version.jose4j>
         <version.commons.codec>1.11</version.commons.codec>
@@ -384,22 +385,22 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
-                <version>${version.jackson}</version>
+                <version>${version.jackson-databind}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-core</artifactId>
-                <version>${version.jackson}</version>
+                <version>${version.jackson-core}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-annotations</artifactId>
-                <version>${version.jackson}</version>
+                <version>${version.jackson-core}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.datatype</groupId>
                 <artifactId>jackson-datatype-jsr310</artifactId>
-                <version>${version.jackson}</version>
+                <version>${version.jackson-core}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>com.fasterxml.jackson.dataformat</groupId>
