@@ -21,6 +21,8 @@ import com.networknt.cluster.LightCluster;
 import com.networknt.config.Config;
 import com.networknt.consul.ConsulConfig;
 import com.networknt.service.SingletonServiceFactory;
+import com.networknt.switcher.SwitcherUtil;
+import com.networknt.utility.Constants;
 import com.networknt.utility.Util;
 import org.junit.*;
 import org.slf4j.Logger;
@@ -86,10 +88,14 @@ public class ConsulRegistryIT {
         startServer(49588, null, server1);
         startServer(49589, "", server2);
         startServer(49590, "dev", server3);
+        // Wait for server start complete
+        Thread.sleep(10000);
     }
 
     @AfterClass
     public static void tearDown() {
+        // Skip the service unregistering since the test container tear down before the server tear down
+        serverConfig.setEnableRegistry(false);
         if (server1 != null) {
             try {
                 Thread.sleep(1000);
@@ -123,12 +129,9 @@ public class ConsulRegistryIT {
     public void testDiscoverWithoutEnvTag() throws InterruptedException {
         String url = null;
         for (int i = 0; i < retryTimes; i++) {
-            try {
-                url = lightCluster.serviceToUrl("https", serviceId, null, null);
-                if (url != null) break;
-            } catch (Exception e) {
-                Thread.sleep(2000);
-            }
+            url = lightCluster.serviceToUrl("https", serviceId, null, null);
+            if (url != null) break;
+            Thread.sleep(2000);
         }
         Assert.assertNotNull(url);
         Assert.assertTrue(url.equals("https://" + ipAddress + ":49588") || url.equals("https://" + ipAddress + ":49589") || url.equals("https://" + ipAddress + ":49590"));
@@ -138,12 +141,9 @@ public class ConsulRegistryIT {
     public void testDiscoverWithEmptyStringEnvTag() throws InterruptedException {
         String url = null;
         for (int i = 0; i < retryTimes; i++) {
-            try {
-                url = lightCluster.serviceToUrl("https", serviceId, "", null);
-                if (url != null) break;
-            } catch (Exception e) {
-                Thread.sleep(2000);
-            }
+            url = lightCluster.serviceToUrl("https", serviceId, "", null);
+            if (url != null) break;
+            Thread.sleep(2000);
         }
         Assert.assertNotNull(url);
         Assert.assertTrue(url.equals("https://" + ipAddress + ":49588") || url.equals("https://" + ipAddress + ":49589"));
@@ -153,12 +153,9 @@ public class ConsulRegistryIT {
     public void testDiscoverWithNonEmptyStringEnvTag() throws InterruptedException {
         String url = null;
         for (int i = 0; i < retryTimes; i++) {
-            try {
-                url = lightCluster.serviceToUrl("https", serviceId, "dev", null);
-                if (url != null) break;
-            } catch (Exception e) {
-                Thread.sleep(2000);
-            }
+            url = lightCluster.serviceToUrl("https", serviceId, "dev", null);
+            if (url != null) break;
+            Thread.sleep(2000);
         }
         Assert.assertNotNull(url);
         Assert.assertEquals("https://" + ipAddress + ":49590", url);
@@ -174,12 +171,9 @@ public class ConsulRegistryIT {
     public void testDiscoverCaching() throws InterruptedException {
         String url = null;
         for (int i = 0; i < retryTimes; i++) {
-            try {
-                url = lightCluster.serviceToUrl("https", serviceId, "dev", null);
-                if (url != null) break;
-            } catch (Exception e) {
-                Thread.sleep(2000);
-            }
+            url = lightCluster.serviceToUrl("https", serviceId, "dev", null);
+            if (url != null) break;
+            Thread.sleep(2000);
         }
         Assert.assertNotNull(url);
         Assert.assertEquals("https://" + ipAddress + ":49590", url);
@@ -193,11 +187,12 @@ public class ConsulRegistryIT {
     }
 
     private static void startServer(int port, String envTag, Server server) throws InterruptedException {
+        SwitcherUtil.setSwitcherValue(Constants.REGISTRY_HEARTBEAT_SWITCHER, false);
         serverConfig.setHttpsPort(port);
         serverConfig.setEnvironment(envTag);
         logger.info("starting server");
         new Thread(() -> server.start()).start();
         // Wait for server start complete
-        Thread.sleep(5000);
+        Thread.sleep(1000);
     }
 }
