@@ -112,7 +112,7 @@
         <version.testcontainers>1.8.0</version.testcontainers>
         <version.jaeger>0.35.2</version.jaeger>
         <version.opentracing>0.32.0</version.opentracing>
-        <skip.unit.tests>false</skip.unit.tests>
+        <skipTests>false</skipTests>
         <matched.test.resources>**/*</matched.test.resources>
         <version.javadoc-packagelist-plugin>1.0.0</version.javadoc-packagelist-plugin>
         <version.maven-javadoc>3.1.0</version.maven-javadoc>
@@ -748,8 +748,8 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <!-- Skips unit tests if the value of skip.unit.tests property is true -->
-                    <skipTests>${skip.unit.tests}</skipTests>
+                    <!-- Skips unit tests if the value of skipTests property is true -->
+                    <skipTests>${skipTests}</skipTests>
                     <!-- Excludes integration tests when unit tests are run -->
                     <excludes>
                         <exclude>**/*IT.java</exclude>
@@ -766,6 +766,38 @@
                     <forkCount>0</forkCount>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>${version.build-helper-maven}</version>
+                <executions>
+                    <execution>
+                        <id>add-test-source</id>
+                        <goals>
+                            <goal>add-test-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.basedir}\src\integration\java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>add-test-resource</id>
+                        <goals>
+                            <goal>add-test-resource</goal>
+                        </goals>
+                        <configuration>
+                            <resources>
+                                <resource>
+                                    <!-- Don't forget <directory> label -->
+                                    <directory>${project.basedir}\src\integration\resources</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <!-- JACOCO added for code coverage -->
             <plugin>
                 <groupId>org.jacoco</groupId>
@@ -779,8 +811,7 @@
                             <goal>prepare-agent</goal>
                         </goals>
                         <configuration>
-                            <propertyName>surefireArgLine</propertyName>
-                            <!--<destFile>${project.build.directory}/coverage-reports/jacoco-ut.exec</destFile>-->
+                            <destFile>${project.build.directory}/coverage-reports/jacoco-ut.exec</destFile>
                         </configuration>
                     </execution>
                     <execution>
@@ -789,6 +820,33 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
+                        <configuration>
+                            <dataFile>${project.build.directory}/coverage-reports/jacoco-ut.exec</dataFile>
+                            <outputDirectory>${project.reporting.outputDirectory}/jacoco-ut</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <!-- End Executions for unit tests -->
+                    <!-- The Executions for integration tests -->
+                    <execution>
+                        <id>pre-integration-test</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                        <configuration>
+                            <destFile>${project.build.directory}/coverage-reports/jacoco-it.exec</destFile>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>post-integration-test</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <configuration>
+                            <dataFile>${project.build.directory}/coverage-reports/jacoco-it.exec</dataFile>
+                            <outputDirectory>${project.reporting.outputDirectory}/jacoco-it</outputDirectory>
+                        </configuration>
                     </execution>
                     <!-- End Executions for integration tests -->
                 </executions>
@@ -867,7 +925,7 @@
                 <!--
                     Only unit tests are run when the development profile is active
                 -->
-                <skip.unit.tests>false</skip.unit.tests>
+                <skipTests>false</skipTests>
             </properties>
             <build>
                 <plugins>
@@ -946,7 +1004,7 @@
                 <!--
                     Only integration tests are run when the integration-test profile is active
                 -->
-                <skip.unit.tests>true</skip.unit.tests>
+                <skipTests>true</skipTests>
                 <!--to include nothing for regular unit resources-->
                 <matched.test.resources>a^</matched.test.resources>
             </properties>
@@ -968,10 +1026,8 @@
                                     <goal>verify</goal>
                                 </goals>
                                 <configuration>
-                                    <!--
-                                        Skips integration tests if the value of skip.integration.tests
-                                        property is true
-                                    -->
+                                    <!--to avoid be overridden by skipTests-->
+                                    <skipTests>false</skipTests>
                                 </configuration>
                             </execution>
                         </executions>
