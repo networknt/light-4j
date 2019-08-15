@@ -43,6 +43,18 @@ public final class ClientConfig {
     private static final String ERROR_THRESHOLD = "errorThreshold";
     private static final String RESET_TIMEOUT = "resetTimeout";
     private static final String INJECT_OPEN_TRACING = "injectOpenTracing";
+    public static final int DEFAULT_CONNECTION_POOL_SIZE = 1000;
+    public static final boolean DEFAULT_REQUEST_ENABLE_HTTP2 = true;
+    public static final int DEFAULT_MAX_REQUEST_PER_CONNECTION = 1000000;
+    public static final long DEFAULT_CONNECTION_EXPIRE_TIME = 1000000;
+    public static final int DEFAULT_MAX_CONNECTION_PER_HOST = 1000;
+    public static final int DEFAULT_MIN_CONNECTION_PER_HOST = 250;
+
+    private static final String CONNECTION_POOL_SIZE = "connectionPoolSize";
+    private static final String MAX_REQUEST_PER_CONNECTION = "maxReqPerConn";
+    private static final String CONNECTION_EXPIRE_TIME = "connectionExpireSize";
+    private static final String MAX_CONNECTION_NUM_PER_HOST = "maxConnectionNumPerHost";
+    private static final String MIN_CONNECTION_NUM_PER_HOST = "minConnectionNumPerHost";
 
     private final Config config;
     private final Map<String, Object> mappedConfig;
@@ -56,6 +68,12 @@ public final class ClientConfig {
     private int timeout = DEFAULT_TIMEOUT;
     private int errorThreshold = DEFAULT_ERROR_THRESHOLD;
     private boolean injectOpenTracing = DEFAULT_INJECT_OPEN_TRACING;
+    private int connectionPoolSize = DEFAULT_CONNECTION_POOL_SIZE;
+    private int maxReqPerConn = DEFAULT_MAX_REQUEST_PER_CONNECTION;
+    private boolean requestEnableHttp2 = DEFAULT_REQUEST_ENABLE_HTTP2;
+    private long connectionExpireTime = DEFAULT_CONNECTION_EXPIRE_TIME;
+    private int maxConnectionNumPerHost = DEFAULT_MAX_CONNECTION_PER_HOST;
+    private int minConnectionNumPerHost = DEFAULT_MIN_CONNECTION_PER_HOST;
 
     private static ClientConfig instance;
 
@@ -108,6 +126,24 @@ public final class ClientConfig {
         }
         if(requestConfig.containsKey(INJECT_OPEN_TRACING)) {
             injectOpenTracing = (Boolean) requestConfig.get(INJECT_OPEN_TRACING);
+        }
+        if (requestConfig.containsKey(CONNECTION_POOL_SIZE)) {
+            connectionPoolSize = (int) requestConfig.get(CONNECTION_POOL_SIZE);
+        }
+        if (requestConfig.containsKey(ENABLE_HTTP2)) {
+            requestEnableHttp2 = (boolean) requestConfig.get(ENABLE_HTTP2);
+        }
+        if (requestConfig.containsKey(MAX_REQUEST_PER_CONNECTION)) {
+            maxReqPerConn = (int) requestConfig.get(MAX_REQUEST_PER_CONNECTION);
+        }
+        if (requestConfig.containsKey(CONNECTION_EXPIRE_TIME)) {
+            connectionExpireTime = (long) requestConfig.get(CONNECTION_EXPIRE_TIME);
+        }
+        if (requestConfig.containsKey(MAX_CONNECTION_NUM_PER_HOST)) {
+            maxConnectionNumPerHost = (int) requestConfig.get(MAX_CONNECTION_NUM_PER_HOST);
+        }
+        if (requestConfig.containsKey(MIN_CONNECTION_NUM_PER_HOST)) {
+            minConnectionNumPerHost = (int) requestConfig.get(MIN_CONNECTION_NUM_PER_HOST);
         }
     }
 
@@ -187,4 +223,32 @@ public final class ClientConfig {
     }
 
     public boolean isInjectOpenTracing() { return injectOpenTracing; }
+
+    public int getConnectionPoolSize() {
+        return connectionPoolSize;
+    }
+
+    public boolean getRequestEnableHttp2() {
+        return requestEnableHttp2;
+    }
+
+    public int getMaxRequestPerConnection() {
+        return maxReqPerConn;
+    }
+
+    protected void setRequestEnableHttp2(boolean isRequestEnableHttp2) {
+        this.requestEnableHttp2 = isRequestEnableHttp2;
+    }
+
+    public long getConnectionExpireTime() {
+        return connectionExpireTime;
+    }
+
+    public int getMaxConnectionNumPerHost() {
+        return maxConnectionNumPerHost;
+    }
+
+    public int getMinConnectionNumPerHost() {
+        return minConnectionNumPerHost;
+    }
 }

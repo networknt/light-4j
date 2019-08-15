@@ -149,4 +149,16 @@ request:
   timeout: 3000
   # reset the circuit after this timeout in millisecond
   resetTimeout: 7000
+  # if inject OpenTracing with the Http2Client in header
   injectOpenTracing: false
+  # the flag to indicate whether http/2 is enabled when calling client.callService()
+  enableHttp2: true
+  # the maximum host capacity of connection pool
+  connectionPoolSize: 1000
+  # the maximum request limitation for each connection
+  maxReqPerConn: 1000000
+  # maximum quantity of connection in connection pool for each host
+  maxConnectionNumPerHost: 1000
+  # minimum quantity of connection in connection pool for each host. The corresponding connection number will shrink to minConnectionNumPerHost
+  # by remove least recently used connections when the connection number of a host reach 0.75 * maxConnectionNumPerHost.
+  minConnectionNumPerHost: 250
