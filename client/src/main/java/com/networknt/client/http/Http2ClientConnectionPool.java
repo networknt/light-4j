@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -79,7 +80,7 @@ public class Http2ClientConnectionPool {
         CachedConnection cachedConnection = getAndRemoveClosedConnection(uri);
         if (cachedConnection == null || getConnectionStatus(cachedConnection) != ConnectionStatus.MULTIPLEX_SUPPORT) {
             CachedConnection newConnection = new CachedConnection(connection);
-            connectionPool.computeIfAbsent(uri.toString(), k -> new ArrayList<>()).add(newConnection);
+            connectionPool.computeIfAbsent(uri.toString(), k -> new LinkedList<>()).add(newConnection);
             connectionCount.getAndIncrement();
         }
     }
@@ -100,18 +101,32 @@ public class Http2ClientConnectionPool {
 
     private synchronized CachedConnection selectConnection(List<CachedConnection> connections, boolean isRemoveClosedConnection) {
         if (connections != null) {
-            Collections.shuffle(connections);
-            Iterator<CachedConnection> iterator = connections.iterator();
-            while (iterator.hasNext()) {
-                CachedConnection connection = iterator.next();
-                if (connection != null) {
-                    ConnectionStatus status = getConnectionStatus(connection);
-                    if (ConnectionStatus.CLOSE == status && isRemoveClosedConnection) {
-                        // Remove unavailable connection from the list.
-                        iterator.remove();
-                        connectionStatusMap.remove(connection.get());
-                        connectionCount.getAndDecrement();
+            if (connections.size() > ClientConfig.get().getMaxConnectionNumPerHost() * 0.75) {
+                while (connections.size() > ClientConfig.get().getMinConnectionNumPerHost() && connections.size() > 0) {
+                    connections.remove(0);
+                }
+            }
+            if (isRemoveClosedConnection) {
+                Iterator<CachedConnection> iterator = connections.iterator();
+                while (iterator.hasNext()) {
+                    CachedConnection connection = iterator.next();
+                    if (connection != null) {
+                        ConnectionStatus status = getConnectionStatus(connection);
+                        if (ConnectionStatus.CLOSE == status) {
+                            // Remove unavailable connection from the list.
+                            iterator.remove();
+                               connectionStatusMap.remove(connection.get());
+                            connectionCount.getAndDecrement();
+                        }
                     }
+                }
+            }
+            if (connections.size() > 0) {
+                // Balance the selection of each connection
+                int randomInt = ThreadLocalRandom.current().nextInt(0, connections.size());
+                for (int i = 0; i < connections.size(); i++) {
+                    CachedConnection connection = connections.get((i + randomInt) % connections.size());
+                    ConnectionStatus status = getConnectionStatus(connection);
                     // Return non-hanging connection
                     if (status == ConnectionStatus.AVAILABLE || status == ConnectionStatus.MULTIPLEX_SUPPORT) {
                         return connection;
@@ -174,24 +189,24 @@ public class Http2ClientConnectionPool {
     private class CachedConnection {
         private AtomicInteger requestCount;
         private ClientConnection clientConnection;
+        private long lifeStartTime;
         private int maxReqCount = ClientConfig.get().getMaxRequestPerConnection();
+        private long expireTime = ClientConfig.get().getConnectionExpireTime();
 
         protected CachedConnection(ClientConnection connection) {
             requestCount = new AtomicInteger(0);
             this.clientConnection = connection;
+            this.lifeStartTime = System.currentTimeMillis();
         }
 
         public boolean isOpen() {
-            // Only the http2 connections have the maximum request limitation
-            if (clientConnection.isMultiplexingSupported()) {
-                if (requestCount.get() >= maxReqCount && maxReqCount != -1) {
-                    logger.debug("Connection expired.");
-                    try {
-                        this.clientConnection.close();
-                    } catch (Exception ignored) {
-                    }
-                    return false;
+            if (System.currentTimeMillis() - lifeStartTime >= expireTime || (requestCount.get() >= maxReqCount && maxReqCount != -1)) {
+                logger.debug("Connection expired.");
+                try {
+                    this.clientConnection.close();
+                } catch (Exception ignored) {
                 }
+                return false;
             }
             return this.clientConnection.isOpen();
         }
@@ -205,9 +220,7 @@ public class Http2ClientConnectionPool {
         }
 
         protected void incrementRequestCount() {
-            if (clientConnection.isMultiplexingSupported()) {
-                this.requestCount.getAndIncrement();
-            }
+            this.requestCount.getAndIncrement();
         }
     }
 }

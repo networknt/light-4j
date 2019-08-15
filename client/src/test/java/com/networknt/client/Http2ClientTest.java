@@ -618,7 +618,7 @@ public class Http2ClientTest {
                 countComplete.getAndIncrement();
                 latch.countDown();
             });
-            Thread.sleep(10);
+            Thread.sleep(5);
         }
         latch.await(5, TimeUnit.SECONDS);
 

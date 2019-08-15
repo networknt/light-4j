@@ -24,11 +24,14 @@ import com.networknt.client.oauth.Jwt;
 import com.networknt.client.oauth.TokenManager;
 import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
 import com.networknt.client.ssl.TLSConfig;
+import com.networknt.cluster.Cluster;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
+import com.networknt.exception.ClientException;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
+import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.TlsUtil;
 import io.undertow.UndertowOptions;
@@ -694,7 +697,15 @@ public class Http2Client {
         return new CircuitBreaker(() -> callService(uri, request, requestBody));
     }
 
+    /**
+     * This method is used to call the service corresponding to the uri and obtain a response, connection pool is embedded.
+     * @param uri URI of target service
+     * @param request request
+     * @param requestBody request body
+     * @return client response
+     */
     public CompletableFuture<ClientResponse> callService(URI uri, ClientRequest request, Optional<String> requestBody) {
+        addHostHeader(request);
         CompletableFuture<ClientResponse> futureClientResponse;
         AtomicReference<ClientConnection> currentConnection = new AtomicReference<>(http2ClientConnectionPool.getConnection(uri));
         if (currentConnection.get() != null) {
@@ -709,6 +720,31 @@ public class Http2Client {
         }
         futureClientResponse.thenAcceptAsync(clientResponse -> http2ClientConnectionPool.resetConnectionStatus(currentConnection.get()));
         return futureClientResponse;
+    }
+
+    /**
+     * This method is used to call the service by using the serviceId and obtain a response
+     * service discovery, load balancing and connection pool are embedded.
+     * @param protocol target service protocol
+     * @param serviceId target service's service Id
+     * @param envTag environment tag
+     * @param request request
+     * @param requestBody request body
+     * @return client response
+     */
+    public CompletableFuture<ClientResponse> callService(String protocol, String serviceId, String envTag, ClientRequest request, Optional<String> requestBody) {
+        try {
+            Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
+            String url = cluster.serviceToUrl(protocol, serviceId, envTag, null);
+            if (url == null) {
+                logger.error("Failed to discover service with serviceID: {}, and tag: {}", serviceId, envTag);
+                throw new ClientException(String.format("Failed to discover service with serviceID: %s, and tag: %s", serviceId, envTag));
+            }
+            return callService(new URI(url), request, requestBody);
+        } catch (Exception e) {
+            logger.error("Failed to call service: {}", serviceId);
+            throw new RuntimeException("Failed to call service: " + serviceId, e);
+        }
     }
 
     /**
@@ -766,6 +802,12 @@ public class Http2Client {
                 futureClientResponseNoRequest.completeExceptionally(e);
             }
             return futureClientResponseNoRequest;
+        }
+    }
+
+    private void addHostHeader(ClientRequest request) {
+        if (!request.getRequestHeaders().contains(Headers.HOST)) {
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
         }
     }
 }
