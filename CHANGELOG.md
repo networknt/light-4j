@@ -1,5 +1,15 @@
 # Change Log
 
+## [1.6.7](https://github.com/networknt/light-4j/tree/1.6.7) (2019-08-16)
+
+
+**Merged pull requests:**
+
+
+- Feat/connection pool [\#598](https://github.com/networknt/light-4j/pull/598) ([jiachen1120](https://github.com/jiachen1120))
+- Fix/\#590 skip tests [\#591](https://github.com/networknt/light-4j/pull/591) ([BalloonWen](https://github.com/BalloonWen))
+- fixes \#600 upgrade jackson-databind to 2.9.9.3 [\#601](https://github.com/networknt/light-4j/pull/601) ([stevehu](https://github.com/stevehu))
+- Feat/pluggable config loader [\#575](https://github.com/networknt/light-4j/pull/575) ([jiachen1120](https://github.com/jiachen1120))
 ## [1.6.6](https://github.com/networknt/light-4j/tree/1.6.6) (2019-07-31)
 
 
