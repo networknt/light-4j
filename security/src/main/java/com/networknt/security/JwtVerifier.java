@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.networknt.security;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -52,16 +53,25 @@ import java.util.function.BiFunction;
 import java.util.regex.Pattern;
 
 /**
- * JWT token helper utility that use by different framework to verify JWT tokens.
+ * This is a new class that is designed as non-static to replace the JwtHelper which is a static class. The reason
+ * is to pass the framework specific security configuration so that we can eliminate the security.yml for token
+ * verification.
+ *
+ * The JwtHelper will be stay for a while for backward compatibility reason as it is a public class and users might
+ * use it in their application. The only thing that need to remember is to have both security.yml and openapi-security.yml
+ * for the security configuration and there are overlap between these two files.
+ *
+ * To use this class, create an instance by passing in the security configuration and cache the instance in your app
+ * as a field or an instance variable.
  *
  * @author Steve Hu
  */
-@Deprecated
-public class JwtHelper {
-    static final Logger logger = LoggerFactory.getLogger(JwtHelper.class);
+public class JwtVerifier {
+    static final Logger logger = LoggerFactory.getLogger(JwtVerifier.class);
+
     public static final String KID = "kid";
-    public static final String JWT_CONFIG = "jwt";
     public static final String SECURITY_CONFIG = "security";
+    public static final String JWT_CONFIG = "jwt";
     public static final String JWT_CERTIFICATE = "certificate";
     public static final String JWT_CLOCK_SKEW_IN_SECONDS = "clockSkewInSeconds";
     public static final String ENABLE_VERIFY_JWT = "enableVerifyJwt";
@@ -73,24 +83,55 @@ public class JwtHelper {
     public static final String JWT_KEY_RESOLVER_X509CERT = "X509Certificate";
     public static final String JWT_KEY_RESOLVER_JWKS = "JsonWebKeySet";
 
+
+    Map<String, Object> config;
+    Map<String, Object> jwtConfig;
+    int secondsOfAllowedClockSkew;
+    Boolean enableJwtCache;
+    Boolean bootstrapFromKeyService;
+
+    static Cache<String, JwtClaims> cache;
     static Map<String, X509Certificate> certMap;
     static Map<String, List<JsonWebKey>> jwksMap;
     static List<String> fingerPrints;
 
-    static Map<String, Object> securityConfig = (Map)Config.getInstance().getJsonMapConfig(SECURITY_CONFIG);
-    static Map<String, Object> securityJwtConfig = (Map)securityConfig.get(JWT_CONFIG);
-    static int secondsOfAllowedClockSkew = (Integer) securityJwtConfig.get(JWT_CLOCK_SKEW_IN_SECONDS);
-    static Boolean enableJwtCache = (Boolean)securityConfig.get(ENABLE_JWT_CACHE);
-    static Boolean bootstrapFromKeyService = (Boolean)securityConfig.get(BOOTSTRAP_FROM_KEY_SERVICE);
-
-    static Cache<String, JwtClaims> cache;
-
-    static {
+    public JwtVerifier(Map<String, Object> config) {
+        this.config = config;
+        this.jwtConfig = (Map)config.get(JWT_CONFIG);
+        this.secondsOfAllowedClockSkew = (Integer)jwtConfig.get(JWT_CLOCK_SKEW_IN_SECONDS);
+        this.bootstrapFromKeyService = (Boolean)config.get(BOOTSTRAP_FROM_KEY_SERVICE);
+        this.enableJwtCache = (Boolean)config.get(ENABLE_JWT_CACHE);
         if(Boolean.TRUE.equals(enableJwtCache)) {
             cache = Caffeine.newBuilder()
                     // assuming that the clock screw time is less than 5 minutes
                     .expireAfterWrite(CACHE_EXPIRED_IN_MINUTES, TimeUnit.MINUTES)
                     .build();
+        }
+        switch ((String) jwtConfig.getOrDefault(JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT)) {
+            case JWT_KEY_RESOLVER_JWKS:
+                jwksMap = new HashMap<>();
+                break;
+            case JWT_KEY_RESOLVER_X509CERT:
+                // load local public key certificates only if bootstrapFromKeyService is false
+                if(bootstrapFromKeyService == null || Boolean.FALSE.equals(bootstrapFromKeyService)) {
+                    certMap = new HashMap<>();
+                    fingerPrints = new ArrayList<>();
+                    Map<String, Object> keyMap = (Map<String, Object>) jwtConfig.get(JWT_CERTIFICATE);
+                    for(String kid: keyMap.keySet()) {
+                        X509Certificate cert = null;
+                        try {
+                            cert = readCertificate((String)keyMap.get(kid));
+                        } catch (Exception e) {
+                            logger.error("Exception:", e);
+                        }
+                        certMap.put(kid, cert);
+                        fingerPrints.add(FingerPrintUtil.getCertFingerPrint(cert));
+                    }
+                }
+                break;
+            default:
+                logger.info("{} not found or not recognized in jwt config. Use {} as default {}",
+                        JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT, JWT_KEY_RESOLVER);
         }
     }
 
@@ -101,7 +142,7 @@ public class JwtHelper {
      * @return X509Certificate object
      * @throws Exception Exception while reading certificate
      */
-    static public X509Certificate readCertificate(String filename)
+    public X509Certificate readCertificate(String filename)
             throws Exception {
         InputStream inStream = null;
         X509Certificate cert = null;
@@ -127,35 +168,6 @@ public class JwtHelper {
         return cert;
     }
 
-    static {
-        switch ((String) securityJwtConfig.getOrDefault(JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT)) {
-            case JWT_KEY_RESOLVER_JWKS:
-                jwksMap = new HashMap<>();
-                break;
-            default:
-                logger.info("{} not found or not recognized in jwt config. Use {} as default {}",
-                        JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT, JWT_KEY_RESOLVER);
-            case JWT_KEY_RESOLVER_X509CERT:
-                // load local public key certificates only if bootstrapFromKeyService is false
-                if(bootstrapFromKeyService == null || Boolean.FALSE.equals(bootstrapFromKeyService)) {
-                    certMap = new HashMap<>();
-                    fingerPrints = new ArrayList<>();
-                    Map<String, Object> keyMap = (Map<String, Object>) securityJwtConfig.get(JwtHelper.JWT_CERTIFICATE);
-                    for(String kid: keyMap.keySet()) {
-                        X509Certificate cert = null;
-                        try {
-                            cert = JwtHelper.readCertificate((String)keyMap.get(kid));
-                        } catch (Exception e) {
-                            logger.error("Exception:", e);
-                        }
-                        certMap.put(kid, cert);
-                        fingerPrints.add(FingerPrintUtil.getCertFingerPrint(cert));
-                    }
-                }
-                break;
-        }
-    }
-
     /**
      * Parse the jwt token from Authorization header.
      *
@@ -179,26 +191,6 @@ public class JwtHelper {
     }
 
     /**
-     * Verify JWT token format and signature. If ignoreExpiry is true, skip expiry verification, otherwise
-     * verify the expiry before signature verification.
-     *
-     * In most cases, we need to verify the expiry of the jwt token. The only time we need to ignore expiry
-     * verification is in SPA middleware handlers which need to verify csrf token in jwt against the csrf
-     * token in the request header to renew the expired token.
-     *
-     * @param jwt String of Json web token
-     * @param ignoreExpiry If true, don't verify if the token is expired.
-     * @return JwtClaims object
-     * @throws InvalidJwtException InvalidJwtException
-     * @throws ExpiredTokenException ExpiredTokenException
-     * @deprecated Use verifyToken instead.
-     */
-    @Deprecated
-    public static JwtClaims verifyJwt(String jwt, boolean ignoreExpiry) throws InvalidJwtException, ExpiredTokenException {
-        return verifyJwt(jwt, ignoreExpiry, true);
-    }
-
-    /**
      * This method is to keep backward compatible for those call without VerificationKeyResolver.
      * @param jwt JWT token
      * @param ignoreExpiry indicate if the expiry will be ignored
@@ -207,8 +199,8 @@ public class JwtHelper {
      * @throws InvalidJwtException throw when the token is invalid
      * @throws ExpiredTokenException throw when the token is expired
      */
-    public static JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken) throws InvalidJwtException, ExpiredTokenException {
-        return verifyJwt(jwt, ignoreExpiry, isToken, JwtHelper::getKeyResolver);
+    public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken) throws InvalidJwtException, ExpiredTokenException {
+        return verifyJwt(jwt, ignoreExpiry, isToken, this::getKeyResolver);
     }
 
     /**
@@ -227,7 +219,7 @@ public class JwtHelper {
      * @throws InvalidJwtException InvalidJwtException
      * @throws ExpiredTokenException ExpiredTokenException
      */
-    public static JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken, BiFunction<String, Boolean, VerificationKeyResolver> getKeyResolver)
+    public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken, BiFunction<String, Boolean, VerificationKeyResolver> getKeyResolver)
             throws InvalidJwtException, ExpiredTokenException {
         JwtClaims claims;
 
@@ -300,12 +292,12 @@ public class JwtHelper {
      * Get VerificationKeyResolver based on the configuration settings
      * @param kid
      * @param isToken
-     * @return
+     * @return VerificationKeyResolver
      */
-    private static VerificationKeyResolver getKeyResolver(String kid, boolean isToken) {
+    private VerificationKeyResolver getKeyResolver(String kid, boolean isToken) {
 
         VerificationKeyResolver verificationKeyResolver = null;
-        String keyResolver = (String) securityJwtConfig.getOrDefault(JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT);
+        String keyResolver = (String) jwtConfig.getOrDefault(JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT);
         switch (keyResolver) {
             default:
             case JWT_KEY_RESOLVER_X509CERT:
@@ -349,7 +341,7 @@ public class JwtHelper {
      * @param kid
      * @return
      */
-    private static List<JsonWebKey> getJsonWebKeySetForToken(String kid) {
+    private List<JsonWebKey> getJsonWebKeySetForToken(String kid) {
 
         TokenKeyRequest keyRequest = new TokenKeyRequest(kid);
         try {
@@ -364,7 +356,7 @@ public class JwtHelper {
 
     }
 
-    public static X509Certificate getCertForToken(String kid) {
+    public X509Certificate getCertForToken(String kid) {
         X509Certificate certificate = null;
         TokenKeyRequest keyRequest = new TokenKeyRequest(kid);
         try {
@@ -380,7 +372,7 @@ public class JwtHelper {
         return certificate;
     }
 
-    public static X509Certificate getCertForSign(String kid) {
+    public X509Certificate getCertForSign(String kid) {
         X509Certificate certificate = null;
         SignKeyRequest keyRequest = new SignKeyRequest(kid);
         try {
@@ -403,7 +395,8 @@ public class JwtHelper {
      *
      * @return List of certificate fingerprints
      */
-    public static List getFingerPrints() {
+    public List getFingerPrints() {
         return fingerPrints;
     }
+
 }
