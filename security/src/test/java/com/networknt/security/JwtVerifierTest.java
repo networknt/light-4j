@@ -38,21 +38,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by steve on 01/09/16.
- */
-@Deprecated
-public class JwtHelperTest {
+public class JwtVerifierTest {
+    static final String CONFIG_NAME = "security";
     @Test
     public void testReadCertificate() {
-        Map<String, Object> securityConfig = Config.getInstance().getJsonMapConfig(JwtHelper.SECURITY_CONFIG);
-        Map<String, Object> jwtConfig = (Map<String, Object>)securityConfig.get(JwtIssuer.JWT_CONFIG);
-        Map<String, Object> keyMap = (Map<String, Object>) jwtConfig.get(JwtHelper.JWT_CERTIFICATE);
+        Map<String, Object> config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
+        Map<String, Object> jwtConfig = (Map<String, Object>)config.get(JwtIssuer.JWT_CONFIG);
+        Map<String, Object> keyMap = (Map<String, Object>) jwtConfig.get(JwtVerifier.JWT_CERTIFICATE);
         Map<String, X509Certificate> certMap = new HashMap<>();
+        JwtVerifier jwtVerifier = new JwtVerifier(config);
         for(String kid: keyMap.keySet()) {
             X509Certificate cert = null;
             try {
-                cert = JwtHelper.readCertificate((String)keyMap.get(kid));
+                cert = jwtVerifier.readCertificate((String)keyMap.get(kid));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -67,8 +65,9 @@ public class JwtHelperTest {
         String jwt = JwtIssuer.getJwt(claims);
         claims = null;
         Assert.assertNotNull(jwt);
+        JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
         try {
-            claims = JwtHelper.verifyJwt(jwt, false);
+            claims = jwtVerifier.verifyJwt(jwt, false, true);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -76,7 +75,7 @@ public class JwtHelperTest {
         Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
 
         try {
-            claims = JwtHelper.verifyJwt(jwt, false);
+            claims = jwtVerifier.verifyJwt(jwt, false, true);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -126,7 +125,8 @@ public class JwtHelperTest {
 
         System.out.print("JWT = " + jwt);
 
-        JwtClaims claims = JwtHelper.verifyJwt(jwt, true, true, (kId, isToken) -> {
+        JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
+        JwtClaims claims = jwtVerifier.verifyJwt(jwt, true, true, (kId, isToken) -> {
             try {
                 // use public key to create the the JsonWebKey
                 Key publicKey = ks.getCertificate(alias).getPublicKey();
@@ -155,8 +155,9 @@ public class JwtHelperTest {
         String jwt = JwtIssuer.getJwt(claims);
         claims = null;
         Assert.assertNotNull(jwt);
+        JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
         try {
-            claims = JwtHelper.verifyJwt(jwt, false, true);
+            claims = jwtVerifier.verifyJwt(jwt, false, true);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -164,7 +165,7 @@ public class JwtHelperTest {
         Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
 
         try {
-            claims = JwtHelper.verifyJwt(jwt, false, true);
+            claims = jwtVerifier.verifyJwt(jwt, false, true);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -178,8 +179,9 @@ public class JwtHelperTest {
         String jwt = JwtIssuer.getJwt(claims);
         claims = null;
         Assert.assertNotNull(jwt);
+        JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
         try {
-            claims = JwtHelper.verifyJwt(jwt, false, false);
+            claims = jwtVerifier.verifyJwt(jwt, false, false);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -187,7 +189,7 @@ public class JwtHelperTest {
         Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
 
         try {
-            claims = JwtHelper.verifyJwt(jwt, false, false);
+            claims = jwtVerifier.verifyJwt(jwt, false, false);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -202,7 +204,8 @@ public class JwtHelperTest {
     @Test
     @Ignore
     public void testGetCertForToken() {
-        X509Certificate certificate = JwtHelper.getCertForToken("100");
+        JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
+        X509Certificate certificate = jwtVerifier.getCertForToken("100");
         System.out.println("certificate = " + certificate);
         Assert.assertNotNull(certificate);
     }
@@ -214,8 +217,10 @@ public class JwtHelperTest {
     @Test
     @Ignore
     public void testGetCertForSign() {
-        X509Certificate certificate = JwtHelper.getCertForSign("100");
+        JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
+        X509Certificate certificate = jwtVerifier.getCertForSign("100");
         System.out.println("certificate = " + certificate);
         Assert.assertNotNull(certificate);
     }
+
 }
