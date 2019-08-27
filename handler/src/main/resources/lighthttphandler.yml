@@ -1,0 +1,9 @@
+# Configuration for the LightHttpHandler. The handler is the base class  for all middleware, server and health handlers
+
+# set the Status Object in the AUDIT_INFO, for auditing purposes
+# default, if not set:false
+auditOnError: false
+
+# set the StackTrace in the AUDIT_INFO, for auditing purposes
+# default, if not set:false
+auditStackTrace: false
