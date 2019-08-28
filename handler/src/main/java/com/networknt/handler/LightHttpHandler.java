@@ -75,7 +75,7 @@ public interface LightHttpHandler extends HttpHandler {
         // In normal case, the auditInfo shouldn't be null as it is created by OpenApiHandler with
         // endpoint and openapiOperation available. This handler will enrich the auditInfo.
         @SuppressWarnings("unchecked")
-		Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
+        Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
         if(auditInfo == null) {
             auditInfo = new HashMap<>();
             exchange.putAttachment(AttachmentConstants.AUDIT_INFO, auditInfo);
@@ -83,9 +83,9 @@ public interface LightHttpHandler extends HttpHandler {
 
         // save info for auditing purposes in case of an error
         if(auditOnError)
-        	auditInfo.put(Constants.STATUS, status);
+      	    auditInfo.put(Constants.STATUS, status);
         if(auditStackTrace) {
-        	auditInfo.put(Constants.STACK_TRACE, Arrays.toString(elements));
+       	    auditInfo.put(Constants.STACK_TRACE, Arrays.toString(elements));
         }        
     }
 
