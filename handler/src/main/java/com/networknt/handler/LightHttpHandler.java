@@ -17,6 +17,7 @@
 package com.networknt.handler;
 
 import com.networknt.config.Config;
+import com.networknt.handler.config.HandlerConfig;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.status.Status;
 import com.networknt.utility.Constants;
@@ -42,14 +43,14 @@ public interface LightHttpHandler extends HttpHandler {
     Logger logger = LoggerFactory.getLogger(LightHttpHandler.class);
     String ERROR_NOT_DEFINED = "ERR10042";
 
- // Handler can save errors and stack traces for auditing. Default: false
- 	static final String CONFIG_NAME = "lighthttphandler";
+    // Handler can save errors and stack traces for auditing. Default: false
+ 	static final String CONFIG_NAME = "handler";
  	static final String AUDIT_ON_ERROR = "auditOnError";
  	static final String AUDIT_STACK_TRACE = "auditStackTrace";
 
- 	static Map<String, Object> lightHandlerConfig = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
- 	static boolean auditOnError = lightHandlerConfig != null ? (lightHandlerConfig.get("auditOnError") != null ? (Boolean)lightHandlerConfig.get(AUDIT_ON_ERROR) : false) : false;
- 	static boolean auditStackTrace = lightHandlerConfig != null ? (lightHandlerConfig.get(AUDIT_STACK_TRACE) != null ? (Boolean)lightHandlerConfig.get(AUDIT_STACK_TRACE) : false) : false;
+	public static HandlerConfig config = (HandlerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, HandlerConfig.class);
+ 	static boolean auditOnError = config != null ? config.getAuditOnError() : false;
+ 	static boolean auditStackTrace = config != null ? config.getAuditStackTrace() : false;
     
     /**
      * This method is used to construct a standard error status in JSON format from an error code.
