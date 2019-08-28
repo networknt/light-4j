@@ -20,6 +20,7 @@ import com.networknt.audit.AuditHandler;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import io.prometheus.client.CollectorRegistry;
@@ -83,7 +84,7 @@ public class PrometheusHandler implements MiddlewareHandler {
         SimpleTimer respTimer = new SimpleTimer();
 
         exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
-            Map<String, Object> auditInfo = exchange1.getAttachment(AuditHandler.AUDIT_INFO);
+            Map<String, Object> auditInfo = exchange1.getAttachment(AttachmentConstants.AUDIT_INFO);
             if(auditInfo != null) {
                 Map<String, String> tags = new HashMap<>();
                 tags.put("endpoint", (String)auditInfo.get(Constants.ENDPOINT_STRING));
