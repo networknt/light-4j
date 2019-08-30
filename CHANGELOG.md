@@ -1,5 +1,13 @@
 # Change Log
 
+## [2.0.5](https://github.com/networknt/light-4j/tree/2.0.5) (2019-08-30)
+
+
+**Merged pull requests:**
+
+
+- fixes \#605 server exits without any error in the console [\#606](https://github.com/networknt/light-4j/pull/606) ([stevehu](https://github.com/stevehu))
+- fixes \#603 add JwtVerifier to replace JwtHelper [\#604](https://github.com/networknt/light-4j/pull/604) ([stevehu](https://github.com/stevehu))
 ## [2.0.4](https://github.com/networknt/light-4j/tree/2.0.4) (2019-08-16)
 
 
