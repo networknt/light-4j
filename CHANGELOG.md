@@ -7,6 +7,8 @@
 
 
 - Fixes \#607 Collect Status and StackTrace on Error in light-4j handlers [\#608](https://github.com/networknt/light-4j/pull/608) ([ddobrin](https://github.com/ddobrin))
+
+
 ## [1.6.7](https://github.com/networknt/light-4j/tree/1.6.7) (2019-08-16)
 
 
