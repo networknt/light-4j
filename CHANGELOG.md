@@ -1,5 +1,12 @@
 # Change Log
 
+## [1.6.9](https://github.com/networknt/light-4j/tree/1.6.9) (2019-09-13)
+
+
+**Merged pull requests:**
+
+
+- fixed \#609 [\#610](https://github.com/networknt/light-4j/pull/610) ([chenyan71](https://github.com/chenyan71))
 ## [1.6.8](https://github.com/networknt/light-4j/tree/1.6.8) (2019-08-30)
 
 
