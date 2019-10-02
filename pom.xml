@@ -67,7 +67,7 @@
     <properties>
         <java.version>11</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <version.jackson>2.9.9</version.jackson>
+        <version.jackson>2.9.10</version.jackson>
         <version.jackson-databind>2.9.9.3</version.jackson-databind>
         <version.slf4j>1.7.25</version.slf4j>
         <version.jose4j>0.6.3</version.jose4j>
