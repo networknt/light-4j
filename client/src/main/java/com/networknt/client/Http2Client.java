@@ -38,6 +38,7 @@ import com.networknt.utility.TlsUtil;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
+import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.client.*;
 import io.undertow.connector.ByteBufferPool;
@@ -144,7 +145,7 @@ public class Http2Client {
         }
         this.clientProviders = Collections.unmodifiableMap(map);
         try {
-            final Xnio xnio = Xnio.getInstance();
+            final Xnio xnio = Xnio.getInstance(Undertow.class.getClassLoader());
             WORKER = xnio.createWorker(null, Http2Client.DEFAULT_OPTIONS);
             SSL = new UndertowXnioSsl(WORKER.getXnio(), OptionMap.EMPTY, BUFFER_POOL, createSSLContext());
         } catch (Exception e) {
