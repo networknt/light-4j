@@ -34,6 +34,7 @@ import com.networknt.monad.Result;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.TlsUtil;
+import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.client.*;
 import io.undertow.connector.ByteBufferPool;
@@ -135,7 +136,7 @@ public class Http2Client {
         }
         this.clientProviders = Collections.unmodifiableMap(map);
         try {
-            final Xnio xnio = Xnio.getInstance();
+            final Xnio xnio = Xnio.getInstance(Undertow.class.getClassLoader());
             WORKER = xnio.createWorker(null, Http2Client.DEFAULT_OPTIONS);
             SSL = new UndertowXnioSsl(WORKER.getXnio(), OptionMap.EMPTY, BUFFER_POOL, createSSLContext());
         } catch (Exception e) {
