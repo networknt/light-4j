@@ -21,34 +21,37 @@ import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
+import com.networknt.utility.TlsUtil;
+import io.undertow.UndertowOptions;
+import io.undertow.client.ClientConnection;
+import io.undertow.client.ClientRequest;
+import io.undertow.client.ClientResponse;
 import io.undertow.util.Headers;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.impl.client.BasicResponseHandler;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.ssl.SSLContexts;
+import io.undertow.util.Methods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xnio.IoUtils;
+import org.xnio.OptionMap;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
-import javax.net.ssl.SSLContext;
-import java.io.FileInputStream;
+import javax.net.ssl.*;
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.networknt.server.Server.ENV_PROPERTY_KEY;
 import static com.networknt.server.Server.STARTUP_CONFIG_NAME;
@@ -90,6 +93,8 @@ public class DefaultConfigLoader implements IConfigLoader{
 
     // An instance of Jackson ObjectMapper that can be used anywhere else for Json.
     final static ObjectMapper mapper = new ObjectMapper();
+    // The instance of Http2Client that is used to connect to the light-config-server with bootstrap.truststore
+    static Http2Client client = Http2Client.getInstance();
 
     @Override
     public void init() {
@@ -187,75 +192,79 @@ public class DefaultConfigLoader implements IConfigLoader{
         }
     }
 
+    /**
+     * This is a public method that is used to test the connectivity in the integration test to ensure that the
+     * light-config-server can be connected with the default bootstrap.truststore. There is no real value for
+     * this method other than that.
+     *
+     * @return String of OK
+     */
+    public static String getConfigServerHealth(String host, String path) {
+        String result = null;
+        try {
+            final CountDownLatch latch = new CountDownLatch(1);
+            ClientConnection connection = client.connect(new URI(host), Http2Client.WORKER, client.createXnioSsl(createBootstrapContext()), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+            final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+            try {
+                final ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(path);
+                request.getRequestHeaders().put(Headers.HOST, host);
+                connection.sendRequest(request, client.createClientCallback(reference, latch));
+                latch.await(1000, TimeUnit.MILLISECONDS);
+            } finally {
+                // here the connection is closed after one request. It should be used for in frequent
+                // request as creating a new connection is costly with TLS handshake and ALPN.
+                IoUtils.safeClose(connection);
+            }
+            int statusCode = reference.get().getResponseCode();
+            String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+            if (statusCode >= 300) {
+                logger.error("Failed to load configs from config server" + statusCode + ":" + body);
+                throw new Exception("Failed to load configs from config server: " + statusCode);
+            } else {
+                result = body;
+            }
+        } catch (Exception e) {
+            logger.error("Exception while calling config server:", e);
+        }
+        return result;
+    }
+
     private static Map<String, Object> getServiceConfigs(String configServerPath) {
         String authorization = System.getenv(AUTHORIZATION);
-        String truststorePassword = System.getenv(CLIENT_TRUSTSTORE_PASS);
-        String truststoreLocation = System.getenv(CLIENT_TRUSTSTORE_LOC);
         String verifyHostname = System.getenv(VERIFY_HOST_NAME);
 
         Map<String, Object> configs = new HashMap<>();
 
         logger.debug("Calling Config Server endpoint:{}{}", configServerUri, configServerPath);
 
-        HttpClient client = null;
-
         try {
-            // Initial trust store that is used when connecting to the config server
-            // It should contain only the config server cert
-            if(truststoreLocation != null)
-            {
-                // Load client trust store
-                InputStream trustStoreInputStream = new FileInputStream(truststoreLocation);
-                KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
-                trustStore.load(trustStoreInputStream, truststorePassword.toCharArray());
-                SSLContext sslContext = SSLContexts.custom().loadTrustMaterial(trustStore, null).build();
-
-                // Create contextualized SSL connection factory
-                SSLConnectionSocketFactory sslsf;
-                if ("TRUE".equalsIgnoreCase(verifyHostname)) {
-                    sslsf = new SSLConnectionSocketFactory(sslContext);
-                } else {
-                    sslsf = new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
-                }
-
-                // Build Http client w/ SSL Socket factory
-                client = HttpClientBuilder.create().useSystemProperties()
-                        .setSSLSocketFactory(sslsf)
-                        .build();
-            } else {
-                client = HttpClientBuilder.create().useSystemProperties().build();
+            final CountDownLatch latch = new CountDownLatch(1);
+            ClientConnection connection = client.connect(new URI(configServerUri), Http2Client.WORKER, client.createXnioSsl(createBootstrapContext()), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+            final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+            try {
+                final ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(configServerPath);
+                request.getRequestHeaders().put(Headers.AUTHORIZATION, authorization);
+                request.getRequestHeaders().put(Headers.HOST, configServerUri);
+                connection.sendRequest(request, client.createClientCallback(reference, latch));
+                latch.await(1000, TimeUnit.MILLISECONDS);
+            } finally {
+                // here the connection is closed after one request. It should be used for in frequent
+                // request as creating a new connection is costly with TLS handshake and ALPN.
+                IoUtils.safeClose(connection);
             }
-            HttpGet request = new HttpGet(configServerUri + configServerPath);
-            request.addHeader(Headers.AUTHORIZATION.toString(), authorization);
-            request.addHeader(Headers.HOST.toString(), configServerUri);
-            HttpResponse response = client.execute(request);
-
-            int statusCode = response.getStatusLine().getStatusCode();
-            ResponseHandler<String> handler = new BasicResponseHandler();
-            String respBody = handler.handleResponse(response);
-
+            int statusCode = reference.get().getResponseCode();
+            String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
             if (statusCode >= 300) {
-                logger.error("Failed to load configs from config server" + statusCode + ":"
-                        + respBody);
+                logger.error("Failed to load configs from config server" + statusCode + ":" + body);
                 throw new Exception("Failed to load configs from config server: " + statusCode);
             } else {
                 // Get the response
-                Map<String, Object> responseMap = (Map<String, Object>) mapper.readValue(respBody, new TypeReference<Map<String, Object>>() {});
+                Map<String, Object> responseMap = (Map<String, Object>) mapper.readValue(body, new TypeReference<Map<String, Object>>() {});
                 configs = (Map<String, Object>) responseMap.get("configProperties");
             }
         } catch (Exception e) {
             logger.error("Exception while calling config server:", e);
-        } finally {
-            try {
-                if (client != null) {
-                    ((CloseableHttpClient) client).close();
-                }
-            }
-            catch (Exception e) {
-                logger.error("Cannot close HttpClient", e);
-            }
         }
-
         return configs;
     }
 
@@ -268,5 +277,43 @@ public class DefaultConfigLoader implements IConfigLoader{
         configPath.append("/").append(lightEnv);
         logger.debug("configPath: {}", configPath);
         return configPath.toString();
+    }
+
+    private static KeyStore loadBootstrapTrustStore() {
+        String truststorePassword = System.getenv(CLIENT_TRUSTSTORE_PASS);
+        String truststoreLocation = System.getenv(CLIENT_TRUSTSTORE_LOC);
+        if(truststoreLocation == null) truststoreLocation = Server.getServerConfig().getBootstrapStoreName();
+        if(truststorePassword == null) truststorePassword = Server.getServerConfig().getBootstrapStorePass();
+        return TlsUtil.loadTrustStore(truststoreLocation, truststorePassword.toCharArray());
+    }
+
+    private static TrustManager[] buildTrustManagers(final KeyStore trustStore) {
+        TrustManager[] trustManagers = null;
+        try {
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory
+                    .getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            trustManagerFactory.init(trustStore);
+            trustManagers = trustManagerFactory.getTrustManagers();
+        } catch (NoSuchAlgorithmException | KeyStoreException e) {
+            logger.error("Unable to initialise TrustManager[]", e);
+            throw new RuntimeException("Unable to initialise TrustManager[]", e);
+        }
+        return trustManagers;
+    }
+
+
+    private static SSLContext createBootstrapContext() throws RuntimeException {
+        SSLContext sslContext = null;
+        if(Server.getServerConfig().isEnableBootstrap()) {
+            try {
+                TrustManager[] trustManagers = buildTrustManagers(loadBootstrapTrustStore());
+                sslContext = SSLContext.getInstance("TLSv1.2");
+                sslContext.init(null, trustManagers, null);
+            } catch (Exception e) {
+                logger.error("Unable to create SSLContext", e);
+                throw new RuntimeException("Unable to create SSLContext", e);
+            }
+        }
+        return sslContext;
     }
 }

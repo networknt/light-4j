@@ -138,7 +138,7 @@ public class Http2Client {
         try {
             final Xnio xnio = Xnio.getInstance(Undertow.class.getClassLoader());
             WORKER = xnio.createWorker(null, Http2Client.DEFAULT_OPTIONS);
-            SSL = new UndertowXnioSsl(WORKER.getXnio(), OptionMap.EMPTY, BUFFER_POOL, createSSLContext());
+            SSL = createXnioSsl(createSSLContext());
         } catch (Exception e) {
             logger.error("Exception: ", e);
         }
@@ -156,6 +156,18 @@ public class Http2Client {
     	}else {
     		map.put(scheme, provider);
     	}
+    }
+
+    /**
+     * Create an XnioSsl object with the given sslContext. This is used to create the normal client context
+     * and the light-config-server bootstrap context separately. the XnioSsl object can be used to create
+     * an Https connection to the downstream services.
+     *
+     * @param sslContext SslContext
+     * @return XnioSsl
+     */
+    public XnioSsl createXnioSsl(SSLContext sslContext) {
+        return new UndertowXnioSsl(WORKER.getXnio(), OptionMap.EMPTY, BUFFER_POOL, sslContext);
     }
 
     public IoFuture<ClientConnection> connect(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
