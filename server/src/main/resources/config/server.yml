@@ -27,9 +27,6 @@ enableTwoWayTls: false
 # Truststore file name in config folder. TruststorePass is in secret.yml to access it.
 truststoreName: server.truststore
 
-# Enable connecting to light-config-server for configuration with bootstrap certificate.
-enableBootstrap: false
-
 # Bootstrap truststore name used to connect to the light-config-server if it is used.
 bootstrapStoreName: bootstrap.truststore
 

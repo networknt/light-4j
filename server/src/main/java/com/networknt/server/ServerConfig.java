@@ -47,7 +47,6 @@ public class ServerConfig {
     boolean alwaysSetDate;
     boolean allowUnescapedCharactersInUrl;
     String serverString;
-    boolean enableBootstrap;
     String bootstrapStoreName;
     String bootstrapStorePass;
 
@@ -264,14 +263,6 @@ public class ServerConfig {
 
     public void setAllowUnescapedCharactersInUrl(boolean allowUnescapedCharactersInUrl) {
         this.allowUnescapedCharactersInUrl = allowUnescapedCharactersInUrl;
-    }
-
-    public boolean isEnableBootstrap() {
-        return enableBootstrap;
-    }
-
-    public void setEnableBootstrap(boolean enableBootstrap) {
-        this.enableBootstrap = enableBootstrap;
     }
 
     public String getBootstrapStoreName() {

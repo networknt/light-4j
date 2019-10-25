@@ -30,6 +30,7 @@ import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
+import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -38,8 +39,12 @@ import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
 import javax.net.ssl.*;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -95,6 +100,7 @@ public class DefaultConfigLoader implements IConfigLoader{
     final static ObjectMapper mapper = new ObjectMapper();
     // The instance of Http2Client that is used to connect to the light-config-server with bootstrap.truststore
     static Http2Client client = Http2Client.getInstance();
+    ClientConnection connection = null;
 
     @Override
     public void init() {
@@ -110,13 +116,24 @@ public class DefaultConfigLoader implements IConfigLoader{
         if (configServerUri != null) {
             logger.info("Loading configs from config server");
 
-            String configPath = getConfigServerPath();
+            try {
+                connection = client.connect(new URI(configServerUri), Http2Client.WORKER, client.createXnioSsl(createBootstrapContext()), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+                String configPath = getConfigServerPath();
 
-            loadConfigs(configPath);
+                loadConfigs(configPath);
 
-            loadFiles(configPath, CONFIG_SERVER_CERTS_CONTEXT_ROOT);
+                loadFiles(configPath, CONFIG_SERVER_CERTS_CONTEXT_ROOT);
 
-            loadFiles(configPath, CONFIG_SERVER_FILES_CONTEXT_ROOT);
+                loadFiles(configPath, CONFIG_SERVER_FILES_CONTEXT_ROOT);
+            } catch (Exception e) {
+                logger.error("Failed to connect to config server", e);
+            }finally {
+                // here the connection is closed after one request. It should be used for in frequent
+                // request as creating a new connection is costly with TLS handshake and ALPN.
+                IoUtils.safeClose(connection);
+            }
+
+
 
             try {
                 String filename = System.getProperty("logback.configurationFile");
@@ -229,7 +246,7 @@ public class DefaultConfigLoader implements IConfigLoader{
         return result;
     }
 
-    private static Map<String, Object> getServiceConfigs(String configServerPath) {
+    private Map<String, Object> getServiceConfigs(String configServerPath) {
         String authorization = System.getenv(AUTHORIZATION);
         String verifyHostname = System.getenv(VERIFY_HOST_NAME);
 
@@ -239,19 +256,14 @@ public class DefaultConfigLoader implements IConfigLoader{
 
         try {
             final CountDownLatch latch = new CountDownLatch(1);
-            ClientConnection connection = client.connect(new URI(configServerUri), Http2Client.WORKER, client.createXnioSsl(createBootstrapContext()), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
             final AtomicReference<ClientResponse> reference = new AtomicReference<>();
-            try {
-                final ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(configServerPath);
-                request.getRequestHeaders().put(Headers.AUTHORIZATION, authorization);
-                request.getRequestHeaders().put(Headers.HOST, configServerUri);
-                connection.sendRequest(request, client.createClientCallback(reference, latch));
-                latch.await(1000, TimeUnit.MILLISECONDS);
-            } finally {
-                // here the connection is closed after one request. It should be used for in frequent
-                // request as creating a new connection is costly with TLS handshake and ALPN.
-                IoUtils.safeClose(connection);
-            }
+
+            final ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(configServerPath);
+            request.getRequestHeaders().put(Headers.AUTHORIZATION, authorization);
+            request.getRequestHeaders().put(Headers.HOST, configServerUri);
+            connection.sendRequest(request, client.createClientCallback(reference, latch));
+            latch.await(10000, TimeUnit.MILLISECONDS);
+
             int statusCode = reference.get().getResponseCode();
             String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
             if (statusCode >= 300) {
@@ -279,12 +291,27 @@ public class DefaultConfigLoader implements IConfigLoader{
         return configPath.toString();
     }
 
-    private static KeyStore loadBootstrapTrustStore() {
+    private static KeyStore loadBootstrapTrustStore(){
         String truststorePassword = System.getenv(CLIENT_TRUSTSTORE_PASS);
         String truststoreLocation = System.getenv(CLIENT_TRUSTSTORE_LOC);
         if(truststoreLocation == null) truststoreLocation = Server.getServerConfig().getBootstrapStoreName();
         if(truststorePassword == null) truststorePassword = Server.getServerConfig().getBootstrapStorePass();
-        return TlsUtil.loadTrustStore(truststoreLocation, truststorePassword.toCharArray());
+
+        try (InputStream stream = new FileInputStream(truststoreLocation)) {
+            if (stream == null) {
+                String message = "Unable to load truststore '" + truststoreLocation + "', please provide the correct truststore to enable TLS connection.";
+                if (logger.isErrorEnabled()) {
+                    logger.error(message);
+                }
+                throw new RuntimeException(message);
+            }
+            KeyStore loadedKeystore = KeyStore.getInstance("JKS");
+            loadedKeystore.load(stream, truststorePassword != null ? truststorePassword.toCharArray() : null);
+            return loadedKeystore;
+        } catch (Exception e) {
+            logger.error("Unable to load truststore: " + truststoreLocation, e);
+            throw new RuntimeException("Unable to load truststore: " + truststoreLocation, e);
+        }
     }
 
     private static TrustManager[] buildTrustManagers(final KeyStore trustStore) {
@@ -304,15 +331,13 @@ public class DefaultConfigLoader implements IConfigLoader{
 
     private static SSLContext createBootstrapContext() throws RuntimeException {
         SSLContext sslContext = null;
-        if(Server.getServerConfig().isEnableBootstrap()) {
-            try {
-                TrustManager[] trustManagers = buildTrustManagers(loadBootstrapTrustStore());
-                sslContext = SSLContext.getInstance("TLSv1.2");
-                sslContext.init(null, trustManagers, null);
-            } catch (Exception e) {
-                logger.error("Unable to create SSLContext", e);
-                throw new RuntimeException("Unable to create SSLContext", e);
-            }
+        try {
+            TrustManager[] trustManagers = buildTrustManagers(loadBootstrapTrustStore());
+            sslContext = SSLContext.getInstance("TLSv1.2");
+            sslContext.init(null, trustManagers, null);
+        } catch (Exception e) {
+            logger.error("Unable to create SSLContext", e);
+            throw new RuntimeException("Unable to create SSLContext", e);
         }
         return sslContext;
     }
