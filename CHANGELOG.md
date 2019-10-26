@@ -1,5 +1,13 @@
 # Change Log
 
+## [1.6.10](https://github.com/networknt/light-4j/tree/1.6.10) (2019-10-26)
+
+
+**Merged pull requests:**
+
+
+- Fix/Replace - to _ to match the OpenShift environment variable syntax [\#618](https://github.com/networknt/light-4j/pull/618) ([jiachen1120](https://github.com/jiachen1120))
+- fixes \#613 service throws UT005001 once the metrics/influxdb module i… [\#614](https://github.com/networknt/light-4j/pull/614) ([stevehu](https://github.com/stevehu))
 ## [1.6.9](https://github.com/networknt/light-4j/tree/1.6.9) (2019-09-13)
 
 
