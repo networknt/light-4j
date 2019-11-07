@@ -15,11 +15,7 @@
  */
 package com.networknt.security;
 
-import java.security.KeyStore;
-import java.security.PrivateKey;
-import java.security.interfaces.RSAPrivateKey;
-import java.util.Map;
-
+import com.networknt.config.Config;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
@@ -27,7 +23,10 @@ import org.jose4j.lang.JoseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.networknt.config.Config;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.interfaces.RSAPrivateKey;
+import java.util.Map;
 
 /**
  * JWT token issuer helper utility that use by light-ouath2 token and code services to

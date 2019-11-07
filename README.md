@@ -10,18 +10,25 @@ A fast, lightweight and cloud-native microservices framework.
 
 [![Build Status](https://travis-ci.org/networknt/light-4j.svg?branch=master)](https://travis-ci.org/networknt/light-4j) [![codecov.io](https://codecov.io/github/networknt/light-4j/coverage.svg?branch=master)](https://codecov.io/github/networknt/light-4j?branch=master)
 
-## Why called Light 4J
+## Why call it Light-4J
 
-Light means lightweight, lightning fast and shedding light on how to program with modern Java SE.   
+Light means lightweight, lightning fast and shedding light on how to program with modern Java SE for cloud-native deployment.
 
-## Why this framework
+## Why am I doing it
+
+I had been working on the Java EE platforms since early 2000 and suffered the performance and productivity issues. In 2014, I realized that the IT industry was moving from Monolithic to Microservices and from on-premise data centers to the public clouds. 
+
+To reduce the production cost for my applications, I need to find a lightweight platform that has a small memory footprint,  high throughput, and low latency in Java. Java EE and Spring/Spring Boot are too heavy to be considered. Other lightweight Java platforms all have different issues on the separation between the business logic and technical cross-cutting concerns. Moreover, they are not cloud-native or designed for container/cloud. 
+
+Without finding anything suitable, I started to build my open-source platform light-4j on top of the Undertow HTTP core by following the [principles](https://doc.networknt.com/about/principles/). Because my approach is very radical, and it is against products from big corporations, I have been attacked by some entities online and offline constantly. However, I am so convinced that my approach is the future direction and spend all my effort to continue the development. Today, a lot of companies are using light-4j on production with very positive feedback. It further encourages me to devote myself to the framework and to extend the platform to build an ecosystem.
+
+For users who benefit from the platform, you can [become a sponsor](https://github.com/sponsors/stevehu) for me so that I can put all my effort into the open-source projects. 
+
+## Why use this framework
 
 ### Fast and small memory footprint to lower production cost.
 
-It is 44 times faster than the most popular microservices platform Spring Boot embedded 
-Tomcat and use only 1/5 of memory. Here is the [benchmark](https://github.com/networknt/microservices-framework-benchmark) 
-results compare with Spring Boot and other microservices frameworks. Here is the [comparison](https://www.techempower.com/benchmarks/#section=data-r15&hw=ph&test=plaintext)
-with other Web frameworks. 
+It is 44 times faster than the most popular microservices platform Spring Boot embedded Tomcat and use only 1/5 of memory. Here are the [benchmark](https://github.com/networknt/microservices-framework-benchmark) results compare with Spring Boot and other microservices frameworks. Here is the third party [comparison](https://www.techempower.com/benchmarks/) with other Web frameworks.  
 
 ### Provide an embedded gateway to address cross-cutting concerns.
 * Plugin architecture for startup/shutdown hooks and middleware components

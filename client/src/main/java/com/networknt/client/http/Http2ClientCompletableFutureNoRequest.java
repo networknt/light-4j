@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
 public class Http2ClientCompletableFutureNoRequest extends CompletableFuture<ClientResponse> implements ClientCallback<ClientExchange> {
-    Logger logger = LoggerFactory.getLogger(Http2ClientCompletableFutureNoRequest.class);
+    private Logger logger = LoggerFactory.getLogger(Http2ClientCompletableFutureNoRequest.class);
 
     @Override
     public void completed(ClientExchange result) {

@@ -168,8 +168,8 @@ public class ClientX509ExtendedTrustManager extends X509ExtendedTrustManager imp
 	 * 
 	 * This method can be applied to both clients and servers.
 	 * 
-	 * @param session
-	 * @param cert
+	 * @param session SSLSession
+	 * @param cert X509Certificate
 	 * @throws CertificateException
 	 */
 	private void checkIdentity(SSLSession session, X509Certificate cert) throws CertificateException {
