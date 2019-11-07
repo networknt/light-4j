@@ -76,7 +76,11 @@ public class GenericDataSource {
         ds.setUsername((String)mainParams.get("username"));
 
         // use encrypted password
-        ds.setPassword((String)secret.get(getDbPassKey()));
+        String password = (String)mainParams.get(getDbPassKey());
+        if (password==null) {
+            password = (String)secret.get(getDbPassKey());
+        }
+        ds.setPassword(password);
 
         // set datasource paramters
         ds.setMaximumPoolSize((Integer)mainParams.get("maximumPoolSize"));
