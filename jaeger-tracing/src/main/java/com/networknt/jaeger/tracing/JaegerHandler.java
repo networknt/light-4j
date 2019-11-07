@@ -20,6 +20,7 @@ import com.networknt.audit.AuditHandler;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import io.opentracing.Span;
@@ -70,7 +71,7 @@ public class JaegerHandler implements MiddlewareHandler {
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         // get the path and method to construct the endpoint for the operation of tracing.
-        Map<String, Object> auditInfo = exchange.getAttachment(AuditHandler.AUDIT_INFO);
+        Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
         String endpoint = null;
         if(auditInfo != null) {
             endpoint = (String)auditInfo.get(Constants.ENDPOINT_STRING);

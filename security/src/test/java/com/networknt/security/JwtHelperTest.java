@@ -41,6 +41,7 @@ import java.util.Map;
 /**
  * Created by steve on 01/09/16.
  */
+@Deprecated
 public class JwtHelperTest {
     @Test
     public void testReadCertificate() {

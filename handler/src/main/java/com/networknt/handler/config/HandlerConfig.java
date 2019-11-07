@@ -21,6 +21,7 @@ import java.util.Map;
 
 /**
  * @author Nicholas Azar
+ * @author Dan Dobrin
  */
 public class HandlerConfig {
     private boolean enabled;
@@ -28,6 +29,8 @@ public class HandlerConfig {
     private Map<String, List<String>> chains;
     private List<PathChain> paths;
     private List<String> defaultHandlers;
+    private boolean auditOnError;
+    private boolean auditStackTrace;
 
     public boolean isEnabled() {
         return enabled;
@@ -67,6 +70,22 @@ public class HandlerConfig {
 
     public void setDefaultHandlers(List<String> defaultHandlers) {
         this.defaultHandlers = defaultHandlers;
+    }
+    
+    public boolean getAuditOnError() {
+    	return auditOnError;
+    }
+    
+    public void setAuditOnError(boolean auditOnError) {
+    	this.auditOnError = auditOnError;
+    }
+    
+    public boolean getAuditStackTrace() {
+    	return auditStackTrace;
+    }
+    
+    public void setAuditStackTrace(boolean auditStackTrace) {
+    	this.auditStackTrace = auditStackTrace;
     }
 }
 
