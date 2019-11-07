@@ -43,10 +43,8 @@ public class Constants {
 
     public static final String CSRF_TOKEN_STRING = "X-CSRF-TOKEN";
 
-    // Logging and Auditing
+    // Logger
     public static final String AUDIT_LOGGER = "Audit";
-    public static final String STATUS = "Status";
-    public static final String STACK_TRACE = "StackTrace";
 
     // JWT claims for fine-grained authorization in business context.
     // The key for the subject token claims in auditInfo after security handler

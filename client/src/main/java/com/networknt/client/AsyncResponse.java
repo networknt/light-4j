@@ -19,9 +19,9 @@ package com.networknt.client;
 import io.undertow.client.ClientResponse;
 
 public class AsyncResponse {
-    private ClientResponse clientResponse;
-    private String responseBody;
-    private long responseTime;
+    ClientResponse clientResponse;
+    String responseBody;
+    long responseTime;
 
     public AsyncResponse(ClientResponse clientResponse, String responseBody, long responseTime) {
         this.clientResponse = clientResponse;

@@ -18,27 +18,15 @@ package com.networknt.client;
 
 public interface AsyncResult<T> {
 
-    /**
-     * The result of the operation. This will be null if the operation failed.
-     * @return T
-     */
+    //The result of the operation. This will be null if the operation failed.
     T result();
 
-    /**
-     * An exception describing failure. This will be null if the operation succeeded.
-     * @return Throwable exception
-     */
+    //An exception describing failure. This will be null if the operation succeeded.
     Throwable cause();
 
-    /**
-     * Did it succeed?
-     * @return boolean
-     */
+    //Did it succeed?
     boolean succeeded();
 
-    /**
-     * Did it fail?
-     * @return boolean
-     */
+    //Did it fail?
     boolean failed();
 }

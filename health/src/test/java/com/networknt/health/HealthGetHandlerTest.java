@@ -17,8 +17,6 @@
 package com.networknt.health;
 
 import com.networknt.client.Http2Client;
-import com.networknt.config.Config;
-import com.networknt.config.JsonMapper;
 import com.networknt.exception.ClientException;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
@@ -49,8 +47,6 @@ public class HealthGetHandlerTest {
     static final Logger logger = LoggerFactory.getLogger(HealthGetHandlerTest.class);
 
     static Undertow server = null;
-
-    static final HealthConfig config = (HealthConfig) Config.getInstance().getJsonObjectConfig(HealthGetHandler.CONFIG_NAME, HealthConfig.class);
 
     @BeforeClass
     public static void setUp() {
@@ -84,18 +80,6 @@ public class HealthGetHandlerTest {
 
     @Test
     public void testHealth() throws Exception {
-        testHealth(false);
-    }
-
-    @Test
-    public void testHealthJson() throws Exception {
-        testHealth(true);
-    }
-
-    public void testHealth(boolean useJson) throws Exception {
-
-        config.setUseJson(useJson);
-
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
@@ -119,11 +103,6 @@ public class HealthGetHandlerTest {
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
         Assert.assertEquals(200, statusCode);
-        Assert.assertEquals(useJson ? HealthGetHandler.HEALTH_RESULT_OK_JSON : HealthGetHandler.HEALTH_RESULT_OK, body);
-
-        if (useJson) {
-            Assert.assertEquals("application/json",
-                    reference.get().getResponseHeaders().get(Headers.CONTENT_TYPE).getFirst());
-        }
+        Assert.assertEquals("OK", body);
     }
 }

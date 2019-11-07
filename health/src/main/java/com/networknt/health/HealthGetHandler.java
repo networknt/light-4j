@@ -16,11 +16,9 @@
 
 package com.networknt.health;
 
-import com.networknt.config.Config;
-import com.networknt.config.JsonMapper;
 import com.networknt.handler.LightHttpHandler;
+import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,43 +40,14 @@ import org.slf4j.LoggerFactory;
  * @author Steve Hu
  */
 public class HealthGetHandler implements LightHttpHandler {
-
     public static final String CONFIG_NAME = "health";
 
-    public static final String HEALTH_RESULT_OK = "OK";
-    public static final String HEALTH_RESULT_OK_JSON = JsonMapper.toJson(new HealthResult("OK"));
-
     static final Logger logger = LoggerFactory.getLogger(HealthGetHandler.class);
-
-    static final HealthConfig config = (HealthConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, HealthConfig.class);
 
     public HealthGetHandler(){}
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        if (config != null && config.isUseJson()) {
-            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-            exchange.getResponseSender().send(HEALTH_RESULT_OK_JSON);
-        } else {
-            exchange.getResponseSender().send(HEALTH_RESULT_OK);
-        }
+        exchange.getResponseSender().send("OK");
     }
-
-    static class HealthResult {
-
-        private String result;
-
-        private HealthResult(String result) {
-            setResult(result);
-        }
-
-        public String getResult() {
-            return result;
-        }
-
-        public void setResult(String result) {
-            this.result = result;
-        }
-    }
-
 }

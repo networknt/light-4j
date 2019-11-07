@@ -29,16 +29,13 @@ import java.util.Map;
 public class ConsulUtils {
 
     /**
-     * Check if two lists have the same urls.
+     * Check if two lists have the same urls. If any list is empty, return false
      *
      * @param urls1 first url list
      * @param urls2 second url list
      * @return boolean true when they are the same
      */
     public static boolean isSame(List<URL> urls1, List<URL> urls2) {
-        if(urls1 == null && urls2 == null) {
-            return true;
-        }
         if (urls1 == null || urls2 == null) {
             return false;
         }

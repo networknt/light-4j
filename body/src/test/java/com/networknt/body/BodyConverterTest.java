@@ -47,13 +47,15 @@ public class BodyConverterTest {
 
         Assert.assertEquals(2, bodyMap.size());
 
-        Object aConvertedListvalue = bodyMap.get(aKey);
-        Assert.assertTrue(aConvertedListvalue instanceof String);
-        Assert.assertEquals(aValue, aConvertedListvalue);
+        List<Object> aConvertedListvalue = (List<Object>) bodyMap.get(aKey);
+        Assert.assertEquals(1, aConvertedListvalue.size());
+        Assert.assertTrue(aConvertedListvalue.get(0) instanceof FormData.FormValue);
+        Assert.assertEquals(aValue, ((FormData.FormValue)aConvertedListvalue.get(0)).getValue());
 
-        Object anotherListvalues = bodyMap.get(anotherKey);
-        Assert.assertTrue(anotherListvalues instanceof String);
-        Assert.assertEquals(anotherValue, anotherListvalues);
+        List<Object> anotherListvalues = (List<Object>) bodyMap.get(anotherKey);
+        Assert.assertEquals(1, anotherListvalues.size());
+        Assert.assertTrue(anotherListvalues.get(0) instanceof FormData.FormValue);
+        Assert.assertEquals(anotherValue, ((FormData.FormValue)anotherListvalues.get(0)).getValue());
     }
 
     @Test
@@ -73,10 +75,10 @@ public class BodyConverterTest {
         List<Object> aConvertedListvalue = (List<Object>) bodyMap.get(aKey);
         Assert.assertEquals(2, aConvertedListvalue.size());
 
-        Assert.assertTrue(aConvertedListvalue.get(0) instanceof String);
-        Assert.assertEquals(aValue, aConvertedListvalue.get(0));
+        Assert.assertTrue(aConvertedListvalue.get(0) instanceof FormData.FormValue);
+        Assert.assertEquals(aValue, ((FormData.FormValue)aConvertedListvalue.get(0)).getValue());
 
-        Assert.assertTrue(aConvertedListvalue.get(1) instanceof String);
-        Assert.assertEquals(anotherValue, aConvertedListvalue.get(1));
+        Assert.assertTrue(aConvertedListvalue.get(1) instanceof FormData.FormValue);
+        Assert.assertEquals(anotherValue, ((FormData.FormValue)aConvertedListvalue.get(1)).getValue());
     }
 }

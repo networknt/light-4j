@@ -16,7 +16,8 @@
 
 package com.networknt.client.oauth;
 
-import com.networknt.client.ClientConfig;
+import com.networknt.client.Http2Client;
+import com.networknt.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,33 +30,38 @@ import java.util.Map;
  * @author Steve Hu
  */
 public class SignKeyRequest extends KeyRequest {
-    private static Logger logger = LoggerFactory.getLogger(SignKeyRequest.class);
-
-    /**
-     * @deprecated will be moved to {@link ClientConfig#SIGN}
-     */
-    @Deprecated
+    public static Logger logger = LoggerFactory.getLogger(SignKeyRequest.class);
     public static String SIGN = "sign";
 
     public SignKeyRequest(String kid) {
         super(kid);
+        Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
 
-        Map<String, Object> signConfig = ClientConfig.get().getSignConfig();
-        if(signConfig != null) {
-            Map<String, Object> keyConfig = (Map<String, Object>)signConfig.get(ClientConfig.KEY);
-            if(keyConfig != null) {
-                setServerUrl((String)keyConfig.get(ClientConfig.SERVER_URL));
-                setServiceId((String)keyConfig.get(ClientConfig.SERVICE_ID));
-                Object object = keyConfig.get(ClientConfig.ENABLE_HTTP2);
-                setEnableHttp2(object != null && (Boolean) object);
-                setUri(keyConfig.get(ClientConfig.URI) + "/" + kid);
-                setClientId((String)keyConfig.get(ClientConfig.CLIENT_ID));
-                setClientSecret((String)keyConfig.get(ClientConfig.CLIENT_SECRET));
+        if(clientConfig != null) {
+            Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OAUTH);
+            if(oauthConfig != null) {
+                Map<String, Object> signConfig = (Map<String, Object>)oauthConfig.get(SIGN);
+                if(signConfig != null) {
+                    Map<String, Object> keyConfig = (Map<String, Object>)signConfig.get(KEY);
+                    if(keyConfig != null) {
+                        setServerUrl((String)keyConfig.get(SERVER_URL));
+                        setServiceId((String)keyConfig.get(SERVICE_ID));
+                        Object object = keyConfig.get(ENABLE_HTTP2);
+                        setEnableHttp2(object != null && (Boolean) object);
+                        setUri(keyConfig.get(URI) + "/" + kid);
+                        setClientId((String)keyConfig.get(CLIENT_ID));
+                        setClientSecret((String)keyConfig.get(CLIENT_SECRET));
+                    } else {
+                        logger.error("Error: could not find key section in sign of oauth in client.yml");
+                    }
+                } else {
+                    logger.error("Error: could not find sign section of oauth in client.yml");
+                }
             } else {
-                logger.error("Error: could not find key section in sign of oauth in client.yml");
+                logger.error("Error: could not find oauth section in client.yml");
             }
         } else {
-            logger.error("Error: could not find sign section of oauth in client.yml");
+            logger.error("Error: could not load client.yml for Sign Key");
         }
     }
 }

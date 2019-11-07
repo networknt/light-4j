@@ -179,12 +179,12 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                 logger.debug("response = " + Config.getInstance().getMapper().writeValueAsString(response));
             } catch (Exception e) {}
         }
-        ConcurrentHashMap<String, List<URL>> serviceUrls = new ConcurrentHashMap<>();
         if (response != null) {
             List<ConsulService> services = response.getValue();
             if(logger.isDebugEnabled()) try {logger.debug("services = " + Config.getInstance().getMapper().writeValueAsString(services));} catch (Exception e) {}
             if (services != null && !services.isEmpty()
                     && response.getConsulIndex() > lastConsulIndexId) {
+                ConcurrentHashMap<String, List<URL>> serviceUrls = new ConcurrentHashMap<String, List<URL>>();
                 for (ConsulService service : services) {
                     try {
                         URL url = ConsulUtils.buildUrl(protocol, service);
@@ -204,11 +204,8 @@ public class ConsulRegistry extends CommandFailbackRegistry {
             } else {
                 logger.info(serviceName + " no need update, lastIndex:" + lastConsulIndexId);
             }
-        } else {
-            serviceUrls.put(serviceName, new ArrayList<>());
-            logger.info("no response for service: {}, set urls to null", serviceName);
         }
-        return serviceUrls;
+        return null;
     }
 
     /**
@@ -233,26 +230,35 @@ public class ConsulRegistry extends CommandFailbackRegistry {
      */
     private void updateServiceCache(String serviceName, ConcurrentHashMap<String, List<URL>> serviceUrls, boolean needNotify) {
         if (serviceUrls != null && !serviceUrls.isEmpty()) {
-            List<URL> cachedUrls = serviceCache.get(serviceName);
-            List<URL> newUrls = serviceUrls.get(serviceName);
-            try {
-                logger.debug("serviceUrls = {}", Config.getInstance().getMapper().writeValueAsString(serviceUrls));
-            } catch(Exception e) {
-            }
-            boolean change = true;
-            if (ConsulUtils.isSame(newUrls, cachedUrls)) {
-                change = false;
-            } else {
-                serviceCache.put(serviceName, newUrls);
-            }
-            if (change && needNotify) {
-                notifyExecutor.execute(new NotifyService(serviceName, newUrls));
-                logger.info("light service notify-service: " + serviceName);
-                StringBuilder sb = new StringBuilder();
-                for (URL url : newUrls) {
-                    sb.append(url.getUri()).append(";");
+            List<URL> urls = serviceCache.get(serviceName);
+            if (urls == null) {
+                if(logger.isDebugEnabled()) {
+                    try {
+                        logger.debug("serviceUrls = " + Config.getInstance().getMapper().writeValueAsString(serviceUrls));
+                    } catch(Exception e) {
+                    }
                 }
-                logger.info("consul notify urls:" + sb.toString());
+                serviceCache.put(serviceName, serviceUrls.get(serviceName));
+            }
+            for (Map.Entry<String, List<URL>> entry : serviceUrls.entrySet()) {
+                boolean change = true;
+                if (urls != null) {
+                    List<URL> newUrls = entry.getValue();
+                    if (newUrls == null || newUrls.isEmpty() || ConsulUtils.isSame(newUrls, urls)) {
+                        change = false;
+                    } else {
+                        serviceCache.put(serviceName, newUrls);
+                    }
+                }
+                if (change && needNotify) {
+                    notifyExecutor.execute(new NotifyService(entry.getKey(), entry.getValue()));
+                    logger.info("light service notify-service: " + entry.getKey());
+                    StringBuilder sb = new StringBuilder();
+                    for (URL url : entry.getValue()) {
+                        sb.append(url.getUri()).append(";");
+                    }
+                    logger.info("consul notify urls:" + sb.toString());
+                }
             }
         }
     }

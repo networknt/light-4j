@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.networknt</groupId>
     <artifactId>light-4j</artifactId>
-    <version>2.0.8-SNAPSHOT</version>
+    <version>2.0.2-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Parent POM</name>
     <description>Light 4J Framework Components</description>
@@ -67,8 +67,7 @@
     <properties>
         <java.version>11</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <version.jackson>2.10.0</version.jackson>
-        <version.jackson-databind>2.10.0</version.jackson-databind>
+        <version.jackson>2.9.9</version.jackson>
         <version.slf4j>1.7.25</version.slf4j>
         <version.jose4j>0.6.3</version.jose4j>
         <version.commons.codec>1.11</version.commons.codec>
@@ -77,18 +76,18 @@
         <version.junit>4.12</version.junit>
         <version.mockito>2.23.0</version.mockito>
         <version.powermock>2.0.2</version.powermock>
-        <version.undertow>2.0.23.Final</version.undertow>
+        <version.undertow>2.0.21.Final</version.undertow>
         <version.hamcrest>1.3</version.hamcrest>
         <version.assertj>3.8.0</version.assertj>
         <version.hdrhistogram>2.1.10</version.hdrhistogram>
         <version.jsr305>3.0.2</version.jsr305>
-        <version.json-schema-validator>1.0.24</version.json-schema-validator>
+        <version.json-schema-validator>1.0.15</version.json-schema-validator>
         <version.zookeeper>3.5.3-beta</version.zookeeper>
         <version.zkclient>0.3</version.zkclient>
         <version.curator>4.0.1</version.curator>
         <version.snakeyaml>1.20</version.snakeyaml>
         <version.caffeine>2.6.2</version.caffeine>
-        <version.prometheus>0.6.0</version.prometheus>
+        <version.prometheus>0.3.0</version.prometheus>
         <version.javamail>1.6.1</version.javamail>
         <version.hikaricp>3.2.0</version.hikaricp>
         <version.h2>1.4.196</version.h2>
@@ -112,7 +111,7 @@
         <version.testcontainers>1.8.0</version.testcontainers>
         <version.jaeger>0.35.2</version.jaeger>
         <version.opentracing>0.32.0</version.opentracing>
-        <skipTests>false</skipTests>
+        <skip.unit.tests>false</skip.unit.tests>
         <matched.test.resources>**/*</matched.test.resources>
         <version.javadoc-packagelist-plugin>1.0.0</version.javadoc-packagelist-plugin>
         <version.maven-javadoc>3.1.0</version.maven-javadoc>
@@ -397,7 +396,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
-                <version>${version.jackson-databind}</version>
+                <version>${version.jackson}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
@@ -487,11 +486,6 @@
             <dependency>
                 <groupId>io.prometheus</groupId>
                 <artifactId>simpleclient_common</artifactId>
-                <version>${version.prometheus}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.prometheus</groupId>
-                <artifactId>simpleclient_hotspot</artifactId>
                 <version>${version.prometheus}</version>
             </dependency>
             <dependency>
@@ -754,8 +748,8 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <!-- Skips unit tests if the value of skipTests property is true -->
-                    <skipTests>${skipTests}</skipTests>
+                    <!-- Skips unit tests if the value of skip.unit.tests property is true -->
+                    <skipTests>${skip.unit.tests}</skipTests>
                     <!-- Excludes integration tests when unit tests are run -->
                     <excludes>
                         <exclude>**/*IT.java</exclude>
@@ -772,38 +766,6 @@
                     <forkCount>0</forkCount>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>${version.build-helper-maven}</version>
-                <executions>
-                    <execution>
-                        <id>add-test-source</id>
-                        <goals>
-                            <goal>add-test-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>${project.basedir}\src\integration\java</source>
-                            </sources>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>add-test-resource</id>
-                        <goals>
-                            <goal>add-test-resource</goal>
-                        </goals>
-                        <configuration>
-                            <resources>
-                                <resource>
-                                    <!-- Don't forget <directory> label -->
-                                    <directory>${project.basedir}\src\integration\resources</directory>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <!-- JACOCO added for code coverage -->
             <plugin>
                 <groupId>org.jacoco</groupId>
@@ -817,7 +779,8 @@
                             <goal>prepare-agent</goal>
                         </goals>
                         <configuration>
-                            <destFile>${project.build.directory}/coverage-reports/jacoco-ut.exec</destFile>
+                            <propertyName>surefireArgLine</propertyName>
+                            <!--<destFile>${project.build.directory}/coverage-reports/jacoco-ut.exec</destFile>-->
                         </configuration>
                     </execution>
                     <execution>
@@ -826,33 +789,6 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
-                        <configuration>
-                            <dataFile>${project.build.directory}/coverage-reports/jacoco-ut.exec</dataFile>
-                            <outputDirectory>${project.reporting.outputDirectory}/jacoco-ut</outputDirectory>
-                        </configuration>
-                    </execution>
-                    <!-- End Executions for unit tests -->
-                    <!-- The Executions for integration tests -->
-                    <execution>
-                        <id>pre-integration-test</id>
-                        <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                        <configuration>
-                            <destFile>${project.build.directory}/coverage-reports/jacoco-it.exec</destFile>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>post-integration-test</id>
-                        <phase>post-integration-test</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                        <configuration>
-                            <dataFile>${project.build.directory}/coverage-reports/jacoco-it.exec</dataFile>
-                            <outputDirectory>${project.reporting.outputDirectory}/jacoco-it</outputDirectory>
-                        </configuration>
                     </execution>
                     <!-- End Executions for integration tests -->
                 </executions>
@@ -860,57 +796,57 @@
             <!-- end JACOCO -->
         </plugins>
         <pluginManagement>
-            <plugins>
-                <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
-                <plugin>
-                    <groupId>org.eclipse.m2e</groupId>
-                    <artifactId>lifecycle-mapping</artifactId>
-                    <version>${version.lifecycle-mapping}</version>
-                    <configuration>
-                        <lifecycleMappingMetadata>
-                            <pluginExecutions>
-                                <pluginExecution>
-                                    <pluginExecutionFilter>
-                                        <groupId>
-                                            org.apache.maven.plugins
-                                        </groupId>
-                                        <artifactId>
-                                            maven-compiler-plugin
-                                        </artifactId>
-                                        <versionRange>
-                                            [3.3,)
-                                        </versionRange>
-                                        <goals>
-                                            <goal>compile</goal>
-                                            <goal>testCompile</goal>
-                                        </goals>
-                                    </pluginExecutionFilter>
-                                    <action>
-                                        <ignore></ignore>
-                                    </action>
-                                </pluginExecution>
-                                <pluginExecution>
-                                    <pluginExecutionFilter>
-                                        <groupId>org.jacoco</groupId>
-                                        <artifactId>
-                                            jacoco-maven-plugin
-                                        </artifactId>
-                                        <versionRange>
-                                            [0.7.4.201502262128,)
-                                        </versionRange>
-                                        <goals>
-                                            <goal>prepare-agent</goal>
-                                        </goals>
-                                    </pluginExecutionFilter>
-                                    <action>
-                                        <ignore></ignore>
-                                    </action>
-                                </pluginExecution>
-                            </pluginExecutions>
-                        </lifecycleMappingMetadata>
-                    </configuration>
-                </plugin>
-            </plugins>
+        	<plugins>
+        		<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+        		<plugin>
+        			<groupId>org.eclipse.m2e</groupId>
+        			<artifactId>lifecycle-mapping</artifactId>
+        			<version>${version.lifecycle-mapping}</version>
+        			<configuration>
+        				<lifecycleMappingMetadata>
+        					<pluginExecutions>
+        						<pluginExecution>
+        							<pluginExecutionFilter>
+        								<groupId>
+        									org.apache.maven.plugins
+        								</groupId>
+        								<artifactId>
+        									maven-compiler-plugin
+        								</artifactId>
+        								<versionRange>
+        									[3.3,)
+        								</versionRange>
+        								<goals>
+        									<goal>compile</goal>
+        									<goal>testCompile</goal>
+        								</goals>
+        							</pluginExecutionFilter>
+        							<action>
+        								<ignore></ignore>
+        							</action>
+        						</pluginExecution>
+        						<pluginExecution>
+        							<pluginExecutionFilter>
+        								<groupId>org.jacoco</groupId>
+        								<artifactId>
+        									jacoco-maven-plugin
+        								</artifactId>
+        								<versionRange>
+        									[0.7.4.201502262128,)
+        								</versionRange>
+        								<goals>
+        									<goal>prepare-agent</goal>
+        								</goals>
+        							</pluginExecutionFilter>
+        							<action>
+        								<ignore></ignore>
+        							</action>
+        						</pluginExecution>
+        					</pluginExecutions>
+        				</lifecycleMappingMetadata>
+        			</configuration>
+        		</plugin>
+        	</plugins>
         </pluginManagement>
     </build>
 
@@ -931,7 +867,7 @@
                 <!--
                     Only unit tests are run when the development profile is active
                 -->
-                <skipTests>false</skipTests>
+                <skip.unit.tests>false</skip.unit.tests>
             </properties>
             <build>
                 <plugins>
@@ -1010,7 +946,7 @@
                 <!--
                     Only integration tests are run when the integration-test profile is active
                 -->
-                <skipTests>true</skipTests>
+                <skip.unit.tests>true</skip.unit.tests>
                 <!--to include nothing for regular unit resources-->
                 <matched.test.resources>a^</matched.test.resources>
             </properties>
@@ -1032,8 +968,10 @@
                                     <goal>verify</goal>
                                 </goals>
                                 <configuration>
-                                    <!--to avoid be overridden by skipTests-->
-                                    <skipTests>false</skipTests>
+                                    <!--
+                                        Skips integration tests if the value of skip.integration.tests
+                                        property is true
+                                    -->
                                 </configuration>
                             </execution>
                         </executions>

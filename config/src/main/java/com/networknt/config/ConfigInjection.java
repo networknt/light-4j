@@ -92,7 +92,7 @@ public class ConfigInjection {
             Boolean containsField = false;
             // Use key of injectionPattern to get value from both environment variables and "values.yaml"
             Object envValue = typeCast(System.getenv(injectionPattern.getKey()));
-            Map<String, Object> valueMap = Config.getInstance().getDefaultJsonMapConfig(CENTRALIZED_MANAGEMENT);
+            Map<String, Object> valueMap = Config.getInstance().getJsonMapConfig(CENTRALIZED_MANAGEMENT);
             Object fileValue = (valueMap != null) ? valueMap.get(injectionPattern.getKey()) : null;
             // Return different value from different sources based on injection order defined before
             if ((INJECTION_ORDER_CODE.equals("2") && envValue != null) || (INJECTION_ORDER_CODE.equals("1") && fileValue == null)) {

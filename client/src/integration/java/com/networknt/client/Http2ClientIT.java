@@ -20,6 +20,7 @@ package com.networknt.client;
 
 import com.networknt.config.Config;
 import com.networknt.httpstring.HttpStringConstants;
+import com.networknt.utility.Constants;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.client.*;

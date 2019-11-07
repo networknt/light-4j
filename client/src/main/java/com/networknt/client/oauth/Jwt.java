@@ -16,7 +16,7 @@
 
 package com.networknt.client.oauth;
 
-import com.networknt.client.ClientConfig;
+import com.networknt.config.Config;
 import com.networknt.utility.StringUtils;
 
 import java.util.*;
@@ -26,31 +26,35 @@ import java.util.*;
  * it will load config from client.yml/oauth/token
  */
 public class Jwt {
-
-    protected Set<String> scopes = new HashSet<>();
-    protected Key key;
-    /**
-     * the cached jwt token for client credentials grant type
-     */
-    private String jwt;
-
-    /**
-     * jwt expire time in millisecond so that we don't need to parse the jwt.
-     */
-    private long expire;
+    private String jwt;    // the cached jwt token for client credentials grant type
+    private long expire;   // jwt expire time in millisecond so that we don't need to parse the jwt.
     private volatile boolean renewing = false;
     private volatile long expiredRetryTimeout;
     private volatile long earlyRetryTimeout;
+    private Set<String> scopes = new HashSet<>();
+    private Key key;
+
     private static long tokenRenewBeforeExpired;
     private static long expiredRefreshRetryDelay;
     private static long earlyRefreshRetryDelay;
 
+    static final String OAUTH = "oauth";
+    static final String TOKEN = "token";
+    static final String TOKEN_RENEW_BEFORE_EXPIRED = "tokenRenewBeforeExpired";
+    static final String EXPIRED_REFRESH_RETRY_DELAY = "expiredRefreshRetryDelay";
+    static final String EARLY_REFRESH_RETRY_DELAY = "earlyRefreshRetryDelay";
+    public static final String CLIENT_CONFIG_NAME = "client";
+
     public Jwt() {
-        Map<String, Object> tokenConfig = ClientConfig.get().getTokenConfig();
-        if(tokenConfig != null) {
-            tokenRenewBeforeExpired = (Integer) tokenConfig.get(ClientConfig.TOKEN_RENEW_BEFORE_EXPIRED);
-            expiredRefreshRetryDelay = (Integer)tokenConfig.get(ClientConfig.EXPIRED_REFRESH_RETRY_DELAY);
-            earlyRefreshRetryDelay = (Integer)tokenConfig.get(ClientConfig.EARLY_REFRESH_RETRY_DELAY);
+        Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(CLIENT_CONFIG_NAME);
+        if(clientConfig != null) {
+            Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OAUTH);
+            if(oauthConfig != null) {
+                Map<String, Object> tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);
+                tokenRenewBeforeExpired = (Integer) tokenConfig.get(TOKEN_RENEW_BEFORE_EXPIRED);
+                expiredRefreshRetryDelay = (Integer)tokenConfig.get(EXPIRED_REFRESH_RETRY_DELAY);
+                earlyRefreshRetryDelay = (Integer)tokenConfig.get(EARLY_REFRESH_RETRY_DELAY);
+            }
         }
     }
 
@@ -147,14 +151,8 @@ public class Jwt {
      * for now it's only identified by scopes and serviceId.
      */
     public static class Key {
-        /**
-         * scopes should be extendable by its children
-         */
-        protected Set<String> scopes;
-        /**
-         * serviceId should be extendable by its children
-         */
-        protected String serviceId;
+        private Set<String> scopes;
+        private String serviceId;
 
         @Override
         public int hashCode() {

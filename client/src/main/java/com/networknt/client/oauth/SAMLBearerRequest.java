@@ -17,11 +17,13 @@
 package com.networknt.client.oauth;
 
 
-import com.networknt.client.ClientConfig;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
+import com.networknt.client.Http2Client;
+import com.networknt.config.Config;
 
 /**
  * This holds values used to call the SAML Bearer grant flow from the OAuth Server.
@@ -41,24 +43,30 @@ public class SAMLBearerRequest extends TokenRequest {
 
     private String samlAssertion;
     private String jwtClientAssertion;
-    private static final Logger logger = LoggerFactory.getLogger(SAMLBearerRequest.class);
+
+    static Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
+    static final Logger logger = LoggerFactory.getLogger(SAMLBearerRequest.class);
+
 
     public SAMLBearerRequest(String samlAssertion, String jwtClientAssertion) {
 
-        setGrantType(ClientConfig.SAML_BEARER);
+        setGrantType(SAML_BEARER);
         this.samlAssertion = samlAssertion;
         this.jwtClientAssertion = jwtClientAssertion;
 
+
         try {
-            Map<String, Object> tokenConfig = ClientConfig.get().getTokenConfig();
+            Map<String, Object> oauthConfig = (Map<String, Object>) clientConfig.get(OAUTH);
 
-            setServerUrl((String) tokenConfig.get(ClientConfig.SERVER_URL));
-            Object object = tokenConfig.get(ClientConfig.ENABLE_HTTP2);
+            Map<String, Object> tokenConfig = (Map<String, Object>) oauthConfig.get(TOKEN);
+
+            setServerUrl((String) tokenConfig.get(SERVER_URL));
+            Object object = tokenConfig.get(ENABLE_HTTP2);
             setEnableHttp2(object != null && (Boolean) object);
-            Map<String, Object> ccConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.CLIENT_CREDENTIALS);
+            Map<String, Object> ccConfig = (Map<String, Object>) tokenConfig.get(CLIENT_CREDENTIALS);
 
-            setClientId((String) ccConfig.get(ClientConfig.CLIENT_ID));
-            setUri((String) ccConfig.get(ClientConfig.URI));
+            setClientId((String) ccConfig.get(CLIENT_ID));
+            setUri((String) ccConfig.get(URI));
         } catch (NullPointerException e) {
             logger.error("Nullpointer in config object: " + e);
         }

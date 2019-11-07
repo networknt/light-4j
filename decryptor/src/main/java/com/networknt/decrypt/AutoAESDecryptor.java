@@ -9,7 +9,7 @@ package com.networknt.decrypt;
  * decryptorClass: com.networknt.decrypt.AutoAESDecryptor
  */
 public class AutoAESDecryptor extends AESDecryptor {
-    private final static String LIGHT_4J_CONFIG_PASSWORD = "light_4j_config_password";
+    private final static String LIGHT_4J_CONFIG_PASSWORD = "light-4j-config-password";
 
     @Override
     protected char[] getPassword() {

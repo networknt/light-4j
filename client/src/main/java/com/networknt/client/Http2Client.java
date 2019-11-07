@@ -19,28 +19,68 @@
 package com.networknt.client;
 
 import com.networknt.client.circuitbreaker.CircuitBreaker;
-import com.networknt.client.http.*;
+import com.networknt.client.http.Light4jHttp2ClientProvider;
+import com.networknt.client.http.Light4jHttpClientProvider;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ServiceLoader;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
+
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+
+import com.networknt.httpstring.AttachmentConstants;
+import io.opentracing.Tracer;
+import io.opentracing.propagation.Format;
+import io.opentracing.tag.Tags;
+import org.owasp.encoder.Encode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xnio.ChannelListeners;
+import org.xnio.FutureResult;
+import org.xnio.IoFuture;
+import org.xnio.IoUtils;
+import org.xnio.OptionMap;
+import org.xnio.Options;
+import org.xnio.Xnio;
+import org.xnio.XnioIoThread;
+import org.xnio.XnioWorker;
+import org.xnio.channels.StreamSinkChannel;
+import org.xnio.ssl.XnioSsl;
+
 import com.networknt.client.oauth.Jwt;
 import com.networknt.client.oauth.TokenManager;
 import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
 import com.networknt.client.ssl.TLSConfig;
-import com.networknt.cluster.Cluster;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
-import com.networknt.httpstring.AttachmentConstants;
-import com.networknt.exception.ClientException;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
-import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.TlsUtil;
-import io.opentracing.Tracer;
-import io.opentracing.propagation.Format;
-import io.opentracing.tag.Tags;
-import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.client.*;
+import com.networknt.client.http.*;
 import io.undertow.connector.ByteBufferPool;
 import io.undertow.protocols.ssl.UndertowXnioSsl;
 import io.undertow.server.DefaultByteBufferPool;
@@ -49,26 +89,8 @@ import io.undertow.util.AttachmentKey;
 import io.undertow.util.Headers;
 import io.undertow.util.StringReadChannelListener;
 import io.undertow.util.StringWriteChannelListener;
-import org.owasp.encoder.Encode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xnio.*;
-import org.xnio.channels.StreamSinkChannel;
-import org.xnio.ssl.XnioSsl;
-
-import javax.net.ssl.*;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.InetSocketAddress;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.security.*;
-import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * This is a new client module that replaces the old Client module. The old version
@@ -78,7 +100,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Steve Hu
  */
 public class Http2Client {
-    private static final Logger logger = LoggerFactory.getLogger(Http2Client.class);
+    static final Logger logger = LoggerFactory.getLogger(Http2Client.class);
 
     public static final String CONFIG_NAME = "client";
     public static final String CONFIG_SECRET = "secret";
@@ -106,9 +128,6 @@ public class Http2Client {
 
     // TokenManager is to manage cached jwt tokens for this client.
     private TokenManager tokenManager = TokenManager.getInstance();
-
-    // Initialize connection pool
-    private Http2ClientConnectionPool http2ClientConnectionPool = Http2ClientConnectionPool.getInstance();
 
     static {
         List<String> masks = new ArrayList<>();
@@ -145,7 +164,7 @@ public class Http2Client {
         }
         this.clientProviders = Collections.unmodifiableMap(map);
         try {
-            final Xnio xnio = Xnio.getInstance(Undertow.class.getClassLoader());
+            final Xnio xnio = Xnio.getInstance();
             WORKER = xnio.createWorker(null, Http2Client.DEFAULT_OPTIONS);
             SSL = new UndertowXnioSsl(WORKER.getXnio(), OptionMap.EMPTY, BUFFER_POOL, createSSLContext());
         } catch (Exception e) {
@@ -182,17 +201,17 @@ public class Http2Client {
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         ClientProvider provider = getClientProvider(uri);
         final FutureResult<ClientConnection> result = new FutureResult<>();
-            provider.connect(new ClientCallback<ClientConnection>() {
-                @Override
-                public void completed(ClientConnection r) {
-                    result.setResult(r);
-                }
+        provider.connect(new ClientCallback<ClientConnection>() {
+            @Override
+            public void completed(ClientConnection r) {
+                result.setResult(r);
+            }
 
-                @Override
-                public void failed(IOException e) {
-                    result.setException(e);
-                }
-            }, bindAddress, uri, worker, ssl, bufferPool, options);
+            @Override
+            public void failed(IOException e) {
+                result.setException(e);
+            }
+        }, bindAddress, uri, worker, ssl, bufferPool, options);
         return result.getIoFuture();
     }
 
@@ -480,7 +499,7 @@ public class Http2Client {
      */
     public static SSLContext createSSLContext() throws IOException {
     	Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(TLS);
-
+    	
     	return null==tlsMap?null:createSSLContext((String)tlsMap.get(TLSConfig.DEFAULT_GROUP_KEY));
     }
 
@@ -794,54 +813,34 @@ public class Http2Client {
         return new CircuitBreaker(() -> callService(uri, request, requestBody));
     }
 
-    /**
-     * This method is used to call the service corresponding to the uri and obtain a response, connection pool is embedded.
-     * @param uri URI of target service
-     * @param request request
-     * @param requestBody request body
-     * @return client response
-     */
     public CompletableFuture<ClientResponse> callService(URI uri, ClientRequest request, Optional<String> requestBody) {
-        addHostHeader(request);
-        CompletableFuture<ClientResponse> futureClientResponse;
-        AtomicReference<ClientConnection> currentConnection = new AtomicReference<>(http2ClientConnectionPool.getConnection(uri));
-        if (currentConnection.get() != null) {
-            logger.debug("Reusing the connection: {} to {}", currentConnection.toString(), uri.toString());
-            futureClientResponse = getFutureClientResponse(currentConnection.get(), uri, request, requestBody);
-        } else {
-            CompletableFuture<ClientConnection> futureConnection = this.connectAsync(uri);
-            futureClientResponse = futureConnection.thenComposeAsync(clientConnection -> {
-                currentConnection.set(clientConnection);
-                return getFutureClientResponse(clientConnection, uri, request, requestBody);
-            });
-        }
-        futureClientResponse.thenAcceptAsync(clientResponse -> http2ClientConnectionPool.resetConnectionStatus(currentConnection.get()));
-        return futureClientResponse;
-    }
-
-    /**
-     * This method is used to call the service by using the serviceId and obtain a response
-     * service discovery, load balancing and connection pool are embedded.
-     * @param protocol target service protocol
-     * @param serviceId target service's service Id
-     * @param envTag environment tag
-     * @param request request
-     * @param requestBody request body
-     * @return client response
-     */
-    public CompletableFuture<ClientResponse> callService(String protocol, String serviceId, String envTag, ClientRequest request, Optional<String> requestBody) {
-        try {
-            Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
-            String url = cluster.serviceToUrl(protocol, serviceId, envTag, null);
-            if (url == null) {
-                logger.error("Failed to discover service with serviceID: {}, and tag: {}", serviceId, envTag);
-                throw new ClientException(String.format("Failed to discover service with serviceID: %s, and tag: %s", serviceId, envTag));
+        CompletableFuture<ClientConnection> futureConnection = this.connectAsync(uri);
+        CompletableFuture<ClientResponse> futureClientResponse = futureConnection.thenComposeAsync(clientConnection -> {
+            if (requestBody.isPresent()) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("The request sent to {} = request header: {}, request body: {}", uri.toString(), request.getRequestHeaders().toString(), requestBody.get());
+                }
+                Http2ClientCompletableFutureWithRequest futureClientResponseWithRequest = new Http2ClientCompletableFutureWithRequest(requestBody.get());
+                try {
+                    clientConnection.sendRequest(request, futureClientResponseWithRequest);
+                } catch (Exception e) {
+                    futureClientResponseWithRequest.completeExceptionally(e);
+                }
+                return futureClientResponseWithRequest;
+            } else {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("The request sent to {} = request header: {}, request body is empty", uri.toString(), request.getRequestHeaders().toString());
+                }
+                Http2ClientCompletableFutureNoRequest futureClientResponseNoRequest = new Http2ClientCompletableFutureNoRequest();
+                try {
+                    clientConnection.sendRequest(request, futureClientResponseNoRequest);
+                } catch (Exception e) {
+                    futureClientResponseNoRequest.completeExceptionally(e);
+                }
+                return futureClientResponseNoRequest;
             }
-            return callService(new URI(url), request, requestBody);
-        } catch (Exception e) {
-            logger.error("Failed to call service: {}", serviceId);
-            throw new RuntimeException("Failed to call service: " + serviceId, e);
-        }
+        });
+        return futureClientResponse;
     }
 
     /**
@@ -851,60 +850,28 @@ public class Http2Client {
      */
     public CompletableFuture<ClientConnection> connectAsync(URI uri) {
         return this.connectAsync(null, uri, com.networknt.client.Http2Client.WORKER, com.networknt.client.Http2Client.SSL, com.networknt.client.Http2Client.BUFFER_POOL,
-                ClientConfig.get().getRequestEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
+                OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
     }
 
     public CompletableFuture<ClientConnection> connectAsync(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         CompletableFuture<ClientConnection> completableFuture = new CompletableFuture<>();
-            ClientProvider provider = clientProviders.get(uri.getScheme());
-            try {
-                provider.connect(new ClientCallback<ClientConnection>() {
-                    @Override
-                    public void completed(ClientConnection r) {
-                        completableFuture.complete(r);
-                        http2ClientConnectionPool.cacheConnection(uri, r);
-                    }
+        ClientProvider provider = clientProviders.get(uri.getScheme());
+        try {
+            provider.connect(new ClientCallback<ClientConnection>() {
+                @Override
+                public void completed(ClientConnection r) {
+                    completableFuture.complete(r);
+                }
 
-                    @Override
-                    public void failed(IOException e) {
-                        completableFuture.completeExceptionally(e);
-                    }
-                }, bindAddress, uri, worker, ssl, bufferPool, options);
-            } catch (Throwable t) {
-                completableFuture.completeExceptionally(t);
-            }
+                @Override
+                public void failed(IOException e) {
+                    completableFuture.completeExceptionally(e);
+                }
+            }, bindAddress, uri, worker, ssl, bufferPool, options);
+        } catch (Throwable t) {
+            completableFuture.completeExceptionally(t);
+        }
         return completableFuture;
     }
 
-    private CompletableFuture<ClientResponse> getFutureClientResponse(ClientConnection clientConnection, URI uri, ClientRequest request, Optional<String> requestBody) {
-        if (requestBody.isPresent()) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("The request sent to {} = request header: {}, request body: {}", uri.toString(), request.getRequestHeaders().toString(), requestBody.get());
-            }
-            Http2ClientCompletableFutureWithRequest futureClientResponseWithRequest = new Http2ClientCompletableFutureWithRequest(requestBody.get());
-            try {
-                clientConnection.sendRequest(request, futureClientResponseWithRequest);
-            } catch (Exception e) {
-                futureClientResponseWithRequest.completeExceptionally(e);
-            }
-            return futureClientResponseWithRequest;
-        } else {
-            if (logger.isDebugEnabled()) {
-                logger.debug("The request sent to {} = request header: {}, request body is empty", uri.toString(), request.getRequestHeaders().toString());
-            }
-            Http2ClientCompletableFutureNoRequest futureClientResponseNoRequest = new Http2ClientCompletableFutureNoRequest();
-            try {
-                clientConnection.sendRequest(request, futureClientResponseNoRequest);
-            } catch (Exception e) {
-                futureClientResponseNoRequest.completeExceptionally(e);
-            }
-            return futureClientResponseNoRequest;
-        }
-    }
-
-    private void addHostHeader(ClientRequest request) {
-        if (!request.getRequestHeaders().contains(Headers.HOST)) {
-            request.getRequestHeaders().put(Headers.HOST, "localhost");
-        }
-    }
 }

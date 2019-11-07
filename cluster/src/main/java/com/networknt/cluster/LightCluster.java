@@ -21,7 +21,6 @@ import com.networknt.registry.*;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.ConcurrentHashSet;
 import com.networknt.utility.Constants;
-import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,22 +54,17 @@ public class LightCluster implements Cluster {
     /**
      * Implement serviceToUrl with client side service discovery.
      *
-     * @param protocol either http or https
-     * @param serviceId unique service identifier
+     * @param protocol String
+     * @param serviceId String
      * @param requestKey String
-     * @return Url discovered after the load balancing. Return null if the corresponding service cannot be found
+     * @return String
      */
     @Override
     public String serviceToUrl(String protocol, String serviceId, String tag, String requestKey) {
         URL url = loadBalance.select(discovery(protocol, serviceId, tag), requestKey);
-        if (url != null) {
-            logger.debug("Final url after load balance = {}.", url);
-            // construct a url in string
-            return protocol + "://" + url.getHost() + ":" + url.getPort();
-        } else {
-            logger.debug("The service: {} cannot be found from service discovery.", serviceId);
-            return null;
-        }
+        if(logger.isDebugEnabled()) logger.debug("final url after load balance = " + url);
+        // construct a url in string
+        return protocol + "://" + url.getHost() + ":" + url.getPort();
     }
 
     /**
@@ -93,7 +87,7 @@ public class LightCluster implements Cluster {
         // lookup in serviceMap first, if not there, then subscribe and discover.
         List<URL> urls = serviceMap.get(serviceId);
         if(logger.isDebugEnabled()) logger.debug("cached serviceId " + serviceId + " urls = " + urls);
-        if((urls == null) || (urls.isEmpty())) {
+        if(urls == null) {
             URL subscribeUrl = URLImpl.valueOf(protocol + "://localhost/" + serviceId);
             if(tag != null) {
                 subscribeUrl.addParameter(Constants.TAG_ENVIRONMENT, tag);
@@ -101,7 +95,7 @@ public class LightCluster implements Cluster {
             if(logger.isDebugEnabled()) logger.debug("subscribeUrl = " + subscribeUrl);
             // you only need to subscribe once.
             if(!subscribedSet.contains(subscribeUrl)) {
-                registry.subscribe(subscribeUrl, new ClusterNotifyListener(serviceId));
+                registry.subscribe(subscribeUrl, new ClusterNotifyListener());
                 subscribedSet.add(subscribeUrl);
             }
             urls = registry.discover(subscribeUrl);
@@ -130,19 +124,10 @@ public class LightCluster implements Cluster {
     }
 
     static class ClusterNotifyListener implements NotifyListener {
-        private String serviceId;
-
-        ClusterNotifyListener(String serviceId) {
-            this.serviceId = serviceId;
-        }
-
         @Override
         public void notify(URL registryUrl, List<URL> urls) {
-            logger.debug("registryUrl is: {}", registryUrl);
-            logger.debug("notify service: {} with updated urls: {}", serviceId, urls.toString());
-            if(StringUtils.isNotBlank(serviceId)) {
-                serviceMap.put(serviceId, urls == null ? new ArrayList<>() : urls);
-            }
+            if(logger.isDebugEnabled()) logger.debug("notify is called in ClusterNotifyListener registryUrl = " + registryUrl + " urls = " + urls);
+            if(urls != null && urls.size() > 0) serviceMap.put(urls.get(0).getPath(), urls);
         }
     }
 }

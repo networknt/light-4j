@@ -3,6 +3,3 @@
 
 # true to enable this middleware handler.
 enabled: true
-
-# true to return Json format message
-useJson: false

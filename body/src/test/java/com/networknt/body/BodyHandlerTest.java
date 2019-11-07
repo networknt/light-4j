@@ -472,7 +472,7 @@ public class BodyHandlerTest {
         } finally {
             IoUtils.safeClose(connection);
         }
-        Assert.assertEquals("{key1:value1,key2:value2 with space,keylist[]:[1, 2]}", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+        Assert.assertEquals("{key1:[value1],key2:[value2 with space],keylist[]:[1,2]}", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
     }
 
     @Test
@@ -513,6 +513,6 @@ public class BodyHandlerTest {
         } finally {
             IoUtils.safeClose(connection);
         }
-        Assert.assertEquals("{key1:value1,key2:value2}", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+        Assert.assertEquals("{key1:[value1],key2:[value2]}", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
     }
 }

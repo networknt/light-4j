@@ -54,8 +54,6 @@ public class ClientRequestComposerProvider {
             case SAML_BEARER_REQUEST_COMPOSER:
                 composersMap.put(SAML_BEARER_REQUEST_COMPOSER, new DefaultSAMLBearerRequestComposer());
                 break;
-            default:
-                break;
         }
     }
 

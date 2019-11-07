@@ -52,7 +52,7 @@ public class CircuitBreaker {
             }
 
             ClientResponse clientResponse = supplier.get().get(ClientConfig.get().getTimeout(), TimeUnit.MILLISECONDS);
-            timeoutCount = new AtomicInteger(0);
+            timeoutCount = new AtomicInteger(0);;
 
             return clientResponse;
         } catch (InterruptedException | ExecutionException e) {

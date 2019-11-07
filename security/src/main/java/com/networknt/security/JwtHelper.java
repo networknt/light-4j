@@ -56,7 +56,6 @@ import java.util.regex.Pattern;
  *
  * @author Steve Hu
  */
-@Deprecated
 public class JwtHelper {
     static final Logger logger = LoggerFactory.getLogger(JwtHelper.class);
     public static final String KID = "kid";
@@ -72,7 +71,7 @@ public class JwtHelper {
     public static final String JWT_KEY_RESOLVER = "keyResolver";
     public static final String JWT_KEY_RESOLVER_X509CERT = "X509Certificate";
     public static final String JWT_KEY_RESOLVER_JWKS = "JsonWebKeySet";
-
+    
     static Map<String, X509Certificate> certMap;
     static Map<String, List<JsonWebKey>> jwksMap;
     static List<String> fingerPrints;
@@ -200,12 +199,12 @@ public class JwtHelper {
 
     /**
      * This method is to keep backward compatible for those call without VerificationKeyResolver.
-     * @param jwt JWT token
-     * @param ignoreExpiry indicate if the expiry will be ignored
-     * @param isToken indicate if the JWT is a token
-     * @return JwtClaims
-     * @throws InvalidJwtException throw when the token is invalid
-     * @throws ExpiredTokenException throw when the token is expired
+     * @param jwt
+     * @param ignoreExpiry
+     * @param isToken
+     * @return
+     * @throws InvalidJwtException
+     * @throws ExpiredTokenException
      */
     public static JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken) throws InvalidJwtException, ExpiredTokenException {
         return verifyJwt(jwt, ignoreExpiry, isToken, JwtHelper::getKeyResolver);

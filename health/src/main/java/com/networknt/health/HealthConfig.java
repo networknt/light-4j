@@ -24,8 +24,6 @@ package com.networknt.health;
 public class HealthConfig {
     boolean enabled;
 
-    boolean useJson;
-
     public HealthConfig() {
     }
 
@@ -37,11 +35,4 @@ public class HealthConfig {
         this.enabled = enabled;
     }
 
-    public boolean isUseJson() {
-        return useJson;
-    }
-
-    public void setUseJson(boolean useJson) {
-        this.useJson = useJson;
-    }
 }

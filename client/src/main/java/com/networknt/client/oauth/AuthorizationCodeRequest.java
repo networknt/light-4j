@@ -16,47 +16,52 @@
 
 package com.networknt.client.oauth;
 
-import com.networknt.client.ClientConfig;
+import java.util.List;
+import java.util.Map;
+
 import com.networknt.client.Http2Client;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Created by steve on 02/09/16.
  */
 public class AuthorizationCodeRequest extends TokenRequest {
 
-    private String authCode;
-    private String redirectUri;
+    String authCode;
+    String redirectUri;
 
     /**
      * load default values from client.json for authorization code grant, overwrite by setters
      * in case you want to change it at runtime.
      */
     public AuthorizationCodeRequest() {
-        setGrantType(ClientConfig.AUTHORIZATION_CODE);
-        Map<String, Object> tokenConfig = ClientConfig.get().getTokenConfig();
-        if(tokenConfig != null) {
-            setServerUrl((String)tokenConfig.get(ClientConfig.SERVER_URL));
-            setServiceId((String)tokenConfig.get(ClientConfig.SERVICE_ID));
-            Object object = tokenConfig.get(ClientConfig.ENABLE_HTTP2);
-            setEnableHttp2(object != null && (Boolean) object);
-            Map<String, Object> acConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.AUTHORIZATION_CODE);
-            if(acConfig != null) {
-                setClientId((String)acConfig.get(ClientConfig.CLIENT_ID));
-                // load client secret from client.yml and fallback to secret.yml
-                if(acConfig.get(ClientConfig.CLIENT_SECRET) != null) {
-                    setClientSecret((String)acConfig.get(ClientConfig.CLIENT_SECRET));
-                } else {
-                    Map<String, Object> secret = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
-                    setClientSecret((String)secret.get(SecretConstants.AUTHORIZATION_CODE_CLIENT_SECRET));
+        setGrantType(AUTHORIZATION_CODE);
+        Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
+        if(clientConfig != null) {
+            Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(OAUTH);
+            if(oauthConfig != null) {
+                Map<String, Object> tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);
+                if(tokenConfig != null) {
+                    setServerUrl((String)tokenConfig.get(SERVER_URL));
+                    setServiceId((String)tokenConfig.get(SERVICE_ID));
+                    Object object = tokenConfig.get(ENABLE_HTTP2);
+                    setEnableHttp2(object != null && (Boolean) object);
+                    Map<String, Object> acConfig = (Map<String, Object>) tokenConfig.get(AUTHORIZATION_CODE);
+                    if(acConfig != null) {
+                        setClientId((String)acConfig.get(CLIENT_ID));
+                        // load client secret from client.yml and fallback to secret.yml
+                        if(acConfig.get(CLIENT_SECRET) != null) {
+                            setClientSecret((String)acConfig.get(CLIENT_SECRET));
+                        } else {
+                            Map<String, Object> secret = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
+                            setClientSecret((String)secret.get(SecretConstants.AUTHORIZATION_CODE_CLIENT_SECRET));
+                        }
+                        setUri((String)acConfig.get(URI));
+                        setScope((List<String>)acConfig.get(SCOPE));
+                        setRedirectUri((String)acConfig.get(REDIRECT_URI));
+                    }
                 }
-                setUri((String)acConfig.get(ClientConfig.URI));
-                setScope((List<String>)acConfig.get(ClientConfig.SCOPE));
-                setRedirectUri((String)acConfig.get(ClientConfig.REDIRECT_URI));
             }
         }
     }

@@ -18,11 +18,12 @@ package com.networknt.info;
 
 import com.networknt.config.Config;
 import com.networknt.handler.LightHttpHandler;
-import com.networknt.security.IJwtVerifyHandler;
-import com.networknt.security.JwtVerifier;
+import com.networknt.security.JwtHelper;
+import com.networknt.status.Status;
 import com.networknt.utility.FingerPrintUtil;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.Util;
+import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
@@ -32,7 +33,9 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * This is a server info handler that output the runtime info about the server. For example, how many
@@ -86,20 +89,8 @@ public class ServerInfoGetHandler implements LightHttpHandler {
 
     public Map<String, Object> getSecurity() {
         Map<String, Object> secMap = new LinkedHashMap<>();
-        // as we have replaced the static JwtHelper to JwtVerifier, we cannot use the static method to
-        // get the fingerprints anymore, need to iterate the registered security module to do so.
-        Map<String, Object> moduleMap = ModuleRegistry.getRegistry();
-        // use set to eliminate duplications and will convert to ArrayList later
-        Set<String> fingerprints = new HashSet<>();
-        for(Object module: moduleMap.entrySet()) {
-            if(module instanceof IJwtVerifyHandler) {
-                IJwtVerifyHandler handler = (IJwtVerifyHandler)module;
-                fingerprints.addAll(handler.getJwtVerifier().getFingerPrints());
-            }
-        }
-
-        if(fingerprints.size() > 0) {
-            secMap.put("oauth2FingerPrints", new ArrayList<String>(fingerprints));
+        if(JwtHelper.getFingerPrints() != null) {
+            secMap.put("oauth2FingerPrints", JwtHelper.getFingerPrints());
         }
         secMap.put("serverFingerPrint", getServerTlsFingerPrint());
         return secMap;

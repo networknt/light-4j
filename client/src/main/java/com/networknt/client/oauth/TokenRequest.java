@@ -16,111 +16,38 @@
 
 package com.networknt.client.oauth;
 
-import com.networknt.client.ClientConfig;
-
 import java.util.List;
 
 /**
  * Created by steve on 02/09/16.
  */
 public class TokenRequest {
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#OAUTH}
-     */
-    @Deprecated
     public static String OAUTH = "oauth";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#TOKEN}
-     */
-    @Deprecated
     public static String TOKEN = "token";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#SERVER_URL}
-     */
-    @Deprecated
     public static String SERVER_URL = "server_url";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#SERVICE_ID}
-     */
-    @Deprecated
     public static String SERVICE_ID = "serviceId";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#ENABLE_HTTP2}
-     */
-    @Deprecated
     public static String ENABLE_HTTP2 = "enableHttp2";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#AUTHORIZATION_CODE}
-     */
-    @Deprecated
     public static String AUTHORIZATION_CODE = "authorization_code";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#CLIENT_CREDENTIALS}
-     */
-    @Deprecated
     public static String CLIENT_CREDENTIALS = "client_credentials";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#SAML_BEARER}
-     */
-    @Deprecated
     public static String SAML_BEARER = "saml_bearer";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#REFRESH_TOKEN}
-     */
-    @Deprecated
     public static String REFRESH_TOKEN = "refresh_token";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#URI}
-     */
-    @Deprecated
     public static String URI = "uri";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#CLIENT_ID}
-     */
-    @Deprecated
     public static String CLIENT_ID = "client_id";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#REDIRECT_URI}
-     */
-    @Deprecated
+    public static String CLIENT_SECRET = "client_secret";
     public static String REDIRECT_URI = "redirect_uri";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#SCOPE}
-     */
-    @Deprecated
     public static String SCOPE = "scope";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#CSRF}
-     */
-    @Deprecated
     public static String CSRF = "csrf";
 
-    private String grantType;
-    private String serverUrl;
-    private String serviceId;
-    private boolean enableHttp2;
-    private String uri;
-    private String clientId;
-    private String clientSecret;
-    private List<String> scope;
-    /**
-     * put csrf here as both authorization code and refresh token need it.
-     */
-    private String csrf;
+    String grantType;
+    String serverUrl;
+    String serviceId;
+    boolean enableHttp2;
+    String uri;
+    String clientId;
+    String clientSecret;
+    List<String> scope;
+    // put csrf here as both authorization code and refresh token need it.
+    String csrf;
 
     public TokenRequest() {
     }
