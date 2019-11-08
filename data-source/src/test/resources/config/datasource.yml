@@ -62,5 +62,6 @@ H2DataSource:
   DriverClassName: org.h2.jdbcx.JdbcDataSource
   jdbcUrl: jdbc:h2:mem:XE;MODE=MYSQL;INIT=runscript from 'classpath:scripts/test-oauth2.sql'\;runscript from 'classpath:scripts/test-tokenization.sql'\;runscript from 'classpath:scripts/test-vault.sql'\;runscript from 'classpath:scripts/test-todo.sql';
   username: sa
+  H2Password: sa
   maximumPoolSize: 2
   connectionTimeout: 500
