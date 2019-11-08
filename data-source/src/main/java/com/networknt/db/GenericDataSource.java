@@ -33,7 +33,7 @@ import java.util.Map;
 public class GenericDataSource {
     protected static final String DATASOURCE = "datasource";
     protected static final String SECRET = "secret";
-    private static final String DB_PASSWORD = "dbPassword";
+    private static final String DB_PASSWORD = "password";
     private static final String DS_NAME = "H2DataSource";
 
     // the HikariDataSource
@@ -76,7 +76,11 @@ public class GenericDataSource {
         ds.setUsername((String)mainParams.get("username"));
 
         // use encrypted password
-        ds.setPassword((String)secret.get(getDbPassKey()));
+        String password = (String)mainParams.get(DB_PASSWORD);
+        if (password==null) {
+            password = (String)secret.get(getDbPassKey());
+        }
+        ds.setPassword(password);
 
         // set datasource paramters
         ds.setMaximumPoolSize((Integer)mainParams.get("maximumPoolSize"));
