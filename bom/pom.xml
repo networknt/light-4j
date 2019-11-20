@@ -21,6 +21,7 @@
 	
     <groupId>com.networknt</groupId>
     <artifactId>light-4j-bom</artifactId>
+    <version>2.0.8-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Light 4j Bill of Materials</name>
     <description>Light 4j Bill of Materials</description>
