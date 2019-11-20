@@ -76,6 +76,7 @@
         <version.logback>1.2.3</version.logback>
         <version.junit>4.12</version.junit>
         <version.mockito>2.23.4</version.mockito>
+		<version.objenesis>3.0.1</version.objenesis>
         <version.powermock>2.0.2</version.powermock>
         <version.undertow>2.0.28.Final</version.undertow>
         <version.hamcrest>1.3</version.hamcrest>
@@ -365,12 +366,14 @@
                 <artifactId>mockito-core</artifactId>
                 <version>${version.mockito}</version>
                 <scope>test</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.objenesis</groupId>
-                        <artifactId>objenesis</artifactId>
-                    </exclusion>
-                </exclusions>
+            </dependency>
+			<!-- This solves a version conflict in mockito-core's dependency tree. -->
+			<!-- Make sure this is the latest transitive version in mockito-core's dependency tree -->
+            <dependency>
+                <groupId>org.objenesis</groupId>
+                <artifactId>objenesis</artifactId>
+                <version>${version.objenesis}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.powermock</groupId>
