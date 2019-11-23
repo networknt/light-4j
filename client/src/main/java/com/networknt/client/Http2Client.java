@@ -49,6 +49,7 @@ import io.undertow.util.AttachmentKey;
 import io.undertow.util.Headers;
 import io.undertow.util.StringReadChannelListener;
 import io.undertow.util.StringWriteChannelListener;
+import org.omg.SendingContext.RunTime;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -147,7 +148,6 @@ public class Http2Client {
         try {
             final Xnio xnio = Xnio.getInstance(Undertow.class.getClassLoader());
             WORKER = xnio.createWorker(null, Http2Client.DEFAULT_OPTIONS);
-            SSL = new UndertowXnioSsl(WORKER.getXnio(), OptionMap.EMPTY, BUFFER_POOL, createSSLContext());
         } catch (Exception e) {
             logger.error("Exception: ", e);
         }
@@ -167,6 +167,18 @@ public class Http2Client {
     	}
     }
 
+    /**
+     * Create an XnioSsl object with the given sslContext. This is used to create the normal client context
+     * and the light-config-server bootstrap context separately. the XnioSsl object can be used to create
+     * an Https connection to the downstream services.
+     *
+     * @param sslContext SslContext
+     * @return XnioSsl
+     */
+    public XnioSsl createXnioSsl(SSLContext sslContext) {
+        return new UndertowXnioSsl(WORKER.getXnio(), OptionMap.EMPTY, BUFFER_POOL, sslContext);
+    }
+
     public IoFuture<ClientConnection> connect(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         return connect(uri, worker, null, bufferPool, options);
     }
@@ -175,11 +187,25 @@ public class Http2Client {
         return connect(bindAddress, uri, worker, null, bufferPool, options);
     }
 
+    private XnioSsl getDefaultXnioSsl() {
+        if(SSL == null) {
+            try {
+                SSL = createXnioSsl(createSSLContext());
+            } catch (Exception e) {
+                logger.error("Exception", e);
+                throw new RuntimeException(e);
+            }
+        }
+        return SSL;
+    }
+
     public IoFuture<ClientConnection> connect(final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         return connect((InetSocketAddress) null, uri, worker, ssl, bufferPool, options);
     }
 
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         ClientProvider provider = getClientProvider(uri);
         final FutureResult<ClientConnection> result = new FutureResult<>();
             provider.connect(new ClientCallback<ClientConnection>() {
@@ -206,10 +232,12 @@ public class Http2Client {
     }
 
     public IoFuture<ClientConnection> connect(final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         return connect((InetSocketAddress) null, uri, ioThread, ssl, bufferPool, options);
     }
 
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         ClientProvider provider = getClientProvider(uri);
         final FutureResult<ClientConnection> result = new FutureResult<>();
         provider.connect(new ClientCallback<ClientConnection>() {
@@ -235,11 +263,13 @@ public class Http2Client {
     }
 
     public void connect(final ClientCallback<ClientConnection> listener, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         ClientProvider provider = getClientProvider(uri);
         provider.connect(listener, uri, worker, ssl, bufferPool, options);
     }
 
     public void connect(final ClientCallback<ClientConnection> listener, InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         ClientProvider provider = getClientProvider(uri);
         provider.connect(listener, bindAddress, uri, worker, ssl, bufferPool, options);
     }
@@ -254,11 +284,13 @@ public class Http2Client {
     }
 
     public void connect(final ClientCallback<ClientConnection> listener, final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         ClientProvider provider = getClientProvider(uri);
         provider.connect(listener, uri, ioThread, ssl, bufferPool, options);
     }
 
     public void connect(final ClientCallback<ClientConnection> listener, InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         ClientProvider provider = getClientProvider(uri);
         provider.connect(listener, bindAddress, uri, ioThread, ssl, bufferPool, options);
     }
@@ -850,11 +882,13 @@ public class Http2Client {
      * @return CompletableFuture
      */
     public CompletableFuture<ClientConnection> connectAsync(URI uri) {
-        return this.connectAsync(null, uri, com.networknt.client.Http2Client.WORKER, com.networknt.client.Http2Client.SSL, com.networknt.client.Http2Client.BUFFER_POOL,
+        if("https".equals(uri.getScheme()) && SSL == null) SSL = getDefaultXnioSsl();
+        return this.connectAsync(null, uri, WORKER, SSL, com.networknt.client.Http2Client.BUFFER_POOL,
                 ClientConfig.get().getRequestEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
     }
 
     public CompletableFuture<ClientConnection> connectAsync(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        if("https".equals(uri.getScheme()) && SSL == null) SSL = getDefaultXnioSsl();
         CompletableFuture<ClientConnection> completableFuture = new CompletableFuture<>();
             ClientProvider provider = clientProviders.get(uri.getScheme());
             try {
