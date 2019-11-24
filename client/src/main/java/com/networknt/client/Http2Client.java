@@ -186,7 +186,7 @@ public class Http2Client {
         return connect(bindAddress, uri, worker, null, bufferPool, options);
     }
 
-    private XnioSsl getDefaultXnioSsl() {
+    public XnioSsl getDefaultXnioSsl() {
         if(SSL == null) {
             try {
                 SSL = createXnioSsl(createSSLContext());
