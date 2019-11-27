@@ -1,5 +1,14 @@
 # Change Log
 
+## [1.6.11](https://github.com/networknt/light-4j/tree/1.6.11) (2019-11-27)
+
+
+**Merged pull requests:**
+
+
+- fixes \#623 make the getDefaultXnioSsl public from Http2Client as ligh… [\#624](https://github.com/networknt/light-4j/pull/624) ([stevehu](https://github.com/stevehu))
+- Integration with REST based Light Config Server [\#612](https://github.com/networknt/light-4j/pull/612) ([santoshaherkar](https://github.com/santoshaherkar))
+- fixes \#620 [\#621](https://github.com/networknt/light-4j/pull/621) ([chenyan71](https://github.com/chenyan71))
 ## [1.6.10](https://github.com/networknt/light-4j/tree/1.6.10) (2019-10-26)
 
 
