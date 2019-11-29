@@ -20,6 +20,7 @@ package com.networknt.client;
 
 import com.networknt.client.circuitbreaker.CircuitBreaker;
 import com.networknt.client.http.*;
+import com.networknt.client.listener.ByteBufferReadChannelListener;
 import com.networknt.client.oauth.Jwt;
 import com.networknt.client.oauth.TokenManager;
 import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
@@ -59,6 +60,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.nio.ByteBuffer;
 import java.security.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -85,6 +87,7 @@ public class Http2Client {
     public static XnioWorker WORKER;
     public static XnioSsl SSL;
     public static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
+    public static AttachmentKey<ByteBuffer> BUFFER_BODY = AttachmentKey.create(ByteBuffer.class);
 
     static final String TLS = "tls";
     static final String LOAD_TRUST_STORE = "loadTrustStore";
@@ -573,6 +576,51 @@ public class Http2Client {
             @Override
             public void failed(IOException e) {
                 logger.error("IOException:", e);
+                latch.countDown();
+            }
+        };
+    }
+
+    public ClientCallback<ClientExchange> byteBufferClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch) {
+        return new ClientCallback<ClientExchange>() {
+            public void completed(ClientExchange result) {
+                result.setResponseListener(new ClientCallback<ClientExchange>() {
+                    public void completed(final ClientExchange result) {
+                        reference.set(result.getResponse());
+                        (new ByteBufferReadChannelListener(result.getConnection().getBufferPool()) {
+                            protected void bufferDone(List<Byte> out) {
+                                byte[] byteArray = new byte[out.size()];
+                                int index = 0;
+                                for (byte b : out) {
+                                    byteArray[index++] = b;
+                                }
+                                result.getResponse().putAttachment(BUFFER_BODY, (ByteBuffer.wrap(byteArray)));
+                                latch.countDown();
+                            }
+
+                            protected void error(IOException e) {
+                                latch.countDown();
+                            }
+                        }).setup(result.getResponseChannel());
+                    }
+                    public void failed(IOException e) {
+                        latch.countDown();
+                    }
+                });
+
+                try {
+                    result.getRequestChannel().shutdownWrites();
+                    if (!result.getRequestChannel().flush()) {
+                        result.getRequestChannel().getWriteSetter().set(ChannelListeners.flushingChannelListener((ChannelListener)null, (ChannelExceptionHandler)null));
+                        result.getRequestChannel().resumeWrites();
+                    }
+                } catch (IOException var3) {
+                    latch.countDown();
+                }
+
+            }
+
+            public void failed(IOException e) {
                 latch.countDown();
             }
         };
