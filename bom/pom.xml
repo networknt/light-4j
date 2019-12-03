@@ -19,11 +19,15 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 	
-    <groupId>com.networknt</groupId>
+    <parent>
+        <groupId>com.networknt</groupId>
+        <artifactId>light-4j</artifactId>
+        <version>2.0.8-SNAPSHOT</version>
+        <relativePath>..</relativePath>
+    </parent>
+	
     <artifactId>light-4j-bom</artifactId>
-    <version>2.0.8-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>Light 4j Bill of Materials</name>
     <description>Light 4j Bill of Materials</description>
 
     <dependencyManagement>
