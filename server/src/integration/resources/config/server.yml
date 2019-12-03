@@ -31,6 +31,12 @@ enableTwoWayTls: false
 # Truststore file name in config folder. TruststorePass is in secret.yml to access it.
 truststoreName: server.truststore
 
+# Bootstrap truststore name used to connect to the light-config-server if it is used.
+bootstrapStoreName: src/integration/resources/config/bootstrap.truststore
+
+# Bootstrap truststore password
+bootstrapStorePass: password
+
 # Unique service identifier. Used in service registration and discovery etc.
 serviceId: com.networknt.petstore-1.0.0
 
