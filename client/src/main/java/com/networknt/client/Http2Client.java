@@ -83,7 +83,7 @@ public class Http2Client {
             .set(Options.KEEP_ALIVE, true)
             .set(Options.WORKER_NAME, "Client").getMap();
     public static XnioWorker WORKER;
-    public static XnioSsl SSL;
+    private static XnioSsl SSL;
     public static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
 
     static final String TLS = "tls";
