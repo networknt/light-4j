@@ -88,7 +88,12 @@ public class Http2Client {
             .set(Options.KEEP_ALIVE, true)
             .set(Options.WORKER_NAME, "Client").getMap();
     public static XnioWorker WORKER;
-    private static XnioSsl SSL;
+    /**
+     * @deprecated  As of release 1.6.11, replaced by {@link #getDefaultXnioSsl()}
+     *              SSL is no longer statically initialized.
+     */
+    @Deprecated
+    public static XnioSsl SSL;
     public static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
 
     static final String TLS = "tls";
