@@ -72,7 +72,7 @@ public abstract class CommandFailbackRegistry extends FailbackRegistry {
         return finalResult;
     }
 
-    private CommandServiceManager getCommandServiceManager(URL urlCopy) {
+    protected CommandServiceManager getCommandServiceManager(URL urlCopy) {
         CommandServiceManager manager = commandManagerMap.get(urlCopy);
         if (manager == null) {
             manager = new CommandServiceManager(urlCopy);
