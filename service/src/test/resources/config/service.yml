@@ -54,3 +54,7 @@ singletons:
   - com.networknt.service.InfoValidator
 - com.networknt.service.IntegrationData: com.networknt.service.ServiceInitializer::integrationData
 - com.networknt.service.ChannelMapping: com.networknt.service.ServiceInitializer::channelMapping
+- com.networknt.service.Pair:
+  - com.networknt.service.OrderedPair:
+    - java.lang.Object: key1
+    - java.lang.Object: value1

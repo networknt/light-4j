@@ -156,5 +156,10 @@ public class SingletonServiceFactoryTest {
         Assert.assertTrue(channelMapping.transform("ReplyTo").startsWith("aggregate-destination-"));
     }
 
-
+    @Test
+    public void testTwoGenericTypes() {
+        Pair p = SingletonServiceFactory.getBean(Pair.class);
+        Assert.assertEquals("key1", p.getKey());
+        Assert.assertEquals("value1", p.getValue());
+    }
 }
