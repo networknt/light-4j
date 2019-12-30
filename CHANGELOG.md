@@ -1,5 +1,16 @@
 # Change Log
 
+## [1.6.12](https://github.com/networknt/light-4j/tree/1.6.12) (2019-12-30)
+
+
+**Merged pull requests:**
+
+
+- Bug fix: ConsulRegistry keeps the first service url discovered in cache [\#633](https://github.com/networknt/light-4j/pull/633) ([jsu216](https://github.com/jsu216))
+- fixes issue \#625 [\#626](https://github.com/networknt/light-4j/pull/626) ([chenyan71](https://github.com/chenyan71))
+- Make Http2Client.SSL public again, but deprecate it [\#631](https://github.com/networknt/light-4j/pull/631) ([miklish](https://github.com/miklish))
+- Make SSL private to prevent its usage before it is initialized.  [\#630](https://github.com/networknt/light-4j/pull/630) ([miklish](https://github.com/miklish))
+- Make valueMap to be static to prevent multiple warning [\#628](https://github.com/networknt/light-4j/pull/628) ([jiachen1120](https://github.com/jiachen1120))
 ## [1.6.11](https://github.com/networknt/light-4j/tree/1.6.11) (2019-11-27)
 
 
