@@ -44,13 +44,13 @@ public interface LightHttpHandler extends HttpHandler {
     String ERROR_NOT_DEFINED = "ERR10042";
 
     // Handler can save errors and stack traces for auditing. Default: false
- 	static final String CONFIG_NAME = "handler";
- 	static final String AUDIT_ON_ERROR = "auditOnError";
- 	static final String AUDIT_STACK_TRACE = "auditStackTrace";
+ 	String CONFIG_NAME = "handler";
+ 	String AUDIT_ON_ERROR = "auditOnError";
+ 	String AUDIT_STACK_TRACE = "auditStackTrace";
 
-	public static HandlerConfig config = (HandlerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, HandlerConfig.class);
- 	static boolean auditOnError = config != null ? config.getAuditOnError() : false;
- 	static boolean auditStackTrace = config != null ? config.getAuditStackTrace() : false;
+	HandlerConfig config = (HandlerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, HandlerConfig.class);
+ 	boolean auditOnError = config != null ? config.getAuditOnError() : false;
+ 	boolean auditStackTrace = config != null ? config.getAuditStackTrace() : false;
     
     /**
      * This method is used to construct a standard error status in JSON format from an error code.
@@ -65,28 +65,7 @@ public interface LightHttpHandler extends HttpHandler {
             // There is no entry in status.yml for this particular error code.
             status = new Status(ERROR_NOT_DEFINED, code);
         }
-        exchange.setStatusCode(status.getStatusCode());
-        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-        status.setDescription(status.getDescription().replaceAll("\\\\", "\\\\\\\\"));
-        exchange.getResponseSender().send(status.toString());
-        StackTraceElement[] elements = Thread.currentThread().getStackTrace();
-        logger.error(status.toString() + " at " + elements[2].getClassName() + "." + elements[2].getMethodName() + "(" + elements[2].getFileName() + ":" + elements[2].getLineNumber() + ")");
-        
-        // In normal case, the auditInfo shouldn't be null as it is created by OpenApiHandler with
-        // endpoint and openapiOperation available. This handler will enrich the auditInfo.
-        @SuppressWarnings("unchecked")
-        Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
-        if(auditInfo == null) {
-            auditInfo = new HashMap<>();
-            exchange.putAttachment(AttachmentConstants.AUDIT_INFO, auditInfo);
-        }    
-
-        // save info for auditing purposes in case of an error
-        if(auditOnError)
-      	    auditInfo.put(Constants.STATUS, status);
-        if(auditStackTrace) {
-       	    auditInfo.put(Constants.STACK_TRACE, Arrays.toString(elements));
-        }        
+        setExchangeStatus(exchange, status);
     }
 
     /**
@@ -103,5 +82,20 @@ public interface LightHttpHandler extends HttpHandler {
         exchange.getResponseSender().send(status.toString());
         StackTraceElement[] elements = Thread.currentThread().getStackTrace();
         logger.error(status.toString() + " at " + elements[2].getClassName() + "." + elements[2].getMethodName() + "(" + elements[2].getFileName() + ":" + elements[2].getLineNumber() + ")");
+        // In normal case, the auditInfo shouldn't be null as it is created by OpenApiHandler with
+        // endpoint and openapiOperation available. This handler will enrich the auditInfo.
+        @SuppressWarnings("unchecked")
+        Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
+        if(auditInfo == null) {
+            auditInfo = new HashMap<>();
+            exchange.putAttachment(AttachmentConstants.AUDIT_INFO, auditInfo);
+        }
+
+        // save info for auditing purposes in case of an error
+        if(auditOnError)
+            auditInfo.put(Constants.STATUS, status);
+        if(auditStackTrace) {
+            auditInfo.put(Constants.STACK_TRACE, Arrays.toString(elements));
+        }
     }
 }
