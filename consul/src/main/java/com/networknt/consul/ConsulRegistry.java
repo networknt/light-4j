@@ -20,9 +20,11 @@ import com.networknt.client.Http2Client;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 import com.networknt.consul.client.ConsulClient;
+import com.networknt.registry.NotifyListener;
 import com.networknt.registry.URL;
 import com.networknt.registry.URLParamType;
 import com.networknt.registry.support.command.CommandFailbackRegistry;
+import com.networknt.registry.support.command.CommandServiceManager;
 import com.networknt.registry.support.command.ServiceListener;
 import com.networknt.utility.Constants;
 import org.slf4j.Logger;
@@ -107,6 +109,23 @@ public class ConsulRegistry extends CommandFailbackRegistry {
     protected void subscribeService(URL url, ServiceListener serviceListener) {
         addServiceListener(url, serviceListener);
         startListenerThreadIfNewService(url);
+    }
+
+    /**
+     * Override the method in <code>com.networknt.registry.support.commandCommandFailbackRegistry</code>
+     * to skip calling the <code>com.networknt.registry.support.commandCommandFailbackRegistry#doDiscover()</code> and
+     * <code>com.networknt.registry.support.commandCommandFailbackRegistry#notify()</code>
+     * @param url The subscribed service URL
+     * @param listener  The listener to be notified when service registration changed.
+     */
+    @Override
+    protected void doSubscribe(URL url, final NotifyListener listener) {
+        if(logger.isInfoEnabled()) logger.info("CommandFailbackRegistry subscribe. url: " + url.toSimpleString());
+        URL urlCopy = url.createCopy();
+        CommandServiceManager manager = getCommandServiceManager(urlCopy);
+        manager.addNotifyListener(listener);
+
+        subscribeService(urlCopy, manager);
     }
 
     /**

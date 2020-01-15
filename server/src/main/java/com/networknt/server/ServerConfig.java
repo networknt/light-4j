@@ -50,6 +50,8 @@ public class ServerConfig {
     boolean alwaysSetDate;
     boolean allowUnescapedCharactersInUrl;
     String serverString;
+    String bootstrapStoreName;
+    String bootstrapStorePass;
 
 	public ServerConfig() {
     }
@@ -288,5 +290,21 @@ public class ServerConfig {
 
     public void setAllowUnescapedCharactersInUrl(boolean allowUnescapedCharactersInUrl) {
         this.allowUnescapedCharactersInUrl = allowUnescapedCharactersInUrl;
-    }    
+    }
+
+    public String getBootstrapStoreName() {
+        return bootstrapStoreName;
+    }
+
+    public void setBootstrapStoreName(String bootstrapStoreName) {
+        this.bootstrapStoreName = bootstrapStoreName;
+    }
+
+    public String getBootstrapStorePass() {
+        return bootstrapStorePass;
+    }
+
+    public void setBootstrapStorePass(String bootstrapStorePass) {
+        this.bootstrapStorePass = bootstrapStorePass;
+    }
 }

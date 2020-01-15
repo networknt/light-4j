@@ -1,5 +1,26 @@
 # Change Log
 
+## [2.0.9](https://github.com/networknt/light-4j/tree/2.0.9) (2019-12-30)
+
+
+**Merged pull requests:**
+
+
+- fixes \#637 refactor the LightHttpHandler to ensure the auditInfo is c… [\#638](https://github.com/networknt/light-4j/pull/638) ([stevehu](https://github.com/stevehu))
+- fixes \#635 add a test case with two generic types for service module [\#636](https://github.com/networknt/light-4j/pull/636) ([stevehu](https://github.com/stevehu))
+- Bug fix: ConsulRegistry keeps the first service url discovered in cache [\#633](https://github.com/networknt/light-4j/pull/633) ([jsu216](https://github.com/jsu216))
+- fixes issue \#625 [\#626](https://github.com/networknt/light-4j/pull/626) ([chenyan71](https://github.com/chenyan71))
+- Make Http2Client.SSL public again, but deprecate it [\#631](https://github.com/networknt/light-4j/pull/631) ([miklish](https://github.com/miklish))
+- Make SSL private to prevent its usage before it is initialized.  [\#630](https://github.com/networknt/light-4j/pull/630) ([miklish](https://github.com/miklish))
+- Make valueMap to be static to prevent multiple warning [\#628](https://github.com/networknt/light-4j/pull/628) ([jiachen1120](https://github.com/jiachen1120))
+## [2.0.8](https://github.com/networknt/light-4j/tree/2.0.8) (2019-11-27)
+
+
+**Merged pull requests:**
+
+
+- fixes \#623 make the getDefaultXnioSsl public from Http2Client as ligh… [\#624](https://github.com/networknt/light-4j/pull/624) ([stevehu](https://github.com/stevehu))
+- fixes \#620 [\#621](https://github.com/networknt/light-4j/pull/621) ([chenyan71](https://github.com/chenyan71))
 ## [2.0.7](https://github.com/networknt/light-4j/tree/2.0.7) (2019-10-26)
 
 
