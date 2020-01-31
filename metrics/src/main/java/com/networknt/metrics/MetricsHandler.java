@@ -76,6 +76,10 @@ public class MetricsHandler implements MiddlewareHandler {
                         .filter(MetricFilter.ALL)
                         .build(influxDb);
                 reporter.start(config.getReportInMinutes(), TimeUnit.MINUTES);
+                if (config.enableJVMMonitor) {
+                    createJVMMetricsReporter(influxDb);
+                }
+
                 logger.info("metrics is enabled and reporter is started");
             } catch (Exception e) {
                 // if there are any exception, chances are influxdb is not available. disable this handler.
@@ -166,4 +170,18 @@ public class MetricsHandler implements MiddlewareHandler {
         }
     }
 
+    private static void createJVMMetricsReporter(final InfluxDbSender influxDb) {
+        Map<String, String> commonTags = new HashMap<>();
+
+        commonTags.put("apiName", Server.config.getServiceId());
+        commonTags.put("environment", Server.config.getEnvironment());
+        InetAddress inetAddress = Util.getInetAddress();
+        // On Docker for Mac, inetAddress will be null as there is a bug.
+        commonTags.put("ipAddress", inetAddress == null ? "unknown" : inetAddress.getHostAddress());
+        commonTags.put("hostname", inetAddress == null ? "unknown" : inetAddress.getHostName()); // will be container id if in docker.
+
+        JVMMetricsInfluxDbReporter jvmReporter = new JVMMetricsInfluxDbReporter(new MetricRegistry(), influxDb, "jvmInfluxDb-reporter",
+                MetricFilter.ALL, TimeUnit.SECONDS, TimeUnit.MILLISECONDS, commonTags);
+        jvmReporter.start(config.getReportInMinutes(), TimeUnit.MINUTES);
+    }
 }
