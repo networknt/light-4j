@@ -616,12 +616,6 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
-                <groupId>com.oracle</groupId>
-                <artifactId>ojdbc6</artifactId>
-                <version>${version.oracle}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
                 <groupId>com.h2database</groupId>
                 <artifactId>h2</artifactId>
                 <version>${version.h2}</version>
