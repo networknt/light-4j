@@ -26,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  */
 public class MetricsConfig {
     boolean enabled;
-
+    boolean enableJVMMonitor;
     String influxdbProtocol;
     String influxdbHost;
     int influxdbPort;
@@ -47,6 +47,14 @@ public class MetricsConfig {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean isEnableJVMMonitor() {
+        return enableJVMMonitor;
+    }
+
+    public void setEnableJVMMonitor(boolean enableJVMMonitor) {
+        this.enableJVMMonitor = enableJVMMonitor;
     }
 
     public String getInfluxdbHost() {
