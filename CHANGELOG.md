@@ -1,5 +1,13 @@
 # Change Log
 
+## [2.0.10](https://github.com/networknt/light-4j/tree/2.0.10) (2020-01-31)
+
+
+**Merged pull requests:**
+
+
+- fixes \#641 remove oracle JDBC driver test dependency [\#642](https://github.com/networknt/light-4j/pull/642) ([stevehu](https://github.com/stevehu))
+- fixes \#639 [\#640](https://github.com/networknt/light-4j/pull/640) ([chenyan71](https://github.com/chenyan71))
 ## [2.0.9](https://github.com/networknt/light-4j/tree/2.0.9) (2019-12-30)
 
 
