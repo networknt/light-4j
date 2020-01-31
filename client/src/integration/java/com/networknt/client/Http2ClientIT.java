@@ -652,7 +652,7 @@ public class Http2ClientIT {
         }
     }
 
-
+    @Test
     public String callApiAsync() throws Exception {
         final Http2Client client = createClient();
         final CountDownLatch latch = new CountDownLatch(1);
@@ -674,6 +674,7 @@ public class Http2ClientIT {
         return reference.get().getAttachment(Http2Client.RESPONSE_BODY);
     }
 
+    @Test
     public ByteBuffer callApiWithByteBuffer() throws Exception {
         final Http2Client client = createClient();
         final CountDownLatch latch = new CountDownLatch(1);
