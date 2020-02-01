@@ -27,6 +27,7 @@ import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.Counter;
 import io.prometheus.client.SimpleTimer;
 import io.prometheus.client.Summary;
+import io.prometheus.client.hotspot.DefaultExports;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -41,6 +42,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 
+/**
+ * Metrics middleware handler can be plugged into the request/response chain to
+ * capture metrics information for all services. This is systems monitoring middleware handler
+ * to integrated with Prometheus
+ *
+ */
 public class PrometheusHandler implements MiddlewareHandler {
     public static final String CONFIG_NAME = "prometheus";
     public static PrometheusConfig config =(PrometheusConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, PrometheusConfig.class);
@@ -58,7 +65,7 @@ public class PrometheusHandler implements MiddlewareHandler {
     public static final String AUTO_ERROR_TOTAL = "auth_error_total";
     public static final String REQUEST_ERROR_TOTAL = "request_error_total";
     public static final String SERVER_ERROR_TOTAL = "server_error_total";
-    public static final String RERSPONSE_TIME_SECOND = "response_time_seconds";
+    public static final String RESPONSE_TIME_SECOND = "response_time_seconds";
 
 
 
@@ -93,9 +100,13 @@ public class PrometheusHandler implements MiddlewareHandler {
                 List<String> labels = new ArrayList<>(tags.keySet());
                 List<String> labelValues = new ArrayList<>(tags.values());
 
-                summary(RERSPONSE_TIME_SECOND, labels).labels(labelValues.stream().toArray(String[]::new)).observe(respTimer.elapsedSeconds());
+                summary(RESPONSE_TIME_SECOND, labels).labels(labelValues.stream().toArray(String[]::new)).observe(respTimer.elapsedSeconds());
 
                 incCounterForStatusCode(exchange1.getStatusCode(), labels, labelValues);
+                if (config.enableHotspot) {
+                    logger.info("Prometheus hotspot monitor enabled.");
+                    DefaultExports.initialize();
+                }
             }
             nextListener.proceed();
         });

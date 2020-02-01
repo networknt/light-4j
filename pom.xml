@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.networknt</groupId>
     <artifactId>light-4j</artifactId>
-    <version>1.6.13</version>
+    <version>1.6.14</version>
     <packaging>pom</packaging>
     <name>Parent POM</name>
     <description>Light 4J Framework Components</description>
@@ -89,7 +89,7 @@
         <version.curator>4.0.1</version.curator>
         <version.snakeyaml>1.20</version.snakeyaml>
         <version.caffeine>2.6.2</version.caffeine>
-        <version.prometheus>0.3.0</version.prometheus>
+        <version.prometheus>0.6.0</version.prometheus>
         <version.javamail>1.6.1</version.javamail>
         <version.hikaricp>3.1.0</version.hikaricp>
         <version.h2>1.4.196</version.h2>
@@ -478,6 +478,11 @@
                 <version>${version.prometheus}</version>
             </dependency>
             <dependency>
+                <groupId>io.prometheus</groupId>
+                <artifactId>simpleclient_hotspot</artifactId>
+                <version>${version.prometheus}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.zookeeper</groupId>
                 <artifactId>zookeeper</artifactId>
                 <version>${version.zookeeper}</version>
@@ -592,12 +597,6 @@
                 <groupId>com.microsoft.sqlserver</groupId>
                 <artifactId>mssql-jdbc</artifactId>
                 <version>${version.sqlserver}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.oracle</groupId>
-                <artifactId>ojdbc6</artifactId>
-                <version>${version.oracle}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>

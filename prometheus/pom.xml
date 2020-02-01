@@ -21,7 +21,7 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>1.6.13</version>
+        <version>1.6.14</version>
         <relativePath>..</relativePath>
     </parent>
 
@@ -93,6 +93,10 @@
         <dependency>
             <groupId>io.prometheus</groupId>
             <artifactId>simpleclient_common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>simpleclient_hotspot</artifactId>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
