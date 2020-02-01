@@ -1,5 +1,14 @@
 # Change Log
 
+## [1.6.14](https://github.com/networknt/light-4j/tree/1.6.14) (2020-01-31)
+
+
+**Merged pull requests:**
+
+
+- fixes \#641 remove oracle JDBC driver test dependency [\#642](https://github.com/networknt/light-4j/pull/642) ([stevehu](https://github.com/stevehu))
+- fixes \#639 [\#640](https://github.com/networknt/light-4j/pull/640) ([chenyan71](https://github.com/chenyan71))
+- add Prometheus hotspot monitor [\#567](https://github.com/networknt/light-4j/pull/567) ([chenyan71](https://github.com/chenyan71))
 ## [1.6.13](https://github.com/networknt/light-4j/tree/1.6.13) (2019-12-30)
 
 
