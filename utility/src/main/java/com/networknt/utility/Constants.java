@@ -27,6 +27,8 @@ public class Constants {
     public static final String CORRELATION_ID_STRING = "X-Correlation-Id";
     public static final String TRACEABILITY_ID_STRING = "X-Traceability-Id";
     public static final String USER_ID_STRING = "user_id";
+    public static final String USER_TYPE_STRING = "user_type";
+    public static final String ROLES_STRING = "roles";
     public static final String CLIENT_ID_STRING = "client_id";
     public static final String SCOPE_CLIENT_ID_STRING = "scope_client_id";
     public static final String SCOPE_STRING = "scope";
