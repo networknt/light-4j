@@ -63,11 +63,14 @@ public class CorsHttpHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
-        if (isPreflightedRequest(exchange)) {
-            handlePreflightRequest(exchange);
-            return;
+        HeaderMap headers = exchange.getRequestHeaders();
+        if (CorsUtil.isCoreRequest(headers)) {
+            if (isPreflightedRequest(exchange)) {
+                handlePreflightRequest(exchange);
+                return;
+            }
+            setCorsResponseHeaders(exchange);
         }
-        setCorsResponseHeaders(exchange);
         Handler.next(exchange, next);
     }
 
