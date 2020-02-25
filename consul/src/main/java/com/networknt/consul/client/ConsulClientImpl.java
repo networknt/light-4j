@@ -102,7 +102,7 @@ public class ConsulClientImpl implements ConsulClient {
 	@Override
 	public void checkPass(String serviceId, String token) {
 		logger.debug("checkPass serviceId = {}", serviceId);
-		String path = "/v1/agent/check/pass/" + "service:" + serviceId;
+		String path = "/v1/agent/check/pass/" + "check-" + serviceId;
 		try {
 			ConsulConnection consulConnection = getConnection(CHECK_PASS_CONNECTION_KEY);
 			AtomicReference<ClientResponse> reference = consulConnection.send(Methods.PUT, path, token, null);
@@ -119,7 +119,7 @@ public class ConsulClientImpl implements ConsulClient {
 	@Override
 	public void checkFail(String serviceId, String token) {
 		logger.debug("checkFail serviceId = {}", serviceId);
-		String path = "/v1/agent/check/fail/" + "service:" + serviceId;
+		String path = "/v1/agent/check/fail/" + "check-" + serviceId;
 		try {
 			ConsulConnection consulConnection = getConnection(CHECK_FAIL_CONNECTION_KEY);
 			AtomicReference<ClientResponse> reference = consulConnection.send(Methods.PUT, path, token, null);
