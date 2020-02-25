@@ -514,7 +514,10 @@ public class OauthHelper {
         params.put(GRANT_TYPE, request.getGrantType());
         if(TokenRequest.AUTHORIZATION_CODE.equals(request.getGrantType())) {
             params.put(CODE, ((AuthorizationCodeRequest)request).getAuthCode());
-            params.put(REDIRECT_URI, ((AuthorizationCodeRequest)request).getRedirectUri());
+            // The redirectUri can be null so that OAuth 2.0 provider will use the redirectUri defined in the client registration
+            if(((AuthorizationCodeRequest)request).getRedirectUri() != null) {
+                params.put(REDIRECT_URI, ((AuthorizationCodeRequest)request).getRedirectUri());
+            }
             String csrf = request.getCsrf();
             if(csrf != null) {
                 params.put(CSRF, csrf);
