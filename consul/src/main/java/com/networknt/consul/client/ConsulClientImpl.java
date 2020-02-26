@@ -86,7 +86,7 @@ public class ConsulClientImpl implements ConsulClient {
 	 */
 	public ConsulClientImpl() {
 		String consulUrl = config.getConsulUrl().toLowerCase();
-		optionMap =  config.isEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY;
+		optionMap =  isHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY;
 		logger.debug("url = {}", consulUrl);
 		if(config.getWait() != null && config.getWait().length() > 2) wait = config.getWait();
 		logger.debug("wait = {}", wait);
@@ -237,7 +237,7 @@ public class ConsulClientImpl implements ConsulClient {
 	private ConsulConnection getConnection(String cacheKey) {
 		//the case when enable http2 support use the class level ConsulConnection
         // will use http/2 connection only if tls is enabled as Consul only support HTTP/2 with TLS.
-		if(config.isEnableHttp2() || config.getConsulUrl().toLowerCase().startsWith("https")) {
+		if(isHttp2()) {
 			return this.http2Connection;
 		} else {
 			ConsulConnection cachedConsulConnection = connectionPool.get(cacheKey);
@@ -326,5 +326,16 @@ public class ConsulClientImpl implements ConsulClient {
 			reqCounter.set(0);
 			return newConnection;
 		}
+	}
+
+	/**
+	 * As the Consul server is built with Go and HTTP/2 is supported by default when HTTPS is used, we need to leverage
+	 * the multiplexing of HTTP/2 whenever possible. In the scenario that the user miss the enableHttp2 flag in the
+	 * consul.yml config file, we will force the Consul client to use HTTP/2 if the consulUrl is starting with "https".
+	 *
+ 	 * @return true if we want to use HTTP/2 to connect to the Consul.
+	 */
+	private boolean isHttp2() {
+		return config.isEnableHttp2() || config.getConsulUrl().toLowerCase().startsWith("https");
 	}
 }
