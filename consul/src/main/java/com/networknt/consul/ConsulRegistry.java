@@ -176,10 +176,10 @@ public class ConsulRegistry extends CommandFailbackRegistry {
         String protocol = url.getProtocol();
         if(logger.isDebugEnabled()) logger.debug("protocol = " + protocol + " serviceName = " + serviceName + " tag = " + tag);
         List<URL> urls = serviceCache.get(serviceName);
-        if (urls == null) {
+        if (urls == null || urls .isEmpty()) {
             synchronized (serviceName.intern()) {
                 urls = serviceCache.get(serviceName);
-                if (urls == null) {
+                if (urls == null || urls .isEmpty()) {
                     ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(protocol, serviceName);
                     updateServiceCache(serviceName, serviceUrls, false);
                     urls = serviceCache.get(serviceName);
