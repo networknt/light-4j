@@ -174,7 +174,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
         String serviceName = url.getPath();
         String tag = url.getParameter(Constants.TAG_ENVIRONMENT);
         String protocol = url.getProtocol();
-        if(logger.isDebugEnabled()) logger.debug("protocol = " + protocol + " serviceName = " + serviceName + " tag = " + tag);
+        if(logger.isTraceEnabled()) logger.trace("protocol = " + protocol + " serviceName = " + serviceName + " tag = " + tag);
         List<URL> urls = serviceCache.get(serviceName);
         if (urls == null || urls .isEmpty()) {
             synchronized (serviceName.intern()) {
@@ -191,11 +191,11 @@ public class ConsulRegistry extends CommandFailbackRegistry {
 
     private ConcurrentHashMap<String, List<URL>> lookupServiceUpdate(String protocol, String serviceName) {
         Long lastConsulIndexId = lookupServices.get(serviceName) == null ? 0L : lookupServices.get(serviceName);
-        if(logger.isDebugEnabled()) logger.debug("serviceName = " + serviceName + " lastConsulIndexId = " + lastConsulIndexId);
+        if(logger.isTraceEnabled()) logger.trace("serviceName = " + serviceName + " lastConsulIndexId = " + lastConsulIndexId);
         ConsulResponse<List<ConsulService>> response = lookupConsulService(serviceName, lastConsulIndexId);
-        if(logger.isDebugEnabled()) {
+        if(logger.isTraceEnabled()) {
             try {
-                logger.debug("response = " + Config.getInstance().getMapper().writeValueAsString(response));
+                logger.trace("response = " + Config.getInstance().getMapper().writeValueAsString(response));
             } catch (Exception e) {}
         }
         ConcurrentHashMap<String, List<URL>> serviceUrls = new ConcurrentHashMap<>();
@@ -212,7 +212,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                             urlList = new ArrayList<>();
                             serviceUrls.put(serviceName, urlList);
                         }
-                        if(logger.isDebugEnabled()) logger.debug("lookupServiceUpdate url = " + url);
+                        if(logger.isTraceEnabled()) logger.trace("lookupServiceUpdate url = " + url);
                         urlList.add(url);
                     } catch (Exception e) {
                         logger.error("convert consul service to url fail! service:" + service, e);
@@ -255,7 +255,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
             List<URL> cachedUrls = serviceCache.get(serviceName);
             List<URL> newUrls = serviceUrls.get(serviceName);
             try {
-                logger.debug("serviceUrls = {}", Config.getInstance().getMapper().writeValueAsString(serviceUrls));
+                logger.trace("serviceUrls = {}", Config.getInstance().getMapper().writeValueAsString(serviceUrls));
             } catch(Exception e) {
             }
             boolean change = true;
