@@ -101,7 +101,7 @@ public class ConsulClientImpl implements ConsulClient {
 
 	@Override
 	public void checkPass(String serviceId, String token) {
-		logger.debug("checkPass serviceId = {}", serviceId);
+		logger.trace("checkPass serviceId = {}", serviceId);
 		String path = "/v1/agent/check/pass/" + "check-" + serviceId;
 		try {
 			ConsulConnection consulConnection = getConnection(CHECK_PASS_CONNECTION_KEY);
@@ -118,7 +118,7 @@ public class ConsulClientImpl implements ConsulClient {
 
 	@Override
 	public void checkFail(String serviceId, String token) {
-		logger.debug("checkFail serviceId = {}", serviceId);
+		logger.trace("checkFail serviceId = {}", serviceId);
 		String path = "/v1/agent/check/fail/" + "check-" + serviceId;
 		try {
 			ConsulConnection consulConnection = getConnection(CHECK_FAIL_CONNECTION_KEY);
@@ -189,7 +189,7 @@ public class ConsulClientImpl implements ConsulClient {
 		if(tag != null) {
 			path = path + "&tag=" + tag;
 		}
-		logger.debug("path = {}", path);
+		logger.trace("path = {}", path);
 		try {
 			AtomicReference<ClientResponse> reference  = connection.send(Methods.GET, path, token, null);
 			int statusCode = reference.get().getResponseCode();
@@ -296,7 +296,7 @@ public class ConsulClientImpl implements ConsulClient {
 			ClientRequest request = new ClientRequest().setMethod(method).setPath(path);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
 			if (token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
-			logger.debug("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
+			logger.trace("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
 			if(StringUtils.isBlank(json)) {
 				connection.sendRequest(request, client.createClientCallback(reference, latch));
 			} else {
@@ -306,7 +306,7 @@ public class ConsulClientImpl implements ConsulClient {
 
 			latch.await();
 			reqCounter.getAndIncrement();
-			logger.debug("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
+			logger.trace("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
 			return reference;
 		}
 
@@ -315,7 +315,7 @@ public class ConsulClientImpl implements ConsulClient {
 		}
 
 		ClientConnection createConnection() {
-			logger.debug("connection is closed with counter {}, reconnecting...", reqCounter);
+			logger.trace("connection is closed with counter {}, reconnecting...", reqCounter);
 			ClientConnection newConnection = null;
 			try {
 				newConnection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
