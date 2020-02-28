@@ -33,6 +33,7 @@ import io.undertow.util.NetworkUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Collection;
 
 /**
@@ -59,6 +60,7 @@ public class CorsUtil {
     public static String matchOrigin(HttpServerExchange exchange, Collection<String> allowedOrigins) throws Exception {
         HeaderMap headers = exchange.getRequestHeaders();
         String[] origins = headers.get(Headers.ORIGIN).toArray();
+        if(logger.isTraceEnabled()) logger.trace("origins from the request header = " + Arrays.toString(origins) + " allowedOrigins = " + allowedOrigins.toString());
         if (allowedOrigins != null && !allowedOrigins.isEmpty()) {
             for (String allowedOrigin : allowedOrigins) {
                 for (String origin : origins) {
@@ -69,6 +71,7 @@ public class CorsUtil {
             }
         }
         String allowedOrigin = defaultOrigin(exchange);
+        if(logger.isTraceEnabled()) logger.trace("allowedOrigin from the exchange = " + allowedOrigin);
         for (String origin : origins) {
             if (allowedOrigin.equalsIgnoreCase(sanitizeDefaultPort(origin))) {
                 return allowedOrigin;
