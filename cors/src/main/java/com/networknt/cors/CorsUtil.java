@@ -60,7 +60,7 @@ public class CorsUtil {
     public static String matchOrigin(HttpServerExchange exchange, Collection<String> allowedOrigins) throws Exception {
         HeaderMap headers = exchange.getRequestHeaders();
         String[] origins = headers.get(Headers.ORIGIN).toArray();
-        if(logger.isTraceEnabled()) logger.trace("origins from the request header = " + Arrays.toString(origins) + " allowedOrigins = " + allowedOrigins.toString());
+        if(logger.isTraceEnabled()) logger.trace("origins from the request header = " + Arrays.toString(origins) + " allowedOrigins = " + allowedOrigins);
         if (allowedOrigins != null && !allowedOrigins.isEmpty()) {
             for (String allowedOrigin : allowedOrigins) {
                 for (String origin : origins) {
