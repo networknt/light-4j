@@ -5,7 +5,7 @@
     <parent>
         <artifactId>light-4j</artifactId>
         <groupId>com.networknt</groupId>
-        <version>1.6.17</version>
+        <version>1.6.18-SNAPSHOT</version>
         <relativePath>..</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
