@@ -1,5 +1,18 @@
 # Change Log
 
+## [1.6.17](https://github.com/networknt/light-4j/tree/1.6.17) (2020-02-29)
+
+
+**Merged pull requests:**
+
+
+- fixes \#658 add trace logging to help debug cors rejections in CorsUtil [\#659](https://github.com/networknt/light-4j/pull/659) ([stevehu](https://github.com/stevehu))
+- fixes \#655 update logging level to trace for consul module [\#656](https://github.com/networknt/light-4j/pull/656) ([stevehu](https://github.com/stevehu))
+-  fixes for \#649 [\#652](https://github.com/networknt/light-4j/pull/652) ([stevehu](https://github.com/stevehu))
+- fixes \#653 update OauthHelper to allow redirectUri optional when gett… [\#654](https://github.com/networknt/light-4j/pull/654) ([stevehu](https://github.com/stevehu))
+- fixes \#647 Service registration fails with the latest Consul [\#651](https://github.com/networknt/light-4j/pull/651) ([stevehu](https://github.com/stevehu))
+- fixes \#645 loose the condition to apply the cors headers [\#646](https://github.com/networknt/light-4j/pull/646) ([stevehu](https://github.com/stevehu))
+- fixes \#643 Add user_type and roles constants in utility for light-spa-4j [\#644](https://github.com/networknt/light-4j/pull/644) ([stevehu](https://github.com/stevehu))
 ## [1.6.16](https://github.com/networknt/light-4j/tree/1.6.16) (2020-02-06)
 
 
