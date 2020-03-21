@@ -61,7 +61,7 @@ public class JwtVerifierTest {
 
     @Test
     public void testVerifyJwt() throws Exception {
-        JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"));
+        JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"), "user");
         String jwt = JwtIssuer.getJwt(claims);
         claims = null;
         Assert.assertNotNull(jwt);
@@ -151,7 +151,7 @@ public class JwtVerifierTest {
 
     @Test
     public void testVerifyToken() throws Exception {
-        JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"));
+        JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"), "user");
         String jwt = JwtIssuer.getJwt(claims);
         claims = null;
         Assert.assertNotNull(jwt);
@@ -175,7 +175,7 @@ public class JwtVerifierTest {
 
     @Test
     public void testVerifySign() throws Exception {
-        JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"));
+        JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"), "user");
         String jwt = JwtIssuer.getJwt(claims);
         claims = null;
         Assert.assertNotNull(jwt);
