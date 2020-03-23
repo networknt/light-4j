@@ -40,9 +40,11 @@ oauth:
     expiredRefreshRetryDelay: 2000
     # if scope token is not expired but in renew windown, we need slow retry delay.
     earlyRefreshRetryDelay: 4000
-    # token server url. The default port number for token service is 6882.
-    server_url: https://localhost:6882
-    # token service unique id for OAuth 2.0 provider
+    # token server url. The default port number for token service is 6882. If this is set,
+    # it will take high priority than serviceId for the direct connection
+    # server_url: https://localhost:6882
+    # token service unique id for OAuth 2.0 provider. If server_url is not set above,
+    # a service discovery action will be taken to find an instance of token service.
     serviceId: com.networknt.oauth2-token-1.0.0
     # set to true if the oauth2 provider supports HTTP/2
     enableHttp2: true
@@ -57,9 +59,10 @@ oauth:
       # the web server uri that will receive the redirected authorization code
       redirect_uri: https://localhost:8080/authorization_code
       # optional scope, default scope in the client registration will be used if not defined.
-      scope:
-      - petstore.r
-      - petstore.w
+      # If there are scopes specified here, they will be verified against the registered scopes.
+      # scope:
+      # - petstore.r
+      # - petstore.w
     # the following section defines uri and parameters for client credentials grant type
     client_credentials:
       # token endpoint for client credentials grant
@@ -69,9 +72,10 @@ oauth:
       # client_secret for client credentials grant flow.
       client_secret: f6h1FTI8Q3-7UScPZDzfXA
       # optional scope, default scope in the client registration will be used if not defined.
-      scope:
-      - petstore.r
-      - petstore.w
+      # If there are scopes specified here, they will be verified against the registered scopes.
+      # scope:
+      # - petstore.r
+      # - petstore.w
     refresh_token:
       # token endpoint for refresh token grant
       uri: "/oauth2/token"
@@ -80,13 +84,15 @@ oauth:
       # client_secret for refresh token
       client_secret: f6h1FTI8Q3-7UScPZDzfXA
       # optional scope, default scope in the client registration will be used if not defined.
-      scope:
-      - petstore.r
-      - petstore.w
+      # If there are scopes specified here, they will be verified against the registered scopes.
+      # scope:
+      # - petstore.r
+      # - petstore.w
     # light-oauth2 key distribution endpoint configuration for token verification
     key:
       # key distribution server url for token verification. It will be used if it is configured.
-      server_url: https://localhost:6886
+      # If it is not set, a service lookup will be taken with serviceId to find an instance.
+      # server_url: https://localhost:6886
       # key serviceId for key distribution service, it will be used if above server_url is not configured.
       serviceId: com.networknt.oauth2-key-1.0.0
       # the path for the key distribution endpoint
@@ -100,7 +106,8 @@ oauth:
   # sign endpoint configuration
   sign:
     # token server url. The default port number for token service is 6882. If this url exists, it will be used.
-    server_url: https://localhost:6882
+    # if it is not set, then a service lookup against serviceId will be taken to discover an instance.
+    # server_url: https://localhost:6882
     # token serviceId. If server_url doesn't exist, the serviceId will be used to lookup the token service.
     serviceId: com.networknt.oauth2-token-1.0.0
     # signing endpoint for the sign request
@@ -116,7 +123,8 @@ oauth:
     # the key distribution sever config for sign. It can be different then token key distribution server.
     key:
       # key distribution server url. It will be used to establish connection if it exists.
-      server_url: https://localhost:6886
+      # if it is not set, then a service lookup against serviceId will be taken to discover an instance.
+      # server_url: https://localhost:6886
       # the unique service id for key distribution service, it will be used to lookup key service if above url doesn't exist.
       serviceId: com.networknt.oauth2-key-1.0.0
       # the path for the key distribution endpoint
@@ -130,7 +138,7 @@ oauth:
   # de-ref by reference token to JWT token. It is separate service as it might be the external OAuth 2.0 provider.
   deref:
     # Token service server url, this might be different than the above token server url. The static url will be used if it is configured.
-    server_url: https://localhost:6882
+    # server_url: https://localhost:6882
     # token service unique id for OAuth 2.0 provider. Need for service lookup/discovery. It will be used if above server_url is not configured.
     serviceId: com.networknt.oauth2-token-1.0.0
     # set to true if the oauth2 provider supports HTTP/2
