@@ -545,8 +545,8 @@ public class Http2Client {
 
                             @Override
                             protected void stringDone(String string) {
-                                if (logger.isDebugEnabled()) {
-                                    logger.debug("Service call response = {}", string);
+                                if (logger.isTraceEnabled()) {
+                                    logger.trace("Service call response = {}", string);
                                 }
                                 result.getResponse().putAttachment(RESPONSE_BODY, string);
                                 latch.countDown();
@@ -643,8 +643,8 @@ public class Http2Client {
                         new StringReadChannelListener(BUFFER_POOL) {
                             @Override
                             protected void stringDone(String string) {
-                                if (logger.isDebugEnabled()) {
-                                    logger.debug("Service call response = {}", string);
+                                if (logger.isTraceEnabled()) {
+                                    logger.trace("Service call response = {}", string);
                                 }
                                 result.getResponse().putAttachment(RESPONSE_BODY, string);
                                 latch.countDown();
@@ -686,8 +686,8 @@ public class Http2Client {
 
                             @Override
                             protected void stringDone(String string) {
-                                if (logger.isDebugEnabled()) {
-                                    logger.debug("Service call response = {}", string);
+                                if (logger.isTraceEnabled()) {
+                                    logger.trace("Service call response = {}", string);
                                 }
                                 AsyncResponse ar = new AsyncResponse(result.getResponse(), string, System.currentTimeMillis() - startTime);
                                 reference.set(DefaultAsyncResult.succeed(ar));
@@ -744,8 +744,8 @@ public class Http2Client {
                         new StringReadChannelListener(BUFFER_POOL) {
                             @Override
                             protected void stringDone(String string) {
-                                if (logger.isDebugEnabled()) {
-                                    logger.debug("Service call response = {}", string);
+                                if (logger.isTraceEnabled()) {
+                                    logger.trace("Service call response = {}", string);
                                 }
                                 AsyncResponse ar = new AsyncResponse(result.getResponse(), string, System.currentTimeMillis() - startTime);
                                 reference.set(DefaultAsyncResult.succeed(ar));
