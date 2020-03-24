@@ -33,6 +33,8 @@ import javax.mail.internet.MimeMultipart;
 import java.security.GeneralSecurityException;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Email sender that support both text and attachment.
@@ -165,5 +167,30 @@ public class EmailSender {
         {
             return new PasswordAuthentication(this.user, this.password);
         }
+    }
+
+    /**
+     * This is the template variable replacement utility to replace [name] with a key
+     * name in the map with the value in the template to generate the final email body.
+     *
+     * @param text The template in html format
+     * @param replacements A map that contains key/value pair for variables
+     * @return String of processed template
+     */
+    public static String replaceTokens(String text,
+                                       Map<String, String> replacements) {
+        Pattern pattern = Pattern.compile("\\[(.+?)\\]");
+        Matcher matcher = pattern.matcher(text);
+        StringBuffer buffer = new StringBuffer();
+
+        while (matcher.find()) {
+            String replacement = replacements.get(matcher.group(1));
+            if (replacement != null) {
+                matcher.appendReplacement(buffer, "");
+                buffer.append(replacement);
+            }
+        }
+        matcher.appendTail(buffer);
+        return buffer.toString();
     }
 }
