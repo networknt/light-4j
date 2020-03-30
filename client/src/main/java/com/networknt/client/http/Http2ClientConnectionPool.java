@@ -183,6 +183,7 @@ public class Http2ClientConnectionPool {
                 return ConnectionStatus.CLOSE;
             } else {
                 handleParkedConnection(uri, connection);
+                return ConnectionStatus.CLOSE;
             }
 
         } else if (connection.isHttp2Connection()) {
