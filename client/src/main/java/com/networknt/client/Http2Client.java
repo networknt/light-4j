@@ -899,7 +899,7 @@ public class Http2Client {
         addHostHeader(request);
         CompletableFuture<ClientResponse> futureClientResponse;
         AtomicReference<ClientConnection> currentConnection = new AtomicReference<>(http2ClientConnectionPool.getConnection(uri));
-        if (currentConnection.get() != null) {
+        if (currentConnection.get() != null && currentConnection.get().isOpen()) {
             logger.debug("Reusing the connection: {} to {}", currentConnection.toString(), uri.toString());
             futureClientResponse = getFutureClientResponse(currentConnection.get(), uri, request, requestBody);
         } else {
