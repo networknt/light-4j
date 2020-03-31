@@ -1,5 +1,19 @@
 # Change Log
 
+## [1.6.18](https://github.com/networknt/light-4j/tree/1.6.18) (2020-03-31)
+
+
+**Merged pull requests:**
+
+
+- fixes \#688 add status codes for light-portal [\#689](https://github.com/networknt/light-4j/pull/689) ([stevehu](https://github.com/stevehu))
+- Issue 679 [\#684](https://github.com/networknt/light-4j/pull/684) ([chenyan71](https://github.com/chenyan71))
+- fixes \#681 change client.yml config name to connectionExpireTime [\#682](https://github.com/networknt/light-4j/pull/682) ([stevehu](https://github.com/stevehu))
+- Issue 677 [\#680](https://github.com/networknt/light-4j/pull/680) ([chenyan71](https://github.com/chenyan71))
+- update undertow to 2.0.30.Final [\#678](https://github.com/networknt/light-4j/pull/678) ([gexclaude](https://github.com/gexclaude))
+- fixes \#673 add replaceToken method for html email template [\#674](https://github.com/networknt/light-4j/pull/674) ([stevehu](https://github.com/stevehu))
+- fixes \#671 change Http2Client createClientCallback debug to trace [\#672](https://github.com/networknt/light-4j/pull/672) ([stevehu](https://github.com/stevehu))
+- fixes \#663 update security test cases to add roles to the long-lived … [\#664](https://github.com/networknt/light-4j/pull/664) ([stevehu](https://github.com/stevehu))
 ## [1.6.17](https://github.com/networknt/light-4j/tree/1.6.17) (2020-02-29)
 
 
