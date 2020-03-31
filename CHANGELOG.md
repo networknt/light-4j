@@ -1,5 +1,21 @@
 # Change Log
 
+## [2.0.12](https://github.com/networknt/light-4j/tree/2.0.12) (2020-03-31)
+
+
+**Merged pull requests:**
+
+
+- fixes \#688 add status codes for light-portal [\#689](https://github.com/networknt/light-4j/pull/689) ([stevehu](https://github.com/stevehu))
+- fixes \#686 apply issue 679 to master branch [\#687](https://github.com/networknt/light-4j/pull/687) ([stevehu](https://github.com/stevehu))
+- fixes \#683 update master based on 677 and 681 [\#685](https://github.com/networknt/light-4j/pull/685) ([stevehu](https://github.com/stevehu))
+- fixes \#675 resolve a defect in client.yml for the oauth2 urls [\#676](https://github.com/networknt/light-4j/pull/676) ([stevehu](https://github.com/stevehu))
+- fixes \#673 add replaceToken method for html email template [\#674](https://github.com/networknt/light-4j/pull/674) ([stevehu](https://github.com/stevehu))
+- fixes \#671 change Http2Client createClientCallback debug to trace [\#672](https://github.com/networknt/light-4j/pull/672) ([stevehu](https://github.com/stevehu))
+- fixes \#669 parameterize default client.yml in client module [\#670](https://github.com/networknt/light-4j/pull/670) ([stevehu](https://github.com/stevehu))
+- fixes \#667 comment out server_url in client.yml to default to service… [\#668](https://github.com/networknt/light-4j/pull/668) ([stevehu](https://github.com/stevehu))
+- fixes \#665 need to promote the scope token to authorization header if… [\#666](https://github.com/networknt/light-4j/pull/666) ([stevehu](https://github.com/stevehu))
+- fixes \#663 update security test cases to add roles to the long-lived … [\#664](https://github.com/networknt/light-4j/pull/664) ([stevehu](https://github.com/stevehu))
 ## [2.0.11](https://github.com/networknt/light-4j/tree/2.0.11) (2020-02-29)
 
 
