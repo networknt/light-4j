@@ -51,7 +51,7 @@ public final class ClientConfig {
     private static final String RESET_TIMEOUT = "resetTimeout";
     private static final String CONNECTION_POOL_SIZE = "connectionPoolSize";
     private static final String MAX_REQUEST_PER_CONNECTION = "maxReqPerConn";
-    private static final String CONNECTION_EXPIRE_TIME = "connectionExpireSize";
+    private static final String CONNECTION_EXPIRE_TIME = "connectionExpireTime";
     private static final String MAX_CONNECTION_NUM_PER_HOST = "maxConnectionNumPerHost";
     private static final String MIN_CONNECTION_NUM_PER_HOST = "minConnectionNumPerHost";
 
