@@ -610,8 +610,8 @@ ERR11502:
 ERR11601:
   statusCode: 400
   code: ERR11601
-  message: DELETE_USER_EXECUTION_EXCEPTION
-  description: Execution Exception caused by %s when deleting user %s.
+  message: INCORRECT_TOKEN_TYPE
+  description: Incorrect token type. Expecting %s.
 ERR11602:
   statusCode: 400
   code: ERR11602
@@ -620,43 +620,43 @@ ERR11602:
 ERR11603:
   statusCode: 400
   code: ERR11603
-  message: CREATE_USER_EXECUTION_EXCEPTION
-  description: Execution Exception caused by %s when creating user %s.
+  message: DELETE_USER_DENIED
+  description: Delete user %s denied with user %s and roles %s.
 ERR11604:
   statusCode: 400
   code: ERR11604
-  message: CREATE_USER_EXCEPTION
-  description: Exception %s is caught when creating user %s.
+  message: USER_ID_IS_USED
+  description: UserId %s is used already.
 ERR11605:
   statusCode: 400
   code: ERR11605
-  message: UPDATE_USER_EXECUTION_EXCEPTION
-  description: Execution Exception caused by %s when updating user %s.
+  message: SEND_MESSAGE_EXCEPITON
+  description: Send message exception caused by %s with user %s.
 ERR11606:
   statusCode: 400
   code: ERR11606
   message: UPDATE_USER_EXCEPTION
   description: Exception %s is caught when updating user %s.
 ERR11607:
-  statusCode: 400
+  statusCode: 404
   code: ERR11607
   message: USER_NOT_FOUND_BY_EMAIL
   description: User not found by email %s.
 ERR11608:
   statusCode: 400
   code: ERR11608
-  message: USER_NOT_FOUND_BY_ID
-  description: User not found by entityId %s.
+  message: CHANGE_PASSWORD_DENIED
+  description: User %s is not allowed to change password for %s.
 ERR11609:
-  statusCode: 400
+  statusCode: 404
   code: ERR11609
-  message: USER_NOT_FOUND_BY_USERID
+  message: USER_NOT_FOUND_BY_ID
   description: User not found by userId %s.
 ERR11610:
   statusCode: 400
   code: ERR11610
-  message: USER_NOT_FOUND_BY_USERIDEMAIL
-  description: User not found by userIdEmail %s.
+  message: EMAIL_NOT_CONFIRMED
+  description: Email %s is not confirmed. Please find the user confirmation email.
 ERR11611:
   statusCode: 400
   code: ERR11611
@@ -665,8 +665,8 @@ ERR11611:
 ERR11612:
   statusCode: 400
   code: ERR11612
-  message: USER_ID_IS_USED
-  description: Userid %s is registered.
+  message: WRONG_LOGIN_PASSWORD
+  description: Wrong login password for user with email %s.
 ERR11613:
   statusCode: 400
   code: ERR11613
@@ -685,13 +685,43 @@ ERR11615:
 ERR11616:
   statusCode: 400
   code: ERR11616
-  message: INVALID_SIGNIN_PASSWORD
-  description: Invalid signIn password.
+  message: ERROR_VALIDATE_PASSWORD
+  description: Password validation error with excetion %s.
 ERR11617:
   statusCode: 400
   code: ERR11617
   message: USER_NOT_ACTIVATED
   description: User %s is not activated.
+ERR11618:
+  statusCode: 400
+  code: ERR11618
+  message: USER_QUERY_DENIED
+  description: User %s is not matched the JWT user_id %s and not admin role.
+ERR11619:
+  statusCode: 400
+  code: ERR11619
+  message: EMAIL_SENDING_ERROR
+  description: Failed to send the confirmation email to %s.
+ERR11620:
+  statusCode: 400
+  code: ERR11620
+  message: PERMISSION_DENIED
+  description: Fail to access the endpoint for roles %s.
+ERR11621:
+  statusCode: 400
+  code: ERR11621
+  message: CITY_REGISTERED
+  description: The city has been registered with key %s.
+ERR11622:
+  statusCode: 400
+  code: ERR11622
+  message: PROFILE_LOCATION_INCOMPLETE
+  description: Country, Province or City is missing in user profile.
+ERR11623:
+  statusCode: 400
+  code: ERR11623
+  message: CITY_NOT_REGISTERED
+  description: The location %s has not been registered.
 
 
 # OAuth2 service error 12000-13000
