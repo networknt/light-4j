@@ -103,7 +103,7 @@ request:
   timeout: 3000
   resetTimeout: 7000
   # connection expire time.
-  connectionExpireSize: 2000000
+  connectionExpireTime: 2000000
   # the flag to indicate whether http/2 is enabled when calling client.callService()
   enableHttp2: true
   # the maximum host capacity of connection pool
