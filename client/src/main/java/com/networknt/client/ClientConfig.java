@@ -52,7 +52,7 @@ public final class ClientConfig {
 
     private static final String CONNECTION_POOL_SIZE = "connectionPoolSize";
     private static final String MAX_REQUEST_PER_CONNECTION = "maxReqPerConn";
-    private static final String CONNECTION_EXPIRE_TIME = "connectionExpireSize";
+    private static final String CONNECTION_EXPIRE_TIME = "connectionExpireTime";
     private static final String MAX_CONNECTION_NUM_PER_HOST = "maxConnectionNumPerHost";
     private static final String MIN_CONNECTION_NUM_PER_HOST = "minConnectionNumPerHost";
 
@@ -137,7 +137,7 @@ public final class ClientConfig {
             maxReqPerConn = (int) requestConfig.get(MAX_REQUEST_PER_CONNECTION);
         }
         if (requestConfig.containsKey(CONNECTION_EXPIRE_TIME)) {
-            connectionExpireTime = (long) requestConfig.get(CONNECTION_EXPIRE_TIME);
+            connectionExpireTime = Long.parseLong(requestConfig.get(CONNECTION_EXPIRE_TIME).toString());
         }
         if (requestConfig.containsKey(MAX_CONNECTION_NUM_PER_HOST)) {
             maxConnectionNumPerHost = (int) requestConfig.get(MAX_CONNECTION_NUM_PER_HOST);

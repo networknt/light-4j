@@ -149,6 +149,8 @@ request:
   timeout: 3000
   # reset the circuit after this timeout in millisecond
   resetTimeout: 7000
+  # connection expire time.
+  connectionExpireTime: 2000000
   # if inject OpenTracing with the Http2Client in header
   injectOpenTracing: false
   # the flag to indicate whether http/2 is enabled when calling client.callService()
