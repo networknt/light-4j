@@ -132,7 +132,7 @@ public final class ClientConfig {
             maxReqPerConn = (int) requestConfig.get(MAX_REQUEST_PER_CONNECTION);
         }
         if (requestConfig.containsKey(CONNECTION_EXPIRE_TIME)) {
-            connectionExpireTime = (long) requestConfig.get(CONNECTION_EXPIRE_TIME);
+            connectionExpireTime = Long.parseLong(requestConfig.get(CONNECTION_EXPIRE_TIME).toString());
         }
         if (requestConfig.containsKey(MAX_CONNECTION_NUM_PER_HOST)) {
             maxConnectionNumPerHost = (int) requestConfig.get(MAX_CONNECTION_NUM_PER_HOST);
