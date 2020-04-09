@@ -16,6 +16,7 @@
 
 package com.networknt.email;
 
+import com.networknt.config.Config;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -45,5 +46,11 @@ public class EmailSenderTest {
         } catch (MessagingException e) {
             e.printStackTrace();
         }
+    }
+
+    @Test
+    public void testConfigPassword() {
+        EmailConfig config = (EmailConfig)Config.getInstance().getJsonObjectConfig(EmailConfig.CONFIG_NAME, EmailConfig.class);
+        System.out.println("password = " + config.pass);
     }
 }

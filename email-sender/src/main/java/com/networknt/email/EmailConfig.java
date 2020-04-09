@@ -22,6 +22,7 @@ package com.networknt.email;
  * @author Steve Hu
  */
 public class EmailConfig {
+    public static final String CONFIG_NAME = "email";
     String host;
     String port;
     String user;
