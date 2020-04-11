@@ -455,15 +455,20 @@ public class Http2Client {
      * @return Result when fail to get jwt, it will return a Status.
      */
     public Result populateHeader(ClientRequest request, String authToken, String correlationId, String traceabilityId) {
+        Result<Jwt> result = tokenManager.getJwt(request);
+        if(result.isFailure()) { return Failure.of(result.getError()); }
+        // we cannot assume that the authToken is passed from the original caller. If it is null, then promote.
+        if(authToken == null) {
+            authToken = "Bearer " + result.getResult().getJwt();
+        } else {
+            request.getRequestHeaders().put(HttpStringConstants.SCOPE_TOKEN, "Bearer " + result.getResult().getJwt());
+        }
+        request.getRequestHeaders().put(HttpStringConstants.CORRELATION_ID, correlationId);
         if(traceabilityId != null) {
             addAuthTokenTrace(request, authToken, traceabilityId);
         } else {
             addAuthToken(request, authToken);
         }
-        Result<Jwt> result = tokenManager.getJwt(request);
-        if(result.isFailure()) { return Failure.of(result.getError()); }
-        request.getRequestHeaders().put(HttpStringConstants.CORRELATION_ID, correlationId);
-        request.getRequestHeaders().put(HttpStringConstants.SCOPE_TOKEN, "Bearer " + result.getResult().getJwt());
         return result;
     }
 
@@ -481,14 +486,19 @@ public class Http2Client {
      * @return Result when fail to get jwt, it will return a Status.
      */
     public Result populateHeader(ClientRequest request, String authToken, Tracer tracer) {
+        Result<Jwt> result = tokenManager.getJwt(request);
+        if(result.isFailure()) { return Failure.of(result.getError()); }
+        // we cannot assume the original caller always has an authorization token. If authToken is null, then promote...
+        if(authToken == null) {
+            authToken = "Bearer " + result.getResult().getJwt();
+        } else {
+            request.getRequestHeaders().put(HttpStringConstants.SCOPE_TOKEN, "Bearer " + result.getResult().getJwt());
+        }
         if(tracer != null) {
             addAuthTokenTrace(request, authToken, tracer);
         } else {
             addAuthToken(request, authToken);
         }
-        Result<Jwt> result = tokenManager.getJwt(request);
-        if(result.isFailure()) { return Failure.of(result.getError()); }
-        request.getRequestHeaders().put(HttpStringConstants.SCOPE_TOKEN, "Bearer " + result.getResult().getJwt());
         return result;
     }
 
@@ -640,8 +650,8 @@ public class Http2Client {
 
                             @Override
                             protected void stringDone(String string) {
-                                if (logger.isDebugEnabled()) {
-                                    logger.debug("Service call response = {}", string);
+                                if (logger.isTraceEnabled()) {
+                                    logger.trace("Service call response = {}", string);
                                 }
                                 result.getResponse().putAttachment(RESPONSE_BODY, string);
                                 latch.countDown();
@@ -738,8 +748,8 @@ public class Http2Client {
                         new StringReadChannelListener(BUFFER_POOL) {
                             @Override
                             protected void stringDone(String string) {
-                                if (logger.isDebugEnabled()) {
-                                    logger.debug("Service call response = {}", string);
+                                if (logger.isTraceEnabled()) {
+                                    logger.trace("Service call response = {}", string);
                                 }
                                 result.getResponse().putAttachment(RESPONSE_BODY, string);
                                 latch.countDown();
@@ -781,8 +791,8 @@ public class Http2Client {
 
                             @Override
                             protected void stringDone(String string) {
-                                if (logger.isDebugEnabled()) {
-                                    logger.debug("Service call response = {}", string);
+                                if (logger.isTraceEnabled()) {
+                                    logger.trace("Service call response = {}", string);
                                 }
                                 AsyncResponse ar = new AsyncResponse(result.getResponse(), string, System.currentTimeMillis() - startTime);
                                 reference.set(DefaultAsyncResult.succeed(ar));
@@ -839,8 +849,8 @@ public class Http2Client {
                         new StringReadChannelListener(BUFFER_POOL) {
                             @Override
                             protected void stringDone(String string) {
-                                if (logger.isDebugEnabled()) {
-                                    logger.debug("Service call response = {}", string);
+                                if (logger.isTraceEnabled()) {
+                                    logger.trace("Service call response = {}", string);
                                 }
                                 AsyncResponse ar = new AsyncResponse(result.getResponse(), string, System.currentTimeMillis() - startTime);
                                 reference.set(DefaultAsyncResult.succeed(ar));
@@ -889,7 +899,7 @@ public class Http2Client {
         addHostHeader(request);
         CompletableFuture<ClientResponse> futureClientResponse;
         AtomicReference<ClientConnection> currentConnection = new AtomicReference<>(http2ClientConnectionPool.getConnection(uri));
-        if (currentConnection.get() != null) {
+        if (currentConnection.get() != null && currentConnection.get().isOpen()) {
             logger.debug("Reusing the connection: {} to {}", currentConnection.toString(), uri.toString());
             futureClientResponse = getFutureClientResponse(currentConnection.get(), uri, request, requestBody);
         } else {

@@ -86,7 +86,7 @@ public class ConsulClientImpl implements ConsulClient {
 	 */
 	public ConsulClientImpl() {
 		String consulUrl = config.getConsulUrl().toLowerCase();
-		optionMap =  config.isEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY;
+		optionMap =  isHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY;
 		logger.debug("url = {}", consulUrl);
 		if(config.getWait() != null && config.getWait().length() > 2) wait = config.getWait();
 		logger.debug("wait = {}", wait);
@@ -101,8 +101,8 @@ public class ConsulClientImpl implements ConsulClient {
 
 	@Override
 	public void checkPass(String serviceId, String token) {
-		logger.debug("checkPass serviceId = {}", serviceId);
-		String path = "/v1/agent/check/pass/" + "service:" + serviceId;
+		logger.trace("checkPass serviceId = {}", serviceId);
+		String path = "/v1/agent/check/pass/" + "check-" + serviceId;
 		try {
 			ConsulConnection consulConnection = getConnection(CHECK_PASS_CONNECTION_KEY);
 			AtomicReference<ClientResponse> reference = consulConnection.send(Methods.PUT, path, token, null);
@@ -118,8 +118,8 @@ public class ConsulClientImpl implements ConsulClient {
 
 	@Override
 	public void checkFail(String serviceId, String token) {
-		logger.debug("checkFail serviceId = {}", serviceId);
-		String path = "/v1/agent/check/fail/" + "service:" + serviceId;
+		logger.trace("checkFail serviceId = {}", serviceId);
+		String path = "/v1/agent/check/fail/" + "check-" + serviceId;
 		try {
 			ConsulConnection consulConnection = getConnection(CHECK_FAIL_CONNECTION_KEY);
 			AtomicReference<ClientResponse> reference = consulConnection.send(Methods.PUT, path, token, null);
@@ -189,7 +189,7 @@ public class ConsulClientImpl implements ConsulClient {
 		if(tag != null) {
 			path = path + "&tag=" + tag;
 		}
-		logger.debug("path = {}", path);
+		logger.trace("path = {}", path);
 		try {
 			AtomicReference<ClientResponse> reference  = connection.send(Methods.GET, path, token, null);
 			int statusCode = reference.get().getResponseCode();
@@ -237,7 +237,7 @@ public class ConsulClientImpl implements ConsulClient {
 	private ConsulConnection getConnection(String cacheKey) {
 		//the case when enable http2 support use the class level ConsulConnection
         // will use http/2 connection only if tls is enabled as Consul only support HTTP/2 with TLS.
-		if(config.isEnableHttp2() && config.getConsulUrl().toLowerCase().startsWith("https")) {
+		if(isHttp2()) {
 			return this.http2Connection;
 		} else {
 			ConsulConnection cachedConsulConnection = connectionPool.get(cacheKey);
@@ -296,7 +296,7 @@ public class ConsulClientImpl implements ConsulClient {
 			ClientRequest request = new ClientRequest().setMethod(method).setPath(path);
 			request.getRequestHeaders().put(Headers.HOST, "localhost");
 			if (token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
-			logger.debug("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
+			logger.trace("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
 			if(StringUtils.isBlank(json)) {
 				connection.sendRequest(request, client.createClientCallback(reference, latch));
 			} else {
@@ -306,7 +306,7 @@ public class ConsulClientImpl implements ConsulClient {
 
 			latch.await();
 			reqCounter.getAndIncrement();
-			logger.debug("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
+			logger.trace("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
 			return reference;
 		}
 
@@ -315,7 +315,7 @@ public class ConsulClientImpl implements ConsulClient {
 		}
 
 		ClientConnection createConnection() {
-			logger.debug("connection is closed with counter {}, reconnecting...", reqCounter);
+			logger.trace("connection is closed with counter {}, reconnecting...", reqCounter);
 			ClientConnection newConnection = null;
 			try {
 				newConnection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
@@ -326,5 +326,16 @@ public class ConsulClientImpl implements ConsulClient {
 			reqCounter.set(0);
 			return newConnection;
 		}
+	}
+
+	/**
+	 * As the Consul server is built with Go and HTTP/2 is supported by default when HTTPS is used, we need to leverage
+	 * the multiplexing of HTTP/2 whenever possible. In the scenario that the user miss the enableHttp2 flag in the
+	 * consul.yml config file, we will force the Consul client to use HTTP/2 if the consulUrl is starting with "https".
+	 *
+ 	 * @return true if we want to use HTTP/2 to connect to the Consul.
+	 */
+	private boolean isHttp2() {
+		return config.isEnableHttp2() || config.getConsulUrl().toLowerCase().startsWith("https");
 	}
 }
