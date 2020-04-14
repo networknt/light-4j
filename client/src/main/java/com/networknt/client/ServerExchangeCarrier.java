@@ -1,6 +1,6 @@
 package com.networknt.client;
 
-import io.undertow.client.ClientRequest;
+import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HttpString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,12 +8,13 @@ import org.slf4j.LoggerFactory;
 import java.util.Iterator;
 import java.util.Map;
 
-public class ClientRequestCarrier implements io.opentracing.propagation.TextMap {
-    private final static Logger logger = LoggerFactory.getLogger(ClientRequestCarrier.class);
-    private final ClientRequest clientRequest;
+public class ServerExchangeCarrier implements io.opentracing.propagation.TextMap {
+    private final static Logger logger = LoggerFactory.getLogger(ServerExchangeCarrier.class);
 
-    public ClientRequestCarrier(ClientRequest clientRequest) {
-        this.clientRequest = clientRequest;
+    private final HttpServerExchange exchange;
+
+    public ServerExchangeCarrier(HttpServerExchange exchange) {
+        this.exchange = exchange;
     }
 
     @Override
@@ -24,6 +25,6 @@ public class ClientRequestCarrier implements io.opentracing.propagation.TextMap 
     @Override
     public void put(String key, String value) {
         if(logger.isDebugEnabled()) logger.debug("key = " + key + " value = " + value);
-        clientRequest.getRequestHeaders().put(new HttpString(key), value);
+        exchange.getRequestHeaders().put(new HttpString(key), value);
     }
 }

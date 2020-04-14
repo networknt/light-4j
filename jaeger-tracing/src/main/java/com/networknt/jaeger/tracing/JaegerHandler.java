@@ -21,8 +21,10 @@ import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
+import com.networknt.server.Server;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
+import com.networknt.utility.NetUtils;
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
@@ -98,7 +100,11 @@ public class JaegerHandler implements MiddlewareHandler {
         } catch (IllegalArgumentException e) {
             spanBuilder = tracer.buildSpan(endpoint);
         }
-        Span rootSpan = spanBuilder.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER).start();
+        Span rootSpan = spanBuilder
+                .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
+                .withTag(Tags.PEER_HOSTNAME.getKey(), NetUtils.getLocalAddressByDatagram())
+                .withTag(Tags.PEER_PORT.getKey(), Server.config.getHttpsPort())
+                .start();
         tracer.activateSpan(rootSpan);
         // This can be retrieved in the business handler to add tags and logs for tracing.
         exchange.putAttachment(ROOT_SPAN, rootSpan);
