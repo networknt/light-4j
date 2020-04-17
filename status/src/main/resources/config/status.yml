@@ -706,22 +706,37 @@ ERR11620:
   statusCode: 400
   code: ERR11620
   message: PERMISSION_DENIED
-  description: Fail to access the endpoint for roles %s.
+  description: Fail to access the endpoint for user or roles %s.
 ERR11621:
   statusCode: 400
   code: ERR11621
   message: CITY_REGISTERED
-  description: The city has been registered with key %s.
+  description: The city has been registered with key %s, %s, %s.
 ERR11622:
   statusCode: 400
   code: ERR11622
   message: PROFILE_LOCATION_INCOMPLETE
   description: Country, Province or City is missing in user profile.
 ERR11623:
-  statusCode: 400
+  statusCode: 404
   code: ERR11623
-  message: CITY_NOT_REGISTERED
-  description: The location %s has not been registered.
+  message: CITY_NOT_FOUND
+  description: City not found for %s, %s, %s.
+ERR11624:
+  statusCode: 400
+  code: ERR11624
+  message: COUNTRY_PROVINCE_CITY_EMPTY
+  description: Country %s or province %s or city %s is empty.
+ERR11625:
+  statusCode: 404
+  code: ERR11625
+  message: ENTITY_NOT_FOUND
+  description: Entity not found for %s, %s, %s.
+ERR11626:
+  statusCode: 404
+  code: ERR11626
+  message: STATUS_NOT_FOUND
+  description: Status not found for email or userId %s.
 
 
 # OAuth2 service error 12000-13000
