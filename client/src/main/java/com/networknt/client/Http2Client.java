@@ -376,7 +376,7 @@ public class Http2Client {
             }
         }
         request.getRequestHeaders().put(Headers.AUTHORIZATION, token);
-        if(tracer != null) {
+        if(tracer != null && tracer.activeSpan() != null) {
             Tags.SPAN_KIND.set(tracer.activeSpan(), Tags.SPAN_KIND_CLIENT);
             Tags.HTTP_METHOD.set(tracer.activeSpan(), request.getMethod().toString());
             Tags.HTTP_URL.set(tracer.activeSpan(), request.getPath());
