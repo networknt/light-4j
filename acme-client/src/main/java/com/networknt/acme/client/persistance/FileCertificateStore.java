@@ -2,7 +2,6 @@ package com.networknt.acme.client.persistance;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Path;
 
 import org.shredzone.acme4j.Certificate;
 
@@ -23,4 +22,7 @@ public class FileCertificateStore implements CertificateStore {
 		}
 		return true;
 	}
+
+	
+
 }
