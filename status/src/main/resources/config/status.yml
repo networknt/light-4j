@@ -990,6 +990,11 @@ ERR12049:
   code: ERR12049
   message: PROVIDER_ID_INVALID
   description: Provider id invalid
+ERR12050:
+  statusCode: 400
+  code: ERR12050
+  message: FAILED_TO_POPULATE_HEADER
+  description: Failed to populate client credentials scope token in header in method %s
 
 # Tokenization service
 ERR12100:
