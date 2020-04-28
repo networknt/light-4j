@@ -1,9 +1,13 @@
 package com.networknt.acme.client.persistance;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.KeyPair;
 
+import org.shredzone.acme4j.util.KeyPairUtils;
+
 public interface KeyPairStore {
-	KeyPair loadOrCreateKeyPair(String name) throws  IOException;
+	KeyPair getOrCreateKeyPair(String name) throws  IOException;
+	default KeyPair generateKePair() {
+		return KeyPairUtils.createKeyPair(2048);
+	}
 }
