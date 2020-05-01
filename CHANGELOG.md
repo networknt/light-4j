@@ -1,5 +1,16 @@
 # Change Log
 
+## [2.0.13](https://github.com/networknt/light-4j/tree/2.0.13) (2020-05-01)
+
+
+**Merged pull requests:**
+
+
+- fixes \#699 add start_time to refresh_token table with default [\#700](https://github.com/networknt/light-4j/pull/700) ([stevehu](https://github.com/stevehu))
+- fixes \#696 add remember to token response to handle refresh token [\#697](https://github.com/networknt/light-4j/pull/697) ([stevehu](https://github.com/stevehu))
+- fixes \#694 double check the tracer has activeSpan in the client heade… [\#695](https://github.com/networknt/light-4j/pull/695) ([stevehu](https://github.com/stevehu))
+- fixes \#692 add host and port to the JaegerHandler for tracing [\#693](https://github.com/networknt/light-4j/pull/693) ([stevehu](https://github.com/stevehu))
+- fixes \#690 add test case to email-sender to demo the environment vari… [\#691](https://github.com/networknt/light-4j/pull/691) ([stevehu](https://github.com/stevehu))
 ## [2.0.12](https://github.com/networknt/light-4j/tree/2.0.12) (2020-03-31)
 
 
