@@ -1,5 +1,11 @@
 # Change Log
 
+## [1.6.19](https://github.com/networknt/light-4j/tree/1.6.19) (2020-05-01)
+
+
+**Merged pull requests:**
+
+
 ## [1.6.18](https://github.com/networknt/light-4j/tree/1.6.18) (2020-03-31)
 
 
