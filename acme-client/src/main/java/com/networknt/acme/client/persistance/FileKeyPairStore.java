@@ -16,9 +16,7 @@ public class FileKeyPairStore implements KeyPairStore {
 	static final Logger logger = LoggerFactory.getLogger(FileKeyPairStore.class);
 	@Override
 	public KeyPair getOrCreateKeyPair(String name) throws IOException {
-		
 		File file = new File(name);
-		
 		if (file.exists()) {
 			return read(name, file);
 		} 
