@@ -18,7 +18,7 @@ import org.shredzone.acme4j.exception.AcmeException;
 import com.networknt.acme.client.persistance.FileKeyPairStore;
 
 public class CertificateAuthority {
-	public Certificate order() throws AcmeException, InterruptedException {
+	public Certificate order() throws AcmeException, InterruptedException, IOException {
 		Session session = new SessionFactory().getPebbleSession();
 		Account account = new AccountManager().getAccount(session);
 		
@@ -33,8 +33,9 @@ public class CertificateAuthority {
 		return null;
 	}
 
-	private void processAuth(Authorization auth) throws AcmeException, InterruptedException {
+	private void processAuth(Authorization auth) throws AcmeException, InterruptedException, IOException {
 		Http01Challenge challenge = auth.findChallenge(Http01Challenge.class);
+		new HTTPChallengeResponder(challenge.getAuthorization());
 		challenge.trigger();
 		while (auth.getStatus() != Status.VALID) {
 			  Thread.sleep(3000L);
