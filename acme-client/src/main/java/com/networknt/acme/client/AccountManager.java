@@ -11,26 +11,15 @@ import org.shredzone.acme4j.exception.AcmeException;
 import com.networknt.acme.client.persistance.FileKeyPairStore;
 
 public class AccountManager {
-	public Account getAccount(Session session) {
+	public Account getAccount(Session session) throws IOException, AcmeException {
 		KeyPair  accountKey = null;
 		Account account = null;
-		try {
-			accountKey = new FileKeyPairStore().getOrCreateKeyPair(System.getProperty("user.home")+"/account.key");
-			 
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		try {
-			 account = new AccountBuilder()
-			        .agreeToTermsOfService()
-			        .useKeyPair(accountKey)
-			        .create(session);
-		} catch (AcmeException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		accountKey = new FileKeyPairStore().getOrCreateKeyPair(System.getProperty("user.home")+"/account.key");
+		account = new AccountBuilder()
+				.agreeToTermsOfService()
+				.useKeyPair(accountKey)
+				.create(session);
+
 		return account;
 	}
 }

@@ -22,8 +22,13 @@ public class HTTPChallengeResponder {
 		challengeResponse = content;
 		server=HttpServer.create(new InetSocketAddress(port), 0);
 		server.createContext(acmePath, new MyHandler());
-		server.setExecutor(null); // creates a default executor
+		server.setExecutor(null); 
+	}
+	public void start() {
 		server.start();
+	}
+	public void stop() {
+		server.stop(0);
 	}
 	class MyHandler implements HttpHandler {
 	    public void handle(HttpExchange t) throws IOException {
