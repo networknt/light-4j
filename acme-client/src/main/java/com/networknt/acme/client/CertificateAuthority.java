@@ -18,7 +18,7 @@ import org.shredzone.acme4j.util.CSRBuilder;
 
 import com.networknt.acme.client.persistance.CertificateStore;
 import com.networknt.acme.client.persistance.FileCertificateStore;
-import com.networknt.acme.client.persistance.FileKeyPairStore;
+import com.networknt.acme.client.persistance.FileKeyStore;
 
 public class CertificateAuthority {
 	public Certificate order() throws AcmeException, InterruptedException, IOException {
@@ -36,7 +36,7 @@ public class CertificateAuthority {
 		return order.getCertificate();
 	}
 	private byte[] createCSR() throws IOException {
-		KeyPair domainKeyPair = new FileKeyPairStore().getOrCreateKeyPair(System.getProperty("user.home")+"/domain.key");
+		KeyPair domainKeyPair = new FileKeyStore().getKey(System.getProperty("user.home")+"/domain.key");
 		CSRBuilder csrb = new CSRBuilder();
 		csrb.addDomain("test.com");
 		csrb.sign(domainKeyPair);
