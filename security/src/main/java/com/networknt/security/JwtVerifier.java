@@ -116,17 +116,19 @@ public class JwtVerifier {
                 if(bootstrapFromKeyService == null || Boolean.FALSE.equals(bootstrapFromKeyService)) {
                     certMap = new HashMap<>();
                     fingerPrints = new ArrayList<>();
-                    Map<String, Object> keyMap = (Map<String, Object>) jwtConfig.get(JWT_CERTIFICATE);
-                    for(String kid: keyMap.keySet()) {
-                        X509Certificate cert = null;
-                        try {
-                            cert = readCertificate((String)keyMap.get(kid));
-                        } catch (Exception e) {
-                            logger.error("Exception:", e);
+                    if (jwtConfig.get(JWT_CERTIFICATE)!=null) {
+                        Map<String, Object> keyMap = (Map<String, Object>) jwtConfig.get(JWT_CERTIFICATE);
+                        for(String kid: keyMap.keySet()) {
+                            X509Certificate cert = null;
+                            try {
+                                cert = readCertificate((String)keyMap.get(kid));
+                            } catch (Exception e) {
+                                logger.error("Exception:", e);
+                            }
+                            certMap.put(kid, cert);
+                            fingerPrints.add(FingerPrintUtil.getCertFingerPrint(cert));
                         }
-                        certMap.put(kid, cert);
-                        fingerPrints.add(FingerPrintUtil.getCertFingerPrint(cert));
-                    }
+                   }
                 }
                 break;
             default:
