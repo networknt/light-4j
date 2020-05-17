@@ -40,7 +40,7 @@ import java.util.Map;
 
 public class JwtVerifierTest {
     static final String CONFIG_NAME = "security";
-    static final String CONFIG_NAME_OPENAPI = "openapi-security";
+    static final String CONFIG_NAME_OPENAPI = "openapi-security-no-default-jwtcertificate";
     @Test
     public void testReadCertificate() {
         Map<String, Object> config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
