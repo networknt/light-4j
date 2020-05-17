@@ -40,6 +40,7 @@ import java.util.Map;
 
 public class JwtVerifierTest {
     static final String CONFIG_NAME = "security";
+    static final String CONFIG_NAME_OPENAPI = "openapi-security-no-default-jwtcertificate";
     @Test
     public void testReadCertificate() {
         Map<String, Object> config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
@@ -57,6 +58,28 @@ public class JwtVerifierTest {
             certMap.put(kid, cert);
         }
         Assert.assertEquals(2, certMap.size());
+    }
+
+    @Test
+    public void testReadCertificate2() {
+        Map<String, Object> config = Config.getInstance().getJsonMapConfig(CONFIG_NAME_OPENAPI);
+        Map<String, Object> jwtConfig = (Map<String, Object>)config.get(JwtIssuer.JWT_CONFIG);
+        Map<String, X509Certificate> certMap = new HashMap<>();
+        if (jwtConfig.get(JwtVerifier.JWT_CERTIFICATE)!=null) {
+            Map<String, Object> keyMap = (Map<String, Object>) jwtConfig.get(JwtVerifier.JWT_CERTIFICATE);
+            JwtVerifier jwtVerifier = new JwtVerifier(config);
+            for(String kid: keyMap.keySet()) {
+                X509Certificate cert = null;
+                try {
+                    cert = jwtVerifier.readCertificate((String)keyMap.get(kid));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                certMap.put(kid, cert);
+            }
+        }
+
+        Assert.assertEquals(0, certMap.size());
     }
 
     @Test
