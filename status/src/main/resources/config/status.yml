@@ -386,7 +386,7 @@ ERR10052:
   statusCode: 401
   code: ERR10052
   message: GET_TOKEN_ERROR
-  description: "Cannot get valid token: %s."
+  description: Cannot get valid token %s.
 ERR10053:
   statusCode: 401
   code: ERR10053
@@ -762,6 +762,16 @@ ERR11631:
   code: ERR11631
   message: NO_ENTITY_REGISTERED
   description: No entity has been registered for the %s, %s, %s, %s, %s combination.
+ERR11632:
+  statusCode: 404
+  code: ERR11632
+  message: PAYMENT_NOT_FOUND_BY_EMAIL
+  description: Payment not found for email %s.
+ERR11633:
+  statusCode: 404
+  code: ERR11633
+  message: ORDER_NOT_FOUND_BY_EMAIL
+  description: Order not found for email %s.
 
 
 # OAuth2 service error 12000-13000
