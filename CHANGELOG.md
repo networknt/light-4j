@@ -1,5 +1,14 @@
 # Change Log
 
+## [2.0.14](https://github.com/networknt/light-4j/tree/2.0.14) (2020-05-29)
+
+
+**Merged pull requests:**
+
+
+- fixes \#709 [\#711](https://github.com/networknt/light-4j/pull/711) ([chenyan71](https://github.com/chenyan71))
+- fixes \#707 switch toByteBuffer from direct to indirect [\#708](https://github.com/networknt/light-4j/pull/708) ([stevehu](https://github.com/stevehu))
+- fixes \#704 add keyResolver to the security.yml with comment [\#705](https://github.com/networknt/light-4j/pull/705) ([stevehu](https://github.com/stevehu))
 ## [2.0.13](https://github.com/networknt/light-4j/tree/2.0.13) (2020-05-01)
 
 
