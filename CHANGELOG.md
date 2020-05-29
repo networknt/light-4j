@@ -7,6 +7,8 @@
 
 
 - fixes \#709 [\#711](https://github.com/networknt/light-4j/pull/711) ([chenyan71](https://github.com/chenyan71))
+
+
 ## [1.6.19](https://github.com/networknt/light-4j/tree/1.6.19) (2020-05-01)
 
 
