@@ -26,20 +26,32 @@ import java.util.*;
  */
 public class BodyConverter {
     static Map<String, Object> convert(FormData data) {
-        Map<String, Object> map = new HashMap<>();
-        for (String key : data) {
-            if (data.get(key).size() == 1) {
-                String value = data.getFirst(key).getValue();
-                map.put(key, value);
-            } else if (data.get(key).size() > 1) {
-                List<Object> list = new ArrayList<>();
-                for (FormData.FormValue value : data.get(key)) {
-                    list.add(value.getValue());
-                }
-                map.put(key, list);
-            }
-            // ignore size == 0
-        }
-        return map;
-    }
+		Map<String, Object> map = new HashMap<>();
+		for (String key : data) {
+
+			if (data.get(key).size() == 1) {
+				// If the form data is file, read it as FileItem, else read as String.
+				if (data.getFirst(key).getFileName() == null) {
+					String value = data.getFirst(key).getValue();
+					map.put(key, value);
+				} else {
+					FileItem value = data.getFirst(key).getFileItem();
+					map.put(key, value);
+				}
+			} else if (data.get(key).size() > 1) {
+				List<Object> list = new ArrayList<>();
+				for (FormData.FormValue value : data.get(key)) {
+					// If the form data is file, read it as FileItem, else read as String.
+					if (value.getFileName() == null) {
+						list.add(value.getValue());
+					} else {
+						list.add(value.getFileItem());
+					}
+				}
+				map.put(key, list);
+			}
+			// ignore size == 0
+		}
+		return map;
+	}
 }
