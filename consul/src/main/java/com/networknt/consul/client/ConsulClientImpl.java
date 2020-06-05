@@ -104,7 +104,7 @@ public class ConsulClientImpl implements ConsulClient {
 		logger.trace("checkPass serviceId = {}", serviceId);
 		String path = "/v1/agent/check/pass/" + "check-" + serviceId;
 		try {
-			ConsulConnection consulConnection = getConnection(CHECK_PASS_CONNECTION_KEY);
+			ConsulConnection consulConnection = getConnection(CHECK_PASS_CONNECTION_KEY + Thread.currentThread().getId());
 			AtomicReference<ClientResponse> reference = consulConnection.send(Methods.PUT, path, token, null);
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= UNUSUAL_STATUS_CODE){
@@ -121,7 +121,7 @@ public class ConsulClientImpl implements ConsulClient {
 		logger.trace("checkFail serviceId = {}", serviceId);
 		String path = "/v1/agent/check/fail/" + "check-" + serviceId;
 		try {
-			ConsulConnection consulConnection = getConnection(CHECK_FAIL_CONNECTION_KEY);
+			ConsulConnection consulConnection = getConnection(CHECK_FAIL_CONNECTION_KEY + Thread.currentThread().getId());
 			AtomicReference<ClientResponse> reference = consulConnection.send(Methods.PUT, path, token, null);
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= UNUSUAL_STATUS_CODE){
@@ -137,7 +137,7 @@ public class ConsulClientImpl implements ConsulClient {
 		String json = service.toString();
 		String path = "/v1/agent/service/register";
 		try {
-			ConsulConnection consulConnection = getConnection(REGISTER_CONNECTION_KEY);
+			ConsulConnection consulConnection = getConnection(REGISTER_CONNECTION_KEY + Thread.currentThread().getId());
 			AtomicReference<ClientResponse> reference = consulConnection.send(Methods.PUT, path, token, json);
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= UNUSUAL_STATUS_CODE){
@@ -153,7 +153,7 @@ public class ConsulClientImpl implements ConsulClient {
 	public void unregisterService(String serviceId, String token) {
 		String path = "/v1/agent/service/deregister/" + serviceId;
 		try {
-			ConsulConnection connection = getConnection(UNREGISTER_CONNECTION_KEY);
+			ConsulConnection connection = getConnection(UNREGISTER_CONNECTION_KEY + Thread.currentThread().getId());
             final AtomicReference<ClientResponse> reference = connection.send(Methods.PUT, path, token, null);
             int statusCode = reference.get().getResponseCode();
             if(statusCode >= UNUSUAL_STATUS_CODE){
@@ -183,7 +183,7 @@ public class ConsulClientImpl implements ConsulClient {
 			return null;
 		}
 
-		ConsulConnection connection = getConnection(serviceName);
+		ConsulConnection connection = getConnection(serviceName + Thread.currentThread().getId());
 
 		String path = "/v1/health/service/" + serviceName + "?passing&wait="+wait+"&index=" + lastConsulIndex;
 		if(tag != null) {
