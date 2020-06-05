@@ -1,5 +1,12 @@
 # Change Log
 
+## [1.6.21](https://github.com/networknt/light-4j/tree/1.6.21) (2020-06-05)
+
+
+**Merged pull requests:**
+
+
+- fix for issue \#715 - ensure cached consul connections are specific to… [\#716](https://github.com/networknt/light-4j/pull/716) ([miklish](https://github.com/miklish))
 ## [1.6.20](https://github.com/networknt/light-4j/tree/1.6.20) (2020-05-29)
 
 
