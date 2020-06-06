@@ -61,7 +61,7 @@ public class ConsulTestIT {
     public void discoverService() throws Exception {
         registry.doRegister(serviceUrl);
         List<URL> urls = registry.discoverService(serviceUrl);
-        Assert.assertNull(urls);
+        Assert.assertEquals(urls.size(), 0);
         Thread.sleep(sleepTime);
         urls = registry.discoverService(serviceUrl);
         //Assert.assertTrue(urls.contains(serviceUrl));

@@ -59,26 +59,9 @@ public class ConsulClientImpl implements ConsulClient {
 	private static final int UNUSUAL_STATUS_CODE = 300;
 	private Http2Client client = Http2Client.getInstance();
 
-	/**
-	 * if http2 is not enabled, connection should be cached within a connectionPool
-	 */
-	private ConcurrentHashMap<String, ConsulConnection> connectionPool = new ConcurrentHashMap<>();
-
-	/**
-	 *  Consul supports HTTP2 connection when using HTTPS, thus, there will be only one cached connection shared by all the API calls to Consul.
-	 *  In production, https should be used and it supports multiplex.
-	 */
-	private ConsulConnection http2Connection = new ConsulConnection();
 	private OptionMap optionMap;
 	private URI uri;
-	private int maxReqPerConn;
 	private String wait = "600s";
-
-	private final String REGISTER_CONNECTION_KEY = "http2ConnectionKey";
-	private final String UNREGISTER_CONNECTION_KEY = "unregisterConnectionKey";
-	private final String CHECK_PASS_CONNECTION_KEY = "checkPassConnectionKey";
-	private final String CHECK_FAIL_CONNECTION_KEY = "checkFailConnectionKey";
-
 
 	/**
 	 * Construct ConsulClient with all parameters from consul.yml config file. The other two constructors are
@@ -96,16 +79,16 @@ public class ConsulClientImpl implements ConsulClient {
 			logger.error("Invalid URI " + consulUrl, e);
 			throw new RuntimeException("Invalid URI " + consulUrl, e);
 		}
-		maxReqPerConn = config.getMaxReqPerConn() > 0 ? config.getMaxReqPerConn() : 1000000;
 	}
 
 	@Override
 	public void checkPass(String serviceId, String token) {
 		logger.trace("checkPass serviceId = {}", serviceId);
 		String path = "/v1/agent/check/pass/" + "check-" + serviceId;
+		ClientConnection connection = null;
 		try {
-			ConsulConnection consulConnection = getConnection(CHECK_PASS_CONNECTION_KEY + Thread.currentThread().getId());
-			AtomicReference<ClientResponse> reference = consulConnection.send(Methods.PUT, path, token, null);
+			connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
+			AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, null);
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= UNUSUAL_STATUS_CODE){
 				logger.error("Failed to checkPass on Consul: {} : {}", statusCode, reference.get().getAttachment(Http2Client.RESPONSE_BODY));
@@ -113,6 +96,8 @@ public class ConsulClientImpl implements ConsulClient {
 			}
 		} catch (Exception e) {
 			logger.error("CheckPass request exception", e);
+		} finally {
+			client.returnConnection(connection);
 		}
 	}
 
@@ -120,15 +105,18 @@ public class ConsulClientImpl implements ConsulClient {
 	public void checkFail(String serviceId, String token) {
 		logger.trace("checkFail serviceId = {}", serviceId);
 		String path = "/v1/agent/check/fail/" + "check-" + serviceId;
+		ClientConnection connection = null;
 		try {
-			ConsulConnection consulConnection = getConnection(CHECK_FAIL_CONNECTION_KEY + Thread.currentThread().getId());
-			AtomicReference<ClientResponse> reference = consulConnection.send(Methods.PUT, path, token, null);
+			connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
+			AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, null);
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= UNUSUAL_STATUS_CODE){
 				logger.error("Failed to checkFail on Consul: {} : {}", statusCode, reference.get().getAttachment(Http2Client.RESPONSE_BODY));
 			}
 		} catch (Exception e) {
 			logger.error("CheckFail request exception", e);
+		} finally {
+			client.returnConnection(connection);
 		}
 	}
 
@@ -136,9 +124,10 @@ public class ConsulClientImpl implements ConsulClient {
 	public void registerService(ConsulService service, String token) {
 		String json = service.toString();
 		String path = "/v1/agent/service/register";
+		ClientConnection connection = null;
 		try {
-			ConsulConnection consulConnection = getConnection(REGISTER_CONNECTION_KEY + Thread.currentThread().getId());
-			AtomicReference<ClientResponse> reference = consulConnection.send(Methods.PUT, path, token, json);
+			connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
+			AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, json);
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= UNUSUAL_STATUS_CODE){
 				throw new Exception("Failed to register on Consul: " + statusCode);
@@ -146,21 +135,26 @@ public class ConsulClientImpl implements ConsulClient {
 		} catch (Exception e) {
 			logger.error("Failed to register on Consul, Exception:", e);
 			throw new RuntimeException(e.getMessage());
+		} finally {
+			client.returnConnection(connection);
 		}
 	}
 
 	@Override
 	public void unregisterService(String serviceId, String token) {
 		String path = "/v1/agent/service/deregister/" + serviceId;
+		ClientConnection connection = null;
 		try {
-			ConsulConnection connection = getConnection(UNREGISTER_CONNECTION_KEY + Thread.currentThread().getId());
-            final AtomicReference<ClientResponse> reference = connection.send(Methods.PUT, path, token, null);
+			connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
+	        final AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, null);
             int statusCode = reference.get().getResponseCode();
             if(statusCode >= UNUSUAL_STATUS_CODE){
                 logger.error("Failed to unregister on Consul, body = {}", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
             }
 		} catch (Exception e) {
 			logger.error("Failed to unregister on Consul, Exception:", e);
+		} finally {
+			client.returnConnection(connection);
 		}
 	}
 
@@ -182,16 +176,15 @@ public class ConsulClientImpl implements ConsulClient {
 		if(StringUtils.isBlank(serviceName)) {
 			return null;
 		}
-
-		ConsulConnection connection = getConnection(serviceName + Thread.currentThread().getId());
-
+		ClientConnection connection = null;
 		String path = "/v1/health/service/" + serviceName + "?passing&wait="+wait+"&index=" + lastConsulIndex;
 		if(tag != null) {
 			path = path + "&tag=" + tag;
 		}
 		logger.trace("path = {}", path);
 		try {
-			AtomicReference<ClientResponse> reference  = connection.send(Methods.GET, path, token, null);
+			connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
+			AtomicReference<ClientResponse> reference  = send(connection, Methods.GET, path, token, null);
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= UNUSUAL_STATUS_CODE){
 				throw new Exception("Failed to unregister on Consul: " + statusCode);
@@ -214,6 +207,8 @@ public class ConsulClientImpl implements ConsulClient {
 			}
 		} catch (Exception e) {
 			logger.error("Exception:", e);
+		} finally {
+			client.returnConnection(connection);
 		}
 		return newResponse;
 	}
@@ -229,103 +224,31 @@ public class ConsulClientImpl implements ConsulClient {
 	}
 
 	/**
-	 * if http2 is enabled, try to establish connect and return the class level {@link #http2Connection}
-	 * if http2 is disabled, try to get from the {@link #connectionPool}
-	 * @param cacheKey @required cacheKey as the key for caching connection, if not specify cacheKey, will cause NullPointerException
-	 * @return ClientConnection
+	 * send to consul with the passed in connection
+	 * @param connection ClientConnection
+	 * @param method http method to use
+	 * @param path path to send to consul
+	 * @param token token to put in header
+	 * @param json request body to send
+	 * @return AtomicReference<ClientResponse> response
 	 */
-	private ConsulConnection getConnection(String cacheKey) {
-		//the case when enable http2 support use the class level ConsulConnection
-        // will use http/2 connection only if tls is enabled as Consul only support HTTP/2 with TLS.
-		if(isHttp2()) {
-			return this.http2Connection;
+	AtomicReference<ClientResponse> send(ClientConnection connection, HttpString method, String path, String token, String json) throws InterruptedException {
+		final CountDownLatch latch = new CountDownLatch(1);
+		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+
+		ClientRequest request = new ClientRequest().setMethod(method).setPath(path);
+		request.getRequestHeaders().put(Headers.HOST, "localhost");
+		if (token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
+		logger.trace("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
+		if(StringUtils.isBlank(json)) {
+			connection.sendRequest(request, client.createClientCallback(reference, latch));
 		} else {
-			ConsulConnection cachedConsulConnection = connectionPool.get(cacheKey);
-			if(cachedConsulConnection == null) {
-				//init and cache an empty ConsulConnection
-				cachedConsulConnection = new ConsulConnection();
-				connectionPool.put(cacheKey, cachedConsulConnection);
-			}
-			return cachedConsulConnection;
+			request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+			connection.sendRequest(request, client.createClientCallback(reference, latch, json));
 		}
-	}
-
-	/**
-	 * wrapper of ClientConnection, added request counts for each connection
-	 */
-	private class ConsulConnection {
-		private ClientConnection connection;
-		private AtomicInteger reqCounter;
-
-		public ConsulConnection() {
-			reqCounter = new AtomicInteger(0);
-		}
-
-		public ClientConnection getConnection() {
-			return connection;
-		}
-
-		public void setConnection(ClientConnection connection) {
-			this.connection = connection;
-		}
-
-		public AtomicInteger getReqCounter() {
-			return reqCounter;
-		}
-
-		public void setReqCounter(AtomicInteger reqCounter) {
-			this.reqCounter = reqCounter;
-		}
-
-		/**
-		 * send to consul, init or reconnect if necessary
-		 * @param method http method to use
-		 * @param path path to send to consul
-		 * @param token token to put in header
-		 * @param json request body to send
-		 * @return AtomicReference<ClientResponse> response
-		 */
-		 AtomicReference<ClientResponse> send (HttpString method, String path, String token, String json) throws InterruptedException {
-			final CountDownLatch latch = new CountDownLatch(1);
-			final AtomicReference<ClientResponse> reference = new AtomicReference<>();
-
-			if (needsToCreateConnection()) {
-				this.connection = createConnection();
-			}
-
-			ClientRequest request = new ClientRequest().setMethod(method).setPath(path);
-			request.getRequestHeaders().put(Headers.HOST, "localhost");
-			if (token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
-			logger.trace("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
-			if(StringUtils.isBlank(json)) {
-				connection.sendRequest(request, client.createClientCallback(reference, latch));
-			} else {
-                request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
-				connection.sendRequest(request, client.createClientCallback(reference, latch, json));
-			}
-
-			latch.await();
-			reqCounter.getAndIncrement();
-			logger.trace("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
-			return reference;
-		}
-
-		boolean needsToCreateConnection() {
-			return connection == null || !connection.isOpen() || reqCounter.get() >= maxReqPerConn;
-		}
-
-		ClientConnection createConnection() {
-			logger.trace("connection is closed with counter {}, reconnecting...", reqCounter);
-			ClientConnection newConnection = null;
-			try {
-				newConnection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
-			} catch (IOException e) {
-				logger.error("cannot create connection to consul {} due to: {}", uri, e.getMessage());
-			}
-			//whenever init/reconnect, reset request to 0
-			reqCounter.set(0);
-			return newConnection;
-		}
+		latch.await();
+		logger.trace("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
+		return reference;
 	}
 
 	/**
