@@ -1,5 +1,14 @@
 # Change Log
 
+## [1.6.22](https://github.com/networknt/light-4j/tree/1.6.22) (2020-06-06)
+
+
+**Merged pull requests:**
+
+
+- fixes \#721 update consul client to leverage connecction pool of Http2… [\#722](https://github.com/networknt/light-4j/pull/722) ([stevehu](https://github.com/stevehu))
+- fixes \#718 add borrowConnection and returnConnection to Http2Client [\#720](https://github.com/networknt/light-4j/pull/720) ([stevehu](https://github.com/stevehu))
+- fixes \#717 remove unused import in Http2Client in 1.6.x [\#718](https://github.com/networknt/light-4j/pull/718) ([stevehu](https://github.com/stevehu))
 ## [1.6.21](https://github.com/networknt/light-4j/tree/1.6.21) (2020-06-05)
 
 
