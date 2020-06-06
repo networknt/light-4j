@@ -10,6 +10,7 @@ singletons:
       parameters:
         registrySessionTimeout: '1000'
 - com.networknt.consul.client.ConsulClient:
+#  - com.networknt.consul.client.ConsulClientImpl
   - com.networknt.consul.MockConsulClient:
     - java.lang.String: localhost
     - int: 8500
