@@ -181,7 +181,27 @@ public class Http2Client {
         return connect(uri, worker, null, bufferPool, options);
     }
 
+    public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
+        final FutureResult<ClientConnection> result = new FutureResult<>();
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        if(connection != null && connection.isOpen()) {
+            result.setResult(connection);
+            return result.getIoFuture();
+        }
+        return connect(uri, worker, null, bufferPool, options);
+    }
+
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
+        return connect(bindAddress, uri, worker, null, bufferPool, options);
+    }
+
+    public IoFuture<ClientConnection> borrowConnection(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
+        final FutureResult<ClientConnection> result = new FutureResult<>();
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        if(connection != null && connection.isOpen()) {
+            result.setResult(connection);
+            return result.getIoFuture();
+        }
         return connect(bindAddress, uri, worker, null, bufferPool, options);
     }
 
@@ -197,7 +217,22 @@ public class Http2Client {
         return SSL;
     }
 
+    public void returnConnection(ClientConnection connection) {
+        http2ClientConnectionPool.resetConnectionStatus(connection);
+    }
+
     public IoFuture<ClientConnection> connect(final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
+        return connect((InetSocketAddress) null, uri, worker, ssl, bufferPool, options);
+    }
+
+    public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        final FutureResult<ClientConnection> result = new FutureResult<>();
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        if(connection != null && connection.isOpen()) {
+            result.setResult(connection);
+            return result.getIoFuture();
+        }
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         return connect((InetSocketAddress) null, uri, worker, ssl, bufferPool, options);
     }
@@ -206,17 +241,18 @@ public class Http2Client {
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         ClientProvider provider = getClientProvider(uri);
         final FutureResult<ClientConnection> result = new FutureResult<>();
-            provider.connect(new ClientCallback<ClientConnection>() {
-                @Override
-                public void completed(ClientConnection r) {
-                    result.setResult(r);
-                }
+        provider.connect(new ClientCallback<ClientConnection>() {
+            @Override
+            public void completed(ClientConnection r) {
+                result.setResult(r);
+                http2ClientConnectionPool.cacheConnection(uri, r);
+            }
 
-                @Override
-                public void failed(IOException e) {
-                    result.setException(e);
-                }
-            }, bindAddress, uri, worker, ssl, bufferPool, options);
+            @Override
+            public void failed(IOException e) {
+                result.setException(e);
+            }
+        }, bindAddress, uri, worker, ssl, bufferPool, options);
         return result.getIoFuture();
     }
 
@@ -224,12 +260,42 @@ public class Http2Client {
         return connect((InetSocketAddress) null, uri, ioThread, null, bufferPool, options);
     }
 
+    public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
+        final FutureResult<ClientConnection> result = new FutureResult<>();
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        if(connection != null && connection.isOpen()) {
+            result.setResult(connection);
+            return result.getIoFuture();
+        }
+        return connect((InetSocketAddress) null, uri, ioThread, null, bufferPool, options);
+    }
 
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
         return connect(bindAddress, uri, ioThread, null, bufferPool, options);
     }
 
+    public IoFuture<ClientConnection> borrowConnection(InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
+        final FutureResult<ClientConnection> result = new FutureResult<>();
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        if(connection != null && connection.isOpen()) {
+            result.setResult(connection);
+            return result.getIoFuture();
+        }
+        return connect(bindAddress, uri, ioThread, null, bufferPool, options);
+    }
+
     public IoFuture<ClientConnection> connect(final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
+        return connect((InetSocketAddress) null, uri, ioThread, ssl, bufferPool, options);
+    }
+
+    public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        final FutureResult<ClientConnection> result = new FutureResult<>();
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        if(connection != null && connection.isOpen()) {
+            result.setResult(connection);
+            return result.getIoFuture();
+        }
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         return connect((InetSocketAddress) null, uri, ioThread, ssl, bufferPool, options);
     }
@@ -242,6 +308,7 @@ public class Http2Client {
             @Override
             public void completed(ClientConnection r) {
                 result.setResult(r);
+                http2ClientConnectionPool.cacheConnection(uri, r);
             }
 
             @Override
