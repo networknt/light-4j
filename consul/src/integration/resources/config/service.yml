@@ -8,10 +8,7 @@ singletons:
       parameters:
         registryRetryPeriod: '30000'
 - com.networknt.consul.client.ConsulClient:
-  - com.networknt.consul.client.ConsulClientImpl:
-    - java.lang.String: http
-    - java.lang.String: localhost
-    - int: 8500
+  - com.networknt.consul.client.ConsulClientImpl
 - com.networknt.registry.Registry:
   - com.networknt.consul.ConsulRegistry
 - com.networknt.balance.LoadBalance:
