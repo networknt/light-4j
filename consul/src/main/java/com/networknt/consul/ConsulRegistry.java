@@ -228,7 +228,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                 }
                 lookupServices.put(serviceName, response.getConsulIndex());
                 return serviceUrls;
-            } else if (response.getConsulIndex() <= lastConsulIndexId) {
+            } else if (response.getConsulIndex() < lastConsulIndexId) {
                 logger.info(serviceName + "  lastIndex:" + lastConsulIndexId + "; response consul Index:" + response.getConsulIndex());
                 lookupServices.put(serviceName, 0L);
             } else {
