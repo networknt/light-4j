@@ -1,5 +1,15 @@
 # Change Log
 
+## [1.6.23](https://github.com/networknt/light-4j/tree/1.6.23) (2020-06-22)
+
+
+**Merged pull requests:**
+
+
+-  fixes \#730 [\#731](https://github.com/networknt/light-4j/pull/731) ([chenyan71](https://github.com/chenyan71))
+-  no change to index same [\#729](https://github.com/networknt/light-4j/pull/729) ([chenyan71](https://github.com/chenyan71))
+- fixes \#726 [\#727](https://github.com/networknt/light-4j/pull/727) ([chenyan71](https://github.com/chenyan71))
+- fixes \#724 remove the temporary version.jackson-databind in the pom.xml [\#725](https://github.com/networknt/light-4j/pull/725) ([stevehu](https://github.com/stevehu))
 ## [1.6.22](https://github.com/networknt/light-4j/tree/1.6.22) (2020-06-06)
 
 
