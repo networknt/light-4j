@@ -106,6 +106,7 @@ public class LightCluster implements Cluster {
             }
             urls = registry.discover(subscribeUrl);
             if(logger.isDebugEnabled()) logger.debug("discovered urls = " + urls);
+            serviceMap.put(serviceId, urls == null ? new ArrayList<>() : urls);
         }
         //if doesn't specify envTag at all, return all the urls
         if(tag == null) {return urls;}
