@@ -772,6 +772,21 @@ ERR11633:
   code: ERR11633
   message: ORDER_NOT_FOUND_BY_EMAIL
   description: Order not found for email %s.
+ERR11634:
+  statusCode: 404
+  code: ERR11634
+  message: REFERENCE_NOT_FOUND
+  description: Reference not found for name %s and language %s.
+ERR11635:
+  statusCode: 400
+  code: ERR11635
+  message: HOST_NOT_MATCH_EMAIL
+  description: Host %s doesn't match the email domain %s.
+ERR11636:
+  statusCode: 400
+  code: ERR11636
+  message: SQL_EXCEPTION
+  description: SQLException with error %s.
 
 
 # OAuth2 service error 12000-13000
