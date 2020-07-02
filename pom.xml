@@ -92,7 +92,7 @@
         <version.javamail>1.6.1</version.javamail>
         <version.hikaricp>3.1.0</version.hikaricp>
         <version.h2>1.4.196</version.h2>
-        <version.mysql>6.0.5</version.mysql>
+        <version.mysql>8.0.16</version.mysql>
         <version.postgres>9.4.1211</version.postgres>
         <version.oracle>11.2.0.3</version.oracle>
         <version.sqlserver>6.5.1.jre8-preview</version.sqlserver>
