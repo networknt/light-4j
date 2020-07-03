@@ -21,6 +21,7 @@ package com.networknt.client;
 import com.networknt.client.circuitbreaker.CircuitBreaker;
 import com.networknt.client.http.*;
 import com.networknt.client.listener.ByteBufferReadChannelListener;
+import com.networknt.client.listener.ByteBufferWriteChannelListener;
 import com.networknt.client.oauth.Jwt;
 import com.networknt.client.oauth.TokenManager;
 import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
@@ -761,6 +762,52 @@ public class Http2Client {
     public ClientCallback<ClientExchange> byteBufferClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch) {
         return new ClientCallback<ClientExchange>() {
             public void completed(ClientExchange result) {
+                result.setResponseListener(new ClientCallback<ClientExchange>() {
+                    public void completed(final ClientExchange result) {
+                        reference.set(result.getResponse());
+                        (new ByteBufferReadChannelListener(result.getConnection().getBufferPool()) {
+                            protected void bufferDone(List<Byte> out) {
+                                byte[] byteArray = new byte[out.size()];
+                                int index = 0;
+                                for (byte b : out) {
+                                    byteArray[index++] = b;
+                                }
+                                result.getResponse().putAttachment(BUFFER_BODY, (ByteBuffer.wrap(byteArray)));
+                                latch.countDown();
+                            }
+
+                            protected void error(IOException e) {
+                                latch.countDown();
+                            }
+                        }).setup(result.getResponseChannel());
+                    }
+                    public void failed(IOException e) {
+                        latch.countDown();
+                    }
+                });
+
+                try {
+                    result.getRequestChannel().shutdownWrites();
+                    if (!result.getRequestChannel().flush()) {
+                        result.getRequestChannel().getWriteSetter().set(ChannelListeners.flushingChannelListener((ChannelListener)null, (ChannelExceptionHandler)null));
+                        result.getRequestChannel().resumeWrites();
+                    }
+                } catch (IOException var3) {
+                    latch.countDown();
+                }
+
+            }
+
+            public void failed(IOException e) {
+                latch.countDown();
+            }
+        };
+    }
+
+    public ClientCallback<ClientExchange> byteBufferClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch, final ByteBuffer requestBody) {
+        return new ClientCallback<ClientExchange>() {
+            public void completed(ClientExchange result) {
+                new ByteBufferWriteChannelListener(requestBody).setup(result.getRequestChannel());
                 result.setResponseListener(new ClientCallback<ClientExchange>() {
                     public void completed(final ClientExchange result) {
                         reference.set(result.getResponse());
