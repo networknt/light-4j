@@ -70,7 +70,7 @@ public class ConfigInjection {
             if (!(value instanceof String)) {
                 return value;
             }
-            m.appendReplacement(sb, (String) value);
+            m.appendReplacement(sb, m.quoteReplacement((String)value));
         }
         return m.appendTail(sb).toString();
     }
