@@ -34,4 +34,17 @@ public class ConfigEscapeTest {
         Map<String, Object> passwordMap = Config.getInstance().getJsonMapConfigNoCache("password");
         Assert.assertEquals("def$g", passwordMap.get("value"));
     }
+
+    @Test
+    public void testSql1() {
+        Map<String, Object> passwordMap = Config.getInstance().getJsonMapConfigNoCache("password");
+        Assert.assertEquals("SELECT JSON_VALUE(abc, '$.foo.bar') FROM def", passwordMap.get("sql1"));
+    }
+
+    @Test
+    public void testSql2() {
+        Map<String, Object> passwordMap = Config.getInstance().getJsonMapConfigNoCache("password");
+        Assert.assertEquals("SELECT JSON_VALUE(abc, '$.foo.bar') FROM def", passwordMap.get("sql2"));
+    }
+
 }
