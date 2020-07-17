@@ -21,6 +21,11 @@ import com.networknt.acme.client.persistance.FileCertificateStore;
 import com.networknt.acme.client.persistance.FileKeyStore;
 
 public class CertificateAuthority {
+	private static final String CERTFICATE_SIGNING_REQUEST_FILE = "/example.csr";
+	private static final String DOMAIN_KEY_FILE = "/domain.key";
+	private static final String CERTIFICATE_FILE = "/certificate.pem";
+	private static final String BASE_PATH = "user.home";
+
 	public Certificate order() throws AcmeException, InterruptedException, IOException {
 		Session session = new SessionFactory().getPebbleSession();
 		Account account = new AccountManager().getAccount(session);
@@ -32,15 +37,15 @@ public class CertificateAuthority {
 			  order.update();
 		}
 		CertificateStore certStore = new FileCertificateStore();
-		certStore.store(order.getCertificate(), System.getProperty("user.home")+"/certificate.pem");
+		certStore.store(order.getCertificate(), System.getProperty(BASE_PATH)+CERTIFICATE_FILE);
 		return order.getCertificate();
 	}
 	private byte[] createCSR() throws IOException {
-		KeyPair domainKeyPair = new FileKeyStore().getKey(System.getProperty("user.home")+"/domain.key");
+		KeyPair domainKeyPair = new FileKeyStore().getKey(System.getProperty(BASE_PATH)+DOMAIN_KEY_FILE);
 		CSRBuilder csrb = new CSRBuilder();
 		csrb.addDomain("test.com");
 		csrb.sign(domainKeyPair);
-		csrb.write(new FileWriter(System.getProperty("user.home")+"/example.csr"));
+		csrb.write(new FileWriter(System.getProperty(BASE_PATH)+CERTFICATE_SIGNING_REQUEST_FILE));
 		return csrb.getEncoded();
 	}
 	private Order createOrder(Account account) throws AcmeException, InterruptedException, IOException {

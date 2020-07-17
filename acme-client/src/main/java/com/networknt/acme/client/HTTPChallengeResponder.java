@@ -14,14 +14,14 @@ import com.sun.net.httpserver.HttpServer;
 public class HTTPChallengeResponder {
 	private String challengeResponse;
 	private HttpServer server;
-	private static final String acmePath = "/.well-known/acme-challenge/";
-	private static final int port = 80;
+	private static final String ACME_CHALLENGE_PATH = "/.well-known/acme-challenge/";
+	private static final int PORT = 80;
 	static final Logger logger = LoggerFactory.getLogger(HTTPChallengeResponder.class);
 	public HTTPChallengeResponder(String content) throws IOException {
-		logger.info(challengeResponse);
+		logger.info(content);
 		challengeResponse = content;
-		server=HttpServer.create(new InetSocketAddress(port), 0);
-		server.createContext(acmePath, new MyHandler());
+		server = HttpServer.create(new InetSocketAddress(PORT), 0);
+		server.createContext(ACME_CHALLENGE_PATH, new MyHandler());
 		server.setExecutor(null); 
 	}
 	public void start() {
