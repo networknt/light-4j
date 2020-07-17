@@ -21,6 +21,7 @@ package com.networknt.client;
 import com.networknt.client.circuitbreaker.CircuitBreaker;
 import com.networknt.client.http.*;
 import com.networknt.client.listener.ByteBufferReadChannelListener;
+import com.networknt.client.listener.ByteBufferWriteChannelListener;
 import com.networknt.client.oauth.Jwt;
 import com.networknt.client.oauth.TokenManager;
 import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
@@ -190,7 +191,27 @@ public class Http2Client {
         return connect(uri, worker, null, bufferPool, options);
     }
 
+    public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
+        final FutureResult<ClientConnection> result = new FutureResult<>();
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        if(connection != null && connection.isOpen()) {
+            result.setResult(connection);
+            return result.getIoFuture();
+        }
+        return connect(uri, worker, null, bufferPool, options);
+    }
+
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
+        return connect(bindAddress, uri, worker, null, bufferPool, options);
+    }
+
+    public IoFuture<ClientConnection> borrowConnection(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
+        final FutureResult<ClientConnection> result = new FutureResult<>();
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        if(connection != null && connection.isOpen()) {
+            result.setResult(connection);
+            return result.getIoFuture();
+        }
         return connect(bindAddress, uri, worker, null, bufferPool, options);
     }
 
@@ -206,7 +227,22 @@ public class Http2Client {
         return SSL;
     }
 
+    public void returnConnection(ClientConnection connection) {
+        http2ClientConnectionPool.resetConnectionStatus(connection);
+    }
+
     public IoFuture<ClientConnection> connect(final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
+        return connect((InetSocketAddress) null, uri, worker, ssl, bufferPool, options);
+    }
+
+    public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        final FutureResult<ClientConnection> result = new FutureResult<>();
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        if(connection != null && connection.isOpen()) {
+            result.setResult(connection);
+            return result.getIoFuture();
+        }
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         return connect((InetSocketAddress) null, uri, worker, ssl, bufferPool, options);
     }
@@ -215,17 +251,18 @@ public class Http2Client {
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         ClientProvider provider = getClientProvider(uri);
         final FutureResult<ClientConnection> result = new FutureResult<>();
-            provider.connect(new ClientCallback<ClientConnection>() {
-                @Override
-                public void completed(ClientConnection r) {
-                    result.setResult(r);
-                }
+        provider.connect(new ClientCallback<ClientConnection>() {
+            @Override
+            public void completed(ClientConnection r) {
+                result.setResult(r);
+                http2ClientConnectionPool.cacheConnection(uri, r);
+            }
 
-                @Override
-                public void failed(IOException e) {
-                    result.setException(e);
-                }
-            }, bindAddress, uri, worker, ssl, bufferPool, options);
+            @Override
+            public void failed(IOException e) {
+                result.setException(e);
+            }
+        }, bindAddress, uri, worker, ssl, bufferPool, options);
         return result.getIoFuture();
     }
 
@@ -233,12 +270,42 @@ public class Http2Client {
         return connect((InetSocketAddress) null, uri, ioThread, null, bufferPool, options);
     }
 
+    public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
+        final FutureResult<ClientConnection> result = new FutureResult<>();
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        if(connection != null && connection.isOpen()) {
+            result.setResult(connection);
+            return result.getIoFuture();
+        }
+        return connect((InetSocketAddress) null, uri, ioThread, null, bufferPool, options);
+    }
 
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
         return connect(bindAddress, uri, ioThread, null, bufferPool, options);
     }
 
+    public IoFuture<ClientConnection> borrowConnection(InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
+        final FutureResult<ClientConnection> result = new FutureResult<>();
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        if(connection != null && connection.isOpen()) {
+            result.setResult(connection);
+            return result.getIoFuture();
+        }
+        return connect(bindAddress, uri, ioThread, null, bufferPool, options);
+    }
+
     public IoFuture<ClientConnection> connect(final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
+        return connect((InetSocketAddress) null, uri, ioThread, ssl, bufferPool, options);
+    }
+
+    public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        final FutureResult<ClientConnection> result = new FutureResult<>();
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        if(connection != null && connection.isOpen()) {
+            result.setResult(connection);
+            return result.getIoFuture();
+        }
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         return connect((InetSocketAddress) null, uri, ioThread, ssl, bufferPool, options);
     }
@@ -251,6 +318,7 @@ public class Http2Client {
             @Override
             public void completed(ClientConnection r) {
                 result.setResult(r);
+                http2ClientConnectionPool.cacheConnection(uri, r);
             }
 
             @Override
@@ -376,7 +444,7 @@ public class Http2Client {
             }
         }
         request.getRequestHeaders().put(Headers.AUTHORIZATION, token);
-        if(tracer != null) {
+        if(tracer != null && tracer.activeSpan() != null) {
             Tags.SPAN_KIND.set(tracer.activeSpan(), Tags.SPAN_KIND_CLIENT);
             Tags.HTTP_METHOD.set(tracer.activeSpan(), request.getMethod().toString());
             Tags.HTTP_URL.set(tracer.activeSpan(), request.getPath());
@@ -694,6 +762,52 @@ public class Http2Client {
     public ClientCallback<ClientExchange> byteBufferClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch) {
         return new ClientCallback<ClientExchange>() {
             public void completed(ClientExchange result) {
+                result.setResponseListener(new ClientCallback<ClientExchange>() {
+                    public void completed(final ClientExchange result) {
+                        reference.set(result.getResponse());
+                        (new ByteBufferReadChannelListener(result.getConnection().getBufferPool()) {
+                            protected void bufferDone(List<Byte> out) {
+                                byte[] byteArray = new byte[out.size()];
+                                int index = 0;
+                                for (byte b : out) {
+                                    byteArray[index++] = b;
+                                }
+                                result.getResponse().putAttachment(BUFFER_BODY, (ByteBuffer.wrap(byteArray)));
+                                latch.countDown();
+                            }
+
+                            protected void error(IOException e) {
+                                latch.countDown();
+                            }
+                        }).setup(result.getResponseChannel());
+                    }
+                    public void failed(IOException e) {
+                        latch.countDown();
+                    }
+                });
+
+                try {
+                    result.getRequestChannel().shutdownWrites();
+                    if (!result.getRequestChannel().flush()) {
+                        result.getRequestChannel().getWriteSetter().set(ChannelListeners.flushingChannelListener((ChannelListener)null, (ChannelExceptionHandler)null));
+                        result.getRequestChannel().resumeWrites();
+                    }
+                } catch (IOException var3) {
+                    latch.countDown();
+                }
+
+            }
+
+            public void failed(IOException e) {
+                latch.countDown();
+            }
+        };
+    }
+
+    public ClientCallback<ClientExchange> byteBufferClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch, final ByteBuffer requestBody) {
+        return new ClientCallback<ClientExchange>() {
+            public void completed(ClientExchange result) {
+                new ByteBufferWriteChannelListener(requestBody).setup(result.getRequestChannel());
                 result.setResponseListener(new ClientCallback<ClientExchange>() {
                     public void completed(final ClientExchange result) {
                         reference.set(result.getResponse());

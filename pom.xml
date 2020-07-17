@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.networknt</groupId>
     <artifactId>light-4j</artifactId>
-    <version>2.0.13-SNAPSHOT</version>
+    <version>2.0.16-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Parent POM</name>
     <description>Light 4J Framework Components</description>
@@ -67,8 +67,7 @@
     <properties>
         <java.version>11</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <version.jackson>2.10.0</version.jackson>
-        <version.jackson-databind>2.10.0</version.jackson-databind>
+        <version.jackson>2.10.4</version.jackson>
         <version.slf4j>1.7.25</version.slf4j>
         <version.jose4j>0.6.3</version.jose4j>
         <version.commons.codec>1.11</version.commons.codec>
@@ -77,7 +76,7 @@
         <version.junit>4.12</version.junit>
         <version.mockito>2.23.0</version.mockito>
         <version.powermock>2.0.2</version.powermock>
-        <version.undertow>2.0.29.Final</version.undertow>
+        <version.undertow>2.1.3.Final</version.undertow>
         <version.hamcrest>1.3</version.hamcrest>
         <version.assertj>3.8.0</version.assertj>
         <version.hdrhistogram>2.1.10</version.hdrhistogram>
@@ -92,7 +91,7 @@
         <version.javamail>1.6.1</version.javamail>
         <version.hikaricp>3.2.0</version.hikaricp>
         <version.h2>1.4.196</version.h2>
-        <version.mysql>6.0.5</version.mysql>
+        <version.mysql>8.0.16</version.mysql>
         <version.postgres>9.4.1211</version.postgres>
         <version.oracle>11.2.0.3</version.oracle>
         <version.sqlserver>7.0.0.jre10</version.sqlserver>
@@ -397,7 +396,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
-                <version>${version.jackson-databind}</version>
+                <version>${version.jackson}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>

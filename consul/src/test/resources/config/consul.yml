@@ -1,5 +1,5 @@
 # Consul URL for accessing APIs
-consulUrl: https://localhost:8500
+consulUrl: http://localhost:8500
 # number of requests before reset the shared connection.
 maxReqPerConn: 1000000
 # deregister the service after the amount of time after health check failed.

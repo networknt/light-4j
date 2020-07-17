@@ -20,6 +20,7 @@ package com.networknt.client;
 
 import com.networknt.config.Config;
 import com.networknt.httpstring.HttpStringConstants;
+import com.networknt.utility.Constants;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.client.*;
@@ -62,7 +63,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
-public class Http2ClientIT {
+public class Http2ClientPoolIT {
     static final Logger logger = LoggerFactory.getLogger(Http2ClientIT.class);
     static Undertow server = null;
     static SSLContext sslContext;
@@ -218,7 +219,7 @@ public class Http2ClientIT {
 
         final List<AtomicReference<ClientResponse>> references = new CopyOnWriteArrayList<>();
         final CountDownLatch latch = new CountDownLatch(10);
-        final ClientConnection connection = client.connect(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        final ClientConnection connection = client.borrowConnection(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
         try {
             connection.getIoThread().execute(new Runnable() {
                 @Override
@@ -242,44 +243,9 @@ public class Http2ClientIT {
                 Assert.assertEquals("HTTP/1.1", reference.get().getProtocol().toString());
             }
         } finally {
-            IoUtils.safeClose(connection);
+            client.returnConnection(connection);
         }
     }
-
-    /*
-    @Test
-    public void testMultipleHttp2Get() throws Exception {
-        //
-        final Http2Client client = createClient();
-
-        final List<ClientResponse> responses = new CopyOnWriteArrayList<>();
-        final CountDownLatch latch = new CountDownLatch(10);
-        final ClientConnection connection = client.connect(ADDRESS, worker, pool, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
-        try {
-            connection.getIoThread().execute(new Runnable() {
-                @Override
-                public void run() {
-                    for (int i = 0; i < 10; i++) {
-                        final ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(MESSAGE);
-                        request.getRequestHeaders().put(Headers.HOST, "localhost");
-                        connection.sendRequest(request, createClientCallback(responses, latch));
-                    }
-                }
-
-            });
-
-            latch.await(10, TimeUnit.SECONDS);
-
-            Assert.assertEquals(10, responses.size());
-            for (final ClientResponse response : responses) {
-                Assert.assertEquals(message, response.getAttachment(RESPONSE_BODY));
-                Assert.assertEquals("HTTP/1.1", response.getProtocol().toString());
-            }
-        } finally {
-            IoUtils.safeClose(connection);
-        }
-    }
-    */
 
     @Test
     public void testMultipleHttpPost() throws Exception {
@@ -289,7 +255,7 @@ public class Http2ClientIT {
 
         final List<String> responses = new CopyOnWriteArrayList<>();
         final CountDownLatch latch = new CountDownLatch(10);
-        final ClientConnection connection = client.connect(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        final ClientConnection connection = client.borrowConnection(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
         try {
             connection.getIoThread().execute(new Runnable() {
                 @Override
@@ -347,83 +313,10 @@ public class Http2ClientIT {
                 Assert.assertEquals(postMessage, response);
             }
         } finally {
-            IoUtils.safeClose(connection);
+            client.returnConnection(connection);
         }
     }
 
-    /*
-    @Test
-    public void testMultipleHttp2Post() throws Exception {
-        //
-        final Http2Client client = createClient();
-        final String postMessage = "This is a post request";
-
-        final List<String> responses = new CopyOnWriteArrayList<>();
-        final CountDownLatch latch = new CountDownLatch(10);
-        final ClientConnection connection = client.connect(ADDRESS, worker, pool, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
-        try {
-            connection.getIoThread().execute(new Runnable() {
-                @Override
-                public void run() {
-                    for (int i = 0; i < 10; i++) {
-                        final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(POST);
-                        request.getRequestHeaders().put(Headers.HOST, "localhost");
-                        request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
-                        connection.sendRequest(request, new ClientCallback<ClientExchange>() {
-                            @Override
-                            public void completed(ClientExchange result) {
-                                new StringWriteChannelListener(postMessage).setup(result.getRequestChannel());
-                                result.setResponseListener(new ClientCallback<ClientExchange>() {
-                                    @Override
-                                    public void completed(ClientExchange result) {
-                                        new StringReadChannelListener(pool) {
-
-                                            @Override
-                                            protected void stringDone(String string) {
-                                                responses.add(string);
-                                                latch.countDown();
-                                            }
-
-                                            @Override
-                                            protected void error(IOException e) {
-                                                e.printStackTrace();
-                                                latch.countDown();
-                                            }
-                                        }.setup(result.getResponseChannel());
-                                    }
-
-                                    @Override
-                                    public void failed(IOException e) {
-                                        e.printStackTrace();
-                                        latch.countDown();
-                                    }
-                                });
-                            }
-
-                            @Override
-                            public void failed(IOException e) {
-                                e.printStackTrace();
-                                latch.countDown();
-                            }
-                        });
-                    }
-                }
-
-            });
-
-            latch.await(10, TimeUnit.SECONDS);
-
-            Assert.assertEquals(10, responses.size());
-            for (final String response : responses) {
-                Assert.assertEquals(postMessage, response);
-            }
-        } finally {
-            IoUtils.safeClose(connection);
-        }
-    }
-    */
-
-    // FIXME Causes server.close to hang on JDK11.
     @Test
     public void testMultipleHttpGetSsl() throws Exception {
         //
@@ -434,7 +327,7 @@ public class Http2ClientIT {
         SSLContext context = Http2Client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
-        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        final ClientConnection connection = client.borrowConnection(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
         try {
             connection.getIoThread().execute(new Runnable() {
                 @Override
@@ -455,14 +348,12 @@ public class Http2ClientIT {
             Assert.assertEquals(10, references.size());
             for (final AtomicReference<ClientResponse> reference : references) {
                 Assert.assertEquals(message, reference.get().getAttachment(Http2Client.RESPONSE_BODY));
-                Assert.assertEquals("HTTP/1.1", reference.get().getProtocol().toString());
             }
         } finally {
-            IoUtils.safeClose(connection);
+            client.returnConnection(connection);
         }
     }
 
-    // FIXME Causes server.close to hang.
     @Test
     public void testMultipleHttp2GetSsl() throws Exception {
         //
@@ -473,7 +364,7 @@ public class Http2ClientIT {
         SSLContext context = client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
-        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        final ClientConnection connection = client.borrowConnection(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
         try {
             connection.getIoThread().execute(new Runnable() {
                 @Override
@@ -494,20 +385,18 @@ public class Http2ClientIT {
             Assert.assertEquals(10, references.size());
             for (final AtomicReference<ClientResponse> reference : references) {
                 Assert.assertEquals(message, reference.get().getAttachment(Http2Client.RESPONSE_BODY));
-                Assert.assertEquals("HTTP/2.0", reference.get().getProtocol().toString());
             }
         } finally {
             connection.getIoThread().execute(new Runnable() {
                 @Override
                 public void run() {
-                    IoUtils.safeClose(connection);
+                    client.returnConnection(connection);
                 }
             });
         }
     }
 
 
-    // FIXME Causes server.close to hang.
     @Test
     public void testMultipleHttpPostSsl() throws Exception {
         //
@@ -519,7 +408,7 @@ public class Http2ClientIT {
         SSLContext context = client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
-        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        final ClientConnection connection = client.borrowConnection(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
         try {
             connection.getIoThread().execute(new Runnable() {
                 @Override
@@ -577,11 +466,10 @@ public class Http2ClientIT {
                 Assert.assertEquals(postMessage, response);
             }
         } finally {
-            IoUtils.safeClose(connection);
+            client.returnConnection(connection);
         }
     }
 
-    // FIXME Causes server.close to hang.
     @Test
     public void testMultipleHttp2PostSsl() throws Exception {
         //
@@ -593,7 +481,7 @@ public class Http2ClientIT {
         SSLContext context = Http2Client.createSSLContext();
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
-        final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        final ClientConnection connection = client.borrowConnection(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
         try {
             connection.getIoThread().execute(new Runnable() {
                 @Override
@@ -651,14 +539,14 @@ public class Http2ClientIT {
                 Assert.assertEquals(postMessage, response);
             }
         } finally {
-            IoUtils.safeClose(connection);
+            client.returnConnection(connection);
         }
     }
 
     public String callApiAsync() throws Exception {
         final Http2Client client = createClient();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection = client.connect(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        final ClientConnection connection = client.borrowConnection(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath(API).setMethod(Methods.GET);
@@ -671,7 +559,7 @@ public class Http2ClientIT {
             Assert.assertEquals("{\"message\":\"OK!\"}", response.getAttachment(Http2Client.RESPONSE_BODY));
             Assert.assertEquals(false, connection.isOpen());
         } finally {
-            IoUtils.safeClose(connection);
+            client.returnConnection(connection);
         }
         return reference.get().getAttachment(Http2Client.RESPONSE_BODY);
     }
@@ -679,7 +567,7 @@ public class Http2ClientIT {
     public ByteBuffer callApiWithByteBuffer() throws Exception {
         final Http2Client client = createClient();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection = client.connect(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        final ClientConnection connection = client.borrowConnection(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath(API).setMethod(Methods.GET);
@@ -689,36 +577,15 @@ public class Http2ClientIT {
             connection.sendRequest(request, client.byteBufferClientCallback(reference, latch));
             latch.await();
 
-           // final ClientResponse response = reference.get();
-            Assert.assertNotNull(reference.get().getAttachment(Http2Client.BUFFER_BODY));
-            Assert.assertEquals(false, connection.isOpen());
-        } finally {
-            IoUtils.safeClose(connection);
-        }
-        return reference.get().getAttachment(Http2Client.BUFFER_BODY);
-    }
-
-    public ByteBuffer callApiWithByteBufferRequest() throws Exception {
-        final Http2Client client = createClient();
-        final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection = client.connect(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
-        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
-        try {
-            ClientRequest request = new ClientRequest().setPath(API).setMethod(Methods.GET);
-            request.getRequestHeaders().put(Headers.HOST, "localhost");
-            client.populateHeader(request, "Bearer token", "cid", "tid");
-            request.getRequestHeaders().add(Headers.CONNECTION, Headers.CLOSE.toString());
-            connection.sendRequest(request, client.byteBufferClientCallback(reference, latch, ByteBuffer.wrap("WebKitFormBoundaryOmz20xyMCkE27rN7".getBytes())));
-            latch.await();
-
             // final ClientResponse response = reference.get();
             Assert.assertNotNull(reference.get().getAttachment(Http2Client.BUFFER_BODY));
             Assert.assertEquals(false, connection.isOpen());
         } finally {
-            IoUtils.safeClose(connection);
+            client.returnConnection(connection);
         }
         return reference.get().getAttachment(Http2Client.BUFFER_BODY);
     }
+
 
     @Test
     public void testAsyncAboutToExpire() throws InterruptedException, ExecutionException {
@@ -775,60 +642,6 @@ public class Http2ClientIT {
         }
         System.out.println("resultList = " + resultList);
     }
-
-    /*
-    private ClientCallback<ClientExchange> createClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch) {
-        return new ClientCallback<ClientExchange>() {
-            @Override
-            public void completed(ClientExchange result) {
-                result.setResponseListener(new ClientCallback<ClientExchange>() {
-                    @Override
-                    public void completed(final ClientExchange result) {
-                        reference.set(result.getResponse());
-                        new StringReadChannelListener(result.getConnection().getBufferPool()) {
-
-                            @Override
-                            protected void stringDone(String string) {
-                                result.getResponse().putAttachment(Http2Client.RESPONSE_BODY, string);
-                                latch.countDown();
-                            }
-
-                            @Override
-                            protected void error(IOException e) {
-                                e.printStackTrace();
-
-                                latch.countDown();
-                            }
-                        }.setup(result.getResponseChannel());
-                    }
-
-                    @Override
-                    public void failed(IOException e) {
-                        e.printStackTrace();
-
-                        latch.countDown();
-                    }
-                });
-                try {
-                    result.getRequestChannel().shutdownWrites();
-                    if(!result.getRequestChannel().flush()) {
-                        result.getRequestChannel().getWriteSetter().set(ChannelListeners.<StreamSinkChannel>flushingChannelListener(null, null));
-                        result.getRequestChannel().resumeWrites();
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    latch.countDown();
-                }
-            }
-
-            @Override
-            public void failed(IOException e) {
-                e.printStackTrace();
-                latch.countDown();
-            }
-        };
-    }
-    */
 
     private static KeyStore loadKeyStore(final String name) throws IOException {
         final InputStream stream = Config.getInstance().getInputStreamFromFile(name);

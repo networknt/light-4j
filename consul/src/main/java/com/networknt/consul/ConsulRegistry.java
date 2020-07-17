@@ -180,7 +180,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
             synchronized (serviceName.intern()) {
                 urls = serviceCache.get(serviceName);
                 if (urls == null || urls .isEmpty()) {
-                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(protocol, serviceName);
+                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(protocol, serviceName, false);
                     updateServiceCache(serviceName, serviceUrls, false);
                     urls = serviceCache.get(serviceName);
                 }
@@ -190,7 +190,15 @@ public class ConsulRegistry extends CommandFailbackRegistry {
     }
 
     private ConcurrentHashMap<String, List<URL>> lookupServiceUpdate(String protocol, String serviceName) {
-        Long lastConsulIndexId = lookupServices.get(serviceName) == null ? 0L : lookupServices.get(serviceName);
+        return lookupServiceUpdate(protocol, serviceName, true);
+    }
+
+    private ConcurrentHashMap<String, List<URL>> lookupServiceUpdate(String protocol, String serviceName, boolean isBlockQuery) {
+        Long lastConsulIndexId = 0L;
+        if (isBlockQuery) {
+            lastConsulIndexId = lookupServices.get(serviceName) == null ? 0L : lookupServices.get(serviceName);
+        }
+
         if(logger.isTraceEnabled()) logger.trace("serviceName = " + serviceName + " lastConsulIndexId = " + lastConsulIndexId);
         ConsulResponse<List<ConsulService>> response = lookupConsulService(serviceName, lastConsulIndexId);
         if(logger.isTraceEnabled()) {
@@ -220,6 +228,9 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                 }
                 lookupServices.put(serviceName, response.getConsulIndex());
                 return serviceUrls;
+            } else if (response.getConsulIndex() < lastConsulIndexId) {
+                logger.info(serviceName + "  lastIndex:" + lastConsulIndexId + "; response consul Index:" + response.getConsulIndex());
+                lookupServices.put(serviceName, 0L);
             } else {
                 logger.info(serviceName + " no need update, lastIndex:" + lastConsulIndexId);
             }

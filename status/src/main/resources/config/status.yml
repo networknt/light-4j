@@ -386,7 +386,7 @@ ERR10052:
   statusCode: 401
   code: ERR10052
   message: GET_TOKEN_ERROR
-  description: "Cannot get valid token: %s."
+  description: Cannot get valid token %s.
 ERR10053:
   statusCode: 401
   code: ERR10053
@@ -706,22 +706,87 @@ ERR11620:
   statusCode: 400
   code: ERR11620
   message: PERMISSION_DENIED
-  description: Fail to access the endpoint for roles %s.
+  description: Fail to access the endpoint for user or roles %s.
 ERR11621:
   statusCode: 400
   code: ERR11621
   message: CITY_REGISTERED
-  description: The city has been registered with key %s.
+  description: The city has been registered with key %s, %s, %s.
 ERR11622:
   statusCode: 400
   code: ERR11622
   message: PROFILE_LOCATION_INCOMPLETE
   description: Country, Province or City is missing in user profile.
 ERR11623:
-  statusCode: 400
+  statusCode: 404
   code: ERR11623
-  message: CITY_NOT_REGISTERED
-  description: The location %s has not been registered.
+  message: CITY_NOT_FOUND
+  description: City not found for %s, %s, %s.
+ERR11624:
+  statusCode: 400
+  code: ERR11624
+  message: COUNTRY_PROVINCE_CITY_EMPTY
+  description: Country %s or province %s or city %s is empty.
+ERR11625:
+  statusCode: 404
+  code: ERR11625
+  message: ENTITY_NOT_FOUND
+  description: Entity not found for %s at %s, %s and %s defined in your profile. Please create an entity first.
+ERR11626:
+  statusCode: 404
+  code: ERR11626
+  message: STATUS_NOT_FOUND
+  description: Status not found for email or userId %s.
+ERR11627:
+  statusCode: 404
+  code: ERR11627
+  message: PRIVATE_MESSAGE_NOT_FOUND
+  description: Private message not found for email %s.
+ERR11628:
+  statusCode: 404
+  code: ERR11628
+  message: WEBSITE_NOT_FOUND
+  description: Website not found for email %s.
+ERR11629:
+  statusCode: 400
+  code: ERR11629
+  message: WALLET_QUERY_DENIED
+  description: Taiji Wallet %s email is not matched the JWT user_id %s and not admin role.
+ERR11630:
+  statusCode: 404
+  code: ERR11630
+  message: EMAIL_NOT_FOUND_BY_WALLET
+  description: Email not found for Taiji wallet %s.
+ERR11631:
+  statusCode: 404
+  code: ERR11631
+  message: NO_ENTITY_REGISTERED
+  description: No entity has been registered for the %s, %s, %s, %s, %s combination.
+ERR11632:
+  statusCode: 404
+  code: ERR11632
+  message: PAYMENT_NOT_FOUND_BY_EMAIL
+  description: Payment not found for email %s.
+ERR11633:
+  statusCode: 404
+  code: ERR11633
+  message: ORDER_NOT_FOUND_BY_EMAIL
+  description: Order not found for email %s.
+ERR11634:
+  statusCode: 404
+  code: ERR11634
+  message: REFERENCE_NOT_FOUND
+  description: Reference not found for name %s and language %s.
+ERR11635:
+  statusCode: 400
+  code: ERR11635
+  message: HOST_NOT_MATCH_EMAIL
+  description: Host %s doesn't match the email domain %s.
+ERR11636:
+  statusCode: 400
+  code: ERR11636
+  message: SQL_EXCEPTION
+  description: SQLException with error %s.
 
 
 # OAuth2 service error 12000-13000
@@ -975,6 +1040,11 @@ ERR12049:
   code: ERR12049
   message: PROVIDER_ID_INVALID
   description: Provider id invalid
+ERR12050:
+  statusCode: 400
+  code: ERR12050
+  message: FAILED_TO_POPULATE_HEADER
+  description: Failed to populate client credentials scope token in header in method %s
 
 # Tokenization service
 ERR12100:

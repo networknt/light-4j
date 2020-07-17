@@ -130,6 +130,9 @@ public class BodyHandler implements MiddlewareHandler {
             FormData formData = parser.parseBlocking();
             data = BodyConverter.convert(formData);
             exchange.putAttachment(REQUEST_BODY, data);
+        } else {
+            InputStream inputStream = exchange.getInputStream();
+            exchange.putAttachment(REQUEST_BODY, inputStream);
         }
     }
 
