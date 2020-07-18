@@ -17,25 +17,25 @@ import org.shredzone.acme4j.util.CSRBuilder;
 import com.networknt.acme.client.persistance.CertificateStore;
 import com.networknt.acme.client.persistance.FileCertificateStore;
 import com.networknt.acme.client.persistance.FileKeyStore;
+import com.networknt.config.Config;
 
 public class CertificateAuthority {
 	private static final String BASE_PATH = "user.home";
 	private static final String CERTFICATE_SIGNING_REQUEST_FILE = "/example.csr";
 	private static final String CERTIFICATE_FILE = "/certificate.pem";
 	private static final String DOMAIN_KEY_FILE = "/domain.key";
+	private static ACMEConfig config = (ACMEConfig) Config.getInstance().getJsonObjectConfig("acme", ACMEConfig.class);
 
-	public Certificate order(ACMEConfig acmeConfig) throws AcmeException, InterruptedException, IOException {
+	public Certificate order() throws AcmeException, InterruptedException, IOException {
 		Session session = new SessionFactory().getPebbleSession();
 		Account account = new AccountManager().getAccount(session);
-		String domain = acmeConfig.getDomain();
-		Order order = orderCertificate(account, domain);
+		Order order = orderCertificate(account);
 		storeCertificate(order);
 		return order.getCertificate();
 	}
 
-	private Order orderCertificate(Account account, String domain)
-			throws AcmeException, InterruptedException, IOException {
-		Order order = createOrder(account, domain);
+	private Order orderCertificate(Account account) throws AcmeException, InterruptedException, IOException {
+		Order order = createOrder(account);
 		byte[] csr = createCSR();
 		order.execute(csr);
 		while (order.getStatus() != Status.VALID) {
@@ -45,8 +45,9 @@ public class CertificateAuthority {
 		return order;
 	}
 
-	private Order createOrder(Account account, String domain) throws AcmeException, InterruptedException, IOException {
-		Order order = account.newOrder().domains("test.com").create();
+	private Order createOrder(Account account) throws AcmeException, InterruptedException, IOException {
+		String domain = config.getDomain();
+		Order order = account.newOrder().domains(domain).create();
 		for (Authorization auth : order.getAuthorizations()) {
 			if (auth.getStatus() != Status.VALID) {
 				processAuth(auth);
