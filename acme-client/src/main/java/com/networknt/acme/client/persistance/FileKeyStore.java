@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 public class FileKeyStore implements KeyStore {
 	static final Logger logger = LoggerFactory.getLogger(FileKeyStore.class);
+	
 	@Override
 	public KeyPair getKey(String name) {
 		File file = new File(name);
@@ -35,12 +36,8 @@ public class FileKeyStore implements KeyStore {
 			return createKey(file);
 		}
 	}
+
 	
-	private KeyPair createKey( File file) {
-		KeyPair keyPair = generateKePair();
-		writeKeyToFile(file, keyPair);
-		return keyPair;
-	}
 	private void writeKeyToFile(File file, KeyPair keyPair) {
 		String fileName = file.getName();
 		try (FileWriter fw = new FileWriter(file)) {
@@ -50,5 +47,10 @@ public class FileKeyStore implements KeyStore {
 			logger.error("Error while writing to file "+fileName, e);
 		}
 	}
-
+	
+	private KeyPair createKey( File file) {
+		KeyPair keyPair = generateKePair();
+		writeKeyToFile(file, keyPair);
+		return keyPair;
+	}
 }
