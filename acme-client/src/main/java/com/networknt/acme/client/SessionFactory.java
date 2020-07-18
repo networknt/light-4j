@@ -3,10 +3,17 @@ package com.networknt.acme.client;
 import org.shredzone.acme4j.Session;
 
 public class SessionFactory {
+
 	public Session getLetsEncryptSession() {
-		return new  Session("https://acme-staging-v02.api.letsencrypt.org/directory");
+		return new Session("https://acme-v02.api.letsencrypt.org/directory");
 	}
+
+	public Session getLetsEncryptStagingSession() {
+		return new Session("https://acme-staging-v02.api.letsencrypt.org/directory");
+	}
+
 	public Session getPebbleSession() {
-		return new  Session("https://localhost:14000/dir");
+		return new Session("https://localhost:14000/dir");
 	}
+
 }
