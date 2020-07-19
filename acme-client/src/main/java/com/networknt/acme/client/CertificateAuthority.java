@@ -3,6 +3,8 @@ package com.networknt.acme.client;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.security.KeyPair;
+import java.security.cert.X509Certificate;
+import java.util.List;
 
 import org.shredzone.acme4j.Account;
 import org.shredzone.acme4j.Authorization;
@@ -20,21 +22,29 @@ import com.networknt.acme.client.persistance.FileKeyStore;
 import com.networknt.config.Config;
 
 public class CertificateAuthority {
-	private static final String BASE_PATH = "user.home";
-	private static final String CERTFICATE_SIGNING_REQUEST_FILE = "/example.csr";
-	private static final String CERTIFICATE_FILE = "/certificate.pem";
-	private static final String DOMAIN_KEY_FILE = "/domain.key";
+	private static final String BASE_PATH = System.getProperty("user.home");
+	private static final String CERTFICATE_SIGNING_REQUEST_PATH = BASE_PATH + "/domain.csr";
+	private static final String CERTIFICATE_PATH = BASE_PATH + "/certificate.pem";
+	private static final String DOMAIN_KEY_PATH = BASE_PATH + "/domain.key";
 	private static ACMEConfig config = (ACMEConfig) Config.getInstance().getJsonObjectConfig("acme", ACMEConfig.class);
 
-	public Certificate order() throws AcmeException, InterruptedException, IOException {
-		Session session = new SessionFactory().getPebbleSession();
-		Account account = new AccountManager().getAccount(session);
-		Order order = orderCertificate(account);
-		storeCertificate(order);
-		return order.getCertificate();
+	public List<X509Certificate> order() throws AcmeException, InterruptedException, IOException {
+		List<X509Certificate> certficateChain = getCertificate();
+		if (!certficateChain.isEmpty())
+			return certficateChain;
+		Certificate certifcate = orderCertificate();
+		storeCertificate(certifcate);
+		return certifcate.getCertificateChain();
 	}
 
-	private Order orderCertificate(Account account) throws AcmeException, InterruptedException, IOException {
+	private List<X509Certificate> getCertificate() {
+		return new FileCertificateStore().retrieve(CERTIFICATE_PATH);
+
+	}
+
+	private Certificate orderCertificate() throws AcmeException, InterruptedException, IOException {
+		Session session = new SessionFactory().getPebbleSession();
+		Account account = new AccountManager().getAccount(session);
 		Order order = createOrder(account);
 		byte[] csr = createCSR();
 		order.execute(csr);
@@ -42,7 +52,7 @@ public class CertificateAuthority {
 			Thread.sleep(3000L);
 			order.update();
 		}
-		return order;
+		return order.getCertificate();
 	}
 
 	private Order createOrder(Account account) throws AcmeException, InterruptedException, IOException {
@@ -69,17 +79,17 @@ public class CertificateAuthority {
 	}
 
 	private byte[] createCSR() throws IOException {
-		KeyPair domainKeyPair = new FileKeyStore().getKey(System.getProperty(BASE_PATH) + DOMAIN_KEY_FILE);
+		KeyPair domainKeyPair = new FileKeyStore().getKey(DOMAIN_KEY_PATH);
 		CSRBuilder csrb = new CSRBuilder();
 		csrb.addDomain("test.com");
 		csrb.sign(domainKeyPair);
-		csrb.write(new FileWriter(System.getProperty(BASE_PATH) + CERTFICATE_SIGNING_REQUEST_FILE));
+		csrb.write(new FileWriter(CERTFICATE_SIGNING_REQUEST_PATH));
 		return csrb.getEncoded();
 	}
 
-	private void storeCertificate(Order order) {
+	private void storeCertificate(Certificate certificate) {
 		CertificateStore certStore = new FileCertificateStore();
-		certStore.store(order.getCertificate(), System.getProperty(BASE_PATH) + CERTIFICATE_FILE);
+		certStore.store(certificate, CERTIFICATE_PATH);
 	}
 
 }

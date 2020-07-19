@@ -1,8 +1,12 @@
 package com.networknt.acme.client.persistance;
 
+import java.security.cert.X509Certificate;
+import java.util.List;
+
 import org.shredzone.acme4j.Certificate;
 
 public interface CertificateStore {
-	Certificate retrieve(String certificateName);
-	boolean store(Certificate certificate,String certificateName);
+	List<X509Certificate> retrieve(String certificatePath);
+
+	boolean store(Certificate certificate, String certificatePath);
 }
