@@ -22,19 +22,20 @@ import com.networknt.acme.client.persistance.FileKeyStore;
 import com.networknt.config.Config;
 
 public class CertificateAuthority {
+
 	private static final String BASE_PATH = System.getProperty("user.home");
 	private static final String CERTFICATE_SIGNING_REQUEST_PATH = BASE_PATH + "/domain.csr";
 	private static final String CERTIFICATE_PATH = BASE_PATH + "/certificate.pem";
 	private static final String DOMAIN_KEY_PATH = BASE_PATH + "/domain.key";
 	private static ACMEConfig config = (ACMEConfig) Config.getInstance().getJsonObjectConfig("acme", ACMEConfig.class);
 
-	public List<X509Certificate> order() throws AcmeException, InterruptedException, IOException {
+	public void order(CertificateInstaller installer) throws AcmeException, InterruptedException, IOException {
 		List<X509Certificate> certficateChain = getCertificate();
 		if (!certficateChain.isEmpty())
-			return certficateChain;
+			installer.install(certficateChain);
 		Certificate certifcate = orderCertificate();
 		storeCertificate(certifcate);
-		return certifcate.getCertificateChain();
+		installer.install(certifcate.getCertificateChain());
 	}
 
 	private List<X509Certificate> getCertificate() {

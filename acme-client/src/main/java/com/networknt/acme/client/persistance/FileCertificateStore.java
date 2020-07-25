@@ -15,7 +15,6 @@ import org.shredzone.acme4j.Certificate;
 
 public class FileCertificateStore implements CertificateStore {
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public List<X509Certificate> retrieve(String certificatePath) {
 		try {
@@ -23,7 +22,6 @@ public class FileCertificateStore implements CertificateStore {
 			CertificateFactory cf = CertificateFactory.getInstance("X509");
 			return (List<X509Certificate>) cf.generateCertificates(is);
 		} catch (FileNotFoundException | CertificateException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return Collections.emptyList();
