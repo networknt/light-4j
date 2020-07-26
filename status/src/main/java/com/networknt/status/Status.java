@@ -117,6 +117,23 @@ public class Status {
      * Construct a status object based on all the properties in the object. It is not
      * very often to use this construct to create object.
      *
+     * @param httpStatus  HttpStatus
+     * @param message     Message
+     * @param description Description
+     */
+    public Status(HttpStatus httpStatus, String message, String description) {
+        this.statusCode = httpStatus.value();
+        this.code = httpStatus.getReasonPhrase();
+        this.severity = defaultSeverity;
+        this.message = message;
+        this.description = description;
+    }
+
+
+    /**
+     * Construct a status object based on all the properties in the object. It is not
+     * very often to use this construct to create object.
+     *
      * @param statusCode  Status Code
      * @param code        Code
      * @param severity    Status Severity
