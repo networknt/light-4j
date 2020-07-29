@@ -50,7 +50,6 @@ public class ConfigInjection {
     private static final String EXCLUSION_CONFIG_FILE_LIST = "exclusionConfigFileList";
 
     private static final Map<String, Object> exclusionMap = Config.getInstance().getJsonMapConfig(SCALABLE_CONFIG);
-    private static final Map<String, Object> valueMap = Config.getInstance().getDefaultJsonMapConfig(CENTRALIZED_MANAGEMENT);
 
     // Define the injection pattern which represents the injection points
     private static Pattern pattern = Pattern.compile("\\$\\{(.*?)\\}");
@@ -98,6 +97,7 @@ public class ConfigInjection {
             Boolean containsField = false;
             // Use key of injectionPattern to get value from both environment variables and "values.yaml"
             Object envValue = typeCast(System.getenv(injectionPattern.getKey()));
+            Map<String, Object> valueMap = Config.getInstance().getDefaultJsonMapConfig(CENTRALIZED_MANAGEMENT);
             Object fileValue = (valueMap != null) ? valueMap.get(injectionPattern.getKey()) : null;
             // Return different value from different sources based on injection order defined before
             if ((INJECTION_ORDER_CODE.equals("2") && envValue != null) || (INJECTION_ORDER_CODE.equals("1") && fileValue == null)) {
