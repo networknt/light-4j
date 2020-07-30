@@ -12,6 +12,8 @@ import static com.networknt.server.Server.logger;
  * 3. bufferSize
  * 4. serverString
  * 5. alwaysSetDate
+ * 6. maxTransferFileSize
+ * 7. allowUnescapedCharactersInUrl
  * <p>
  * Note: To set these options, configuring them in server.yml
  */
@@ -22,6 +24,7 @@ public enum ServerOption {
     BACKLOG("backlog"),
     SERVER_STRING("serverString"),
     ALWAYS_SET_DATE("alwaysSetDate"),
+    MAX_TRANSFER_FILE_SIZE("maxTransferFileSize"),
     ALLOW_UNESCAPED_CHARACTERS_IN_URL("allowUnescapedCharactersInUrl");
 
     private final String value;
@@ -93,6 +96,12 @@ public enum ServerOption {
             case ALWAYS_SET_DATE:
                 if (value == null) {
                     serverConfig.setAlwaysSetDate(true);
+                }
+                return true;
+            case MAX_TRANSFER_FILE_SIZE:
+                if (value == null || (long) value <= 0) {
+                    serverConfig.setMaxTransferFileSize(1000000);
+                    return false;
                 }
                 return true;
             case ALLOW_UNESCAPED_CHARACTERS_IN_URL:
