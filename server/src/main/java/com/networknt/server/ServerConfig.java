@@ -52,6 +52,7 @@ public class ServerConfig {
     String serverString;
     String bootstrapStoreName;
     String bootstrapStorePass;
+    long maxTransferFileSize;
 
 	public ServerConfig() {
     }
@@ -306,5 +307,13 @@ public class ServerConfig {
 
     public void setBootstrapStorePass(String bootstrapStorePass) {
         this.bootstrapStorePass = bootstrapStorePass;
+    }
+
+    public long getMaxTransferFileSize() {
+        return maxTransferFileSize;
+    }
+
+    public void setMaxTransferFileSize(long maxTransferFileSize) {
+        this.maxTransferFileSize = maxTransferFileSize;
     }
 }

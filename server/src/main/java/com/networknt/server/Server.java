@@ -269,6 +269,8 @@ public class Server {
                     .setServerOption(UndertowOptions.ALLOW_UNESCAPED_CHARACTERS_IN_URL, serverConfig.isAllowUnescapedCharactersInUrl())
                     // This is to overcome a bug in JDK 11.0.1, 11.0.2. For more info https://issues.jboss.org/browse/UNDERTOW-1422
                     .setSocketOption(Options.SSL_ENABLED_PROTOCOLS, Sequence.of("TLSv1.2"))
+                    .setServerOption(UndertowOptions.MAX_ENTITY_SIZE, serverConfig.getMaxTransferFileSize())
+                    .setServerOption(UndertowOptions.MULTIPART_MAX_ENTITY_SIZE, 10*serverConfig.getMaxTransferFileSize())
                     .setHandler(Handlers.header(handler, Headers.SERVER_STRING, serverConfig.getServerString())).setWorkerThreads(serverConfig.getWorkerThreads()).build();
 
             server.start();
