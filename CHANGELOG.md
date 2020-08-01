@@ -6,6 +6,8 @@
 **Merged pull requests:**
 
 
+
+
 ## [1.6.24](https://github.com/networknt/light-4j/tree/1.6.24) (2020-07-01)
 
 
