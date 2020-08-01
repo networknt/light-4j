@@ -1,5 +1,19 @@
 # Change Log
 
+## [2.0.16](https://github.com/networknt/light-4j/tree/2.0.16) (2020-08-01)
+
+
+**Merged pull requests:**
+
+
+- fixes \#743 Handle the limit file size for upload/download [\#746](https://github.com/networknt/light-4j/pull/746) ([stevehu](https://github.com/stevehu))
+- Issue \#744: Valuemap not pickup the values loaded from config server [\#745](https://github.com/networknt/light-4j/pull/745) ([jsu216](https://github.com/jsu216))
+- fixes \#740 check escape backslash before appy quoteReplacement config [\#741](https://github.com/networknt/light-4j/pull/741) ([stevehu](https://github.com/stevehu))
+- fixes \#723 Token replacement in config files does not allow special c… [\#738](https://github.com/networknt/light-4j/pull/738) ([stevehu](https://github.com/stevehu))
+-  fixes \#710 [\#739](https://github.com/networknt/light-4j/pull/739) ([chenyan71](https://github.com/chenyan71))
+- fixes \#735 update client.yml in test resources to disable http2 as th… [\#736](https://github.com/networknt/light-4j/pull/736) ([stevehu](https://github.com/stevehu))
+- fixes \#721 update consul client to leverage connecction pool of Http2… [\#722](https://github.com/networknt/light-4j/pull/722) ([stevehu](https://github.com/stevehu))
+- fixes \#718 add borrowConnection and returnConnection to Http2Client [\#720](https://github.com/networknt/light-4j/pull/720) ([stevehu](https://github.com/stevehu))
 ## [2.0.15](https://github.com/networknt/light-4j/tree/2.0.15) (2020-07-01)
 
 
