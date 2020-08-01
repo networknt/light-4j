@@ -1,5 +1,15 @@
 # Change Log
 
+## [1.6.26](https://github.com/networknt/light-4j/tree/1.6.26) (2020-07-31)
+
+
+**Merged pull requests:**
+
+
+- Issue \#744: Valuemap not pickup the values loaded from config server [\#745](https://github.com/networknt/light-4j/pull/745) ([jsu216](https://github.com/jsu216))
+- fixes \#740 check escape backslash before appy quoteReplacement config [\#741](https://github.com/networknt/light-4j/pull/741) ([stevehu](https://github.com/stevehu))
+- fixes \#723 Token replacement in config files does not allow special c… [\#738](https://github.com/networknt/light-4j/pull/738) ([stevehu](https://github.com/stevehu))
+-  fixes \#710 [\#739](https://github.com/networknt/light-4j/pull/739) ([chenyan71](https://github.com/chenyan71))
 ## [1.6.25](https://github.com/networknt/light-4j/tree/1.6.25) (2020-07-31)
 
 
