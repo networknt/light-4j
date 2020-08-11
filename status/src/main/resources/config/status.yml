@@ -787,6 +787,11 @@ ERR11636:
   code: ERR11636
   message: SQL_EXCEPTION
   description: SQLException with error %s.
+ERR11637:
+  statusCode: 404
+  code: ERR11637
+  message: OBJECT_NOT_FOUND
+  description: Object %s not found for key %s.
 
 
 # OAuth2 service error 12000-13000
