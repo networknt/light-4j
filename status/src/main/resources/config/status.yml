@@ -1050,6 +1050,11 @@ ERR12050:
   code: ERR12050
   message: FAILED_TO_POPULATE_HEADER
   description: Failed to populate client credentials scope token in header in method %s
+ERR12051:
+  statusCode: 400
+  code: ERR12051
+  message: HOST_IS_REQUIRED
+  description: Host is required
 
 # Tokenization service
 ERR12100:
