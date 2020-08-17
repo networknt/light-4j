@@ -106,6 +106,9 @@ public class BodyHandler implements MiddlewareHandler {
                 } else if (contentType.startsWith("multipart/form-data") || contentType.startsWith("application/x-www-form-urlencoded")) {
                     // attach the parsed request body into exchange if the body parser is enabled
                     attachFormDataBody(exchange);
+                } else {
+                    InputStream inputStream = exchange.getInputStream();
+                    exchange.putAttachment(REQUEST_BODY, inputStream);
                 }
             } catch (IOException e) {
                 logger.error("IOException: ", e);
