@@ -32,6 +32,13 @@ public class ClaimsUtil {
         return claims;
     }
 
+    public static JwtClaims getTestCcClaims(String clientId, List<String> scope) {
+        JwtClaims claims = JwtIssuer.getDefaultJwtClaims();
+        claims.setClaim("client_id", clientId);
+        if(scope != null) claims.setStringListClaim("scope", scope); // multi-valued claims work too and will end up as a JSON array
+        return claims;
+    }
+
     public static JwtClaims getCustomClaims(String userId, String userType, String clientId, List<String> scope, Map<String, String> custom, String roles) {
         JwtClaims claims = JwtIssuer.getDefaultJwtClaims();
         claims.setClaim("user_id", userId);
