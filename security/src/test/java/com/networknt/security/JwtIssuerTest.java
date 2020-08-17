@@ -151,4 +151,13 @@ public class JwtIssuerTest {
         String jwt = JwtIssuer.getJwt(claims);
         System.out.println("***Long lived token for portal lightapi***: " + jwt);
     }
+
+    @Test
+    public void longlivedCcLocalPortal() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestCcClaims("f7d42348-c647-4efb-a52d-4c5787421e73", Arrays.asList("portal.r", "portal.w"));
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***Long lived token for portal lightapi***: " + jwt);
+    }
+
 }
