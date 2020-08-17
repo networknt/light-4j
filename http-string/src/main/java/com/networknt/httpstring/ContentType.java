@@ -16,14 +16,26 @@
 
 package com.networknt.httpstring;
 
+import java.io.Serializable;
+
 /**
  * a enum for http Content-Type header
- * currently only support 3 types JSON, XML AND *\/*
+ *
  */
 public enum ContentType {
+
+    ANY_TYPE("*/*"),
     APPLICATION_JSON("application/json"),
     XML("text/xml"),
-    ANY_TYPE("*/*");
+    APPLICATION_XML_VALUE("application/xml"),
+    APPLICATION_FORM_URLENCODED_VALUE("application/x-www-form-urlencoded"),
+    APPLICATION_PDF_VALUE("application/pdf"),
+    MULTIPART_MIXED_VALUE("multipart/mixed"),
+    MULTIPART_FORM_DATA_VALUE("multipart/form-data"),
+    TEXT_PLAIN_VALUE("text/plain"),
+    IMAGE_PNG_VALUE ("image/png"),
+    IMAGE_JPEG_VALUE ("image/jpeg"),
+    IMAGE_GIF_VALUE ("image/gif");
 
     private final String value;
 
