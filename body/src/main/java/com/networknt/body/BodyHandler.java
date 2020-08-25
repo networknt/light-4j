@@ -87,12 +87,12 @@ public class BodyHandler implements MiddlewareHandler {
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         // parse the body to map or list if content type is application/json
         String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
-        if (exchange.isInIoThread()) {
-            exchange.dispatch(this);
-            return;
-        }
-        exchange.startBlocking();
         if (contentType != null) {
+            if (exchange.isInIoThread()) {
+                exchange.dispatch(this);
+                return;
+            }
+            exchange.startBlocking();
             try {
                 if (contentType.startsWith("application/json")) {
                     InputStream inputStream = exchange.getInputStream();
@@ -119,10 +119,6 @@ public class BodyHandler implements MiddlewareHandler {
                 setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, contentType);
                 return;
             }
-        } else {
-            // attach the stream to the exchange if the content type is missing.
-            InputStream inputStream = exchange.getInputStream();
-            exchange.putAttachment(REQUEST_BODY, inputStream);
         }
         Handler.next(exchange, next);
     }
