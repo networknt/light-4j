@@ -18,6 +18,7 @@ package io.dropwizard.metrics.influxdb;
 
 import com.networknt.client.Http2Client;
 import com.networknt.exception.ClientException;
+import com.networknt.httpstring.ContentType;
 import com.networknt.mask.Mask;
 import io.dropwizard.metrics.influxdb.data.InfluxDbPoint;
 import io.dropwizard.metrics.influxdb.data.InfluxDbWriteObject;
@@ -124,6 +125,7 @@ public class InfluxDbHttpSender implements InfluxDbSender {
                     final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(path);
                     request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
                     request.getRequestHeaders().put(Headers.HOST, "localhost");
+                    request.getRequestHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     connection.sendRequest(request, client.createClientCallback(reference, latch, body));
                 }
             });
