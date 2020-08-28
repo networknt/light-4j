@@ -1,5 +1,15 @@
 # Change Log
 
+## [1.6.27](https://github.com/networknt/light-4j/tree/1.6.27) (2020-08-28)
+
+
+**Merged pull requests:**
+
+
+- fixes \#757 avoid parsing the body if content-type is missing [\#758](https://github.com/networknt/light-4j/pull/758) ([stevehu](https://github.com/stevehu))
+- fixes \#753 handle text/plain and content type missing in BodyHandler [\#755](https://github.com/networknt/light-4j/pull/755) ([stevehu](https://github.com/stevehu))
+- fixes \#754 Add content type text/plain header to the InfluxDbSender [\#756](https://github.com/networknt/light-4j/pull/756) ([stevehu](https://github.com/stevehu))
+- Issue 742 [\#749](https://github.com/networknt/light-4j/pull/749) ([chenyan71](https://github.com/chenyan71))
 ## [1.6.26](https://github.com/networknt/light-4j/tree/1.6.26) (2020-07-31)
 
 
