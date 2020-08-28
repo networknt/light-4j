@@ -1,5 +1,18 @@
 # Change Log
 
+## [2.0.17](https://github.com/networknt/light-4j/tree/2.0.17) (2020-08-28)
+
+
+**Merged pull requests:**
+
+
+- fixes \#759 skip sanitizer if the body is not JSON [\#760](https://github.com/networknt/light-4j/pull/760) ([stevehu](https://github.com/stevehu))
+- fixes \#757 avoid parsing the body if content-type is missing [\#758](https://github.com/networknt/light-4j/pull/758) ([stevehu](https://github.com/stevehu))
+- fixes \#753 handle text/plain and content type missing in BodyHandler [\#755](https://github.com/networknt/light-4j/pull/755) ([stevehu](https://github.com/stevehu))
+- fixes \#754 Add content type text/plain header to the InfluxDbSender [\#756](https://github.com/networknt/light-4j/pull/756) ([stevehu](https://github.com/stevehu))
+- Issue 742 [\#749](https://github.com/networknt/light-4j/pull/749) ([chenyan71](https://github.com/chenyan71))
+- fixes \#751 add a method to create client credentials token in issuer … [\#752](https://github.com/networknt/light-4j/pull/752) ([stevehu](https://github.com/stevehu))
+- fixes \#747 Add a generic status code for 404 object not found [\#748](https://github.com/networknt/light-4j/pull/748) ([stevehu](https://github.com/stevehu))
 ## [2.0.16](https://github.com/networknt/light-4j/tree/2.0.16) (2020-08-01)
 
 
