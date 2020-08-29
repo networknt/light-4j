@@ -73,6 +73,10 @@ public class Server {
 
     // service_id in slf4j MDC
     static final String SID = "sId";
+    // the bound port for the server. For metrics and other queries.
+    public static int currentPort;
+    // the bound ip for the server. For metrics and other queries
+    public static String currentAddress;
 
     @Deprecated //use getServerConfig() method instead
     public static ServerConfig config = getServerConfig(); // there are a lot of users are using the static variable in their code.
@@ -316,7 +320,8 @@ public class Server {
             if (logger.isInfoEnabled())
                 logger.info("Https port disabled.");
         }
-
+        // at this moment, the port number is bound. save it for later queries
+        currentPort = port;
         return true;
     }
 
@@ -487,7 +492,7 @@ public class Server {
                 ipAddress = inetAddress.getHostAddress();
                 logger.info("Could not find IP from STATUS_HOST_IP, use the InetAddress " + ipAddress);
             }
-
+            currentAddress = ipAddress;
             ServerConfig serverConfig = getServerConfig();
             Map parameters = new HashMap<>();
             if (serverConfig.getEnvironment() != null)
