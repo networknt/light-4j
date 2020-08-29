@@ -94,12 +94,12 @@ public class MetricsHandler implements MiddlewareHandler {
     Map<String, String> commonTags = new HashMap<>();
 
     public MetricsHandler() {
-        commonTags.put("apiName", Server.config.getServiceId());
-        commonTags.put("environment", Server.config.getEnvironment());
+        commonTags.put("api", Server.config.getServiceId());
+        commonTags.put("env", Server.config.getEnvironment());
+        commonTags.put("addr", Server.currentAddress);
+        commonTags.put("port", "" + Server.currentPort);
         InetAddress inetAddress = Util.getInetAddress();
-        // On Docker for Mac, inetAddress will be null as there is a bug.
-        commonTags.put("ipAddress", inetAddress == null ? "unknown" : inetAddress.getHostAddress());
-        commonTags.put("hostname", inetAddress == null ? "unknown" : inetAddress.getHostName()); // will be container id if in docker.
+        commonTags.put("host", inetAddress == null ? "unknown" : inetAddress.getHostName()); // will be container id if in docker.
                 
         if(logger.isDebugEnabled()) {
         	logger.debug(commonTags.toString());
@@ -173,12 +173,12 @@ public class MetricsHandler implements MiddlewareHandler {
     private static void createJVMMetricsReporter(final InfluxDbSender influxDb) {
         Map<String, String> commonTags = new HashMap<>();
 
-        commonTags.put("apiName", Server.config.getServiceId());
-        commonTags.put("environment", Server.config.getEnvironment());
+        commonTags.put("api", Server.config.getServiceId());
+        commonTags.put("env", Server.config.getEnvironment());
+        commonTags.put("addr", Server.currentAddress);
+        commonTags.put("port", "" + Server.currentPort);
         InetAddress inetAddress = Util.getInetAddress();
-        // On Docker for Mac, inetAddress will be null as there is a bug.
-        commonTags.put("ipAddress", inetAddress == null ? "unknown" : inetAddress.getHostAddress());
-        commonTags.put("hostname", inetAddress == null ? "unknown" : inetAddress.getHostName()); // will be container id if in docker.
+        commonTags.put("host", inetAddress == null ? "unknown" : inetAddress.getHostName()); // will be container id if in docker.
 
         JVMMetricsInfluxDbReporter jvmReporter = new JVMMetricsInfluxDbReporter(new MetricRegistry(), influxDb, "jvmInfluxDb-reporter",
                 MetricFilter.ALL, TimeUnit.SECONDS, TimeUnit.MILLISECONDS, commonTags);
