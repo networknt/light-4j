@@ -21,6 +21,7 @@ public final class ClientConfig {
     public static final String SAML_BEARER = "saml_bearer";
     public static final String CLIENT_CREDENTIALS = "client_credentials";
     public static final String AUTHORIZATION_CODE = "authorization_code";
+    public static final String CLIENT_AUTHENTICATED_USER = "client_authenticated_user";
     public static final String CACHE = "cache";
     public static final String CAPACITY = "capacity";
     public static final String OAUTH = "oauth";
