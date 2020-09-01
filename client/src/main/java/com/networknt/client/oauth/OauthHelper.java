@@ -59,6 +59,9 @@ public class OauthHelper {
     private static final String BASIC = "Basic";
     private static final String GRANT_TYPE = "grant_type";
     private static final String CODE = "code";
+    private static final String USER_ID = "userId";
+    private static final String USER_TYPE = "userType";
+    private static final String ROLES = "roles";
 
     /**
      * @deprecated will be moved to {@link ClientConfig#SCOPE}
@@ -512,7 +515,7 @@ public class OauthHelper {
     public static String getEncodedString(TokenRequest request) throws UnsupportedEncodingException {
         Map<String, String> params = new HashMap<>();
         params.put(GRANT_TYPE, request.getGrantType());
-        if(TokenRequest.AUTHORIZATION_CODE.equals(request.getGrantType())) {
+        if(ClientConfig.AUTHORIZATION_CODE.equals(request.getGrantType())) {
             params.put(CODE, ((AuthorizationCodeRequest)request).getAuthCode());
             // The redirectUri can be null so that OAuth 2.0 provider will use the redirectUri defined in the client registration
             if(((AuthorizationCodeRequest)request).getRedirectUri() != null) {
@@ -523,7 +526,20 @@ public class OauthHelper {
                 params.put(CSRF, csrf);
             }
         }
-        if(TokenRequest.REFRESH_TOKEN.equals(request.getGrantType())) {
+        if(ClientConfig.CLIENT_AUTHENTICATED_USER.equals(request.getGrantType())) {
+            params.put(USER_TYPE, ((ClientAuthenticatedUserRequest)request).getUserType());
+            params.put(USER_ID, ((ClientAuthenticatedUserRequest)request).getUserId());
+            params.put(ROLES, ((ClientAuthenticatedUserRequest)request).getRoles());
+            // The redirectUri can be null so that OAuth 2.0 provider will use the redirectUri defined in the client registration
+            if(((ClientAuthenticatedUserRequest)request).getRedirectUri() != null) {
+                params.put(REDIRECT_URI, ((ClientAuthenticatedUserRequest)request).getRedirectUri());
+            }
+            String csrf = request.getCsrf();
+            if(csrf != null) {
+                params.put(CSRF, csrf);
+            }
+        }
+        if(ClientConfig.REFRESH_TOKEN.equals(request.getGrantType())) {
             params.put(REFRESH_TOKEN, ((RefreshTokenRequest)request).getRefreshToken());
             String csrf = request.getCsrf();
             if(csrf != null) {
