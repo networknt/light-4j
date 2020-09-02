@@ -571,6 +571,11 @@ ERR11301:
 
 
 # 11350-11399 light-router
+ERR11350:
+  statusCode: 400
+  code: ERR11350
+  message: EMAIL_REGISTERED
+  description: Email %s has been registered with a different userId %s.
 
 # 11400-11499 light-config-server
 ERR11400:
