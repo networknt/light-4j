@@ -19,21 +19,23 @@ import org.shredzone.acme4j.util.CSRBuilder;
 import com.networknt.acme.client.persistance.CertificateStore;
 import com.networknt.acme.client.persistance.FileCertificateStore;
 import com.networknt.acme.client.persistance.FileKeyStore;
+import com.networknt.acme.client.util.ACMEUtils;
 import com.networknt.config.Config;
 
 public class CertificateAuthority {
 
-	private static final String BASE_PATH = System.getProperty("user.home");
-	private static final String CERTFICATE_SIGNING_REQUEST_PATH = BASE_PATH + "/domain.csr";
-	private static final String CERTIFICATE_PATH = BASE_PATH + "/certificate.pem";
-	private static final String DOMAIN_KEY_PATH = BASE_PATH + "/domain.key";
+	private static final String BASE_PATH = System.getProperty("user.home") + "/acme/";
+	private static final String CERTFICATE_SIGNING_REQUEST_PATH = BASE_PATH + "domain.csr";
+	private static final String CERTIFICATE_PATH = BASE_PATH + "certificate.pem";
+	private static final String DOMAIN_KEY_PATH = BASE_PATH + "domain.key";
 	private static ACMEConfig config = (ACMEConfig) Config.getInstance().getJsonObjectConfig("acme", ACMEConfig.class);
 
-	public void order(CertificateInstaller installer) throws AcmeException, InterruptedException, IOException {
+	public void order(String type, CertificateInstaller installer)
+			throws AcmeException, InterruptedException, IOException {
 		List<X509Certificate> certficateChain = getCertificate();
 		if (!certficateChain.isEmpty())
 			installer.install(certficateChain);
-		Certificate certifcate = orderCertificate();
+		Certificate certifcate = orderCertificate(type);
 		storeCertificate(certifcate);
 		installer.install(certifcate.getCertificateChain());
 	}
@@ -43,8 +45,8 @@ public class CertificateAuthority {
 
 	}
 
-	private Certificate orderCertificate() throws AcmeException, InterruptedException, IOException {
-		Session session = new SessionFactory().getPebbleSession();
+	private Certificate orderCertificate(String sessionType) throws AcmeException, InterruptedException, IOException {
+		Session session = ACMEUtils.getSession(sessionType);
 		Account account = new AccountManager().getAccount(session);
 		Order order = createOrder(account);
 		byte[] csr = createCSR();

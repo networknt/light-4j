@@ -9,6 +9,6 @@ import com.networknt.acme.client.CertificateAuthority;
 public class AcmeMainTest {
 	public static void main(String[] args) throws AcmeException, InterruptedException, IOException {
 		CertificateAuthority ca = new CertificateAuthority();
-		ca.order((chain) -> System.out.println(chain));
+		ca.order("PEBBLE", (chain) -> System.out.println(chain));
 	}
 }
