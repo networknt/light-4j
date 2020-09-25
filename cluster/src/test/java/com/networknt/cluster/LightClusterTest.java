@@ -38,6 +38,17 @@ public class LightClusterTest {
     }
 
     @Test
+    public void testServiceToUrlWithEnvironment() {
+        String s = cluster.serviceToUrl("https", "com.networknt.portal.command-1.0.0", "0000", null);
+        Assert.assertTrue("https://localhost:8440".equals(s));
+        s = cluster.serviceToUrl("https", "com.networknt.portal.command-1.0.0", "0001", null);
+        Assert.assertTrue("https://localhost:8441".equals(s));
+        s = cluster.serviceToUrl("https", "com.networknt.portal.command-1.0.0", "0002", null);
+        Assert.assertTrue("https://localhost:8442".equals(s));
+
+    }
+
+    @Test
     public void testServices() {
         List<URI> l = cluster.services("http", "com.networknt.apib-1.0.0", null);
         Assert.assertEquals(2, l.size());
