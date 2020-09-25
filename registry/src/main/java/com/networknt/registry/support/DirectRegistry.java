@@ -51,7 +51,17 @@ public class DirectRegistry extends AbstractRegistry {
                 if(entry.getValue().contains(",")) {
                     String[] directUrlArray = entry.getValue().split(",");
                     for (String directUrl : directUrlArray) {
-                        urls.add(addGeneralTag(URLImpl.valueOf(directUrl.trim() + "/" + entry.getKey())));
+                        String s = "";
+                        if(directUrl.contains("?")) {
+                            // allow the environment parameter here as an option to for tag based lookup.
+                            String u = directUrl.substring(0, directUrl.indexOf("?"));
+                            String p = directUrl.substring(directUrl.indexOf("?"));
+                            // insert the path to the middle and move the parameter to the end to form a valid url
+                            s = u.trim() + "/" + entry.getKey() + p;
+                        } else {
+                            s = directUrl.trim() + "/" + entry.getKey();
+                        }
+                        urls.add(addGeneralTag(URLImpl.valueOf(s)));
                     }
                 } else {
                     urls.add(addGeneralTag(URLImpl.valueOf(entry.getValue() + "/" + entry.getKey())));
@@ -92,6 +102,7 @@ public class DirectRegistry extends AbstractRegistry {
 
     private List<URL> createSubscribeUrl(URL subscribeUrl) {
         String serviceName = subscribeUrl.getPath();
+        // still return everything and the LightCluster will filter out others with the environment tag
         return directUrls.get(serviceName);
     }
 
@@ -106,7 +117,10 @@ public class DirectRegistry extends AbstractRegistry {
     }
 
     private URL addGeneralTag(URL url) {
-        url.addParameter(Constants.TAG_ENVIRONMENT, GENERAL_TAG);
+        // allow the environment parameter here. use general tag only if it is missing.
+        if(url.getParameter(Constants.TAG_ENVIRONMENT) == null) {
+            url.addParameter(Constants.TAG_ENVIRONMENT, GENERAL_TAG);
+        }
         return url;
     }
 }
