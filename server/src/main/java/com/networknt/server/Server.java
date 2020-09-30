@@ -71,7 +71,7 @@ public class Server {
     
     public static final String ENV_PROPERTY_KEY = "environment";
 
-    static final String STATUS_HOST_IP = "STATUS_HOST_IP";
+    public static final String STATUS_HOST_IP = "STATUS_HOST_IP";
 
     // service_id in slf4j MDC
     static final String SID = "sId";
