@@ -1,5 +1,16 @@
 # Change Log
 
+## [1.6.28](https://github.com/networknt/light-4j/tree/1.6.28) (2020-10-01)
+
+
+**Merged pull requests:**
+
+
+- fixes \#773 resolve a defect to handle the environment tag with single… [\#774](https://github.com/networknt/light-4j/pull/774) ([stevehu](https://github.com/stevehu))
+- fixes \#769 add environment tag to the DirectRegistry to support tag b… [\#770](https://github.com/networknt/light-4j/pull/770) ([stevehu](https://github.com/stevehu))
+- fixes \#765 add email registered error to the status.yml for light-rou… [\#766](https://github.com/networknt/light-4j/pull/766) ([stevehu](https://github.com/stevehu))
+- fixes \#763 add client authenticated user request in the OauthHelper f… [\#764](https://github.com/networknt/light-4j/pull/764) ([stevehu](https://github.com/stevehu))
+- fixes \#761 capture the ip address and port number on server for metrics [\#762](https://github.com/networknt/light-4j/pull/762) ([stevehu](https://github.com/stevehu))
 ## [1.6.27](https://github.com/networknt/light-4j/tree/1.6.27) (2020-08-28)
 
 
