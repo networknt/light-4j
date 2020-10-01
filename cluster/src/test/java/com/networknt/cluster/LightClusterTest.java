@@ -49,6 +49,12 @@ public class LightClusterTest {
     }
 
     @Test
+    public void testServiceToSingleUrlWithEnv() {
+        String s = cluster.serviceToUrl("https", "com.networknt.chainwriter-1.0.0", "0000", null);
+        Assert.assertTrue("https://localhost:8444".equals(s));
+    }
+
+    @Test
     public void testServices() {
         List<URI> l = cluster.services("http", "com.networknt.apib-1.0.0", null);
         Assert.assertEquals(2, l.size());
