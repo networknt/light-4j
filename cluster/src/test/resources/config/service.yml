@@ -10,6 +10,7 @@ singletons:
       parameters:
         com.networknt.apib-1.0.0: http://localhost:7002,http://localhost:7005
         com.networknt.apic-1.0.0: http://localhost:7003
+        com.networknt.chainwriter-1.0.0: https://localhost:8444?environment=0000
         com.networknt.portal.command-1.0.0: https://localhost:8440?environment=0000,https://localhost:8441?environment=0001,https://localhost:8442?environment=0002
 - com.networknt.registry.Registry:
   - com.networknt.registry.support.DirectRegistry
