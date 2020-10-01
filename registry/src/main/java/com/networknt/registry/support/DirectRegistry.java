@@ -51,25 +51,29 @@ public class DirectRegistry extends AbstractRegistry {
                 if(entry.getValue().contains(",")) {
                     String[] directUrlArray = entry.getValue().split(",");
                     for (String directUrl : directUrlArray) {
-                        String s = "";
-                        if(directUrl.contains("?")) {
-                            // allow the environment parameter here as an option to for tag based lookup.
-                            String u = directUrl.substring(0, directUrl.indexOf("?"));
-                            String p = directUrl.substring(directUrl.indexOf("?"));
-                            // insert the path to the middle and move the parameter to the end to form a valid url
-                            s = u.trim() + "/" + entry.getKey() + p;
-                        } else {
-                            s = directUrl.trim() + "/" + entry.getKey();
-                        }
+                        String s = buildUrl(directUrl, entry.getKey());
                         urls.add(addGeneralTag(URLImpl.valueOf(s)));
                     }
                 } else {
-                    urls.add(addGeneralTag(URLImpl.valueOf(entry.getValue() + "/" + entry.getKey())));
+                    String s = buildUrl(entry.getValue(), entry.getKey());
+                    urls.add(addGeneralTag(URLImpl.valueOf(s)));
                 }
             } catch (Exception e) {
                 throw new FrameworkException(new Status(PARSE_DIRECT_URL_ERROR, url.toString()));
             }
             directUrls.put(entry.getKey(), urls);
+        }
+    }
+
+    private String buildUrl(String url, String key) {
+        if(url.contains("?")) {
+            // allow the environment parameter here as an option to for tag based lookup.
+            String u = url.substring(0, url.indexOf("?"));
+            String p = url.substring(url.indexOf("?"));
+            // insert the path to the middle and move the parameter to the end to form a valid url
+            return u.trim() + "/" + key + p;
+        } else {
+            return url.trim() + "/" + key;
         }
     }
 
