@@ -27,6 +27,7 @@ public class CertificateAuthority {
 	private static final String BASE_PATH = System.getProperty("user.home") + "/acme/";
 	private static final String CERTFICATE_SIGNING_REQUEST_PATH = BASE_PATH + "domain.csr";
 	private static final String CERTIFICATE_PATH = BASE_PATH + "certificate.pem";
+	private static final String ACCOUNT_KEY_PATH = BASE_PATH + "account.key";
 	private static final String DOMAIN_KEY_PATH = BASE_PATH + "domain.key";
 	private static ACMEConfig config = (ACMEConfig) Config.getInstance().getJsonObjectConfig("acme", ACMEConfig.class);
 
@@ -47,7 +48,7 @@ public class CertificateAuthority {
 
 	private Certificate orderCertificate(String sessionType) throws AcmeException, InterruptedException, IOException {
 		Session session = ACMEUtils.getSession(sessionType);
-		Account account = new AccountManager().getAccount(session);
+		Account account = new AccountManager().getAccount(session, ACCOUNT_KEY_PATH);
 		Order order = createOrder(account);
 		byte[] csr = createCSR();
 		order.execute(csr);

@@ -21,6 +21,7 @@ public class HTTPChallengeResponder {
 	public HTTPChallengeResponder(String content) throws IOException {
 		logger.info(content);
 		challengeResponse = content;
+		// TODO: handle java.net.SocketException, port 80 can be opened by root
 		server = HttpServer.create(new InetSocketAddress(PORT), 0);
 		server.createContext(ACME_CHALLENGE_PATH, new MyHandler());
 		server.setExecutor(null);

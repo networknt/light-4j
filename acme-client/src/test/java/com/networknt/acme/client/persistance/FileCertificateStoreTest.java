@@ -11,36 +11,28 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.shredzone.acme4j.Certificate;
 import org.wildfly.common.Assert;
 
-public class FileKeyStoreTest {
+public class FileCertificateStoreTest {
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
-	FileKeyStore cut = new FileKeyStore();
+	FileCertificateStore cut = new FileCertificateStore();
 	String filename = "";
 
 	@Before
 	public void beforeClassFunction() {
-		filename = folder.getRoot().getAbsolutePath() + File.pathSeparator + "account.key";
+		filename = folder.getRoot().getAbsolutePath() + File.pathSeparator + "certificate.pem";
 	}
 
 	@Test
 	public void key_pair_should_be_generated_and_stored_if_account_key_file_doesnt_exist() throws IOException {
-
-		KeyPair key = cut.getKey(filename);
+		Certificate certificate  = new Certificate(null, null);
+		KeyPair key = cut.store(certificate, certificateName)
 		assertNotNull(key.getPrivate());
 		assertNotNull(key.getPublic());
 		Assert.assertTrue(new File(filename).exists());
 
-	}
-
-	@Test
-	public void key_pair_should_be_read_from_account_key_file__if_it_exists() throws IOException {
-
-		KeyPair generated = cut.getKey(filename);
-		KeyPair saved = cut.getKey(filename);
-		assertEquals(generated.getPrivate(), saved.getPrivate());
-		assertEquals(generated.getPublic(), saved.getPublic());
 	}
 
 }
