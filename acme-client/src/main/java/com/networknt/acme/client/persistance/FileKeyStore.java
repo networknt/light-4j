@@ -36,6 +36,7 @@ public class FileKeyStore implements KeyStore {
 
 	private void writeKeyToFile(File file, KeyPair keyPair) {
 		String fileName = file.getName();
+		file.getParentFile().mkdirs();
 		try (FileWriter fw = new FileWriter(file)) {
 			logger.info("KeyPair file " + fileName + " does not exists, creating the file");
 			KeyPairUtils.writeKeyPair(keyPair, fw);
