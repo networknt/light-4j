@@ -21,7 +21,9 @@ public class ManualAESDecryptor extends AESDecryptor {
             // for IDE testing
             System.out.print("Password for config decryption: ");
             Scanner sc = new Scanner(System.in);
-            password = sc.next().toCharArray();
+            if (sc.hasNext()) {
+              password = sc.next().toCharArray();
+            }
             sc.close();
         }
         if (password == null || password.length == 0) {
