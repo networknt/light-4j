@@ -12,11 +12,8 @@ import com.networknt.acme.client.persistance.FileKeyStore;
 public class AccountManager {
 
 	public Account getAccount(Session session, String accountKeyFilePath) throws AcmeException {
-		KeyPair accountKey = null;
-		Account account = null;
-		accountKey = new FileKeyStore().getKey(accountKeyFilePath);
-		account = new AccountBuilder().agreeToTermsOfService().useKeyPair(accountKey).create(session);
-
+		KeyPair accountKey = new FileKeyStore().getKey(accountKeyFilePath);
+		Account account = new AccountBuilder().agreeToTermsOfService().useKeyPair(accountKey).create(session);
 		return account;
 	}
 }
