@@ -128,7 +128,7 @@ public class MetricsHandler implements MiddlewareHandler {
                 Map<String, String> tags = new HashMap<>();
                 tags.put("endpoint", (String)auditInfo.get(Constants.ENDPOINT_STRING));
                 tags.put("clientId", auditInfo.get(Constants.CLIENT_ID_STRING) != null ? (String)auditInfo.get(Constants.CLIENT_ID_STRING) : "unknown");
-
+                tags.put("scopeClientId", auditInfo.get(Constants.SCOPE_CLIENT_ID_STRING) != null ? (String)auditInfo.get(Constants.SCOPE_CLIENT_ID_STRING) : "n/a");
                 long time = Clock.defaultClock().getTick() - startTime;
                 MetricName metricName = new MetricName("response_time");
                 metricName = metricName.tagged(commonTags);
