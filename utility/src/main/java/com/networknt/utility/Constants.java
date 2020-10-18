@@ -30,6 +30,7 @@ public class Constants {
     public static final String USER_TYPE_STRING = "user_type";
     public static final String ROLES_STRING = "roles";
     public static final String CLIENT_ID_STRING = "client_id";
+    public static final String CALLER_ID_STRING = "caller_id";
     public static final String SCOPE_CLIENT_ID_STRING = "scope_client_id";
     public static final String SCOPE_STRING = "scope";
     public static final String ENDPOINT_STRING = "endpoint";
