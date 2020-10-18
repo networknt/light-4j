@@ -159,6 +159,8 @@ request:
   resetTimeout: ${client.resetTimeout:7000}
   # if open tracing is enable. traceability, correlation and metrics should not be in the chain if opentracing is used.
   injectOpenTracing: ${client.injectOpenTracing:false}
+  # inject serviceId as callerId into the http header for metrics to collect the caller. The serviceId is from server.yml
+  injectCallerId: ${client.injectCallerId:false}
   # the flag to indicate whether http/2 is enabled when calling client.callService()
   enableHttp2: ${client.enableHttp2:true}
   # the maximum host capacity of connection pool

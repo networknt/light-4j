@@ -31,6 +31,7 @@ public class HttpStringConstants {
     public static final HttpString TRACEABILITY_ID = new HttpString(Constants.TRACEABILITY_ID_STRING);
     public static final HttpString USER_ID = new HttpString(Constants.USER_ID_STRING);
     public static final HttpString CLIENT_ID = new HttpString(Constants.CLIENT_ID_STRING);
+    public static final HttpString CALLER_ID = new HttpString(Constants.CALLER_ID_STRING);
     public static final HttpString SCOPE_CLIENT_ID = new HttpString(Constants.SCOPE_CLIENT_ID_STRING);
     public static final HttpString SCOPE = new HttpString(Constants.SCOPE_STRING);
     public static final HttpString ENDPOINT = new HttpString(Constants.ENDPOINT_STRING);

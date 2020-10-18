@@ -40,10 +40,12 @@ public final class ClientConfig {
     public static final int DEFAULT_TIMEOUT = 3000;
     public static final int DEFAULT_RESET_TIMEOUT = 600000;
     public static final boolean DEFAULT_INJECT_OPEN_TRACING = false;
+    public static final boolean DEFAULT_INJECT_CALLER_ID = false;
     private static final String BUFFER_SIZE = "bufferSize";
     private static final String ERROR_THRESHOLD = "errorThreshold";
     private static final String RESET_TIMEOUT = "resetTimeout";
     private static final String INJECT_OPEN_TRACING = "injectOpenTracing";
+    private static final String INJECT_CALLER_ID = "injectCallerId";
     public static final int DEFAULT_CONNECTION_POOL_SIZE = 1000;
     public static final boolean DEFAULT_REQUEST_ENABLE_HTTP2 = true;
     public static final int DEFAULT_MAX_REQUEST_PER_CONNECTION = 1000000;
@@ -69,6 +71,7 @@ public final class ClientConfig {
     private int timeout = DEFAULT_TIMEOUT;
     private int errorThreshold = DEFAULT_ERROR_THRESHOLD;
     private boolean injectOpenTracing = DEFAULT_INJECT_OPEN_TRACING;
+    private boolean injectCallerId = DEFAULT_INJECT_CALLER_ID;
     private int connectionPoolSize = DEFAULT_CONNECTION_POOL_SIZE;
     private int maxReqPerConn = DEFAULT_MAX_REQUEST_PER_CONNECTION;
     private boolean requestEnableHttp2 = DEFAULT_REQUEST_ENABLE_HTTP2;
@@ -127,6 +130,9 @@ public final class ClientConfig {
         }
         if(requestConfig.containsKey(INJECT_OPEN_TRACING)) {
             injectOpenTracing = (Boolean) requestConfig.get(INJECT_OPEN_TRACING);
+        }
+        if(requestConfig.containsKey(INJECT_CALLER_ID)) {
+            injectCallerId = (Boolean) requestConfig.get(INJECT_CALLER_ID);
         }
         if (requestConfig.containsKey(CONNECTION_POOL_SIZE)) {
             connectionPoolSize = (int) requestConfig.get(CONNECTION_POOL_SIZE);
@@ -224,6 +230,10 @@ public final class ClientConfig {
     }
 
     public boolean isInjectOpenTracing() { return injectOpenTracing; }
+
+    public boolean isInjectCallerId() {
+        return injectCallerId;
+    }
 
     public int getConnectionPoolSize() {
         return connectionPoolSize;

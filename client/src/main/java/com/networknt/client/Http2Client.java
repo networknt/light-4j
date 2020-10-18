@@ -85,6 +85,7 @@ public class Http2Client {
 
     public static final String CONFIG_NAME = "client";
     public static final String CONFIG_SECRET = "secret";
+    public static final String CONFIG_SERVER = "server";
     public static final OptionMap DEFAULT_OPTIONS = OptionMap.builder()
             .set(Options.WORKER_IO_THREADS, 8)
             .set(Options.TCP_NODELAY, true)
@@ -112,6 +113,8 @@ public class Http2Client {
     static final String KEY_STORE_PASSWORD_PROPERTY = "javax.net.ssl.keyStorePassword";
     static final String TRUST_STORE_PROPERTY = "javax.net.ssl.trustStore";
     static final String TRUST_STORE_PASSWORD_PROPERTY = "javax.net.ssl.trustStorePassword";
+    static final String SERVICE_ID = "serviceId";
+    static String callerId = "unknown";
 
     // TokenManager is to manage cached jwt tokens for this client.
     private TokenManager tokenManager = TokenManager.getInstance();
@@ -122,6 +125,14 @@ public class Http2Client {
     static {
         List<String> masks = new ArrayList<>();
         ModuleRegistry.registerModule(Http2Client.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), masks);
+        // take the best effort to get the serviceId from the server.yml file. It might not exist if this is a standalone client.
+        boolean injectCallerId = ClientConfig.get().isInjectCallerId();
+        if(injectCallerId) {
+            Map<String, Object> serverConfig = Config.getInstance().getJsonMapConfig(CONFIG_SERVER);
+            if(serverConfig != null) {
+                callerId = (String)serverConfig.get(SERVICE_ID);
+            }
+        }
     }
 
     public static final ByteBufferPool BUFFER_POOL = new DefaultByteBufferPool(true, ClientConfig.get().getBufferSize() * 1024);
@@ -536,6 +547,9 @@ public class Http2Client {
             addAuthTokenTrace(request, authToken, traceabilityId);
         } else {
             addAuthToken(request, authToken);
+        }
+        if(ClientConfig.get().isInjectCallerId()) {
+            request.getRequestHeaders().put(HttpStringConstants.CALLER_ID, callerId);
         }
         return result;
     }
