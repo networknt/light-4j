@@ -1,0 +1,6 @@
+# This is the config file to replace the default config loader to a customized one.
+# For example, load the config files from the config server instead of filesystem.
+# The following dummy entry is just to prevent the warning message during startup.
+dummy: dummyEntry
+# For real config loader config, please follow the format below with your implementation.
+# configLoaderClass: com.networknt.server.ConfigServerLoader
