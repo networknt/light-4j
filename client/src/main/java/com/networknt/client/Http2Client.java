@@ -128,7 +128,7 @@ public class Http2Client {
         // take the best effort to get the serviceId from the server.yml file. It might not exist if this is a standalone client.
         boolean injectCallerId = ClientConfig.get().isInjectCallerId();
         if(injectCallerId) {
-            Map<String, Object> serverConfig = Config.getInstance().getJsonMapConfig(CONFIG_SERVER);
+            Map<String, Object> serverConfig = Config.getInstance().getJsonMapConfigNoCache(CONFIG_SERVER);
             if(serverConfig != null) {
                 callerId = (String)serverConfig.get(SERVICE_ID);
             }
