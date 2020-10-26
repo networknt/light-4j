@@ -797,6 +797,11 @@ ERR11637:
   code: ERR11637
   message: OBJECT_NOT_FOUND
   description: Object %s not found for key %s.
+ERR11638:
+  statusCode: 400
+  code: ERR11638
+  message: FILESYSTEM_ERROR
+  description: Error while access filesystem with file %s and error message %s.
 
 
 # OAuth2 service error 12000-13000
