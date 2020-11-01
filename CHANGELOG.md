@@ -1,5 +1,18 @@
 # Change Log
 
+## [2.0.19](https://github.com/networknt/light-4j/tree/2.0.19) (2020-11-01)
+
+
+**Merged pull requests:**
+
+
+- Issue786 [\#787](https://github.com/networknt/light-4j/pull/787) ([stevehu](https://github.com/stevehu))
+- fixes \#784 get server config without cache in the client module [\#785](https://github.com/networknt/light-4j/pull/785) ([stevehu](https://github.com/stevehu))
+- fixes \#782 add startup.yml to the server module to suppress the warning [\#783](https://github.com/networknt/light-4j/pull/783) ([stevehu](https://github.com/stevehu))
+- fixes \#780 Add callerId to the metrics collection with a header in th… [\#781](https://github.com/networknt/light-4j/pull/781) ([stevehu](https://github.com/stevehu))
+- fixes \#778 add scopeClientId to the metrics handler [\#779](https://github.com/networknt/light-4j/pull/779) ([stevehu](https://github.com/stevehu))
+- Bump junit from 4.12 to 4.13.1 [\#777](https://github.com/networknt/light-4j/pull/777) ([dependabot](https://github.com/apps/dependabot))
+- Avoid NoSuchElementException in ManualAESDecryptor. [\#776](https://github.com/networknt/light-4j/pull/776) ([rgrig](https://github.com/rgrig))
 ## [2.0.18](https://github.com/networknt/light-4j/tree/2.0.18) (2020-10-01)
 
 
