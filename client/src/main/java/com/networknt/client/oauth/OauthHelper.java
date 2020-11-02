@@ -406,9 +406,11 @@ public class OauthHelper {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
+        URI uri = null;
         try {
             if(keyRequest.getServerUrl() != null) {
-                connection = client.connect(new URI(keyRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, keyRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+                uri = new URI(keyRequest.getServerUrl());
+                connection = client.connect(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, keyRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
             } else if(keyRequest.getServiceId() != null) {
                 Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
                 String url = cluster.serviceToUrl("https", keyRequest.getServiceId(), envTag, null);
@@ -428,7 +430,7 @@ public class OauthHelper {
             if (keyRequest.getClientId()!=null) {
                 request.getRequestHeaders().put(Headers.AUTHORIZATION, getBasicAuthHeader(keyRequest.getClientId(), keyRequest.getClientSecret()));
             }
-            request.getRequestHeaders().put(Headers.HOST, "localhost");
+            request.getRequestHeaders().put(Headers.HOST, uri != null ? uri.getHost() : "localhost"); // use the host from the serverUrl to bypass Mcafee local proxy
             adjustNoChunkedEncoding(request, "");
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();

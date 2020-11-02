@@ -344,8 +344,8 @@ public class JwtVerifier {
      * @return
      */
     private List<JsonWebKey> getJsonWebKeySetForToken(String kid) {
-
-        TokenKeyRequest keyRequest = new TokenKeyRequest(kid);
+        // the jwk indicator will ensure that the kid is not concat to the uri for path parameter.
+        TokenKeyRequest keyRequest = new TokenKeyRequest(kid, true);
         try {
             logger.debug("Getting Json Web Key for kid: {} from {}", kid, keyRequest.getServerUrl());
             String key = OauthHelper.getKey(keyRequest);
@@ -355,7 +355,6 @@ public class JwtVerifier {
             logger.error("Exception: ", e);
             throw new RuntimeException(e);
         }
-
     }
 
     public X509Certificate getCertForToken(String kid) {
