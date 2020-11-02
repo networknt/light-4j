@@ -34,15 +34,19 @@ import java.util.Map;
  */
 public class TokenKeyRequest extends KeyRequest {
     private static Logger logger = LoggerFactory.getLogger(TokenKeyRequest.class);
+    private boolean jwk;
 
     /**
      * @deprecated will be moved to {@link ClientConfig#TOKEN}
      */
     @Deprecated
     public static String TOKEN = "token";
-
     public TokenKeyRequest(String kid) {
+        this(kid, false);
+    }
+    public TokenKeyRequest(String kid, boolean jwk) {
         super(kid);
+        this.jwk = jwk;
         Map<String, Object> clientConfig = ClientConfig.get().getMappedConfig();
         // client_secret is in secret.yml instead of client.yml
         if(clientConfig != null) {
@@ -82,7 +86,12 @@ public class TokenKeyRequest extends KeyRequest {
         setServiceId((String)keyConfig.get(ClientConfig.SERVICE_ID));
         Object object = keyConfig.get(ClientConfig.ENABLE_HTTP2);
         setEnableHttp2(object != null && (Boolean) object);
-        setUri(keyConfig.get(ClientConfig.URI) + "/" + kid);
+        if(jwk) {
+            // there is no additional kid in the path parameter for jwk
+            setUri(keyConfig.get(ClientConfig.URI).toString());
+        } else {
+            setUri(keyConfig.get(ClientConfig.URI) + "/" + kid);
+        }
         setClientId((String)keyConfig.get(ClientConfig.CLIENT_ID));
     }
 

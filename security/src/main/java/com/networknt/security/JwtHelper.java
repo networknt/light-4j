@@ -351,7 +351,7 @@ public class JwtHelper {
      */
     private static List<JsonWebKey> getJsonWebKeySetForToken(String kid) {
 
-        TokenKeyRequest keyRequest = new TokenKeyRequest(kid);
+        TokenKeyRequest keyRequest = new TokenKeyRequest(kid, true);
         try {
             logger.debug("Getting Json Web Key for kid: {} from {}", kid, keyRequest.getServerUrl());
             String key = OauthHelper.getKey(keyRequest);
