@@ -33,6 +33,7 @@ public class Constants {
     public static final String CALLER_ID_STRING = "caller_id";
     public static final String SCOPE_CLIENT_ID_STRING = "scope_client_id";
     public static final String SCOPE_STRING = "scope";
+    public static final String SCP_STRING = "scp";
     public static final String ENDPOINT_STRING = "endpoint";
     public static final String CSRF_STRING = "csrf";
 
