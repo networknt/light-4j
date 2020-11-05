@@ -1,5 +1,14 @@
 # Change Log
 
+## [2.0.20](https://github.com/networknt/light-4j/tree/2.0.20) (2020-11-05)
+
+
+**Merged pull requests:**
+
+
+- fixes \#792 add a scp constant string to enure there is no hard-coded … [\#793](https://github.com/networknt/light-4j/pull/793) ([stevehu](https://github.com/stevehu))
+- fixes \#790 update security test to generate long lived tokens with sc… [\#791](https://github.com/networknt/light-4j/pull/791) ([stevehu](https://github.com/stevehu))
+- fixes \#788 update the OAuth key request for jwk integration [\#789](https://github.com/networknt/light-4j/pull/789) ([stevehu](https://github.com/stevehu))
 ## [2.0.19](https://github.com/networknt/light-4j/tree/2.0.19) (2020-11-01)
 
 
