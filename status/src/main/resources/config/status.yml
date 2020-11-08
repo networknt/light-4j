@@ -407,6 +407,11 @@ ERR10056:
   code: ERR10056
   message: OAUTH_SERVER_URL_ERROR
   description: Neither server_url nor serviceId is configured in client.yml for %s.
+ERR10057:
+  statusCode: 400
+  code: ERR10057
+  message: CONFIG_PROPERTY_MISSING
+  description: Config property %s is missing in config file %s.
 
 # 11000-11500 swagger-validator errors
 ERR11000:

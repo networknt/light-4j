@@ -20,10 +20,16 @@ import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
+import com.networknt.status.Status;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
 public class DerefRequest {
+    private static final Logger logger = LoggerFactory.getLogger(DerefRequest.class);
+    private static final String CONFIG_PROPERTY_MISSING = "ERR10057";
+
     private String serverUrl;
     private String proxyHost;
     private int proxyPort;
@@ -45,12 +51,10 @@ public class DerefRequest {
             setEnableHttp2(object != null && (Boolean) object);
             setUri(derefConfig.get(ClientConfig.URI) + "/" + token);
             setClientId((String)derefConfig.get(ClientConfig.CLIENT_ID));
-            // load client secret from client.yml and fallback to secret.yml
             if(derefConfig.get(ClientConfig.CLIENT_SECRET) != null) {
                 setClientSecret((String)derefConfig.get(ClientConfig.CLIENT_SECRET));
             } else {
-                Map<String, Object> secret = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
-                setClientSecret((String)secret.get(SecretConstants.DEREF_CLIENT_SECRET));
+                logger.error(new Status(CONFIG_PROPERTY_MISSING, "deref client_secret", "client.yml").toString());
             }
         }
     }

@@ -23,7 +23,6 @@ package com.networknt.db;
  */
 public class SqlServerDataSource extends GenericDataSource {
     private static final String SQLSERVER_DS = "SqlServerDataSource";
-    private static final String SQLSERVER_PASSWORD = "sqlServerPassword";
 
     @Override
     public String getDsName() {
@@ -32,11 +31,6 @@ public class SqlServerDataSource extends GenericDataSource {
         } else {
             return SQLSERVER_DS;
         }
-    }
-
-    @Override
-    public String getDbPassKey() {
-        return SQLSERVER_PASSWORD;
     }
 
     public SqlServerDataSource(String dsName) {

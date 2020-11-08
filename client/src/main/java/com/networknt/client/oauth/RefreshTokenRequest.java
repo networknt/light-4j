@@ -20,11 +20,17 @@ import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
+import com.networknt.status.Status;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
 
 public class RefreshTokenRequest extends TokenRequest {
+    private static final Logger logger = LoggerFactory.getLogger(RefreshTokenRequest.class);
+    private static final String CONFIG_PROPERTY_MISSING = "ERR10057";
+
     String refreshToken;
 
     public RefreshTokenRequest() {
@@ -41,12 +47,10 @@ public class RefreshTokenRequest extends TokenRequest {
             Map<String, Object> rtConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.REFRESH_TOKEN);
             if(rtConfig != null) {
                 setClientId((String)rtConfig.get(ClientConfig.CLIENT_ID));
-                // load client secret from client.yml and fallback to secret.yml
                 if(rtConfig.get(ClientConfig.CLIENT_SECRET) != null) {
                     setClientSecret((String)rtConfig.get(ClientConfig.CLIENT_SECRET));
                 } else {
-                    Map<String, Object> secret = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
-                    setClientSecret((String)secret.get(SecretConstants.REFRESH_TOKEN_CLIENT_SECRET));
+                    logger.error(new Status(CONFIG_PROPERTY_MISSING, "refresh_token client_secret", "client.yml").toString());
                 }
                 setUri((String)rtConfig.get(ClientConfig.URI));
                 setScope((List<String>)rtConfig.get(ClientConfig.SCOPE));
