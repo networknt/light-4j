@@ -402,6 +402,11 @@ ERR10055:
   code: ERR10055
   message: TLS_TRUSTSTORE_ERROR
   description: Cannot load client.truststore to create HttpClient.
+ERR10056:
+  statusCode: 400
+  code: ERR10056
+  message: OAUTH_SERVER_URL_ERROR
+  description: Neither server_url nor serviceId is configured in client.yml for %s.
 
 # 11000-11500 swagger-validator errors
 ERR11000:
