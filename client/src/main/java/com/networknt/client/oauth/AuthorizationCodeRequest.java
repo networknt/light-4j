@@ -41,6 +41,9 @@ public class AuthorizationCodeRequest extends TokenRequest {
         Map<String, Object> tokenConfig = ClientConfig.get().getTokenConfig();
         if(tokenConfig != null) {
             setServerUrl((String)tokenConfig.get(ClientConfig.SERVER_URL));
+            setProxyHost((String)tokenConfig.get(ClientConfig.PROXY_HOST));
+            int port = tokenConfig.get(ClientConfig.PROXY_PORT) == null ? 443 : (Integer)tokenConfig.get(ClientConfig.PROXY_PORT);
+            setProxyPort(port);
             setServiceId((String)tokenConfig.get(ClientConfig.SERVICE_ID));
             Object object = tokenConfig.get(ClientConfig.ENABLE_HTTP2);
             setEnableHttp2(object != null && (Boolean) object);

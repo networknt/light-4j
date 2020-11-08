@@ -30,61 +30,9 @@ import java.util.Map;
  *
  */
 public class SignRequest {
-    /**
-     * @deprecated will be moved to {@link ClientConfig#OAUTH}
-     */
-    @Deprecated
-    public static String OAUTH = "oauth";
-
-    /**
-     * @deprecated will be moved to {@link ClientConfig#SIGN}
-     */
-    @Deprecated
-    public static String SIGN = "sign";
-
-    /**
-     * @deprecated will be moved to {@link ClientConfig#SERVER_URL}
-     */
-    @Deprecated
-    public static String SERVER_URL = "server_url";
-
-    /**
-     * @deprecated will be moved to {@link ClientConfig#SERVICE_ID}
-     */
-    @Deprecated
-    public static String SERVICE_ID = "serviceId";
-
-    /**
-     * @deprecated will be moved to {@link ClientConfig#URI}
-     */
-    @Deprecated
-    public static String URI = "uri";
-
-    /**
-     * @deprecated will be moved to {@link ClientConfig#ENABLE_HTTP2}
-     */
-    @Deprecated
-    public static String ENABLE_HTTP2 = "enableHttp2";
-
-    /**
-     * @deprecated will be moved to {@link ClientConfig#TIMEOUT}
-     */
-    @Deprecated
-    public static String TIMEOUT = "timeout";
-
-    /**
-     * @deprecated will be moved to {@link ClientConfig#CLIENT_ID}
-     */
-    @Deprecated
-    public static String CLIENT_ID = "client_id";
-
-    /**
-     * @deprecated will be moved to {@link ClientConfig#CLIENT_SECRET}
-     */
-    @Deprecated
-    public static String CLIENT_SECRET = "client_secret";
-
     private String serverUrl;
+    private String proxyHost;
+    private int proxyPort;
     private String serviceId;
     private boolean enableHttp2;
     private String uri;
@@ -98,6 +46,9 @@ public class SignRequest {
         Map<String, Object> signConfig = ClientConfig.get().getSignConfig();
         if(signConfig != null) {
             setServerUrl((String)signConfig.get(ClientConfig.SERVER_URL));
+            setProxyHost((String)signConfig.get(ClientConfig.PROXY_HOST));
+            int port = signConfig.get(ClientConfig.PROXY_PORT) == null ? 443 : (Integer)signConfig.get(ClientConfig.PROXY_PORT);
+            setProxyPort(port);
             setServiceId((String)signConfig.get(ClientConfig.SERVICE_ID));
             setUri((String)signConfig.get(ClientConfig.URI));
             timeout = (Integer) signConfig.get(ClientConfig.TIMEOUT);
@@ -178,5 +129,21 @@ public class SignRequest {
 
     public void setPayload(Map<String, Object> payload) {
         this.payload = payload;
+    }
+
+    public String getProxyHost() {
+        return proxyHost;
+    }
+
+    public void setProxyHost(String proxyHost) {
+        this.proxyHost = proxyHost;
+    }
+
+    public int getProxyPort() {
+        return proxyPort;
+    }
+
+    public void setProxyPort(int proxyPort) {
+        this.proxyPort = proxyPort;
     }
 }

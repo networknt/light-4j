@@ -45,6 +45,9 @@ public class SignKeyRequest extends KeyRequest {
             Map<String, Object> keyConfig = (Map<String, Object>)signConfig.get(ClientConfig.KEY);
             if(keyConfig != null) {
                 setServerUrl((String)keyConfig.get(ClientConfig.SERVER_URL));
+                setProxyHost((String)keyConfig.get(ClientConfig.PROXY_HOST));
+                int port = keyConfig.get(ClientConfig.PROXY_PORT) == null ? 443 : (Integer)keyConfig.get(ClientConfig.PROXY_PORT);
+                setProxyPort(port);
                 setServiceId((String)keyConfig.get(ClientConfig.SERVICE_ID));
                 Object object = keyConfig.get(ClientConfig.ENABLE_HTTP2);
                 setEnableHttp2(object != null && (Boolean) object);

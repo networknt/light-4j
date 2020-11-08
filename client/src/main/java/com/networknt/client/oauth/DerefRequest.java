@@ -24,50 +24,9 @@ import com.networknt.config.Config;
 import java.util.Map;
 
 public class DerefRequest {
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#OAUTH}
-     */
-    @Deprecated
-    public static String OAUTH = "oauth";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#DEREF}
-     */
-    @Deprecated
-    public static String DEREF = "deref";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#SERVER_URL}
-     */
-    @Deprecated
-    public static String SERVER_URL = "server_url";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#SERVICE_ID}
-     */
-    @Deprecated
-    public static String SERVICE_ID = "serviceId";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#URI}
-     */
-    @Deprecated
-    public static String URI = "uri";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#CLIENT_ID}
-     */
-    @Deprecated
-    public static String CLIENT_ID = "client_id";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#ENABLE_HTTP2}
-     */
-    @Deprecated
-    public static String ENABLE_HTTP2 = "enableHttp2";
-
     private String serverUrl;
+    private String proxyHost;
+    private int proxyPort;
     private String serviceId;
     private String uri;
     private String clientId;
@@ -78,6 +37,9 @@ public class DerefRequest {
         Map<String, Object> derefConfig = ClientConfig.get().getDerefConfig();
         if(derefConfig != null) {
             setServerUrl((String)derefConfig.get(ClientConfig.SERVER_URL));
+            setProxyHost((String)derefConfig.get(ClientConfig.PROXY_HOST));
+            int port = derefConfig.get(ClientConfig.PROXY_PORT) == null ? 443 : (Integer)derefConfig.get(ClientConfig.PROXY_PORT);
+            setProxyPort(port);
             setServiceId((String)derefConfig.get(ClientConfig.SERVICE_ID));
             Object object = derefConfig.get(ClientConfig.ENABLE_HTTP2);
             setEnableHttp2(object != null && (Boolean) object);
@@ -136,4 +98,20 @@ public class DerefRequest {
     public boolean isEnableHttp2() { return enableHttp2; }
 
     public void setEnableHttp2(boolean enableHttp2) { this.enableHttp2 = enableHttp2; }
+
+    public String getProxyHost() {
+        return proxyHost;
+    }
+
+    public void setProxyHost(String proxyHost) {
+        this.proxyHost = proxyHost;
+    }
+
+    public int getProxyPort() {
+        return proxyPort;
+    }
+
+    public void setProxyPort(int proxyPort) {
+        this.proxyPort = proxyPort;
+    }
 }

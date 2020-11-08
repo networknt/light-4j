@@ -83,6 +83,9 @@ public class TokenKeyRequest extends KeyRequest {
 
     private void setKeyOptions(Map<String, Object> keyConfig) {
         setServerUrl((String)keyConfig.get(ClientConfig.SERVER_URL));
+        setProxyHost((String)keyConfig.get(ClientConfig.PROXY_HOST));
+        int port = keyConfig.get(ClientConfig.PROXY_PORT) == null ? 443 : (Integer)keyConfig.get(ClientConfig.PROXY_PORT);
+        setProxyPort(port);
         setServiceId((String)keyConfig.get(ClientConfig.SERVICE_ID));
         Object object = keyConfig.get(ClientConfig.ENABLE_HTTP2);
         setEnableHttp2(object != null && (Boolean) object);
