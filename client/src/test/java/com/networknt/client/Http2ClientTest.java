@@ -997,7 +997,7 @@ public class Http2ClientTest {
                 Boolean loadKeyStore = (Boolean) tlsMap.get(Http2Client.LOAD_KEY_STORE);
                 if (loadKeyStore != null && loadKeyStore) {
                     String keyStoreName = (String)tlsMap.get(Http2Client.KEY_STORE);
-                    String keyPass = (String) ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_KEY_PASS);
+                    String keyPass = (String) tlsMap.get(Http2Client.KEY_PASS);
                     KeyStore keyStore = loadKeyStore(keyStoreName);
                     KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                     keyManagerFactory.init(keyStore, keyPass.toCharArray());
@@ -1019,8 +1019,8 @@ public class Http2ClientTest {
                     if (trustStoreName != null && trustStorePass != null) {
                         if(logger.isInfoEnabled()) logger.info("Loading trust store from system property at " + Encode.forJava(trustStoreName));
                     } else {
-                        trustStoreName = (String) tlsMap.get(Http2Client.TRUST_STORE);
-                        trustStorePass = (String)ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_TRUSTSTORE_PASS);
+                        trustStoreName = (String)tlsMap.get(Http2Client.TRUST_STORE);
+                        trustStorePass = (String)tlsMap.get(Http2Client.TRUST_STORE_PASS);
                         if(logger.isInfoEnabled()) logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
                     }
                     if (trustStoreName != null && trustStorePass != null) {

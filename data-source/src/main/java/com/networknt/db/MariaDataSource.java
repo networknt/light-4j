@@ -23,7 +23,6 @@ package com.networknt.db;
  */
 public class MariaDataSource extends GenericDataSource {
     private static final String MARIA_DS = "MariaDataSource";
-    private static final String MARIA_PASSWORD = "mariaPassword";
 
     @Override
     public String getDsName() {
@@ -32,11 +31,6 @@ public class MariaDataSource extends GenericDataSource {
         } else {
             return MARIA_DS;
         }
-    }
-
-    @Override
-    public String getDbPassKey() {
-        return MARIA_PASSWORD;
     }
 
     public MariaDataSource(String dsName) {

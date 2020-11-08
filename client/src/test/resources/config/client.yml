@@ -64,7 +64,7 @@ oauth:
     client_credentials:
       # token endpoint for client credentials grant
       uri: "/oauth2/token"
-      # client_id for client credentials grant flow. client_secret is in secret.yml
+      # client_id for client credentials grant flow.
       client_id: test_client
       # client_secret for client credentials grant flow.
       client_secret: test_secret
@@ -75,9 +75,9 @@ oauth:
     refresh_token:
       # token endpoint for refresh token grant
       uri: "/oauth2/token"
-      # client_id for refresh token grant flow. client_secret is in secret.yml
+      # client_id for refresh token grant flow.
       client_id: f7d42348-c647-4efb-a52d-4c5787421e72
-      # client_secret for refresh token
+      # client_secret for refresh token grant flow
       client_secret: f6h1FTI8Q3-7UScPZDzfXA
       # optional scope, default scope in the client registration will be used if not defined.
       scope:

@@ -108,14 +108,13 @@ public class JwtVerifierTest {
 
     @Test
     public void testVerifyJwtByJsonWebKeys() throws Exception {
-        Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(JwtIssuer.SECRET_CONFIG);
         JwtConfig jwtConfig = (JwtConfig) Config.getInstance().getJsonObjectConfig(JwtIssuer.JWT_CONFIG, JwtConfig.class);
 
         String fileName = jwtConfig.getKey().getFilename();
         String alias = jwtConfig.getKey().getKeyName();
 
-        KeyStore ks = loadKeystore(fileName, (String)secretConfig.get(JwtIssuer.JWT_PRIVATE_KEY_PASSWORD));
-        Key privateKey = ks.getKey(alias, ((String) secretConfig.get(JwtIssuer.JWT_PRIVATE_KEY_PASSWORD)).toCharArray());
+        KeyStore ks = loadKeystore(fileName, jwtConfig.getKey().getPassword());
+        Key privateKey = ks.getKey(alias, jwtConfig.getKey().getPassword().toCharArray());
 
         JsonWebSignature jws = new JsonWebSignature();
 

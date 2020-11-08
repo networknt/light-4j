@@ -23,7 +23,6 @@ package com.networknt.db;
  */
 public class OracleDataSource extends GenericDataSource {
     private static final String ORACLE_DS = "OracleDataSource";
-    private static final String ORACLE_PASSWORD = "oraclePassword";
 
     @Override
     public String getDsName() {
@@ -32,11 +31,6 @@ public class OracleDataSource extends GenericDataSource {
         } else {
             return ORACLE_DS;
         }
-    }
-
-    @Override
-    public String getDbPassKey() {
-        return ORACLE_PASSWORD;
     }
 
     public OracleDataSource(String dsName) {

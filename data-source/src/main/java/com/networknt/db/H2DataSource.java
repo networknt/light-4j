@@ -25,7 +25,6 @@ package com.networknt.db;
  */
 public class H2DataSource extends GenericDataSource {
     private static final String H2_DS = "H2DataSource";
-    private static final String H2_PASSWORD = "H2Password";
 
     @Override
     public String getDsName() {
@@ -34,11 +33,6 @@ public class H2DataSource extends GenericDataSource {
         } else {
             return H2_DS;
         }
-    }
-
-    @Override
-    public String getDbPassKey() {
-        return H2_PASSWORD;
     }
 
     public H2DataSource(String dsName) {

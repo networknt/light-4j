@@ -18,9 +18,7 @@ package com.networknt.server;
 import com.networknt.config.Config;
 import com.networknt.status.Status;
 import junit.framework.TestCase;
-import org.junit.Assert;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runners.MethodSorters;
 
 import java.io.File;
@@ -36,7 +34,7 @@ public class TestMergeStatusConfig extends TestCase {
 
     final String homeDir = System.getProperty("user.home");
 
-    @Override
+    @BeforeClass
     public void setUp() throws Exception {
         super.setUp();
 
@@ -52,12 +50,13 @@ public class TestMergeStatusConfig extends TestCase {
         writeConfigFile("ERR99999", contents);
     }
 
-    @Override
+    @AfterClass
     public void tearDown() throws Exception {
         File appStatus = new File(homeDir + "/app-status.yml");
         appStatus.delete();
     }
 
+    @Test
     public void testAppStatus() {
         config.clear();
         // test default element without merging with app-status
@@ -65,6 +64,7 @@ public class TestMergeStatusConfig extends TestCase {
         Assert.assertEquals(401, status0.getStatusCode());
         Server.mergeStatusConfig();
         Status status = new Status("ERR99999");
+        System.out.println("****************************************************************" + status.toString());
         Assert.assertEquals(404, status.getStatusCode());
         // test default element after merging
         Status status1 = new Status("ERR10053", "url");

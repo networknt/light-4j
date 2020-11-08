@@ -3,7 +3,7 @@
 # Enable Basic Authentication Handler, default is false.
 enabled: false
 
-# usernames and passwords, the password can be encrypted like secret.yml
+# usernames and passwords, the password can be encrypted like user2
 # As we are supporting multiple users, so leave the passwords in this file.
 users:
   - username: user1

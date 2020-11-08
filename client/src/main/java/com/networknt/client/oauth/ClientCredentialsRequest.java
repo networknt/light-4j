@@ -20,6 +20,9 @@ import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
+import com.networknt.status.Status;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -28,13 +31,11 @@ import java.util.Map;
  * load default values from client.yml for client credentials grant, overwrite by setters
  * in case you want to change it at runtime.
  *
- * Note that client_secret is loaded from secret.yml instead of client.yml and the assumption
- * is that there is only one client shared by both authorization code grant and client credentials
- * grant.
- *
  * @author Steve Hu
  */
 public class ClientCredentialsRequest extends TokenRequest {
+    private static final Logger logger = LoggerFactory.getLogger(ClientCredentialsRequest.class);
+    private static final String CONFIG_PROPERTY_MISSING = "ERR10057";
 
     public ClientCredentialsRequest() {
         setGrantType(ClientConfig.CLIENT_CREDENTIALS);
@@ -50,12 +51,10 @@ public class ClientCredentialsRequest extends TokenRequest {
             Map<String, Object> ccConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.CLIENT_CREDENTIALS);
             if(ccConfig != null) {
                 setClientId((String)ccConfig.get(ClientConfig.CLIENT_ID));
-                // load client secret from client.yml and fallback to secret.yml
                 if(ccConfig.get(ClientConfig.CLIENT_SECRET) != null) {
                     setClientSecret((String)ccConfig.get(ClientConfig.CLIENT_SECRET));
                 } else {
-                    Map<String, Object> secret = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
-                    setClientSecret((String)secret.get(SecretConstants.CLIENT_CREDENTIALS_CLIENT_SECRET));
+                    logger.error(new Status(CONFIG_PROPERTY_MISSING, "client_credentials client_secret", "client.yml").toString());
                 }
                 setUri((String)ccConfig.get(ClientConfig.URI));
                 //set default scope from config.

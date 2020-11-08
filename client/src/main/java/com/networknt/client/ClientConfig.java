@@ -8,7 +8,6 @@ import java.util.Map;
 public final class ClientConfig {
 
     public static final String CONFIG_NAME = "client";
-    public static final String CONFIG_SECRET = "secret";
     public static final String REQUEST = "request";
     public static final String SERVER_URL = "server_url";
     public static final String PROXY_HOST = "proxyHost";
@@ -90,7 +89,6 @@ public final class ClientConfig {
         if (mappedConfig != null) {
             setBufferSize();
             setTokenConfig();
-            setSecretConfig();
             setRequestConfig();
             setDerefConfig();
             setSignConfig();
@@ -109,10 +107,6 @@ public final class ClientConfig {
      */
     static void reset() {
         instance = null;
-    }
-
-    private void setSecretConfig() {
-        secretConfig = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
     }
 
     private void setRequestConfig() {
