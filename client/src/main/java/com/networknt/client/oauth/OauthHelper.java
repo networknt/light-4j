@@ -63,6 +63,7 @@ public class OauthHelper {
     private static final String ESTABLISH_CONNECTION_ERROR = "ERR10053";
     private static final String GET_TOKEN_TIMEOUT = "ERR10054";
     private static final String TLS_TRUSTSTORE_ERROR = "ERR10055";
+    private static final String OAUTH_SERVER_URL_ERROR = "ERR10056";
     public static final String STATUS_CLIENT_CREDENTIALS_TOKEN_NOT_AVAILABLE = "ERR10009";
 
     private static final Logger logger = LoggerFactory.getLogger(OauthHelper.class);
@@ -110,6 +111,9 @@ public class OauthHelper {
             if(serverUrl == null) {
                 Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
                 tokenRequest.setServerUrl(cluster.serviceToUrl("https", tokenRequest.getServiceId(), envTag, null));
+            }
+            if(tokenRequest.getServerUrl() == null) {
+                return Failure.of(new Status(OAUTH_SERVER_URL_ERROR, "token"));
             }
             IClientRequestComposable requestComposer = ClientRequestComposerProvider.getInstance().getComposer(ClientRequestComposerProvider.ClientRequestComposers.CLIENT_CREDENTIAL_REQUEST_COMPOSER);
             final HttpRequest request = requestComposer.composeClientRequest(tokenRequest);
@@ -165,13 +169,16 @@ public class OauthHelper {
                 Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
                 signRequest.setServerUrl(cluster.serviceToUrl("https", signRequest.getServiceId(), envTag, null));
             }
+            if(signRequest.getServerUrl() == null) {
+                return Failure.of(new Status(OAUTH_SERVER_URL_ERROR, "sign"));
+            }
             Map<String, Object> map = new HashMap<>();
             map.put("expires", signRequest.getExpires());
             map.put("payload", signRequest.getPayload());
             String requestBody = Config.getInstance().getMapper().writeValueAsString(map);
             HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                     .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                    .uri(URI.create(serverUrl + signRequest.getUri()));
+                    .uri(URI.create(signRequest.getServerUrl() + signRequest.getUri()));
             if(signRequest.getClientId() != null && signRequest.getClientSecret() != null) {
                 requestBuilder.setHeader(Headers.AUTHORIZATION_STRING, getBasicAuthHeader(signRequest.getClientId(), signRequest.getClientSecret()));
             }
@@ -229,6 +236,9 @@ public class OauthHelper {
                 Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
                 tokenRequest.setServerUrl(cluster.serviceToUrl("https", tokenRequest.getServiceId(), envTag, null));
             }
+            if(tokenRequest.getServerUrl() == null) {
+                return Failure.of(new Status(OAUTH_SERVER_URL_ERROR, "token"));
+            }
             IClientRequestComposable requestComposer = ClientRequestComposerProvider.getInstance().getComposer(ClientRequestComposerProvider.ClientRequestComposers.SAML_BEARER_REQUEST_COMPOSER);
             final HttpRequest request = requestComposer.composeClientRequest(tokenRequest);
             CompletableFuture<HttpResponse<String>> response = tokenClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
@@ -265,6 +275,9 @@ public class OauthHelper {
         if(serverUrl == null) {
             Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
             serverUrl = cluster.serviceToUrl("https", keyRequest.getServiceId(), envTag, null);
+        }
+        if(serverUrl == null) {
+            throw new ClientException(new Status(OAUTH_SERVER_URL_ERROR, "key"));
         }
         try {
             // The key client is used only during the server startup or jwt key is rotated. Don't cache the keyClient.
@@ -332,7 +345,9 @@ public class OauthHelper {
                 Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
                 serverUrl = cluster.serviceToUrl("https", derefRequest.getServiceId(), envTag, null);
             }
-
+            if(serverUrl == null) {
+                throw new ClientException(new Status(OAUTH_SERVER_URL_ERROR, "deref"));
+            }
             HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                     .GET()
                     .uri(URI.create(serverUrl + derefRequest.getUri()));
