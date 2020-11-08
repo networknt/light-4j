@@ -17,6 +17,7 @@
 package com.networknt.consul;
 
 import com.networknt.client.Http2Client;
+import com.networknt.client.oauth.AuthorizationCodeRequest;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 import com.networknt.consul.client.ConsulClient;
@@ -26,6 +27,7 @@ import com.networknt.registry.URLParamType;
 import com.networknt.registry.support.command.CommandFailbackRegistry;
 import com.networknt.registry.support.command.CommandServiceManager;
 import com.networknt.registry.support.command.ServiceListener;
+import com.networknt.status.Status;
 import com.networknt.utility.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +42,8 @@ import java.util.concurrent.TimeUnit;
 
 public class ConsulRegistry extends CommandFailbackRegistry {
     private static final Logger logger = LoggerFactory.getLogger(ConsulRegistry.class);
+    private static final String CONFIG_PROPERTY_MISSING = "ERR10057";
+
     private ConsulClient client;
     private ConsulHeartbeatManager heartbeatManager;
     private int lookupInterval;
@@ -348,8 +352,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
         ConsulConfig consulConfig = getConsulConfig();
         String token = consulConfig.getConsulToken();
         if(token == null) {
-            Map<String, Object> secret = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
-            token = secret == null? null : (String)secret.get(SecretConstants.CONSUL_TOKEN);
+            logger.error(new Status(CONFIG_PROPERTY_MISSING, SecretConstants.CONSUL_TOKEN, "consul.yml").toString());
         }
         return token;
     }

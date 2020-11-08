@@ -6,6 +6,7 @@ key:
   kid: '100'                               # kid that used to sign the JWT tokens. It will be shown up in the token header.
   filename: "primary.jks"                  # private key that is used to sign JWT tokens.
   keyName: selfsigned                      # key name that is used to identify the right key in keystore.
+  password: password                       # private key store password and private key password is the same
 issuer: urn:com:networknt:oauth2:v1        # default issuer of the JWT token
 audience: urn:com.networknt                # default audience of the JWT token
 expiredInMinutes: 10                       # expired in 10 minutes by default for issued JWT tokens

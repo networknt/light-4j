@@ -35,6 +35,7 @@ import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.service.SingletonServiceFactory;
+import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.TlsUtil;
 import io.opentracing.Tracer;
@@ -82,9 +83,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class Http2Client {
     private static final Logger logger = LoggerFactory.getLogger(Http2Client.class);
-
+    private static final String CONFIG_PROPERTY_MISSING = "ERR10057";
     public static final String CONFIG_NAME = "client";
-    public static final String CONFIG_SECRET = "secret";
     public static final String CONFIG_SERVER = "server";
     public static final OptionMap DEFAULT_OPTIONS = OptionMap.builder()
             .set(Options.WORKER_IO_THREADS, 8)
@@ -638,17 +638,16 @@ public class Http2Client {
                         if(logger.isInfoEnabled()) logger.info("Loading key store from system property at " + Encode.forJava(keyStoreName));
                     } else {
                         keyStoreName = (String) tlsMap.get(KEY_STORE);
-                        // load keyStorePass from the client.yml first and fallback to secret.yml if doesn't exist.
                         keyStorePass = (String) tlsMap.get(KEY_STORE_PASS);
                         if(keyStorePass == null) {
-                            keyStorePass = (String) ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_KEYSTORE_PASS);
+                            logger.error(new Status(CONFIG_PROPERTY_MISSING, KEY_STORE_PASS, "client.yml").toString());
                         }
                         if(logger.isInfoEnabled()) logger.info("Loading key store from config at " + Encode.forJava(keyStoreName));
                     }
                     if (keyStoreName != null && keyStorePass != null) {
                         String keyPass = (String) tlsMap.get(KEY_PASS);
                         if(keyPass == null) {
-                            keyPass = (String) ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_KEY_PASS);
+                            logger.error(new Status(CONFIG_PROPERTY_MISSING, KEY_PASS, "client.yml").toString());
                         }
                         KeyStore keyStore = TlsUtil.loadKeyStore(keyStoreName, keyStorePass.toCharArray());
                         KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
@@ -675,7 +674,7 @@ public class Http2Client {
                         trustStoreName = (String) tlsMap.get(TRUST_STORE);
                         trustStorePass = (String) tlsMap.get(TRUST_STORE_PASS);
                         if(trustStorePass == null) {
-                            trustStorePass = (String)ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_TRUSTSTORE_PASS);
+                            logger.error(new Status(CONFIG_PROPERTY_MISSING, TRUST_STORE_PASS, "client.yml").toString());
                         }
                         if(logger.isInfoEnabled()) logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
                     }

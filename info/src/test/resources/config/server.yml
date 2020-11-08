@@ -6,8 +6,8 @@ ip: 0.0.0.0
 # Http port if enableHttp is true.
 httpPort: 8080
 
-# Enable HTTP should be false on official environment.
-enableHttp: true
+# Enable HTTP should be false by default.
+enableHttp: false
 
 # Https port if enableHttps is true.
 httpsPort: 8443
@@ -15,21 +15,39 @@ httpsPort: 8443
 # Enable HTTPS should be true on official environment.
 enableHttps: true
 
-# Http/2 is enabled. When Http2 is enable, enableHttps is true and enableHttp is false by default.
-# If you want to have http enabled, enableHttp2 must be false.
-enableHttp2: false
+# Http/2 is enabled by default for better performance and it works with the client module
+enableHttp2: true
 
-# Keystore file name in config folder. KeystorePass is in secret.yml to access it.
+# Keystore file name in config folder.
 keystoreName: server.keystore
+
+# Keystore password
+keystorePass: password
+
+# Private key password
+keyPass: password
 
 # Flag that indicate if two way TLS is enabled. Not recommended in docker container.
 enableTwoWayTls: false
 
-# Truststore file name in config folder. TruststorePass is in secret.yml to access it.
+# Truststore file name in config folder.
 truststoreName: server.truststore
+
+# Truststore password
+truststorePass: password
+
+# Bootstrap truststore name used to connect to the light-config-server if it is used.
+bootstrapStoreName: bootstrap.truststore
+
+# Bootstrap truststore password
+bootstrapStorePass: password
 
 # Unique service identifier. Used in service registration and discovery etc.
 serviceId: com.networknt.petstore-1.0.0
+
+# Unique service name. Used in microservices to associate a given name to a service with configuration 
+# or as a key within the configuration of a particular domain
+serviceName: petstore
 
 # Flag to enable service registration. Only be true if running as standalone Java jar.
 enableRegistry: false
@@ -38,3 +56,7 @@ enableRegistry: false
 # https://github.com/networknt/light-doc/blob/master/docs/content/design/env-segregation.md
 # This tag should only be set for testing env, not production. The production certification process will enforce it.
 # environment: test1
+
+# Build number, to be set by teams for auditing purposes. 
+# This build number is independent of the API version, and it set by teams according to their release management process
+buildNumber: latest

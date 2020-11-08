@@ -213,7 +213,8 @@ public class DefaultConfigLoader implements IConfigLoader{
      * This is a public method that is used to test the connectivity in the integration test to ensure that the
      * light-config-server can be connected with the default bootstrap.truststore. There is no real value for
      * this method other than that.
-     *
+     * @param host config server host
+     * @param path config server path
      * @return String of OK
      */
     public static String getConfigServerHealth(String host, String path) {
