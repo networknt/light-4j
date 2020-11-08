@@ -52,7 +52,10 @@ public class SAMLBearerRequest extends TokenRequest {
         try {
             Map<String, Object> tokenConfig = ClientConfig.get().getTokenConfig();
 
-            setServerUrl((String) tokenConfig.get(ClientConfig.SERVER_URL));
+            setServerUrl((String)tokenConfig.get(ClientConfig.SERVER_URL));
+            setProxyHost((String)tokenConfig.get(ClientConfig.PROXY_HOST));
+            int port = tokenConfig.get(ClientConfig.PROXY_PORT) == null ? 443 : (Integer)tokenConfig.get(ClientConfig.PROXY_PORT);
+            setProxyPort(port);
             Object object = tokenConfig.get(ClientConfig.ENABLE_HTTP2);
             setEnableHttp2(object != null && (Boolean) object);
             Map<String, Object> ccConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.CLIENT_CREDENTIALS);
