@@ -1,23 +1,20 @@
 package com.networknt.client.oauth;
 
-import io.undertow.client.ClientRequest;
+
+import java.net.http.HttpRequest;
 
 /**
- * An interface to describe that a ClientRequest can be composed by a TokenRequest.
- * TokenRequest info should be the same for different Oauth servers, but different Oauth servers may have different way to accept request.
+ * An interface to describe that a HttpRequest can be composed by a TokenRequest. TokenRequest info should be the
+ * same for different OAuth servers, but different OAuth servers may have different way to accept request.
+ *
+ * @author Steve Hu
  */
 public interface IClientRequestComposable {
     /**
-     * compose an actual ClientRequest based on the given TokenRequest model.
+     * compose an actual HttpRequest based on the given TokenRequest model.
      * @param tokenRequest token request
-     * @return ClientRequest
+     * @return HttpRequest
      */
-    ClientRequest composeClientRequest(TokenRequest tokenRequest);
+    HttpRequest composeClientRequest(TokenRequest tokenRequest);
 
-    /**
-     * compose an actual request body based on the given TokenRequest model.
-     * @param tokenRequest token request
-     * @return String
-     */
-    String composeRequestBody(TokenRequest tokenRequest);
 }

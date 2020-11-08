@@ -397,6 +397,11 @@ ERR10054:
   code: ERR10054
   message: GET_TOKEN_TIMEOUT
   description: Cannot get valid token, probably due to a timeout.
+ERR10055:
+  statusCode: 400
+  code: ERR10055
+  message: TLS_TRUSTSTORE_ERROR
+  description: Cannot load client.truststore to create HttpClient.
 
 # 11000-11500 swagger-validator errors
 ERR11000:

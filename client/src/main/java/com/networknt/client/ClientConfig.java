@@ -11,6 +11,8 @@ public final class ClientConfig {
     public static final String CONFIG_SECRET = "secret";
     public static final String REQUEST = "request";
     public static final String SERVER_URL = "server_url";
+    public static final String PROXY_HOST = "proxyHost";
+    public static final String PROXY_PORT = "proxyPort";
     public static final String SERVICE_ID = "serviceId";
     public static final String URI = "uri";
     public static final String CLIENT_ID = "client_id";

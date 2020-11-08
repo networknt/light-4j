@@ -16,101 +16,16 @@
 
 package com.networknt.client.oauth;
 
-import com.networknt.client.ClientConfig;
-
 import java.util.List;
 
 /**
  * Created by steve on 02/09/16.
  */
 public class TokenRequest {
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#OAUTH}
-     */
-    @Deprecated
-    public static String OAUTH = "oauth";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#TOKEN}
-     */
-    @Deprecated
-    public static String TOKEN = "token";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#SERVER_URL}
-     */
-    @Deprecated
-    public static String SERVER_URL = "server_url";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#SERVICE_ID}
-     */
-    @Deprecated
-    public static String SERVICE_ID = "serviceId";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#ENABLE_HTTP2}
-     */
-    @Deprecated
-    public static String ENABLE_HTTP2 = "enableHttp2";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#AUTHORIZATION_CODE}
-     */
-    @Deprecated
-    public static String AUTHORIZATION_CODE = "authorization_code";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#CLIENT_CREDENTIALS}
-     */
-    @Deprecated
-    public static String CLIENT_CREDENTIALS = "client_credentials";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#SAML_BEARER}
-     */
-    @Deprecated
-    public static String SAML_BEARER = "saml_bearer";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#REFRESH_TOKEN}
-     */
-    @Deprecated
-    public static String REFRESH_TOKEN = "refresh_token";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#URI}
-     */
-    @Deprecated
-    public static String URI = "uri";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#CLIENT_ID}
-     */
-    @Deprecated
-    public static String CLIENT_ID = "client_id";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#REDIRECT_URI}
-     */
-    @Deprecated
-    public static String REDIRECT_URI = "redirect_uri";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#SCOPE}
-     */
-    @Deprecated
-    public static String SCOPE = "scope";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#CSRF}
-     */
-    @Deprecated
-    public static String CSRF = "csrf";
-
     private String grantType;
     private String serverUrl;
+    private String proxyHost;
+    private int proxyPort;
     private String serviceId;
     private boolean enableHttp2;
     private String uri;
@@ -189,5 +104,19 @@ public class TokenRequest {
 
     public void setCsrf(String csrf) { this.csrf = csrf; }
 
+    public String getProxyHost() {
+        return proxyHost;
+    }
 
+    public void setProxyHost(String proxyHost) {
+        this.proxyHost = proxyHost;
+    }
+
+    public int getProxyPort() {
+        return proxyPort;
+    }
+
+    public void setProxyPort(int proxyPort) {
+        this.proxyPort = proxyPort;
+    }
 }

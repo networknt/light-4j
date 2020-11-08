@@ -52,6 +52,8 @@ public class HttpRequestValue implements Serializable {
 
     /**
      * Indicates whether this entity has a body part by the key.
+     * @param key the key
+     * @return true if has body
      */
     public boolean hasBody(String key) {
         return (this.bodyPartMap==null? false : this.bodyPartMap.containsKey(key) );
