@@ -25,11 +25,20 @@ enableHttp2: true
 # Keystore file name in config folder.
 keystoreName: server.keystore
 
+# Keystore password
+keystorePass: ${server.keystorePass:password}
+
+# Private key password
+keyPass: ${server.keyPass:password}
+
 # Flag that indicate if two way TLS is enabled. Not recommended in docker container.
 enableTwoWayTls: false
 
 # Truststore file name in config folder.
 truststoreName: server.truststore
+
+# Truststore password
+truststorePass: ${server.truststorePass:password}
 
 # Bootstrap truststore name used to connect to the light-config-server if it is used.
 bootstrapStoreName: src/integration/resources/config/bootstrap.truststore
