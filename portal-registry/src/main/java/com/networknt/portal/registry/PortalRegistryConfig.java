@@ -21,8 +21,8 @@ public class PortalRegistryConfig {
 
     String portalUrl;
     int maxReqPerConn;
-    String deregisterAfter;
-    String checkInterval;
+    int deregisterAfter;
+    int checkInterval;
     boolean httpCheck;
     boolean ttlCheck;
 
@@ -42,19 +42,19 @@ public class PortalRegistryConfig {
         this.maxReqPerConn = maxReqPerConn;
     }
 
-    public String getDeregisterAfter() {
+    public int getDeregisterAfter() {
         return deregisterAfter;
     }
 
-    public void setDeregisterAfter(String deregisterAfter) {
+    public void setDeregisterAfter(int deregisterAfter) {
         this.deregisterAfter = deregisterAfter;
     }
 
-    public String getCheckInterval() {
+    public int getCheckInterval() {
         return checkInterval;
     }
 
-    public void setCheckInterval(String checkInterval) {
+    public void setCheckInterval(int checkInterval) {
         this.checkInterval = checkInterval;
     }
 

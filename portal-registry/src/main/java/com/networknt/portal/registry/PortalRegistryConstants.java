@@ -2,20 +2,20 @@ package com.networknt.portal.registry;
 
 public class PortalRegistryConstants {
     /**
-     * Service Check Interval
+     * Service Check Interval 10 seconds
      */
-    public static String INTERVAL = PortalRegistryService.config.checkInterval == null ? "10s" : PortalRegistryService.config.checkInterval;
+    public static int INTERVAL = 10000;
 
     /**
      * Service Time To Live in second. If there is no heart beat with TTL, the service
-     * will be marked as unavailable.
+     * will be marked as unavailable. Default to 10 seconds
      */
-    public static int TTL = Integer.valueOf(INTERVAL.substring(0,INTERVAL.length() - 1));
+    public static int TTL = INTERVAL;
 
     /**
      * Heart beat circle，2/3 of ttl
      */
-    public static int HEARTBEAT_CIRCLE = (TTL * 1000 * 2) / 3;
+    public static int HEARTBEAT_CIRCLE = (TTL * 2) / 3;
 
     /**
      * Maximum continuous switch checks, send heart beat is this number is exceeded.
