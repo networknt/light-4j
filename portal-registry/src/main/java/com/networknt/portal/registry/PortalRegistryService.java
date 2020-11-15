@@ -72,9 +72,9 @@ public class PortalRegistryService {
 
     public PortalRegistryService() {
         if(config.httpCheck) {
-            checkString = ",\"check\":{\"id\":\"%1$s:%2$s:%3$s\",\"deregisterCriticalServiceAfter\":\"" + config.deregisterAfter + "\",\"http\":\"" + "https://%2$s:%3$s/health/%1$s" + "\",\"tlsSkipVerify\":true,\"interval\":\"" + config.checkInterval + "\"}}";
+            checkString = ",\"check\":{\"id\":\"%1$s:%2$s:%3$s\",\"deregisterCriticalServiceAfter\":" + config.deregisterAfter + ",\"http\":\"" + "https://%2$s:%3$s/health/%4$s" + "\",\"tlsSkipVerify\":true,\"interval\":" + config.checkInterval + "}}";
         } else {
-            checkString = ",\"check\":{\"id\":\"%1$s:%2$s:%3$s\",\"deregisterCriticalServiceAfter\":\"" + config.deregisterAfter + "\",\"ttl\":\"" + config.checkInterval + "\"}}";
+            checkString = ",\"check\":{\"id\":\"%1$s:%2$s:%3$s\",\"deregisterCriticalServiceAfter\":" + config.deregisterAfter + ",\"ttl\":" + config.checkInterval + "}}";
         }
     }
 
@@ -91,7 +91,7 @@ public class PortalRegistryService {
                 + (tag != null ? "\",\"tag\":\"" + tag : "")
                 + "\",\"address\":\"" + address
                 + "\",\"port\":" + port
-                + String.format(checkString, key, address, port);
+                + String.format(checkString, key, address, port, serviceId);
     }
 
 }
