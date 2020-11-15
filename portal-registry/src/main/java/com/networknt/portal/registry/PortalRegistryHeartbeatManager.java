@@ -1,0 +1,192 @@
+/*
+ *  Copyright 2009-2016 Weibo, Inc.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+package com.networknt.portal.registry;
+
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
+import com.networknt.portal.registry.client.PortalRegistryClient;
+import com.networknt.utility.ConcurrentHashSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * consul heart beat manager. passing status service id is registered here，
+ * and this class will set passing status for serviceId（in fact it is corresponding checkId of serviceId),
+ * then the heart beat process is done.
+ *
+ * Switcher is used to enable heart beat or disable heart beat.
+ * 
+ * @author zhanglei
+ *
+ */
+public class PortalRegistryHeartbeatManager {
+	private static final Logger logger = LoggerFactory.getLogger(PortalRegistryHeartbeatManager.class);
+	private PortalRegistryClient client;
+	private String token;
+	// all serviceIds that need heart beats.
+	private ConcurrentHashSet<PortalRegistryService> services = new ConcurrentHashSet<>();
+
+	private ThreadPoolExecutor jobExecutor;
+	private ScheduledExecutorService heartbeatExecutor;
+	// last heart beat switcher status
+	private boolean lastHeartBeatSwitcherStatus = false;
+	private volatile boolean currentHeartBeatSwitcherStatus = false;
+	// switcher check times
+	private int switcherCheckTimes = 0;
+
+	public PortalRegistryHeartbeatManager(PortalRegistryClient client, String token) {
+		this.client = client;
+		this.token = token;
+		heartbeatExecutor = Executors.newSingleThreadScheduledExecutor();
+		ArrayBlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<Runnable>(
+				10000);
+		jobExecutor = new ThreadPoolExecutor(5, 30, 30 * 1000,
+				TimeUnit.MILLISECONDS, workQueue);
+	}
+
+	public void start() {
+		heartbeatExecutor.scheduleAtFixedRate(
+				new Runnable() {
+					@Override
+					public void run() {
+						// Because consul check set pass triggers consul
+						// server write operation，frequently heart beat will impact consul
+						// performance，so heart beat takes long cycle and switcher check takes short cycle.
+						// multiple check on switcher and then send one heart beat to consul server.
+						// TODO change to switcher listener approach.
+						try {
+							boolean switcherStatus = isHeartbeatOpen();
+							if (isSwitcherChange(switcherStatus)) { // heart beat switcher status changed
+								processHeartbeat(switcherStatus);
+							} else {// heart beat switcher status not changed.
+								if (switcherStatus) {// switcher is on, check MAX_SWITCHER_CHECK_TIMES and then send a heart beat
+									switcherCheckTimes++;
+									if (switcherCheckTimes >= PortalRegistryConstants.MAX_SWITCHER_CHECK_TIMES) {
+										processHeartbeat(true);
+										switcherCheckTimes = 0;
+									}
+								}
+							}
+						} catch (Exception e) {
+							logger.error("consul heartbeat executor err:",
+									e);
+						}
+					}
+				}, PortalRegistryConstants.SWITCHER_CHECK_CIRCLE,
+				PortalRegistryConstants.SWITCHER_CHECK_CIRCLE, TimeUnit.MILLISECONDS);
+	}
+
+	/**
+	 * check heart beat switcher status, if switcher is changed, then change lastHeartBeatSwitcherStatus
+	 * to the latest status.
+	 * 
+	 * @param switcherStatus
+	 * @return
+	 */
+	private boolean isSwitcherChange(boolean switcherStatus) {
+		boolean ret = false;
+		if (switcherStatus != lastHeartBeatSwitcherStatus) {
+			ret = true;
+			lastHeartBeatSwitcherStatus = switcherStatus;
+			logger.info("heartbeat switcher change to " + switcherStatus);
+		}
+		return ret;
+	}
+
+	protected void processHeartbeat(boolean isPass) {
+		for (PortalRegistryService service : services) {
+			try {
+				jobExecutor.execute(new HeartbeatJob(service, isPass));
+			} catch (RejectedExecutionException ree) {
+				logger.error("execute heartbeat job fail! serviceId:"
+						+ service.getServiceId() + " is rejected");
+			}
+		}
+	}
+
+	public void close() {
+		heartbeatExecutor.shutdown();
+		jobExecutor.shutdown();
+		logger.info("Consul heartbeatManager closed.");
+	}
+
+	/**
+	 * Add consul serviceId，added serviceId will set passing status to keep sending heart beat.
+	 * 
+	 * @param service PortalRegistryService
+	 */
+	public void addHeartbeatService(PortalRegistryService service) {
+		services.add(service);
+	}
+
+	/**
+	 * remove service，corresponding service won't send heart beat
+	 * 
+	 * @param service PortalRegistryService
+	 */
+	public void removeHeartbeatService(PortalRegistryService service) {
+		services.remove(service);
+	}
+
+	// check if heart beat switcher is on
+	private boolean isHeartbeatOpen() {
+		return currentHeartBeatSwitcherStatus;
+	}
+
+	public void setHeartbeatOpen(boolean open) {
+		currentHeartBeatSwitcherStatus = open;
+	}
+
+	class HeartbeatJob implements Runnable {
+		private PortalRegistryService service;
+		private boolean isPass;
+
+		public HeartbeatJob(PortalRegistryService service, boolean isPass) {
+			super();
+			this.service = service;
+			this.isPass = isPass;
+		}
+
+		@Override
+		public void run() {
+			try {
+				if (isPass) {
+					client.checkPass(service, token);
+				} else {
+					client.checkFail(service, token);
+				}
+			} catch (Exception e) {
+				logger.error(
+						"portal controller heartbeat-set check pass error!serviceId:"
+								+ service.getServiceId(), e);
+			}
+
+		}
+
+	}
+
+	public void setClient(PortalRegistryClient client) {
+		this.client = client;
+	}
+
+
+}

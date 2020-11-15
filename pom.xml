@@ -144,6 +144,7 @@
         <module>registry</module>
         <module>balance</module>
         <module>consul</module>
+        <module>portal-registry</module>
         <module>zookeeper</module>
         <module>cors</module>
         <module>cluster</module>

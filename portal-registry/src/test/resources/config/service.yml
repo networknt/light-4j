@@ -1,0 +1,18 @@
+---
+# singleton service factory configuration
+singletons:
+- com.networknt.registry.URL:
+  - com.networknt.registry.URLImpl:
+      protocol: light
+      host: localhost
+      port: 8500
+      path: ''
+      parameters:
+        registrySessionTimeout: '1000'
+- com.networknt.portal.registry.client.PortalRegistryClient:
+#  - com.networknt.portal.registry.client.PortalRegistryClientImpl
+  - com.networknt.portal.registry.MockPortalRegistryClient:
+    - java.lang.String: localhost
+    - int: 8500
+- com.networknt.registry.Registry:
+  - com.networknt.portal.registry.PortalRegistry
