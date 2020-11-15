@@ -1,0 +1,17 @@
+singletons:
+- com.networknt.registry.URL:
+  - com.networknt.registry.URLImpl:
+      protocol: light
+      host: localhost
+      port: 8080
+      path: consul
+      parameters:
+        registryRetryPeriod: '30000'
+- com.networknt.portal.registry.client.PortalRegistryClient:
+  - com.networknt.portal.registry.client.PortalRegistryClientImpl
+- com.networknt.registry.Registry:
+  - com.networknt.portal.registry.PortalRegistry
+- com.networknt.balance.LoadBalance:
+  - com.networknt.balance.RoundRobinLoadBalance
+- com.networknt.cluster.Cluster:
+  - com.networknt.cluster.LightCluster

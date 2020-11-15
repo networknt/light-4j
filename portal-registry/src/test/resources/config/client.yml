@@ -1,0 +1,166 @@
+# This is the configuration file for Http2Client.
+---
+# Settings for TLS
+tls:
+  # if the server is using self-signed certificate, this need to be false. If true, you have to use CA signed certificate
+  # or load truststore that contains the self-signed cretificate.
+  verifyHostname: true
+  # The default trustedNames group used to created default SSL context. This is used to create Http2Client.SSL if set.
+  defaultGroupKey: trustedNames.local
+  # trusted hostnames, service names, service Ids, and so on.
+  # Note: localhost and 127.0.0.1 are not trustable hostname/ip in general. So, these values should not be used as trusted names in production.
+  trustedNames: 
+    local: localhost
+    negativeTest: invalidhost 
+    empty:
+  # trust store contains certifictes that server needs. Enable if tls is used.
+  loadTrustStore: true
+  # trust store location can be specified here or system properties javax.net.ssl.trustStore and password javax.net.ssl.trustStorePassword
+  trustStore: client.truststore
+  # trust store password
+  trustStorePass: password
+  # key store contains client key and it should be loaded if two-way ssl is uesed.
+  loadKeyStore: true
+  # key store location
+  keyStore: client.keystore
+  # key store password
+  keyStorePass: password
+  # private key password
+  keyPass: password
+# settings for OAuth2 server communication
+oauth:
+  # OAuth 2.0 token endpoint configuration
+  token:
+    cache:
+      #capacity of caching TOKENs
+      capacity: 200
+    # The scope token will be renewed automatically 1 minutes before expiry
+    tokenRenewBeforeExpired: 4000
+    # if scope token is expired, we need short delay so that we can retry faster.
+    expiredRefreshRetryDelay: 5000
+    # if scope token is not expired but in renew windown, we need slow retry delay.
+    earlyRefreshRetryDelay: 30000
+    # token server url. The default port number for token service is 6882.
+    server_url: http://localhost:7777
+    # token service unique id for OAuth 2.0 provider
+    serviceId: com.networknt.oauth2-token-1.0.0
+    # set to true if the oauth2 provider supports HTTP/2
+    # enableHttp2: true
+    # the following section defines uri and parameters for authorization code grant type
+    authorization_code:
+      # token endpoint for authorization code grant
+      uri: "/oauth2/token"
+      # client_id for authorization code grant flow.
+      client_id: test_client
+      # client_secret for authorization code grant flow.
+      client_secret: test_secret
+      # the web server uri that will receive the redirected authorization code
+      redirect_uri: https://localhost:8080/authorization_code
+      # optional scope, default scope in the client registration will be used if not defined.
+      scope:
+      - test.r
+      - test.w
+    # the following section defines uri and parameters for client credentials grant type
+    client_credentials:
+      # token endpoint for client credentials grant
+      uri: "/oauth2/token"
+      # client_id for client credentials grant flow.
+      client_id: test_client
+      # client_secret for client credentials grant flow.
+      client_secret: test_secret
+      # optional scope, default scope in the client registration will be used if not defined.
+      scope:
+      - test.r
+      - test.w
+    refresh_token:
+      # token endpoint for refresh token grant
+      uri: "/oauth2/token"
+      # client_id for refresh token grant flow.
+      client_id: f7d42348-c647-4efb-a52d-4c5787421e72
+      # client_secret for refresh token grant flow
+      client_secret: f6h1FTI8Q3-7UScPZDzfXA
+      # optional scope, default scope in the client registration will be used if not defined.
+      scope:
+      - petstore.r
+      - petstore.w
+    # light-oauth2 key distribution endpoint configuration for token verification
+    key:
+      # key distribution server url for token verification. It will be used if it is configured.
+      server_url: https://localhost:7777
+      # key serviceId for key distribution service, it will be used if above server_url is not configured.
+      serviceId: com.networknt.oauth2-key-1.0.0
+      # the path for the key distribution endpoint
+      uri: "/oauth2/key"
+      # client_id used to access key distribution service. It can be the same client_id with token service or not.
+      client_id: f7d42348-c647-4efb-a52d-4c5787421e72
+      # client secret used to access the key distribution service.
+      client_secret: f6h1FTI8Q3-7UScPZDzfXA
+      # set to true if the oauth2 provider supports HTTP/2
+      enableHttp2: true
+  # sign endpoint configuration
+  sign:
+    # token server url. The default port number for token service is 6882. If this url exists, it will be used.
+    server_url: https://localhost:6882
+    # token serviceId. If server_url doesn't exist, the serviceId will be used to lookup the token service.
+    serviceId: com.networknt.oauth2-token-1.0.0
+    # signing endpoint for the sign request
+    uri: "/oauth2/token"
+    # timeout in milliseconds
+    timeout: 2000
+    # set to true if the oauth2 provider supports HTTP/2
+    enableHttp2: true
+    # client_id for client authentication
+    client_id: f7d42348-c647-4efb-a52d-4c5787421e72
+    # client secret for client authentication and it can be encrypted here.
+    client_secret: f6h1FTI8Q3-7UScPZDzfXA
+    # the key distribution sever config for sign. It can be different then token key distribution server.
+    key:
+      # key distribution server url. It will be used to establish connection if it exists.
+      server_url: https://localhost:6886
+      # the unique service id for key distribution service, it will be used to lookup key service if above url doesn't exist.
+      serviceId: com.networknt.oauth2-key-1.0.0
+      # the path for the key distribution endpoint
+      uri: "/oauth2/key"
+      # client_id used to access key distribution service. It can be the same client_id with token service or not.
+      client_id: f7d42348-c647-4efb-a52d-4c5787421e72
+      # client secret used to access the key distribution service.
+      client_secret: f6h1FTI8Q3-7UScPZDzfXA
+      # set to true if the oauth2 provider supports HTTP/2
+      enableHttp2: true
+  # de-ref by reference token to JWT token. It is separate service as it might be the external OAuth 2.0 provider.
+  deref:
+    # Token service server url, this might be different than the above token server url. The static url will be used if it is configured.
+    server_url: https://localhost:6882
+    # token service unique id for OAuth 2.0 provider. Need for service lookup/discovery. It will be used if above server_url is not configured.
+    serviceId: com.networknt.oauth2-token-1.0.0
+    # set to true if the oauth2 provider supports HTTP/2
+    enableHttp2: true
+    # the path for the key distribution endpoint
+    uri: "/oauth2/deref"
+    # client_id used to access key distribution service. It can be the same client_id with token service or not.
+    client_id: f7d42348-c647-4efb-a52d-4c5787421e72
+    # client_secret for deref
+    client_secret: f6h1FTI8Q3-7UScPZDzfXA
+# circuit breaker configuration for the client
+request:
+  # number of timeouts/errors to break the circuit
+  errorThreshold: 2
+  # timeout in millisecond to indicate a client error.
+  timeout: 3000
+  # reset the circuit after this timeout in millisecond
+  resetTimeout: 7000
+  # connection expire time.
+  connectionExpireTime: 2000000
+  # if inject OpenTracing with the Http2Client in header
+  injectOpenTracing: false
+  # the flag to indicate whether http/2 is enabled when calling client.callService()
+  enableHttp2: true
+  # the maximum host capacity of connection pool
+  connectionPoolSize: 1000
+  # the maximum request limitation for each connection
+  maxReqPerConn: 1000000
+  # maximum quantity of connection in connection pool for each host
+  maxConnectionNumPerHost: 1000
+  # minimum quantity of connection in connection pool for each host. The corresponding connection number will shrink to minConnectionNumPerHost
+  # by remove least recently used connections when the connection number of a host reach 0.75 * maxConnectionNumPerHost.
+  minConnectionNumPerHost: 250
