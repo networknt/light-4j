@@ -27,6 +27,7 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
 import io.undertow.util.HttpString;
 import io.undertow.util.PathTemplateMatcher;
+import io.undertow.websockets.WebSocketConnectionCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +40,7 @@ import java.util.Map;
 import java.util.Random;
 
 import static io.undertow.util.PathTemplateMatch.ATTACHMENT_KEY;
+import static io.undertow.Handlers.websocket;
 
 /**
  * @author Nicholas Azar
@@ -426,6 +428,8 @@ public class Handler {
 			resolvedHandler = (HttpHandler) handlerOrProviderObject;
 		} else if (handlerOrProviderObject instanceof HandlerProvider) {
 			resolvedHandler = ((HandlerProvider) handlerOrProviderObject).getHandler();
+		} else if (handlerOrProviderObject instanceof WebSocketConnectionCallback) {
+			resolvedHandler = websocket((WebSocketConnectionCallback)handlerOrProviderObject);
 		} else {
 			throw new RuntimeException("Unsupported type of handler provided: " + handlerOrProviderObject);
 		}
