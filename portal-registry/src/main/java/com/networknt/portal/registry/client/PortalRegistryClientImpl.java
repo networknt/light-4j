@@ -116,6 +116,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
             int statusCode = reference.get().getResponseCode();
             if (statusCode >= UNUSUAL_STATUS_CODE) {
                 logger.error("Failed to register on portal controller: {} : {}", statusCode, reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+                System.out.println("Error registerService: " + reference.get().getAttachment(Http2Client.RESPONSE_BODY));
                 throw new Exception("Failed to register on portal controller: " + statusCode);
             }
         } catch (Exception e) {

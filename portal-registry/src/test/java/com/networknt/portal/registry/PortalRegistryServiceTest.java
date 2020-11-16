@@ -38,7 +38,7 @@ public class PortalRegistryServiceTest {
         if(config.httpCheck) {
             Assert.assertEquals("{\"serviceId\":\"com.networknt.apib-1.0.0\",\"name\":\"apib\",\"tag\":\"uat1\",\"address\":\"127.0.0.1\",\"port\":7442,\"check\":{\"id\":\"com.networknt.apib-1.0.0|uat1:127.0.0.1:7442\",\"deregisterCriticalServiceAfter\":120000,\"http\":\"https://127.0.0.1:7442/health/com.networknt.apib-1.0.0\",\"tlsSkipVerify\":true,\"interval\":10000}}", s);
         } else {
-            Assert.assertEquals("{\"serviceId\":\"com.networknt.apib-1.0.0\",\"name\":\"apib\",\"tag\":\"uat1\",\"address\":\"127.0.0.1\",\"port\":7442,\"check\":{\"id\":\"com.networknt.apib-1.0.0|uat1:127.0.0.1:7442\",\"deregisterCriticalServiceAfter\":120000,\"ttl\":10000}}", s);
+            Assert.assertEquals("{\"serviceId\":\"com.networknt.apib-1.0.0\",\"name\":\"apib\",\"tag\":\"uat1\",\"address\":\"127.0.0.1\",\"port\":7442,\"check\":{\"id\":\"com.networknt.apib-1.0.0|uat1:127.0.0.1:7442\",\"deregisterCriticalServiceAfter\":120000,\"interval\":10000}}", s);
         }
     }
 }

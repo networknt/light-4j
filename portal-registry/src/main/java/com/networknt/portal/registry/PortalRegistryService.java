@@ -74,7 +74,7 @@ public class PortalRegistryService {
         if(config.httpCheck) {
             checkString = ",\"check\":{\"id\":\"%1$s:%2$s:%3$s\",\"deregisterCriticalServiceAfter\":" + config.deregisterAfter + ",\"http\":\"" + "https://%2$s:%3$s/health/%4$s" + "\",\"tlsSkipVerify\":true,\"interval\":" + config.checkInterval + "}}";
         } else {
-            checkString = ",\"check\":{\"id\":\"%1$s:%2$s:%3$s\",\"deregisterCriticalServiceAfter\":" + config.deregisterAfter + ",\"ttl\":" + config.checkInterval + "}}";
+            checkString = ",\"check\":{\"id\":\"%1$s:%2$s:%3$s\",\"deregisterCriticalServiceAfter\":" + config.deregisterAfter + ",\"interval\":" + config.checkInterval + "}}";
         }
     }
 
