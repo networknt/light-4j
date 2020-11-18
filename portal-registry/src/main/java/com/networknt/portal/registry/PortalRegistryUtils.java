@@ -58,6 +58,7 @@ public class PortalRegistryUtils {
         service.setAddress(url.getHost());
         service.setServiceId(convertPortalRegistrySerivceId(url));
         service.setName(url.getPath());
+        service.setProtocol(url.getProtocol());
         service.setPort(url.getPort());
         String env = url.getParameter(Constants.TAG_ENVIRONMENT);
         if(env != null) service.setTag(env);

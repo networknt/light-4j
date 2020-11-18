@@ -37,6 +37,7 @@ public class MockUtils {
         service.setAddress(address);
         service.setServiceId(path);
         service.setName(group);
+        service.setProtocol(protocol);
         service.setPort(port);
         service.setTag(tag);
         return service;

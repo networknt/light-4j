@@ -16,6 +16,8 @@ public class PortalRegistryService {
 
     private String tag;
 
+    private String protocol;
+
     private String address;
 
     private int port;
@@ -46,6 +48,14 @@ public class PortalRegistryService {
         this.tag = tag;
     }
 
+    public String getProtocol() {
+        return protocol;
+    }
+
+    public void setProtocol(String protocol) {
+        this.protocol = protocol;
+    }
+
     public String getAddress() {
         return address;
     }
@@ -72,9 +82,9 @@ public class PortalRegistryService {
 
     public PortalRegistryService() {
         if(config.httpCheck) {
-            checkString = ",\"check\":{\"id\":\"%1$s:%2$s:%3$s\",\"deregisterCriticalServiceAfter\":" + config.deregisterAfter + ",\"http\":\"" + "https://%2$s:%3$s/health/%4$s" + "\",\"tlsSkipVerify\":true,\"interval\":" + config.checkInterval + "}}";
+            checkString = ",\"check\":{\"id\":\"%1$s:%2$s:%3$s:%4$s\",\"deregisterCriticalServiceAfter\":" + config.deregisterAfter + ",\"http\":\"" + "%2$s://%3$s:%4$s/health/%5$s" + "\",\"tlsSkipVerify\":true,\"interval\":" + config.checkInterval + "}}";
         } else {
-            checkString = ",\"check\":{\"id\":\"%1$s:%2$s:%3$s\",\"deregisterCriticalServiceAfter\":" + config.deregisterAfter + ",\"interval\":" + config.checkInterval + "}}";
+            checkString = ",\"check\":{\"id\":\"%1$s:%2$s:%3$s:%4$s\",\"deregisterCriticalServiceAfter\":" + config.deregisterAfter + ",\"interval\":" + config.checkInterval + "}}";
         }
     }
 
@@ -89,9 +99,10 @@ public class PortalRegistryService {
         return "{\"serviceId\":\"" + serviceId +
                 "\",\"name\":\"" + name
                 + (tag != null ? "\",\"tag\":\"" + tag : "")
+                + "\",\"protocol\":\"" + protocol
                 + "\",\"address\":\"" + address
                 + "\",\"port\":" + port
-                + String.format(checkString, key, address, port, serviceId);
+                + String.format(checkString, key, protocol, address, port, serviceId);
     }
 
 }
