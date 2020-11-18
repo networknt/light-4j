@@ -129,8 +129,9 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
 
     @Override
     public void unregisterService(PortalRegistryService service, String token) {
-        String path = "/services?serviceId=" + service.getServiceId() + "&address=" + service.getAddress() + "&port=" + service.getPort();
+        String path = "/services?serviceId=" + service.getServiceId() + "&protocol=" + service.getProtocol() + "&address=" + service.getAddress() + "&port=" + service.getPort();
         if(service.getTag() != null) path = path + "&tag=" + service.getTag();
+        System.out.println("de-register path = " + path);
         ClientConnection connection = null;
         try {
             connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
@@ -164,7 +165,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
             return null;
         }
         ClientConnection connection = null;
-        String path = "/services" + "?passing&serviceId=" + serviceId;
+        String path = "/services/lookup" + "?passing&serviceId=" + serviceId;
         if (tag != null) {
             path = path + "&tag=" + tag;
         }
@@ -203,6 +204,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         service.setAddress((String) serviceMap.get("address"));
         service.setServiceId((String) serviceMap.get("serviceId"));
         service.setName((String) serviceMap.get("name"));
+        service.setProtocol((String)serviceMap.get("protocol"));
         service.setPort((Integer) serviceMap.get("port"));
         service.setTag((String)serviceMap.get("tag"));
         return service;
