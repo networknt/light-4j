@@ -510,7 +510,7 @@ public class Server {
             Map parameters = new HashMap<>();
             if (serverConfig.getEnvironment() != null)
                 parameters.put(ENV_PROPERTY_KEY, serverConfig.getEnvironment());
-            URL serviceUrl = new URLImpl("light", ipAddress, port, serviceId, parameters);
+            URL serviceUrl = new URLImpl(serverConfig.enableHttps ? "https" : "http", ipAddress, port, serviceId, parameters);
             if (logger.isInfoEnabled()) logger.info("register service: " + serviceUrl.toFullStr());
             registry.register(serviceUrl);
             return serviceUrl;
