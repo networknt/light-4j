@@ -55,7 +55,7 @@ public class JVMMetricsInfluxDbReporter extends ScheduledReporter {
         final String value = format(gauge.getValue());
         if(value != null) {
             Map<String, String> apiTags = new HashMap<>(name.getTags());
-            String apiName = apiTags.remove("apiName");
+            String apiName = apiTags.remove("api");
             Map<String, String> clientTags = new HashMap<>(name.getTags());
             String clientId = clientTags.remove("clientId");
 
