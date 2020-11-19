@@ -180,7 +180,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         final Snapshot snapshot = timer.getSnapshot();
 
         Map<String, String> apiTags = new HashMap<>(name.getTags());
-        String apiName = apiTags.remove("apiName");
+        String apiName = apiTags.remove("api");
         Map<String, String> clientTags = new HashMap<>(name.getTags());
         String clientId = clientTags.remove("clientId");
 
@@ -201,7 +201,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         }
         final Snapshot snapshot = histogram.getSnapshot();
         Map<String, String> apiTags = new HashMap<>(name.getTags());
-        String apiName = apiTags.remove("apiName");
+        String apiName = apiTags.remove("api");
         Map<String, String> clientTags = new HashMap<>(name.getTags());
         String clientId = clientTags.remove("clientId");
 
@@ -220,7 +220,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
 
     private void reportCounter(MetricName name, Counter counter, long now) {
         Map<String, String> apiTags = new HashMap<>(name.getTags());
-        String apiName = apiTags.remove("apiName");
+        String apiName = apiTags.remove("api");
         Map<String, String> clientTags = new HashMap<>(name.getTags());
         String clientId = clientTags.remove("clientId");
 
@@ -234,7 +234,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         final String value = format(gauge.getValue());
         if(value != null) {
             Map<String, String> apiTags = new HashMap<>(name.getTags());
-            String apiName = apiTags.remove("apiName");
+            String apiName = apiTags.remove("api");
             Map<String, String> clientTags = new HashMap<>(name.getTags());
             String clientId = clientTags.remove("clientId");
 
@@ -250,7 +250,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
             return;
         }
         Map<String, String> apiTags = new HashMap<>(name.getTags());
-        String apiName = apiTags.remove("apiName");
+        String apiName = apiTags.remove("api");
         Map<String, String> clientTags = new HashMap<>(name.getTags());
         String clientId = clientTags.remove("clientId");
 

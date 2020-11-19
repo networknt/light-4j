@@ -54,16 +54,44 @@ import java.util.concurrent.TimeUnit;
  */
 public class MetricsHandler implements MiddlewareHandler {
     public static final String CONFIG_NAME = "metrics";
-    public static MetricsConfig config;
-
+    public static MetricsConfig config = (MetricsConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, MetricsConfig.class);
     static final MetricRegistry registry = new MetricRegistry();
-
     static final Logger logger = LoggerFactory.getLogger(MetricsHandler.class);
 
-    static {
-        config = (MetricsConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, MetricsConfig.class);
-        // initialize reporter and start the report scheduler if metrics is enabled
-        if(config.enabled) {
+    // this is the indicator to start the reporter and construct the common tags. It cannot be static as
+    // the currentPort and currentAddress are not available during the handler initialization.
+    private boolean firstTime = true;
+    private volatile HttpHandler next;
+    Map<String, String> commonTags = new HashMap<>();
+
+    public MetricsHandler() {
+
+    }
+
+    @Override
+    public HttpHandler getNext() {
+        return this.next;
+    }
+
+    @Override
+    public MiddlewareHandler setNext(final HttpHandler next) {
+        Handlers.handlerNotNull(next);
+        this.next = next;
+        return this;
+    }
+
+    @Override
+    public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        if(firstTime) {
+            commonTags.put("api", Server.config.getServiceId());
+            commonTags.put("env", Server.config.getEnvironment());
+            commonTags.put("addr", Server.currentAddress);
+            commonTags.put("port", "" + Server.currentPort);
+            InetAddress inetAddress = Util.getInetAddress();
+            commonTags.put("host", inetAddress == null ? "unknown" : inetAddress.getHostName()); // will be container id if in docker.
+            if(logger.isDebugEnabled()) {
+                logger.debug(commonTags.toString());
+            }
             try {
                 InfluxDbSender influxDb =
                         new InfluxDbHttpSender(config.influxdbProtocol, config.influxdbHost, config.influxdbPort,
@@ -81,45 +109,13 @@ public class MetricsHandler implements MiddlewareHandler {
 
                 logger.info("metrics is enabled and reporter is started");
             } catch (Exception e) {
-                // if there are any exception, chances are influxdb is not available. disable this handler.
-                logger.error("metrics is disabled as it cannot connect to the influxdb", e);
-                // reset the enabled to false to make sure that server/info reports the right status.
-                config.setEnabled(false);
+                // if there are any exception, chances are influxdb is not available.
+                logger.error("metrics is failed to connect to the influxdb", e);
             }
+            // reset the flag so that this block will only be called once.
+            firstTime = false;
         }
-    }
 
-    private volatile HttpHandler next;
-    Map<String, String> commonTags = new HashMap<>();
-
-    public MetricsHandler() {
-        commonTags.put("api", Server.config.getServiceId());
-        commonTags.put("env", Server.config.getEnvironment());
-        commonTags.put("addr", Server.currentAddress);
-        commonTags.put("port", "" + Server.currentPort);
-        InetAddress inetAddress = Util.getInetAddress();
-        commonTags.put("host", inetAddress == null ? "unknown" : inetAddress.getHostName()); // will be container id if in docker.
-                
-        if(logger.isDebugEnabled()) {
-        	logger.debug(commonTags.toString());
-        }
-    }
-
-    @Override
-    public HttpHandler getNext() {
-        return this.next;
-    }
-
-    @Override
-    public MiddlewareHandler setNext(final HttpHandler next) {
-        Handlers.handlerNotNull(next);
-        this.next = next;
-        return this;
-
-    }
-
-    @Override
-    public void handleRequest(final HttpServerExchange exchange) throws Exception {
         long startTime = Clock.defaultClock().getTick();
         exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
             Map<String, Object> auditInfo = exchange1.getAttachment(AttachmentConstants.AUDIT_INFO);
@@ -170,16 +166,7 @@ public class MetricsHandler implements MiddlewareHandler {
         }
     }
 
-    private static void createJVMMetricsReporter(final InfluxDbSender influxDb) {
-        Map<String, String> commonTags = new HashMap<>();
-
-        commonTags.put("api", Server.config.getServiceId());
-        commonTags.put("env", Server.config.getEnvironment());
-        commonTags.put("addr", Server.currentAddress);
-        commonTags.put("port", "" + Server.currentPort);
-        InetAddress inetAddress = Util.getInetAddress();
-        commonTags.put("host", inetAddress == null ? "unknown" : inetAddress.getHostName()); // will be container id if in docker.
-
+    private void createJVMMetricsReporter(final InfluxDbSender influxDb) {
         JVMMetricsInfluxDbReporter jvmReporter = new JVMMetricsInfluxDbReporter(new MetricRegistry(), influxDb, "jvmInfluxDb-reporter",
                 MetricFilter.ALL, TimeUnit.SECONDS, TimeUnit.MILLISECONDS, commonTags);
         jvmReporter.start(config.getReportInMinutes(), TimeUnit.MINUTES);
