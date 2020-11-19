@@ -292,15 +292,18 @@ public class Server {
                 logger.info("Failed to bind to port " + port + ". Trying " + ++port);
             return false;
         }
+        // at this moment, the port number is bound. save it for later queries
+        currentPort = port;
+        currentAddress = getAddress();
         // application level service registry. only be used without docker container.
         if (serverConfig.enableRegistry) {
             // assuming that registry is defined in service.json, otherwise won't start the server.
             serviceUrls = new ArrayList<>();
-            serviceUrls.add(register(serverConfig.getServiceId(), port));
+            serviceUrls.add(register(serverConfig.getServiceId()));
             // check if any serviceIds from startup hook that need to be registered.
             if(serviceIds.size() > 0) {
                 for(String id: serviceIds) {
-                    serviceUrls.add(register(id, port));
+                    serviceUrls.add(register(id));
                 }
             }
             // start heart beat if registry is enabled
@@ -326,8 +329,6 @@ public class Server {
             if (logger.isInfoEnabled())
                 logger.info("Https port disabled.");
         }
-        // at this moment, the port number is bound. save it for later queries
-        currentPort = port;
         return true;
     }
 
@@ -487,30 +488,18 @@ public class Server {
      * can be called from light-hybrid-4j to register individual service.
      *
      * @param serviceId Service Id that is registered
-     * @param port Port number of the service
      * @return URL
      */
-    public static URL register(String serviceId, int port) {
+    public static URL register(String serviceId) {
         try {
             registry = SingletonServiceFactory.getBean(Registry.class);
             if (registry == null)
                 throw new RuntimeException("Could not find registry instance in service map");
-            // in kubernetes pod, the hostIP is passed in as STATUS_HOST_IP environment
-            // variable. If this is null
-            // then get the current server IP as it is not running in Kubernetes.
-            String ipAddress = System.getenv(STATUS_HOST_IP);
-            logger.info("Registry IP from STATUS_HOST_IP is " + ipAddress);
-            if (ipAddress == null) {
-                InetAddress inetAddress = NetUtils.getLocalAddress();
-                ipAddress = inetAddress.getHostAddress();
-                logger.info("Could not find IP from STATUS_HOST_IP, use the InetAddress " + ipAddress);
-            }
-            currentAddress = ipAddress;
             ServerConfig serverConfig = getServerConfig();
             Map parameters = new HashMap<>();
             if (serverConfig.getEnvironment() != null)
                 parameters.put(ENV_PROPERTY_KEY, serverConfig.getEnvironment());
-            URL serviceUrl = new URLImpl(serverConfig.enableHttps ? "https" : "http", ipAddress, port, serviceId, parameters);
+            URL serviceUrl = new URLImpl(serverConfig.enableHttps ? "https" : "http", currentAddress, currentPort, serviceId, parameters);
             if (logger.isInfoEnabled()) logger.info("register service: " + serviceUrl.toFullStr());
             registry.register(serviceUrl);
             return serviceUrl;
@@ -523,5 +512,19 @@ public class Server {
             throw new RuntimeException(e.getMessage());
         }
 
+    }
+
+    public static String getAddress() {
+        // in kubernetes pod, the hostIP is passed in as STATUS_HOST_IP environment
+        // variable. If this is null
+        // then get the current server IP as it is not running in Kubernetes.
+        String address = System.getenv(STATUS_HOST_IP);
+        logger.info("Registry IP from STATUS_HOST_IP is " + address);
+        if (address == null) {
+            InetAddress inetAddress = NetUtils.getLocalAddress();
+            address = inetAddress.getHostAddress();
+            logger.info("Could not find IP from STATUS_HOST_IP, use the InetAddress " + address);
+        }
+        return address;
     }
 }
