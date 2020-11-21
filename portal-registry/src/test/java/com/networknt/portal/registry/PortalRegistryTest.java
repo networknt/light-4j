@@ -17,6 +17,7 @@
 package com.networknt.portal.registry;
 
 import com.networknt.portal.registry.client.PortalRegistryClient;
+import com.networknt.registry.NotifyListener;
 import com.networknt.registry.Registry;
 import com.networknt.registry.support.command.ServiceListener;
 import com.networknt.registry.URL;
@@ -85,56 +86,34 @@ public class PortalRegistryTest {
         Assert.assertFalse(client.isRegistered(service2));
     }
 
-    private ServiceListener createNewServiceListener(final URL serviceUrl) {
-        return new ServiceListener() {
-            @Override
-            public void notifyService(URL refUrl, URL registryUrl, List<URL> urls) {
-                if (!urls.isEmpty()) {
-                    Assert.assertTrue(urls.contains(serviceUrl));
-                }
-            }
-        };
-    }
-
     @Test
     public void subAndUnsubService() throws Exception {
-        ServiceListener serviceListener = createNewServiceListener(serviceUrl);
-        ServiceListener serviceListener2 = createNewServiceListener(serviceUrl);
-
-        registry.subscribeService(clientUrl, serviceListener);
-        registry.subscribeService(clientUrl2, serviceListener2);
-        Assert.assertTrue(containsServiceListener(serviceUrl, clientUrl, serviceListener));
-        Assert.assertTrue(containsServiceListener(serviceUrl, clientUrl2, serviceListener2));
+        registry.doSubscribe(clientUrl, null);
+        registry.doSubscribe(clientUrl2, null);
 
         registry.doRegister(serviceUrl);
         registry.doRegister(serviceUrl2);
         registry.doAvailable(null);
         Thread.sleep(sleepTime);
 
-        registry.unsubscribeService(clientUrl, serviceListener);
-        Assert.assertFalse(containsServiceListener(serviceUrl, clientUrl, serviceListener));
-        Assert.assertTrue(containsServiceListener(serviceUrl, clientUrl2, serviceListener2));
-
-        registry.unsubscribeService(clientUrl2, serviceListener2);
-        Assert.assertFalse(containsServiceListener(serviceUrl, clientUrl2, serviceListener2));
-
+        registry.doUnsubscribe(clientUrl, null);
+        registry.doUnsubscribe(clientUrl2, null);
     }
 
     @Test
     public void discoverService() throws Exception {
         registry.doRegister(serviceUrl);
-        List<URL> urls = registry.discoverService(serviceUrl);
-        Assert.assertNull(urls);
+        List<URL> urls = registry.doDiscover(serviceUrl);
+        Assert.assertTrue(urls.isEmpty());
 
         registry.doAvailable(null);
         Thread.sleep(sleepTime);
-        urls = registry.discoverService(serviceUrl);
+        System.out.println("Before discovery");
+        try {
+            urls = registry.doDiscover(serviceUrl);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         Assert.assertTrue(urls.contains(serviceUrl));
     }
-
-    private Boolean containsServiceListener(URL serviceUrl, URL clientUrl, ServiceListener serviceListener) {
-        String service = PortalRegistryUtils.getUrlClusterInfo(serviceUrl);
-        return registry.getServiceListeners().get(service).get(clientUrl) == serviceListener;
-    }
-
 }

@@ -18,42 +18,35 @@ package com.networknt.portal.registry;
 
 import com.networknt.config.Config;
 import com.networknt.portal.registry.client.PortalRegistryClient;
+import com.networknt.portal.registry.client.PortalRegistryWebSocketClient;
 import com.networknt.registry.NotifyListener;
 import com.networknt.registry.URL;
 import com.networknt.registry.URLParamType;
-import com.networknt.registry.support.command.CommandFailbackRegistry;
-import com.networknt.registry.support.command.CommandServiceManager;
-import com.networknt.registry.support.command.ServiceListener;
+import com.networknt.registry.support.AbstractRegistry;
 import com.networknt.utility.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
-public class PortalRegistry extends CommandFailbackRegistry {
+import static com.networknt.portal.registry.PortalRegistryConfig.CONFIG_NAME;
+
+public class PortalRegistry extends AbstractRegistry {
     private static final Logger logger = LoggerFactory.getLogger(PortalRegistry.class);
     private static final String CONFIG_PROPERTY_MISSING = "ERR10057";
-
+    private static final PortalRegistryConfig config = (PortalRegistryConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, PortalRegistryConfig.class);
+    PortalRegistryWebSocketClient webSocketClient = null;
     private PortalRegistryClient client;
     private PortalRegistryHeartbeatManager heartbeatManager;
     private int lookupInterval;
 
     // service local cache. key: serviceName, value: <service url list>
     private ConcurrentHashMap<String, List<URL>> serviceCache = new ConcurrentHashMap<String, List<URL>>();
-
-    // record lookup service thread, ensure each serviceName start only one thread, <serviceName, lastConsulIndexId>
-    private ConcurrentHashMap<String, Long> lookupServices = new ConcurrentHashMap<String, Long>();
-
-    // TODO: 2016/6/17 clientUrl support multiple listener
-    // record subscribers service callback listeners, listener was called when corresponding service changes
-    private ConcurrentHashMap<String, ConcurrentHashMap<URL, ServiceListener>> serviceListeners = new ConcurrentHashMap<String, ConcurrentHashMap<URL, ServiceListener>>();
-    private ThreadPoolExecutor notifyExecutor;
 
     public PortalRegistry(URL url, PortalRegistryClient client) {
         super(url);
@@ -63,14 +56,8 @@ public class PortalRegistry extends CommandFailbackRegistry {
             heartbeatManager.start();
         }
         lookupInterval = getUrl().getIntParameter(URLParamType.registrySessionTimeout.getName(), PortalRegistryConstants.DEFAULT_LOOKUP_INTERVAL);
-
         ArrayBlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<Runnable>(20000);
-        notifyExecutor = new ThreadPoolExecutor(10, 30, 30 * 1000, TimeUnit.MILLISECONDS, workQueue);
-        logger.info("ConsulRegistry init finish.");
-    }
-
-    public ConcurrentHashMap<String, ConcurrentHashMap<URL, ServiceListener>> getServiceListeners() {
-        return serviceListeners;
+        logger.info("PortalRegistry init finish.");
     }
 
     @Override
@@ -92,7 +79,7 @@ public class PortalRegistry extends CommandFailbackRegistry {
         if (url == null) {
             if(getPortalRegistryConfig().ttlCheck) heartbeatManager.setHeartbeatOpen(true);
         } else {
-            throw new UnsupportedOperationException("Command consul registry not support available by urls yet");
+            throw new UnsupportedOperationException("Portal registry not support available by urls yet");
         }
     }
 
@@ -101,14 +88,8 @@ public class PortalRegistry extends CommandFailbackRegistry {
         if (url == null) {
             if(getPortalRegistryConfig().ttlCheck) heartbeatManager.setHeartbeatOpen(false);
         } else {
-            throw new UnsupportedOperationException("Command consul registry not support unavailable by urls yet");
+            throw new UnsupportedOperationException("Portal registry not support unavailable by urls yet");
         }
-    }
-
-    @Override
-    protected void subscribeService(URL url, ServiceListener serviceListener) {
-        addServiceListener(url, serviceListener);
-        startListenerThreadIfNewService(url);
     }
 
     /**
@@ -120,64 +101,63 @@ public class PortalRegistry extends CommandFailbackRegistry {
      */
     @Override
     protected void doSubscribe(URL url, final NotifyListener listener) {
-        if(logger.isInfoEnabled()) logger.info("CommandFailbackRegistry subscribe. url: " + url.toSimpleString());
-        URL urlCopy = url.createCopy();
-        CommandServiceManager manager = getCommandServiceManager(urlCopy);
-        manager.addNotifyListener(listener);
+        if(logger.isInfoEnabled()) logger.info("PortalRegistry subscribe url: " + url.toSimpleString());
+        // here we assume that the first lookup has been done for the url so that subscription info is available on the server
+        // We just need to open the WebSocket connection here if it is not created. Both parameters are not used here and we
+        // can save a lot of threads than the Consul implementation.
+        try {
+            if(webSocketClient == null) {
+                // The client is created only once and it is responsible for all the subscriptions to the down stream APIs.
+                webSocketClient = new PortalRegistryWebSocketClient(URI.create("ws://localhost:8080/myapp")) {
+                    @Override
+                    public void onOpen() {
+                        System.out.println("open");
+                    }
 
-        subscribeService(urlCopy, manager);
-    }
+                    @Override
+                    public void onMessage(String msg) {
+                        System.out.println("message: " + msg);
+                    }
 
-    /**
-     * if new service registered, start a new lookup thread
-     * each serviceName start a lookup thread to discover service
-     *
-     * @param url
-     */
-    private void startListenerThreadIfNewService(URL url) {
-        String serviceId = url.getPath();
-        String tag = url.getParameter(Constants.TAG_ENVIRONMENT);
-        String key = tag == null ? serviceId : serviceId + "|" + tag;
-        String protocol = url.getProtocol();
-        if (!lookupServices.containsKey(key)) {
-            Long value = lookupServices.putIfAbsent(key, 0L);
-            if (value == null) {
-                ServiceLookupThread lookupThread = new ServiceLookupThread(protocol, serviceId, tag);
-                lookupThread.setDaemon(true);
-                lookupThread.start();
+                    @Override
+                    public void onClose(int code, String reason) {
+                        System.out.println("close (code: " + code + ", reason: " + reason + ")");
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        System.out.println("err: " + e.getMessage());
+                        System.out.println("Client isOpen?: " + this.isOpen());
+                    }
+                };
             }
-        }
-    }
-
-    private void addServiceListener(URL url, ServiceListener serviceListener) {
-        String service = PortalRegistryUtils.getUrlClusterInfo(url);
-        ConcurrentHashMap<URL, ServiceListener> map = serviceListeners.get(service);
-        if (map == null) {
-            serviceListeners.putIfAbsent(service, new ConcurrentHashMap<URL, ServiceListener>());
-            map = serviceListeners.get(service);
-        }
-        synchronized (map) {
-            map.put(url, serviceListener);
+            webSocketClient.send(url.toFullStr());
+        } catch (IOException e) {
+            logger.error("Exception:", e);
         }
     }
 
     @Override
-    protected void unsubscribeService(URL url, ServiceListener listener) {
-        ConcurrentHashMap<URL, ServiceListener> listeners = serviceListeners.get(PortalRegistryUtils.getUrlClusterInfo(url));
-        if (listeners != null) {
-            synchronized (listeners) {
-                listeners.remove(url);
+    protected void doUnsubscribe(URL url, NotifyListener listener) {
+        // same as the doSubscribe, both url and listener are not used but it is called per client url and it can be
+        // called multiple time without any issue. The first call will stop the WebSocket client.
+        if(logger.isInfoEnabled()) logger.info("PortalRegistry unsubscribe url: " + url.toSimpleString());
+        try {
+            if(webSocketClient != null && webSocketClient.isOpen()) {
+                webSocketClient.close();
             }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
         }
     }
 
     @Override
-    protected List<URL> discoverService(URL url) {
+    protected List<URL> doDiscover(URL url) {
         String serviceId = url.getPath();
         String tag = url.getParameter(Constants.TAG_ENVIRONMENT);
         String key = tag == null ? serviceId : serviceId + "|" + tag;
         String protocol = url.getProtocol();
-        if(logger.isTraceEnabled()) logger.trace("protocol = " + protocol + " serviceId = " + serviceId + " tag = " + tag);
+        if(logger.isTraceEnabled()) logger.trace("discover protocol = " + protocol + " serviceId = " + serviceId + " tag = " + tag);
         List<URL> urls = serviceCache.get(key);
         if (urls == null || urls .isEmpty()) {
             synchronized (key.intern()) {
@@ -195,35 +175,26 @@ public class PortalRegistry extends CommandFailbackRegistry {
     private ConcurrentHashMap<String, List<URL>> lookupServiceUpdate(String protocol, String serviceId, String tag) {
         if(logger.isTraceEnabled()) logger.trace("protocol = " + protocol  + " serviceId = " + serviceId + " tag = " + tag);
         String key = tag == null ? serviceId : serviceId + "|" + tag;
-        PortalRegistryResponse<List<PortalRegistryService>> response = lookupConsulService(serviceId, tag);
-        if(logger.isTraceEnabled()) {
-            try {
-                logger.trace("response = " + Config.getInstance().getMapper().writeValueAsString(response));
-            } catch (Exception e) {}
-        }
+        List<Map<String, Object>> services = lookupService(serviceId, tag);
         ConcurrentHashMap<String, List<URL>> serviceUrls = new ConcurrentHashMap<>();
-        if (response != null) {
-            List<PortalRegistryService> services = response.getValue();
-            if(logger.isDebugEnabled()) try {logger.debug("services = " + Config.getInstance().getMapper().writeValueAsString(services));} catch (Exception e) {}
-            if (services != null && !services.isEmpty()) {
-                for (PortalRegistryService service : services) {
-                    try {
-                        URL url = PortalRegistryUtils.buildUrl(protocol, service);
-                        List<URL> urlList = serviceUrls.get(key);
-                        if (urlList == null) {
-                            urlList = new ArrayList<>();
-                            serviceUrls.put(key, urlList);
-                        }
-                        if(logger.isTraceEnabled()) logger.trace("lookupServiceUpdate url = " + url);
-                        urlList.add(url);
-                    } catch (Exception e) {
-                        logger.error("convert portal registry service to url fail! service:" + service, e);
+        if (services != null && !services.isEmpty()) {
+            for (Map<String, Object> service : services) {
+                try {
+                    URL url = PortalRegistryUtils.buildUrl(serviceId, tag, service);
+                    // filter the protocol base on the passed in parameter
+                    if(!url.getProtocol().equals(protocol)) continue;
+                    List<URL> urlList = serviceUrls.get(key);
+                    if (urlList == null) {
+                        urlList = new ArrayList<>();
+                        serviceUrls.put(key, urlList);
                     }
+                    if(logger.isTraceEnabled()) logger.trace("lookupServiceUpdate url = " + url);
+                    urlList.add(url);
+                } catch (Exception e) {
+                    logger.error("convert portal registry service to url fail! service:" + service, e);
                 }
-                return serviceUrls;
-            } else {
-                logger.info(key + " no need update with empty service list");
             }
+            return serviceUrls;
         } else {
             serviceUrls.put(key, new ArrayList<>());
             logger.info("no response for service: {}, set urls to empty list", key);
@@ -232,14 +203,13 @@ public class PortalRegistry extends CommandFailbackRegistry {
     }
 
     /**
-     * directly fetch consul service data.
+     * directly fetch portal registry service data.
      *
      * @param serviceId service Id
-     * @return PortalRegistryResponse or null
+     * @return list of services or null
      */
-    private PortalRegistryResponse<List<PortalRegistryService>> lookupConsulService(String serviceId, String tag) {
-        PortalRegistryResponse<List<PortalRegistryService>> response = client.lookupHealthService(serviceId, tag, getPortalToken());
-        return response;
+    private List<Map<String, Object>> lookupService(String serviceId, String tag) {
+        return client.lookupHealthService(serviceId, tag, getPortalToken());
     }
 
     /**
@@ -264,72 +234,6 @@ public class PortalRegistry extends CommandFailbackRegistry {
                 change = false;
             } else {
                 serviceCache.put(serviceName, newUrls);
-            }
-            if (change && needNotify) {
-                notifyExecutor.execute(new NotifyService(serviceName, newUrls));
-                logger.info("light service notify-service: " + serviceName);
-                StringBuilder sb = new StringBuilder();
-                for (URL url : newUrls) {
-                    sb.append(url.getUri()).append(";");
-                }
-                logger.info("consul notify urls:" + sb.toString());
-            }
-        }
-    }
-
-    private class ServiceLookupThread extends Thread {
-       private String protocol;
-       private String serviceId;
-       private String tag;
-       private String key;
-
-        public ServiceLookupThread(String protocol, String serviceId, String tag) {
-            this.protocol = protocol;
-            this.serviceId = serviceId;
-            this.tag = tag;
-            this.key = this.tag == null ? this.serviceId : this.serviceId + "|" + tag;
-        }
-
-        @Override
-        public void run() {
-            logger.info("start service lookup thread. lookup interval: " + lookupInterval + "ms, service: " + serviceId);
-            while (true) {
-                try {
-                    sleep(lookupInterval);
-                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(protocol, serviceId, tag);
-                    updateServiceCache(key, serviceUrls, true);
-                } catch (Throwable e) {
-                    logger.error("service lookup thread fail!", e);
-                    try {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException ignored) {
-                    }
-                }
-            }
-        }
-    }
-
-    private class NotifyService implements Runnable {
-        private String service;
-        private List<URL> urls;
-
-        public NotifyService(String service, List<URL> urls) {
-            this.service = service;
-            this.urls = urls;
-        }
-
-        @Override
-        public void run() {
-            ConcurrentHashMap<URL, ServiceListener> listeners = serviceListeners.get(service);
-            if (listeners != null) {
-                synchronized (listeners) {
-                    for (Map.Entry<URL, ServiceListener> entry : listeners.entrySet()) {
-                        ServiceListener serviceListener = entry.getValue();
-                        serviceListener.notifyService(entry.getKey(), getUrl(), urls);
-                    }
-                }
-            } else {
-                logger.debug("need not notify service:" + service);
             }
         }
     }
