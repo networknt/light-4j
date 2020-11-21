@@ -19,6 +19,7 @@ package com.networknt.portal.registry;
 import com.networknt.portal.registry.client.PortalRegistryClient;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,9 +36,7 @@ public class MockPortalRegistryClient implements PortalRegistryClient {
     // registered service and service status, true is available, false unavailable
     private ConcurrentHashMap<String, Boolean> serviceStatus = new ConcurrentHashMap<String, Boolean>();
     // registered serviceId and service relationship
-    private ConcurrentHashMap<String, PortalRegistryService> services = new ConcurrentHashMap<String, PortalRegistryService>();
-    // KVValue
-    private ConcurrentHashMap<String, String> KVValues = new ConcurrentHashMap<String, String>();
+    private ConcurrentHashMap<String, PortalRegistryService> services = new ConcurrentHashMap<>();
 
     String host;
     int port;
@@ -78,16 +77,21 @@ public class MockPortalRegistryClient implements PortalRegistryClient {
     }
 
     @Override
-    public PortalRegistryResponse<List<PortalRegistryService>> lookupHealthService(String serviceName, String tag, String token) {
-        PortalRegistryResponse<List<PortalRegistryService>> res = new PortalRegistryResponse<List<PortalRegistryService>>();
-        List<PortalRegistryService> list = new ArrayList<PortalRegistryService>();
+    public List<Map<String, Object>> lookupHealthService(String serviceName, String tag, String token) {
+        List<Map<String, Object>> list = new ArrayList<>();
         for (Map.Entry<String, Boolean> entry : serviceStatus.entrySet()) {
             if (entry.getValue()) {
-                list.add(services.get(entry.getKey()));
+                PortalRegistryService service = services.get(entry.getKey());
+                if(service != null) {
+                    Map<String, Object> node = new HashMap<>();
+                    node.put("protocol",service.getProtocol());
+                    node.put("address", service.getAddress());
+                    node.put("port", service.getPort());
+                    list.add(node);
+                }
             }
         }
-        res.setValue(list);
-        return res;
+        return list;
     }
 
     public long getCheckPassTimes(PortalRegistryService service) {
