@@ -16,9 +16,8 @@
 package com.networknt.portal.registry.client;
 
 import java.util.List;
+import java.util.Map;
 
-import com.networknt.portal.registry.PortalRegistry;
-import com.networknt.portal.registry.PortalRegistryResponse;
 import com.networknt.portal.registry.PortalRegistryService;
 
 public interface PortalRegistryClient {
@@ -63,6 +62,6 @@ public interface PortalRegistryClient {
 	 * @param token consul token for security
 	 * @return T
 	 */
-	PortalRegistryResponse<List<PortalRegistryService>> lookupHealthService(String serviceId, String tag, String token);
+	List<Map<String, Object>> lookupHealthService(String serviceId, String tag, String token);
 
 }

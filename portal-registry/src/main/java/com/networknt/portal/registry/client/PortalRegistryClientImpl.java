@@ -5,9 +5,7 @@ import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.httpstring.HttpStringConstants;
-import com.networknt.portal.registry.PortalRegistry;
 import com.networknt.portal.registry.PortalRegistryConfig;
-import com.networknt.portal.registry.PortalRegistryResponse;
 import com.networknt.portal.registry.PortalRegistryService;
 import com.networknt.utility.StringUtils;
 import io.undertow.UndertowOptions;
@@ -157,15 +155,13 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
      * @return null if serviceId is blank
      */
     @Override
-    public PortalRegistryResponse<List<PortalRegistryService>> lookupHealthService(String serviceId, String tag, String token) {
-
-        PortalRegistryResponse<List<PortalRegistryService>> newResponse = null;
-
+    public List<Map<String, Object>> lookupHealthService(String serviceId, String tag, String token) {
+        List<Map<String, Object>> services = null;
         if (StringUtils.isBlank(serviceId)) {
             return null;
         }
         ClientConnection connection = null;
-        String path = "/services/lookup" + "?passing&serviceId=" + serviceId;
+        String path = "/services/lookup" + "?serviceId=" + serviceId;
         if (tag != null) {
             path = path + "&tag=" + tag;
         }
@@ -178,36 +174,14 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
                 throw new Exception("Failed to unregister on Consul: " + statusCode);
             } else {
                 String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-                List<Map<String, Object>> services = Config.getInstance().getMapper().readValue(body, new TypeReference<List<Map<String, Object>>>() {
-                });
-                List<PortalRegistryService> PortalRegistryServcies = new ArrayList<>(services.size());
-                for (Map<String, Object> service : services) {
-                    PortalRegistryService newService = convertToPortalRegistryService((Map<String, Object>) service.get("Service"));
-                    PortalRegistryServcies.add(newService);
-                }
-                if (!PortalRegistryServcies.isEmpty()) {
-                    newResponse = new PortalRegistryResponse();
-                    newResponse.setValue(PortalRegistryServcies);
-                    newResponse.setConsulIndex(Long.parseLong(reference.get().getResponseHeaders().getFirst("X-Consul-Index")));
-                }
+                services = JsonMapper.string2List(body);
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
         } finally {
             client.returnConnection(connection);
         }
-        return newResponse;
-    }
-
-    private PortalRegistryService convertToPortalRegistryService(Map<String, Object> serviceMap) {
-        PortalRegistryService service = new PortalRegistryService();
-        service.setAddress((String) serviceMap.get("address"));
-        service.setServiceId((String) serviceMap.get("serviceId"));
-        service.setName((String) serviceMap.get("name"));
-        service.setProtocol((String)serviceMap.get("protocol"));
-        service.setPort((Integer) serviceMap.get("port"));
-        service.setTag((String)serviceMap.get("tag"));
-        return service;
+        return services;
     }
 
     /**
