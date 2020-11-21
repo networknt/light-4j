@@ -67,18 +67,17 @@ public class PortalRegistryUtils {
 
     /**
      * build url from service
-     * @param protocol the protocol of the service
-     * @param service PortalRegistryService
+     * @param serviceId the serviceId
+     * @param tag the optional tag
+     * @param service service object map
      * @return URL object
      */
-    public static URL buildUrl(String protocol, PortalRegistryService service) {
+    public static URL buildUrl(String serviceId, String tag, Map<String, Object> service) {
         URL url = null;
         if (url == null) {
             Map<String, String> params = new HashMap<>();
-            if (service.getTag() != null) {
-                params.put(URLParamType.environment.getName(), service.getTag());
-            }
-            url = new URLImpl(protocol, service.getAddress(), service.getPort(), service.getServiceId(), params);
+            if(tag != null) params.put(URLParamType.environment.getName(), tag);
+            url = new URLImpl((String)service.get("protocol"), (String)service.get("address"), (Integer)service.get("port"), serviceId, params);
         }
         return url;
     }
