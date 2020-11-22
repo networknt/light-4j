@@ -171,7 +171,7 @@ public class PortalRegistry extends AbstractRegistry {
                 urls = serviceCache.get(key);
                 if (urls == null || urls .isEmpty()) {
                     ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(protocol, serviceId, tag);
-                    updateServiceCache(serviceId, serviceUrls, false);
+                    updateServiceCache(key, serviceUrls, false);
                     urls = serviceCache.get(key);
                 }
             }
