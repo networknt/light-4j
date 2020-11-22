@@ -17,6 +17,7 @@
 package com.networknt.portal.registry;
 
 import com.networknt.config.Config;
+import com.networknt.config.JsonMapper;
 import com.networknt.portal.registry.client.PortalRegistryClient;
 import com.networknt.portal.registry.client.PortalRegistryWebSocketClient;
 import com.networknt.registry.NotifyListener;
@@ -24,12 +25,14 @@ import com.networknt.registry.URL;
 import com.networknt.registry.URLParamType;
 import com.networknt.registry.support.AbstractRegistry;
 import com.networknt.utility.Constants;
+import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -106,9 +109,10 @@ public class PortalRegistry extends AbstractRegistry {
         // We just need to open the WebSocket connection here if it is not created. Both parameters are not used here and we
         // can save a lot of threads than the Consul implementation.
         try {
+            String u = "wss" + config.getPortalUrl().substring(config.getPortalUrl().indexOf("://"));
             if(webSocketClient == null) {
                 // The client is created only once and it is responsible for all the subscriptions to the down stream APIs.
-                webSocketClient = new PortalRegistryWebSocketClient(URI.create("ws://localhost:8080/myapp")) {
+                webSocketClient = new PortalRegistryWebSocketClient(URI.create(u + "/ws")) {
                     @Override
                     public void onOpen() {
                         System.out.println("open");
@@ -116,7 +120,10 @@ public class PortalRegistry extends AbstractRegistry {
 
                     @Override
                     public void onMessage(String msg) {
-                        System.out.println("message: " + msg);
+                        if(logger.isDebugEnabled()) logger.debug("WebSocket message: " + msg);
+                        // The subscribed service nodes have been changed.
+                        // {"com.networknt.ab-1.0.0|test1":[]}
+                        updateCacheFromMessage(msg);
                     }
 
                     @Override
@@ -131,10 +138,10 @@ public class PortalRegistry extends AbstractRegistry {
                     }
                 };
             }
-            webSocketClient.send(url.toFullStr());
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("Exception:", e);
         }
+        webSocketClient.send(url.toFullStr());
     }
 
     @Override
@@ -174,15 +181,43 @@ public class PortalRegistry extends AbstractRegistry {
 
     private ConcurrentHashMap<String, List<URL>> lookupServiceUpdate(String protocol, String serviceId, String tag) {
         if(logger.isTraceEnabled()) logger.trace("protocol = " + protocol  + " serviceId = " + serviceId + " tag = " + tag);
-        String key = tag == null ? serviceId : serviceId + "|" + tag;
         List<Map<String, Object>> services = lookupService(serviceId, tag);
+        return convertLisMap2UR(serviceId, tag, protocol, services);
+    }
+
+    private void updateCacheFromMessage(String message) {
+        Map<String, Object> map = JsonMapper.string2Map(message);
+        // there is only one entry in the map from the socket message.
+        Iterator<Map.Entry<String, Object>> iterator = map.entrySet().iterator();
+        Map.Entry<String, Object> entry = iterator.next();
+        String key = entry.getKey();
+
+        String serviceId = null;
+        String tag = null;
+        if(key.indexOf("|") > 0) {
+            String[] parts = StringUtils.split(key, "|");
+            serviceId = parts[0];
+            tag = parts[1];
+        } else {
+            serviceId = key;
+        }
+
+        List nodes = (List)entry.getValue();
+        ConcurrentHashMap<String, List<URL>> serviceUrls = convertLisMap2UR(serviceId,  tag, null, nodes);
+        synchronized (key.intern()) {
+            updateServiceCache(key, serviceUrls, false);
+        }
+    }
+
+    private ConcurrentHashMap<String, List<URL>> convertLisMap2UR(String serviceId, String tag, String protocol, List<Map<String, Object>> services)  {
+        String key = tag == null ? serviceId : serviceId + "|" + tag;
         ConcurrentHashMap<String, List<URL>> serviceUrls = new ConcurrentHashMap<>();
         if (services != null && !services.isEmpty()) {
             for (Map<String, Object> service : services) {
                 try {
                     URL url = PortalRegistryUtils.buildUrl(serviceId, tag, service);
                     // filter the protocol base on the passed in parameter
-                    if(!url.getProtocol().equals(protocol)) continue;
+                    if(protocol != null && !url.getProtocol().equals(protocol)) continue;
                     List<URL> urlList = serviceUrls.get(key);
                     if (urlList == null) {
                         urlList = new ArrayList<>();
@@ -213,27 +248,24 @@ public class PortalRegistry extends AbstractRegistry {
     }
 
     /**
-     * update service cache of the serviceName.
+     * update service cache of the service key.
      * update local cache when service list changed,
      * if need notify, notify service
      *
-     * @param serviceName
+     * @param key service key with serviceId and optional tag
      * @param serviceUrls
      * @param needNotify
      */
-    private void updateServiceCache(String serviceName, ConcurrentHashMap<String, List<URL>> serviceUrls, boolean needNotify) {
+    private void updateServiceCache(String key, ConcurrentHashMap<String, List<URL>> serviceUrls, boolean needNotify) {
         if (serviceUrls != null && !serviceUrls.isEmpty()) {
-            List<URL> cachedUrls = serviceCache.get(serviceName);
-            List<URL> newUrls = serviceUrls.get(serviceName);
-            try {
-                logger.trace("serviceUrls = {}", Config.getInstance().getMapper().writeValueAsString(serviceUrls));
-            } catch(Exception e) {
-            }
+            List<URL> cachedUrls = serviceCache.get(key);
+            List<URL> newUrls = serviceUrls.get(key);
+            if(logger.isTraceEnabled()) logger.trace("serviceUrls = " + JsonMapper.toJson(serviceUrls));
             boolean change = true;
             if (PortalRegistryUtils.isSame(newUrls, cachedUrls)) {
                 change = false;
             } else {
-                serviceCache.put(serviceName, newUrls);
+                serviceCache.put(key, newUrls);
             }
         }
     }

@@ -109,9 +109,4 @@ public class MockPortalRegistryClient implements PortalRegistryClient {
     public boolean isWorking(PortalRegistryService service) {
         return serviceStatus.get(service.getServiceId() + service.getAddress() + service.getPort());
     }
-
-    public void removeService(PortalRegistryService service) {
-        serviceStatus.remove(service.getServiceId() + service.getAddress() + service.getPort());
-        services.remove(service.getServiceId() + service.getAddress() + service.getPort());
-    }
 }

@@ -16,18 +16,22 @@
 
 package com.networknt.portal.registry;
 
+import com.networknt.config.JsonMapper;
 import com.networknt.portal.registry.client.PortalRegistryClient;
 import com.networknt.registry.NotifyListener;
 import com.networknt.registry.Registry;
 import com.networknt.registry.support.command.ServiceListener;
 import com.networknt.registry.URL;
 import com.networknt.service.SingletonServiceFactory;
+import com.networknt.utility.StringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 public class PortalRegistryTest {
     private MockPortalRegistryClient client;
@@ -88,16 +92,16 @@ public class PortalRegistryTest {
 
     @Test
     public void subAndUnsubService() throws Exception {
-        registry.doSubscribe(clientUrl, null);
-        registry.doSubscribe(clientUrl2, null);
+        //registry.doSubscribe(clientUrl, null);
+        //registry.doSubscribe(clientUrl2, null);
 
         registry.doRegister(serviceUrl);
         registry.doRegister(serviceUrl2);
         registry.doAvailable(null);
         Thread.sleep(sleepTime);
 
-        registry.doUnsubscribe(clientUrl, null);
-        registry.doUnsubscribe(clientUrl2, null);
+        //registry.doUnsubscribe(clientUrl, null);
+        //registry.doUnsubscribe(clientUrl2, null);
     }
 
     @Test
@@ -115,5 +119,46 @@ public class PortalRegistryTest {
             e.printStackTrace();
         }
         Assert.assertTrue(urls.contains(serviceUrl));
+    }
+
+    @Test
+    public void testWssUrl() {
+        String s = "https://localhost:8438";
+        String u = "wss" + s.substring(s.indexOf("://"));
+        Assert.assertEquals("wss://localhost:8438", u);
+
+    }
+
+    @Test
+    public void testSocketMessage() {
+        String s = "{\"com.networknt.ab-1.0.0|test1\":[]}";
+        Map<String, Object> map = JsonMapper.string2Map(s);
+        // there is only one entry in the map.
+        Iterator<Map.Entry<String, Object>> iterator = map.entrySet().iterator();
+        Map.Entry<String, Object> entry = iterator.next();
+        String key = entry.getKey();
+        List nodes = (List)entry.getValue();
+        Assert.assertEquals(nodes.size(), 0);
+        Assert.assertEquals("com.networknt.ab-1.0.0|test1", key);
+
+        String[] parts = StringUtils.split(key, "|");
+        String serviceId = parts[0];
+        String tag = parts[1];
+        Assert.assertEquals("com.networknt.ab-1.0.0", serviceId);
+        Assert.assertEquals("test1", tag);
+    }
+
+    @Test
+    public void testStringSplit() {
+        String s = "com.networknt.ab-1.0.0";
+        if(s.indexOf("|") > 0) {
+            String[] parts = StringUtils.split(s, "|");
+            String serviceId = parts[0];
+            String tag = parts[1];
+            Assert.assertEquals(s, serviceId);
+            Assert.assertNull(tag);
+        } else {
+
+        }
     }
 }
