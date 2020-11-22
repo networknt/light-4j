@@ -26,6 +26,7 @@ public abstract class PortalRegistryWebSocketClient implements WebSocketClientHa
         UndertowXnioSsl ssl = new UndertowXnioSsl(Xnio.getInstance(), OptionMap.EMPTY, Http2Client.createSSLContext());
         final io.undertow.websockets.client.WebSocketClient.ConnectionBuilder connectionBuilder = io.undertow.websockets.client.WebSocketClient.connectionBuilder(Http2Client.WORKER, Http2Client.BUFFER_POOL, uri).setSsl(ssl);
         IoFuture<WebSocketChannel> future = connectionBuilder.connect();
+        channel = future.get();
         future.addNotifier(futureNotifier, null);
     }
 
