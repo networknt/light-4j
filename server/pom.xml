@@ -60,7 +60,7 @@
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>zookeeper</artifactId>
+            <artifactId>portal-registry</artifactId>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
