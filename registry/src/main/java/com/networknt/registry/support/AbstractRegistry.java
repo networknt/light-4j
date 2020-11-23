@@ -96,9 +96,8 @@ public abstract class AbstractRegistry implements Registry {
 
     @Override
     public void subscribe(URL url, NotifyListener listener) {
-        if (url == null || listener == null) {
-            logger.warn("[{}] subscribe with malformed param, url:{}, listener:{}",
-                    registryClassName, url, listener);
+        if (url == null) {
+            logger.warn("[{}] subscribe with malformed param, url:{}", registryClassName, url);
             return;
         }
         if(logger.isInfoEnabled()) logger.info("[{}] Listener ({}) will subscribe to url ({}) in Registry [{}]",
@@ -108,8 +107,8 @@ public abstract class AbstractRegistry implements Registry {
 
     @Override
     public void unsubscribe(URL url, NotifyListener listener) {
-        if (url == null || listener == null) {
-            logger.warn("[{}] unsubscribe with malformed param, url:{}, listener:{}", registryClassName, url, listener);
+        if (url == null) {
+            logger.warn("[{}] unsubscribe with malformed param, url:{}", registryClassName, url);
             return;
         }
         if(logger.isInfoEnabled()) logger.info("[{}] Listener ({}) will unsubscribe from url ({}) in Registry [{}]",
