@@ -44,24 +44,37 @@ public class DirectRegistry extends AbstractRegistry {
 
     public DirectRegistry(URL url) {
         super(url);
-        for (Map.Entry<String, String> entry : url.getParameters().entrySet())
-        {
-            List<URL> urls = new ArrayList<>();
+        for (Map.Entry<String, String> entry : url.getParameters().entrySet()) {
+            String tag = null;
             try {
                 if(entry.getValue().contains(",")) {
                     String[] directUrlArray = entry.getValue().split(",");
                     for (String directUrl : directUrlArray) {
                         String s = buildUrl(directUrl, entry.getKey());
-                        urls.add(addGeneralTag(URLImpl.valueOf(s)));
+                        URL u = URLImpl.valueOf(s);
+                        tag = u.getParameter(Constants.TAG_ENVIRONMENT);
+                        String key = tag == null ? entry.getKey() : entry.getKey() + "|" + tag;
+                        List<URL> urls = directUrls.get(key);
+                        if(urls != null) {
+                            urls.add(u);
+                        } else {
+                            urls = new ArrayList<>();
+                            urls.add(u);
+                        }
+                        directUrls.put(key, urls);
                     }
                 } else {
+                    List<URL> urls = new ArrayList<>();
                     String s = buildUrl(entry.getValue(), entry.getKey());
-                    urls.add(addGeneralTag(URLImpl.valueOf(s)));
+                    URL u = URLImpl.valueOf(s);
+                    tag = u.getParameter(Constants.TAG_ENVIRONMENT);
+                    String key = tag == null ? entry.getKey() : entry.getKey() + "|" + tag;
+                    urls.add(u);
+                    directUrls.put(key, urls);
                 }
             } catch (Exception e) {
                 throw new FrameworkException(new Status(PARSE_DIRECT_URL_ERROR, url.toString()));
             }
-            directUrls.put(entry.getKey(), urls);
         }
     }
 
@@ -105,9 +118,10 @@ public class DirectRegistry extends AbstractRegistry {
     }
 
     private List<URL> createSubscribeUrl(URL subscribeUrl) {
-        String serviceName = subscribeUrl.getPath();
-        // still return everything and the LightCluster will filter out others with the environment tag
-        return directUrls.get(serviceName);
+        String serviceId = subscribeUrl.getPath();
+        String tag = subscribeUrl.getParameter(Constants.TAG_ENVIRONMENT);
+        String key = tag == null ? serviceId : serviceId + "|" + tag;
+        return directUrls.get(key);
     }
 
     @Override
@@ -118,13 +132,5 @@ public class DirectRegistry extends AbstractRegistry {
     @Override
     protected void doUnavailable(URL url) {
         // do nothing
-    }
-
-    private URL addGeneralTag(URL url) {
-        // allow the environment parameter here. use general tag only if it is missing.
-        if(url.getParameter(Constants.TAG_ENVIRONMENT) == null) {
-            url.addParameter(Constants.TAG_ENVIRONMENT, GENERAL_TAG);
-        }
-        return url;
     }
 }

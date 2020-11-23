@@ -16,18 +16,15 @@
 
 package com.networknt.consul;
 
-import com.networknt.client.Http2Client;
-import com.networknt.client.oauth.AuthorizationCodeRequest;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 import com.networknt.consul.client.ConsulClient;
 import com.networknt.registry.NotifyListener;
 import com.networknt.registry.URL;
 import com.networknt.registry.URLParamType;
-import com.networknt.registry.support.command.CommandFailbackRegistry;
-import com.networknt.registry.support.command.CommandServiceManager;
-import com.networknt.registry.support.command.ServiceListener;
+import com.networknt.registry.support.AbstractRegistry;
 import com.networknt.status.Status;
+import com.networknt.utility.ConcurrentHashSet;
 import com.networknt.utility.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,12 +32,13 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public class ConsulRegistry extends CommandFailbackRegistry {
+public class ConsulRegistry extends AbstractRegistry {
     private static final Logger logger = LoggerFactory.getLogger(ConsulRegistry.class);
     private static final String CONFIG_PROPERTY_MISSING = "ERR10057";
 
@@ -50,13 +48,14 @@ public class ConsulRegistry extends CommandFailbackRegistry {
 
     // service local cache. key: serviceName, value: <service url list>
     private ConcurrentHashMap<String, List<URL>> serviceCache = new ConcurrentHashMap<String, List<URL>>();
-
+    // keep all the subscribe urls, so that it won't double subscribe.
+    private static Set<URL> subscribedSet = new ConcurrentHashSet<>();
     // record lookup service thread, ensure each serviceName start only one thread, <serviceName, lastConsulIndexId>
     private ConcurrentHashMap<String, Long> lookupServices = new ConcurrentHashMap<String, Long>();
 
     // TODO: 2016/6/17 clientUrl support multiple listener
     // record subscribers service callback listeners, listener was called when corresponding service changes
-    private ConcurrentHashMap<String, ConcurrentHashMap<URL, ServiceListener>> serviceListeners = new ConcurrentHashMap<String, ConcurrentHashMap<URL, ServiceListener>>();
+    private ConcurrentHashMap<String, ConcurrentHashMap<URL, NotifyListener>> notifyListeners = new ConcurrentHashMap<>();
     private ThreadPoolExecutor notifyExecutor;
 
     public ConsulRegistry(URL url, ConsulClient client) {
@@ -73,8 +72,8 @@ public class ConsulRegistry extends CommandFailbackRegistry {
         logger.info("ConsulRegistry init finish.");
     }
 
-    public ConcurrentHashMap<String, ConcurrentHashMap<URL, ServiceListener>> getServiceListeners() {
-        return serviceListeners;
+    public ConcurrentHashMap<String, ConcurrentHashMap<URL, NotifyListener>> getNotifyListeners() {
+        return notifyListeners;
     }
 
     @Override
@@ -109,12 +108,6 @@ public class ConsulRegistry extends CommandFailbackRegistry {
         }
     }
 
-    @Override
-    protected void subscribeService(URL url, ServiceListener serviceListener) {
-        addServiceListener(url, serviceListener);
-        startListenerThreadIfNewService(url);
-    }
-
     /**
      * Override the method in <code>com.networknt.registry.support.commandCommandFailbackRegistry</code>
      * to skip calling the <code>com.networknt.registry.support.commandCommandFailbackRegistry#doDiscover()</code> and
@@ -124,12 +117,42 @@ public class ConsulRegistry extends CommandFailbackRegistry {
      */
     @Override
     protected void doSubscribe(URL url, final NotifyListener listener) {
-        if(logger.isInfoEnabled()) logger.info("CommandFailbackRegistry subscribe. url: " + url.toSimpleString());
-        URL urlCopy = url.createCopy();
-        CommandServiceManager manager = getCommandServiceManager(urlCopy);
-        manager.addNotifyListener(listener);
+        // you only need to subscribe once.
+        if(!subscribedSet.contains(url)) {
+            addNotifyListener(url, listener);
+            startListenerThreadIfNewService(url);
+            subscribedSet.add(url);
+        }
+    }
 
-        subscribeService(urlCopy, manager);
+    @Override
+    protected void doUnsubscribe(URL url, NotifyListener listener) {
+        ConcurrentHashMap<URL, NotifyListener> listeners = notifyListeners.get(ConsulUtils.getUrlClusterInfo(url));
+        if (listeners != null) {
+            synchronized (listeners) {
+                listeners.remove(url);
+            }
+        }
+    }
+
+    @Override
+    protected List<URL> doDiscover(URL url) {
+        String serviceName = url.getPath();
+        String tag = url.getParameter(Constants.TAG_ENVIRONMENT);
+        String protocol = url.getProtocol();
+        if(logger.isTraceEnabled()) logger.trace("protocol = " + protocol + " serviceName = " + serviceName + " tag = " + tag);
+        List<URL> urls = serviceCache.get(serviceName);
+        if (urls == null || urls .isEmpty()) {
+            synchronized (serviceName.intern()) {
+                urls = serviceCache.get(serviceName);
+                if (urls == null || urls .isEmpty()) {
+                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(protocol, serviceName, false);
+                    updateServiceCache(serviceName, serviceUrls, false);
+                    urls = serviceCache.get(serviceName);
+                }
+            }
+        }
+        return urls;
     }
 
     /**
@@ -151,46 +174,16 @@ public class ConsulRegistry extends CommandFailbackRegistry {
         }
     }
 
-    private void addServiceListener(URL url, ServiceListener serviceListener) {
+    private void addNotifyListener(URL url, NotifyListener listener) {
         String service = ConsulUtils.getUrlClusterInfo(url);
-        ConcurrentHashMap<URL, ServiceListener> map = serviceListeners.get(service);
+        ConcurrentHashMap<URL, NotifyListener> map = notifyListeners.get(service);
         if (map == null) {
-            serviceListeners.putIfAbsent(service, new ConcurrentHashMap<URL, ServiceListener>());
-            map = serviceListeners.get(service);
+            notifyListeners.putIfAbsent(service, new ConcurrentHashMap<>());
+            map = notifyListeners.get(service);
         }
         synchronized (map) {
-            map.put(url, serviceListener);
+            map.put(url, listener);
         }
-    }
-
-    @Override
-    protected void unsubscribeService(URL url, ServiceListener listener) {
-        ConcurrentHashMap<URL, ServiceListener> listeners = serviceListeners.get(ConsulUtils.getUrlClusterInfo(url));
-        if (listeners != null) {
-            synchronized (listeners) {
-                listeners.remove(url);
-            }
-        }
-    }
-
-    @Override
-    protected List<URL> discoverService(URL url) {
-        String serviceName = url.getPath();
-        String tag = url.getParameter(Constants.TAG_ENVIRONMENT);
-        String protocol = url.getProtocol();
-        if(logger.isTraceEnabled()) logger.trace("protocol = " + protocol + " serviceName = " + serviceName + " tag = " + tag);
-        List<URL> urls = serviceCache.get(serviceName);
-        if (urls == null || urls .isEmpty()) {
-            synchronized (serviceName.intern()) {
-                urls = serviceCache.get(serviceName);
-                if (urls == null || urls .isEmpty()) {
-                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(protocol, serviceName, false);
-                    updateServiceCache(serviceName, serviceUrls, false);
-                    urls = serviceCache.get(serviceName);
-                }
-            }
-        }
-        return urls;
     }
 
     private ConcurrentHashMap<String, List<URL>> lookupServiceUpdate(String protocol, String serviceName) {
@@ -330,12 +323,12 @@ public class ConsulRegistry extends CommandFailbackRegistry {
 
         @Override
         public void run() {
-            ConcurrentHashMap<URL, ServiceListener> listeners = serviceListeners.get(service);
+            ConcurrentHashMap<URL, NotifyListener> listeners = notifyListeners.get(service);
             if (listeners != null) {
                 synchronized (listeners) {
-                    for (Map.Entry<URL, ServiceListener> entry : listeners.entrySet()) {
-                        ServiceListener serviceListener = entry.getValue();
-                        serviceListener.notifyService(entry.getKey(), getUrl(), urls);
+                    for (Map.Entry<URL, NotifyListener> entry : listeners.entrySet()) {
+                        NotifyListener listener = entry.getValue();
+                        listener.notify(getUrl(), urls);
                     }
                 }
             } else {
