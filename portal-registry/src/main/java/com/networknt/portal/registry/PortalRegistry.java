@@ -24,17 +24,14 @@ import com.networknt.registry.NotifyListener;
 import com.networknt.registry.URL;
 import com.networknt.registry.URLParamType;
 import com.networknt.registry.support.AbstractRegistry;
+import com.networknt.utility.ConcurrentHashSet;
 import com.networknt.utility.Constants;
 import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 
 import static com.networknt.portal.registry.PortalRegistryConfig.CONFIG_NAME;
@@ -47,9 +44,10 @@ public class PortalRegistry extends AbstractRegistry {
     private PortalRegistryClient client;
     private PortalRegistryHeartbeatManager heartbeatManager;
     private int lookupInterval;
-
+    // keep all the subscribe urls, so that it won't double subscribe.
+    private static Set<URL> subscribedSet = new ConcurrentHashSet<>();
     // service local cache. key: serviceName, value: <service url list>
-    private ConcurrentHashMap<String, List<URL>> serviceCache = new ConcurrentHashMap<String, List<URL>>();
+    private ConcurrentHashMap<String, List<URL>> serviceCache = new ConcurrentHashMap<>();
 
     public PortalRegistry(URL url, PortalRegistryClient client) {
         super(url);
@@ -59,7 +57,6 @@ public class PortalRegistry extends AbstractRegistry {
             heartbeatManager.start();
         }
         lookupInterval = getUrl().getIntParameter(URLParamType.registrySessionTimeout.getName(), PortalRegistryConstants.DEFAULT_LOOKUP_INTERVAL);
-        ArrayBlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<Runnable>(20000);
         logger.info("PortalRegistry init finish.");
     }
 
@@ -105,43 +102,47 @@ public class PortalRegistry extends AbstractRegistry {
     @Override
     protected void doSubscribe(URL url, final NotifyListener listener) {
         if(logger.isInfoEnabled()) logger.info("PortalRegistry subscribe url: " + url.toSimpleString());
-        // here we assume that the first lookup has been done for the url so that subscription info is available on the server
-        // We just need to open the WebSocket connection here if it is not created. Both parameters are not used here and we
-        // can save a lot of threads than the Consul implementation.
-        try {
-            String u = "wss" + config.getPortalUrl().substring(config.getPortalUrl().indexOf("://"));
-            if(webSocketClient == null) {
-                // The client is created only once and it is responsible for all the subscriptions to the down stream APIs.
-                webSocketClient = new PortalRegistryWebSocketClient(URI.create(u + "/ws")) {
-                    @Override
-                    public void onOpen() {
-                        System.out.println("open");
-                    }
+        // you only need to subscribe once.
+        if(!subscribedSet.contains(url)) {
+            // here we assume that the first lookup has been done for the url so that subscription info is available on the server
+            // We just need to open the WebSocket connection here if it is not created. Both parameters are not used here and we
+            // can save a lot of threads than the Consul implementation.
+            try {
+                String u = "wss" + config.getPortalUrl().substring(config.getPortalUrl().indexOf("://"));
+                if(webSocketClient == null) {
+                    // The client is created only once and it is responsible for all the subscriptions to the down stream APIs.
+                    webSocketClient = new PortalRegistryWebSocketClient(URI.create(u + "/ws")) {
+                        @Override
+                        public void onOpen() {
+                            System.out.println("open");
+                        }
 
-                    @Override
-                    public void onMessage(String msg) {
-                        if(logger.isDebugEnabled()) logger.debug("WebSocket message: " + msg);
-                        // The subscribed service nodes have been changed.
-                        // {"com.networknt.ab-1.0.0|test1":[]}
-                        updateCacheFromMessage(msg);
-                    }
+                        @Override
+                        public void onMessage(String msg) {
+                            if(logger.isDebugEnabled()) logger.debug("WebSocket message: " + msg);
+                            // The subscribed service nodes have been changed.
+                            // {"com.networknt.ab-1.0.0|test1":[]}
+                            updateCacheFromMessage(msg);
+                        }
 
-                    @Override
-                    public void onClose(int code, String reason) {
-                        System.out.println("close (code: " + code + ", reason: " + reason + ")");
-                    }
+                        @Override
+                        public void onClose(int code, String reason) {
+                            System.out.println("close (code: " + code + ", reason: " + reason + ")");
+                        }
 
-                    @Override
-                    public void onError(Exception e) {
-                        System.out.println("err: " + e.getMessage());
-                        System.out.println("Client isOpen?: " + this.isOpen());
-                    }
-                };
+                        @Override
+                        public void onError(Exception e) {
+                            System.out.println("err: " + e.getMessage());
+                            System.out.println("Client isOpen?: " + this.isOpen());
+                        }
+                    };
+                }
+            } catch (Exception e) {
+                logger.error("Exception:", e);
             }
-        } catch (Exception e) {
-            logger.error("Exception:", e);
+            webSocketClient.send(url.toFullStr());
         }
-        webSocketClient.send(url.toFullStr());
+        subscribedSet.add(url);
     }
 
     @Override
