@@ -103,13 +103,13 @@ public class DirectRegistry extends AbstractRegistry {
     @Override
     protected void doSubscribe(URL url, NotifyListener listener) {
         subscribeUrls.putIfAbsent(url, 1);
-        listener.notify(this.getUrl(), doDiscover(url));
+        if(listener != null) listener.notify(this.getUrl(), doDiscover(url));
     }
 
     @Override
     protected void doUnsubscribe(URL url, NotifyListener listener) {
         subscribeUrls.remove(url);
-        listener.notify(this.getUrl(), doDiscover(url));
+        if(listener != null) listener.notify(this.getUrl(), doDiscover(url));
     }
 
     @Override
