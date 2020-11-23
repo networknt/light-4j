@@ -300,12 +300,6 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
-                <artifactId>zookeeper</artifactId>
-                <version>${project.version}</version>
-                <optional>true</optional>
-            </dependency>
-            <dependency>
-                <groupId>com.networknt</groupId>
                 <artifactId>cors</artifactId>
                 <version>${project.version}</version>
                 <optional>true</optional>
