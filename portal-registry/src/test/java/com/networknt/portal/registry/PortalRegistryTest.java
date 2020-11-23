@@ -18,9 +18,7 @@ package com.networknt.portal.registry;
 
 import com.networknt.config.JsonMapper;
 import com.networknt.portal.registry.client.PortalRegistryClient;
-import com.networknt.registry.NotifyListener;
 import com.networknt.registry.Registry;
-import com.networknt.registry.support.command.ServiceListener;
 import com.networknt.registry.URL;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.StringUtils;

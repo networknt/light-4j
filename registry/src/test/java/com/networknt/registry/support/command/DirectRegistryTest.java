@@ -50,18 +50,18 @@ public class DirectRegistryTest {
         URL subscribeUrl = URLImpl.valueOf("light://localhost:8080/command?environment=0000");
 
         List<URL> urls = registry.discover(subscribeUrl);
-        Assert.assertEquals(3, urls.size());
+        Assert.assertEquals(1, urls.size());
         Assert.assertTrue(urls.get(0).getPort() == 8440);
 
         subscribeUrl = URLImpl.valueOf("light://localhost:8080/command?environment=0001");
         urls = registry.discover(subscribeUrl);
-        Assert.assertEquals(3, urls.size());
-        Assert.assertTrue(urls.get(1).getPort() == 8441);
+        Assert.assertEquals(1, urls.size());
+        Assert.assertTrue(urls.get(0).getPort() == 8441);
 
         subscribeUrl = URLImpl.valueOf("light://localhost:8080/command?environment=0002");
         urls = registry.discover(subscribeUrl);
-        Assert.assertEquals(3, urls.size());
-        Assert.assertTrue(urls.get(2).getPort() == 8442);
+        Assert.assertEquals(1, urls.size());
+        Assert.assertTrue(urls.get(0).getPort() == 8442);
     }
 
 }
