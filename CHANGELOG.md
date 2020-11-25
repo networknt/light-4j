@@ -29,6 +29,8 @@
 - fixes \#775 log the connection info when failed to connect to the OAut… [\#798](https://github.com/networknt/light-4j/pull/798) ([stevehu](https://github.com/stevehu))
 - fixes \#796 update the redirect_uri to localhost 3000 to sync with lig… [\#797](https://github.com/networknt/light-4j/pull/797) ([stevehu](https://github.com/stevehu))
 - fixes \#794 switch OauthHelper to HttpClient of jdk11 to support forwa… [\#795](https://github.com/networknt/light-4j/pull/795) ([stevehu](https://github.com/stevehu))
+
+
 ## [2.0.20](https://github.com/networknt/light-4j/tree/2.0.20) (2020-11-05)
 
 
