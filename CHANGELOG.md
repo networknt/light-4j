@@ -1,5 +1,34 @@
 # Change Log
 
+## [2.0.21](https://github.com/networknt/light-4j/tree/2.0.21) (2020-11-25)
+
+
+**Merged pull requests:**
+
+
+- fixes \#837 invoke notify only if listener is not null in the direct r… [\#838](https://github.com/networknt/light-4j/pull/838) ([stevehu](https://github.com/stevehu))
+- fixes \#835 add CID and UID string into the constants for Okta token [\#836](https://github.com/networknt/light-4j/pull/836) ([stevehu](https://github.com/stevehu))
+- fixes \#833 subscribe and unsubscribe regardless listener for Abstract… [\#834](https://github.com/networknt/light-4j/pull/834) ([stevehu](https://github.com/stevehu))
+- fixes \#829 remove the serviceMap cache from the LightCluster and use … [\#832](https://github.com/networknt/light-4j/pull/832) ([stevehu](https://github.com/stevehu))
+- fixes \#830 remove zookeeper registry as nobody is using it [\#831](https://github.com/networknt/light-4j/pull/831) ([stevehu](https://github.com/stevehu))
+- fixes \#827 update discovered cache with WebSocket message from contro… [\#828](https://github.com/networknt/light-4j/pull/828) ([stevehu](https://github.com/stevehu))
+- fixes \#825 update the service lookup for the Portal Registry [\#826](https://github.com/networknt/light-4j/pull/826) ([stevehu](https://github.com/stevehu))
+- fixes \#823 add a new test case for JwtIssuerTest to generate light-pr… [\#824](https://github.com/networknt/light-4j/pull/824) ([stevehu](https://github.com/stevehu))
+- Issue821 [\#822](https://github.com/networknt/light-4j/pull/822) ([stevehu](https://github.com/stevehu))
+- fixes \#819 output the body in the ServerInfoGetHandlerTest as it fail… [\#820](https://github.com/networknt/light-4j/pull/820) ([stevehu](https://github.com/stevehu))
+- fixes \#817 update the currentPort and currentAddress in server module [\#818](https://github.com/networknt/light-4j/pull/818) ([stevehu](https://github.com/stevehu))
+- Issue815 [\#816](https://github.com/networknt/light-4j/pull/816) ([stevehu](https://github.com/stevehu))
+- fixes \#813 update portal-registry.yml with templates in both main and… [\#814](https://github.com/networknt/light-4j/pull/814) ([stevehu](https://github.com/stevehu))
+- fixes \#811 upgrade server info handler to output openapi.yaml and upd… [\#812](https://github.com/networknt/light-4j/pull/812) ([stevehu](https://github.com/stevehu))
+- fixes \#809 update handler to support websocket in the handler.yml [\#810](https://github.com/networknt/light-4j/pull/810) ([stevehu](https://github.com/stevehu))
+- fixes \#807 add portal-registry model for portal registry and discovery [\#808](https://github.com/networknt/light-4j/pull/808) ([stevehu](https://github.com/stevehu))
+- fixes \#805 update server.yml to add keystore and truststore passwords [\#806](https://github.com/networknt/light-4j/pull/806) ([stevehu](https://github.com/stevehu))
+- fixes \#803 update client.yml to add truststore password [\#804](https://github.com/networknt/light-4j/pull/804) ([stevehu](https://github.com/stevehu))
+- fixes \#801 add password to the jwt.yml as the secret.yml is removed [\#802](https://github.com/networknt/light-4j/pull/802) ([stevehu](https://github.com/stevehu))
+- fixes \#799 remove secret.yml and add config property missing error code [\#800](https://github.com/networknt/light-4j/pull/800) ([stevehu](https://github.com/stevehu))
+- fixes \#775 log the connection info when failed to connect to the OAut… [\#798](https://github.com/networknt/light-4j/pull/798) ([stevehu](https://github.com/stevehu))
+- fixes \#796 update the redirect_uri to localhost 3000 to sync with lig… [\#797](https://github.com/networknt/light-4j/pull/797) ([stevehu](https://github.com/stevehu))
+- fixes \#794 switch OauthHelper to HttpClient of jdk11 to support forwa… [\#795](https://github.com/networknt/light-4j/pull/795) ([stevehu](https://github.com/stevehu))
 ## [2.0.20](https://github.com/networknt/light-4j/tree/2.0.20) (2020-11-05)
 
 
