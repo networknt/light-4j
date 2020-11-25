@@ -26,9 +26,7 @@ import com.networknt.config.JsonMapper;
 import com.networknt.correlation.CorrelationHandler;
 import com.networknt.exception.ClientException;
 import com.networknt.handler.Handler;
-import com.networknt.handler.LightHttpHandler;
 import com.networknt.httpstring.HttpStringConstants;
-import com.networknt.status.Status;
 import com.networknt.utility.Constants;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
@@ -42,7 +40,6 @@ import io.undertow.util.AttachmentKey;
 import io.undertow.util.HeaderMap;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import javafx.scene.effect.Light;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.mockito.*;
@@ -57,14 +54,12 @@ import org.xnio.OptionMap;
 
 import java.net.URI;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import static com.networknt.audit.AuditConfig.CONFIG_NAME;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -91,8 +86,7 @@ public class AuditHandlerTest {
                                 Constants.CORRELATION_ID_STRING,
                                 Constants.TRACEABILITY_ID_STRING,
                                 AuditHandler.STATUS_CODE,
-                                AuditHandler.RESPONSE_TIME
-                             };
+                                AuditHandler.RESPONSE_TIME };
 
     @BeforeClass
     public static void setUp() {
@@ -425,6 +419,4 @@ public class AuditHandlerTest {
             return attachmentKey.toString().equals("io.undertow.util.SimpleAttachmentKey<java.lang.Integer>");
         }
     }
-
-
 }
