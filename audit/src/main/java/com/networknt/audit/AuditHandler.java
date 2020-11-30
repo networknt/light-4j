@@ -114,11 +114,11 @@ public class AuditHandler implements MiddlewareHandler {
 
                 // add additional fields accumulated during the microservice execution
                 // according to the config
-                //Map<String, Object> auditInfo1 = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
-                if(auditInfo != null) {
+                Map<String, Object> auditInfo1 = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
+                if(auditInfo1 != null) {
                     if(auditConfig.getAuditList() != null && auditConfig.getAuditList().size() > 0) {
                         for(String name: auditConfig.getAuditList()) {
-                            auditMap.putIfAbsent(name, auditInfo.get(name));
+                            auditMap.putIfAbsent(name, auditInfo1.get(name));
                         }
                     }
                 }
