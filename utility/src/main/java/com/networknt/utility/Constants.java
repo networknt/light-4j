@@ -38,6 +38,7 @@ public class Constants {
     public static final String SCP_STRING = "scp";
     public static final String ENDPOINT_STRING = "endpoint";
     public static final String CSRF_STRING = "csrf";
+    public static final String AUTHORIZATION_STRING = "authorization";
 
     // Swagger 2.0 operation header name
     public static final String SWAGGER_OPERATION_STRING = "swagger_operation";
