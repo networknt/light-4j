@@ -1,4 +1,4 @@
-O# Server configuration
+# Server configuration
 ---
 # This is the default binding address if the service is dockerized.
 ip: 0.0.0.0
