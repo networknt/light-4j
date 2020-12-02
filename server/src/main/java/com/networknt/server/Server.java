@@ -505,13 +505,18 @@ public class Server {
             return serviceUrl;
             // handle the registration exception separately to eliminate confusion
         } catch (Exception e) {
-            System.out.println("Failed to register service, the server stopped.");
-            e.printStackTrace();
-            if (logger.isInfoEnabled())
-                logger.info("Failed to register service, the server stopped.", e);
-            throw new RuntimeException(e.getMessage());
+            if(config.startOnRegistryFailure) {
+                System.out.println("Failed to register service, start the server without registry.");
+                e.printStackTrace();
+                if (logger.isInfoEnabled()) logger.info("Failed to register service, start the server without registry.", e);
+                return null;
+            } else {
+                System.out.println("Failed to register service, the server stopped.");
+                e.printStackTrace();
+                if (logger.isInfoEnabled()) logger.info("Failed to register service, the server stopped.", e);
+                throw new RuntimeException(e.getMessage());
+            }
         }
-
     }
 
     public static String getAddress() {
