@@ -26,6 +26,7 @@ import com.networknt.registry.Registry;
 import com.networknt.registry.URL;
 import com.networknt.registry.URLImpl;
 import com.networknt.service.SingletonServiceFactory;
+import com.networknt.status.Status;
 import com.networknt.switcher.SwitcherUtil;
 import com.networknt.utility.Constants;
 import com.networknt.utility.NetUtils;
@@ -68,8 +69,9 @@ public class Server {
     public static final String STARTUP_CONFIG_NAME = "startup";
     public static final String CONFIG_LOADER_CLASS = "configLoaderClass";
     public static final String[] STATUS_CONFIG_NAME = {"status", "app-status"};
-    
     public static final String ENV_PROPERTY_KEY = "environment";
+
+    public static final String ERROR_CONNECT_REGISTRY = "ERR10058";
 
     public static final String STATUS_HOST_IP = "STATUS_HOST_IP";
 
@@ -491,6 +493,7 @@ public class Server {
      * @return URL
      */
     public static URL register(String serviceId) {
+        URL serviceUrl = null;
         try {
             registry = SingletonServiceFactory.getBean(Registry.class);
             if (registry == null)
@@ -499,19 +502,20 @@ public class Server {
             Map parameters = new HashMap<>();
             if (serverConfig.getEnvironment() != null)
                 parameters.put(ENV_PROPERTY_KEY, serverConfig.getEnvironment());
-            URL serviceUrl = new URLImpl(serverConfig.enableHttps ? "https" : "http", currentAddress, currentPort, serviceId, parameters);
+            serviceUrl = new URLImpl(serverConfig.enableHttps ? "https" : "http", currentAddress, currentPort, serviceId, parameters);
             if (logger.isInfoEnabled()) logger.info("register service: " + serviceUrl.toFullStr());
             registry.register(serviceUrl);
             return serviceUrl;
             // handle the registration exception separately to eliminate confusion
         } catch (Exception e) {
+            Status status = new Status(ERROR_CONNECT_REGISTRY, serviceUrl);
             if(config.startOnRegistryFailure) {
-                System.out.println("Failed to register service, start the server without registry.");
+                System.out.println("Failed to register service, start the server without registry. " + status.toString());
                 e.printStackTrace();
                 if (logger.isInfoEnabled()) logger.info("Failed to register service, start the server without registry.", e);
                 return null;
             } else {
-                System.out.println("Failed to register service, the server stopped.");
+                System.out.println("Failed to register service, the server stopped. " + status.toString());
                 e.printStackTrace();
                 if (logger.isInfoEnabled()) logger.info("Failed to register service, the server stopped.", e);
                 throw new RuntimeException(e.getMessage());
