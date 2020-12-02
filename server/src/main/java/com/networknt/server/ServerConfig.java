@@ -53,6 +53,7 @@ public class ServerConfig {
     String bootstrapStoreName;
     String bootstrapStorePass;
     long maxTransferFileSize;
+    boolean startOnRegistryFailure;
 
 	public ServerConfig() {
     }
@@ -315,5 +316,13 @@ public class ServerConfig {
 
     public void setMaxTransferFileSize(long maxTransferFileSize) {
         this.maxTransferFileSize = maxTransferFileSize;
+    }
+
+    public boolean isStartOnRegistryFailure() {
+        return startOnRegistryFailure;
+    }
+
+    public void setStartOnRegistryFailure(boolean startOnRegistryFailure) {
+        this.startOnRegistryFailure = startOnRegistryFailure;
     }
 }
