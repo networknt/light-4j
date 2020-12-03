@@ -38,29 +38,33 @@ import java.util.Map;
  *
  */
 public class LoggerPostHandler implements LightHttpHandler {
-
     public static final String CONFIG_NAME = "logging";
     static final String STATUS_LOGGER_INFO_DISABLED = "ERR12108";
+    static final String STATUS_REQUEST_BODY_MISSING = "ERR10059";
 
     public LoggerPostHandler() {
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        List loggers = (List) exchange.getAttachment(BodyHandler.REQUEST_BODY);
         LoggerConfig config = (LoggerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, LoggerConfig.class);
-
         if (config.isEnabled()) {
-            for (Object object : loggers) {
-                Map<String, String> map = (Map<String, String>) object;
-                String name = map.get("name");
-                Level level = Level.valueOf(map.get("level"));
-                ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(name);
-                if(level != logger.getLevel()) logger.setLevel(level);
-            }
+            List loggers = (List) exchange.getAttachment(BodyHandler.REQUEST_BODY);
+            if(loggers == null) {
+                logger.error("loggers is null from the attachment. Most likely, the body handler is not in the handler chain.");
+                setExchangeStatus(exchange, STATUS_REQUEST_BODY_MISSING);
+            } else {
+                for (Object object : loggers) {
+                    Map<String, String> map = (Map<String, String>) object;
+                    String name = map.get("name");
+                    Level level = Level.valueOf(map.get("level"));
+                    ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(name);
+                    if(level != logger.getLevel()) logger.setLevel(level);
+                }
 
-            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, ContentType.APPLICATION_JSON.value());
-            exchange.getResponseSender().send(JsonMapper.toJson(loggers));
+                exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, ContentType.APPLICATION_JSON.value());
+                exchange.getResponseSender().send(JsonMapper.toJson(loggers));
+            }
         } else {
             logger.error("Logging is disabled in logging.yml");
             setExchangeStatus(exchange, STATUS_LOGGER_INFO_DISABLED);
