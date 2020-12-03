@@ -417,6 +417,11 @@ ERR10058:
   code: ERR10058
   message: ERROR_CONNECT_REGISTRY
   description: Failed to connect to the registry %s.
+ERR10059:
+  statusCode: 400
+  code: ERR10059
+  message: REQUEST_BODY_MISSING
+  description: Request body is missing.
 
 # 11000-11500 swagger-validator errors
 ERR11000:
