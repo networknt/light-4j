@@ -370,6 +370,7 @@ public enum HttpStatus {
 
 	/**
 	 * Return the integer value of this status code.
+	 * @return int
 	 */
 	public int value() {
 		return this.value;
@@ -377,6 +378,7 @@ public enum HttpStatus {
 
 	/**
 	 * Return the reason phrase of this status code.
+	 * @return String
 	 */
 	public String getReasonPhrase() {
 		return this.reasonPhrase;
@@ -467,7 +469,9 @@ public enum HttpStatus {
 
 		/**
 		 * Return the integer value of this status series. Ranges from 1 to 5.
+		 * @return int
 		 */
+
 		public int value() {
 			return this.value;
 		}
