@@ -13,4 +13,6 @@ import io.undertow.util.AttachmentKey;
 public class AttachmentConstants {
     // The key to the audit info attachment in exchange. Allow other handlers to set values.
     public static final AttachmentKey<Map> AUDIT_INFO = AttachmentKey.create(Map.class);
+    public static final AttachmentKey<Object> REQUEST_BODY = AttachmentKey.create(Object.class);
+    public static final AttachmentKey<String> REQUEST_BODY_STRING = AttachmentKey.create(String.class);
 }
