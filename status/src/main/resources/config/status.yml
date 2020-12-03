@@ -412,6 +412,11 @@ ERR10057:
   code: ERR10057
   message: CONFIG_PROPERTY_MISSING
   description: Config property %s is missing in config file %s.
+ERR10058:
+  statusCode: 400
+  code: ERR10058
+  message: ERROR_CONNECT_REGISTRY
+  description: Failed to connect to the registry %s.
 
 # 11000-11500 swagger-validator errors
 ERR11000:
