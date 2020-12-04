@@ -107,6 +107,10 @@ public class AuditHandlerTest {
             bodyHandler.setNext(handler);
             handler = bodyHandler;
 
+            ParameterHandler parameterHandler = new ParameterHandler();
+            parameterHandler.setNext(handler);
+            handler = parameterHandler;
+
             server = Undertow.builder()
                     .addHttpListener(8080, "localhost")
                     .setHandler(handler)
@@ -131,7 +135,8 @@ public class AuditHandlerTest {
     static RoutingHandler getTestHandler() {
         return Handlers.routing()
                 .add(Methods.POST, "/pet", exchange -> exchange.getResponseSender().send("OK"))
-                .add(Methods.POST, "/error", exchange -> new ErrorStatusTestHandler().handleRequest(exchange));
+                .add(Methods.POST, "/error", exchange -> new ErrorStatusTestHandler().handleRequest(exchange))
+                .add(Methods.POST, "/pet/{petId}", exchange -> exchange.getResponseSender().send("OK"));
     }
 
     @Before
@@ -264,56 +269,74 @@ public class AuditHandlerTest {
 
     @Test
     public void testAuditWithErrorStatus() throws Exception {
-        postRequestWith401Response(null);
+        runTest("/error", "post", null, 401);
         verifyAuditErrorStatus();
     }
 
     @Test
     public void testAudit401WithDumpRequest() throws Exception {
-        postRequestWith401Response(null);
-        verifyAuditInfo("request", "post");
+        runTest("/error", "post", null, 401);
+        verifyAuditInfo("requestBody", "post");
     }
 
     @Test
     public void testAudit200WithDumpRequest() throws Exception {
-        postRequestWith200Response(null);
-        verifyAuditInfo("request", "post");
+        runTest("/pet", "post", null, 200);
+        verifyAuditInfo("requestBody", "post");
     }
 
     @Test
     public void testAuditWithDumpResponse() throws Exception {
-        postRequestWith401Response(null);
-        verifyAuditInfo("response", "{\"statusCode\":401,\"code\":\"ERR10001\",\"message\":\"AUTH_TOKEN_EXPIRED\",\"description\":\"Jwt token in authorization header expired\",\"severity\":\"ERROR\"}");
+        runTest("/error", "post", null, 401);
+        verifyAuditInfo("responseBody", "{\"statusCode\":401,\"code\":\"ERR10001\",\"message\":\"AUTH_TOKEN_EXPIRED\",\"description\":\"Jwt token in authorization header expired\",\"severity\":\"ERROR\"}");
     }
 
     @Test
     public void testAuditWithoutDumpResponse() throws Exception {
-        postRequestWith200Response(null);
-        verifyAuditInfo("response", null);
+        runTest("/pet", "post", null, 200);
+        verifyAuditInfo("responseBody", null);
     }
 
     @Test
     public void testAudit200WithQueryParameters() throws Exception {
-        postRequestWith200Response("testId=1");
+        runTest("/pet?testId=1", "post", null, 200);
         verifyAuditInfo("queryParameters", "{testId=[1]}");
     }
 
     @Test
     public void testAudit401WithQueryParameters() throws Exception {
-        postRequestWith401Response("testId=1");
+        runTest("/error?testId=1", "post", null, 401);
         verifyAuditInfo("queryParameters", "{testId=[1]}");
     }
 
     @Test
     public void testAudit200WithoutQueryParameters() throws Exception {
-        postRequestWith200Response(null);
+        runTest("/pet", "post", null, 200);
         verifyAuditInfo("queryParameters", null);
     }
 
     @Test
     public void testAudit401WithoutQueryParameters() throws Exception {
-        postRequestWith401Response(null);
+        runTest("/error", "post", null, 401);
         verifyAuditInfo("queryParameters", null);
+    }
+
+    @Test
+    public void testAuditWithPathParameters() throws Exception {
+        runTest("/pet/1,2,3", "post", null, 200);
+        verifyAuditInfo("pathParameters", "{petId=[1,2,3]}");
+    }
+
+    @Test
+    public void testAuditWithCookies() throws Exception {
+        runTest("/pet", "post", "petsId=1", 200);
+        verifyAuditInfo("requestCookies", "{petsId=1}");
+    }
+
+    @Test
+    public void testAuditWithServiceId() throws Exception {
+        runTest("/pet", "post", null, 200);
+        verifyAuditInfo("serviceId", "com.networknt.petstore-1.0.0");
     }
 
     @Test
@@ -448,48 +471,7 @@ public class AuditHandlerTest {
         }
     }
 
-    private void postRequestWith401Response(String query) throws ClientException {
-        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
-        final Http2Client client = Http2Client.getInstance();
-        final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
-        try {
-            connection = client.connect(new URI("http://localhost:8080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
-        } catch (Exception e) {
-            throw new ClientException(e);
-        }
-
-        try {
-            String post = "post";
-            connection.getIoThread().execute(new Runnable() {
-                @Override
-                public void run() {
-                    final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/error" + (query == null ? "" : "?" + query));
-                    request.getRequestHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    request.getRequestHeaders().put(Headers.HOST, "localhost");
-                    request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer eyJraWQiOiIxMDAiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJ1cm46Y29tOm5ldHdvcmtudDpvYXV0aDI6djEiLCJhdWQiOiJ1cm46Y29tLm5ldHdvcmtudCIsImV4cCI6MTc5MDAzNTcwOSwianRpIjoiSTJnSmdBSHN6NzJEV2JWdUFMdUU2QSIsImlhdCI6MTQ3NDY3NTcwOSwibmJmIjoxNDc0Njc1NTg5LCJ2ZXJzaW9uIjoiMS4wIiwidXNlcl9pZCI6InN0ZXZlIiwidXNlcl90eXBlIjoiRU1QTE9ZRUUiLCJjbGllbnRfaWQiOiJmN2Q0MjM0OC1jNjQ3LTRlZmItYTUyZC00YzU3ODc0MjFlNzIiLCJzY29wZSI6WyJ3cml0ZTpwZXRzIiwicmVhZDpwZXRzIl19.mue6eh70kGS3Nt2BCYz7ViqwO7lh_4JSFwcHYdJMY6VfgKTHhsIGKq2uEDt3zwT56JFAePwAxENMGUTGvgceVneQzyfQsJeVGbqw55E9IfM_uSM-YcHwTfR7eSLExN4pbqzVDI353sSOvXxA98ZtJlUZKgXNE1Ngun3XFORCRIB_eH8B0FY_nT_D1Dq2WJrR-re-fbR6_va95vwoUdCofLRa4IpDfXXx19ZlAtfiVO44nw6CS8O87eGfAm7rCMZIzkWlCOFWjNHnCeRsh7CVdEH34LF-B48beiG5lM7h4N12-EME8_VDefgMjZ8eqs1ICvJMxdIut58oYbdnkwTjkA");
-                    request.getRequestHeaders().put(HttpStringConstants.SCOPE_TOKEN, "Bearer eyJraWQiOiIxMDAiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJ1cm46Y29tOm5ldHdvcmtudDpvYXV0aDI6djEiLCJhdWQiOiJ1cm46Y29tLm5ldHdvcmtudCIsImV4cCI6MTc5MDAzNTcwOSwianRpIjoiSTJnSmdBSHN6NzJEV2JWdUFMdUU2QSIsImlhdCI6MTQ3NDY3NTcwOSwibmJmIjoxNDc0Njc1NTg5LCJ2ZXJzaW9uIjoiMS4wIiwidXNlcl9pZCI6InN0ZXZlIiwidXNlcl90eXBlIjoiRU1QTE9ZRUUiLCJjbGllbnRfaWQiOiJmN2Q0MjM0OC1jNjQ3LTRlZmItYTUyZC00YzU3ODc0MjFlNzIiLCJzY29wZSI6WyJ3cml0ZTpwZXRzIiwicmVhZDpwZXRzIl19.mue6eh70kGS3Nt2BCYz7ViqwO7lh_4JSFwcHYdJMY6VfgKTHhsIGKq2uEDt3zwT56JFAePwAxENMGUTGvgceVneQzyfQsJeVGbqw55E9IfM_uSM-YcHwTfR7eSLExN4pbqzVDI353sSOvXxA98ZtJlUZKgXNE1Ngun3XFORCRIB_eH8B0FY_nT_D1Dq2WJrR-re-fbR6_va95vwoUdCofLRa4IpDfXXx19ZlAtfiVO44nw6CS8O87eGfAm7rCMZIzkWlCOFWjNHnCeRsh7CVdEH34LF-B48beiG5lM7h4N12-EME8_VDefgMjZ8eqs1ICvJMxdIut58oYbdnkwTjkA");
-                    request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
-                    connection.sendRequest(request, client.createClientCallback(reference, latch, post));
-                }
-            });
-
-            latch.await(10, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            logger.error("IOException: ", e);
-            throw new ClientException(e);
-        } finally {
-            IoUtils.safeClose(connection);
-        }
-        Assert.assertEquals(401, reference.get().getResponseCode());
-
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException ignored) {
-        }
-    }
-
-    private void postRequestWith200Response(String query) throws ClientException {
+    private void runTest(String path, String body, String cookies, int expectStatus) throws ClientException {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
@@ -501,17 +483,20 @@ public class AuditHandlerTest {
         }
 
         try {
-            String post = "post";
+            String post = body;
             connection.getIoThread().execute(new Runnable() {
                 @Override
                 public void run() {
-                    final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/pet" + (query == null ? "" : "?" + query));
+                    final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(path);
                     request.getRequestHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     request.getRequestHeaders().put(Headers.HOST, "localhost");
                     request.getRequestHeaders().put(HttpStringConstants.TRACEABILITY_ID, "tid");
                     request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer eyJraWQiOiIxMDAiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJ1cm46Y29tOm5ldHdvcmtudDpvYXV0aDI6djEiLCJhdWQiOiJ1cm46Y29tLm5ldHdvcmtudCIsImV4cCI6MTc5MDAzNTcwOSwianRpIjoiSTJnSmdBSHN6NzJEV2JWdUFMdUU2QSIsImlhdCI6MTQ3NDY3NTcwOSwibmJmIjoxNDc0Njc1NTg5LCJ2ZXJzaW9uIjoiMS4wIiwidXNlcl9pZCI6InN0ZXZlIiwidXNlcl90eXBlIjoiRU1QTE9ZRUUiLCJjbGllbnRfaWQiOiJmN2Q0MjM0OC1jNjQ3LTRlZmItYTUyZC00YzU3ODc0MjFlNzIiLCJzY29wZSI6WyJ3cml0ZTpwZXRzIiwicmVhZDpwZXRzIl19.mue6eh70kGS3Nt2BCYz7ViqwO7lh_4JSFwcHYdJMY6VfgKTHhsIGKq2uEDt3zwT56JFAePwAxENMGUTGvgceVneQzyfQsJeVGbqw55E9IfM_uSM-YcHwTfR7eSLExN4pbqzVDI353sSOvXxA98ZtJlUZKgXNE1Ngun3XFORCRIB_eH8B0FY_nT_D1Dq2WJrR-re-fbR6_va95vwoUdCofLRa4IpDfXXx19ZlAtfiVO44nw6CS8O87eGfAm7rCMZIzkWlCOFWjNHnCeRsh7CVdEH34LF-B48beiG5lM7h4N12-EME8_VDefgMjZ8eqs1ICvJMxdIut58oYbdnkwTjkA");
                     request.getRequestHeaders().put(HttpStringConstants.SCOPE_TOKEN, "Bearer eyJraWQiOiIxMDAiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJ1cm46Y29tOm5ldHdvcmtudDpvYXV0aDI6djEiLCJhdWQiOiJ1cm46Y29tLm5ldHdvcmtudCIsImV4cCI6MTc5MDAzNTcwOSwianRpIjoiSTJnSmdBSHN6NzJEV2JWdUFMdUU2QSIsImlhdCI6MTQ3NDY3NTcwOSwibmJmIjoxNDc0Njc1NTg5LCJ2ZXJzaW9uIjoiMS4wIiwidXNlcl9pZCI6InN0ZXZlIiwidXNlcl90eXBlIjoiRU1QTE9ZRUUiLCJjbGllbnRfaWQiOiJmN2Q0MjM0OC1jNjQ3LTRlZmItYTUyZC00YzU3ODc0MjFlNzIiLCJzY29wZSI6WyJ3cml0ZTpwZXRzIiwicmVhZDpwZXRzIl19.mue6eh70kGS3Nt2BCYz7ViqwO7lh_4JSFwcHYdJMY6VfgKTHhsIGKq2uEDt3zwT56JFAePwAxENMGUTGvgceVneQzyfQsJeVGbqw55E9IfM_uSM-YcHwTfR7eSLExN4pbqzVDI353sSOvXxA98ZtJlUZKgXNE1Ngun3XFORCRIB_eH8B0FY_nT_D1Dq2WJrR-re-fbR6_va95vwoUdCofLRa4IpDfXXx19ZlAtfiVO44nw6CS8O87eGfAm7rCMZIzkWlCOFWjNHnCeRsh7CVdEH34LF-B48beiG5lM7h4N12-EME8_VDefgMjZ8eqs1ICvJMxdIut58oYbdnkwTjkA");
                     request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+                    if (cookies != null) {
+                        request.getRequestHeaders().put(Headers.COOKIE, cookies);
+                    }
                     connection.sendRequest(request, client.createClientCallback(reference, latch, post));
                 }
             });
@@ -523,7 +508,7 @@ public class AuditHandlerTest {
         } finally {
             IoUtils.safeClose(connection);
         }
-        Assert.assertEquals("OK", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+        Assert.assertEquals(expectStatus, reference.get().getResponseCode());
 
         try {
             Thread.sleep(100);
