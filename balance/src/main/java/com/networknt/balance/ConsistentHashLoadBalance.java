@@ -51,7 +51,7 @@ public class ConsistentHashLoadBalance implements LoadBalance {
 
 
     @Override
-    public URL select(List<URL> urls, String requestKey) {
+    public URL select(List<URL> urls, String serviceId, String tag, String requestKey) {
         URL url = null;
         if (urls.size() > 1) {
             url = doSelect(urls, requestKey);

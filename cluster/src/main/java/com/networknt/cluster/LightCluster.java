@@ -57,7 +57,7 @@ public class LightCluster implements Cluster {
      */
     @Override
     public String serviceToUrl(String protocol, String serviceId, String tag, String requestKey) {
-        URL url = loadBalance.select(discovery(protocol, serviceId, tag), requestKey);
+        URL url = loadBalance.select(discovery(protocol, serviceId, tag), serviceId, tag, requestKey);
         if (url != null) {
             logger.debug("Final url after load balance = {}.", url);
             // construct a url in string
