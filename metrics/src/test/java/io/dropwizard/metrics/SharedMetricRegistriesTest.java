@@ -31,20 +31,20 @@ import java.lang.reflect.Modifier;
 public class SharedMetricRegistriesTest {
     
     @Before
-	public void setUp() {
-		SharedMetricRegistries.clear();
+    public void setUp() {
+        SharedMetricRegistries.clear();
 
         assertThat(SharedMetricRegistries.names())
                 .isEmpty();
-	}
+    }
 	
 	@After
-	public void tearDown() {
-		SharedMetricRegistries.clear();
+    public void tearDown() {
+        SharedMetricRegistries.clear();
 
         assertThat(SharedMetricRegistries.names())
                 .isEmpty();
-	}
+    }
 
     @Test
     public void memorizesRegistriesByName() throws Exception {
