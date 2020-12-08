@@ -38,7 +38,7 @@ public class SharedMetricRegistriesTest {
                 .isEmpty();
     }
 	
-	@After
+    @After
     public void tearDown() {
         SharedMetricRegistries.clear();
 
