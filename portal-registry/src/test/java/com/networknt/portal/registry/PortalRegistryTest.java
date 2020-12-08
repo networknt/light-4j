@@ -88,15 +88,23 @@ public class PortalRegistryTest {
         Assert.assertFalse(client.isRegistered(service2));
     }
 
+    @Ignore
     @Test
     public void subAndUnsubService() throws Exception {
         //registry.doSubscribe(clientUrl, null);
         //registry.doSubscribe(clientUrl2, null);
 
+        // registry
         registry.doRegister(serviceUrl);
         registry.doRegister(serviceUrl2);
         registry.doAvailable(null);
         Thread.sleep(sleepTime);
+        
+        // unregistry
+        registry.doUnavailable(null);
+        Thread.sleep(sleepTime);
+        registry.doUnregister(serviceUrl);
+        registry.doUnregister(serviceUrl2);
 
         //registry.doUnsubscribe(clientUrl, null);
         //registry.doUnsubscribe(clientUrl2, null);
