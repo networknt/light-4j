@@ -125,6 +125,11 @@ public class PortalRegistryTest {
             e.printStackTrace();
         }
         Assert.assertTrue(urls.contains(serviceUrl));
+        
+        // unavailable
+        registry.doUnavailable(null);
+        Thread.sleep(sleepTime);
+        Assert.assertFalse(client.isWorking(serviceid));
     }
 
     @Test
