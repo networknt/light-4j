@@ -28,6 +28,7 @@ public class ParameterHandler implements MiddlewareHandler {
     static {
         pathTemplateMatcher.add("/pet", "0");
         pathTemplateMatcher.add("/pet/{petId}", "1");
+        pathTemplateMatcher.add("/error/{petId}", "1");
     }
 
     @Override

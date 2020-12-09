@@ -27,8 +27,6 @@ import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.Cookie;
-import io.undertow.util.AttachmentKey;
-import io.undertow.util.Cookies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -180,7 +178,7 @@ public class AuditHandler implements MiddlewareHandler {
         if (auditConfig.hasHeaderList()) {
             auditHeader(exchange, auditMap);
         }
-        if (auditConfig.getAuditList() == null) {
+        if (!auditConfig.hasAuditList()) {
             return;
         }
         for (String key : auditConfig.getAuditList()) {

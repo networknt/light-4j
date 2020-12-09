@@ -136,6 +136,7 @@ public class AuditHandlerTest {
         return Handlers.routing()
                 .add(Methods.POST, "/pet", exchange -> exchange.getResponseSender().send("OK"))
                 .add(Methods.POST, "/error", exchange -> new ErrorStatusTestHandler().handleRequest(exchange))
+                .add(Methods.POST, "/error/{petId}", exchange -> new ErrorStatusTestHandler().handleRequest(exchange))
                 .add(Methods.POST, "/pet/{petId}", exchange -> exchange.getResponseSender().send("OK"));
     }
 
@@ -322,20 +323,38 @@ public class AuditHandlerTest {
     }
 
     @Test
-    public void testAuditWithPathParameters() throws Exception {
+    public void testAuditWith200PathParameters() throws Exception {
         runTest("/pet/1,2,3", "post", null, 200);
         verifyAuditInfo("pathParameters", "{petId=[1,2,3]}");
     }
 
     @Test
-    public void testAuditWithCookies() throws Exception {
+    public void testAuditWith401PathParameters() throws Exception {
+        runTest("/error/1,2,3", "post", null, 401);
+        verifyAuditInfo("pathParameters", "{petId=[1,2,3]}");
+    }
+
+    @Test
+    public void testAuditWith200Cookies() throws Exception {
         runTest("/pet", "post", "petsId=1", 200);
         verifyAuditInfo("requestCookies", "{petsId=1}");
     }
 
     @Test
-    public void testAuditWithServiceId() throws Exception {
+    public void testAuditWith401Cookies() throws Exception {
+        runTest("/error", "post", "petsId=1", 401);
+        verifyAuditInfo("requestCookies", "{petsId=1}");
+    }
+
+    @Test
+    public void testAuditWith200ServiceId() throws Exception {
         runTest("/pet", "post", null, 200);
+        verifyAuditInfo("serviceId", "com.networknt.petstore-1.0.0");
+    }
+
+    @Test
+    public void testAuditWith401ServiceId() throws Exception {
+        runTest("/error", "post", null, 401);
         verifyAuditInfo("serviceId", "com.networknt.petstore-1.0.0");
     }
 
