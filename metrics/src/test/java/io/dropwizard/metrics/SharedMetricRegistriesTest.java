@@ -16,6 +16,7 @@
 
 package io.dropwizard.metrics;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -28,6 +29,22 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
 public class SharedMetricRegistriesTest {
+    
+    @Before
+    public void setUp() {
+        SharedMetricRegistries.clear();
+
+        assertThat(SharedMetricRegistries.names())
+                .isEmpty();
+    }
+	
+    @After
+    public void tearDown() {
+        SharedMetricRegistries.clear();
+
+        assertThat(SharedMetricRegistries.names())
+                .isEmpty();
+    }
 
     @Test
     public void memorizesRegistriesByName() throws Exception {
