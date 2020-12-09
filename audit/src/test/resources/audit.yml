@@ -4,7 +4,7 @@
 enabled: true
 
 # Enable mask
-mask: true
+mask: false
 
 # Output response status code
 statusCode: true
@@ -53,6 +53,15 @@ audit:
 
 # Response payload, this is optional and must be set by the service in its implementation
 - responseBody
+
+# Request query parameters
+- queryParameters
+
+# Request path parameters
+- pathParameters
+
+# Request cookies
+- requestCookies
 
 # Response error status payload
 - Status
