@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
@@ -60,9 +61,9 @@ public class BodyHandler implements MiddlewareHandler {
 
     // request body will be parse during validation and it is attached to the exchange, in JSON,
     // it could be a map or list. So treat it as Object in the attachment.
-    public static final AttachmentKey<Object> REQUEST_BODY = AttachmentKey.create(Object.class);
+    public static final AttachmentKey<Object> REQUEST_BODY = AttachmentConstants.REQUEST_BODY;
 
-    public static final AttachmentKey<String> REQUEST_BODY_STRING = AttachmentKey.create(String.class);
+    public static final AttachmentKey<String> REQUEST_BODY_STRING = AttachmentConstants.REQUEST_BODY_STRING;
 
     public static final String CONFIG_NAME = "body";
 
