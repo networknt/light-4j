@@ -141,10 +141,10 @@ public class ConsulRegistryTest {
         urls = registry.discover(serviceUrl);
         Assert.assertTrue(urls.contains(serviceUrl));
         
-        // unavailable
+        // unavailable & unregister
         registry.doUnavailable(null);
         Thread.sleep(sleepTime);
-        Assert.assertFalse(client.isWorking(serviceid));
+        registry.doUnregister(serviceUrl);
     }
 
     private Boolean containsNotifyListener(URL serviceUrl, URL clientUrl, NotifyListener listener) {

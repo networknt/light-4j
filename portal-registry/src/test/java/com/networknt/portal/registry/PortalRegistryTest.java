@@ -25,6 +25,7 @@ import com.networknt.utility.StringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Iterator;
@@ -126,10 +127,10 @@ public class PortalRegistryTest {
         }
         Assert.assertTrue(urls.contains(serviceUrl));
         
-        // unavailable
+        // unavailable & unregister
         registry.doUnavailable(null);
         Thread.sleep(sleepTime);
-        Assert.assertFalse(client.isWorking(serviceid));
+        registry.doUnregister(serviceUrl);
     }
 
     @Test
