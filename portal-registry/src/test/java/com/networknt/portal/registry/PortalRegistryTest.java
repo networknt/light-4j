@@ -25,6 +25,7 @@ import com.networknt.utility.StringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Iterator;
@@ -88,15 +89,23 @@ public class PortalRegistryTest {
         Assert.assertFalse(client.isRegistered(service2));
     }
 
+    @Ignore
     @Test
     public void subAndUnsubService() throws Exception {
         //registry.doSubscribe(clientUrl, null);
         //registry.doSubscribe(clientUrl2, null);
 
+        // registry
         registry.doRegister(serviceUrl);
         registry.doRegister(serviceUrl2);
         registry.doAvailable(null);
         Thread.sleep(sleepTime);
+        
+        // unregistry
+        registry.doUnavailable(null);
+        Thread.sleep(sleepTime);
+        registry.doUnregister(serviceUrl);
+        registry.doUnregister(serviceUrl2);
 
         //registry.doUnsubscribe(clientUrl, null);
         //registry.doUnsubscribe(clientUrl2, null);
@@ -117,6 +126,11 @@ public class PortalRegistryTest {
             e.printStackTrace();
         }
         Assert.assertTrue(urls.contains(serviceUrl));
+        
+        // unavailable & unregister
+        registry.doUnavailable(null);
+        Thread.sleep(sleepTime);
+        registry.doUnregister(serviceUrl);
     }
 
     @Test

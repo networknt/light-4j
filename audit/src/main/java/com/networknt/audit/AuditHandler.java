@@ -91,11 +91,17 @@ public class AuditHandler implements MiddlewareHandler {
 
     private volatile HttpHandler next;
 
+    private String serviceId;
+
     private DateTimeFormatter DATE_TIME_FORMATTER;
 
     public AuditHandler() {
         if (logger.isInfoEnabled()) logger.info("AuditHandler is loaded.");
         auditConfig = AuditConfig.load();
+        Map<String, Object> serverConfig = Config.getInstance().getJsonMapConfigNoCache(SERVER_CONFIG);
+        if (serverConfig != null) {
+            serviceId = (String) serverConfig.get(SERVICEID_KEY);
+        }
     }
 
     @Override
@@ -282,9 +288,8 @@ public class AuditHandler implements MiddlewareHandler {
     }
 
     private void auditServiceId(Map<String, Object> auditMap) {
-        Map<String, Object> serverConfig = Config.getInstance().getJsonMapConfig(SERVER_CONFIG);
-        if (serverConfig != null && serverConfig.get(SERVICEID_KEY) != null) {
-            auditMap.put(SERVICEID_KEY, serverConfig.get(SERVICEID_KEY));
+        if (!StringUtils.isBlank(serviceId)) {
+            auditMap.put(SERVICEID_KEY, serviceId);
         }
     }
 

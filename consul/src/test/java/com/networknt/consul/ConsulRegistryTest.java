@@ -102,16 +102,25 @@ public class ConsulRegistryTest {
         NotifyListener notifyListener = createNewNotifyListener(serviceUrl);
         NotifyListener notifylistener2 = createNewNotifyListener(serviceUrl);
 
+        // subscribe
         registry.doSubscribe(clientUrl, notifyListener);
         registry.doSubscribe(clientUrl2, notifylistener2);
         Assert.assertTrue(containsNotifyListener(serviceUrl, clientUrl, notifyListener));
         Assert.assertTrue(containsNotifyListener(serviceUrl, clientUrl2, notifylistener2));
 
+        // register
         registry.doRegister(serviceUrl);
         registry.doRegister(serviceUrl2);
         registry.doAvailable(null);
         Thread.sleep(sleepTime);
+        
+        // unregister
+        registry.doUnavailable(null);
+        Thread.sleep(sleepTime);
+        registry.doUnregister(serviceUrl);
+        registry.doUnregister(serviceUrl2);
 
+        // unsubscrib
         registry.doUnsubscribe(clientUrl, notifyListener);
         Assert.assertFalse(containsNotifyListener(serviceUrl, clientUrl, notifyListener));
         Assert.assertTrue(containsNotifyListener(serviceUrl, clientUrl2, notifylistener2));
@@ -131,6 +140,11 @@ public class ConsulRegistryTest {
         Thread.sleep(sleepTime);
         urls = registry.discover(serviceUrl);
         Assert.assertTrue(urls.contains(serviceUrl));
+        
+        // unavailable & unregister
+        registry.doUnavailable(null);
+        Thread.sleep(sleepTime);
+        registry.doUnregister(serviceUrl);
     }
 
     private Boolean containsNotifyListener(URL serviceUrl, URL clientUrl, NotifyListener listener) {
