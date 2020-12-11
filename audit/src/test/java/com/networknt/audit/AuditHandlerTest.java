@@ -54,6 +54,7 @@ import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -68,7 +69,7 @@ import static org.mockito.Mockito.verify;
  * Created by steve on 01/09/16.
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({AuditConfig.class, LoggerFactory.class})
+@PrepareForTest({AuditConfig.class, LoggerFactory.class, AuditHandler.class})
 @PowerMockIgnore({"javax.*", "org.xml.sax.*", "org.apache.log4j.*", "java.xml.*", "com.sun.*"})
 public class AuditHandlerTest {
     static Logger logger = LoggerFactory.getLogger(AuditHandlerTest.class);
@@ -357,6 +358,38 @@ public class AuditHandlerTest {
         runTest("/error", "post", null, 401);
         verifyAuditInfo("serviceId", "com.networknt.petstore-1.0.0");
     }
+
+    @Test
+    public void testAuditWith200TimestampFormatted() throws Exception {
+        long time = 1607639411945L;
+        Instant instant = Instant.ofEpochMilli(time);
+        PowerMockito.mockStatic(System.class);
+        PowerMockito.mockStatic(Instant.class);
+        PowerMockito.when(Instant.now()).thenReturn(instant);
+        runTest("/pet", "post", null, 200);
+        verifyAuditInfo("timestamp", "2020-12-10T17:30:11.945-0500");
+    }
+
+    @Test
+    public void testAuditWith401TimestampFormatted() throws Exception {
+        long time = 1607639411945L;
+        Instant instant = Instant.ofEpochMilli(time);
+        PowerMockito.mockStatic(Instant.class);
+        PowerMockito.when(Instant.now()).thenReturn(instant);
+
+        runTest("/error", "post", null, 401);
+        verifyAuditInfo("timestamp", "2020-12-10T17:30:11.945-0500");
+    }
+
+/*    @Test used for testing when doesn't specify timestampFormat
+    public void testAuditWith200TimestampLong() throws Exception {
+        long time = 1607639411945L;
+
+        PowerMockito.mockStatic(System.class);
+        PowerMockito.when(System.currentTimeMillis()).thenReturn(time);
+        runTest("/pet", "post", null, 200);
+        verifyAuditInfo("timestamp", "1607639411945");
+    }*/
 
     @Test
     public void shouldAddListenerIfIsStatusCodeAndIsResponseTimeAreTrue() throws Exception {

@@ -23,6 +23,7 @@ import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.mask.Mask;
 import com.networknt.utility.ModuleRegistry;
+import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -30,6 +31,9 @@ import io.undertow.server.handlers.Cookie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -87,6 +91,8 @@ public class AuditHandler implements MiddlewareHandler {
 
     private volatile HttpHandler next;
 
+    private DateTimeFormatter DATE_TIME_FORMATTER;
+
     public AuditHandler() {
         if (logger.isInfoEnabled()) logger.info("AuditHandler is loaded.");
         auditConfig = AuditConfig.load();
@@ -97,7 +103,15 @@ public class AuditHandler implements MiddlewareHandler {
         Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
         Map<String, Object> auditMap = new LinkedHashMap<>();
         final long start = System.currentTimeMillis();
-        auditMap.put(TIMESTAMP, System.currentTimeMillis());
+        String timestampFormat = auditConfig.getTimestampFormat();
+        if (StringUtils.isBlank(timestampFormat)) {
+            auditMap.put(TIMESTAMP, System.currentTimeMillis());
+        } else {
+            DATE_TIME_FORMATTER = DATE_TIME_FORMATTER == null ? DateTimeFormatter.ofPattern(timestampFormat)
+                    .withZone(ZoneId.systemDefault()) : DATE_TIME_FORMATTER;
+            String formatted = DATE_TIME_FORMATTER.format(Instant.now());
+            auditMap.put(TIMESTAMP, formatted);
+        }
 
         // dump audit info fields according to config
         boolean needAuditData = auditInfo != null && auditConfig.hasAuditList();
