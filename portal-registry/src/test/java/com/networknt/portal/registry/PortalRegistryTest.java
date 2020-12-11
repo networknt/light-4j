@@ -127,7 +127,7 @@ public class PortalRegistryTest {
         }
         Assert.assertTrue(urls.contains(serviceUrl));
         
-        // unavailable
+        // unavailable & unregister
         registry.doUnavailable(null);
         Thread.sleep(sleepTime);
         registry.doUnregister(serviceUrl);
