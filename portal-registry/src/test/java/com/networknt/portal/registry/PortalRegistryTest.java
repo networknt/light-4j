@@ -130,7 +130,7 @@ public class PortalRegistryTest {
         // unavailable
         registry.doUnavailable(null);
         Thread.sleep(sleepTime);
-        Assert.assertFalse(client.isWorking(serviceid));
+        registry.doUnregister(serviceUrl);
     }
 
     @Test
