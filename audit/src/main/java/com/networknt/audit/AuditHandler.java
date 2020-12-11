@@ -23,6 +23,7 @@ import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.mask.Mask;
 import com.networknt.utility.ModuleRegistry;
+import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -87,9 +88,15 @@ public class AuditHandler implements MiddlewareHandler {
 
     private volatile HttpHandler next;
 
+    private String serviceId;
+
     public AuditHandler() {
         if (logger.isInfoEnabled()) logger.info("AuditHandler is loaded.");
         auditConfig = AuditConfig.load();
+        Map<String, Object> serverConfig = Config.getInstance().getJsonMapConfigNoCache(SERVER_CONFIG);
+        if (serverConfig != null) {
+            serviceId = (String) serverConfig.get(SERVICEID_KEY);
+        }
     }
 
     @Override
@@ -268,9 +275,8 @@ public class AuditHandler implements MiddlewareHandler {
     }
 
     private void auditServiceId(Map<String, Object> auditMap) {
-        Map<String, Object> serverConfig = Config.getInstance().getJsonMapConfigNoCache(SERVER_CONFIG);
-        if (serverConfig != null && serverConfig.get(SERVICEID_KEY) != null) {
-            auditMap.put(SERVICEID_KEY, serverConfig.get(SERVICEID_KEY));
+        if (!StringUtils.isBlank(serviceId)) {
+            auditMap.put(SERVICEID_KEY, serviceId);
         }
     }
 
