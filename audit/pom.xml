@@ -111,6 +111,11 @@
             <artifactId>powermock-module-junit4</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>body</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 </project>
