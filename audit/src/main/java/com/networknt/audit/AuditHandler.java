@@ -268,7 +268,7 @@ public class AuditHandler implements MiddlewareHandler {
     }
 
     private void auditServiceId(Map<String, Object> auditMap) {
-        Map<String, Object> serverConfig = Config.getInstance().getJsonMapConfig(SERVER_CONFIG);
+        Map<String, Object> serverConfig = Config.getInstance().getJsonMapConfigNoCache(SERVER_CONFIG);
         if (serverConfig != null && serverConfig.get(SERVICEID_KEY) != null) {
             auditMap.put(SERVICEID_KEY, serverConfig.get(SERVICEID_KEY));
         }
