@@ -22,6 +22,7 @@ import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.mask.Mask;
+import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
@@ -31,6 +32,9 @@ import io.undertow.server.handlers.Cookie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -83,12 +87,15 @@ public class AuditHandler implements MiddlewareHandler {
     static final String STATUS_KEY = "Status";
     static final String SERVER_CONFIG = "server";
     static final String SERVICEID_KEY = "serviceId";
+    static final String INVALID_CONFIG_VALUE_CODE = "ERR10060";
 
     private AuditConfig auditConfig;
 
     private volatile HttpHandler next;
 
     private String serviceId;
+
+    private DateTimeFormatter DATE_TIME_FORMATTER;
 
     public AuditHandler() {
         if (logger.isInfoEnabled()) logger.info("AuditHandler is loaded.");
@@ -97,6 +104,16 @@ public class AuditHandler implements MiddlewareHandler {
         if (serverConfig != null) {
             serviceId = (String) serverConfig.get(SERVICEID_KEY);
         }
+        String timestampFormat = auditConfig.getTimestampFormat();
+        if (!StringUtils.isBlank(timestampFormat)) {
+            try {
+                DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(timestampFormat)
+                        .withZone(ZoneId.systemDefault());
+            } catch (IllegalArgumentException e) {
+                logger.error(new Status(INVALID_CONFIG_VALUE_CODE, timestampFormat, "timestampFormat", "audit.yml").toString());
+
+            }
+        }
     }
 
     @Override
@@ -104,7 +121,9 @@ public class AuditHandler implements MiddlewareHandler {
         Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
         Map<String, Object> auditMap = new LinkedHashMap<>();
         final long start = System.currentTimeMillis();
-        auditMap.put(TIMESTAMP, System.currentTimeMillis());
+
+        // add audit timestamp
+        auditMap.put(TIMESTAMP, DATE_TIME_FORMATTER == null ? System.currentTimeMillis() : DATE_TIME_FORMATTER.format(Instant.now()));
 
         // dump audit info fields according to config
         boolean needAuditData = auditInfo != null && auditConfig.hasAuditList();

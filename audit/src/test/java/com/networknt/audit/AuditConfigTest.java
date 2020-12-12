@@ -64,6 +64,7 @@ public class AuditConfigTest {
         Assert.assertFalse(configHandler.isResponseTime());
         Assert.assertFalse(configHandler.isAuditOnError());
         Assert.assertFalse(configHandler.isMaskEnabled());
+        Assert.assertNull(configHandler.getTimestampFormat());
     }
 
     @Test
@@ -155,5 +156,23 @@ public class AuditConfigTest {
         configMap.put("logLevelIsError", typeOfValue);
         configMap.put("mask", typeOfValue);
         return configMap;
+    }
+
+    @Test
+    public void shouldGetTimestampFormatAndAuditConfig() {
+        HashMap<String, Object> configMap = new HashMap<>();
+        String format= "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+        configMap.put("timestampFormat", format);
+
+        Logger logger = Mockito.mock(Logger.class);
+        Mockito.when(LoggerFactory.getLogger(Constants.AUDIT_LOGGER)).thenReturn(logger);
+
+        Config config = Mockito.mock(Config.class);
+        Mockito.when(config.getJsonMapConfigNoCache(CONFIG_NAME)).thenReturn(configMap);
+        Mockito.when(Config.getInstance()).thenReturn(config);
+
+        AuditConfig configHandler = AuditConfig.load();
+
+        Assert.assertEquals(format, configHandler.getTimestampFormat());
     }
 }

@@ -422,6 +422,11 @@ ERR10059:
   code: ERR10059
   message: REQUEST_BODY_MISSING
   description: Request body is missing.
+ERR10060:
+  statusCode: 400
+  code: ERR10060
+  message: CONFIG_VALUE_INVALID
+  description: Config value %s for key %s invalid in config file %s.
 
 # 11000-11500 swagger-validator errors
 ERR11000:
