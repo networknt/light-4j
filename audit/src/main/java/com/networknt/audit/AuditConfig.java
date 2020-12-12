@@ -32,6 +32,7 @@ class AuditConfig {
     private static final String AUDIT_ON_ERROR = "auditOnError";
     private static final String IS_LOG_LEVEL_ERROR = "logLevelIsError";
     private static final String IS_MASK_ENABLED = "mask";
+    private static final String TIMESTAMP_FORMAT = "timestampFormat";
     private final Map<String, Object> mappedConfig;
     static final String CONFIG_NAME = "audit";
     private List<String> headerList;
@@ -44,6 +45,7 @@ class AuditConfig {
     private boolean responseTime;
     private boolean auditOnError;
     private boolean isMaskEnabled;
+    private String timestampFormat;
 
     private AuditConfig() {
         config = Config.getInstance();
@@ -98,6 +100,10 @@ class AuditConfig {
         return getAuditList() != null && getAuditList().size() > 0;
     }
 
+    String getTimestampFormat() {
+        return timestampFormat;
+    }
+
     Config getConfig() {
         return config;
     }
@@ -132,5 +138,6 @@ class AuditConfig {
         if(object != null && (Boolean) object) {
             isMaskEnabled = true;
         }
+        timestampFormat = (String)getMappedConfig().get(TIMESTAMP_FORMAT);
     }
 }

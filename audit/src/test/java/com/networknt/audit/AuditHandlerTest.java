@@ -54,6 +54,7 @@ import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -61,14 +62,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 /**
  * Created by steve on 01/09/16.
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({AuditConfig.class, LoggerFactory.class})
+@PrepareForTest({AuditConfig.class, LoggerFactory.class, AuditHandler.class})
 @PowerMockIgnore({"javax.*", "org.xml.sax.*", "org.apache.log4j.*", "java.xml.*", "com.sun.*"})
 public class AuditHandlerTest {
     static Logger logger = LoggerFactory.getLogger(AuditHandlerTest.class);
@@ -356,6 +356,71 @@ public class AuditHandlerTest {
     public void testAuditWith401ServiceId() throws Exception {
         runTest("/error", "post", null, 401);
         verifyAuditInfo("serviceId", "com.networknt.petstore-1.0.0");
+    }
+
+    @Test
+    public void testAuditWith200TimestampFormatted() throws Exception {
+        long time = 1607639411945L;
+        Instant instant = Instant.ofEpochMilli(time);
+        PowerMockito.mockStatic(System.class);
+        PowerMockito.mockStatic(Instant.class);
+        PowerMockito.when(Instant.now()).thenReturn(instant);
+        runTest("/pet", "post", null, 200);
+        verifyAuditInfo("timestamp", "2020-12-10T17:30:11.945-0500");
+    }
+
+    @Test
+    public void testAuditWith401TimestampFormatted() throws Exception {
+        long time = 1607639411945L;
+        Instant instant = Instant.ofEpochMilli(time);
+        PowerMockito.mockStatic(Instant.class);
+        PowerMockito.when(Instant.now()).thenReturn(instant);
+
+        runTest("/error", "post", null, 401);
+        verifyAuditInfo("timestamp", "2020-12-10T17:30:11.945-0500");
+    }
+
+    @Test //used for testing when doesn't specify timestampFormat
+    public void testAuditWith200TimestampLong() throws Exception {
+        Map<String, Object> map = testTimestampInitHelper(null);
+        Assert.assertEquals(1607639411945L, map.get("timestamp"));
+    }
+
+    @Test //used for testing when user specified a wrong format timestampFormat
+    public void testAuditWith200TimestampInvalidFormat() throws Exception {
+        Map<String, Object> map = testTimestampInitHelper("abc");
+        Assert.assertEquals(1607639411945L, map.get("timestamp"));
+    }
+
+    private Map<String, Object> testTimestampInitHelper(String o) throws Exception {
+        PowerMockito.mockStatic(AuditConfig.class);
+        AtomicReference<String> content = new AtomicReference<>("");
+        Consumer<String> consumer = (str) -> content.set(str);
+        // mock handler
+        AuditConfig auditConfig = Mockito.mock(AuditConfig.class);
+        when(auditConfig.getAuditFunc()).thenReturn(consumer);
+
+        Mockito.when(auditConfig.getTimestampFormat()).thenReturn(o);
+        Config config = Mockito.mock(Config.class);
+        when(config.getMapper()).thenReturn(new ObjectMapper());
+        Mockito.when(auditConfig.getConfig()).thenReturn(config);
+        PowerMockito.when(AuditConfig.load()).thenReturn(auditConfig);
+        AuditHandler auditHandler = Mockito.spy(new AuditHandler());
+        Mockito.doNothing().when(auditHandler).next(Mockito.any());
+
+        // mock exchange
+        HeaderMap headerMap = Mockito.spy(new HeaderMap());
+        HttpServerExchange httpServerExchange = Mockito.mock(HttpServerExchange.class);
+        Mockito.when(httpServerExchange.getRequestHeaders()).thenReturn(headerMap);
+
+        long time = 1607639411945L;
+        // mock time
+        PowerMockito.mockStatic(System.class);
+        PowerMockito.when(System.currentTimeMillis()).thenReturn(time);
+
+        Handler.init();
+        auditHandler.handleRequest(httpServerExchange);
+        return JsonMapper.string2Map(content.get());
     }
 
     @Test
