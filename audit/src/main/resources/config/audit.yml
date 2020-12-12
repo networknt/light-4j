@@ -20,7 +20,7 @@ auditOnError: false
 # log level; by default set to info
 logLevelIsError: false
 
-# the format for outputting the timestamp, if not specify, will use long value
+# the format for outputting the timestamp, if the format is not specified or invalid, will use a long value.
 #timestampFormat: yyyy-MM-dd'T'HH:mm:ss.SSSZ
 
 # Output header elements. You can add more if you want.
