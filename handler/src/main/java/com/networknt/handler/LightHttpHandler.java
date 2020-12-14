@@ -19,7 +19,9 @@ package com.networknt.handler;
 import com.networknt.config.Config;
 import com.networknt.handler.config.HandlerConfig;
 import com.networknt.httpstring.AttachmentConstants;
+import com.networknt.service.SingletonServiceFactory;
 import com.networknt.status.Status;
+import com.networknt.status.StatusWrapper;
 import com.networknt.utility.Constants;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -76,6 +78,15 @@ public interface LightHttpHandler extends HttpHandler {
      * @param status   error status
      */
     default void setExchangeStatus(HttpServerExchange exchange, Status status) {
+        // Wrap default status into custom status if the implementation of StatusWrapper was provided
+        StatusWrapper statusWrapper;
+        try {
+            statusWrapper = SingletonServiceFactory.getBean(StatusWrapper.class);
+        } catch (NoClassDefFoundError e) {
+            statusWrapper = null;
+        }
+        status = statusWrapper == null ? status : statusWrapper.wrap(status, exchange);
+
         exchange.setStatusCode(status.getStatusCode());
         exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
         status.setDescription(status.getDescription().replaceAll("\\\\", "\\\\\\\\"));
