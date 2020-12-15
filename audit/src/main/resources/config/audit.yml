@@ -51,10 +51,10 @@ audit:
 - serviceId
 
 # Request Body, this is optional and must be set by the service in its implementation
-- requestBody
+# - requestBody
 
 # Response payload, this is optional and must be set by the service in its implementation
-- responseBody
+# - responseBody
 
 # Response error status payload
 - Status
