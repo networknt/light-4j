@@ -36,6 +36,9 @@ public class Constants {
     public static final String SCOPE_CLIENT_ID_STRING = "scope_client_id";
     public static final String SCOPE_STRING = "scope";
     public static final String SCP_STRING = "scp";
+    // use for light-aws-lambda to pass the scopes to the scope verifier from authorizer
+    public static final String PRIMARY_SCOPES = "primary_scopes";
+    public static final String SECONDARY_SCOPES = "secondary_scopes";
     public static final String ENDPOINT_STRING = "endpoint";
     public static final String CSRF_STRING = "csrf";
     public static final String AUTHORIZATION_STRING = "authorization";
