@@ -1,6 +1,5 @@
-package com.networknt.utility;
+package com.networknt.config;
 
-import com.networknt.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
