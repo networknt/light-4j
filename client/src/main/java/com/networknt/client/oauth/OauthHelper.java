@@ -44,11 +44,10 @@ import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class OauthHelper {
@@ -461,8 +460,15 @@ public class OauthHelper {
         exchange.setStatusCode(status.getStatusCode());
         exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
         exchange.getResponseSender().send(status.toString());
-        StackTraceElement[] elements = Thread.currentThread().getStackTrace();
-        logger.error(status.toString() + " at " + elements[2].getClassName() + "." + elements[2].getMethodName() + "(" + elements[2].getFileName() + ":" + elements[2].getLineNumber() + ")");
+        logger.error(status.toString());
+        // in case to trace where the status is created, enable the trace level logging to diagnose.
+        if (logger.isTraceEnabled()) {
+            StackTraceElement[] elements = Thread.currentThread().getStackTrace();
+            String stackTrace = Arrays.stream(elements)
+                    .map(StackTraceElement::toString)
+                    .collect(Collectors.joining("\n"));
+            logger.trace(stackTrace);
+        }
     }
 
     /**

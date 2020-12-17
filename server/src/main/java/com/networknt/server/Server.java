@@ -509,12 +509,14 @@ public class Server {
         } catch (Exception e) {
             Status status = new Status(ERROR_CONNECT_REGISTRY, serviceUrl);
             if(config.startOnRegistryFailure) {
-                System.out.println("Failed to register service, start the server without registry. " + status.toString());
+                System.out.println("Failed to register service, start the server without registry. ");
+                System.out.println(status.toString());
                 e.printStackTrace();
                 if (logger.isInfoEnabled()) logger.info("Failed to register service, start the server without registry.", e);
                 return null;
             } else {
-                System.out.println("Failed to register service, the server stopped. " + status.toString());
+                System.out.println("Failed to register service, the server stopped.");
+                System.out.println(status.toString());
                 e.printStackTrace();
                 if (logger.isInfoEnabled()) logger.info("Failed to register service, the server stopped.", e);
                 throw new RuntimeException(e.getMessage());
