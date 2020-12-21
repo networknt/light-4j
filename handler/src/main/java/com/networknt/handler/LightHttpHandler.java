@@ -47,12 +47,15 @@ public interface LightHttpHandler extends HttpHandler {
 
     // Handler can save errors and stack traces for auditing. Default: false
     String CONFIG_NAME = "handler";
+    String AUDIT_CONFIG_NAME = "audit";
     String AUDIT_ON_ERROR = "auditOnError";
     String AUDIT_STACK_TRACE = "auditStackTrace";
 
     HandlerConfig config = (HandlerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, HandlerConfig.class);
-    boolean auditOnError = config != null ? config.getAuditOnError() : false;
-    boolean auditStackTrace = config != null ? config.getAuditStackTrace() : false;
+    Map<String, Object> auditConfig = Config.getInstance().getDefaultJsonMapConfigNoCache(AUDIT_CONFIG_NAME);
+
+    boolean auditOnError = auditConfig.get(AUDIT_ON_ERROR) != null ? (boolean)auditConfig.get(AUDIT_ON_ERROR) : false;
+    boolean auditStackTrace = auditConfig.get(AUDIT_STACK_TRACE) != null ? (boolean)auditConfig.get(AUDIT_ON_ERROR) : false;
 
     /**
      * This method is used to construct a standard error status in JSON format from an error code.
