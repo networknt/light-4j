@@ -1,5 +1,35 @@
 # Change Log
 
+## [2.0.22](https://github.com/networknt/light-4j/tree/2.0.22) (2020-12-22)
+
+
+**Merged pull requests:**
+
+
+- fixes \#880 add two status codes for light-aws-lambda [\#881](https://github.com/networknt/light-4j/pull/881) ([stevehu](https://github.com/stevehu))
+- issue \#877 [\#878](https://github.com/networknt/light-4j/pull/878) ([BalloonWen](https://github.com/BalloonWen))
+- issue-\#874 [\#875](https://github.com/networknt/light-4j/pull/875) ([BalloonWen](https://github.com/BalloonWen))
+- fixes \#872 add tId to the MDC from TraceabilityHandler so that it can… [\#873](https://github.com/networknt/light-4j/pull/873) ([stevehu](https://github.com/stevehu))
+- fixes \#870 add primary_scopes and secondary_scopes to constants [\#871](https://github.com/networknt/light-4j/pull/871) ([stevehu](https://github.com/stevehu))
+- fixes \#868 disable the audit on requestBody and responseBody audit in… [\#869](https://github.com/networknt/light-4j/pull/869) ([stevehu](https://github.com/stevehu))
+- fixes \#866 move TlsUtil to config module from utility to remove confi… [\#867](https://github.com/networknt/light-4j/pull/867) ([stevehu](https://github.com/stevehu))
+- \#841 added StatusWrapper interface [\#859](https://github.com/networknt/light-4j/pull/859) ([jiachen1120](https://github.com/jiachen1120))
+- issue-864 seprate logging error status and stack trace [\#865](https://github.com/networknt/light-4j/pull/865) ([BalloonWen](https://github.com/BalloonWen))
+- issue-858 auditing timestamp supports custome date format [\#860](https://github.com/networknt/light-4j/pull/860) ([BalloonWen](https://github.com/BalloonWen))
+- Fix/861 config load exception when auditing service id [\#863](https://github.com/networknt/light-4j/pull/863) ([BalloonWen](https://github.com/BalloonWen))
+- Add missing package import in PortalRegistryTest.java [\#862](https://github.com/networknt/light-4j/pull/862) ([KellyShao](https://github.com/KellyShao))
+- Fix flaky tests in PortalRegistryTest.java and ConsulRegistryTest.java [\#857](https://github.com/networknt/light-4j/pull/857) ([KellyShao](https://github.com/KellyShao))
+- Fixed flaky tests caused by SharedMetricRegistries in SharedMetricRegistriesTest.java [\#856](https://github.com/networknt/light-4j/pull/856) ([KellyShao](https://github.com/KellyShao))
+- - solved \#840 [\#849](https://github.com/networknt/light-4j/pull/849) ([jiachen1120](https://github.com/jiachen1120))
+- fixes \#854 RoundRobinLoadBalance is unpredictable if there are more t… [\#855](https://github.com/networknt/light-4j/pull/855) ([stevehu](https://github.com/stevehu))
+- fixes \#852 parameterize health and info configuration file [\#853](https://github.com/networknt/light-4j/pull/853) ([stevehu](https://github.com/stevehu))
+- fixes \#850 add an error code for the logger post if the body does not… [\#851](https://github.com/networknt/light-4j/pull/851) ([stevehu](https://github.com/stevehu))
+- fixes \#847 add status code for the registry failure during the server… [\#848](https://github.com/networknt/light-4j/pull/848) ([stevehu](https://github.com/stevehu))
+- fixes \#845 add startOnRegistryFailure to server.yml to control if sta… [\#846](https://github.com/networknt/light-4j/pull/846) ([stevehu](https://github.com/stevehu))
+- fixes \#843 update logger-config for light-controller to query and upd… [\#844](https://github.com/networknt/light-4j/pull/844) ([stevehu](https://github.com/stevehu))
+- - fixed \#839 Error status resulted at framework middleware handler is… [\#842](https://github.com/networknt/light-4j/pull/842) ([jiachen1120](https://github.com/jiachen1120))
+
+
 ## [2.0.21](https://github.com/networknt/light-4j/tree/2.0.21) (2020-11-25)
 
 
