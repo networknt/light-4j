@@ -54,8 +54,8 @@ public interface LightHttpHandler extends HttpHandler {
     HandlerConfig config = (HandlerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, HandlerConfig.class);
     Map<String, Object> auditConfig = Config.getInstance().getDefaultJsonMapConfigNoCache(AUDIT_CONFIG_NAME);
 
-    boolean auditOnError = auditConfig.get(AUDIT_ON_ERROR) != null ? (boolean)auditConfig.get(AUDIT_ON_ERROR) : false;
-    boolean auditStackTrace = auditConfig.get(AUDIT_STACK_TRACE) != null ? (boolean)auditConfig.get(AUDIT_ON_ERROR) : false;
+    boolean auditOnError = auditConfig == null ? false : auditConfig.get(AUDIT_ON_ERROR) != null ? (boolean)auditConfig.get(AUDIT_ON_ERROR) : false;
+    boolean auditStackTrace = auditConfig == null ? false : auditConfig.get(AUDIT_STACK_TRACE) != null ? (boolean)auditConfig.get(AUDIT_ON_ERROR) : false;
 
     /**
      * This method is used to construct a standard error status in JSON format from an error code.
