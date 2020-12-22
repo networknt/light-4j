@@ -427,6 +427,16 @@ ERR10060:
   code: ERR10060
   message: CONFIG_VALUE_INVALID
   description: Config value %s for key %s invalid in config file %s.
+ERR10061:
+  statusCode: 401
+  code: ERR10061
+  message: MISSING_GATEWAY_AUTHORIZER
+  description: JWT Authorizer is not configured or without permission on AWS API Gateway.
+ERR10062:
+  statusCode: 401
+  code: ERR10062
+  message: MISSING_PRIMARY_SCOPES
+  description: Scopes from the JWT token in Authorization header are missing.
 
 # 11000-11500 swagger-validator errors
 ERR11000:
