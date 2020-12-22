@@ -28,6 +28,7 @@ import com.networknt.monad.Result;
 import com.networknt.monad.Success;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.status.Status;
+import com.networknt.utility.StringUtils;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.*;
 import org.apache.commons.codec.binary.Base64;
@@ -284,7 +285,7 @@ public class OauthHelper {
                     .followRedirects(HttpClient.Redirect.NORMAL)
                     .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
                     .sslContext(Http2Client.createSSLContext());
-            if(keyRequest.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(keyRequest.getProxyHost(), keyRequest.getProxyPort() == 0 ? 443 : keyRequest.getProxyPort())));
+            if(!StringUtils.isBlank(keyRequest.getProxyHost())) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(keyRequest.getProxyHost(), keyRequest.getProxyPort() == 0 ? 443 : keyRequest.getProxyPort())));
             if(keyRequest.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
             HttpClient keyClient = clientBuilder.build();
 
