@@ -96,7 +96,7 @@ public class ConfigInjection {
             // Flag to validate whether the environment or values.yml contains the corresponding field
             Boolean containsField = false;
             // Use key of injectionPattern to get value from both environment variables and "values.yaml"
-            Object envValue = typeCast(System.getenv(injectionPattern.getKey()));
+            Object envValue = typeCast(System.getenv().get(injectionPattern.getKey()));
             Map<String, Object> valueMap = Config.getInstance().getDefaultJsonMapConfig(CENTRALIZED_MANAGEMENT);
             Object fileValue = (valueMap != null) ? valueMap.get(injectionPattern.getKey()) : null;
             // Return different value from different sources based on injection order defined before
