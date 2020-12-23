@@ -1,5 +1,16 @@
 # Change Log
 
+## [1.6.30](https://github.com/networknt/light-4j/tree/1.6.30) (2020-12-22)
+
+
+**Merged pull requests:**
+
+
+- fixes \#868 disable the audit on requestBody and responseBody audit in… [\#869](https://github.com/networknt/light-4j/pull/869) ([stevehu](https://github.com/stevehu))
+- \#841 added StatusWrapper interface [\#859](https://github.com/networknt/light-4j/pull/859) ([jiachen1120](https://github.com/jiachen1120))
+- Fix/861 config load exception when auditing service id [\#863](https://github.com/networknt/light-4j/pull/863) ([BalloonWen](https://github.com/BalloonWen))
+- - solved \#840 [\#849](https://github.com/networknt/light-4j/pull/849) ([jiachen1120](https://github.com/jiachen1120))
+- - fixed \#839 Error status resulted at framework middleware handler is… [\#842](https://github.com/networknt/light-4j/pull/842) ([jiachen1120](https://github.com/jiachen1120))
 ## [1.6.29](https://github.com/networknt/light-4j/tree/1.6.29) (2020-11-01)
 
 
