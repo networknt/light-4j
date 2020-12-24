@@ -70,117 +70,12 @@ import static org.mockito.Mockito.*;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({AuditConfig.class, LoggerFactory.class, AuditHandler.class})
 @PowerMockIgnore({"javax.*", "org.xml.sax.*", "org.apache.log4j.*", "java.xml.*", "com.sun.*"})
-public class AuditHandlerTest {
+public class AuditHandlerTest extends AuditHandlerTestBase{
     static Logger logger = LoggerFactory.getLogger(AuditHandlerTest.class);
 
-    static Undertow server = null;
-
-    final ch.qos.logback.classic.Logger auditLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Constants.AUDIT_LOGGER);
-
-    @Mock
-    Appender mockAppender;
-
-    @Captor
-    ArgumentCaptor<ILoggingEvent> captorLoggingEvent;
-
-    String[] requiredKeys = { AuditHandler.TIMESTAMP,
-                                Constants.CORRELATION_ID_STRING,
-                                Constants.TRACEABILITY_ID_STRING,
-                                AuditHandler.STATUS_CODE,
-                                AuditHandler.RESPONSE_TIME };
-
     @BeforeClass
-    public static void setUp() {
-        if(server == null) {
-            logger.info("starting server");
-            HttpHandler handler = getTestHandler();
-
-            AuditHandler auditHandler = new AuditHandler();
-            auditHandler.setNext(handler);
-            handler = auditHandler;
-
-            CorrelationHandler correlationHandler = new CorrelationHandler();
-            correlationHandler.setNext(handler);
-            handler = correlationHandler;
-
-            BodyHandler bodyHandler = new BodyHandler();
-            bodyHandler.setNext(handler);
-            handler = bodyHandler;
-
-            ParameterHandler parameterHandler = new ParameterHandler();
-            parameterHandler.setNext(handler);
-            handler = parameterHandler;
-
-            server = Undertow.builder()
-                    .addHttpListener(8080, "localhost")
-                    .setHandler(handler)
-                    .build();
-            server.start();
-        }
-    }
-
-    @AfterClass
-    public static void tearDown() throws Exception {
-        if(server != null) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException ignored) {
-
-            }
-            server.stop();
-            logger.info("The server is stopped.");
-        }
-    }
-
-    static RoutingHandler getTestHandler() {
-        return Handlers.routing()
-                .add(Methods.POST, "/pet", exchange -> exchange.getResponseSender().send("OK"))
-                .add(Methods.POST, "/error", exchange -> new ErrorStatusTestHandler().handleRequest(exchange))
-                .add(Methods.POST, "/error/{petId}", exchange -> new ErrorStatusTestHandler().handleRequest(exchange))
-                .add(Methods.POST, "/pet/{petId}", exchange -> exchange.getResponseSender().send("OK"));
-    }
-
-    @Before
-    public void beforeTest() throws Exception {
-        // inject the mock appender
-        auditLogger.addAppender(mockAppender);
-    }
-
-    @After
-    public void afterTest() throws Exception {
-        // remove the mock appender
-        auditLogger.detachAppender(mockAppender);
-    }
-
-    private void verifyAuditLog(String traceVal) {
-        verify(mockAppender, times(1)).doAppend(captorLoggingEvent.capture());
-        ILoggingEvent event = captorLoggingEvent.getValue();
-        Map<String, Object> mapValue = JsonMapper.string2Map(event.getFormattedMessage());
-
-        Assert.assertEquals(Level.INFO, event.getLevel());
-        Assert.assertTrue(Arrays.stream(requiredKeys).allMatch(mapValue::containsKey));
-        Assert.assertEquals(traceVal, mapValue.get(Constants.TRACEABILITY_ID_STRING));
-        Assert.assertNotNull(mapValue.get(Constants.CORRELATION_ID_STRING));
-        Assert.assertEquals(200, mapValue.get(AuditHandler.STATUS_CODE));
-    }
-
-    private void verifyAuditErrorStatus() {
-        verify(mockAppender, times(1)).doAppend(captorLoggingEvent.capture());
-        ILoggingEvent event = captorLoggingEvent.getValue();
-        Map<String, Object> mapValue = JsonMapper.string2Map(event.getFormattedMessage());
-
-        Assert.assertEquals("{statusCode=401, code=ERR10001, severity=ERROR, message=AUTH_TOKEN_EXPIRED, description=Jwt token in authorization header expired}", mapValue.get("Status").toString());
-    }
-
-    private void verifyAuditInfo(String key, String value) {
-        verify(mockAppender, times(1)).doAppend(captorLoggingEvent.capture());
-        ILoggingEvent event = captorLoggingEvent.getValue();
-        Map<String, Object> mapValue = JsonMapper.string2Map(event.getFormattedMessage());
-        if (value == null) {
-            Assert.assertNull(mapValue.get(key));
-        } else {
-            Assert.assertEquals(value, mapValue.get(key));
-        }
+    public static void init() {
+        setUp();
     }
 
     @Test
@@ -268,10 +163,11 @@ public class AuditHandlerTest {
         verifyAuditLog(null);
     }
 
+    // status will only be returned when auditOnError is true
     @Test
     public void testAuditWithErrorStatus() throws Exception {
         runTest("/error", "post", null, 401);
-        verifyAuditErrorStatus();
+        verifyAuditInfo("status", null);
     }
 
     @Test
@@ -286,10 +182,11 @@ public class AuditHandlerTest {
         verifyAuditInfo("requestBody", "post");
     }
 
+    // response body will only be returned when auditOnError is true
     @Test
     public void testAuditWithDumpResponse() throws Exception {
         runTest("/error", "post", null, 401);
-        verifyAuditInfo("responseBody", "{\"statusCode\":401,\"code\":\"ERR10001\",\"message\":\"AUTH_TOKEN_EXPIRED\",\"description\":\"Jwt token in authorization header expired\",\"severity\":\"ERROR\"}");
+        verifyAuditInfo("responseBody", null);
     }
 
     @Test
@@ -552,51 +449,6 @@ public class AuditHandlerTest {
                 return false;
             }
             return attachmentKey.toString().equals("io.undertow.util.SimpleAttachmentKey<java.lang.Integer>");
-        }
-    }
-
-    private void runTest(String path, String body, String cookies, int expectStatus) throws ClientException {
-        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
-        final Http2Client client = Http2Client.getInstance();
-        final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
-        try {
-            connection = client.connect(new URI("http://localhost:8080"), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
-        } catch (Exception e) {
-            throw new ClientException(e);
-        }
-
-        try {
-            String post = body;
-            connection.getIoThread().execute(new Runnable() {
-                @Override
-                public void run() {
-                    final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(path);
-                    request.getRequestHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    request.getRequestHeaders().put(Headers.HOST, "localhost");
-                    request.getRequestHeaders().put(HttpStringConstants.TRACEABILITY_ID, "tid");
-                    request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer eyJraWQiOiIxMDAiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJ1cm46Y29tOm5ldHdvcmtudDpvYXV0aDI6djEiLCJhdWQiOiJ1cm46Y29tLm5ldHdvcmtudCIsImV4cCI6MTc5MDAzNTcwOSwianRpIjoiSTJnSmdBSHN6NzJEV2JWdUFMdUU2QSIsImlhdCI6MTQ3NDY3NTcwOSwibmJmIjoxNDc0Njc1NTg5LCJ2ZXJzaW9uIjoiMS4wIiwidXNlcl9pZCI6InN0ZXZlIiwidXNlcl90eXBlIjoiRU1QTE9ZRUUiLCJjbGllbnRfaWQiOiJmN2Q0MjM0OC1jNjQ3LTRlZmItYTUyZC00YzU3ODc0MjFlNzIiLCJzY29wZSI6WyJ3cml0ZTpwZXRzIiwicmVhZDpwZXRzIl19.mue6eh70kGS3Nt2BCYz7ViqwO7lh_4JSFwcHYdJMY6VfgKTHhsIGKq2uEDt3zwT56JFAePwAxENMGUTGvgceVneQzyfQsJeVGbqw55E9IfM_uSM-YcHwTfR7eSLExN4pbqzVDI353sSOvXxA98ZtJlUZKgXNE1Ngun3XFORCRIB_eH8B0FY_nT_D1Dq2WJrR-re-fbR6_va95vwoUdCofLRa4IpDfXXx19ZlAtfiVO44nw6CS8O87eGfAm7rCMZIzkWlCOFWjNHnCeRsh7CVdEH34LF-B48beiG5lM7h4N12-EME8_VDefgMjZ8eqs1ICvJMxdIut58oYbdnkwTjkA");
-                    request.getRequestHeaders().put(HttpStringConstants.SCOPE_TOKEN, "Bearer eyJraWQiOiIxMDAiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJ1cm46Y29tOm5ldHdvcmtudDpvYXV0aDI6djEiLCJhdWQiOiJ1cm46Y29tLm5ldHdvcmtudCIsImV4cCI6MTc5MDAzNTcwOSwianRpIjoiSTJnSmdBSHN6NzJEV2JWdUFMdUU2QSIsImlhdCI6MTQ3NDY3NTcwOSwibmJmIjoxNDc0Njc1NTg5LCJ2ZXJzaW9uIjoiMS4wIiwidXNlcl9pZCI6InN0ZXZlIiwidXNlcl90eXBlIjoiRU1QTE9ZRUUiLCJjbGllbnRfaWQiOiJmN2Q0MjM0OC1jNjQ3LTRlZmItYTUyZC00YzU3ODc0MjFlNzIiLCJzY29wZSI6WyJ3cml0ZTpwZXRzIiwicmVhZDpwZXRzIl19.mue6eh70kGS3Nt2BCYz7ViqwO7lh_4JSFwcHYdJMY6VfgKTHhsIGKq2uEDt3zwT56JFAePwAxENMGUTGvgceVneQzyfQsJeVGbqw55E9IfM_uSM-YcHwTfR7eSLExN4pbqzVDI353sSOvXxA98ZtJlUZKgXNE1Ngun3XFORCRIB_eH8B0FY_nT_D1Dq2WJrR-re-fbR6_va95vwoUdCofLRa4IpDfXXx19ZlAtfiVO44nw6CS8O87eGfAm7rCMZIzkWlCOFWjNHnCeRsh7CVdEH34LF-B48beiG5lM7h4N12-EME8_VDefgMjZ8eqs1ICvJMxdIut58oYbdnkwTjkA");
-                    request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
-                    if (cookies != null) {
-                        request.getRequestHeaders().put(Headers.COOKIE, cookies);
-                    }
-                    connection.sendRequest(request, client.createClientCallback(reference, latch, post));
-                }
-            });
-
-            latch.await(10, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            logger.error("IOException: ", e);
-            throw new ClientException(e);
-        } finally {
-            IoUtils.safeClose(connection);
-        }
-        Assert.assertEquals(expectStatus, reference.get().getResponseCode());
-
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException ignored) {
         }
     }
 }
