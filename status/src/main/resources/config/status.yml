@@ -437,6 +437,16 @@ ERR10062:
   code: ERR10062
   message: MISSING_PRIMARY_SCOPES
   description: Scopes from the JWT token in Authorization header are missing.
+ERR10063:
+  statusCode: 400
+  code: ERR10063
+  message: MISSING_ENDPOINT_FUNCTION
+  description: Missing funcation in the mapping for endpoint %s.
+ERR10064:
+  statusCode: 400
+  code: ERR10064
+  message: EMPTY_LAMBDA_RESPONSE
+  description: Empty lambda function response for %s.
 
 # 11000-11500 swagger-validator errors
 ERR11000:
