@@ -99,7 +99,7 @@ public enum ServerOption {
                 }
                 return true;
             case MAX_TRANSFER_FILE_SIZE:
-                if (value == null || (long) value <= 0) {
+                if (value == null || Long.parseLong(value.toString()) <= 0) {
                     serverConfig.setMaxTransferFileSize(1000000);
                     return false;
                 }
