@@ -34,6 +34,8 @@ import java.util.*;
  * This is a middleware component that sanitize cross site scripting tags in request. As potentially
  * sanitizing body of the request, this middleware must be plugged into the chain after body parser.
  *
+ * Note: the sanitizer only works with JSON body, for other types, it will be skipped.
+ *
  * @author Steve Hu
  */
 public class SanitizerHandler implements MiddlewareHandler {
@@ -79,9 +81,11 @@ public class SanitizerHandler implements MiddlewareHandler {
             if (body != null) {
                 if(body instanceof List) {
                     encoding.encodeList((List<Map<String, Object>>)body);
-                } else {
+                } else if (body instanceof Map){
                     // assume it is a map here.
                     encoding.encodeNode((Map<String, Object>)body);
+                } else {
+                    // Body is not in JSON format or form data, skip...
                 }
             }
         }

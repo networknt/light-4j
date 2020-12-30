@@ -1,5 +1,143 @@
 # Change Log
 
+## [2.0.22](https://github.com/networknt/light-4j/tree/2.0.22) (2020-12-22)
+
+
+**Merged pull requests:**
+
+
+- fixes \#880 add two status codes for light-aws-lambda [\#881](https://github.com/networknt/light-4j/pull/881) ([stevehu](https://github.com/stevehu))
+- issue \#877 [\#878](https://github.com/networknt/light-4j/pull/878) ([BalloonWen](https://github.com/BalloonWen))
+- issue-\#874 [\#875](https://github.com/networknt/light-4j/pull/875) ([BalloonWen](https://github.com/BalloonWen))
+- fixes \#872 add tId to the MDC from TraceabilityHandler so that it can… [\#873](https://github.com/networknt/light-4j/pull/873) ([stevehu](https://github.com/stevehu))
+- fixes \#870 add primary_scopes and secondary_scopes to constants [\#871](https://github.com/networknt/light-4j/pull/871) ([stevehu](https://github.com/stevehu))
+- fixes \#868 disable the audit on requestBody and responseBody audit in… [\#869](https://github.com/networknt/light-4j/pull/869) ([stevehu](https://github.com/stevehu))
+- fixes \#866 move TlsUtil to config module from utility to remove confi… [\#867](https://github.com/networknt/light-4j/pull/867) ([stevehu](https://github.com/stevehu))
+- \#841 added StatusWrapper interface [\#859](https://github.com/networknt/light-4j/pull/859) ([jiachen1120](https://github.com/jiachen1120))
+- issue-864 seprate logging error status and stack trace [\#865](https://github.com/networknt/light-4j/pull/865) ([BalloonWen](https://github.com/BalloonWen))
+- issue-858 auditing timestamp supports custome date format [\#860](https://github.com/networknt/light-4j/pull/860) ([BalloonWen](https://github.com/BalloonWen))
+- Fix/861 config load exception when auditing service id [\#863](https://github.com/networknt/light-4j/pull/863) ([BalloonWen](https://github.com/BalloonWen))
+- Add missing package import in PortalRegistryTest.java [\#862](https://github.com/networknt/light-4j/pull/862) ([KellyShao](https://github.com/KellyShao))
+- Fix flaky tests in PortalRegistryTest.java and ConsulRegistryTest.java [\#857](https://github.com/networknt/light-4j/pull/857) ([KellyShao](https://github.com/KellyShao))
+- Fixed flaky tests caused by SharedMetricRegistries in SharedMetricRegistriesTest.java [\#856](https://github.com/networknt/light-4j/pull/856) ([KellyShao](https://github.com/KellyShao))
+- - solved \#840 [\#849](https://github.com/networknt/light-4j/pull/849) ([jiachen1120](https://github.com/jiachen1120))
+- fixes \#854 RoundRobinLoadBalance is unpredictable if there are more t… [\#855](https://github.com/networknt/light-4j/pull/855) ([stevehu](https://github.com/stevehu))
+- fixes \#852 parameterize health and info configuration file [\#853](https://github.com/networknt/light-4j/pull/853) ([stevehu](https://github.com/stevehu))
+- fixes \#850 add an error code for the logger post if the body does not… [\#851](https://github.com/networknt/light-4j/pull/851) ([stevehu](https://github.com/stevehu))
+- fixes \#847 add status code for the registry failure during the server… [\#848](https://github.com/networknt/light-4j/pull/848) ([stevehu](https://github.com/stevehu))
+- fixes \#845 add startOnRegistryFailure to server.yml to control if sta… [\#846](https://github.com/networknt/light-4j/pull/846) ([stevehu](https://github.com/stevehu))
+- fixes \#843 update logger-config for light-controller to query and upd… [\#844](https://github.com/networknt/light-4j/pull/844) ([stevehu](https://github.com/stevehu))
+- - fixed \#839 Error status resulted at framework middleware handler is… [\#842](https://github.com/networknt/light-4j/pull/842) ([jiachen1120](https://github.com/jiachen1120))
+
+
+## [2.0.21](https://github.com/networknt/light-4j/tree/2.0.21) (2020-11-25)
+
+
+**Merged pull requests:**
+
+
+- fixes \#837 invoke notify only if listener is not null in the direct r… [\#838](https://github.com/networknt/light-4j/pull/838) ([stevehu](https://github.com/stevehu))
+- fixes \#835 add CID and UID string into the constants for Okta token [\#836](https://github.com/networknt/light-4j/pull/836) ([stevehu](https://github.com/stevehu))
+- fixes \#833 subscribe and unsubscribe regardless listener for Abstract… [\#834](https://github.com/networknt/light-4j/pull/834) ([stevehu](https://github.com/stevehu))
+- fixes \#829 remove the serviceMap cache from the LightCluster and use … [\#832](https://github.com/networknt/light-4j/pull/832) ([stevehu](https://github.com/stevehu))
+- fixes \#830 remove zookeeper registry as nobody is using it [\#831](https://github.com/networknt/light-4j/pull/831) ([stevehu](https://github.com/stevehu))
+- fixes \#827 update discovered cache with WebSocket message from contro… [\#828](https://github.com/networknt/light-4j/pull/828) ([stevehu](https://github.com/stevehu))
+- fixes \#825 update the service lookup for the Portal Registry [\#826](https://github.com/networknt/light-4j/pull/826) ([stevehu](https://github.com/stevehu))
+- fixes \#823 add a new test case for JwtIssuerTest to generate light-pr… [\#824](https://github.com/networknt/light-4j/pull/824) ([stevehu](https://github.com/stevehu))
+- Issue821 [\#822](https://github.com/networknt/light-4j/pull/822) ([stevehu](https://github.com/stevehu))
+- fixes \#819 output the body in the ServerInfoGetHandlerTest as it fail… [\#820](https://github.com/networknt/light-4j/pull/820) ([stevehu](https://github.com/stevehu))
+- fixes \#817 update the currentPort and currentAddress in server module [\#818](https://github.com/networknt/light-4j/pull/818) ([stevehu](https://github.com/stevehu))
+- Issue815 [\#816](https://github.com/networknt/light-4j/pull/816) ([stevehu](https://github.com/stevehu))
+- fixes \#813 update portal-registry.yml with templates in both main and… [\#814](https://github.com/networknt/light-4j/pull/814) ([stevehu](https://github.com/stevehu))
+- fixes \#811 upgrade server info handler to output openapi.yaml and upd… [\#812](https://github.com/networknt/light-4j/pull/812) ([stevehu](https://github.com/stevehu))
+- fixes \#809 update handler to support websocket in the handler.yml [\#810](https://github.com/networknt/light-4j/pull/810) ([stevehu](https://github.com/stevehu))
+- fixes \#807 add portal-registry model for portal registry and discovery [\#808](https://github.com/networknt/light-4j/pull/808) ([stevehu](https://github.com/stevehu))
+- fixes \#805 update server.yml to add keystore and truststore passwords [\#806](https://github.com/networknt/light-4j/pull/806) ([stevehu](https://github.com/stevehu))
+- fixes \#803 update client.yml to add truststore password [\#804](https://github.com/networknt/light-4j/pull/804) ([stevehu](https://github.com/stevehu))
+- fixes \#801 add password to the jwt.yml as the secret.yml is removed [\#802](https://github.com/networknt/light-4j/pull/802) ([stevehu](https://github.com/stevehu))
+- fixes \#799 remove secret.yml and add config property missing error code [\#800](https://github.com/networknt/light-4j/pull/800) ([stevehu](https://github.com/stevehu))
+- fixes \#775 log the connection info when failed to connect to the OAut… [\#798](https://github.com/networknt/light-4j/pull/798) ([stevehu](https://github.com/stevehu))
+- fixes \#796 update the redirect_uri to localhost 3000 to sync with lig… [\#797](https://github.com/networknt/light-4j/pull/797) ([stevehu](https://github.com/stevehu))
+- fixes \#794 switch OauthHelper to HttpClient of jdk11 to support forwa… [\#795](https://github.com/networknt/light-4j/pull/795) ([stevehu](https://github.com/stevehu))
+
+
+## [2.0.20](https://github.com/networknt/light-4j/tree/2.0.20) (2020-11-05)
+
+
+**Merged pull requests:**
+
+
+- fixes \#792 add a scp constant string to enure there is no hard-coded … [\#793](https://github.com/networknt/light-4j/pull/793) ([stevehu](https://github.com/stevehu))
+- fixes \#790 update security test to generate long lived tokens with sc… [\#791](https://github.com/networknt/light-4j/pull/791) ([stevehu](https://github.com/stevehu))
+- fixes \#788 update the OAuth key request for jwk integration [\#789](https://github.com/networknt/light-4j/pull/789) ([stevehu](https://github.com/stevehu))
+## [2.0.19](https://github.com/networknt/light-4j/tree/2.0.19) (2020-11-01)
+
+
+**Merged pull requests:**
+
+
+- Issue786 [\#787](https://github.com/networknt/light-4j/pull/787) ([stevehu](https://github.com/stevehu))
+- fixes \#784 get server config without cache in the client module [\#785](https://github.com/networknt/light-4j/pull/785) ([stevehu](https://github.com/stevehu))
+- fixes \#782 add startup.yml to the server module to suppress the warning [\#783](https://github.com/networknt/light-4j/pull/783) ([stevehu](https://github.com/stevehu))
+- fixes \#780 Add callerId to the metrics collection with a header in th… [\#781](https://github.com/networknt/light-4j/pull/781) ([stevehu](https://github.com/stevehu))
+- fixes \#778 add scopeClientId to the metrics handler [\#779](https://github.com/networknt/light-4j/pull/779) ([stevehu](https://github.com/stevehu))
+- Bump junit from 4.12 to 4.13.1 [\#777](https://github.com/networknt/light-4j/pull/777) ([dependabot](https://github.com/apps/dependabot))
+- Avoid NoSuchElementException in ManualAESDecryptor. [\#776](https://github.com/networknt/light-4j/pull/776) ([rgrig](https://github.com/rgrig))
+## [2.0.18](https://github.com/networknt/light-4j/tree/2.0.18) (2020-10-01)
+
+
+**Merged pull requests:**
+
+
+- fixes \#773 resolve a defect to handle the environment tag with single… [\#774](https://github.com/networknt/light-4j/pull/774) ([stevehu](https://github.com/stevehu))
+- fixes \#771 change the STATUS_HOST_IP to public [\#772](https://github.com/networknt/light-4j/pull/772) ([stevehu](https://github.com/stevehu))
+- fixes \#769 add environment tag to the DirectRegistry to support tag b… [\#770](https://github.com/networknt/light-4j/pull/770) ([stevehu](https://github.com/stevehu))
+- fixes \#765 add email registered error to the status.yml for light-rou… [\#766](https://github.com/networknt/light-4j/pull/766) ([stevehu](https://github.com/stevehu))
+- fixes \#763 add client authenticated user request in the OauthHelper f… [\#764](https://github.com/networknt/light-4j/pull/764) ([stevehu](https://github.com/stevehu))
+- fixes \#761 capture the ip address and port number on server for metrics [\#762](https://github.com/networknt/light-4j/pull/762) ([stevehu](https://github.com/stevehu))
+
+
+## [2.0.17](https://github.com/networknt/light-4j/tree/2.0.17) (2020-08-28)
+
+
+**Merged pull requests:**
+
+
+- fixes \#759 skip sanitizer if the body is not JSON [\#760](https://github.com/networknt/light-4j/pull/760) ([stevehu](https://github.com/stevehu))
+- fixes \#757 avoid parsing the body if content-type is missing [\#758](https://github.com/networknt/light-4j/pull/758) ([stevehu](https://github.com/stevehu))
+- fixes \#753 handle text/plain and content type missing in BodyHandler [\#755](https://github.com/networknt/light-4j/pull/755) ([stevehu](https://github.com/stevehu))
+- fixes \#754 Add content type text/plain header to the InfluxDbSender [\#756](https://github.com/networknt/light-4j/pull/756) ([stevehu](https://github.com/stevehu))
+- Issue 742 [\#749](https://github.com/networknt/light-4j/pull/749) ([chenyan71](https://github.com/chenyan71))
+- fixes \#751 add a method to create client credentials token in issuer … [\#752](https://github.com/networknt/light-4j/pull/752) ([stevehu](https://github.com/stevehu))
+- fixes \#747 Add a generic status code for 404 object not found [\#748](https://github.com/networknt/light-4j/pull/748) ([stevehu](https://github.com/stevehu))
+## [2.0.16](https://github.com/networknt/light-4j/tree/2.0.16) (2020-08-01)
+
+
+**Merged pull requests:**
+
+
+- fixes \#743 Handle the limit file size for upload/download [\#746](https://github.com/networknt/light-4j/pull/746) ([stevehu](https://github.com/stevehu))
+- Issue \#744: Valuemap not pickup the values loaded from config server [\#745](https://github.com/networknt/light-4j/pull/745) ([jsu216](https://github.com/jsu216))
+- fixes \#740 check escape backslash before appy quoteReplacement config [\#741](https://github.com/networknt/light-4j/pull/741) ([stevehu](https://github.com/stevehu))
+- fixes \#723 Token replacement in config files does not allow special c… [\#738](https://github.com/networknt/light-4j/pull/738) ([stevehu](https://github.com/stevehu))
+-  fixes \#710 [\#739](https://github.com/networknt/light-4j/pull/739) ([chenyan71](https://github.com/chenyan71))
+- fixes \#735 update client.yml in test resources to disable http2 as th… [\#736](https://github.com/networknt/light-4j/pull/736) ([stevehu](https://github.com/stevehu))
+- fixes \#721 update consul client to leverage connecction pool of Http2… [\#722](https://github.com/networknt/light-4j/pull/722) ([stevehu](https://github.com/stevehu))
+- fixes \#718 add borrowConnection and returnConnection to Http2Client [\#720](https://github.com/networknt/light-4j/pull/720) ([stevehu](https://github.com/stevehu))
+## [2.0.15](https://github.com/networknt/light-4j/tree/2.0.15) (2020-07-01)
+
+
+**Merged pull requests:**
+
+
+- fixes \#732 add several status code to status.yml for reference API in… [\#733](https://github.com/networknt/light-4j/pull/733) ([stevehu](https://github.com/stevehu))
+-  fixes \#730 [\#731](https://github.com/networknt/light-4j/pull/731) ([chenyan71](https://github.com/chenyan71))
+-  no change to index same [\#729](https://github.com/networknt/light-4j/pull/729) ([chenyan71](https://github.com/chenyan71))
+- fixes \#726 [\#727](https://github.com/networknt/light-4j/pull/727) ([chenyan71](https://github.com/chenyan71))
+- fixes \#724 remove the temporary version.jackson-databind in the pom.xml [\#725](https://github.com/networknt/light-4j/pull/725) ([stevehu](https://github.com/stevehu))
+- fix for issue \#715 - ensure cached consul connections are specific to… [\#716](https://github.com/networknt/light-4j/pull/716) ([miklish](https://github.com/miklish))
+- fixes \#713 reformat the BodyConverter and add the missing import [\#714](https://github.com/networknt/light-4j/pull/714) ([stevehu](https://github.com/stevehu))
+- Update BodyConverter.java [\#712](https://github.com/networknt/light-4j/pull/712) ([thirtysixmm](https://github.com/thirtysixmm))
 ## [2.0.14](https://github.com/networknt/light-4j/tree/2.0.14) (2020-05-29)
 
 

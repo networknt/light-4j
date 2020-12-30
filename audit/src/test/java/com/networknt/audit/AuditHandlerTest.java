@@ -24,6 +24,7 @@ import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.correlation.CorrelationHandler;
+import com.networknt.body.BodyHandler;
 import com.networknt.exception.ClientException;
 import com.networknt.handler.Handler;
 import com.networknt.httpstring.HttpStringConstants;
@@ -53,6 +54,7 @@ import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -60,96 +62,20 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 /**
  * Created by steve on 01/09/16.
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({AuditConfig.class, LoggerFactory.class})
+@PrepareForTest({AuditConfig.class, LoggerFactory.class, AuditHandler.class})
 @PowerMockIgnore({"javax.*", "org.xml.sax.*", "org.apache.log4j.*", "java.xml.*", "com.sun.*"})
-public class AuditHandlerTest {
+public class AuditHandlerTest extends AuditHandlerTestBase{
     static Logger logger = LoggerFactory.getLogger(AuditHandlerTest.class);
 
-    static Undertow server = null;
-
-    final ch.qos.logback.classic.Logger auditLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Constants.AUDIT_LOGGER);
-
-    @Mock
-    Appender mockAppender;
-
-    @Captor
-    ArgumentCaptor<ILoggingEvent> captorLoggingEvent;
-
-    String[] requiredKeys = { AuditHandler.TIMESTAMP,
-                                Constants.CORRELATION_ID_STRING,
-                                Constants.TRACEABILITY_ID_STRING,
-                                AuditHandler.STATUS_CODE,
-                                AuditHandler.RESPONSE_TIME };
-
     @BeforeClass
-    public static void setUp() {
-        if(server == null) {
-            logger.info("starting server");
-            HttpHandler handler = getTestHandler();
-
-            AuditHandler auditHandler = new AuditHandler();
-            auditHandler.setNext(handler);
-            handler = auditHandler;
-
-            CorrelationHandler correlationHandler = new CorrelationHandler();
-            correlationHandler.setNext(handler);
-            handler = correlationHandler;
-
-            server = Undertow.builder()
-                    .addHttpListener(8080, "localhost")
-                    .setHandler(handler)
-                    .build();
-            server.start();
-        }
-    }
-
-    @AfterClass
-    public static void tearDown() throws Exception {
-        if(server != null) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException ignored) {
-
-            }
-            server.stop();
-            logger.info("The server is stopped.");
-        }
-    }
-
-    static RoutingHandler getTestHandler() {
-        return Handlers.routing()
-                .add(Methods.POST, "/pet", exchange -> exchange.getResponseSender().send("OK"));
-    }
-
-    @Before
-    public void beforeTest() throws Exception {
-        // inject the mock appender
-        auditLogger.addAppender(mockAppender);
-    }
-
-    @After
-    public void afterTest() throws Exception {
-        // remove the mock appender
-        auditLogger.detachAppender(mockAppender);
-    }
-
-    private void verifyAuditLog(String traceVal) {
-        verify(mockAppender, times(1)).doAppend(captorLoggingEvent.capture());
-        ILoggingEvent event = captorLoggingEvent.getValue();
-        Map<String, Object> mapValue = JsonMapper.string2Map(event.getFormattedMessage());
-
-        Assert.assertEquals(Level.INFO, event.getLevel());
-        Assert.assertTrue(Arrays.stream(requiredKeys).allMatch(mapValue::containsKey));
-        Assert.assertEquals(traceVal, mapValue.get(Constants.TRACEABILITY_ID_STRING));
-        Assert.assertNotNull(mapValue.get(Constants.CORRELATION_ID_STRING));
-        Assert.assertEquals(200, mapValue.get(AuditHandler.STATUS_CODE));
+    public static void init() {
+        setUp();
     }
 
     @Test
@@ -235,6 +161,163 @@ public class AuditHandlerTest {
         } catch (InterruptedException ignored) {
         }
         verifyAuditLog(null);
+    }
+
+    // status will only be returned when auditOnError is true
+    @Test
+    public void testAuditWithErrorStatus() throws Exception {
+        runTest("/error", "post", null, 401);
+        verifyAuditInfo("status", null);
+    }
+
+    @Test
+    public void testAudit401WithDumpRequest() throws Exception {
+        runTest("/error", "post", null, 401);
+        verifyAuditInfo("requestBody", "post");
+    }
+
+    @Test
+    public void testAudit200WithDumpRequest() throws Exception {
+        runTest("/pet", "post", null, 200);
+        verifyAuditInfo("requestBody", "post");
+    }
+
+    // response body will only be returned when auditOnError is true
+    @Test
+    public void testAuditWithDumpResponse() throws Exception {
+        runTest("/error", "post", null, 401);
+        verifyAuditInfo("responseBody", null);
+    }
+
+    @Test
+    public void testAuditWithoutDumpResponse() throws Exception {
+        runTest("/pet", "post", null, 200);
+        verifyAuditInfo("responseBody", null);
+    }
+
+    @Test
+    public void testAudit200WithQueryParameters() throws Exception {
+        runTest("/pet?testId=1", "post", null, 200);
+        verifyAuditInfo("queryParameters", "{testId=[1]}");
+    }
+
+    @Test
+    public void testAudit401WithQueryParameters() throws Exception {
+        runTest("/error?testId=1", "post", null, 401);
+        verifyAuditInfo("queryParameters", "{testId=[1]}");
+    }
+
+    @Test
+    public void testAudit200WithoutQueryParameters() throws Exception {
+        runTest("/pet", "post", null, 200);
+        verifyAuditInfo("queryParameters", null);
+    }
+
+    @Test
+    public void testAudit401WithoutQueryParameters() throws Exception {
+        runTest("/error", "post", null, 401);
+        verifyAuditInfo("queryParameters", null);
+    }
+
+    @Test
+    public void testAuditWith200PathParameters() throws Exception {
+        runTest("/pet/1,2,3", "post", null, 200);
+        verifyAuditInfo("pathParameters", "{petId=[1,2,3]}");
+    }
+
+    @Test
+    public void testAuditWith401PathParameters() throws Exception {
+        runTest("/error/1,2,3", "post", null, 401);
+        verifyAuditInfo("pathParameters", "{petId=[1,2,3]}");
+    }
+
+    @Test
+    public void testAuditWith200Cookies() throws Exception {
+        runTest("/pet", "post", "petsId=1", 200);
+        verifyAuditInfo("requestCookies", "{petsId=1}");
+    }
+
+    @Test
+    public void testAuditWith401Cookies() throws Exception {
+        runTest("/error", "post", "petsId=1", 401);
+        verifyAuditInfo("requestCookies", "{petsId=1}");
+    }
+
+    @Test
+    public void testAuditWith200ServiceId() throws Exception {
+        runTest("/pet", "post", null, 200);
+        verifyAuditInfo("serviceId", "com.networknt.petstore-1.0.0");
+    }
+
+    @Test
+    public void testAuditWith401ServiceId() throws Exception {
+        runTest("/error", "post", null, 401);
+        verifyAuditInfo("serviceId", "com.networknt.petstore-1.0.0");
+    }
+
+    @Test
+    public void testAuditWith200TimestampFormatted() throws Exception {
+        long time = 1607639411945L;
+        Instant instant = Instant.ofEpochMilli(time);
+        PowerMockito.mockStatic(System.class);
+        PowerMockito.mockStatic(Instant.class);
+        PowerMockito.when(Instant.now()).thenReturn(instant);
+        runTest("/pet", "post", null, 200);
+        verifyAuditInfo("timestamp", "2020-12-10T17:30:11.945-0500");
+    }
+
+    @Test
+    public void testAuditWith401TimestampFormatted() throws Exception {
+        long time = 1607639411945L;
+        Instant instant = Instant.ofEpochMilli(time);
+        PowerMockito.mockStatic(Instant.class);
+        PowerMockito.when(Instant.now()).thenReturn(instant);
+
+        runTest("/error", "post", null, 401);
+        verifyAuditInfo("timestamp", "2020-12-10T17:30:11.945-0500");
+    }
+
+    @Test //used for testing when doesn't specify timestampFormat
+    public void testAuditWith200TimestampLong() throws Exception {
+        Map<String, Object> map = testTimestampInitHelper(null);
+        Assert.assertEquals(1607639411945L, map.get("timestamp"));
+    }
+
+    @Test //used for testing when user specified a wrong format timestampFormat
+    public void testAuditWith200TimestampInvalidFormat() throws Exception {
+        Map<String, Object> map = testTimestampInitHelper("abc");
+        Assert.assertEquals(1607639411945L, map.get("timestamp"));
+    }
+
+    private Map<String, Object> testTimestampInitHelper(String o) throws Exception {
+        PowerMockito.mockStatic(AuditConfig.class);
+        AtomicReference<String> content = new AtomicReference<>("");
+        Consumer<String> consumer = (str) -> content.set(str);
+        // mock handler
+        AuditConfig auditConfig = Mockito.mock(AuditConfig.class);
+        when(auditConfig.getAuditFunc()).thenReturn(consumer);
+
+        Mockito.when(auditConfig.getTimestampFormat()).thenReturn(o);
+        Config config = Mockito.mock(Config.class);
+        when(config.getMapper()).thenReturn(new ObjectMapper());
+        Mockito.when(auditConfig.getConfig()).thenReturn(config);
+        PowerMockito.when(AuditConfig.load()).thenReturn(auditConfig);
+        AuditHandler auditHandler = Mockito.spy(new AuditHandler());
+        Mockito.doNothing().when(auditHandler).next(Mockito.any());
+
+        // mock exchange
+        HeaderMap headerMap = Mockito.spy(new HeaderMap());
+        HttpServerExchange httpServerExchange = Mockito.mock(HttpServerExchange.class);
+        Mockito.when(httpServerExchange.getRequestHeaders()).thenReturn(headerMap);
+
+        long time = 1607639411945L;
+        // mock time
+        PowerMockito.mockStatic(System.class);
+        PowerMockito.when(System.currentTimeMillis()).thenReturn(time);
+
+        Handler.init();
+        auditHandler.handleRequest(httpServerExchange);
+        return JsonMapper.string2Map(content.get());
     }
 
     @Test

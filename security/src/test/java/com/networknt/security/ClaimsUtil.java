@@ -32,6 +32,34 @@ public class ClaimsUtil {
         return claims;
     }
 
+    public static JwtClaims getTestCcClaims(String clientId, List<String> scope) {
+        JwtClaims claims = JwtIssuer.getDefaultJwtClaims();
+        claims.setClaim("client_id", clientId);
+        if(scope != null) claims.setStringListClaim("scope", scope); // multi-valued claims work too and will end up as a JSON array
+        return claims;
+    }
+
+    public static JwtClaims getTestCcClaimsWithScp(String clientId, List<String> scope) {
+        JwtClaims claims = JwtIssuer.getDefaultJwtClaims();
+        claims.setClaim("client_id", clientId);
+        if(scope != null) claims.setStringListClaim("scp", scope); // multi-valued claims work too and will end up as a JSON array
+        return claims;
+    }
+
+    public static JwtClaims getTestCcClaimsScope(String clientId, String scope) {
+        JwtClaims claims = JwtIssuer.getDefaultJwtClaims();
+        claims.setClaim("client_id", clientId);
+        claims.setClaim("scope", scope);
+        return claims;
+    }
+
+    public static JwtClaims getTestCcClaimsScopeScp(String clientId, String scope) {
+        JwtClaims claims = JwtIssuer.getDefaultJwtClaims();
+        claims.setClaim("client_id", clientId);
+        claims.setClaim("scp", scope);
+        return claims;
+    }
+
     public static JwtClaims getCustomClaims(String userId, String userType, String clientId, List<String> scope, Map<String, String> custom, String roles) {
         JwtClaims claims = JwtIssuer.getDefaultJwtClaims();
         claims.setClaim("user_id", userId);

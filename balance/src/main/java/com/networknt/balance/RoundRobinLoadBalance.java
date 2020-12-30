@@ -21,6 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -39,12 +41,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class RoundRobinLoadBalance implements LoadBalance {
     static Logger logger = LoggerFactory.getLogger(RoundRobinLoadBalance.class);
+    // cache the idx for each service so that the index is per service for the round robin.
+    Map<String, AtomicInteger> serviceIdx = new ConcurrentHashMap<>();
 
     public RoundRobinLoadBalance() {
         if(logger.isInfoEnabled()) logger.info("A RoundRobinLoadBalance instance is started");
     }
-
-    private AtomicInteger idx = new AtomicInteger((int)(Math.random()*10));
 
     /**
      * Round robin requestKey is not used as it should be null, the url will
@@ -52,22 +54,25 @@ public class RoundRobinLoadBalance implements LoadBalance {
      * same priority.
      *
      * @param urls List
+     * @param serviceId String
+     * @param tag String
      * @param requestKey String
      * @return Url
      */
     @Override
-    public URL select(List<URL> urls, String requestKey) {
+    public URL select(List<URL> urls, String serviceId, String tag, String requestKey) {
         URL url = null;
         if (urls.size() > 1) {
-            url = doSelect(urls);
+            String key = tag == null ? serviceId : serviceId + "|" + tag;
+            url = doSelect(urls, key);
         } else if (urls.size() == 1) {
             url = urls.get(0);
         }
         return url;
     }
 
-    protected URL doSelect(List<URL> urls) {
-        int index = getNextPositive();
+    protected URL doSelect(List<URL> urls, String key) {
+        int index = getNextPositive(key);
         for (int i = 0; i < urls.size(); i++) {
             URL url = urls.get((i + index) % urls.size());
             if (url != null) {
@@ -78,9 +83,12 @@ public class RoundRobinLoadBalance implements LoadBalance {
     }
 
     // get positive int
-    private int getNextPositive() {
+    private int getNextPositive(String key) {
+        AtomicInteger idx = serviceIdx.get(key);
+        if(idx == null) {
+            idx = new AtomicInteger((int)(Math.random()*10));
+            serviceIdx.put(key, idx);
+        }
         return getPositive(idx.incrementAndGet());
     }
-
-
 }

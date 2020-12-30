@@ -16,6 +16,7 @@
 
 package com.networknt.logging.handler;
 
+import ch.qos.logback.classic.LoggerContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.config.Config;
 import com.networknt.handler.LightHttpHandler;
@@ -23,21 +24,20 @@ import com.networknt.httpstring.ContentType;
 import com.networknt.logging.model.LoggerConfig;
 import com.networknt.logging.model.LoggerInfo;
 import io.undertow.server.HttpServerExchange;
-
-import java.util.Deque;
-import java.util.Map;
-
 import io.undertow.util.Headers;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
- *
- * This handler will provide the logging level for the given Logger.
+ * This handler will provide all the available logging levels for the all loggers.
  */
 public class LoggerGetHandler implements LightHttpHandler {
 
     public static final String CONFIG_NAME = "logging";
-    private static final String LOGGER_NAME = "loggerName";
     static final String STATUS_LOGGER_INFO_DISABLED = "ERR12108";
     private static final ObjectMapper mapper = Config.getInstance().getMapper();
 
@@ -46,19 +46,21 @@ public class LoggerGetHandler implements LightHttpHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-
-        Map<String, Deque<String>> parameters = exchange.getQueryParameters();
-        String loggerName = parameters.get(LOGGER_NAME).getFirst();
+        List<LoggerInfo> loggersList = new ArrayList<LoggerInfo>();
         LoggerConfig config = (LoggerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, LoggerConfig.class);
 
         if (config.isEnabled()) {
-            ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(loggerName);
-            LoggerInfo loggerInfo = new LoggerInfo();
-            loggerInfo.setName(logger.getName());
-            loggerInfo.setLevel(logger.getLevel().toString());
-
+            LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
+            for (ch.qos.logback.classic.Logger log : lc.getLoggerList()) {
+                if (log.getLevel() != null) {
+                    LoggerInfo loggerInfo = new LoggerInfo();
+                    loggerInfo.setName(log.getName());
+                    loggerInfo.setLevel(log.getLevel().toString());
+                    loggersList.add(loggerInfo);
+                }
+            }
             exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, ContentType.APPLICATION_JSON.value());
-            exchange.getResponseSender().send(mapper.writeValueAsString(loggerInfo));
+            exchange.getResponseSender().send(mapper.writeValueAsString(loggersList));
         } else {
             logger.error("Logging is disabled in logging.yml");
             setExchangeStatus(exchange, STATUS_LOGGER_INFO_DISABLED);

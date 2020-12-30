@@ -22,16 +22,20 @@ import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.mask.Mask;
+import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
+import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.AttachmentKey;
+import io.undertow.server.handlers.Cookie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 /**
  * This is a simple audit handler that dump most important info per request basis. The following
@@ -75,14 +79,41 @@ public class AuditHandler implements MiddlewareHandler {
     static final String RESPONSE_TIME = "responseTime";
     static final String TIMESTAMP = "timestamp";
     static final String MASK_KEY = "audit";
+    static final String REQUEST_BODY_KEY = "requestBody";
+    static final String RESPONSE_BODY_KEY = "responseBody";
+    static final String QUERY_PARAMETERS_KEY = "queryParameters";
+    static final String PATH_PARAMETERS_KEY = "pathParameters";
+    static final String REQUEST_COOKIES_KEY = "requestCookies";
+    static final String STATUS_KEY = "Status";
+    static final String SERVER_CONFIG = "server";
+    static final String SERVICEID_KEY = "serviceId";
+    static final String INVALID_CONFIG_VALUE_CODE = "ERR10060";
 
     private AuditConfig auditConfig;
 
     private volatile HttpHandler next;
 
+    private String serviceId;
+
+    private DateTimeFormatter DATE_TIME_FORMATTER;
+
     public AuditHandler() {
-        if(logger.isInfoEnabled()) logger.info("AuditHandler is loaded.");
+        if (logger.isInfoEnabled()) logger.info("AuditHandler is loaded.");
         auditConfig = AuditConfig.load();
+        Map<String, Object> serverConfig = Config.getInstance().getJsonMapConfigNoCache(SERVER_CONFIG);
+        if (serverConfig != null) {
+            serviceId = (String) serverConfig.get(SERVICEID_KEY);
+        }
+        String timestampFormat = auditConfig.getTimestampFormat();
+        if (!StringUtils.isBlank(timestampFormat)) {
+            try {
+                DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(timestampFormat)
+                        .withZone(ZoneId.systemDefault());
+            } catch (IllegalArgumentException e) {
+                logger.error(new Status(INVALID_CONFIG_VALUE_CODE, timestampFormat, "timestampFormat", "audit.yml").toString());
+
+            }
+        }
     }
 
     @Override
@@ -90,20 +121,25 @@ public class AuditHandler implements MiddlewareHandler {
         Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
         Map<String, Object> auditMap = new LinkedHashMap<>();
         final long start = System.currentTimeMillis();
-        auditMap.put(TIMESTAMP, System.currentTimeMillis());
+
+        // add audit timestamp
+        auditMap.put(TIMESTAMP, DATE_TIME_FORMATTER == null ? System.currentTimeMillis() : DATE_TIME_FORMATTER.format(Instant.now()));
 
         // dump audit info fields according to config
         boolean needAuditData = auditInfo != null && auditConfig.hasAuditList();
-        if(needAuditData) {
+        if (needAuditData) {
             auditFields(auditInfo, auditMap);
         }
 
-        // dump headers field according to config
-        if(auditConfig.hasHeaderList()) {
-            auditHeader(exchange, auditMap);
+        // dump request header, request body, path parameters, query parameters and request cookies according to config
+        auditRequest(exchange, auditMap, auditConfig);
+
+        // dump serviceId from server.yml
+        if (auditConfig.hasAuditList() && auditConfig.getAuditList().contains(SERVICEID_KEY)) {
+            auditServiceId(auditMap);
         }
 
-        if(auditConfig.isStatusCode() || auditConfig.isResponseTime()) {
+        if (auditConfig.isStatusCode() || auditConfig.isResponseTime()) {
             exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
                 if (auditConfig.isStatusCode()) {
                     auditMap.put(STATUS_CODE, exchange1.getStatusCode());
@@ -111,21 +147,23 @@ public class AuditHandler implements MiddlewareHandler {
                 if (auditConfig.isResponseTime()) {
                     auditMap.put(RESPONSE_TIME, System.currentTimeMillis() - start);
                 }
-
                 // add additional fields accumulated during the microservice execution
                 // according to the config
-                //Map<String, Object> auditInfo1 = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
-                if(auditInfo != null) {
-                    if(auditConfig.getAuditList() != null && auditConfig.getAuditList().size() > 0) {
-                        for(String name: auditConfig.getAuditList()) {
-                            auditMap.putIfAbsent(name, auditInfo.get(name));
+                Map<String, Object> auditInfo1 = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
+                if (auditInfo1 != null) {
+                    if (auditConfig.getAuditList() != null && auditConfig.getAuditList().size() > 0) {
+                        for (String name : auditConfig.getAuditList()) {
+                            if (name.equals(RESPONSE_BODY_KEY)) {
+                                auditResponseOnError(exchange, auditMap);
+                            }
+                            auditMap.putIfAbsent(name, auditInfo1.get(name));
                         }
                     }
                 }
 
                 try {
                     // audit entries only is it is an error, if auditOnError flag is set
-                    if(auditConfig.isAuditOnError()) {
+                    if (auditConfig.isAuditOnError()) {
                         if (exchange1.getStatusCode() >= 400)
                             auditConfig.getAuditFunc().accept(Config.getInstance().getMapper().writeValueAsString(auditMap));
                     } else {
@@ -144,7 +182,7 @@ public class AuditHandler implements MiddlewareHandler {
     }
 
     private void auditHeader(HttpServerExchange exchange, Map<String, Object> auditMap) {
-        for(String name: auditConfig.getHeaderList()) {
+        for (String name : auditConfig.getHeaderList()) {
             String value = exchange.getRequestHeaders().getFirst(name);
             auditMap.put(name, auditConfig.isMaskEnabled() ? Mask.maskRegex(value, "requestHeader", name) : value);
         }
@@ -155,10 +193,109 @@ public class AuditHandler implements MiddlewareHandler {
     }
 
     private void auditFields(Map<String, Object> auditInfo, Map<String, Object> auditMap) {
-        for(String name: auditConfig.getAuditList()) {
+        for (String name : auditConfig.getAuditList()) {
             Object value = auditInfo.get(name);
             boolean needApplyMask = auditConfig.isMaskEnabled() && value instanceof String;
             auditMap.put(name, needApplyMask ? Mask.maskRegex((String) value, MASK_KEY, name) : value);
+        }
+    }
+
+    private void auditRequest(HttpServerExchange exchange, Map<String, Object> auditMap, AuditConfig auditConfig) {
+        if (auditConfig.hasHeaderList()) {
+            auditHeader(exchange, auditMap);
+        }
+        if (!auditConfig.hasAuditList()) {
+            return;
+        }
+        for (String key : auditConfig.getAuditList()) {
+            switch (key) {
+                case REQUEST_BODY_KEY:
+                    auditRequestBody(exchange, auditMap);
+                    break;
+                case REQUEST_COOKIES_KEY:
+                    auditRequestCookies(exchange, auditMap);
+                    break;
+                case QUERY_PARAMETERS_KEY:
+                    auditQueryParameters(exchange, auditMap);
+                    break;
+                case PATH_PARAMETERS_KEY:
+                    auditPathParameters(exchange, auditMap);
+                    break;
+            }
+        }
+    }
+
+    // Audit request body automatically if body handler enabled
+    private void auditRequestBody(HttpServerExchange exchange, Map<String, Object> auditMap) {
+        // Try to get BodyHandler cached request body string first to prevent unnecessary decoding
+        String requestBodyString = exchange.getAttachment(AttachmentConstants.REQUEST_BODY_STRING);
+        if (requestBodyString == null && exchange.getAttachment(AttachmentConstants.REQUEST_BODY) != null) {
+            requestBodyString = exchange.getAttachment(AttachmentConstants.REQUEST_BODY).toString();
+        }
+        // Mask requestBody json string if mask enabled
+        if (requestBodyString != null) {
+            auditMap.put(REQUEST_BODY_KEY, auditConfig.isMaskEnabled() ? Mask.maskJson(requestBodyString, REQUEST_BODY_KEY) : requestBodyString);
+        }
+    }
+
+    // Audit response body only if auditOnError is enabled
+    private void auditResponseOnError(HttpServerExchange exchange, Map<String, Object> auditMap) {
+        if (!auditOnError) {
+            return;
+        }
+        String responseBodyString = null;
+        Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
+        if (auditInfo != null && auditInfo.get(STATUS_KEY) != null) {
+            responseBodyString = auditInfo.get(STATUS_KEY).toString();
+        }
+        if (responseBodyString != null) {
+            auditMap.put(RESPONSE_BODY_KEY, auditConfig.isMaskEnabled() ? Mask.maskJson(responseBodyString, RESPONSE_BODY_KEY) : responseBodyString);
+        }
+    }
+
+    // Audit query parameters
+    private void auditQueryParameters(HttpServerExchange exchange, Map<String, Object> auditMap) {
+        Map<String, String> res = new HashMap<>();
+        Map<String, Deque<String>> queryParameters = exchange.getQueryParameters();
+        if (queryParameters != null && queryParameters.size() > 0) {
+            for (String query : queryParameters.keySet()) {
+                String value = queryParameters.get(query).toString();
+                String mask = auditConfig.isMaskEnabled() ? Mask.maskRegex(value, QUERY_PARAMETERS_KEY, query) : value;
+                res.put(query, mask);
+            }
+            auditMap.put(QUERY_PARAMETERS_KEY, res.toString());
+        }
+    }
+
+    private void auditPathParameters(HttpServerExchange exchange, Map<String, Object> auditMap) {
+        Map<String, String> res = new HashMap<>();
+        Map<String, Deque<String>> pathParameters = exchange.getPathParameters();
+        if (pathParameters != null && pathParameters.size() > 0) {
+            for (String name : pathParameters.keySet()) {
+                String value = pathParameters.get(name).toString();
+                String mask = auditConfig.isMaskEnabled() ? Mask.maskRegex(value, PATH_PARAMETERS_KEY, name) : value;
+                res.put(name, mask);
+            }
+            auditMap.put(PATH_PARAMETERS_KEY, res.toString());
+        }
+    }
+
+    private void auditRequestCookies(HttpServerExchange exchange, Map<String, Object> auditMap) {
+        Map<String, String> res = new HashMap<>();
+        Map<String, Cookie> cookieMap = exchange.getRequestCookies();
+        if (cookieMap != null && cookieMap.size() > 0) {
+            for (String name : cookieMap.keySet()) {
+                String cookieString = cookieMap.get(name).getValue();
+                String mask = auditConfig.isMaskEnabled() ? Mask.maskRegex(cookieString, REQUEST_COOKIES_KEY, name) : cookieString;
+                res.put(name, mask);
+            }
+            auditMap.put(REQUEST_COOKIES_KEY, res.toString());
+        }
+    }
+
+    private void auditServiceId(Map<String, Object> auditMap) {
+        if (!StringUtils.isBlank(serviceId)) {
+            auditMap.put(SERVICEID_KEY, serviceId);
         }
     }
 

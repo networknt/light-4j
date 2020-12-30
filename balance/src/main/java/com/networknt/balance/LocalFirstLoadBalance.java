@@ -65,11 +65,14 @@ public class LocalFirstLoadBalance extends RoundRobinLoadBalance {
      * to use the remote interface for service to service communication.
      *
      * @param urls List
+     * @param serviceId String
+     * @param tag String
      * @param requestKey String
      * @return URL
      */
     @Override
-    public URL select(List<URL> urls, String requestKey) {
+    public URL select(List<URL> urls, String serviceId, String tag, String requestKey) {
+        String key = tag == null ? serviceId : serviceId + "|" + tag;
     	// search for a URL in the same ip first
         List<URL> localUrls = searchLocalUrls(urls, ip);
         if(localUrls.size() > 0) {
@@ -77,11 +80,11 @@ public class LocalFirstLoadBalance extends RoundRobinLoadBalance {
                  return localUrls.get(0);
              } else {
                 // round robin within localUrls
-                 return doSelect(localUrls);
+                 return doSelect(localUrls, key);
              }
         } else {
             // round robin within urls
-            return doSelect(urls);
+            return doSelect(urls, key);
         }
     }
 

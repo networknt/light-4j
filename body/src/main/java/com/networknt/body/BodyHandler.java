@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
@@ -60,9 +61,9 @@ public class BodyHandler implements MiddlewareHandler {
 
     // request body will be parse during validation and it is attached to the exchange, in JSON,
     // it could be a map or list. So treat it as Object in the attachment.
-    public static final AttachmentKey<Object> REQUEST_BODY = AttachmentKey.create(Object.class);
+    public static final AttachmentKey<Object> REQUEST_BODY = AttachmentConstants.REQUEST_BODY;
 
-    public static final AttachmentKey<String> REQUEST_BODY_STRING = AttachmentKey.create(String.class);
+    public static final AttachmentKey<String> REQUEST_BODY_STRING = AttachmentConstants.REQUEST_BODY_STRING;
 
     public static final String CONFIG_NAME = "body";
 
@@ -103,9 +104,16 @@ public class BodyHandler implements MiddlewareHandler {
                     }
                     // attach the parsed request body into exchange if the body parser is enabled
                     attachJsonBody(exchange, unparsedRequestBody);
+                } else if (contentType.startsWith("text/plain")) {
+                    InputStream inputStream = exchange.getInputStream();
+                    String unparsedRequestBody = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
+                    exchange.putAttachment(REQUEST_BODY, unparsedRequestBody);
                 } else if (contentType.startsWith("multipart/form-data") || contentType.startsWith("application/x-www-form-urlencoded")) {
                     // attach the parsed request body into exchange if the body parser is enabled
                     attachFormDataBody(exchange);
+                } else {
+                    InputStream inputStream = exchange.getInputStream();
+                    exchange.putAttachment(REQUEST_BODY, inputStream);
                 }
             } catch (IOException e) {
                 logger.error("IOException: ", e);
@@ -130,6 +138,9 @@ public class BodyHandler implements MiddlewareHandler {
             FormData formData = parser.parseBlocking();
             data = BodyConverter.convert(formData);
             exchange.putAttachment(REQUEST_BODY, data);
+        } else {
+            InputStream inputStream = exchange.getInputStream();
+            exchange.putAttachment(REQUEST_BODY, inputStream);
         }
     }
 

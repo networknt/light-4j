@@ -27,10 +27,12 @@ public interface LoadBalance {
      * Select one url from a list of url with requestKey as optional.
      *
      * @param urls List
+     * @param serviceId String
+     * @param tag String
      * @param requestKey String
      * @return URL
      */
-    URL select(List<URL> urls, String requestKey);
+    URL select(List<URL> urls, String serviceId, String tag, String requestKey);
 
     /**
      * return positive int value of originValue

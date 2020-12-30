@@ -151,4 +151,50 @@ public class JwtIssuerTest {
         String jwt = JwtIssuer.getJwt(claims);
         System.out.println("***Long lived token for portal lightapi***: " + jwt);
     }
+
+    @Test
+    public void longlivedCcLocalPortal() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestCcClaims("f7d42348-c647-4efb-a52d-4c5787421e73", Arrays.asList("portal.r", "portal.w"));
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***Long lived token for portal lightapi***: " + jwt);
+    }
+
+    /**
+     * The returned token contains scp as the key for the scope. Some OAuth 2.0 provider like Okta use this claim. All scopes are separated by comma.
+     * @throws Exception
+     */
+    @Test
+    public void longlivedCcLocalPortalWithScp() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestCcClaimsWithScp("f7d42348-c647-4efb-a52d-4c5787421e73", Arrays.asList("portal.r", "portal.w"));
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***Long lived token for portal lightapi***: " + jwt);
+    }
+
+    /**
+     * The returned token contains scope as the key for the scope. All scopes are separated by space.
+     * @throws Exception
+     */
+    @Test
+    public void longlivedCcLocalPortalScope() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestCcClaimsScope("f7d42348-c647-4efb-a52d-4c5787421e73", "portal.r portal.w");
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***Long lived token for portal lightapi***: " + jwt);
+    }
+
+    /**
+     * The returned token contains scp as the key for the scope. Some OAuth 2.0 provider like Okta use this claim. All scopes are separated by comma.
+     * The token will have proxy.r and proxy.w as scopes for testing with proxy configuration in light-config-test proxy folder.
+     * @throws Exception
+     */
+    @Test
+    public void longlivedCcLocalProxyWithScp() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestCcClaimsWithScp("f7d42348-c647-4efb-a52d-4c5787421e73", Arrays.asList("proxy.r", "proxy.w"));
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***Long lived token for proxy***: " + jwt);
+    }
+
 }

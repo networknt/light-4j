@@ -16,6 +16,7 @@
 
 package com.networknt.client.oauth;
 
+import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.monad.Result;
@@ -90,13 +91,13 @@ public class OauthHelperTest {
     public static void tearDown() throws Exception {
         if(server != null) {
             try {
-                Thread.sleep(100);
+                Thread.sleep(1000);
             } catch (InterruptedException ignored) {
             }
             server.stop();
             System.out.println("The server is stopped.");
             try {
-                Thread.sleep(100);
+                Thread.sleep(1000);
             } catch (InterruptedException ignored) {
             }
         }
@@ -214,7 +215,7 @@ public class OauthHelperTest {
         AuthorizationCodeRequest tokenRequest = new AuthorizationCodeRequest();
         tokenRequest.setClientId("test_client");
         tokenRequest.setClientSecret("test_secret");
-        tokenRequest.setGrantType(TokenRequest.AUTHORIZATION_CODE);
+        tokenRequest.setGrantType(ClientConfig.AUTHORIZATION_CODE);
         List<String> list = new ArrayList<>();
         list.add("test.r");
         list.add("test.w");
@@ -237,7 +238,7 @@ public class OauthHelperTest {
         AuthorizationCodeRequest tokenRequest = new AuthorizationCodeRequest();
         tokenRequest.setClientId("test_client");
         tokenRequest.setClientSecret("test_secret");
-        tokenRequest.setGrantType(TokenRequest.AUTHORIZATION_CODE);
+        tokenRequest.setGrantType(ClientConfig.AUTHORIZATION_CODE);
         List<String> list = new ArrayList<>();
         list.add("test.r");
         list.add("test.w");
@@ -248,9 +249,10 @@ public class OauthHelperTest {
         tokenRequest.setRedirectUri("https://localhost:8443/authorize");
         tokenRequest.setAuthCode("test_code");
 
-        TokenResponse tokenResponse = OauthHelper.getToken(tokenRequest);
-        Assert.assertNotNull(tokenResponse);
-        System.out.println("tokenResponse = " + tokenResponse);
+        Result<TokenResponse> result = OauthHelper.getTokenResult(tokenRequest);
+        Assert.assertTrue(result.isSuccess());
+        Assert.assertNotNull(result.getResult());
+        System.out.println("tokenResponse = " + result.getResult());
     }
 
     @Test

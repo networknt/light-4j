@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author fishermen
  */
 
-abstract class AbstractRegistry implements Registry {
+public abstract class AbstractRegistry implements Registry {
     private static final Logger logger = LoggerFactory.getLogger(AbstractRegistry.class);
 
     private ConcurrentHashMap<URL, Map<String, List<URL>>> subscribedCategoryResponses =
@@ -48,7 +48,7 @@ abstract class AbstractRegistry implements Registry {
     private Set<URL> registeredServiceUrls = new ConcurrentHashSet<>();
     protected String registryClassName = this.getClass().getSimpleName();
 
-    AbstractRegistry(URL url) {
+    public AbstractRegistry(URL url) {
         this.registryUrl = url.createCopy();
         // register a heartbeat switcher to perceive service state change and change available state
         SwitcherUtil.registerSwitcherListener(Constants.REGISTRY_HEARTBEAT_SWITCHER, new SwitcherListener() {
@@ -96,9 +96,8 @@ abstract class AbstractRegistry implements Registry {
 
     @Override
     public void subscribe(URL url, NotifyListener listener) {
-        if (url == null || listener == null) {
-            logger.warn("[{}] subscribe with malformed param, url:{}, listener:{}",
-                    registryClassName, url, listener);
+        if (url == null) {
+            logger.warn("[{}] subscribe with malformed param, url:{}", registryClassName, url);
             return;
         }
         if(logger.isInfoEnabled()) logger.info("[{}] Listener ({}) will subscribe to url ({}) in Registry [{}]",
@@ -108,8 +107,8 @@ abstract class AbstractRegistry implements Registry {
 
     @Override
     public void unsubscribe(URL url, NotifyListener listener) {
-        if (url == null || listener == null) {
-            logger.warn("[{}] unsubscribe with malformed param, url:{}, listener:{}", registryClassName, url, listener);
+        if (url == null) {
+            logger.warn("[{}] unsubscribe with malformed param, url:{}", registryClassName, url);
             return;
         }
         if(logger.isInfoEnabled()) logger.info("[{}] Listener ({}) will unsubscribe from url ({}) in Registry [{}]",

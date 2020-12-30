@@ -23,7 +23,6 @@ package com.networknt.db;
  */
 public class PostgresDataSource extends GenericDataSource {
     private static final String POSTGRES_DS = "PostgresDataSource";
-    private static final String POSTGRES_PASSWORD = "postgresPassword";
 
     @Override
     public String getDsName() {
@@ -32,11 +31,6 @@ public class PostgresDataSource extends GenericDataSource {
         } else {
             return POSTGRES_DS;
         }
-    }
-
-    @Override
-    public String getDbPassKey() {
-        return POSTGRES_PASSWORD;
     }
 
     public PostgresDataSource(String dsName) {

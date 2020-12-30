@@ -19,7 +19,9 @@ package com.networknt.handler;
 import com.networknt.config.Config;
 import com.networknt.handler.config.HandlerConfig;
 import com.networknt.httpstring.AttachmentConstants;
+import com.networknt.service.SingletonServiceFactory;
 import com.networknt.status.Status;
+import com.networknt.status.StatusWrapper;
 import com.networknt.utility.Constants;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -28,6 +30,7 @@ import io.undertow.util.Headers;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,24 +46,27 @@ public interface LightHttpHandler extends HttpHandler {
     String ERROR_NOT_DEFINED = "ERR10042";
 
     // Handler can save errors and stack traces for auditing. Default: false
- 	String CONFIG_NAME = "handler";
- 	String AUDIT_ON_ERROR = "auditOnError";
- 	String AUDIT_STACK_TRACE = "auditStackTrace";
+    String CONFIG_NAME = "handler";
+    String AUDIT_CONFIG_NAME = "audit";
+    String AUDIT_ON_ERROR = "auditOnError";
+    String AUDIT_STACK_TRACE = "auditStackTrace";
 
-	HandlerConfig config = (HandlerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, HandlerConfig.class);
- 	boolean auditOnError = config != null ? config.getAuditOnError() : false;
- 	boolean auditStackTrace = config != null ? config.getAuditStackTrace() : false;
-    
+    HandlerConfig config = (HandlerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, HandlerConfig.class);
+    Map<String, Object> auditConfig = Config.getInstance().getDefaultJsonMapConfigNoCache(AUDIT_CONFIG_NAME);
+
+    boolean auditOnError = auditConfig == null ? false : auditConfig.get(AUDIT_ON_ERROR) != null ? (boolean)auditConfig.get(AUDIT_ON_ERROR) : false;
+    boolean auditStackTrace = auditConfig == null ? false : auditConfig.get(AUDIT_STACK_TRACE) != null ? (boolean)auditConfig.get(AUDIT_ON_ERROR) : false;
+
     /**
      * This method is used to construct a standard error status in JSON format from an error code.
      *
      * @param exchange HttpServerExchange
-     * @param code error code
-     * @param args arguments for error description
+     * @param code     error code
+     * @param args     arguments for error description
      */
     default void setExchangeStatus(HttpServerExchange exchange, String code, final Object... args) {
         Status status = new Status(code, args);
-        if(status.getStatusCode() == 0) {
+        if (status.getStatusCode() == 0) {
             // There is no entry in status.yml for this particular error code.
             status = new Status(ERROR_NOT_DEFINED, code);
         }
@@ -72,29 +78,46 @@ public interface LightHttpHandler extends HttpHandler {
      * want to bubble up to the caller and eventually to the original caller.
      *
      * @param exchange HttpServerExchange
-     * @param status error status
+     * @param status   error status
      */
     default void setExchangeStatus(HttpServerExchange exchange, Status status) {
+        // Wrap default status into custom status if the implementation of StatusWrapper was provided
+        StatusWrapper statusWrapper;
+        try {
+            statusWrapper = SingletonServiceFactory.getBean(StatusWrapper.class);
+        } catch (NoClassDefFoundError e) {
+            statusWrapper = null;
+        }
+        status = statusWrapper == null ? status : statusWrapper.wrap(status, exchange);
+
         exchange.setStatusCode(status.getStatusCode());
         exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
         status.setDescription(status.getDescription().replaceAll("\\\\", "\\\\\\\\"));
-        exchange.getResponseSender().send(status.toString());
         StackTraceElement[] elements = Thread.currentThread().getStackTrace();
-        logger.error(status.toString() + " at " + elements[2].getClassName() + "." + elements[2].getMethodName() + "(" + elements[2].getFileName() + ":" + elements[2].getLineNumber() + ")");
+
+        logger.error(status.toString());
+        // in case to trace where the status is created, enable the trace level logging to diagnose.
+        if (logger.isTraceEnabled()) {
+            String stackTrace = Arrays.stream(elements)
+                    .map(StackTraceElement::toString)
+                    .collect(Collectors.joining("\n"));
+            logger.trace(stackTrace);
+        }
         // In normal case, the auditInfo shouldn't be null as it is created by OpenApiHandler with
         // endpoint and openapiOperation available. This handler will enrich the auditInfo.
         @SuppressWarnings("unchecked")
         Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
-        if(auditInfo == null) {
+        if (auditInfo == null) {
             auditInfo = new HashMap<>();
             exchange.putAttachment(AttachmentConstants.AUDIT_INFO, auditInfo);
         }
 
         // save info for auditing purposes in case of an error
-        if(auditOnError)
+        if (auditOnError)
             auditInfo.put(Constants.STATUS, status);
-        if(auditStackTrace) {
+        if (auditStackTrace) {
             auditInfo.put(Constants.STACK_TRACE, Arrays.toString(elements));
         }
+        exchange.getResponseSender().send(status.toString());
     }
 }

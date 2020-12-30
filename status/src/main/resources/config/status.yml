@@ -397,6 +397,56 @@ ERR10054:
   code: ERR10054
   message: GET_TOKEN_TIMEOUT
   description: Cannot get valid token, probably due to a timeout.
+ERR10055:
+  statusCode: 400
+  code: ERR10055
+  message: TLS_TRUSTSTORE_ERROR
+  description: Cannot load client.truststore to create HttpClient.
+ERR10056:
+  statusCode: 400
+  code: ERR10056
+  message: OAUTH_SERVER_URL_ERROR
+  description: Neither server_url nor serviceId is configured in client.yml for %s.
+ERR10057:
+  statusCode: 400
+  code: ERR10057
+  message: CONFIG_PROPERTY_MISSING
+  description: Config property %s is missing in config file %s.
+ERR10058:
+  statusCode: 400
+  code: ERR10058
+  message: ERROR_CONNECT_REGISTRY
+  description: Failed to connect to the registry %s.
+ERR10059:
+  statusCode: 400
+  code: ERR10059
+  message: REQUEST_BODY_MISSING
+  description: Request body is missing.
+ERR10060:
+  statusCode: 400
+  code: ERR10060
+  message: CONFIG_VALUE_INVALID
+  description: Config value %s for key %s invalid in config file %s.
+ERR10061:
+  statusCode: 401
+  code: ERR10061
+  message: MISSING_GATEWAY_AUTHORIZER
+  description: JWT Authorizer is not configured or without permission on AWS API Gateway.
+ERR10062:
+  statusCode: 401
+  code: ERR10062
+  message: MISSING_PRIMARY_SCOPES
+  description: Scopes from the JWT token in Authorization header are missing.
+ERR10063:
+  statusCode: 400
+  code: ERR10063
+  message: MISSING_ENDPOINT_FUNCTION
+  description: Missing funcation in the mapping for endpoint %s.
+ERR10064:
+  statusCode: 400
+  code: ERR10064
+  message: EMPTY_LAMBDA_RESPONSE
+  description: Empty lambda function response for %s.
 
 # 11000-11500 swagger-validator errors
 ERR11000:
@@ -571,6 +621,11 @@ ERR11301:
 
 
 # 11350-11399 light-router
+ERR11350:
+  statusCode: 400
+  code: ERR11350
+  message: EMAIL_REGISTERED
+  description: Email %s has been registered with a different userId %s.
 
 # 11400-11499 light-config-server
 ERR11400:
@@ -772,6 +827,31 @@ ERR11633:
   code: ERR11633
   message: ORDER_NOT_FOUND_BY_EMAIL
   description: Order not found for email %s.
+ERR11634:
+  statusCode: 404
+  code: ERR11634
+  message: REFERENCE_NOT_FOUND
+  description: Reference not found for name %s and language %s.
+ERR11635:
+  statusCode: 400
+  code: ERR11635
+  message: HOST_NOT_MATCH_EMAIL
+  description: Host %s doesn't match the email domain %s.
+ERR11636:
+  statusCode: 400
+  code: ERR11636
+  message: SQL_EXCEPTION
+  description: SQLException with error %s.
+ERR11637:
+  statusCode: 404
+  code: ERR11637
+  message: OBJECT_NOT_FOUND
+  description: Object %s not found for key %s.
+ERR11638:
+  statusCode: 400
+  code: ERR11638
+  message: FILESYSTEM_ERROR
+  description: Error while access filesystem with file %s and error message %s.
 
 
 # OAuth2 service error 12000-13000
@@ -1030,6 +1110,11 @@ ERR12050:
   code: ERR12050
   message: FAILED_TO_POPULATE_HEADER
   description: Failed to populate client credentials scope token in header in method %s
+ERR12051:
+  statusCode: 400
+  code: ERR12051
+  message: HOST_IS_REQUIRED
+  description: Host is required
 
 # Tokenization service
 ERR12100:

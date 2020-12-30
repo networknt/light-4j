@@ -655,7 +655,6 @@ public class Http2ClientIT {
         }
     }
 
-    @Test
     public String callApiAsync() throws Exception {
         final Http2Client client = createClient();
         final CountDownLatch latch = new CountDownLatch(1);
@@ -677,7 +676,6 @@ public class Http2ClientIT {
         return reference.get().getAttachment(Http2Client.RESPONSE_BODY);
     }
 
-    @Test
     public ByteBuffer callApiWithByteBuffer() throws Exception {
         final Http2Client client = createClient();
         final CountDownLatch latch = new CountDownLatch(1);
@@ -700,6 +698,27 @@ public class Http2ClientIT {
         return reference.get().getAttachment(Http2Client.BUFFER_BODY);
     }
 
+    public ByteBuffer callApiWithByteBufferRequest() throws Exception {
+        final Http2Client client = createClient();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection = client.connect(ADDRESS, worker, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        try {
+            ClientRequest request = new ClientRequest().setPath(API).setMethod(Methods.GET);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
+            client.populateHeader(request, "Bearer token", "cid", "tid");
+            request.getRequestHeaders().add(Headers.CONNECTION, Headers.CLOSE.toString());
+            connection.sendRequest(request, client.byteBufferClientCallback(reference, latch, ByteBuffer.wrap("WebKitFormBoundaryOmz20xyMCkE27rN7".getBytes())));
+            latch.await();
+
+            // final ClientResponse response = reference.get();
+            Assert.assertNotNull(reference.get().getAttachment(Http2Client.BUFFER_BODY));
+            Assert.assertEquals(false, connection.isOpen());
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+        return reference.get().getAttachment(Http2Client.BUFFER_BODY);
+    }
 
     @Test
     public void testAsyncAboutToExpire() throws InterruptedException, ExecutionException {

@@ -60,7 +60,7 @@ public class ServerInfoGetHandler implements LightHttpHandler {
             infoMap.put("deployment", getDeployment());
             infoMap.put("environment", getEnvironment(exchange));
             infoMap.put("security", getSecurity());
-            infoMap.put("specification", Config.getInstance().getJsonMapConfigNoCache("swagger"));
+            infoMap.put("specification", Config.getInstance().getJsonMapConfigNoCache("openapi"));
             infoMap.put("component", ModuleRegistry.getRegistry());
             exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
             exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(infoMap));
@@ -165,14 +165,13 @@ public class ServerInfoGetHandler implements LightHttpHandler {
     private String getServerTlsFingerPrint() {
         String fingerPrint = null;
         Map<String, Object> serverConfig = Config.getInstance().getJsonMapConfigNoCache("server");
-        Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfigNoCache("secret");
         // load keystore here based on server config and secret config
         String keystoreName = (String)serverConfig.get("keystoreName");
-        String serverKeystorePass = (String)secretConfig.get("serverKeystorePass");
+        String keystorePass = (String)serverConfig.get("keystorePass");
         if(keystoreName != null) {
             try (InputStream stream = Config.getInstance().getInputStreamFromFile(keystoreName)) {
                 KeyStore loadedKeystore = KeyStore.getInstance("JKS");
-                loadedKeystore.load(stream, serverKeystorePass.toCharArray());
+                loadedKeystore.load(stream, keystorePass.toCharArray());
                 X509Certificate cert = (X509Certificate)loadedKeystore.getCertificate("server");
                 if(cert != null) {
                     fingerPrint = FingerPrintUtil.getCertFingerPrint(cert);

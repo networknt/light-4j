@@ -23,14 +23,12 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
-import com.networknt.utility.TlsUtil;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -40,11 +38,9 @@ import org.yaml.snakeyaml.Yaml;
 
 import javax.net.ssl.*;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -213,7 +209,8 @@ public class DefaultConfigLoader implements IConfigLoader{
      * This is a public method that is used to test the connectivity in the integration test to ensure that the
      * light-config-server can be connected with the default bootstrap.truststore. There is no real value for
      * this method other than that.
-     *
+     * @param host config server host
+     * @param path config server path
      * @return String of OK
      */
     public static String getConfigServerHealth(String host, String path) {

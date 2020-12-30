@@ -1,8 +1,7 @@
----
 # Server health endpoint that can output OK to indicate the server is alive
 
 # true to enable this middleware handler.
-enabled: true
+enabled: ${health.enabled:true}
 
 # true to return Json format message
-useJson: false
+useJson: ${health.useJson:false}

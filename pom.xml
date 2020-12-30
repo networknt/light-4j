@@ -1,4 +1,3 @@
-
 <!--
   ~ Copyright (c) 2016 Network New Technologies Inc.
   ~
@@ -20,7 +19,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.networknt</groupId>
     <artifactId>light-4j</artifactId>
-    <version>2.0.15-SNAPSHOT</version>
+    <version>2.0.23-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Parent POM</name>
     <description>Light 4J Framework Components</description>
@@ -67,32 +66,28 @@
     <properties>
         <java.version>11</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <version.jackson>2.10.0</version.jackson>
-        <version.jackson-databind>2.10.0</version.jackson-databind>
+        <version.jackson>2.10.4</version.jackson>
         <version.slf4j>1.7.25</version.slf4j>
         <version.jose4j>0.6.3</version.jose4j>
         <version.commons.codec>1.11</version.commons.codec>
         <version.encoder>1.2.1</version.encoder>
         <version.logback>1.2.3</version.logback>
-        <version.junit>4.12</version.junit>
+        <version.junit>4.13.1</version.junit>
         <version.mockito>2.23.0</version.mockito>
         <version.powermock>2.0.2</version.powermock>
-        <version.undertow>2.1.1.Final</version.undertow>
+        <version.undertow>2.1.3.Final</version.undertow>
         <version.hamcrest>1.3</version.hamcrest>
         <version.assertj>3.8.0</version.assertj>
         <version.hdrhistogram>2.1.10</version.hdrhistogram>
         <version.jsr305>3.0.2</version.jsr305>
         <version.json-schema-validator>1.0.29</version.json-schema-validator>
-        <version.zookeeper>3.5.3-beta</version.zookeeper>
-        <version.zkclient>0.3</version.zkclient>
-        <version.curator>4.0.1</version.curator>
-        <version.snakeyaml>1.20</version.snakeyaml>
+        <version.snakeyaml>1.26</version.snakeyaml>
         <version.caffeine>2.6.2</version.caffeine>
         <version.prometheus>0.6.0</version.prometheus>
         <version.javamail>1.6.1</version.javamail>
         <version.hikaricp>3.2.0</version.hikaricp>
         <version.h2>1.4.196</version.h2>
-        <version.mysql>6.0.5</version.mysql>
+        <version.mysql>8.0.16</version.mysql>
         <version.postgres>9.4.1211</version.postgres>
         <version.oracle>11.2.0.3</version.oracle>
         <version.sqlserver>7.0.0.jre10</version.sqlserver>
@@ -145,7 +140,7 @@
         <module>registry</module>
         <module>balance</module>
         <module>consul</module>
-        <module>zookeeper</module>
+        <module>portal-registry</module>
         <module>cors</module>
         <module>cluster</module>
         <module>rate-limit</module>
@@ -300,9 +295,8 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
-                <artifactId>zookeeper</artifactId>
+                <artifactId>portal-registry</artifactId>
                 <version>${project.version}</version>
-                <optional>true</optional>
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
@@ -391,7 +385,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
-                <version>${version.jackson-databind}</version>
+                <version>${version.jackson}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
@@ -487,36 +481,6 @@
                 <groupId>io.prometheus</groupId>
                 <artifactId>simpleclient_hotspot</artifactId>
                 <version>${version.prometheus}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.zookeeper</groupId>
-                <artifactId>zookeeper</artifactId>
-                <version>${version.zookeeper}</version>
-                <scope>compile</scope>
-                <optional>true</optional>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.slf4j</groupId>
-                        <artifactId>slf4j-log4j12</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>io.netty</groupId>
-                        <artifactId>netty</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>com.101tec</groupId>
-                <artifactId>zkclient</artifactId>
-                <version>${version.zkclient}</version>
-                <scope>compile</scope>
-                <optional>true</optional>
-                <exclusions>
-                    <exclusion>
-                        <groupId>log4j</groupId>
-                        <artifactId>log4j</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.yaml</groupId>

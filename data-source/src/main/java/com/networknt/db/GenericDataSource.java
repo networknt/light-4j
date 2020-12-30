@@ -32,7 +32,6 @@ import java.util.Map;
  */
 public class GenericDataSource {
     protected static final String DATASOURCE = "datasource";
-    protected static final String SECRET = "secret";
     private static final String DB_PASSWORD = "password";
     private static final String DS_NAME = "H2DataSource";
 
@@ -62,10 +61,6 @@ public class GenericDataSource {
     protected HikariDataSource createDataSource() {
         // get the configured datasources
         Map<String, Object> dataSourceMap = Config.getInstance().getJsonMapConfig(DATASOURCE);
-
-        // get the decrypted secret file
-        Map<String, Object> secret = Config.getInstance().getJsonMapConfig(SECRET);
-
         // get the requested datasource
         Map<String, Object> mainParams = (Map<String, Object>) dataSourceMap.get(getDsName());
         Map<String, String> configParams = (Map<String, String>)mainParams.get("parameters");
@@ -77,9 +72,6 @@ public class GenericDataSource {
 
         // use encrypted password
         String password = (String)mainParams.get(DB_PASSWORD);
-        if (password==null) {
-            password = (String)secret.get(getDbPassKey());
-        }
         ds.setPassword(password);
 
         // set datasource paramters

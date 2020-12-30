@@ -9,9 +9,9 @@ tls:
   defaultGroupKey: ${client.defaultGroupKey:trustedNames.local}
   # trusted hostnames, service names, service Ids, and so on.
   # Note: localhost and 127.0.0.1 are not trustable hostname/ip in general. So, these values should not be used as trusted names in production.
-  trustedNames: 
+  trustedNames:
     local: localhost
-    negativeTest: invalidhost 
+    negativeTest: invalidhost
     empty:
   # trust store contains certifictes that server needs. Enable if tls is used.
   loadTrustStore: ${client.loadTrustStore:true}
@@ -43,6 +43,15 @@ oauth:
     # token server url. The default port number for token service is 6882. If this is set,
     # it will take high priority than serviceId for the direct connection
     # server_url: ${client.tokenServerUrl:https://localhost:6882}
+    # For users who leverage SaaS OAuth 2.0 provider from lightapi.net or others in the public cloud
+    # and has an internal proxy server to access code, token and key services of OAuth 2.0, set up the
+    # proxyHost here for the HTTPS traffic. This option is only working with server_url and serviceId
+    # below should be commented out. OAuth 2.0 services cannot be discovered if a proxy server is used.
+    # proxyHost: ${client.tokenProxyHost:proxy.lightapi.net}
+    # We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has
+    # a different port, please specify it here. If proxyHost is available and proxyPort is missing, then
+    # the default value 443 is going to be used for the HTTP connection.
+    # proxyPort: ${client.tokenProxyPort:3128}
     # token service unique id for OAuth 2.0 provider. If server_url is not set above,
     # a service discovery action will be taken to find an instance of token service.
     serviceId: ${client.tokenServiceId:com.networknt.oauth2-token-1.0.0}
@@ -57,7 +66,7 @@ oauth:
       # client_secret for authorization code grant flow.
       client_secret: ${client.tokenAcClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
       # the web server uri that will receive the redirected authorization code
-      redirect_uri: ${client.tokenAcRedirectUri:https://localhost:8080/authorization_code}
+      redirect_uri: ${client.tokenAcRedirectUri:https://localhost:3000/authorization}
       # optional scope, default scope in the client registration will be used if not defined.
       # If there are scopes specified here, they will be verified against the registered scopes.
       # scope:
@@ -67,7 +76,7 @@ oauth:
     client_credentials:
       # token endpoint for client credentials grant
       uri: ${client.tokenCcUri:/oauth2/token}
-      # client_id for client credentials grant flow. client_secret is in secret.yml
+      # client_id for client credentials grant flow.
       client_id: ${client.tokenCcClientId:f7d42348-c647-4efb-a52d-4c5787421e72}
       # client_secret for client credentials grant flow.
       client_secret: ${client.tokenCcClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
@@ -79,9 +88,9 @@ oauth:
     refresh_token:
       # token endpoint for refresh token grant
       uri: ${client.tokenRtUri:/oauth2/token}
-      # client_id for refresh token grant flow. client_secret is in secret.yml
+      # client_id for refresh token grant flow.
       client_id: ${client.tokenRtClientId:f7d42348-c647-4efb-a52d-4c5787421e72}
-      # client_secret for refresh token
+      # client_secret for refresh token grant flow
       client_secret: ${client.tokenRtClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
       # optional scope, default scope in the client registration will be used if not defined.
       # If there are scopes specified here, they will be verified against the registered scopes.
@@ -93,6 +102,15 @@ oauth:
       # key distribution server url for token verification. It will be used if it is configured.
       # If it is not set, a service lookup will be taken with serviceId to find an instance.
       # server_url: ${client.tokenKeyServerUrl:https://localhost:6886}
+      # For users who leverage SaaS OAuth 2.0 provider from lightapi.net or others in the public cloud
+      # and has an internal proxy server to access code, token and key services of OAuth 2.0, set up the
+      # proxyHost here for the HTTPS traffic. This option is only working with server_url and serviceId
+      # below should be commented out. OAuth 2.0 services cannot be discovered if a proxy server is used.
+      # proxyHost: ${client.tokenKeyProxyHost:proxy.lightapi.net}
+      # We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has
+      # a different port, please specify it here. If proxyHost is available and proxyPort is missing, then
+      # the default value 443 is going to be used for the HTTP connection.
+      # proxyPort: ${client.tokenKeyProxyPort:3128}
       # key serviceId for key distribution service, it will be used if above server_url is not configured.
       serviceId: ${client.tokenKeyServiceId:com.networknt.oauth2-key-1.0.0}
       # the path for the key distribution endpoint
@@ -108,6 +126,15 @@ oauth:
     # token server url. The default port number for token service is 6882. If this url exists, it will be used.
     # if it is not set, then a service lookup against serviceId will be taken to discover an instance.
     # server_url: ${client.signServerUrl:https://localhost:6882}
+    # For users who leverage SaaS OAuth 2.0 provider from lightapi.net or others in the public cloud
+    # and has an internal proxy server to access code, token and key services of OAuth 2.0, set up the
+    # proxyHost here for the HTTPS traffic. This option is only working with server_url and serviceId
+    # below should be commented out. OAuth 2.0 services cannot be discovered if a proxy server is used.
+    # proxyHost: ${client.signProxyHost:proxy.lightapi.net}
+    # We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has
+    # a different port, please specify it here. If proxyHost is available and proxyPort is missing, then
+    # the default value 443 is going to be used for the HTTP connection.
+    # proxyPort: ${client.signProxyPort:3128}
     # token serviceId. If server_url doesn't exist, the serviceId will be used to lookup the token service.
     serviceId: ${client.signServiceId:com.networknt.oauth2-token-1.0.0}
     # signing endpoint for the sign request
@@ -125,6 +152,15 @@ oauth:
       # key distribution server url. It will be used to establish connection if it exists.
       # if it is not set, then a service lookup against serviceId will be taken to discover an instance.
       # server_url: ${client.signKeyServerUrl:https://localhost:6886}
+      # For users who leverage SaaS OAuth 2.0 provider from lightapi.net or others in the public cloud
+      # and has an internal proxy server to access code, token and key services of OAuth 2.0, set up the
+      # proxyHost here for the HTTPS traffic. This option is only working with server_url and serviceId
+      # below should be commented out. OAuth 2.0 services cannot be discovered if a proxy server is used.
+      # proxyHost: ${client.signKeyProxyHost:proxy.lightapi.net}
+      # We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has
+      # a different port, please specify it here. If proxyHost is available and proxyPort is missing, then
+      # the default value 443 is going to be used for the HTTP connection.
+      # proxyPort: ${client.signKeyProxyPort:3128}
       # the unique service id for key distribution service, it will be used to lookup key service if above url doesn't exist.
       serviceId: ${client.signKeyServiceId:com.networknt.oauth2-key-1.0.0}
       # the path for the key distribution endpoint
@@ -139,6 +175,15 @@ oauth:
   deref:
     # Token service server url, this might be different than the above token server url. The static url will be used if it is configured.
     # server_url: ${client.derefServerUrl:https://localhost:6882}
+    # For users who leverage SaaS OAuth 2.0 provider in the public cloud and has an internal
+    # proxy server to access code, token and key services of OAuth 2.0, set up the proxyHost
+    # here for the HTTPS traffic. This option is only working with server_url and serviceId
+    # below should be commented out. OAuth 2.0 services cannot be discovered if a proxy is used.
+    # proxyHost: ${client.derefProxyHost:proxy.lightapi.net}
+    # We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has
+    # a different port, please specify it here. If proxyHost is available and proxyPort is missing, then
+    # the default value 443 is going to be used for the HTTP connection.
+    # proxyPort: ${client.derefProxyPort:3128}
     # token service unique id for OAuth 2.0 provider. Need for service lookup/discovery. It will be used if above server_url is not configured.
     serviceId: ${client.derefServiceId:com.networknt.oauth2-token-1.0.0}
     # set to true if the oauth2 provider supports HTTP/2
@@ -159,6 +204,8 @@ request:
   resetTimeout: ${client.resetTimeout:7000}
   # if open tracing is enable. traceability, correlation and metrics should not be in the chain if opentracing is used.
   injectOpenTracing: ${client.injectOpenTracing:false}
+  # inject serviceId as callerId into the http header for metrics to collect the caller. The serviceId is from server.yml
+  injectCallerId: ${client.injectCallerId:false}
   # the flag to indicate whether http/2 is enabled when calling client.callService()
   enableHttp2: ${client.enableHttp2:true}
   # the maximum host capacity of connection pool

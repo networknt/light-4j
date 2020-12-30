@@ -44,22 +44,49 @@ public class DirectRegistry extends AbstractRegistry {
 
     public DirectRegistry(URL url) {
         super(url);
-        for (Map.Entry<String, String> entry : url.getParameters().entrySet())
-        {
-            List<URL> urls = new ArrayList<>();
+        for (Map.Entry<String, String> entry : url.getParameters().entrySet()) {
+            String tag = null;
             try {
                 if(entry.getValue().contains(",")) {
                     String[] directUrlArray = entry.getValue().split(",");
                     for (String directUrl : directUrlArray) {
-                        urls.add(addGeneralTag(URLImpl.valueOf(directUrl.trim() + "/" + entry.getKey())));
+                        String s = buildUrl(directUrl, entry.getKey());
+                        URL u = URLImpl.valueOf(s);
+                        tag = u.getParameter(Constants.TAG_ENVIRONMENT);
+                        String key = tag == null ? entry.getKey() : entry.getKey() + "|" + tag;
+                        List<URL> urls = directUrls.get(key);
+                        if(urls != null) {
+                            urls.add(u);
+                        } else {
+                            urls = new ArrayList<>();
+                            urls.add(u);
+                        }
+                        directUrls.put(key, urls);
                     }
                 } else {
-                    urls.add(addGeneralTag(URLImpl.valueOf(entry.getValue() + "/" + entry.getKey())));
+                    List<URL> urls = new ArrayList<>();
+                    String s = buildUrl(entry.getValue(), entry.getKey());
+                    URL u = URLImpl.valueOf(s);
+                    tag = u.getParameter(Constants.TAG_ENVIRONMENT);
+                    String key = tag == null ? entry.getKey() : entry.getKey() + "|" + tag;
+                    urls.add(u);
+                    directUrls.put(key, urls);
                 }
             } catch (Exception e) {
                 throw new FrameworkException(new Status(PARSE_DIRECT_URL_ERROR, url.toString()));
             }
-            directUrls.put(entry.getKey(), urls);
+        }
+    }
+
+    private String buildUrl(String url, String key) {
+        if(url.contains("?")) {
+            // allow the environment parameter here as an option to for tag based lookup.
+            String u = url.substring(0, url.indexOf("?"));
+            String p = url.substring(url.indexOf("?"));
+            // insert the path to the middle and move the parameter to the end to form a valid url
+            return u.trim() + "/" + key + p;
+        } else {
+            return url.trim() + "/" + key;
         }
     }
 
@@ -76,13 +103,13 @@ public class DirectRegistry extends AbstractRegistry {
     @Override
     protected void doSubscribe(URL url, NotifyListener listener) {
         subscribeUrls.putIfAbsent(url, 1);
-        listener.notify(this.getUrl(), doDiscover(url));
+        if(listener != null) listener.notify(this.getUrl(), doDiscover(url));
     }
 
     @Override
     protected void doUnsubscribe(URL url, NotifyListener listener) {
         subscribeUrls.remove(url);
-        listener.notify(this.getUrl(), doDiscover(url));
+        if(listener != null) listener.notify(this.getUrl(), doDiscover(url));
     }
 
     @Override
@@ -91,8 +118,10 @@ public class DirectRegistry extends AbstractRegistry {
     }
 
     private List<URL> createSubscribeUrl(URL subscribeUrl) {
-        String serviceName = subscribeUrl.getPath();
-        return directUrls.get(serviceName);
+        String serviceId = subscribeUrl.getPath();
+        String tag = subscribeUrl.getParameter(Constants.TAG_ENVIRONMENT);
+        String key = tag == null ? serviceId : serviceId + "|" + tag;
+        return directUrls.get(key);
     }
 
     @Override
@@ -103,10 +132,5 @@ public class DirectRegistry extends AbstractRegistry {
     @Override
     protected void doUnavailable(URL url) {
         // do nothing
-    }
-
-    private URL addGeneralTag(URL url) {
-        url.addParameter(Constants.TAG_ENVIRONMENT, GENERAL_TAG);
-        return url;
     }
 }

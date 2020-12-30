@@ -27,13 +27,21 @@ public class Constants {
     public static final String CORRELATION_ID_STRING = "X-Correlation-Id";
     public static final String TRACEABILITY_ID_STRING = "X-Traceability-Id";
     public static final String USER_ID_STRING = "user_id";
+    public static final String UID_STRING = "uid";
     public static final String USER_TYPE_STRING = "user_type";
     public static final String ROLES_STRING = "roles";
     public static final String CLIENT_ID_STRING = "client_id";
+    public static final String CID_STRING = "cid";
+    public static final String CALLER_ID_STRING = "caller_id";
     public static final String SCOPE_CLIENT_ID_STRING = "scope_client_id";
     public static final String SCOPE_STRING = "scope";
+    public static final String SCP_STRING = "scp";
+    // use for light-aws-lambda to pass the scopes to the scope verifier from authorizer
+    public static final String PRIMARY_SCOPES = "primary_scopes";
+    public static final String SECONDARY_SCOPES = "secondary_scopes";
     public static final String ENDPOINT_STRING = "endpoint";
     public static final String CSRF_STRING = "csrf";
+    public static final String AUTHORIZATION_STRING = "authorization";
 
     // Swagger 2.0 operation header name
     public static final String SWAGGER_OPERATION_STRING = "swagger_operation";

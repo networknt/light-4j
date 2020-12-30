@@ -21,12 +21,12 @@ package com.networknt.client;
 import com.networknt.client.circuitbreaker.CircuitBreaker;
 import com.networknt.client.http.*;
 import com.networknt.client.listener.ByteBufferReadChannelListener;
+import com.networknt.client.listener.ByteBufferWriteChannelListener;
 import com.networknt.client.oauth.Jwt;
 import com.networknt.client.oauth.TokenManager;
 import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
 import com.networknt.client.ssl.TLSConfig;
 import com.networknt.cluster.Cluster;
-import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.exception.ClientException;
@@ -34,8 +34,9 @@ import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.service.SingletonServiceFactory;
+import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
-import com.networknt.utility.TlsUtil;
+import com.networknt.config.TlsUtil;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
@@ -81,9 +82,9 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class Http2Client {
     private static final Logger logger = LoggerFactory.getLogger(Http2Client.class);
-
+    private static final String CONFIG_PROPERTY_MISSING = "ERR10057";
     public static final String CONFIG_NAME = "client";
-    public static final String CONFIG_SECRET = "secret";
+    public static final String CONFIG_SERVER = "server";
     public static final OptionMap DEFAULT_OPTIONS = OptionMap.builder()
             .set(Options.WORKER_IO_THREADS, 8)
             .set(Options.TCP_NODELAY, true)
@@ -111,6 +112,8 @@ public class Http2Client {
     static final String KEY_STORE_PASSWORD_PROPERTY = "javax.net.ssl.keyStorePassword";
     static final String TRUST_STORE_PROPERTY = "javax.net.ssl.trustStore";
     static final String TRUST_STORE_PASSWORD_PROPERTY = "javax.net.ssl.trustStorePassword";
+    static final String SERVICE_ID = "serviceId";
+    static String callerId = "unknown";
 
     // TokenManager is to manage cached jwt tokens for this client.
     private TokenManager tokenManager = TokenManager.getInstance();
@@ -121,6 +124,14 @@ public class Http2Client {
     static {
         List<String> masks = new ArrayList<>();
         ModuleRegistry.registerModule(Http2Client.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), masks);
+        // take the best effort to get the serviceId from the server.yml file. It might not exist if this is a standalone client.
+        boolean injectCallerId = ClientConfig.get().isInjectCallerId();
+        if(injectCallerId) {
+            Map<String, Object> serverConfig = Config.getInstance().getJsonMapConfigNoCache(CONFIG_SERVER);
+            if(serverConfig != null) {
+                callerId = (String)serverConfig.get(SERVICE_ID);
+            }
+        }
     }
 
     public static final ByteBufferPool BUFFER_POOL = new DefaultByteBufferPool(true, ClientConfig.get().getBufferSize() * 1024);
@@ -190,7 +201,27 @@ public class Http2Client {
         return connect(uri, worker, null, bufferPool, options);
     }
 
+    public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
+        final FutureResult<ClientConnection> result = new FutureResult<>();
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        if(connection != null && connection.isOpen()) {
+            result.setResult(connection);
+            return result.getIoFuture();
+        }
+        return connect(uri, worker, null, bufferPool, options);
+    }
+
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
+        return connect(bindAddress, uri, worker, null, bufferPool, options);
+    }
+
+    public IoFuture<ClientConnection> borrowConnection(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
+        final FutureResult<ClientConnection> result = new FutureResult<>();
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        if(connection != null && connection.isOpen()) {
+            result.setResult(connection);
+            return result.getIoFuture();
+        }
         return connect(bindAddress, uri, worker, null, bufferPool, options);
     }
 
@@ -206,7 +237,22 @@ public class Http2Client {
         return SSL;
     }
 
+    public void returnConnection(ClientConnection connection) {
+        http2ClientConnectionPool.resetConnectionStatus(connection);
+    }
+
     public IoFuture<ClientConnection> connect(final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
+        return connect((InetSocketAddress) null, uri, worker, ssl, bufferPool, options);
+    }
+
+    public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        final FutureResult<ClientConnection> result = new FutureResult<>();
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        if(connection != null && connection.isOpen()) {
+            result.setResult(connection);
+            return result.getIoFuture();
+        }
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         return connect((InetSocketAddress) null, uri, worker, ssl, bufferPool, options);
     }
@@ -215,17 +261,18 @@ public class Http2Client {
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         ClientProvider provider = getClientProvider(uri);
         final FutureResult<ClientConnection> result = new FutureResult<>();
-            provider.connect(new ClientCallback<ClientConnection>() {
-                @Override
-                public void completed(ClientConnection r) {
-                    result.setResult(r);
-                }
+        provider.connect(new ClientCallback<ClientConnection>() {
+            @Override
+            public void completed(ClientConnection r) {
+                result.setResult(r);
+                http2ClientConnectionPool.cacheConnection(uri, r);
+            }
 
-                @Override
-                public void failed(IOException e) {
-                    result.setException(e);
-                }
-            }, bindAddress, uri, worker, ssl, bufferPool, options);
+            @Override
+            public void failed(IOException e) {
+                result.setException(e);
+            }
+        }, bindAddress, uri, worker, ssl, bufferPool, options);
         return result.getIoFuture();
     }
 
@@ -233,12 +280,42 @@ public class Http2Client {
         return connect((InetSocketAddress) null, uri, ioThread, null, bufferPool, options);
     }
 
+    public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
+        final FutureResult<ClientConnection> result = new FutureResult<>();
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        if(connection != null && connection.isOpen()) {
+            result.setResult(connection);
+            return result.getIoFuture();
+        }
+        return connect((InetSocketAddress) null, uri, ioThread, null, bufferPool, options);
+    }
 
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
         return connect(bindAddress, uri, ioThread, null, bufferPool, options);
     }
 
+    public IoFuture<ClientConnection> borrowConnection(InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
+        final FutureResult<ClientConnection> result = new FutureResult<>();
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        if(connection != null && connection.isOpen()) {
+            result.setResult(connection);
+            return result.getIoFuture();
+        }
+        return connect(bindAddress, uri, ioThread, null, bufferPool, options);
+    }
+
     public IoFuture<ClientConnection> connect(final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
+        return connect((InetSocketAddress) null, uri, ioThread, ssl, bufferPool, options);
+    }
+
+    public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        final FutureResult<ClientConnection> result = new FutureResult<>();
+        ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
+        if(connection != null && connection.isOpen()) {
+            result.setResult(connection);
+            return result.getIoFuture();
+        }
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         return connect((InetSocketAddress) null, uri, ioThread, ssl, bufferPool, options);
     }
@@ -251,6 +328,7 @@ public class Http2Client {
             @Override
             public void completed(ClientConnection r) {
                 result.setResult(r);
+                http2ClientConnectionPool.cacheConnection(uri, r);
             }
 
             @Override
@@ -469,6 +547,9 @@ public class Http2Client {
         } else {
             addAuthToken(request, authToken);
         }
+        if(ClientConfig.get().isInjectCallerId()) {
+            request.getRequestHeaders().put(HttpStringConstants.CALLER_ID, callerId);
+        }
         return result;
     }
 
@@ -556,17 +637,16 @@ public class Http2Client {
                         if(logger.isInfoEnabled()) logger.info("Loading key store from system property at " + Encode.forJava(keyStoreName));
                     } else {
                         keyStoreName = (String) tlsMap.get(KEY_STORE);
-                        // load keyStorePass from the client.yml first and fallback to secret.yml if doesn't exist.
                         keyStorePass = (String) tlsMap.get(KEY_STORE_PASS);
                         if(keyStorePass == null) {
-                            keyStorePass = (String) ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_KEYSTORE_PASS);
+                            logger.error(new Status(CONFIG_PROPERTY_MISSING, KEY_STORE_PASS, "client.yml").toString());
                         }
                         if(logger.isInfoEnabled()) logger.info("Loading key store from config at " + Encode.forJava(keyStoreName));
                     }
                     if (keyStoreName != null && keyStorePass != null) {
                         String keyPass = (String) tlsMap.get(KEY_PASS);
                         if(keyPass == null) {
-                            keyPass = (String) ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_KEY_PASS);
+                            logger.error(new Status(CONFIG_PROPERTY_MISSING, KEY_PASS, "client.yml").toString());
                         }
                         KeyStore keyStore = TlsUtil.loadKeyStore(keyStoreName, keyStorePass.toCharArray());
                         KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
@@ -593,7 +673,7 @@ public class Http2Client {
                         trustStoreName = (String) tlsMap.get(TRUST_STORE);
                         trustStorePass = (String) tlsMap.get(TRUST_STORE_PASS);
                         if(trustStorePass == null) {
-                            trustStorePass = (String)ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_TRUSTSTORE_PASS);
+                            logger.error(new Status(CONFIG_PROPERTY_MISSING, TRUST_STORE_PASS, "client.yml").toString());
                         }
                         if(logger.isInfoEnabled()) logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
                     }
@@ -694,6 +774,52 @@ public class Http2Client {
     public ClientCallback<ClientExchange> byteBufferClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch) {
         return new ClientCallback<ClientExchange>() {
             public void completed(ClientExchange result) {
+                result.setResponseListener(new ClientCallback<ClientExchange>() {
+                    public void completed(final ClientExchange result) {
+                        reference.set(result.getResponse());
+                        (new ByteBufferReadChannelListener(result.getConnection().getBufferPool()) {
+                            protected void bufferDone(List<Byte> out) {
+                                byte[] byteArray = new byte[out.size()];
+                                int index = 0;
+                                for (byte b : out) {
+                                    byteArray[index++] = b;
+                                }
+                                result.getResponse().putAttachment(BUFFER_BODY, (ByteBuffer.wrap(byteArray)));
+                                latch.countDown();
+                            }
+
+                            protected void error(IOException e) {
+                                latch.countDown();
+                            }
+                        }).setup(result.getResponseChannel());
+                    }
+                    public void failed(IOException e) {
+                        latch.countDown();
+                    }
+                });
+
+                try {
+                    result.getRequestChannel().shutdownWrites();
+                    if (!result.getRequestChannel().flush()) {
+                        result.getRequestChannel().getWriteSetter().set(ChannelListeners.flushingChannelListener((ChannelListener)null, (ChannelExceptionHandler)null));
+                        result.getRequestChannel().resumeWrites();
+                    }
+                } catch (IOException var3) {
+                    latch.countDown();
+                }
+
+            }
+
+            public void failed(IOException e) {
+                latch.countDown();
+            }
+        };
+    }
+
+    public ClientCallback<ClientExchange> byteBufferClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch, final ByteBuffer requestBody) {
+        return new ClientCallback<ClientExchange>() {
+            public void completed(ClientExchange result) {
+                new ByteBufferWriteChannelListener(requestBody).setup(result.getRequestChannel());
                 result.setResponseListener(new ClientCallback<ClientExchange>() {
                     public void completed(final ClientExchange result) {
                         reference.set(result.getResponse());
