@@ -1,4 +1,7 @@
 ---
+showMetadata: false
+showDescription: true
+showMessage: true
 SUC10200:
   statusCode: 200
   code: SUC10200
