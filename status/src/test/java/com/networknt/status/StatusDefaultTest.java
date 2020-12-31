@@ -90,6 +90,16 @@ public class StatusDefaultTest {
 
     @PrepareForTest({Config.class})
     @Test
+    public void testToStringWithNullMetadata() {
+        initStatusConfig(true, true, true);
+
+        Status status = new Status("ERR11000", "parameter name", "original url");
+        System.out.println(status);
+        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"severity\":\"ERROR\"}", status.toString());
+    }
+
+    @PrepareForTest({Config.class})
+    @Test
     public void testToStringWithoutMetadata() {
         initStatusConfig(true, false, true);
 

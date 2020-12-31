@@ -258,7 +258,7 @@ public class Status {
             if (showDescription) {
                 sb.append("\",\"description\":\"" + getDescription());
             }
-            if (showMetadata) {
+            if (showMetadata && getMetadata() != null) {
                 try {
                     sb.append("\",\"metadata\":\"" + Config.getInstance().getMapper().writeValueAsString(getMetadata()));
                 } catch (JsonProcessingException e) {
