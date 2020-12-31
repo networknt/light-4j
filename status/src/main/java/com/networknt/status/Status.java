@@ -242,9 +242,9 @@ public class Status {
 
     @Override
     public String toString() {
-        showMessage = config.get(SHOW_MESSAGE) == null ? false : (boolean)config.get(SHOW_MESSAGE);
+        showMessage = config.get(SHOW_MESSAGE) == null ? true : (boolean)config.get(SHOW_MESSAGE);
         showMetadata = config.get(SHOW_METADATA) == null ? false : (boolean)config.get(SHOW_METADATA);
-        showDescription = config.get(SHOW_DESCRIPTION) == null ? false : (boolean)config.get(SHOW_DESCRIPTION);
+        showDescription = config.get(SHOW_DESCRIPTION) == null ? true : (boolean)config.get(SHOW_DESCRIPTION);
         if (statusSerializer != null) {
             return statusSerializer.serializeStatus(this);
         } else {
