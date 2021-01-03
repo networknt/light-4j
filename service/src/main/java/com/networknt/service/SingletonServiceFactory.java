@@ -61,6 +61,9 @@ public class SingletonServiceFactory {
                 }
             }
         } catch (Exception e) {
+            // #883 during the server startup, any exception here will stops the server and there is no chance for the
+            // logback to output anything to the log file or stdout/stderr. That is the reason here to printStackTrace.
+            e.printStackTrace();
             logger.error("Exception:", e);
         }
     }
