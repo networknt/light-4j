@@ -16,12 +16,14 @@
 
 package com.networknt.status;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.config.Config;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.IllegalFormatException;
 import java.util.Map;
 
@@ -44,6 +46,9 @@ public class Status {
 
     // default severity
     public static final String defaultSeverity = "ERROR";
+    public static final String SHOW_METADATA = "showMetadata";
+    public static final String SHOW_DESCRIPTION = "showDescription";
+    public static final String SHOW_MESSAGE = "showMessage";
 
     // status serialization bean
     // allows API implementations to provide their own Status serialization mechanism
@@ -54,6 +59,10 @@ public class Status {
     private String severity;
     private String message;
     private String description;
+    private Map<String, Object> metadata;
+    private boolean showMetadata;
+    private boolean showDescription;
+    private boolean showMessage;
 
     static {
         ModuleRegistry.registerModule(Status.class.getName(), config, null);
@@ -85,6 +94,33 @@ public class Status {
             this.statusCode = (Integer) map.get("statusCode");
             this.message = (String) map.get("message");
             this.description = (String) map.get("description");
+            try {
+                this.description = format(this.description, args);
+            } catch (IllegalFormatException e) {
+//                logger.warn(format("Error formatting description of status %s", code), e);
+            }
+            if ((this.severity = (String) map.get("severity")) == null)
+                this.severity = defaultSeverity;
+
+        }
+    }
+
+    /**
+     * Construct a status object based on error code and a list of arguments. It is
+     * the most popular way to create status object from status.yml definition.
+     *
+     * @param code Error Code
+     * @param args A list of arguments that will be populated into the error description
+     */
+    public Status(final String code, final Map<String, Object> metadata, final Object... args) {
+        this.code = code;
+        @SuppressWarnings("unchecked")
+        Map<String, Object> map = (Map<String, Object>) config.get(code);
+        if (map != null) {
+            this.statusCode = (Integer) map.get("statusCode");
+            this.message = (String) map.get("message");
+            this.description = (String) map.get("description");
+            this.metadata = metadata;
             try {
                 this.description = format(this.description, args);
             } catch (IllegalFormatException e) {
@@ -188,16 +224,57 @@ public class Status {
         return severity;
     }
 
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
+    }
+
+    /**
+     * put key value pair to the metadata
+     * @param key key of the entry
+     * @param value value of the entry
+     */
+    public void putMetadata(String key, Object value) {
+        if (this.metadata == null) {
+            this.metadata = new HashMap<>();
+        }
+        this.metadata.put(key, value);
+    }
+
     @Override
     public String toString() {
+        showMessage = config.get(SHOW_MESSAGE) == null ? true : (boolean)config.get(SHOW_MESSAGE);
+        showMetadata = config.get(SHOW_METADATA) == null ? false : (boolean)config.get(SHOW_METADATA);
+        showDescription = config.get(SHOW_DESCRIPTION) == null ? true : (boolean)config.get(SHOW_DESCRIPTION);
         if (statusSerializer != null) {
             return statusSerializer.serializeStatus(this);
         } else {
-            return "{\"statusCode\":" + getStatusCode()
-                    + ",\"code\":\"" + getCode()
-                    + "\",\"message\":\""
-                    + getMessage() + "\",\"description\":\""
-                    + getDescription() + "\",\"severity\":\"" + getSeverity() + "\"}";
+            StringBuilder sb = new StringBuilder();
+            sb.append("{")
+            .append("\"statusCode\":" + getStatusCode())
+            .append(",\"code\":\"" + getCode());
+            if (showMessage) {
+                sb.append("\",\"message\":\"" + getMessage());
+            }
+            if (showDescription) {
+                sb.append("\",\"description\":\"" + getDescription());
+            }
+            if (showMetadata && getMetadata() != null) {
+                try {
+                    sb.append("\",\"metadata\":" + Config.getInstance().getMapper().writeValueAsString(getMetadata()));
+                } catch (JsonProcessingException e) {
+                    logger.error("cannot parse metadata for status:" + getStatusCode(), e);
+                }
+                sb.append(",\"severity\":\"" + getSeverity());
+            } else {
+                sb.append("\",\"severity\":\"" + getSeverity());
+            }
+            sb.append("\"}");
+
+            return sb.toString();
         }
     }
 }
