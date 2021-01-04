@@ -23,6 +23,7 @@ import com.networknt.utility.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.IllegalFormatException;
 import java.util.Map;
 
@@ -237,6 +238,9 @@ public class Status {
      * @param value value of the entry
      */
     public void putMetadata(String key, Object value) {
+        if (this.metadata == null) {
+            this.metadata = new HashMap<>();
+        }
         this.metadata.put(key, value);
     }
 
