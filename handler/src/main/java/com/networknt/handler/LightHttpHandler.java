@@ -74,6 +74,24 @@ public interface LightHttpHandler extends HttpHandler {
     }
 
     /**
+     * This method is used to construct a standard error status with metadata in JSON format from an error code.
+     *
+     * @param exchange HttpServerExchange
+     * @param code     error code
+     * @param metadata additional metadata info
+     * @param args     arguments for error description
+     */
+    default void setExchangeStatus(HttpServerExchange exchange, String code, Map<String, Object> metadata, final Object... args) {
+        Status status = new Status(code, args);
+        if (status.getStatusCode() == 0) {
+            // There is no entry in status.yml for this particular error code.
+            status = new Status(ERROR_NOT_DEFINED, code);
+        }
+        status.setMetadata(metadata);
+        setExchangeStatus(exchange, status);
+    }
+
+    /**
      * There are situations that the downstream service returns an error status response and we just
      * want to bubble up to the caller and eventually to the original caller.
      *

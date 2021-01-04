@@ -17,17 +17,26 @@
 package com.networknt.status;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.config.Config;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by steve on 23/09/16.
  */
-@RunWith(SeparateClassloaderTestRunner.class)
+@RunWith(PowerMockRunner.class)
+@PowerMockIgnore({"javax.*", "org.xml.sax.*", "org.apache.log4j.*", "java.xml.*", "com.sun.*"})
 public class StatusDefaultTest {
 
     @Test
@@ -69,6 +78,91 @@ public class StatusDefaultTest {
         Status status = new Status(400, "ERR11000", "INVALID_AUTH_TOKEN","Incorrect signature or malformed token in authorization header", "SEVERE");
         System.out.println(status);
         Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"INVALID_AUTH_TOKEN\",\"description\":\"Incorrect signature or malformed token in authorization header\",\"severity\":\"SEVERE\"}", status.toString());
+    }
+
+    @PrepareForTest({Config.class})
+    @Test
+    public void testToStringWithMetadata() throws JsonProcessingException {
+        initStatusConfig(true, true, true);
+
+        Status status = new Status("ERR11000", Map.of("metaKey", Map.of("nestedKey", "nestedValue")), "parameter name", "original url");
+        System.out.println(status);
+        String expected = "{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"metadata\":{\"metaKey\":{\"nestedKey\":\"nestedValue\"}},\"severity\":\"ERROR\"}";
+        ObjectMapper mapper = new ObjectMapper();
+        Assert.assertEquals(expected, status.toString());
+        HashMap<String, Object> deSerialized = mapper.readValue(expected, new TypeReference<HashMap<String, Object>>() {
+        });
+        Assert.assertEquals(deSerialized.get("statusCode"), 400);
+        Assert.assertEquals(deSerialized.get("code"), "ERR11000");
+        Assert.assertEquals(deSerialized.get("message"), "VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING");
+        Assert.assertEquals(deSerialized.get("description"), "Query parameter parameter name is required on path original url but not found in request.");
+        Map<String, Object> meta = (Map<String, Object>) deSerialized.get("metadata");
+        Assert.assertNotNull(meta.get("metaKey"));
+        Map<String, Object> nested = (Map<String, Object>) meta.get("metaKey");
+        Assert.assertEquals(nested.get("nestedKey"), "nestedValue");
+    }
+
+    @PrepareForTest({Config.class})
+    @Test
+    public void testToStringWithNullMetadata() {
+        initStatusConfig(true, true, true);
+
+        Status status = new Status("ERR11000", "parameter name", "original url");
+        System.out.println(status);
+        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"severity\":\"ERROR\"}", status.toString());
+    }
+
+    @PrepareForTest({Config.class})
+    @Test
+    public void testToStringWithoutMetadata() {
+        initStatusConfig(true, false, true);
+
+        Status status = new Status("ERR11000", Map.of("metaKey", "metaValue"), "parameter name", "original url");
+        System.out.println(status);
+        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"severity\":\"ERROR\"}", status.toString());
+    }
+
+    @PrepareForTest({Config.class})
+    @Test
+    public void testToStringWithoutMessage() {
+        initStatusConfig(false, true, true);
+
+        Status status = new Status("ERR11000", Map.of("metaKey", "metaValue"), "parameter name", "original url");
+        System.out.println(status);
+        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"metadata\":{\"metaKey\":\"metaValue\"},\"severity\":\"ERROR\"}", status.toString());
+    }
+
+    @PrepareForTest({Config.class})
+    @Test
+    public void testToStringWithoutDescription() {
+        initStatusConfig(true, true, false);
+
+        Status status = new Status("ERR11000", Map.of("metaKey", "metaValue"), "parameter name", "original url");
+        System.out.println(status);
+        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"metadata\":{\"metaKey\":\"metaValue\"},\"severity\":\"ERROR\"}", status.toString());
+    }
+
+    @PrepareForTest({Config.class})
+    @Test
+    public void testToStringWithoutAnything() {
+        initStatusConfig(false, false, false);
+
+        Status status = new Status("ERR11000", Map.of("metaKey", "metaValue"), "parameter name", "original url");
+        System.out.println(status);
+        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"severity\":\"ERROR\"}", status.toString());
+    }
+
+    private void initStatusConfig(boolean showMessage, boolean showMetadata, boolean showDescription) {
+        Map<String, Object> statusConfig = Config.getInstance().getJsonMapConfig("status");
+        statusConfig.put("showMessage", showMessage);
+        statusConfig.put("showMetadata", showMetadata);
+        statusConfig.put("showDescription", showDescription);
+
+        Config configInstance = Config.getInstance();
+        Config spyInstance = Mockito.spy(configInstance);
+        PowerMockito.mockStatic(Config.class);
+        PowerMockito.when(Config.getInstance()).thenReturn(spyInstance);
+        Mockito.doReturn(statusConfig).when(spyInstance).getJsonMapConfig("status");
     }
 
     @Test
