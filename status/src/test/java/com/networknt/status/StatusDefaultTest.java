@@ -17,6 +17,7 @@
 package com.networknt.status;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.config.Config;
 import org.junit.Assert;
@@ -28,6 +29,7 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -80,12 +82,24 @@ public class StatusDefaultTest {
 
     @PrepareForTest({Config.class})
     @Test
-    public void testToStringWithMetadata() {
+    public void testToStringWithMetadata() throws JsonProcessingException {
         initStatusConfig(true, true, true);
 
-        Status status = new Status("ERR11000", Map.of("metaKey", "metaValue"), "parameter name", "original url");
+        Status status = new Status("ERR11000", Map.of("metaKey", Map.of("nestedKey", "nestedValue")), "parameter name", "original url");
         System.out.println(status);
-        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"metadata\":\"{\"metaKey\":\"metaValue\"}\",\"severity\":\"ERROR\"}", status.toString());
+        String expected = "{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"metadata\":{\"metaKey\":{\"nestedKey\":\"nestedValue\"}},\"severity\":\"ERROR\"}";
+        ObjectMapper mapper = new ObjectMapper();
+        Assert.assertEquals(expected, status.toString());
+        HashMap<String, Object> deSerialized = mapper.readValue(expected, new TypeReference<HashMap<String, Object>>() {
+        });
+        Assert.assertEquals(deSerialized.get("statusCode"), 400);
+        Assert.assertEquals(deSerialized.get("code"), "ERR11000");
+        Assert.assertEquals(deSerialized.get("message"), "VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING");
+        Assert.assertEquals(deSerialized.get("description"), "Query parameter parameter name is required on path original url but not found in request.");
+        Map<String, Object> meta = (Map<String, Object>) deSerialized.get("metadata");
+        Assert.assertNotNull(meta.get("metaKey"));
+        Map<String, Object> nested = (Map<String, Object>) meta.get("metaKey");
+        Assert.assertEquals(nested.get("nestedKey"), "nestedValue");
     }
 
     @PrepareForTest({Config.class})
@@ -115,7 +129,7 @@ public class StatusDefaultTest {
 
         Status status = new Status("ERR11000", Map.of("metaKey", "metaValue"), "parameter name", "original url");
         System.out.println(status);
-        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"metadata\":\"{\"metaKey\":\"metaValue\"}\",\"severity\":\"ERROR\"}", status.toString());
+        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"metadata\":{\"metaKey\":\"metaValue\"},\"severity\":\"ERROR\"}", status.toString());
     }
 
     @PrepareForTest({Config.class})
@@ -125,7 +139,7 @@ public class StatusDefaultTest {
 
         Status status = new Status("ERR11000", Map.of("metaKey", "metaValue"), "parameter name", "original url");
         System.out.println(status);
-        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"metadata\":\"{\"metaKey\":\"metaValue\"}\",\"severity\":\"ERROR\"}", status.toString());
+        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"metadata\":{\"metaKey\":\"metaValue\"},\"severity\":\"ERROR\"}", status.toString());
     }
 
     @PrepareForTest({Config.class})

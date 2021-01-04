@@ -264,12 +264,14 @@ public class Status {
             }
             if (showMetadata && getMetadata() != null) {
                 try {
-                    sb.append("\",\"metadata\":\"" + Config.getInstance().getMapper().writeValueAsString(getMetadata()));
+                    sb.append("\",\"metadata\":" + Config.getInstance().getMapper().writeValueAsString(getMetadata()));
                 } catch (JsonProcessingException e) {
                     logger.error("cannot parse metadata for status:" + getStatusCode(), e);
                 }
+                sb.append(",\"severity\":\"" + getSeverity());
+            } else {
+                sb.append("\",\"severity\":\"" + getSeverity());
             }
-            sb.append("\",\"severity\":\"" + getSeverity());
             sb.append("\"}");
 
             return sb.toString();
