@@ -298,7 +298,7 @@ public class Status {
         return sb.toString();
     }
 
-    private static Map<String, Object> getConfig() {
+    public static Map<String, Object> getConfig() {
         return Config.getInstance().getJsonMapConfig(CONFIG_NAME);
     }
 
