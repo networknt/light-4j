@@ -257,29 +257,22 @@ public class Status {
         if (statusSerializer != null) {
             return statusSerializer.serializeStatus(this);
         } else {
-            StringBuilder sb = new StringBuilder();
-            sb.append("{")
-                    .append("\"statusCode\":" + getStatusCode())
-                    .append(",\"code\":\"" + getCode())
-                    .append("\",\"message\":\"" + getMessage())
-                    .append("\",\"description\":\"" + getDescription());
-            if (getMetadata() != null) {
-                try {
-                    sb.append("\",\"metadata\":" + Config.getInstance().getMapper().writeValueAsString(getMetadata()));
-                } catch (JsonProcessingException e) {
-                    logger.error("cannot parse metadata for status:" + getStatusCode(), e);
-                }
-                sb.append(",\"severity\":\"" + getSeverity());
-            } else {
-                sb.append("\",\"severity\":\"" + getSeverity());
-            }
-            sb.append("\"}");
-
-            return sb.toString();
+            return toStringConditionally(true, true, true);
         }
     }
 
-    public String toStringConditionally(boolean showMessage, boolean showDescription, boolean showMetadata) {
+    /**
+     * This method is used to construct a Status with fields conditionally.
+     *
+     * @return JSON style String of Status
+     */
+    public String toStringConditionally() {
+
+        return toStringConditionally(shouldShowMessage(), shouldShowDescription(), shouldShowMetadata());
+    }
+
+    private String toStringConditionally(boolean showMessage, boolean showDescription, boolean showMetadata) {
+
         StringBuilder sb = new StringBuilder();
         sb.append("{")
                 .append("\"statusCode\":" + getStatusCode())

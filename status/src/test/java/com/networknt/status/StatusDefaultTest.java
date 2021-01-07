@@ -89,7 +89,7 @@ public class StatusDefaultTest {
         System.out.println(status);
         String expected = "{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"metadata\":{\"metaKey\":{\"nestedKey\":\"nestedValue\"}},\"severity\":\"ERROR\"}";
         ObjectMapper mapper = new ObjectMapper();
-        Assert.assertEquals(expected, status.toStringConditionally(true, true, true));
+        Assert.assertEquals(expected, status.toStringConditionally());
         HashMap<String, Object> deSerialized = mapper.readValue(expected, new TypeReference<HashMap<String, Object>>() {
         });
         Assert.assertEquals(deSerialized.get("statusCode"), 400);
@@ -111,7 +111,7 @@ public class StatusDefaultTest {
         System.out.println(status);
         String expected = "{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"metadata\":{\"metaKey\":{\"nestedKey\":\"nestedValue\"}},\"severity\":\"ERROR\"}";
         Assert.assertEquals(expected, status.toString());
-        Assert.assertEquals(status.toString(), status.toStringConditionally(true, true, true));
+        Assert.assertEquals(status.toString(), status.toStringConditionally());
     }
 
     @PrepareForTest({Config.class})
@@ -130,8 +130,8 @@ public class StatusDefaultTest {
         initStatusConfig(true, true, false);
 
         Status status = new Status("ERR11000", Map.of("metaKey", "metaValue"), "parameter name", "original url");
-        System.out.println(status.toStringConditionally(true, true, false));
-        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"severity\":\"ERROR\"}", status.toStringConditionally(true, true, false));
+        System.out.println(status.toStringConditionally());
+        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"severity\":\"ERROR\"}", status.toStringConditionally());
     }
 
     @PrepareForTest({Config.class})
@@ -141,7 +141,7 @@ public class StatusDefaultTest {
 
         Status status = new Status("ERR11000", Map.of("metaKey", "metaValue"), "parameter name", "original url");
         System.out.println(status);
-        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"metadata\":{\"metaKey\":\"metaValue\"},\"severity\":\"ERROR\"}", status.toStringConditionally(false, true, true));
+        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"description\":\"Query parameter parameter name is required on path original url but not found in request.\",\"metadata\":{\"metaKey\":\"metaValue\"},\"severity\":\"ERROR\"}", status.toStringConditionally());
     }
 
     @PrepareForTest({Config.class})
@@ -151,7 +151,7 @@ public class StatusDefaultTest {
 
         Status status = new Status("ERR11000", Map.of("metaKey", "metaValue"), "parameter name", "original url");
         System.out.println(status);
-        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"metadata\":{\"metaKey\":\"metaValue\"},\"severity\":\"ERROR\"}", status.toStringConditionally(true, false, true));
+        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"message\":\"VALIDATOR_REQUEST_PARAMETER_QUERY_MISSING\",\"metadata\":{\"metaKey\":\"metaValue\"},\"severity\":\"ERROR\"}", status.toStringConditionally());
     }
 
     @PrepareForTest({Config.class})
@@ -161,7 +161,7 @@ public class StatusDefaultTest {
 
         Status status = new Status("ERR11000", Map.of("metaKey", "metaValue"), "parameter name", "original url");
         System.out.println(status);
-        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"severity\":\"ERROR\"}", status.toStringConditionally(false, false, false));
+        Assert.assertEquals("{\"statusCode\":400,\"code\":\"ERR11000\",\"severity\":\"ERROR\"}", status.toStringConditionally());
     }
 
     private void initStatusConfig(boolean showMessage, boolean showDescription, boolean showMetadata) {

@@ -137,6 +137,6 @@ public interface LightHttpHandler extends HttpHandler {
             auditInfo.put(Constants.STACK_TRACE, Arrays.toString(elements));
         }
         exchange.getResponseSender().send(
-                status.toStringConditionally(Status.shouldShowMessage(), Status.shouldShowDescription(), Status.shouldShowMetadata()));
+                status.toStringConditionally());
     }
 }
