@@ -42,7 +42,6 @@ public class Status {
     private static final Logger logger = LoggerFactory.getLogger(Status.class);
 
     public static final String CONFIG_NAME = "status";
-    public static final Map<String, Object> config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
 
     // default severity
     public static final String defaultSeverity = "ERROR";
@@ -60,12 +59,9 @@ public class Status {
     private String message;
     private String description;
     private Map<String, Object> metadata;
-    private boolean showMetadata;
-    private boolean showDescription;
-    private boolean showMessage;
 
     static {
-        ModuleRegistry.registerModule(Status.class.getName(), config, null);
+        ModuleRegistry.registerModule(Status.class.getName(), getConfig(), null);
         try {
             statusSerializer = SingletonServiceFactory.getBean(StatusSerializer.class);
         } catch (ExceptionInInitializerError e) {
@@ -89,7 +85,7 @@ public class Status {
     public Status(final String code, final Object... args) {
         this.code = code;
         @SuppressWarnings("unchecked")
-        Map<String, Object> map = (Map<String, Object>) config.get(code);
+        Map<String, Object> map = (Map<String, Object>) getConfig().get(code);
         if (map != null) {
             this.statusCode = (Integer) map.get("statusCode");
             this.message = (String) map.get("message");
@@ -115,7 +111,7 @@ public class Status {
     public Status(final String code, final Map<String, Object> metadata, final Object... args) {
         this.code = code;
         @SuppressWarnings("unchecked")
-        Map<String, Object> map = (Map<String, Object>) config.get(code);
+        Map<String, Object> map = (Map<String, Object>) getConfig().get(code);
         if (map != null) {
             this.statusCode = (Integer) map.get("statusCode");
             this.message = (String) map.get("message");
@@ -232,6 +228,18 @@ public class Status {
         this.metadata = metadata;
     }
 
+    public static boolean shouldShowMetadata() {
+        return getConfig().get(SHOW_METADATA) == null ? false : (boolean)getConfig().get(SHOW_METADATA);
+    }
+
+    public static boolean shouldShowMessage() {
+        return getConfig().get(SHOW_MESSAGE) == null ? false : (boolean)getConfig().get(SHOW_MESSAGE);
+    }
+
+    public static boolean shouldShowDescription() {
+        return getConfig().get(SHOW_DESCRIPTION) == null ? true : (boolean)getConfig().get(SHOW_DESCRIPTION);
+    }
+
     /**
      * put key value pair to the metadata
      * @param key key of the entry
@@ -246,23 +254,16 @@ public class Status {
 
     @Override
     public String toString() {
-        showMessage = config.get(SHOW_MESSAGE) == null ? true : (boolean)config.get(SHOW_MESSAGE);
-        showMetadata = config.get(SHOW_METADATA) == null ? false : (boolean)config.get(SHOW_METADATA);
-        showDescription = config.get(SHOW_DESCRIPTION) == null ? true : (boolean)config.get(SHOW_DESCRIPTION);
         if (statusSerializer != null) {
             return statusSerializer.serializeStatus(this);
         } else {
             StringBuilder sb = new StringBuilder();
             sb.append("{")
-            .append("\"statusCode\":" + getStatusCode())
-            .append(",\"code\":\"" + getCode());
-            if (showMessage) {
-                sb.append("\",\"message\":\"" + getMessage());
-            }
-            if (showDescription) {
-                sb.append("\",\"description\":\"" + getDescription());
-            }
-            if (showMetadata && getMetadata() != null) {
+                    .append("\"statusCode\":" + getStatusCode())
+                    .append(",\"code\":\"" + getCode())
+                    .append("\",\"message\":\"" + getMessage())
+                    .append("\",\"description\":\"" + getDescription());
+            if (getMetadata() != null) {
                 try {
                     sb.append("\",\"metadata\":" + Config.getInstance().getMapper().writeValueAsString(getMetadata()));
                 } catch (JsonProcessingException e) {
@@ -277,4 +278,35 @@ public class Status {
             return sb.toString();
         }
     }
+
+    public String toStringConditionally(boolean showMessage, boolean showDescription, boolean showMetadata) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{")
+                .append("\"statusCode\":" + getStatusCode())
+                .append(",\"code\":\"" + getCode());
+        if (showMessage) {
+            sb.append("\",\"message\":\"" + getMessage());
+        }
+        if (showDescription) {
+            sb.append("\",\"description\":\"" + getDescription());
+        }
+        if (showMetadata && getMetadata() != null) {
+            try {
+                sb.append("\",\"metadata\":" + Config.getInstance().getMapper().writeValueAsString(getMetadata()));
+            } catch (JsonProcessingException e) {
+                logger.error("cannot parse metadata for status:" + getStatusCode(), e);
+            }
+            sb.append(",\"severity\":\"" + getSeverity());
+        } else {
+            sb.append("\",\"severity\":\"" + getSeverity());
+        }
+        sb.append("\"}");
+
+        return sb.toString();
+    }
+
+    private static Map<String, Object> getConfig() {
+        return Config.getInstance().getJsonMapConfig(CONFIG_NAME);
+    }
+
 }
