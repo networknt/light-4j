@@ -121,7 +121,7 @@ SUC10308:
   severity: NA
   description: The request and all future requests should be repeated with another URI
 
-# 10000-11000 Light Java Framework validation errors
+# 10000-10999 Light Java Framework validation errors
 ERR10000:
   statusCode: 401
   code: ERR10000
@@ -448,7 +448,7 @@ ERR10064:
   message: EMPTY_LAMBDA_RESPONSE
   description: Empty lambda function response for %s.
 
-# 11000-11500 swagger-validator errors
+# 11000-11499 swagger-validator errors
 ERR11000:
   statusCode: 400
   code: ERR11000
@@ -854,7 +854,7 @@ ERR11638:
   description: Error while access filesystem with file %s and error message %s.
 
 
-# OAuth2 service error 12000-13000
+# OAuth2 service error 12000-12999
 
 ERR12000:
   statusCode: 400
@@ -1168,7 +1168,7 @@ ERR12109:
   message: LOGGING_LEVEL_NOT_PROVIDED
   description: Logging level is not provided
 
-# http2client error 13000-14000
+# http2client error 13000-13999
 ERR13001:
   statusCode: 403
   code: ERR13001
