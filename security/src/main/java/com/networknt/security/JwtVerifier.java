@@ -353,8 +353,7 @@ public class JwtVerifier {
             String key = OauthHelper.getKey(keyRequest);
             logger.debug("Got Json Web Key '{}' for kid: {}", key, kid);
             return new JsonWebKeySet(key).getJsonWebKeys();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error("Exception: ", e);
             logger.error(new Status(GET_KEY_ERROR).toString());
             throw new RuntimeException(e);
