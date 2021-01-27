@@ -23,6 +23,7 @@ import com.networknt.client.oauth.SignKeyRequest;
 import com.networknt.client.oauth.TokenKeyRequest;
 import com.networknt.config.Config;
 import com.networknt.exception.ExpiredTokenException;
+import com.networknt.status.Status;
 import com.networknt.utility.FingerPrintUtil;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.JsonWebKeySet;
@@ -68,6 +69,7 @@ import java.util.regex.Pattern;
  */
 public class JwtVerifier {
     static final Logger logger = LoggerFactory.getLogger(JwtVerifier.class);
+    static final String GET_KEY_ERROR = "ERR10065";
 
     public static final String KID = "kid";
     public static final String SECURITY_CONFIG = "security";
@@ -353,6 +355,7 @@ public class JwtVerifier {
             return new JsonWebKeySet(key).getJsonWebKeys();
         } catch (Exception e) {
             logger.error("Exception: ", e);
+            logger.error(new Status(GET_KEY_ERROR).toString());
             throw new RuntimeException(e);
         }
     }
