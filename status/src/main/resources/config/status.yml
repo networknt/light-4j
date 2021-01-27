@@ -447,11 +447,6 @@ ERR10064:
   code: ERR10064
   message: EMPTY_LAMBDA_RESPONSE
   description: Empty lambda function response for %s.
-ERR10065:
-  statusCode: 400
-  code: ERR10065
-  message: OAUTH_KEY_ERROR
-  description: Unable to download jwk set.
 
 # 11000-11499 swagger-validator errors
 ERR11000:
