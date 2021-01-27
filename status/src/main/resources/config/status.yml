@@ -451,7 +451,7 @@ ERR10065:
   statusCode: 400
   code: ERR10065
   message: OAUTH_KEY_ERROR
-  description: Error happened when getting Oauth key.
+  description: Unable to download jwk set.
 
 # 11000-11499 swagger-validator errors
 ERR11000:
