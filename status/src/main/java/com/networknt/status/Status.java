@@ -233,7 +233,7 @@ public class Status {
     }
 
     public static boolean shouldShowMessage() {
-        return getConfig().get(SHOW_MESSAGE) == null ? false : (boolean)getConfig().get(SHOW_MESSAGE);
+        return getConfig().get(SHOW_MESSAGE) == null ? true : (boolean)getConfig().get(SHOW_MESSAGE);
     }
 
     public static boolean shouldShowDescription() {
