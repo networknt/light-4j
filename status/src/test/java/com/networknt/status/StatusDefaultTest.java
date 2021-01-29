@@ -60,6 +60,13 @@ public class StatusDefaultTest {
     }
 
     @Test
+    public void testToStringConditionallyWithDefault() {
+        Status status = new Status("ERR10001");
+        System.out.println(status.toStringConditionally());
+        Assert.assertEquals("{\"statusCode\":401,\"code\":\"ERR10001\",\"message\":\"AUTH_TOKEN_EXPIRED\",\"description\":\"Jwt token in authorization header expired\",\"severity\":\"ERROR\"}", status.toStringConditionally());
+    }
+
+    @Test
     public void testToStringWithArgs() {
         Status status = new Status("ERR11000", "parameter name", "original url");
         System.out.println(status);
