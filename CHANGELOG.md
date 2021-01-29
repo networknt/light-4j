@@ -1,5 +1,12 @@
 # Change Log
 
+## [1.6.31](https://github.com/networknt/light-4j/tree/1.6.31) (2021-01-29)
+
+
+**Merged pull requests:**
+
+
+- fixes \#883 output an error message in the service module if the implm… [\#892](https://github.com/networknt/light-4j/pull/892) ([stevehu](https://github.com/stevehu))
 ## [1.6.30](https://github.com/networknt/light-4j/tree/1.6.30) (2020-12-22)
 
 
