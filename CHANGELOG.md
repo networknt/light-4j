@@ -1,5 +1,25 @@
 # Change Log
 
+## [2.0.23](https://github.com/networknt/light-4j/tree/2.0.23) (2021-01-29)
+
+
+**Merged pull requests:**
+
+
+- issue \#904   fix message is not displayed by default [\#905](https://github.com/networknt/light-4j/pull/905) ([BalloonWen](https://github.com/BalloonWen))
+- fixes \#902 add an error code for light-chaos-monkey [\#903](https://github.com/networknt/light-4j/pull/903) ([stevehu](https://github.com/stevehu))
+- revert issue \#898 [\#901](https://github.com/networknt/light-4j/pull/901) ([BalloonWen](https://github.com/BalloonWen))
+- Feat/\#898 oauth key [\#900](https://github.com/networknt/light-4j/pull/900) ([BalloonWen](https://github.com/BalloonWen))
+- Feat/\#898 oauth key [\#899](https://github.com/networknt/light-4j/pull/899) ([BalloonWen](https://github.com/BalloonWen))
+- Fixing other ranges [\#896](https://github.com/networknt/light-4j/pull/896) ([jaswalkiranavtar](https://github.com/jaswalkiranavtar))
+- issue \#894 show metadaata, description, message separately [\#895](https://github.com/networknt/light-4j/pull/895) ([BalloonWen](https://github.com/BalloonWen))
+- Fixing range to make it consistent with others [\#893](https://github.com/networknt/light-4j/pull/893) ([jaswalkiranavtar](https://github.com/jaswalkiranavtar))
+- Feat/\#884 add metadata to Status [\#889](https://github.com/networknt/light-4j/pull/889) ([BalloonWen](https://github.com/BalloonWen))
+- fixes \#883 output an error message in the service module if the implm… [\#892](https://github.com/networknt/light-4j/pull/892) ([stevehu](https://github.com/stevehu))
+- fixes \#890 move the ByteUtil from light-portal to light-4j utility mo… [\#891](https://github.com/networknt/light-4j/pull/891) ([stevehu](https://github.com/stevehu))
+- Fix for 887 [\#888](https://github.com/networknt/light-4j/pull/888) ([helloalbin](https://github.com/helloalbin))
+- fixes \#885 add two status codes for lambda invoker handler for light-… [\#886](https://github.com/networknt/light-4j/pull/886) ([stevehu](https://github.com/stevehu))
+- Fix/\#876  LightHttpHandler is getting auditOnError and auditStackTrace config properly. [\#882](https://github.com/networknt/light-4j/pull/882) ([BalloonWen](https://github.com/BalloonWen))
 ## [2.0.22](https://github.com/networknt/light-4j/tree/2.0.22) (2020-12-22)
 
 
