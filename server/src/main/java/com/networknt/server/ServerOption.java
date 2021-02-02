@@ -25,7 +25,8 @@ public enum ServerOption {
     SERVER_STRING("serverString"),
     ALWAYS_SET_DATE("alwaysSetDate"),
     MAX_TRANSFER_FILE_SIZE("maxTransferFileSize"),
-    ALLOW_UNESCAPED_CHARACTERS_IN_URL("allowUnescapedCharactersInUrl");
+    ALLOW_UNESCAPED_CHARACTERS_IN_URL("allowUnescapedCharactersInUrl"),
+    SHUTDOWN_TIMEOUT("shutdownTimeout");
 
     private final String value;
 
@@ -107,6 +108,12 @@ public enum ServerOption {
             case ALLOW_UNESCAPED_CHARACTERS_IN_URL:
                 if (value == null) {
                     serverConfig.setAllowUnescapedCharactersInUrl(false);
+                }
+                return true;
+            case SHUTDOWN_TIMEOUT:
+                if (value == null || (int) value <= 0) {
+                    serverConfig.setShutdownTimeout(10);
+                    return false;
                 }
                 return true;
             default:
