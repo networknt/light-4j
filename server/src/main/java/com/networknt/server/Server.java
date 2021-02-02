@@ -267,6 +267,7 @@ public class Server {
             server = builder.setBufferSize(serverConfig.getBufferSize()).setIoThreads(serverConfig.getIoThreads())
                     // above seems slightly faster in some configurations
                     .setSocketOption(Options.BACKLOG, serverConfig.getBacklog())
+                    .setServerOption(UndertowOptions.SHUTDOWN_TIMEOUT, serverConfig.getShutdownTimeout())
                     .setServerOption(UndertowOptions.ALWAYS_SET_KEEP_ALIVE, false) // don't send a keep-alive header for
                     // HTTP/1.1 requests, as it is not required
                     .setServerOption(UndertowOptions.ALWAYS_SET_DATE, serverConfig.isAlwaysSetDate())
@@ -357,7 +358,7 @@ public class Server {
             logger.info("Starting graceful shutdown.");
             gracefulShutdownHandler.shutdown();
             try {
-                gracefulShutdownHandler.awaitShutdown(60 * 1000);
+                gracefulShutdownHandler.awaitShutdown(getServerConfig().getShutdownGracefulPeriod());
             } catch (InterruptedException e) {
                 logger.error("Error occurred while waiting for pending requests to complete.", e);
             }
