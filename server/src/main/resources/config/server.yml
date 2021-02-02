@@ -82,6 +82,11 @@ maxPort: ${server.maxPort:2500}
 # Allows teams to audit the value and set it according to their release management process
 buildNumber: ${server.buildNumber:latest}
 
+# Shutdown gracefully wait period in milliseconds
+# In this period, it allows the in-flight requests to complete but new requests are not allowed. It needs to be set
+# based on the slowest request possible.
+shutdownGracefulPeriod: ${server.shutdownGracefulPeriod:2000}
+
 # -----------------------------------------------------------------------------------------------------------
 # The following parameters are for advanced users to fine tune the service in a container environment. Please leave
 # these values default if you do not understand. For more info, visit https://doc.networknt.com/concern/server/
