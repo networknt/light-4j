@@ -16,7 +16,6 @@
 
 package com.networknt.config;
 
-import junit.framework.TestCase;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -88,5 +87,49 @@ public class TestCentralizedManagement {
         testMap.put("key", "${TEST.emptyString: value}");
         CentralizedManagement.mergeMap(testMap);
         Assert.assertEquals("", testMap.get("key"));
+    }
+
+    @Test
+    // happy pass
+    public void testMergeKey() {
+        Map<String, Object> map = Config.getInstance().getJsonMapConfig("testKeyInject");
+        Map<String, Object> mapAfterInjection = Config.getInstance().getJsonMapConfig("testKeyInject_expect");
+        Assert.assertEquals(mapAfterInjection, map);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testMap_key_notAllowEmptyStringOverwrite() {
+        Map<String, Object> testMap = new HashMap<>();
+        testMap.put("${TEST.emptyString: key}", "value");
+        CentralizedManagement.mergeMap(testMap);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testMap_key_notAllowNullOverwrite() {
+        Map<String, Object> testMap = new HashMap<>();
+        testMap.put("${TEST.null: key}", "value");
+        CentralizedManagement.mergeMap(testMap);
+    }
+
+    @Test
+    public void testMap_key_mergeApplied_mutatesInPlaceCorrectly() {
+        Map<String, Object> testMap = new HashMap<>();
+        testMap.put("${TEST.string}", "value");
+        CentralizedManagement.mergeMap(testMap);
+        Assert.assertEquals(testMap.get("test").toString(), "value");
+    }
+
+    @Test(expected = ConfigException.class)
+    public void testMap_key_mergeWhenFieldNotInValues_throwsException() {
+        Map<String, Object> testMap = new HashMap<>();
+        testMap.put("${TEST.somethingNotInValues}", "value");
+        CentralizedManagement.mergeMap(testMap);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testMap_key_keyMustBeString() {
+        Map<String, Object> testMap = new HashMap<>();
+        testMap.put("${TEST.double: 1.1}", "value");
+        CentralizedManagement.mergeMap(testMap);
     }
 }
