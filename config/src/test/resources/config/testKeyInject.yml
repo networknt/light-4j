@@ -1,0 +1,12 @@
+#key1 test inject key with default value, test inject key of Map type
+${key1}:
+  #key2 test inject key with content other than inject pattern
+  key2${key2:_suffix}:
+    #key3 test inject key without default value, test inject key of String type
+    ${key3}: val3
+    key4: val4
+    #key5 test inject key of List type
+    ${key5}:
+      - list1
+      - list2
+    key6${key6}: val6

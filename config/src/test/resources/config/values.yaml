@@ -10,3 +10,7 @@ TEST.emptyString: ""
 password.escapeValue: def$g
 password.sql1: SELECT JSON_VALUE(abc, '\$.foo.bar') FROM def
 password.sql2: SELECT JSON_VALUE(abc, '$.foo.bar') FROM def
+key1: key11
+key3: key33
+key5: key55
+key6: key66
