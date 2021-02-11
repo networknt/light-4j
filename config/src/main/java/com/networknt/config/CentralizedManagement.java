@@ -18,6 +18,7 @@ package com.networknt.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +49,7 @@ public class CentralizedManagement {
         if (m1 instanceof Map) {
             Iterator<Object> fieldNames = ((Map<Object, Object>) m1).keySet().iterator();
             String fieldName = null;
+            Map<String, Object> mapWithInjectedKey = new HashMap<>();
             while (fieldNames.hasNext()) {
                 fieldName = String.valueOf(fieldNames.next());
                 Object field1 = ((Map<String, Object>) m1).get(fieldName);
@@ -61,7 +63,18 @@ public class CentralizedManagement {
                         ((Map<String, Object>) m1).put(fieldName, injectValue);
                     }
                 }
+                // post order, in case the key of configuration can also be injected.
+                Object injectedFieldName = ConfigInjection.getInjectValue(fieldName);
+                // only inject when key has been changed
+                if (!fieldName.equals(injectedFieldName)) {
+                    validateInjectedFieldName(fieldName, injectedFieldName);
+                    // the map is unmodifiable during iterator, so put in another map and put it back after iteration.
+                    mapWithInjectedKey.put((String)ConfigInjection.getInjectValue(fieldName), field1);
+                    fieldNames.remove();
+                }
             }
+            // put back those updated keys
+            ((Map<String, Object>) m1).putAll(mapWithInjectedKey);
         } else if (m1 instanceof List) {
             for (int i = 0; i < ((List<Object>) m1).size(); i++) {
                 Object field1 = ((List<Object>) m1).get(i);
@@ -74,6 +87,18 @@ public class CentralizedManagement {
                     ((List<Object>) m1).set(i, injectValue);
                 }
             }
+        }
+    }
+
+    private static void validateInjectedFieldName(String fieldName, Object injectedFieldName) {
+        if (injectedFieldName == null) {
+            throw new RuntimeException("the overwritten value cannot be null for key:" + fieldName);
+        }
+        if (!(injectedFieldName instanceof String)) {
+            throw new RuntimeException("the overwritten value for key has to be a String" + fieldName);
+        }
+        if(((String) injectedFieldName).isBlank()) {
+            throw new RuntimeException("the overwritten value cannot be empty for key:" + fieldName);
         }
     }
 
