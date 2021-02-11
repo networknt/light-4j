@@ -9,3 +9,4 @@ ${key1}:
     ${key5}:
       - list1
       - list2
+    key6${key6}: val6
