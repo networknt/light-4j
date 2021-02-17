@@ -115,7 +115,7 @@ public class JwtVerifier {
                 jwksMap = new HashMap<>();
                 List<JsonWebKey> jwkList = getJsonWebKeySetForToken();
                 if (jwkList == null || jwkList.isEmpty()) {
-                    throw new RuntimeException("cannot resolve JWK");
+                    throw new RuntimeException("cannot get JWK from OAuth server");
                 }
                 jwksMap.put(jwkList.get(0).getKeyId(), jwkList);
                 logger.debug("Successfully cached JWK");
@@ -336,8 +336,9 @@ public class JwtVerifier {
                         throw new RuntimeException("no JWK for kid: " + kid);
                     }
                     jwksMap.put(jwkList.get(0).getKeyId(), jwkList);
+                    logger.info("Got Json web key set for kid: {} from Oauth server", kid);
                 }
-                logger.debug("Got Json web key set for kid: {} from local cache", kid);
+                logger.debug("Got Json web key set from local cache");
                 verificationKeyResolver = new JwksVerificationKeyResolver(jwkList);
                 break;
         }
@@ -345,7 +346,7 @@ public class JwtVerifier {
     }
 
     /**
-     * Retrieve JWK set from oauth server with the given kid
+     * Retrieve JWK set from oauth server
      *
      * @return {@link List} of {@link JsonWebKey}
      */
