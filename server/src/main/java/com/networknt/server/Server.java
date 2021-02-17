@@ -29,6 +29,7 @@ import com.networknt.service.SingletonServiceFactory;
 import com.networknt.status.Status;
 import com.networknt.switcher.SwitcherUtil;
 import com.networknt.utility.Constants;
+import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.NetUtils;
 import com.networknt.config.TlsUtil;
 import io.undertow.Handlers;
@@ -119,6 +120,14 @@ public class Server {
             // merge status.yml and app-status.yml if app-status.yml is provided
             mergeStatusConfig();
 
+            // register the module to /server/info
+            List<String> masks = new ArrayList<>();
+            masks.add("keystorePass");
+            masks.add("keyPass");
+            masks.add("truststorePass");
+            ModuleRegistry.registerModule(Server.class.getName(), Config.getInstance().getJsonMapConfigNoCache(SERVER_CONFIG_NAME), masks);
+
+            // start the server
             start();
         } catch (RuntimeException e) {
             // Handle any exception encountered during server start-up
