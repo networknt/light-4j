@@ -110,8 +110,15 @@ public class JwtVerifier {
                     .build();
         }
         switch ((String) jwtConfig.getOrDefault(JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT)) {
+            // init getting JWK
             case JWT_KEY_RESOLVER_JWKS:
                 jwksMap = new HashMap<>();
+                List<JsonWebKey> jwkList = getJsonWebKeySetForToken();
+                if (jwkList == null || jwkList.isEmpty()) {
+                    throw new RuntimeException("cannot get JWK from OAuth server");
+                }
+                jwksMap.put(jwkList.get(0).getKeyId(), jwkList);
+                logger.debug("Successfully cached JWK");
                 break;
             case JWT_KEY_RESOLVER_X509CERT:
                 // load local public key certificates only if bootstrapFromKeyService is false
@@ -322,36 +329,35 @@ public class JwtVerifier {
                 verificationKeyResolver = x509VerificationKeyResolver;
                 break;
             case JWT_KEY_RESOLVER_JWKS:
-                List<JsonWebKey> jwkList = jwksMap == null ? null : jwksMap.get(kid);
+                List<JsonWebKey> jwkList = jwksMap.get(kid);
                 if (jwkList == null) {
-                    jwkList = getJsonWebKeySetForToken(kid);
-                    if (jwkList != null) {
-                        if (jwksMap == null) jwksMap = new HashMap<>();  // null if bootstrapFromKeyService is true
-                        jwksMap.put(kid, jwkList);
+                    jwkList = getJsonWebKeySetForToken();
+                    if (jwkList == null || jwkList.isEmpty()) {
+                        throw new RuntimeException("no JWK for kid: " + kid);
                     }
-                } else {
-                    logger.debug("Got Json web key set for kid: {} from local cache", kid);
+                    jwksMap.put(jwkList.get(0).getKeyId(), jwkList);
+                    logger.info("Got Json web key set for kid: {} from Oauth server", kid);
                 }
-                if (jwkList != null) {
-                    verificationKeyResolver = new JwksVerificationKeyResolver(jwkList);
-                }
+                logger.debug("Got Json web key set from local cache");
+                verificationKeyResolver = new JwksVerificationKeyResolver(jwkList);
                 break;
         }
         return verificationKeyResolver;
     }
 
     /**
-     * Retrieve JWK set from oauth server with the given kid
-     * @param kid
-     * @return
+     * Retrieve JWK set from oauth server
+     *
+     * @return {@link List} of {@link JsonWebKey}
      */
-    private List<JsonWebKey> getJsonWebKeySetForToken(String kid) {
+    private List<JsonWebKey> getJsonWebKeySetForToken() {
         // the jwk indicator will ensure that the kid is not concat to the uri for path parameter.
-        TokenKeyRequest keyRequest = new TokenKeyRequest(kid, true);
+        // the kid is not needed to get JWK
+        TokenKeyRequest keyRequest = new TokenKeyRequest(null, true);
         try {
-            logger.debug("Getting Json Web Key for kid: {} from {}", kid, keyRequest.getServerUrl());
+            logger.debug("Getting Json Web Key list from {}", keyRequest.getServerUrl());
             String key = OauthHelper.getKey(keyRequest);
-            logger.debug("Got Json Web Key '{}' for kid: {}", key, kid);
+            logger.debug("Got Json Web Key list from {}", keyRequest.getServerUrl());
             return new JsonWebKeySet(key).getJsonWebKeys();
         } catch (Exception e) {
             logger.error("Exception: ", e);
