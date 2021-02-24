@@ -37,8 +37,8 @@ public class CookiesDumper extends AbstractDumper implements IRequestDumpable, I
      */
     @Override
     public void dumpRequest(Map<String, Object> result) {
-        Map<String, Cookie> cookiesMap = exchange.getRequestCookies();
-        dumpCookies(cookiesMap, "requestCookies");
+        Iterable<Cookie> iterable = exchange.requestCookies();
+        dumpCookies(iterable, "requestCookies");
         this.putDumpInfoTo(result);
 
     }
@@ -49,17 +49,19 @@ public class CookiesDumper extends AbstractDumper implements IRequestDumpable, I
      */
     @Override
     public void dumpResponse(Map<String, Object> result) {
-        Map<String, Cookie> cookiesMap = exchange.getResponseCookies();
-        dumpCookies(cookiesMap, "responseCookies");
+        Iterable<Cookie> iterable = exchange.responseCookies();
+        dumpCookies(iterable, "responseCookies");
         this.putDumpInfoTo(result);
     }
 
     /**
      * put cookies info to cookieMap
-     * @param cookiesMap Map of cookies
+     * @param iterable Iterable of cookies
      */
-    private void dumpCookies(Map<String, Cookie> cookiesMap, String maskKey) {
-        cookiesMap.forEach((key, cookie) -> {
+    private void dumpCookies(Iterable<Cookie> iterable, String maskKey) {
+        Iterator<Cookie> iterator = iterable.iterator();
+        while(iterator.hasNext()) {
+            Cookie cookie = iterator.next();
             if(!config.getRequestFilteredCookies().contains(cookie.getName())) {
                 List<Map<String, String>> cookieInfoList = new ArrayList<>();
                 //mask cookieValue
@@ -68,9 +70,10 @@ public class CookiesDumper extends AbstractDumper implements IRequestDumpable, I
                 cookieInfoList.add(new HashMap<String, String>(){{put(DumpConstants.COOKIE_DOMAIN, cookie.getDomain());}});
                 cookieInfoList.add(new HashMap<String, String>(){{put(DumpConstants.COOKIE_PATH, cookie.getPath());}});
                 cookieInfoList.add(new HashMap<String, String>(){{put(DumpConstants.COOKIE_EXPIRES, cookie.getExpires() == null ? "" : cookie.getExpires().toString());}});
-                this.cookieMap.put(key, cookieInfoList);
+                this.cookieMap.put(cookie.getName(), cookieInfoList);
             }
-        });
+
+        }
     }
 
     /**
