@@ -1,5 +1,12 @@
 # Change Log
 
+## [1.6.32](https://github.com/networknt/light-4j/tree/1.6.32) (2021-02-24)
+
+
+**Merged pull requests:**
+
+
+- fixes \#920 update CookiesDumper in DumpHandler after upgrade to under… [\#921](https://github.com/networknt/light-4j/pull/921) ([stevehu](https://github.com/stevehu))
 ## [1.6.31](https://github.com/networknt/light-4j/tree/1.6.31) (2021-01-29)
 
 
