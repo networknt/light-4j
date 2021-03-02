@@ -375,6 +375,11 @@
                 <artifactId>jaeger-tracing</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>http-entity</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <!-- External dependencies -->
 
             <dependency>

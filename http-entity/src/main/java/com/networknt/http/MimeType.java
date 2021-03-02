@@ -19,7 +19,6 @@ package com.networknt.http;
 
 import com.networknt.utility.CollectionUtils;
 import com.networknt.utility.ObjectUtils;
-import com.networknt.utility.LinkedCaseInsensitiveMap;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
@@ -174,7 +173,7 @@ public class MimeType implements Comparable<MimeType>, Serializable {
 		this.type = type.toLowerCase(Locale.ENGLISH);
 		this.subtype = subtype.toLowerCase(Locale.ENGLISH);
 		if (!CollectionUtils.isEmpty(parameters)) {
-			Map<String, String> map = new LinkedCaseInsensitiveMap<>(parameters.size(), Locale.ENGLISH);
+			Map<String, String> map = new LinkedHashMap<>();
 			parameters.forEach((parameter, value) -> {
 				checkParameters(parameter, value);
 				map.put(parameter, value);

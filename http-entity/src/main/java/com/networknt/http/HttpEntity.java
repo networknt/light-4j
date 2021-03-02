@@ -17,8 +17,8 @@
 package com.networknt.http;
 
 
-import com.networknt.utility.MultiValueMap;
 import com.networknt.utility.ObjectUtils;
+import io.undertow.util.HeaderMap;
 
 /**
  * Represents an HTTP request or response entity, consisting of headers and body.
@@ -49,6 +49,7 @@ import com.networknt.utility.ObjectUtils;
  *
  * @author Arjen Poutsma
  * @author Juergen Hoeller
+ * @author Steve Hu
  * @since 3.0.2
  * @param <T> the body type
  * @see #getBody()
@@ -62,7 +63,7 @@ public class HttpEntity<T> {
 	public static final HttpEntity<?> EMPTY = new HttpEntity<>();
 
 
-	private final HttpHeaders headers;
+	private final HeaderMap headers;
 
 	private final T body;
 
@@ -86,7 +87,7 @@ public class HttpEntity<T> {
 	 * Create a new {@code HttpEntity} with the given headers and no body.
 	 * @param headers the entity headers
 	 */
-	public HttpEntity(MultiValueMap<String, String> headers) {
+	public HttpEntity(HeaderMap headers) {
 		this(null, headers);
 	}
 
@@ -95,9 +96,9 @@ public class HttpEntity<T> {
 	 * @param body the entity body
 	 * @param headers the entity headers
 	 */
-	public HttpEntity(T body, MultiValueMap<String, String> headers) {
+	public HttpEntity(T body, HeaderMap headers) {
 		this.body = body;
-		this.headers = HttpHeaders.readOnlyHttpHeaders(headers != null ? headers : new HttpHeaders());
+		this.headers = headers;
 	}
 
 
@@ -105,7 +106,7 @@ public class HttpEntity<T> {
 	 * Returns the headers of this entity.
 	 * @return HttpHeaders
 	 */
-	public HttpHeaders getHeaders() {
+	public HeaderMap getHeaders() {
 		return this.headers;
 	}
 
