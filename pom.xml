@@ -158,6 +158,7 @@
         <module>monad-result</module>
         <module>logger-config</module>
         <module>jaeger-tracing</module>
+        <module>http-entity</module>
     </modules>
 
     <dependencyManagement>
