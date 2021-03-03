@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -145,7 +146,7 @@ public class MetricsHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(MetricsHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        ModuleRegistry.registerModule(MetricsHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), List.of("influxdbPass"));
     }
 
     private void incCounterForStatusCode(int statusCode, Map<String, String> commonTags, Map<String, String> tags) {
