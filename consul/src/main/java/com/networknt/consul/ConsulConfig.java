@@ -17,6 +17,7 @@
 package com.networknt.consul;
 
 public class ConsulConfig {
+    public static final String CONFIG_NAME = "consul";
     String consulUrl;
     String consulToken;
     int maxReqPerConn;

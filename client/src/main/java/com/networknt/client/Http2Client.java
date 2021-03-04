@@ -114,6 +114,10 @@ public class Http2Client {
     static final String TRUST_STORE_PASSWORD_PROPERTY = "javax.net.ssl.trustStorePassword";
     static final String SERVICE_ID = "serviceId";
     static String callerId = "unknown";
+    static String MASK_KEY_CLIENT_SECRET = "client_secret";
+    static String MASK_KEY_TRUST_STORE_PASS = "trustStorePass";
+    static String MASK_KEY_KEY_STORE_PASS = "keyStorePass";
+    static String MASK_KEY_KEY_PASS = "keyPass";
 
     // TokenManager is to manage cached jwt tokens for this client.
     private TokenManager tokenManager = TokenManager.getInstance();
@@ -122,7 +126,7 @@ public class Http2Client {
     private Http2ClientConnectionPool http2ClientConnectionPool = Http2ClientConnectionPool.getInstance();
 
     static {
-        List<String> masks = new ArrayList<>();
+        List<String> masks = List.of(MASK_KEY_CLIENT_SECRET, MASK_KEY_TRUST_STORE_PASS, MASK_KEY_KEY_STORE_PASS, MASK_KEY_KEY_PASS);
         ModuleRegistry.registerModule(Http2Client.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), masks);
         // take the best effort to get the serviceId from the server.yml file. It might not exist if this is a standalone client.
         boolean injectCallerId = ClientConfig.get().isInjectCallerId();
