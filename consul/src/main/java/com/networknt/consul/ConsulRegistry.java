@@ -26,6 +26,7 @@ import com.networknt.registry.support.AbstractRegistry;
 import com.networknt.status.Status;
 import com.networknt.utility.ConcurrentHashSet;
 import com.networknt.utility.Constants;
+import com.networknt.utility.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,6 +59,8 @@ public class ConsulRegistry extends AbstractRegistry {
     private ConcurrentHashMap<String, ConcurrentHashMap<URL, NotifyListener>> notifyListeners = new ConcurrentHashMap<>();
     private ThreadPoolExecutor notifyExecutor;
 
+    static String MASK_KEY_CONSUL_TOKEN = "consulToken";
+
     public ConsulRegistry(URL url, ConsulClient client) {
         super(url);
         this.client = client;
@@ -70,6 +73,7 @@ public class ConsulRegistry extends AbstractRegistry {
         ArrayBlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<Runnable>(20000);
         notifyExecutor = new ThreadPoolExecutor(10, 30, 30 * 1000, TimeUnit.MILLISECONDS, workQueue);
         logger.info("ConsulRegistry init finish.");
+        ModuleRegistry.registerModule(ConsulRegistry.class.getName(), Config.getInstance().getJsonMapConfigNoCache(ConsulConfig.CONFIG_NAME), List.of(MASK_KEY_CONSUL_TOKEN));
     }
 
     public ConcurrentHashMap<String, ConcurrentHashMap<URL, NotifyListener>> getNotifyListeners() {
