@@ -26,6 +26,7 @@ import com.networknt.registry.URLParamType;
 import com.networknt.registry.support.AbstractRegistry;
 import com.networknt.utility.ConcurrentHashSet;
 import com.networknt.utility.Constants;
+import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +59,7 @@ public class PortalRegistry extends AbstractRegistry {
         }
         lookupInterval = getUrl().getIntParameter(URLParamType.registrySessionTimeout.getName(), PortalRegistryConstants.DEFAULT_LOOKUP_INTERVAL);
         logger.info("PortalRegistry init finish.");
+        ModuleRegistry.registerModule(PortalRegistry.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
     @Override
