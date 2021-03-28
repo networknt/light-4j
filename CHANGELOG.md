@@ -8,7 +8,9 @@
 
 - mask server info sensitive data [\#927](https://github.com/networknt/light-4j/pull/927) ([BalloonWen](https://github.com/BalloonWen))
 - Issue924 [\#925](https://github.com/networknt/light-4j/pull/925) ([stevehu](https://github.com/stevehu))
-- combine proxy info and target servers' info [\#923](https://github.com/networknt/light-4j/pull/923) ([BalloonWen](https://github.com/BalloonWen))
+- combine proxy info and target servers info [\#923](https://github.com/networknt/light-4j/pull/923) ([BalloonWen](https://github.com/BalloonWen))
+
+
 ## [2.0.24](https://github.com/networknt/light-4j/tree/2.0.24) (2021-02-24)
 
 
