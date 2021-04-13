@@ -48,7 +48,7 @@ bootstrapStoreName: ${server.bootstrapStoreName:bootstrap.truststore}
 bootstrapStorePass: ${server.bootstrapStorePass:password}
 
 # Unique service identifier. Used in service registration and discovery etc.
-serviceId: ${server.serviceId:com.networknt.petstore-1.0.0}
+serviceId: ${server.serviceId:}
 
 # Flag to enable self service registration. This should be turned on on official test and production. And
 # dyanmicPort should be enabled if any orchestration tool is used like Kubernetes.

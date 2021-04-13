@@ -16,18 +16,22 @@
 
 package com.networknt.correlation;
 
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.Util;
+
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 /**
  * This is a handler that checks if X-Correlation-Id exists in request header and put it into
@@ -44,7 +48,11 @@ import org.slf4j.MDC;
 public class CorrelationHandler implements MiddlewareHandler {
     private static final Logger logger = LoggerFactory.getLogger(CorrelationHandler.class);
     private static final String CID = "cId";
+    private static final String SID = "sId";
+    private static final String SERVICEID_KEY = "serviceId";
     private static final String CONFIG_NAME = "correlation";
+    private static final String SERVER_CONFIG_NAME = "server";
+    private String serviceId = "";
 
     public static CorrelationConfig config =
             (CorrelationConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, CorrelationConfig.class);
@@ -59,6 +67,13 @@ public class CorrelationHandler implements MiddlewareHandler {
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         // check if the cid is in the request header
         String cId = exchange.getRequestHeaders().getFirst(HttpStringConstants.CORRELATION_ID);
+        
+        //Fetching serviceId to set in MDC
+        Map<String, Object> serverConfig = Config.getInstance().getJsonMapConfigNoCache(SERVER_CONFIG_NAME);
+        if (serverConfig != null) {
+        	serviceId = (String) serverConfig.get(SERVICEID_KEY);
+        }
+        
         if(cId == null) {
         	// if not set, check the autgen flag and generate if set to true
         	if(config.isAutogenCorrelationID()) {
@@ -66,14 +81,28 @@ public class CorrelationHandler implements MiddlewareHandler {
 	            cId = Util.getUUID();
 	            exchange.getRequestHeaders().put(HttpStringConstants.CORRELATION_ID, cId);
 	            String tId = exchange.getRequestHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
+	            
+	            MDC.put(CID, cId);
+	            if(!"".equalsIgnoreCase(serviceId)) {
+		            MDC.put(SID, serviceId);
+	            } else {
+		            MDC.put(SID, MDC.get(SID));
+	            }
+	            
 	            if(tId != null && logger.isInfoEnabled()) {
 	                logger.info("Associate traceability Id " + tId + " with correlation Id " + cId);
                 }
         	} 
+        } else {
+        	// Add the cId and sId into MDC so that all log statement will have cId and sId as part of it.
+            MDC.put(CID, cId);
+            if(!"".equalsIgnoreCase(serviceId)) {
+	            MDC.put(SID, serviceId);
+            } else {
+	            MDC.put(SID, MDC.get(SID));
+            }        
         }
-        // Add the cId into MDC so that all log statement will have cId as part of it.
-        MDC.put(CID, cId);
-        //logger.debug("Init cId:" + cId);
+        
         Handler.next(exchange, next);
     }
 

@@ -34,6 +34,7 @@ public class ServerConfigTest {
         ServerConfig serverConfig = (ServerConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServerConfig.class);
         Assert.assertNull(serverConfig.getEnvironment());
         Assert.assertEquals("petstore", serverConfig.getServiceName());
+        Assert.assertEquals("com.networknt.petstore-1.0.0", serverConfig.getServiceId());
     }
 
     @Test

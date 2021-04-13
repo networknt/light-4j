@@ -31,7 +31,10 @@ import com.networknt.switcher.SwitcherUtil;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.NetUtils;
+import com.networknt.utility.Util;
 import com.networknt.config.TlsUtil;
+import com.networknt.correlation.CorrelationConfig;
+
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
@@ -65,6 +68,7 @@ public class Server {
 
     static final Logger logger = LoggerFactory.getLogger(Server.class);
     public static final String SERVER_CONFIG_NAME = "server";
+    public static final String CORRELATION_CONFIG_NAME = "correlation";
     public static final String SECRET_CONFIG_NAME = "secret";
     public static final String STARTUP_CONFIG_NAME = "startup";
     public static final String CONFIG_LOADER_CLASS = "configLoaderClass";
@@ -77,6 +81,7 @@ public class Server {
 
     // service_id in slf4j MDC
     static final String SID = "sId";
+    static final String CID = "cId";
     // the bound port for the server. For metrics and other queries.
     public static int currentPort;
     // the bound ip for the server. For metrics and other queries
@@ -100,6 +105,9 @@ public class Server {
 
     // When dynamic port is used, this HashSet contains used port so that we just need to check here instead of trying bind.
     private static Set usedPorts;
+    
+    public static CorrelationConfig configCorr = (CorrelationConfig) Config.getInstance().getJsonObjectConfig(CORRELATION_CONFIG_NAME,
+			CorrelationConfig.class);
 
     public static void main(final String[] args) {
         init();
@@ -116,6 +124,10 @@ public class Server {
 
             // this will make sure that all log statement will have serviceId
             MDC.put(SID, config.getServiceId());
+            
+            if(configCorr.isAutogenCorrelationID()) {
+                MDC.put(CID, Util.getUUID());
+            }
 
             // merge status.yml and app-status.yml if app-status.yml is provided
             mergeStatusConfig();
