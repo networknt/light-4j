@@ -1177,6 +1177,88 @@ ERR12109:
   code: ERR12109
   message: LOGGING_LEVEL_NOT_PROVIDED
   description: Logging level is not provided
+# light-mesh error 12200-12299
+ERR12200:
+  statusCode: 404
+  code: ERR12200
+  message: CONSUMER_INSTANCE_NOT_FOUND
+  description: Consumer instance not found for group %s and instance %s
+ERR12201:
+  statusCode: 400
+  code: ERR12201
+  message: CONSUMER_CONFIG_EXCEPTION
+  description: Consumer configuration exception with message %s
+ERR12202:
+  statusCode: 400
+  code: ERR12202
+  message: CONSUMER_ALREADY_EXISTS
+  description: Consumer already exists with id %s
+ERR12203:
+  statusCode: 400
+  code: ERR12203
+  message: INVALID_EMBEDDED_FORMAT
+  description: Invalid embedded format %s
+ERR12204:
+  statusCode: 400
+  code: ERR12204
+  message: CONSUMER_FORMAT_MISMATCH
+  description: The request data format does not match the deserializer for this consumer instance
+ERR12205:
+  statusCode: 400
+  code: ERR12205
+  message: UNEXPECTED_CONSUMER_READ_EXCEPTION
+  description: Unexpected exception in consumer read task with id %s
+ERR12206:
+  statusCode: 400
+  code: ERR12206
+  message: SERIALIZE_SCHEMA_EXCEPTION
+  description: Unexpected exception in serializing %s format with message %s
+ERR12207:
+  statusCode: 400
+  code: ERR12207
+  message: FAILED_TO_COMMIT_OFFSETS
+  description: Failed to commit offsets for consumer id %s with message %s
+ERR12208:
+  statusCode: 400
+  code: ERR12208
+  message: FAILED_TO_GET_SCHEMA
+  description: Failed to get schema with SchemaManager
+ERR12209:
+  statusCode: 400
+  code: ERR12209
+  message: FORMAT_WITH_SCHEMA_ID
+  description: Format exists along with Schema Id for %s in ProduceRequest
+ERR12210:
+  statusCode: 400
+  code: ERR12210
+  message: VERSION_WITH_SCHEMA_ID
+  description: Schema version exists along with Schema Id for %s in ProduceRequest
+ERR12211:
+  statusCode: 400
+  code: ERR12211
+  message: SCHEMA_WITH_SCHEMA_ID
+  description: Raw schema exists along with Schema Id for %s in ProduceRequest
+ERR12212:
+  statusCode: 400
+  code: ERR12212
+  message: FORMAT_WITH_SCHEMA_VERSION
+  description: Format exists along with Schema version for %s in ProduceRequest
+ERR12213:
+  statusCode: 400
+  code: ERR12213
+  message: SCHEMA_WITH_SCHEMA_VERSION
+  description: Raw schema exists along with Schema version for %s in ProduceRequest
+ERR12214:
+  statusCode: 400
+  code: ERR12214
+  message: RAW_SCHEMA_WITHOUT_FORMAT
+  description: Format does not exists along with Raw schema for %s in ProduceRequest
+ERR12215:
+  statusCode: 400
+  code: ERR12215
+  message: FORMAT_WITH_SUBJECT
+  description: Format exists along with Schema subject for %s in ProduceRequest
+
 
 # http2client error 13000-13999
 ERR13001:
@@ -1184,7 +1266,6 @@ ERR13001:
   code: ERR13001
   message: UNABLE_PARSE_SCOPES_FROM_HEADER
   description: Cannot parse scopes from request headers.
-
 # 20000-29999 common error codes within your business domain.
 # It is highly recommended to have your error code shared within your organization or your line of business.
 # In that case, all your services can share the same status.yml which in org default config
