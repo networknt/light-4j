@@ -32,6 +32,10 @@
     <dependencies>
         <dependency>
             <groupId>com.networknt</groupId>
+            <artifactId>utility</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
             <artifactId>config</artifactId>
         </dependency>
         <dependency>

@@ -79,7 +79,7 @@ public class JwtIssuerTest {
         Map<String, String> custom = new HashMap<>();
         custom.put("consumer_application_id", "361");
         custom.put("request_transit", "67");
-        JwtClaims claims = ClaimsUtil.getCustomClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("party.util.reference.read", "server.info.r"), custom, "user");
+        JwtClaims claims = ClaimsUtil.getCustomClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("party.util.reference.read", "server.info.r"), custom, "user admin");
         claims.setExpirationTimeMinutesInTheFuture(5256000);
         String jwt = JwtIssuer.getJwt(claims);
         System.out.println("***LongLived reference JWT***: " + jwt);

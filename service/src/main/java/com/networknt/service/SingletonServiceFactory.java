@@ -17,6 +17,7 @@
 package com.networknt.service;
 
 import com.networknt.config.Config;
+import com.networknt.utility.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
