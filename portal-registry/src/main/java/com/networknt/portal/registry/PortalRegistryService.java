@@ -82,7 +82,8 @@ public class PortalRegistryService {
 
     public PortalRegistryService() {
         if(config.httpCheck) {
-            checkString = ",\"check\":{\"id\":\"%1$s:%2$s:%3$s:%4$s\",\"deregisterCriticalServiceAfter\":" + config.deregisterAfter + ",\"http\":\"" + "%2$s://%3$s:%4$s/health/%5$s" + "\",\"tlsSkipVerify\":true,\"interval\":" + config.checkInterval + "}}";
+            String healthPath = "%2$s://%3$s:%4$s" + config.getHealthPath() + "%5$s";
+            checkString = ",\"check\":{\"id\":\"%1$s:%2$s:%3$s:%4$s\",\"deregisterCriticalServiceAfter\":" + config.deregisterAfter + ",\"http\":\"" + healthPath + "\",\"tlsSkipVerify\":true,\"interval\":" + config.checkInterval + "}}";
         } else {
             checkString = ",\"check\":{\"id\":\"%1$s:%2$s:%3$s:%4$s\",\"deregisterCriticalServiceAfter\":" + config.deregisterAfter + ",\"interval\":" + config.checkInterval + "}}";
         }
