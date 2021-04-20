@@ -23,3 +23,7 @@ httpCheck: ${portalRegistry.httpCheck:false}
 # this is the only option as our portal controller cannot access your internal service to perform a health check.
 # We recommend deploying light-portal internally if you are running services within an internal network for efficiency.
 ttlCheck: ${portalRegistry.ttlCheck:true}
+# The health check path implemented on the server. In most of the cases, it would be /health/ plus the serviceId;
+# however, on a kubernetes cluster, it might be /health/liveness/ in order to differentiate from the /health/readiness/
+# Note that we need to provide the leading and trailing slash in the path definition.
+healthPath: ${portalRegistry.healthPath:/health/}

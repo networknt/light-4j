@@ -25,6 +25,7 @@ public class PortalRegistryConfig {
     int checkInterval;
     boolean httpCheck;
     boolean ttlCheck;
+    String healthPath;
 
     public String getPortalUrl() {
         return portalUrl;
@@ -72,5 +73,13 @@ public class PortalRegistryConfig {
 
     public void setTtlCheck(boolean ttlCheck) {
         this.ttlCheck = ttlCheck;
+    }
+
+    public String getHealthPath() {
+        return healthPath;
+    }
+
+    public void setHealthPath(String healthPath) {
+        this.healthPath = healthPath;
     }
 }
