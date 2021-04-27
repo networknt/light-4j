@@ -1,5 +1,14 @@
 # Change Log
 
+## [2.0.26](https://github.com/networknt/light-4j/tree/2.0.26) (2021-04-27)
+
+
+**Merged pull requests:**
+
+
+- added base path in the HandlerConfig [\#934](https://github.com/networknt/light-4j/pull/934) ([BalloonWen](https://github.com/BalloonWen))
+- fixes \#932 make the health check path configurable in the portal-regi… [\#933](https://github.com/networknt/light-4j/pull/933) ([stevehu](https://github.com/stevehu))
+- fixes \#929 add error codes for the light-mesh kafka-sidecar [\#930](https://github.com/networknt/light-4j/pull/930) ([stevehu](https://github.com/stevehu))
 ## [2.0.25](https://github.com/networknt/light-4j/tree/2.0.25) (2021-03-28)
 
 
