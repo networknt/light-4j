@@ -118,7 +118,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
                 throw new Exception("Failed to register on portal controller: " + statusCode);
             }
         } catch (Exception e) {
-            logger.error("Failed to register on portal controller, Exception:", e);
+            logger.error("Failed to register on portal controller json = " + json + " uri = " + uri, e);
             throw new RuntimeException(e.getMessage());
         } finally {
             client.returnConnection(connection);
