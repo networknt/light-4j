@@ -17,6 +17,7 @@
 package com.networknt.audit;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.jayway.jsonpath.InvalidJsonException;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
@@ -28,6 +29,7 @@ import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.Cookie;
+import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,9 +114,6 @@ public class AuditHandler implements MiddlewareHandler {
             auditFields(auditInfo, auditMap);
         }
 
-        // dump request header, request body, path parameters, query parameters and request cookies according to config
-        auditRequest(exchange, auditMap, auditConfig);
-
         // dump serviceId from server.yml
         if (auditConfig.hasAuditList() && auditConfig.getAuditList().contains(SERVICEID_KEY)) {
             auditServiceId(auditMap);
@@ -122,6 +121,9 @@ public class AuditHandler implements MiddlewareHandler {
 
         if (auditConfig.isStatusCode() || auditConfig.isResponseTime()) {
             exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
+                // dump request header, request body, path parameters, query parameters and request cookies according to config
+                auditRequest(exchange, auditMap, auditConfig);
+
                 if (auditConfig.isStatusCode()) {
                     auditMap.put(STATUS_CODE, exchange1.getStatusCode());
                 }
@@ -210,12 +212,37 @@ public class AuditHandler implements MiddlewareHandler {
     private void auditRequestBody(HttpServerExchange exchange, Map<String, Object> auditMap) {
         // Try to get BodyHandler cached request body string first to prevent unnecessary decoding
         String requestBodyString = exchange.getAttachment(AttachmentConstants.REQUEST_BODY_STRING);
-        if (requestBodyString == null && exchange.getAttachment(AttachmentConstants.REQUEST_BODY) != null) {
-            requestBodyString = exchange.getAttachment(AttachmentConstants.REQUEST_BODY).toString();
+        Object requestBody = exchange.getAttachment(AttachmentConstants.REQUEST_BODY);
+        String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
+        if (requestBodyString == null && requestBody != null) {
+            if (contentType.startsWith("application/json")) {
+                try {
+                    requestBodyString = Config.getInstance().getMapper().writeValueAsString(requestBody);
+                } catch (JsonProcessingException e) {
+                    logger.error("Failed to audit log request body", e);
+                }
+            } else {
+                requestBodyString = requestBody.toString();
+            }
         }
         // Mask requestBody json string if mask enabled
         if (requestBodyString != null) {
-            auditMap.put(REQUEST_BODY_KEY, auditConfig.isMaskEnabled() ? Mask.maskJson(requestBodyString, REQUEST_BODY_KEY) : requestBodyString);
+            if (auditConfig.isMaskEnabled()) {
+                if (contentType.startsWith("application/json")) {
+                    try {
+                        String maskedJsonBody = Mask.maskJson(requestBodyString, REQUEST_BODY_KEY);
+                        auditMap.put(REQUEST_BODY_KEY, maskedJsonBody);
+                    } catch (InvalidJsonException invalidJsonException) {
+                        auditMap.put(REQUEST_BODY_KEY, requestBodyString);
+                        throw invalidJsonException;
+                    }
+                } else {
+                    String maskedString = Mask.maskString(requestBodyString, REQUEST_BODY_KEY);
+                    auditMap.put(REQUEST_BODY_KEY, maskedString);
+                }
+            } else {
+                auditMap.put(REQUEST_BODY_KEY, requestBodyString);
+            }
         }
     }
 

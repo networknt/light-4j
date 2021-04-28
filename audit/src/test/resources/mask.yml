@@ -1,0 +1,6 @@
+string:
+  requestBody:
+    password=[^&]*: password=******
+json:
+  requestBody:
+    "$.account.password": "(.*)"
