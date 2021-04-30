@@ -22,6 +22,8 @@ public class PortalRegistryService {
 
     private int port;
 
+    private String healthPath;
+
     private String checkString;
 
     public String getServiceId() {
@@ -72,6 +74,14 @@ public class PortalRegistryService {
         this.port = port;
     }
 
+    public String getHealthPath() {
+        return healthPath;
+    }
+
+    public void setHealthPath(String healthPath) {
+        this.healthPath = healthPath;
+    }
+
     public String getCheckString() {
         return checkString;
     }
@@ -82,8 +92,7 @@ public class PortalRegistryService {
 
     public PortalRegistryService() {
         if(config.httpCheck) {
-            String healthPath = "%2$s://%3$s:%4$s" + config.getHealthPath() + "%5$s";
-            checkString = ",\"check\":{\"id\":\"%1$s:%2$s:%3$s:%4$s\",\"deregisterCriticalServiceAfter\":" + config.deregisterAfter + ",\"http\":\"" + healthPath + "\",\"tlsSkipVerify\":true,\"interval\":" + config.checkInterval + "}}";
+            checkString = ",\"check\":{\"id\":\"%1$s:%2$s:%3$s:%4$s\",\"deregisterCriticalServiceAfter\":" + config.deregisterAfter + ",\"healthPath\":\"" + config.healthPath + "\",\"tlsSkipVerify\":true,\"interval\":" + config.checkInterval + "}}";
         } else {
             checkString = ",\"check\":{\"id\":\"%1$s:%2$s:%3$s:%4$s\",\"deregisterCriticalServiceAfter\":" + config.deregisterAfter + ",\"interval\":" + config.checkInterval + "}}";
         }
