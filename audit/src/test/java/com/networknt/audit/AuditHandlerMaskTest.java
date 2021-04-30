@@ -94,13 +94,13 @@ public class AuditHandlerMaskTest {
         HttpHandler handler = Handlers.routing()
                 .add(Methods.POST, "/", exchange -> exchange.getResponseSender().send("OK"));
 
-        AuditHandler auditHandler = new AuditHandler();
-        auditHandler.setNext(handler);
-        handler = auditHandler;
-
         BodyHandler bodyHandler = new BodyHandler();
         bodyHandler.setNext(handler);
         handler = bodyHandler;
+
+        AuditHandler auditHandler = new AuditHandler();
+        auditHandler.setNext(handler);
+        handler = auditHandler;
 
         Undertow server = Undertow.builder()
                 .addHttpListener(SERVER_PORT, SERVER_HOST)
@@ -118,7 +118,7 @@ public class AuditHandlerMaskTest {
         }
     }
 
-    private void sendRequest(String requestBody, String contentType) throws Exception {
+    private String sendRequest(String requestBody, String contentType) throws Exception {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
@@ -142,7 +142,7 @@ public class AuditHandlerMaskTest {
             });
 
             latch.await(10, TimeUnit.SECONDS);
-            Assert.assertEquals("OK", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+            return reference.get().getAttachment(Http2Client.RESPONSE_BODY);
         } catch (Exception e) {
             logger.error("IOException: ", e);
             throw new ClientException(e);
@@ -155,39 +155,57 @@ public class AuditHandlerMaskTest {
     public void testMaskJsonRequestBodyWithoutSecret() throws Exception {
         logConsumer.clear();
         String requestBody = "{\"account\":{\"name\":\"John\"}}";
-        sendRequest(requestBody, "application/json");
+        Assert.assertEquals("OK", sendRequest(requestBody, "application/json"));
 
-        assertRequestBody(requestBody);
+        assertRequestBody(200, requestBody);
+    }
+
+    @Test
+    public void testMaskJsonInvalidRequestBodyWithoutSecret() throws Exception {
+        logConsumer.clear();
+        String requestBody = "{\"account\":\"name\":\"John\"}}";
+        Assert.assertNotEquals("OK", sendRequest(requestBody, "application/json"));
+
+        assertRequestBody(400, requestBody);
     }
 
     @Test
     public void testMaskJsonRequestBodyWithSecret() throws Exception {
         logConsumer.clear();
         String requestBody = "{\"account\":{\"password\":\"secret\"}}";
-        sendRequest(requestBody, "application/json");
+        Assert.assertEquals("OK", sendRequest(requestBody, "application/json"));
 
-        assertRequestBody(requestBody.replace("secret", "******"));
+        assertRequestBody(200, requestBody.replace("secret", "******"));
+    }
+
+    @Test
+    public void testMaskJsonInvalidRequestBodyWithSecret() throws Exception {
+        logConsumer.clear();
+        String requestBody = "{\"account\":\"password\":\"secret\"}}";
+        Assert.assertNotEquals("OK", sendRequest(requestBody, "application/json"));
+
+        assertRequestBody(400, requestBody);
     }
 
     @Test
     public void testMaskStringRequestBodyWithoutSecret() throws Exception {
         logConsumer.clear();
         String requestBody = "account=John Smith";
-        sendRequest(requestBody, "text/plain");
+        Assert.assertEquals("OK", sendRequest(requestBody, "text/plain"));
 
-        assertRequestBody(requestBody);
+        assertRequestBody(200, requestBody);
     }
 
     @Test
     public void testMaskStringRequestBodyWithSecret() throws Exception {
         logConsumer.clear();
         String requestBody = "password=secret";
-        sendRequest(requestBody, "text/plain");
+        Assert.assertEquals("OK", sendRequest(requestBody, "text/plain"));
 
-        assertRequestBody(requestBody.replace("secret", "******"));
+        assertRequestBody(200, requestBody.replace("secret", "******"));
     }
 
-    private void assertRequestBody(String expectedRequestBody) throws Exception {
+    private void assertRequestBody(int expectedStatusCode, String expectedRequestBody) throws Exception {
         int count = 0;
         while (count++ < 10 && logConsumer.getLoggedText() == null) {
             Thread.sleep(100);
@@ -197,7 +215,7 @@ public class AuditHandlerMaskTest {
         Assert.assertNotNull(actualRequestBody);
         Map<String, Object> mapValue = JsonMapper.string2Map(actualRequestBody);
         Assert.assertNotNull(mapValue);
-        Assert.assertEquals(200, mapValue.get("statusCode"));
+        Assert.assertEquals(expectedStatusCode, mapValue.get("statusCode"));
         Assert.assertEquals(expectedRequestBody, mapValue.get("requestBody"));
     }
 

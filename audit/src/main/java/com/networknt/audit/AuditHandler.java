@@ -103,26 +103,26 @@ public class AuditHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
         Map<String, Object> auditMap = new LinkedHashMap<>();
         final long start = System.currentTimeMillis();
         auditMap.put(TIMESTAMP, System.currentTimeMillis());
 
-        // dump audit info fields according to config
-        boolean needAuditData = auditInfo != null && auditConfig.hasAuditList();
-        if (needAuditData) {
-            auditFields(auditInfo, auditMap);
-        }
-
-        // dump serviceId from server.yml
-        if (auditConfig.hasAuditList() && auditConfig.getAuditList().contains(SERVICEID_KEY)) {
-            auditServiceId(auditMap);
-        }
-
         if (auditConfig.isStatusCode() || auditConfig.isResponseTime()) {
             exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
+                Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
+                // dump audit info fields according to config
+                boolean needAuditData = auditInfo != null && auditConfig.hasAuditList();
+                if (needAuditData) {
+                    auditFields(auditInfo, auditMap);
+                }
+
                 // dump request header, request body, path parameters, query parameters and request cookies according to config
                 auditRequest(exchange, auditMap, auditConfig);
+
+                // dump serviceId from server.yml
+                if (auditConfig.hasAuditList() && auditConfig.getAuditList().contains(SERVICEID_KEY)) {
+                    auditServiceId(auditMap);
+                }
 
                 if (auditConfig.isStatusCode()) {
                     auditMap.put(STATUS_CODE, exchange1.getStatusCode());
@@ -234,7 +234,6 @@ public class AuditHandler implements MiddlewareHandler {
                         auditMap.put(REQUEST_BODY_KEY, maskedJsonBody);
                     } catch (InvalidJsonException invalidJsonException) {
                         auditMap.put(REQUEST_BODY_KEY, requestBodyString);
-                        throw invalidJsonException;
                     }
                 } else {
                     String maskedString = Mask.maskString(requestBodyString, REQUEST_BODY_KEY);
