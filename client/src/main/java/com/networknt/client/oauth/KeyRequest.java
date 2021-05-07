@@ -16,8 +16,6 @@
 
 package com.networknt.client.oauth;
 
-import com.networknt.client.ClientConfig;
-
 /**
  * This is the generic key request with an id as parameter. The static serverUrl will be used if
  * available. Otherwise, the serviceId will be used to lookup the key service. There are two sub
