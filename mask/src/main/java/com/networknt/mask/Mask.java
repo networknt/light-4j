@@ -223,7 +223,25 @@ public class Mask {
          */
         if(pathList != null && pathList.size() == 1) {
             String path = pathList.get(0);
+            
+            
+            /* I tried to implement as below and its working as expected
+                instead of doing  List values = ctx.read(path);
+
+            Object readValues = ctx.read(path);
+            List values = new ArrayList();
+            if(readValues instanceof String){
+                values.add(readValues);
+            }
+            else {
+                 values = (List)ctx.read(path);
+            }
+            */
+
+
+            //here ctx.read(path) returning string "4586996854721123 and failing on "cannot cast string to list"
             List values = ctx.read(path);
+            
             List maskedValue = new ArrayList();
             //mask each value in the list of the same path
             values.forEach(o -> maskedValue.add(replaceWithMask(o.toString(), MASK_REPLACEMENT_CHAR.charAt(0), expression)));
