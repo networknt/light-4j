@@ -113,6 +113,7 @@ public class ClientRequestComposerProvider {
                     .POST(HttpRequest.BodyPublishers.ofString(composeRequestBody(tokenRequest)))
                     .uri(URI.create(tokenRequest.getServerUrl() + tokenRequest.getUri()))
                     .setHeader(Headers.CONTENT_TYPE_STRING, "application/x-www-form-urlencoded")
+                    .setHeader(Headers.ACCEPT_STRING, "application/json")
                     .setHeader(Headers.AUTHORIZATION_STRING, OauthHelper.getBasicAuthHeader(tokenRequest.getClientId(), tokenRequest.getClientSecret()))
                     .build();
             return request;

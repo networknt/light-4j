@@ -99,6 +99,7 @@ public class OauthHelper {
                         .followRedirects(HttpClient.Redirect.NORMAL)
                         .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
                         .sslContext(Http2Client.createSSLContext());
+                if(logger.isTraceEnabled()) logger.trace("proxyHost = " + tokenRequest.getProxyHost() + " proxyPort = " + tokenRequest.getProxyPort());
                 if(!StringUtils.isBlank(tokenRequest.getProxyHost())) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(tokenRequest.getProxyHost(), tokenRequest.getProxyPort() == 0 ? 443 : tokenRequest.getProxyPort())));
                 if(tokenRequest.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
                 tokenClient = clientBuilder.build();
