@@ -16,6 +16,7 @@
 
 package com.networknt.body;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
@@ -103,7 +104,12 @@ public class BodyHandler implements MiddlewareHandler {
                         exchange.putAttachment(REQUEST_BODY_STRING, unparsedRequestBody);
                     }
                     // attach the parsed request body into exchange if the body parser is enabled
-                    attachJsonBody(exchange, unparsedRequestBody);
+                    try {
+                        attachJsonBody(exchange, unparsedRequestBody);
+                    } catch (JsonParseException jsonParseException) {
+                        exchange.putAttachment(REQUEST_BODY_STRING, unparsedRequestBody);
+                        throw jsonParseException;
+                    }
                 } else if (contentType.startsWith("text/plain")) {
                     InputStream inputStream = exchange.getInputStream();
                     String unparsedRequestBody = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
