@@ -1,5 +1,12 @@
 # Change Log
 
+## [1.6.35](https://github.com/networknt/light-4j/tree/1.6.35) (2021-05-10)
+
+
+**Merged pull requests:**
+
+
+- Fix audit issue \#935 and \#936 [\#937](https://github.com/networknt/light-4j/pull/937) ([jsu216](https://github.com/jsu216))
 ## [1.6.34](https://github.com/networknt/light-4j/tree/1.6.34) (2021-04-27)
 
 
