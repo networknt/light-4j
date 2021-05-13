@@ -132,17 +132,6 @@ public class MaskTest {
         String input = "{\"name\":\"Steve\", \"list\":[{\"name\":\"Josh\", \"creditCardNumber\":\"4586996854721123\"}],\"password\":\"secret\"}";
         String output = Mask.maskJson(input, "testIssue942");
         System.out.println(output);
-        Assert.assertEquals(output, "{\"name\":\"Steve\", \"list\":[{\"name\":\"Josh\", \"creditCardNumber\":\"****************\"}],\"password\":\"secret\"}");
-
-        /*
-        this is test result that I got when using the commented code in Mask.java, when using the original code I am getting ClassCastException.
-        Expected :{"name":"Steve","list":[{"name":"Josh","creditCardNumber":["****************"]}],"password":"secret"}
-        Actual   :{"name":"Steve", "list":[{"name":"Josh", "creditCardNumber":"****************"}],"password":"secret"}
-
-
-        also I am dont understand why in the expected I am getting list of creditCardNumber
-
-         */
+        Assert.assertEquals(output, "{\"name\":\"Steve\",\"list\":[{\"name\":\"Josh\",\"creditCardNumber\":\"****************\"}],\"password\":\"secret\"}");
     }
-    
 }
