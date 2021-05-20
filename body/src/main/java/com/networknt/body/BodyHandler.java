@@ -31,6 +31,8 @@ import io.undertow.server.handlers.form.FormDataParser;
 import io.undertow.server.handlers.form.FormParserFactory;
 import io.undertow.util.AttachmentKey;
 import io.undertow.util.Headers;
+import io.undertow.util.HttpString;
+import io.undertow.util.Methods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,7 +90,10 @@ public class BodyHandler implements MiddlewareHandler {
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         // parse the body to map or list if content type is application/json
         String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
-        if (contentType != null) {
+        HttpString method = exchange.getRequestMethod();
+        boolean hasBody = method.equals(Methods.POST) || method.equals(Methods.PUT) || method.equals(Methods.PATCH);
+        // bypass the body parser if body doesn't exist.
+        if (hasBody && contentType != null) {
             if (exchange.isInIoThread()) {
                 exchange.dispatch(this);
                 return;
