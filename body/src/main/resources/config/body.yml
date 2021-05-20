@@ -3,3 +3,5 @@
 enabled: true
 # cache request body
 cacheRequestBody: false
+# maxBuffers to cache the body for ProxyBodyHandler to read the body. 64K by default.
+maxBuffers: 65536

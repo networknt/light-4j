@@ -22,6 +22,7 @@ package com.networknt.body;
 public class BodyConfig {
     boolean enabled;
     boolean cacheRequestBody;
+    int maxBuffers;
 
     public BodyConfig() {
     }
@@ -40,5 +41,13 @@ public class BodyConfig {
 
     public void setCacheRequestBody(boolean cacheRequestBody) {
         this.cacheRequestBody = cacheRequestBody;
+    }
+
+    public int getMaxBuffers() {
+        return maxBuffers;
+    }
+
+    public void setMaxBuffers(int maxBuffers) {
+        this.maxBuffers = maxBuffers;
     }
 }
