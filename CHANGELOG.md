@@ -1,5 +1,19 @@
 # Change Log
 
+## [2.0.27](https://github.com/networknt/light-4j/tree/2.0.27) (2021-05-25)
+
+
+**Merged pull requests:**
+
+
+- fixes \#950 make the body.yml externalizable with the values.yml [\#951](https://github.com/networknt/light-4j/pull/951) ([stevehu](https://github.com/stevehu))
+- url config loader [\#947](https://github.com/networknt/light-4j/pull/947) ([xlongwei](https://github.com/xlongwei))
+- fixes \#948 Add ProxyBodyHandler for sidecar to intercept the body [\#949](https://github.com/networknt/light-4j/pull/949) ([stevehu](https://github.com/stevehu))
+- fixes \#942 handle only one element in an array for masking [\#946](https://github.com/networknt/light-4j/pull/946) ([stevehu](https://github.com/stevehu))
+- Issue942 [\#945](https://github.com/networknt/light-4j/pull/945) ([ssoifer](https://github.com/ssoifer))
+- fixes \#943 update client.yml to move the OAuth token proxyHost and pr… [\#944](https://github.com/networknt/light-4j/pull/944) ([stevehu](https://github.com/stevehu))
+- fixes \#940 update OauthHelper getTokenResult to check before apply pr… [\#941](https://github.com/networknt/light-4j/pull/941) ([stevehu](https://github.com/stevehu))
+- fixes \#938 add healthPath to the portalRegistryService for controller [\#939](https://github.com/networknt/light-4j/pull/939) ([stevehu](https://github.com/stevehu))
 ## [2.0.26](https://github.com/networknt/light-4j/tree/2.0.26) (2021-04-27)
 
 
