@@ -69,7 +69,8 @@ public class ServerInfoGetHandler implements LightHttpHandler {
         infoMap.put("deployment", getDeployment());
         infoMap.put("environment", getEnvironment(exchange));
         infoMap.put("security", getSecurity());
-        infoMap.put("specification", Config.getInstance().getJsonMapConfigNoCache("openapi"));
+        // remove this as it is a rest specific. The specification is loaded in the specific handler.
+        // infoMap.put("specification", Config.getInstance().getJsonMapConfigNoCache("openapi"));
         infoMap.put("component", ModuleRegistry.getRegistry());
         return infoMap;
     }
