@@ -654,7 +654,7 @@ ERR11402:
   message: ERROR_WRITING_KEY_FILE
   description: Error writing key file to path %s.
 
-# 11500 - 11599 GraphQL valdator errors
+# 11500 - 11599 GraphQL validator errors
 ERR11500:
   statusCode: 400
   code: ERR11500
@@ -864,7 +864,7 @@ ERR11638:
   description: Error while access filesystem with file %s and error message %s.
 
 
-# OAuth2 service error 12000-12999
+# OAuth2 service error 12000-12099
 
 ERR12000:
   statusCode: 400
@@ -1258,7 +1258,11 @@ ERR12215:
   code: ERR12215
   message: FORMAT_WITH_SUBJECT
   description: Format exists along with Schema subject for %s in ProduceRequest
-
+ERR12216:
+  statusCode: 400
+  code: ERR12216
+  message: PRODUCER_NOT_ENABLED
+  description: The producer startup hook is not enabled in the service.yml
 
 # http2client error 13000-13999
 ERR13001:
