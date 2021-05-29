@@ -49,6 +49,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -75,9 +76,9 @@ public class DefaultConfigLoader implements IConfigLoader{
     public static final String DEFAULT_TARGET_CONFIGS_DIRECTORY ="src/main/resources/config";
 
     public static final String CONFIG_SERVER_URI = "light-config-server-uri";
-    public static final String CONFIG_SERVER_CONFIGS_CONTEXT_ROOT = "/config-server/configs";
-    public static final String CONFIG_SERVER_CERTS_CONTEXT_ROOT = "/config-server/certs";
-    public static final String CONFIG_SERVER_FILES_CONTEXT_ROOT = "/config-server/files";
+    public static final String CONFIG_SERVER_CONFIGS_CONTEXT_ROOT = "/configs";
+    public static final String CONFIG_SERVER_CERTS_CONTEXT_ROOT = "/certs";
+    public static final String CONFIG_SERVER_FILES_CONTEXT_ROOT = "/files";
     public static final String AUTHORIZATION = "config_server_authorization";
     public static final String CLIENT_TRUSTSTORE_PASS = "config_server_client_truststore_password";
     public static final String CLIENT_TRUSTSTORE_LOC = "config_server_client_truststore_location";
@@ -88,9 +89,9 @@ public class DefaultConfigLoader implements IConfigLoader{
     public static final String SERVICE_NAME = "serviceName";
     public static final String SERVICE_VERSION = "serviceVersion";
 
-    public static String lightEnv = System.getProperty(LIGHT_ENV);
-    public static String configServerUri = System.getProperty(CONFIG_SERVER_URI);
-    public static String targetConfigsDirectory = System.getProperty(Config.LIGHT_4J_CONFIG_DIR);
+    public static String lightEnv = null;
+    public static String configServerUri = null;
+    public static String targetConfigsDirectory = null;
 
     // An instance of Jackson ObjectMapper that can be used anywhere else for Json.
     final static ObjectMapper mapper = new ObjectMapper();
@@ -100,18 +101,24 @@ public class DefaultConfigLoader implements IConfigLoader{
 
     @Override
     public void init() {
+        lightEnv = getPropertyOrEnv(LIGHT_ENV);
         if (lightEnv == null) {
             logger.warn("Warning! {} is not provided; defaulting to {}", LIGHT_ENV, DEFAULT_ENV);
             lightEnv = DEFAULT_ENV;
         }
+        targetConfigsDirectory = getPropertyOrEnv(Config.LIGHT_4J_CONFIG_DIR);
         if (targetConfigsDirectory == null) {
             logger.warn("Warning! {} is not provided; defaulting to {}", Config.LIGHT_4J_CONFIG_DIR, DEFAULT_TARGET_CONFIGS_DIRECTORY);
             targetConfigsDirectory = DEFAULT_TARGET_CONFIGS_DIRECTORY;
         }
-
+        configServerUri = getPropertyOrEnv(CONFIG_SERVER_URI);
         if (configServerUri != null) {
             logger.info("Loading configs from config server");
-
+            if(logger.isDebugEnabled()) {
+                logger.debug("light-env:" + lightEnv);
+                logger.debug("targetConfigsDirectory:" + targetConfigsDirectory);
+                logger.debug("configServerUri:" + configServerUri);
+            }
             try {
                 connection = client.connect(new URI(configServerUri), Http2Client.WORKER, client.createXnioSsl(createBootstrapContext()), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
                 String configPath = getConfigServerPath();
@@ -244,8 +251,8 @@ public class DefaultConfigLoader implements IConfigLoader{
     }
 
     private Map<String, Object> getServiceConfigs(String configServerPath) {
-        String authorization = System.getenv(AUTHORIZATION);
-        String verifyHostname = System.getenv(VERIFY_HOST_NAME);
+        String authorization = getPropertyOrEnv(AUTHORIZATION);
+        String verifyHostname = getPropertyOrEnv(VERIFY_HOST_NAME);
 
         Map<String, Object> configs = new HashMap<>();
 
@@ -284,13 +291,13 @@ public class DefaultConfigLoader implements IConfigLoader{
         configPath.append("/").append(startupConfig.get(SERVICE_NAME));
         configPath.append("/").append(startupConfig.get(SERVICE_VERSION));
         configPath.append("/").append(lightEnv);
-        logger.debug("configPath: {}", configPath);
+        if(logger.isDebugEnabled()) logger.debug("configPath: {}", configPath);
         return configPath.toString();
     }
 
     private static KeyStore loadBootstrapTrustStore(){
-        String truststorePassword = System.getenv(CLIENT_TRUSTSTORE_PASS);
-        String truststoreLocation = System.getenv(CLIENT_TRUSTSTORE_LOC);
+        String truststorePassword = getPropertyOrEnv(CLIENT_TRUSTSTORE_PASS);
+        String truststoreLocation = getPropertyOrEnv(CLIENT_TRUSTSTORE_LOC);
         if(truststoreLocation == null) truststoreLocation = Server.getServerConfig().getBootstrapStoreName();
         if(truststorePassword == null) truststorePassword = Server.getServerConfig().getBootstrapStorePass();
 
@@ -337,5 +344,22 @@ public class DefaultConfigLoader implements IConfigLoader{
             throw new RuntimeException("Unable to create SSLContext", e);
         }
         return sslContext;
+    }
+
+    private static String getPropertyOrEnv(String key) {
+        // The key should be in lower case and separated with hyphen.
+        // Always check the -D and then env variable for the key with lower and upper case.
+        String s = System.getProperty(key);
+        if(s == null) {
+            s = System.getenv(key);
+        }
+        if(s == null) {
+            s = System.getenv(key.toUpperCase());
+        }
+        if(s == null) {
+            // Linux convention for the environment variables with underscore.
+            s = System.getenv(key.toUpperCase().replaceAll("-", "_"));
+        }
+        return s;
     }
 }
