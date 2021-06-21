@@ -77,8 +77,10 @@ public class Server {
 
     // service_id in slf4j MDC
     static final String SID = "sId";
-    // the bound port for the server. For metrics and other queries.
-    public static int currentPort;
+    // the bound http port for the server. For metrics and other queries.
+    public static int currentHttpPort = -1;
+    // the bound https port for the server. For metrics and other queries.
+    public static int currentHttpsPort = -1;
     // the bound ip for the server. For metrics and other queries
     public static String currentAddress;
 
@@ -251,13 +253,17 @@ public class Server {
         try {
             Undertow.Builder builder = Undertow.builder();
             if (serverConfig.enableHttps) {
-                port = port < 0 ? serverConfig.getHttpsPort() : port;
+                int p = port < 0 ? serverConfig.getHttpsPort() : port;
                 sslContext = createSSLContext();
-                builder.addHttpsListener(port, serverConfig.getIp(), sslContext);
-            } else if (serverConfig.enableHttp) {
-                port = port < 0 ? serverConfig.getHttpPort() : port;
-                builder.addHttpListener(port, serverConfig.getIp());
-            } else {
+                builder.addHttpsListener(p, serverConfig.getIp(), sslContext);
+                currentHttpsPort = p;
+            }
+            if (serverConfig.enableHttp) {
+                int p = port < 0 ? serverConfig.getHttpPort() : port;
+                builder.addHttpListener(p, serverConfig.getIp());
+                currentHttpPort = p;
+            }
+            if(currentHttpsPort == -1 && currentHttpPort == -1) {
                 throw new RuntimeException(
                         "Unable to start the server as both http and https are disabled in server.yml");
             }
@@ -304,7 +310,6 @@ public class Server {
             return false;
         }
         // at this moment, the port number is bound. save it for later queries
-        currentPort = port;
         currentAddress = getAddress();
         // application level service registry. only be used without docker container.
         if (serverConfig.enableRegistry) {
@@ -323,18 +328,18 @@ public class Server {
         }
 
         if (serverConfig.enableHttp) {
-            System.out.println("Http Server started on ip:" + serverConfig.getIp() + " Port:" + port);
+            System.out.println("Http Server started on ip:" + serverConfig.getIp() + " with HTTP Port:" + currentHttpPort);
             if (logger.isInfoEnabled())
-                logger.info("Http Server started on ip:" + serverConfig.getIp() + " Port:" + port);
+                logger.info("Http Server started on ip:" + serverConfig.getIp() + " with HTTP Port:" + currentHttpPort);
         } else {
             System.out.println("Http port disabled.");
             if (logger.isInfoEnabled())
                 logger.info("Http port disabled.");
         }
         if (serverConfig.enableHttps) {
-            System.out.println("Https Server started on ip:" + serverConfig.getIp() + " Port:" + port);
+            System.out.println("Https Server started on ip:" + serverConfig.getIp() + " with HTTPS Port:" + currentHttpsPort);
             if (logger.isInfoEnabled())
-                logger.info("Https Server started on ip:" + serverConfig.getIp() + " Port:" + port);
+                logger.info("Https Server started on ip:" + serverConfig.getIp() + " with HTTPS Port:" + currentHttpsPort);
         } else {
             System.out.println("Https port disabled.");
             if (logger.isInfoEnabled())
@@ -511,7 +516,7 @@ public class Server {
             Map parameters = new HashMap<>();
             if (serverConfig.getEnvironment() != null)
                 parameters.put(ENV_PROPERTY_KEY, serverConfig.getEnvironment());
-            serviceUrl = new URLImpl(serverConfig.enableHttps ? "https" : "http", currentAddress, currentPort, serviceId, parameters);
+            serviceUrl = new URLImpl(serverConfig.enableHttps ? "https" : "http", currentAddress, serverConfig.enableHttps ? currentHttpsPort : currentHttpPort, serviceId, parameters);
             if (logger.isInfoEnabled()) logger.info("register service: " + serviceUrl.toFullStr());
             registry.register(serviceUrl);
             return serviceUrl;

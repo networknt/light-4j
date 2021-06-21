@@ -86,10 +86,10 @@ public class MetricsHandler implements MiddlewareHandler {
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         if(firstTime) {
-            commonTags.put("api", Server.config.getServiceId());
-            commonTags.put("env", Server.config.getEnvironment());
+            commonTags.put("api", Server.getServerConfig().getServiceId());
+            commonTags.put("env", Server.getServerConfig().getEnvironment());
             commonTags.put("addr", Server.currentAddress);
-            commonTags.put("port", "" + Server.currentPort);
+            commonTags.put("port", "" + (Server.getServerConfig().isEnableHttps() ? Server.currentHttpsPort : Server.currentHttpPort));
             InetAddress inetAddress = Util.getInetAddress();
             commonTags.put("host", inetAddress == null ? "unknown" : inetAddress.getHostName()); // will be container id if in docker.
             if(logger.isDebugEnabled()) {
