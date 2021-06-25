@@ -159,6 +159,8 @@
         <module>logger-config</module>
         <module>jaeger-tracing</module>
         <module>http-entity</module>
+        <module>egress-router</module>
+        <module>ingress-proxy</module>
     </modules>
 
     <dependencyManagement>
