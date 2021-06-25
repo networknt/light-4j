@@ -107,6 +107,7 @@ public class Status {
      *
      * @param code Error Code
      * @param args A list of arguments that will be populated into the error description
+     * @param metadata a map of metadata attributes
      */
     public Status(final String code, final Map<String, Object> metadata, final Object... args) {
         this.code = code;

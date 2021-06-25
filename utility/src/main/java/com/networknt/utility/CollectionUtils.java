@@ -84,6 +84,7 @@ public abstract class CollectionUtils {
      * {@link Collection} implementation specific.
      * @param source the source Collection
      * @param candidates the candidates to search for
+     * @param <E> type
      * @return the first present object, or {@code null} if not found
      */
     @SuppressWarnings("unchecked")
@@ -103,6 +104,7 @@ public abstract class CollectionUtils {
      * Find a single value of the given type in the given Collection.
      * @param collection the Collection to search
      * @param type the type to look for
+     * @param <T> type
      * @return a value of the given type found if there is a clear match,
      * or {@code null} if none or more than one such value found
      */
