@@ -1,0 +1,22 @@
+---
+# Light Router Configuration
+# As this router is built to support discovery and security for light-4j services,
+# the outbound connection is always HTTP 2.0 with TLS enabled.
+
+# If HTTP 2.0 protocol will be accepted from incoming request.
+http2Enabled: true
+
+# If TLS is enabled when accepting incoming request. Should be true on test and prod.
+httpsEnabled: true
+
+# Max request time in milliseconds before timeout to the server.
+maxRequestTime: 1000
+
+# Rewrite Host Header with the target host and port and write X_FORWARDED_HOST with original host
+rewriteHostHeader: true
+
+# Reuse XForwarded for the target XForwarded header
+reuseXForwarded: false
+
+# Max Connection Retries
+maxConnectionRetries: 3
