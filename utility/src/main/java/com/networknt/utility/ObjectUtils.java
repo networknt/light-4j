@@ -22,6 +22,7 @@ public abstract class ObjectUtils {
      * Determine whether the given object is an array:
      * either an Object array or a primitive array.
      * @param obj the object to check
+     * @return boolean indicate if the object is an array
      */
     public static boolean isArray(Object obj) {
         return (obj != null && obj.getClass().isArray());
@@ -31,6 +32,7 @@ public abstract class ObjectUtils {
      * Determine whether the given array is empty:
      * i.e. {@code null} or of zero length.
      * @param array the array to check
+     * @return boolean indicate if the collect is empty
      * @see #isEmpty(Object)
      */
     public static boolean isEmpty(Object[] array) {
@@ -163,6 +165,8 @@ public abstract class ObjectUtils {
      * @see #nullSafeHashCode(int[])
      * @see #nullSafeHashCode(long[])
      * @see #nullSafeHashCode(short[])
+     * @param obj Object
+     * @return int hash code
      */
     public static int nullSafeHashCode(Object obj) {
         if (obj == null) {

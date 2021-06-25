@@ -374,6 +374,7 @@
                 <groupId>com.networknt</groupId>
                 <artifactId>jaeger-tracing</artifactId>
                 <version>${project.version}</version>
+                <optional>true</optional>
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
