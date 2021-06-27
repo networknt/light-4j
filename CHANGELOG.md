@@ -1,5 +1,19 @@
 # Change Log
 
+## [2.0.28](https://github.com/networknt/light-4j/tree/2.0.28) (2021-06-27)
+
+
+**Merged pull requests:**
+
+
+- fixes \#965 [\#969](https://github.com/networknt/light-4j/pull/969) ([chenyan71](https://github.com/chenyan71))
+- fixes \#967 make the jaeger-client optional in the client module [\#968](https://github.com/networknt/light-4j/pull/968) ([stevehu](https://github.com/stevehu))
+- fixes \#963 update the logic to support both http and https port cache… [\#964](https://github.com/networknt/light-4j/pull/964) ([stevehu](https://github.com/stevehu))
+- fixes \#960 support both environment variable and jvm option for confi… [\#961](https://github.com/networknt/light-4j/pull/961) ([stevehu](https://github.com/stevehu))
+- fixes \#958 add a new error code to the status.yml to indicate kafka-s… [\#959](https://github.com/networknt/light-4j/pull/959) ([stevehu](https://github.com/stevehu))
+- fixes \#956 add registerModule for the SingletonServiceFactory [\#957](https://github.com/networknt/light-4j/pull/957) ([stevehu](https://github.com/stevehu))
+- fixes \#954 remove the specification section from the server info resp… [\#955](https://github.com/networknt/light-4j/pull/955) ([stevehu](https://github.com/stevehu))
+- fixes \#952 upgrade jaeger to 1.6.0 to resolve security vulnerabilities [\#953](https://github.com/networknt/light-4j/pull/953) ([stevehu](https://github.com/stevehu))
 ## [2.0.27](https://github.com/networknt/light-4j/tree/2.0.27) (2021-05-25)
 
 
