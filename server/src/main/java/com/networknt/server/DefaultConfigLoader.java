@@ -21,8 +21,12 @@ import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
+import com.networknt.monad.Failure;
+import com.networknt.status.Status;
+import com.networknt.utility.StringUtils;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
@@ -40,17 +44,20 @@ import javax.net.ssl.*;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.net.ProxySelector;
 import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.time.Duration;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -71,6 +78,7 @@ public class DefaultConfigLoader implements IConfigLoader{
     public static Map<String, Object> startupConfig = Config.getInstance().getJsonMapConfig(STARTUP_CONFIG_NAME);
     private static final String CENTRALIZED_MANAGEMENT = "values";
     public static final String LIGHT_ENV = "light-env";
+    public static final String VERIFY_HOSTNAME_FALSE = "false";
 
     public static final String DEFAULT_ENV = "dev";
     public static final String DEFAULT_TARGET_CONFIGS_DIRECTORY ="src/main/resources/config";
@@ -95,9 +103,22 @@ public class DefaultConfigLoader implements IConfigLoader{
 
     // An instance of Jackson ObjectMapper that can be used anywhere else for Json.
     final static ObjectMapper mapper = new ObjectMapper();
-    // The instance of Http2Client that is used to connect to the light-config-server with bootstrap.truststore
-    static Http2Client client = Http2Client.getInstance();
-    ClientConnection connection = null;
+    // Using JDK 11 HTTP client to connect to the config server with bootstrap.truststore
+    private static HttpClient configClient = createHttpClient();
+
+    private static HttpClient createHttpClient() {
+        String verifyHostname = getPropertyOrEnv(VERIFY_HOST_NAME);
+        if(VERIFY_HOSTNAME_FALSE.equals(verifyHostname)) {
+            final Properties props = System.getProperties();
+            props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
+        }
+        HttpClient.Builder clientBuilder = HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .connectTimeout(Duration.ofMillis(1000)) // default to 1 second timeout.
+                .version(HttpClient.Version.HTTP_2)
+                .sslContext(createBootstrapContext());
+        return clientBuilder.build();
+    }
 
     @Override
     public void init() {
@@ -119,8 +140,8 @@ public class DefaultConfigLoader implements IConfigLoader{
                 logger.debug("targetConfigsDirectory:" + targetConfigsDirectory);
                 logger.debug("configServerUri:" + configServerUri);
             }
+
             try {
-                connection = client.connect(new URI(configServerUri), Http2Client.WORKER, client.createXnioSsl(createBootstrapContext()), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
                 String configPath = getConfigServerPath();
 
                 loadConfigs(configPath);
@@ -130,13 +151,7 @@ public class DefaultConfigLoader implements IConfigLoader{
                 loadFiles(configPath, CONFIG_SERVER_FILES_CONTEXT_ROOT);
             } catch (Exception e) {
                 logger.error("Failed to connect to config server", e);
-            }finally {
-                // here the connection is closed after one request. It should be used for in frequent
-                // request as creating a new connection is costly with TLS handshake and ALPN.
-                IoUtils.safeClose(connection);
             }
-
-
 
             try {
                 String filename = System.getProperty("logback.configurationFile");
@@ -221,28 +236,12 @@ public class DefaultConfigLoader implements IConfigLoader{
      */
     public static String getConfigServerHealth(String host, String path) {
         String result = null;
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(host + path))
+                .build();
         try {
-            final CountDownLatch latch = new CountDownLatch(1);
-            ClientConnection connection = client.connect(new URI(host), Http2Client.WORKER, client.createXnioSsl(createBootstrapContext()), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
-            final AtomicReference<ClientResponse> reference = new AtomicReference<>();
-            try {
-                final ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(path);
-                request.getRequestHeaders().put(Headers.HOST, host);
-                connection.sendRequest(request, client.createClientCallback(reference, latch));
-                latch.await(1000, TimeUnit.MILLISECONDS);
-            } finally {
-                // here the connection is closed after one request. It should be used for in frequent
-                // request as creating a new connection is costly with TLS handshake and ALPN.
-                IoUtils.safeClose(connection);
-            }
-            int statusCode = reference.get().getResponseCode();
-            String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-            if (statusCode >= 300) {
-                logger.error("Failed to load configs from config server" + statusCode + ":" + body);
-                throw new Exception("Failed to load configs from config server: " + statusCode);
-            } else {
-                result = body;
-            }
+            HttpResponse<String> response = configClient.send(request, HttpResponse.BodyHandlers.ofString());
+            result = response.body();
         } catch (Exception e) {
             logger.error("Exception while calling config server:", e);
         }
@@ -251,29 +250,24 @@ public class DefaultConfigLoader implements IConfigLoader{
 
     private Map<String, Object> getServiceConfigs(String configServerPath) {
         String authorization = getPropertyOrEnv(AUTHORIZATION);
-        String verifyHostname = getPropertyOrEnv(VERIFY_HOST_NAME);
+        if(authorization == null) authorization = ""; // give it an empty string to avoid NPE.
 
         Map<String, Object> configs = new HashMap<>();
 
         logger.debug("Calling Config Server endpoint:{}{}", configServerUri, configServerPath);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(configServerUri + configServerPath))
+                .header(Headers.AUTHORIZATION_STRING, authorization)
+                .build();
 
         try {
-            final CountDownLatch latch = new CountDownLatch(1);
-            final AtomicReference<ClientResponse> reference = new AtomicReference<>();
-
-            final ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(configServerPath);
-            request.getRequestHeaders().put(Headers.AUTHORIZATION, authorization);
-            request.getRequestHeaders().put(Headers.HOST, configServerUri);
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
-            latch.await(10000, TimeUnit.MILLISECONDS);
-
-            int statusCode = reference.get().getResponseCode();
-            String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-            if (statusCode >= 300) {
+            HttpResponse<String> response = configClient.send(request, HttpResponse.BodyHandlers.ofString());
+            int statusCode = response.statusCode();
+            String body = response.body();
+            if(statusCode >= 300) {
                 logger.error("Failed to load configs from config server" + statusCode + ":" + body);
                 throw new Exception("Failed to load configs from config server: " + statusCode);
             } else {
-                // Get the response
                 Map<String, Object> responseMap = (Map<String, Object>) mapper.readValue(body, new TypeReference<Map<String, Object>>() {});
                 configs = (Map<String, Object>) responseMap.get("configProperties");
             }
