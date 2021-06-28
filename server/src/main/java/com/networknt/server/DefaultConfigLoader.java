@@ -180,8 +180,7 @@ public class DefaultConfigLoader implements IConfigLoader{
         //clear config cache: this is required just in case other classes have already loaded something in cache
         Config.getInstance().clear();
         Config.getInstance().putInConfigCache(CENTRALIZED_MANAGEMENT, serviceConfigs);
-        // Reset global pointer to the server.yml object
-        Server.config = Server.getServerConfig();
+        //You can call Server.getServerConfig() now.
     }
 
     /**
