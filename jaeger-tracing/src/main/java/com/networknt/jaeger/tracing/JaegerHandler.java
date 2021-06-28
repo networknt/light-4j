@@ -103,7 +103,7 @@ public class JaegerHandler implements MiddlewareHandler {
         Span rootSpan = spanBuilder
                 .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
                 .withTag(Tags.PEER_HOSTNAME.getKey(), NetUtils.getLocalAddressByDatagram())
-                .withTag(Tags.PEER_PORT.getKey(), Server.config.getHttpsPort())
+                .withTag(Tags.PEER_PORT.getKey(), Server.getServerConfig().getHttpsPort())
                 .start();
         tracer.activateSpan(rootSpan);
         // This can be retrieved in the business handler to add tags and logs for tracing.

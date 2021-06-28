@@ -148,8 +148,7 @@ public class UrlConfigLoader implements IConfigLoader {
 		// loaded something in cache
 		Config.getInstance().clear();
 		Config.getInstance().putInConfigCache(CONFIGS_FILE_NAME, serviceConfigs);
-		// Reset global pointer to the server.yml object
-		Server.config = Server.getServerConfig();
+		// You can call Server.getServerConfig() from now.
 	}
 
 	private void loadFiles(String configType) {

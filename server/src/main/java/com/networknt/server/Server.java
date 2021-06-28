@@ -84,9 +84,6 @@ public class Server {
     // the bound ip for the server. For metrics and other queries
     public static String currentAddress;
 
-    @Deprecated //use getServerConfig() method instead
-    public static ServerConfig config = getServerConfig(); // there are a lot of users are using the static variable in their code.
-
     public final static TrustManager[] TRUST_ALL_CERTS = new X509TrustManager[]{new DummyTrustManager()};
     /** a list of service ids populated by startup hooks that want to register to the service registry */
     public static List<String> serviceIds = new ArrayList<>();
@@ -117,7 +114,7 @@ public class Server {
             loadConfigs();
 
             // this will make sure that all log statement will have serviceId
-            MDC.put(SID, config.getServiceId());
+            MDC.put(SID, getServerConfig().getServiceId());
 
             // merge status.yml and app-status.yml if app-status.yml is provided
             mergeStatusConfig();
@@ -523,7 +520,7 @@ public class Server {
             // handle the registration exception separately to eliminate confusion
         } catch (Exception e) {
             Status status = new Status(ERROR_CONNECT_REGISTRY, serviceUrl);
-            if(config.startOnRegistryFailure) {
+            if(getServerConfig().startOnRegistryFailure) {
                 System.out.println("Failed to register service, start the server without registry. ");
                 System.out.println(status.toString());
                 e.printStackTrace();
