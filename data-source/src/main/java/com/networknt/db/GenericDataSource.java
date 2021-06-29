@@ -40,6 +40,7 @@ public class GenericDataSource {
     private HikariDataSource ds;
     // the data source name
     protected String dsName;
+    protected Map<String, Object> dataSourceMap;
 
     public String getDsName() {
         return dsName;
@@ -61,7 +62,7 @@ public class GenericDataSource {
 
     protected HikariDataSource createDataSource() {
         // get the configured datasources
-        Map<String, Object> dataSourceMap = Config.getInstance().getJsonMapConfig(DATASOURCE);
+        dataSourceMap = Config.getInstance().getJsonMapConfig(DATASOURCE);
 
         // get the decrypted secret file
         Map<String, Object> secret = Config.getInstance().getJsonMapConfig(SECRET);
@@ -98,7 +99,7 @@ public class GenericDataSource {
      *
      * @return the DataSource object
      */
-    public DataSource getDataSource() {
+    public HikariDataSource getDataSource() {
         return ds;
     }
 
