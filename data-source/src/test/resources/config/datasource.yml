@@ -19,6 +19,27 @@ MysqlDataSource:
     verifyServerCertificate: 'false'
     useSSL: 'true'
     requireSSL: 'true'
+
+CustomMysqlDataSource:
+  DriverClassName: com.mysql.jdbc.Driver
+  jdbcUrl: jdbc:mysql://localhost:3308/account_db?useSSL=false
+  username: account_user
+  password: passWord00
+  maximumPoolSize: 2
+  connectionTimeout: 500
+  leakDetectionThreshold: 100
+  registerMBeans: true
+  testQuery: select version()
+  parameters:
+    useServerPrepStmts: 'true'
+    cachePrepStmts: 'true'
+    cacheCallableStmts: 'true'
+    prepStmtCacheSize: '4096'
+    prepStmtCacheSqlLimit: '2048'
+    verifyServerCertificate: 'false'
+    useSSL: 'true'
+    requireSSL: 'true'
+
 MariaDataSource:
   DriverClassName: org.mariadb.jdbc.MariaDbDataSource
   jdbcUrl: jdbc:mariadb://mariadb:3306/oauth2?useSSL=false

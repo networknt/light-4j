@@ -60,8 +60,22 @@ public class GenericDataSourceTest {
     }
 
     @Test
+    @Ignore
     public void testGetMysqlDataSource() {
         DataSource ds = SingletonServiceFactory.getBean(MysqlDataSource.class).getDataSource();
+        assertNotNull(ds);
+
+        try(Connection connection = ds.getConnection()){
+            assertNotNull(connection);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    @Ignore
+    public void testCustomMysqlDataSource() {
+        DataSource ds = SingletonServiceFactory.getBean(CustomMysqlDataSource.class).getDataSource();
         assertNotNull(ds);
 
         try(Connection connection = ds.getConnection()){
