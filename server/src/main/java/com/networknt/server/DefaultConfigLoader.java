@@ -50,6 +50,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -219,7 +220,9 @@ public class DefaultConfigLoader implements IConfigLoader{
             Base64.Decoder decoder = Base64.getMimeDecoder();
             for (String fileName : serviceFiles.keySet()) {
                 filePath=Paths.get(targetConfigsDirectory+"/"+fileName);
-                Files.write(filePath, decoder.decode(serviceFiles.get(fileName).toString().getBytes()));
+                byte[] ba = decoder.decode(serviceFiles.get(fileName).toString().getBytes());
+                if(logger.isDebugEnabled()) logger.debug("filename = " + fileName + " content = " + new String(ba, StandardCharsets.UTF_8));
+                Files.write(filePath, ba);
             }
         }  catch (IOException e) {
             logger.error("Exception while creating {} dir or creating files there:{}",targetConfigsDirectory, e);
