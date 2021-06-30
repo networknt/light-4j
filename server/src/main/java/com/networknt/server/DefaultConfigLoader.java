@@ -105,9 +105,9 @@ public class DefaultConfigLoader implements IConfigLoader{
     // An instance of Jackson ObjectMapper that can be used anywhere else for Json.
     final static ObjectMapper mapper = new ObjectMapper();
     // Using JDK 11 HTTP client to connect to the config server with bootstrap.truststore
-    private static HttpClient configClient = createHttpClient();
+    private HttpClient configClient;
 
-    private static HttpClient createHttpClient() {
+    private HttpClient createHttpClient() {
         String verifyHostname = getPropertyOrEnv(VERIFY_HOST_NAME);
         if(VERIFY_HOSTNAME_FALSE.equals(verifyHostname)) {
             final Properties props = System.getProperties();
@@ -141,6 +141,8 @@ public class DefaultConfigLoader implements IConfigLoader{
                 logger.debug("targetConfigsDirectory:" + targetConfigsDirectory);
                 logger.debug("configServerUri:" + configServerUri);
             }
+            // lazy create client for config server access.
+            configClient = createHttpClient();
 
             try {
                 String configPath = getConfigServerPath();
@@ -237,7 +239,7 @@ public class DefaultConfigLoader implements IConfigLoader{
      * @param path config server path
      * @return String of OK
      */
-    public static String getConfigServerHealth(String host, String path) {
+    public String getConfigServerHealth(String host, String path) {
         String result = null;
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(host + path))
