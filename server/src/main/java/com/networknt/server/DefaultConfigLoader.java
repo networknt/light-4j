@@ -147,7 +147,8 @@ public class DefaultConfigLoader implements IConfigLoader{
             try {
                 String configPath = getConfigServerPath();
 
-                loadConfigs(configPath);
+                // This is the method in the future to load values.yml from the config server
+                // loadConfigs(configPath);
 
                 loadFiles(configPath, CONFIG_SERVER_CERTS_CONTEXT_ROOT);
 
