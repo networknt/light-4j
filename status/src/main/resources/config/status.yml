@@ -1125,6 +1125,11 @@ ERR12051:
   code: ERR12051
   message: HOST_IS_REQUIRED
   description: Host is required
+ERR12052:
+  statusCode: 400
+  code: ERR12052
+  message: AUTHORIZATION_CODE_NOT_FOUND
+  description: Authorization code %s not found when getting an authorization code token
 
 # Tokenization service
 ERR12100:
