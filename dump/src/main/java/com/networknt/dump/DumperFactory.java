@@ -64,7 +64,9 @@ class DumperFactory {
         List<IResponseDumpable> dumpers = new ArrayList<>();
         for(String dumperNames: responseDumpers) {
             IResponseDumpable dumper = factory.create(dumperNames, config, exchange);
-            dumpers.add(dumper);
+            if (dumper != null) {
+                dumpers.add(dumper);
+            }
         }
         return dumpers;
     }
