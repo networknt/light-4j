@@ -262,7 +262,7 @@ public class DefaultConfigLoader implements IConfigLoader{
 
         logger.debug("Calling Config Server endpoint:{}{}", configServerUri, configServerPath);
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(configServerUri + configServerPath))
+                .uri(URI.create(configServerUri.trim() + configServerPath.trim()))
                 .header(Headers.AUTHORIZATION_STRING, authorization)
                 .build();
 
