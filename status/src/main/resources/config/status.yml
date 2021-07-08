@@ -653,6 +653,11 @@ ERR11402:
   code: ERR11402
   message: ERROR_WRITING_KEY_FILE
   description: Error writing key file to path %s.
+ERR11403:
+  statusCode: 400
+  code: ERR11403
+  message: ERROR_SERVICE_ID_MISMATCH
+  description: The service claim %s in the JWT token does not match the serviceId %s from the request path.
 
 # 11500 - 11599 GraphQL validator errors
 ERR11500:
