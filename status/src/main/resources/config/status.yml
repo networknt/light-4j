@@ -658,6 +658,12 @@ ERR11403:
   code: ERR11403
   message: ERROR_SERVICE_ID_MISMATCH
   description: The service claim %s in the JWT token does not match the serviceId %s from the request path.
+ERR11404:
+  statusCode: 400
+  code: ERR11404
+  message: ERROR_SERVICE_ID_MISSING
+  description: The service claim in the JWT token is missing.
+
 
 # 11500 - 11599 GraphQL validator errors
 ERR11500:
