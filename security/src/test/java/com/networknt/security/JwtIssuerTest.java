@@ -197,4 +197,12 @@ public class JwtIssuerTest {
         System.out.println("***Long lived token for proxy***: " + jwt);
     }
 
+    @Test
+    public void sidecarReferenceBootstrap() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestCcClaimsScopeService("f7d42348-c647-4efb-a52d-4c5787421e72", "portal.r portal.w", "0100");
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***Reference Long lived Bootstrap token for config server and controller: " + jwt);
+    }
+
 }

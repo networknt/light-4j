@@ -260,7 +260,7 @@ public class DefaultConfigLoader implements IConfigLoader{
 
         Map<String, Object> configs = new HashMap<>();
 
-        logger.debug("Calling Config Server endpoint:{}{}", configServerUri, configServerPath);
+        logger.debug("Calling Config Server endpoint:host{}:path{}", configServerUri, configServerPath);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(configServerUri.trim() + configServerPath.trim()))
                 .header(Headers.AUTHORIZATION_STRING, authorization)

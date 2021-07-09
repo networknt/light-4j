@@ -53,6 +53,14 @@ public class ClaimsUtil {
         return claims;
     }
 
+    public static JwtClaims getTestCcClaimsScopeService(String clientId, String scope, String serviceId) {
+        JwtClaims claims = JwtIssuer.getDefaultJwtClaims();
+        claims.setClaim("client_id", clientId);
+        claims.setClaim("scope", scope);
+        claims.setClaim("service", serviceId);
+        return claims;
+    }
+
     public static JwtClaims getTestCcClaimsScopeScp(String clientId, String scope) {
         JwtClaims claims = JwtIssuer.getDefaultJwtClaims();
         claims.setClaim("client_id", clientId);
