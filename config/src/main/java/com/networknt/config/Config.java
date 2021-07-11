@@ -69,9 +69,13 @@ public abstract class Config {
 
     public abstract Map<String, Object> getJsonMapConfig(String configName);
 
+    public abstract Map<String, Object> getJsonMapConfigIgnoreCache(String configName);
+
     public abstract Map<String, Object> getDefaultJsonMapConfig(String configName);
 
     public abstract Map<String, Object> getJsonMapConfig(String configName, String path);
+
+    public abstract Map<String, Object> getJsonMapConfigIgnoreCache(String configName, String path);
 
     public abstract Map<String, Object> getDefaultJsonMapConfig(String configName, String path);
 
@@ -112,7 +116,7 @@ public abstract class Config {
     }
 
     private static final class FileConfigImpl extends Config {
-    	static final String CONFIG_NAME = "config";
+        static final String CONFIG_NAME = "config";
         static final String CONFIG_EXT_JSON = ".json";
         static final String CONFIG_EXT_YAML = ".yaml";
         static final String CONFIG_EXT_YML = ".yml";
@@ -142,20 +146,20 @@ public abstract class Config {
             mapper.registerModule(new JavaTimeModule());
             mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         }
-        
+
         final Yaml yaml;
-        
+
         FileConfigImpl(){
-        	super();
-        	String decryptorClass = getDecryptorClass();
-        	configLoaderClass = getConfigLoaderClass();
-        	if (null==decryptorClass || decryptorClass.trim().isEmpty()) {
-        		yaml = new Yaml();
-        	}else {
-	            final Resolver resolver = new Resolver();
-	            resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
-	        	yaml = new Yaml(new DecryptConstructor(decryptorClass), new Representer(), new DumperOptions(), resolver);
-        	}
+            super();
+            String decryptorClass = getDecryptorClass();
+            configLoaderClass = getConfigLoaderClass();
+            if (null==decryptorClass || decryptorClass.trim().isEmpty()) {
+                yaml = new Yaml();
+            }else {
+                final Resolver resolver = new Resolver();
+                resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
+                yaml = new Yaml(new DecryptConstructor(decryptorClass), new Representer(), new DumperOptions(), resolver);
+            }
         }
 
         private static Config initialize() {
@@ -312,6 +316,22 @@ public abstract class Config {
         }
 
         /**
+         * Method used to load the configuration file as a map based on the config loader class configured in config.yml and cache it.
+         *  Different as getJsonMapConfig, it will always reload the config instead of load config cache first
+         * If there is no config loader configured, file will be loaded by default loading method.
+         * @param configName    The name of the config file, without an extension
+         * @param path          The relative directory or absolute directory that config will be loaded from
+         * @return A map of the config fields if possible, null otherwise. IOExceptions smothered.
+         */
+        @Override
+        public Map<String, Object> getJsonMapConfigIgnoreCache(String configName, String path) {
+            Map<String, Object> config = config = loadJsonMapConfigWithSpecificConfigLoader(configName, path);
+            //verify if need override config cache here?
+            // if (config != null) configCache.put(configName, config);
+            return config;
+        }
+
+        /**
          * Method used to load the configuration file as a map by using default loading method and cache it.
          * @param configName    The name of the config file, without an extension
          * @param path          The relative directory or absolute directory that config will be loaded from
@@ -341,6 +361,18 @@ public abstract class Config {
         @Override
         public Map<String, Object> getJsonMapConfig(String configName) {
             return getJsonMapConfig(configName, "");
+        }
+
+        /**
+         * Method used to load the configuration file as a map based on the config loader class configured in config.yml and cache it.
+         *  Different as getJsonMapConfig, it will always reload the config instead of load config cache first
+         * If no config loader is configured, file will be loaded by default loading method.
+         * @param configName    The name of the config file, without an extension
+         * @return A map of the config fields if possible, null otherwise. IOExceptions smothered.
+         */
+        @Override
+        public Map<String, Object> getJsonMapConfigIgnoreCache(String configName) {
+            return getJsonMapConfigIgnoreCache(configName, "");
         }
 
         /**
@@ -481,8 +513,8 @@ public abstract class Config {
             }
             return config;
         }
-        
-        
+
+
         private Map<String, Object> loadMapConfig(String configName, String path) {
             Map<String, Object> config;
             for (String extension : configExtensionsOrdered) {
