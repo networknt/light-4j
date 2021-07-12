@@ -20,6 +20,7 @@ public class PortalRegistryConfig {
     public static final String CONFIG_NAME = "portal-registry";
 
     String portalUrl;
+    String portalToken;
     int maxReqPerConn;
     int deregisterAfter;
     int checkInterval;
@@ -33,6 +34,14 @@ public class PortalRegistryConfig {
 
     public void setPortalUrl(String portalUrl) {
         this.portalUrl = portalUrl;
+    }
+
+    public String getPortalToken() {
+        return portalToken;
+    }
+
+    public void setPortalToken(String portalToken) {
+        this.portalToken = portalToken;
     }
 
     public int getMaxReqPerConn() {
