@@ -278,7 +278,14 @@ public class PortalRegistry extends AbstractRegistry {
     }
 
     private String getPortalToken() {
-        return config.getPortalToken();
+        String token = config.getPortalToken();
+        if(token == null) return null;
+        // make sure that the token has the Bearer prefix.
+        if(token.toUpperCase().startsWith("BEARER ")) {
+            return "Bearer " + token.substring(7);
+        } else {
+            return "Bearer " + token;
+        }
     }
 
 }
