@@ -200,7 +200,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
 
         ClientRequest request = new ClientRequest().setMethod(method).setPath(path);
         request.getRequestHeaders().put(Headers.HOST, "localhost");
-        if (token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
+        if (token != null) request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + token); // token is a JWT.
         logger.trace("The request sent to controller: {} = request header: {}, request body is empty", uri.toString(), request.toString());
         if (StringUtils.isBlank(json)) {
             connection.sendRequest(request, client.createClientCallback(reference, latch));
