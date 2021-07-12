@@ -278,8 +278,7 @@ public class PortalRegistry extends AbstractRegistry {
     }
 
     private String getPortalToken() {
-
-        return null;
+        return config.getPortalToken();
     }
 
 }
