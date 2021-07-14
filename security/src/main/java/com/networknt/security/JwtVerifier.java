@@ -305,16 +305,10 @@ public class JwtVerifier {
     private VerificationKeyResolver getKeyResolver(String kid, boolean isToken) {
         // try the X509 certificate first
         String keyResolver = (String) jwtConfig.getOrDefault(JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT);
-        // get the public key certificate from the cache that is loaded from security.yml if it is not there,
-        // go to OAuth2 server /oauth2/key endpoint to get the public key certificate with kid as parameter.
-        X509Certificate certificate = certMap == null? null : certMap.get(kid);
-        if(certificate == null) {
-            certificate = isToken? getCertForToken(kid) : getCertForSign(kid);
-            if(certMap == null) certMap = new HashMap<>();  // null if bootstrapFromKeyService is true
-            certMap.put(kid, certificate);
-        } else {
-            logger.debug("Got raw certificate for kid: {} from local cache", kid);
-        }
+        // get the public key certificate from the cache that is loaded from security.yml. If it is not there,
+        // go to the next step to access JWK if it is enabled. We need to update the light-oauth2 and oauth-kafka
+        // to support JWK instead of X509Certificate endpoint. 
+        X509Certificate certificate = certMap == null ? null : certMap.get(kid);
         if(certificate != null) {
             X509VerificationKeyResolver x509VerificationKeyResolver = new X509VerificationKeyResolver(certificate);
             x509VerificationKeyResolver.setTryAllOnNoThumbHeader(true);
