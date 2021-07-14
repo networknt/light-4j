@@ -185,6 +185,18 @@ public class JwtIssuerTest {
     }
 
     /**
+     * The returned token contains scope as the key for the scope. All scopes are separated by space.
+     * @throws Exception
+     */
+    @Test
+    public void longlivedCcLocalAdminScope() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestCcClaimsScope("f7d42348-c647-4efb-a52d-4c5787421e73", "admin");
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***Long lived token for admin endpoints***: " + jwt);
+    }
+
+    /**
      * The returned token contains scp as the key for the scope. Some OAuth 2.0 provider like Okta use this claim. All scopes are separated by comma.
      * The token will have proxy.r and proxy.w as scopes for testing with proxy configuration in light-config-test proxy folder.
      * @throws Exception
