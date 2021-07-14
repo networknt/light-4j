@@ -85,7 +85,6 @@ public class JwtVerifier {
     public static final String JWT_KEY_RESOLVER_X509CERT = "X509Certificate";
     public static final String JWT_KEY_RESOLVER_JWKS = "JsonWebKeySet";
 
-
     Map<String, Object> config;
     Map<String, Object> jwtConfig;
     int secondsOfAllowedClockSkew;
@@ -109,40 +108,35 @@ public class JwtVerifier {
                     .expireAfterWrite(CACHE_EXPIRED_IN_MINUTES, TimeUnit.MINUTES)
                     .build();
         }
-        switch ((String) jwtConfig.getOrDefault(JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT)) {
-            // init getting JWK
-            case JWT_KEY_RESOLVER_JWKS:
-                jwksMap = new HashMap<>();
-                List<JsonWebKey> jwkList = getJsonWebKeySetForToken();
-                if (jwkList == null || jwkList.isEmpty()) {
-                    throw new RuntimeException("cannot get JWK from OAuth server");
+        // init getting JWK during the initialization. The other part is in the resolver for OAuth 2.0 provider to
+        // rotate keys when the first token is received with the new kid.
+        String keyResolver = (String) jwtConfig.getOrDefault(JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT);
+        // cache the certificates
+        certMap = new HashMap<>();
+        fingerPrints = new ArrayList<>();
+        if (jwtConfig.get(JWT_CERTIFICATE)!=null) {
+            Map<String, Object> keyMap = (Map<String, Object>) jwtConfig.get(JWT_CERTIFICATE);
+            for(String kid: keyMap.keySet()) {
+                X509Certificate cert = null;
+                try {
+                    cert = readCertificate((String)keyMap.get(kid));
+                } catch (Exception e) {
+                    logger.error("Exception:", e);
                 }
-                jwksMap.put(jwkList.get(0).getKeyId(), jwkList);
-                logger.debug("Successfully cached JWK");
-                break;
-            case JWT_KEY_RESOLVER_X509CERT:
-                // load local public key certificates only if bootstrapFromKeyService is false
-                if(bootstrapFromKeyService == null || Boolean.FALSE.equals(bootstrapFromKeyService)) {
-                    certMap = new HashMap<>();
-                    fingerPrints = new ArrayList<>();
-                    if (jwtConfig.get(JWT_CERTIFICATE)!=null) {
-                        Map<String, Object> keyMap = (Map<String, Object>) jwtConfig.get(JWT_CERTIFICATE);
-                        for(String kid: keyMap.keySet()) {
-                            X509Certificate cert = null;
-                            try {
-                                cert = readCertificate((String)keyMap.get(kid));
-                            } catch (Exception e) {
-                                logger.error("Exception:", e);
-                            }
-                            certMap.put(kid, cert);
-                            fingerPrints.add(FingerPrintUtil.getCertFingerPrint(cert));
-                        }
-                   }
-                }
-                break;
-            default:
-                logger.info("{} not found or not recognized in jwt config. Use {} as default {}",
-                        JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT, JWT_KEY_RESOLVER);
+                certMap.put(kid, cert);
+                fingerPrints.add(FingerPrintUtil.getCertFingerPrint(cert));
+            }
+        }
+        logger.debug("Successfully cached Certificate");
+        if(JWT_KEY_RESOLVER_JWKS.equals(keyResolver)) {
+            // cache the jwk
+            jwksMap = new HashMap<>();
+            List<JsonWebKey> jwkList = getJsonWebKeySetForToken();
+            if (jwkList == null || jwkList.isEmpty()) {
+                throw new RuntimeException("cannot get JWK from OAuth server");
+            }
+            jwksMap.put(jwkList.get(0).getKeyId(), jwkList);
+            logger.debug("Successfully cached JWK");
         }
     }
 
@@ -310,7 +304,7 @@ public class JwtVerifier {
      */
     private VerificationKeyResolver getKeyResolver(String kid, boolean isToken) {
         // try the X509 certificate first
-
+        String keyResolver = (String) jwtConfig.getOrDefault(JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT);
         // get the public key certificate from the cache that is loaded from security.yml if it is not there,
         // go to OAuth2 server /oauth2/key endpoint to get the public key certificate with kid as parameter.
         X509Certificate certificate = certMap == null? null : certMap.get(kid);
@@ -326,18 +320,23 @@ public class JwtVerifier {
             x509VerificationKeyResolver.setTryAllOnNoThumbHeader(true);
             return x509VerificationKeyResolver;
         } else {
-            // try jwk if kid cannot be found in the certificate map.
-            List<JsonWebKey> jwkList = jwksMap.get(kid);
-            if (jwkList == null) {
-                jwkList = getJsonWebKeySetForToken();
-                if (jwkList == null || jwkList.isEmpty()) {
-                    throw new RuntimeException("no JWK for kid: " + kid);
+            if(JWT_KEY_RESOLVER_JWKS.equals(keyResolver)) {
+                // try jwk if kid cannot be found in the certificate map.
+                List<JsonWebKey> jwkList = jwksMap.get(kid);
+                if (jwkList == null) {
+                    jwkList = getJsonWebKeySetForToken();
+                    if (jwkList == null || jwkList.isEmpty()) {
+                        throw new RuntimeException("no JWK for kid: " + kid);
+                    }
+                    jwksMap.put(jwkList.get(0).getKeyId(), jwkList);
+                    logger.info("Got Json web key set for kid: {} from Oauth server", kid);
                 }
-                jwksMap.put(jwkList.get(0).getKeyId(), jwkList);
-                logger.info("Got Json web key set for kid: {} from Oauth server", kid);
+                logger.debug("Got Json web key set from local cache");
+                return new JwksVerificationKeyResolver(jwkList);
+            } else {
+                logger.error("Both X509Certificate and JWK are not configured.");
+                return null;
             }
-            logger.debug("Got Json web key set from local cache");
-            return new JwksVerificationKeyResolver(jwkList);
         }
     }
 
