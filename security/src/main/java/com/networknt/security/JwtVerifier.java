@@ -300,49 +300,45 @@ public class JwtVerifier {
     }
 
     /**
-     * Get VerificationKeyResolver based on the configuration settings
-     * @param kid
-     * @param isToken
+     * Get VerificationKeyResolver based on the kid and isToken indicator. For the implementation, we check
+     * the jwk first and 509Certificate if the jwk cannot find the kid. Basically, we want to iterate all
+     * the resolvers and find the right one with the kid.
+     *
+     * @param kid key id from the JWT token
+     * @param isToken indicate if the resolver is for token verification or signing.
      * @return VerificationKeyResolver
      */
     private VerificationKeyResolver getKeyResolver(String kid, boolean isToken) {
+        // try the X509 certificate first
 
-        VerificationKeyResolver verificationKeyResolver = null;
-        String keyResolver = (String) jwtConfig.getOrDefault(JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT);
-        switch (keyResolver) {
-            default:
-            case JWT_KEY_RESOLVER_X509CERT:
-                // get the public key certificate from the cache that is loaded from security.yml if it is not there,
-                // go to OAuth2 server /oauth2/key endpoint to get the public key certificate with kid as parameter.
-                X509Certificate certificate = certMap == null? null : certMap.get(kid);
-                if(certificate == null) {
-                    certificate = isToken? getCertForToken(kid) : getCertForSign(kid);
-                    if(certMap == null) certMap = new HashMap<>();  // null if bootstrapFromKeyService is true
-                    certMap.put(kid, certificate);
-                } else {
-                    logger.debug("Got raw certificate for kid: {} from local cache", kid);
-                }
-                X509VerificationKeyResolver x509VerificationKeyResolver = new X509VerificationKeyResolver(certificate);
-
-                x509VerificationKeyResolver.setTryAllOnNoThumbHeader(true);
-
-                verificationKeyResolver = x509VerificationKeyResolver;
-                break;
-            case JWT_KEY_RESOLVER_JWKS:
-                List<JsonWebKey> jwkList = jwksMap.get(kid);
-                if (jwkList == null) {
-                    jwkList = getJsonWebKeySetForToken();
-                    if (jwkList == null || jwkList.isEmpty()) {
-                        throw new RuntimeException("no JWK for kid: " + kid);
-                    }
-                    jwksMap.put(jwkList.get(0).getKeyId(), jwkList);
-                    logger.info("Got Json web key set for kid: {} from Oauth server", kid);
-                }
-                logger.debug("Got Json web key set from local cache");
-                verificationKeyResolver = new JwksVerificationKeyResolver(jwkList);
-                break;
+        // get the public key certificate from the cache that is loaded from security.yml if it is not there,
+        // go to OAuth2 server /oauth2/key endpoint to get the public key certificate with kid as parameter.
+        X509Certificate certificate = certMap == null? null : certMap.get(kid);
+        if(certificate == null) {
+            certificate = isToken? getCertForToken(kid) : getCertForSign(kid);
+            if(certMap == null) certMap = new HashMap<>();  // null if bootstrapFromKeyService is true
+            certMap.put(kid, certificate);
+        } else {
+            logger.debug("Got raw certificate for kid: {} from local cache", kid);
         }
-        return verificationKeyResolver;
+        if(certificate != null) {
+            X509VerificationKeyResolver x509VerificationKeyResolver = new X509VerificationKeyResolver(certificate);
+            x509VerificationKeyResolver.setTryAllOnNoThumbHeader(true);
+            return x509VerificationKeyResolver;
+        } else {
+            // try jwk if kid cannot be found in the certificate map.
+            List<JsonWebKey> jwkList = jwksMap.get(kid);
+            if (jwkList == null) {
+                jwkList = getJsonWebKeySetForToken();
+                if (jwkList == null || jwkList.isEmpty()) {
+                    throw new RuntimeException("no JWK for kid: " + kid);
+                }
+                jwksMap.put(jwkList.get(0).getKeyId(), jwkList);
+                logger.info("Got Json web key set for kid: {} from Oauth server", kid);
+            }
+            logger.debug("Got Json web key set from local cache");
+            return new JwksVerificationKeyResolver(jwkList);
+        }
     }
 
     /**
