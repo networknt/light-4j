@@ -58,7 +58,7 @@ public class SAMLTokenHandler implements MiddlewareHandler {
 
     public static Map<String, Object> config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
     static Logger logger = LoggerFactory.getLogger(SAMLTokenHandler.class);
-    private volatile HttpHandler next;
+    protected volatile HttpHandler next;
 
     static final String OAUTH = "oauth";
     static final String TOKEN = "token";
