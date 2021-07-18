@@ -67,7 +67,7 @@ public class TokenHandler implements MiddlewareHandler {
 
     public static Map<String, Object> config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
     static Logger logger = LoggerFactory.getLogger(TokenHandler.class);
-    private volatile HttpHandler next;
+    protected volatile HttpHandler next;
     // Cached jwt token for this handler on behalf of a client.
     private final Jwt cachedJwt = new Jwt();
     public TokenHandler() { }

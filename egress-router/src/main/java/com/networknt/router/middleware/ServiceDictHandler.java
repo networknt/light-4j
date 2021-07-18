@@ -49,7 +49,7 @@ public class ServiceDictHandler implements MiddlewareHandler {
 	}
 	
     
-    private volatile HttpHandler next;
+    protected volatile HttpHandler next;
 
     static final String STATUS_INVALID_REQUEST_PATH = "ERR10007";
 
