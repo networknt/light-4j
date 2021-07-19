@@ -64,13 +64,18 @@ public class ServiceDictHandler implements MiddlewareHandler {
         if(serviceId == null) {
             String requestPath = exchange.getRequestURI();
             String httpMethod = exchange.getRequestMethod().toString().toLowerCase();
-            
+
             serviceId = HandlerUtils.findServiceId(toInternalKey(httpMethod, requestPath), mappings);
             if(serviceId == null) {
-                setExchangeStatus(exchange, STATUS_INVALID_REQUEST_PATH, requestPath);
-                return;
+                HeaderValues serviceUrlHeader = exchange.getRequestHeaders().get(HttpStringConstants.SERVICE_URL);
+                String serviceUrl = serviceUrlHeader != null ? serviceUrlHeader.peekFirst() : null;
+                if (serviceUrl==null) {
+                    setExchangeStatus(exchange, STATUS_INVALID_REQUEST_PATH, requestPath);
+                    return;
+                }
+            } else {
+                exchange.getRequestHeaders().put(HttpStringConstants.SERVICE_ID, serviceId);
             }
-            exchange.getRequestHeaders().put(HttpStringConstants.SERVICE_ID, serviceId);
         }
         Handler.next(exchange, next);
 	}
