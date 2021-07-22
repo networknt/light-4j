@@ -24,3 +24,6 @@ reuseXForwarded: false
 
 # Max Connection Retries
 maxConnectionRetries: 3
+
+# Decode the the JWT token claims and forward to the backend api in the form of json string
+forwardJwtClaims: false

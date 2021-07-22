@@ -33,6 +33,7 @@ public class ProxyConfig {
     boolean rewriteHostHeader;
     boolean reuseXForwarded;
     int maxConnectionRetries;
+    private boolean forwardJwtClaims;
 
     public ProxyConfig() {
     }
@@ -96,4 +97,12 @@ public class ProxyConfig {
     public int getMaxConnectionRetries() { return maxConnectionRetries; }
 
     public void setMaxConnectionRetries(int maxConnectionRetries) { this.maxConnectionRetries = maxConnectionRetries; }
+
+    public boolean isForwardJwtClaims() {
+        return forwardJwtClaims;
+    }
+
+    public void setForwardJwtClaims(boolean forwardJwtClaims) {
+        this.forwardJwtClaims = forwardJwtClaims;
+    }
 }
