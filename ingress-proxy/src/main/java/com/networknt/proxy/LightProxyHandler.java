@@ -16,12 +16,19 @@
 
 package com.networknt.proxy;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.ResponseCodeHandler;
 import io.undertow.server.handlers.proxy.LoadBalancingProxyClient;
+import io.undertow.util.HeaderMap;
+import io.undertow.util.HttpString;
+import org.jose4j.jwt.JwtClaims;
+import org.jose4j.jwt.consumer.InvalidJwtException;
+import org.jose4j.jwt.consumer.JwtConsumer;
+import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +48,10 @@ import java.util.function.Consumer;
  */
 public class LightProxyHandler implements HttpHandler {
     static final String CONFIG_NAME = "proxy";
+    static final String CLAIMS_KEY = "jwtClaims";
+    private static final String AUTH_HEADER_NAME = "Authorization";
+    private static final int LONG_CLOCK_SKEW = 1000000;
+
     static final Logger logger = LoggerFactory.getLogger(LightProxyHandler.class);
     static ProxyConfig config = (ProxyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ProxyConfig.class);
 
@@ -48,38 +59,63 @@ public class LightProxyHandler implements HttpHandler {
 
     public LightProxyHandler() {
         List<String> hosts = Arrays.asList(config.getHosts().split(","));
-        if(config.httpsEnabled) {
-            LoadBalancingProxyClient loadBalancer = new LoadBalancingProxyClient()
-                    .setConnectionsPerThread(config.getConnectionsPerThread());
+        LoadBalancingProxyClient loadBalancer = new LoadBalancingProxyClient()
+                .setConnectionsPerThread(config.getConnectionsPerThread());
+        if(config.isHttpsEnabled()) {
             hosts.forEach(handlingConsumerWrapper(host -> loadBalancer.addHost(new URI(host), Http2Client.getInstance().getDefaultXnioSsl()), URISyntaxException.class));
-            proxyHandler = ProxyHandler.builder()
-                    .setProxyClient(loadBalancer)
-                    .setMaxConnectionRetries(config.maxConnectionRetries)
-                    .setMaxRequestTime(config.maxRequestTime)
-                    .setReuseXForwarded(config.reuseXForwarded)
-                    .setRewriteHostHeader(config.rewriteHostHeader)
-                    .setNext(ResponseCodeHandler.HANDLE_404)
-                    .build();
         } else {
-            LoadBalancingProxyClient loadBalancer = new LoadBalancingProxyClient()
-                    .setConnectionsPerThread(config.getConnectionsPerThread());
             hosts.forEach(handlingConsumerWrapper(host -> loadBalancer.addHost(new URI(host)), URISyntaxException.class));
-            proxyHandler = ProxyHandler.builder()
-                    .setProxyClient(loadBalancer)
-                    .setMaxConnectionRetries(config.maxConnectionRetries)
-                    .setMaxRequestTime(config.maxRequestTime)
-                    .setReuseXForwarded(config.reuseXForwarded)
-                    .setRewriteHostHeader(config.rewriteHostHeader)
-                    .setNext(ResponseCodeHandler.HANDLE_404)
-                    .build();
         }
+        proxyHandler = ProxyHandler.builder()
+                .setProxyClient(loadBalancer)
+                .setMaxConnectionRetries(config.maxConnectionRetries)
+                .setMaxRequestTime(config.maxRequestTime)
+                .setReuseXForwarded(config.reuseXForwarded)
+                .setRewriteHostHeader(config.rewriteHostHeader)
+                .setNext(ResponseCodeHandler.HANDLE_404)
+                .build();
     }
 
     @Override
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
+        if(config.isForwardJwtClaims()) {
+            HeaderMap headerValues = httpServerExchange.getRequestHeaders();
+            JwtClaims jwtClaims = extractClaimsFromJwt(headerValues);
+            httpServerExchange.getRequestHeaders().put(HttpString.tryFromString(CLAIMS_KEY), new ObjectMapper().writeValueAsString(jwtClaims.getClaimsMap()));
+        }
         proxyHandler.handleRequest(httpServerExchange);
     }
 
+    /**
+     * Takes in the header values from the request as a headerMap.
+     * Grab the JWT from the auth header, then extract and return the claims.
+     *
+     * @param headerValues - the header values from the request
+     * @return - the claims from the token
+     */
+    private JwtClaims extractClaimsFromJwt(HeaderMap headerValues) {
+
+        // make sure request actually contained authentication header value
+        if(headerValues.get(AUTH_HEADER_NAME) != null)
+        {
+            String jwt = String.valueOf(headerValues.get(AUTH_HEADER_NAME)).split(" ")[1];
+            JwtConsumer jwtConsumer = new JwtConsumerBuilder()
+                    .setSkipSignatureVerification()
+                    .setSkipAllDefaultValidators()
+                    .setAllowedClockSkewInSeconds(LONG_CLOCK_SKEW)
+                    .build();
+            JwtClaims jwtClaims = null;
+            try {
+                jwtClaims = jwtConsumer.processToClaims(jwt);
+            } catch (InvalidJwtException e) {
+                e.printStackTrace();
+            }
+            return jwtClaims;
+        } else {
+            return new JwtClaims();
+        }
+
+    }
     @FunctionalInterface
     public interface ThrowingConsumer<T, E extends Exception> {
         void accept(T t) throws E;
