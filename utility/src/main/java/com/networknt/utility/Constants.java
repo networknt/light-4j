@@ -104,6 +104,8 @@ public class Constants {
     public static final String ENV_TAG_STRING = "env_tag";
     public static final String HASH_KEY_STRING = "hash_key";
     public static final String HTTPS = "https";
+    public static final String HEADER = "header";
+    public static final String PROTOCOL = "protocol";
 
     // Encode and decode for gzip and deflate
     public static final String ENCODE_GZIP = "gzip";
