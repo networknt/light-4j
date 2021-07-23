@@ -24,6 +24,7 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.ResponseCodeHandler;
 import io.undertow.server.handlers.proxy.LoadBalancingProxyClient;
 import io.undertow.util.HeaderMap;
+import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.consumer.InvalidJwtException;
@@ -49,7 +50,6 @@ import java.util.function.Consumer;
 public class LightProxyHandler implements HttpHandler {
     static final String CONFIG_NAME = "proxy";
     static final String CLAIMS_KEY = "jwtClaims";
-    private static final String AUTH_HEADER_NAME = "Authorization";
     private static final int LONG_CLOCK_SKEW = 1000000;
 
     static final Logger logger = LoggerFactory.getLogger(LightProxyHandler.class);
@@ -96,9 +96,9 @@ public class LightProxyHandler implements HttpHandler {
     private JwtClaims extractClaimsFromJwt(HeaderMap headerValues) {
 
         // make sure request actually contained authentication header value
-        if(headerValues.get(AUTH_HEADER_NAME) != null)
+        if(headerValues.get(Headers.AUTHORIZATION_STRING) != null)
         {
-            String jwt = String.valueOf(headerValues.get(AUTH_HEADER_NAME)).split(" ")[1];
+            String jwt = String.valueOf(headerValues.get(Headers.AUTHORIZATION_STRING)).split(" ")[1];
             JwtConsumer jwtConsumer = new JwtConsumerBuilder()
                     .setSkipSignatureVerification()
                     .setSkipAllDefaultValidators()
