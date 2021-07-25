@@ -1,5 +1,31 @@
 # Change Log
 
+## [2.0.29](https://github.com/networknt/light-4j/tree/2.0.29) (2021-07-25)
+
+
+**Merged pull requests:**
+
+
+-  add two constants for http-sidecar usage [\#1008](https://github.com/networknt/light-4j/pull/1008) ([chenyan71](https://github.com/chenyan71))
+- Issue1006 [\#1007](https://github.com/networknt/light-4j/pull/1007) ([chenyan71](https://github.com/chenyan71))
+-  build error fix, change egress_router value scope [\#1005](https://github.com/networknt/light-4j/pull/1005) ([chenyan71](https://github.com/chenyan71))
+- fixes \#1003 audit request body serialize to JSON if possible and fall… [\#1004](https://github.com/networknt/light-4j/pull/1004) ([stevehu](https://github.com/stevehu))
+-  fix an issue on jwt.yml config file [\#1002](https://github.com/networknt/light-4j/pull/1002) ([chenyan71](https://github.com/chenyan71))
+- fixes \#1000 support both X509Certificate and JsonWebKeySet at the sam… [\#1001](https://github.com/networknt/light-4j/pull/1001) ([stevehu](https://github.com/stevehu))
+- fixes \#998 add portalToken to the portal-registry.yml and use the tok… [\#999](https://github.com/networknt/light-4j/pull/999) ([stevehu](https://github.com/stevehu))
+- fixes \#995 [\#996](https://github.com/networknt/light-4j/pull/996) ([chenyan71](https://github.com/chenyan71))
+- fixes \#993 add a test case to generate a bootstrap token for service … [\#994](https://github.com/networknt/light-4j/pull/994) ([stevehu](https://github.com/stevehu))
+- fixes \#991 add a status code for the service claim mismatch to the path [\#992](https://github.com/networknt/light-4j/pull/992) ([stevehu](https://github.com/stevehu))
+- fixes \#989 trim the environment variable for config server uri and co… [\#990](https://github.com/networknt/light-4j/pull/990) ([stevehu](https://github.com/stevehu))
+- Fix the NPEs in Issues 962 and 981 [\#988](https://github.com/networknt/light-4j/pull/988) ([containerAnalyzer](https://github.com/containerAnalyzer))
+- fixes \#986 add a new error code for oauth to indicate that the author… [\#987](https://github.com/networknt/light-4j/pull/987) ([stevehu](https://github.com/stevehu))
+- fixes \#984 [\#985](https://github.com/networknt/light-4j/pull/985) ([chenyan71](https://github.com/chenyan71))
+- fixes \#982 disable loadConfigs from DefaultConfigLoader [\#983](https://github.com/networknt/light-4j/pull/983) ([stevehu](https://github.com/stevehu))
+- fixes \#979 lazy creation of the jdk11 http client to connect to confi… [\#980](https://github.com/networknt/light-4j/pull/980) ([stevehu](https://github.com/stevehu))
+- fixes \#970 [\#975](https://github.com/networknt/light-4j/pull/975) ([chenyan71](https://github.com/chenyan71))
+- fixes \#977 output content of the config files from config server in log [\#978](https://github.com/networknt/light-4j/pull/978) ([stevehu](https://github.com/stevehu))
+- fixes \#973 switch to jdk 11 http client to connect to the config server [\#974](https://github.com/networknt/light-4j/pull/974) ([stevehu](https://github.com/stevehu))
+- fixes \#971 remove the server.config and switch to getServerConfig method [\#972](https://github.com/networknt/light-4j/pull/972) ([stevehu](https://github.com/stevehu))
 ## [2.0.28](https://github.com/networknt/light-4j/tree/2.0.28) (2021-06-27)
 
 
