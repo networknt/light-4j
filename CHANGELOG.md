@@ -26,6 +26,8 @@
 - fixes \#977 output content of the config files from config server in log [\#978](https://github.com/networknt/light-4j/pull/978) ([stevehu](https://github.com/stevehu))
 - fixes \#973 switch to jdk 11 http client to connect to the config server [\#974](https://github.com/networknt/light-4j/pull/974) ([stevehu](https://github.com/stevehu))
 - fixes \#971 remove the server.config and switch to getServerConfig method [\#972](https://github.com/networknt/light-4j/pull/972) ([stevehu](https://github.com/stevehu))
+
+
 ## [2.0.28](https://github.com/networknt/light-4j/tree/2.0.28) (2021-06-27)
 
 
