@@ -85,9 +85,9 @@ public class DefaultConfigLoader implements IConfigLoader{
     public static final String DEFAULT_TARGET_CONFIGS_DIRECTORY ="src/main/resources/config";
 
     public static final String CONFIG_SERVER_URI = "light-config-server-uri";
-    public static final String CONFIG_SERVER_CONFIGS_CONTEXT_ROOT = "/configs";
-    public static final String CONFIG_SERVER_CERTS_CONTEXT_ROOT = "/certs";
-    public static final String CONFIG_SERVER_FILES_CONTEXT_ROOT = "/files";
+    public static final String CONFIG_SERVER_CONFIGS_CONTEXT_ROOT = "/config-server/configs";
+    public static final String CONFIG_SERVER_CERTS_CONTEXT_ROOT = "/config-server/certs";
+    public static final String CONFIG_SERVER_FILES_CONTEXT_ROOT = "/config-server/files";
     public static final String AUTHORIZATION = "config_server_authorization";
     public static final String CLIENT_TRUSTSTORE_PASS = "config_server_client_truststore_password";
     public static final String CLIENT_TRUSTSTORE_LOC = "config_server_client_truststore_location";
