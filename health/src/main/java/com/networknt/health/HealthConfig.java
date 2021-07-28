@@ -22,9 +22,13 @@ package com.networknt.health;
  * @author Steve Hu
  */
 public class HealthConfig {
-    boolean enabled;
+    public static final String CONFIG_NAME = "health";
 
+    boolean enabled;
     boolean useJson;
+    boolean downstreamEnabled;
+    String downstreamHost;
+    String downstreamPath;
 
     public HealthConfig() {
     }
@@ -43,5 +47,29 @@ public class HealthConfig {
 
     public void setUseJson(boolean useJson) {
         this.useJson = useJson;
+    }
+
+    public boolean isDownstreamEnabled() {
+        return downstreamEnabled;
+    }
+
+    public void setDownstreamEnabled(boolean downstreamEnabled) {
+        this.downstreamEnabled = downstreamEnabled;
+    }
+
+    public String getDownstreamHost() {
+        return downstreamHost;
+    }
+
+    public void setDownstreamHost(String downstreamHost) {
+        this.downstreamHost = downstreamHost;
+    }
+
+    public String getDownstreamPath() {
+        return downstreamPath;
+    }
+
+    public void setDownstreamPath(String downstreamPath) {
+        this.downstreamPath = downstreamPath;
     }
 }
