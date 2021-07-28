@@ -68,10 +68,10 @@ public class LightProxyHandler implements HttpHandler {
         }
         proxyHandler = ProxyHandler.builder()
                 .setProxyClient(loadBalancer)
-                .setMaxConnectionRetries(config.maxConnectionRetries)
-                .setMaxRequestTime(config.maxRequestTime)
-                .setReuseXForwarded(config.reuseXForwarded)
-                .setRewriteHostHeader(config.rewriteHostHeader)
+                .setMaxConnectionRetries(config.getMaxConnectionRetries())
+                .setMaxRequestTime(config.getMaxRequestTime())
+                .setReuseXForwarded(config.isReuseXForwarded())
+                .setRewriteHostHeader(config.isRewriteHostHeader())
                 .setNext(ResponseCodeHandler.HANDLE_404)
                 .build();
     }
