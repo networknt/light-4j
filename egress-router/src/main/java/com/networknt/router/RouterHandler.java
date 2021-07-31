@@ -37,7 +37,7 @@ public class RouterHandler implements HttpHandler {
     static final String CONFIG_NAME = "router";
     static RouterConfig config = (RouterConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, RouterConfig.class);
 
-    ProxyHandler proxyHandler;
+    protected ProxyHandler proxyHandler;
 
     public RouterHandler() {
         // As we are building a client side router for the light platform, the assumption is the server will
