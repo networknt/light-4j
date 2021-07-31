@@ -5,6 +5,11 @@ enabled: ${health.enabled:true}
 # true to return Json format message. By default, it is false. It will only be changed to true if the monitor
 # tool only support JSON response body.
 useJson: ${health.useJson:false}
+# timeout in milliseconds for the health check. If the duration is passed, a failure will return.
+# It is to prevent taking too much time to check subsystems that are not available or timeout.
+# As the health check is used by the control plane for service discovery, by default, one request
+# per ten seconds. The quick response time is very important to not block the control plane.
+timeout: ${health.timeout:500}
 
 # For some of the services like light-proxy, http-sidecar and kafka-sidecar, we might need to check the down
 # stream API before return the health status to the invoker. By default it is not enabled.
