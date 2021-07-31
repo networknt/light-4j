@@ -26,6 +26,7 @@ public class HealthConfig {
 
     boolean enabled;
     boolean useJson;
+    int timeout;
     boolean downstreamEnabled;
     String downstreamHost;
     String downstreamPath;
@@ -47,6 +48,14 @@ public class HealthConfig {
 
     public void setUseJson(boolean useJson) {
         this.useJson = useJson;
+    }
+
+    public int getTimeout() {
+        return timeout;
+    }
+
+    public void setTimeout(int timeout) {
+        this.timeout = timeout;
     }
 
     public boolean isDownstreamEnabled() {
