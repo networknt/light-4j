@@ -1,0 +1,11 @@
+
+# Singleton service factory configuration/IoC injection
+singletons:
+  - com.networknt.registry.URL:
+      - com.networknt.registry.URLImpl:
+          parameters:
+            registryRetryPeriod: '30000'
+  - com.networknt.balance.LoadBalance:
+      - com.networknt.balance.RoundRobinLoadBalance
+  - com.networknt.cluster.Cluster:
+      - com.networknt.cluster.LightCluster
