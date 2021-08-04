@@ -663,6 +663,16 @@ ERR11404:
   code: ERR11404
   message: ERROR_SERVICE_ID_MISSING
   description: The service claim in the JWT token is missing.
+ERR11405:
+  statusCode: 400
+  code: ERR11405
+  message: ERROR_SERVICE_EXISTS
+  description: The service %s already exists.
+ERR11406:
+  statusCode: 404
+  code: ERR11406
+  message: ERROR_SERVICE_NOT_FOUND
+  description: The service %s not found.
 
 
 # 11500 - 11599 GraphQL validator errors
