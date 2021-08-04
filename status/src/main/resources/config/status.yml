@@ -666,13 +666,13 @@ ERR11404:
 ERR11405:
   statusCode: 400
   code: ERR11405
-  message: ERROR_ALREADY_EXIST
-  description: The service %s already exist.
+  message: ERROR_SERVICE_EXISTS
+  description: The service %s already exists.
 ERR11406:
   statusCode: 404
   code: ERR11406
-  message: ERROR_NOT_EXIST
-  description: The service %s don't exist.
+  message: ERROR_SERVICE_NOT_FOUND
+  description: The service %s not found.
 
 
 # 11500 - 11599 GraphQL validator errors
