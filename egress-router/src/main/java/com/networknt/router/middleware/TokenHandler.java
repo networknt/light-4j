@@ -21,6 +21,7 @@ import com.networknt.client.oauth.OauthHelper;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.monad.Result;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
@@ -85,7 +86,13 @@ public class TokenHandler implements MiddlewareHandler {
             OauthHelper.sendStatusToResponse(exchange, result.getError());
             return;
         }
-        exchange.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + cachedJwt.getJwt());
+        String token = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
+        if(token == null) {
+            exchange.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + cachedJwt.getJwt());
+        } else {
+            exchange.getRequestHeaders().put(HttpStringConstants.SCOPE_TOKEN, "Bearer " + cachedJwt.getJwt());
+        }
+
         Handler.next(exchange, next);
     }
 
