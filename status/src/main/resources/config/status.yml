@@ -673,6 +673,11 @@ ERR11406:
   code: ERR11406
   message: ERROR_SERVICE_NOT_FOUND
   description: The service %s not found.
+ERR11407:
+  statusCode: 400
+  code: ERR11407
+  message: ERROR_BAD_BODY_PARAMETER
+  description: The body doesn't follow the correct format.
 
 
 # 11500 - 11599 GraphQL validator errors
