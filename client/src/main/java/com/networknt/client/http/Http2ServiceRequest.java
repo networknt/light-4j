@@ -6,7 +6,12 @@ import com.networknt.client.model.HttpVerb;
 import com.networknt.client.model.ServiceDef;
 import com.networknt.cluster.Cluster;
 import com.networknt.config.Config;
+import com.networknt.monad.Failure;
+import com.networknt.monad.Result;
+import com.networknt.monad.Success;
 import com.networknt.service.SingletonServiceFactory;
+import com.networknt.status.HttpStatus;
+import com.networknt.status.Status;
 import io.undertow.client.ClientRequest;
 import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
@@ -19,7 +24,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 public class Http2ServiceRequest {
 
@@ -28,12 +32,13 @@ public class Http2ServiceRequest {
     private Optional<String> requestBody = Optional.empty();
     private Boolean addCCToken = false;
     private String authToken;
+    public static final String STATUS_MESSAGE_ERROR = "SERVICE_API_CALL_ERROR";
     private final ClientRequest clientRequest;
 
     Http2Client http2Client =Http2Client.getInstance();
     ObjectMapper objectMapper = Config.getInstance().getMapper();
 
-    Optional<Predicate<Integer>> isStatusCodeValid = Optional.empty();
+    Optional<List<HttpStatus>> statusCodesValid = Optional.empty();
 
     public Http2ServiceRequest(URI uri, HttpVerb verb) {
         this.hostURI = uri;
@@ -67,14 +72,30 @@ public class Http2ServiceRequest {
         this.clientRequest = new ClientRequest().setMethod(method).setPath(path);
     }
 
-    public void setIsStatusCodeValid(Predicate<Integer> isStatusCodeValid) {
-        this.isStatusCodeValid = Optional.of(isStatusCodeValid);
+    public void setStatusCodesValid(List<HttpStatus> statusCodesValid) {
+        this.statusCodesValid = Optional.of(statusCodesValid);
     }
 
     public CompletableFuture<Http2ServiceResponse> call() {
         processClientRequest();
         return http2Client.callService(hostURI, clientRequest, requestBody).thenApplyAsync(
                 response -> new Http2ServiceResponse(response));
+    }
+
+    public CompletableFuture<Result<Http2ServiceResponse>> callForResult() {
+        return this.call().thenComposeAsync(http2ServiceResponse -> {
+            CompletableFuture<Result<Http2ServiceResponse>> completableFuture = new CompletableFuture<>();
+            try {
+                if (http2ServiceResponse.isClientResponseStatusOK()) {
+                    completableFuture.complete(Success.of(http2ServiceResponse));
+                } else {
+                    completableFuture.complete(Failure.of(new Status(http2ServiceResponse.getClientResponseStatusCode(), "ERR500001", STATUS_MESSAGE_ERROR, http2ServiceResponse.getClientResponseBody())));
+                }
+            } catch (Exception e) {
+                completableFuture.completeExceptionally(e);
+            }
+            return completableFuture;
+        });
     }
 
     public CallWaiter call(Consumer<Http2ServiceResponse> callback, Consumer<Exception> exceptionHandler) {
@@ -87,20 +108,27 @@ public class Http2ServiceRequest {
         }), exceptionHandler);
     }
 
-    public void optionallyValidateClientResponseStatusCode(int statusCode) throws Exception {
-        if (this.isStatusCodeValid.isPresent()) {
-            if (!this.isStatusCodeValid.get().test(statusCode)) {
-                throw new Exception("cannot type the response object because response code is " + statusCode);
+    public boolean optionallyValidateClientResponseStatusCode(int statusCode) throws Exception {
+        HttpStatus httpStatus = HttpStatus.resolve(statusCode);
+        if (this.statusCodesValid.isPresent() && httpStatus!=null) {
+            if (!this.statusCodesValid.get().contains(httpStatus)) {
+                return false;
             }
+        } else {
+            if ((httpStatus!=null && httpStatus.isError()) || (httpStatus==null && statusCode>=400) ) return false;
         }
+        return true;
     }
 
     public <ResponseType> CompletableFuture<ResponseType> callForTypedObject(Class<ResponseType> responseTypeClass) {
         return this.call().thenComposeAsync(http2ServiceResponse -> {
             CompletableFuture<ResponseType> completableFuture = new CompletableFuture<>();
             try {
-                optionallyValidateClientResponseStatusCode(http2ServiceResponse.getClientResponseStatusCode());
-                completableFuture.complete(http2ServiceResponse.getTypedClientResponse(responseTypeClass));
+                if (optionallyValidateClientResponseStatusCode(http2ServiceResponse.getClientResponseStatusCode())) {
+                    completableFuture.complete(http2ServiceResponse.getTypedClientResponse(responseTypeClass));
+                } else {
+                      throw new Exception("Response code is " + http2ServiceResponse.getClientResponseStatusCode() + "; Error response:" + http2ServiceResponse.getClientResponseBody());
+                }
             } catch (Exception e) {
                 completableFuture.completeExceptionally(e);
             }
@@ -111,8 +139,11 @@ public class Http2ServiceRequest {
     public <ResponseType> CallWaiter callForTypedObject(Class<ResponseType> responseTypeClass, Consumer<ResponseType> callback, Consumer<Exception> exceptionHandler) {
         return new CallWaiter(this.call().thenAcceptAsync(http2ServiceResponse -> {
             try {
-                optionallyValidateClientResponseStatusCode(http2ServiceResponse.getClientResponseStatusCode());
-                callback.accept(http2ServiceResponse.getTypedClientResponse(responseTypeClass));
+                if (optionallyValidateClientResponseStatusCode(http2ServiceResponse.getClientResponseStatusCode())) {
+                    callback.accept(http2ServiceResponse.getTypedClientResponse(responseTypeClass));
+                } else {
+                    throw new Exception("Response code is " + http2ServiceResponse.getClientResponseStatusCode() + "; Error response:" + http2ServiceResponse.getClientResponseBody());
+                }
             } catch (Exception e) {
                 exceptionHandler.accept(e);
             }
@@ -123,8 +154,11 @@ public class Http2ServiceRequest {
         return this.call().thenComposeAsync(http2ServiceResponse -> {
             CompletableFuture<List<ResponseType>> completableFuture = new CompletableFuture<>();
             try {
-                optionallyValidateClientResponseStatusCode(http2ServiceResponse.getClientResponseStatusCode());
-                completableFuture.complete(http2ServiceResponse.getTypedListClientResponse(responseTypeClass));
+                if (optionallyValidateClientResponseStatusCode(http2ServiceResponse.getClientResponseStatusCode())) {
+                    completableFuture.complete(http2ServiceResponse.getTypedListClientResponse(responseTypeClass));
+                } else {
+                    throw new Exception("Response code is " + http2ServiceResponse.getClientResponseStatusCode() + "; Error response:" + http2ServiceResponse.getClientResponseBody());
+                }
             } catch (Exception e) {
                 completableFuture.completeExceptionally(e);
             }
@@ -135,8 +169,11 @@ public class Http2ServiceRequest {
     public <ResponseType> CallWaiter callForTypedList(Class<ResponseType> responseTypeClass, Consumer<List<ResponseType>> callback, Consumer<Exception> exceptionHandler) {
         return new CallWaiter(this.call().thenAcceptAsync(http2ServiceResponse -> {
             try {
-                optionallyValidateClientResponseStatusCode(http2ServiceResponse.getClientResponseStatusCode());
-                callback.accept(http2ServiceResponse.getTypedListClientResponse(responseTypeClass));
+                if (optionallyValidateClientResponseStatusCode(http2ServiceResponse.getClientResponseStatusCode())) {
+                    callback.accept(http2ServiceResponse.getTypedListClientResponse(responseTypeClass));
+                } else {
+                    throw new Exception("Response code is " + http2ServiceResponse.getClientResponseStatusCode() + "; Error response:" + http2ServiceResponse.getClientResponseBody());
+                }
             } catch (Exception e) {
                 exceptionHandler.accept(e);
             }

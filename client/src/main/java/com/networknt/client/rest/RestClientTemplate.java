@@ -18,6 +18,7 @@ package com.networknt.client.rest;
 
 import com.networknt.client.http.Http2ServiceRequest;
 import com.networknt.client.model.ServiceDef;
+import com.networknt.status.HttpStatus;
 import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
 import org.slf4j.Logger;
@@ -25,19 +26,26 @@ import org.slf4j.LoggerFactory;
 import org.xnio.OptionMap;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class RestClientTemplate implements RestClient {
 
     private static Logger logger = LoggerFactory.getLogger(RestClientTemplate.class);
 
     private OptionMap restOptions;
+    Optional<List<HttpStatus>> statusCodesValid = Optional.empty();
 
     /**
      * Instantiate a new LightRestClient with default RestClientOptions
      */
     public RestClientTemplate() {
         this.restOptions = OptionMap.EMPTY;
+    }
+
+    public void setStatusCodesValid(List<HttpStatus> statusCodesValid) {
+        this.statusCodesValid = Optional.of(statusCodesValid);
     }
 
     /**
@@ -146,6 +154,7 @@ public class RestClientTemplate implements RestClient {
     protected <T> T execute(String url, String path, Class<T> responseType, Map<String, ?> headerMap, HttpString method, String requestBody) throws RestClientException {
         try {
             Http2ServiceRequest http2ServiceRequest = new Http2ServiceRequest(new URI(url), path, method);
+            if (statusCodesValid.isPresent()) http2ServiceRequest.setStatusCodesValid(statusCodesValid.get());
             http2ServiceRequest.setRequestHeaders(headerMap);
             if (requestBody!=null) http2ServiceRequest.setRequestBody(requestBody);
             return http2ServiceRequest.callForTypedObject(responseType).get();
@@ -159,6 +168,7 @@ public class RestClientTemplate implements RestClient {
     protected <T> T execute(ServiceDef serviceDef, String path, Class<T> responseType, Map<String, ?> headerMap, HttpString method, String requestBody) throws RestClientException {
         try {
             Http2ServiceRequest http2ServiceRequest = new Http2ServiceRequest(serviceDef, path, method);
+            if (statusCodesValid.isPresent()) http2ServiceRequest.setStatusCodesValid(statusCodesValid.get());
             http2ServiceRequest.setRequestHeaders(headerMap);
             if (requestBody!=null) http2ServiceRequest.setRequestBody(requestBody);
             return http2ServiceRequest.callForTypedObject(responseType).get();
