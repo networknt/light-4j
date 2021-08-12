@@ -209,9 +209,25 @@ public class JwtIssuerTest {
         System.out.println("***Long lived token for proxy***: " + jwt);
     }
 
+    /**
+     * This token is used to connect to the light-config-server with serviceId 0100 for testing with a service specific for a client.
+     * @throws Exception
+     */
     @Test
     public void sidecarReferenceBootstrap() throws Exception {
         JwtClaims claims = ClaimsUtil.getTestCcClaimsScopeService("f7d42348-c647-4efb-a52d-4c5787421e72", "portal.r portal.w", "0100");
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***Reference Long lived Bootstrap token for config server and controller: " + jwt);
+    }
+
+    /**
+     * This token is used to connect to the light-config-server with serviceId example-service for unit test populated configs.
+     * @throws Exception
+     */
+    @Test
+    public void sidecarExampleBootstrap() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestCcClaimsScopeService("f7d42348-c647-4efb-a52d-4c5787421e72", "portal.r portal.w", "example-service");
         claims.setExpirationTimeMinutesInTheFuture(5256000);
         String jwt = JwtIssuer.getJwt(claims);
         System.out.println("***Reference Long lived Bootstrap token for config server and controller: " + jwt);
