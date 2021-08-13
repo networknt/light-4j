@@ -25,6 +25,8 @@ import org.junit.Test;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class HostWhitelistTest {
 
@@ -32,12 +34,6 @@ public class HostWhitelistTest {
 
     @BeforeClass
     public static void setUp() {
-        RouterConfig config = (RouterConfig) Config.getInstance()
-                .getJsonObjectConfig("router", RouterConfig.class);
-        config.setHostWhitelist(new String[] {
-                "192.168.0.*",
-                "10.1.2.*"
-        });
         SingletonServiceFactory.setBean("com.networknt.router.HostWhitelist", new HostWhitelist());
     }
 
