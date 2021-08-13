@@ -20,3 +20,6 @@ reuseXForwarded: false
 
 # Max Connection Retries
 maxConnectionRetries: 3
+
+# allowed host list. Use Regex to do wildcard match
+hostWhitelist: ${router.hostWhitelist:.*}
