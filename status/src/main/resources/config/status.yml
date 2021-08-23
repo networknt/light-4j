@@ -1228,7 +1228,7 @@ ERR12203:
   statusCode: 400
   code: ERR12203
   message: INVALID_EMBEDDED_FORMAT
-  description: Invalid embedded format %s
+  description: Invalid embedded format key %s or value %s
 ERR12204:
   statusCode: 400
   code: ERR12204
