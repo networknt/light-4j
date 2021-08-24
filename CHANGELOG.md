@@ -1,5 +1,21 @@
 # Change Log
 
+## [2.0.30](https://github.com/networknt/light-4j/tree/2.0.30) (2021-08-23)
+
+
+**Merged pull requests:**
+
+
+-  fixes \#1023 [\#1024](https://github.com/networknt/light-4j/pull/1024) ([GavinChenYan](https://github.com/GavinChenYan))
+-  add status change and new method for Result object [\#1022](https://github.com/networknt/light-4j/pull/1022) ([GavinChenYan](https://github.com/GavinChenYan))
+- Add new error code [\#1021](https://github.com/networknt/light-4j/pull/1021) ([wswjwjccjlu](https://github.com/wswjwjccjlu))
+-  fixes \#1019 [\#1020](https://github.com/networknt/light-4j/pull/1020) ([GavinChenYan](https://github.com/GavinChenYan))
+- issue\#1017 add new error codes [\#1018](https://github.com/networknt/light-4j/pull/1018) ([wswjwjccjlu](https://github.com/wswjwjccjlu))
+-  fixes \#1015 [\#1016](https://github.com/networknt/light-4j/pull/1016) ([GavinChenYan](https://github.com/GavinChenYan))
+- Issue1011 [\#1014](https://github.com/networknt/light-4j/pull/1014) ([stevehu](https://github.com/stevehu))
+- change egress router to allow user to extend the router handler [\#1013](https://github.com/networknt/light-4j/pull/1013) ([GavinChenYan](https://github.com/GavinChenYan))
+- fixes \#1011 update the health.yml to enable downstream health check w… [\#1012](https://github.com/networknt/light-4j/pull/1012) ([stevehu](https://github.com/stevehu))
+- fixes \#1009 update config server path with config-server base path [\#1010](https://github.com/networknt/light-4j/pull/1010) ([stevehu](https://github.com/stevehu))
 ## [2.0.29](https://github.com/networknt/light-4j/tree/2.0.29) (2021-07-25)
 
 
