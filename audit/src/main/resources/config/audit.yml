@@ -40,6 +40,8 @@ headers:
 
 # Traceability Id
 - X-Traceability-Id
+# caller id for metrics
+- caller_id
 
 # Output from id token and access token
 audit:
