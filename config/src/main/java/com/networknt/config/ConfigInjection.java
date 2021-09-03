@@ -82,10 +82,16 @@ public class ConfigInjection {
     // Return the list of exclusion files list which includes the names of config files that shouldn't be injected
     // Double check values and exclusions to ensure no dead loop
     public static boolean isExclusionConfigFile(String configName) {
-        List<Object> exclusionConfigFileList = (exclusionMap == null) ? new ArrayList<>() : (List<Object>) exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST);
+        HashSet<Object> exclusionConfigFileSet;
+        if (exclusionMap == null || !exclusionMap.containsKey(EXCLUSION_CONFIG_FILE_LIST)) {
+            exclusionConfigFileSet = new HashSet<>();
+        } else {
+            exclusionMap.put(EXCLUSION_CONFIG_FILE_LIST, new HashSet(exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST)));
+            exclusionConfigFileSet = exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST);
+        }
         return CENTRALIZED_MANAGEMENT.equals(configName)
                 || SCALABLE_CONFIG.equals(configName)
-                || exclusionConfigFileList.contains(configName);
+                || exclusionConfigFileSet.contains(configName);
     }
 
     // Method used to parse the content inside pattern "${}"
