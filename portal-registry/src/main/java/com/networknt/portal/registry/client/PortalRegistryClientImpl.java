@@ -127,7 +127,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
 
     @Override
     public void unregisterService(PortalRegistryService service, String token) {
-        String path = "/services?serviceId=" + service.getServiceId() + "&protocol=" + service.getProtocol() + "&address=" + service.getAddress() + "&port=" + service.getPort();
+        String path = "/services?serviceId=" + service.getServiceId() + "&protocol=" + service.getProtocol() + "&address=" + service.getAddress() + "&port=" + service.getPort() + "%checkInterval=" + config.getCheckInterval();
         if(service.getTag() != null) path = path + "&tag=" + service.getTag();
         System.out.println("de-register path = " + path);
         ClientConnection connection = null;
