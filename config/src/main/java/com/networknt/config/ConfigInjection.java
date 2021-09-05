@@ -86,8 +86,12 @@ public class ConfigInjection {
         if (exclusionMap == null || !exclusionMap.containsKey(EXCLUSION_CONFIG_FILE_LIST)) {
             exclusionConfigFileSet = new HashSet<>();
         } else {
-            exclusionMap.put(EXCLUSION_CONFIG_FILE_LIST, new HashSet(exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST)));
-            exclusionConfigFileSet = exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST);
+            if (exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST) instanceof Set) {
+                exclusionConfigFileSet = exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST);
+            } else {
+                exclusionMap.put(EXCLUSION_CONFIG_FILE_LIST, new HashSet(exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST)));
+                exclusionConfigFileSet = exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST);
+            }
         }
         return CENTRALIZED_MANAGEMENT.equals(configName)
                 || SCALABLE_CONFIG.equals(configName)
