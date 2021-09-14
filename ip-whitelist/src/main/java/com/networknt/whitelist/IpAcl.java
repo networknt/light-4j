@@ -16,12 +16,12 @@
 
 package com.networknt.whitelist;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class IpAcl {
-    private List<WhitelistHandler.PeerMatch> ipv6acl = new ArrayList<>();
-    private List<WhitelistHandler.PeerMatch> ipv4acl = new ArrayList<>();
+    private List<WhitelistHandler.PeerMatch> ipv6acl = new LinkedList<>();
+    private List<WhitelistHandler.PeerMatch> ipv4acl = new LinkedList<>();
 
     public List<WhitelistHandler.PeerMatch> getIpv6acl() {
         return ipv6acl;
