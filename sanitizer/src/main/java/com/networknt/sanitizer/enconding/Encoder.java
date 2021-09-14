@@ -1,7 +1,9 @@
 package com.networknt.sanitizer.enconding;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Map;
 
 public class Encoder {
@@ -17,12 +19,14 @@ public class Encoder {
     }
 
     public void encodeNode(Map<String, Object> map) {
+        Set<String> attributesToIgnoreSet = new HashSet<>(attributesToIgnore);
+        Set<String> attributesToAppreciateSet = new HashSet<>(attributesToAppreciate);
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             String key = entry.getKey();
-            if (attributesToIgnore.contains(key)) {
+            if (attributesToIgnoreSet.contains(key)) {
                 continue;
             }
-            if (!attributesToAppreciate.isEmpty() && !attributesToAppreciate.contains(key)) {
+            if (!attributesToAppreciateSet.isEmpty() && !attributesToAppreciateSet.contains(key)) {
                 continue;
             }
 
