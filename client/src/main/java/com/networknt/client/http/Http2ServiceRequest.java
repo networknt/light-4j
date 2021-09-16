@@ -6,6 +6,7 @@ import com.networknt.client.model.HttpVerb;
 import com.networknt.client.model.ServiceDef;
 import com.networknt.cluster.Cluster;
 import com.networknt.config.Config;
+import com.networknt.httpstring.ContentType;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;
@@ -33,6 +34,7 @@ public class Http2ServiceRequest {
     private Boolean addCCToken = false;
     private String authToken;
     public static final String STATUS_MESSAGE_ERROR = "SERVICE_API_CALL_ERROR";
+    public static final String TRANSFER_ENCODING_DEFAULT = "chunked";
     private final ClientRequest clientRequest;
 
     Http2Client http2Client =Http2Client.getInstance();
@@ -222,6 +224,11 @@ public class Http2ServiceRequest {
         return this;
     }
 
+    public Http2ServiceRequest addRequestHeader(HttpString headerName, String headerValue) {
+        this.clientRequest.getRequestHeaders().put(headerName, headerValue);
+        return this;
+    }
+
     public Http2ServiceRequest addRequestHeader(String headerName, int headerValue) {
         this.clientRequest.getRequestHeaders().put(new HttpString(headerName), headerValue);
         return this;
@@ -250,6 +257,14 @@ public class Http2ServiceRequest {
             }
         }
 
+        if (this.requestBody!=null) {
+            if (this.clientRequest.getRequestHeaders().get(Headers.CONTENT_TYPE) == null) {
+                clientRequest.getRequestHeaders().put(Headers.CONTENT_TYPE, ContentType.APPLICATION_JSON.value());
+            }
+            if (this.clientRequest.getRequestHeaders().get(Headers.TRANSFER_ENCODING) == null) {
+                clientRequest.getRequestHeaders().put(Headers.TRANSFER_ENCODING, TRANSFER_ENCODING_DEFAULT);
+            }
+        }
 
         // Ensure host header exists
         if (this.clientRequest.getRequestHeaders().get(Headers.HOST) == null ||
