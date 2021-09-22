@@ -1,5 +1,16 @@
 # Change Log
 
+## [2.0.31](https://github.com/networknt/light-4j/tree/2.0.31) (2021-09-22)
+
+
+**Merged pull requests:**
+
+
+-  fixes \#1033 [\#1034](https://github.com/networknt/light-4j/pull/1034) ([GavinChenYan](https://github.com/GavinChenYan))
+- add default header when client request missed the setting [\#1032](https://github.com/networknt/light-4j/pull/1032) ([GavinChenYan](https://github.com/GavinChenYan))
+- fixes \#1030 update the portal de-registry to add checkInterval to the… [\#1031](https://github.com/networknt/light-4j/pull/1031) ([stevehu](https://github.com/stevehu))
+- fixes \#1026 [\#1027](https://github.com/networknt/light-4j/pull/1027) ([GavinChenYan](https://github.com/GavinChenYan))
+- add caller id header to audit map which will be used metrics [\#1025](https://github.com/networknt/light-4j/pull/1025) ([GavinChenYan](https://github.com/GavinChenYan))
 ## [2.0.30](https://github.com/networknt/light-4j/tree/2.0.30) (2021-08-23)
 
 
