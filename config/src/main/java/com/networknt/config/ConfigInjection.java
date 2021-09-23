@@ -48,6 +48,7 @@ public class ConfigInjection {
     private static final String CENTRALIZED_MANAGEMENT = "values";
     private static final String SCALABLE_CONFIG = "config";
     private static final String EXCLUSION_CONFIG_FILE_LIST = "exclusionConfigFileList";
+    private static final String ALLOW_DEFAULT_EMPTY = "allowDefaultValueEmpty";
 
     private static final Map<String, Object> exclusionMap = Config.getInstance().getJsonMapConfig(SCALABLE_CONFIG);
 
@@ -120,7 +121,9 @@ public class ConfigInjection {
                         throw new ConfigException(error_text);
                     }
                     // Throw exception when no parsing result found
-                    throw new ConfigException("\"${" + content + "}\" appears in config file cannot be expanded");
+                    if (exclusionMap.get(ALLOW_DEFAULT_EMPTY)== null || !(Boolean)exclusionMap.get(ALLOW_DEFAULT_EMPTY)) {
+                        throw new ConfigException("\"${" + content + "}\" appears in config file cannot be expanded");
+                    }
                 }
             }
         }
