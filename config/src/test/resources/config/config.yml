@@ -5,3 +5,6 @@ exclusionConfigFileList:
   - test_exclusion
 
 decryptorClass: com.networknt.decrypt.AESDecryptor
+
+# Following config indicator if the application allow the default config as empty (null or empty string)
+#allowDefaultValueEmpty: false
