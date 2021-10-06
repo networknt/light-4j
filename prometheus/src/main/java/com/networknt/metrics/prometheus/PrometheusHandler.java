@@ -97,16 +97,22 @@ public class PrometheusHandler implements MiddlewareHandler {
                 tags.put("endpoint", (String)auditInfo.get(Constants.ENDPOINT_STRING));
                 tags.put("clientId", auditInfo.get(Constants.CLIENT_ID_STRING) != null ? (String)auditInfo.get(Constants.CLIENT_ID_STRING) : "unknown");
 
-                List<String> labels = new ArrayList<>(tags.keySet());
-                List<String> labelValues = new ArrayList<>(tags.values());
-
-                summary(RESPONSE_TIME_SECOND, labels).labels(labelValues.stream().toArray(String[]::new)).observe(respTimer.elapsedSeconds());
-
-                incCounterForStatusCode(exchange1.getStatusCode(), labels, labelValues);
-                if (config.enableHotspot) {
-                    logger.info("Prometheus hotspot monitor enabled.");
-                    DefaultExports.initialize();
-                }
+				// The tags can be empty in error cases.
+				if (!tags.isEmpty()) {
+					List<String> labels = new ArrayList<>(tags.keySet());
+					List<String> labelValues = new ArrayList<>(tags.values());
+		
+					summary(RESPONSE_TIME_SECOND, labels).labels(labelValues.stream().toArray(String[]::new)).observe(respTimer.elapsedSeconds());
+		
+					incCounterForStatusCode(exchange1.getStatusCode(), labels, labelValues);
+					if (config.enableHotspot) {
+						logger.info("Prometheus hotspot monitor enabled.");
+						DefaultExports.initialize();
+					}
+				}
+				else {
+					logger.debug("Tags was empty. AuditInfo size "+auditInfo.size());
+				}
             }
             nextListener.proceed();
         });
