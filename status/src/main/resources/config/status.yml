@@ -1208,6 +1208,11 @@ ERR12109:
   code: ERR12109
   message: LOGGING_LEVEL_NOT_PROVIDED
   description: Logging level is not provided
+ERR12110:
+  statusCode: 500
+  code: ERR12110
+  message: Failed to parse log file appender
+  description: log file requested does not exist or has improper formatting
 # light-mesh error 12200-12299
 ERR12200:
   statusCode: 404
