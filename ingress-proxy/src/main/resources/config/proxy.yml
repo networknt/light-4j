@@ -1,0 +1,29 @@
+---
+# Reverse Proxy Handler Configuration
+
+# If HTTP 2.0 protocol will be used to connect to target servers
+http2Enabled: false
+
+# If TLS is enabled when connecting to the target servers
+httpsEnabled: false
+
+# Target URIs
+hosts: http://localhost:8081
+
+# Connections per thread to the target servers
+connectionsPerThread: 20
+
+# Max request time in milliseconds before timeout
+maxRequestTime: 1000
+
+# Rewrite Host Header with the target host and port and write X_FORWARDED_HOST with original host
+rewriteHostHeader: true
+
+# Reuse XForwarded for the target XForwarded header
+reuseXForwarded: false
+
+# Max Connection Retries
+maxConnectionRetries: 3
+
+# Decode the the JWT token claims and forward to the backend api in the form of json string
+forwardJwtClaims: false

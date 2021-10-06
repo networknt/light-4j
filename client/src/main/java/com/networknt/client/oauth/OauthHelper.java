@@ -92,13 +92,15 @@ public class OauthHelper {
      * @return Result of TokenResponse or error Status.
      */
     public static Result<TokenResponse> getTokenResult(TokenRequest tokenRequest, String envTag) {
+        // As the tokenClient will be reused frequently, we create it once and cache it.
         if(tokenClient == null) {
             try {
                 HttpClient.Builder clientBuilder = HttpClient.newBuilder()
                         .followRedirects(HttpClient.Redirect.NORMAL)
                         .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
                         .sslContext(Http2Client.createSSLContext());
-                if(tokenRequest.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(tokenRequest.getProxyHost(), tokenRequest.getProxyPort() == 0 ? 443 : tokenRequest.getProxyPort())));
+                if(logger.isTraceEnabled()) logger.trace("proxyHost = " + tokenRequest.getProxyHost() + " proxyPort = " + tokenRequest.getProxyPort());
+                if(!StringUtils.isBlank(tokenRequest.getProxyHost())) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(tokenRequest.getProxyHost(), tokenRequest.getProxyPort() == 0 ? 443 : tokenRequest.getProxyPort())));
                 if(tokenRequest.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
                 tokenClient = clientBuilder.build();
             } catch (IOException e) {

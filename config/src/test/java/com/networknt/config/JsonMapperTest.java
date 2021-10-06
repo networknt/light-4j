@@ -18,6 +18,7 @@ package com.networknt.config;
 
 import org.junit.Test;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,6 +41,17 @@ public class JsonMapperTest {
         Map<String, Object> newMap = JsonMapper.string2Map(s);
         System.out.println(newMap);
         //Long l = (Long)newMap.get("Long");
+    }
+
+    @Test
+    public void testInstant() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("string", "hello");
+        map.put("timestamp", Instant.now());
+        String s = JsonMapper.toJson(map);
+        System.out.println("s = " + s);
+        Map<String, Object> newMap = JsonMapper.string2Map(s);
+        System.out.println(newMap);
     }
 
 }

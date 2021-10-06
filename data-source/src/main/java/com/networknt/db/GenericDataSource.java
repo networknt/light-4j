@@ -39,6 +39,7 @@ public class GenericDataSource {
     private HikariDataSource ds;
     // the data source name
     protected String dsName;
+    protected Map<String, Object> dataSourceMap;
 
     public String getDsName() {
         return dsName;
@@ -60,7 +61,7 @@ public class GenericDataSource {
 
     protected HikariDataSource createDataSource() {
         // get the configured datasources
-        Map<String, Object> dataSourceMap = Config.getInstance().getJsonMapConfig(DATASOURCE);
+        dataSourceMap = Config.getInstance().getJsonMapConfig(DATASOURCE);
         // get the requested datasource
         Map<String, Object> mainParams = (Map<String, Object>) dataSourceMap.get(getDsName());
         Map<String, String> configParams = (Map<String, String>)mainParams.get("parameters");
@@ -88,9 +89,9 @@ public class GenericDataSource {
     /**
      * Get an instance of the datasource
      *
-     * @return the DataSource object
+     * @return the HikariDataSource object
      */
-    public DataSource getDataSource() {
+    public HikariDataSource getDataSource() {
         return ds;
     }
 

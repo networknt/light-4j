@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -64,6 +65,8 @@ public class MetricsHandler implements MiddlewareHandler {
     private volatile HttpHandler next;
     Map<String, String> commonTags = new HashMap<>();
 
+    static String MASK_KEY_INFLUX_DB_PASS= "influxdbPass";
+
     public MetricsHandler() {
 
     }
@@ -83,10 +86,10 @@ public class MetricsHandler implements MiddlewareHandler {
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         if(firstTime) {
-            commonTags.put("api", Server.config.getServiceId());
-            commonTags.put("env", Server.config.getEnvironment());
+            commonTags.put("api", Server.getServerConfig().getServiceId());
+            commonTags.put("env", Server.getServerConfig().getEnvironment());
             commonTags.put("addr", Server.currentAddress);
-            commonTags.put("port", "" + Server.currentPort);
+            commonTags.put("port", "" + (Server.getServerConfig().isEnableHttps() ? Server.currentHttpsPort : Server.currentHttpPort));
             InetAddress inetAddress = Util.getInetAddress();
             commonTags.put("host", inetAddress == null ? "unknown" : inetAddress.getHostName()); // will be container id if in docker.
             if(logger.isDebugEnabled()) {
@@ -145,7 +148,7 @@ public class MetricsHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(MetricsHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        ModuleRegistry.registerModule(MetricsHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), List.of(MASK_KEY_INFLUX_DB_PASS));
     }
 
     private void incCounterForStatusCode(int statusCode, Map<String, String> commonTags, Map<String, String> tags) {

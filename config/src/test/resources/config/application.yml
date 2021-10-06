@@ -1,6 +1,6 @@
 consul:
   # Consul URL for accessing APIs
-  consulUrl: "${consul.url:https://consul.mcc.np.api.cibc.com:8443}"
+  consulUrl: "${consul.url:https://consul.networknt.com:8443}"
   # number of requests before reset the shared connection.
   maxReqPerConn: 1000000
   # deregister the service after the amount of time after health check failed.

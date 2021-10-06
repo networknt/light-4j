@@ -21,8 +21,12 @@ import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
+import com.networknt.monad.Failure;
+import com.networknt.status.Status;
+import com.networknt.utility.StringUtils;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
@@ -40,16 +44,21 @@ import javax.net.ssl.*;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.net.ProxySelector;
 import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
+import java.time.Duration;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -70,6 +79,7 @@ public class DefaultConfigLoader implements IConfigLoader{
     public static Map<String, Object> startupConfig = Config.getInstance().getJsonMapConfig(STARTUP_CONFIG_NAME);
     private static final String CENTRALIZED_MANAGEMENT = "values";
     public static final String LIGHT_ENV = "light-env";
+    public static final String VERIFY_HOSTNAME_FALSE = "false";
 
     public static final String DEFAULT_ENV = "dev";
     public static final String DEFAULT_TARGET_CONFIGS_DIRECTORY ="src/main/resources/config";
@@ -88,48 +98,64 @@ public class DefaultConfigLoader implements IConfigLoader{
     public static final String SERVICE_NAME = "serviceName";
     public static final String SERVICE_VERSION = "serviceVersion";
 
-    public static String lightEnv = System.getProperty(LIGHT_ENV);
-    public static String configServerUri = System.getProperty(CONFIG_SERVER_URI);
-    public static String targetConfigsDirectory = System.getProperty(Config.LIGHT_4J_CONFIG_DIR);
+    public static String lightEnv = null;
+    public static String configServerUri = null;
+    public static String targetConfigsDirectory = null;
 
     // An instance of Jackson ObjectMapper that can be used anywhere else for Json.
     final static ObjectMapper mapper = new ObjectMapper();
-    // The instance of Http2Client that is used to connect to the light-config-server with bootstrap.truststore
-    static Http2Client client = Http2Client.getInstance();
-    ClientConnection connection = null;
+    // Using JDK 11 HTTP client to connect to the config server with bootstrap.truststore
+    private HttpClient configClient;
+
+    private HttpClient createHttpClient() {
+        String verifyHostname = getPropertyOrEnv(VERIFY_HOST_NAME);
+        if(VERIFY_HOSTNAME_FALSE.equals(verifyHostname)) {
+            final Properties props = System.getProperties();
+            props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
+        }
+        HttpClient.Builder clientBuilder = HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .connectTimeout(Duration.ofMillis(1000)) // default to 1 second timeout.
+                .version(HttpClient.Version.HTTP_2)
+                .sslContext(createBootstrapContext());
+        return clientBuilder.build();
+    }
 
     @Override
     public void init() {
+        lightEnv = getPropertyOrEnv(LIGHT_ENV);
         if (lightEnv == null) {
             logger.warn("Warning! {} is not provided; defaulting to {}", LIGHT_ENV, DEFAULT_ENV);
             lightEnv = DEFAULT_ENV;
         }
+        targetConfigsDirectory = getPropertyOrEnv(Config.LIGHT_4J_CONFIG_DIR);
         if (targetConfigsDirectory == null) {
             logger.warn("Warning! {} is not provided; defaulting to {}", Config.LIGHT_4J_CONFIG_DIR, DEFAULT_TARGET_CONFIGS_DIRECTORY);
             targetConfigsDirectory = DEFAULT_TARGET_CONFIGS_DIRECTORY;
         }
-
+        configServerUri = getPropertyOrEnv(CONFIG_SERVER_URI);
         if (configServerUri != null) {
             logger.info("Loading configs from config server");
+            if(logger.isDebugEnabled()) {
+                logger.debug("light-env:" + lightEnv);
+                logger.debug("targetConfigsDirectory:" + targetConfigsDirectory);
+                logger.debug("configServerUri:" + configServerUri);
+            }
+            // lazy create client for config server access.
+            configClient = createHttpClient();
 
             try {
-                connection = client.connect(new URI(configServerUri), Http2Client.WORKER, client.createXnioSsl(createBootstrapContext()), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
                 String configPath = getConfigServerPath();
 
-                loadConfigs(configPath);
+                // This is the method in the future to load values.yml from the config server
+                // loadConfigs(configPath);
 
                 loadFiles(configPath, CONFIG_SERVER_CERTS_CONTEXT_ROOT);
 
                 loadFiles(configPath, CONFIG_SERVER_FILES_CONTEXT_ROOT);
             } catch (Exception e) {
                 logger.error("Failed to connect to config server", e);
-            }finally {
-                // here the connection is closed after one request. It should be used for in frequent
-                // request as creating a new connection is costly with TLS handshake and ALPN.
-                IoUtils.safeClose(connection);
             }
-
-
 
             try {
                 String filename = System.getProperty("logback.configurationFile");
@@ -173,8 +199,7 @@ public class DefaultConfigLoader implements IConfigLoader{
         //clear config cache: this is required just in case other classes have already loaded something in cache
         Config.getInstance().clear();
         Config.getInstance().putInConfigCache(CENTRALIZED_MANAGEMENT, serviceConfigs);
-        // Reset global pointer to the server.yml object
-        Server.config = Server.getServerConfig();
+        //You can call Server.getServerConfig() now.
     }
 
     /**
@@ -198,7 +223,9 @@ public class DefaultConfigLoader implements IConfigLoader{
             Base64.Decoder decoder = Base64.getMimeDecoder();
             for (String fileName : serviceFiles.keySet()) {
                 filePath=Paths.get(targetConfigsDirectory+"/"+fileName);
-                Files.write(filePath, decoder.decode(serviceFiles.get(fileName).toString().getBytes()));
+                byte[] ba = decoder.decode(serviceFiles.get(fileName).toString().getBytes());
+                if(logger.isDebugEnabled()) logger.debug("filename = " + fileName + " content = " + new String(ba, StandardCharsets.UTF_8));
+                Files.write(filePath, ba);
             }
         }  catch (IOException e) {
             logger.error("Exception while creating {} dir or creating files there:{}",targetConfigsDirectory, e);
@@ -213,30 +240,14 @@ public class DefaultConfigLoader implements IConfigLoader{
      * @param path config server path
      * @return String of OK
      */
-    public static String getConfigServerHealth(String host, String path) {
+    public String getConfigServerHealth(String host, String path) {
         String result = null;
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(host + path))
+                .build();
         try {
-            final CountDownLatch latch = new CountDownLatch(1);
-            ClientConnection connection = client.connect(new URI(host), Http2Client.WORKER, client.createXnioSsl(createBootstrapContext()), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
-            final AtomicReference<ClientResponse> reference = new AtomicReference<>();
-            try {
-                final ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(path);
-                request.getRequestHeaders().put(Headers.HOST, host);
-                connection.sendRequest(request, client.createClientCallback(reference, latch));
-                latch.await(1000, TimeUnit.MILLISECONDS);
-            } finally {
-                // here the connection is closed after one request. It should be used for in frequent
-                // request as creating a new connection is costly with TLS handshake and ALPN.
-                IoUtils.safeClose(connection);
-            }
-            int statusCode = reference.get().getResponseCode();
-            String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-            if (statusCode >= 300) {
-                logger.error("Failed to load configs from config server" + statusCode + ":" + body);
-                throw new Exception("Failed to load configs from config server: " + statusCode);
-            } else {
-                result = body;
-            }
+            HttpResponse<String> response = configClient.send(request, HttpResponse.BodyHandlers.ofString());
+            result = response.body();
         } catch (Exception e) {
             logger.error("Exception while calling config server:", e);
         }
@@ -244,30 +255,25 @@ public class DefaultConfigLoader implements IConfigLoader{
     }
 
     private Map<String, Object> getServiceConfigs(String configServerPath) {
-        String authorization = System.getenv(AUTHORIZATION);
-        String verifyHostname = System.getenv(VERIFY_HOST_NAME);
+        String authorization = getPropertyOrEnv(AUTHORIZATION);
+        if(authorization == null) authorization = ""; // give it an empty string to avoid NPE.
 
         Map<String, Object> configs = new HashMap<>();
 
-        logger.debug("Calling Config Server endpoint:{}{}", configServerUri, configServerPath);
+        logger.debug("Calling Config Server endpoint:host{}:path{}", configServerUri, configServerPath);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(configServerUri.trim() + configServerPath.trim()))
+                .header(Headers.AUTHORIZATION_STRING, authorization)
+                .build();
 
         try {
-            final CountDownLatch latch = new CountDownLatch(1);
-            final AtomicReference<ClientResponse> reference = new AtomicReference<>();
-
-            final ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(configServerPath);
-            request.getRequestHeaders().put(Headers.AUTHORIZATION, authorization);
-            request.getRequestHeaders().put(Headers.HOST, configServerUri);
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
-            latch.await(10000, TimeUnit.MILLISECONDS);
-
-            int statusCode = reference.get().getResponseCode();
-            String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-            if (statusCode >= 300) {
+            HttpResponse<String> response = configClient.send(request, HttpResponse.BodyHandlers.ofString());
+            int statusCode = response.statusCode();
+            String body = response.body();
+            if(statusCode >= 300) {
                 logger.error("Failed to load configs from config server" + statusCode + ":" + body);
                 throw new Exception("Failed to load configs from config server: " + statusCode);
             } else {
-                // Get the response
                 Map<String, Object> responseMap = (Map<String, Object>) mapper.readValue(body, new TypeReference<Map<String, Object>>() {});
                 configs = (Map<String, Object>) responseMap.get("configProperties");
             }
@@ -284,13 +290,13 @@ public class DefaultConfigLoader implements IConfigLoader{
         configPath.append("/").append(startupConfig.get(SERVICE_NAME));
         configPath.append("/").append(startupConfig.get(SERVICE_VERSION));
         configPath.append("/").append(lightEnv);
-        logger.debug("configPath: {}", configPath);
+        if(logger.isDebugEnabled()) logger.debug("configPath: {}", configPath);
         return configPath.toString();
     }
 
     private static KeyStore loadBootstrapTrustStore(){
-        String truststorePassword = System.getenv(CLIENT_TRUSTSTORE_PASS);
-        String truststoreLocation = System.getenv(CLIENT_TRUSTSTORE_LOC);
+        String truststorePassword = getPropertyOrEnv(CLIENT_TRUSTSTORE_PASS);
+        String truststoreLocation = getPropertyOrEnv(CLIENT_TRUSTSTORE_LOC);
         if(truststoreLocation == null) truststoreLocation = Server.getServerConfig().getBootstrapStoreName();
         if(truststorePassword == null) truststorePassword = Server.getServerConfig().getBootstrapStorePass();
 
@@ -337,5 +343,22 @@ public class DefaultConfigLoader implements IConfigLoader{
             throw new RuntimeException("Unable to create SSLContext", e);
         }
         return sslContext;
+    }
+
+    private static String getPropertyOrEnv(String key) {
+        // The key should be in lower case and separated with hyphen.
+        // Always check the -D and then env variable for the key with lower and upper case.
+        String s = System.getProperty(key);
+        if(s == null) {
+            s = System.getenv(key);
+        }
+        if(s == null) {
+            s = System.getenv(key.toUpperCase());
+        }
+        if(s == null) {
+            // Linux convention for the environment variables with underscore.
+            s = System.getenv(key.toUpperCase().replaceAll("-", "_"));
+        }
+        return s;
     }
 }

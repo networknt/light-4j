@@ -79,7 +79,7 @@ public class JwtIssuerTest {
         Map<String, String> custom = new HashMap<>();
         custom.put("consumer_application_id", "361");
         custom.put("request_transit", "67");
-        JwtClaims claims = ClaimsUtil.getCustomClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("party.util.reference.read", "server.info.r"), custom, "user");
+        JwtClaims claims = ClaimsUtil.getCustomClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("party.util.reference.read", "server.info.r"), custom, "user admin");
         claims.setExpirationTimeMinutesInTheFuture(5256000);
         String jwt = JwtIssuer.getJwt(claims);
         System.out.println("***LongLived reference JWT***: " + jwt);
@@ -185,6 +185,18 @@ public class JwtIssuerTest {
     }
 
     /**
+     * The returned token contains scope as the key for the scope. All scopes are separated by space.
+     * @throws Exception
+     */
+    @Test
+    public void longlivedCcLocalAdminScope() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestCcClaimsScope("f7d42348-c647-4efb-a52d-4c5787421e73", "admin");
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***Long lived token for admin endpoints***: " + jwt);
+    }
+
+    /**
      * The returned token contains scp as the key for the scope. Some OAuth 2.0 provider like Okta use this claim. All scopes are separated by comma.
      * The token will have proxy.r and proxy.w as scopes for testing with proxy configuration in light-config-test proxy folder.
      * @throws Exception
@@ -195,6 +207,30 @@ public class JwtIssuerTest {
         claims.setExpirationTimeMinutesInTheFuture(5256000);
         String jwt = JwtIssuer.getJwt(claims);
         System.out.println("***Long lived token for proxy***: " + jwt);
+    }
+
+    /**
+     * This token is used to connect to the light-config-server with serviceId 0100 for testing with a service specific for a client.
+     * @throws Exception
+     */
+    @Test
+    public void sidecarReferenceBootstrap() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestCcClaimsScopeService("f7d42348-c647-4efb-a52d-4c5787421e72", "portal.r portal.w", "0100");
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***Reference Long lived Bootstrap token for config server and controller: " + jwt);
+    }
+
+    /**
+     * This token is used to connect to the light-config-server with serviceId example-service for unit test populated configs.
+     * @throws Exception
+     */
+    @Test
+    public void sidecarExampleBootstrap() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestCcClaimsScopeService("f7d42348-c647-4efb-a52d-4c5787421e72", "portal.r portal.w", "example-service");
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***Reference Long lived Bootstrap token for config server and controller: " + jwt);
     }
 
 }

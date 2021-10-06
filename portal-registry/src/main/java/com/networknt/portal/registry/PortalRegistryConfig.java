@@ -20,11 +20,13 @@ public class PortalRegistryConfig {
     public static final String CONFIG_NAME = "portal-registry";
 
     String portalUrl;
+    String portalToken;
     int maxReqPerConn;
     int deregisterAfter;
     int checkInterval;
     boolean httpCheck;
     boolean ttlCheck;
+    String healthPath;
 
     public String getPortalUrl() {
         return portalUrl;
@@ -32,6 +34,14 @@ public class PortalRegistryConfig {
 
     public void setPortalUrl(String portalUrl) {
         this.portalUrl = portalUrl;
+    }
+
+    public String getPortalToken() {
+        return portalToken;
+    }
+
+    public void setPortalToken(String portalToken) {
+        this.portalToken = portalToken;
     }
 
     public int getMaxReqPerConn() {
@@ -72,5 +82,13 @@ public class PortalRegistryConfig {
 
     public void setTtlCheck(boolean ttlCheck) {
         this.ttlCheck = ttlCheck;
+    }
+
+    public String getHealthPath() {
+        return healthPath;
+    }
+
+    public void setHealthPath(String healthPath) {
+        this.healthPath = healthPath;
     }
 }

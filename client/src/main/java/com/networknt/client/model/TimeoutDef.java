@@ -1,3 +1,4 @@
+package com.networknt.client.model;
 /*
  * Copyright (c) 2016 Network New Technologies Inc.
  *
@@ -14,18 +15,31 @@
  * limitations under the License.
  */
 
-package com.networknt.utility;
 
-import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
-/**
- * Utility to deal with collection
- *
- * @author Steve Hu
- */
-public class CollectionUtil {
-    @SuppressWarnings("rawtypes")
-    public static boolean isEmpty(Collection collection) {
-        return collection == null || collection.size() == 0;
+public class TimeoutDef {
+    private long timeout;
+    private TimeUnit unit;
+
+    public TimeoutDef(long timeout, TimeUnit timeUnit) {
+        this.timeout = timeout;
+        this.unit = timeUnit;
+    }
+
+    public long getTimeout() {
+        return timeout;
+    }
+
+    public void setTimeout(long timeout) {
+        this.timeout = timeout;
+    }
+
+    public TimeUnit getUnit() {
+        return unit;
+    }
+
+    public void setUnit(TimeUnit unit) {
+        this.unit = unit;
     }
 }

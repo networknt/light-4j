@@ -17,6 +17,7 @@
 package com.networknt.service;
 
 import com.networknt.config.Config;
+import com.networknt.utility.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,8 +62,12 @@ public class SingletonServiceFactory {
                 }
             }
         } catch (Exception e) {
+            // #883 during the server startup, any exception here will stops the server and there is no chance for the
+            // logback to output anything to the log file or stdout/stderr. That is the reason here to printStackTrace.
+            e.printStackTrace();
             logger.error("Exception:", e);
         }
+        ModuleRegistry.registerModule(SingletonServiceFactory.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
     private static Object handleSingleImpl(List<String> interfaceClasses, List<Object> value) throws Exception {

@@ -173,13 +173,13 @@ public class AuditHandlerTest extends AuditHandlerTestBase{
     @Test
     public void testAudit401WithDumpRequest() throws Exception {
         runTest("/error", "post", null, 401);
-        verifyAuditInfo("requestBody", "post");
+        verifyAuditInfo("requestBody", "\"post\"");
     }
 
     @Test
     public void testAudit200WithDumpRequest() throws Exception {
         runTest("/pet", "post", null, 200);
-        verifyAuditInfo("requestBody", "post");
+        verifyAuditInfo("requestBody", "\"post\"");
     }
 
     // response body will only be returned when auditOnError is true

@@ -16,12 +16,14 @@
 
 package com.networknt.status;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.config.Config;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.IllegalFormatException;
 import java.util.Map;
 
@@ -40,10 +42,12 @@ public class Status {
     private static final Logger logger = LoggerFactory.getLogger(Status.class);
 
     public static final String CONFIG_NAME = "status";
-    public static final Map<String, Object> config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
 
     // default severity
     public static final String defaultSeverity = "ERROR";
+    public static final String SHOW_METADATA = "showMetadata";
+    public static final String SHOW_DESCRIPTION = "showDescription";
+    public static final String SHOW_MESSAGE = "showMessage";
 
     // status serialization bean
     // allows API implementations to provide their own Status serialization mechanism
@@ -54,9 +58,10 @@ public class Status {
     private String severity;
     private String message;
     private String description;
+    private Map<String, Object> metadata;
 
     static {
-        ModuleRegistry.registerModule(Status.class.getName(), config, null);
+        ModuleRegistry.registerModule(Status.class.getName(), getConfig(), null);
         try {
             statusSerializer = SingletonServiceFactory.getBean(StatusSerializer.class);
         } catch (ExceptionInInitializerError e) {
@@ -80,11 +85,39 @@ public class Status {
     public Status(final String code, final Object... args) {
         this.code = code;
         @SuppressWarnings("unchecked")
-        Map<String, Object> map = (Map<String, Object>) config.get(code);
+        Map<String, Object> map = (Map<String, Object>) getConfig().get(code);
         if (map != null) {
             this.statusCode = (Integer) map.get("statusCode");
             this.message = (String) map.get("message");
             this.description = (String) map.get("description");
+            try {
+                this.description = format(this.description, args);
+            } catch (IllegalFormatException e) {
+//                logger.warn(format("Error formatting description of status %s", code), e);
+            }
+            if ((this.severity = (String) map.get("severity")) == null)
+                this.severity = defaultSeverity;
+
+        }
+    }
+
+    /**
+     * Construct a status object based on error code and a list of arguments. It is
+     * the most popular way to create status object from status.yml definition.
+     *
+     * @param code Error Code
+     * @param args A list of arguments that will be populated into the error description
+     * @param metadata a map of metadata attributes
+     */
+    public Status(final String code, final Map<String, Object> metadata, final Object... args) {
+        this.code = code;
+        @SuppressWarnings("unchecked")
+        Map<String, Object> map = (Map<String, Object>) getConfig().get(code);
+        if (map != null) {
+            this.statusCode = (Integer) map.get("statusCode");
+            this.message = (String) map.get("message");
+            this.description = (String) map.get("description");
+            this.metadata = metadata;
             try {
                 this.description = format(this.description, args);
             } catch (IllegalFormatException e) {
@@ -188,16 +221,86 @@ public class Status {
         return severity;
     }
 
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
+    }
+
+    public static boolean shouldShowMetadata() {
+        return getConfig().get(SHOW_METADATA) == null ? false : (boolean)getConfig().get(SHOW_METADATA);
+    }
+
+    public static boolean shouldShowMessage() {
+        return getConfig().get(SHOW_MESSAGE) == null ? true : (boolean)getConfig().get(SHOW_MESSAGE);
+    }
+
+    public static boolean shouldShowDescription() {
+        return getConfig().get(SHOW_DESCRIPTION) == null ? true : (boolean)getConfig().get(SHOW_DESCRIPTION);
+    }
+
+    /**
+     * put key value pair to the metadata
+     * @param key key of the entry
+     * @param value value of the entry
+     */
+    public void putMetadata(String key, Object value) {
+        if (this.metadata == null) {
+            this.metadata = new HashMap<>();
+        }
+        this.metadata.put(key, value);
+    }
+
     @Override
     public String toString() {
         if (statusSerializer != null) {
             return statusSerializer.serializeStatus(this);
         } else {
-            return "{\"statusCode\":" + getStatusCode()
-                    + ",\"code\":\"" + getCode()
-                    + "\",\"message\":\""
-                    + getMessage() + "\",\"description\":\""
-                    + getDescription() + "\",\"severity\":\"" + getSeverity() + "\"}";
+            return toStringConditionally(true, true, true);
         }
     }
+
+    /**
+     * This method is used to construct a Status with fields conditionally.
+     *
+     * @return JSON style String of Status
+     */
+    public String toStringConditionally() {
+
+        return toStringConditionally(shouldShowMessage(), shouldShowDescription(), shouldShowMetadata());
+    }
+
+    private String toStringConditionally(boolean showMessage, boolean showDescription, boolean showMetadata) {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{")
+                .append("\"statusCode\":" + getStatusCode())
+                .append(",\"code\":\"" + getCode());
+        if (showMessage) {
+            sb.append("\",\"message\":\"" + getMessage());
+        }
+        if (showDescription) {
+            sb.append("\",\"description\":\"" + getDescription());
+        }
+        if (showMetadata && getMetadata() != null) {
+            try {
+                sb.append("\",\"metadata\":" + Config.getInstance().getMapper().writeValueAsString(getMetadata()));
+            } catch (JsonProcessingException e) {
+                logger.error("cannot parse metadata for status:" + getStatusCode(), e);
+            }
+            sb.append(",\"severity\":\"" + getSeverity());
+        } else {
+            sb.append("\",\"severity\":\"" + getSeverity());
+        }
+        sb.append("\"}");
+
+        return sb.toString();
+    }
+
+    public static Map<String, Object> getConfig() {
+        return Config.getInstance().getJsonMapConfig(CONFIG_NAME);
+    }
+
 }

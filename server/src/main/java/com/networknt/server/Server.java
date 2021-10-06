@@ -29,6 +29,7 @@ import com.networknt.service.SingletonServiceFactory;
 import com.networknt.status.Status;
 import com.networknt.switcher.SwitcherUtil;
 import com.networknt.utility.Constants;
+import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.NetUtils;
 import com.networknt.config.TlsUtil;
 import io.undertow.Handlers;
@@ -76,13 +77,12 @@ public class Server {
 
     // service_id in slf4j MDC
     static final String SID = "sId";
-    // the bound port for the server. For metrics and other queries.
-    public static int currentPort;
+    // the bound http port for the server. For metrics and other queries.
+    public static int currentHttpPort = -1;
+    // the bound https port for the server. For metrics and other queries.
+    public static int currentHttpsPort = -1;
     // the bound ip for the server. For metrics and other queries
     public static String currentAddress;
-
-    @Deprecated //use getServerConfig() method instead
-    public static ServerConfig config = getServerConfig(); // there are a lot of users are using the static variable in their code.
 
     public final static TrustManager[] TRUST_ALL_CERTS = new X509TrustManager[]{new DummyTrustManager()};
     /** a list of service ids populated by startup hooks that want to register to the service registry */
@@ -114,11 +114,19 @@ public class Server {
             loadConfigs();
 
             // this will make sure that all log statement will have serviceId
-            MDC.put(SID, config.getServiceId());
+            MDC.put(SID, getServerConfig().getServiceId());
 
             // merge status.yml and app-status.yml if app-status.yml is provided
             mergeStatusConfig();
 
+            // register the module to /server/info
+            List<String> masks = new ArrayList<>();
+            masks.add("keystorePass");
+            masks.add("keyPass");
+            masks.add("truststorePass");
+            ModuleRegistry.registerModule(Server.class.getName(), Config.getInstance().getJsonMapConfigNoCache(SERVER_CONFIG_NAME), masks);
+
+            // start the server
             start();
         } catch (RuntimeException e) {
             // Handle any exception encountered during server start-up
@@ -242,13 +250,17 @@ public class Server {
         try {
             Undertow.Builder builder = Undertow.builder();
             if (serverConfig.enableHttps) {
-                port = port < 0 ? serverConfig.getHttpsPort() : port;
+                int p = port < 0 ? serverConfig.getHttpsPort() : port;
                 sslContext = createSSLContext();
-                builder.addHttpsListener(port, serverConfig.getIp(), sslContext);
-            } else if (serverConfig.enableHttp) {
-                port = port < 0 ? serverConfig.getHttpPort() : port;
-                builder.addHttpListener(port, serverConfig.getIp());
-            } else {
+                builder.addHttpsListener(p, serverConfig.getIp(), sslContext);
+                currentHttpsPort = p;
+            }
+            if (serverConfig.enableHttp) {
+                int p = port < 0 ? serverConfig.getHttpPort() : port;
+                builder.addHttpListener(p, serverConfig.getIp());
+                currentHttpPort = p;
+            }
+            if(currentHttpsPort == -1 && currentHttpPort == -1) {
                 throw new RuntimeException(
                         "Unable to start the server as both http and https are disabled in server.yml");
             }
@@ -267,6 +279,7 @@ public class Server {
             server = builder.setBufferSize(serverConfig.getBufferSize()).setIoThreads(serverConfig.getIoThreads())
                     // above seems slightly faster in some configurations
                     .setSocketOption(Options.BACKLOG, serverConfig.getBacklog())
+                    .setServerOption(UndertowOptions.SHUTDOWN_TIMEOUT, serverConfig.getShutdownTimeout())
                     .setServerOption(UndertowOptions.ALWAYS_SET_KEEP_ALIVE, false) // don't send a keep-alive header for
                     // HTTP/1.1 requests, as it is not required
                     .setServerOption(UndertowOptions.ALWAYS_SET_DATE, serverConfig.isAlwaysSetDate())
@@ -294,7 +307,6 @@ public class Server {
             return false;
         }
         // at this moment, the port number is bound. save it for later queries
-        currentPort = port;
         currentAddress = getAddress();
         // application level service registry. only be used without docker container.
         if (serverConfig.enableRegistry) {
@@ -313,18 +325,18 @@ public class Server {
         }
 
         if (serverConfig.enableHttp) {
-            System.out.println("Http Server started on ip:" + serverConfig.getIp() + " Port:" + port);
+            System.out.println("Http Server started on ip:" + serverConfig.getIp() + " with HTTP Port:" + currentHttpPort);
             if (logger.isInfoEnabled())
-                logger.info("Http Server started on ip:" + serverConfig.getIp() + " Port:" + port);
+                logger.info("Http Server started on ip:" + serverConfig.getIp() + " with HTTP Port:" + currentHttpPort);
         } else {
             System.out.println("Http port disabled.");
             if (logger.isInfoEnabled())
                 logger.info("Http port disabled.");
         }
         if (serverConfig.enableHttps) {
-            System.out.println("Https Server started on ip:" + serverConfig.getIp() + " Port:" + port);
+            System.out.println("Https Server started on ip:" + serverConfig.getIp() + " with HTTPS Port:" + currentHttpsPort);
             if (logger.isInfoEnabled())
-                logger.info("Https Server started on ip:" + serverConfig.getIp() + " Port:" + port);
+                logger.info("Https Server started on ip:" + serverConfig.getIp() + " with HTTPS Port:" + currentHttpsPort);
         } else {
             System.out.println("Https port disabled.");
             if (logger.isInfoEnabled())
@@ -357,7 +369,7 @@ public class Server {
             logger.info("Starting graceful shutdown.");
             gracefulShutdownHandler.shutdown();
             try {
-                gracefulShutdownHandler.awaitShutdown(60 * 1000);
+                gracefulShutdownHandler.awaitShutdown(getServerConfig().getShutdownGracefulPeriod());
             } catch (InterruptedException e) {
                 logger.error("Error occurred while waiting for pending requests to complete.", e);
             }
@@ -501,14 +513,14 @@ public class Server {
             Map parameters = new HashMap<>();
             if (serverConfig.getEnvironment() != null)
                 parameters.put(ENV_PROPERTY_KEY, serverConfig.getEnvironment());
-            serviceUrl = new URLImpl(serverConfig.enableHttps ? "https" : "http", currentAddress, currentPort, serviceId, parameters);
+            serviceUrl = new URLImpl(serverConfig.enableHttps ? "https" : "http", currentAddress, serverConfig.enableHttps ? currentHttpsPort : currentHttpPort, serviceId, parameters);
             if (logger.isInfoEnabled()) logger.info("register service: " + serviceUrl.toFullStr());
             registry.register(serviceUrl);
             return serviceUrl;
             // handle the registration exception separately to eliminate confusion
         } catch (Exception e) {
             Status status = new Status(ERROR_CONNECT_REGISTRY, serviceUrl);
-            if(config.startOnRegistryFailure) {
+            if(getServerConfig().startOnRegistryFailure) {
                 System.out.println("Failed to register service, start the server without registry. ");
                 System.out.println(status.toString());
                 e.printStackTrace();

@@ -41,6 +41,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public class NioUtils {
     private static final int BUFFER_SIZE = 1024 * 4;
+    private static final String DOT = ".";
 
     static final Logger logger = LoggerFactory.getLogger(NioUtils.class);
 
@@ -325,5 +326,29 @@ public class NioUtils {
     public static String toString(InputStream is) throws IOException {
         return new String(toByteArray(is), StandardCharsets.UTF_8);
     }
+
+    /**
+     * Get the file extension from the File object
+     * @param file File object
+     * @return String extension
+     */
+    public static String getFileExtension(File file) {
+        String name = file.getName();
+        return getFileExtension(name);
+    }
+
+    /**
+     * Get the file extension from the file name
+     * @param name File name
+     * @return String extension
+     */
+    public static String getFileExtension(String name) {
+        int lastIndexOf = name.lastIndexOf(DOT);
+        if (lastIndexOf < 0) {
+            return StringUtils.EMPTY;
+        }
+        return name.substring(lastIndexOf+1);
+    }
+
 
 }

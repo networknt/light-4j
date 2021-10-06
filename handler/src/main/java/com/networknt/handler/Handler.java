@@ -16,6 +16,7 @@
 
 package com.networknt.handler;
 
+import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.Tuple;
 import com.networknt.config.Config;
 import com.networknt.handler.config.EndpointSource;
@@ -74,6 +75,7 @@ public class Handler {
 		initChains();
 		initPaths();
 		initDefaultHandlers();
+		ModuleRegistry.registerModule(Handler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
 	}
 
 	/**

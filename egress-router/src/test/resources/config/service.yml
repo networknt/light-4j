@@ -1,0 +1,16 @@
+# Singleton service factory configuration/IoC injection
+singletons:
+- com.networknt.registry.URL:
+  - com.networknt.registry.URLImpl:
+      protocol: https
+      host: localhost
+      port: 8080
+      path: direct
+      parameters:
+        com.networknt.test-1.0.0: http://localhost:8082?environment=dev
+- com.networknt.registry.Registry:
+  - com.networknt.registry.support.DirectRegistry
+- com.networknt.balance.LoadBalance:
+  - com.networknt.balance.RoundRobinLoadBalance
+- com.networknt.cluster.Cluster:
+  - com.networknt.cluster.LightCluster

@@ -59,6 +59,9 @@ public class TokenKeyRequest extends KeyRequest {
                     // there is no key section under oauth. look up in the oauth/token section for key
                     Map<String, Object> tokenConfig = ClientConfig.get().getTokenConfig();
                     if(tokenConfig != null) {
+                        setProxyHost((String)tokenConfig.get(ClientConfig.PROXY_HOST));
+                        int port = tokenConfig.get(ClientConfig.PROXY_PORT) == null ? 443 : (Integer)tokenConfig.get(ClientConfig.PROXY_PORT);
+                        setProxyPort(port);
                         keyConfig = (Map<String, Object>)tokenConfig.get(ClientConfig.KEY);
                         if(keyConfig != null) {
                             setKeyOptions(keyConfig);
@@ -79,9 +82,6 @@ public class TokenKeyRequest extends KeyRequest {
 
     private void setKeyOptions(Map<String, Object> keyConfig) {
         setServerUrl((String)keyConfig.get(ClientConfig.SERVER_URL));
-        setProxyHost((String)keyConfig.get(ClientConfig.PROXY_HOST));
-        int port = keyConfig.get(ClientConfig.PROXY_PORT) == null ? 443 : (Integer)keyConfig.get(ClientConfig.PROXY_PORT);
-        setProxyPort(port);
         setServiceId((String)keyConfig.get(ClientConfig.SERVICE_ID));
         Object object = keyConfig.get(ClientConfig.ENABLE_HTTP2);
         setEnableHttp2(object != null && (Boolean) object);

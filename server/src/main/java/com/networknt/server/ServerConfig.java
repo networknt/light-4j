@@ -47,6 +47,8 @@ public class ServerConfig {
     int ioThreads;
     int workerThreads;
     int backlog;
+    int shutdownTimeout;
+    int shutdownGracefulPeriod;
     boolean alwaysSetDate;
     boolean allowUnescapedCharactersInUrl;
     String serverString;
@@ -268,6 +270,22 @@ public class ServerConfig {
 
     public void setBacklog(int backlog) {
         this.backlog = backlog;
+    }
+
+    public int getShutdownTimeout() {
+        return shutdownTimeout;
+    }
+
+    public void setShutdownTimeout(int shutdownTimeout) {
+        this.shutdownTimeout = shutdownTimeout;
+    }
+
+    public int getShutdownGracefulPeriod() {
+        return shutdownGracefulPeriod;
+    }
+
+    public void setShutdownGracefulPeriod(int shutdownGracefulPeriod) {
+        this.shutdownGracefulPeriod = shutdownGracefulPeriod;
     }
 
     public boolean isAlwaysSetDate() {

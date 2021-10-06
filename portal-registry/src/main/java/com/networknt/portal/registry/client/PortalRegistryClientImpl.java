@@ -118,7 +118,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
                 throw new Exception("Failed to register on portal controller: " + statusCode);
             }
         } catch (Exception e) {
-            logger.error("Failed to register on portal controller, Exception:", e);
+            logger.error("Failed to register on portal controller json = " + json + " uri = " + uri, e);
             throw new RuntimeException(e.getMessage());
         } finally {
             client.returnConnection(connection);
@@ -127,7 +127,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
 
     @Override
     public void unregisterService(PortalRegistryService service, String token) {
-        String path = "/services?serviceId=" + service.getServiceId() + "&protocol=" + service.getProtocol() + "&address=" + service.getAddress() + "&port=" + service.getPort();
+        String path = "/services?serviceId=" + service.getServiceId() + "&protocol=" + service.getProtocol() + "&address=" + service.getAddress() + "&port=" + service.getPort() + "&checkInterval=" + config.getCheckInterval();
         if(service.getTag() != null) path = path + "&tag=" + service.getTag();
         System.out.println("de-register path = " + path);
         ClientConnection connection = null;
@@ -200,7 +200,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
 
         ClientRequest request = new ClientRequest().setMethod(method).setPath(path);
         request.getRequestHeaders().put(Headers.HOST, "localhost");
-        if (token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
+        if (token != null) request.getRequestHeaders().put(Headers.AUTHORIZATION, token); // token is a JWT with Bearer prefix
         logger.trace("The request sent to controller: {} = request header: {}, request body is empty", uri.toString(), request.toString());
         if (StringUtils.isBlank(json)) {
             connection.sendRequest(request, client.createClientCallback(reference, latch));
