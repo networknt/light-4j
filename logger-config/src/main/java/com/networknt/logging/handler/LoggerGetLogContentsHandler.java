@@ -4,6 +4,7 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.rolling.RollingFileAppender;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.config.Config;
@@ -15,6 +16,7 @@ import io.undertow.util.Headers;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.text.ParseException;
@@ -34,7 +36,7 @@ public class LoggerGetLogContentsHandler implements LightHttpHandler {
     private static final ObjectMapper mapper = Config.getInstance().getMapper();
 
     @Override
-    public void handleRequest(HttpServerExchange exchange) {
+    public void handleRequest(HttpServerExchange exchange) throws IOException, ParseException {
         long requestTimeRangeStart = DEFAULT_MIN_RANGE;
         long requestTimeRangeEnd = DEFAULT_MAX_RANGE;
 
@@ -43,9 +45,9 @@ public class LoggerGetLogContentsHandler implements LightHttpHandler {
 
         if (config.isEnabled()) {
 
-            if(parameters.get("startTime").getFirst() != null)
+            if(parameters.containsKey("startTime"))
                 requestTimeRangeStart = Long.parseLong(parameters.get("startTime").getFirst());
-            if(parameters.get("endTime").getFirst() != null)
+            if(parameters.containsKey("endTime"))
                 requestTimeRangeEnd = Long.parseLong(parameters.get("endTime").getFirst());
 
             this.getLogEntries(requestTimeRangeStart, requestTimeRangeEnd, exchange);
@@ -64,28 +66,22 @@ public class LoggerGetLogContentsHandler implements LightHttpHandler {
      * @param endTime - the request end time range when grabbing log entries
      * @param exchange - HttpServer exchange
      */
-    private void getLogEntries(long startTime, long endTime, HttpServerExchange exchange) {
-        List<String> logContent = new ArrayList<>();
+    private void getLogEntries(long startTime, long endTime, HttpServerExchange exchange) throws IOException, ParseException {
+        List<Object> logContent = new ArrayList<>();
 
         LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
         for (ch.qos.logback.classic.Logger log : lc.getLoggerList()) {
 
             /* only parse the context if the log is valid */
             if (log.getLevel() != null) {
-                String logString = this.parseLogContents(startTime, endTime, log, exchange);
-                if(logString == null)
-                    return;
-                logContent.add(logString);
+                List<Map<String, Object>> logs = this.parseLogContents(startTime, endTime, log);
+                if(!logs.isEmpty())
+                    logContent.addAll(logs);
+
             }
         }
-
-        try {
-            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, ContentType.APPLICATION_JSON.value());
-            exchange.getResponseSender().send(mapper.writeValueAsString(logContent));
-        } catch (JsonProcessingException e) {
-            logger.error("Failed to map appender list");
-            setExchangeStatus(exchange, STATUS_LOGGER_FILE_INVALID);
-        }
+        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, ContentType.APPLICATION_JSON.value());
+        exchange.getResponseSender().send(mapper.writeValueAsString(logContent));
     }
 
     /**
@@ -93,26 +89,21 @@ public class LoggerGetLogContentsHandler implements LightHttpHandler {
      * @param startTime - the request start time range when grabbing log entries
      * @param endTime - the request end time range when grabbing log entries
      * @param log - the log context
-     * @param exchange - the HttpServerExchange
      * @return - returns the string response for log entry request.
      */
-    private String parseLogContents(long startTime, long endTime, ch.qos.logback.classic.Logger log, HttpServerExchange exchange) {
-        StringBuilder res = new StringBuilder();
+    private List<Map<String, Object>> parseLogContents(long startTime, long endTime, ch.qos.logback.classic.Logger log) throws IOException, ParseException {
+        List<Map<String, Object>> res = new ArrayList<>();
         for(Iterator<Appender<ILoggingEvent>> it = log.iteratorForAppenders(); it.hasNext();) {
             Appender<ILoggingEvent> logEvent = it.next();
             if(logEvent.getClass().equals(RollingFileAppender.class)) {
-                try {
-                    FileReader reader = new FileReader(((RollingFileAppender<ILoggingEvent>) logEvent).getFile());
-                    BufferedReader bufferedReader = new BufferedReader(reader);
-                    res.append(this.parseAppenderFile(bufferedReader, startTime, endTime));
-                } catch(IOException | ParseException e) {
-                    logger.error("Failed to get log file");
-                    setExchangeStatus(exchange, STATUS_LOGGER_FILE_INVALID);
-                    return null;
-                }
+                FileReader reader = new FileReader(((RollingFileAppender<ILoggingEvent>) logEvent).getFile());
+                BufferedReader bufferedReader = new BufferedReader(reader);
+                List<Map<String, Object>> parsedLogLines = this.parseAppenderFile(bufferedReader, startTime, endTime);
+                if(!parsedLogLines.isEmpty())
+                    res.addAll(parsedLogLines);
             }
         }
-        return res.toString();
+        return res;
     }
 
     /**
@@ -125,8 +116,8 @@ public class LoggerGetLogContentsHandler implements LightHttpHandler {
      * @throws ParseException - exception when parsing the file
      * @throws IOException - exception when trying to load the file
      */
-    private String parseAppenderFile(BufferedReader bufferedReader, long startTime, long endTime) throws ParseException, IOException {
-        StringBuilder res = new StringBuilder();
+    private List<Map<String, Object>> parseAppenderFile(BufferedReader bufferedReader, long startTime, long endTime) throws ParseException, IOException {
+        List<Map<String, Object>> res = new ArrayList<>();
         String currentLine;
         while((currentLine=bufferedReader.readLine()) != null) {
 
@@ -138,11 +129,10 @@ public class LoggerGetLogContentsHandler implements LightHttpHandler {
                 SimpleDateFormat timestampFormat = new SimpleDateFormat(TIMESTAMP_FORMAT);
                 long logTime = timestampFormat.parse(logLine.get(TIMESTAMP_LOG_KEY).toString()).toInstant().toEpochMilli();
                 if(logTime > startTime && logTime < endTime) {
-                    res.append(currentLine);
-                    res.append("\n");
+                    res.add(logLine);
                 }
             }
         }
-        return res.toString();
+        return res;
     }
 }
