@@ -63,6 +63,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         Map<String, Object> map = new HashMap<>();
         map.put("id", checkId);
         map.put("pass", true);
+        map.put("checkInterval", config.getCheckInterval());
         String path = "/services/check";
         ClientConnection connection = null;
         try {
@@ -87,6 +88,7 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         Map<String, Object> map = new HashMap<>();
         map.put("id", checkId);
         map.put("pass", false);
+        map.put("checkInterval", config.getCheckInterval());
         String path = "/services/check";
         ClientConnection connection = null;
         try {
