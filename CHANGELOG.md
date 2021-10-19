@@ -1,5 +1,20 @@
 # Change Log
 
+## [2.0.32](https://github.com/networknt/light-4j/tree/2.0.32) (2021-10-19)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1045 add checkInterval to the TTL check body to find the right [\#1046](https://github.com/networknt/light-4j/pull/1046) ([stevehu](https://github.com/stevehu))
+- Feature/get log contents [\#1044](https://github.com/networknt/light-4j/pull/1044) ([KalevGonvick](https://github.com/KalevGonvick))
+- fixes \#1042 create a TimeUtil in the utility module for scheduler and… [\#1043](https://github.com/networknt/light-4j/pull/1043) ([stevehu](https://github.com/stevehu))
+-  java.lang.IllegalArgumentException: Label cannot be null. \#1039  [\#1040](https://github.com/networknt/light-4j/pull/1040) ([helloalbin](https://github.com/helloalbin))
+- Added handler for grabbing log contents [\#1041](https://github.com/networknt/light-4j/pull/1041) ([KalevGonvick](https://github.com/KalevGonvick))
+- fixes \#1037 A typo in the deregister url for the protal registry [\#1038](https://github.com/networknt/light-4j/pull/1038) ([stevehu](https://github.com/stevehu))
+-  fixes \#1035 [\#1036](https://github.com/networknt/light-4j/pull/1036) ([GavinChenYan](https://github.com/GavinChenYan))
+
+
 ## [2.0.31](https://github.com/networknt/light-4j/tree/2.0.31) (2021-09-22)
 
 
