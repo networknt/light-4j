@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
@@ -16,7 +15,6 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.form.FormData;
 import io.undertow.server.handlers.form.FormDataParser;
 import io.undertow.server.handlers.form.FormParserFactory;
-import io.undertow.util.AttachmentKey;
 import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
@@ -33,6 +31,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
+import static com.networknt.body.BodyHandler.REQUEST_BODY_STRING;
+import static com.networknt.body.BodyHandler.REQUEST_BODY;
+
 /**
  * This is the Body Parser handler used by the light-proxy and light-mesh/http-sidecar to not only parse
  * the body into an attachment but also keep the stream to be forwarded to the backend API. If the normal
@@ -43,12 +44,6 @@ import java.util.Map;
 public class ProxyBodyHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(ProxyBodyHandler.class);
     static final String CONTENT_TYPE_MISMATCH = "ERR10015";
-
-    // request body will be parse during validation and it is attached to the exchange, in JSON,
-    // it could be a map or list. So treat it as Object in the attachment.
-    public static final AttachmentKey<Object> REQUEST_BODY = AttachmentConstants.REQUEST_BODY;
-
-    public static final AttachmentKey<String> REQUEST_BODY_STRING = AttachmentConstants.REQUEST_BODY_STRING;
 
     public static final String CONFIG_NAME = "body";
 
@@ -191,6 +186,11 @@ public class ProxyBodyHandler implements MiddlewareHandler {
                     exchange.putAttachment(REQUEST_BODY, unparsedRequestBody);
                 } else if (contentType.startsWith("multipart/form-data") || contentType.startsWith("application/x-www-form-urlencoded")) {
                     // attach the parsed request body into exchange if the body parser is enabled
+                    if (exchange.isInIoThread()) {
+                        exchange.dispatch(this);
+                        return;
+                    }
+                    exchange.startBlocking();
                     attachFormDataBody(exchange);
                 } else {
                     InputStream inputStream = exchange.getInputStream();
