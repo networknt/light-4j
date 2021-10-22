@@ -20,9 +20,11 @@ package com.networknt.body;
  * Created by steve on 29/09/16.
  */
 public class BodyConfig {
+    public static final String CONFIG_NAME = "body";
     boolean enabled;
     boolean cacheRequestBody;
     int maxBuffers;
+    boolean skipProxyBodyHandler;
 
     public BodyConfig() {
     }
@@ -49,5 +51,13 @@ public class BodyConfig {
 
     public void setMaxBuffers(int maxBuffers) {
         this.maxBuffers = maxBuffers;
+    }
+
+    public boolean isSkipProxyBodyHandler() {
+        return skipProxyBodyHandler;
+    }
+
+    public void setSkipProxyBodyHandler(boolean skipProxyBodyHandler) {
+        this.skipProxyBodyHandler = skipProxyBodyHandler;
     }
 }
