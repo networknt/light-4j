@@ -3,4 +3,7 @@ enabled: ${body.enabled:true}
 # cache request body
 cacheRequestBody: ${body.cacheRequestBody:false}
 # maxBuffers to cache the body for ProxyBodyHandler to read the body. 64K by default.
-maxBuffers: ${body.maxBuffers:16384}
+# Any request content type application/json size is bigger than this property will be
+# ignored and won't be validated on the proxy. Other content type will pass through
+# to the backend directly without body parsing and validation.
+maxBuffers: ${body.maxBuffers:65536}
