@@ -106,6 +106,7 @@
         <version.maven-gpg>1.6</version.maven-gpg>
         <version.testcontainers>1.8.0</version.testcontainers>
         <version.jaeger>1.6.0</version.jaeger>
+        <version.thrift>0.15.0</version.thrift>
         <version.opentracing>0.32.0</version.opentracing>
         <skipTests>false</skipTests>
         <matched.test.resources>**/*</matched.test.resources>
@@ -520,6 +521,17 @@
                 <groupId>io.jaegertracing</groupId>
                 <artifactId>jaeger-client</artifactId>
                 <version>${version.jaeger}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.thrift</groupId>
+                <artifactId>libthrift</artifactId>
+                <version>${version.thrift}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>javax.annotation</groupId>
+                        <artifactId>javax.annotation-api</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>io.opentracing</groupId>
