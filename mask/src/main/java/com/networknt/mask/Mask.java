@@ -223,11 +223,18 @@ public class Mask {
          */
         if(pathList != null && pathList.size() == 1) {
             String path = pathList.get(0);
-            List values = ctx.read(path);
+            // the value might be a string or a list
+            Object readValues = ctx.read(path);
+            List values = new ArrayList();
+            if(readValues instanceof String){
+                values.add(readValues);
+            } else {
+                values = ctx.read(path);
+            }
             List maskedValue = new ArrayList();
             //mask each value in the list of the same path
             values.forEach(o -> maskedValue.add(replaceWithMask(o.toString(), MASK_REPLACEMENT_CHAR.charAt(0), expression)));
-            ctx.set(path, maskedValue);
+            ctx.set(path, maskedValue.size() == 1 ? maskedValue.get(0) : maskedValue);
         } else {
             for (String path : Optional.ofNullable(pathList).orElse(Collections.emptyList())) {
                 Object value = ctx.read(path);
