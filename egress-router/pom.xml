@@ -6,9 +6,9 @@
         <artifactId>light-4j</artifactId>
         <groupId>com.networknt</groupId>
         <version>2.0.33-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-
     <artifactId>egress-router</artifactId>
     <packaging>jar</packaging>
     <description>A module that contains all router related handler and util classes.</description>
