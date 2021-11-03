@@ -6,7 +6,7 @@
         <artifactId>light-4j</artifactId>
         <groupId>com.networknt</groupId>
         <version>2.0.33-SNAPSHOT</version>
-        <relativePath>..</relativePath>
+        <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>logger-config</artifactId>
