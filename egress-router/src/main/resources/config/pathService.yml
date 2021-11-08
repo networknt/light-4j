@@ -1,0 +1,7 @@
+# indicate if PathServiceHandler is enabled or not
+enabled: true
+# mapping from request endpoints to serviceIds
+mapping:
+  /v1/address/{id}@get: party.address-1.0.0
+  /v2/address@get: party.address-2.0.0
+  /v1/contact@post: party.contact-1.0.0
