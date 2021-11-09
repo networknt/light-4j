@@ -1,11 +1,10 @@
 package com.networknt.logging.handler;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.rolling.RollingFileAppender;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.config.Config;
 import com.networknt.handler.LightHttpHandler;
@@ -16,7 +15,6 @@ import io.undertow.util.Headers;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.text.ParseException;
@@ -30,18 +28,17 @@ public class LoggerGetLogContentsHandler implements LightHttpHandler {
     static final String STATUS_LOGGER_INFO_DISABLED = "ERR12108";
     static final String STATUS_LOGGER_FILE_INVALID = "ERR12110";
     static final String TIMESTAMP_LOG_KEY = "timestamp";
-    static final long DEFAULT_MAX_RANGE = Long.MAX_VALUE;
-    static final long DEFAULT_MIN_RANGE = Long.MIN_VALUE;
-
     private static final ObjectMapper mapper = Config.getInstance().getMapper();
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws IOException, ParseException {
-        long requestTimeRangeStart = DEFAULT_MIN_RANGE;
-        long requestTimeRangeEnd = DEFAULT_MAX_RANGE;
-
         LoggerConfig config = (LoggerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, LoggerConfig.class);
+        long requestTimeRangeStart = System.currentTimeMillis()- config.getLogStart();
+        long requestTimeRangeEnd = System.currentTimeMillis();
+
         Map<String, Deque<String>> parameters = exchange.getQueryParameters();
+        String loggerName = parameters.containsKey("loggerName")? parameters.get("loggerName").getFirst() : null;
+        Level loggerLevel = parameters.containsKey("loggerLevel")? Level.toLevel(parameters.get("loggerLevel").getFirst(), Level.ERROR): Level.ERROR;
 
         if (config.isEnabled()) {
 
@@ -50,7 +47,7 @@ public class LoggerGetLogContentsHandler implements LightHttpHandler {
             if(parameters.containsKey("endTime"))
                 requestTimeRangeEnd = Long.parseLong(parameters.get("endTime").getFirst());
 
-            this.getLogEntries(requestTimeRangeStart, requestTimeRangeEnd, exchange);
+            this.getLogEntries(requestTimeRangeStart, requestTimeRangeEnd, exchange, loggerName, loggerLevel);
         } else {
             logger.error("Logging is disabled in logging.yml");
             setExchangeStatus(exchange, STATUS_LOGGER_INFO_DISABLED);
@@ -66,18 +63,17 @@ public class LoggerGetLogContentsHandler implements LightHttpHandler {
      * @param endTime - the request end time range when grabbing log entries
      * @param exchange - HttpServer exchange
      */
-    private void getLogEntries(long startTime, long endTime, HttpServerExchange exchange) throws IOException, ParseException {
+    private void getLogEntries(long startTime, long endTime, HttpServerExchange exchange, String loggerName, Level loggerLevel) throws IOException, ParseException {
         List<Object> logContent = new ArrayList<>();
 
         LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
         for (ch.qos.logback.classic.Logger log : lc.getLoggerList()) {
 
             /* only parse the context if the log is valid */
-            if (log.getLevel() != null) {
+            if (log.getLevel() != null && log.getLevel().isGreaterOrEqual(loggerLevel) && (loggerName==null || log.getName().equalsIgnoreCase(loggerName))) {
                 List<Map<String, Object>> logs = this.parseLogContents(startTime, endTime, log);
                 if(!logs.isEmpty())
                     logContent.addAll(logs);
-
             }
         }
         exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, ContentType.APPLICATION_JSON.value());

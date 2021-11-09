@@ -21,6 +21,7 @@ package com.networknt.logging.model;
  */
 public class LoggerConfig {
     boolean enabled;
+    long logStart;
 
     public LoggerConfig() {
     }
@@ -31,5 +32,13 @@ public class LoggerConfig {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public long getLogStart() {
+        return logStart;
+    }
+
+    public void setLogStart(long logStart) {
+        this.logStart = logStart;
     }
 }
