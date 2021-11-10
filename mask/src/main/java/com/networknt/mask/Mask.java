@@ -223,13 +223,13 @@ public class Mask {
          */
         if(pathList != null && pathList.size() == 1) {
             String path = pathList.get(0);
-            // the value might be a string or a list
+            // readValues might be a String or a List
             Object readValues = ctx.read(path);
-            List values = new ArrayList();
+            List values;
             if(readValues instanceof String){
-                values.add(readValues);
+                (values = new ArrayList()).add(readValues);
             } else {
-                values = ctx.read(path);
+                values = (List) readValues;
             }
             List maskedValue = new ArrayList();
             //mask each value in the list of the same path
