@@ -1,5 +1,14 @@
 # Change Log
 
+## [1.6.37](https://github.com/networknt/light-4j/tree/1.6.37) (2021-11-10)
+
+
+**Merged pull requests:**
+
+
+- Issue1055 [\#1063](https://github.com/networknt/light-4j/pull/1063) ([jaydeepparekh1311](https://github.com/jaydeepparekh1311))
+- Issue1055 - ClassCastException in maskList method [\#1056](https://github.com/networknt/light-4j/pull/1056) ([jaydeepparekh1311](https://github.com/jaydeepparekh1311))
+- fixes \#970 [\#976](https://github.com/networknt/light-4j/pull/976) ([GavinChenYan](https://github.com/GavinChenYan))
 ## [1.6.36](https://github.com/networknt/light-4j/tree/1.6.36) (2021-06-27)
 
 
