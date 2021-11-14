@@ -16,7 +16,6 @@
 
 package com.networknt.jaeger.tracing;
 
-import com.networknt.audit.AuditHandler;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
