@@ -100,7 +100,7 @@ public class Http2Client {
     public static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
     public static AttachmentKey<ByteBuffer> BUFFER_BODY = AttachmentKey.create(ByteBuffer.class);
 
-    static final String TLS = "tls";
+    public static final String TLS = "tls";
     static final String LOAD_TRUST_STORE = "loadTrustStore";
     static final String LOAD_KEY_STORE = "loadKeyStore";
     static final String TRUST_STORE = "trustStore";
