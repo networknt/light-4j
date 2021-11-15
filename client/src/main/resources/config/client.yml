@@ -143,15 +143,6 @@ oauth:
       # key distribution server url. It will be used to establish connection if it exists.
       # if it is not set, then a service lookup against serviceId will be taken to discover an instance.
       # server_url: ${client.signKeyServerUrl:https://localhost:6886}
-      # For users who leverage SaaS OAuth 2.0 provider from lightapi.net or others in the public cloud
-      # and has an internal proxy server to access code, token and key services of OAuth 2.0, set up the
-      # proxyHost here for the HTTPS traffic. This option is only working with server_url and serviceId
-      # below should be commented out. OAuth 2.0 services cannot be discovered if a proxy server is used.
-      # proxyHost: ${client.signKeyProxyHost:proxy.lightapi.net}
-      # We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has
-      # a different port, please specify it here. If proxyHost is available and proxyPort is missing, then
-      # the default value 443 is going to be used for the HTTP connection.
-      # proxyPort: ${client.signKeyProxyPort:3128}
       # the unique service id for key distribution service, it will be used to lookup key service if above url doesn't exist.
       serviceId: ${client.signKeyServiceId:com.networknt.oauth2-key-1.0.0}
       # the path for the key distribution endpoint
