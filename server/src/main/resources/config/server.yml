@@ -1,7 +1,7 @@
 # Server configuration
 ---
 # This is the default binding address if the service is dockerized.
-ip: 0.0.0.0
+ip: ${server.ip:0.0.0.0}
 
 # Http port if enableHttp is true. It will be ignored if dynamicPort is true.
 httpPort: ${server.httpPort:8080}
