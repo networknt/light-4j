@@ -2,10 +2,10 @@
 # Sanitize request for cross site scripting during runtime
 
 # indicate if sanitizer is enabled or not
-enabled: false
+enabled: ${sanitizer.enabled:false}
 
 # if it is enabled, does body need to be sanitized
-sanitizeBody: true
+sanitizeBody: ${sanitizer.sanitizeBody:true}
 
 # if it is enabled, does header need to be sanitized
-sanitizeHeader: false
+sanitizeHeader: ${sanitizer.sanitizeHeader:false}
