@@ -457,6 +457,12 @@ ERR10066:
   code: ERR10066
   message: OAUTH_KEY_ERROR
   description: Unable to download jwk set.
+ERR10067:
+  statusCode: 403
+  code: ERR10067
+  message: ACCESS_CONTROL_ERROR
+  description: Failed to pass the fine-grained authorization with rule %s.
+
 
 # 11000-11499 swagger-validator errors
 ERR11000:

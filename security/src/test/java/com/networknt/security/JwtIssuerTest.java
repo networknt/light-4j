@@ -105,6 +105,14 @@ public class JwtIssuerTest {
     }
 
     @Test
+    public void normalPetStoreJwtWithManagerTeller() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"), "manager teller");
+        claims.setExpirationTimeMinutesInTheFuture(10);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***JWT***: " + jwt);
+    }
+
+    @Test
     public void normalPetStoreJwt() throws Exception {
         JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"), "user");
         claims.setExpirationTimeMinutesInTheFuture(10);
@@ -231,6 +239,66 @@ public class JwtIssuerTest {
         claims.setExpirationTimeMinutesInTheFuture(5256000);
         String jwt = JwtIssuer.getJwt(claims);
         System.out.println("***Reference Long lived Bootstrap token for config server and controller: " + jwt);
+    }
+
+    /**
+     * The returned token contains scopes for access-control example
+     * @throws Exception
+     */
+    @Test
+    public void CcAccessControl() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestCcClaimsScope("f7d42348-c647-4efb-a52d-4c5787421e73", "account.r account.w");
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***Long lived token for Client Credentials Access Control***: " + jwt);
+    }
+
+    /**
+     * The returned token contains scopes for access-control example
+     * @throws Exception
+     */
+    @Test
+    public void AcRoleAccessControlRight() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestClaims("stevehu", "CUSTOMER", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("account.r", "account.w"), "customer");
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***Long lived token Authorization code customer with  roles***: " + jwt);
+    }
+
+    /**
+     * The returned token contains scopes for access-control example
+     * @throws Exception
+     */
+    @Test
+    public void AcRoleAccessControlWrong() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestClaims("stevehu", "CUSTOMER", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("account.r", "account.w"), "user");
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***Long lived token Authorization code customer with  roles***: " + jwt);
+    }
+
+    /**
+     * The returned token contains scopes for access-control example
+     * @throws Exception
+     */
+    @Test
+    public void AcGroupAccessControlRight() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestClaimsGroup("stevehu", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("account.r", "account.w"), "admin frontOffice");
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***Long lived token Authorization code customer with  roles***: " + jwt);
+    }
+
+    /**
+     * The returned token contains scopes for access-control example
+     * @throws Exception
+     */
+    @Test
+    public void AcGroupAccessControlWrong() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestClaimsGroup("stevehu", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("account.r", "account.w"), "backOffice");
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***Long lived token Authorization code customer with  roles***: " + jwt);
     }
 
 }

@@ -81,6 +81,7 @@
         <version.hdrhistogram>2.1.10</version.hdrhistogram>
         <version.jsr305>3.0.2</version.jsr305>
         <version.json-schema-validator>1.0.63</version.json-schema-validator>
+        <version.yaml-rule>1.0.0</version.yaml-rule>
         <version.snakeyaml>1.26</version.snakeyaml>
         <version.caffeine>2.6.2</version.caffeine>
         <version.prometheus>0.6.0</version.prometheus>
@@ -162,6 +163,7 @@
         <module>http-entity</module>
         <module>egress-router</module>
         <module>ingress-proxy</module>
+        <module>rule-loader</module>
     </modules>
 
     <dependencyManagement>
@@ -384,12 +386,22 @@
                 <artifactId>http-entity</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>rule-loader</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <!-- External dependencies -->
 
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>json-schema-validator</artifactId>
                 <version>${version.json-schema-validator}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>yaml-rule</artifactId>
+                <version>${version.yaml-rule}</version>
             </dependency>
 
             <dependency>
