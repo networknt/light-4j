@@ -89,7 +89,7 @@ public class CorsUtilTest {
         headerMap.add(HOST, "localhost:80");
         headerMap.add(ORIGIN, "http://www.example.com");
         assertThat(CorsUtil.matchOrigin(exchange, allowedOrigins), is(nullValue()));
-        headerMap.addAll(ORIGIN, Arrays.asList("http://localhost:8080", "http://www.example.com:9990", "http://localhost"));
+        headerMap.addAll(ORIGIN, Arrays.asList("http://localhost:7080", "http://www.example.com:9990", "http://localhost"));
         allowedOrigins = Arrays.asList("http://localhost", "http://www.example.com:9990");
         assertThat(CorsUtil.matchOrigin(exchange, allowedOrigins), is("http://localhost"));
     }
@@ -105,16 +105,16 @@ public class CorsUtilTest {
         assertThat(CorsUtil.sanitizeDefaultPort(url), is("http://127.0.0.1"));
         url = "http://127.0.0.1:443";
         assertThat(CorsUtil.sanitizeDefaultPort(url), is("http://127.0.0.1:443"));
-        url = "http://127.0.0.1:8080";
-        assertThat(CorsUtil.sanitizeDefaultPort(url), is("http://127.0.0.1:8080"));
+        url = "http://127.0.0.1:7080";
+        assertThat(CorsUtil.sanitizeDefaultPort(url), is("http://127.0.0.1:7080"));
         url = "https://127.0.0.1:80";
         assertThat(CorsUtil.sanitizeDefaultPort(url), is("https://127.0.0.1:80"));
         url = "https://127.0.0.1:443";
         assertThat(CorsUtil.sanitizeDefaultPort(url), is("https://127.0.0.1"));
         url = "https://127.0.0.1";
         assertThat(CorsUtil.sanitizeDefaultPort(url), is("https://127.0.0.1"));
-        url = "http://[::FFFF:129.144.52.38]:8080";
-        assertThat(CorsUtil.sanitizeDefaultPort(url), is("http://[::FFFF:129.144.52.38]:8080"));
+        url = "http://[::FFFF:129.144.52.38]:7080";
+        assertThat(CorsUtil.sanitizeDefaultPort(url), is("http://[::FFFF:129.144.52.38]:7080"));
         url = "http://[::FFFF:129.144.52.38]:80";
         assertThat(CorsUtil.sanitizeDefaultPort(url), is("http://[::FFFF:129.144.52.38]"));
     }
@@ -130,8 +130,8 @@ public class CorsUtilTest {
         exchange.setRequestScheme("http");
         assertThat(CorsUtil.defaultOrigin(exchange), is("http://localhost"));
         headerMap.clear();
-        headerMap.add(HOST, "www.example.com:8080");
-        assertThat(CorsUtil.defaultOrigin(exchange), is("http://www.example.com:8080"));
+        headerMap.add(HOST, "www.example.com:7080");
+        assertThat(CorsUtil.defaultOrigin(exchange), is("http://www.example.com:7080"));
         headerMap.clear();
         headerMap.add(HOST, "www.example.com:443");
         exchange.setRequestScheme("https");

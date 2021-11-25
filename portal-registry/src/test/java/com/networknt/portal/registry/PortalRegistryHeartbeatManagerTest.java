@@ -60,7 +60,7 @@ public class PortalRegistryHeartbeatManagerTest {
         int serviceNum = 5;
 
         for (int i = 0; i < serviceNum; i++) {
-            URL url = new URLImpl("light", "127.0.0.1", 8080, "com.networknt.petstore.v" + i);
+            URL url = new URLImpl("light", "127.0.0.1", 7080, "com.networknt.petstore.v" + i);
             mockServices.put(url, 0L);
             heartbeatManager.addHeartbeatService(PortalRegistryUtils.buildService(url));
         }

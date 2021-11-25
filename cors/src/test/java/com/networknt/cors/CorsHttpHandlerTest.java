@@ -65,7 +65,7 @@ public class CorsHttpHandlerTest {
             corsHttpHandler.setNext(handler);
             handler = corsHttpHandler;
             server = Undertow.builder()
-                    .addHttpListener(8080, "localhost")
+                    .addHttpListener(7080, "localhost")
                     .setHandler(handler)
                     .build();
             server.start();
@@ -97,7 +97,7 @@ public class CorsHttpHandlerTest {
 
     @Test
     public void testOptionsWrongOrigin() throws Exception {
-        String url = "http://localhost:8080";
+        String url = "http://localhost:7080";
         Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
@@ -133,7 +133,7 @@ public class CorsHttpHandlerTest {
 
     @Test
     public void testOptionsCorrectOrigin() throws Exception {
-        String url = "http://localhost:8080";
+        String url = "http://localhost:7080";
         Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;

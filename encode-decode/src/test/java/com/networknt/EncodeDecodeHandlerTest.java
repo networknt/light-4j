@@ -81,7 +81,7 @@ public class EncodeDecodeHandlerTest {
             pathHandler.addPrefixPath("/encode", encoder);
             pathHandler.addPrefixPath("/decode", decoder);
             server = Undertow.builder()
-                    .addHttpListener(8080, "localhost")
+                    .addHttpListener(7080, "localhost")
                     .setHandler(pathHandler)
                     .build();
             server.start();
@@ -126,7 +126,7 @@ public class EncodeDecodeHandlerTest {
     public void runTest(final String theMessage, String encoding) throws Exception {
         try (CloseableHttpClient client = HttpClientBuilder.create().disableContentCompression().build()){
             message = theMessage;
-            HttpGet get = new HttpGet("http://localhost:8080/encode");
+            HttpGet get = new HttpGet("http://localhost:7080/encode");
             get.setHeader(Headers.ACCEPT_ENCODING_STRING, encoding);
             HttpResponse result = client.execute(get);
             Assert.assertEquals(StatusCodes.OK, result.getStatusLine().getStatusCode());
@@ -134,7 +134,7 @@ public class EncodeDecodeHandlerTest {
             Assert.assertEquals(encoding, header[0].getValue());
             byte[] body = HttpClientUtils.readRawResponse(result);
 
-            HttpPost post = new HttpPost("http://localhost:8080/decode");
+            HttpPost post = new HttpPost("http://localhost:7080/decode");
             post.setEntity(new ByteArrayEntity(body));
             post.addHeader(Headers.CONTENT_ENCODING_STRING, encoding);
 

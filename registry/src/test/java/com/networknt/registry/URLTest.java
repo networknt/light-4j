@@ -62,7 +62,7 @@ public class URLTest {
         parameters.put(URLParamType.nodeType.getName(), Constants.NODE_TYPE_SERVICE);
         parameters.put(URLParamType.version.getName(), URLParamType.version.getValue());
 
-        URL url = new URLImpl("http", "localhost", 8080, "config", parameters);
+        URL url = new URLImpl("http", "localhost", 7080, "config", parameters);
 
         String p1 = url.getParameter("key1");
         Assert.assertEquals("value1", p1);
@@ -88,20 +88,20 @@ public class URLTest {
         //Assert.assertEquals(Float.valueOf(0.01f), f2);
 
         String uri = url.getUri();
-        Assert.assertEquals("http://localhost:8080/config", uri);
+        Assert.assertEquals("http://localhost:7080/config", uri);
 
         String identity = url.getIdentity();
-        Assert.assertEquals("http://localhost:8080/default/config/1.0/service", identity);
+        Assert.assertEquals("http://localhost:7080/default/config/1.0/service", identity);
 
-        URL refUrl = new URLImpl("http", "localhost", 8080, "config");
+        URL refUrl = new URLImpl("http", "localhost", 7080, "config");
         boolean canServe = url.canServe(refUrl);
         Assert.assertTrue(canServe);
 
         String fullStr = url.toFullStr();
-        Assert.assertEquals("http://localhost:8080/config?key1=value1&key2=true&key5=10L&key3=10&key4=3.14&nodeType=service&version=1.0&", fullStr);
+        Assert.assertEquals("http://localhost:7080/config?key1=value1&key2=true&key5=10L&key3=10&key4=3.14&nodeType=service&version=1.0&", fullStr);
 
 
-        URL newUrl = URLImpl.valueOf("http://localhost:8080/config?key1=value1&key2=true&key5=10L&key3=10&key4=3.14&nodeType=service&version=1.0");
+        URL newUrl = URLImpl.valueOf("http://localhost:7080/config?key1=value1&key2=true&key5=10L&key3=10&key4=3.14&nodeType=service&version=1.0");
 
         Assert.assertNotNull(newUrl);
     }
