@@ -29,7 +29,7 @@ public class ServerBuilder {
         instance = null;
 
         return Undertow.builder()
-                .addHttpListener(8080, "localhost")
+                .addHttpListener(7080, "localhost")
                 .setHandler(handler)
                 .build();
     }

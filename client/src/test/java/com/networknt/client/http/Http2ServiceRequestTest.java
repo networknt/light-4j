@@ -20,7 +20,7 @@ public class Http2ServiceRequestTest {
 
     @Before
     public void setUp() throws  Exception{
-        http2ServiceRequest = new Http2ServiceRequest(new URI("http://localhost:8080"), Methods.GET);
+        http2ServiceRequest = new Http2ServiceRequest(new URI("http://localhost:7080"), Methods.GET);
         statusCodesValid = new ArrayList<>();
         statusCodesValid.add(HttpStatus.OK);
         statusCodesValid.add(HttpStatus.CREATED);

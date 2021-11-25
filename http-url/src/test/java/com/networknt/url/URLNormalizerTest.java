@@ -169,8 +169,8 @@ public class URLNormalizerTest {
         s = "http://www.example.com/bar.html";
         t = "http://www.example.com/bar.html";
         assertEquals(t, n(s).removeDefaultPort().toString());
-        s = "http://www.example.com:8080/bar.html";
-        t = "http://www.example.com:8080/bar.html";
+        s = "http://www.example.com:7080/bar.html";
+        t = "http://www.example.com:7080/bar.html";
         assertEquals(t, n(s).removeDefaultPort().toString());
         s = "http://www.example.com:80";
         t = "http://www.example.com";

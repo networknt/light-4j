@@ -49,7 +49,7 @@ public class ContentHandlerTest {
   private static final Logger logger = LoggerFactory.getLogger(ContentHandlerTest.class);
 
   private static Undertow server = null;
-  private static final String url = "http://localhost:8080";
+  private static final String url = "http://localhost:7080";
 
   @BeforeClass
   public static void setUp() {
@@ -62,7 +62,7 @@ public class ContentHandlerTest {
 
       handler = contentHandler;
       server = Undertow.builder()
-        .addHttpListener(8080, "localhost")
+        .addHttpListener(7080, "localhost")
         .setHandler(handler)
         .build();
       server.start();
