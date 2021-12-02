@@ -71,7 +71,6 @@
         <version.jose4j>0.6.3</version.jose4j>
         <version.commons.codec>1.13</version.commons.codec>
         <version.encoder>1.2.1</version.encoder>
-        <versions.xnio>3.8.5.Final</versions.xnio>
         <version.logback>1.2.7</version.logback>
         <version.junit>4.13.1</version.junit>
         <version.mockito>2.23.0</version.mockito>
@@ -466,16 +465,6 @@
                 <groupId>org.jboss.threads</groupId>
                 <artifactId>jboss-threads</artifactId>
                 <version>3.4.2.Final</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jboss.xnio</groupId>
-                <artifactId>xnio-nio</artifactId>
-                <version>${versions.xnio}}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jboss.xnio</groupId>
-                <artifactId>xnio-api</artifactId>
-                <version>${versions.xnio}}</version>
             </dependency>
             <dependency>
                 <groupId>org.hdrhistogram</groupId>
