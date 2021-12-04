@@ -71,7 +71,7 @@
         <version.jackson>2.12.1</version.jackson>
         <version.slf4j>1.7.25</version.slf4j>
         <version.jose4j>0.6.3</version.jose4j>
-        <version.commons.codec>1.11</version.commons.codec>
+        <version.commons.codec>1.13</version.commons.codec>
         <version.encoder>1.2.1</version.encoder>
         <version.logback>1.2.7</version.logback>
         <version.junit>4.13.1</version.junit>
