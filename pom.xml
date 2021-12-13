@@ -67,7 +67,7 @@
         <java.version>11</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <version.jackson>2.12.1</version.jackson>
-        <version.slf4j>1.7.25</version.slf4j>
+        <version.slf4j>1.7.32</version.slf4j>
         <version.jose4j>0.6.3</version.jose4j>
         <version.commons.codec>1.13</version.commons.codec>
         <version.encoder>1.2.1</version.encoder>
