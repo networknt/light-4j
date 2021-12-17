@@ -166,7 +166,7 @@ ERR10008:
   statusCode: 405
   code: ERR10008
   message: METHOD_NOT_ALLOWED
-  description: Request method cannot be found in the spec.
+  description: Request method %s cannot be found in the path %s.
 ERR10009:
   statusCode: 408
   code: ERR10009
