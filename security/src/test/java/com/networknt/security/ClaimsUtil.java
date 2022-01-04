@@ -67,7 +67,7 @@ public class ClaimsUtil {
         JwtClaims claims = JwtIssuer.getDefaultJwtClaims();
         claims.setClaim("client_id", clientId);
         claims.setClaim("scope", scope);
-        claims.setClaim("service", serviceId);
+        claims.setClaim("sid", serviceId);
         return claims;
     }
 
