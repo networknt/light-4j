@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
+import com.networknt.config.JsonMapper;
 import com.networknt.monad.Failure;
 import com.networknt.status.Status;
 import com.networknt.utility.StringUtils;
@@ -147,8 +148,8 @@ public class DefaultConfigLoader implements IConfigLoader{
             try {
                 String configPath = getConfigServerPath();
 
-                // This is the method in the future to load values.yml from the config server
-                // loadConfigs(configPath);
+                // This is the method to load values.yml from the config server
+                loadConfigs(configPath);
 
                 loadFiles(configPath, CONFIG_SERVER_CERTS_CONTEXT_ROOT);
 
@@ -186,10 +187,7 @@ public class DefaultConfigLoader implements IConfigLoader{
         String configServerConfigsPath = CONFIG_SERVER_CONFIGS_CONTEXT_ROOT + configPath;
         //get service configs and put them in config cache
         Map<String, Object> serviceConfigs = getServiceConfigs(configServerConfigsPath);
-
-        //set the environment value (the one used to fetch configs) in the serviceConfigs going into configCache
-        serviceConfigs.put(ENV_PROPERTY_KEY, lightEnv);
-        logger.debug("serviceConfigs received from Config Server: {}", serviceConfigs);
+        if(logger.isDebugEnabled()) logger.debug("serviceConfigs received from Config Server: ", JsonMapper.toJson(serviceConfigs));
 
         // pass serviceConfigs through Config.yaml's load method so that it can decrypt any encrypted values
         DumperOptions options = new DumperOptions();
@@ -212,8 +210,7 @@ public class DefaultConfigLoader implements IConfigLoader{
         String configServerFilesPath = contextRoot + configPath;
         //get service files and put them in config dir
         Map<String, Object> serviceFiles = getServiceConfigs(configServerFilesPath);
-        logger.debug("{} files loaded from config sever.", serviceFiles.size());
-        logger.debug("loadFiles: {}", serviceFiles);
+        if(logger.isDebugEnabled()) logger.debug("loadFiles:", JsonMapper.toJson(serviceFiles));
         try {
             Path filePath = Paths.get(targetConfigsDirectory);
             if (!Files.exists(filePath)) {
@@ -260,7 +257,7 @@ public class DefaultConfigLoader implements IConfigLoader{
 
         Map<String, Object> configs = new HashMap<>();
 
-        logger.debug("Calling Config Server endpoint:host{}:path{}", configServerUri, configServerPath);
+        if(logger.isDebugEnabled()) logger.debug("Calling Config Server endpoint:host{}:path{}", configServerUri, configServerPath);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(configServerUri.trim() + configServerPath.trim()))
                 .header(Headers.AUTHORIZATION_STRING, authorization)
@@ -274,8 +271,7 @@ public class DefaultConfigLoader implements IConfigLoader{
                 logger.error("Failed to load configs from config server" + statusCode + ":" + body);
                 throw new Exception("Failed to load configs from config server: " + statusCode);
             } else {
-                Map<String, Object> responseMap = (Map<String, Object>) mapper.readValue(body, new TypeReference<Map<String, Object>>() {});
-                configs = (Map<String, Object>) responseMap.get("configProperties");
+                configs = mapper.readValue(body, new TypeReference<Map<String, Object>>() {});
             }
         } catch (Exception e) {
             logger.error("Exception while calling config server:", e);

@@ -230,6 +230,18 @@ public class JwtIssuerTest {
     }
 
     /**
+     * This token is used to connect to the light-config-server with serviceId 0100 for testing with a service specific for a client.
+     * @throws Exception
+     */
+    @Test
+    public void sidecarReferenceBootstrapWithServiceId() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestCcClaimsScopeService("f7d42348-c647-4efb-a52d-4c5787421e72", "A8E73740C0041C03D67C3A951AA1D7533C8F9F2FB57D7BA107210B9BC9E06DA2", "com.networknt.petstore-1.0.0");
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***Reference Long lived Bootstrap token for config server and controller: " + jwt);
+    }
+
+    /**
      * This token is used to connect to the light-config-server with serviceId example-service for unit test populated configs.
      * @throws Exception
      */
