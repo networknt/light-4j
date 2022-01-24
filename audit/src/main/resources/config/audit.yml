@@ -68,4 +68,4 @@ audit:
 # - responseBody
 
 # Response error status payload
-- Status
+- status
