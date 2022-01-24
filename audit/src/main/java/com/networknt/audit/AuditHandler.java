@@ -84,7 +84,7 @@ public class AuditHandler implements MiddlewareHandler {
     static final String QUERY_PARAMETERS_KEY = "queryParameters";
     static final String PATH_PARAMETERS_KEY = "pathParameters";
     static final String REQUEST_COOKIES_KEY = "requestCookies";
-    static final String STATUS_KEY = "Status";
+    static final String STATUS_KEY = "status";
     static final String SERVER_CONFIG = "server";
     static final String SERVICEID_KEY = "serviceId";
     static final String INVALID_CONFIG_VALUE_CODE = "ERR10060";

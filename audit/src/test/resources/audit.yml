@@ -67,4 +67,4 @@ audit:
 - requestCookies
 
 # Response error status payload
-- Status
+- status
