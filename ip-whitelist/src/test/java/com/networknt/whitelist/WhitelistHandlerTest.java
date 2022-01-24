@@ -52,8 +52,10 @@ public class WhitelistHandlerTest {
             logger.info("starting server");
             HttpHandler handler = getTestHandler();
             WhitelistHandler whitelistHandler = new WhitelistHandler();
-            whitelistHandler.setNext(handler);
-            handler = whitelistHandler;
+            if(whitelistHandler.isEnabled()) {
+                whitelistHandler.setNext(handler);
+                handler = whitelistHandler;
+            }
             server = Undertow.builder()
                     .addHttpListener(7080, "localhost")
                     .setHandler(handler)

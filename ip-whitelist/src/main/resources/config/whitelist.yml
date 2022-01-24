@@ -1,7 +1,13 @@
 # IP Whitelist configuration
 ---
-# Indicate if this handler is enabled or not
-enabled: false
-
-defaultAllow: true
-
+# Indicate if this handler is enabled or not. It is normally used for the third party integration
+# so that only approved IPs can connect to the light-router or light-proxy at certain endpoints.
+enabled: ${whitelist.enabled:false}
+# Default allowed or denied if there is no rules defined for the path. Default is false so only
+# defined paths with IP ACL rules will be allowed to access. Other paths or other IPs are not
+# allowed to access the service. If this is set to true, then other IPs can access other paths
+# not defined below. However, for the paths defined below, only the listed IPs can access.
+defaultAllow: ${whitelist.defaultAllow:true}
+# List of endpoints and their access rules. It supports IPv4 and IPv6 with Exact, Wildcard and
+# Slash format. The endpoint is defined as path@method.
+paths: ${whitelist.paths:}

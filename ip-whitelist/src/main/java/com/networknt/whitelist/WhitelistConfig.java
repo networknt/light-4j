@@ -229,4 +229,12 @@ public class WhitelistConfig {
         ipAcl.getIpv4acl().add(new WhitelistHandler.ExactIpV4PeerMatch(deny, peer, bytes));
     }
 
+    @Override
+    public String toString() {
+        return "WhitelistConfig{" +
+                "enabled=" + enabled +
+                ", defaultAllow=" + defaultAllow +
+                ", endpointAcl=" + endpointAcl +
+                '}';
+    }
 }
