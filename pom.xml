@@ -87,7 +87,7 @@
         <version.prometheus>0.6.0</version.prometheus>
         <version.javamail>1.6.1</version.javamail>
         <version.hikaricp>3.2.0</version.hikaricp>
-        <version.h2>2.0.206</version.h2>
+        <version.h2>2.1.210</version.h2>
         <version.mysql>8.0.16</version.mysql>
         <version.postgres>9.4.1211</version.postgres>
         <version.oracle>11.2.0.3</version.oracle>
