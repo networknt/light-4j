@@ -60,8 +60,10 @@ public class HeaderHandlerTest {
             logger.info("starting server");
             HttpHandler handler = getTestHandler();
             HeaderHandler headerHandler = new HeaderHandler();
-            headerHandler.setNext(handler);
-            handler = headerHandler;
+            if(headerHandler.isEnabled()) {
+                headerHandler.setNext(handler);
+                handler = headerHandler;
+            }
             server = Undertow.builder()
                     .addHttpListener(7080, "localhost")
                     .setHandler(handler)
