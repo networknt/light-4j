@@ -6,8 +6,11 @@
 # internally to throttle request for a slow backend service or externally for DDoS attacks.
 enabled: ${limit.enabled:false}
 # Maximum concurrent requests allowed at a given time. If this number is exceeded, new requests
-# will be queued. It must be greater than 1 and should be set based on your use case.
-concurrentRequest: ${limit.concurrentRequest:1000}
+# will be queued. It must be greater than 1 and should be set based on your use case. Be aware
+# it is concurrent requests not the number of request per second. Light-4j server can handle
+# millions of request per seconds. With 2 concurrent requests, the petstore API can still handle
+# hundreds or even thousands requests per second.
+concurrentRequest: ${limit.concurrentRequest:2}
 # Overflow request queue size. -1 means there is no limit on the queue size and this should
 # only be used in the corporate network for throttling. For Internet facing service, set it
 # to a small value to prevent DDoS attacks. New requests will be dropped with 503 response
