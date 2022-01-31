@@ -6,13 +6,13 @@ package com.networknt.decrypt;
  * will be thrown.
  * <p>
  * To use this decryptor, adding the following line into config.yml
- * decryptorClass: com.networknt.decrypt.AutoAESDecryptor
+ * decryptorClass: com.networknt.decrypt.AutoAESSaltDecryptor
  *
- * Please use AutoAESSaltDecryptor instead
+ * The difference between this implementation and the AutoAESDecryptor is that
+ * this one supports the dynamic salt and the salt will be part of the secret
+ * to make the encryption stronger.
  */
-
-@Deprecated
-public class AutoAESDecryptor extends AESDecryptor {
+public class AutoAESSaltDecryptor extends AESSaltDecryptor {
     private final static String LIGHT_4J_CONFIG_PASSWORD = "light_4j_config_password";
 
     @Override
@@ -23,4 +23,5 @@ public class AutoAESDecryptor extends AESDecryptor {
         }
         return passwordStr.toCharArray();
     }
+
 }

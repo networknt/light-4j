@@ -26,6 +26,11 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
+/**
+ *
+ * Please use AESSaltDecryptor
+ */
+@Deprecated
 public class AESDecryptor implements Decryptor {
 
     private static final int ITERATIONS = 65536;
