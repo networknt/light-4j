@@ -8,10 +8,7 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
-import java.security.AlgorithmParameters;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
+import java.security.*;
 import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
 
@@ -34,16 +31,18 @@ public class AESSaltEncryptor {
     }
 
     private static final int ITERATIONS = 65536;
-    private static final int KEY_SIZE = 128;
+    private static final int KEY_SIZE = 256;
     private static final String STRING_ENCODING = "UTF-8";
+    private static final byte[] iv = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     private static byte[] salt;
     private SecretKeySpec secret;
     private Cipher cipher;
+    private IvParameterSpec ivSpec;
 
     public AESSaltEncryptor() {
         try {
             /* Derive the key, given password and salt. */
-            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
             salt = getSalt();
             KeySpec spec = new PBEKeySpec(Constants.FRAMEWORK_NAME.toCharArray(), salt, ITERATIONS, KEY_SIZE);
             SecretKey tmp = factory.generateSecret(spec);
@@ -51,6 +50,7 @@ public class AESSaltEncryptor {
             // CBC = Cipher Block chaining
             // PKCS5Padding Indicates that the keys are padded
             cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            ivSpec = new IvParameterSpec(iv);
         } catch (Exception e) {
             throw new RuntimeException("Unable to initialize", e);
         }
@@ -68,15 +68,8 @@ public class AESSaltEncryptor {
         try
         {
             byte[] inputBytes = input.getBytes(STRING_ENCODING);
-            // CBC = Cipher Block chaining
-            // PKCS5Padding Indicates that the keys are padded
-            cipher.init(Cipher.ENCRYPT_MODE, secret);
-            AlgorithmParameters params = cipher.getParameters();
-            byte[] iv = params.getParameterSpec(IvParameterSpec.class).getIV();
-            byte[] ciphertext = cipher.doFinal(inputBytes);
-            byte[] out = new byte[iv.length + ciphertext.length];
-            System.arraycopy(iv, 0, out, 0, iv.length);
-            System.arraycopy(ciphertext, 0, out, iv.length, ciphertext.length);
+            cipher.init(Cipher.ENCRYPT_MODE, secret, ivSpec);
+            byte[] out = cipher.doFinal(inputBytes);
             return CRYPT_PREFIX + ":" + toHex(salt) + ":" +toHex(out);
         } catch (IllegalBlockSizeException e) {
             throw new RuntimeException("Unable to encrypt", e);
@@ -84,11 +77,11 @@ public class AESSaltEncryptor {
             throw new RuntimeException("Unable to encrypt", e);
         } catch (InvalidKeyException e) {
             throw new RuntimeException("Unable to encrypt", e);
-        } catch (InvalidParameterSpecException e) {
-            throw new RuntimeException("Unable to encrypt", e);
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException("Unable to encrypt", e);
         } catch(NoSuchAlgorithmException e) {
+            throw new RuntimeException("Unable to encrypt", e);
+        } catch(InvalidAlgorithmParameterException e) {
             throw new RuntimeException("Unable to encrypt", e);
         }
     }
