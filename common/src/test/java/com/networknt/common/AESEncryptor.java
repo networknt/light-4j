@@ -37,7 +37,11 @@ import javax.crypto.spec.SecretKeySpec;
 
 import com.networknt.utility.Constants;
 
-
+/**
+ * Please use AESSaltEncryptor instead.
+ *
+ */
+@Deprecated
 public class AESEncryptor {
     public static void main(String [] args) {
         if(args.length == 0) {
