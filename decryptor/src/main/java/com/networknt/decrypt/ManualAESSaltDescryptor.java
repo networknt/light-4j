@@ -1,6 +1,6 @@
 package com.networknt.decrypt;
 
-import java.io.*;
+import java.io.Console;
 import java.util.Scanner;
 
 /**
@@ -8,12 +8,13 @@ import java.util.Scanner;
  * files from stdin.
  * <p>
  * To use this decryptor, adding the following line into config.yml
- * decryptorClass: com.networknt.decrypt.ManualAESDecryptor
+ * decryptorClass: com.networknt.decrypt.ManualAESSaltDecryptor
  *
- * Please use the ManualAESSaltDescryptor instead.
+ * The difference between this implementation and the ManualAESDescryptor
+ * is that one are using a dynamic salt and the salt will be part of the
+ * secret text for strong encryption.
  */
-@Deprecated
-public class ManualAESDecryptor extends AESDecryptor {
+public class ManualAESSaltDescryptor extends AESSaltDecryptor {
     @Override
     protected char[] getPassword() {
         char[] password = null;
@@ -25,7 +26,7 @@ public class ManualAESDecryptor extends AESDecryptor {
             System.out.print("Password for config decryption: ");
             Scanner sc = new Scanner(System.in);
             if (sc.hasNext()) {
-              password = sc.next().toCharArray();
+                password = sc.next().toCharArray();
             }
             sc.close();
         }
@@ -34,4 +35,5 @@ public class ManualAESDecryptor extends AESDecryptor {
         }
         return password;
     }
+
 }
