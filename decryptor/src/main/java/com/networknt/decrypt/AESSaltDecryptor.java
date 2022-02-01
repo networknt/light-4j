@@ -23,22 +23,22 @@ public class AESSaltDecryptor implements Decryptor {
     private static final Logger logger = LoggerFactory.getLogger(AESSaltDecryptor.class);
 
     private static final int ITERATIONS = 65536;
+    private static final int KEY_SIZE = 256;
     private static final String STRING_ENCODING = "UTF-8";
+    private static final byte[] iv = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
     // cache the secret to void recreating instances for each decrypt call as all config files
     // will use the same salt per application.
     private Map<String, SecretKeySpec> secretMap = new ConcurrentHashMap<>();
-    /**
-     * If we user Key size of 256 we will get java.security.InvalidKeyException:
-     * Illegal key size or default parameters , Unless we configure Java
-     * Cryptography Extension 128
-     */
-    private static final int KEY_SIZE = 128;
     private Cipher cipher;
-
+    IvParameterSpec ivSpec;
 
     public AESSaltDecryptor() {
         try {
+            // CBC = Cipher Block chaining
+            // PKCS5Padding Indicates that the keys are padded
             cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            ivSpec = new IvParameterSpec(iv);
         } catch (Exception e) {
             logger.error("Failed to get the Cipher instance:", e);
             throw new RuntimeException("Unable to initialize", e);
@@ -66,18 +66,13 @@ public class AESSaltDecryptor implements Decryptor {
             if(secret == null) {
                 KeySpec spec = new PBEKeySpec(getPassword(), salt, ITERATIONS, KEY_SIZE);
                 /* Derive the key, given password and salt. */
-                SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+                SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
                 SecretKey tmp = factory.generateSecret(spec);
                 secret = new SecretKeySpec(tmp.getEncoded(), "AES");
                 secretMap.put(parts[1], secret);
             }
-            // CBC = Cipher Block chaining
-            // PKCS5Padding Indicates that the keys are padded
-            int keylen = KEY_SIZE / 8;
-            byte[] iv = new byte[keylen];
-            System.arraycopy(hash, 0, iv, 0, keylen);
-            cipher.init(Cipher.DECRYPT_MODE, secret, new IvParameterSpec(iv));
-            return new String(cipher.doFinal(hash, keylen, hash.length - keylen), STRING_ENCODING);
+            cipher.init(Cipher.DECRYPT_MODE, secret, ivSpec);
+            return new String(cipher.doFinal(hash), STRING_ENCODING);
         } catch (Exception e) {
             throw new RuntimeException("Unable to decrypt because the decrypted password is incorrect.", e);
         }
