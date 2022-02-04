@@ -21,6 +21,10 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+/**
+ * Get logs from the log files based on the input parameters.
+ *
+ */
 public class LoggerGetLogContentsHandler implements LightHttpHandler {
 
     public static final String CONFIG_NAME = "logging";

@@ -1438,4 +1438,21 @@ public class StringUtils {
         return collectionToDelimitedString(coll, ",");
     }
 
+    /**
+     * Check if a string is numeric.
+     * @param str input
+     * @return boolean true is numeric
+     */
+    public static boolean isNumeric(String str) {
+        if (str == null) {
+            return false;
+        }
+        int sz = str.length();
+        for (int i = 0; i < sz; i++) {
+            if (Character.isDigit(str.charAt(i)) == false) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
