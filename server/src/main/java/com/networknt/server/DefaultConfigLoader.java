@@ -221,7 +221,6 @@ public class DefaultConfigLoader implements IConfigLoader{
             for (String fileName : serviceFiles.keySet()) {
                 filePath=Paths.get(targetConfigsDirectory+"/"+fileName);
                 byte[] ba = decoder.decode(serviceFiles.get(fileName).toString().getBytes());
-                if(logger.isDebugEnabled()) logger.debug("filename = " + fileName + " content = " + new String(ba, StandardCharsets.UTF_8));
                 Files.write(filePath, ba);
             }
         }  catch (IOException e) {
