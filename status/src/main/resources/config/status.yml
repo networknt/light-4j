@@ -201,7 +201,7 @@ ERR10015:
   statusCode: 400
   code: ERR10015
   message: CONTENT_TYPE_MISMATCH
-  description: Content type in header %s doesn't match the body. The body might be trucated due to bufferSize to small in server.xml
+  description: Content type in header %s doesn't match the body.
 ERR10016:
   statusCode: 400
   code: ERR10016
@@ -462,6 +462,10 @@ ERR10067:
   code: ERR10067
   message: ACCESS_CONTROL_ERROR
   description: Failed to pass the fine-grained authorization with rule %s.
+ERR10068:
+  statusCode: 413
+  message: PAYLOAD_TOO_LARGE
+  description: The request body has exceeded the set max size.
 
 
 # 11000-11499 swagger-validator errors
