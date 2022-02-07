@@ -32,6 +32,9 @@ public class LoggerGetLogContentsHandler implements LightHttpHandler {
     static final String STATUS_LOGGER_INFO_DISABLED = "ERR12108";
     static final String STATUS_LOGGER_FILE_INVALID = "ERR12110";
     static final String TIMESTAMP_LOG_KEY = "timestamp";
+    public static final int DEFAULT_LIMIT = 100;
+    public static final int DEFAULT_OFFSET = 0;
+
     private static final ObjectMapper mapper = Config.getInstance().getMapper();
 
     @Override
@@ -39,19 +42,24 @@ public class LoggerGetLogContentsHandler implements LightHttpHandler {
         LoggerConfig config = (LoggerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, LoggerConfig.class);
         long requestTimeRangeStart = System.currentTimeMillis()- config.getLogStart();
         long requestTimeRangeEnd = System.currentTimeMillis();
+        int limit = DEFAULT_LIMIT;
+        int offset = DEFAULT_OFFSET;
 
         Map<String, Deque<String>> parameters = exchange.getQueryParameters();
         String loggerName = parameters.containsKey("loggerName")? parameters.get("loggerName").getFirst() : null;
         Level loggerLevel = parameters.containsKey("loggerLevel")? Level.toLevel(parameters.get("loggerLevel").getFirst(), Level.ERROR): Level.ERROR;
 
         if (config.isEnabled()) {
-
+            if(parameters.containsKey("limit"))
+                limit = Integer.parseInt(parameters.get("limit").getFirst());
+            if(parameters.containsKey("offset"))
+                offset = Integer.parseInt(parameters.get("offset").getFirst());
             if(parameters.containsKey("startTime"))
                 requestTimeRangeStart = Long.parseLong(parameters.get("startTime").getFirst());
             if(parameters.containsKey("endTime"))
                 requestTimeRangeEnd = Long.parseLong(parameters.get("endTime").getFirst());
 
-            this.getLogEntries(requestTimeRangeStart, requestTimeRangeEnd, exchange, loggerName, loggerLevel);
+            this.getLogEntries(requestTimeRangeStart, requestTimeRangeEnd, exchange, loggerName, loggerLevel, offset, limit);
         } else {
             logger.error("Logging is disabled in logging.yml");
             setExchangeStatus(exchange, STATUS_LOGGER_INFO_DISABLED);
@@ -67,17 +75,18 @@ public class LoggerGetLogContentsHandler implements LightHttpHandler {
      * @param endTime - the request end time range when grabbing log entries
      * @param exchange - HttpServer exchange
      */
-    private void getLogEntries(long startTime, long endTime, HttpServerExchange exchange, String loggerName, Level loggerLevel) throws IOException, ParseException {
-        List<Object> logContent = new ArrayList<>();
+    private void getLogEntries(long startTime, long endTime, HttpServerExchange exchange, String loggerName, Level loggerLevel, int offset, int limit) throws IOException, ParseException {
+        // the return is a map of list with key is the loggerName. There might be multiple of loggers in the logback.xml file.
+        Map<String, List<Map<String, Object>>> logContent = new HashMap<>();
 
         LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
         for (ch.qos.logback.classic.Logger log : lc.getLoggerList()) {
 
             /* only parse the context if the log is valid */
             if (log.getLevel() != null && log.getLevel().isGreaterOrEqual(loggerLevel) && (loggerName==null || log.getName().equalsIgnoreCase(loggerName))) {
-                List<Map<String, Object>> logs = this.parseLogContents(startTime, endTime, log);
+                List<Map<String, Object>> logs = this.parseLogContents(startTime, endTime, log, offset, limit);
                 if(!logs.isEmpty())
-                    logContent.addAll(logs);
+                    logContent.put(log.getName(), logs);
             }
         }
         exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, ContentType.APPLICATION_JSON.value());
@@ -91,14 +100,14 @@ public class LoggerGetLogContentsHandler implements LightHttpHandler {
      * @param log - the log context
      * @return - returns the string response for log entry request.
      */
-    private List<Map<String, Object>> parseLogContents(long startTime, long endTime, ch.qos.logback.classic.Logger log) throws IOException, ParseException {
+    private List<Map<String, Object>> parseLogContents(long startTime, long endTime, ch.qos.logback.classic.Logger log, int offset, int limit) throws IOException, ParseException {
         List<Map<String, Object>> res = new ArrayList<>();
         for(Iterator<Appender<ILoggingEvent>> it = log.iteratorForAppenders(); it.hasNext();) {
             Appender<ILoggingEvent> logEvent = it.next();
             if(logEvent.getClass().equals(RollingFileAppender.class)) {
                 FileReader reader = new FileReader(((RollingFileAppender<ILoggingEvent>) logEvent).getFile());
                 BufferedReader bufferedReader = new BufferedReader(reader);
-                List<Map<String, Object>> parsedLogLines = this.parseAppenderFile(bufferedReader, startTime, endTime);
+                List<Map<String, Object>> parsedLogLines = this.parseAppenderFile(bufferedReader, startTime, endTime, offset, limit);
                 if(!parsedLogLines.isEmpty())
                     res.addAll(parsedLogLines);
             }
@@ -116,22 +125,26 @@ public class LoggerGetLogContentsHandler implements LightHttpHandler {
      * @throws ParseException - exception when parsing the file
      * @throws IOException - exception when trying to load the file
      */
-    private List<Map<String, Object>> parseAppenderFile(BufferedReader bufferedReader, long startTime, long endTime) throws ParseException, IOException {
+    private List<Map<String, Object>> parseAppenderFile(BufferedReader bufferedReader, long startTime, long endTime, int offset, int limit) throws ParseException, IOException {
         List<Map<String, Object>> res = new ArrayList<>();
+        int index = 0;
         String currentLine;
-        while((currentLine=bufferedReader.readLine()) != null) {
-
-            @SuppressWarnings("unchecked")
-            Map<String,Object> logLine = mapper.readValue(currentLine, Map.class);
-
-            /* Grab the log entry as a map, and check to see if the timestamp falls within range of startTime and endTime */
-            if(logLine != null && logLine.containsKey(TIMESTAMP_LOG_KEY)) {
-                SimpleDateFormat timestampFormat = new SimpleDateFormat(TIMESTAMP_FORMAT);
-                long logTime = timestampFormat.parse(logLine.get(TIMESTAMP_LOG_KEY).toString()).toInstant().toEpochMilli();
-                if(logTime > startTime && logTime < endTime) {
-                    res.add(logLine);
+        try {
+            while ((currentLine = bufferedReader.readLine()) != null) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> logLine = mapper.readValue(currentLine, Map.class);
+                /* Grab the log entry as a map, and check to see if the timestamp falls within range of startTime and endTime */
+                if (logLine != null && logLine.containsKey(TIMESTAMP_LOG_KEY)) {
+                    SimpleDateFormat timestampFormat = new SimpleDateFormat(TIMESTAMP_FORMAT);
+                    long logTime = timestampFormat.parse(logLine.get(TIMESTAMP_LOG_KEY).toString()).toInstant().toEpochMilli();
+                    if (logTime > startTime && logTime < endTime && index >= offset && res.size() < limit) {
+                        res.add(logLine);
+                        index++;
+                    }
                 }
             }
+        } catch (Exception e) {
+            // any exception here might be the format is not JSON for the logger. For example Audit logger etc. Ignore it.
         }
         return res;
     }
