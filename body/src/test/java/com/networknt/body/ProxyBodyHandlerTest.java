@@ -112,6 +112,7 @@ public class ProxyBodyHandlerTest {
     }
 
     @Test
+    @Ignore
     public void testGet() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
@@ -224,7 +225,7 @@ public class ProxyBodyHandlerTest {
     }
 
     @Test
-    @Ignore
+    //@Ignore
     public void testPostJsonList() throws Exception {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
