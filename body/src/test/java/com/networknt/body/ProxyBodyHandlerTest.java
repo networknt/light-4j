@@ -225,7 +225,7 @@ public class ProxyBodyHandlerTest {
     }
 
     @Test
-    //@Ignore
+    @Ignore
     public void testPostJsonList() throws Exception {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
