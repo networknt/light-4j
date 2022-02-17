@@ -89,7 +89,7 @@
         <version.hikaricp>3.2.0</version.hikaricp>
         <version.h2>2.1.210</version.h2>
         <version.mysql>8.0.16</version.mysql>
-        <version.postgres>42.2.25</version.postgres>
+        <version.postgres>42.3.3</version.postgres>
         <version.oracle>11.2.0.3</version.oracle>
         <version.sqlserver>7.0.0.jre10</version.sqlserver>
         <version.httpclient>4.5.13</version.httpclient>
