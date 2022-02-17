@@ -1,3 +1,4 @@
 # rule loader config
 # portal host
 portalHost: ${ruleLoader.portalHost:https://localhost}
+portalToken: ${PORTAL_AUTHORIZATION:}
