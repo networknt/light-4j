@@ -153,6 +153,23 @@ public class JwtIssuerTest {
     }
 
     @Test
+    public void longlivedLightPortalController() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestClaims("stevehu@gmail.com", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e73", Arrays.asList("portal.r", "portal.w"), "user CtlPltAdmin CtlPltRead CtlPltWrite");
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***Long lived token for portal controller ***: " + jwt);
+    }
+
+    @Test
+    public void longlivedLightPortalConfigServer() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestClaims("stevehu@gmail.com", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e73", Arrays.asList("portal.r", "portal.w"), "user CfgPltAdmin CfgPltRead CfgPltWrite");
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***Long lived token for portal config server ***: " + jwt);
+    }
+
+
+    @Test
     public void longlivedLightPortalLightapi() throws Exception {
         JwtClaims claims = ClaimsUtil.getTestClaims("stevehu@gmail.com", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("portal.r", "portal.w"), "user lightapi.net admin");
         claims.setExpirationTimeMinutesInTheFuture(5256000);
@@ -224,6 +241,18 @@ public class JwtIssuerTest {
     @Test
     public void sidecarReferenceBootstrap() throws Exception {
         JwtClaims claims = ClaimsUtil.getTestCcClaimsScopeService("f7d42348-c647-4efb-a52d-4c5787421e72", "portal.r portal.w", "0100");
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***Reference Long lived Bootstrap token for config server and controller: " + jwt);
+    }
+
+    /**
+     * This token is used to connect to the light-config-server with serviceId 0100 for testing with a service specific for a client.
+     * @throws Exception
+     */
+    @Test
+    public void petstoreBootstrap() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestCcClaimsScopeService("f7d42348-c647-4efb-a52d-4c5787421e72", "portal.r portal.w", "com.networknt.petstore-3.0.1");
         claims.setExpirationTimeMinutesInTheFuture(5256000);
         String jwt = JwtIssuer.getJwt(claims);
         System.out.println("***Reference Long lived Bootstrap token for config server and controller: " + jwt);
@@ -311,6 +340,30 @@ public class JwtIssuerTest {
         claims.setExpirationTimeMinutesInTheFuture(5256000);
         String jwt = JwtIssuer.getJwt(claims);
         System.out.println("***Long lived token Authorization code customer with  roles***: " + jwt);
+    }
+
+    /**
+     * The returned token contains groups User_API_Dev_R User_API_Dev_W for controller-group-role rule
+     * @throws Exception
+     */
+    @Test
+    public void GroupToRoleAccessControlRight() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestClaimsGroup("stevehu", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("portal.r", "portal.w"), "User_API_Dev_R User_API_Dev_W");
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***Long lived token Authorization code customer with controller groups to roles ***: " + jwt);
+    }
+
+    /**
+     * The returned token contains groups User_API_Wrong for controller-group-role rule
+     * @throws Exception
+     */
+    @Test
+    public void GroupToRoleAccessControlWrong() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestClaimsGroup("stevehu", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("portal.r", "portal.w"), "User_API_Wrong");
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***Long lived token Authorization code customer with a wrong controller groups that cannot be converted to roles ***: " + jwt);
     }
 
 }
