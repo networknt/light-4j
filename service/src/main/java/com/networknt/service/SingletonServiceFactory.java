@@ -304,6 +304,7 @@ public class SingletonServiceFactory {
      * @param <T> class type
      * @return The implementation object
      */
+    @SuppressWarnings("TypeParameterUnusedInFormals")
     public static <T> T getBean(Class<T> interfaceClass) {
         Object object = serviceMap.get(interfaceClass.getName());
         if(object == null) return null;
