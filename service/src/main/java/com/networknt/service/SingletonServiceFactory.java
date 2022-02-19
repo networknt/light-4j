@@ -282,6 +282,7 @@ public class SingletonServiceFactory {
      * @param typeClass Generic type class
      * @return The implementation object
      */
+    @SuppressWarnings("TypeParameterUnusedInFormals")
     public static <T> T getBean(Class<T> interfaceClass, Class typeClass) {
         Object object = serviceMap.get(interfaceClass.getName() + "<" + typeClass.getName() + ">");
         if(object == null) return null;
