@@ -6,6 +6,9 @@
 **Merged pull requests:**
 
 
+- fixes \#1110 add Suppression annotation for TypeParameterUnusedInFormals [\#1111](https://github.com/networknt/light-4j/pull/1111) ([stevehu](https://github.com/stevehu))
+
+
 ## [1.6.37](https://github.com/networknt/light-4j/tree/1.6.37) (2021-11-10)
 
 
