@@ -45,6 +45,7 @@ public class JsonMapper {
         }
     }
 
+    @SuppressWarnings("TypeParameterUnusedInFormals")
     public static <T> T fromJson(String json, Class<T> targetType) {
         try {
             return objectMapper.readValue(json, targetType);
