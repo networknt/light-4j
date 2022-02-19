@@ -123,7 +123,8 @@ public class TLSConfig {
     private static String toCacheKey(boolean verifyHostName, String key) {
     	return String.format("%b-%s", verifyHostName, StringUtils.trimToEmpty(key));
     }
-    
+
+	@SuppressWarnings("TypeParameterUnusedInFormals")
     private static <T> T typeSafeGet(Map<String, Object> map, String key, Class<T> valueType, String groupKey) {
     	if (map.containsKey(key)) {
     		Object value = map.get(key);
