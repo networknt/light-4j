@@ -58,6 +58,7 @@ public interface Result<T> {
         end of the flow, you could convert it to two different client responses depending on
         the insides.
      */
+    @SuppressWarnings("TypeParameterUnusedInFormals")
     default <R> R fold(Function<? super T, ? extends R> successFunction, Function<Failure<R>, ? extends R> failureFunction) {
         return isSuccess() ?
                 successFunction.apply(getResult()) :
