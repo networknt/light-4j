@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.networknt.config.yml.ConfigLoaderConstructor;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
@@ -140,6 +141,7 @@ public abstract class Config {
 
         static {
             mapper.registerModule(new JavaTimeModule());
+            mapper.registerModule(new Jdk8Module());
             mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         }
         
