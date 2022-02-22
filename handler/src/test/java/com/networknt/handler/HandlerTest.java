@@ -16,16 +16,21 @@
 
 package com.networknt.handler;
 
+import com.networknt.exception.ApiException;
 import com.networknt.handler.config.EndpointSource;
 import com.networknt.handler.config.PathChain;
+import com.networknt.status.Status;
 import com.networknt.utility.Tuple;
 import io.undertow.server.HttpHandler;
 import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
 import io.undertow.util.PathTemplateMatcher;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
+import java.lang.management.MemoryType;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +57,10 @@ public class HandlerTest {
         Map<String, List<HttpHandler>> handlers = Handler.handlerListById;
         Assert.assertEquals(1, handlers.get("third").size());
         Assert.assertEquals(2, handlers.get("secondBeforeFirst").size());
+
+        Status status = new Status("ERR11618");
+        Method method =  Handler.resolveMethod(new ApiException(status));
+        Assert.assertNotNull(method);
     }
 
     private PathChain mkPathChain(String source, String path, String method, String... exec) {
@@ -61,6 +70,26 @@ public class HandlerTest {
         pc.setMethod(method);
         pc.setExec(Arrays.asList(exec));
         return pc;
+    }
+
+    @Ignore
+    @Test
+    public void testExceptionProcessorMethod() {
+        Handler.init();
+        Status status = new Status("ERR11618");
+        Method method =  Handler.resolveMethod(new ApiException(status));
+        Assert.assertNotNull(method);
+    }
+
+    @Ignore
+    @Test
+    public void testExceptionProcessorMethodInvoke() throws  Exception{
+        Handler.init();
+
+        Status status = new Status("ERR11618");
+        Status result =  Handler.handlerException(new ApiException(status));
+        Assert.assertNotNull(result);
+        Assert.assertEquals("ERR11618", result.getCode());
     }
 
     static class MockEndpointSource implements EndpointSource {

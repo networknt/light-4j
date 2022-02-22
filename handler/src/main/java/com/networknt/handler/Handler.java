@@ -16,6 +16,9 @@
 
 package com.networknt.handler;
 
+import com.networknt.exception.ExceptionDepthComparator;
+import com.networknt.exception.ExceptionIndicator;
+import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.Tuple;
 import com.networknt.config.Config;
@@ -33,12 +36,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.lang.reflect.Method;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static io.undertow.util.PathTemplateMatch.ATTACHMENT_KEY;
 import static io.undertow.Handlers.websocket;
@@ -65,6 +65,11 @@ public class Handler {
 	static List<HttpHandler> defaultHandlers;
 	// this is the last handler that need to be called when OrchestratorHandler is injected into the beginning of the chain
 	static HttpHandler lastHandler;
+	static List<Class<? extends Throwable>> handledExceptions = new ArrayList<>();
+	static Tuple<String, Class> exceptionProcessor;
+	private static final String DEFAULT_EXCEPTION_PROCESSOR_NAME = "com.networknt.exception.DefaultExceptionProcessor";
+	private static final Map<Class<? extends Throwable>, Method> mappedMethods = new HashMap<>(16);
+	static final String STATUS_RUNTIME_EXCEPTION = "ERR10010";
 
 	public static void setLastHandler(HttpHandler handler) {
 		lastHandler = handler;
@@ -75,6 +80,7 @@ public class Handler {
 		initChains();
 		initPaths();
 		initDefaultHandlers();
+		initExceptionProcessor();
 		ModuleRegistry.registerModule(Handler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
 	}
 
@@ -96,6 +102,22 @@ public class Handler {
 					initMapDefinedHandler((Map<String, Object>) handler);
 				}
 			}
+		}
+	}
+
+	static void initExceptionProcessor() {
+		String exceptionProcessorName;
+		if (config != null && config.getExceptionProcessor() != null) {
+			exceptionProcessorName = (String) config.getExceptionProcessor();
+		} else {
+			exceptionProcessorName = DEFAULT_EXCEPTION_PROCESSOR_NAME;
+		}
+		try {
+			Class processor = Class.forName(exceptionProcessorName);
+			processAnnotationMethods(processor);
+			exceptionProcessor = new Tuple<>(exceptionProcessorName, processor);
+		} catch (ClassNotFoundException e) {
+			throw new RuntimeException("Configured class: " + exceptionProcessorName + " has not been found");
 		}
 	}
 
@@ -341,6 +363,34 @@ public class Handler {
 		return false;
 	}
 
+	/**
+	 * If the exception has method to process.
+	 *
+	 * @param e The current exception to verify.
+	 * @return true if the processor has defined the exception handler method for the exception.
+	 */
+	public static boolean isProcessable(Throwable e) {
+		return handledExceptions.contains(e.getClass());
+	}
+
+	/**
+	 * If handler the input exception by the defined exception processor.
+	 *
+	 * @param e The current exception to verify.
+	 * @return status object which include the detail exception handle result.
+	 */
+	public static Status handlerException(Throwable e) throws  Exception{
+		Status status = new Status(STATUS_RUNTIME_EXCEPTION);
+		Method method = resolveMethod(e);
+		if (method != null) {
+			Object processorObject = exceptionProcessor.second.getDeclaredConstructor().newInstance();
+			Object result = method.invoke(processorObject, e);
+			if (result instanceof Status) {
+				return (Status)result;
+			}
+		}
+		return status;
+	}
 
 	/**
 	 * If there is no matching path, the OrchestrationHandler is going to try to start the defaultHandlers.
@@ -514,6 +564,78 @@ public class Handler {
 			}
 		}
 		throw new RuntimeException("Invalid format provided for class label: " + classLabel);
+	}
+
+	private static void processAnnotationMethods(Class<?> processor) {
+		for (final Method method : processor.getDeclaredMethods()) {
+			if (method.isAnnotationPresent(ExceptionIndicator.class)) {
+				ExceptionIndicator annotInstance = method.getAnnotation(ExceptionIndicator.class);
+				handledExceptions.addAll(Arrays.stream(annotInstance.value()).collect(Collectors.toList()));
+				List<Class<? extends Throwable>> exceptionTypes = getExceptionsFromMethodSignature(method);
+				for (Class<? extends Throwable> exceptionType : exceptionTypes) {
+					Method oldMethod = mappedMethods.put(exceptionType, method);
+					if (oldMethod != null && !oldMethod.equals(method)) {
+						throw new IllegalStateException("Ambiguous @ExceptionHandler method mapped for [" +
+								exceptionType + "]: {" + oldMethod + ", " + method + "}");
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Find a {@link Method} to handle the given exception.
+	 * <p>Uses {@link ExceptionDepthComparator} if more than one match is found.
+	 * @param exception the exception
+	 * @return a Method to handle the exception, or {@code null} if none found
+	 */
+	public static Method resolveMethod(Throwable exception) {
+		Method method = getMappedMethod(exception.getClass());
+		if (method == null) {
+			Throwable cause = exception.getCause();
+			if (cause != null) {
+				method = getMappedMethod(cause.getClass());
+			}
+		}
+		return method;
+	}
+
+
+	private static Method getMappedMethod(Class<? extends Throwable> exceptionType) {
+		List<Class<? extends Throwable>> matches = new ArrayList<>();
+		for (Class<? extends Throwable> mappedException : mappedMethods.keySet()) {
+			if (mappedException.isAssignableFrom(exceptionType)) {
+				matches.add(mappedException);
+			}
+		}
+		if (!matches.isEmpty()) {
+			if (matches.size() > 1) {
+				matches.sort(new ExceptionDepthComparator(exceptionType));
+			}
+			return mappedMethods.get(matches.get(0));
+		}
+		else {
+			return null;
+		}
+	}
+
+	/**
+	 * Extract the exceptions this method handles. This implementation looks for
+	 * sub-classes of Throwable in the method signature.
+	 * <p>The method is static to ensure safe use from sub-class constructors.
+	 */
+	@SuppressWarnings("unchecked")
+	protected static List<Class<? extends Throwable>> getExceptionsFromMethodSignature(Method method) {
+		List<Class<? extends Throwable>> result = new ArrayList<>();
+		for (Class<?> paramType : method.getParameterTypes()) {
+			if (Throwable.class.isAssignableFrom(paramType)) {
+				result.add((Class<? extends Throwable>) paramType);
+			}
+		}
+		if (result.isEmpty()) {
+			throw new IllegalStateException("No exception types mapped to " + method);
+		}
+		return result;
 	}
 
 	// Exposed for testing only.

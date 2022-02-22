@@ -26,6 +26,7 @@ import java.util.Map;
 public class HandlerConfig {
     private boolean enabled;
     private List<Object> handlers;
+    private Object exceptionProcessor;
     private Map<String, List<String>> chains;
     private List<PathChain> paths;
     private List<String> defaultHandlers;
@@ -43,6 +44,14 @@ public class HandlerConfig {
 
     public List<Object> getHandlers() {
         return handlers;
+    }
+
+    public Object getExceptionProcessor() {
+        return exceptionProcessor;
+    }
+
+    public void setExceptionProcessor(Object exceptionProcessor) {
+        this.exceptionProcessor = exceptionProcessor;
     }
 
     public void setHandlers(List<Object> handlers) {

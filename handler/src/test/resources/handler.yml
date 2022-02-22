@@ -35,3 +35,5 @@ paths:
 # will be returned.
 defaultHandlers:
   - third
+
+exceptionProcessor: com.networknt.exception.DefaultExceptionProcessor

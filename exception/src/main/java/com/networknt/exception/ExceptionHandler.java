@@ -22,6 +22,7 @@ import com.networknt.handler.MiddlewareHandler;
 import com.networknt.exception.ApiException;
 import com.networknt.exception.FrameworkException;
 import com.networknt.exception.ClientException;
+import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -66,7 +67,7 @@ public class ExceptionHandler implements MiddlewareHandler {
         // dispatch here to make sure that all exceptions will be capture in this handler
         // otherwise, some of the exceptions will be captured in Connectors class in Undertow
         // As we've updated Server.java to redirect the logs to slf4j but still it make sense
-        // to handle the exception on our ExcpetionHandler.
+        // to handle the exception on our ExceptionHandler.
         if (exchange.isInIoThread()) {
             exchange.dispatch(this);
             return;
@@ -78,37 +79,13 @@ public class ExceptionHandler implements MiddlewareHandler {
             logger.error("Exception:", e);
             if(exchange.isResponseChannelAvailable()) {
                 //handle exceptions
-                if(e instanceof RuntimeException) {
-                    // check if it is FrameworkException which is subclass of RuntimeException.
-                    if(e instanceof FrameworkException) {
-                        FrameworkException fe = (FrameworkException)e;
-                        exchange.setStatusCode(fe.getStatus().getStatusCode());
-                        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-                        exchange.getResponseSender().send(fe.getStatus().toString());
-                        logger.error(fe.getStatus().toString(), e);
-                    } else {
-                        setExchangeStatus(exchange, STATUS_RUNTIME_EXCEPTION);
-                    }
+                if (Handler.isProcessable(e)) {
+                    Status status = Handler.handlerException(e);
+                    exchange.setStatusCode(status.getStatusCode());
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+                    exchange.getResponseSender().send(status.toString());
                 } else {
-                    if(e instanceof ApiException) {
-                        ApiException ae = (ApiException)e;
-                        exchange.setStatusCode(ae.getStatus().getStatusCode());
-                        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-                        exchange.getResponseSender().send(ae.getStatus().toString());
-                        logger.error(ae.getStatus().toString(), e);
-                    } else if(e instanceof ClientException){
-                        ClientException ce = (ClientException)e;
-                        if(ce.getStatus().getStatusCode() == 0){
-                            setExchangeStatus(exchange, STATUS_UNCAUGHT_EXCEPTION);
-                        } else {
-                            exchange.setStatusCode(ce.getStatus().getStatusCode());
-                            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-                            exchange.getResponseSender().send(ce.getStatus().toString());
-                        }
-
-                    } else {
-                        setExchangeStatus(exchange, STATUS_UNCAUGHT_EXCEPTION);
-                    }
+                    setExchangeStatus(exchange, STATUS_RUNTIME_EXCEPTION);
                 }
             }
         } finally {
