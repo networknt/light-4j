@@ -21,11 +21,14 @@ package io.undertow.server.handlers.proxy;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.ServerExchangeCarrier;
 import com.networknt.cluster.Cluster;
+import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.router.HostWhitelist;
+import com.networknt.router.RouterConfig;
 import com.networknt.service.SingletonServiceFactory;
+import com.networknt.utility.Constants;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
@@ -59,6 +62,7 @@ import static io.undertow.server.handlers.proxy.ProxyConnectionPool.Availability
  */
 public class LoadBalancingRouterProxyClient implements ProxyClient {
     private static Logger logger = LoggerFactory.getLogger(LoadBalancingRouterProxyClient.class);
+    private static final RouterConfig config = RouterConfig.load();
     private static final AttachmentKey<AttachmentList<Host>> ATTEMPTED_HOSTS = AttachmentKey.createList(Host.class);
     private static Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
     private static final HostWhitelist HOST_WHITELIST = new HostWhitelist();
@@ -206,9 +210,9 @@ public class LoadBalancingRouterProxyClient implements ProxyClient {
         // if the serviceId doesn't exist in the header, check if there is one in the query parameter.
         // also remove it from the query parameters to ensure that the downstream call doesn't have it.
         // it is for legacy client that is easy to manipulate the query parameters than headers.
-        if(serviceId == null) {
+        if(config.isServiceIdQueryParameter()) {
             Map<String, Deque<String>> queryParameters = exchange.getQueryParameters();
-            Deque<String> dequeServiceId = queryParameters.remove(HttpStringConstants.SERVICE_ID);
+            Deque<String> dequeServiceId = queryParameters.remove(Constants.SERVICE_ID_STRING);
             if(dequeServiceId != null) {
                 serviceId = dequeServiceId.getFirst();
             }
