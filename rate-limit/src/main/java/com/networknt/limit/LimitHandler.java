@@ -23,7 +23,6 @@ import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.server.handlers.RequestLimit;
 
 /**
  * A handler which limits the maximum number of concurrent requests.  Requests beyond the limit will
@@ -32,10 +31,7 @@ import io.undertow.server.handlers.RequestLimit;
  * @author Steve Hu
  */
 public class LimitHandler implements MiddlewareHandler {
-    private static final String CONFIG_NAME = "limit";
-
-    public static LimitConfig config =
-            (LimitConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, LimitConfig.class);
+    public static LimitConfig config = (LimitConfig)Config.getInstance().getJsonObjectConfig(LimitConfig.CONFIG_NAME, LimitConfig.class);
 
     private volatile HttpHandler next;
     private final RequestLimit requestLimit;
