@@ -44,6 +44,7 @@ import org.xnio.ssl.XnioSsl;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -202,6 +203,16 @@ public class LoadBalancingRouterProxyClient implements ProxyClient {
         String serviceUrl = headers.getFirst(HttpStringConstants.SERVICE_URL);
         // remove the header here in case the downstream service is another light-router instance.
         if(serviceUrl != null) headers.remove(HttpStringConstants.SERVICE_URL);
+        // if the serviceId doesn't exist in the header, check if there is one in the query parameter.
+        // also remove it from the query parameters to ensure that the downstream call doesn't have it.
+        // it is for legacy client that is easy to manipulate the query parameters than headers.
+        if(serviceId == null) {
+            Map<String, Deque<String>> queryParameters = exchange.getQueryParameters();
+            Deque<String> dequeServiceId = queryParameters.remove(HttpStringConstants.SERVICE_ID);
+            if(dequeServiceId != null) {
+                serviceId = dequeServiceId.getFirst();
+            }
+        }
         String envTag = headers.getFirst(HttpStringConstants.ENV_TAG);
         String key = envTag == null ?  (serviceUrl != null ? serviceUrl : serviceId) :  (serviceUrl != null ? serviceUrl : serviceId) + "|" + envTag;
         AttachmentList<Host> attempted = exchange.getAttachment(ATTEMPTED_HOSTS);
