@@ -16,3 +16,9 @@ concurrentRequest: ${limit.concurrentRequest:2}
 # to a small value to prevent DDoS attacks. New requests will be dropped with 503 response
 # code returned if the queue is full.
 queueSize: ${limit.queueSize:-1}
+# If the rate limit is exposed to the Internet to prevent DDoS attacks, it will return 503
+# error code to trick the DDoS client/tool to stop the attacks as it considers the server
+# is down. However, if the rate limit is used internally to throttle the client requests to
+# protect a slow backend API, it will return 429 error code to indicate too many requests
+# for the client to wait a grace period to resent the request. By default, 503 is returned.
+errorCode: ${limit.errorCode:503}

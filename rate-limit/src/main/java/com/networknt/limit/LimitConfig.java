@@ -22,9 +22,11 @@ package com.networknt.limit;
  * @author Steve Hu
  */
 public class LimitConfig {
+    public static final String CONFIG_NAME = "limit";
     boolean enabled;
     int concurrentRequest;
     int queueSize;
+    int errorCode;
 
     public LimitConfig() {
     }
@@ -53,4 +55,11 @@ public class LimitConfig {
         this.queueSize = queueSize;
     }
 
+    public int getErrorCode() {
+        return errorCode;
+    }
+
+    public void setErrorCode(int errorCode) {
+        this.errorCode = errorCode;
+    }
 }
