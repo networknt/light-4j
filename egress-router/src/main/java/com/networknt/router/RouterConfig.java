@@ -40,6 +40,7 @@ public class RouterConfig {
     List<String> hostWhitelist;
     private Config config;
     private final Map<String, Object> mappedConfig;
+    boolean serviceIdQueryParameter;
 
     public RouterConfig() {
         config = Config.getInstance();
@@ -49,7 +50,7 @@ public class RouterConfig {
 
     }
 
-    static RouterConfig load() {
+    public static RouterConfig load() {
         return new RouterConfig();
     }
 
@@ -78,7 +79,10 @@ public class RouterConfig {
         if(object != null ) {
             maxConnectionRetries = (Integer)object;
         }
-
+        object = getMappedConfig().get("serviceIdQueryParameter");
+        if(object != null) {
+            serviceIdQueryParameter = (Boolean)object;
+        }
     }
 
     public Map<String, Object> getMappedConfig() {
@@ -118,5 +122,13 @@ public class RouterConfig {
 
     public void setHostWhitelist(List<String> hostWhitelist) {
         this.hostWhitelist = hostWhitelist;
+    }
+
+    public boolean isServiceIdQueryParameter() {
+        return serviceIdQueryParameter;
+    }
+
+    public void setServiceIdQueryParameter(boolean serviceIdQueryParameter) {
+        this.serviceIdQueryParameter = serviceIdQueryParameter;
     }
 }
