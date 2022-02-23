@@ -17,6 +17,7 @@
 package com.networknt.limit;
 
 import com.networknt.client.Http2Client;
+import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
@@ -28,16 +29,16 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -47,7 +48,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class LimitHandlerTest {
     static final Logger logger = LoggerFactory.getLogger(LimitHandlerTest.class);
-
+    static final LimitConfig config = (LimitConfig)Config.getInstance().getJsonObjectConfig(LimitConfig.CONFIG_NAME, LimitConfig.class);
     static Undertow server = null;
 
     @BeforeClass
@@ -127,7 +128,7 @@ public class LimitHandlerTest {
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
         try {
-            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
         } catch (Exception e) {
             throw new ClientException(e);
         }
@@ -146,9 +147,10 @@ public class LimitHandlerTest {
         return reference.get().getAttachment(Http2Client.RESPONSE_BODY) + ":" + reference.get().getResponseCode();
     }
 
-    /*
     @Test
+    @Ignore
     // For some reason, travis become really slow or not allow multi-thread anymore and this test fails always.
+    // You can run it within the IDE or remove the @Ignore and run it locally with mvn clean install.
     public void testMoreRequests() throws Exception {
         Callable<String> task = this::callApi;
         List<Callable<String>> tasks = Collections.nCopies(10, task);
@@ -164,8 +166,7 @@ public class LimitHandlerTest {
             resultList.add(s);
         }
         long last = (System.currentTimeMillis() - start);
-        // make sure that there are at least one element in resultList is :513
-        Assert.assertTrue(resultList.contains(":513"));
+        // make sure that there are at least one element in resultList is :503 or :429
+        Assert.assertTrue(resultList.contains(":" + config.getErrorCode()));
     }
-    */
 }
