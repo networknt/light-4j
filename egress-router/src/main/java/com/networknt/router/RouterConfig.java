@@ -17,10 +17,15 @@
 package com.networknt.router;
 
 import com.networknt.config.Config;
+import com.networknt.config.ConfigException;
+import com.networknt.utility.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Config class for reverse router.
@@ -28,7 +33,7 @@ import java.util.Map;
  * @author Steve Hu
  */
 public class RouterConfig {
-
+    private static final Logger logger = LoggerFactory.getLogger(RouterConfig.class);
     static final String CONFIG_NAME = "router";
 
     boolean http2Enabled;
@@ -38,6 +43,7 @@ public class RouterConfig {
     boolean reuseXForwarded;
     int maxConnectionRetries;
     List<String> hostWhitelist;
+    List<UrlRewriteRule> urlRewriteRules;
     private Config config;
     private final Map<String, Object> mappedConfig;
     boolean serviceIdQueryParameter;
@@ -46,6 +52,7 @@ public class RouterConfig {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
         setHostWhitelist();
+        setUrlRewriteRules();
         setConfigData();
 
     }
@@ -112,7 +119,7 @@ public class RouterConfig {
     }
 
     public void setHostWhitelist() {
-        this.hostWhitelist =new ArrayList<>();
+        this.hostWhitelist = new ArrayList<>();
         if (mappedConfig.get("hostWhitelist") !=null && mappedConfig.get("hostWhitelist") instanceof String) {
             hostWhitelist.add((String)mappedConfig.get("hostWhitelist"));
         } else {
@@ -122,6 +129,39 @@ public class RouterConfig {
 
     public void setHostWhitelist(List<String> hostWhitelist) {
         this.hostWhitelist = hostWhitelist;
+    }
+
+    public List<UrlRewriteRule> getUrlRewriteRules() {
+        return urlRewriteRules;
+    }
+
+    public void setUrlRewriteRules() {
+        this.urlRewriteRules = new ArrayList<>();
+        if (mappedConfig.get("urlRewriteRules") !=null && mappedConfig.get("urlRewriteRules") instanceof String) {
+            urlRewriteRules.add(convertToRule((String)mappedConfig.get("urlRewriteRules")));
+        } else {
+            List<String> rules = (List)mappedConfig.get("urlRewriteRules");
+            if(rules != null) {
+                for (String s : rules) {
+                    urlRewriteRules.add(convertToRule(s));
+                }
+            }
+        }
+    }
+
+    private UrlRewriteRule convertToRule(String s) {
+        // make sure that the string has two parts and the first part can be compiled to a pattern.
+        String[] parts = StringUtils.split(s, ' ');
+        if(parts.length != 2) {
+            String error = "The URL rewrite rule " + s + " must have two parts";
+            logger.error(error);
+            throw new ConfigException(error);
+        }
+        return new UrlRewriteRule(Pattern.compile(parts[0]), parts[1]);
+    }
+
+    public void setUrlRewriteRules(List<UrlRewriteRule> urlRewriteRules) {
+        this.urlRewriteRules = urlRewriteRules;
     }
 
     public boolean isServiceIdQueryParameter() {

@@ -1,0 +1,12 @@
+router.hostWhitelist:
+  - 192.168.0.*
+  - 10.1.2.*
+
+router.urlRewriteRules:
+  # test your regex rule at https://www.freeformatter.com/java-regex-tester.html#ad-output
+  # /listings/123 to /listing.html?listing=123
+  - /listings/(.*)$ /listing.html?listing=$1
+  # /ph/uat/de-asia-ekyc-service/v1 to /uat-de-asia-ekyc-service/v1
+  - /ph/uat/de-asia-ekyc-service/v1 /uat-de-asia-ekyc-service/v1
+  # /tutorial/linux/wordpress/file1 to /tutorial/linux/cms/file1.php
+  - (/tutorial/.*)/wordpress/(\w+)\.?.*$ $1/cms/$2.php

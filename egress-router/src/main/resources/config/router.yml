@@ -23,3 +23,12 @@ maxConnectionRetries: 3
 
 # allowed host list. Use Regex to do wildcard match
 hostWhitelist: ${router.hostWhitelist:.*}
+
+# support serviceId in the query parameter for routing to overwrite serviceId in header routing.
+# by default, it is false and shouldn't be used unless you are dealing with a legacy client that
+# doesn't support header manipulation. Once this flag is true, we are going to overwrite the header
+# service_id derived with other handlers from prefix, path, endpoint etc.
+serviceIdQueryParameter: ${router.serviceIdQueryParameter:false}
+
+# URL rewrite rules, each line will have type source target and type can be "string" or "regex"
+urlRewriteRules: ${router.urlRewriteRules:}

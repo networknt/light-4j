@@ -17,13 +17,11 @@
 package com.networknt.router;
 
 import com.networknt.client.Http2Client;
-import com.networknt.config.Config;
 import io.undertow.UndertowOptions;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.ResponseCodeHandler;
 import io.undertow.server.handlers.proxy.LoadBalancingRouterProxyClient;
-import io.undertow.server.handlers.proxy.ProxyHandler;
 import org.xnio.OptionMap;
 
 /**
