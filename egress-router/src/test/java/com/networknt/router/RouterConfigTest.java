@@ -63,23 +63,26 @@ public class RouterConfigTest {
 
     @Test
     public void testRegexReplace1() {
-        String sourceURL = "http://mysite.com/listings/123";
-        String targetURL = "http://mysite.com/listing.html?listing=123";
+        String sourceURL = "/listings/123";
+        String targetURL = "/listing.html?listing=123";
         Pattern pattern = Pattern.compile("/listings/(.*)$");
         String replace = "/listing.html?listing=$1";
 
         Matcher matcher = pattern.matcher(sourceURL);
-        String s = matcher.replaceAll(replace);
+        String s = null;
+        if(matcher.matches()) {
+            s = matcher.replaceAll(replace);
+        }
         Assert.assertEquals(targetURL, s);
         System.out.println(s);
     }
 
     @Test
     public void testRegexReplace2() {
-        String sourceURL = "ph/uat/de-asia-ekyc-service/v1";
-        String targetURL = "uat-de-asia-ekyc-service/v1";
-        Pattern pattern = Pattern.compile("ph/uat/de-asia-ekyc-service/v1");
-        String replace = "uat-de-asia-ekyc-service/v1";
+        String sourceURL = "/ph/uat/de-asia-ekyc-service/v1";
+        String targetURL = "/uat-de-asia-ekyc-service/v1";
+        Pattern pattern = Pattern.compile("/ph/uat/de-asia-ekyc-service/v1");
+        String replace = "/uat-de-asia-ekyc-service/v1";
 
         Matcher matcher = pattern.matcher(sourceURL);
         String s = matcher.replaceAll(replace);
@@ -89,9 +92,9 @@ public class RouterConfigTest {
 
     @Test
     public void testRegexReplace3() {
-        String sourceURL = "tutorial/linux/wordpress/file1";
-        String targetURL = "tutorial/linux/cms/file1.php";
-        Pattern pattern = Pattern.compile("(tutorial/.*)/wordpress/(\\w+)\\.?.*$");
+        String sourceURL = "/tutorial/linux/wordpress/file1";
+        String targetURL = "/tutorial/linux/cms/file1.php";
+        Pattern pattern = Pattern.compile("(/tutorial/.*)/wordpress/(\\w+)\\.?.*$");
         String replace = "$1/cms/$2.php";
 
         Matcher matcher = pattern.matcher(sourceURL);

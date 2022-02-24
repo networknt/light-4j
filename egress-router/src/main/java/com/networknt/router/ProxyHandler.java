@@ -81,6 +81,7 @@ import io.undertow.util.StatusCodes;
 import io.undertow.util.Transfer;
 import io.undertow.util.WorkerUtils;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 /**
@@ -106,7 +107,6 @@ public class ProxyHandler implements HttpHandler {
 
     private final ProxyClient proxyClient;
     private final int maxRequestTime;
-
     /**
      * Map of additional headers to add to the request.
      */
@@ -326,6 +326,7 @@ public class ProxyHandler implements HttpHandler {
         private final boolean reuseXForwarded;
         private final ProxyHandler.ProxyClientHandler proxyClientHandler;
         private final Predicate idempotentPredicate;
+        private final RouterConfig config = RouterConfig.load();
 
         ProxyAction(final ProxyConnection clientConnection, final HttpServerExchange exchange, Map<HttpString, ExchangeAttribute> requestHeaders,
                     boolean rewriteHostHeader, boolean reuseXForwarded, ProxyHandler.ProxyClientHandler proxyClientHandler, Predicate idempotentPredicate) {
@@ -363,8 +364,23 @@ public class ProxyHandler implements HttpHandler {
                     && (!clientConnection.getTargetPath().equals("/") || targetURI.isEmpty())) {
                 requestURI.append(clientConnection.getTargetPath());
             }
-            
-            requestURI.append(targetURI);
+
+            if(config.getUrlRewriteRules().size() > 0) {
+                boolean matched = false;
+                for(UrlRewriteRule rule : config.urlRewriteRules) {
+                    Matcher matcher = rule.getPattern().matcher(targetURI);
+                    if(matcher.matches()) {
+                        matched = true;
+                        requestURI.append(matcher.replaceAll(rule.getReplace()));
+                        break;
+                    }
+                }
+                // if no matched rule in the list, use the original targetURI.
+                if(!matched) requestURI.append(targetURI);
+            } else {
+                // there is no url rewrite rules, so use the original targetURI
+                requestURI.append(targetURI);
+            }
 
             String qs = exchange.getQueryString();
             if (qs != null && !qs.isEmpty()) {

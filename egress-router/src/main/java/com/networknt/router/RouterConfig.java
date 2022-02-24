@@ -141,8 +141,10 @@ public class RouterConfig {
             urlRewriteRules.add(convertToRule((String)mappedConfig.get("urlRewriteRules")));
         } else {
             List<String> rules = (List)mappedConfig.get("urlRewriteRules");
-            for(String s : rules) {
-                urlRewriteRules.add(convertToRule(s));
+            if(rules != null) {
+                for (String s : rules) {
+                    urlRewriteRules.add(convertToRule(s));
+                }
             }
         }
     }
