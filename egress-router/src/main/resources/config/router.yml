@@ -30,5 +30,8 @@ hostWhitelist: ${router.hostWhitelist:.*}
 # service_id derived with other handlers from prefix, path, endpoint etc.
 serviceIdQueryParameter: ${router.serviceIdQueryParameter:false}
 
-# URL rewrite rules, each line will have type source target and type can be "string" or "regex"
+# URL rewrite rules, each line will have two parts: the regex patten and replace string separated
+# with a space. The light-router has service discovery for host routing, so whe working on the
+# url rewrite rules, we only need to create about the path in the URL.
+# Test your rules at https://www.freeformatter.com/java-regex-tester.html#ad-output
 urlRewriteRules: ${router.urlRewriteRules:}

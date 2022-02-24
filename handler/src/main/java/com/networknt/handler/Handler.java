@@ -422,6 +422,7 @@ public class Handler {
 		try {
 			handlerOrProviderObject = namedClass.second.getDeclaredConstructor().newInstance();
 		} catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+			logger.error("Could not instantiate handler class " + namedClass.second, e);
 			throw new RuntimeException("Could not instantiate handler class: " + namedClass.second);
 		}
 
