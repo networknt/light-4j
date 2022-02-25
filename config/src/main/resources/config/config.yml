@@ -24,4 +24,4 @@ decryptorClass:
 # For some configuration files, we have left some properties without default values as there
 # would be negative impact on the application security. The following config will ensure that
 # null will be used when the default value is empty without stopping the server during the start.
-allowDefaultValueEmpty: false
+allowDefaultValueEmpty: true
