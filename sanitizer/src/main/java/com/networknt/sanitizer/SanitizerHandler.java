@@ -21,6 +21,7 @@ import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.sanitizer.enconding.Encoder;
+import com.networknt.sanitizer.enconding.EncodingStrategy;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -39,51 +40,54 @@ import java.util.*;
  * @author Steve Hu
  */
 public class SanitizerHandler implements MiddlewareHandler {
-    public static final String CONFIG_NAME = "sanitizer";
 
     static SanitizerConfig config;
 
-    Encoder encoding;
+    Encoder bodyEncoder;
+    Encoder headerEncoder;
     private volatile HttpHandler next;
 
     public SanitizerHandler() {
-        config = (SanitizerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, SanitizerConfig.class);
-        encoding = new Encoder(config.getEncoding(), config.getAttributesToIgnore(), config.getAttributesToEncode());
+        config = SanitizerConfig.load();
+        bodyEncoder = new Encoder(EncodingStrategy.of(config.getBodyEncoder()), config.getBodyAttributesToIgnore(), config.getBodyAttributesToEncode());
+        headerEncoder = new Encoder(EncodingStrategy.of(config.getHeaderEncoder()), config.getHeaderAttributesToIgnore(), config.getHeaderAttributesToEncode());
     }
 
-    // integration test purpose
+    // integration test purpose only.
+    @Deprecated
     public SanitizerHandler(String configName) {
-        config = (SanitizerConfig) Config.getInstance().getJsonObjectConfig(configName, SanitizerConfig.class);
-        encoding = new Encoder(config.getEncoding(), config.getAttributesToIgnore(), config.getAttributesToEncode());
+        config = SanitizerConfig.load(configName);
+        bodyEncoder = new Encoder(EncodingStrategy.of(config.getBodyEncoder()), config.getBodyAttributesToIgnore(), config.getBodyAttributesToEncode());
+        headerEncoder = new Encoder(EncodingStrategy.of(config.getHeaderEncoder()), config.getHeaderAttributesToIgnore(), config.getHeaderAttributesToEncode());
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         String method = exchange.getRequestMethod().toString();
-        if (config.isSanitizeHeader()) {
+        if (config.isHeaderEnabled()) {
             HeaderMap headerMap = exchange.getRequestHeaders();
             if (headerMap != null) {
                 for (HeaderValues values : headerMap) {
                     if (values != null) {
                         ListIterator<String> itValues = values.listIterator();
                         while (itValues.hasNext()) {
-                            itValues.set(encoding.applyEncoding(itValues.next()));
+                            itValues.set(headerEncoder.applyEncoding(itValues.next()));
                         }
                     }
                 }
             }
         }
 
-        if (config.isSanitizeBody() && ("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method) || "PATCH".equalsIgnoreCase(method))) {
+        if (config.isBodyEnabled() && ("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method) || "PATCH".equalsIgnoreCase(method))) {
             // assume that body parser is installed before this middleware and body is parsed as a map.
             // we are talking about JSON api now.
             Object body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
             if (body != null) {
                 if(body instanceof List) {
-                    encoding.encodeList((List<Map<String, Object>>)body);
+                    bodyEncoder.encodeList((List<Map<String, Object>>)body);
                 } else if (body instanceof Map){
                     // assume it is a map here.
-                    encoding.encodeNode((Map<String, Object>)body);
+                    bodyEncoder.encodeNode((Map<String, Object>)body);
                 } else {
                     // Body is not in JSON format or form data, skip...
                 }

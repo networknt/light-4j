@@ -1,6 +1,7 @@
 package com.networknt.sanitizer.builder;
 
 import com.networknt.body.BodyHandler;
+import com.networknt.sanitizer.SanitizerConfig;
 import com.networknt.sanitizer.SanitizerHandler;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
@@ -8,7 +9,7 @@ import io.undertow.server.HttpHandler;
 public class ServerBuilder {
 
     private static ServerBuilder instance;
-    private String configName = SanitizerHandler.CONFIG_NAME;
+    private String configName = SanitizerConfig.CONFIG_NAME;
 
     public static ServerBuilder newServer() {
         if (instance == null) instance = new ServerBuilder();

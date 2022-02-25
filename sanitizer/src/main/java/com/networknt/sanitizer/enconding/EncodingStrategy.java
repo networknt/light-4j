@@ -1,20 +1,20 @@
 package com.networknt.sanitizer.enconding;
 
 public class EncodingStrategy {
-
     public static Encoding of(String value) {
-        if (EncoderRegistry.hasEncodingsRegistered()) {
-            if (EncoderRegistry.getEncoding().getId().equals(value)) {
-                return EncoderRegistry.getEncoding();
-            }
-        }
 
         if (value == null) {
-            return new DefaultEncoding();
+            return new SourceEncoding();
         }
         switch (value) {
-            case "default":
-                return new DefaultEncoding();
+            case "javascript":
+                return new GeneralEncoding();
+            case "javascript-source":
+                return new SourceEncoding();
+            case "javascript-attribute":
+                return new AttributeEncoding();
+            case "javascript-block":
+                return new BlockEncoding();
             default:
                 throw new IllegalStateException(String.format("Encoding unknown: %s", value));
         }

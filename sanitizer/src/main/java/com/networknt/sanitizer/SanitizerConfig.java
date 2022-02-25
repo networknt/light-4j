@@ -16,10 +16,11 @@
 
 package com.networknt.sanitizer;
 
-import com.networknt.sanitizer.enconding.Encoding;
-import com.networknt.sanitizer.enconding.EncodingStrategy;
+import com.networknt.config.Config;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Sanitizer configuration class
@@ -27,12 +28,36 @@ import java.util.List;
  * @author Steve Hu
  */
 public class SanitizerConfig {
+    public static final String CONFIG_NAME = "sanitizer";
     private boolean enabled;
-    private boolean sanitizeBody;
-    private boolean sanitizeHeader;
-    private List<String> attributesToIgnore;
-    private List<String> attributesToEncode;
-    private String encoding;
+    private boolean bodyEnabled;
+    private String bodyEncoder;
+    private List<String> bodyAttributesToIgnore;
+    private List<String> bodyAttributesToEncode;
+
+    private boolean headerEnabled;
+    private String headerEncoder;
+    private List<String> headerAttributesToIgnore;
+    private List<String> headerAttributesToEncode;
+
+    private final Map<String, Object> mappedConfig;
+
+    private SanitizerConfig(String configName) {
+        mappedConfig = Config.getInstance().getJsonMapConfig(configName);
+        setBodyAttributesToEncodeList();
+        setBodyAttributesToIgnoreList();
+        setHeaderAttributesToEncodeList();
+        setHeaderAttributesToIgnoreList();
+        setConfigData();
+    }
+
+    public static SanitizerConfig load() {
+        return new SanitizerConfig(CONFIG_NAME);
+    }
+
+    public static SanitizerConfig load(String configName) {
+        return new SanitizerConfig(configName);
+    }
 
     public boolean isEnabled() {
         return enabled;
@@ -42,43 +67,131 @@ public class SanitizerConfig {
         this.enabled = enabled;
     }
 
-    public boolean isSanitizeBody() {
-        return sanitizeBody;
+    public boolean isBodyEnabled() {
+        return bodyEnabled;
     }
 
-    public void setSanitizeBody(boolean sanitizeBody) {
-        this.sanitizeBody = sanitizeBody;
+    public void setBodyEnabled(boolean bodyEnabled) {
+        this.bodyEnabled = bodyEnabled;
     }
 
-    public boolean isSanitizeHeader() {
-        return sanitizeHeader;
+    public String getBodyEncoder() {
+        return bodyEncoder;
     }
 
-    public void setSanitizeHeader(boolean sanitizeHeader) {
-        this.sanitizeHeader = sanitizeHeader;
+    public void setBodyEncoder(String bodyEncoder) {
+        this.bodyEncoder = bodyEncoder;
     }
 
-    public Encoding getEncoding() {
-        return EncodingStrategy.of(encoding);
+    public List<String> getBodyAttributesToIgnore() {
+        return bodyAttributesToIgnore;
     }
 
-    public void setEncoding(String encoding) {
-        this.encoding = encoding;
+    public void setBodyAttributesToIgnore(List<String> bodyAttributesToIgnore) {
+        this.bodyAttributesToIgnore = bodyAttributesToIgnore;
     }
 
-    public List<String> getAttributesToIgnore() {
-        return attributesToIgnore;
+    public List<String> getBodyAttributesToEncode() {
+        return bodyAttributesToEncode;
     }
 
-    public void setAttributesToIgnore(List<String> attributesToIgnore) {
-        this.attributesToIgnore = attributesToIgnore;
+    public void setBodyAttributesToEncode(List<String> bodyAttributesToEncode) {
+        this.bodyAttributesToEncode = bodyAttributesToEncode;
     }
 
-    public List<String> getAttributesToEncode() {
-        return attributesToEncode;
+    public boolean isHeaderEnabled() {
+        return headerEnabled;
     }
 
-    public void setAttributesToEncode(List<String> attributesToEncode) {
-        this.attributesToEncode = attributesToEncode;
+    public void setHeaderEnabled(boolean headerEnabled) {
+        this.headerEnabled = headerEnabled;
     }
+
+    public String getHeaderEncoder() {
+        return headerEncoder;
+    }
+
+    public void setHeaderEncoder(String headerEncoder) {
+        this.headerEncoder = headerEncoder;
+    }
+
+    public List<String> getHeaderAttributesToIgnore() {
+        return headerAttributesToIgnore;
+    }
+
+    public void setHeaderAttributesToIgnore(List<String> headerAttributesToIgnore) {
+        this.headerAttributesToIgnore = headerAttributesToIgnore;
+    }
+
+    public List<String> getHeaderAttributesToEncode() {
+        return headerAttributesToEncode;
+    }
+
+    public void setHeaderAttributesToEncode(List<String> headerAttributesToEncode) {
+        this.headerAttributesToEncode = headerAttributesToEncode;
+    }
+
+    public void setConfigData() {
+        Object object = mappedConfig.get("enabled");
+        if(object != null && (Boolean) object) {
+            enabled = true;
+        }
+
+        object = mappedConfig.get("bodyEnabled");
+        if(object != null && (Boolean) object) {
+            bodyEnabled = true;
+        }
+
+        object = mappedConfig.get("headerEnabled");
+        if(object != null && (Boolean) object) {
+            headerEnabled = true;
+        }
+
+        object = mappedConfig.get("bodyEncoder");
+        if(object != null ) {
+            bodyEncoder = (String)object;
+        }
+
+        object = mappedConfig.get("headerEncoder");
+        if(object != null ) {
+            headerEncoder = (String)object;
+        }
+    }
+
+    public void setBodyAttributesToEncodeList() {
+        this.bodyAttributesToEncode = new ArrayList<>();
+        if(mappedConfig.get("bodyAttributesToEncode") != null && mappedConfig.get("bodyAttributesToEncode") instanceof String) {
+            bodyAttributesToEncode.add((String)mappedConfig.get("bodyAttributesToEncode"));
+        } else {
+            bodyAttributesToEncode = (List)mappedConfig.get("bodyAttributesToEncode");
+        }
+    }
+
+    public void setBodyAttributesToIgnoreList() {
+        this.bodyAttributesToIgnore = new ArrayList<>();
+        if(mappedConfig.get("bodyAttributesToIgnore") != null && mappedConfig.get("bodyAttributesToIgnore") instanceof String) {
+            bodyAttributesToIgnore.add((String)mappedConfig.get("bodyAttributesToIgnore"));
+        } else {
+            bodyAttributesToIgnore = (List)mappedConfig.get("bodyAttributesToIgnore");
+        }
+    }
+
+    public void setHeaderAttributesToEncodeList() {
+        this.headerAttributesToEncode = new ArrayList<>();
+        if(mappedConfig.get("headerAttributesToEncode") != null && mappedConfig.get("headerAttributesToEncode") instanceof String) {
+            headerAttributesToEncode.add((String)mappedConfig.get("headerAttributesToEncode"));
+        } else {
+            headerAttributesToEncode = (List)mappedConfig.get("headerAttributesToEncode");
+        }
+    }
+
+    public void setHeaderAttributesToIgnoreList() {
+        this.headerAttributesToIgnore = new ArrayList<>();
+        if(mappedConfig.get("headerAttributesToIgnore") != null && mappedConfig.get("headerAttributesToIgnore") instanceof String) {
+            headerAttributesToIgnore.add((String)mappedConfig.get("headerAttributesToIgnore"));
+        } else {
+            headerAttributesToIgnore = (List)mappedConfig.get("headerAttributesToIgnore");
+        }
+    }
+
 }
