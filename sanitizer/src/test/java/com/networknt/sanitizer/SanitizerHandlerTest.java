@@ -191,7 +191,7 @@ public class SanitizerHandlerTest {
         String data = "{\"s1\":\"<script>alert('test1')</script>\",\"s2\":[\"abc\",\"<script>alert('test2')</script>\"],\"s3\":{\"s4\":\"def\",\"s5\":\"<script>alert('test5')</script>\"},\"s6\":[{\"s7\":\"<script>alert('test7')</script>\"},{\"s8\":\"ghi\"}],\"s9\":[[\"<script>alert('test9')</script>\"],[\"jkl\"]]}";
         HashMap<String, Object> jsonMap = Config.getInstance().getMapper().readValue(data,new TypeReference<HashMap<String, Object>>(){});
         SanitizerHandler handler = new SanitizerHandler();
-        handler.encoding.encodeNode(jsonMap);
+        handler.bodyEncoder.encodeNode(jsonMap);
         Assert.assertEquals(jsonMap.get("s1"), "<script>alert(\\'test1\\')</script>");
         ArrayList l2 = (ArrayList)jsonMap.get("s2");
         String s2 = (String)l2.get(1);
