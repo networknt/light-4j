@@ -22,7 +22,7 @@ reuseXForwarded: false
 maxConnectionRetries: 3
 
 # allowed host list. Use Regex to do wildcard match
-hostWhitelist: ${router.hostWhitelist:.*}
+hostWhitelist: ${router.hostWhitelist:}
 
 # support serviceId in the query parameter for routing to overwrite serviceId in header routing.
 # by default, it is false and shouldn't be used unless you are dealing with a legacy client that
