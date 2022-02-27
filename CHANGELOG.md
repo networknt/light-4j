@@ -1,5 +1,52 @@
 # Change Log
 
+## [2.1.0](https://github.com/networknt/light-4j/tree/2.1.0) (2022-02-27)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1124 enhance the sanitizer to make the configuration separated… [\#1125](https://github.com/networknt/light-4j/pull/1125) ([stevehu](https://github.com/stevehu))
+- fixes \#1122 log the stacktrace if a middleware handler is not loaded … [\#1123](https://github.com/networknt/light-4j/pull/1123) ([stevehu](https://github.com/stevehu))
+- Issue1120 [\#1121](https://github.com/networknt/light-4j/pull/1121) ([stevehu](https://github.com/stevehu))
+- fixes \#1118 allow router to support serviceId from query parameters a… [\#1119](https://github.com/networknt/light-4j/pull/1119) ([stevehu](https://github.com/stevehu))
+- fixes \#1116 Update the rate-limit to allow customzied the error code … [\#1117](https://github.com/networknt/light-4j/pull/1117) ([stevehu](https://github.com/stevehu))
+- fixes \#1112 add Jdk8Module to the ObjectMappers in config module to h… [\#1113](https://github.com/networknt/light-4j/pull/1113) ([stevehu](https://github.com/stevehu))
+- fixes \#1108 update the rule-loader to add another rule action to tran… [\#1109](https://github.com/networknt/light-4j/pull/1109) ([stevehu](https://github.com/stevehu))
+- Bump postgresql from 42.2.25 to 42.3.3 [\#1107](https://github.com/networknt/light-4j/pull/1107) ([dependabot](https://github.com/apps/dependabot))
+- fixes \#1105 disable a test case in the body handler as it is not stable [\#1106](https://github.com/networknt/light-4j/pull/1106) ([stevehu](https://github.com/stevehu))
+- Truncated Exception Fix [\#1104](https://github.com/networknt/light-4j/pull/1104) ([KalevGonvick](https://github.com/KalevGonvick))
+- fixes \#1102 update the LoggerGetLogContentHandler to return map and h… [\#1103](https://github.com/networknt/light-4j/pull/1103) ([stevehu](https://github.com/stevehu))
+- fixes \#1100 remove a logging statement in the DefaultConfigLoader as … [\#1101](https://github.com/networknt/light-4j/pull/1101) ([stevehu](https://github.com/stevehu))
+- fixes \#1097 add isNumeric to StringUtils in the utility [\#1098](https://github.com/networknt/light-4j/pull/1098) ([stevehu](https://github.com/stevehu))
+- Bump postgresql from 9.4.1211 to 42.2.25 [\#1095](https://github.com/networknt/light-4j/pull/1095) ([dependabot](https://github.com/apps/dependabot))
+- Issue1093 [\#1094](https://github.com/networknt/light-4j/pull/1094) ([stevehu](https://github.com/stevehu))
+- fixes \#1091 update the default rate limit concurrent requests to 2 fr… [\#1092](https://github.com/networknt/light-4j/pull/1092) ([stevehu](https://github.com/stevehu))
+- fixes \#1089 update audit status key from Status to status [\#1090](https://github.com/networknt/light-4j/pull/1090) ([stevehu](https://github.com/stevehu))
+- fixes \#1087 externalize rate-limit, header and whitelist-ip config files [\#1088](https://github.com/networknt/light-4j/pull/1088) ([stevehu](https://github.com/stevehu))
+- Bump h2 from 2.0.206 to 2.1.210 [\#1086](https://github.com/networknt/light-4j/pull/1086) ([dependabot](https://github.com/apps/dependabot))
+- fixes \#1084 update the DefaultConfigLoader to get the values.yml from… [\#1085](https://github.com/networknt/light-4j/pull/1085) ([stevehu](https://github.com/stevehu))
+- Bump httpclient from 4.5.6 to 4.5.13 [\#1077](https://github.com/networknt/light-4j/pull/1077) ([dependabot](https://github.com/apps/dependabot))
+- Bump h2 from 1.4.196 to 2.0.206 [\#1083](https://github.com/networknt/light-4j/pull/1083) ([dependabot](https://github.com/apps/dependabot))
+- fixes \#1081 update the ClaimsUtil to name the service id claim with s… [\#1082](https://github.com/networknt/light-4j/pull/1082) ([stevehu](https://github.com/stevehu))
+- fixes \#1079 add method and path to the method not found error message [\#1080](https://github.com/networknt/light-4j/pull/1080) ([stevehu](https://github.com/stevehu))
+- fixes \#1075 Add rule-loader module to support fine-grained access con… [\#1076](https://github.com/networknt/light-4j/pull/1076) ([stevehu](https://github.com/stevehu))
+- fixes \#1073 update the sanitizer.yml to externalize properties for va… [\#1074](https://github.com/networknt/light-4j/pull/1074) ([stevehu](https://github.com/stevehu))
+- fixes \#1071 externalize jaeger-tracing configuration properties [\#1072](https://github.com/networknt/light-4j/pull/1072) ([stevehu](https://github.com/stevehu))
+- fixes \#1069 update server.yml to externalize server.ip [\#1070](https://github.com/networknt/light-4j/pull/1070) ([stevehu](https://github.com/stevehu))
+- fixes \#1067 update the SignKeyRequest to get the proxy info from the … [\#1068](https://github.com/networknt/light-4j/pull/1068) ([stevehu](https://github.com/stevehu))
+- fixes \#1065 Turn off hostname verification for OAuthHelper based on t… [\#1066](https://github.com/networknt/light-4j/pull/1066) ([stevehu](https://github.com/stevehu))
+- change promethus config to be extendable [\#1064](https://github.com/networknt/light-4j/pull/1064) ([GavinChenYan](https://github.com/GavinChenYan))
+- fixes \#1061 [\#1062](https://github.com/networknt/light-4j/pull/1062) ([GavinChenYan](https://github.com/GavinChenYan))
+- Issue1059 [\#1060](https://github.com/networknt/light-4j/pull/1060) ([stevehu](https://github.com/stevehu))
+- fixes \#1057 add ProxyHealthGetHandler in ingress-proxy for the http-s… [\#1058](https://github.com/networknt/light-4j/pull/1058) ([stevehu](https://github.com/stevehu))
+- fixes \#1053 update the pom.xml and jaeger-client dependency to avoid … [\#1054](https://github.com/networknt/light-4j/pull/1054) ([stevehu](https://github.com/stevehu))
+- Issue 1048 [\#1051](https://github.com/networknt/light-4j/pull/1051) ([stevehu](https://github.com/stevehu))
+- max json payload for proxy which using buffer stream [\#1050](https://github.com/networknt/light-4j/pull/1050) ([GavinChenYan](https://github.com/GavinChenYan))
+- fixes \#1048 update ProxyBodyHandler to handle the data form and add t… [\#1049](https://github.com/networknt/light-4j/pull/1049) ([stevehu](https://github.com/stevehu))
+- add other contentType for proxy body handler [\#1047](https://github.com/networknt/light-4j/pull/1047) ([GavinChenYan](https://github.com/GavinChenYan))
+
+
 ## [2.0.32](https://github.com/networknt/light-4j/tree/2.0.32) (2021-10-19)
 
 
