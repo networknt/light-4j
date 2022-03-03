@@ -1,16 +1,14 @@
 package com.networknt.sanitizer;
 
-import com.networknt.sanitizer.enconding.Encoder;
-import com.networknt.sanitizer.enconding.Encoding;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.owasp.encoder.Encode;
+import org.owasp.encoder.*;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-public class EncoderTest {
+public class EncoderWrapperTest {
     private String s = "A'NDERSONoô";
     private String value = "anyValue";
 
@@ -79,8 +77,7 @@ public class EncoderTest {
         map.put("data2", "value2");
         map.put("data3", "value3");
         map.put("data4", "value4");
-        Encoding encoding = new FakeEncoding();
-        Encoder encoder = Mockito.spy(new Encoder(encoding, Arrays.asList("data2", "data4"), null));
+        EncoderWrapper encoder = Mockito.spy(new EncoderWrapper(Encoders.forName("java"), Arrays.asList("data2", "data4"), null));
 
         encoder.encodeNode(map);
 
@@ -98,8 +95,7 @@ public class EncoderTest {
         map.put("data2", "value2");
         map.put("data3", "value3");
         map.put("data4", "value4");
-        Encoding encoding = new FakeEncoding();
-        Encoder encoder = Mockito.spy(new Encoder(encoding, null, Arrays.asList("data3")));
+        EncoderWrapper encoder = Mockito.spy(new EncoderWrapper(Encoders.forName("java"), null, Arrays.asList("data3")));
 
         encoder.encodeNode(map);
 
@@ -116,8 +112,24 @@ public class EncoderTest {
         map.put("data2", "value2");
         map.put("data3", "value3");
         map.put("data4", "value4");
-        Encoding encoding = new FakeEncoding();
-        Encoder encoder = Mockito.spy(new Encoder(encoding, Arrays.asList("data2"), Arrays.asList("data3")));
+        EncoderWrapper encoder = Mockito.spy(new EncoderWrapper(Encoders.forName("java"), Arrays.asList("data2"), Arrays.asList("data3")));
+
+        encoder.encodeNode(map);
+
+        Mockito.verify(encoder, Mockito.never()).applyEncoding("value1");
+        Mockito.verify(encoder).applyEncoding("value3");
+        Mockito.verify(encoder, Mockito.never()).applyEncoding("value2");
+        Mockito.verify(encoder, Mockito.never()).applyEncoding("value4");
+    }
+
+    @Test(expected = UnsupportedContextException.class)
+    public void shouldThrowExceptionForIncorrectEncoder() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("data1", "value1");
+        map.put("data2", "value2");
+        map.put("data3", "value3");
+        map.put("data4", "value4");
+        EncoderWrapper encoder = Mockito.spy(new EncoderWrapper(Encoders.forName("fake"), Arrays.asList("data2"), Arrays.asList("data3")));
 
         encoder.encodeNode(map);
 
@@ -152,8 +164,7 @@ public class EncoderTest {
     }
 
     private void testEncodingFor(Map<String, Object> structure) {
-        Encoding encoding = new FakeEncoding();
-        Encoder encoder = Mockito.spy(new Encoder(encoding, null, null));
+        EncoderWrapper encoder = Mockito.spy(new EncoderWrapper(Encoders.forName("java"), null, null));
 
         encoder.encodeNode(structure);
 

@@ -20,14 +20,14 @@ import com.networknt.body.BodyHandler;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.sanitizer.enconding.Encoder;
-import com.networknt.sanitizer.enconding.EncodingStrategy;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderMap;
 import io.undertow.util.HeaderValues;
+import org.owasp.encoder.EncoderWrapper;
+import org.owasp.encoder.Encoders;
 
 import java.util.*;
 
@@ -43,22 +43,22 @@ public class SanitizerHandler implements MiddlewareHandler {
 
     static SanitizerConfig config;
 
-    Encoder bodyEncoder;
-    Encoder headerEncoder;
+    EncoderWrapper bodyEncoder;
+    EncoderWrapper headerEncoder;
     private volatile HttpHandler next;
 
     public SanitizerHandler() {
         config = SanitizerConfig.load();
-        bodyEncoder = new Encoder(EncodingStrategy.of(config.getBodyEncoder()), config.getBodyAttributesToIgnore(), config.getBodyAttributesToEncode());
-        headerEncoder = new Encoder(EncodingStrategy.of(config.getHeaderEncoder()), config.getHeaderAttributesToIgnore(), config.getHeaderAttributesToEncode());
+        bodyEncoder = new EncoderWrapper(Encoders.forName(config.getBodyEncoder()), config.getBodyAttributesToIgnore(), config.getBodyAttributesToEncode());
+        headerEncoder = new EncoderWrapper(Encoders.forName(config.getHeaderEncoder()), config.getHeaderAttributesToIgnore(), config.getHeaderAttributesToEncode());
     }
 
     // integration test purpose only.
     @Deprecated
     public SanitizerHandler(String configName) {
         config = SanitizerConfig.load(configName);
-        bodyEncoder = new Encoder(EncodingStrategy.of(config.getBodyEncoder()), config.getBodyAttributesToIgnore(), config.getBodyAttributesToEncode());
-        headerEncoder = new Encoder(EncodingStrategy.of(config.getHeaderEncoder()), config.getHeaderAttributesToIgnore(), config.getHeaderAttributesToEncode());
+        bodyEncoder = new EncoderWrapper(Encoders.forName(config.getBodyEncoder()), config.getBodyAttributesToIgnore(), config.getBodyAttributesToEncode());
+        headerEncoder = new EncoderWrapper(Encoders.forName(config.getHeaderEncoder()), config.getHeaderAttributesToIgnore(), config.getHeaderAttributesToEncode());
     }
 
     @Override
