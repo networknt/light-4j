@@ -62,15 +62,13 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
                 while(iteratorList.hasNext()) {
                     List<Map<String, String>> list = iteratorList.next();
                     for(Map<String, String> map: list) {
-                        Iterator<String> iteratorRule = map.values().iterator();
-                        while(iteratorRule.hasNext()) {
-                            String ruleId = iteratorRule.next();
-                            if(logger.isDebugEnabled()) logger.debug("Load rule for ruleId = " + ruleId);
-                            // get rule content for each id and concat them together.
-                            String r = getRuleById(config.getPortalHost(), DEFAULT_HOST, ruleId).getResult();
-                            Map<String, Object> ruleMap = JsonMapper.string2Map(r);
-                            ruleString = ruleString + ruleMap.get("value") + "\n";
-                        }
+                        // in this map, we might have ruleId, roles, variables as keys. Here we only need to get the ruleId in order to load rule body.
+                        String ruleId = map.get("ruleId");
+                        if(logger.isDebugEnabled()) logger.debug("Load rule for ruleId = " + ruleId);
+                        // get rule content for each id and concat them together.
+                        String r = getRuleById(config.getPortalHost(), DEFAULT_HOST, ruleId).getResult();
+                        Map<String, Object> ruleMap = JsonMapper.string2Map(r);
+                        ruleString = ruleString + ruleMap.get("value") + "\n";
                     }
                 }
             }
