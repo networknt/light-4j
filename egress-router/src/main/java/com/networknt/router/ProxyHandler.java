@@ -364,7 +364,7 @@ public class ProxyHandler implements HttpHandler {
                     && (!clientConnection.getTargetPath().equals("/") || targetURI.isEmpty())) {
                 requestURI.append(clientConnection.getTargetPath());
             }
-
+            // handle the url rewrite here.
             if(config.getUrlRewriteRules().size() > 0) {
                 boolean matched = false;
                 for(UrlRewriteRule rule : config.urlRewriteRules) {
@@ -387,8 +387,18 @@ public class ProxyHandler implements HttpHandler {
                 requestURI.append('?');
                 requestURI.append(qs);
             }
+            // handler the method rewrite here.
+            HttpString method = exchange.getRequestMethod();
+            if(config.getMethodRewriteRules().size() > 0) {
+                for(MethodRewriteRule rule: config.getMethodRewriteRules()) {
+                    if(targetURI.equals(rule.requestPath) && method.toString().equals(rule.getSourceMethod())) {
+                        if(logger.isDebugEnabled()) logger.debug("Rewrite HTTP method from " + rule.getSourceMethod() + " to " + rule.getTargetMethod());
+                        method = new HttpString(rule.targetMethod);
+                    }
+                }
+            }
             request.setPath(requestURI.toString())
-                    .setMethod(exchange.getRequestMethod());
+                    .setMethod(method);
             final HeaderMap inboundRequestHeaders = exchange.getRequestHeaders();
             final HeaderMap outboundRequestHeaders = request.getRequestHeaders();
             copyHeaders(outboundRequestHeaders, inboundRequestHeaders);

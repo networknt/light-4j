@@ -16,7 +16,6 @@
 
 package com.networknt.router;
 
-import com.networknt.config.Config;
 import com.networknt.service.SingletonServiceFactory;
 import org.junit.Assert;
 import org.junit.Before;
@@ -25,8 +24,6 @@ import org.junit.Test;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class HostWhitelistTest {
 

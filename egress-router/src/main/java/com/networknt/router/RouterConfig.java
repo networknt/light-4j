@@ -22,9 +22,7 @@ import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -44,15 +42,25 @@ public class RouterConfig {
     int maxConnectionRetries;
     List<String> hostWhitelist;
     List<UrlRewriteRule> urlRewriteRules;
+    List<MethodRewriteRule> methodRewriteRules;
+    Set httpMethods;
     private Config config;
     private final Map<String, Object> mappedConfig;
     boolean serviceIdQueryParameter;
 
     public RouterConfig() {
+        httpMethods = new HashSet();
+        httpMethods.add("GET");
+        httpMethods.add("POST");
+        httpMethods.add("DELETE");
+        httpMethods.add("PUT");
+        httpMethods.add("PATCH");
+
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
         setHostWhitelist();
         setUrlRewriteRules();
+        setMethodRewriteRules();
         setConfigData();
 
     }
@@ -138,18 +146,18 @@ public class RouterConfig {
     public void setUrlRewriteRules() {
         this.urlRewriteRules = new ArrayList<>();
         if (mappedConfig.get("urlRewriteRules") !=null && mappedConfig.get("urlRewriteRules") instanceof String) {
-            urlRewriteRules.add(convertToRule((String)mappedConfig.get("urlRewriteRules")));
+            urlRewriteRules.add(convertToUrlRewriteRule((String)mappedConfig.get("urlRewriteRules")));
         } else {
             List<String> rules = (List)mappedConfig.get("urlRewriteRules");
             if(rules != null) {
                 for (String s : rules) {
-                    urlRewriteRules.add(convertToRule(s));
+                    urlRewriteRules.add(convertToUrlRewriteRule(s));
                 }
             }
         }
     }
 
-    private UrlRewriteRule convertToRule(String s) {
+    private UrlRewriteRule convertToUrlRewriteRule(String s) {
         // make sure that the string has two parts and the first part can be compiled to a pattern.
         String[] parts = StringUtils.split(s, ' ');
         if(parts.length != 2) {
@@ -162,6 +170,51 @@ public class RouterConfig {
 
     public void setUrlRewriteRules(List<UrlRewriteRule> urlRewriteRules) {
         this.urlRewriteRules = urlRewriteRules;
+    }
+
+    public List<MethodRewriteRule> getMethodRewriteRules() {
+        return methodRewriteRules;
+    }
+
+    public void setMethodRewriteRules() {
+        this.methodRewriteRules = new ArrayList<>();
+        if (mappedConfig.get("methodRewriteRules") !=null && mappedConfig.get("methodRewriteRules") instanceof String) {
+            methodRewriteRules.add(convertToMethodRewriteRule((String)mappedConfig.get("methodRewriteRules")));
+        } else {
+            List<String> rules = (List)mappedConfig.get("methodRewriteRules");
+            if(rules != null) {
+                for (String s : rules) {
+                    methodRewriteRules.add(convertToMethodRewriteRule(s));
+                }
+            }
+        }
+    }
+
+    private MethodRewriteRule convertToMethodRewriteRule(String s) {
+        // make sure that the string has three parts and the second part and third part are HTTP methods.
+        String[] parts = StringUtils.split(s, ' ');
+        if(parts.length != 3) {
+            String error = "The Method rewrite rule " + s + " must have three parts";
+            logger.error(error);
+            throw new ConfigException(error);
+        }
+        String sourceMethod = parts[1].trim().toUpperCase();
+        if(!httpMethods.contains(sourceMethod)) {
+            String error = "The source method converted to uppercase " + sourceMethod + " is not a valid HTTP Method";
+            logger.error(error);
+            throw new ConfigException(error);
+        }
+        String targetMethod = parts[2].trim().toUpperCase();
+        if(!httpMethods.contains(targetMethod)) {
+            String error = "The target method converted to uppercase " + targetMethod + " is not a valid HTTP Method";
+            logger.error(error);
+            throw new ConfigException(error);
+        }
+        return new MethodRewriteRule(parts[0], sourceMethod, targetMethod);
+    }
+
+    public void setMethodRewriteRules(List<MethodRewriteRule> methodRewriteRules) {
+        this.methodRewriteRules = methodRewriteRules;
     }
 
     public boolean isServiceIdQueryParameter() {
