@@ -35,3 +35,12 @@ serviceIdQueryParameter: ${router.serviceIdQueryParameter:false}
 # url rewrite rules, we only need to create about the path in the URL.
 # Test your rules at https://www.freeformatter.com/java-regex-tester.html#ad-output
 urlRewriteRules: ${router.urlRewriteRules:}
+
+# Method rewrite rules for legacy clients that don't support DELETE, PUT, and PATCH HTTP methods to
+# send a request with GET and POST instead. The gateway will rewrite the method from GET to DELETE or
+# from POST to PUT or PATCH. This will be set up at the endpoint level to limit the application.
+# The format of the rule will be "path source-method target-method". Please refer to test values.yml for
+# examples.
+# Note: you cannot rewrite a method with a body to a method without a body or vice versa.
+methodRewriteRules: ${router.methodRewriteRules:}
+

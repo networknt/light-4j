@@ -10,3 +10,11 @@ router.urlRewriteRules:
   - /ph/uat/de-asia-ekyc-service/v1 /uat-de-asia-ekyc-service/v1
   # /tutorial/linux/wordpress/file1 to /tutorial/linux/cms/file1.php
   - (/tutorial/.*)/wordpress/(\w+)\.?.*$ $1/cms/$2.php
+
+router.methodRewriteRules:
+  # rewrite POST to PUT for path /v2/address
+  - /v2/address POST PUT
+  # rewrite POST to PATCH for path /v1/address
+  - /v1/address POST PATCH
+  # rewrite GET to DELETE for path /v1/address
+  - /v1/address GET DELETE
