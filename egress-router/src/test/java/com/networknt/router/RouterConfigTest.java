@@ -16,17 +16,10 @@
 
 package com.networknt.router;
 
-import com.networknt.config.JsonMapper;
-import com.networknt.service.SingletonServiceFactory;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
