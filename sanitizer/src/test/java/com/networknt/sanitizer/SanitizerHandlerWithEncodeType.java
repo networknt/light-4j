@@ -12,7 +12,7 @@ public class SanitizerHandlerWithEncodeType {
 
     private static Undertow server = null;
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testStartServer() {
         if(server == null) {
             LOGGER.info("starting server");

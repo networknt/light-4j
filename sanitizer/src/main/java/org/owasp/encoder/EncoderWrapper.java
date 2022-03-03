@@ -1,17 +1,23 @@
-package com.networknt.sanitizer.enconding;
+package org.owasp.encoder;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class Encoder {
+/**
+ * A wrapper class that simplify the invocation to encode method. It is located in this package to invoke a non-public
+ * method in Encode class.
+ *
+ * @author Steve Hu
+ */
+public class EncoderWrapper {
 
-    private final Encoding encoding;
+    private final Encoder encoder;
     private final List<String> attributesToIgnore;
     private final List<String> attributesToAppreciate;
 
-    public Encoder(Encoding encoding, List<String> attributesToIgnore, List<String> attributesToAppreciate) {
-        this.encoding = encoding;
+    public EncoderWrapper(Encoder encoder, List<String> attributesToIgnore, List<String> attributesToAppreciate) {
+        this.encoder = encoder;
         this.attributesToIgnore = attributesToIgnore == null ? new ArrayList<>() : attributesToIgnore;
         this.attributesToAppreciate = attributesToAppreciate == null ? new ArrayList<>() : attributesToAppreciate;
     }
@@ -51,6 +57,6 @@ public class Encoder {
     }
 
     public String applyEncoding(String value) {
-        return encoding.apply(value);
+        return Encode.encode(encoder, value);
     }
 }
