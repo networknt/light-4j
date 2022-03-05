@@ -464,9 +464,14 @@ ERR10067:
   description: Failed to pass the fine-grained authorization with rule %s.
 ERR10068:
   statusCode: 413
+  code: ERR10068
   message: PAYLOAD_TOO_LARGE
   description: The request body has exceeded the set max size.
-
+ERR10069:
+  statusCode: 403
+  code: ERR10069
+  message: ACCESS_CONTROL_MISSING
+  description: Access control rule is missing for endpoint %s and default deny is true.
 
 # 11000-11499 swagger-validator errors
 ERR11000:
