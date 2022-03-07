@@ -21,9 +21,7 @@ import org.xnio.OptionMap;
 
 import java.net.URI;
 import java.net.URLEncoder;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -56,6 +54,7 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
             // need to get the rule bodies here to create a map of ruleId to ruleBody.
             Iterator<Object> iterator = endpointRules.values().iterator();
             String ruleString = "\n";
+            Set<String> ruleIdSet = new HashSet<>(); // use this set to ensure the same ruleId will only be concat once.
             while (iterator.hasNext()) {
                 Map<String, List> value = (Map<String, List>)iterator.next();
                 Iterator<List> iteratorList = value.values().iterator();
@@ -64,11 +63,14 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
                     for(Map<String, String> map: list) {
                         // in this map, we might have ruleId, roles, variables as keys. Here we only need to get the ruleId in order to load rule body.
                         String ruleId = map.get("ruleId");
-                        if(logger.isDebugEnabled()) logger.debug("Load rule for ruleId = " + ruleId);
-                        // get rule content for each id and concat them together.
-                        String r = getRuleById(config.getPortalHost(), DEFAULT_HOST, ruleId).getResult();
-                        Map<String, Object> ruleMap = JsonMapper.string2Map(r);
-                        ruleString = ruleString + ruleMap.get("value") + "\n";
+                        if(!ruleIdSet.contains(ruleId)) {
+                            if (logger.isDebugEnabled()) logger.debug("Load rule for ruleId = " + ruleId);
+                            // get rule content for each id and concat them together.
+                            String r = getRuleById(config.getPortalHost(), DEFAULT_HOST, ruleId).getResult();
+                            Map<String, Object> ruleMap = JsonMapper.string2Map(r);
+                            ruleString = ruleString + ruleMap.get("value") + "\n";
+                            ruleIdSet.add(ruleId);
+                        }
                     }
                 }
             }
