@@ -136,7 +136,7 @@ public class ProxyHandler implements HttpHandler {
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         final ProxyClient.ProxyTarget target = proxyClient.findTarget(exchange);
         if (target == null) {
-            logger.debug("No proxy target for request to %s", exchange.getRequestURL());
+            logger.debug("No proxy target for request to {}", exchange.getRequestURL());
             next.handleRequest(exchange);
             return;
         }
@@ -523,7 +523,7 @@ public class ProxyHandler implements HttpHandler {
                 request.getRequestHeaders().put(Headers.X_FORWARDED_HOST, exchange.getRequestHeaders().getFirst(Headers.HOST));
             }
             if(logger.isDebugEnabled()) {
-                logger.debug("Sending request %s to target %s for exchange %s", request, clientConnection.getConnection().getPeerAddress(), exchange);
+                logger.debug("Sending request {} to target {} for exchange {}", request, clientConnection.getConnection().getPeerAddress(), exchange);
             }
             //handle content
             //if the frontend is HTTP/2 then we may need to add a Transfer-Encoding header, to indicate to the backend
@@ -540,7 +540,7 @@ public class ProxyHandler implements HttpHandler {
                 public void completed(final ClientExchange result) {
 
                     if(logger.isDebugEnabled()) {
-                        logger.debug("Sent request %s to target %s for exchange %s", request, remoteHost, exchange);
+                        logger.debug("Sent request {} to target {} for exchange {}", request, remoteHost, exchange);
                     }
                     result.putAttachment(EXCHANGE, exchange);
 
@@ -550,7 +550,7 @@ public class ProxyHandler implements HttpHandler {
                             @Override
                             public void handleContinue(final ClientExchange clientExchange) {
                                 if(logger.isDebugEnabled()) {
-                                    logger.debug("Received continue response to request %s to target %s for exchange %s", request, clientConnection.getConnection().getPeerAddress(), exchange);
+                                    logger.debug("Received continue response to request {} to target {} for exchange {}", request, clientConnection.getConnection().getPeerAddress(), exchange);
                                 }
                                 HttpContinue.sendContinueResponse(exchange, new IoCallback() {
                                     @Override
@@ -576,7 +576,7 @@ public class ProxyHandler implements HttpHandler {
                             public boolean handlePush(ClientExchange originalRequest, final ClientExchange pushedRequest) {
 
                                 if(logger.isDebugEnabled()) {
-                                    logger.debug("Sending push request %s received from %s to target %s for exchange %s", pushedRequest.getRequest(), request, remoteHost, exchange);
+                                    logger.debug("Sending push request {} received from {} to target {} for exchange {}", pushedRequest.getRequest(), request, remoteHost, exchange);
                                 }
                                 final ClientRequest request = pushedRequest.getRequest();
                                 exchange.getConnection().pushResource(request.getPath(), request.getMethod(), request.getRequestHeaders(), new HttpHandler() {
@@ -665,7 +665,7 @@ public class ProxyHandler implements HttpHandler {
             final ClientResponse response = result.getResponse();
 
             if(logger.isDebugEnabled()) {
-                logger.debug("Received response %s for request %s for exchange %s", response, result.getRequest(), exchange);
+                logger.debug("Received response {} for request {} for exchange {}", response, result.getRequest(), exchange);
             }
             final HeaderMap inboundResponseHeaders = response.getResponseHeaders();
             final HeaderMap outboundResponseHeaders = exchange.getResponseHeaders();
@@ -679,7 +679,7 @@ public class ProxyHandler implements HttpHandler {
                     public void handleUpgrade(StreamConnection streamConnection, HttpServerExchange exchange) {
 
                         if(logger.isDebugEnabled()) {
-                            logger.debug("Upgraded request %s to for exchange %s", result.getRequest(), exchange);
+                            logger.debug("Upgraded request {} to for exchange {}", result.getRequest(), exchange);
                         }
                         StreamConnection clientChannel = null;
                         try {
