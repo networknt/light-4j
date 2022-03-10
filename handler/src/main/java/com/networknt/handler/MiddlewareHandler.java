@@ -59,4 +59,11 @@ public interface MiddlewareHandler extends LightHttpHandler {
      * Register this handler to the handler registration.
      */
     void register();
+
+    /**
+     * Reload config values in case the config values changed by config server.
+     */
+    default void reload() {
+
+    }
 }

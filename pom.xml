@@ -164,6 +164,7 @@
         <module>egress-router</module>
         <module>ingress-proxy</module>
         <module>rule-loader</module>
+        <module>config-reload</module>
     </modules>
 
     <dependencyManagement>

@@ -8,4 +8,6 @@ package com.networknt.server;
  */
 public interface IConfigLoader {
     void init();
+
+    void reloadConfig();
 }
