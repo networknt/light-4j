@@ -22,6 +22,7 @@ import com.networknt.client.Http2Client;
 import com.networknt.client.ssl.TLSConfig;
 import com.networknt.cluster.Cluster;
 import com.networknt.config.Config;
+import com.networknt.config.JsonMapper;
 import com.networknt.exception.ClientException;
 import com.networknt.httpstring.ContentType;
 import com.networknt.monad.Failure;
@@ -94,6 +95,7 @@ public class OauthHelper {
      */
     public static Result<TokenResponse> getTokenResult(TokenRequest tokenRequest, String envTag) {
         // As the tokenClient will be reused frequently, we create it once and cache it.
+        if(logger.isTraceEnabled()) logger.trace("tokenRequest = " + JsonMapper.toJson(tokenRequest));
         if(tokenClient == null) {
             try {
                 HttpClient.Builder clientBuilder = HttpClient.newBuilder()
@@ -457,6 +459,7 @@ public class OauthHelper {
     private static Result<TokenResponse> handleResponse(ContentType contentType, String responseBody) {
         TokenResponse tokenResponse;
         Result<TokenResponse> result;
+        if(logger.isTraceEnabled()) logger.trace("contentType = " + contentType + " responseBody = " +  responseBody);
         try {
             //only accept json format response so that can map to a TokenResponse, otherwise escapes server's response and return to the client.
             if(!contentType.equals(ContentType.APPLICATION_JSON)) {
@@ -477,6 +480,7 @@ public class OauthHelper {
         } catch (UnrecognizedPropertyException e) {
             //in this case, cannot parse success token, which means the server doesn't response a successful token but some messages, we need to pass this message out.
             result = Failure.of(new Status(GET_TOKEN_ERROR, escapeBasedOnType(contentType, responseBody)));
+            logger.error("Error in token parsing", e);
         } catch (IOException | RuntimeException e) {
             result = Failure.of(new Status(GET_TOKEN_ERROR, e.getMessage()));
             logger.error("Error in token retrieval", e);
