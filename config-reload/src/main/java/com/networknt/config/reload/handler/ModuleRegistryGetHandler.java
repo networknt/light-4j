@@ -13,6 +13,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * This is an admin endpoint used to load the list of Registry moduels
+ * The endpoint spec will be defined in the openapi-inject-yml
+ *
+ * @author Gavin Chen
+ *
+ */
 public class ModuleRegistryGetHandler implements LightHttpHandler {
 
     public static final String CONFIG_NAME = "configreload";

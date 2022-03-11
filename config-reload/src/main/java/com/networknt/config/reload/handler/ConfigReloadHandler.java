@@ -17,6 +17,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * This is an admin endpoint used to re-load config values from config server on run-time
+ * The endpoint spec will be defined in the openapi-inject-yml
+ * User call the endpoint will re-load the config values runtime without service restart
+ *
+ * @author Gavin Chen
+ *
+ */
 public class ConfigReloadHandler implements LightHttpHandler {
 
     public static final String CONFIG_NAME = "configreload";
@@ -35,7 +43,10 @@ public class ConfigReloadHandler implements LightHttpHandler {
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         ConfigReloadConfig config = (ConfigReloadConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ConfigReloadConfig.class);
-        List<String> modules =  (List) exchange.getAttachment(BodyHandler.REQUEST_BODY);
+      //  Map<String, Object> bodyMap = (Map<String, Object>)exchange.getAttachment(BodyHandler.REQUEST_BODY);
+        List<String> modules =  (List)exchange.getAttachment(BodyHandler.REQUEST_BODY);
+
+        List<String> reloads =  new ArrayList<>();
         if (config.isEnabled()) {
             reLoadConfigs();
             if (modules==null || modules.isEmpty() || MODULE_DEFAULT.equalsIgnoreCase(modules.get(0))) {
@@ -49,29 +60,32 @@ public class ConfigReloadHandler implements LightHttpHandler {
             for (String module: modules) {
                 try {
                     Class handler = Class.forName(module);
-                    processReloadMethod(handler);
+                    if (processReloadMethod(handler)) reloads.add(handler.getName());
                 } catch (ClassNotFoundException e) {
                     throw new RuntimeException("Handler class: " + module + " has not been found");
                 }
             }
             exchange.getResponseHeaders().add(new HttpString("Content-Type"), "application/json");
-            exchange.setStatusCode(HttpStatus.ACCEPTED.value());
-            exchange.getResponseSender().send("config reloaded");
+            exchange.setStatusCode(HttpStatus.OK.value());
+            exchange.getResponseSender().send(mapper.writeValueAsString(reloads));
         } else {
             logger.error("Config reload is disabled in configreload.yml");
             setExchangeStatus(exchange, STATUS_CONFIG_RELOAD_DISABLED);
         }
     }
 
-    private void processReloadMethod(Class<?> handler) {
+    private boolean processReloadMethod(Class<?> handler) {
         try {
             Method reload = handler.getDeclaredMethod(RELOAD_METHOD);
             Object processorObject = handler.getDeclaredConstructor().newInstance();
             Object result = reload.invoke(processorObject);
+
             logger.info("Invoke reload method " + result);
+            return true;
         } catch (Exception e) {
-            logger.error("Cannot invoke reload method.");
+            logger.error("Cannot invoke reload method for :" + handler.getName());
         }
+        return false;
     }
 
 

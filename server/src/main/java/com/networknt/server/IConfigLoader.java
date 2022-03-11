@@ -9,5 +9,9 @@ package com.networknt.server;
 public interface IConfigLoader {
     void init();
 
+    /**
+     * Refresh config values from config server if the config server url is defined
+     *
+     */
     void reloadConfig();
 }

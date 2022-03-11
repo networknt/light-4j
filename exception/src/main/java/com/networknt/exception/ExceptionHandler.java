@@ -49,7 +49,7 @@ public class ExceptionHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(ExceptionHandler.class);
 
     public static final String CONFIG_NAME = "exception";
-    static final ExceptionConfig config =
+    static  ExceptionConfig config =
             (ExceptionConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ExceptionConfig.class);
 
     static final String STATUS_RUNTIME_EXCEPTION = "ERR10010";
@@ -140,4 +140,8 @@ public class ExceptionHandler implements MiddlewareHandler {
         ModuleRegistry.registerModule(ExceptionHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
+    @Override
+    public void reload() {
+        config =  (ExceptionConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ExceptionConfig.class);
+    }
 }
