@@ -39,15 +39,16 @@ public class BaseTest {
 
     @AfterClass
     public static void tearDown() throws Exception {
-//        if(server != null) {
-//            try {
-//                Thread.sleep(100);
-//            } catch (InterruptedException ignored) {
-//
-//            }
-//            server.stop();
-//            logger.info("The server is stopped.");
-//        }
+        if(server != null) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ignored) {
+
+            }
+            server.stop();
+            server = null;
+            logger.info("The server is stopped.");
+        }
     }
 
     static RoutingHandler getTestHandler() {
