@@ -39,7 +39,7 @@ public class ContentHandler implements MiddlewareHandler {
 
   public static final String CONFIG_NAME = "content";
 
-  public static final ContentConfig config = (ContentConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ContentConfig.class);
+  public static  ContentConfig config = (ContentConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ContentConfig.class);
 
   private static final String contentType = config.getContentType();
 
@@ -83,5 +83,10 @@ public class ContentHandler implements MiddlewareHandler {
         .put(Headers.CONTENT_TYPE, contentType);
     }
     Handler.next(exchange, next);
+  }
+
+  @Override
+  public void reload() {
+    config =(ContentConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ContentConfig.class);
   }
 }

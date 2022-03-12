@@ -151,6 +151,11 @@ public class MetricsHandler implements MiddlewareHandler {
         ModuleRegistry.registerModule(MetricsHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), List.of(MASK_KEY_INFLUX_DB_PASS));
     }
 
+    @Override
+    public void reload() {
+        config = (MetricsConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, MetricsConfig.class);
+    }
+
     private void incCounterForStatusCode(int statusCode, Map<String, String> commonTags, Map<String, String> tags) {
         MetricName metricName = new MetricName("request").tagged(commonTags).tagged(tags);
         registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.COUNTERS).inc();

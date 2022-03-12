@@ -132,6 +132,10 @@ public class SAMLTokenHandler implements MiddlewareHandler {
         ModuleRegistry.registerModule(SAMLTokenHandler.class.getName(), config, null);
     }
 
+    @Override
+    public void reload() {
+        config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
+    }
 
     private Result<String> getSAMLBearerToken(String samlAssertion , String jwtAssertion) {
         SAMLBearerRequest tokenRequest = new SAMLBearerRequest(samlAssertion , jwtAssertion);

@@ -1315,6 +1315,12 @@ ERR12216:
   message: PRODUCER_NOT_ENABLED
   description: The producer startup hook is not enabled in the service.yml
 
+ERR12217:
+  statusCode: 400
+  code: ERR12217
+  message: CONFIG_RELOAD_DISABLED
+  description: Config reload is disabled in configreload.yml
+
 # http2client error 13000-13999
 ERR13001:
   statusCode: 403

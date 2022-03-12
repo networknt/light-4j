@@ -33,7 +33,7 @@ class AuditConfig {
     private static final String IS_LOG_LEVEL_ERROR = "logLevelIsError";
     private static final String IS_MASK_ENABLED = "mask";
     private static final String TIMESTAMP_FORMAT = "timestampFormat";
-    private final Map<String, Object> mappedConfig;
+    private  Map<String, Object> mappedConfig;
     static final String CONFIG_NAME = "audit";
     private List<String> headerList;
     private List<String> auditList;
@@ -58,6 +58,14 @@ class AuditConfig {
 
     static AuditConfig load() {
         return new AuditConfig();
+    }
+
+    void reload() {
+        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
+
+        setLists();
+        setLogLevel();
+        setConfigData();
     }
 
     List<String> getHeaderList() {

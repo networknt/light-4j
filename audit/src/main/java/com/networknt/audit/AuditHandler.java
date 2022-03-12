@@ -326,4 +326,13 @@ public class AuditHandler implements MiddlewareHandler {
     public void register() {
         ModuleRegistry.registerModule(AuditHandler.class.getName(), auditConfig.getMappedConfig(), null);
     }
+
+    @Override
+    public void reload() {
+        if (auditConfig==null) {
+            auditConfig = AuditConfig.load();
+        } else {
+            auditConfig.reload();
+        }
+    }
 }

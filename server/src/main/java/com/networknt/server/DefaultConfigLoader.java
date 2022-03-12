@@ -178,6 +178,33 @@ public class DefaultConfigLoader implements IConfigLoader{
         }
     }
 
+    @Override
+    public void reloadConfig() {
+        configServerUri = getPropertyOrEnv(CONFIG_SERVER_URI);
+        if (configServerUri != null) {
+            logger.info("Loading configs from config server");
+            if(logger.isDebugEnabled()) {
+                logger.debug("light-env:" + lightEnv);
+                logger.debug("targetConfigsDirectory:" + targetConfigsDirectory);
+                logger.debug("configServerUri:" + configServerUri);
+            }
+            // lazy create client for config server access.
+            configClient = createHttpClient();
+
+            try {
+                String configPath = getConfigServerPath();
+                // This is the method to load values.yml from the config server
+                loadConfigs(configPath);
+
+            } catch (Exception e) {
+                logger.error("Failed to connect to config server", e);
+            }
+
+        } else {
+            logger.warn("Warning! {} is not provided; using local configs", CONFIG_SERVER_URI);
+        }
+    }
+
     /**
      * load config properties from light config server
      * @param configPath

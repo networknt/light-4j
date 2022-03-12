@@ -89,4 +89,9 @@ public class TraceabilityHandler implements MiddlewareHandler {
     public void register() {
         ModuleRegistry.registerModule(TraceabilityHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
+
+    @Override
+    public void reload() {
+        config = (TraceabilityConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, TraceabilityConfig.class);
+    }
 }

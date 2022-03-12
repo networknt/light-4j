@@ -118,5 +118,9 @@ public class ServiceDictHandler implements MiddlewareHandler {
         ModuleRegistry.registerModule(ServiceDictHandler.class.getName(), config, null);
     }
 
+    @Override
+    public void reload() {
+        config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
+    }
 
 }
