@@ -112,8 +112,9 @@ public class TokenManager {
     }
 
     /**
-     * get a Jwt with a provided clientRequest,
-     * it will get token based on Jwt.Key (either scope or service_id)
+     * get a Jwt with a provided clientRequest. Decision needs to be made based on the path if
+     * multiple auth server is configured in the client.yml file.
+     * it will get token based on Jwt.Key (either scope or service_id) first from the cache.
      * if the user declared both scope and service_id in header, it will get jwt based on scope
      * @param clientRequest client request
      * @return Result

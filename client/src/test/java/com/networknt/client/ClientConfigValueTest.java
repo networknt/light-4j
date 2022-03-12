@@ -8,18 +8,11 @@ import static junit.framework.TestCase.assertEquals;
 
 
 public class ClientConfigValueTest {
-
-    private Config config;
-    @Before
-    public void setUp() {
-        config = Config.getInstance();
-
-    }
-
+    public static final String CONFIG_NAME = "client";
     @Test
     public void testLoadConfig() {
-        assertEquals(ClientConfig.get().getConnectionExpireTime(), 2000000);
-
+        ClientConfig config = ClientConfig.get(CONFIG_NAME);
+        assertEquals(config.getConnectionExpireTime(), 1800000);
     }
 
 

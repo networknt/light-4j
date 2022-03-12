@@ -96,6 +96,9 @@ public class Http2ClientTest {
 
     private static final URI ADDRESS;
 
+    public static final String CONFIG_NAME = "client";
+    static ClientConfig config;
+
     static {
         try {
             ADDRESS = new URI("http://localhost:7777");
@@ -123,6 +126,7 @@ public class Http2ClientTest {
 
     @BeforeClass
     public static void beforeClass() throws IOException {
+        config = ClientConfig.get(CONFIG_NAME);
         // Create xnio worker
         final Xnio xnio = Xnio.getInstance();
         final XnioWorker xnioWorker = xnio.createWorker(null, Http2Client.DEFAULT_OPTIONS);
@@ -581,7 +585,7 @@ public class Http2ClientTest {
         AtomicInteger countComplete = new AtomicInteger(0);
         ClientRequest request = new ClientRequest().setPath(SLOW_MESSAGE).setMethod(Methods.GET);
         request.getRequestHeaders().put(Headers.HOST, "localhost");
-        ClientConfig.get().setRequestEnableHttp2(false);
+        config.setRequestEnableHttp2(false);
         CountDownLatch latch = new CountDownLatch(asyncRequestNumber);
         for (int i = 0; i < asyncRequestNumber; i++) {
             client.callService(ADDRESS, request, Optional.empty()).thenAcceptAsync(clientResponse -> {
@@ -599,7 +603,7 @@ public class Http2ClientTest {
         System.out.println("Completed: " + countComplete.get());
 
         // Reset to default
-        ClientConfig.get().setRequestEnableHttp2(true);
+        config.setRequestEnableHttp2(true);
     }
 
     @Test
@@ -990,7 +994,7 @@ public class Http2ClientTest {
     private static SSLContext createTestSSLContext(boolean verifyHostName, String trustedNamesGroupKey) throws IOException {
         SSLContext sslContext = null;
         KeyManager[] keyManagers = null;
-        Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+        Map<String, Object> tlsMap = (Map<String, Object>)config.getMappedConfig().get(Http2Client.TLS);
         if(tlsMap != null) {
             try {
                 // load key store for client certificate if two way ssl is used.
