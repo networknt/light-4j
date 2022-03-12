@@ -19,6 +19,7 @@ package com.networknt.proxy;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
+import com.networknt.utility.ModuleRegistry;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.ResponseCodeHandler;
@@ -74,6 +75,7 @@ public class LightProxyHandler implements HttpHandler {
                 .setRewriteHostHeader(config.isRewriteHostHeader())
                 .setNext(ResponseCodeHandler.HANDLE_404)
                 .build();
+        ModuleRegistry.registerModule(ProxyHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
     @Override
@@ -137,4 +139,7 @@ public class LightProxyHandler implements HttpHandler {
         };
     }
 
+    public void reload() {
+        config = (ProxyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ProxyConfig.class);
+    }
 }

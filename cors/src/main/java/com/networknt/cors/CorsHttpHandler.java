@@ -122,4 +122,8 @@ public class CorsHttpHandler implements MiddlewareHandler {
         ModuleRegistry.registerModule(CorsHttpHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
+    @Override
+    public void reload() {
+        config = (CorsConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, CorsConfig.class);
+    }
 }

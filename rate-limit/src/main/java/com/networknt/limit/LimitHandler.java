@@ -66,4 +66,10 @@ public class LimitHandler implements MiddlewareHandler {
     public void register() {
         ModuleRegistry.registerModule(LimitHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
+
+    @Override
+    public void reload() {
+        config = (LimitConfig)Config.getInstance().getJsonObjectConfig(LimitConfig.CONFIG_NAME, LimitConfig.class);
+    }
+
 }

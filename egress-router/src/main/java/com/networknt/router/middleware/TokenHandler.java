@@ -118,4 +118,9 @@ public class TokenHandler implements MiddlewareHandler {
     public void register() {
         ModuleRegistry.registerModule(TokenHandler.class.getName(), config, null);
     }
+
+    @Override
+    public void reload() {
+        config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
+    }
 }

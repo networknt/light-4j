@@ -129,6 +129,11 @@ public class PrometheusHandler implements MiddlewareHandler {
         ModuleRegistry.registerModule(PrometheusHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
+    @Override
+    public void reload() {
+        config =(PrometheusConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, PrometheusConfig.class);
+    }
+
     private void incCounterForStatusCode(int statusCode, List<String> labels,  List<String> labelValues) {
 
         counter(REQUEST_TOTAL, labels).labels(labelValues.stream().toArray(String[]::new)).inc();

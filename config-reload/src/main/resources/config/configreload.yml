@@ -1,0 +1,5 @@
+---
+# config reload from config server.
+
+# Indicate if the config reload from config server  is enable or not.
+enabled: ${configreload.enabled:true}

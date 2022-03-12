@@ -67,7 +67,7 @@ public class BodyHandler implements MiddlewareHandler {
 
     public static final String CONFIG_NAME = "body";
 
-    public static final BodyConfig config = (BodyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, BodyConfig.class);
+    public static  BodyConfig config = (BodyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, BodyConfig.class);
 
     private volatile HttpHandler next;
 
@@ -190,5 +190,10 @@ public class BodyHandler implements MiddlewareHandler {
     @Override
     public void register() {
         ModuleRegistry.registerModule(BodyHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+    }
+
+    @Override
+    public void reload() {
+        config = (BodyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, BodyConfig.class);
     }
 }

@@ -129,6 +129,30 @@ public class UrlConfigLoader implements IConfigLoader {
 		}
 	}
 
+	@Override
+	public void reloadConfig() {
+		if (StringUtils.isBlank(configServerUri)) {
+			return;
+		}
+		try {
+			logger.info("init url config: {}{}", configServerUri, configServerPath);
+			URI uri = new URI(configServerUri);
+			host = uri.getHost();
+			connection = client.connect(uri, Http2Client.WORKER, client.createXnioSsl(createBootstrapContext()),
+					Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+
+			loadConfigs();
+
+		} catch (Exception e) {
+			logger.error("Failed to connect to config server", e);
+		} finally {
+			// here the connection is closed after one request. It should be used for in
+			// frequent
+			// request as creating a new connection is costly with TLS handshake and ALPN.
+			IoUtils.safeClose(connection);
+		}
+	}
+
 	@SuppressWarnings("deprecation")
 	private void loadConfigs() {
 		Map<String, Object> serviceConfigs = new HashMap<>();
