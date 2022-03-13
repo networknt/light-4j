@@ -30,6 +30,11 @@ public class Jwt {
     protected Set<String> scopes = new HashSet<>();
     protected Key key;
     /**
+     * This is the client credentials token config if multiple auth servers are used.
+     */
+    protected Map<String, Object> ccConfig;
+
+    /**
      * the cached jwt token for client credentials grant type
      */
     private String jwt;
@@ -121,6 +126,14 @@ public class Jwt {
 
     public static void setEarlyRefreshRetryDelay(long earlyRefreshRetryDelay) {
         Jwt.earlyRefreshRetryDelay = earlyRefreshRetryDelay;
+    }
+
+    public Map<String, Object> getCcConfig() {
+        return ccConfig;
+    }
+
+    public void setCcConfig(Map<String, Object> ccConfig) {
+        this.ccConfig = ccConfig;
     }
 
     public Set<String> getScopes() {

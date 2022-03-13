@@ -5,14 +5,15 @@ import com.networknt.client.Http2Client;
 import com.networknt.client.oauth.cache.ICacheStrategy;
 import com.networknt.client.oauth.cache.LongestExpireCacheStrategy;
 import com.networknt.config.Config;
+import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
+import com.networknt.status.Status;
 import io.undertow.client.ClientRequest;
 import io.undertow.util.HeaderValues;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This class is a singleton to manage ALL tokens.
@@ -20,30 +21,8 @@ import java.util.Set;
  * It manages caches based on different cache strategies underneath.
  */
 public class TokenManager {
-    private Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_NAME);
-    /**
-     * @deprecated will be moved to {@link ClientConfig#CACHE}
-     */
-    @Deprecated
-    public static final String CACHE = "cache";
-
-    /**
-     * @deprecated will be moved to {@link ClientConfig#OAUTH}
-     */
-    @Deprecated
-    public static final String OAUTH = "oauth";
-
-    /**
-     * @deprecated will be moved to {@link ClientConfig#TOKEN}
-     */
-    @Deprecated
-    public static final String TOKEN = "token";
-
-    /**
-     * @deprecated will be moved to {@link ClientConfig#CAPACITY}
-     */
-    @Deprecated
-    public static final String CAPACITY_CONFIG = "capacity";
+    private Logger logger = LoggerFactory.getLogger(TokenManager.class);
+    private static final String CONFIG_PROPERTY_MISSING = "ERR10057";
 
     private static volatile TokenManager INSTANCE;
     private static int CAPACITY = 200;
@@ -85,11 +64,12 @@ public class TokenManager {
      *      - get a new jwt from oauth server
      * 3.after getting the valid token, cache that token no matter if it's already cached or not. The strategy should determine how to cache it.
      * @param key either based on scope or service id
+     * @param ccConfig a map of target auth server client credentials config
      * @return a Jwt if successful, otherwise return error Status.
      */
-    public Result<Jwt> getJwt(Jwt.Key key) {
+    public Result<Jwt> getJwt(Jwt.Key key, Map<String, Object> ccConfig) {
         Jwt cachedJwt = getJwt(cacheStrategy, key);
-
+        if(ccConfig != null) cachedJwt.setCcConfig(ccConfig);
         Result<Jwt> result = OauthHelper.populateCCToken(cachedJwt);
         //update JWT
         if (result.isSuccess()) {
@@ -120,17 +100,39 @@ public class TokenManager {
      * @return Result
      */
     public Result<Jwt> getJwt(ClientRequest clientRequest) {
-        HeaderValues scope = clientRequest.getRequestHeaders().get(ClientConfig.SCOPE);
-        if(scope != null) {
-            String scopeStr = scope.getFirst();
-            Set<String> scopeSet = new HashSet<>();
-            scopeSet.addAll(Arrays.asList(scopeStr.split(" ")));
-            return getJwt(new Jwt.Key(scopeSet));
+        // check the client.yml to see if multiple auth server is enabled.
+        if(ClientConfig.get().isMultipleAuthServers()) {
+            String path = clientRequest.getPath();
+            if(logger.isTraceEnabled()) logger.trace("clientRequest path = " + path);
+            // get the target serviceId based on the request path.
+            Map<String, String> pathPrefixServices = ClientConfig.get().getPathPrefixServices();
+            String serviceId = pathPrefixServices.get(path);
+            if(logger.isTraceEnabled()) logger.trace("serviceId = " + serviceId);
+            // based on the serviceId, we can find the configuration of the auth server from the client credentials
+            Map<String, Object> clientCredentials = (Map<String, Object>)ClientConfig.get().getTokenConfig().get(ClientConfig.CLIENT_CREDENTIALS);
+            Map<String, Object> serviceIdAuthServers = (Map<String, Object>)clientCredentials.get(ClientConfig.SERVICE_ID_AUTH_SERVERS);
+            if(serviceIdAuthServers == null) {
+                Status status = new Status(CONFIG_PROPERTY_MISSING, "serviceIdAuthServers", "client.yml");
+                return Failure.of(status);
+            }
+            Map<String, Object> ccConfig = (Map<String, Object>)serviceIdAuthServers.get(serviceId);
+            // pass the ccConfig to the get token request so that this section can be populated with the object.
+            // we always use the serviceId as the cache in the multiple auth server situation, and it won't be null.
+            return getJwt(new Jwt.Key(serviceId), ccConfig);
+        } else {
+            // single auth server, keep the existing logic.
+            HeaderValues scope = clientRequest.getRequestHeaders().get(ClientConfig.SCOPE);
+            if(scope != null) {
+                String scopeStr = scope.getFirst();
+                Set<String> scopeSet = new HashSet<>();
+                scopeSet.addAll(Arrays.asList(scopeStr.split(" ")));
+                return getJwt(new Jwt.Key(scopeSet), null);
+            }
+            HeaderValues serviceId = clientRequest.getRequestHeaders().get(ClientConfig.SERVICE_ID);
+            if(serviceId != null) {
+                return getJwt(new Jwt.Key(serviceId.getFirst()), null);
+            }
+            return getJwt(new Jwt.Key(), null);
         }
-        HeaderValues serviceId = clientRequest.getRequestHeaders().get(ClientConfig.SERVICE_ID);
-        if(serviceId != null) {
-            return getJwt(new Jwt.Key(serviceId.getFirst()));
-        }
-        return getJwt(new Jwt.Key());
     }
 }

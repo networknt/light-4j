@@ -75,7 +75,7 @@ public final class ClientConfig {
     private Map<String, Object> tokenConfig;
     private Map<String, Object> derefConfig;
     private Map<String, Object> signConfig;
-    private List<Map<String, String>> pathPrefixServices;
+    private Map<String, String> pathPrefixServices;
     private int bufferSize = DEFAULT_BUFFER_SIZE;
     private int resetTimeout = DEFAULT_RESET_TIMEOUT;
     private int timeout = DEFAULT_TIMEOUT;
@@ -228,17 +228,14 @@ public final class ClientConfig {
     }
 
     private void setPathPrefixServices() {
-        pathPrefixServices = new ArrayList<>();
-        if (mappedConfig.get(PATH_PREFIX_SERVICES) !=null && mappedConfig.get(PATH_PREFIX_SERVICES) instanceof Map) {
-            pathPrefixServices.add((Map)mappedConfig.get(PATH_PREFIX_SERVICES));
-        } else {
-            pathPrefixServices = (List)mappedConfig.get(PATH_PREFIX_SERVICES);
+        if (mappedConfig.get(PATH_PREFIX_SERVICES) != null && mappedConfig.get(PATH_PREFIX_SERVICES) instanceof Map) {
+            pathPrefixServices = (Map)mappedConfig.get(PATH_PREFIX_SERVICES);
         }
     }
 
     public Map<String, Object> getTlsConfig() { return tlsConfig; }
 
-    public List<Map<String, String>> getPathPrefixServices() { return pathPrefixServices; }
+    public Map<String, String> getPathPrefixServices() { return pathPrefixServices; }
 
     public int getBufferSize() {
         return bufferSize;

@@ -33,7 +33,7 @@ public class MultipleAuthServerTest {
     }
     @Test
     public void pathPrefixServiceExists() {
-        List<Map<String, String>> pathPrefixServices = config.getPathPrefixServices();
+        Map<String, String> pathPrefixServices = config.getPathPrefixServices();
         assertTrue(pathPrefixServices.size() > 0);
     }
 

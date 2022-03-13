@@ -37,7 +37,7 @@ public class ClientCredentialsRequest extends TokenRequest {
     private static final Logger logger = LoggerFactory.getLogger(ClientCredentialsRequest.class);
     private static final String CONFIG_PROPERTY_MISSING = "ERR10057";
 
-    public ClientCredentialsRequest() {
+    public ClientCredentialsRequest(Map<String, Object> ccConfig) {
         setGrantType(ClientConfig.CLIENT_CREDENTIALS);
         Map<String, Object> tokenConfig = ClientConfig.get().getTokenConfig();
         if(tokenConfig != null) {
@@ -48,7 +48,7 @@ public class ClientCredentialsRequest extends TokenRequest {
             setServiceId((String)tokenConfig.get(ClientConfig.SERVICE_ID));
             Object object = tokenConfig.get(ClientConfig.ENABLE_HTTP2);
             setEnableHttp2(object != null && (Boolean) object);
-            Map<String, Object> ccConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.CLIENT_CREDENTIALS);
+            if(ccConfig == null) ccConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.CLIENT_CREDENTIALS);
             if(ccConfig != null) {
                 setClientId((String)ccConfig.get(ClientConfig.CLIENT_ID));
                 if(ccConfig.get(ClientConfig.CLIENT_SECRET) != null) {
@@ -59,6 +59,23 @@ public class ClientCredentialsRequest extends TokenRequest {
                 setUri((String)ccConfig.get(ClientConfig.URI));
                 //set default scope from config.
                 setScope((List<String>)ccConfig.get(ClientConfig.SCOPE));
+                // overwrite server url, id, proxy host, id and http2 flag if they are defined in the ccConfig.
+                // This is only used by the multiple auth servers. There is no reason to overwrite in single auth server.
+                if(ccConfig.get(ClientConfig.SERVER_URL) != null) {
+                    setServerUrl((String)ccConfig.get(ClientConfig.SERVER_URL));
+                }
+                if(ccConfig.get(ClientConfig.SERVICE_ID) != null) {
+                    setServiceId((String)ccConfig.get(ClientConfig.SERVICE_ID));
+                }
+                if(ccConfig.get(ClientConfig.PROXY_HOST) != null) {
+                    setProxyHost((String)ccConfig.get(ClientConfig.PROXY_HOST));
+                }
+                if(ccConfig.get(ClientConfig.PROXY_PORT) != null) {
+                    setProxyPort((Integer)ccConfig.get(ClientConfig.PROXY_PORT));
+                }
+                if(ccConfig.get(ClientConfig.ENABLE_HTTP2) != null) {
+                    setEnableHttp2((Boolean)ccConfig.get(ClientConfig.ENABLE_HTTP2));
+                }
             }
         }
     }

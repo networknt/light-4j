@@ -55,6 +55,7 @@ public class SanitizerConfig {
         return new SanitizerConfig(CONFIG_NAME);
     }
 
+    @Deprecated
     public static SanitizerConfig load(String configName) {
         return new SanitizerConfig(configName);
     }

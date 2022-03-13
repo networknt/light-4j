@@ -596,7 +596,7 @@ public class OauthHelper {
      * @return Jwt when success, it will be the same object as the jwt you passed in; return Status when fail;
      */
     private static Result<Jwt> getCCTokenRemotely(final Jwt jwt) {
-        TokenRequest tokenRequest = new ClientCredentialsRequest();
+        TokenRequest tokenRequest = new ClientCredentialsRequest(jwt.getCcConfig());
         //scopes at this point is may not be set yet when issuing a new token.
         setScope(tokenRequest, jwt);
         Result<TokenResponse> result = OauthHelper.getTokenResult(tokenRequest);
@@ -622,8 +622,8 @@ public class OauthHelper {
      * @param jwt
      */
     private static void setScope(TokenRequest tokenRequest, Jwt jwt) {
-        if(jwt.getKey() != null && !jwt.getKey().getScopes().isEmpty()) {
-            tokenRequest.setScope(new ArrayList<String>() {{ addAll(jwt.getKey().getScopes()); }});
+        if(jwt.getKey() != null && jwt.getKey().getScopes() != null) {
+            tokenRequest.setScope(new ArrayList<>() {{ addAll(jwt.getKey().getScopes()); }});
         }
     }
 
