@@ -32,7 +32,7 @@ oauth:
   # OAuth 2.0 token endpoint configuration
   # If there are multiple oauth providers per serviceId, then we need to update this flag to true. In order to derive the serviceId from the
   # path prefix, we need to set up the pathPrefixServices below if there is no duplicated paths between services.
-  multipleAuthServers: ${client.multipleAuthServers:false}
+  multipleAuthServers: ${client.multipleAuthServers:true}
   token:
     cache:
       #capacity of caching TOKENs
@@ -90,7 +90,65 @@ oauth:
       # - petstore.w
       # The serviceId to the service specific OAuth 2.0 configuration. Used only when multipleOAuthServer is
       # set as true. For detailed config options, please see the values.yml in the client module test.
-      serviceIdAuthServers: ${client.tokenCcServiceIdAuthServers:}
+      serviceIdAuthServers:
+        com.networknt.petstore-3.0.1:
+          # token server url. The default port number for token service is 6882. If this is set,
+          # it will take high priority than serviceId for the direct connection
+          server_url: https://localhost:7771
+          # token service unique id for OAuth 2.0 provider. If server_url is not set above,
+          # a service discovery action will be taken to find an instance of token service.
+          # serviceId: ${client.tokenServiceId:com.networknt.oauth2-token-1.0.0}
+          # For users who leverage SaaS OAuth 2.0 provider from lightapi.net or others in the public cloud
+          # and has an internal proxy server to access code, token and key services of OAuth 2.0, set up the
+          # proxyHost here for the HTTPS traffic. This option is only working with server_url and serviceId
+          # below should be commented out. OAuth 2.0 services cannot be discovered if a proxy server is used.
+          # proxyHost: ${client.tokenProxyHost:proxy.lightapi.net}
+          # We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has
+          # a different port, please specify it here. If proxyHost is available and proxyPort is missing, then
+          # the default value 443 is going to be used for the HTTP connection.
+          # proxyPort: ${client.tokenProxyPort:3128}
+          # set to true if the oauth2 provider supports HTTP/2
+          enableHttp2: true
+          # token endpoint for client credentials grant
+          uri: /oauth2/token
+          # client_id for client credentials grant flow.
+          client_id: f7d42348-c647-4efb-a52d-4c5787421e72
+          # client_secret for client credentials grant flow.
+          client_secret: f6h1FTI8Q3-7UScPZDzfXA
+          # optional scope, default scope in the client registration will be used if not defined.
+          # If there are scopes specified here, they will be verified against the registered scopes.
+          scope:
+          - petstore.r
+          - petstore.w
+        com.networknt.market-1.0.0:
+          # token server url. The default port number for token service is 6882. If this is set,
+          # it will take high priority than serviceId for the direct connection
+          server_url: https://localhost:7772
+          # token service unique id for OAuth 2.0 provider. If server_url is not set above,
+          # a service discovery action will be taken to find an instance of token service.
+          # serviceId: ${client.tokenServiceId:com.networknt.oauth2-token-1.0.0}
+          # For users who leverage SaaS OAuth 2.0 provider from lightapi.net or others in the public cloud
+          # and has an internal proxy server to access code, token and key services of OAuth 2.0, set up the
+          # proxyHost here for the HTTPS traffic. This option is only working with server_url and serviceId
+          # below should be commented out. OAuth 2.0 services cannot be discovered if a proxy server is used.
+          # proxyHost: ${client.tokenProxyHost:proxy.lightapi.net}
+          # We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has
+          # a different port, please specify it here. If proxyHost is available and proxyPort is missing, then
+          # the default value 443 is going to be used for the HTTP connection.
+          # proxyPort: ${client.tokenProxyPort:3128}
+          # set to true if the oauth2 provider supports HTTP/2
+          enableHttp2: true
+          # token endpoint for client credentials grant
+          uri: /oauth2/token
+          # client_id for client credentials grant flow.
+          client_id: f7d42348-c647-4efb-a52d-4c5787421e72
+          # client_secret for client credentials grant flow.
+          client_secret: f6h1FTI8Q3-7UScPZDzfXA
+          # optional scope, default scope in the client registration will be used if not defined.
+          # If there are scopes specified here, they will be verified against the registered scopes.
+          scope:
+          - market.r
+          - market.w
     refresh_token:
       # token endpoint for refresh token grant
       uri: ${client.tokenRtUri:/oauth2/token}
@@ -120,7 +178,66 @@ oauth:
       enableHttp2: ${client.tokenKeyEnableHttp2:true}
       # The serviceId to the service specific OAuth 2.0 configuration. Used only when multipleOAuthServer is
       # set as true. For detailed config options, please see the values.yml in the client module test.
-      serviceIdAuthServers: ${client.tokenKeyServiceIdAuthServers:}
+      serviceIdAuthServers:
+        com.networknt.petstore-3.0.1:
+          # token server url. The default port number for token service is 6882. If this is set,
+          # it will take high priority than serviceId for the direct connection
+          server_url: https://localhost:6884
+          # token service unique id for OAuth 2.0 provider. If server_url is not set above,
+          # a service discovery action will be taken to find an instance of token service.
+          # serviceId: ${client.tokenServiceId:com.networknt.oauth2-token-1.0.0}
+          # For users who leverage SaaS OAuth 2.0 provider from lightapi.net or others in the public cloud
+          # and has an internal proxy server to access code, token and key services of OAuth 2.0, set up the
+          # proxyHost here for the HTTPS traffic. This option is only working with server_url and serviceId
+          # below should be commented out. OAuth 2.0 services cannot be discovered if a proxy server is used.
+          # proxyHost: ${client.tokenProxyHost:proxy.lightapi.net}
+          # We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has
+          # a different port, please specify it here. If proxyHost is available and proxyPort is missing, then
+          # the default value 443 is going to be used for the HTTP connection.
+          # proxyPort: ${client.tokenProxyPort:3128}
+          # set to true if the oauth2 provider supports HTTP/2
+          enableHttp2: true
+          # token endpoint for client credentials grant
+          uri: /oauth2/key
+          # client_id for client credentials grant flow.
+          client_id: f7d42348-c647-4efb-a52d-4c5787421e72
+          # client_secret for client credentials grant flow.
+          client_secret: f6h1FTI8Q3-7UScPZDzfXA
+          # optional scope, default scope in the client registration will be used if not defined.
+          # If there are scopes specified here, they will be verified against the registered scopes.
+          # scope:
+          # - petstore.r
+          # - petstore.w
+        com.networknt.market-1.0.0:
+          # token server url. The default port number for token service is 6882. If this is set,
+          # it will take high priority than serviceId for the direct connection
+          server_url: https://localhost:6885
+          # token service unique id for OAuth 2.0 provider. If server_url is not set above,
+          # a service discovery action will be taken to find an instance of token service.
+          # serviceId: ${client.tokenServiceId:com.networknt.oauth2-token-1.0.0}
+          # For users who leverage SaaS OAuth 2.0 provider from lightapi.net or others in the public cloud
+          # and has an internal proxy server to access code, token and key services of OAuth 2.0, set up the
+          # proxyHost here for the HTTPS traffic. This option is only working with server_url and serviceId
+          # below should be commented out. OAuth 2.0 services cannot be discovered if a proxy server is used.
+          # proxyHost: ${client.tokenProxyHost:proxy.lightapi.net}
+          # We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has
+          # a different port, please specify it here. If proxyHost is available and proxyPort is missing, then
+          # the default value 443 is going to be used for the HTTP connection.
+          # proxyPort: ${client.tokenProxyPort:3128}
+          # set to true if the oauth2 provider supports HTTP/2
+          enableHttp2: true
+          # token endpoint for client credentials grant
+          uri: /oauth2/key
+          # client_id for client credentials grant flow.
+          client_id: f7d42348-c647-4efb-a52d-4c5787421e72
+          # client_secret for client credentials grant flow.
+          client_secret: f6h1FTI8Q3-7UScPZDzfXA
+            # optional scope, default scope in the client registration will be used if not defined.
+            # If there are scopes specified here, they will be verified against the registered scopes.
+            # scope:
+            # - petstore.r
+            # - petstore.w
+
   # sign endpoint configuration
   sign:
     # token server url. The default port number for token service is 6882. If this url exists, it will be used.
@@ -188,7 +305,9 @@ oauth:
 # If you have multiple OAuth 2.0 providers and use path prefix to decide which OAuth 2.0 server
 # to get the token or JWK. If two or more services have the same path, you must use serviceId in
 # the request header to use the serviceId to find the OAuth 2.0 provider configuration.
-pathPrefixServices: ${client.pathPrefixServices:}
+pathPrefixServices:
+  /api/petstore: com.networknt.petstore-3.0.1
+  /api/market: com.networknt.market-1.0.0
 # circuit breaker configuration for the client
 request:
   # number of timeouts/errors to break the circuit
