@@ -2,6 +2,8 @@ package com.networknt.client;
 
 import com.networknt.config.Config;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 
@@ -14,6 +16,7 @@ public final class ClientConfig {
     public static final String PROXY_PORT = "proxyPort";
     public static final String SERVICE_ID = "serviceId";
     public static final String URI = "uri";
+    public static final String TLS = "tls";
     public static final String CLIENT_ID = "client_id";
     public static final String SCOPE = "scope";
     public static final String CSRF = "csrf";
@@ -26,6 +29,9 @@ public final class ClientConfig {
     public static final String CACHE = "cache";
     public static final String CAPACITY = "capacity";
     public static final String OAUTH = "oauth";
+    public static final String MULTIPLE_AUTH_SERVERS = "multipleAuthServers";
+    public static final String PATH_PREFIX_SERVICES = "pathPrefixServices";
+    public static final String SERVICE_ID_AUTH_SERVERS = "serviceIdAuthServers";
     public static final String KEY = "key";
     public static final String CLIENT_SECRET = "client_secret";
     public static final String DEREF = "deref";
@@ -63,10 +69,13 @@ public final class ClientConfig {
     private final Config config;
     private final Map<String, Object> mappedConfig;
 
+    private Map<String, Object> tlsConfig;
+    private boolean multipleAuthServers;
+    private Map<String, Object> oauthConfig;
     private Map<String, Object> tokenConfig;
-    private Map<String, Object> secretConfig;
     private Map<String, Object> derefConfig;
     private Map<String, Object> signConfig;
+    private Map<String, String> pathPrefixServices;
     private int bufferSize = DEFAULT_BUFFER_SIZE;
     private int resetTimeout = DEFAULT_RESET_TIMEOUT;
     private int timeout = DEFAULT_TIMEOUT;
@@ -82,23 +91,53 @@ public final class ClientConfig {
 
     private static ClientConfig instance;
 
-    private ClientConfig() {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfig(CONFIG_NAME);
-
+    private void load() {
         if (mappedConfig != null) {
+            setTlsConfig();
             setBufferSize();
+            setOAuthConfig();
             setTokenConfig();
             setRequestConfig();
             setDerefConfig();
             setSignConfig();
+            if(multipleAuthServers) {
+                setPathPrefixServices();
+            }
         }
+    }
+    private ClientConfig() {
+        config = Config.getInstance();
+        mappedConfig = config.getJsonMapConfig(CONFIG_NAME);
+        load();
+    }
+
+    /**
+     * This method is not supposed to be used in production but only in testing. No cache method is used
+     * to make sure that multiple client.yml files are not mixed together.
+     * @param configName
+     */
+    @Deprecated
+    private ClientConfig(String configName) {
+        config = Config.getInstance();
+        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        System.err.println("reload with " + configName);
+        load();
     }
 
     public static ClientConfig get() {
         if (instance == null) {
             instance = new ClientConfig();
         }
+        return instance;
+    }
+
+    /**
+     * This method is not supposed to be used in production but only in testing.
+     * @param configName String
+     * @return ClientConfig object
+     */
+    public static ClientConfig get(String configName) {
+        instance = new ClientConfig(configName);
         return instance;
     }
 
@@ -157,26 +196,46 @@ public final class ClientConfig {
         }
     }
 
+    private void setTlsConfig() {
+        tlsConfig = (Map<String, Object>)mappedConfig.get(TLS);
+    }
+
+    private void setOAuthConfig() {
+        oauthConfig = (Map<String, Object>)mappedConfig.get(OAUTH);
+        if (oauthConfig != null && oauthConfig.get(MULTIPLE_AUTH_SERVERS) != null) {
+            multipleAuthServers = (Boolean)oauthConfig.get(MULTIPLE_AUTH_SERVERS);
+        } else {
+            multipleAuthServers = false;
+        }
+    }
+
     private void setTokenConfig() {
-        Map<String, Object> oauthConfig = (Map<String, Object>)mappedConfig.get(OAUTH);
         if (oauthConfig != null) {
             tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);
         }
     }
 
     private void setDerefConfig() {
-        Map<String, Object> oauthConfig = (Map<String, Object>)mappedConfig.get(OAUTH);
         if (oauthConfig != null) {
             derefConfig = (Map<String, Object>)oauthConfig.get(DEREF);
         }
     }
 
     private void setSignConfig() {
-        Map<String, Object> oauthConfig = (Map<String, Object>)mappedConfig.get(OAUTH);
         if (oauthConfig != null) {
             signConfig = (Map<String, Object>)oauthConfig.get(SIGN);
         }
     }
+
+    private void setPathPrefixServices() {
+        if (mappedConfig.get(PATH_PREFIX_SERVICES) != null && mappedConfig.get(PATH_PREFIX_SERVICES) instanceof Map) {
+            pathPrefixServices = (Map)mappedConfig.get(PATH_PREFIX_SERVICES);
+        }
+    }
+
+    public Map<String, Object> getTlsConfig() { return tlsConfig; }
+
+    public Map<String, String> getPathPrefixServices() { return pathPrefixServices; }
 
     public int getBufferSize() {
         return bufferSize;
@@ -192,17 +251,6 @@ public final class ClientConfig {
 
     public Map<String, Object> getTokenConfig() {
         return tokenConfig;
-    }
-
-    /**
-     *
-     * The secret has been moved back to client.yml
-     *
-     * @return Map of secret config
-     */
-    @Deprecated
-    public Map<String, Object> getSecretConfig() {
-        return secretConfig;
     }
 
     public Map<String, Object> getDerefConfig() {
@@ -258,4 +306,6 @@ public final class ClientConfig {
     public int getMinConnectionNumPerHost() {
         return minConnectionNumPerHost;
     }
+
+    public boolean isMultipleAuthServers() { return multipleAuthServers; }
 }

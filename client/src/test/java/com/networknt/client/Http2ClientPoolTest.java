@@ -96,6 +96,9 @@ public class Http2ClientPoolTest {
 
     private static final URI ADDRESS;
 
+    public static final String CONFIG_NAME = "client";
+    static ClientConfig config;
+
     static {
         try {
             ADDRESS = new URI("http://localhost:7777");
@@ -123,6 +126,7 @@ public class Http2ClientPoolTest {
 
     @BeforeClass
     public static void beforeClass() throws IOException {
+        config = ClientConfig.get(CONFIG_NAME);
         // Create xnio worker
         final Xnio xnio = Xnio.getInstance();
         final XnioWorker xnioWorker = xnio.createWorker(null, Http2Client.DEFAULT_OPTIONS);
@@ -555,14 +559,14 @@ public class Http2ClientPoolTest {
     private static SSLContext createTestSSLContext(boolean verifyHostName, String trustedNamesGroupKey) throws IOException {
         SSLContext sslContext = null;
         KeyManager[] keyManagers = null;
-        Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+        Map<String, Object> tlsMap = (Map<String, Object>)config.getMappedConfig().get(Http2Client.TLS);
         if(tlsMap != null) {
             try {
                 // load key store for client certificate if two way ssl is used.
                 Boolean loadKeyStore = (Boolean) tlsMap.get(Http2Client.LOAD_KEY_STORE);
                 if (loadKeyStore != null && loadKeyStore) {
                     String keyStoreName = (String)tlsMap.get(Http2Client.KEY_STORE);
-                    String keyPass = (String) ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_KEY_PASS);
+                    String keyPass = (String) config.getTlsConfig().get(SecretConstants.CLIENT_KEY_PASS);
                     KeyStore keyStore = loadKeyStore(keyStoreName);
                     KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                     keyManagerFactory.init(keyStore, keyPass.toCharArray());
@@ -585,7 +589,7 @@ public class Http2ClientPoolTest {
                         if(logger.isInfoEnabled()) logger.info("Loading trust store from system property at " + Encode.forJava(trustStoreName));
                     } else {
                         trustStoreName = (String) tlsMap.get(Http2Client.TRUST_STORE);
-                        trustStorePass = (String)ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_TRUSTSTORE_PASS);
+                        trustStorePass = (String)config.getTlsConfig().get(SecretConstants.CLIENT_TRUSTSTORE_PASS);
                         if(logger.isInfoEnabled()) logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
                     }
                     if (trustStoreName != null && trustStorePass != null) {

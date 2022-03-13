@@ -72,7 +72,7 @@ import java.util.regex.Pattern;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-public class Http2ClientTest {
+public class Http2ClientTest extends Http2ClientBase {
     static final Logger logger = LoggerFactory.getLogger(Http2ClientTest.class);
     public static final String SLOW = "/slow";
     static Undertow server = null;
@@ -95,6 +95,9 @@ public class Http2ClientTest {
     private static XnioWorker worker;
 
     private static final URI ADDRESS;
+
+    public static final String CONFIG_NAME = "client";
+    static ClientConfig config;
 
     static {
         try {
@@ -123,6 +126,7 @@ public class Http2ClientTest {
 
     @BeforeClass
     public static void beforeClass() throws IOException {
+        config = ClientConfig.get(CONFIG_NAME);
         // Create xnio worker
         final Xnio xnio = Xnio.getInstance();
         final XnioWorker xnioWorker = xnio.createWorker(null, Http2Client.DEFAULT_OPTIONS);
@@ -236,14 +240,6 @@ public class Http2ClientTest {
             }
         }
 
-    }
-
-    static Http2Client createClient() {
-        return createClient(OptionMap.EMPTY);
-    }
-
-    static Http2Client createClient(final OptionMap options) {
-        return Http2Client.getInstance();
     }
 
     @Test
@@ -581,7 +577,7 @@ public class Http2ClientTest {
         AtomicInteger countComplete = new AtomicInteger(0);
         ClientRequest request = new ClientRequest().setPath(SLOW_MESSAGE).setMethod(Methods.GET);
         request.getRequestHeaders().put(Headers.HOST, "localhost");
-        ClientConfig.get().setRequestEnableHttp2(false);
+        config.setRequestEnableHttp2(false);
         CountDownLatch latch = new CountDownLatch(asyncRequestNumber);
         for (int i = 0; i < asyncRequestNumber; i++) {
             client.callService(ADDRESS, request, Optional.empty()).thenAcceptAsync(clientResponse -> {
@@ -599,7 +595,7 @@ public class Http2ClientTest {
         System.out.println("Completed: " + countComplete.get());
 
         // Reset to default
-        ClientConfig.get().setRequestEnableHttp2(true);
+        config.setRequestEnableHttp2(true);
     }
 
     @Test
@@ -737,180 +733,13 @@ public class Http2ClientTest {
     }
     */
 
-    private static KeyStore loadKeyStore(final String name) throws IOException {
-        final InputStream stream = Config.getInstance().getInputStreamFromFile(name);
-        if(stream == null) {
-            throw new RuntimeException("Could not load keystore");
-        }
-        try {
-            KeyStore loadedKeystore = KeyStore.getInstance("JKS");
-            loadedKeystore.load(stream, STORE_PASSWORD);
-
-            return loadedKeystore;
-        } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException e) {
-            throw new IOException(String.format("Unable to load KeyStore %s", name), e);
-        } finally {
-            IoUtils.safeClose(stream);
-        }
-    }
-
-    private static SSLContext createSSLContext(final KeyStore keyStore, final KeyStore trustStore, boolean client) throws IOException {
-        KeyManager[] keyManagers;
-        try {
-            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            keyManagerFactory.init(keyStore, STORE_PASSWORD);
-            keyManagers = keyManagerFactory.getKeyManagers();
-        } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
-            throw new IOException("Unable to initialise KeyManager[]", e);
-        }
-
-        TrustManager[] trustManagers = null;
-        try {
-            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            trustManagerFactory.init(trustStore);
-            trustManagers = trustManagerFactory.getTrustManagers();
-        } catch (NoSuchAlgorithmException | KeyStoreException e) {
-            throw new IOException("Unable to initialise TrustManager[]", e);
-        }
-
-        SSLContext sslContext;
-        try {
-            if(!client) {
-                sslContext = SSLContext.getInstance("TLS");
-            } else {
-                sslContext = SSLContext.getInstance("TLS");
-            }
-            sslContext.init(keyManagers, trustManagers, null);
-        } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            throw new IOException("Unable to create and initialise the SSLContext", e);
-        }
-
-        return sslContext;
-    }
-
     private static int randInt(int min, int max) {
         Random rand = new Random();
         return rand.nextInt((max-min) + 1) + min;
     }
 
-    private static boolean isTokenExpired(String authorization) {
-        boolean expired = false;
-        String jwt = getJwtFromAuthorization(authorization);
-        if(jwt != null) {
-            try {
-                JwtConsumer consumer = new JwtConsumerBuilder()
-                        .setSkipAllValidators()
-                        .setDisableRequireSignature()
-                        .setSkipSignatureVerification()
-                        .build();
 
-                JwtContext jwtContext = consumer.process(jwt);
-                JwtClaims jwtClaims = jwtContext.getJwtClaims();
 
-                try {
-                    if ((NumericDate.now().getValue() - 60) >= jwtClaims.getExpirationTime().getValue()) {
-                        expired = true;
-                    }
-                } catch (MalformedClaimException e) {
-                    logger.error("MalformedClaimException:", e);
-                }
-            } catch(InvalidJwtException e) {
-                e.printStackTrace();
-            }
-        }
-        return expired;
-    }
-
-    private static String getJwt(int expiredInSeconds) throws Exception {
-        JwtClaims claims = getTestClaims();
-        claims.setExpirationTime(NumericDate.fromMilliseconds(System.currentTimeMillis() + expiredInSeconds * 1000));
-        return getJwt(claims);
-    }
-
-    private static JwtClaims getTestClaims() {
-        JwtClaims claims = new JwtClaims();
-        claims.setIssuer("urn:com:networknt:oauth2:v1");
-        claims.setAudience("urn:com.networknt");
-        claims.setExpirationTimeMinutesInTheFuture(10);
-        claims.setGeneratedJwtId(); // a unique identifier for the token
-        claims.setIssuedAtToNow();  // when the token was issued/created (now)
-        claims.setNotBeforeMinutesInThePast(2); // time before which the token is not yet valid (2 minutes ago)
-        claims.setClaim("version", "1.0");
-
-        claims.setClaim("user_id", "steve");
-        claims.setClaim("user_type", "EMPLOYEE");
-        claims.setClaim("client_id", "aaaaaaaa-1234-1234-1234-bbbbbbbb");
-        List<String> scope = Arrays.asList("api.r", "api.w");
-        claims.setStringListClaim("scope", scope); // multi-valued claims work too and will end up as a JSON array
-        return claims;
-    }
-
-    public static String getJwtFromAuthorization(String authorization) {
-        String jwt = null;
-        if(authorization != null) {
-            String[] parts = authorization.split(" ");
-            if (parts.length == 2) {
-                String scheme = parts[0];
-                String credentials = parts[1];
-                Pattern pattern = Pattern.compile("^Bearer$", Pattern.CASE_INSENSITIVE);
-                if (pattern.matcher(scheme).matches()) {
-                    jwt = credentials;
-                }
-            }
-        }
-        return jwt;
-    }
-
-    public static String getJwt(JwtClaims claims) throws JoseException {
-        String jwt;
-
-        RSAPrivateKey privateKey = (RSAPrivateKey) getPrivateKey(
-                "/config/primary.jks", "password", "selfsigned");
-
-        // A JWT is a JWS and/or a JWE with JSON claims as the payload.
-        // In this example it is a JWS nested inside a JWE
-        // So we first create a JsonWebSignature object.
-        JsonWebSignature jws = new JsonWebSignature();
-
-        // The payload of the JWS is JSON content of the JWT Claims
-        jws.setPayload(claims.toJson());
-
-        // The JWT is signed using the sender's private key
-        jws.setKey(privateKey);
-        jws.setKeyIdHeaderValue("100");
-
-        // Set the signature algorithm on the JWT/JWS that will integrity protect the claims
-        jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.RSA_USING_SHA256);
-
-        // Sign the JWS and produce the compact serialization, which will be the inner JWT/JWS
-        // representation, which is a string consisting of three dot ('.') separated
-        // base64url-encoded parts in the form Header.Payload.Signature
-        jwt = jws.getCompactSerialization();
-        return jwt;
-    }
-
-    private static PrivateKey getPrivateKey(String filename, String password, String key) {
-        PrivateKey privateKey = null;
-
-        try {
-            KeyStore keystore = KeyStore.getInstance("JKS");
-            keystore.load(Http2Client.class.getResourceAsStream(filename),
-                    password.toCharArray());
-
-            privateKey = (PrivateKey) keystore.getKey(key,
-                    password.toCharArray());
-        } catch (Exception e) {
-            logger.error("Exception:", e);
-        }
-
-        if (privateKey == null) {
-            logger.error("Failed to retrieve private key from keystore");
-        }
-
-        return privateKey;
-    }
-    
-    
     @Test
     public void server_identity_check_positive_case() throws Exception{
     	final Http2Client client = createClient();
@@ -990,7 +819,7 @@ public class Http2ClientTest {
     private static SSLContext createTestSSLContext(boolean verifyHostName, String trustedNamesGroupKey) throws IOException {
         SSLContext sslContext = null;
         KeyManager[] keyManagers = null;
-        Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+        Map<String, Object> tlsMap = (Map<String, Object>)config.getMappedConfig().get(Http2Client.TLS);
         if(tlsMap != null) {
             try {
                 // load key store for client certificate if two way ssl is used.

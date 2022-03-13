@@ -31,7 +31,9 @@ public interface RestClient {
      * @param url the URL example: https://localhost:8443 ;  https://"com.networknt.hello-1
      * @param path the path of the service call, for example: /v1/hello
      * @param responseType the type of the return value
+     * @param <T> This is the type parameter
      * @return the converted object
+     * @throws RestClientException RestClientException
      */
     <T> T get(String url, String path, Class<T> responseType) throws RestClientException;
 
@@ -42,7 +44,9 @@ public interface RestClient {
      * @param serviceDef the URL service definition
      * @param path the path of the service call, for example: /v1/hello
      * @param responseType the type of the return value
+     * @param <T> This is the type parameter
      * @return the converted object
+     * @throws RestClientException RestClientException
      */
     <T> T get(ServiceDef serviceDef, String path, Class<T> responseType) throws RestClientException;
 
@@ -54,7 +58,9 @@ public interface RestClient {
      * @param path the path of the service call, for example: /v1/hello
      * @param responseType the type of the return value
      * @param headerMap the map containing header setting map
+     * @param <T> This is the type parameter
      * @return the converted object
+     * @throws RestClientException RestClientException
      */
     <T> T get(ServiceDef serviceDef, String path, Class<T> responseType, Map<String, ?> headerMap) throws RestClientException;
 
@@ -64,6 +70,7 @@ public interface RestClient {
      * @param url the URL example: https://localhost:8443 ;  https://"com.networknt.hello-1
      * @param path the path of the service call, for example: /v1/hello
      * @return the JSON format object
+     * @throws RestClientException RestClientException
      */
     String get(String url, String path) throws RestClientException;
 
@@ -73,6 +80,7 @@ public interface RestClient {
      * @param serviceDef the URL service definition
      * @param path the path of the service call, for example: /v1/hello
      * @return the JSON format object
+     * @throws RestClientException RestClientException
      */
     String get(ServiceDef serviceDef, String path) throws RestClientException;
     /**
@@ -83,7 +91,9 @@ public interface RestClient {
      * @param path the path of the service call, for example: /v1/hello
      * @param responseType the type of the return value
      * @param headerMap the map containing header setting map
+     * @param <T> This is the type parameter
      * @return the converted object
+     * @throws RestClientException RestClientException
      */
     <T> T get(String url,  String path, Class<T> responseType, Map<String, ?> headerMap) throws RestClientException;
 
@@ -95,7 +105,9 @@ public interface RestClient {
      * @param path the path of the service call, for example: /v1/hello
      * @param responseType the type of the return value
      * @param requestBody REQUEST BODY
+     * @param <T> This is the type parameter
      * @return the converted object
+     * @throws RestClientException RestClientException
      */
     <T> T post(String url, String path, Class<T> responseType, String requestBody) throws RestClientException;
 
@@ -107,7 +119,9 @@ public interface RestClient {
      * @param path the path of the service call, for example: /v1/hello
      * @param responseType the type of the return value
      * @param requestBody REQUEST BODY
+     * @param <T> This is the type parameter
      * @return the converted object
+     * @throws RestClientException RestClientException
      */
     <T> T post(ServiceDef serviceDef, String path, Class<T> responseType, String requestBody) throws RestClientException;
     /**
@@ -119,7 +133,9 @@ public interface RestClient {
      * @param responseType the type of the return value
      * @param headerMap the map containing header setting map
      * @param requestBody REQUEST BODY
+     * @param <T> This is the type parameter
      * @return the converted object
+     * @throws RestClientException RestClientException
      */
     <T> T post(ServiceDef serviceDef, String path, Class<T> responseType, Map<String, ?> headerMap, String requestBody) throws RestClientException;
     /**
@@ -129,6 +145,7 @@ public interface RestClient {
      * @param path the path of the service call, for example: /v1/hello
      * @param requestBody REQUEST BODY
      * @return the JSON format object
+     * @throws RestClientException RestClientException
      */
     String post(String url, String path,  String requestBody) throws RestClientException;
 
@@ -139,6 +156,7 @@ public interface RestClient {
      * @param path the path of the service call, for example: /v1/hello
      * @param requestBody REQUEST BODY
      * @return the JSON format object
+     * @throws RestClientException RestClientException
      */
     String post(ServiceDef serviceDef, String path,  String requestBody) throws RestClientException;
     /**
@@ -150,7 +168,9 @@ public interface RestClient {
      * @param responseType the type of the return value
      * @param headerMap the map containing header setting map
      * @param requestBody REQUEST BODY
+     * @param <T> This is the type parameter
      * @return the converted object
+     * @throws RestClientException RestClientException
      */
     <T> T post(String url,  String path, Class<T> responseType, Map<String, ?> headerMap,  String requestBody) throws RestClientException;
 
@@ -161,6 +181,7 @@ public interface RestClient {
      * @param path the path of the service call, for example: /v1/hello
      * @param requestBody REQUEST BODY
      * @return the JSON format string
+     * @throws RestClientException RestClientException
      */
     String put(String url, String path,  String requestBody) throws RestClientException;
 
@@ -171,6 +192,7 @@ public interface RestClient {
      * @param path the path of the service call, for example: /v1/hello
      * @param requestBody REQUEST BODY
      * @return the JSON format string
+     * @throws RestClientException RestClientException
      */
     String put(ServiceDef serviceDef, String path,  String requestBody) throws RestClientException;
 
@@ -182,6 +204,7 @@ public interface RestClient {
      * @param headerMap the map containing header setting map
      * @param requestBody REQUEST BODY
      * @return the JSON format string
+     * @throws RestClientException RestClientException
      */
     String put(ServiceDef serviceDef, String path,  Map<String, ?> headerMap, String requestBody) throws RestClientException;
     /**
@@ -192,6 +215,7 @@ public interface RestClient {
      * @param headerMap the map containing header setting map
      * @param requestBody REQUEST BODY
      * @return the converted object
+     * @throws RestClientException RestClientException
      */
    String put(String url,  String path,  Map<String, ?> headerMap,  String requestBody) throws RestClientException;
 
@@ -201,6 +225,7 @@ public interface RestClient {
      * @param url the URL example: https://localhost:8443 ;  https://"com.networknt.hello-1
      * @param path the path of the service call, for example: /v1/hello
      * @return the JSON format string
+     * @throws RestClientException RestClientException
      */
     String delete(String url, String path) throws RestClientException;
 
@@ -210,6 +235,7 @@ public interface RestClient {
      * @param serviceDef the URL service definition
      * @param path the path of the service call, for example: /v1/hello
      * @return the JSON format string
+     * @throws RestClientException RestClientException
      */
     String delete(ServiceDef serviceDef, String path) throws RestClientException;
     /**
@@ -218,7 +244,9 @@ public interface RestClient {
      * @param url the URL
      * @param path the path of the service call, for example: /v1/hello
      * @param headerMap the map containing header setting map
+     * @param requestBody the body of the request
      * @return the converted object
+     * @throws RestClientException RestClientException
      */
     String delete(String url,  String path,  Map<String, ?> headerMap,  String requestBody) throws RestClientException;
 }
