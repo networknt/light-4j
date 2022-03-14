@@ -49,8 +49,10 @@ public class ConfigReloadHandler implements LightHttpHandler {
         List<String> reloads =  new ArrayList<>();
         if (config.isEnabled()) {
             reLoadConfigs();
-            if (modules==null || modules.isEmpty() || MODULE_DEFAULT.equalsIgnoreCase(modules.get(0))) {
-                modules.clear();
+            if (modules==null || modules.isEmpty() || modules.contains(MODULE_DEFAULT)) {
+                if (modules==null) modules = new ArrayList<>();
+                if (!modules.isEmpty()) modules.clear();
+
                 Map<String, Object> modulesRegistry =  ModuleRegistry.getRegistry();
                 for (Map.Entry<String, Object> entry: modulesRegistry.entrySet()) {
                     modules.add(entry.getKey());
