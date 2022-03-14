@@ -19,6 +19,7 @@ package com.networknt.security;
 import com.networknt.config.Config;
 import com.networknt.utility.Constants;
 import org.jose4j.jwk.JsonWebKey;
+import org.jose4j.jwk.JsonWebKeySet;
 import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
@@ -39,11 +40,11 @@ import java.util.List;
 import java.util.Map;
 
 public class JwtVerifierTest {
-    static final String CONFIG_NAME = "security";
+    static final String CONFIG_NAME = "security-509";
     static final String CONFIG_NAME_OPENAPI = "openapi-security-no-default-jwtcertificate";
     @Test
     public void testReadCertificate() {
-        Map<String, Object> config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
+        Map<String, Object> config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
         Map<String, Object> jwtConfig = (Map<String, Object>)config.get(JwtIssuer.JWT_CONFIG);
         Map<String, Object> keyMap = (Map<String, Object>) jwtConfig.get(JwtVerifier.JWT_CERTIFICATE);
         Map<String, X509Certificate> certMap = new HashMap<>();
@@ -62,7 +63,7 @@ public class JwtVerifierTest {
 
     @Test
     public void testReadCertificate2() {
-        Map<String, Object> config = Config.getInstance().getJsonMapConfig(CONFIG_NAME_OPENAPI);
+        Map<String, Object> config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME_OPENAPI);
         Map<String, Object> jwtConfig = (Map<String, Object>)config.get(JwtIssuer.JWT_CONFIG);
         Map<String, X509Certificate> certMap = new HashMap<>();
         if (jwtConfig.get(JwtVerifier.JWT_CERTIFICATE)!=null) {
@@ -80,30 +81,6 @@ public class JwtVerifierTest {
         }
 
         Assert.assertEquals(0, certMap.size());
-    }
-
-    @Test
-    public void testVerifyJwt() throws Exception {
-        JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"), "user");
-        String jwt = JwtIssuer.getJwt(claims);
-        claims = null;
-        Assert.assertNotNull(jwt);
-        JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
-        try {
-            claims = jwtVerifier.verifyJwt(jwt, false, true);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        Assert.assertNotNull(claims);
-        Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
-
-        try {
-            claims = jwtVerifier.verifyJwt(jwt, false, true);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        System.out.println("jwtClaims = " + claims);
     }
 
     @Test
@@ -148,7 +125,7 @@ public class JwtVerifierTest {
         System.out.print("JWT = " + jwt);
 
         JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
-        JwtClaims claims = jwtVerifier.verifyJwt(jwt, true, true, (kId, isToken) -> {
+        JwtClaims claims = jwtVerifier.verifyJwt(jwt, true, true, null, (kId, requestPath) -> {
             try {
                 // use public key to create the the JsonWebKey
                 Key publicKey = ks.getCertificate(alias).getPublicKey();
@@ -164,6 +141,24 @@ public class JwtVerifierTest {
         Assert.assertEquals(iss, claims.getStringClaimValue("iss"));
     }
 
+    @Test
+    public void testGenerateJsonWebKeys() throws Exception {
+        JwtConfig jwtConfig = (JwtConfig) Config.getInstance().getJsonObjectConfig(JwtIssuer.JWT_CONFIG, JwtConfig.class);
+
+        String fileName = jwtConfig.getKey().getFilename();
+        String alias = jwtConfig.getKey().getKeyName();
+
+        KeyStore ks = loadKeystore(fileName, jwtConfig.getKey().getPassword());
+        Key privateKey = ks.getKey(alias, jwtConfig.getKey().getPassword().toCharArray());
+        Key publicKey = ks.getCertificate(alias).getPublicKey();
+        PublicJsonWebKey jwk = PublicJsonWebKey.Factory.newPublicJwk(publicKey);
+        jwk.setKeyId("111");
+        List<JsonWebKey> jwkList = Arrays.asList(jwk);
+        JsonWebKeySet jwks = new JsonWebKeySet(jwkList);
+        String jwksJson = jwks.toJson(JsonWebKey.OutputControlLevel.PUBLIC_ONLY);
+        System.out.println(jwksJson);
+    }
+
     private static KeyStore loadKeystore(String fileName, String keyStorePass) throws Exception {
         KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
         char[] passwd = keyStorePass.toCharArray();
@@ -172,7 +167,7 @@ public class JwtVerifierTest {
     }
 
     @Test
-    public void testVerifyToken() throws Exception {
+    public void testVerifyJwt() throws Exception {
         JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"), "user");
         String jwt = JwtIssuer.getJwt(claims);
         claims = null;
@@ -219,30 +214,29 @@ public class JwtVerifierTest {
         System.out.println("jwtClaims = " + claims);
     }
 
-    /**
-     * This test needs light-oauth2 service to be up and running in order to test it
-     * to start the light-oauth2 please refer to https://networknt.github.io/light-oauth2/tutorials
-     */
     @Test
-    @Ignore
-    public void testGetCertForToken() {
+    public void testVerifyToken() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"), "user");
+        String jwt = JwtIssuer.getJwt(claims);
+        claims = null;
+        Assert.assertNotNull(jwt);
         JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
-        X509Certificate certificate = jwtVerifier.getCertForToken("100");
-        System.out.println("certificate = " + certificate);
-        Assert.assertNotNull(certificate);
+        try {
+            claims = jwtVerifier.verifyJwt(jwt, false, true);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Assert.assertNotNull(claims);
+        Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
+
+        try {
+            claims = jwtVerifier.verifyJwt(jwt, false, true);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("jwtClaims = " + claims);
     }
 
-    /**
-     * This test needs light-oauth2 service to be up and running in order to test it
-     * to start the light-oauth2 please refer to https://networknt.github.io/light-oauth2/tutorials
-     */
-    @Test
-    @Ignore
-    public void testGetCertForSign() {
-        JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
-        X509Certificate certificate = jwtVerifier.getCertForSign("100");
-        System.out.println("certificate = " + certificate);
-        Assert.assertNotNull(certificate);
-    }
 
 }
