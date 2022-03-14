@@ -172,34 +172,6 @@ public class ProxyHandler implements HttpHandler {
         exchange.dispatch(exchange.isInIoThread() ? SameThreadExecutor.INSTANCE : exchange.getIoThread(), clientHandler);
     }
 
-    /**
-     * Adds a request header to the outgoing request. If the header resolves to null or an empty string
-     * it will not be added, however any existing header with the same name will be removed.
-     *
-     * @param header    The header name
-     * @param attribute The header value attribute.
-     * @return this
-     */
-    @Deprecated
-    public ProxyHandler addRequestHeader(final HttpString header, final ExchangeAttribute attribute) {
-        requestHeaders.put(header, attribute);
-        return this;
-    }
-
-    /**
-     * Adds a request header to the outgoing request. If the header resolves to null or an empty string
-     * it will not be added, however any existing header with the same name will be removed.
-     *
-     * @param header The header name
-     * @param value  The header value attribute.
-     * @return this
-     */
-    @Deprecated
-    public ProxyHandler addRequestHeader(final HttpString header, final String value) {
-        requestHeaders.put(header, ExchangeAttributes.constant(value));
-        return this;
-    }
-
     static void copyHeaders(final HeaderMap to, final HeaderMap from) {
         long f = from.fastIterateNonEmpty();
         HeaderValues values;
