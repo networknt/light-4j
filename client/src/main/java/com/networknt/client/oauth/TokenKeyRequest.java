@@ -36,41 +36,30 @@ public class TokenKeyRequest extends KeyRequest {
 
     private boolean jwk;
 
-    /**
-     * @deprecated will be moved to {@link ClientConfig#TOKEN}
-     */
-    @Deprecated
-    public static String TOKEN = "token";
     public TokenKeyRequest(String kid) {
-        this(kid, false);
+        this(kid, false, null);
     }
-    public TokenKeyRequest(String kid, boolean jwk) {
+    public TokenKeyRequest(String kid, boolean jwk, Map<String, Object> keyConfig) {
         super(kid);
         this.jwk = jwk;
         Map<String, Object> clientConfig = ClientConfig.get().getMappedConfig();
         if(clientConfig != null) {
             Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(ClientConfig.OAUTH);
             if(oauthConfig != null) {
-                // for backward compatible here, should be moved to the token section.
-                Map<String, Object> keyConfig = (Map<String, Object>)oauthConfig.get(ClientConfig.KEY);
-                if(keyConfig != null) {
-                    setKeyOptions(keyConfig);
-                } else {
-                    // there is no key section under oauth. look up in the oauth/token section for key
-                    Map<String, Object> tokenConfig = ClientConfig.get().getTokenConfig();
-                    if(tokenConfig != null) {
-                        setProxyHost((String)tokenConfig.get(ClientConfig.PROXY_HOST));
-                        int port = tokenConfig.get(ClientConfig.PROXY_PORT) == null ? 443 : (Integer)tokenConfig.get(ClientConfig.PROXY_PORT);
-                        setProxyPort(port);
-                        keyConfig = (Map<String, Object>)tokenConfig.get(ClientConfig.KEY);
-                        if(keyConfig != null) {
-                            setKeyOptions(keyConfig);
-                        } else {
-                            logger.error(new Status(CONFIG_PROPERTY_MISSING, "token section", "client.yml").toString());
-                        }
+                // there is no key section under oauth. look up in the oauth/token section for key
+                Map<String, Object> tokenConfig = ClientConfig.get().getTokenConfig();
+                if(tokenConfig != null) {
+                    setProxyHost((String)tokenConfig.get(ClientConfig.PROXY_HOST));
+                    int port = tokenConfig.get(ClientConfig.PROXY_PORT) == null ? 443 : (Integer)tokenConfig.get(ClientConfig.PROXY_PORT);
+                    setProxyPort(port);
+                    if(keyConfig == null) keyConfig = (Map<String, Object>)tokenConfig.get(ClientConfig.KEY);
+                    if(keyConfig != null) {
+                        setKeyOptions(keyConfig);
                     } else {
                         logger.error(new Status(CONFIG_PROPERTY_MISSING, "token section", "client.yml").toString());
                     }
+                } else {
+                    logger.error(new Status(CONFIG_PROPERTY_MISSING, "token section", "client.yml").toString());
                 }
             } else {
                 logger.error(new Status(CONFIG_PROPERTY_MISSING, "oauth section", "client.yml").toString());
