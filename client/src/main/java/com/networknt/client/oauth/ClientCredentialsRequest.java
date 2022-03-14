@@ -36,6 +36,9 @@ import java.util.Map;
 public class ClientCredentialsRequest extends TokenRequest {
     private static final Logger logger = LoggerFactory.getLogger(ClientCredentialsRequest.class);
     private static final String CONFIG_PROPERTY_MISSING = "ERR10057";
+    public ClientCredentialsRequest() {
+        this(null);
+    }
 
     public ClientCredentialsRequest(Map<String, Object> ccConfig) {
         setGrantType(ClientConfig.CLIENT_CREDENTIALS);
