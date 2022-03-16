@@ -116,6 +116,7 @@ public class ClientRequestComposerProvider {
                     .setHeader(Headers.ACCEPT_STRING, "application/json")
                     .setHeader(Headers.AUTHORIZATION_STRING, OauthHelper.getBasicAuthHeader(tokenRequest.getClientId(), tokenRequest.getClientSecret()))
                     .build();
+            if(logger.isTraceEnabled()) logger.trace("request = " + request.toString());
             return request;
         }
 

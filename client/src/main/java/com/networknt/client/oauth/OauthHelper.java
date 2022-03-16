@@ -122,10 +122,13 @@ public class OauthHelper {
             if(serverUrl == null) {
                 Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
                 tokenRequest.setServerUrl(cluster.serviceToUrl("https", tokenRequest.getServiceId(), envTag, null));
+                if(logger.isTraceEnabled()) logger.trace("serviceUrl is null, discovered url = " + tokenRequest.getServerUrl());
             }
             if(tokenRequest.getServerUrl() == null) {
+                if(logger.isTraceEnabled()) logger.trace("serviceUrl is empty and could not discovery serviceUrl. tokenRequest = " + JsonMapper.toJson(tokenRequest));
                 return Failure.of(new Status(OAUTH_SERVER_URL_ERROR, "token"));
             }
+            if(logger.isTraceEnabled()) logger.trace("token service url = " + serverUrl);
             IClientRequestComposable requestComposer = ClientRequestComposerProvider.getInstance().getComposer(ClientRequestComposerProvider.ClientRequestComposers.CLIENT_CREDENTIAL_REQUEST_COMPOSER);
             final HttpRequest request = requestComposer.composeClientRequest(tokenRequest);
             CompletableFuture<HttpResponse<String>> response = tokenClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
@@ -453,6 +456,7 @@ public class OauthHelper {
         if(request.getScope() != null) {
             params.put(ClientConfig.SCOPE, String.join(" ", request.getScope()));
         }
+        if(logger.isTraceEnabled()) logger.trace("token request form data = " + JsonMapper.toJson(params));
         return Http2Client.getFormDataString(params);
     }
 
