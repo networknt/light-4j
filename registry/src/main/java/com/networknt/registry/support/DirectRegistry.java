@@ -21,6 +21,8 @@ import com.networknt.exception.FrameworkException;
 import com.networknt.registry.NotifyListener;
 import com.networknt.registry.URL;
 import com.networknt.utility.Constants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,6 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author axb, Steve Hu
  */
 public class DirectRegistry extends AbstractRegistry {
+    private final static Logger logger = LoggerFactory.getLogger(DirectRegistry.class);
     private final static String PARSE_DIRECT_URL_ERROR = "ERR10019";
     private final static String GENERAL_TAG = "*";
     private ConcurrentHashMap<URL, Object> subscribeUrls = new ConcurrentHashMap();
@@ -47,6 +50,7 @@ public class DirectRegistry extends AbstractRegistry {
         for (Map.Entry<String, String> entry : url.getParameters().entrySet()) {
             String tag = null;
             try {
+                if(logger.isTraceEnabled()) logger.trace("entry key = " + entry.getKey() + " entry value = " + entry.getValue());
                 if(entry.getValue().contains(",")) {
                     String[] directUrlArray = entry.getValue().split(",");
                     for (String directUrl : directUrlArray) {
@@ -73,6 +77,7 @@ public class DirectRegistry extends AbstractRegistry {
                     directUrls.put(key, urls);
                 }
             } catch (Exception e) {
+                logger.error("Exception: ", e);
                 throw new FrameworkException(new Status(PARSE_DIRECT_URL_ERROR, url.toString()));
             }
         }
