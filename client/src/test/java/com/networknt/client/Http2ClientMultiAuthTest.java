@@ -231,7 +231,7 @@ public class Http2ClientMultiAuthTest extends Http2ClientBase {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
             ClientRequest request = new ClientRequest().setPath(API_MARKET).setMethod(Methods.GET);
-            // this will force the client to get a scope token from the auth server 1 and put into the X-Scope-Token header.
+            // this will force the client to get a scope token from the auth server 2 and put into the X-Scope-Token header.
             client.populateHeader(request, "Bearer token", "cid", "tid");
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
