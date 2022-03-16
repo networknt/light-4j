@@ -45,7 +45,7 @@ oauth:
     earlyRefreshRetryDelay: ${client.earlyRefreshRetryDelay:4000}
     # token server url. The default port number for token service is 6882. If this is set,
     # it will take high priority than serviceId for the direct connection
-    # server_url: ${client.tokenServerUrl:https://localhost:6882}
+    server_url: ${client.tokenServerUrl:}
     # token service unique id for OAuth 2.0 provider. If server_url is not set above,
     # a service discovery action will be taken to find an instance of token service.
     serviceId: ${client.tokenServiceId:com.networknt.oauth2-token-1.0.0}
@@ -53,11 +53,11 @@ oauth:
     # and has an internal proxy server to access code, token and key services of OAuth 2.0, set up the
     # proxyHost here for the HTTPS traffic. This option is only working with server_url and serviceId
     # below should be commented out. OAuth 2.0 services cannot be discovered if a proxy server is used.
-    # proxyHost: ${client.tokenProxyHost:proxy.lightapi.net}
+    proxyHost: ${client.tokenProxyHost:}
     # We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has
     # a different port, please specify it here. If proxyHost is available and proxyPort is missing, then
     # the default value 443 is going to be used for the HTTP connection.
-    # proxyPort: ${client.tokenProxyPort:3128}
+    proxyPort: ${client.tokenProxyPort:}
     # set to true if the oauth2 provider supports HTTP/2
     enableHttp2: ${client.tokenEnableHttp2:true}
     # the following section defines uri and parameters for authorization code grant type
@@ -107,7 +107,7 @@ oauth:
     key:
       # key distribution server url for token verification. It will be used if it is configured.
       # If it is not set, a service lookup will be taken with serviceId to find an instance.
-      # server_url: ${client.tokenKeyServerUrl:https://localhost:6886}
+      server_url: ${client.tokenKeyServerUrl:}
       # key serviceId for key distribution service, it will be used if above server_url is not configured.
       serviceId: ${client.tokenKeyServiceId:com.networknt.oauth2-key-1.0.0}
       # the path for the key distribution endpoint
