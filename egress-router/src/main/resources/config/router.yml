@@ -4,22 +4,22 @@
 # the outbound connection is always HTTP 2.0 with TLS enabled.
 
 # If HTTP 2.0 protocol will be accepted from incoming request.
-http2Enabled: true
+http2Enabled: ${router.http2Enabled:true}
 
 # If TLS is enabled when accepting incoming request. Should be true on test and prod.
-httpsEnabled: true
+httpsEnabled: ${router.httpsEnabled:true}
 
 # Max request time in milliseconds before timeout to the server.
-maxRequestTime: 1000
+maxRequestTime: ${router.maxRequestTime:1000}
 
 # Rewrite Host Header with the target host and port and write X_FORWARDED_HOST with original host
-rewriteHostHeader: true
+rewriteHostHeader: ${router.rewriteHostHeader:true}
 
 # Reuse XForwarded for the target XForwarded header
-reuseXForwarded: false
+reuseXForwarded: ${router.reuseXForwarded:false}
 
 # Max Connection Retries
-maxConnectionRetries: 3
+maxConnectionRetries: ${router.maxConnectionRetries:3}
 
 # allowed host list. Use Regex to do wildcard match
 hostWhitelist: ${router.hostWhitelist:}
