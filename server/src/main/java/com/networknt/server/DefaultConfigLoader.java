@@ -298,11 +298,95 @@ public class DefaultConfigLoader implements IConfigLoader{
                 throw new Exception("Failed to load configs from config server: " + statusCode);
             } else {
                 configs = mapper.readValue(body, new TypeReference<Map<String, Object>>() {});
+                processNestedMap(configs);
             }
         } catch (Exception e) {
             logger.error("Exception while calling config server:", e);
         }
         return configs;
+    }
+
+    private void processNestedMap(Map<String, Object> map) {
+        for(String key : map.keySet()) {
+            String value = (String) map.get(key);
+            if (value.contains("\n")) {
+                Object valueObject = processNestedString(value);
+                map.put(key, valueObject);
+            }
+        }
+    }
+
+    private Object processNestedString(String str) {
+        String[] strArray = str.split("\n");
+        int level = getLeadingSpaces(strArray[1]);
+        boolean isList = strArray[1].stripLeading().charAt(0) == '-';
+        boolean isSameLevel = true;
+        StringBuilder temp = new StringBuilder();
+        if (isList) {
+           List<Object> resList = new ArrayList<>();
+           for(int i=1; i< strArray.length; i++) {
+               if(getLeadingSpaces(strArray[i])==level) {
+                   if(!isSameLevel) {
+                       resList.add(processNestedString(temp.toString()));
+                       temp = new StringBuilder();
+                       isSameLevel = true;
+                   }
+                   if(strArray[i].length()==3) {
+                       isSameLevel = false;
+                   } else if (strArray[i].contains(":")) {
+                       isSameLevel = false;
+                       temp.append("\n").append(strArray[i].replaceFirst("-", " "));
+                   } else {
+                       resList.add(strArray[i].substring(level+2));
+                   }
+               } else {
+                   isSameLevel = false;
+                   temp.append("\n").append(strArray[i]);
+               }
+           }
+           if(temp.length()!=0) {
+               resList.add(processNestedString(temp.toString()));
+           }
+           return resList;
+        } else {
+            Map<String, Object> resMap = new HashMap<>();
+            String lastKey = "";
+            for(int i=1; i< strArray.length; i++) {
+                if(getLeadingSpaces(strArray[i])==level) {
+                    String[] keyValue = strArray[i].split(":");
+                    String key = keyValue[0].stripLeading();
+                    if(!isSameLevel) {
+                        resMap.put(lastKey, processNestedString(temp.toString()));
+                        temp = new StringBuilder();
+                        isSameLevel = true;
+                    }
+                    if(keyValue.length==2) {
+                        resMap.put(key, keyValue[1].stripLeading());
+                    } else {
+                        lastKey = key;
+                    }
+                } else {
+                    isSameLevel = false;
+                    temp.append("\n").append(strArray[i]);
+                }
+            }
+            if(temp.length()!=0) {
+                resMap.put(lastKey, processNestedString(temp.toString()));
+            }
+            return resMap;
+        }
+    }
+
+    private int getLeadingSpaces(String s) {
+        int res = 0;
+        for(char c : s.toCharArray()) {
+            if(c == ' ') {
+                res++;
+            } else {
+                break;
+            }
+        }
+        return res;
     }
 
     private static String getConfigServerPath() {
