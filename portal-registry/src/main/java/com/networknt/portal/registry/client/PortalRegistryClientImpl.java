@@ -167,13 +167,14 @@ public class PortalRegistryClientImpl implements PortalRegistryClient {
         if (tag != null) {
             path = path + "&tag=" + tag;
         }
-        logger.trace("path = {}", path);
+        if(logger.isTraceEnabled()) logger.trace("path = {}", path);
         try {
             connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
             AtomicReference<ClientResponse> reference = send(connection, Methods.GET, path, token, null);
             int statusCode = reference.get().getResponseCode();
             if (statusCode >= UNUSUAL_STATUS_CODE) {
-                throw new Exception("Failed to unregister on Consul: " + statusCode);
+                logger.error("Failed to look up service on Portal with serviceId {} tag {} response code {} and body {}", serviceId, tag, statusCode, reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+                throw new Exception("Failed to lookup service on Portal: " + statusCode);
             } else {
                 String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
                 services = JsonMapper.string2List(body);
