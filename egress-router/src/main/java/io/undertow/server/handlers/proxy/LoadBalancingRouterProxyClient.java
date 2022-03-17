@@ -220,16 +220,21 @@ public class LoadBalancingRouterProxyClient implements ProxyClient {
         }
         String envTag = headers.getFirst(HttpStringConstants.ENV_TAG);
         String key = envTag == null ?  (serviceUrl != null ? serviceUrl : serviceId) :  (serviceUrl != null ? serviceUrl : serviceId) + "|" + envTag;
+        if(logger.isTraceEnabled()) logger.trace("key = " + key);
         AttachmentList<Host> attempted = exchange.getAttachment(ATTEMPTED_HOSTS);
+        if(logger.isTraceEnabled()) logger.trace("attempted = " + attempted);
         Host[] hostArray = this.hosts.get(key);
+        if(logger.isTraceEnabled()) logger.trace("size = " + hostArray.length + " hostArray = " + hostArray);
         if (hostArray == null || hostArray.length == 0) {
             // this must be the first this service is called since the router is started. discover here.
             if (serviceUrl != null) {
+                if(logger.isTraceEnabled()) logger.trace("serviceUrl = " + serviceUrl);
                 try {
                     URI uri = new URI(serviceUrl);
                     if (HOST_WHITELIST != null) {
                         if (HOST_WHITELIST.isHostAllowed(uri)) {
                             this.hosts.put(key, new Host[] {new Host(serviceId, bindAddress, uri, ssl, options) });
+                            if(logger.isTraceEnabled()) logger.trace("added host to hosts with serviceUrl = " + serviceUrl);
                         } else {
                             throw new RuntimeException(String.format("Route to %s is not allowed in the host whitelist", serviceUrl));
                         }
@@ -243,11 +248,15 @@ public class LoadBalancingRouterProxyClient implements ProxyClient {
                     throw new RuntimeException(e);
                 }
             } else {
+                if(logger.isTraceEnabled()) logger.trace("serviceUrl is null, addHosts by serviceId = " + serviceId + " and envTag = " + envTag);
                 addHosts(serviceId, envTag);
             }
             hostArray = this.hosts.get(key);
         }
-
+        if(logger.isTraceEnabled()) logger.trace("hostArray size = " + hostArray.length + " hostArray = " + hostArray);
+        if(hostArray.length == 0) {
+            throw new ConfigException(String.format("HostArray is empty. serviceUrl = %s serviceId = %s envTag = %s", serviceUrl, serviceId, envTag));
+        }
         int host = hostSelector.selectHost(hostArray);
 
         final int startHost = host; //if the all hosts have problems we come back to this one
