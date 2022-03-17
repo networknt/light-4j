@@ -569,6 +569,11 @@ ERR11018:
   code: ERR11018
   message: VALIDATOR_RESPONSE_CONTENT_UNEXPECTED
   description: No response body content or schema is expected for %s on path %s.
+ERR11019:
+  statusCode: 400
+  code: ERR11019
+  message: STARTUP_HOOK_NOT_LOADED
+  description: Startup hook %s is not loaded properly.
 
 # 11100-11199 Light Code Generator validation errors
 ERR11100:
