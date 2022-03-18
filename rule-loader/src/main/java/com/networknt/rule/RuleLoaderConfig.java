@@ -2,10 +2,19 @@ package com.networknt.rule;
 
 public class RuleLoaderConfig {
     public static final String CONFIG_NAME = "rule-loader";
+    boolean enabled;
     String portalHost;
     String portalToken;
 
     private RuleLoaderConfig() {
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     public String getPortalHost() {

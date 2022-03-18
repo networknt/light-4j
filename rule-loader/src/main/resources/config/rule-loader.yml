@@ -1,4 +1,7 @@
 # rule loader config
-# portal host
+# A flag to enable the rule loader to get rules for the service from portal
+enabled: ${ruleLoader.enabled:true}
+# The portal host with port number if it is not default TLS port 443.
 portalHost: ${ruleLoader.portalHost:https://localhost}
+# An authorization token that allows the rule loader to connect to the light-portal
 portalToken: ${PORTAL_AUTHORIZATION:}
