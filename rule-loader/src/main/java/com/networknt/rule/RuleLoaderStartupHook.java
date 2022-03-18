@@ -79,7 +79,7 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
                 rules = RuleMapper.string2RuleMap(ruleString);
                 if(logger.isInfoEnabled()) logger.info("Load YAML rules with size = " + rules.size());
             } else {
-                logger.error("Could not load rule for serviceId = " + serverConfig.getServiceId());
+                logger.error("Could not load rule for serviceId = " + serverConfig.getServiceId() + " error = " + result.getError());
             }
         } else {
             if(logger.isInfoEnabled()) logger.info("Rule Loader is not enabled and skipped loading rules from the portal.");
