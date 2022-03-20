@@ -161,6 +161,14 @@ public class JwtIssuerTest {
     }
 
     @Test
+    public void longlivedPortalAdmin() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestClaims("stevehu@lightapi.net", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e73", Arrays.asList("portal.r", "portal.w"), "user admin CtlPltAdmin CtlPltRead CtlPltWrite");
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims);
+        System.out.println("***Long lived token for portal admin ***: " + jwt);
+    }
+
+    @Test
     public void longlivedLightPortalConfigServer() throws Exception {
         JwtClaims claims = ClaimsUtil.getTestClaims("stevehu@gmail.com", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e73", Arrays.asList("portal.r", "portal.w"), "user CfgPltAdmin CfgPltRead CfgPltWrite");
         claims.setExpirationTimeMinutesInTheFuture(5256000);
