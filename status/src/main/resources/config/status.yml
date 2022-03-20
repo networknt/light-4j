@@ -472,6 +472,11 @@ ERR10069:
   code: ERR10069
   message: ACCESS_CONTROL_MISSING
   description: Access control rule is missing for endpoint %s and default deny is true.
+ERR10070:
+  statusCode: 400
+  code: ERR10070
+  message: OBJECT_NOT_UNIQUE
+  description: The object %s is not unique with value %s.
 
 # 11000-11499 swagger-validator errors
 ERR11000:

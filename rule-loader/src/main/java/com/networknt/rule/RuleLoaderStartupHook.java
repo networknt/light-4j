@@ -75,7 +75,6 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
                         }
                     }
                 }
-                System.out.println(ruleString);
                 rules = RuleMapper.string2RuleMap(ruleString);
                 if(logger.isInfoEnabled()) logger.info("Load YAML rules with size = " + rules.size());
             } else {
