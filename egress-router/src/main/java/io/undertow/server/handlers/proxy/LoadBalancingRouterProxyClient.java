@@ -224,7 +224,6 @@ public class LoadBalancingRouterProxyClient implements ProxyClient {
         AttachmentList<Host> attempted = exchange.getAttachment(ATTEMPTED_HOSTS);
         if(logger.isTraceEnabled()) logger.trace("attempted = " + attempted);
         Host[] hostArray = this.hosts.get(key);
-        if(logger.isTraceEnabled()) logger.trace("size = " + hostArray.length + " hostArray = " + hostArray);
         if (hostArray == null || hostArray.length == 0) {
             // this must be the first this service is called since the router is started. discover here.
             if (serviceUrl != null) {
