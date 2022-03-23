@@ -235,6 +235,36 @@ public class LimitConfig {
         }
     }
 
+    public List<String> getAddressList() {
+        List<String> addressList = new ArrayList<>();
+       if (getAddress().getDirectMaps()!=null && !getAddress().getDirectMaps().isEmpty()) {
+           getAddress().getDirectMaps().forEach(m->{
+               m.forEach((p,v)->addressList.add(p));
+           });
+        }
+        if (getAddress().getPathMaps()!=null && !getAddress().getPathMaps().isEmpty()) {
+            getAddress().getPathMaps().forEach(m->{
+                m.forEach((p,v)->addressList.add(p));
+            });
+        }
+        return addressList;
+    }
+
+    public List<String> getClientList() {
+        List<String> addressList = new ArrayList<>();
+        if (getClient().getDirectMaps()!=null && !getClient().getDirectMaps().isEmpty()) {
+            getClient().getDirectMaps().forEach(m->{
+                m.forEach((p,v)->addressList.add(p));
+            });
+        }
+        if (getClient().getPathMaps()!=null && !getClient().getPathMaps().isEmpty()) {
+            getClient().getPathMaps().forEach(m->{
+                m.forEach((p,v)->addressList.add(p));
+            });
+        }
+        return addressList;
+    }
+
     class RateLimitSet{
         List<Map<String, List<LimitQuota>>>  directMaps;
         List<Map<String, Map<String,LimitQuota>>>  pathMaps;
