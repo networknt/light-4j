@@ -216,5 +216,3 @@ request:
   # minimum quantity of connection in connection pool for each host. The corresponding connection number will shrink to minConnectionNumPerHost
   # by remove least recently used connections when the connection number of a host reach 0.75 * maxConnectionNumPerHost.
   minConnectionNumPerHost: ${client.minConnectionNumPerHost:250}
-  # Transfer-Encoding header. valid values: chucked, compress, deflate, gzip or any valid combination of them. By default, the chucked is used.
-  transferEncoding: ${client.tansferEncoding:chucked}
