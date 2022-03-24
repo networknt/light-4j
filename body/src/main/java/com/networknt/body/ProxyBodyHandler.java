@@ -8,9 +8,11 @@ import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.UndertowLogger;
 import io.undertow.connector.PooledByteBuffer;
+import io.undertow.server.ConduitWrapper;
 import io.undertow.server.Connectors;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.util.ConduitFactory;
 import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
@@ -19,7 +21,10 @@ import org.slf4j.LoggerFactory;
 import org.xnio.ChannelListener;
 import org.xnio.IoUtils;
 import org.xnio.channels.StreamSourceChannel;
+import org.xnio.conduits.AbstractStreamSourceConduit;
+import org.xnio.conduits.StreamSourceConduit;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -77,109 +82,158 @@ public class ProxyBodyHandler implements MiddlewareHandler {
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
+        exchange.addRequestWrapper(new ConduitWrapper<>() {
+            @Override
+            public StreamSourceConduit wrap(ConduitFactory<StreamSourceConduit> conduitFactory, HttpServerExchange httpServerExchange) {
+                StreamSourceConduit source = conduitFactory.create();
+                return new AbstractStreamSourceConduit<>(source) {
+                    final ByteArrayOutputStream bufferOut = new ByteArrayOutputStream(config.getMaxBuffers());
+                    @Override
+                    public int read(ByteBuffer dst) throws IOException {
+                        int x = super.read(dst);
+                        if(x >= 0) {
+                            ByteBuffer duplicateDat = dst.duplicate();
+                            duplicateDat.flip();
+                            byte[] data = new byte[x];
+                            duplicateDat.get(data);
+                            bufferOut.write(data);
+                        } else {
+                            String requestBody = bufferOut.toString(StandardCharsets.UTF_8);
+                            logger.debug("request body = " + requestBody);
 
-        if (this.shouldParseBody(exchange)) {
-            final StreamSourceChannel streamSourceChannel = exchange.getRequestChannel();
-            int bufferIndex = 0;
-            final PooledByteBuffer[] bufferedData = new PooledByteBuffer[config.getMaxBuffers()];
-            PooledByteBuffer pooledByteBuffer = exchange.getConnection().getByteBufferPool().allocate();
-            try {
-                for (; ; ) {
-                    ByteBuffer byteBuffer = pooledByteBuffer.getBuffer();
-                    int read = streamSourceChannel.read(byteBuffer);
-
-                    if (read == -1) {
-                        transferBufferToBuffer(bufferedData, byteBuffer, pooledByteBuffer, bufferIndex);
-                        break;
-                    } else if (read == 0) {
-                        final AtomicReference<PooledByteBuffer> pooledByteBufferReference = new AtomicReference<>();
-                        pooledByteBufferReference.set(pooledByteBuffer);
-
-                        final AtomicReference<Integer> bufferIndexReference = new AtomicReference<>();
-                        bufferIndexReference.set(bufferIndex);
-                        streamSourceChannel.getReadSetter().set(new ChannelListener<StreamSourceChannel>() {
-
-                            PooledByteBuffer channelPoolBuffer = pooledByteBufferReference.get();
-                            int channelBufferIndex = bufferIndexReference.get();
-
-                            @Override
-                            public void handleEvent(StreamSourceChannel channel) {
-                                try {
-                                    for (; ; ) {
-                                        ByteBuffer byteBuffer = channelPoolBuffer.getBuffer();
-                                        int read = channel.read(byteBuffer);
-                                        if (read == -1) {
-                                            transferBufferToBuffer(bufferedData, byteBuffer, channelPoolBuffer, channelBufferIndex);
-                                            this.resetExchangeStream();
-                                            return;
-
-                                        } else if (read == 0) {
-                                            return;
-
-                                        } else if (!byteBuffer.hasRemaining()) {
-                                            byteBuffer.flip();
-                                            bufferedData[channelBufferIndex++] = channelPoolBuffer;
-                                            if (channelBufferIndex == config.getMaxBuffers()) {
-                                                this.resetExchangeStream();
-                                                return;
-                                            }
-                                            channelPoolBuffer = exchange.getConnection().getByteBufferPool().allocate();
-                                            
-                                        }
-                                    }
-                                } catch (Throwable t) {
-                                    if (t instanceof IOException) {
-                                        UndertowLogger.REQUEST_IO_LOGGER.ioException((IOException) t);
-                                    } else {
-                                        UndertowLogger.REQUEST_IO_LOGGER.handleUnexpectedFailure(t);
-                                    }
-                                    safeBufferClose(bufferedData, channelPoolBuffer);
-                                    exchange.endExchange();
-                                }
+                            // parse the body to map or list if content type is application/json
+                            try {
+                                prepParsedBody(exchange, contentType, requestBody);
+                            } catch (IOException e) {
+                                logger.error("IOException: ", e);
+                                setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, contentType);
                             }
-
-                            private void resetExchangeStream() {
-                                resetRequestChannel(bufferedData, exchange);
-                                streamSourceChannel.getReadSetter().set(null);
-                                streamSourceChannel.suspendReads();
-                                Connectors.executeRootHandler(next, exchange);
-                            }
-                        });
-
-                        streamSourceChannel.resumeReads();
-                        break;
-
-                    } else if (!byteBuffer.hasRemaining()) {
-                        byteBuffer.flip();
-                        bufferedData[bufferIndex++] = pooledByteBuffer;
-                        if (hasExceededMaxBuffer(bufferIndex)) {
-                            resetRequestChannel(bufferedData, exchange);
-                            safeBufferClose(bufferedData, pooledByteBuffer);
-                            setExchangeStatus(exchange, PAYLOAD_TOO_LARGE, "application/json");
-                            return;
                         }
-                        pooledByteBuffer = exchange.getConnection().getByteBufferPool().allocate();
+                        return x;
                     }
+                };
+            }
+
+            private void prepParsedBody(HttpServerExchange exchange, String contentType, String requestBody) throws IOException {
+                if (contentType.startsWith("application/json")) {
+                    if (config.isCacheRequestBody()) {
+                        exchange.putAttachment(REQUEST_BODY_STRING, requestBody);
+                    }
+                    // attach the parsed request body into exchange if the body parser is enabled
+                    attachJsonBody(exchange, requestBody);
+                } else {
+                    exchange.putAttachment(REQUEST_BODY, requestBody);
                 }
-
-                resetRequestChannel(bufferedData, exchange);
-            } catch (Exception | Error e) {
-                safeBufferClose(bufferedData, pooledByteBuffer);
-                throw e;
             }
 
-            String requestBody = StandardCharsets.UTF_8.decode(pooledByteBuffer.getBuffer().duplicate()).toString();
-            logger.debug("request body = " + requestBody);
-
-            // parse the body to map or list if content type is application/json
-            try {
-                this.prepParsedBody(exchange, contentType, requestBody);
-            } catch (IOException e) {
-                logger.error("IOException: ", e);
-                setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, contentType);
-                return;
-            }
-        }
+        });
+//        if (this.shouldParseBody(exchange)) {
+//
+//            logger.info("maxBuffer: {}", config.getMaxBuffers());
+//            final StreamSourceChannel streamSourceChannel = exchange.getRequestChannel();
+//            int bufferIndex = 0;
+//            final PooledByteBuffer[] bufferedData = new PooledByteBuffer[config.getMaxBuffers()];
+//            PooledByteBuffer pooledByteBuffer = exchange.getConnection().getByteBufferPool().allocate();
+//            logger.info("request len: {}", pooledByteBuffer.getBuffer().position());
+//            try {
+//                for (; ; ) {
+//                    ByteBuffer byteBuffer = pooledByteBuffer.getBuffer();
+//                    int read = streamSourceChannel.read(byteBuffer);
+//
+//                    if (read == -1) {
+//                        transferBufferToBuffer(bufferedData, byteBuffer, pooledByteBuffer, bufferIndex);
+//                        break;
+//                    } else if (read == 0) {
+//                        final AtomicReference<PooledByteBuffer> pooledByteBufferReference = new AtomicReference<>();
+//                        pooledByteBufferReference.set(pooledByteBuffer);
+//
+//                        final AtomicReference<Integer> bufferIndexReference = new AtomicReference<>();
+//                        bufferIndexReference.set(bufferIndex);
+//                        streamSourceChannel.getReadSetter().set(new ChannelListener<StreamSourceChannel>() {
+//
+//                            PooledByteBuffer channelPoolBuffer = pooledByteBufferReference.get();
+//                            final int channelBufferIndex = bufferIndexReference.get();
+//
+//                            @Override
+//                            public void handleEvent(StreamSourceChannel channel) {
+//                                try {
+//                                    for (; ; ) {
+//                                        ByteBuffer byteBuffer = channelPoolBuffer.getBuffer();
+//                                        int read = channel.read(byteBuffer);
+//                                        if (read == -1) {
+//                                            transferBufferToBuffer(bufferedData, byteBuffer, channelPoolBuffer, channelBufferIndex);
+//                                            this.resetExchangeStream();
+//                                            return;
+//
+//                                        } else if (read == 0) {
+//                                            return;
+//
+//                                        } else if (!byteBuffer.hasRemaining()) {
+//                                            byteBuffer.flip();
+//                                            bufferedData[channelBufferIndex] = channelPoolBuffer;
+//                                            if (channelBufferIndex == config.getMaxBuffers()) {
+//                                                this.resetExchangeStream();
+//                                                setExchangeStatus(exchange, PAYLOAD_TOO_LARGE, "application/json");
+//                                                return;
+//                                            }
+//                                            channelPoolBuffer = exchange.getConnection().getByteBufferPool().allocate();
+//
+//                                        }
+//                                    }
+//                                } catch (Throwable t) {
+//                                    if (t instanceof IOException) {
+//                                        UndertowLogger.REQUEST_IO_LOGGER.ioException((IOException) t);
+//                                    } else {
+//                                        UndertowLogger.REQUEST_IO_LOGGER.handleUnexpectedFailure(t);
+//                                    }
+//                                    safeBufferClose(bufferedData, channelPoolBuffer);
+//                                    exchange.endExchange();
+//                                }
+//                            }
+//
+//                            private void resetExchangeStream() {
+//                                resetRequestChannel(bufferedData, exchange);
+//                                streamSourceChannel.getReadSetter().set(null);
+//                                streamSourceChannel.suspendReads();
+//                                Connectors.executeRootHandler(next, exchange);
+//                            }
+//                        });
+//
+//                        streamSourceChannel.resumeReads();
+//                        break;
+//
+//                    } else if (!byteBuffer.hasRemaining()) {
+//                        byteBuffer.flip();
+//                        bufferedData[bufferIndex++] = pooledByteBuffer;
+//                        if (hasExceededMaxBuffer(bufferIndex)) {
+//                            resetRequestChannel(bufferedData, exchange);
+//                            safeBufferClose(bufferedData, pooledByteBuffer);
+//                            setExchangeStatus(exchange, PAYLOAD_TOO_LARGE, "application/json");
+//                            return;
+//                        }
+//                        pooledByteBuffer = exchange.getConnection().getByteBufferPool().allocate();
+//                    }
+//                }
+//
+//                resetRequestChannel(bufferedData, exchange);
+//            } catch (Exception | Error e) {
+//                safeBufferClose(bufferedData, pooledByteBuffer);
+//                throw e;
+//            }
+//
+//            String requestBody = StandardCharsets.UTF_8.decode(pooledByteBuffer.getBuffer().duplicate()).toString();
+//            logger.debug("request body = " + requestBody);
+//
+//            // parse the body to map or list if content type is application/json
+//            try {
+//                this.prepParsedBody(exchange, contentType, requestBody);
+//            } catch (IOException e) {
+//                logger.error("IOException: ", e);
+//                setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, contentType);
+//                return;
+//            }
+//        }
+        next.handleRequest(exchange);
         Handler.next(exchange, next);
     }
 
