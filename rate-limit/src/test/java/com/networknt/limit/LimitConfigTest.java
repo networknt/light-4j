@@ -19,13 +19,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
-import java.util.Calendar;
+
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
+
 
 
 public class LimitConfigTest {
@@ -72,16 +69,10 @@ public class LimitConfigTest {
 
     @Test
     public void testClient() {
-        LimitConfig.RateLimitSet limitAddress =  limitConfig.getClient();
-        Assert.assertEquals(limitAddress.getDirectMaps().size(), 2);
-        Assert.assertEquals(limitAddress.getPathMaps().size(), 1);
+        LimitConfig.RateLimitSet limitClient =  limitConfig.getClient();
+        Assert.assertEquals(limitClient.getDirectMaps().size(), 2);
+        Assert.assertEquals(limitClient.getPathMaps().size(), 1);
 
     }
 
-    @Test
-    public void testTime() {
-        System.out.println(Calendar.getInstance().getTimeInMillis());
-        System.out.println(Instant.now().getEpochSecond());
-        System.out.println(Instant.now().plusSeconds(1).getEpochSecond());
-    }
 }
