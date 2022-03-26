@@ -1,8 +1,8 @@
 package com.networknt.limit;
 
-import com.networknt.http.ResponseEntity;
-import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.utility.Constants;
+import com.networknt.httpstring.AttachmentConstants;
+
 
 import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
@@ -96,8 +96,9 @@ public class RateLimiter {
             //TODO change IP address get by resolver
             InetSocketAddress peer = exchange.getSourceAddress();
             String ip = peer.getHostString();
-
+            List<LimitQuota> rateLimit = this.config.getAddress().directMaps.get(ip);
             if (!config.getAddressList().contains(ip)) {
+                rateLimit = this.config.rateLimit;
                 Map<TimeUnit, Map<Long, AtomicLong>> directMap = new ConcurrentHashMap<>();
                 this.config.getRateLimit().forEach(i->{
                     directMap.put(i.getUnit(), new ConcurrentHashMap<>());
@@ -105,16 +106,19 @@ public class RateLimiter {
                 addressDirectTimeMap.put(ip, directMap);
             }
             if (addressPathTimeMap.containsKey(ip)) {
-                return isAllowByPath(ip, ADDRESS_TYPE);
+                String path = exchange.getRelativePath();
+                return isAllowByPath(ip, path, ADDRESS_TYPE);
             } else {
-                return isAllowDirect(ip, ADDRESS_TYPE);
+                return isAllowDirect(ip, rateLimit, ADDRESS_TYPE);
             }
 
         } else if (LimitKey.CLIENT.equals(limitKey)) {
             //TODO change client id get by resolver
             Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
             String clientId = (String)auditInfo.get(Constants.CLIENT_ID_STRING);
+            List<LimitQuota> rateLimit = this.config.getClient().directMaps.get(clientId);
             if (!config.getClientList().contains(clientId)) {
+                rateLimit = this.config.rateLimit;
                 Map<TimeUnit, Map<Long, AtomicLong>> directMap = new ConcurrentHashMap<>();
                 this.config.getRateLimit().forEach(i->{
                     directMap.put(i.getUnit(), new ConcurrentHashMap<>());
@@ -122,9 +126,10 @@ public class RateLimiter {
                 clientDirectTimeMap.put(clientId, directMap);
             }
             if (clientPathTimeMap.containsKey(clientId)) {
-                return isAllowByPath(clientId, CLIENT_TYPE);
+                String path = exchange.getRelativePath();
+                return isAllowByPath(clientId, path, CLIENT_TYPE);
             } else {
-                return isAllowDirect(clientId, CLIENT_TYPE);
+                return isAllowDirect(clientId, rateLimit, CLIENT_TYPE);
             }
         } else  {
             //By default, the key is server
@@ -144,16 +149,69 @@ public class RateLimiter {
      * Handle logic for direct rate limit setting for both address and client
      * use the type for differential the address/client
      */
-    protected RateLimitResponse isAllowDirect(String directKey, String type) {
+    protected RateLimitResponse isAllowDirect(String directKey, List<LimitQuota> rateLimit, String type) {
+        long currentTimeWindow = Instant.now().getEpochSecond();
+        Map<TimeUnit, Map<Long, AtomicLong>> directTimeMap;
+
+        if (ADDRESS_TYPE.equalsIgnoreCase(type)) {
+            directTimeMap = addressDirectTimeMap.get(directKey);
+        } else {
+            directTimeMap = clientDirectTimeMap.get(directKey);
+        }
+        for (LimitQuota limitQuota: rateLimit) {
+            Map<Long, AtomicLong> timeMap =  directTimeMap.get(limitQuota.getUnit());
+            if (timeMap.isEmpty()) {
+                timeMap.put(currentTimeWindow, new AtomicLong(1L));
+                return new RateLimitResponse(true, buildHeaders(1L, limitQuota));
+            } else {
+                Long countInOverallTime = removeOldEntriesForUser(currentTimeWindow, timeMap, limitQuota.unit);
+                if (countInOverallTime < limitQuota.value) {
+                    //Handle new time windows
+                    Long newCount = timeMap.getOrDefault(currentTimeWindow, new AtomicLong(0)).longValue() + 1;
+                    timeMap.put(currentTimeWindow, new AtomicLong(newCount));
+                    logger.debug("CurrentTimeWindow:" + currentTimeWindow +" Result:true "+ " Count:"+countInOverallTime);
+                    return new RateLimitResponse(true, buildHeaders(countInOverallTime, limitQuota));
+                } else {
+                    return new RateLimitResponse(false, buildHeaders(countInOverallTime, limitQuota));
+                }
+            }
+        }
         return null;
     }
+
 
     /**
      * Handle logic for path rate limit setting for both address and client
      * use the type for differential the address/client
      */
-    protected RateLimitResponse isAllowByPath(String pathKey, String type) {
-        return null;
+    protected RateLimitResponse isAllowByPath(String pathKey, String path, String type) {
+        long currentTimeWindow = Instant.now().getEpochSecond();
+        Map<String, Map<Long, AtomicLong>> pathTimeMap;
+        LimitQuota limitQuota;
+        if (ADDRESS_TYPE.equalsIgnoreCase(type)) {
+            pathTimeMap = addressPathTimeMap.get(pathKey);
+            limitQuota = this.config.getAddress().getPathMaps().get(pathKey).getOrDefault(path, this.config.getRateLimit().get(0));
+        } else {
+            pathTimeMap = clientPathTimeMap.get(pathKey);
+            limitQuota = this.config.getClient().getPathMaps().get(pathKey).getOrDefault(path, this.config.getRateLimit().get(0));
+        }
+
+        Map<Long, AtomicLong> timeMap =  pathTimeMap.get(path);
+        if (timeMap.isEmpty()) {
+            timeMap.put(currentTimeWindow, new AtomicLong(1L));
+        } else {
+            Long countInOverallTime = removeOldEntriesForUser(currentTimeWindow, timeMap, limitQuota.unit);
+            if (countInOverallTime < limitQuota.value) {
+                //Handle new time windows
+                Long newCount = timeMap.getOrDefault(currentTimeWindow, new AtomicLong(0)).longValue() + 1;
+                timeMap.put(currentTimeWindow, new AtomicLong(newCount));
+                logger.debug("CurrentTimeWindow:" + currentTimeWindow +" Result:true "+ " Count:"+countInOverallTime);
+                return new RateLimitResponse(true, buildHeaders(countInOverallTime, limitQuota));
+            } else {
+                return new RateLimitResponse(false, buildHeaders(countInOverallTime, limitQuota));
+            }
+        }
+        return new RateLimitResponse(true, buildHeaders(1L, limitQuota));
     }
 
     /**
@@ -181,7 +239,8 @@ public class RateLimiter {
 
     private Map<String, String> buildHeaders(Long countInOverallTime, LimitQuota limitQuota) {
         Map<String, String> headers = new HashMap<>();
-        //TODO calculate and populate response
+        headers.put(Constants.RATELIMIT_LIMIT, limitQuota.value + "/" + limitQuota.unit);
+        headers.put(Constants.RATELIMIT_REMAINING, String.valueOf(limitQuota.value - countInOverallTime));
         return headers;
     }
 
