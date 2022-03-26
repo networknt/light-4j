@@ -19,6 +19,8 @@ package com.networknt.limit;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
+import com.networknt.limit.key.KeyResolver;
+import com.networknt.service.SingletonServiceFactory;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
@@ -89,6 +91,10 @@ public class LimitHandlerTest {
                     } catch (InterruptedException e) {
 
                     }
+                    // test the KeyResolver with IP address defined in the service.yml
+                    KeyResolver resolver = SingletonServiceFactory.getBean(KeyResolver.class);
+                    String key = resolver.resolve(exchange);
+                    System.err.println("key = " + key);
                     exchange.getResponseSender().send("OK");
                 });
     }
