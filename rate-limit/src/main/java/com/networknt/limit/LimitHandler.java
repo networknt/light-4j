@@ -31,12 +31,14 @@ import io.undertow.server.HttpServerExchange;
  * @author Steve Hu
  */
 public class LimitHandler implements MiddlewareHandler {
-    public static LimitConfig config = (LimitConfig)Config.getInstance().getJsonObjectConfig(LimitConfig.CONFIG_NAME, LimitConfig.class);
+    public static LimitConfig config;
 
     private volatile HttpHandler next;
     private final RequestLimit requestLimit;
 
     public LimitHandler() {
+        config = LimitConfig.load();
+
         this.requestLimit = new RequestLimit(config.concurrentRequest, config.queueSize);
     }
 
@@ -69,7 +71,7 @@ public class LimitHandler implements MiddlewareHandler {
 
     @Override
     public void reload() {
-        config = (LimitConfig)Config.getInstance().getJsonObjectConfig(LimitConfig.CONFIG_NAME, LimitConfig.class);
+        config =LimitConfig.load();
     }
 
 }

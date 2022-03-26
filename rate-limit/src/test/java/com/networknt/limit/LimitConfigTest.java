@@ -19,8 +19,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+
 import java.util.List;
 import java.util.Map;
+
 
 
 public class LimitConfigTest {
@@ -67,9 +69,10 @@ public class LimitConfigTest {
 
     @Test
     public void testClient() {
-        LimitConfig.RateLimitSet limitAddress =  limitConfig.getClient();
-        Assert.assertEquals(limitAddress.getDirectMaps().size(), 2);
-        Assert.assertEquals(limitAddress.getPathMaps().size(), 1);
+        LimitConfig.RateLimitSet limitClient =  limitConfig.getClient();
+        Assert.assertEquals(limitClient.getDirectMaps().size(), 2);
+        Assert.assertEquals(limitClient.getPathMaps().size(), 1);
 
     }
+
 }

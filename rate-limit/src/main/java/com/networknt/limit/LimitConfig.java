@@ -193,18 +193,14 @@ public class LimitConfig {
             address_config.forEach((k, o)->{
                 if (o instanceof String) {
                     List<String> limits = Arrays.asList(((String)o).split(" "));
-                    Map<String, List<LimitQuota>> directMap = new HashMap<>();
                     List<LimitQuota> limitQuota = new ArrayList<>();
                     limits.stream().forEach(l->limitQuota.add(new LimitQuota(l)));
-                    directMap.put(k, limitQuota);
-                    address.addDirectMap(directMap);
+                    address.addDirectMap(k, limitQuota);
                 } else if (o instanceof Map) {
                     Map<String, String> path = (Map<String, String>)o;
                     Map<String, LimitQuota> pathConfig = new HashMap<>();
                     path.forEach((p, v)->pathConfig.put(p, new LimitQuota(v)));
-                    Map<String, Map<String, LimitQuota>> pathMap = new HashMap<>();
-                    pathMap.put(k, pathConfig);
-                    address.addPathMap(pathMap);
+                    address.addPathMap(k, pathConfig);
                 }
             });
 
@@ -217,60 +213,85 @@ public class LimitConfig {
             client_config.forEach((k, o)->{
                 if (o instanceof String) {
                     List<String> limits = Arrays.asList(((String)o).split(" "));
-                    Map<String, List<LimitQuota>> directMap = new HashMap<>();
                     List<LimitQuota> limitQuota = new ArrayList<>();
                     limits.stream().forEach(l->limitQuota.add(new LimitQuota(l)));
-                    directMap.put(k, limitQuota);
-                    client.addDirectMap(directMap);
+                    client.addDirectMap(k, limitQuota);
                 } else if (o instanceof Map) {
                     Map<String, String> path = (Map<String, String>)o;
                     Map<String, LimitQuota> pathConfig = new HashMap<>();
                     path.forEach((p, v)->pathConfig.put(p, new LimitQuota(v)));
-                    Map<String, Map<String, LimitQuota>> pathMap = new HashMap<>();
-                    pathMap.put(k, pathConfig);
-                    client.addPathMap(pathMap);
+                    client.addPathMap(k, pathConfig);
                 }
             });
 
         }
     }
 
+    public List<String> getAddressList() {
+        List<String> addressList = new ArrayList<>();
+       if (getAddress().getDirectMaps()!=null && !getAddress().getDirectMaps().isEmpty()) {
+           getAddress().getDirectMaps().forEach((k,v)->{
+               addressList.add(k);
+           });
+        }
+        if (getAddress().getPathMaps()!=null && !getAddress().getPathMaps().isEmpty()) {
+            getAddress().getPathMaps().forEach((k,v)->{
+                addressList.add(k);
+            });        }
+        return addressList;
+    }
+
+    public List<String> getClientList() {
+        List<String> clientList = new ArrayList<>();
+        if (getClient().getDirectMaps()!=null && !getClient().getDirectMaps().isEmpty()) {
+            getAddress().getDirectMaps().forEach((k,v)->{
+                clientList.add(k);
+            });
+        }
+        if (getClient().getPathMaps()!=null && !getClient().getPathMaps().isEmpty()) {
+            getAddress().getPathMaps().forEach((k,v)->{
+                clientList.add(k);
+            });
+        }
+        return clientList;
+    }
+
     class RateLimitSet{
-        List<Map<String, List<LimitQuota>>>  directMaps;
-        List<Map<String, Map<String,LimitQuota>>>  pathMaps;
+        Map<String, List<LimitQuota>>  directMaps;
+        Map<String, Map<String,LimitQuota>>  pathMaps;
 
         public RateLimitSet() {
 
         }
 
-        public List<Map<String, List<LimitQuota>>> getDirectMaps() {
+        public Map<String, List<LimitQuota>> getDirectMaps() {
             return directMaps;
         }
 
-        public void setDirectMaps(List<Map<String, List<LimitQuota>>> directMaps) {
+        public void setDirectMaps(Map<String, List<LimitQuota>> directMaps) {
             this.directMaps = directMaps;
         }
 
-        public void addDirectMap(Map<String, List<LimitQuota>> directMap) {
+        public void addDirectMap(String key, List<LimitQuota> limitQuotas) {
             if (this.directMaps==null) {
-                this.directMaps = new ArrayList<>();
+                this.directMaps = new HashMap<>();
             }
-            this.directMaps.add(directMap);
+            this.directMaps.put(key, limitQuotas);
         }
 
-        public List<Map<String, Map<String, LimitQuota>>> getPathMaps() {
+        public Map<String, Map<String, LimitQuota>> getPathMaps() {
             return pathMaps;
         }
 
-        public void setPathMaps(List<Map<String, Map<String, LimitQuota>>> pathMaps) {
+        public void setPathMaps(Map<String, Map<String, LimitQuota>> pathMaps) {
             this.pathMaps = pathMaps;
         }
 
-        public void addPathMap(Map<String, Map<String, LimitQuota>> pathMap) {
+        public void addPathMap(String key, Map<String, LimitQuota> pathMap) {
             if (pathMaps==null) {
-                pathMaps = new ArrayList<>();
+                pathMaps = new HashMap<>();
             }
-            this.pathMaps.add(pathMap);
+            this.pathMaps.put(key, pathMap);
         }
     }
 }
