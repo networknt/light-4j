@@ -33,6 +33,9 @@ public class LimitConfig {
     private static final String ERROR_CODE = "errorCode";
     private static final String LIMIT_KEY = "key";
     private static final String IS_ENABLED = "enabled";
+    private static final String CLIENT_ID_KEY = "clientIdKeyResolver";
+    private static final String USER_ID_KEY = "userIdKeyResolver";
+    private static final String ADDRESS_KEY = "addressKeyResolver";
     private static final String RATE_LIMIT = "rateLimit";
     private static final String SERVER = "server";
     private static final String ADDRESS = "address";
@@ -43,6 +46,10 @@ public class LimitConfig {
     int concurrentRequest;
     int queueSize;
     int errorCode;
+    String clientIdKeyResolver;
+    String addressKeyResolver;
+    String userIdKeyResolver;
+
     LimitKey key;
     List<LimitQuota> rateLimit;
     Map<String, LimitQuota> server;
@@ -99,6 +106,30 @@ public class LimitConfig {
         this.errorCode = errorCode;
     }
 
+    public String getClientIdKeyResolver() {
+        return clientIdKeyResolver;
+    }
+
+    public void setClientIdKeyResolver(String clientIdKeyResolver) {
+        this.clientIdKeyResolver = clientIdKeyResolver;
+    }
+
+    public String getAddressKeyResolver() {
+        return addressKeyResolver;
+    }
+
+    public void setAddressKeyResolver(String addressKeyResolver) {
+        this.addressKeyResolver = addressKeyResolver;
+    }
+
+    public String getUserIdKeyResolver() {
+        return userIdKeyResolver;
+    }
+
+    public void setUserIdKeyResolver(String userIdKeyResolver) {
+        this.userIdKeyResolver = userIdKeyResolver;
+    }
+
     public LimitKey getKey() {
         return key;
     }
@@ -119,6 +150,7 @@ public class LimitConfig {
         return server;
     }
 
+
     public void setServer(Map<String, LimitQuota> server) {
         this.server = server;
     }
@@ -138,6 +170,7 @@ public class LimitConfig {
     public void setClient(RateLimitSet client) {
         this.client = client;
     }
+
 
     Map<String, Object> getMappedConfig() {
         return mappedConfig;
@@ -160,6 +193,18 @@ public class LimitConfig {
         object = getMappedConfig().get(IS_ENABLED);
         if(object != null && (Boolean) object) {
             setEnabled(true);
+        }
+        object = getMappedConfig().get(CLIENT_ID_KEY);
+        if(object != null) {
+            setClientIdKeyResolver((String) object);
+        }
+        object = getMappedConfig().get(ADDRESS_KEY);
+        if(object != null) {
+            setAddressKeyResolver((String) object);
+        }
+        object = getMappedConfig().get(USER_ID_KEY);
+        if(object != null) {
+            setUserIdKeyResolver((String) object);
         }
     }
 

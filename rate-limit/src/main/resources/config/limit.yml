@@ -25,3 +25,10 @@ errorCode: ${limit.errorCode:503}
 # request rate limit: 10 1s 1000 1h
 # 100 requests per second limit and 10000 requests per day quota.
 rateLimit: 100/s 10000/h
+# Client id Key Resolver.
+clientIdKeyResolver: com.networknt.limit.key.JwtClientIdKeyResolver
+# Ip Address Key Resolver.
+addressKeyResolver: com.networknt.limit.key.RemoteAddressKeyResolver
+# User Id Key Resolver.
+userIdKeyResolver: com.networknt.limit.key.JwtUserIdKeyResolver
+

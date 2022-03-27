@@ -1,14 +1,12 @@
 package com.networknt.limit;
 
+import com.networknt.limit.key.KeyResolver;
 import com.networknt.utility.Constants;
-import com.networknt.httpstring.AttachmentConstants;
-
 
 import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,10 +33,14 @@ public class RateLimiter {
     static final String ADDRESS_TYPE = "address";
     static final String CLIENT_TYPE = "client";
 
+    private KeyResolver clientIdKeyResolver;
+    private KeyResolver addressKeyResolver;
+
+
     /**
      * Load config and initial model by Rate limit key.
      */
-    public RateLimiter(LimitConfig config) {
+    public RateLimiter(LimitConfig config) throws Exception {
         this.config = config;
         if (LimitKey.SERVER.equals(config.getKey())) {
             if (this.config.getServer()!=null && !this.config.getServer().isEmpty()) {
@@ -89,33 +91,34 @@ public class RateLimiter {
                 }
             }
         }
+        //Initial Resolvers
+        String clientIdKey = this.config.getClientIdKeyResolver()==null? "com.networknt.limit.key.JwtClientIdKeyResolver":this.config.getClientIdKeyResolver();
+        String addressKey = this.config.getAddressKeyResolver()==null? "com.networknt.limit.key.RemoteAddressKeyResolver":this.config.getAddressKeyResolver();
+        clientIdKeyResolver = (KeyResolver)Class.forName(clientIdKey).getDeclaredConstructor().newInstance();
+        addressKeyResolver = (KeyResolver)Class.forName(addressKey).getDeclaredConstructor().newInstance();
     }
 
     public RateLimitResponse handleRequest(final HttpServerExchange exchange, LimitKey limitKey) {
         if (LimitKey.ADDRESS.equals(limitKey)) {
-            //TODO change IP address get by resolver
-            InetSocketAddress peer = exchange.getSourceAddress();
-            String ip = peer.getHostString();
-            List<LimitQuota> rateLimit = this.config.getAddress().directMaps.get(ip);
-            if (!config.getAddressList().contains(ip)) {
+            String address = addressKeyResolver.resolve(exchange);
+            List<LimitQuota> rateLimit = this.config.getAddress().directMaps.get(address);
+            if (!config.getAddressList().contains(address)) {
                 rateLimit = this.config.rateLimit;
                 Map<TimeUnit, Map<Long, AtomicLong>> directMap = new ConcurrentHashMap<>();
                 this.config.getRateLimit().forEach(i->{
                     directMap.put(i.getUnit(), new ConcurrentHashMap<>());
                 });
-                addressDirectTimeMap.put(ip, directMap);
+                addressDirectTimeMap.put(address, directMap);
             }
-            if (addressPathTimeMap.containsKey(ip)) {
+            if (addressPathTimeMap.containsKey(address)) {
                 String path = exchange.getRelativePath();
-                return isAllowByPath(ip, path, ADDRESS_TYPE);
+                return isAllowByPath(address, path, ADDRESS_TYPE);
             } else {
-                return isAllowDirect(ip, rateLimit, ADDRESS_TYPE);
+                return isAllowDirect(address, rateLimit, ADDRESS_TYPE);
             }
 
         } else if (LimitKey.CLIENT.equals(limitKey)) {
-            //TODO change client id get by resolver
-            Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
-            String clientId = (String)auditInfo.get(Constants.CLIENT_ID_STRING);
+            String clientId = clientIdKeyResolver.resolve(exchange);
             List<LimitQuota> rateLimit = this.config.getClient().directMaps.get(clientId);
             if (!config.getClientList().contains(clientId)) {
                 rateLimit = this.config.rateLimit;

@@ -46,3 +46,8 @@ client:
   f7d42348-c647-4efb-a52d-4c5787421e75:
     /v1/address: 10/s
     /v2/address: 100/s
+
+# Client id Key Resolver.
+clientIdKeyResolver: com.networknt.limit.key.JwtClientIdKeyResolver
+# Ip Address Key Resolver.
+addressKeyResolver: com.networknt.limit.key.RemoteAddressKeyResolver
