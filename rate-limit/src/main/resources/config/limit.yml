@@ -22,6 +22,3 @@ queueSize: ${limit.queueSize:-1}
 # protect a slow backend API, it will return 429 error code to indicate too many requests
 # for the client to wait a grace period to resent the request. By default, 503 is returned.
 errorCode: ${limit.errorCode:503}
-# request rate limit: 10 1s 1000 1h
-# 100 requests per second limit and 10000 requests per day quota.
-rateLimit: 100/s 10000/h

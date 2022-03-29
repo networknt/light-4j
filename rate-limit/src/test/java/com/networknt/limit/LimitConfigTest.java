@@ -48,12 +48,6 @@ public class LimitConfigTest {
     }
 
     @Test
-    public void testRateLimit() {
-        List<LimitQuota> limitQuotaList =  limitConfig.getRateLimit();
-        Assert.assertEquals(limitQuotaList.size(), 2);
-    }
-
-    @Test
     public void testServer() {
         Map<String, LimitQuota> limitServer =  limitConfig.getServer();
         Assert.assertEquals(limitServer.size(), 2);
