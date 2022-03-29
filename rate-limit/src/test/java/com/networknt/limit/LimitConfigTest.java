@@ -41,32 +41,4 @@ public class LimitConfigTest {
         Assert.assertEquals(limitConfig.getQueueSize(), 1);
         Assert.assertEquals(limitConfig.getErrorCode(), 429);
     }
-
-    @Test
-    public void testLimitKey() {
-        Assert.assertEquals(limitConfig.getKey(), LimitKey.SERVER);
-    }
-
-    @Test
-    public void testServer() {
-        Map<String, LimitQuota> limitServer =  limitConfig.getServer();
-        Assert.assertEquals(limitServer.size(), 2);
-    }
-
-    @Test
-    public void testAddress() {
-        LimitConfig.RateLimitSet limitAddress =  limitConfig.getAddress();
-        Assert.assertEquals(limitAddress.getDirectMaps().size(), 2);
-        Assert.assertEquals(limitAddress.getPathMaps().size(), 1);
-
-    }
-
-    @Test
-    public void testClient() {
-        LimitConfig.RateLimitSet limitClient =  limitConfig.getClient();
-        Assert.assertEquals(limitClient.getDirectMaps().size(), 2);
-        Assert.assertEquals(limitClient.getPathMaps().size(), 1);
-
-    }
-
 }
