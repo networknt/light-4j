@@ -63,7 +63,7 @@ public class RateLimiterTest {
         List<RateLimitResponse> responseList = new ArrayList<>();
         Callable<RateLimitResponse> task =this::callByClientAsync;
         List<Callable<RateLimitResponse>> tasks = Collections.nCopies(12, task);
-        ExecutorService executorService = Executors.newFixedThreadPool(1);
+        ExecutorService executorService = Executors.newFixedThreadPool(2);
         List<Future<RateLimitResponse>> futures = executorService.invokeAll(tasks);
         for (Future<RateLimitResponse> future : futures) {
             responseList.add(future.get());
@@ -86,7 +86,7 @@ public class RateLimiterTest {
         List<RateLimitResponse> responseList = new ArrayList<>();
         Callable<RateLimitResponse> task =this::callByAddressAsync;
         List<Callable<RateLimitResponse>> tasks = Collections.nCopies(12, task);
-        ExecutorService executorService = Executors.newFixedThreadPool(1);
+        ExecutorService executorService = Executors.newFixedThreadPool(2);
         List<Future<RateLimitResponse>> futures = executorService.invokeAll(tasks);
         for (Future<RateLimitResponse> future : futures) {
             responseList.add(future.get());

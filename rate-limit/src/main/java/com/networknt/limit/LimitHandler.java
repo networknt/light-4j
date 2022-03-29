@@ -55,14 +55,16 @@ public class LimitHandler implements MiddlewareHandler {
         rateLimiter = new RateLimiter(config);
         RateLimitResponse rateLimitResponse = rateLimiter.handleRequest(exchange, config.getKey());
 
-        exchange.getResponseHeaders().add(new HttpString(Constants.RATELIMIT_LIMIT), rateLimitResponse.getHeaders().get(Constants.RATELIMIT_LIMIT));
-        exchange.getResponseHeaders().add(new HttpString(Constants.RATELIMIT_REMAINING), rateLimitResponse.getHeaders().get(Constants.RATELIMIT_REMAINING));
 
         if (rateLimitResponse.allow) {
             Handler.next(exchange, next);
         } else {
+            exchange.getResponseHeaders().add(new HttpString(Constants.RATELIMIT_LIMIT), rateLimitResponse.getHeaders().get(Constants.RATELIMIT_LIMIT));
+            exchange.getResponseHeaders().add(new HttpString(Constants.RATELIMIT_REMAINING), rateLimitResponse.getHeaders().get(Constants.RATELIMIT_REMAINING));
+            exchange.getResponseHeaders().add(new HttpString(Constants.RATELIMIT_RESET), rateLimitResponse.getHeaders().get(Constants.RATELIMIT_RESET));
+
             exchange.getResponseHeaders().add(new HttpString("Content-Type"), "application/json");
-            exchange.setStatusCode(HttpStatus.TOO_MANY_REQUESTS.value());
+            exchange.setStatusCode(config.getErrorCode()==0 ? HttpStatus.TOO_MANY_REQUESTS.value():config.getErrorCode());
             exchange.getResponseSender().send(mapper.writeValueAsString(rateLimitResponse));
         }
     }

@@ -8,10 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -158,7 +155,7 @@ public class RateLimiter {
      * Handle logic for direct rate limit setting for both address and client
      * use the type for differential the address/client
      */
-    protected RateLimitResponse isAllowDirect(String directKey, List<LimitQuota> rateLimit, String type) {
+    protected synchronized RateLimitResponse isAllowDirect(String directKey, List<LimitQuota> rateLimit, String type) {
         long currentTimeWindow = Instant.now().getEpochSecond();
         Map<TimeUnit, Map<Long, AtomicLong>> directTimeMap;
 
@@ -171,7 +168,7 @@ public class RateLimiter {
             Map<Long, AtomicLong> timeMap =  directTimeMap.get(limitQuota.getUnit());
             if (timeMap.isEmpty()) {
                 timeMap.put(currentTimeWindow, new AtomicLong(1L));
-                return new RateLimitResponse(true, buildHeaders(1L, limitQuota));
+                return new RateLimitResponse(true, null);
             } else {
                 Long countInOverallTime = removeOldEntriesForUser(currentTimeWindow, timeMap, limitQuota.unit);
                 if (countInOverallTime < limitQuota.value) {
@@ -179,9 +176,10 @@ public class RateLimiter {
                     Long newCount = timeMap.getOrDefault(currentTimeWindow, new AtomicLong(0)).longValue() + 1;
                     timeMap.put(currentTimeWindow, new AtomicLong(newCount));
                     logger.debug("CurrentTimeWindow:" + currentTimeWindow +" Result:true "+ " Count:"+countInOverallTime);
-                    return new RateLimitResponse(true, buildHeaders(countInOverallTime, limitQuota));
+                    return new RateLimitResponse(true, null);
                 } else {
-                    return new RateLimitResponse(false, buildHeaders(countInOverallTime, limitQuota));
+                    String reset = getRateLimitReset(currentTimeWindow, timeMap, limitQuota);
+                    return new RateLimitResponse(false, buildHeaders(countInOverallTime, limitQuota, reset));
                 }
             }
         }
@@ -193,7 +191,7 @@ public class RateLimiter {
      * Handle logic for path rate limit setting for both address and client
      * use the type for differential the address/client
      */
-    protected RateLimitResponse isAllowByPath(String pathKey, String path, String type) {
+    protected synchronized RateLimitResponse isAllowByPath(String pathKey, String path, String type) {
         long currentTimeWindow = Instant.now().getEpochSecond();
         Map<String, Map<Long, AtomicLong>> pathTimeMap;
         LimitQuota limitQuota;
@@ -211,22 +209,23 @@ public class RateLimiter {
         } else {
             Long countInOverallTime = removeOldEntriesForUser(currentTimeWindow, timeMap, limitQuota.unit);
             if (countInOverallTime < limitQuota.value) {
-                //Handle new time windows
+                //Handle new time windows\
                 Long newCount = timeMap.getOrDefault(currentTimeWindow, new AtomicLong(0)).longValue() + 1;
                 timeMap.put(currentTimeWindow, new AtomicLong(newCount));
                 logger.debug("CurrentTimeWindow:" + currentTimeWindow +" Result:true "+ " Count:"+countInOverallTime);
-                return new RateLimitResponse(true, buildHeaders(countInOverallTime, limitQuota));
+                return new RateLimitResponse(true, null);
             } else {
-                return new RateLimitResponse(false, buildHeaders(countInOverallTime, limitQuota));
+                String reset = getRateLimitReset(currentTimeWindow, timeMap, limitQuota);
+                return new RateLimitResponse(false, buildHeaders(countInOverallTime, limitQuota, reset));
             }
         }
-        return new RateLimitResponse(true, buildHeaders(1L, limitQuota));
+        return new RateLimitResponse(true, null);
     }
 
     /**
      * Handle logic for Server type (key = server) rate limit
      */
-    public  RateLimitResponse isAllowByServer(LimitQuota limitQuota, String path) {
+    public synchronized RateLimitResponse isAllowByServer(LimitQuota limitQuota, String path) {
         long currentTimeWindow = Instant.now().getEpochSecond();
         Map<Long, AtomicLong> timeMap =  serverTimeMap.get(path);
         if (timeMap.isEmpty()) {
@@ -238,22 +237,39 @@ public class RateLimiter {
                 Long newCount = timeMap.getOrDefault(currentTimeWindow, new AtomicLong(0)).longValue() + 1;
                 timeMap.put(currentTimeWindow, new AtomicLong(newCount));
                 logger.debug("CurrentTimeWindow:" + currentTimeWindow +" Result:true "+ " Count:"+countInOverallTime);
-                return new RateLimitResponse(true, buildHeaders(countInOverallTime, limitQuota));
+                return new RateLimitResponse(true, null);
             } else {
-                return new RateLimitResponse(false, buildHeaders(countInOverallTime, limitQuota));
+                String reset = getRateLimitReset(currentTimeWindow, timeMap, limitQuota);
+                return new RateLimitResponse(false, buildHeaders(countInOverallTime, limitQuota, reset));
             }
         }
-        return new RateLimitResponse(true, buildHeaders(1L, limitQuota));
+        return new RateLimitResponse(true, null);
     }
 
-    private Map<String, String> buildHeaders(Long countInOverallTime, LimitQuota limitQuota) {
+    private String getRateLimitReset(Long currentTimeWindow, Map<Long, AtomicLong> timeMap,  LimitQuota limitQuota) {
+        String res = null;
+        if (TimeUnit.SECONDS.equals(limitQuota.unit)){
+            res = "1s";
+        } else {
+            Optional<Long> firstKey = timeMap.keySet().stream().findFirst();
+            long reset = getWindow(limitQuota.unit) + firstKey.get() - currentTimeWindow;
+            res = reset + "s";
+        }
+        return res;
+    }
+
+    private Map<String, String> buildHeaders(Long countInOverallTime, LimitQuota limitQuota, String reset) {
         Map<String, String> headers = new HashMap<>();
         headers.put(Constants.RATELIMIT_LIMIT, limitQuota.value + "/" + limitQuota.unit);
         headers.put(Constants.RATELIMIT_REMAINING, String.valueOf(limitQuota.value - countInOverallTime));
+        if (reset!=null) {
+            headers.put(Constants.RATELIMIT_RESET, reset);
+        }
+
         return headers;
     }
 
-    private synchronized long removeOldEntriesForUser( long currentTimeWindow, Map<Long, AtomicLong> timeWindowVSCountMap, TimeUnit unit)
+    private  long removeOldEntriesForUser( long currentTimeWindow, Map<Long, AtomicLong> timeWindowVSCountMap, TimeUnit unit)
     {
         List <Long> oldEntriesToBeDeleted=new ArrayList<>();
         long overallCount=0L;
