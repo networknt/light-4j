@@ -1,3 +1,0 @@
-singletons:
-  - com.networknt.limit.key.KeyResolver:
-      - com.networknt.limit.key.RemoteAddressKeyResolver
