@@ -16,6 +16,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ *  Rate limit logic for light-4j framework. The config will define in the limit.yml config file.
+ *
+ * By default Rate limit will handle on the server(service) level. But framework support client and address level limitation
+ *
+ * @author Gavin Chen
+ */
 public class RateLimiter {
 
     protected LimitConfig config;
@@ -67,7 +74,8 @@ public class RateLimiter {
                     });
                 }
             }
-
+            String addressKey = this.config.getAddressKeyResolver()==null? "com.networknt.limit.key.RemoteAddressKeyResolver":this.config.getAddressKeyResolver();
+            addressKeyResolver = (KeyResolver)Class.forName(addressKey).getDeclaredConstructor().newInstance();
         } else if (LimitKey.CLIENT.equals(config.getKey())) {
             if (this.config.getClient()!=null) {
                 if (this.config.getClient().getDirectMaps()!=null && !this.config.getClient().getDirectMaps().isEmpty()) {
@@ -90,12 +98,10 @@ public class RateLimiter {
 
                 }
             }
+            String clientIdKey = this.config.getClientIdKeyResolver()==null? "com.networknt.limit.key.JwtClientIdKeyResolver":this.config.getClientIdKeyResolver();
+            clientIdKeyResolver = (KeyResolver)Class.forName(clientIdKey).getDeclaredConstructor().newInstance();
         }
         //Initial Resolvers
-        String clientIdKey = this.config.getClientIdKeyResolver()==null? "com.networknt.limit.key.JwtClientIdKeyResolver":this.config.getClientIdKeyResolver();
-        String addressKey = this.config.getAddressKeyResolver()==null? "com.networknt.limit.key.RemoteAddressKeyResolver":this.config.getAddressKeyResolver();
-        clientIdKeyResolver = (KeyResolver)Class.forName(clientIdKey).getDeclaredConstructor().newInstance();
-        addressKeyResolver = (KeyResolver)Class.forName(addressKey).getDeclaredConstructor().newInstance();
     }
 
     public RateLimitResponse handleRequest(final HttpServerExchange exchange, LimitKey limitKey) {
@@ -111,7 +117,7 @@ public class RateLimiter {
                 addressDirectTimeMap.put(address, directMap);
             }
             if (addressPathTimeMap.containsKey(address)) {
-                String path = exchange.getRelativePath();
+                String path = exchange.getRequestPath();
                 return isAllowByPath(address, path, ADDRESS_TYPE);
             } else {
                 return isAllowDirect(address, rateLimit, ADDRESS_TYPE);
@@ -129,14 +135,14 @@ public class RateLimiter {
                 clientDirectTimeMap.put(clientId, directMap);
             }
             if (clientPathTimeMap.containsKey(clientId)) {
-                String path = exchange.getRelativePath();
+                String path = exchange.getRequestPath();
                 return isAllowByPath(clientId, path, CLIENT_TYPE);
             } else {
                 return isAllowDirect(clientId, rateLimit, CLIENT_TYPE);
             }
         } else  {
             //By default, the key is server
-            String path = exchange.getRelativePath();
+            String path = exchange.getRequestPath();
             LimitQuota quota;
             if (!serverTimeMap.containsKey(path)) {
                 serverTimeMap.put(path, new ConcurrentHashMap<>());
@@ -220,7 +226,7 @@ public class RateLimiter {
     /**
      * Handle logic for Server type (key = server) rate limit
      */
-    protected RateLimitResponse isAllowByServer(LimitQuota limitQuota, String path) {
+    public  RateLimitResponse isAllowByServer(LimitQuota limitQuota, String path) {
         long currentTimeWindow = Instant.now().getEpochSecond();
         Map<Long, AtomicLong> timeMap =  serverTimeMap.get(path);
         if (timeMap.isEmpty()) {
@@ -247,7 +253,7 @@ public class RateLimiter {
         return headers;
     }
 
-    private long removeOldEntriesForUser( long currentTimeWindow, Map<Long, AtomicLong> timeWindowVSCountMap, TimeUnit unit)
+    private synchronized long removeOldEntriesForUser( long currentTimeWindow, Map<Long, AtomicLong> timeWindowVSCountMap, TimeUnit unit)
     {
         List <Long> oldEntriesToBeDeleted=new ArrayList<>();
         long overallCount=0L;
@@ -273,4 +279,5 @@ public class RateLimiter {
             return 1;
         }
     }
+
 }

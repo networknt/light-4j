@@ -114,4 +114,5 @@ public class Constants {
     //Rate Limit
     public static final String RATELIMIT_LIMIT = "RateLimit-Limit";
     public static final String RATELIMIT_REMAINING = "RateLimit-Remaining";
+    public static final String RATELIMIT_RESET = "RateLimit-Reset";
 }
