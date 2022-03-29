@@ -18,7 +18,7 @@ package com.networknt.router;
 
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
-import com.networknt.router.middleware.SAMLTokenHandler;
+import com.networknt.handler.ProxyHandler;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.UndertowOptions;
 import io.undertow.server.HttpHandler;
@@ -41,7 +41,7 @@ public class RouterHandler implements HttpHandler {
 
     public RouterHandler() {
         config = RouterConfig.load();
-        ModuleRegistry.registerModule(ProxyHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(RouterConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(RouterHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(RouterConfig.CONFIG_NAME), null);
         // As we are building a client side router for the light platform, the assumption is the server will
         // be on HTTP 2.0 TSL always. No need to handle HTTP 1.1 case here.
         LoadBalancingRouterProxyClient client = new LoadBalancingRouterProxyClient();
@@ -57,6 +57,8 @@ public class RouterHandler implements HttpHandler {
                 .setMaxRequestTime(config.maxRequestTime)
                 .setReuseXForwarded(config.reuseXForwarded)
                 .setRewriteHostHeader(config.rewriteHostHeader)
+                .setUrlRewriteRules(config.urlRewriteRules)
+                .setMethodRewriteRules(config.methodRewriteRules)
                 .setNext(ResponseCodeHandler.HANDLE_404)
                 .build();
     }
