@@ -18,6 +18,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
 import org.xnio.channels.StreamSourceChannel;
+
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -70,7 +72,7 @@ public class ProxyBodyHandler implements MiddlewareHandler {
      */
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        if (shouldParseBody(exchange)) {
+        if (this.shouldParseBody(exchange)) {
             final StreamSourceChannel channel = exchange.getRequestChannel();
             int readBuffers = 0;
             PooledByteBuffer buffer = exchange.getConnection().getByteBufferPool().allocate();
@@ -97,11 +99,12 @@ public class ProxyBodyHandler implements MiddlewareHandler {
 
                 Connectors.ungetRequestBytes(exchange, buffer);
                 Connectors.resetRequestChannel(exchange);
-            } catch (Exception | Error e) {
-                if (buffer != null && buffer.isOpen()) {
+            } catch (IOException e) {
+                if (buffer.isOpen()) {
                     IoUtils.safeClose(buffer);
                 }
-                throw e;
+                logger.error(e.getLocalizedMessage(), e);
+                return;
             }
             String requestBody = StandardCharsets.UTF_8.decode(buffer.getBuffer().duplicate()).toString();
             boolean attached = attachJsonBody(exchange, requestBody);
@@ -134,58 +137,41 @@ public class ProxyBodyHandler implements MiddlewareHandler {
      * @param string   raw request body
      */
     private boolean attachJsonBody(final HttpServerExchange exchange, String string) {
+        Object body;
+        string = string.trim();
+        if (string.startsWith("{")) {
+            try {
+                body = Config.getInstance().getMapper().readValue(string, new TypeReference<Map<String, Object>>() {
+                });
+            } catch (JsonProcessingException e) {
+                if(exchange.getConnection().getBufferSize() <= string.length()) {
+                    setExchangeStatus(exchange, PAYLOAD_TOO_LARGE, "application/json");
+                } else {
+                    setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
+                }
+                return false;
+            }
+        } else if (string.startsWith("[")) {
+            try {
+                body = Config.getInstance().getMapper().readValue(string, new TypeReference<List<Object>>() {
+                });
+            } catch (JsonProcessingException e) {
+                if(exchange.getConnection().getBufferSize() <= string.length()) {
+                    setExchangeStatus(exchange, PAYLOAD_TOO_LARGE, "application/json");
+                } else {
+                    setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
+                }
+                return false;
+            }
+        } else {
+            // error here. The content type in head doesn't match the body.
+            setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
+            return false;
+        }
         if (config.isCacheRequestBody()) {
             exchange.putAttachment(REQUEST_BODY_STRING, string);
         }
-        Object body;
-        if (this.isValidJson(string)) {
-            string = string.trim();
-            if (string.startsWith("{")) {
-                try {
-                    body = Config.getInstance().getMapper().readValue(string, new TypeReference<Map<String, Object>>() {
-                    });
-                } catch (JsonProcessingException e) {
-                    setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
-                    return false;
-                }
-            } else if (string.startsWith("[")) {
-                try {
-                    body = Config.getInstance().getMapper().readValue(string, new TypeReference<List<Object>>() {
-                    });
-                } catch (JsonProcessingException e) {
-                    setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
-                    return false;
-                }
-            } else {
-                // error here. The content type in head doesn't match the body.
-                setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
-                return false;
-            }
-            exchange.putAttachment(REQUEST_BODY, body);
-        } else {
-            if(exchange.getConnection().getBufferSize() <= string.length()) {
-                setExchangeStatus(exchange, PAYLOAD_TOO_LARGE, "application/json");
-            } else {
-                setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
-            }
-            return false;
-        }
-        return true;
-    }
-
-    private boolean isValidJson(String body) {
-        body = body.trim();
-        try {
-            Config.getInstance().getMapper().readValue(body, new TypeReference<Map<String, Object>>() {
-            });
-        } catch (JsonProcessingException mapException) {
-            try {
-                Config.getInstance().getMapper().readValue(body, new TypeReference<List<Object>>() {
-                });
-            } catch (JsonProcessingException listException) {
-                return false;
-            }
-        }
+        exchange.putAttachment(REQUEST_BODY, body);
         return true;
     }
 
