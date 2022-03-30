@@ -50,13 +50,13 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class LimitHandlerTest {
     static final Logger logger = LoggerFactory.getLogger(LimitHandlerTest.class);
-    static final LimitConfig config = (LimitConfig)Config.getInstance().getJsonObjectConfig(LimitConfig.CONFIG_NAME, LimitConfig.class);
+    static final LimitConfig config = LimitConfig.load();
     static Undertow server = null;
 
     @BeforeClass
     public static void setUp() {
         if(server == null) {
-            logger.info("starting server");
+            logger.info("starting serverconfig");
             HttpHandler handler = getTestHandler();
             LimitHandler limitHandler = new LimitHandler();
             limitHandler.setNext(handler);
