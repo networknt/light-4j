@@ -59,14 +59,12 @@ public final class ClientConfig {
     public static final long DEFAULT_CONNECTION_EXPIRE_TIME = 1000000;
     public static final int DEFAULT_MAX_CONNECTION_PER_HOST = 1000;
     public static final int DEFAULT_MIN_CONNECTION_PER_HOST = 250;
-    public static final String DEFAULT_TRANSFER_ENCODING = "chunked";
 
     private static final String CONNECTION_POOL_SIZE = "connectionPoolSize";
     private static final String MAX_REQUEST_PER_CONNECTION = "maxReqPerConn";
     private static final String CONNECTION_EXPIRE_TIME = "connectionExpireTime";
     private static final String MAX_CONNECTION_NUM_PER_HOST = "maxConnectionNumPerHost";
     private static final String MIN_CONNECTION_NUM_PER_HOST = "minConnectionNumPerHost";
-    private static final String TRANSFER_ENCODING = "transferEncoding";
 
     private final Config config;
     private final Map<String, Object> mappedConfig;
@@ -90,7 +88,6 @@ public final class ClientConfig {
     private long connectionExpireTime = DEFAULT_CONNECTION_EXPIRE_TIME;
     private int maxConnectionNumPerHost = DEFAULT_MAX_CONNECTION_PER_HOST;
     private int minConnectionNumPerHost = DEFAULT_MIN_CONNECTION_PER_HOST;
-    private String transferEncoding = DEFAULT_TRANSFER_ENCODING;
 
     private static ClientConfig instance;
 
@@ -189,9 +186,6 @@ public final class ClientConfig {
         }
         if (requestConfig.containsKey(MIN_CONNECTION_NUM_PER_HOST)) {
             minConnectionNumPerHost = (int) requestConfig.get(MIN_CONNECTION_NUM_PER_HOST);
-        }
-        if(requestConfig.containsKey(TRANSFER_ENCODING)) {
-            transferEncoding = (String)requestConfig.get(TRANSFER_ENCODING);
         }
     }
 
@@ -314,6 +308,4 @@ public final class ClientConfig {
     }
 
     public boolean isMultipleAuthServers() { return multipleAuthServers; }
-
-    public String getTransferEncoding() { return transferEncoding; }
 }

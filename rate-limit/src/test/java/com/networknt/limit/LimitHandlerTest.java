@@ -19,6 +19,8 @@ package com.networknt.limit;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
+import com.networknt.limit.key.KeyResolver;
+import com.networknt.service.SingletonServiceFactory;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;

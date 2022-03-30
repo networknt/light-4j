@@ -71,7 +71,7 @@ public class ProxyBodyHandler implements MiddlewareHandler {
      */
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        if(shouldParseBody(exchange)) {
+        if (shouldParseBody(exchange)) {
             final StreamSourceChannel channel = exchange.getRequestChannel();
             int readBuffers = 0;
             PooledByteBuffer buffer = exchange.getConnection().getByteBufferPool().allocate();
@@ -110,7 +110,6 @@ public class ProxyBodyHandler implements MiddlewareHandler {
         Handler.next(exchange, next);
     }
 
-
     /**
      * Check to make sure we should actually run the body parse on the current request.
      *
@@ -125,7 +124,7 @@ public class ProxyBodyHandler implements MiddlewareHandler {
                 exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE) != null &&
                 exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE).startsWith("application/json");
     }
-
+    
     /**
      * Method used to parse the body into a Map or a List and attach it into exchange
      *
