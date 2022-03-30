@@ -54,6 +54,7 @@ public class ProxyBodyHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(ProxyBodyHandler.class);
     static final String CONTENT_TYPE_MISMATCH = "ERR10015";
     static final String PAYLOAD_TOO_LARGE = "ERR10068";
+    static final String GENERIC_EXCEPTION = "ERR10014";
 
     public static final BodyConfig config = (BodyConfig) Config.getInstance().getJsonObjectConfig(BodyConfig.CONFIG_NAME, BodyConfig.class);
 
@@ -104,6 +105,7 @@ public class ProxyBodyHandler implements MiddlewareHandler {
                     IoUtils.safeClose(buffer);
                 }
                 logger.error(e.getLocalizedMessage(), e);
+                setExchangeStatus(exchange, GENERIC_EXCEPTION, e.getMessage());
                 return;
             }
             String requestBody = StandardCharsets.UTF_8.decode(buffer.getBuffer().duplicate()).toString();
