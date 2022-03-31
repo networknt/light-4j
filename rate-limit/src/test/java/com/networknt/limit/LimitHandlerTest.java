@@ -91,10 +91,6 @@ public class LimitHandlerTest {
                     } catch (InterruptedException e) {
 
                     }
-                    // test the KeyResolver with IP address defined in the service.yml
-                    KeyResolver resolver = SingletonServiceFactory.getBean(KeyResolver.class);
-                    String key = resolver.resolve(exchange);
-                    System.err.println("key = " + key);
                     exchange.getResponseSender().send("OK");
                 });
     }

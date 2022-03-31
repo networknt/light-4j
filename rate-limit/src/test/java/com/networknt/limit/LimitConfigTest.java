@@ -73,4 +73,11 @@ public class LimitConfigTest {
 
     }
 
+    @Test
+    public void testUser() {
+        LimitConfig.RateLimitSet limitUser =  limitConfig.getUser();
+        Assert.assertEquals(limitUser.getDirectMaps().size(), 3);
+
+    }
+
 }

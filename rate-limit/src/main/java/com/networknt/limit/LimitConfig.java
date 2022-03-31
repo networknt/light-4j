@@ -20,6 +20,8 @@ import com.networknt.config.Config;
 
 import java.util.*;
 
+import static com.networknt.limit.LimitKey.USER;
+
 /**
  * Config class for limit module
  *
@@ -40,6 +42,7 @@ public class LimitConfig {
     private static final String SERVER = "server";
     private static final String ADDRESS = "address";
     private static final String CLIENT = "client";
+    private static final String USER = "user";
     public static final String SEPARATE_KEY = "#";
 
 
@@ -56,6 +59,7 @@ public class LimitConfig {
     Map<String, LimitQuota> server;
     RateLimitSet address;
     RateLimitSet client;
+    RateLimitSet user;
     private  Map<String, Object> mappedConfig;
     private Config config;
 
@@ -172,6 +176,13 @@ public class LimitConfig {
         this.client = client;
     }
 
+    public RateLimitSet getUser() {
+        return user;
+    }
+
+    public void setUser(RateLimitSet user) {
+        this.user = user;
+    }
 
     Map<String, Object> getMappedConfig() {
         return mappedConfig;
@@ -279,6 +290,31 @@ public class LimitConfig {
             });
 
         }
+
+        if (getMappedConfig().get(USER)!=null)  {
+            Map<String, Object> user_config = (Map<String, Object>)getMappedConfig().get(USER);
+            user = new RateLimitSet();
+
+            user_config.forEach((k, o)->{
+                if (o instanceof String) {
+                    List<String> limits = Arrays.asList(((String)o).split(" "));
+                    List<LimitQuota> limitQuota = new ArrayList<>();
+                    limits.stream().forEach(l->limitQuota.add(new LimitQuota(l)));
+                    user.addDirectMap(k, limitQuota);
+                } else if (o instanceof Map) {
+                    Map<String, String> path = (Map<String, String>)o;
+                    path.forEach((p, v)->{
+                        List<String> limits = Arrays.asList(v.split(" "));
+                        String key = k + SEPARATE_KEY + v;
+                        List<LimitQuota> limitQuotas = new ArrayList<>();
+                        limits.stream().forEach(l->limitQuotas.add(new LimitQuota(l)));
+                        user.addDirectMap(key, limitQuotas);
+                    });
+                }
+            });
+
+        }
+
     }
 
     public List<String> getAddressList() {
@@ -297,7 +333,7 @@ public class LimitConfig {
     public List<String> getClientList() {
         List<String> clientList = new ArrayList<>();
         if (getClient().getDirectMaps()!=null && !getClient().getDirectMaps().isEmpty()) {
-            getAddress().getDirectMaps().forEach((k,v)->{
+            getClient().getDirectMaps().forEach((k,v)->{
                 String client = Arrays.asList(k.split(SEPARATE_KEY)).get(0);
                 if (!clientList.contains(client)) {
                     clientList.add(client);
@@ -305,6 +341,19 @@ public class LimitConfig {
             });
         }
         return clientList;
+    }
+
+    public List<String> getUserList() {
+        List<String> userList = new ArrayList<>();
+        if (getClient().getDirectMaps()!=null && !getUser().getDirectMaps().isEmpty()) {
+            getUser().getDirectMaps().forEach((k,v)->{
+                String user = Arrays.asList(k.split(SEPARATE_KEY)).get(0);
+                if (!userList.contains(user)) {
+                    userList.add(user);
+                }
+            });
+        }
+        return userList;
     }
 
     class RateLimitSet{
