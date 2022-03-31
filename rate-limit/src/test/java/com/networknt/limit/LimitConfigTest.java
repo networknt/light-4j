@@ -20,6 +20,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -62,16 +63,13 @@ public class LimitConfigTest {
     @Test
     public void testAddress() {
         LimitConfig.RateLimitSet limitAddress =  limitConfig.getAddress();
-        Assert.assertEquals(limitAddress.getDirectMaps().size(), 2);
-        Assert.assertEquals(limitAddress.getPathMaps().size(), 1);
-
+        Assert.assertEquals(limitAddress.getDirectMaps().size(), 4);
     }
 
     @Test
     public void testClient() {
         LimitConfig.RateLimitSet limitClient =  limitConfig.getClient();
-        Assert.assertEquals(limitClient.getDirectMaps().size(), 2);
-        Assert.assertEquals(limitClient.getPathMaps().size(), 1);
+        Assert.assertEquals(limitClient.getDirectMaps().size(), 4);
 
     }
 

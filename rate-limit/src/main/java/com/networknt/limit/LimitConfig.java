@@ -40,6 +40,7 @@ public class LimitConfig {
     private static final String SERVER = "server";
     private static final String ADDRESS = "address";
     private static final String CLIENT = "client";
+    public static final String SEPARATE_KEY = "#";
 
 
     boolean enabled;
@@ -238,14 +239,18 @@ public class LimitConfig {
             address_config.forEach((k, o)->{
                 if (o instanceof String) {
                     List<String> limits = Arrays.asList(((String)o).split(" "));
-                    List<LimitQuota> limitQuota = new ArrayList<>();
-                    limits.stream().forEach(l->limitQuota.add(new LimitQuota(l)));
-                    address.addDirectMap(k, limitQuota);
+                    List<LimitQuota> limitQuotas = new ArrayList<>();
+                    limits.stream().forEach(l->limitQuotas.add(new LimitQuota(l)));
+                    address.addDirectMap(k, limitQuotas);
                 } else if (o instanceof Map) {
                     Map<String, String> path = (Map<String, String>)o;
-                    Map<String, LimitQuota> pathConfig = new HashMap<>();
-                    path.forEach((p, v)->pathConfig.put(p, new LimitQuota(v)));
-                    address.addPathMap(k, pathConfig);
+                    path.forEach((p, v)->{
+                        List<String> limits = Arrays.asList(v.split(" "));
+                        String key = k + SEPARATE_KEY + p;
+                        List<LimitQuota> limitQuotas = new ArrayList<>();
+                        limits.stream().forEach(l->limitQuotas.add(new LimitQuota(l)));
+                        address.addDirectMap(key, limitQuotas);
+                    });
                 }
             });
 
@@ -263,9 +268,13 @@ public class LimitConfig {
                     client.addDirectMap(k, limitQuota);
                 } else if (o instanceof Map) {
                     Map<String, String> path = (Map<String, String>)o;
-                    Map<String, LimitQuota> pathConfig = new HashMap<>();
-                    path.forEach((p, v)->pathConfig.put(p, new LimitQuota(v)));
-                    client.addPathMap(k, pathConfig);
+                    path.forEach((p, v)->{
+                        List<String> limits = Arrays.asList(v.split(" "));
+                        String key = k + SEPARATE_KEY + v;
+                        List<LimitQuota> limitQuotas = new ArrayList<>();
+                        limits.stream().forEach(l->limitQuotas.add(new LimitQuota(l)));
+                        client.addDirectMap(key, limitQuotas);
+                    });
                 }
             });
 
@@ -276,13 +285,12 @@ public class LimitConfig {
         List<String> addressList = new ArrayList<>();
        if (getAddress().getDirectMaps()!=null && !getAddress().getDirectMaps().isEmpty()) {
            getAddress().getDirectMaps().forEach((k,v)->{
-               addressList.add(k);
+               String address = Arrays.asList(k.split(SEPARATE_KEY)).get(0);
+               if (!addressList.contains(address)) {
+                   addressList.add(address);
+               }
            });
         }
-        if (getAddress().getPathMaps()!=null && !getAddress().getPathMaps().isEmpty()) {
-            getAddress().getPathMaps().forEach((k,v)->{
-                addressList.add(k);
-            });        }
         return addressList;
     }
 
@@ -290,12 +298,10 @@ public class LimitConfig {
         List<String> clientList = new ArrayList<>();
         if (getClient().getDirectMaps()!=null && !getClient().getDirectMaps().isEmpty()) {
             getAddress().getDirectMaps().forEach((k,v)->{
-                clientList.add(k);
-            });
-        }
-        if (getClient().getPathMaps()!=null && !getClient().getPathMaps().isEmpty()) {
-            getAddress().getPathMaps().forEach((k,v)->{
-                clientList.add(k);
+                String client = Arrays.asList(k.split(SEPARATE_KEY)).get(0);
+                if (!clientList.contains(client)) {
+                    clientList.add(client);
+                }
             });
         }
         return clientList;
@@ -303,7 +309,6 @@ public class LimitConfig {
 
     class RateLimitSet{
         Map<String, List<LimitQuota>>  directMaps;
-        Map<String, Map<String,LimitQuota>>  pathMaps;
 
         public RateLimitSet() {
 
@@ -324,19 +329,5 @@ public class LimitConfig {
             this.directMaps.put(key, limitQuotas);
         }
 
-        public Map<String, Map<String, LimitQuota>> getPathMaps() {
-            return pathMaps;
-        }
-
-        public void setPathMaps(Map<String, Map<String, LimitQuota>> pathMaps) {
-            this.pathMaps = pathMaps;
-        }
-
-        public void addPathMap(String key, Map<String, LimitQuota> pathMap) {
-            if (pathMaps==null) {
-                pathMaps = new HashMap<>();
-            }
-            this.pathMaps.put(key, pathMap);
-        }
     }
 }

@@ -21,7 +21,6 @@ import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.status.HttpStatus;
-import com.networknt.status.Status;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
@@ -48,6 +47,7 @@ public class LimitHandler implements MiddlewareHandler {
 
     public LimitHandler() {
         config = LimitConfig.load();
+        logger.info("RateLimit started with key type:" + config.getKey().name());
     }
 
     @Override
@@ -93,7 +93,7 @@ public class LimitHandler implements MiddlewareHandler {
 
     @Override
     public void reload() {
-        config =LimitConfig.load();
+        config = LimitConfig.load();
     }
 
 }

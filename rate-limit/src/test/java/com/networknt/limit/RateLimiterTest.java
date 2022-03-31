@@ -37,7 +37,8 @@ public class RateLimiterTest {
         Callable<RateLimitResponse> task =this::callByServerAsync;
         List<Callable<RateLimitResponse>> tasks = Collections.nCopies(12, task);
 
-        ExecutorService executorService = Executors.newFixedThreadPool(2);
+        //change the thread number here to test multi-threads
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
         List<Future<RateLimitResponse>> futures = executorService.invokeAll(tasks);
         for (Future<RateLimitResponse> future : futures) {
             responseList.add(future.get());
@@ -55,7 +56,7 @@ public class RateLimiterTest {
 
     public RateLimitResponse callByServerAsync() throws Exception {
         LimitQuota limitQuota = limitConfig.getServer().get("/v1/address");
-        return rateLimiter.isAllowByServer(limitQuota, "/v1/address");
+        return rateLimiter.isAllowByServer( "/v1/address");
     }
 
     @Test
@@ -77,7 +78,7 @@ public class RateLimiterTest {
     public RateLimitResponse callByClientAsync() throws Exception {
         String clientId = "f7d42348-c647-4efb-a52d-4c5787421e74";
         List<LimitQuota> rateLimit = limitConfig.getClient().directMaps.get(clientId);
-        return rateLimiterClient.isAllowDirect(clientId, rateLimit, RateLimiter.CLIENT_TYPE);
+        return rateLimiterClient.isAllowDirect(clientId, "/v1/petstore", RateLimiter.CLIENT_TYPE);
     }
 
 
@@ -99,7 +100,7 @@ public class RateLimiterTest {
 
     public RateLimitResponse callByAddressAsync() throws Exception {
         String address = "192.168.1.102";
-        return rateLimiterAddress.isAllowByPath(address, "/v1/address", RateLimiter.ADDRESS_TYPE);
+        return rateLimiterAddress.isAllowDirect(address, "/v1/address", RateLimiter.ADDRESS_TYPE);
     }
 
 }
