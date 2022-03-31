@@ -478,7 +478,7 @@ public abstract class Config {
                     }
                 }
             } catch (Exception e) {
-                logger.error("Exception", e);
+                logger.error("Exception on loading " + ymlFilename, e);
                 throw new RuntimeException("Unable to load " + ymlFilename + " as map.", e);
             }
             return config;

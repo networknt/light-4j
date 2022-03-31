@@ -1,4 +1,4 @@
-package com.networknt.router;
+package com.networknt.handler.config;
 
 public class MethodRewriteRule {
     String requestPath;

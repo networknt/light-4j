@@ -16,13 +16,19 @@
 
 package com.networknt.limit;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.status.HttpStatus;
+import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.util.HttpString;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A handler which limits the maximum number of concurrent requests.  Requests beyond the limit will
@@ -31,18 +37,36 @@ import io.undertow.server.HttpServerExchange;
  * @author Steve Hu
  */
 public class LimitHandler implements MiddlewareHandler {
-    public static LimitConfig config = (LimitConfig)Config.getInstance().getJsonObjectConfig(LimitConfig.CONFIG_NAME, LimitConfig.class);
+    public static LimitConfig config;
+    static final Logger logger = LoggerFactory.getLogger(LimitHandler.class);
 
     private volatile HttpHandler next;
-    private final RequestLimit requestLimit;
+    private  RateLimiter rateLimiter;
+    private static final ObjectMapper mapper = Config.getInstance().getMapper();
+
 
     public LimitHandler() {
-        this.requestLimit = new RequestLimit(config.concurrentRequest, config.queueSize);
+        config = LimitConfig.load();
+        logger.info("RateLimit started with key type:" + config.getKey().name());
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        requestLimit.handleRequest(exchange, Handler.getNext(exchange, next));
+        rateLimiter = new RateLimiter(config);
+        RateLimitResponse rateLimitResponse = rateLimiter.handleRequest(exchange, config.getKey());
+
+
+        if (rateLimitResponse.allow) {
+            Handler.next(exchange, next);
+        } else {
+            exchange.getResponseHeaders().add(new HttpString(Constants.RATELIMIT_LIMIT), rateLimitResponse.getHeaders().get(Constants.RATELIMIT_LIMIT));
+            exchange.getResponseHeaders().add(new HttpString(Constants.RATELIMIT_REMAINING), rateLimitResponse.getHeaders().get(Constants.RATELIMIT_REMAINING));
+            exchange.getResponseHeaders().add(new HttpString(Constants.RATELIMIT_RESET), rateLimitResponse.getHeaders().get(Constants.RATELIMIT_RESET));
+
+            exchange.getResponseHeaders().add(new HttpString("Content-Type"), "application/json");
+            exchange.setStatusCode(config.getErrorCode()==0 ? HttpStatus.TOO_MANY_REQUESTS.value():config.getErrorCode());
+            exchange.getResponseSender().send(mapper.writeValueAsString(rateLimitResponse));
+        }
     }
 
     @Override
@@ -69,7 +93,7 @@ public class LimitHandler implements MiddlewareHandler {
 
     @Override
     public void reload() {
-        config = (LimitConfig)Config.getInstance().getJsonObjectConfig(LimitConfig.CONFIG_NAME, LimitConfig.class);
+        config = LimitConfig.load();
     }
 
 }
