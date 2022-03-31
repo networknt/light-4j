@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.networknt.router;
+package com.networknt.handler;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -30,6 +30,8 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import java.security.cert.CertificateEncodingException;
 
+import com.networknt.handler.config.MethodRewriteRule;
+import com.networknt.handler.config.UrlRewriteRule;
 import io.undertow.UndertowLogger;
 import io.undertow.UndertowMessages;
 import io.undertow.server.handlers.ResponseCodeHandler;
@@ -46,7 +48,6 @@ import org.xnio.StreamConnection;
 import org.xnio.XnioExecutor;
 import org.xnio.channels.StreamSinkChannel;
 import io.undertow.attribute.ExchangeAttribute;
-import io.undertow.attribute.ExchangeAttributes;
 import io.undertow.client.ClientCallback;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientExchange;
@@ -97,6 +98,9 @@ import java.util.stream.Collectors;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public class ProxyHandler implements HttpHandler {
+
+    private static final int DEFAULT_MAX_RETRY_ATTEMPTS = Integer.getInteger("maxRetries", 1);
+
     private static final Logger logger = LoggerFactory.getLogger(ProxyHandler.class);
 
     public static final String UTF_8 = StandardCharsets.UTF_8.name();
@@ -107,6 +111,7 @@ public class ProxyHandler implements HttpHandler {
 
     private final ProxyClient proxyClient;
     private final int maxRequestTime;
+
     /**
      * Map of additional headers to add to the request.
      */
@@ -117,16 +122,20 @@ public class ProxyHandler implements HttpHandler {
     private volatile boolean rewriteHostHeader;
     private volatile boolean reuseXForwarded;
     private volatile int maxConnectionRetries;
+    private volatile List<UrlRewriteRule> urlRewriteRules;
+    private volatile List<MethodRewriteRule> methodRewriteRules;
 
     private final Predicate idempotentRequestPredicate;
 
-    ProxyHandler(ProxyHandler.Builder builder) {
+    ProxyHandler(Builder builder) {
         this.proxyClient = builder.proxyClient;
         this.maxRequestTime = builder.maxRequestTime;
         this.next = builder.next;
         this.rewriteHostHeader = builder.rewriteHostHeader;
         this.reuseXForwarded = builder.reuseXForwarded;
         this.maxConnectionRetries = builder.maxConnectionRetries;
+        this.urlRewriteRules = builder.urlRewriteRules;
+        this.methodRewriteRules = builder.methodRewriteRules;
         this.idempotentRequestPredicate = builder.idempotentRequestPredicate;
         for(Map.Entry<HttpString, ExchangeAttribute> e : builder.requestHeaders.entrySet()) {
             requestHeaders.put(e.getKey(), e.getValue());
@@ -152,7 +161,7 @@ public class ProxyHandler implements HttpHandler {
         if(target instanceof ProxyClient.MaxRetriesProxyTarget) {
             maxRetries = Math.max(maxRetries, ((ProxyClient.MaxRetriesProxyTarget) target).getMaxRetries());
         }
-        final ProxyHandler.ProxyClientHandler clientHandler = new ProxyHandler.ProxyClientHandler(exchange, target, timeout, maxRetries, idempotentRequestPredicate);
+        final ProxyClientHandler clientHandler = new ProxyClientHandler(exchange, target, timeout, maxRetries, idempotentRequestPredicate);
         if (timeout > 0) {
             final XnioExecutor.Key key = WorkerUtils.executeAfter(exchange.getIoThread(), new Runnable() {
                 @Override
@@ -232,7 +241,7 @@ public class ProxyHandler implements HttpHandler {
         @Override
         public void completed(final HttpServerExchange exchange, final ProxyConnection connection) {
             exchange.putAttachment(CONNECTION, connection);
-            exchange.dispatch(SameThreadExecutor.INSTANCE, new ProxyHandler.ProxyAction(connection, exchange, requestHeaders, rewriteHostHeader, reuseXForwarded, exchange.isRequestComplete() ? this : null, idempotentPredicate));
+            exchange.dispatch(SameThreadExecutor.INSTANCE, new ProxyAction(connection, exchange, requestHeaders, rewriteHostHeader, reuseXForwarded, exchange.isRequestComplete() ? this : null, idempotentPredicate, urlRewriteRules, methodRewriteRules));
         }
 
         @Override
@@ -296,12 +305,14 @@ public class ProxyHandler implements HttpHandler {
         private final Map<HttpString, ExchangeAttribute> requestHeaders;
         private final boolean rewriteHostHeader;
         private final boolean reuseXForwarded;
-        private final ProxyHandler.ProxyClientHandler proxyClientHandler;
+        private final ProxyClientHandler proxyClientHandler;
         private final Predicate idempotentPredicate;
-        private final RouterConfig config = RouterConfig.load();
+        private final List<UrlRewriteRule> urlRewriteRules;
+        private final List<MethodRewriteRule> methodRewriteRules;
 
         ProxyAction(final ProxyConnection clientConnection, final HttpServerExchange exchange, Map<HttpString, ExchangeAttribute> requestHeaders,
-                    boolean rewriteHostHeader, boolean reuseXForwarded, ProxyHandler.ProxyClientHandler proxyClientHandler, Predicate idempotentPredicate) {
+                boolean rewriteHostHeader, boolean reuseXForwarded, ProxyClientHandler proxyClientHandler, Predicate idempotentPredicate,
+                List<UrlRewriteRule> urlRewriteRules, List<MethodRewriteRule> methodRewriteRules) {
             this.clientConnection = clientConnection;
             this.exchange = exchange;
             this.requestHeaders = requestHeaders;
@@ -309,6 +320,8 @@ public class ProxyHandler implements HttpHandler {
             this.reuseXForwarded = reuseXForwarded;
             this.proxyClientHandler = proxyClientHandler;
             this.idempotentPredicate = idempotentPredicate;
+            this.urlRewriteRules = urlRewriteRules;
+            this.methodRewriteRules = methodRewriteRules;
         }
 
         @Override
@@ -337,9 +350,9 @@ public class ProxyHandler implements HttpHandler {
                 requestURI.append(clientConnection.getTargetPath());
             }
             // handle the url rewrite here.
-            if(config.getUrlRewriteRules().size() > 0) {
+            if(urlRewriteRules != null && urlRewriteRules.size() > 0) {
                 boolean matched = false;
-                for(UrlRewriteRule rule : config.urlRewriteRules) {
+                for(UrlRewriteRule rule : urlRewriteRules) {
                     Matcher matcher = rule.getPattern().matcher(targetURI);
                     if(matcher.matches()) {
                         matched = true;
@@ -361,11 +374,11 @@ public class ProxyHandler implements HttpHandler {
             }
             // handler the method rewrite here.
             HttpString method = exchange.getRequestMethod();
-            if(config.getMethodRewriteRules().size() > 0) {
-                for(MethodRewriteRule rule: config.getMethodRewriteRules()) {
-                    if(targetURI.equals(rule.requestPath) && method.toString().equals(rule.getSourceMethod())) {
+            if(methodRewriteRules != null && methodRewriteRules.size() > 0) {
+                for(MethodRewriteRule rule: methodRewriteRules) {
+                    if(targetURI.equals(rule.getRequestPath()) && method.toString().equals(rule.getSourceMethod())) {
                         if(logger.isDebugEnabled()) logger.debug("Rewrite HTTP method from " + rule.getSourceMethod() + " to " + rule.getTargetMethod());
-                        method = new HttpString(rule.targetMethod);
+                        method = new HttpString(rule.getTargetMethod());
                     }
                 }
             }
@@ -560,7 +573,7 @@ public class ProxyHandler implements HttpHandler {
                                             path = path.substring(0, i);
                                         }
 
-                                        exchange.dispatch(SameThreadExecutor.INSTANCE, new ProxyHandler.ProxyAction(new ProxyConnection(pushedRequest.getConnection(), path), exchange, requestHeaders, rewriteHostHeader, reuseXForwarded, null, idempotentPredicate));
+                                        exchange.dispatch(SameThreadExecutor.INSTANCE, new ProxyAction(new ProxyConnection(pushedRequest.getConnection(), path), exchange, requestHeaders, rewriteHostHeader, reuseXForwarded, null, idempotentPredicate, urlRewriteRules, methodRewriteRules));
                                     }
                                 });
                                 return true;
@@ -569,15 +582,15 @@ public class ProxyHandler implements HttpHandler {
                     }
 
 
-                    result.setResponseListener(new ProxyHandler.ResponseCallback(exchange, proxyClientHandler, idempotentPredicate));
-                    final ProxyHandler.IoExceptionHandler handler = new ProxyHandler.IoExceptionHandler(exchange, clientConnection.getConnection());
+                    result.setResponseListener(new ResponseCallback(exchange, proxyClientHandler, idempotentPredicate));
+                    final IoExceptionHandler handler = new IoExceptionHandler(exchange, clientConnection.getConnection());
                     if(requiresContinueResponse) {
                         try {
                             if(!result.getRequestChannel().flush()) {
                                 result.getRequestChannel().getWriteSetter().set(ChannelListeners.flushingChannelListener(new ChannelListener<StreamSinkChannel>() {
                                     @Override
                                     public void handleEvent(StreamSinkChannel channel) {
-                                        Transfer.initiateTransfer(exchange.getRequestChannel(), result.getRequestChannel(), ChannelListeners.closingChannelListener(), new ProxyHandler.HTTPTrailerChannelListener(exchange, result, exchange, proxyClientHandler, idempotentPredicate), handler, handler, exchange.getConnection().getByteBufferPool());
+                                        Transfer.initiateTransfer(exchange.getRequestChannel(), result.getRequestChannel(), ChannelListeners.closingChannelListener(), new HTTPTrailerChannelListener(exchange, result, exchange, proxyClientHandler, idempotentPredicate), handler, handler, exchange.getConnection().getByteBufferPool());
 
                                     }
                                 }, handler));
@@ -588,7 +601,7 @@ public class ProxyHandler implements HttpHandler {
                             handler.handleException(result.getRequestChannel(), e);
                         }
                     }
-                    ProxyHandler.HTTPTrailerChannelListener trailerListener = new ProxyHandler.HTTPTrailerChannelListener(exchange, result, exchange, proxyClientHandler, idempotentPredicate);
+                    HTTPTrailerChannelListener trailerListener = new HTTPTrailerChannelListener(exchange, result, exchange, proxyClientHandler, idempotentPredicate);
                     if(!exchange.isRequestComplete()) {
                         Transfer.initiateTransfer(exchange.getRequestChannel(), result.getRequestChannel(), ChannelListeners.closingChannelListener(), trailerListener, handler, handler, exchange.getConnection().getByteBufferPool());
                     } else {
@@ -607,7 +620,7 @@ public class ProxyHandler implements HttpHandler {
         }
     }
 
-    static void handleFailure(HttpServerExchange exchange, ProxyHandler.ProxyClientHandler proxyClientHandler, Predicate idempotentRequestPredicate, IOException e) {
+    static void handleFailure(HttpServerExchange exchange, ProxyClientHandler proxyClientHandler, Predicate idempotentRequestPredicate, IOException e) {
         UndertowLogger.PROXY_REQUEST_LOGGER.proxyRequestFailed(exchange.getRequestURI(), e);
         if(exchange.isResponseStarted()) {
             IoUtils.safeClose(exchange.getConnection());
@@ -622,10 +635,10 @@ public class ProxyHandler implements HttpHandler {
     private static final class ResponseCallback implements ClientCallback<ClientExchange> {
 
         private final HttpServerExchange exchange;
-        private final ProxyHandler.ProxyClientHandler proxyClientHandler;
+        private final ProxyClientHandler proxyClientHandler;
         private final Predicate idempotentPredicate;
 
-        private ResponseCallback(HttpServerExchange exchange, ProxyHandler.ProxyClientHandler proxyClientHandler, Predicate idempotentPredicate) {
+        private ResponseCallback(HttpServerExchange exchange, ProxyClientHandler proxyClientHandler, Predicate idempotentPredicate) {
             this.exchange = exchange;
             this.proxyClientHandler = proxyClientHandler;
             this.idempotentPredicate = idempotentPredicate;
@@ -657,7 +670,7 @@ public class ProxyHandler implements HttpHandler {
                         try {
                             clientChannel = result.getConnection().performUpgrade();
 
-                            final ProxyHandler.ClosingExceptionHandler handler = new ProxyHandler.ClosingExceptionHandler(streamConnection, clientChannel);
+                            final ClosingExceptionHandler handler = new ClosingExceptionHandler(streamConnection, clientChannel);
                             Transfer.initiateTransfer(clientChannel.getSourceChannel(), streamConnection.getSinkChannel(), ChannelListeners.closingChannelListener(), ChannelListeners.writeShutdownChannelListener(ChannelListeners.<StreamSinkChannel>flushingChannelListener(ChannelListeners.closingChannelListener(), ChannelListeners.closingChannelExceptionHandler()), ChannelListeners.closingChannelExceptionHandler()), handler, handler, result.getConnection().getBufferPool());
                             Transfer.initiateTransfer(streamConnection.getSourceChannel(), clientChannel.getSinkChannel(), ChannelListeners.closingChannelListener(), ChannelListeners.writeShutdownChannelListener(ChannelListeners.<StreamSinkChannel>flushingChannelListener(ChannelListeners.closingChannelListener(), ChannelListeners.closingChannelExceptionHandler()), ChannelListeners.closingChannelExceptionHandler()), handler, handler, result.getConnection().getBufferPool());
 
@@ -667,8 +680,8 @@ public class ProxyHandler implements HttpHandler {
                     }
                 });
             }
-            final ProxyHandler.IoExceptionHandler handler = new ProxyHandler.IoExceptionHandler(exchange, result.getConnection());
-            Transfer.initiateTransfer(result.getResponseChannel(), exchange.getResponseChannel(), ChannelListeners.closingChannelListener(), new ProxyHandler.HTTPTrailerChannelListener(result, exchange, exchange, proxyClientHandler, idempotentPredicate), handler, handler, exchange.getConnection().getByteBufferPool());
+            final IoExceptionHandler handler = new IoExceptionHandler(exchange, result.getConnection());
+            Transfer.initiateTransfer(result.getResponseChannel(), exchange.getResponseChannel(), ChannelListeners.closingChannelListener(), new HTTPTrailerChannelListener(result, exchange, exchange, proxyClientHandler, idempotentPredicate), handler, handler, exchange.getConnection().getByteBufferPool());
         }
 
         @Override
@@ -682,10 +695,10 @@ public class ProxyHandler implements HttpHandler {
         private final Attachable source;
         private final Attachable target;
         private final HttpServerExchange exchange;
-        private final ProxyHandler.ProxyClientHandler proxyClientHandler;
+        private final ProxyClientHandler proxyClientHandler;
         private final Predicate idempotentPredicate;
 
-        private HTTPTrailerChannelListener(final Attachable source, final Attachable target, HttpServerExchange exchange, ProxyHandler.ProxyClientHandler proxyClientHandler, Predicate idempotentPredicate) {
+        private HTTPTrailerChannelListener(final Attachable source, final Attachable target, HttpServerExchange exchange, ProxyClientHandler proxyClientHandler, Predicate idempotentPredicate) {
             this.source = source;
             this.target = target;
             this.exchange = exchange;
@@ -753,30 +766,12 @@ public class ProxyHandler implements HttpHandler {
         }
     }
 
-    @Deprecated
-    public ProxyHandler setMaxConnectionRetries(int maxConnectionRetries) {
-        this.maxConnectionRetries = maxConnectionRetries;
-        return this;
-    }
-
     public boolean isRewriteHostHeader() {
         return rewriteHostHeader;
     }
 
-    @Deprecated
-    public ProxyHandler setRewriteHostHeader(boolean rewriteHostHeader) {
-        this.rewriteHostHeader = rewriteHostHeader;
-        return this;
-    }
-
     public boolean isReuseXForwarded() {
         return reuseXForwarded;
-    }
-
-    @Deprecated
-    public ProxyHandler setReuseXForwarded(boolean reuseXForwarded) {
-        this.reuseXForwarded = reuseXForwarded;
-        return this;
     }
 
     public int getMaxConnectionRetries() {
@@ -803,8 +798,8 @@ public class ProxyHandler implements HttpHandler {
         }
     }
 
-    public static ProxyHandler.Builder builder() {
-        return new ProxyHandler.Builder();
+    public static Builder builder() {
+        return new Builder();
     }
 
     public static class Builder {
@@ -815,8 +810,10 @@ public class ProxyHandler implements HttpHandler {
         private HttpHandler next = ResponseCodeHandler.HANDLE_404;
         private boolean rewriteHostHeader;
         private boolean reuseXForwarded;
-        private int maxConnectionRetries = 1;
+        private int maxConnectionRetries = DEFAULT_MAX_RETRY_ATTEMPTS;
         private Predicate idempotentRequestPredicate = IdempotentPredicate.INSTANCE;
+        private List<UrlRewriteRule> urlRewriteRules;
+        private List<MethodRewriteRule> methodRewriteRules;
 
         Builder() {}
 
@@ -825,7 +822,7 @@ public class ProxyHandler implements HttpHandler {
             return proxyClient;
         }
 
-        public ProxyHandler.Builder setProxyClient(ProxyClient proxyClient) {
+        public Builder setProxyClient(ProxyClient proxyClient) {
             if(proxyClient == null) {
                 throw UndertowMessages.MESSAGES.argumentCannotBeNull("proxyClient");
             }
@@ -837,7 +834,7 @@ public class ProxyHandler implements HttpHandler {
             return maxRequestTime;
         }
 
-        public ProxyHandler.Builder setMaxRequestTime(int maxRequestTime) {
+        public Builder setMaxRequestTime(int maxRequestTime) {
             this.maxRequestTime = maxRequestTime;
             return this;
         }
@@ -846,7 +843,7 @@ public class ProxyHandler implements HttpHandler {
             return Collections.unmodifiableMap(requestHeaders);
         }
 
-        public ProxyHandler.Builder addRequestHeader(HttpString header, ExchangeAttribute value) {
+        public Builder addRequestHeader(HttpString header, ExchangeAttribute value) {
             this.requestHeaders.put(header, value);
             return this;
         }
@@ -855,7 +852,7 @@ public class ProxyHandler implements HttpHandler {
             return next;
         }
 
-        public ProxyHandler.Builder setNext(HttpHandler next) {
+        public Builder setNext(HttpHandler next) {
             this.next = next;
             return this;
         }
@@ -864,7 +861,7 @@ public class ProxyHandler implements HttpHandler {
             return rewriteHostHeader;
         }
 
-        public ProxyHandler.Builder setRewriteHostHeader(boolean rewriteHostHeader) {
+        public Builder setRewriteHostHeader(boolean rewriteHostHeader) {
             this.rewriteHostHeader = rewriteHostHeader;
             return this;
         }
@@ -873,8 +870,26 @@ public class ProxyHandler implements HttpHandler {
             return reuseXForwarded;
         }
 
-        public ProxyHandler.Builder setReuseXForwarded(boolean reuseXForwarded) {
+        public Builder setReuseXForwarded(boolean reuseXForwarded) {
             this.reuseXForwarded = reuseXForwarded;
+            return this;
+        }
+
+        public List<UrlRewriteRule> getUrlRewriteRules() {
+            return urlRewriteRules;
+        }
+
+        public Builder setUrlRewriteRules(List<UrlRewriteRule> urlRewriteRules) {
+            this.urlRewriteRules = urlRewriteRules;
+            return this;
+        }
+
+        public List<MethodRewriteRule> getMethodRewriteRules() {
+            return methodRewriteRules;
+        }
+
+        public Builder setMethodRewriteRules(List<MethodRewriteRule> methodRewriteRules) {
+            this.methodRewriteRules = methodRewriteRules;
             return this;
         }
 
@@ -882,7 +897,7 @@ public class ProxyHandler implements HttpHandler {
             return maxConnectionRetries;
         }
 
-        public ProxyHandler.Builder setMaxConnectionRetries(int maxConnectionRetries) {
+        public Builder setMaxConnectionRetries(int maxConnectionRetries) {
             this.maxConnectionRetries = maxConnectionRetries;
             return this;
         }
@@ -891,7 +906,7 @@ public class ProxyHandler implements HttpHandler {
             return idempotentRequestPredicate;
         }
 
-        public ProxyHandler.Builder setIdempotentRequestPredicate(Predicate idempotentRequestPredicate) {
+        public Builder setIdempotentRequestPredicate(Predicate idempotentRequestPredicate) {
             if(idempotentRequestPredicate == null) {
                 throw UndertowMessages.MESSAGES.argumentCannotBeNull("idempotentRequestPredicate");
             }
@@ -903,5 +918,4 @@ public class ProxyHandler implements HttpHandler {
             return new ProxyHandler(this);
         }
     }
-
 }

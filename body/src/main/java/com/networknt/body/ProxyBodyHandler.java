@@ -1,24 +1,24 @@
 package com.networknt.body;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
-import io.undertow.server.ConduitWrapper;
+import io.undertow.connector.PooledByteBuffer;
+import io.undertow.server.Connectors;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.ConduitFactory;
 import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xnio.conduits.AbstractStreamSourceConduit;
-import org.xnio.conduits.StreamSourceConduit;
+import org.xnio.IoUtils;
+import org.xnio.channels.StreamSourceChannel;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -54,6 +54,7 @@ public class ProxyBodyHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(ProxyBodyHandler.class);
     static final String CONTENT_TYPE_MISMATCH = "ERR10015";
     static final String PAYLOAD_TOO_LARGE = "ERR10068";
+    static final String GENERIC_EXCEPTION = "ERR10014";
 
     public static final BodyConfig config = (BodyConfig) Config.getInstance().getJsonObjectConfig(BodyConfig.CONFIG_NAME, BodyConfig.class);
 
@@ -72,47 +73,49 @@ public class ProxyBodyHandler implements MiddlewareHandler {
      */
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
         if (this.shouldParseBody(exchange)) {
-
-            exchange.addRequestWrapper(new ConduitWrapper<>() {
-                @Override
-                public StreamSourceConduit wrap(ConduitFactory<StreamSourceConduit> conduitFactory, HttpServerExchange httpServerExchange) {
-                    StreamSourceConduit source = conduitFactory.create();
-                    return new AbstractStreamSourceConduit<>(source) {
-                        final ByteArrayOutputStream bufferOut = new ByteArrayOutputStream(config.getMaxBuffers());
-
-                        @Override
-                        public int read(ByteBuffer dataBuffer) throws IOException {
-                            int x = super.read(dataBuffer);
-                            if (x >= 0) {
-                                ByteBuffer dupDataBuffer = dataBuffer.duplicate();
-                                dupDataBuffer.flip();
-                                byte[] data = new byte[x];
-                                dupDataBuffer.get(data);
-                                bufferOut.write(data);
-                            } else {
-                                String requestBody = bufferOut.toString(StandardCharsets.UTF_8);
-                                logger.debug("request body = " + requestBody);
-
-                                // parse the body to map or list if content type is application/json
-                                try {
-                                    prepParsedBody(httpServerExchange, contentType, requestBody);
-                                } catch (IOException e) {
-                                    logger.error("IOException: ", e);
-                                    setExchangeStatus(httpServerExchange, CONTENT_TYPE_MISMATCH, contentType);
-                                }
-                            }
-                            return x;
+            final StreamSourceChannel channel = exchange.getRequestChannel();
+            int readBuffers = 0;
+            PooledByteBuffer buffer = exchange.getConnection().getByteBufferPool().allocate();
+            try {
+                do {
+                    ByteBuffer dst = buffer.getBuffer();
+                    int r = channel.read(dst);
+                    if (r == -1) {
+                        if (dst.position() == 0) {
+                            buffer.close();
+                        } else {
+                            dst.flip();
                         }
-                    };
-                }
-            });
-        }
+                        break;
+                    } else if (!dst.hasRemaining()) {
+                        dst.flip();
+                        readBuffers++;
+                        if (readBuffers == 1) {
+                            break;
+                        }
+                        buffer = exchange.getConnection().getByteBufferPool().allocate();
+                    }
+                } while (true);
 
+                Connectors.ungetRequestBytes(exchange, buffer);
+                Connectors.resetRequestChannel(exchange);
+            } catch (IOException e) {
+                if (buffer.isOpen()) {
+                    IoUtils.safeClose(buffer);
+                }
+                logger.error(e.getLocalizedMessage(), e);
+                setExchangeStatus(exchange, GENERIC_EXCEPTION, e.getMessage());
+                return;
+            }
+            String requestBody = StandardCharsets.UTF_8.decode(buffer.getBuffer().duplicate()).toString();
+            boolean attached = attachJsonBody(exchange, requestBody);
+            if (!attached) {
+                return;
+            }
+        }
         Handler.next(exchange, next);
     }
-
 
     /**
      * Check to make sure we should actually run the body parse on the current request.
@@ -129,38 +132,49 @@ public class ProxyBodyHandler implements MiddlewareHandler {
                 exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE).startsWith("application/json");
     }
 
-    private void prepParsedBody(HttpServerExchange exchange, String contentType, String requestBody) throws IOException {
-        if (config.isCacheRequestBody()) {
-            exchange.putAttachment(REQUEST_BODY_STRING, requestBody);
-        }
-        // attach the parsed request body into exchange if the body parser is enabled
-        attachJsonBody(exchange, requestBody);
-    }
-
     /**
      * Method used to parse the body into a Map or a List and attach it into exchange
      *
      * @param exchange exchange to be attached
      * @param string   raw request body
-     * @throws IOException - throws exception if can't read string value.
      */
-    private void attachJsonBody(final HttpServerExchange exchange, String string) throws IOException {
+    private boolean attachJsonBody(final HttpServerExchange exchange, String string) {
         Object body;
-        if (string != null) {
-            string = string.trim();
-            if (string.startsWith("{")) {
+        string = string.trim();
+        if (string.startsWith("{")) {
+            try {
                 body = Config.getInstance().getMapper().readValue(string, new TypeReference<Map<String, Object>>() {
                 });
-            } else if (string.startsWith("[")) {
+            } catch (JsonProcessingException e) {
+                if(exchange.getConnection().getBufferSize() <= string.length()) {
+                    setExchangeStatus(exchange, PAYLOAD_TOO_LARGE, "application/json");
+                } else {
+                    setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
+                }
+                return false;
+            }
+        } else if (string.startsWith("[")) {
+            try {
                 body = Config.getInstance().getMapper().readValue(string, new TypeReference<List<Object>>() {
                 });
-            } else {
-                // error here. The content type in head doesn't match the body.
-                setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
-                return;
+            } catch (JsonProcessingException e) {
+                if(exchange.getConnection().getBufferSize() <= string.length()) {
+                    setExchangeStatus(exchange, PAYLOAD_TOO_LARGE, "application/json");
+                } else {
+                    setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
+                }
+                return false;
             }
-            exchange.putAttachment(REQUEST_BODY, body);
+        } else {
+            // error here. The content type in head doesn't match the body.
+            setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
+            return false;
         }
+        if (config.isCacheRequestBody()) {
+            exchange.putAttachment(REQUEST_BODY_STRING, string);
+        }
+        exchange.putAttachment(REQUEST_BODY, body);
+        return true;
     }
 
     @Override

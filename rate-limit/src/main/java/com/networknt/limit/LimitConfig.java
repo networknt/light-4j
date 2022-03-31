@@ -20,8 +20,6 @@ import com.networknt.config.Config;
 
 import java.util.*;
 
-import static com.networknt.limit.LimitKey.USER;
-
 /**
  * Config class for limit module
  *
@@ -154,7 +152,6 @@ public class LimitConfig {
     public Map<String, LimitQuota> getServer() {
         return server;
     }
-
 
     public void setServer(Map<String, LimitQuota> server) {
         this.server = server;
@@ -377,6 +374,5 @@ public class LimitConfig {
             }
             this.directMaps.put(key, limitQuotas);
         }
-
     }
 }
