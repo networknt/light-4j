@@ -24,11 +24,12 @@ queueSize: ${limit.queueSize:1}
 errorCode: ${limit.errorCode:429}
 # request rate limit: 10 1s 1000 1h
 # 10 requests per second limit and 1000 requests per day quota.
-rateLimit: 10/s
+rateLimit: 10/s 1000/h
 # Key of the rate limit: server, address, client
 # server: The entire server has one rate limit key, and it means all users share the same.
 # address: The IP address is the key and each IP will have its rate limit configuration.
 # client: The client id in the JWT token so that we can give rate limit per client.
+# user: The user id in the JWT token so that we can set rate limit and quota based on user.
 key: ${limit.key:server}
 # Address specific rate limit if they don't follow the default rateLimit definition.
 server:
@@ -46,6 +47,11 @@ client:
   f7d42348-c647-4efb-a52d-4c5787421e75:
     /v1/address: 10/s
     /v2/address: 100/s
+user:
+  alex@lightapi.net: 10/m 10000/d
+  alice@lightapi.net: 20/m 20000/d
+  albert@lightapi.net:
+    /batch: 1000/m 1000000/d
 
 # Client id Key Resolver.
 clientIdKeyResolver: com.networknt.limit.key.JwtClientIdKeyResolver
