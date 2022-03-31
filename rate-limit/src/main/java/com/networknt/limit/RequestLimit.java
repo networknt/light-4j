@@ -154,6 +154,7 @@ public class RequestLimit {
      * Set the maximum concurrent requests.  The value must be greater than or equal to one.
      *
      * @param newMax the maximum concurrent requests
+     * @return max concurrent requests
      */
     public int setMaximumConcurrentRequests(int newMax) {
         if (newMax < 1) {

@@ -20,6 +20,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -41,4 +42,42 @@ public class LimitConfigTest {
         Assert.assertEquals(limitConfig.getQueueSize(), 1);
         Assert.assertEquals(limitConfig.getErrorCode(), 429);
     }
+
+    @Test
+    public void testLimitKey() {
+        Assert.assertEquals(limitConfig.getKey(), LimitKey.SERVER);
+    }
+
+    @Test
+    public void testRateLimit() {
+        List<LimitQuota> limitQuotaList =  limitConfig.getRateLimit();
+        Assert.assertEquals(limitQuotaList.size(), 2);
+    }
+
+    @Test
+    public void testServer() {
+        Map<String, LimitQuota> limitServer =  limitConfig.getServer();
+        Assert.assertEquals(limitServer.size(), 2);
+    }
+
+    @Test
+    public void testAddress() {
+        LimitConfig.RateLimitSet limitAddress =  limitConfig.getAddress();
+        Assert.assertEquals(limitAddress.getDirectMaps().size(), 4);
+    }
+
+    @Test
+    public void testClient() {
+        LimitConfig.RateLimitSet limitClient =  limitConfig.getClient();
+        Assert.assertEquals(limitClient.getDirectMaps().size(), 4);
+
+    }
+
+    @Test
+    public void testUser() {
+        LimitConfig.RateLimitSet limitUser =  limitConfig.getUser();
+        Assert.assertEquals(limitUser.getDirectMaps().size(), 3);
+
+    }
+
 }

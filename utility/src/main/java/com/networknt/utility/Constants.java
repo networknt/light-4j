@@ -110,4 +110,9 @@ public class Constants {
     // Encode and decode for gzip and deflate
     public static final String ENCODE_GZIP = "gzip";
     public static final String ENCODE_DEFLATE = "deflate";
+
+    //Rate Limit
+    public static final String RATELIMIT_LIMIT = "RateLimit-Limit";
+    public static final String RATELIMIT_REMAINING = "RateLimit-Remaining";
+    public static final String RATELIMIT_RESET = "RateLimit-Reset";
 }
