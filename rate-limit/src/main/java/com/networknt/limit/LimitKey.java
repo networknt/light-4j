@@ -2,7 +2,7 @@ package com.networknt.limit;
 
 public enum LimitKey {
 
-    SERVER("server"), ADDRESS("address"), CLIENT("client");
+    SERVER("server"), ADDRESS("address"), CLIENT("client"), USER("user");
 
     private String value;
 
