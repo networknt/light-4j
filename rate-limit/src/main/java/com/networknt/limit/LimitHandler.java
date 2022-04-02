@@ -45,14 +45,14 @@ public class LimitHandler implements MiddlewareHandler {
     private static final ObjectMapper mapper = Config.getInstance().getMapper();
 
 
-    public LimitHandler() {
+    public LimitHandler() throws Exception{
         config = LimitConfig.load();
         logger.info("RateLimit started with key type:" + config.getKey().name());
+        rateLimiter = new RateLimiter(config);
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        rateLimiter = new RateLimiter(config);
         RateLimitResponse rateLimitResponse = rateLimiter.handleRequest(exchange, config.getKey());
 
 

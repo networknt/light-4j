@@ -208,15 +208,18 @@ public class RateLimiter {
      */
     public RateLimitResponse isAllowByServer(String path) {
         long currentTimeWindow = Instant.now().getEpochSecond();
-        LimitQuota limitQuota;
         if (!serverTimeMap.containsKey(path)) {
             synchronized(this) {
                 serverTimeMap.put(path, new ConcurrentHashMap<>());
             }
+        }
+        LimitQuota limitQuota;
+        if (!config.getServer().containsKey(path)) {
             limitQuota = this.config.getRateLimit().get(0);
         } else {
-            limitQuota = config.getServer().get(path);
+            limitQuota = this.config.getServer().get(path);
         }
+
         Map<Long, AtomicLong> timeMap =  serverTimeMap.get(path);
         synchronized(this) {
             if (timeMap.isEmpty()) {
