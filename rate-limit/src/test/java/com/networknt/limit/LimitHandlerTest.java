@@ -87,11 +87,6 @@ public class LimitHandlerTest {
     static RoutingHandler getTestHandler() {
         return Handlers.routing()
                 .add(Methods.GET, "/", exchange -> {
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException e) {
-
-                    }
                     exchange.getResponseSender().send("OK");
                 });
     }
@@ -151,7 +146,6 @@ public class LimitHandlerTest {
     }
 
     @Test
-    @Ignore
     // For some reason, travis become really slow or not allow multi-thread anymore and this test fails always.
     // You can run it within the IDE or remove the @Ignore and run it locally with mvn clean install.
     public void testMoreRequests() throws Exception {
