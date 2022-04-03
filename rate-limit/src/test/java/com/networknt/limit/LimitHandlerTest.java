@@ -43,6 +43,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 
 /**
@@ -54,7 +55,7 @@ public class LimitHandlerTest {
     static Undertow server = null;
 
     @BeforeClass
-    public static void setUp() {
+    public static void setUp() throws Exception{
         if(server == null) {
             logger.info("starting serverconfig");
             HttpHandler handler = getTestHandler();
@@ -155,9 +156,9 @@ public class LimitHandlerTest {
     // You can run it within the IDE or remove the @Ignore and run it locally with mvn clean install.
     public void testMoreRequests() throws Exception {
         Callable<String> task = this::callApi;
-        List<Callable<String>> tasks = Collections.nCopies(10, task);
+        List<Callable<String>> tasks = Collections.nCopies(12, task);
         long start = System.currentTimeMillis();
-        ExecutorService executorService = Executors.newFixedThreadPool(10);
+        ExecutorService executorService = Executors.newFixedThreadPool(2);
         List<Future<String>> futures = executorService.invokeAll(tasks);
         List<String> resultList = new ArrayList<>(futures.size());
         // Check for exceptions
@@ -169,6 +170,7 @@ public class LimitHandlerTest {
         }
         long last = (System.currentTimeMillis() - start);
         // make sure that there are at least one element in resultList is :503 or :429
-        Assert.assertTrue(resultList.contains(":" + config.getErrorCode()));
+        List<String> errorList = resultList.stream().filter(r->r.contains(":" + config.getErrorCode())).collect(Collectors.toList());
+        Assert.assertTrue(errorList.size()>0);
     }
 }
