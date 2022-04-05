@@ -69,8 +69,24 @@ public class LimitConfig {
         setRateLimitConfig();
     }
 
+    /**
+     * Please note that this constructor is only for testing to load different config files
+     * to test different configurations.
+     * @param configName String
+     */
+    public LimitConfig(String configName) {
+        config = Config.getInstance();
+        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        setConfigData();
+        setRateLimitConfig();
+    }
+
     static LimitConfig load() {
         return new LimitConfig();
+    }
+
+    static LimitConfig load(String configName) {
+        return new LimitConfig(configName);
     }
 
     void reload() {

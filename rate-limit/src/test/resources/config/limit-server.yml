@@ -10,7 +10,7 @@ enabled: ${limit.enabled:true}
 concurrentRequest: ${limit.concurrentRequest:1}
 # request rate limit: 10 1s 1000 1h
 # 10 requests per second limit and 1000 requests per day quota.
-rateLimit: 10/1s 10000/1h
+rateLimit: ${limit.rateLimit:100/s 10000/h}
 # Overflow request queue size. -1 means there is no limit on the queue size and this should
 # only be used in the corporate network for throttling. For Internet facing service, set it
 # to a small value to prevent DDoS attacks. New requests will be dropped with 503 response
@@ -29,17 +29,17 @@ errorCode: ${limit.errorCode:429}
 key: ${limit.key:server}
 # Address specific rate limit if they don't follow the default rateLimit definition.
 server:
-  /v1/address: 10/1s
-  /v2/address: 1000/1s
+  /v1/address: 10/s
+  /v2/address: 1000/s
 address:
-  192.168.1.100: 10/1h 1000/1d
-  192.168.1.101: 1000/1s 1000000/1d
+  192.168.1.100: 10/h 1000/d
+  192.168.1.101: 1000/s 1000000/d
   192.168.1.102:
-    /v1/address: 10/1s
-    /v2/address: 100/1s
+    /v1/address: 10/s
+    /v2/address: 100/s
 client:
-  f7d42348-c647-4efb-a52d-4c5787421e73: 100/1m 10000/1d
-  f7d42348-c647-4efb-a52d-4c5787421e74: 10/1m 1000/1d
+  f7d42348-c647-4efb-a52d-4c5787421e73: 100/m 10000/d
+  f7d42348-c647-4efb-a52d-4c5787421e74: 10/m 1000/d
   f7d42348-c647-4efb-a52d-4c5787421e75:
-    /v1/address: 10/1s
-    /v2/address: 100/1s
+    /v1/address: 10/s
+    /v2/address: 100/s
