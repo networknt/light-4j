@@ -4,7 +4,7 @@
 # If this handler is enabled or not. It is disabled by default as this handle might be in
 # most http-sidecar, light-proxy and light-router instances. However, it should only be used
 # internally to throttle request for a slow backend service or externally for DDoS attacks.
-enabled: ${limit.enabled:false}
+enabled: ${limit.enabled:true}
 # Maximum concurrent requests allowed per second on the entire server. This is property is
 # here to keep backward compatible. New users should use the rateLimit property for config
 # with different keys and different time unit.
@@ -51,4 +51,3 @@ clientIdKeyResolver: ${limit.clientIdKeyResolver:com.networknt.limit.key.JwtClie
 addressKeyResolver: ${limit.addressKeyResolver:com.networknt.limit.key.RemoteAddressKeyResolver}
 # User Id Key Resolver.
 userIdKeyResolver: ${limit.userIdKeyResolver:com.networknt.limit.key.JwtUserIdKeyResolver}
-
