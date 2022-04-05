@@ -57,3 +57,5 @@ user:
 clientIdKeyResolver: com.networknt.limit.key.JwtClientIdKeyResolver
 # Ip Address Key Resolver.
 addressKeyResolver: com.networknt.limit.key.RemoteAddressKeyResolver
+# User id Key Resolver.
+userIdKeyResolver: com.networknt.limit.key.JwtUserIdKeyResolver
