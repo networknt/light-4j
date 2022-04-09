@@ -129,13 +129,13 @@ public class RateLimiter {
         List<LimitQuota> rateLimit;
         String mapKey = directKey;
         if (ADDRESS_TYPE.equalsIgnoreCase(type)) {
-            if (this.config.getAddress().directMaps.containsKey(keyWithPath)) {
-                rateLimit = this.config.getAddress().directMaps.get(keyWithPath);
+            if (config.getAddress() != null && config.getAddress().directMaps.containsKey(keyWithPath)) {
+                rateLimit = config.getAddress().directMaps.get(keyWithPath);
                 mapKey = keyWithPath;
-            } else if (this.config.getAddress().directMaps.containsKey(directKey)) {
-                rateLimit = this.config.getAddress().directMaps.get(directKey);
+            } else if (config.getAddress() != null && config.getAddress().directMaps.containsKey(directKey)) {
+                rateLimit = config.getAddress().directMaps.get(directKey);
             } else {
-                rateLimit = this.config.rateLimit;
+                rateLimit = config.rateLimit;
                 Map<TimeUnit, Map<Long, AtomicLong>> directMap = new ConcurrentHashMap<>();
 
                 this.config.getRateLimit().forEach(i->{
@@ -144,13 +144,13 @@ public class RateLimiter {
                 directTimeMap.put(mapKey, directMap);
             }
         } else if(CLIENT_TYPE.equalsIgnoreCase(type)) {
-            if (this.config.getClient().directMaps.containsKey(keyWithPath)) {
-                rateLimit = this.config.getClient().directMaps.get(keyWithPath);
+            if (config.getClient() != null && config.getClient().directMaps.containsKey(keyWithPath)) {
+                rateLimit = config.getClient().directMaps.get(keyWithPath);
                 mapKey = keyWithPath;
-            } else if (this.config.getClient().directMaps.containsKey(directKey)) {
-                rateLimit = this.config.getClient().directMaps.get(directKey);
+            } else if (config.getClient() != null && config.getClient().directMaps.containsKey(directKey)) {
+                rateLimit = config.getClient().directMaps.get(directKey);
             } else {
-                rateLimit = this.config.rateLimit;
+                rateLimit = config.rateLimit;
                 Map<TimeUnit, Map<Long, AtomicLong>> directMap = new ConcurrentHashMap<>();
                 synchronized(this) {
                     this.config.getRateLimit().forEach(i->{
@@ -160,13 +160,13 @@ public class RateLimiter {
                 }
             }
         } else {
-            if (this.config.getUser().directMaps.containsKey(keyWithPath)) {
-                rateLimit = this.config.getUser().directMaps.get(keyWithPath);
+            if (config.getUser() != null && config.getUser().directMaps.containsKey(keyWithPath)) {
+                rateLimit = config.getUser().directMaps.get(keyWithPath);
                 mapKey = keyWithPath;
-            } else if (this.config.getUser().directMaps.containsKey(directKey)) {
-                rateLimit = this.config.getUser().directMaps.get(directKey);
+            } else if (config.getUser() != null && config.getUser().directMaps.containsKey(directKey)) {
+                rateLimit = config.getUser().directMaps.get(directKey);
             } else {
-                rateLimit = this.config.rateLimit;
+                rateLimit = config.rateLimit;
                 Map<TimeUnit, Map<Long, AtomicLong>> directMap = new ConcurrentHashMap<>();
                 synchronized(this) {
                     this.config.getRateLimit().forEach(i->{
@@ -214,10 +214,10 @@ public class RateLimiter {
             }
         }
         LimitQuota limitQuota;
-        if (!config.getServer().containsKey(path)) {
-            limitQuota = this.config.getRateLimit().get(0);
-        } else {
+        if (config.getServer() != null && config.getServer().containsKey(path)) {
             limitQuota = this.config.getServer().get(path);
+        } else {
+            limitQuota = this.config.getRateLimit().get(0);
         }
 
         Map<Long, AtomicLong> timeMap =  serverTimeMap.get(path);

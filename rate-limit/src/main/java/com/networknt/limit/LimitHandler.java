@@ -51,6 +51,20 @@ public class LimitHandler implements MiddlewareHandler {
         rateLimiter = new RateLimiter(config);
     }
 
+    /**
+     * This is a constructor for test cases only. Please don't use it.
+     *
+     * @param cfg limit config
+     * @throws Exception
+     *
+     */
+    @Deprecated
+    public LimitHandler(LimitConfig cfg) throws Exception{
+        config = cfg;
+        logger.info("RateLimit started with key type:" + config.getKey().name());
+        rateLimiter = new RateLimiter(cfg);
+    }
+
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         RateLimitResponse rateLimitResponse = rateLimiter.handleRequest(exchange, config.getKey());
