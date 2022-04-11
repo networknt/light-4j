@@ -1,11 +1,18 @@
 # Basic Authentication Security Configuration for light-4j
 ---
 # Enable Basic Authentication Handler, default is false.
-enabled: false
-# usernames and passwords, the password can be encrypted like user2
-# As we are supporting multiple users, so leave the passwords in this file.
-users:
-  - username: user1
-    password: user1pass
-  - username: user2
-    password: CRYPT:08eXg9TmK604+w06RaBlsPQbplU1F1Ez5pkBO/hNr8w=
+enabled: ${basic.enabled:false}
+# Do we allow the anonymous to pass the authentication and limit it with some paths
+# to access? Default is false, and it should only be true in client-proxy.
+allowAnonymous: ${basic.allowAnonymous:false}
+# Allow the Basic Auth to pass to the next handler if other authorization header exists
+# i.e. OAuth 2.0 Bearer token. When this flag is true, the chain will go to the next
+# handler like JwtVerifyHandler might be used to verify the Bearer token. This feature
+# is used in proxy-client that support multiple clients with different authorizations.
+allowOtherAuth: ${basic.allowOtherAuth:false}
+# usernames and passwords in a list, the password can be encrypted like user2 in test.
+# As we are supporting multiple users, so leave the passwords in this file with users.
+# For each user, you can specify a list of optional paths that this user is allowed to
+# access. A special user anonymous can be used to set the paths for client without an
+# authorization header. The paths are optional and used for proxy only to authorize.
+users: ${basic.users:}

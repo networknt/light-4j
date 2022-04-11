@@ -29,8 +29,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -47,12 +45,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public class BasicAuthHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(BasicAuthHandler.class);
-    static final String CONFIG_NAME = "basic-auth";
-    static final BasicAuthConfig config = (BasicAuthConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, BasicAuthConfig.class);
+    static BasicAuthConfig config = BasicAuthConfig.load();
 
     static final String MISSING_AUTH_TOKEN = "ERR10002";
     static final String INVALID_BASIC_HEADER = "ERR10046";
     static final String INVALID_USERNAME_OR_PASSWORD = "ERR10047";
+    static final String NOT_AUTHORIZED_REQUEST_PATH = "ERR10071";
 
     private volatile HttpHandler next;
 
@@ -60,14 +58,42 @@ public class BasicAuthHandler implements MiddlewareHandler {
         if(logger.isInfoEnabled()) logger.info("BasicAuthHandler is loaded.");
     }
 
+    /**
+     * This is a constructor for test cases only. Please don't use it.
+     * @param cfg BasicAuthConfig
+     */
+    @Deprecated
+    public BasicAuthHandler(BasicAuthConfig cfg) {
+        config = cfg;
+        if(logger.isInfoEnabled()) logger.info("BasicAuthHandler is loaded.");
+    }
+
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         String auth = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
+        String requestPath = exchange.getRequestPath();
         if(auth == null || auth.trim().length() == 0) {
-            setExchangeStatus(exchange, MISSING_AUTH_TOKEN);
-            return;
+            if(config.isAllowAnonymous() && config.getUsers().containsKey(BasicAuthConfig.ANONYMOUS)) {
+                List<String> paths = config.getUsers().get(BasicAuthConfig.ANONYMOUS).getPaths();
+                boolean match = false;
+                for(String path: paths) {
+                    if(requestPath.startsWith(path)) {
+                        match = true;
+                        break;
+                    }
+                }
+                if(!match) {
+                    logger.error("Request path" + requestPath + " is not authorized for user " + BasicAuthConfig.ANONYMOUS);
+                    setExchangeStatus(exchange, NOT_AUTHORIZED_REQUEST_PATH, requestPath, BasicAuthConfig.ANONYMOUS);
+                    return;
+                }
+            } else {
+                logger.error("Anonymous is not allowed and authorization header is missing.");
+                setExchangeStatus(exchange, MISSING_AUTH_TOKEN);
+                return;
+            }
         } else {
-            // verify the header with the config file.
+            // verify the header with the config file. assuming it is basic authentication first.
             String basic = auth.substring(0, 5);
             if("BASIC".equalsIgnoreCase(basic)) {
                 String credentials = auth.substring(6);
@@ -79,20 +105,37 @@ public class BasicAuthHandler implements MiddlewareHandler {
                 if (pos != -1) {
                     String username = credentials.substring(0, pos);
                     String password = credentials.substring(pos + 1);
-                    Optional<Map<String, Object>> result = config.getUsers().stream()
-                            .filter(user -> user.get("username").equals(username) && user.get("password").equals(password))
-                            .findFirst();
-                    if(!result.isPresent()) {
+                    UserAuth user = config.getUsers().get(username);
+                    if(user == null || !(user != null && user.getUsername().equals(username) && user.getPassword().equals(password))) {
+                        logger.error("Invalid username or password with authorization header starts = " + auth.substring(0, 10));
                         setExchangeStatus(exchange, INVALID_USERNAME_OR_PASSWORD);
                         return;
                     }
+                    // Here we have passed the authentication. Let's do the authorization with the paths.
+                    boolean match = false;
+                    for(String path: user.getPaths()) {
+                        if(requestPath.startsWith(path)) {
+                            match = true;
+                            break;
+                        }
+                    }
+                    if(!match) {
+                        logger.error("Request path" + requestPath + " is not authorized for user " + user.getUsername());
+                        setExchangeStatus(exchange, NOT_AUTHORIZED_REQUEST_PATH, requestPath, user.getUsername());
+                        return;
+                    }
                 } else {
-                    setExchangeStatus(exchange, INVALID_BASIC_HEADER, auth);
+                    logger.error("Invalid basic authentication header. It must be username:password base64 encode.");
+                    setExchangeStatus(exchange, INVALID_BASIC_HEADER, auth.substring(0, 10));
                     return;
                 }
             } else {
-                setExchangeStatus(exchange, INVALID_BASIC_HEADER, auth);
-                return;
+                // not basic token.
+                if(!config.allowOtherAuth) {
+                    logger.error("Not a basic authentication header and other authentication header is not allowed.");
+                    setExchangeStatus(exchange, INVALID_BASIC_HEADER, auth.substring(0, 10));
+                    return;
+                }
             }
             Handler.next(exchange, next);
         }
@@ -121,5 +164,10 @@ public class BasicAuthHandler implements MiddlewareHandler {
         List<String> masks = new ArrayList<>();
         masks.add("password");
         ModuleRegistry.registerModule(BasicAuthHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), masks);
+    }
+
+    @Override
+    public void reload() {
+        config = BasicAuthConfig.load();
     }
 }

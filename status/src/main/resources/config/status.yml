@@ -477,6 +477,11 @@ ERR10070:
   code: ERR10070
   message: OBJECT_NOT_UNIQUE
   description: The object %s is not unique with value %s.
+ERR10071:
+  statusCode: 403
+  code: ERR10071
+  message: NOT_AUTHORIZED_REQUEST_PATH
+  description: The request path %s is not authorized for user %s.
 
 # 11000-11499 swagger-validator errors
 ERR11000:
