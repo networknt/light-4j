@@ -61,7 +61,7 @@ public class BasicAuthHandlerTest {
             logger.info("starting server");
             HttpHandler handler = getTestHandler();
             // inject the BasicAuthHandler before the TestHandler for security
-            BasicAuthHandler basicAuthHandler = new BasicAuthHandler();
+            BasicAuthHandler basicAuthHandler = new BasicAuthHandler(BasicAuthConfig.load("basic-auth"));
             basicAuthHandler.setNext(handler);
             server = Undertow.builder()
                     .addHttpListener(17352, "localhost")
