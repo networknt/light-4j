@@ -31,7 +31,3 @@ users:
       - /v1/party
       - /info
       - /v2/pet
-  # a special user to allow the path authorization when allowBearerToken is true
-  - username: bearer
-    paths:
-      - /v2/pet

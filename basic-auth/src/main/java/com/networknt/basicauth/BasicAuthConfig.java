@@ -28,16 +28,17 @@ public class BasicAuthConfig {
     public static final String CONFIG_NAME = "basic-auth";
     private static final String ENABLED = "enabled";
     private static final String ALLOW_ANONYMOUS = "allowAnonymous";
-    private static final String ALLOW_OTHER_AUTH = "allowOtherAuth";
+    private static final String ALLOW_BEARER_TOKEN = "allowBearerToken";
     private static final String USERS = "users";
     private static final String USERNAME = "username";
     private static final String PASSWORD = "password";
     private static final String PATHS = "paths";
     public static final String ANONYMOUS = "anonymous";
+    public static final String BEARER = "bearer";
 
     boolean enabled;
     boolean allowAnonymous;
-    boolean allowOtherAuth;
+    boolean allowBearerToken;
     Map<String, UserAuth> users;  // the key is the username to locate the object
     private Config config;
     private Map<String, Object> mappedConfig;
@@ -90,12 +91,12 @@ public class BasicAuthConfig {
         this.allowAnonymous = allowAnonymous;
     }
 
-    public boolean isAllowOtherAuth() {
-        return allowOtherAuth;
+    public boolean isAllowBearerToken() {
+        return allowBearerToken;
     }
 
-    public void setAllowOtherAuth(boolean allowOtherAuth) {
-        this.allowOtherAuth = allowOtherAuth;
+    public void setAllowBearerToken(boolean allowBearerToken) {
+        this.allowBearerToken = allowBearerToken;
     }
 
     public Map<String, UserAuth> getUsers() { return users; }
@@ -109,9 +110,9 @@ public class BasicAuthConfig {
         if(object != null && (Boolean) object) {
             setAllowAnonymous(true);
         }
-        object = mappedConfig.get(ALLOW_OTHER_AUTH);
+        object = mappedConfig.get(ALLOW_BEARER_TOKEN);
         if(object != null && (Boolean) object) {
-            setAllowOtherAuth(true);
+            setAllowBearerToken(true);
         }
     }
 

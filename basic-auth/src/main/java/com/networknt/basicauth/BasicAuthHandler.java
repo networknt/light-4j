@@ -51,6 +51,8 @@ public class BasicAuthHandler implements MiddlewareHandler {
     static final String INVALID_BASIC_HEADER = "ERR10046";
     static final String INVALID_USERNAME_OR_PASSWORD = "ERR10047";
     static final String NOT_AUTHORIZED_REQUEST_PATH = "ERR10071";
+    static final String INVALID_AUTHORIZATION_HEADER = "ERR12003";
+    static final String BEARER_USER_NOT_FOUND = "ERR10072";
 
     private volatile HttpHandler next;
 
@@ -94,8 +96,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
             }
         } else {
             // verify the header with the config file. assuming it is basic authentication first.
-            String basic = auth.substring(0, 5);
-            if("BASIC".equalsIgnoreCase(basic)) {
+            if("BASIC".equalsIgnoreCase(auth.substring(0, 5))) {
                 String credentials = auth.substring(6);
                 int pos = credentials.indexOf(':');
                 if (pos == -1) {
@@ -129,13 +130,40 @@ public class BasicAuthHandler implements MiddlewareHandler {
                     setExchangeStatus(exchange, INVALID_BASIC_HEADER, auth.substring(0, 10));
                     return;
                 }
-            } else {
-                // not basic token.
-                if(!config.allowOtherAuth) {
-                    logger.error("Not a basic authentication header and other authentication header is not allowed.");
+            } else if("BEARER".equalsIgnoreCase(auth.substring(0, 6))){
+                // not basic token. check if the OAuth 2.0 bearer token is allowed.
+                if(!config.allowBearerToken) {
+                    logger.error("Not a basic authentication header and bearer token is not allowed.");
                     setExchangeStatus(exchange, INVALID_BASIC_HEADER, auth.substring(0, 10));
                     return;
+                } else {
+                    // bearer token is allowed, we need to validate it and check the allowed paths.
+                    UserAuth user = config.getUsers().get(BasicAuthConfig.BEARER);
+                    if(user != null) {
+                        // check the path for authorization
+                        List<String> paths = user.getPaths();
+                        boolean match = false;
+                        for(String path: paths) {
+                            if(requestPath.startsWith(path)) {
+                                match = true;
+                                break;
+                            }
+                        }
+                        if(!match) {
+                            logger.error("Request path" + requestPath + " is not authorized for user " + BasicAuthConfig.BEARER);
+                            setExchangeStatus(exchange, NOT_AUTHORIZED_REQUEST_PATH, requestPath, BasicAuthConfig.BEARER);
+                            return;
+                        }
+                    } else {
+                        logger.error("Bearer token is allowed but missing the bearer user path definitions for authorization");
+                        setExchangeStatus(exchange, BEARER_USER_NOT_FOUND);
+                        return;
+                    }
                 }
+            } else {
+                logger.error("Invalid authorization header " + auth.substring(0, 10));
+                setExchangeStatus(exchange, INVALID_AUTHORIZATION_HEADER, auth.substring(0, 10));
+                return;
             }
             Handler.next(exchange, next);
         }

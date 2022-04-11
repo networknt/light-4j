@@ -5,11 +5,10 @@ enabled: ${basic.enabled:true}
 # Do we allow the anonymous to pass the authentication and limit it with some paths
 # to access? Default is false, and it should only be true in client-proxy.
 allowAnonymous: ${basic.allowAnonymous:false}
-# Allow the Basic Auth to pass to the next handler if other authorization header exists
-# i.e. OAuth 2.0 Bearer token. When this flag is true, the chain will go to the next
-# handler like JwtVerifyHandler might be used to verify the Bearer token. This feature
-# is used in proxy-client that support multiple clients with different authorizations.
-allowOtherAuth: ${basic.allowOtherAuth:false}
+# Allow the Bearer OAuth 2.0 token authorization to pass to the next handler with paths
+# authorization defined under username bearer. This feature is used in proxy-client
+# that support multiple clients with different authorizations.
+allowBearerToken: ${basic.allowBearerToken:false}
 # usernames and passwords, the password can be encrypted like user2
 # As we are supporting multiple users, so leave the passwords in this file.
 # For each user, you can specify a list of paths that this user is allowed

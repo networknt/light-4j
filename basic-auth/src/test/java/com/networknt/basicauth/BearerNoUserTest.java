@@ -17,9 +17,7 @@
 package com.networknt.basicauth;
 
 import com.networknt.client.Http2Client;
-import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
-import com.networknt.status.Status;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.client.ClientConnection;
@@ -46,12 +44,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- * This is a test class for anonymous and allowOtherAuth. It tests all scenarios of positive only.
+ * This is a test class to ensure that an error will return if allowBearerToken is true but there
+ * is no bearer user and paths defined. This is one of the negative test cases.
  *
  * @author Steve Hu
  */
-public class AnonymousOtherTest {
-    static final Logger logger = LoggerFactory.getLogger(AnonymousOtherTest.class);
+public class BearerNoUserTest {
+    static final Logger logger = LoggerFactory.getLogger(AnonymousBearerTest.class);
 
     static Undertow server = null;
 
@@ -61,7 +60,7 @@ public class AnonymousOtherTest {
             logger.info("starting server");
             HttpHandler handler = getTestHandler();
             // inject the BasicAuthHandler before the TestHandler for security
-            BasicAuthHandler basicAuthHandler = new BasicAuthHandler(BasicAuthConfig.load("basic-auth-anonymous"));
+            BasicAuthHandler basicAuthHandler = new BasicAuthHandler(BasicAuthConfig.load("basic-auth-bearer"));
             basicAuthHandler.setNext(handler);
             server = Undertow.builder()
                     .addHttpListener(17352, "localhost")
@@ -106,7 +105,7 @@ public class AnonymousOtherTest {
     }
 
     @Test
-    public void testWithAnonymousWrongPath() throws Exception {
+    public void testWithBearerWrongPath() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
@@ -119,6 +118,7 @@ public class AnonymousOtherTest {
         try {
             ClientRequest request = new ClientRequest().setPath("/v2/wrong").setMethod(Methods.GET);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
+            request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer token");
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
         } catch (Exception e) {
@@ -129,43 +129,14 @@ public class AnonymousOtherTest {
         }
         int statusCode = reference.get().getResponseCode();
         String responseBody = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(403, statusCode);
-        if(statusCode == 403) {
+        Assert.assertEquals(400, statusCode);
+        if(statusCode == 400) {
             Assert.assertNotNull(responseBody);
         }
     }
 
     @Test
-    public void testWithAnonymousRightPath() throws Exception {
-        final Http2Client client = Http2Client.getInstance();
-        final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
-        try {
-            connection = client.connect(new URI("http://localhost:17352"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
-        } catch (Exception e) {
-            throw new ClientException(e);
-        }
-        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
-        try {
-            ClientRequest request = new ClientRequest().setPath("/v2/pet").setMethod(Methods.GET);
-            request.getRequestHeaders().put(Headers.HOST, "localhost");
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
-            latch.await();
-        } catch (Exception e) {
-            logger.error("Exception: ", e);
-            throw new ClientException(e);
-        } finally {
-            IoUtils.safeClose(connection);
-        }
-        int statusCode = reference.get().getResponseCode();
-        Assert.assertEquals(200, statusCode);
-        if(statusCode == 200) {
-            Assert.assertNotNull(reference.get().getAttachment(Http2Client.RESPONSE_BODY));
-        }
-    }
-
-    @Test
-    public void testAllowOtherAuth() throws Exception {
+    public void testWithBearerRightPath() throws Exception {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
@@ -188,8 +159,9 @@ public class AnonymousOtherTest {
             IoUtils.safeClose(connection);
         }
         int statusCode = reference.get().getResponseCode();
-        Assert.assertEquals(200, statusCode);
-        if(statusCode == 200) {
+        String responseBody = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+        Assert.assertEquals(400, statusCode);
+        if(statusCode == 400) {
             Assert.assertNotNull(reference.get().getAttachment(Http2Client.RESPONSE_BODY));
         }
     }
