@@ -191,4 +191,37 @@ public class AnonymousBearerTest {
             Assert.assertNotNull(reference.get().getAttachment(Http2Client.RESPONSE_BODY));
         }
     }
+
+    @Test
+    public void testAllowBearerAuthWrongPath() throws Exception {
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection;
+        try {
+            connection = client.connect(new URI("http://localhost:17352"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        } catch (Exception e) {
+            throw new ClientException(e);
+        }
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        try {
+            ClientRequest request = new ClientRequest().setPath("/v2/wrong").setMethod(Methods.GET);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
+            request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer token");
+            connection.sendRequest(request, client.createClientCallback(reference, latch));
+            latch.await();
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw new ClientException(e);
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+        int statusCode = reference.get().getResponseCode();
+        String responseBody = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+        System.out.println("responseBody = " + responseBody);
+        Assert.assertEquals(403, statusCode);
+        if(statusCode == 403) {
+            Assert.assertNotNull(responseBody);
+        }
+    }
+
 }
