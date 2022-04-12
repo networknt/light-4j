@@ -91,6 +91,8 @@ public class LimitConfig {
 
     void reload() {
         mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
+        setConfigData();
+        setRateLimitConfig();
     }
 
     public boolean isEnabled() {
