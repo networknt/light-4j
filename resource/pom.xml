@@ -5,7 +5,7 @@
     <parent>
         <artifactId>light-4j</artifactId>
         <groupId>com.networknt</groupId>
-        <version>2.1.1-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -24,8 +24,8 @@
             <artifactId>slf4j-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.undertow</groupId>
-            <artifactId>undertow-core</artifactId>
+            <groupId>io.quarkus.http</groupId>
+            <artifactId>quarkus-http-core</artifactId>
         </dependency>
 
         <dependency>
