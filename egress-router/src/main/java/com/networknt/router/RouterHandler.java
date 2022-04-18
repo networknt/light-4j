@@ -59,6 +59,8 @@ public class RouterHandler implements HttpHandler {
                 .setRewriteHostHeader(config.rewriteHostHeader)
                 .setUrlRewriteRules(config.urlRewriteRules)
                 .setMethodRewriteRules(config.methodRewriteRules)
+                .setQueryParamRewriteRules(config.queryParamRewriteRules)
+                .setHeaderRewriteRules(config.headerRewriteRules)
                 .setNext(ResponseCodeHandler.HANDLE_404)
                 .build();
     }

@@ -24,13 +24,14 @@ import java.net.SocketAddress;
 import java.nio.channels.Channel;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.DelayQueue;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import java.security.cert.CertificateEncodingException;
 
 import com.networknt.handler.config.MethodRewriteRule;
+import com.networknt.handler.config.QueryHeaderRewriteRule;
 import com.networknt.handler.config.UrlRewriteRule;
 import io.undertow.UndertowLogger;
 import io.undertow.UndertowMessages;
@@ -38,6 +39,7 @@ import io.undertow.server.handlers.ResponseCodeHandler;
 import io.undertow.server.handlers.proxy.ProxyCallback;
 import io.undertow.server.handlers.proxy.ProxyClient;
 import io.undertow.server.handlers.proxy.ProxyConnection;
+import io.undertow.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.ChannelExceptionHandler;
@@ -68,20 +70,7 @@ import io.undertow.server.RenegotiationRequiredException;
 import io.undertow.server.SSLSessionInfo;
 import io.undertow.server.protocol.http.HttpAttachments;
 import io.undertow.server.protocol.http.HttpContinue;
-import io.undertow.util.Attachable;
-import io.undertow.util.AttachmentKey;
-import io.undertow.util.Certificates;
-import io.undertow.util.CopyOnWriteMap;
-import io.undertow.util.HeaderMap;
-import io.undertow.util.HeaderValues;
-import io.undertow.util.Headers;
-import io.undertow.util.HttpString;
-import io.undertow.util.NetworkUtils;
-import io.undertow.util.SameThreadExecutor;
-import io.undertow.util.StatusCodes;
-import io.undertow.util.Transfer;
-import io.undertow.util.WorkerUtils;
-import java.util.List;
+
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
@@ -125,6 +114,10 @@ public class ProxyHandler implements HttpHandler {
     private volatile List<UrlRewriteRule> urlRewriteRules;
     private volatile List<MethodRewriteRule> methodRewriteRules;
 
+    private volatile Map<String, List<QueryHeaderRewriteRule>> queryParamRewriteRules;
+
+    private volatile Map<String, List<QueryHeaderRewriteRule>> headerRewriteRules;
+
     private final Predicate idempotentRequestPredicate;
 
     ProxyHandler(Builder builder) {
@@ -136,6 +129,8 @@ public class ProxyHandler implements HttpHandler {
         this.maxConnectionRetries = builder.maxConnectionRetries;
         this.urlRewriteRules = builder.urlRewriteRules;
         this.methodRewriteRules = builder.methodRewriteRules;
+        this.queryParamRewriteRules = builder.queryParamRewriteRules;
+        this.headerRewriteRules = builder.headerRewriteRules;
         this.idempotentRequestPredicate = builder.idempotentRequestPredicate;
         for(Map.Entry<HttpString, ExchangeAttribute> e : builder.requestHeaders.entrySet()) {
             requestHeaders.put(e.getKey(), e.getValue());
@@ -181,14 +176,40 @@ public class ProxyHandler implements HttpHandler {
         exchange.dispatch(exchange.isInIoThread() ? SameThreadExecutor.INSTANCE : exchange.getIoThread(), clientHandler);
     }
 
-    static void copyHeaders(final HeaderMap to, final HeaderMap from) {
+    static void copyHeaders(final HeaderMap to, final HeaderMap from, final List<QueryHeaderRewriteRule> rules) {
         long f = from.fastIterateNonEmpty();
         HeaderValues values;
         while (f != -1L) {
             values = from.fiCurrent(f);
             if(!to.contains(values.getHeaderName())) {
-                //don't over write existing headers, normally the map will be empty, if it is not we assume it is not for a reason
-                to.putAll(values.getHeaderName(), values);
+                if(rules != null && rules.size() > 0) {
+                    for(QueryHeaderRewriteRule rule: rules) {
+                        if(rule.getOldK().equals(values.getHeaderName().toString())) {
+                            HttpString key = values.getHeaderName();
+                            if(rule.getNewK() != null)  {
+                                // newK is not null, it means the key has to be changed. Create a new HeaderValues object.
+                                key = new HttpString(rule.getNewK());
+                            }
+                            // check if we need to replace the value with the oldV and newV
+                            if(rule.getOldV() != null && rule.getNewV() != null) {
+                                boolean add = false;
+                                Iterator<String> it = values.iterator();
+                                while(it.hasNext()) {
+                                    String value = it.next();
+                                    if(rule.getOldV().equals(value)) {
+                                        it.remove();
+                                        add = true;
+                                    }
+                                }
+                                if(add) values.addFirst(rule.getNewV());
+                            }
+                            to.putAll(key, values);
+                        }
+                    }
+                } else {
+                    //don't over write existing headers, normally the map will be empty, if it is not we assume it is not for a reason
+                    to.putAll(values.getHeaderName(), values);
+                }
             }
             f = from.fiNextNonEmpty(f);
         }
@@ -241,7 +262,7 @@ public class ProxyHandler implements HttpHandler {
         @Override
         public void completed(final HttpServerExchange exchange, final ProxyConnection connection) {
             exchange.putAttachment(CONNECTION, connection);
-            exchange.dispatch(SameThreadExecutor.INSTANCE, new ProxyAction(connection, exchange, requestHeaders, rewriteHostHeader, reuseXForwarded, exchange.isRequestComplete() ? this : null, idempotentPredicate, urlRewriteRules, methodRewriteRules));
+            exchange.dispatch(SameThreadExecutor.INSTANCE, new ProxyAction(connection, exchange, requestHeaders, rewriteHostHeader, reuseXForwarded, exchange.isRequestComplete() ? this : null, idempotentPredicate, urlRewriteRules, methodRewriteRules, queryParamRewriteRules, headerRewriteRules));
         }
 
         @Override
@@ -309,10 +330,13 @@ public class ProxyHandler implements HttpHandler {
         private final Predicate idempotentPredicate;
         private final List<UrlRewriteRule> urlRewriteRules;
         private final List<MethodRewriteRule> methodRewriteRules;
+        private final Map<String, List<QueryHeaderRewriteRule>> queryParamRewriteRules;
+        private final Map<String, List<QueryHeaderRewriteRule>> headerRewriteRules;
 
         ProxyAction(final ProxyConnection clientConnection, final HttpServerExchange exchange, Map<HttpString, ExchangeAttribute> requestHeaders,
                 boolean rewriteHostHeader, boolean reuseXForwarded, ProxyClientHandler proxyClientHandler, Predicate idempotentPredicate,
-                List<UrlRewriteRule> urlRewriteRules, List<MethodRewriteRule> methodRewriteRules) {
+                List<UrlRewriteRule> urlRewriteRules, List<MethodRewriteRule> methodRewriteRules,
+                Map<String, List<QueryHeaderRewriteRule>> queryParamRewriteRules, Map<String, List<QueryHeaderRewriteRule>> headerRewriteRules) {
             this.clientConnection = clientConnection;
             this.exchange = exchange;
             this.requestHeaders = requestHeaders;
@@ -322,6 +346,8 @@ public class ProxyHandler implements HttpHandler {
             this.idempotentPredicate = idempotentPredicate;
             this.urlRewriteRules = urlRewriteRules;
             this.methodRewriteRules = methodRewriteRules;
+            this.queryParamRewriteRules = queryParamRewriteRules;
+            this.headerRewriteRules = headerRewriteRules;
         }
 
         @Override
@@ -367,10 +393,43 @@ public class ProxyHandler implements HttpHandler {
                 requestURI.append(targetURI);
             }
 
-            String qs = exchange.getQueryString();
-            if (qs != null && !qs.isEmpty()) {
-                requestURI.append('?');
-                requestURI.append(qs);
+            if(queryParamRewriteRules != null && queryParamRewriteRules.get(targetURI) != null) {
+                List<QueryHeaderRewriteRule> rules = queryParamRewriteRules.get(targetURI);
+                Map<String, Deque<String>> params = exchange.getQueryParameters();
+                for(QueryHeaderRewriteRule rule: rules) {
+                    if(params.get(rule.getOldK()) != null) {
+                        Deque<String> values = params.get(rule.getOldK());
+                        // we only iterate the values if oldV and newV are defined.
+                        if(rule.getOldV() != null && rule.getNewV() != null) {
+                            Iterator it = values.iterator();
+                            boolean add = false;
+                            while(it.hasNext()) {
+                                if(it.next().equals(rule.getOldV())) {
+                                    it.remove();
+                                    add = true;
+                                }
+                            }
+                            values.addFirst(rule.getNewV());
+                        }
+                        if(rule.getNewK() != null) {
+                            params.remove(rule.getOldK());
+                            params.put(rule.getNewK(), values);
+                        } else {
+                            params.put(rule.getOldK(), values);
+                        }
+                    }
+                }
+                String qs = QueryParameterUtils.buildQueryString(params);
+                if (qs != null && !qs.isEmpty()) {
+                    requestURI.append('?');
+                    requestURI.append(qs);
+                }
+            } else {
+                String qs = exchange.getQueryString();
+                if (qs != null && !qs.isEmpty()) {
+                    requestURI.append('?');
+                    requestURI.append(qs);
+                }
             }
             // handler the method rewrite here.
             HttpString method = exchange.getRequestMethod();
@@ -386,7 +445,7 @@ public class ProxyHandler implements HttpHandler {
                     .setMethod(method);
             final HeaderMap inboundRequestHeaders = exchange.getRequestHeaders();
             final HeaderMap outboundRequestHeaders = request.getRequestHeaders();
-            copyHeaders(outboundRequestHeaders, inboundRequestHeaders);
+            copyHeaders(outboundRequestHeaders, inboundRequestHeaders, headerRewriteRules == null ? null : headerRewriteRules.get(targetURI));
 
             if (!exchange.isPersistent()) {
                 //just because the client side is non-persistent
@@ -573,7 +632,7 @@ public class ProxyHandler implements HttpHandler {
                                             path = path.substring(0, i);
                                         }
 
-                                        exchange.dispatch(SameThreadExecutor.INSTANCE, new ProxyAction(new ProxyConnection(pushedRequest.getConnection(), path), exchange, requestHeaders, rewriteHostHeader, reuseXForwarded, null, idempotentPredicate, urlRewriteRules, methodRewriteRules));
+                                        exchange.dispatch(SameThreadExecutor.INSTANCE, new ProxyAction(new ProxyConnection(pushedRequest.getConnection(), path), exchange, requestHeaders, rewriteHostHeader, reuseXForwarded, null, idempotentPredicate, urlRewriteRules, methodRewriteRules, queryParamRewriteRules, headerRewriteRules));
                                     }
                                 });
                                 return true;
@@ -582,7 +641,7 @@ public class ProxyHandler implements HttpHandler {
                     }
 
 
-                    result.setResponseListener(new ResponseCallback(exchange, proxyClientHandler, idempotentPredicate));
+                    result.setResponseListener(new ResponseCallback(exchange, proxyClientHandler, idempotentPredicate, headerRewriteRules));
                     final IoExceptionHandler handler = new IoExceptionHandler(exchange, clientConnection.getConnection());
                     if(requiresContinueResponse) {
                         try {
@@ -637,11 +696,13 @@ public class ProxyHandler implements HttpHandler {
         private final HttpServerExchange exchange;
         private final ProxyClientHandler proxyClientHandler;
         private final Predicate idempotentPredicate;
+        private final Map<String, List<QueryHeaderRewriteRule>> headerRewriteRules;
 
-        private ResponseCallback(HttpServerExchange exchange, ProxyClientHandler proxyClientHandler, Predicate idempotentPredicate) {
+        private ResponseCallback(HttpServerExchange exchange, ProxyClientHandler proxyClientHandler, Predicate idempotentPredicate, Map<String, List<QueryHeaderRewriteRule>> headerRewriteRules) {
             this.exchange = exchange;
             this.proxyClientHandler = proxyClientHandler;
             this.idempotentPredicate = idempotentPredicate;
+            this.headerRewriteRules = headerRewriteRules;
         }
 
         @Override
@@ -655,7 +716,7 @@ public class ProxyHandler implements HttpHandler {
             final HeaderMap inboundResponseHeaders = response.getResponseHeaders();
             final HeaderMap outboundResponseHeaders = exchange.getResponseHeaders();
             exchange.setStatusCode(response.getResponseCode());
-            copyHeaders(outboundResponseHeaders, inboundResponseHeaders);
+            copyHeaders(outboundResponseHeaders, inboundResponseHeaders, headerRewriteRules == null ? null : headerRewriteRules.get(exchange.getRequestPath()));
 
             if (exchange.isUpgrade()) {
 
@@ -814,6 +875,8 @@ public class ProxyHandler implements HttpHandler {
         private Predicate idempotentRequestPredicate = IdempotentPredicate.INSTANCE;
         private List<UrlRewriteRule> urlRewriteRules;
         private List<MethodRewriteRule> methodRewriteRules;
+        private Map<String, List<QueryHeaderRewriteRule>> queryParamRewriteRules;
+        private Map<String, List<QueryHeaderRewriteRule>> headerRewriteRules;
 
         Builder() {}
 
@@ -890,6 +953,24 @@ public class ProxyHandler implements HttpHandler {
 
         public Builder setMethodRewriteRules(List<MethodRewriteRule> methodRewriteRules) {
             this.methodRewriteRules = methodRewriteRules;
+            return this;
+        }
+
+        public Map<String, List<QueryHeaderRewriteRule>> getQueryParamRewriteRules() {
+            return queryParamRewriteRules;
+        }
+
+        public Builder setQueryParamRewriteRules(Map<String, List<QueryHeaderRewriteRule>> queryParamRewriteRules) {
+            this.queryParamRewriteRules = queryParamRewriteRules;
+            return this;
+        }
+
+        public Map<String, List<QueryHeaderRewriteRule>> getHeaderRewriteRules() {
+            return headerRewriteRules;
+        }
+
+        public Builder setHeaderRewriteRules(Map<String, List<QueryHeaderRewriteRule>> headerRewriteRules) {
+            this.headerRewriteRules = headerRewriteRules;
             return this;
         }
 

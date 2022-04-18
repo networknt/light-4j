@@ -18,3 +18,55 @@ router.methodRewriteRules:
   - /v1/address POST PATCH
   # rewrite GET to DELETE for path /v1/address
   - /v1/address GET DELETE
+
+router.queryParamRewriteRules:
+  # rewrite query parameter key business-query to request-query and value value1 to value2 for /v1/address
+  /v1/address:
+    - oldK: business-query
+      # overwrite the key
+      newK: request-query
+      oldV: value1
+      # overwrite the value at the same time.
+      newV: value2
+    - oldK: module
+      newK: mod
+    - oldK: app-id
+      oldV: esb
+      newV: emb
+  # rewrite query parameter value from old to new for key key1 for /v2/address
+  /v2/address:
+    # key must be here when you want to overwrite a value.
+    - oldK: key1
+      # only the value = old then we change to new.
+      oldV: old
+      newV: new
+  # rewrite query parameter key from path to route for /v3/address
+  /v3/address:
+    - oldK: path
+      newK: route
+
+router.headerRewriteRules:
+  # rewrite header key business-query to request-query and value value1 to value2 for /v1/address
+  /v1/address:
+    - oldK: business-query
+      # overwrite the key
+      newK: request-query
+      oldV: value1
+      # overwrite the value at the same time.
+      newV: value2
+    - oldK: module
+      newK: mod
+    - oldK: app-id
+      oldV: esb
+      newV: emb
+  # rewrite header value from old to new for key key1 for /v2/address
+  /v2/address:
+    # key must be here when you want to overwrite a value.
+    - oldK: key1
+      # only the value = old then we change to new.
+      oldV: old
+      newV: new
+  # rewrite header key from path to route for /v3/address
+  /v3/address:
+    - oldK: path
+      newK: route
