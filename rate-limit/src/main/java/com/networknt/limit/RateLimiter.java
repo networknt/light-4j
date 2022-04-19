@@ -1,6 +1,8 @@
 package com.networknt.limit;
 
+import com.networknt.exception.FrameworkException;
 import com.networknt.limit.key.KeyResolver;
+import com.networknt.status.Status;
 import com.networknt.utility.Constants;
 
 import io.undertow.server.HttpServerExchange;
@@ -21,7 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Gavin Chen
  */
 public class RateLimiter {
-
+    private static final String LIMIT_KEY_NOT_FOUND = "ERR10073";
     protected LimitConfig config;
 
     private Map<String, Map<Long, AtomicLong>> serverTimeMap = new ConcurrentHashMap<>();
@@ -96,14 +98,29 @@ public class RateLimiter {
     public RateLimitResponse handleRequest(final HttpServerExchange exchange, LimitKey limitKey) {
         if (LimitKey.ADDRESS.equals(limitKey)) {
             String address = addressKeyResolver.resolve(exchange);
+            if(address == null) {
+                logger.error("Failed to resolve the address with the address resolver " + addressKeyResolver.getClass().getPackageName());
+                Status status = new Status(LIMIT_KEY_NOT_FOUND, LimitKey.ADDRESS, addressKeyResolver.toString());
+                throw new FrameworkException(status);
+            }
             String path = exchange.getRequestPath();
             return isAllowDirect(address, path, ADDRESS_TYPE);
         } else if (LimitKey.CLIENT.equals(limitKey)) {
             String clientId = clientIdKeyResolver.resolve(exchange);
+            if(clientId == null) {
+                logger.error("Failed to resolve the clientId with the clientId resolver " + addressKeyResolver.getClass().getPackageName()  + ". You must put the limit handler after the security handler in the request/response chain.");
+                Status status = new Status(LIMIT_KEY_NOT_FOUND, LimitKey.CLIENT, clientIdKeyResolver.getClass().getPackageName());
+                throw new FrameworkException(status);
+            }
             String path = exchange.getRequestPath();
             return isAllowDirect(clientId, path, CLIENT_TYPE);
         } else if (LimitKey.USER.equals(limitKey)) {
             String userId = userIdKeyResolver.resolve(exchange);
+            if(userId == null) {
+                logger.error("Failed to resolve the userId with the userId resolver " + userIdKeyResolver.getClass().getPackageName()  + ". You must put the limit handler after the security handler in the request/response chain.");
+                Status status = new Status(LIMIT_KEY_NOT_FOUND, LimitKey.USER, userIdKeyResolver.getClass().getPackageName());
+                throw new FrameworkException(status);
+            }
             String path = exchange.getRequestPath();
             return isAllowDirect(userId, path, USER_TYPE);
         } else  {
