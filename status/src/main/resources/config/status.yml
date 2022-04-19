@@ -487,6 +487,11 @@ ERR10072:
   code: ERR10072
   message: BEARER_USER_NOT_FOUND
   description: Bearer token is allowed but bearer user is not found.
+ERR10073:
+  statusCode: 400
+  code: ERR10073
+  message: LIMIT_KEY_NOT_FOUND
+  description: Could not resolve the rate limit key with key type %s and resolver %s.
 
 
 
