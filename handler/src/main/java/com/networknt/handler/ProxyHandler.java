@@ -409,7 +409,7 @@ public class ProxyHandler implements HttpHandler {
                                     add = true;
                                 }
                             }
-                            values.addFirst(rule.getNewV());
+                            if(add) values.addFirst(rule.getNewV());
                         }
                         if(rule.getNewK() != null) {
                             params.remove(rule.getOldK());
