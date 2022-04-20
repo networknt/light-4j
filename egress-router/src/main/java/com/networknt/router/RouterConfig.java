@@ -18,6 +18,7 @@ package com.networknt.router;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.handler.config.MethodRewriteRule;
+import com.networknt.handler.config.QueryHeaderRewriteRule;
 import com.networknt.handler.config.UrlRewriteRule;
 import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
@@ -44,6 +45,11 @@ public class RouterConfig {
     List<String> hostWhitelist;
     List<UrlRewriteRule> urlRewriteRules;
     List<MethodRewriteRule> methodRewriteRules;
+
+    Map<String, List<QueryHeaderRewriteRule>> queryParamRewriteRules;
+
+    Map<String, List<QueryHeaderRewriteRule>> headerRewriteRules;
+
     Set httpMethods;
     private Config config;
     private final Map<String, Object> mappedConfig;
@@ -62,6 +68,8 @@ public class RouterConfig {
         setHostWhitelist();
         setUrlRewriteRules();
         setMethodRewriteRules();
+        setQueryParamRewriteRules();
+        setHeaderRewriteRules();
         setConfigData();
 
     }
@@ -224,5 +232,69 @@ public class RouterConfig {
 
     public void setServiceIdQueryParameter(boolean serviceIdQueryParameter) {
         this.serviceIdQueryParameter = serviceIdQueryParameter;
+    }
+
+    public Map<String, List<QueryHeaderRewriteRule>> getQueryParamRewriteRules() {
+        return queryParamRewriteRules;
+    }
+
+    public void setQueryParamRewriteRules(Map<String, List<QueryHeaderRewriteRule>> queryParamRewriteRules) {
+        this.queryParamRewriteRules = queryParamRewriteRules;
+    }
+
+    public void setQueryParamRewriteRules() {
+        queryParamRewriteRules = new HashMap<>();
+        if (mappedConfig.get("queryParamRewriteRules") != null && mappedConfig.get("queryParamRewriteRules") instanceof Map) {
+            Map<String, Object> map = (Map<String, Object>)mappedConfig.get("queryParamRewriteRules");
+            for (Map.Entry<String, Object> r: map.entrySet()) {
+                String key =  r.getKey();
+                Object object = r.getValue();
+                if(object instanceof List) {
+                    List<QueryHeaderRewriteRule> rules = new ArrayList<>();
+                    List<Map<String, String>> values = (List<Map<String, String>>)object;
+                    for(Map<String, String> value: values) {
+                        QueryHeaderRewriteRule rule = new QueryHeaderRewriteRule();
+                        rule.setOldK(value.get("oldK"));
+                        rule.setNewK(value.get("newK"));
+                        rule.setOldV(value.get("oldV"));
+                        rule.setNewV(value.get("newV"));
+                        rules.add(rule);
+                    }
+                    queryParamRewriteRules.put(key, rules);
+                }
+            }
+        }
+    }
+
+    public Map<String, List<QueryHeaderRewriteRule>> getHeaderRewriteRules() {
+        return headerRewriteRules;
+    }
+
+    public void setHeaderRewriteRules(Map<String, List<QueryHeaderRewriteRule>> headerRewriteRules) {
+        this.headerRewriteRules = headerRewriteRules;
+    }
+
+    public void setHeaderRewriteRules() {
+        headerRewriteRules = new HashMap<>();
+        if (mappedConfig.get("headerRewriteRules") != null && mappedConfig.get("headerRewriteRules") instanceof Map) {
+            Map<String, Object> map = (Map<String, Object>)mappedConfig.get("headerRewriteRules");
+            for (Map.Entry<String, Object> r: map.entrySet()) {
+                String key =  r.getKey();
+                Object object = r.getValue();
+                if(object instanceof List) {
+                    List<QueryHeaderRewriteRule> rules = new ArrayList<>();
+                    List<Map<String, String>> values = (List<Map<String, String>>)object;
+                    for(Map<String, String> value: values) {
+                        QueryHeaderRewriteRule rule = new QueryHeaderRewriteRule();
+                        rule.setOldK(value.get("oldK"));
+                        rule.setNewK(value.get("newK"));
+                        rule.setOldV(value.get("oldV"));
+                        rule.setNewV(value.get("newV"));
+                        rules.add(rule);
+                    }
+                    headerRewriteRules.put(key, rules);
+                }
+            }
+        }
     }
 }
