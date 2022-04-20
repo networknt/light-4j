@@ -49,6 +49,19 @@ public class RouterConfigTest {
     }
 
     @Test
+    public void testQueryParamRewriteRules() {
+        Assert.assertNotNull(routerConfig.getQueryParamRewriteRules());
+        Assert.assertEquals(routerConfig.getQueryParamRewriteRules().size(), 3);
+    }
+
+    @Test
+    public void testHeaderRewriteRules() {
+        Assert.assertNotNull(routerConfig.getHeaderRewriteRules());
+        Assert.assertEquals(routerConfig.getHeaderRewriteRules().size(), 3);
+    }
+
+
+    @Test
     public void testUrlRewriteRules() {
         Assert.assertNotNull(routerConfig.getUrlRewriteRules());
         Assert.assertEquals(routerConfig.getUrlRewriteRules().size(), 3);

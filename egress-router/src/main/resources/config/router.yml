@@ -42,3 +42,19 @@ urlRewriteRules: ${router.urlRewriteRules:}
 # examples.
 # Note: you cannot rewrite a method with a body to a method without a body or vice versa.
 methodRewriteRules: ${router.methodRewriteRules:}
+
+# Query parameter rewrite rules for client applications that send different query parameter keys or values
+# than the target server expecting. When overwriting a value, the key must be specified in order to
+# identify the right query parameter. If only the oldK and newK are specified, the router will rewrite the
+# query parameter key oldK with different key newK and keep the value.
+# The format of the rules will be a map with the path as the key. Please refer to test values.yml for
+# examples. You can define a list of rules under the same path.
+queryParamRewriteRules: ${router.queryParamRewriteRules:}
+
+# Header rewrite rules for client applications that send different header keys or values than the target
+# server expecting. When overwriting a value, the key must be specified in order to identify the right
+# header. If only the oldK and newK are specified, the router will rewrite the header key oldK with different
+# key newK and keep the value.
+# The format of the rule will be a map with the path as the key. Please refer to test values.yml for
+# examples. You can define a list of rules under the same path.
+headerRewriteRules: ${router.headerRewriteRules:}
