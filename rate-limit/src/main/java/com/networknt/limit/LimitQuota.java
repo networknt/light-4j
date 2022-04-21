@@ -10,6 +10,11 @@ public class LimitQuota {
 
     }
 
+    public LimitQuota(int value, TimeUnit unit) {
+        this.value = value;
+        this.unit = unit;
+    }
+
     public  LimitQuota(String item) {
       if (item!=null && item.indexOf("/")!=-1) {
           this.value = Integer.parseInt(item.substring(0, item.indexOf("/")).trim());
