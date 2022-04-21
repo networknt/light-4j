@@ -1,0 +1,10 @@
+# old rate limit config file to test the backward compatibility.
+
+# If this handler is enabled or not
+enabled: true
+
+# Maximum concurrent requests allowed, if this number is exceeded, request will be queued.
+concurrentRequest: 10
+
+# Overflow request queue size. -1 means there is no limit on the queue size
+queueSize: -1
