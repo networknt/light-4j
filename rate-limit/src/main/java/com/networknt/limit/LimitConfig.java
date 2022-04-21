@@ -19,6 +19,7 @@ package com.networknt.limit;
 import com.networknt.config.Config;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Config class for limit module
@@ -215,6 +216,9 @@ public class LimitConfig {
         object = mappedConfig.get(ERROR_CODE);
         if (object != null) {
             errorCode = (int) object;
+        } else {
+            // set default value to 503.
+            errorCode = 503;
         }
 
         object = getMappedConfig().get(IS_ENABLED);
@@ -249,6 +253,11 @@ public class LimitConfig {
             List<String> limits = Arrays.asList(str.split(" "));
             List<LimitQuota> limitQuota = new ArrayList<>();
             limits.stream().forEach(l->limitQuota.add(new LimitQuota(l)));
+            rateLimit = limitQuota;
+        } else {
+            // if rateLimit doesn't exist, use the concurrentRequest as request per second.
+            List<LimitQuota> limitQuota = new ArrayList<>();
+            limitQuota.add(new LimitQuota(concurrentRequest, TimeUnit.SECONDS));
             rateLimit = limitQuota;
         }
 
