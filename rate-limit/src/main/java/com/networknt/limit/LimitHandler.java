@@ -55,7 +55,7 @@ public class LimitHandler implements MiddlewareHandler {
      * This is a constructor for test cases only. Please don't use it.
      *
      * @param cfg limit config
-     * @throws Exception
+     * @throws Exception thrown when config is wrong.
      *
      */
     @Deprecated
