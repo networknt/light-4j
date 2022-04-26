@@ -17,6 +17,7 @@
 package com.networknt.mask;
 
 import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Option;
 import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
@@ -27,6 +28,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.InputStream;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -133,5 +135,41 @@ public class MaskTest {
         String output = Mask.maskJson(input, "testIssue1055");
         System.out.println(output);
         Assert.assertEquals(output, "{\"name\":\"Steve\",\"list\":[{\"name\":\"Josh\",\"creditCardNumber\":\"****************\"}],\"password\":\"secret\"}");
+    }
+
+    @Test
+    public void testNullInput()
+    {
+        String output;
+
+        // Mask.maskString((String) null, "");
+        output = Mask.maskString((String) null, "uri");
+        System.out.println("ouput = " + output);
+        Assert.assertEquals(null, output);
+
+        // Mask.maskRegex((String) null, "", "");
+        output = Mask.maskRegex((String) null, "queryParameter", "accountNo");
+        System.out.println("output = " + output);
+        Assert.assertEquals(null, output);
+
+        // Mask.maskJson((String) null,"key");
+        output = Mask.maskJson((String) null, "uri");
+        System.out.println("output = " + output);
+        Assert.assertEquals(null, output);
+
+        // Mask.maskJson((InputStream) null, "");
+        output = Mask.maskJson((InputStream) null, "uri");
+        System.out.println("output = " + output);
+        Assert.assertEquals(null, output);
+
+        // Mask.maskJson((Object) null, "");
+        output = Mask.maskJson((Object) null, "uri");
+        System.out.println("output = " + output);
+        Assert.assertEquals(null, output);
+
+        // Mask.maskJson((DocumentContext) null, "");
+        output = Mask.maskJson((DocumentContext) null, "uri");
+        System.out.println("output = " + output);
+        Assert.assertEquals(null, output);
     }
 }
