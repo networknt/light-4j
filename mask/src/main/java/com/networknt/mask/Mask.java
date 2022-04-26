@@ -103,8 +103,8 @@ public class Mask {
     }
 
     private static String replaceWithMask(String stringToBeMasked, char maskingChar, String regex) {
-        if (stringToBeMasked == null)
-            return null;
+        if (stringToBeMasked == null || stringToBeMasked.length() == 0)
+            return stringToBeMasked;
         String replacementString = "";
         String padGroup;
         if (!StringUtils.isEmpty(regex)) {
