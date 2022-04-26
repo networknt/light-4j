@@ -7,6 +7,8 @@
 
 
 - fix for NPE's if input is null for Mask methods (issue 1208) [\#1222](https://github.com/networknt/light-4j/pull/1222) ([miklish](https://github.com/miklish))
+
+
 ## [1.6.38](https://github.com/networknt/light-4j/tree/1.6.38) (2022-02-19)
 
 
