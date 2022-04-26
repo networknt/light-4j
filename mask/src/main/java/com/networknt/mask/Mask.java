@@ -63,6 +63,8 @@ public class Mask {
      * @return Masked result
      */
     public static String maskString(String input, String key) {
+        if(input == null)
+            return null;
         String output = input;
         Map<String, Object> stringConfig = (Map<String, Object>) config.get(MASK_TYPE_STRING);
         if (stringConfig != null) {
@@ -101,9 +103,8 @@ public class Mask {
     }
 
     private static String replaceWithMask(String stringToBeMasked, char maskingChar, String regex) {
-        if (stringToBeMasked.length() == 0) {
+        if (stringToBeMasked == null || stringToBeMasked.length() == 0)
             return stringToBeMasked;
-        }
         String replacementString = "";
         String padGroup;
         if (!StringUtils.isEmpty(regex)) {
@@ -140,6 +141,8 @@ public class Mask {
      * @return String Masked result
      */
     public static String maskJson(String input, String key) {
+        if(input == null)
+            return null;
         DocumentContext ctx = JsonPath.parse(input);
         return maskJson(ctx, key);
     }
@@ -151,6 +154,8 @@ public class Mask {
      * @return String Masked result
      */
     public static String maskJson(InputStream input, String key) {
+        if(input == null)
+            return null;
         DocumentContext ctx = JsonPath.parse(input);
         return maskJson(ctx, key);
     }
@@ -162,11 +167,15 @@ public class Mask {
      * @return String Masked result
      */
     public static String maskJson(Object input, String key) {
+        if(input == null)
+            return null;
         DocumentContext ctx = JsonPath.parse(input);
         return maskJson(ctx, key);
     }
 
     public static String maskJson(DocumentContext ctx, String key) {
+        if(ctx == null)
+            return null;
         Map<String, Object> jsonConfig = (Map<String, Object>) config.get(MASK_TYPE_JSON);
         if (jsonConfig != null) {
             Map<String, Object> patternMap = (Map<String, Object>) jsonConfig.get(key);
