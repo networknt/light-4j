@@ -1,0 +1,9 @@
+# Enable tableau handler or not, default to false
+enabled: ${tableau.enabled:false}
+# The tableau server url.
+serverUrl: ${tableau.serverUrl:http://127.0.0.1:8080}
+# The tableau signin API path
+serverPath: ${tableau.serverPath:/api/2.8/auth/signin}
+# Tableau Credentials for signin
+# Tableau username
+tableauUsername: ${tableau.tableauUsername:admin}
