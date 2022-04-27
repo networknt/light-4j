@@ -1,0 +1,14 @@
+# client.yml
+client.verifyHostname: false
+# salesforce.yml
+salesforce.enabled: true
+salesforce.authIssuer: 3MVG9S11UK8FGR3O.vJebzXvWgAE211Z9KX_7vmKt6k300-2913g_AdsTWtzBTLI232Y1w21kw2HANBfU9jTTJF9h5mL.2tJdY142hyaPW
+salesforce.authSubject: apiuser.conquestintegration@networknt.sit
+salesforce.certFilename: apigatewayuat.pfx
+salesforce.certPassword: password01
+salesforce.iv: Yeocae324eAvs2a/P33y3Ea3Rqg
+salesforce.appliedPathPrefixes:
+  - /salesforce
+  - /services/apexrest
+salesforce.serviceHost: https://nnt-sit.my.salesforce.com
+
