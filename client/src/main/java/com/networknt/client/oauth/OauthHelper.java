@@ -626,7 +626,7 @@ public class OauthHelper {
      * @param jwt
      */
     private static void setScope(TokenRequest tokenRequest, Jwt jwt) {
-        if(jwt.getKey() != null && jwt.getKey().getScopes() != null) {
+        if(jwt.getKey() != null && jwt.getKey().getScopes() != null && !jwt.getKey().getScopes().isEmpty()) {
             tokenRequest.setScope(new ArrayList<>() {{ addAll(jwt.getKey().getScopes()); }});
         }
     }
