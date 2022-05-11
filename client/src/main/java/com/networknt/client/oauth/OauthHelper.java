@@ -285,6 +285,7 @@ public class OauthHelper {
      * @throws ClientException throw exception if communication with the service fails.
      */
     public static String getKey(KeyRequest keyRequest) throws ClientException {
+        if(logger.isDebugEnabled()) logger.debug("keyRequest = " + keyRequest.toString());
         return getKey(keyRequest, null);
     }
 
@@ -333,6 +334,7 @@ public class OauthHelper {
                     keyClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
             return response.thenApply(HttpResponse::body).get(ClientConfig.get().getTimeout(), TimeUnit.MILLISECONDS);
         } catch (Exception e) {
+            logger.error("Exception:", e);
             throw new ClientException(e);
         }
     }

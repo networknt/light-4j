@@ -107,4 +107,19 @@ public class KeyRequest {
     public void setProxyPort(int proxyPort) {
         this.proxyPort = proxyPort;
     }
+
+    @Override
+    public String toString() {
+        return "KeyRequest{" +
+                "serverUrl='" + serverUrl + '\'' +
+                ", proxyHost='" + proxyHost + '\'' +
+                ", proxyPort=" + proxyPort +
+                ", serviceId='" + serviceId + '\'' +
+                ", uri='" + uri + '\'' +
+                ", clientId='" + clientId + '\'' +
+                ", clientSecret='" + clientSecret + '\'' +
+                ", enableHttp2=" + enableHttp2 +
+                ", kid='" + kid + '\'' +
+                '}';
+    }
 }

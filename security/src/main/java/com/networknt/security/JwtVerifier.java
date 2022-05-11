@@ -370,7 +370,7 @@ public class JwtVerifier {
                 try {
                     logger.debug("Getting Json Web Key list from {} for serviceId {}", keyRequest.getServerUrl(), entry.getKey());
                     String key = OauthHelper.getKey(keyRequest);
-                    logger.debug("Got Json Web Key list from {} for serviceId {}", keyRequest.getServerUrl(), entry.getKey());
+                    logger.debug("Got Json Web Key = ", key);
                     List<JsonWebKey> jwkList = new JsonWebKeySet(key).getJsonWebKeys();
                     if (jwkList == null || jwkList.isEmpty()) {
                         throw new RuntimeException("cannot get JWK from OAuth server");
