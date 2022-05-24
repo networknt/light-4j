@@ -24,7 +24,7 @@ proxyHost: ${salesforce.proxyHost:}
 # Proxy Port if proxy host is used. default value will be 443 which means HTTPS.
 proxyPort: ${salesforce.proxyPort:}
 # If HTTP2 is used to connect to the salesforce site.
-enableHttp2: ${salesforce.enableHttp2:true}
+enableHttp2: ${salesforce.enableHttp2:false}
 # A list of applied request path prefixes, other requests will skip this handler. The value can be a string
 # if there is only one request path prefix needs this handler. or a list of strings if there are multiple.
 appliedPathPrefixes: ${salesforce.appliedPathPrefixes:}
