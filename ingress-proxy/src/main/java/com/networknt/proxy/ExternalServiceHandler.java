@@ -50,7 +50,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     private HttpClient client;
 
     public ExternalServiceHandler() {
-        config = (ExternalServiceConfig) Config.getInstance().getJsonObjectConfig(ExternalServiceConfig.CONFIG_NAME, ExternalServiceConfig.class);
+        config = new ExternalServiceConfig();
         if(logger.isInfoEnabled()) logger.info("ExternalServiceConfig is loaded.");
     }
 
@@ -67,6 +67,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     }
 
     @Override
+
     public boolean isEnabled() {
         return config.isEnabled();
     }
@@ -92,7 +93,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                     String queryString = exchange.getQueryString();
                     HttpRequest.Builder builder = HttpRequest.newBuilder();
                     HttpRequest request = null;
-                    if(queryString != null) {
+                    if(queryString != null && !queryString.trim().isEmpty()) {
                         builder.uri(new URI(requestHost + requestPath + "?" + queryString));
                     } else {
                         builder.uri(new URI(requestHost + requestPath));
@@ -134,8 +135,8 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         try {
                             HttpClient.Builder clientBuilder = HttpClient.newBuilder()
                                     .followRedirects(HttpClient.Redirect.NORMAL)
-                                    .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
-                                    .sslContext(Http2Client.createSSLContext());
+                                    .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()));
+                                    //.sslContext(Http2Client.createSSLContext());
                             if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
                             if(config.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
                             // this a workaround to bypass the hostname verification in jdk11 http client.
@@ -145,7 +146,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                                 props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
                             }
                             client = clientBuilder.build();
-                        } catch (IOException e) {
+                        } catch (Exception e) {
                             logger.error("Cannot create HttpClient:", e);
                             throw e;
                         }
@@ -171,7 +172,11 @@ public class ExternalServiceHandler implements MiddlewareHandler {
         HeaderValues values;
         while (f != -1L) {
             values = headerMap.fiCurrent(f);
-            builder.setHeader(values.getHeaderName().toString(), values.getFirst());
+            try {
+                builder.setHeader(values.getHeaderName().toString(), values.getFirst());
+            } catch (Exception e) {
+                logger.debug("Exception:", e);
+            }
             f = headerMap.fiNextNonEmpty(f);
         }
     }
