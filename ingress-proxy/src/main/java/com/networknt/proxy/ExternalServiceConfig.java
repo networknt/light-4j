@@ -121,13 +121,13 @@ public class ExternalServiceConfig {
                 pathHostMappings.add(parts);
             } else if (object instanceof List) {
                 List<String> maps = (List<String>)object;
-                maps.forEach(item -> {
-                    String[] parts = item.split(" ");
+                for(String s: maps) {
+                    String[] parts = s.split(" ");
                     if(parts.length != 2) {
                         throw new ConfigException("path host entry must have two elements separated by a space.");
                     }
                     pathHostMappings.add(parts);
-                });
+                }
             } else {
                 throw new ConfigException("pathHostMappings must be a string or a list of strings.");
             }

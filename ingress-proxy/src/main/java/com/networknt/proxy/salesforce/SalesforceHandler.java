@@ -75,7 +75,7 @@ public class SalesforceHandler implements MiddlewareHandler {
     private HttpClient client;
 
     public SalesforceHandler() {
-        config = (SalesforceConfig) Config.getInstance().getJsonObjectConfig(SalesforceConfig.CONFIG_NAME, SalesforceConfig.class);
+        config = new SalesforceConfig();
         if(logger.isInfoEnabled()) logger.info("SalesforceAuthHandler is loaded.");
     }
 
