@@ -1,0 +1,13 @@
+# Configuration for external service handler to access third party services through proxy/gateway.
+# Indicate if the handler is enabled or not
+enabled: ${externalService.enabled:false}
+# Proxy Host if calling within the corp network with a gateway like Mcafee gateway.
+proxyHost: ${externalService.proxyHost:}
+# Proxy Port if proxy host is used. default value will be 443 which means HTTPS.
+proxyPort: ${externalService.proxyPort:}
+# If HTTP2 is used to connect to the external service.
+enableHttp2: ${externalService.enableHttp2:false}
+# A list of request path to the service host mappings. Other requests will skip this handler. The value is
+# a string with two parts. The first part is the path and the second is the target host the request is
+# finally routed to.
+pathHostMappings: ${externalService.pathHostMappings:}
