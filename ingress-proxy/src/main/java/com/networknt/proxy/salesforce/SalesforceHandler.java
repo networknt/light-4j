@@ -101,7 +101,7 @@ public class SalesforceHandler implements MiddlewareHandler {
         // As certPassword is in the config file, we need to mask them.
         List<String> masks = new ArrayList<>();
         masks.add("certPassword");
-        ModuleRegistry.registerModule(SalesforceHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), masks);
+        ModuleRegistry.registerModule(SalesforceHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(SalesforceConfig.CONFIG_NAME), masks);
     }
 
     @Override
@@ -131,7 +131,7 @@ public class SalesforceHandler implements MiddlewareHandler {
             String queryString = exchange.getQueryString();
             String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
             HttpRequest request = null;
-            if(method.equalsIgnoreCase("GET") || method.equalsIgnoreCase("DELETE")) {
+            if(method.equalsIgnoreCase("GET")) {
                 request = HttpRequest.newBuilder()
                         .uri(new URI(requestHost + requestPath + "?" + queryString))
                         .headers("Authorization", "Bearer " + accessToken, "Content-Type", contentType)
