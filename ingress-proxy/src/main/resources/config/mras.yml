@@ -1,0 +1,34 @@
+# Configuration for MrasHandler
+# Indicate if the handler is enabled or not
+enabled: ${mras.enabled:false}
+# MRAS get token URL to send the request
+tokenUrl: ${mras.tokenUrl:https://test.mras.com/services/oauth2/token}
+# username for the authentication
+username: ${mras.username:}
+# password for the authentication
+password: ${mras:password:}
+# is cache enabled for the token
+cacheEnabled: ${mras.cacheEnabled:}
+# memory key
+memKey: ${mras.memKey}
+# grace period
+gracePeriod: ${mras.gracePeriod:}
+# keyStoreAlias
+keyStoreAlias: ${mras.keyStoreAlias:}
+# keyAlias
+keyAlias: ${mras.keyAlias:}
+# Certificate file name. The private key alias is the filename without the extension.
+certFilename: ${mras.certFilename:apigatewayuat.pfx}
+# Certificate file password
+certPassword: ${mras.certPassword:password}
+# Proxy Host if calling within the corp network with a gateway like Mcafee gateway.
+proxyHost: ${mras.proxyHost:}
+# Proxy Port if proxy host is used. default value will be 443 which means HTTPS.
+proxyPort: ${mras.proxyPort:}
+# If HTTP2 is used to connect to the MRAS site.
+enableHttp2: ${mras.enableHttp2:false}
+# A list of applied request path prefixes, other requests will skip this handler. The value can be a string
+# if there is only one request path prefix needs this handler. or a list of strings if there are multiple.
+appliedPathPrefixes: ${mras.appliedPathPrefixes:}
+# MRAS target service host for service access with the token get with above property.
+serviceHost: ${mras.serviceHost}
