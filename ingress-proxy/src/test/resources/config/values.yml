@@ -1,5 +1,7 @@
 # client.yml
 client.verifyHostname: false
+client.timeout: 10000
+
 # salesforce.yml
 salesforce.enabled: true
 salesforce.authIssuer: 3MVG9S11UK8FGR3O.vJebzXvWgAE211Z9KX_7vmKt6k300-2913g_AdsTWtzBTLI232Y1w21kw2HANBfU9jTTJF9h5mL.2tJdY142hyaPW
@@ -12,3 +14,26 @@ salesforce.appliedPathPrefixes:
   - /services/apexrest
 salesforce.serviceHost: https://nnt-sit.my.salesforce.com
 
+# mras.yml
+mras.enabled: true
+mras.tokenUrl: https://ais-dev.networknt.munichre.cloud/allfinanz/auth/oauth/token
+mras.username: client_id
+mras.password: client_secret
+mras.cacheEnabled: true
+mras.memKey: MRASToken
+mras.gracePeriod: 50
+mras.keyStoreAlias: mras
+mras.keyAlias: api.ais-dev
+mras.certFilename: mras_ts.jks
+mras.certPassword: password
+mras.appliedPathPrefixes:
+  - /mras
+mras.serviceHost: https://mras.com
+
+# external-service.yml
+externalService.enabled: true
+externalService.pathHostMappings:
+  - /sharepoint https://sharepoint.microsoft.com
+  - /get https://postman-echo.com
+  - /post https://postman-echo.com
+  - /abc https://abc.com
