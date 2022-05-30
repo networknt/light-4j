@@ -1,0 +1,4 @@
+# server.yml
+# The default serviceId to ensure that openapi-inject.yml can be loaded correctly. The values.yml must be
+# overwritten in any application and change the server.serviceId to the right one.
+server.serviceId: com.networknt.petstore-1.0.0
