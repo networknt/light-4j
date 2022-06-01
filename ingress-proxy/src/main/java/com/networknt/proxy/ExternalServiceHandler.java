@@ -7,8 +7,6 @@ import com.networknt.client.ssl.TLSConfig;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.monad.Failure;
-import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
@@ -20,7 +18,6 @@ import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.ProxySelector;
@@ -135,8 +132,8 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         try {
                             HttpClient.Builder clientBuilder = HttpClient.newBuilder()
                                     .followRedirects(HttpClient.Redirect.NORMAL)
-                                    .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()));
-                                    //.sslContext(Http2Client.createSSLContext());
+                                    .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
+                                    .sslContext(Http2Client.createSSLContext());
                             if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
                             if(config.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
                             // this a workaround to bypass the hostname verification in jdk11 http client.
