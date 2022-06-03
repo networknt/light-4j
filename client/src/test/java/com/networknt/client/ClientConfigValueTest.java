@@ -1,8 +1,9 @@
 package com.networknt.client;
 
-import com.networknt.config.Config;
-import org.junit.Before;
+import com.networknt.config.JsonMapper;
 import org.junit.Test;
+
+import java.util.Map;
 
 import static junit.framework.TestCase.assertEquals;
 
@@ -15,5 +16,10 @@ public class ClientConfigValueTest {
         assertEquals(config.getConnectionExpireTime(), 1800000);
     }
 
-
+    @Test
+    public void testTokenConfig() {
+        ClientConfig config = ClientConfig.get(CONFIG_NAME);
+        Map<String, Object> tokenConfig = config.getTokenConfig();
+        System.out.println("tokenConfig = " + JsonMapper.toJson(tokenConfig));
+    }
 }

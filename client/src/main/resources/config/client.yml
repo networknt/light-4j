@@ -72,7 +72,8 @@ oauth:
       redirect_uri: ${client.tokenAcRedirectUri:https://localhost:3000/authorization}
       # optional scope, default scope in the client registration will be used if not defined.
       # If there are scopes specified here, they will be verified against the registered scopes.
-      # scope:
+      # In values.yml, you define a list of strings for the scope(s).
+      scope: ${client.tokenAcScope:}
       # - petstore.r
       # - petstore.w
     # the following section defines uri and parameters for client credentials grant type
@@ -85,7 +86,8 @@ oauth:
       client_secret: ${client.tokenCcClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
       # optional scope, default scope in the client registration will be used if not defined.
       # If there are scopes specified here, they will be verified against the registered scopes.
-      # scope:
+      # In values.yml, you define a list of strings for the scope(s).
+      scope: ${client.tokenCcScope:}
       # - petstore.r
       # - petstore.w
       # The serviceId to the service specific OAuth 2.0 configuration. Used only when multipleOAuthServer is
@@ -100,7 +102,8 @@ oauth:
       client_secret: ${client.tokenRtClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
       # optional scope, default scope in the client registration will be used if not defined.
       # If there are scopes specified here, they will be verified against the registered scopes.
-      # scope:
+      # In values.yml, you define a list of strings for the scope(s).
+      scope: ${client.tokenRtScope:}
       # - petstore.r
       # - petstore.w
     # light-oauth2 key distribution endpoint configuration for token verification
