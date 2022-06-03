@@ -1,0 +1,9 @@
+client.tokenAcScope:
+  - test.w
+  - test.r
+client.tokenCcScope:
+  - test.w
+  - test.r
+client.tokenRtScope:
+  - petstore.w
+  - petstore.r

@@ -66,9 +66,8 @@ oauth:
       # the web server uri that will receive the redirected authorization code
       redirect_uri: https://localhost:8080/authorization_code
       # optional scope, default scope in the client registration will be used if not defined.
-      scope:
-        - test.r
-        - test.w
+      # In values.yml, you define a list of strings for the scope(s).
+      scope: ${client.tokenAcScope:}
     # the following section defines uri and parameters for client credentials grant type
     client_credentials:
       # token endpoint for client credentials grant
@@ -78,9 +77,8 @@ oauth:
       # client_secret for client credentials grant flow.
       client_secret: test_secret
       # optional scope, default scope in the client registration will be used if not defined.
-      scope:
-        - test.r
-        - test.w
+      # In values.yml, you define a list of strings for the scope(s).
+      scope: ${client.tokenCcScope:}
     refresh_token:
       # token endpoint for refresh token grant
       uri: "/oauth2/token"
@@ -89,9 +87,8 @@ oauth:
       # client_secret for refresh token grant flow
       client_secret: f6h1FTI8Q3-7UScPZDzfXA
       # optional scope, default scope in the client registration will be used if not defined.
-      scope:
-        - petstore.r
-        - petstore.w
+      # In values.yml, you define a list of strings for the scope(s).
+      scope: ${client.tokenRtScope:}
     # light-oauth2 key distribution endpoint configuration for token verification
     key:
       # key distribution server url for token verification. It will be used if it is configured.
