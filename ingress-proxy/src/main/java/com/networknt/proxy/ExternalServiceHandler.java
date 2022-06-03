@@ -88,6 +88,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                     String method = exchange.getRequestMethod().toString();
                     String requestHost = parts[1];
                     String queryString = exchange.getQueryString();
+                    if(logger.isTraceEnabled()) logger.trace("request host = " + requestHost + " method = " + method + " queryString = " + queryString);
                     HttpRequest.Builder builder = HttpRequest.newBuilder();
                     HttpRequest request = null;
                     if(queryString != null && !queryString.trim().isEmpty()) {
@@ -103,24 +104,31 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                     } else if(method.equalsIgnoreCase("DELETE")) {
                         request = builder.DELETE().build();
                     } else if(method.equalsIgnoreCase("POST")) {
+                        // if body handler is in the chain before this handler, we should have it in the exchange attachment.
                         String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
+                        if(logger.isTraceEnabled() && bodyString != null) logger.trace("Get post body from the exchange attachment = " + bodyString);
                         if(bodyString == null) {
                             InputStream inputStream = exchange.getInputStream();
                             bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
+                            if(logger.isTraceEnabled()) logger.trace("Get post body from input stream = " + bodyString);
                         }
                         request = builder.POST(HttpRequest.BodyPublishers.ofString(bodyString)).build();
                     } else if(method.equalsIgnoreCase("PUT")) {
                         String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
+                        if(logger.isTraceEnabled() && bodyString != null) logger.trace("Get put body from the exchange attachment = " + bodyString);
                         if(bodyString == null) {
                             InputStream inputStream = exchange.getInputStream();
                             bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
+                            if(logger.isTraceEnabled()) logger.trace("Get put body from input stream = " + bodyString);
                         }
                         request = builder.PUT(HttpRequest.BodyPublishers.ofString(bodyString)).build();
                     } else if(method.equalsIgnoreCase("PATCH")) {
                         String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
+                        if(logger.isTraceEnabled() && bodyString != null) logger.trace("Get patch body from the exchange attachment = " + bodyString);
                         if(bodyString == null) {
                             InputStream inputStream = exchange.getInputStream();
                             bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
+                            if(logger.isTraceEnabled()) logger.trace("Get patch body from input stream = " + bodyString);
                         }
                         request = builder.method("PATCH", HttpRequest.BodyPublishers.ofString(bodyString)).build();
                     } else {
@@ -171,8 +179,10 @@ public class ExternalServiceHandler implements MiddlewareHandler {
             values = headerMap.fiCurrent(f);
             try {
                 builder.setHeader(values.getHeaderName().toString(), values.getFirst());
+                if(logger.isTraceEnabled()) logger.trace("Copy header key = " + values.getHeaderName().toString() + " value = " + values.getFirst());
             } catch (Exception e) {
-                logger.debug("Exception:", e);
+                // for some headers, they cannot be modified.
+                if(logger.isTraceEnabled()) logger.trace("Ignore the exception:", e);
             }
             f = headerMap.fiNextNonEmpty(f);
         }
