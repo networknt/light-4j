@@ -103,7 +103,7 @@ public class TokenHandler implements MiddlewareHandler {
 
         Jwt cachedJwt = cache.get(serviceId);
         // get a new token if cachedJwt is null or the jwt is about expired.
-        if(cachedJwt == null || cachedJwt.getExpire() - (Long)tokenConfig.get(ClientConfig.TOKEN_RENEW_BEFORE_EXPIRED) < System.currentTimeMillis()) {
+        if(cachedJwt == null || cachedJwt.getExpire() - Long.valueOf((Integer)tokenConfig.get(ClientConfig.TOKEN_RENEW_BEFORE_EXPIRED)) < System.currentTimeMillis()) {
             Jwt.Key key = new Jwt.Key(serviceId);
             cachedJwt = new Jwt(key); // create a new instance if the cache is empty for the serviceId.
 
@@ -146,11 +146,15 @@ public class TokenHandler implements MiddlewareHandler {
         // assume that the subject token has the scope already?)
         String token = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
         if(token == null) {
+            if(logger.isTraceEnabled()) logger.trace("Adding jwt token to Authorization header with Bearer " + cachedJwt.getJwt().substring(20));
             exchange.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + cachedJwt.getJwt());
         } else {
+            if(logger.isTraceEnabled()) {
+                logger.trace("Authorization header is used with " + token.substring(10));
+                logger.trace("Adding jwt token to X-Scope-Token header with Bearer " + cachedJwt.getJwt().substring(20));
+            }
             exchange.getRequestHeaders().put(HttpStringConstants.SCOPE_TOKEN, "Bearer " + cachedJwt.getJwt());
         }
-
         Handler.next(exchange, next);
     }
 
