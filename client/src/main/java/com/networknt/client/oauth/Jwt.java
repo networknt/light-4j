@@ -156,8 +156,8 @@ public class Jwt {
     }
 
     /**
-     * a inner model tight to Jwt, this key is to represent to a Jwt for caching or other usage
-     * for now it's only identified by scopes and serviceId.
+     * an inner model tight to Jwt, this key is to represent to a Jwt for caching or other usage
+     * for now it's only identified by scopes and serviceId combination or one of them.
      */
     public static class Key {
         /**

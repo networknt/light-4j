@@ -553,7 +553,7 @@ public class OauthHelper {
     private static Result<Jwt> renewCCTokenSync(final Jwt jwt) {
         // Already expired, try to renew getCCTokenSynchronously but let requests use the old token.
         logger.trace("In renew window and token is already expired.");
-        //the token can be renew when it's not on renewing or current time is lager than retrying interval
+        //the token can be renewed when it's not on renewing or current time is lager than retrying interval
         if (!jwt.isRenewing() || System.currentTimeMillis() > jwt.getExpiredRetryTimeout()) {
             jwt.setRenewing(true);
             jwt.setEarlyRetryTimeout(System.currentTimeMillis() + Jwt.getExpiredRefreshRetryDelay());
@@ -605,6 +605,7 @@ public class OauthHelper {
         TokenRequest tokenRequest = new ClientCredentialsRequest(jwt.getCcConfig());
         //scopes at this point is may not be set yet when issuing a new token.
         setScope(tokenRequest, jwt);
+        if(logger.isTraceEnabled()) logger.trace("TokenRequest = " + JsonMapper.toJson(tokenRequest));
         Result<TokenResponse> result = OauthHelper.getTokenResult(tokenRequest);
         if(result.isSuccess()) {
             TokenResponse tokenResponse = result.getResult();
