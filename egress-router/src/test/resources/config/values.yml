@@ -70,3 +70,26 @@ router.headerRewriteRules:
   /v3/address:
     - oldK: path
       newK: route
+
+# client.yml
+# test configuration for the TokenHandler with multiple OAuth 2.0 providers.
+client.multipleAuthServers: true
+client.tokenCcServiceIdAuthServers:
+  service1:
+    server_url: https://localhost:7771
+    enableHttp2: true
+    uri: /oauth1/token
+    client_id: f7d42348-c647-4efb-a52d-4c5787421e72
+    client_secret: f6h1FTI8Q3-7UScPZDzfXA
+    scope:
+      - petstore.r
+      - petstore.w
+  service2:
+    server_url: https://localhost:7772
+    enableHttp2: true
+    uri: /oauth2/token
+    client_id: f7d42348-c647-4efb-a52d-4c5787421e73
+    client_secret: f6h1FTI8Q3-7UScPZDzfXA
+    scope:
+      - market.r
+      - market.w
