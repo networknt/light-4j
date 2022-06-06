@@ -103,7 +103,7 @@ public class TokenHandler implements MiddlewareHandler {
 
         Jwt cachedJwt = cache.get(serviceId);
         // get a new token if cachedJwt is null or the jwt is about expired.
-        if(cachedJwt == null || cachedJwt.getExpire() - (Long)tokenConfig.get(ClientConfig.TOKEN_RENEW_BEFORE_EXPIRED) < System.currentTimeMillis()) {
+        if(cachedJwt == null || cachedJwt.getExpire() - Long.valueOf((Integer)tokenConfig.get(ClientConfig.TOKEN_RENEW_BEFORE_EXPIRED)) < System.currentTimeMillis()) {
             Jwt.Key key = new Jwt.Key(serviceId);
             cachedJwt = new Jwt(key); // create a new instance if the cache is empty for the serviceId.
 
