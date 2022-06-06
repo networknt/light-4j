@@ -27,10 +27,10 @@ enableHttp2: ${server.enableHttp2:true}
 keystoreName: ${server.keystoreName:server.keystore}
 
 # Keystore password
-keystorePass: ${server.keystorePass:password}
+keystorePass: ${SERVER_KEY_STORE_PASS:password}
 
 # Private key password
-keyPass: ${server.keyPass:password}
+keyPass: ${SERVER_KEY_PASS:password}
 
 # Flag that indicate if two way TLS is enabled. Not recommended in docker container.
 enableTwoWayTls: ${server.enableTwoWayTls:false}
@@ -39,13 +39,13 @@ enableTwoWayTls: ${server.enableTwoWayTls:false}
 truststoreName: ${server.truststoreName:server.truststore}
 
 # Truststore password
-truststorePass: ${server.truststorePass:password}
+truststorePass: ${SERVER_TRUST_STORE_PASS:password}
 
 # Bootstrap truststore name used to connect to the light-config-server if it is used.
 bootstrapStoreName: ${server.bootstrapStoreName:bootstrap.truststore}
 
 # Bootstrap truststore password
-bootstrapStorePass: ${server.bootstrapStorePass:password}
+bootstrapStorePass: ${SERVER_BOOTSTRAP_STORE_PASS:password}
 
 # Unique service identifier. Used in service registration and discovery etc.
 serviceId: ${server.serviceId:com.networknt.petstore-1.0.0}
@@ -93,30 +93,30 @@ shutdownGracefulPeriod: ${server.shutdownGracefulPeriod:2000}
 
 # Unique service name. Used in microservice to associate a given name to a service with configuration
 # or as a key within the configuration of a particular domain
-# serviceName: ${server.serviceName:petstore}
+serviceName: ${server.serviceName:petstore}
 
 # Buffer size of undertow server. Default to 16K
-# bufferSize: ${server.bufferSize:16384}
+bufferSize: ${server.bufferSize:16384}
 
 # Number of IO thread. Default to number of processor * 2
-# ioThreads: ${server.ioThreads:4}
+ioThreads: ${server.ioThreads:4}
 
 # Number of worker threads. Default to 200 and it can be reduced to save memory usage in a container with only one cpu
-# workerThreads: ${server.workerThreads:200}
+workerThreads: ${server.workerThreads:200}
 
 # Backlog size. Default to 10000
-# backlog: ${server.backlog:10000}
+backlog: ${server.backlog:10000}
 
 # Flag to set UndertowOptions.ALWAYS_SET_DATE
-# alwaysSetDate: ${server.alwaysSetDate:false}
+alwaysSetDate: ${server.alwaysSetDate:false}
 
 # Server string used to mark the server. Default to L for light-4j.
-# serverString: ${server.serverString:L}
+serverString: ${server.serverString:L}
 
 # Flag to set UndertowOptions.ALLOW_UNESCAPED_CHARACTERS_IN_URL. Default to false.
 # Please note that this option widens the attack surface and attacker can potentially access your filesystem.
 # This should only be used on an internal server and never be used on a server accessed from the Internet.
-# allowUnescapedCharactersInUrl: ${server.allowUnescapedCharactersInUrl:false}
+allowUnescapedCharactersInUrl: ${server.allowUnescapedCharactersInUrl:false}
 
 # Set the max transfer file size for uploading files. Default to 1000000 which is 1 MB.
-# maxTransferFileSize: ${server.maxTransferFileSize:1000000}
+maxTransferFileSize: ${server.maxTransferFileSize:1000000}
