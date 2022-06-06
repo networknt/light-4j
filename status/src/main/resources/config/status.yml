@@ -492,6 +492,11 @@ ERR10073:
   code: ERR10073
   message: LIMIT_KEY_NOT_FOUND
   description: Could not resolve the rate limit key with key type %s and resolver %s.
+ERR10074:
+  statusCode: 400
+  code: ERR10074
+  message: HANDLER_DEPENDENCY_ERROR
+  description: Handler %s depends on handler %s in the chain.
 
 
 
