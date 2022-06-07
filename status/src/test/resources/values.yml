@@ -1,0 +1,3 @@
+service.singletons:
+  - com.networknt.status.StatusWrapper:
+    - com.networknt.status.TestStatusWrapper
