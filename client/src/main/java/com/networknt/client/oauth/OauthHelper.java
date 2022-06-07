@@ -612,7 +612,7 @@ public class OauthHelper {
             jwt.setJwt(tokenResponse.getAccessToken());
             // the expiresIn is seconds and it is converted to millisecond in the future.
             jwt.setExpire(System.currentTimeMillis() + tokenResponse.getExpiresIn() * 1000);
-            logger.info("Get client credentials token {} with expire_in {} seconds", jwt, tokenResponse.getExpiresIn());
+            logger.info("Get client credentials token {} with expire_in {} seconds", jwt.getJwt().substring(0, 20), tokenResponse.getExpiresIn());
             //set the scope for future usage.
             jwt.setScopes(tokenResponse.getScope());
             return Success.of(jwt);
