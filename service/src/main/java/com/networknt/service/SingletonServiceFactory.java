@@ -17,6 +17,7 @@
 package com.networknt.service;
 
 import com.networknt.config.Config;
+import com.networknt.config.JsonMapper;
 import com.networknt.utility.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +42,7 @@ public class SingletonServiceFactory {
     static {
         ServiceConfig serviceConfig =
                 (ServiceConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServiceConfig.class);
+        if(logger.isTraceEnabled()) logger.trace("serviceConfig = " + JsonMapper.toJson(serviceConfig));
         List<Map<String, Object>> singletons = serviceConfig.getSingletons();
         //logger.debug("singletons " + singletons);
         try {
@@ -94,6 +96,7 @@ public class SingletonServiceFactory {
      * @throws Exception
      */
     private static List<Object> constructAndAddToServiceMap(List<String> interfaceClasses, Map map) throws Exception {
+        if(logger.isTraceEnabled()) logger.trace("map = " + JsonMapper.toJson(map));
         Iterator it = map.entrySet().iterator();
         List<Object> items = new ArrayList<>();
         if (it.hasNext()) {
