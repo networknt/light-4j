@@ -16,14 +16,20 @@
 package com.networknt.audit;
 
 import com.networknt.config.Config;
+import com.networknt.config.ConfigException;
 import com.networknt.utility.Constants;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yaml.snakeyaml.Yaml;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
 class AuditConfig {
+    private static final Logger logger = LoggerFactory.getLogger(AuditConfig.class);
 
     private static final String HEADERS = "headers";
     private static final String AUDIT = "audit";
@@ -48,19 +54,27 @@ class AuditConfig {
     private String timestampFormat;
 
     private AuditConfig() {
+        this(CONFIG_NAME);
+    }
+
+    private AuditConfig(String configName) {
         config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
+        mappedConfig = config.getJsonMapConfigNoCache(configName);
 
         setLists();
         setLogLevel();
         setConfigData();
     }
 
-    static AuditConfig load() {
+    public static AuditConfig load() {
         return new AuditConfig();
     }
 
-    void reload() {
+    public static AuditConfig load(String configName) {
+        return new AuditConfig(configName);
+    }
+
+    public void reload() {
         mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
 
         setLists();
@@ -123,8 +137,24 @@ class AuditConfig {
     }
 
     private void setLists() {
-        headerList = (List<String>) getMappedConfig().get(HEADERS);
-        auditList = (List<String>) getMappedConfig().get(AUDIT);
+        if(getMappedConfig().get(HEADERS) instanceof String) {
+            String s = (String)getMappedConfig().get(HEADERS);
+            if(logger.isTraceEnabled()) logger.trace("s = " + s);
+            headerList = Arrays.asList(s.split("\\s*,\\s*"));
+        } else if (getMappedConfig().get(HEADERS) instanceof List) {
+            headerList = (List<String>) getMappedConfig().get(HEADERS);
+        } else {
+            throw new ConfigException("headers list is missing or wrong type.");
+        }
+        if(getMappedConfig().get(AUDIT) instanceof String) {
+            String s = (String)getMappedConfig().get(AUDIT);
+            if(logger.isTraceEnabled()) logger.trace("s = " + s);
+            auditList = Arrays.asList(s.split("\\s*,\\s*"));
+        } else if (getMappedConfig().get(AUDIT) instanceof List) {
+            auditList = (List<String>) getMappedConfig().get(AUDIT);
+        } else {
+            throw new ConfigException("audit list is missing or wrong type.");
+        }
     }
 
     private void setConfigData() {
