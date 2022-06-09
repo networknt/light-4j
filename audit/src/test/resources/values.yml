@@ -1,0 +1,9 @@
+# audit.yml
+# Use YAML format to define a list of strings.
+audit.headers:
+  - X-Correlation-Id
+  - X-Traceability-Id
+  - caller_id
+# Use comma separated string to define a list of strings.
+# This format is more friendly with the config server.
+audit.audit: client_id, user_id, scope_client_id, endpoint, serviceId, requestBody, responseBody, queryParameters, pathParameters, requestCookies, status
