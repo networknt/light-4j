@@ -1,16 +1,17 @@
-# AuditHandler will pick some important fields from headers and tokens and logs into a audit appender.
+# AuditHandler will pick some important fields from headers and tokens and logs into an audit appender
+# defined in the logback.xml configuration file.
 ---
-# Enable Audit
-enabled: true
+# Enable Audit Logging
+enabled: ${audit.enabled:true}
 
-# Enable mask
-mask: true
+# Enable mask in the audit log
+mask: ${audit.mask:true}
 
 # Output response status code
-statusCode: true
+statusCode: ${audit.statusCode:true}
 
 # Output response time
-responseTime: true
+responseTime: ${audit.responseTime:true}
 
 # when auditOnError is true:
 #  - it will only log when status code >= 400
@@ -18,54 +19,46 @@ responseTime: true
 #  - status detail will be only logged when auditOnError is true
 # when auditOnError is false:
 #  - it will log on every request
-#  - no response body will be logged
-#  - no status detail will be logged
+#  - no response body will be logged.
+#  - no status detail will be logged.
 # log level is controlled by logLevel
-auditOnError: false
+auditOnError: ${audit.auditOnError:false}
 
-# will audit stacktrace when using default setExchangeStatus
-# auditStackTrace: false
-
-# log level; by default set to info
-logLevelIsError: false
+# log level; by default it is set to info. If you want to change it to error, set to true.
+logLevelIsError: ${audit.logLevelIsError:false}
 
 # the format for outputting the timestamp, if the format is not specified or invalid, will use a long value.
-#timestampFormat: yyyy-MM-dd'T'HH:mm:ss.SSSZ
+# for some users that will process the audit log manually, you can use yyyy-MM-dd'T'HH:mm:ss.SSSZ as format.
+timestampFormat: ${audit.timestampFormat:}
 
-# Output header elements. You can add more if you want.
-headers:
+# Output header elements. You can add more if you want. If multiple values, you can use a comma separated
+# string as default value in the template and values.yml. You can also use a list of strings in YAML format.
+headers: ${audit.headers:X-Correlation-Id, X-Traceability-Id,caller_id}
 
 # Correlation Id
-- X-Correlation-Id
-
+# - X-Correlation-Id
 # Traceability Id
-- X-Traceability-Id
+# - X-Traceability-Id
 # caller id for metrics
-- caller_id
+# - caller_id
 
-# Output from id token and access token
-audit:
+# Output from id token and access token. If multiple values, you can use a comma separated string as default
+# value in the template and values.yml. You can also use a list of strings in YAML format.
+audit: ${audit.audit:client_id, user_id, scope_client_id, endpoint, serviceId, requestBody, responseBody, status}
 
 # Client Id
-- client_id
-
+# - client_id
 # User Id in id token, this is optional
-- user_id
-
+# - user_id
 # Client Id in scope/access token, this is optional
-- scope_client_id
-
+# - scope_client_id
 # Request endpoint uri@method.
-- endpoint
-
+# - endpoint
 # Service ID assigned to the service, this is optional and must be set by the service in its implementation
-- serviceId
-
+# - serviceId
 # Request Body, this is optional and must be set by the service in its implementation
 # - requestBody
-
 # Response payload, this is optional and must be set by the service in its implementation
 # - responseBody
-
 # Response error status payload
-- status
+# - status
