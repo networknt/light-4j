@@ -1,7 +1,8 @@
 # indicate if PathPrefixServiceHandler is enabled or not
-enabled: true
+enabled: ${pathPrefixService.enabled:true}
 # mapping from request path prefixes to serviceIds
-mapping:
-  /v1/address: party.address-1.0.0
-  /v2/address: party.address-2.0.0
-  /v1/contact: party.contact-1.0.0
+mapping: ${pathPrefixService.mapping:}
+# The following are examples in the values.yml
+#   /v1/address: party.address-1.0.0
+#   /v2/address: party.address-2.0.0
+#   /v1/contact: party.contact-1.0.0
