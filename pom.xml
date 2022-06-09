@@ -94,7 +94,7 @@
         <version.sqlserver>7.0.0.jre10</version.sqlserver>
         <version.httpclient>4.5.13</version.httpclient>
         <versions.maven-version>2.4</versions.maven-version>
-        <version.jsonpath>2.4.0</version.jsonpath>
+        <version.jsonpath>2.7.0</version.jsonpath>
         <version.maven-version>2.7</version.maven-version>
         <version.nexus-staging-maven>1.6.8</version.nexus-staging-maven>
         <version.maven-source>3.0.1</version.maven-source>
@@ -449,12 +449,6 @@
                 <groupId>com.jayway.jsonpath</groupId>
                 <artifactId>json-path</artifactId>
                 <version>${version.jsonpath}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>net.minidev</groupId>
-                        <artifactId>json-smart</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
