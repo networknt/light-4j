@@ -15,7 +15,7 @@ enableExtractScopeToken: ${security.enableExtractScopeToken:true}
 # Enable JWT scope verification. Only valid when enableVerifyJwt is true.
 enableVerifyScope: ${security.enableVerifyScope:true}
 
-# Enable JWT scope verification. 
+# Enable JWT scope verification.
 # Only valid when (enableVerifyJwt is true) AND (enableVerifyScope is true)
 enableVerifyJwtScopeToken: ${security.enableVerifyJwtScopeToken:true}
 
@@ -30,8 +30,8 @@ enableMockJwt: ${security.enableMockJwt:false}
 # JWT signature public certificates. kid and certificate path mappings.
 jwt:
   certificate: ${security.certificate:100=primary.crt&101=secondary.crt}
-#    '100': primary.crt
-#    '101': secondary.crt
+  #    '100': primary.crt
+  #    '101': secondary.crt
   clockSkewInSeconds: ${security.clockSkewInSeconds:60}
   # Key distribution server standard: JsonWebKeySet for other OAuth 2.0 provider| X509Certificate for light-oauth2
   keyResolver: ${security.keyResolver:X509Certificate}
