@@ -74,20 +74,11 @@ public class JwtVerifier {
 
     public static final String KID = "kid";
     public static final String SECURITY_CONFIG = "security";
-    public static final String JWT_CONFIG = "jwt";
-    public static final String JWT_CERTIFICATE = "certificate";
-    public static final String JWT_CLOCK_SKEW_IN_SECONDS = "clockSkewInSeconds";
-    public static final String ENABLE_VERIFY_JWT = "enableVerifyJwt";
-    private static final String ENABLE_JWT_CACHE = "enableJwtCache";
-    private static final String BOOTSTRAP_FROM_KEY_SERVICE = "bootstrapFromKeyService";
     private static final int CACHE_EXPIRED_IN_MINUTES = 15;
-
-    public static final String JWT_KEY_RESOLVER = "keyResolver";
     public static final String JWT_KEY_RESOLVER_X509CERT = "X509Certificate";
     public static final String JWT_KEY_RESOLVER_JWKS = "JsonWebKeySet";
 
-    Map<String, Object> config;
-    Map<String, Object> jwtConfig;
+    SecurityConfig config;
     int secondsOfAllowedClockSkew;
     Boolean enableJwtCache;
     Boolean bootstrapFromKeyService;
@@ -97,12 +88,11 @@ public class JwtVerifier {
     static Map<String, List<JsonWebKey>> jwksMap;
     static List<String> fingerPrints;
 
-    public JwtVerifier(Map<String, Object> config) {
+    public JwtVerifier(SecurityConfig config) {
         this.config = config;
-        this.jwtConfig = (Map)config.get(JWT_CONFIG);
-        this.secondsOfAllowedClockSkew = (Integer)jwtConfig.get(JWT_CLOCK_SKEW_IN_SECONDS);
-        this.bootstrapFromKeyService = (Boolean)config.get(BOOTSTRAP_FROM_KEY_SERVICE);
-        this.enableJwtCache = (Boolean)config.get(ENABLE_JWT_CACHE);
+        this.secondsOfAllowedClockSkew = config.getClockSkewInSeconds();
+        this.bootstrapFromKeyService = config.isBootstrapFromKeyService();
+        this.enableJwtCache = config.isEnableJwtCache();
         if(Boolean.TRUE.equals(enableJwtCache)) {
             cache = Caffeine.newBuilder()
                     // assuming that the clock screw time is less than 5 minutes
@@ -111,12 +101,12 @@ public class JwtVerifier {
         }
         // init getting JWK during the initialization. The other part is in the resolver for OAuth 2.0 provider to
         // rotate keys when the first token is received with the new kid.
-        String keyResolver = (String) jwtConfig.getOrDefault(JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT);
+        String keyResolver = config.getKeyResolver();
         // cache the certificates
         certMap = new HashMap<>();
         fingerPrints = new ArrayList<>();
-        if (jwtConfig.get(JWT_CERTIFICATE)!=null) {
-            Map<String, Object> keyMap = (Map<String, Object>) jwtConfig.get(JWT_CERTIFICATE);
+        if (config.getCertificate() != null) {
+            Map<String, Object> keyMap = config.getCertificate();
             for(String kid: keyMap.keySet()) {
                 X509Certificate cert = null;
                 try {
@@ -315,7 +305,7 @@ public class JwtVerifier {
      */
     private VerificationKeyResolver getKeyResolver(String kid, String requestPath) {
         // try the X509 certificate first
-        String keyResolver = (String) jwtConfig.getOrDefault(JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT);
+        String keyResolver = config.getKeyResolver();
         // get the public key certificate from the cache that is loaded from security.yml. If it is not there,
         // go to the next step to access JWK if it is enabled. We need to update the light-oauth2 and oauth-kafka
         // to support JWK instead of X509Certificate endpoint. 

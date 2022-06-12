@@ -12,6 +12,11 @@ enableVerifyJwt: true
 # Enable JWT scope verification. Only valid when enableVerifyJwt is true.
 enableVerifyScope: true
 
+# If set true, the JWT verifier handler will pass if the JWT token is expired already. Unless
+# you have a strong reason, please use it only on the dev environment if your OAuth 2 provider
+# doesn't support long-lived token for dev environment or test automation.
+ignoreJwtExpiry: ${security.ignoreJwtExpiry:false}
+
 # User for test only. should be always be false on official environment.
 enableMockJwt: false
 
