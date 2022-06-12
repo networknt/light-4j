@@ -17,6 +17,7 @@
 package com.networknt.security;
 
 import com.networknt.config.Config;
+import com.networknt.config.ConfigException;
 import com.networknt.utility.Constants;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.JsonWebKeySet;
@@ -44,9 +45,8 @@ public class JwtVerifierTest {
     static final String CONFIG_NAME_OPENAPI = "openapi-security-no-default-jwtcertificate";
     @Test
     public void testReadCertificate() {
-        Map<String, Object> config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
-        Map<String, Object> jwtConfig = (Map<String, Object>)config.get(JwtIssuer.JWT_CONFIG);
-        Map<String, Object> keyMap = (Map<String, Object>) jwtConfig.get(JwtVerifier.JWT_CERTIFICATE);
+        SecurityConfig config = SecurityConfig.load(CONFIG_NAME);
+        Map<String, Object> keyMap = config.getCertificate();
         Map<String, X509Certificate> certMap = new HashMap<>();
         JwtVerifier jwtVerifier = new JwtVerifier(config);
         for(String kid: keyMap.keySet()) {
@@ -61,13 +61,12 @@ public class JwtVerifierTest {
         Assert.assertEquals(2, certMap.size());
     }
 
-    @Test
+    @Test(expected = ConfigException.class)
     public void testReadCertificate2() {
-        Map<String, Object> config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME_OPENAPI);
-        Map<String, Object> jwtConfig = (Map<String, Object>)config.get(JwtIssuer.JWT_CONFIG);
+        SecurityConfig config = SecurityConfig.load(CONFIG_NAME_OPENAPI);
         Map<String, X509Certificate> certMap = new HashMap<>();
-        if (jwtConfig.get(JwtVerifier.JWT_CERTIFICATE)!=null) {
-            Map<String, Object> keyMap = (Map<String, Object>) jwtConfig.get(JwtVerifier.JWT_CERTIFICATE);
+        if (config.getCertificate()!=null) {
+            Map<String, Object> keyMap = config.getCertificate();
             JwtVerifier jwtVerifier = new JwtVerifier(config);
             for(String kid: keyMap.keySet()) {
                 X509Certificate cert = null;
@@ -124,7 +123,7 @@ public class JwtVerifierTest {
 
         System.out.print("JWT = " + jwt);
 
-        JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
+        JwtVerifier jwtVerifier = new JwtVerifier(SecurityConfig.load(CONFIG_NAME));
         JwtClaims claims = jwtVerifier.verifyJwt(jwt, true, true, null, (kId, requestPath) -> {
             try {
                 // use public key to create the the JsonWebKey
@@ -172,7 +171,7 @@ public class JwtVerifierTest {
         String jwt = JwtIssuer.getJwt(claims);
         claims = null;
         Assert.assertNotNull(jwt);
-        JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
+        JwtVerifier jwtVerifier = new JwtVerifier(SecurityConfig.load(CONFIG_NAME));
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, true);
         } catch (Exception e) {
@@ -196,7 +195,7 @@ public class JwtVerifierTest {
         String jwt = JwtIssuer.getJwt(claims);
         claims = null;
         Assert.assertNotNull(jwt);
-        JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
+        JwtVerifier jwtVerifier = new JwtVerifier(SecurityConfig.load(CONFIG_NAME));
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, false);
         } catch (Exception e) {
@@ -220,7 +219,7 @@ public class JwtVerifierTest {
         String jwt = JwtIssuer.getJwt(claims);
         claims = null;
         Assert.assertNotNull(jwt);
-        JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
+        JwtVerifier jwtVerifier = new JwtVerifier(SecurityConfig.load(CONFIG_NAME));
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, true);
         } catch (Exception e) {

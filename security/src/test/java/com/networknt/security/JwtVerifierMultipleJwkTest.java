@@ -45,7 +45,7 @@ public class JwtVerifierMultipleJwkTest extends JwtVerifierJwkBase {
     public static String jsonWebKeySetJson112 = "{\"keys\":[{\"kty\":\"RSA\",\"kid\":\"112\",\"n\":\"uuXEy0NvrQOiASV_hMHPnTi1GF5mKYATR0kv9hvLidpwl2q9zmXjP5ZakN-sj2StDZiL3K-HAA_4-tHqBZwipY_hyk0TtcgBQOCvgK3IjsKm1P-WmO1uTPgMYIyZp4OfSOoeom1J5JkZ_BW7nMAabyfiwdq2OefEEj-JbORMgjdXjG_RZ4rfuzM1MR36XLZqDufYhXnM2diaplN4xCYnYQ1L4jAAbcQ22JW2tVPH_Zsa2q60mO13Gw3nz9xQb-C5HIxPo48jxiLdnN6929FvFp3KESX8prDq8lx3GYkje2niXH6nqwDE5Zrtpqkl7gnG60BCrO_QYp1WOgcpDXAHrQ\",\"e\":\"AQAB\"}]}";
 
     static ClientConfig config;
-    static Map<String, Object> securityConfig;
+    static SecurityConfig securityConfig;
 
     private static XnioWorker worker;
     static Undertow server1 = null;
@@ -57,7 +57,7 @@ public class JwtVerifierMultipleJwkTest extends JwtVerifierJwkBase {
 
     @BeforeClass
     public static void beforeClass() throws IOException {
-        securityConfig = Config.getInstance().getJsonMapConfig(JwtVerifier.SECURITY_CONFIG);
+        securityConfig = SecurityConfig.load(JwtVerifier.SECURITY_CONFIG);
         config = ClientConfig.get();
         // Create xnio worker
         final Xnio xnio = Xnio.getInstance();

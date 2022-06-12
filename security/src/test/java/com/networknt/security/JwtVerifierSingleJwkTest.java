@@ -50,7 +50,7 @@ public class JwtVerifierSingleJwkTest extends JwtVerifierJwkBase {
 
     public static final String CLIENT_CONFIG_NAME = "client-single-auth";
     static ClientConfig config;
-    static Map<String, Object> securityConfig;
+    static SecurityConfig securityConfig;
 
     private static XnioWorker worker;
     static Undertow server1 = null;
@@ -62,7 +62,7 @@ public class JwtVerifierSingleJwkTest extends JwtVerifierJwkBase {
 
     @BeforeClass
     public static void beforeClass() throws IOException {
-        securityConfig = Config.getInstance().getJsonMapConfig(JwtVerifier.SECURITY_CONFIG);
+        securityConfig = SecurityConfig.load(JwtVerifier.SECURITY_CONFIG);
         config = ClientConfig.get(CLIENT_CONFIG_NAME);
         // Create xnio worker
         final Xnio xnio = Xnio.getInstance();
