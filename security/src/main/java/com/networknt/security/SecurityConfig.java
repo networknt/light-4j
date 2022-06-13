@@ -35,6 +35,7 @@ public class SecurityConfig {
     private static final String ENABLE_JWT_CACHE = "enableJwtCache";
     private static final String BOOTSTRAP_FROM_KEY_SERVICE = "bootstrapFromKeyService";
     private static final String IGNORE_JWT_EXPIRY = "ignoreJwtExpiry";
+    private static final String PROVIDER_ID = "providerId";
 
     private Map<String, Object> mappedConfig;
     private Map<String, Object> certificate;
@@ -51,6 +52,7 @@ public class SecurityConfig {
     private boolean enableJwtCache;
     private boolean bootstrapFromKeyService;
     private boolean ignoreJwtExpiry;
+    private String providerId;
 
 
     private SecurityConfig(String configName) {
@@ -125,7 +127,9 @@ public class SecurityConfig {
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
-
+    public String getProviderId() {
+        return providerId;
+    }
     Config getConfig() {
         return config;
     }
@@ -193,10 +197,14 @@ public class SecurityConfig {
             if(object != null && (Boolean) object) {
                 ignoreJwtExpiry = true;
             }
+            object = getMappedConfig().get(PROVIDER_ID);
+            if(object != null) providerId = (String)object;
 
             Map<String, Object> jwtMap = (Map)getMappedConfig().get(JWT);
-            clockSkewInSeconds = (Integer)jwtMap.get(CLOCK_SKEW_IN_SECONDS);
-            keyResolver = (String)jwtMap.get(KEY_RESOLVER);
+            if(jwtMap != null) {
+                clockSkewInSeconds = (Integer) jwtMap.get(CLOCK_SKEW_IN_SECONDS);
+                keyResolver = (String) jwtMap.get(KEY_RESOLVER);
+            }
         }
     }
 
