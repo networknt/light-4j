@@ -61,7 +61,7 @@ public class JwtVerifierTest {
         Assert.assertEquals(2, certMap.size());
     }
 
-    @Test(expected = ConfigException.class)
+    @Test
     public void testReadCertificate2() {
         SecurityConfig config = SecurityConfig.load(CONFIG_NAME_OPENAPI);
         Map<String, X509Certificate> certMap = new HashMap<>();
