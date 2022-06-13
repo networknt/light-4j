@@ -34,7 +34,7 @@ jwt:
 #    '101': secondary.crt
   clockSkewInSeconds: ${security.clockSkewInSeconds:60}
   # Key distribution server standard: JsonWebKeySet for other OAuth 2.0 provider| X509Certificate for light-oauth2
-  keyResolver: ${security.keyResolver:X509Certificate}
+  keyResolver: ${security.keyResolver:JsonWebKeySet}
 
 # Enable or disable JWT token logging for audit. This is to log the entire token
 # or choose the next option that only logs client_id, user_id and scope.
