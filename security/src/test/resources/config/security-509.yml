@@ -45,3 +45,8 @@ enableJwtCache: true
 # the first token is arrived. Default to false for dev environment without oauth2 server
 # or official environment that use other OAuth 2.0 providers.
 bootstrapFromKeyService: false
+
+# Used in light-oauth2 and oauth-kafka key service for federated deployment. Each instance
+# will have a providerId, and it will be part of the kid to allow each instance to get the
+# JWK from other instance based on the providerId in the kid.
+providerId: ${security.providerId:}
