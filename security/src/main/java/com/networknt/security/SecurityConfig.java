@@ -5,6 +5,7 @@ import com.networknt.config.ConfigException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -121,7 +122,7 @@ public class SecurityConfig {
         return bootstrapFromKeyService;
     }
 
-    Map<String, Object> getMappedConfig() {
+    public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
 
@@ -130,69 +131,73 @@ public class SecurityConfig {
     }
 
     private void setCertificate() {
-        Map<String, Object> jwtMap = (Map)getMappedConfig().get(JWT);
-        Object obj = jwtMap.get(CERTIFICATE);
-        if(obj instanceof String) {
-            String s = (String)obj;
-            if(logger.isTraceEnabled()) logger.trace("s = " + s);
-            Map<String, Object> map = new LinkedHashMap<>();
-            for(String keyValue : s.split(" *& *")) {
-                String[] pairs = keyValue.split(" *= *", 2);
-                map.put(pairs[0], pairs.length == 1 ? "" : pairs[1]);
+        if(getMappedConfig() != null) {
+            Map<String, Object> jwtMap = (Map)getMappedConfig().get(JWT);
+            Object obj = jwtMap.get(CERTIFICATE);
+            if(obj instanceof String) {
+                String s = (String)obj;
+                if(logger.isTraceEnabled()) logger.trace("s = " + s);
+                Map<String, Object> map = new LinkedHashMap<>();
+                for(String keyValue : s.split(" *& *")) {
+                    String[] pairs = keyValue.split(" *= *", 2);
+                    map.put(pairs[0], pairs.length == 1 ? "" : pairs[1]);
+                }
+                certificate = map;
+            } else if (obj instanceof Map) {
+                certificate = (Map)obj;
+            } else {
+                certificate = new HashMap<>();
             }
-            certificate = map;
-        } else if (obj instanceof Map) {
-            certificate = (Map)obj;
-        } else {
-            throw new ConfigException("certificate map is missing or wrong type.");
         }
     }
 
     private void setConfigData() {
-        Object object = getMappedConfig().get(ENABLE_VERIFY_JWT);
-        if(object != null && (Boolean) object) {
-            enableVerifyJwt = true;
-        }
-        object = getMappedConfig().get(ENABLE_EXTRACT_SCOPE_TOKEN);
-        if(object != null && (Boolean) object) {
-            enableExtractScopeToken = true;
-        }
-        object = getMappedConfig().get(ENABLE_VERIFY_SCOPE);
-        if(object != null && (Boolean) object) {
-            enableVerifyScope = true;
-        }
-        object = getMappedConfig().get(ENABLE_VERIFY_JWT_SCOPE_TOKEN);
-        if(object != null && (Boolean) object) {
-            enableVerifyJwtScopeToken = true;
-        }
-        object = getMappedConfig().get(ENABLE_MOCK_JWT);
-        if(object != null && (Boolean) object) {
-            enableMockJwt = true;
-        }
-        object = getMappedConfig().get(LOG_JWT_TOKEN);
-        if(object != null && (Boolean) object) {
-            logJwtToken = true;
-        }
-        object = getMappedConfig().get(LOG_CLIENT_USER_SCOPE);
-        if(object != null && (Boolean) object) {
-            logClientUserScope = true;
-        }
-        object = getMappedConfig().get(ENABLE_JWT_CACHE);
-        if(object != null && (Boolean) object) {
-            enableJwtCache = true;
-        }
-        object = getMappedConfig().get(BOOTSTRAP_FROM_KEY_SERVICE);
-        if(object != null && (Boolean) object) {
-            bootstrapFromKeyService = true;
-        }
-        object = getMappedConfig().get(IGNORE_JWT_EXPIRY);
-        if(object != null && (Boolean) object) {
-            ignoreJwtExpiry = true;
-        }
+        if(getMappedConfig() != null) {
+            Object object = getMappedConfig().get(ENABLE_VERIFY_JWT);
+            if(object != null && (Boolean) object) {
+                enableVerifyJwt = true;
+            }
+            object = getMappedConfig().get(ENABLE_EXTRACT_SCOPE_TOKEN);
+            if(object != null && (Boolean) object) {
+                enableExtractScopeToken = true;
+            }
+            object = getMappedConfig().get(ENABLE_VERIFY_SCOPE);
+            if(object != null && (Boolean) object) {
+                enableVerifyScope = true;
+            }
+            object = getMappedConfig().get(ENABLE_VERIFY_JWT_SCOPE_TOKEN);
+            if(object != null && (Boolean) object) {
+                enableVerifyJwtScopeToken = true;
+            }
+            object = getMappedConfig().get(ENABLE_MOCK_JWT);
+            if(object != null && (Boolean) object) {
+                enableMockJwt = true;
+            }
+            object = getMappedConfig().get(LOG_JWT_TOKEN);
+            if(object != null && (Boolean) object) {
+                logJwtToken = true;
+            }
+            object = getMappedConfig().get(LOG_CLIENT_USER_SCOPE);
+            if(object != null && (Boolean) object) {
+                logClientUserScope = true;
+            }
+            object = getMappedConfig().get(ENABLE_JWT_CACHE);
+            if(object != null && (Boolean) object) {
+                enableJwtCache = true;
+            }
+            object = getMappedConfig().get(BOOTSTRAP_FROM_KEY_SERVICE);
+            if(object != null && (Boolean) object) {
+                bootstrapFromKeyService = true;
+            }
+            object = getMappedConfig().get(IGNORE_JWT_EXPIRY);
+            if(object != null && (Boolean) object) {
+                ignoreJwtExpiry = true;
+            }
 
-        Map<String, Object> jwtMap = (Map)getMappedConfig().get(JWT);
-        clockSkewInSeconds = (Integer)jwtMap.get(CLOCK_SKEW_IN_SECONDS);
-        keyResolver = (String)jwtMap.get(KEY_RESOLVER);
+            Map<String, Object> jwtMap = (Map)getMappedConfig().get(JWT);
+            clockSkewInSeconds = (Integer)jwtMap.get(CLOCK_SKEW_IN_SECONDS);
+            keyResolver = (String)jwtMap.get(KEY_RESOLVER);
+        }
     }
 
 }
