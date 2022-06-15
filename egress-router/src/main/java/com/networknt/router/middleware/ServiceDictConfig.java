@@ -5,6 +5,8 @@ import com.networknt.config.ConfigException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -72,6 +74,7 @@ public class ServiceDictConfig {
     }
 
     private void setMap() {
+        Map<String, String> rawMapping = null;
         if(getMappedConfig().get(MAPPING) instanceof String) {
             String s = (String)getMappedConfig().get(MAPPING);
             if(logger.isTraceEnabled()) logger.trace("s = " + s);
@@ -80,12 +83,18 @@ public class ServiceDictConfig {
                 String[] pairs = keyValue.split(" *= *", 2);
                 map.put(pairs[0], pairs.length == 1 ? "" : pairs[1]);
             }
-            mapping = map;
+            rawMapping = map;
         } else if (getMappedConfig().get(MAPPING) instanceof Map) {
-            mapping = (Map<String, String>) getMappedConfig().get(MAPPING);
+            rawMapping = (Map<String, String>) getMappedConfig().get(MAPPING);
         } else {
             throw new ConfigException("mapping is missing or wrong type.");
         }
+        // convert the mapping to internal format.
+        mapping = new HashMap<>();
+        for (Map.Entry<String, String> entry : rawMapping.entrySet()) {
+            mapping.put(HandlerUtils.toInternalKey(entry.getKey()), entry.getValue());
+        }
+        mapping = Collections.unmodifiableMap(mapping);
     }
 
     private void setConfigData() {

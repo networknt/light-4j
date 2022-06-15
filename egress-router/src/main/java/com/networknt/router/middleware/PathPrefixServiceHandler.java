@@ -90,7 +90,7 @@ public class PathPrefixServiceHandler implements MiddlewareHandler {
             }
         }
         Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
-        if(auditInfo == null) {
+        if(auditInfo == null && serviceEntry != null) {
             // AUDIT_INFO is created for light-gateway to populate the endpoint as the OpenAPI handlers might not be available.
             auditInfo = new HashMap<>();
             auditInfo.put(Constants.ENDPOINT_STRING, serviceEntry[0] + "@" + exchange.getRequestMethod().toString().toLowerCase());
