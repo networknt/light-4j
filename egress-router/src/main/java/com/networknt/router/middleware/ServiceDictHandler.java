@@ -6,7 +6,6 @@ import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
-import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -27,10 +26,6 @@ import java.util.Map;
 @SuppressWarnings("unchecked")
 public class ServiceDictHandler implements MiddlewareHandler {
 	private static final Logger logger = LoggerFactory.getLogger(ServiceDictHandler.class);
-	protected static final String INTERNAL_KEY_FORMAT = "%s %s";
-	
-    public static final String CONFIG_NAME = "serviceDict";
-    public static final String DELIMITOR = "@";
     protected volatile HttpHandler next;
     protected ServiceDictConfig config;
 
@@ -52,7 +47,7 @@ public class ServiceDictHandler implements MiddlewareHandler {
             if(serviceId == null) {
                 String requestPath = exchange.getRequestURI();
                 String httpMethod = exchange.getRequestMethod().toString().toLowerCase();
-                serviceEntry = HandlerUtils.findServiceEntry(toInternalKey(httpMethod, requestPath), config.getMapping());
+                serviceEntry = HandlerUtils.findServiceEntry(HandlerUtils.toInternalKey(httpMethod, requestPath), config.getMapping());
                 if(serviceEntry == null) {
                     setExchangeStatus(exchange, STATUS_INVALID_REQUEST_PATH, requestPath);
                     return;
@@ -62,7 +57,7 @@ public class ServiceDictHandler implements MiddlewareHandler {
             }
         }
         Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
-        if(auditInfo == null) {
+        if(auditInfo == null && serviceEntry != null) {
             // AUDIT_INFO is created for light-gateway to populate the endpoint as the OpenAPI handlers might not be available.
             auditInfo = new HashMap<>();
             auditInfo.put(Constants.ENDPOINT_STRING, serviceEntry[0]);
@@ -70,21 +65,6 @@ public class ServiceDictHandler implements MiddlewareHandler {
         }
         Handler.next(exchange, next);
 	}
-
-    private static String toInternalKey(String key) {
-    	String[] tokens = StringUtils.trimToEmpty(key).split(DELIMITOR);
-    	
-    	if (tokens.length ==2) {
-    		return toInternalKey(tokens[1], tokens[0]);
-    	}
-    	
-    	logger.warn("Invalid key {}", key);
-    	return key;
-    }
-    
-    protected static String toInternalKey(String method, String path) {
-    	return String.format(INTERNAL_KEY_FORMAT, method, HandlerUtils.normalisePath(path));
-    }
 
 	@Override
     public HttpHandler getNext() {
