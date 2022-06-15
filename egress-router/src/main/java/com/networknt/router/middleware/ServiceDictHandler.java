@@ -1,9 +1,10 @@
 package com.networknt.router.middleware;
 
-import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.HttpStringConstants;
+import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
@@ -13,7 +14,6 @@ import io.undertow.util.HeaderValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,52 +30,43 @@ public class ServiceDictHandler implements MiddlewareHandler {
 	protected static final String INTERNAL_KEY_FORMAT = "%s %s";
 	
     public static final String CONFIG_NAME = "serviceDict";
-    public static final String ENABLED = "enabled";
-    public static final String MAPPING = "mapping";
     public static final String DELIMITOR = "@";
-
-    public static Map<String, Object> config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
-	protected static Map<String, String> rawMappings = (Map<String, String>)config.get(MAPPING);
-	public static Map<String, String> mappings;
-	
-	static {
-		mappings = new HashMap<>();
-		
-		for (Map.Entry<String, String> entry : rawMappings.entrySet()) {
-			mappings.put(toInternalKey(entry.getKey()), entry.getValue());
-		}
-		
-		mappings = Collections.unmodifiableMap(mappings);
-	}
-	
-    
     protected volatile HttpHandler next;
+    protected ServiceDictConfig config;
 
     static final String STATUS_INVALID_REQUEST_PATH = "ERR10007";
 
     public ServiceDictHandler() {
         logger.info("ServiceDictHandler is constructed");
+        config = ServiceDictConfig.load();
     }
 
 	@Override
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
+        String[] serviceEntry = null;
         HeaderValues serviceUrlHeader = exchange.getRequestHeaders().get(HttpStringConstants.SERVICE_URL);
         String serviceUrl = serviceUrlHeader != null ? serviceUrlHeader.peekFirst() : null;
-        if (serviceUrl==null) {
+        if (serviceUrl == null) {
             HeaderValues serviceIdHeader = exchange.getRequestHeaders().get(HttpStringConstants.SERVICE_ID);
             String serviceId = serviceIdHeader != null ? serviceIdHeader.peekFirst() : null;
             if(serviceId == null) {
                 String requestPath = exchange.getRequestURI();
                 String httpMethod = exchange.getRequestMethod().toString().toLowerCase();
-
-                serviceId = HandlerUtils.findServiceId(toInternalKey(httpMethod, requestPath), mappings);
-                if(serviceId == null) {
+                serviceEntry = HandlerUtils.findServiceEntry(toInternalKey(httpMethod, requestPath), config.getMapping());
+                if(serviceEntry == null) {
                     setExchangeStatus(exchange, STATUS_INVALID_REQUEST_PATH, requestPath);
                     return;
                 } else {
-                    exchange.getRequestHeaders().put(HttpStringConstants.SERVICE_ID, serviceId);
+                    exchange.getRequestHeaders().put(HttpStringConstants.SERVICE_ID, serviceEntry[1]);
                 }
             }
+        }
+        Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
+        if(auditInfo == null) {
+            // AUDIT_INFO is created for light-gateway to populate the endpoint as the OpenAPI handlers might not be available.
+            auditInfo = new HashMap<>();
+            auditInfo.put(Constants.ENDPOINT_STRING, serviceEntry[0]);
+            exchange.putAttachment(AttachmentConstants.AUDIT_INFO, auditInfo);
         }
         Handler.next(exchange, next);
 	}
@@ -109,18 +100,16 @@ public class ServiceDictHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        Object object = config.get(ENABLED);
-        return object != null && (Boolean)object;
+        return config.isEnabled();
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ServiceDictHandler.class.getName(), config, null);
+        ModuleRegistry.registerModule(ServiceDictHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void reload() {
-        config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
+        config.reload();
     }
-
 }
