@@ -17,7 +17,6 @@
 package com.networknt.router.middleware;
 
 import com.networknt.httpstring.AttachmentConstants;
-import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.HttpStringConstants;
@@ -56,19 +55,15 @@ import java.util.Map;
  *
  */
 public class PathServiceHandler implements MiddlewareHandler {
-    public static final String CONFIG_NAME = "pathService";
-    public static final String ENABLED = "enabled";
-    public static final String MAPPING = "mapping";
-
-    public static Map<String, Object> config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
-    public static Map<String, String> mapping = (Map<String, String>)config.get(MAPPING);
     static Logger logger = LoggerFactory.getLogger(PathServiceHandler.class);
     private volatile HttpHandler next;
+    private PathServiceConfig config;
 
     static final String AUDIT_INFO_NOT_FOUND = "ERR10041";
 
     public PathServiceHandler() {
         logger.info("PathServiceHandler is constructed");
+        config = PathServiceConfig.load();
     }
 
     @Override
@@ -86,7 +81,7 @@ public class PathServiceHandler implements MiddlewareHandler {
                     if (logger.isDebugEnabled()) logger.debug("endpoint = " + endpoint);
                     // now find the mapped serviceId from the mapping.
                     if (endpoint != null) {
-                        serviceId = mapping.get(endpoint);
+                        serviceId = config.getMapping().get(endpoint);
                         exchange.getRequestHeaders().put(HttpStringConstants.SERVICE_ID, serviceId);
                     }
                 } else {
@@ -113,17 +108,16 @@ public class PathServiceHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        Object object = config.get(ENABLED);
-        return object != null && (Boolean) object;
+        return config.isEnabled();
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(TokenHandler.class.getName(), config, null);
+        ModuleRegistry.registerModule(TokenHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void reload() {
-        config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
+        config.reload();
     }
 }

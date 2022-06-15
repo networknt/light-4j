@@ -93,3 +93,12 @@ client.tokenCcServiceIdAuthServers:
     scope:
       - market.r
       - market.w
+
+# pathPrefixService.yml
+pathPrefixService.mapping: /v1/address=party.address-1.0.0&/v2/address=party.address-2.0.0&/v1/contact=party.contact-1.0.0
+
+# pathService.yml
+pathService.mapping: /v1/address/{id}@get=party.address-1.0.0&/v2/address@get=party.address-2.0.0&/v1/contact@post=party.contact-1.0.0
+
+# serviceDict.yml
+serviceDict.mapping: /v1/address@get=party.address-1.0.0&/v2/address@get=party.address-2.0.0&/v1/contact@post=party.contact-1.0.0

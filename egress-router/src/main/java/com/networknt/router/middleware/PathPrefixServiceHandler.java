@@ -16,10 +16,11 @@
 
 package com.networknt.router.middleware;
 
-import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.HttpStringConstants;
+import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -28,6 +29,7 @@ import io.undertow.util.HeaderValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -56,23 +58,20 @@ import java.util.Map;
  *
  */
 public class PathPrefixServiceHandler implements MiddlewareHandler {
-    public static final String CONFIG_NAME = "pathPrefixService";
-    public static final String ENABLED = "enabled";
-    public static final String MAPPING = "mapping";
-
-    public static Map<String, Object> config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
-    public static Map<String, String> mapping = (Map<String, String>)config.get(MAPPING);
     static Logger logger = LoggerFactory.getLogger(PathPrefixServiceHandler.class);
-    private volatile HttpHandler next;
+    protected volatile HttpHandler next;
+    protected PathPrefixServiceConfig config;
 
     static final String STATUS_INVALID_REQUEST_PATH = "ERR10007";
 
     public PathPrefixServiceHandler() {
         logger.info("PathServiceHandler is constructed");
+        config = PathPrefixServiceConfig.load();
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        String[] serviceEntry = null;
         HeaderValues serviceUrlHeader = exchange.getRequestHeaders().get(HttpStringConstants.SERVICE_URL);
         String serviceUrl = serviceUrlHeader != null ? serviceUrlHeader.peekFirst() : null;
         if (serviceUrl == null) {
@@ -81,14 +80,21 @@ public class PathPrefixServiceHandler implements MiddlewareHandler {
             String serviceId = serviceIdHeader != null ? serviceIdHeader.peekFirst() : null;
             if(serviceId == null) {
                 String requestPath = exchange.getRequestURI();
-                serviceId = HandlerUtils.findServiceId(HandlerUtils.normalisePath(requestPath), mapping);
-                if(serviceId == null) {
+                serviceEntry = HandlerUtils.findServiceEntry(HandlerUtils.normalisePath(requestPath), config.getMapping());
+                if(serviceEntry == null) {
                     setExchangeStatus(exchange, STATUS_INVALID_REQUEST_PATH, requestPath);
                     return;
                 } else {
-                    exchange.getRequestHeaders().put(HttpStringConstants.SERVICE_ID, serviceId);
+                    exchange.getRequestHeaders().put(HttpStringConstants.SERVICE_ID, serviceEntry[1]);
                 }
             }
+        }
+        Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
+        if(auditInfo == null) {
+            // AUDIT_INFO is created for light-gateway to populate the endpoint as the OpenAPI handlers might not be available.
+            auditInfo = new HashMap<>();
+            auditInfo.put(Constants.ENDPOINT_STRING, serviceEntry[0] + "@" + exchange.getRequestMethod().toString().toLowerCase());
+            exchange.putAttachment(AttachmentConstants.AUDIT_INFO, auditInfo);
         }
         Handler.next(exchange, next);
     }
@@ -107,18 +113,16 @@ public class PathPrefixServiceHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        Object object = config.get(ENABLED);
-        return object != null && (Boolean)object;
+        return config.isEnabled();
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(TokenHandler.class.getName(), config, null);
+        ModuleRegistry.registerModule(PathPrefixServiceHandler.class.getName(), config.getMappedConfig(), null);
     }
-
 
     @Override
     public void reload() {
-        config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
+        config.reload();;
     }
 }
