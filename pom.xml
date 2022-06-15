@@ -390,6 +390,16 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
+                <artifactId>egress-router</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>ingress-proxy</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
                 <artifactId>rule-loader</artifactId>
                 <version>${project.version}</version>
             </dependency>

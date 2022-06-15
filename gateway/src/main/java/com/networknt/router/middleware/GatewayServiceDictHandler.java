@@ -56,7 +56,7 @@ public class GatewayServiceDictHandler extends ServiceDictHandler {
             if (serviceId == null) {
                 String requestPath = exchange.getRequestURI();
                 String httpMethod = exchange.getRequestMethod().toString().toLowerCase();
-                serviceEntry = HandlerUtils.findServiceEntry(toInternalKey(httpMethod, requestPath), config.getMapping());
+                serviceEntry = HandlerUtils.findServiceEntry(HandlerUtils.toInternalKey(httpMethod, requestPath), config.getMapping());
                 if (serviceEntry != null) {
                     exchange.getRequestHeaders().put(HttpStringConstants.SERVICE_ID, serviceEntry[1]);
                 }
