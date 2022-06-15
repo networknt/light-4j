@@ -80,12 +80,13 @@ public class TokenKeyRequest extends KeyRequest {
         } else {
             setUri(keyConfig.get(ClientConfig.URI) + "/" + kid);
         }
-        setClientId((String)keyConfig.get(ClientConfig.CLIENT_ID));
+        // clientId is optional
+        if(keyConfig.get(ClientConfig.CLIENT_ID) != null) {
+            setClientId((String)keyConfig.get(ClientConfig.CLIENT_ID));
+        }
+        // clientSecret is optional
         if(keyConfig.get(ClientConfig.CLIENT_SECRET) != null) {
             setClientSecret((String)keyConfig.get(ClientConfig.CLIENT_SECRET));
-        } else {
-            logger.error(new Status(CONFIG_PROPERTY_MISSING, "refresh_token client_secret", "client.yml").toString());
-       }
+        }
     }
 }
-
