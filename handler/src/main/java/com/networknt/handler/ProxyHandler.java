@@ -25,7 +25,6 @@ import java.nio.channels.Channel;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
 import java.util.*;
-import java.util.concurrent.DelayQueue;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import java.security.cert.CertificateEncodingException;
@@ -443,6 +442,7 @@ public class ProxyHandler implements HttpHandler {
             }
             request.setPath(requestURI.toString())
                     .setMethod(method);
+            if(logger.isTraceEnabled()) logger.trace("targetURI = " + targetURI + " requestURI = " + requestURI + " method = " + method);
             final HeaderMap inboundRequestHeaders = exchange.getRequestHeaders();
             final HeaderMap outboundRequestHeaders = request.getRequestHeaders();
             copyHeaders(outboundRequestHeaders, inboundRequestHeaders, headerRewriteRules == null ? null : headerRewriteRules.get(targetURI));

@@ -19,6 +19,7 @@ package com.networknt.proxy;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
+import com.networknt.config.JsonMapper;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.handler.ProxyHandler;
 import io.undertow.server.HttpHandler;
@@ -61,6 +62,7 @@ public class LightProxyHandler implements HttpHandler {
 
     public LightProxyHandler() {
         List<String> hosts = Arrays.asList(config.getHosts().split(","));
+        if(logger.isTraceEnabled()) logger.trace("hosts = " + JsonMapper.toJson(hosts));
         LoadBalancingProxyClient loadBalancer = new LoadBalancingProxyClient()
                 .setConnectionsPerThread(config.getConnectionsPerThread());
         if(config.isHttpsEnabled()) {
