@@ -40,7 +40,7 @@ class AuditConfig {
     private static final String IS_MASK_ENABLED = "mask";
     private static final String TIMESTAMP_FORMAT = "timestampFormat";
     private  Map<String, Object> mappedConfig;
-    static final String CONFIG_NAME = "audit";
+    public static final String CONFIG_NAME = "audit";
     private List<String> headerList;
     private List<String> auditList;
 
@@ -82,47 +82,47 @@ class AuditConfig {
         setConfigData();
     }
 
-    List<String> getHeaderList() {
+    public List<String> getHeaderList() {
         return headerList;
     }
 
-    List<String> getAuditList() {
+    public List<String> getAuditList() {
         return auditList;
     }
 
-    Consumer<String> getAuditFunc() {
+    public Consumer<String> getAuditFunc() {
         return auditFunc;
     }
 
-    boolean isAuditOnError() {
+    public boolean isAuditOnError() {
         return auditOnError;
     }
 
-    boolean isMaskEnabled() {
+    public boolean isMaskEnabled() {
         return isMaskEnabled;
     }
 
-    boolean isResponseTime() {
+    public boolean isResponseTime() {
         return responseTime;
     }
 
-    boolean isStatusCode() {
+    public boolean isStatusCode() {
         return statusCode;
     }
 
-    Map<String, Object> getMappedConfig() {
+    public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
 
-    boolean hasHeaderList() {
+    public boolean hasHeaderList() {
         return getHeaderList() != null && getHeaderList().size() > 0;
     }
 
-    boolean hasAuditList() {
+    public boolean hasAuditList() {
         return getAuditList() != null && getAuditList().size() > 0;
     }
 
-    String getTimestampFormat() {
+    public String getTimestampFormat() {
         return timestampFormat;
     }
 
