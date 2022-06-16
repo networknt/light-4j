@@ -26,15 +26,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ProxyServerInfoHandler implements LightHttpHandler {
-    static final String CONFIG_NAME = "proxy";
-    static ProxyConfig config = (ProxyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ProxyConfig.class);
     private static Http2Client client = Http2Client.getInstance();
     private static final int UNUSUAL_STATUS_CODE = 300;
     private static OptionMap optionMap = OptionMap.create(UndertowOptions.ENABLE_HTTP2, true);
     private static final String PROXY_INFO_KEY = "proxy_info";
+    ProxyConfig config;
 
     public ProxyServerInfoHandler() {
-        config = (ProxyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ProxyConfig.class);
+        config = ProxyConfig.load();
     }
 
     @Override
@@ -72,10 +71,13 @@ public class ProxyServerInfoHandler implements LightHttpHandler {
         ClientConnection connection = null;
         try {
             URI uri = new URI(url);
-            if (config == null || !config.isHttpsEnabled()) {
-                connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
-            } else {
-                connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
+            switch(uri.getScheme()) {
+                case "http":
+                    connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+                    break;
+                case "https":
+                    connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
+                    break;
             }
 
             AtomicReference<ClientResponse> reference = send(connection, Methods.GET, "/server/info", token, null);

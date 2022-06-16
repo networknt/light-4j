@@ -1,13 +1,12 @@
 ---
 # Reverse Proxy Handler Configuration
 
-# If HTTP 2.0 protocol will be used to connect to target servers
+# If HTTP 2.0 protocol will be used to connect to target servers. Only if all host are using https
+# and support the HTTP2 can set this one to true. 
 http2Enabled: ${proxy.http2Enabled:false}
 
-# If TLS is enabled when connecting to the target servers
-httpsEnabled: ${proxy.httpsEnabled:false}
-
-# Target URIs. Use comma separated string for multiple hosts.
+# Target URIs. Use comma separated string for multiple hosts. You can have mix http and https and
+# they will be load balanced. If the host start with https://, then TLS context will be created. 
 hosts: ${proxy.hosts:http://localhost:8080}
 
 # Connections per thread to the target servers
@@ -26,4 +25,4 @@ reuseXForwarded: ${proxy.reuseXForwarded:false}
 maxConnectionRetries: ${proxy.reuseXForwarded:3}
 
 # Decode the the JWT token claims and forward to the backend api in the form of json string
-forwardJwtClaims: false
+forwardJwtClaims: ${proxy.forwardJwtClaims:false}

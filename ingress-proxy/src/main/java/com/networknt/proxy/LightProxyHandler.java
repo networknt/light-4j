@@ -40,7 +40,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Consumer;
 
 
 /**
@@ -51,12 +50,11 @@ import java.util.function.Consumer;
  * @author Steve Hu
  */
 public class LightProxyHandler implements HttpHandler {
-    static final String CONFIG_NAME = "proxy";
     static final String CLAIMS_KEY = "jwtClaims";
     private static final int LONG_CLOCK_SKEW = 1000000;
 
     static final Logger logger = LoggerFactory.getLogger(LightProxyHandler.class);
-    static ProxyConfig config = (ProxyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ProxyConfig.class);
+    static ProxyConfig config = ProxyConfig.load();
 
     ProxyHandler proxyHandler;
 
@@ -65,10 +63,23 @@ public class LightProxyHandler implements HttpHandler {
         if(logger.isTraceEnabled()) logger.trace("hosts = " + JsonMapper.toJson(hosts));
         LoadBalancingProxyClient loadBalancer = new LoadBalancingProxyClient()
                 .setConnectionsPerThread(config.getConnectionsPerThread());
-        if(config.isHttpsEnabled()) {
-            hosts.forEach(handlingConsumerWrapper(host -> loadBalancer.addHost(new URI(host), Http2Client.getInstance().getDefaultXnioSsl()), URISyntaxException.class));
-        } else {
-            hosts.forEach(handlingConsumerWrapper(host -> loadBalancer.addHost(new URI(host)), URISyntaxException.class));
+        for(String host: hosts) {
+            try {
+                URI uri = new URI(host);
+                switch (uri.getScheme()) {
+                    case "http":
+                        loadBalancer.addHost(new URI(host));
+                        break;
+                    case "https":
+                        loadBalancer.addHost(new URI(host), Http2Client.getInstance().getDefaultXnioSsl());
+                        break;
+                    default:
+                        logger.error("Incorrect schema " + uri.getScheme());
+                }
+            } catch (URISyntaxException e) {
+                logger.error("Exception for host " + host, e);
+                throw new RuntimeException(e);
+            }
         }
         proxyHandler = ProxyHandler.builder()
                 .setProxyClient(loadBalancer)
@@ -78,7 +89,7 @@ public class LightProxyHandler implements HttpHandler {
                 .setRewriteHostHeader(config.isRewriteHostHeader())
                 .setNext(ResponseCodeHandler.HANDLE_404)
                 .build();
-        ModuleRegistry.registerModule(ProxyHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        ModuleRegistry.registerModule(ProxyHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
@@ -121,28 +132,8 @@ public class LightProxyHandler implements HttpHandler {
         }
 
     }
-    @FunctionalInterface
-    public interface ThrowingConsumer<T, E extends Exception> {
-        void accept(T t) throws E;
-    }
-    static <T, E extends Exception> Consumer<T> handlingConsumerWrapper(
-            ThrowingConsumer<T, E> throwingConsumer, Class<E> exceptionClass) {
-
-        return i -> {
-            try {
-                throwingConsumer.accept(i);
-            } catch (Exception ex) {
-                try {
-                    E exCast = exceptionClass.cast(ex);
-                    logger.error("Exception occured :", ex);
-                } catch (ClassCastException ccEx) {
-                    throw new RuntimeException(ex);
-                }
-            }
-        };
-    }
 
     public void reload() {
-        config = (ProxyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ProxyConfig.class);
+        config.reload();
     }
 }

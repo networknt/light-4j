@@ -16,17 +16,29 @@
 
 package com.networknt.proxy;
 
-import java.util.List;
+import com.networknt.config.Config;
+
+import java.util.Map;
 
 /**
- * Config class for reverse proxy.
+ * Config class for reverse proxy. This config class supports reload.
  *
  * @author Steve Hu
  */
 public class ProxyConfig {
+    public static final String CONFIG_NAME = "proxy";
+    private static final String ENABLED = "enabled";
+    private static final String HTTP2_ENABLED = "http2Enabled";
+    private static final String HOSTS = "hosts";
+    private static final String CONNECTIONS_PER_THREAD = "connectionsPerThread";
+    private static final String MAX_REQUEST_TIME = "maxRequestTime";
+    private static final String REWRITE_HOST_HEADER = "rewriteHostHeader";
+    private static final String REUSE_X_FORWARDED = "reuseXForwarded";
+    private static final String MAX_CONNECTION_RETRIES = "maxConnectionRetries";
+    private static final String FORWARD_JWT_CLAIMS = "forwardJwtClaims";
+
     boolean enabled;
     boolean http2Enabled;
-    boolean httpsEnabled;
     String hosts;
     int connectionsPerThread;
     int maxRequestTime;
@@ -35,74 +47,86 @@ public class ProxyConfig {
     int maxConnectionRetries;
     private boolean forwardJwtClaims;
 
+    private Config config;
+    private Map<String, Object> mappedConfig;
+
     public ProxyConfig() {
+        this(CONFIG_NAME);
+    }
+
+    public ProxyConfig(String configName) {
+        config = Config.getInstance();
+        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        setConfigData();
+    }
+
+    public static ProxyConfig load() {
+        return new ProxyConfig();
+    }
+
+    public static ProxyConfig load(String configName) {
+        return new ProxyConfig(configName);
+    }
+
+    public void reload() {
+        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
+        setConfigData();
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
     }
 
     public boolean isEnabled() {
         return enabled;
     }
 
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
     public boolean isHttp2Enabled() {
         return http2Enabled;
-    }
-
-    public void setHttp2Enabled(boolean http2Enabled) {
-        this.http2Enabled = http2Enabled;
-    }
-
-    public boolean isHttpsEnabled() {
-        return httpsEnabled;
-    }
-
-    public void setHttpsEnabled(boolean httpsEnabled) {
-        this.httpsEnabled = httpsEnabled;
     }
 
     public String getHosts() {
         return hosts;
     }
 
-    public void setHosts(String hosts) {
-        this.hosts = hosts;
-    }
-
     public int getConnectionsPerThread() {
         return connectionsPerThread;
-    }
-
-    public void setConnectionsPerThread(int connectionsPerThread) {
-        this.connectionsPerThread = connectionsPerThread;
     }
 
     public int getMaxRequestTime() {
         return maxRequestTime;
     }
 
-    public void setMaxRequestTime(int maxRequestTime) {
-        this.maxRequestTime = maxRequestTime;
-    }
-
     public boolean isRewriteHostHeader() { return rewriteHostHeader; }
-
-    public void setRewriteHostHeader(boolean rewriteHostHeader) { this.rewriteHostHeader = rewriteHostHeader; }
 
     public boolean isReuseXForwarded() { return reuseXForwarded; }
 
-    public void setReuseXForwarded(boolean reuseXForwarded) { this.reuseXForwarded = reuseXForwarded; }
-
     public int getMaxConnectionRetries() { return maxConnectionRetries; }
-
-    public void setMaxConnectionRetries(int maxConnectionRetries) { this.maxConnectionRetries = maxConnectionRetries; }
 
     public boolean isForwardJwtClaims() {
         return forwardJwtClaims;
     }
 
-    public void setForwardJwtClaims(boolean forwardJwtClaims) {
-        this.forwardJwtClaims = forwardJwtClaims;
+    private void setConfigData() {
+        Object object = getMappedConfig().get(HTTP2_ENABLED);
+        if(object != null && (Boolean) object) {
+            http2Enabled = true;
+        }
+        object = getMappedConfig().get(REWRITE_HOST_HEADER);
+        if(object != null && (Boolean) object) {
+            rewriteHostHeader = true;
+        }
+        object = getMappedConfig().get(REUSE_X_FORWARDED);
+        if(object != null && (Boolean) object) {
+            reuseXForwarded = true;
+        }
+        object = getMappedConfig().get(FORWARD_JWT_CLAIMS);
+        if(object != null && (Boolean) object) {
+            forwardJwtClaims = true;
+        }
+        hosts = (String)getMappedConfig().get(HOSTS);
+        connectionsPerThread = (Integer)getMappedConfig().get(CONNECTIONS_PER_THREAD);
+        maxRequestTime = (Integer)getMappedConfig().get(MAX_REQUEST_TIME);
+        maxConnectionRetries = (Integer)getMappedConfig().get(MAX_CONNECTION_RETRIES);
     }
 }
