@@ -20,6 +20,7 @@ import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.HttpStringConstants;
+import com.networknt.server.ServerConfig;
 import com.networknt.url.HttpURL;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
@@ -29,6 +30,8 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderValues;
 
 import java.util.Map;
+
+import static com.networknt.httpstring.HttpStringConstants.SERVICE_ID;
 
 /**
  * Router handle light-gateway.
@@ -50,11 +53,16 @@ public class GatewayRouterHandler extends RouterHandler implements MiddlewareHan
     @Override
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
         if (Constants.HEADER.equalsIgnoreCase(gatewayConfig.getEgressIngressIndicator())) {
-            HeaderValues serviceIdHeader = httpServerExchange.getRequestHeaders().get(HttpStringConstants.SERVICE_ID);
+            HeaderValues serviceIdHeader = httpServerExchange.getRequestHeaders().get(SERVICE_ID);
             String serviceId = serviceIdHeader != null ? serviceIdHeader.peekFirst() : null;
             String serviceUrl = httpServerExchange.getRequestHeaders().getFirst(HttpStringConstants.SERVICE_URL);
-            if (serviceId != null || serviceUrl!=null) {
+            if (serviceId != null || serviceUrl != null) {
                 proxyHandler.handleRequest(httpServerExchange);
+                // get the serviceId and put it into the request as callerId for metrics
+                Map<String, Object> serverConfig = Config.getInstance().getJsonMapConfigNoCache(ServerConfig.CONFIG_NAME);
+                if(serverConfig != null) {
+                    httpServerExchange.getRequestHeaders().put(HttpStringConstants.CALLER_ID, (String)serverConfig.get(SERVICE_ID));
+                }
             } else {
                 Handler.next(httpServerExchange, next);
             }
