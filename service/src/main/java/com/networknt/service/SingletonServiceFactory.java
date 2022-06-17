@@ -34,15 +34,13 @@ import java.util.stream.Collectors;
  */
 @SuppressWarnings("unchecked")
 public class SingletonServiceFactory {
-    private static String CONFIG_NAME = "service";
     private static Logger logger = LoggerFactory.getLogger(SingletonServiceFactory.class);
 
     private static Map<String, Object> serviceMap = new HashMap<>();
     // map is statically loaded to make sure there is only one instance per jvm
     static {
-        ServiceConfig serviceConfig =
-                (ServiceConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServiceConfig.class);
-        if(logger.isTraceEnabled()) logger.trace("serviceConfig = " + JsonMapper.toJson(serviceConfig));
+        ServiceConfig serviceConfig = ServiceConfig.load();
+        if(logger.isTraceEnabled()) logger.trace("serviceConfig = " + JsonMapper.toJson(serviceConfig.getMappedConfig()));
         List<Map<String, Object>> singletons = serviceConfig.getSingletons();
         //logger.debug("singletons " + singletons);
         try {
@@ -69,7 +67,7 @@ public class SingletonServiceFactory {
             e.printStackTrace();
             logger.error("Exception:", e);
         }
-        ModuleRegistry.registerModule(SingletonServiceFactory.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        ModuleRegistry.registerModule(SingletonServiceFactory.class.getName(), serviceConfig.getMappedConfig(), null);
     }
 
     private static Object handleSingleImpl(List<String> interfaceClasses, List<Object> value) throws Exception {
@@ -344,7 +342,7 @@ public class SingletonServiceFactory {
      * but just for test cases in order to simulate certain scenarios.
      *
      * @param className full classname with package
-     * @param object The object that you want to binding to the class
+     * @param object The object that you want to bind to the class
      */
     public static void setBean(String className, Object object) {
         serviceMap.put(className, object);
