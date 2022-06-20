@@ -15,13 +15,16 @@
  */
 package com.networknt.audit;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import com.networknt.config.JsonMapper;
 import com.networknt.utility.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -139,8 +142,19 @@ class AuditConfig {
     private void setLists() {
         if(getMappedConfig().get(HEADERS) instanceof String) {
             String s = (String)getMappedConfig().get(HEADERS);
+            s = s.trim();
             if(logger.isTraceEnabled()) logger.trace("s = " + s);
-            headerList = Arrays.asList(s.split("\\s*,\\s*"));
+            if(s.startsWith("[")) {
+                // this is a JSON string, and we need to parse it.
+                try {
+                    headerList = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
+                } catch (Exception e) {
+                    throw new ConfigException("could not parse the headers json with a list of strings.");
+                }
+            } else {
+                // this is a comma separated string.
+                headerList = Arrays.asList(s.split("\\s*,\\s*"));
+            }
         } else if (getMappedConfig().get(HEADERS) instanceof List) {
             headerList = (List<String>) getMappedConfig().get(HEADERS);
         } else {
@@ -148,8 +162,19 @@ class AuditConfig {
         }
         if(getMappedConfig().get(AUDIT) instanceof String) {
             String s = (String)getMappedConfig().get(AUDIT);
+            s = s.trim();
             if(logger.isTraceEnabled()) logger.trace("s = " + s);
-            auditList = Arrays.asList(s.split("\\s*,\\s*"));
+            if(s.startsWith("[")) {
+                // this is a JSON string, and we need to parse it.
+                try {
+                    auditList = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
+                } catch (Exception e) {
+                    throw new ConfigException("could not parse the audit json with a list of strings.");
+                }
+            } else {
+                // this is a comma separated string.
+                auditList = Arrays.asList(s.split("\\s*,\\s*"));
+            }
         } else if (getMappedConfig().get(AUDIT) instanceof List) {
             auditList = (List<String>) getMappedConfig().get(AUDIT);
         } else {
