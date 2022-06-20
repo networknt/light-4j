@@ -19,6 +19,7 @@ package com.networknt.basicauth;
 import com.networknt.common.DecryptUtil;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import com.networknt.config.JsonMapper;
 
 import java.util.HashMap;
 import java.util.List;
@@ -117,37 +118,51 @@ public class BasicAuthConfig {
     }
 
     private void setConfigUser() {
-        if (mappedConfig.get(USERS) != null) {
-            List<Map<String, Object>> userList = (List)mappedConfig.get(USERS);
-            users = new HashMap<>();
-            userList.forEach(user -> {
-                if (user instanceof Map) {
-                    // the password might be encrypted.
-                    user = DecryptUtil.decryptMap(user);
-                    UserAuth userAuth = new UserAuth();
-                    user.forEach((k, v)->{
-                        if(USERNAME.equals(k)) {
-                            userAuth.setUsername((String)v);
-                        }
-                        if(PASSWORD.equals(k)) {
-                            userAuth.setPassword((String)v);
-                        }
-                        if(PATHS.equals(k)) {
-                            if(v instanceof List) {
-                                userAuth.setPaths((List)v);
-                            } else {
-                                throw new ConfigException("Paths must be an array of strings.");
-                            }
-                        }
-                    });
-                    users.put(userAuth.getUsername(), userAuth);
-                }
-            });
+        if (mappedConfig.get(USERS) instanceof List) {
+            List<Map<String, Object>> userList = (List) mappedConfig.get(USERS);
+            populateUsers(userList);
+        } else if (mappedConfig.get(USERS) instanceof String) {
+            // The value can be a string from the config server or in values.yml
+            // It must start with '[' in the beginning.
+            String s = (String)mappedConfig.get(USERS);
+            s = s.trim();
+            if(!s.startsWith("[")) {
+                throw new ConfigException("The string value must be start with [ as a JSON list");
+            }
+            List<Map<String, Object>> userList = JsonMapper.string2List(s);
+            populateUsers(userList);
         } else {
             // if the basic auth is enabled and users is empty, we throw the ConfigException.
             if(enabled) {
                 throw new ConfigException("Basic Auth is enabled but there is no users definition.");
             }
         }
+    }
+
+    private void populateUsers(List<Map<String, Object>> userList) {
+        users = new HashMap<>();
+        userList.forEach(user -> {
+            if (user instanceof Map) {
+                // the password might be encrypted.
+                user = DecryptUtil.decryptMap(user);
+                UserAuth userAuth = new UserAuth();
+                user.forEach((k, v) -> {
+                    if (USERNAME.equals(k)) {
+                        userAuth.setUsername((String) v);
+                    }
+                    if (PASSWORD.equals(k)) {
+                        userAuth.setPassword((String) v);
+                    }
+                    if (PATHS.equals(k)) {
+                        if (v instanceof List) {
+                            userAuth.setPaths((List) v);
+                        } else {
+                            throw new ConfigException("Paths must be an array of strings.");
+                        }
+                    }
+                });
+                users.put(userAuth.getUsername(), userAuth);
+            }
+        });
     }
 }
