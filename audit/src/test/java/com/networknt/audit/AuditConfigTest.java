@@ -53,4 +53,13 @@ public class AuditConfigTest {
         AuditConfig configHandler = AuditConfig.load();
         Assert.assertEquals(format, configHandler.getTimestampFormat());
     }
+
+    @Test
+    @Ignore
+    public void shouldLoadHeaderInJson() {
+        AuditConfig config = AuditConfig.load("audit-json");
+        Assert.assertTrue(config.hasAuditList());
+        Assert.assertEquals(10, config.getAuditList().size());
+    }
+
 }
