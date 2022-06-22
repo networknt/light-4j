@@ -74,7 +74,8 @@ public class ServiceConfig {
         } else if (mappedConfig.get(SINGLETONS) instanceof List) {
             singletons = (List<Map<String, Object>>)mappedConfig.get(SINGLETONS);
         } else {
-            throw new ConfigException("singletons missing or wrong type.");
+            if(logger.isInfoEnabled()) logger.info("singletons missing or wrong type.");
+            // ignore this situation as a particular application might not have any injections.
         }
     }
 }
