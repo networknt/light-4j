@@ -106,7 +106,13 @@ public class TokenManager {
             if(logger.isTraceEnabled()) logger.trace("clientRequest path = " + path);
             // get the target serviceId based on the request path.
             Map<String, String> pathPrefixServices = ClientConfig.get().getPathPrefixServices();
-            String serviceId = pathPrefixServices.get(path);
+            // lookup the serviceId based on the full path and the prefix mapping by iteration here.
+            String serviceId = null;
+            for(Map.Entry<String, String> entry: pathPrefixServices.entrySet()) {
+                if(path.startsWith(entry.getKey())) {
+                    serviceId = entry.getValue();
+                }
+            }
             if(logger.isTraceEnabled()) logger.trace("serviceId = " + serviceId);
             // based on the serviceId, we can find the configuration of the auth server from the client credentials
             Map<String, Object> clientCredentials = (Map<String, Object>)ClientConfig.get().getTokenConfig().get(ClientConfig.CLIENT_CREDENTIALS);

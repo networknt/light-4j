@@ -425,7 +425,13 @@ public class JwtVerifier {
             if(pathPrefixServices == null || pathPrefixServices.size() == 0) {
                 throw new ConfigException("pathPrefixServices property is missing or empty in client.yml");
             }
-            String serviceId = pathPrefixServices.get(requestPath);
+            // lookup the serviceId based on the full path and the prefix mapping by iteration here.
+            String serviceId = null;
+            for(Map.Entry<String, String> entry: pathPrefixServices.entrySet()) {
+                if(requestPath.startsWith(entry.getKey())) {
+                    serviceId = entry.getValue();
+                }
+            }
             if(serviceId == null) {
                 throw new ConfigException("serviceId cannot be identified in client.yml with the requestPath = " + requestPath);
             }

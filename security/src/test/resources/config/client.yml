@@ -306,8 +306,8 @@ oauth:
 # to get the token or JWK. If two or more services have the same path, you must use serviceId in
 # the request header to use the serviceId to find the OAuth 2.0 provider configuration.
 pathPrefixServices:
-  /api/petstore: com.networknt.petstore-3.0.1
-  /api/market: com.networknt.market-1.0.0
+  /api/p: com.networknt.petstore-3.0.1
+  /api/m: com.networknt.market-1.0.0
 # circuit breaker configuration for the client
 request:
   # number of timeouts/errors to break the circuit
