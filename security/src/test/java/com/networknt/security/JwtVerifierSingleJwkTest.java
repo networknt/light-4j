@@ -329,7 +329,10 @@ public class JwtVerifierSingleJwkTest extends JwtVerifierJwkBase {
             connection.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
             final ClientResponse response = reference.get();
-            Assert.assertEquals("{\"message\":\"Market OK!\"}", response.getAttachment(Http2Client.RESPONSE_BODY));
+            int responseStatus = response.getResponseCode();
+            String body = response.getAttachment(Http2Client.RESPONSE_BODY);
+            System.out.println("*************************************status code = " + responseStatus + " res body = " + body);
+            Assert.assertEquals("{\"message\":\"Market OK!\"}", body);
         } finally {
             // return the connection to the connection pool.
             client.returnConnection(connection);
