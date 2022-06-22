@@ -23,6 +23,8 @@ import com.networknt.client.oauth.OauthHelper;
 import com.networknt.client.oauth.SignKeyRequest;
 import com.networknt.client.oauth.TokenKeyRequest;
 import com.networknt.config.Config;
+import com.networknt.config.ConfigException;
+import com.networknt.config.JsonMapper;
 import com.networknt.exception.ExpiredTokenException;
 import com.networknt.status.Status;
 import com.networknt.utility.FingerPrintUtil;
@@ -119,8 +121,11 @@ public class JwtVerifier {
             }
         }
         logger.debug("Successfully cached Certificate");
-        if(JWT_KEY_RESOLVER_JWKS.equals(keyResolver)) {
+        // if KeyResolver is jwk and bootstrap from jwk is true, load jwk during server startup.
+        if(JWT_KEY_RESOLVER_JWKS.equals(keyResolver) && bootstrapFromKeyService) {
             jwksMap = getJsonWebKeyMap();
+        } else {
+            jwksMap = new HashMap<>();
         }
     }
 
@@ -323,8 +328,10 @@ public class JwtVerifier {
                     if (jwkList == null || jwkList.isEmpty()) {
                         throw new RuntimeException("no JWK for kid: " + kid);
                     }
-                    jwksMap.put(jwkList.get(0).getKeyId(), jwkList);
-                    logger.info("Got Json web key set for kid: {} from Oauth server", kid);
+                    for(JsonWebKey jwk: jwkList) {
+                        jwksMap.put(jwk.getKeyId(), jwkList);
+                        logger.info("Got Json web key set for kid: {} from Oauth server", jwk.getKeyId());
+                    }
                 }
                 logger.debug("Got Json web key set from local cache");
                 return new JwksVerificationKeyResolver(jwkList);
@@ -360,13 +367,15 @@ public class JwtVerifier {
                 try {
                     logger.debug("Getting Json Web Key list from {} for serviceId {}", keyRequest.getServerUrl(), entry.getKey());
                     String key = OauthHelper.getKey(keyRequest);
-                    logger.debug("Got Json Web Key = ", key);
+                    logger.debug("Got Json Web Key = " + key);
                     List<JsonWebKey> jwkList = new JsonWebKeySet(key).getJsonWebKeys();
                     if (jwkList == null || jwkList.isEmpty()) {
                         throw new RuntimeException("cannot get JWK from OAuth server");
                     }
-                    jwksMap.put(jwkList.get(0).getKeyId(), jwkList);
-                    logger.debug("Successfully cached JWK for serviceId {}", entry.getKey());
+                    for(JsonWebKey jwk: jwkList) {
+                        jwksMap.put(jwk.getKeyId(), jwkList);
+                        logger.debug("Successfully cached JWK for kid {} serviceId {}", jwk.getKeyId(), entry.getKey());
+                    }
                 } catch (Exception e) {
                     logger.error("Exception: ", e);
                     logger.error(new Status(GET_KEY_ERROR).toString());
@@ -379,13 +388,15 @@ public class JwtVerifier {
             try {
                 logger.debug("Getting Json Web Key list from {}", keyRequest.getServerUrl());
                 String key = OauthHelper.getKey(keyRequest);
-                logger.debug("Got Json Web Key list from {}", keyRequest.getServerUrl());
+                logger.debug("Got Json Web Key = " + key);
                 List<JsonWebKey> jwkList = new JsonWebKeySet(key).getJsonWebKeys();
                 if (jwkList == null || jwkList.isEmpty()) {
                     throw new RuntimeException("cannot get JWK from OAuth server");
                 }
-                jwksMap.put(jwkList.get(0).getKeyId(), jwkList);
-                logger.debug("Successfully cached JWK");
+                for(JsonWebKey jwk: jwkList) {
+                    jwksMap.put(jwk.getKeyId(), jwkList);
+                    logger.debug("Successfully cached JWK for kid {}", jwk.getKeyId());
+                }
             } catch (Exception e) {
                 logger.error("Exception: ", e);
                 logger.error(new Status(GET_KEY_ERROR).toString());
@@ -405,22 +416,30 @@ public class JwtVerifier {
     private List<JsonWebKey> getJsonWebKeySetForToken(String kid, String requestPath) {
         // the jwk indicator will ensure that the kid is not concat to the uri for path parameter.
         // the kid is not needed to get JWK, but if requestPath is not null, it will be used to get the keyConfig
+        if(logger.isTraceEnabled()) logger.trace("kid = " + kid + " requestPath = " + requestPath);
         Map<String, Object> config = null;
-        if(requestPath != null) {
-            ClientConfig clientConfig = ClientConfig.get();
+        ClientConfig clientConfig = ClientConfig.get();
+        if(requestPath != null && clientConfig.isMultipleAuthServers()) {
             if(logger.isTraceEnabled()) logger.trace("requestPath = " + requestPath);
             Map<String, String> pathPrefixServices = clientConfig.getPathPrefixServices();
+            if(pathPrefixServices == null || pathPrefixServices.size() == 0) {
+                throw new ConfigException("pathPrefixServices property is missing or empty in client.yml");
+            }
             String serviceId = pathPrefixServices.get(requestPath);
+            if(serviceId == null) {
+                throw new ConfigException("serviceId cannot be identified in client.yml with the requestPath = " + requestPath);
+            }
             if(logger.isTraceEnabled()) logger.trace("serviceId = " + serviceId);
             // get the serviceIdAuthServers for key definition
             Map<String, Object> tokenConfig = clientConfig.getTokenConfig();
             Map<String, Object> keyConfig = (Map<String, Object>)tokenConfig.get(ClientConfig.KEY);
             Map<String, Object> serviceIdAuthServers = (Map<String, Object>)keyConfig.get(ClientConfig.SERVICE_ID_AUTH_SERVERS);
             if(serviceIdAuthServers == null) {
-                throw new RuntimeException("serviceIdAuthServers property is missing in the token key configuration");
+                throw new ConfigException("serviceIdAuthServers property is missing in the token key configuration in client.yml");
             }
             config = (Map<String, Object>)serviceIdAuthServers.get(serviceId);
         }
+        if(logger.isTraceEnabled() && config != null) logger.trace("multiple oauth config based on path = " + JsonMapper.toJson(config));
         TokenKeyRequest keyRequest = new TokenKeyRequest(kid, true, config);
         try {
             logger.debug("Getting Json Web Key list from {}", keyRequest.getServerUrl());

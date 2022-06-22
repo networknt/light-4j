@@ -120,11 +120,12 @@ public class JwtVerifierMultipleJwkTest extends JwtVerifierJwkBase {
                     .setHandler(new PathHandler()
                             .addExactPath(API_MARKET, (exchange) -> {
                                 boolean hasScopeToken = exchange.getRequestHeaders().contains(HttpStringConstants.SCOPE_TOKEN);
+                                String requestPath = exchange.getRequestPath();
                                 Assert.assertTrue(hasScopeToken);
                                 String scopeToken = exchange.getRequestHeaders().get(HttpStringConstants.SCOPE_TOKEN, 0).substring(7);
                                 // verify the jwt token with JWK.
                                 JwtVerifier jwtVerifier = new JwtVerifier(securityConfig);
-                                JwtClaims claims = jwtVerifier.verifyJwt(scopeToken, true, true);
+                                JwtClaims claims = jwtVerifier.verifyJwt(scopeToken, true, true, requestPath);
                                 exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
                                 exchange.getResponseSender().send(ByteBuffer.wrap(
                                         Config.getInstance().getMapper().writeValueAsBytes(
