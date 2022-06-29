@@ -19,10 +19,7 @@ package com.networknt.consul.client;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
-import com.networknt.consul.ConsulConfig;
-import com.networknt.consul.ConsulConstants;
-import com.networknt.consul.ConsulResponse;
-import com.networknt.consul.ConsulService;
+import com.networknt.consul.*;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.StringUtils;
 import io.undertow.UndertowOptions;
@@ -44,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -246,7 +244,7 @@ public class ConsulClientImpl implements ConsulClient {
 			request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
 			connection.sendRequest(request, client.createClientCallback(reference, latch, json));
 		}
-		latch.await();
+		latch.await(ConsulUtils.getWaitInSecond(wait), TimeUnit.SECONDS);
 		logger.trace("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
 		return reference;
 	}
