@@ -1,7 +1,9 @@
 package com.networknt.handler;
 
+import com.networknt.config.Config;
 import com.networknt.handler.conduit.ContentStreamSinkConduit;
 import com.networknt.handler.conduit.ModifiableContentSinkConduit;
+import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -30,9 +32,26 @@ public class SinkConduitInjectorHandler implements MiddlewareHandler {
     public static final AttachmentKey<HeaderMap> ORIGINAL_ACCEPT_ENCODINGS_KEY = AttachmentKey.create(HeaderMap.class);
 
     @SuppressWarnings("rawtypes")
-    private final List<InterceptorHandler> inteceptors = new ArrayList<>();
+    private final List<InterceptorHandler> interceptors = new ArrayList<>();
     private volatile HttpHandler next;
+    private SinkConduitConfig config;
+    public SinkConduitInjectorHandler() throws Exception{
+        config = SinkConduitConfig.load();
+        logger.info("SinkConduitInjectorHandler is loaded!");
+    }
 
+    /**
+     * This is a constructor for test cases only. Please don't use it.
+     *
+     * @param cfg limit config
+     * @throws Exception thrown when config is wrong.
+     *
+     */
+    @Deprecated
+    public SinkConduitInjectorHandler(SinkConduitConfig cfg) throws Exception{
+        config = cfg;
+        logger.info("SinkConduitInjectorHandler is loaded!");
+    }
 
     @Override
     public HttpHandler getNext() {
@@ -48,17 +67,17 @@ public class SinkConduitInjectorHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return false;
+        return config.isEnabled();
     }
 
     @Override
     public void register() {
-
+        ModuleRegistry.registerModule(SinkConduitConfig.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void reload() {
-        MiddlewareHandler.super.reload();
+        config.reload();
     }
 
     /**
@@ -69,7 +88,7 @@ public class SinkConduitInjectorHandler implements MiddlewareHandler {
      * @param exchange
      */
     private void forceIdentityEncodingForInterceptors(HttpServerExchange exchange) {
-        if (this.inteceptors.stream().anyMatch(ri -> ri.isRequiredContent())) {
+        if (this.interceptors.stream().anyMatch(ri -> ri.isRequiredContent())) {
             var before = new HeaderMap();
 
             if (exchange.getRequestHeaders().contains(Headers.ACCEPT_ENCODING)) {
@@ -106,7 +125,7 @@ public class SinkConduitInjectorHandler implements MiddlewareHandler {
             //     MDC.setContextMap(mdcCtx);
             // }
 
-            if (this.inteceptors.stream().anyMatch(ri -> ri.isRequiredContent())) {
+            if (this.interceptors.stream().anyMatch(ri -> ri.isRequiredContent())) {
                 var mcsc = new ModifiableContentSinkConduit(factory.create(), cexchange);
                 cexchange.putAttachment(MCSC_KEY, mcsc);
                 return mcsc;
@@ -116,8 +135,7 @@ public class SinkConduitInjectorHandler implements MiddlewareHandler {
         });
 
         forceIdentityEncodingForInterceptors(exchange);
-
-        next(exchange);
+        Handler.next(exchange, next);
     }
 
 }
