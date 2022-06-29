@@ -1,0 +1,5 @@
+# server.yml
+server.serviceId: com.networknt.reqtrans-1.0.0
+
+# service.yml
+service.singletons: [{"com.networknt.server.StartupHookProvider":["com.networknt.rule.RuleLoaderStartupHook"]}]

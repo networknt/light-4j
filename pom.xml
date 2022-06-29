@@ -166,6 +166,8 @@
         <module>rule-loader</module>
         <module>config-reload</module>
         <module>gateway</module>
+        <module>request-transformer</module>
+        <module>response-transformer</module>
     </modules>
 
     <dependencyManagement>
@@ -401,6 +403,16 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>rule-loader</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>request-transformer</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>response-transformer</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <!-- External dependencies -->

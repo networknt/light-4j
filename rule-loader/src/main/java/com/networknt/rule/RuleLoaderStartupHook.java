@@ -45,40 +45,49 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
     @Override
     public void onStartup() {
         if(config.isEnabled()) {
-            ServerConfig serverConfig = (ServerConfig)Config.getInstance().getJsonObjectConfig(ServerConfig.CONFIG_NAME, ServerConfig.class);
-            Result<String> result = getServiceById(config.getPortalHost(), serverConfig.getServiceId());
-            if(result.isSuccess()) {
-                String serviceString = result.getResult();
-                if(logger.isDebugEnabled()) logger.debug("getServiceById result = " + serviceString);
-                Map<String, Object> objectMap = JsonMapper.string2Map(serviceString);
-                endpointRules = (Map<String, Object>)objectMap.get("endpointRules");
-                // need to get the rule bodies here to create a map of ruleId to ruleBody.
-                Iterator<Object> iterator = endpointRules.values().iterator();
-                String ruleString = "\n";
-                Set<String> ruleIdSet = new HashSet<>(); // use this set to ensure the same ruleId will only be concat once.
-                while (iterator.hasNext()) {
-                    Map<String, List> value = (Map<String, List>)iterator.next();
-                    Iterator<List> iteratorList = value.values().iterator();
-                    while(iteratorList.hasNext()) {
-                        List<Map<String, String>> list = iteratorList.next();
-                        for(Map<String, String> map: list) {
-                            // in this map, we might have ruleId, roles, variables as keys. Here we only need to get the ruleId in order to load rule body.
-                            String ruleId = map.get("ruleId");
-                            if(!ruleIdSet.contains(ruleId)) {
-                                if (logger.isDebugEnabled()) logger.debug("Load rule for ruleId = " + ruleId);
-                                // get rule content for each id and concat them together.
-                                String r = getRuleById(config.getPortalHost(), DEFAULT_HOST, ruleId).getResult();
-                                Map<String, Object> ruleMap = JsonMapper.string2Map(r);
-                                ruleString = ruleString + ruleMap.get("value") + "\n";
-                                ruleIdSet.add(ruleId);
+            // by default the rules for the service is loaded from the light-portal; however, it can be configured to loaded from config folder.
+            if(RuleLoaderConfig.RULE_SOURCE_CONFIG_FOLDER.equals(config.getRuleSource())) {
+                // load the rules for the service from the externalized config folder. The filename is rules.yml
+                String ruleString = Config.getInstance().getStringFromFile("rules");
+                rules = RuleMapper.string2RuleMap(ruleString);
+                if(logger.isInfoEnabled()) logger.info("Load YAML rules from config folder with size = " + rules.size());
+            } else {
+                // by default, load from light-portal
+                ServerConfig serverConfig = (ServerConfig)Config.getInstance().getJsonObjectConfig(ServerConfig.CONFIG_NAME, ServerConfig.class);
+                Result<String> result = getServiceById(config.getPortalHost(), serverConfig.getServiceId());
+                if(result.isSuccess()) {
+                    String serviceString = result.getResult();
+                    if(logger.isDebugEnabled()) logger.debug("getServiceById result = " + serviceString);
+                    Map<String, Object> objectMap = JsonMapper.string2Map(serviceString);
+                    endpointRules = (Map<String, Object>)objectMap.get("endpointRules");
+                    // need to get the rule bodies here to create a map of ruleId to ruleBody.
+                    Iterator<Object> iterator = endpointRules.values().iterator();
+                    String ruleString = "\n";
+                    Set<String> ruleIdSet = new HashSet<>(); // use this set to ensure the same ruleId will only be concat once.
+                    while (iterator.hasNext()) {
+                        Map<String, List> value = (Map<String, List>)iterator.next();
+                        Iterator<List> iteratorList = value.values().iterator();
+                        while(iteratorList.hasNext()) {
+                            List<Map<String, String>> list = iteratorList.next();
+                            for(Map<String, String> map: list) {
+                                // in this map, we might have ruleId, roles, variables as keys. Here we only need to get the ruleId in order to load rule body.
+                                String ruleId = map.get("ruleId");
+                                if(!ruleIdSet.contains(ruleId)) {
+                                    if (logger.isDebugEnabled()) logger.debug("Load rule for ruleId = " + ruleId);
+                                    // get rule content for each id and concat them together.
+                                    String r = getRuleById(config.getPortalHost(), DEFAULT_HOST, ruleId).getResult();
+                                    Map<String, Object> ruleMap = JsonMapper.string2Map(r);
+                                    ruleString = ruleString + ruleMap.get("value") + "\n";
+                                    ruleIdSet.add(ruleId);
+                                }
                             }
                         }
                     }
+                    rules = RuleMapper.string2RuleMap(ruleString);
+                    if(logger.isInfoEnabled()) logger.info("Load YAML rules from light-portal with size = " + rules.size());
+                } else {
+                    logger.error("Could not load rule for serviceId = " + serverConfig.getServiceId() + " error = " + result.getError());
                 }
-                rules = RuleMapper.string2RuleMap(ruleString);
-                if(logger.isInfoEnabled()) logger.info("Load YAML rules with size = " + rules.size());
-            } else {
-                logger.error("Could not load rule for serviceId = " + serverConfig.getServiceId() + " error = " + result.getError());
             }
         } else {
             if(logger.isInfoEnabled()) logger.info("Rule Loader is not enabled and skipped loading rules from the portal.");
