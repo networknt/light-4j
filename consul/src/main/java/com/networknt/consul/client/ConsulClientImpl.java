@@ -237,7 +237,7 @@ public class ConsulClientImpl implements ConsulClient {
 		ClientRequest request = new ClientRequest().setMethod(method).setPath(path);
 		request.getRequestHeaders().put(Headers.HOST, "localhost");
 		if (token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
-		logger.trace("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
+		if(logger.isTraceEnabled()) logger.trace("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
 		if(StringUtils.isBlank(json)) {
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 		} else {
@@ -245,7 +245,13 @@ public class ConsulClientImpl implements ConsulClient {
 			connection.sendRequest(request, client.createClientCallback(reference, latch, json));
 		}
 		latch.await(ConsulUtils.getWaitInSecond(wait), TimeUnit.SECONDS);
-		logger.trace("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
+		if(logger.isTraceEnabled()) {
+			if(reference != null) {
+				logger.trace("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
+			} else {
+				logger.trace("The request is timeout after {} seconds and reference is null.", ConsulUtils.getWaitInSecond(wait));
+			}
+		}
 		return reference;
 	}
 
