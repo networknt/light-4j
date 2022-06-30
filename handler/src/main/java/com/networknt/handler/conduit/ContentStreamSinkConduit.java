@@ -1,5 +1,7 @@
 package com.networknt.handler.conduit;
 
+import com.networknt.handler.ResponseInterceptorHandler;
+import com.networknt.service.SingletonServiceFactory;
 import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,11 +15,11 @@ import java.nio.channels.FileChannel;
 
 public class ContentStreamSinkConduit extends AbstractStreamSinkConduit<StreamSinkConduit> {
 
-    static final Logger LOGGER = LoggerFactory.getLogger(ContentStreamSinkConduit.class);
+    static final Logger logger = LoggerFactory.getLogger(ContentStreamSinkConduit.class);
 
     private final StreamSinkConduit _next;
 
-    private final ResponseInterceptorsExecutor responseInterceptorsExecutor = new ResponseInterceptorsExecutor(true);
+    private final ResponseInterceptorHandler[] interceptors;
 
     /**
      * Construct a new instance.
@@ -28,12 +30,19 @@ public class ContentStreamSinkConduit extends AbstractStreamSinkConduit<StreamSi
     public ContentStreamSinkConduit(StreamSinkConduit next, HttpServerExchange exchange) {
         super(next);
         this._next = next;
-
+        // load the interceptors from the service.yml
+        interceptors = SingletonServiceFactory.getBeans(ResponseInterceptorHandler.class);
         try {
-            this.responseInterceptorsExecutor.handleRequest(exchange);
+            if(interceptors.length > 0) {
+                // iterate all interceptor handlers.
+                for(ResponseInterceptorHandler interceptor : interceptors) {
+                    if(logger.isDebugEnabled()) logger.debug("Executing interceptor " + interceptor.getClass());
+                    interceptor.handleRequest(exchange);
+                }
+            }
         } catch (Exception e) {
-            LOGGER.error("Error executing interceptors", e);
-            ByteArrayProxyRequest.of(exchange).setInError(true);
+            logger.error("Error executing interceptors", e);
+            // ByteArrayProxyRequest.of(exchange).setInError(true);
             throw new RuntimeException(e);
         }
     }

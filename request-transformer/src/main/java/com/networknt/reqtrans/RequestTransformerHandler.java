@@ -1,7 +1,7 @@
 package com.networknt.reqtrans;
 
-import com.networknt.handler.InterceptorHandler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.handler.RequestInterceptorHandler;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -9,7 +9,7 @@ import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RequestTransformerHandler implements InterceptorHandler {
+public class RequestTransformerHandler implements RequestInterceptorHandler {
     static final Logger logger = LoggerFactory.getLogger(RequestTransformerHandler.class);
 
     private RequestTransformerConfig config;
@@ -50,10 +50,5 @@ public class RequestTransformerHandler implements InterceptorHandler {
     @Override
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
 
-    }
-
-    @Override
-    public boolean isRequiredContent() {
-        return true;
     }
 }

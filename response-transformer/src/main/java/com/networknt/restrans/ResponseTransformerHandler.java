@@ -1,7 +1,7 @@
 package com.networknt.restrans;
 
-import com.networknt.handler.InterceptorHandler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.handler.ResponseInterceptorHandler;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Steve Hu
  */
-public class ResponseTransformerHandler implements InterceptorHandler {
+public class ResponseTransformerHandler implements ResponseInterceptorHandler {
     static final Logger logger = LoggerFactory.getLogger(ResponseTransformerHandler.class);
 
     private ResponseTransformerConfig config;

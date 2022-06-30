@@ -1,5 +1,9 @@
 package com.networknt.handler.conduit;
 
+import com.networknt.handler.BuffersUtils;
+import com.networknt.handler.ResponseInterceptorHandler;
+import com.networknt.httpstring.AttachmentConstants;
+import com.networknt.service.SingletonServiceFactory;
 import io.undertow.connector.PooledByteBuffer;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.protocol.http.ServerFixedLengthStreamSinkConduit;
@@ -19,12 +23,13 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
 public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<StreamSinkConduit> {
+    public static int MAX_BUFFERS = 1024;
 
-    static final Logger LOGGER = LoggerFactory.getLogger(ModifiableContentSinkConduit.class);
+    static final Logger logger = LoggerFactory.getLogger(ModifiableContentSinkConduit.class);
 
     private final HttpServerExchange exchange;
 
-    private final ResponseInterceptorsExecutor interceptorsExecutor;
+    private final ResponseInterceptorHandler[] interceptors;
 
     /**
      * Construct a new instance.
@@ -35,8 +40,8 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
     public ModifiableContentSinkConduit(StreamSinkConduit next, HttpServerExchange exchange) {
         super(next);
         this.exchange = exchange;
-        this.interceptorsExecutor = new ResponseInterceptorsExecutor();
-
+        // load the interceptors from the service.yml
+        interceptors = SingletonServiceFactory.getBeans(ResponseInterceptorHandler.class);
         resetBufferPool(exchange);
     }
 
@@ -47,7 +52,7 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
      * @return
      */
     private void resetBufferPool(HttpServerExchange exchange) {
-        var oldBuffers = exchange.getAttachment(ProxyResponse.BUFFERED_RESPONSE_DATA_KEY);
+        var oldBuffers = exchange.getAttachment(AttachmentConstants.BUFFERED_RESPONSE_DATA_KEY);
         // close the current buffer pool
         if (oldBuffers != null) {
             for (var oldBuffer: oldBuffers) {
@@ -56,12 +61,12 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
                 }
             }
         }
-        exchange.putAttachment(ProxyResponse.BUFFERED_RESPONSE_DATA_KEY, new PooledByteBuffer[MAX_BUFFERS]);
+        exchange.putAttachment(AttachmentConstants.BUFFERED_RESPONSE_DATA_KEY, new PooledByteBuffer[MAX_BUFFERS]);
     }
 
     @Override
     public int write(ByteBuffer src) throws IOException {
-        return BuffersUtils.append(src, exchange.getAttachment(ProxyResponse.BUFFERED_RESPONSE_DATA_KEY), exchange);
+        return BuffersUtils.append(src, exchange.getAttachment(AttachmentConstants.BUFFERED_RESPONSE_DATA_KEY), exchange);
     }
 
     @Override
@@ -97,14 +102,22 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
     @Override
     public void terminateWrites() throws IOException {
         try {
-            interceptorsExecutor.handleRequest(exchange);
+            if(interceptors.length > 0) {
+                // iterate all interceptor handlers.
+                for(ResponseInterceptorHandler interceptor : interceptors) {
+                    if(logger.isDebugEnabled()) logger.debug("Executing interceptor " + interceptor.getClass());
+                    interceptor.handleRequest(exchange);
+                }
+            }
         } catch (Exception e) {
-            throw new IOException(e);
+            logger.error("Error executing interceptors", e);
+            // ByteArrayProxyRequest.of(exchange).setInError(true);
+            throw new RuntimeException(e);
         }
 
-        var dests = ByteArrayProxyResponse.of(exchange).getBuffer();
+        var dests = exchange.getAttachment(AttachmentConstants.BUFFERED_RESPONSE_DATA_KEY);
 
-        updateContentLenght(exchange, dests);
+        updateContentLength(exchange, dests);
 
         for (PooledByteBuffer dest : dests) {
             if (dest != null) {
@@ -115,7 +128,7 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
         next.terminateWrites();
     }
 
-    private void updateContentLenght(HttpServerExchange exchange, PooledByteBuffer[] dests) {
+    private void updateContentLength(HttpServerExchange exchange, PooledByteBuffer[] dests) {
         long length = 0;
 
         for (PooledByteBuffer dest : dests) {
@@ -134,18 +147,18 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
                 m = ServerFixedLengthStreamSinkConduit.class.getDeclaredMethod("reset", long.class, HttpServerExchange.class);
                 m.setAccessible(true);
             } catch (NoSuchMethodException | SecurityException ex) {
-                LOGGER.error("could not find ServerFixedLengthStreamSinkConduit.reset method", ex);
+                logger.error("could not find ServerFixedLengthStreamSinkConduit.reset method", ex);
                 throw new RuntimeException("could not find ServerFixedLengthStreamSinkConduit.reset method", ex);
             }
 
             try {
                 m.invoke(next, length, exchange);
             } catch (Throwable ex) {
-                LOGGER.error("could not access BUFFERED_REQUEST_DATA field", ex);
+                logger.error("could not access BUFFERED_REQUEST_DATA field", ex);
                 throw new RuntimeException("could not access BUFFERED_REQUEST_DATA field", ex);
             }
         } else {
-            LOGGER.warn("updateContentLenght() next is {}", next.getClass().getSimpleName());
+            logger.warn("updateContentLenght() next is {}", next.getClass().getSimpleName());
         }
     }
 

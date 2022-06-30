@@ -2,6 +2,7 @@ package com.networknt.httpstring;
 
 import io.opentracing.Span;
 import io.opentracing.Tracer;
+import io.undertow.connector.PooledByteBuffer;
 import io.undertow.util.AttachmentKey;
 
 import java.util.Map;
@@ -20,4 +21,6 @@ public class AttachmentConstants {
     public static final AttachmentKey<Map> AUDIT_INFO = AttachmentKey.create(Map.class);
     public static final AttachmentKey<Object> REQUEST_BODY = AttachmentKey.create(Object.class);
     public static final AttachmentKey<String> REQUEST_BODY_STRING = AttachmentKey.create(String.class);
+    public static final AttachmentKey<PooledByteBuffer[]> BUFFERED_RESPONSE_DATA_KEY = AttachmentKey.create(PooledByteBuffer[].class);
+
 }
