@@ -19,10 +19,7 @@ package com.networknt.consul.client;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
-import com.networknt.consul.ConsulConfig;
-import com.networknt.consul.ConsulConstants;
-import com.networknt.consul.ConsulResponse;
-import com.networknt.consul.ConsulService;
+import com.networknt.consul.*;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.StringUtils;
 import io.undertow.UndertowOptions;
@@ -34,6 +31,7 @@ import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
 import java.io.IOException;
@@ -44,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -239,15 +238,22 @@ public class ConsulClientImpl implements ConsulClient {
 		ClientRequest request = new ClientRequest().setMethod(method).setPath(path);
 		request.getRequestHeaders().put(Headers.HOST, "localhost");
 		if (token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
-		logger.trace("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
+		if(logger.isTraceEnabled()) logger.trace("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
 		if(StringUtils.isBlank(json)) {
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 		} else {
 			request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
 			connection.sendRequest(request, client.createClientCallback(reference, latch, json));
 		}
-		latch.await();
-		logger.trace("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
+		latch.await(ConsulUtils.getWaitInSecond(wait), TimeUnit.SECONDS);
+        if(reference != null) {
+			if(logger.isTraceEnabled()) logger.trace("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
+		} else {
+            // timeout happens, do not know if the Consul server is still alive. Close the connection to force reconnect. The next time this connection
+			// is borrowed from the pool, a new connection will be created as the one returned is not open.
+			if(connection != null && connection.isOpen()) IoUtils.safeClose(connection);
+			if(logger.isTraceEnabled()) logger.trace("The request is timeout after {} seconds and reference is null.", ConsulUtils.getWaitInSecond(wait));
+		}
 		return reference;
 	}
 
