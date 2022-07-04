@@ -19,6 +19,7 @@ package com.networknt.consul;
 import com.networknt.registry.URL;
 import com.networknt.registry.URLImpl;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -82,4 +83,13 @@ public class ConsulUtilsTest {
         assertEquals(testPath, tempPath);
     }
 
+    @Test
+    public void testGetWaitInSecond() {
+        String w1 = "600s";
+        String w2 = "10m";
+        int w = ConsulUtils.getWaitInSecond(w1);
+        Assert.assertEquals(600, w);
+        w = ConsulUtils.getWaitInSecond(w2);
+        Assert.assertEquals(600, w);
+    }
 }
