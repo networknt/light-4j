@@ -1,8 +1,8 @@
 package com.networknt.handler;
 
-import com.networknt.config.Config;
 import com.networknt.handler.conduit.ContentStreamSinkConduit;
 import com.networknt.handler.conduit.ModifiableContentSinkConduit;
+import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -13,11 +13,9 @@ import io.undertow.util.HeaderMap;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import org.xnio.conduits.StreamSinkConduit;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
 /**
  * This is a middleware handle that is responsible for injecting the SinkConduit in order to update
@@ -32,11 +30,12 @@ public class SinkConduitInjectorHandler implements MiddlewareHandler {
     public static final AttachmentKey<HeaderMap> ORIGINAL_ACCEPT_ENCODINGS_KEY = AttachmentKey.create(HeaderMap.class);
 
     @SuppressWarnings("rawtypes")
-    private final List<ResponseInterceptorHandler> interceptors = new ArrayList<>();
+    private ResponseInterceptorHandler[] interceptors = null;
     private volatile HttpHandler next;
     private SinkConduitConfig config;
     public SinkConduitInjectorHandler() throws Exception{
         config = SinkConduitConfig.load();
+        interceptors = SingletonServiceFactory.getBeans(ResponseInterceptorHandler.class);
         logger.info("SinkConduitInjectorHandler is loaded!");
     }
 
@@ -88,7 +87,7 @@ public class SinkConduitInjectorHandler implements MiddlewareHandler {
      * @param exchange
      */
     private void forceIdentityEncodingForInterceptors(HttpServerExchange exchange) {
-        if (this.interceptors.stream().anyMatch(ri -> ri.isRequiredContent())) {
+        if (Arrays.stream(interceptors).anyMatch(ri -> ri.isRequiredContent())) {
             var before = new HeaderMap();
 
             if (exchange.getRequestHeaders().contains(Headers.ACCEPT_ENCODING)) {
@@ -125,7 +124,7 @@ public class SinkConduitInjectorHandler implements MiddlewareHandler {
             //     MDC.setContextMap(mdcCtx);
             // }
 
-            if (this.interceptors.stream().anyMatch(ri -> ri.isRequiredContent())) {
+            if (Arrays.stream(interceptors).anyMatch(ri -> ri.isRequiredContent())) {
                 var mcsc = new ModifiableContentSinkConduit(factory.create(), cexchange);
                 cexchange.putAttachment(MCSC_KEY, mcsc);
                 return mcsc;
