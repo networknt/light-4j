@@ -181,13 +181,17 @@ public class ConsulClientImpl implements ConsulClient {
 		}
 		logger.trace("path = {}", path);
 		try {
+			logger.debug("Getting connection from pool with {}", uri);
 			connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
+			logger.info("Got connection: {} from pool and send request to {}", connection, path);
 			AtomicReference<ClientResponse> reference  = send(connection, Methods.GET, path, token, null);
 			int statusCode = reference.get().getResponseCode();
+			logger.info("Got status code: {} from the consul query", statusCode);
 			if(statusCode >= UNUSUAL_STATUS_CODE){
 				throw new Exception("Failed to unregister on Consul: " + statusCode);
 			} else {
 				String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+				logger.debug("Got response body: {} from the consul query", body);
 				List<Map<String, Object>> services = Config.getInstance().getMapper().readValue(body, new TypeReference<List<Map<String, Object>>>(){});
 				List<ConsulService> ConsulServcies = new ArrayList<>(
 						services.size());
