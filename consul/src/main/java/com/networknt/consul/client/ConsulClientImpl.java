@@ -31,6 +31,7 @@ import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
 import java.io.IOException;
@@ -241,7 +242,7 @@ public class ConsulClientImpl implements ConsulClient {
 		ClientRequest request = new ClientRequest().setMethod(method).setPath(path);
 		request.getRequestHeaders().put(Headers.HOST, "localhost");
 		if (token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
-		logger.trace("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
+		if (logger.isTraceEnabled()) logger.trace("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
 		if(StringUtils.isBlank(json)) {
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 		} else {
@@ -249,7 +250,14 @@ public class ConsulClientImpl implements ConsulClient {
 			connection.sendRequest(request, client.createClientCallback(reference, latch, json));
 		}
 		latch.await(ConsulUtils.getWaitInSecond(wait), TimeUnit.SECONDS);
-		logger.trace("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
+        if(reference != null) {
+			if(logger.isTraceEnabled()) logger.trace("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
+		} else {
+            // timeout happens, do not know if the Consul server is still alive. Close the connection to force reconnect. The next time this connection
+			// is borrowed from the pool, a new connection will be created as the one returned is not open.
+			if(connection != null && connection.isOpen()) IoUtils.safeClose(connection);
+			if(logger.isTraceEnabled()) logger.trace("The request is timeout after {} seconds and reference is null.", ConsulUtils.getWaitInSecond(wait));
+		}
 		return reference;
 	}
 
