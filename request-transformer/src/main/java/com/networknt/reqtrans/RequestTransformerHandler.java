@@ -51,4 +51,9 @@ public class RequestTransformerHandler implements RequestInterceptorHandler {
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
 
     }
+
+    @Override
+    public boolean isRequiredContent() {
+        return true;
+    }
 }

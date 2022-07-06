@@ -47,7 +47,7 @@ public class SinkConduitInjectorHandler implements MiddlewareHandler {
      *
      */
     @Deprecated
-    public SinkConduitInjectorHandler(SinkConduitConfig cfg) throws Exception{
+    public SinkConduitInjectorHandler(SinkConduitConfig cfg) throws Exception {
         config = cfg;
         logger.info("SinkConduitInjectorHandler is loaded!");
     }

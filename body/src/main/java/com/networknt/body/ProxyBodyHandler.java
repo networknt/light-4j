@@ -5,12 +5,14 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.connector.PooledByteBuffer;
 import io.undertow.server.Connectors;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.util.AttachmentKey;
 import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
@@ -74,44 +76,20 @@ public class ProxyBodyHandler implements MiddlewareHandler {
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         if (this.shouldParseBody(exchange)) {
-            final StreamSourceChannel channel = exchange.getRequestChannel();
-            int readBuffers = 0;
-            PooledByteBuffer buffer = exchange.getConnection().getByteBufferPool().allocate();
-            try {
-                do {
-                    ByteBuffer dst = buffer.getBuffer();
-                    int r = channel.read(dst);
-                    if (r == -1) {
-                        if (dst.position() == 0) {
-                            buffer.close();
-                        } else {
-                            dst.flip();
-                        }
-                        break;
-                    } else if (!dst.hasRemaining()) {
-                        dst.flip();
-                        readBuffers++;
-                        if (readBuffers == 1) {
-                            break;
-                        }
-                        buffer = exchange.getConnection().getByteBufferPool().allocate();
-                    }
-                } while (true);
-
-                Connectors.ungetRequestBytes(exchange, buffer);
-                Connectors.resetRequestChannel(exchange);
-            } catch (IOException e) {
-                if (buffer.isOpen()) {
-                    IoUtils.safeClose(buffer);
+            PooledByteBuffer[] existing = (PooledByteBuffer[])exchange.getAttachment(AttachmentConstants.BUFFERED_REQUEST_DATA_KEY);
+            StringBuilder completeBody = new StringBuilder();
+            for(PooledByteBuffer buffer : existing) {
+                if(buffer != null) {
+                    completeBody.append(StandardCharsets.UTF_8.decode(buffer.getBuffer().duplicate()).toString());
+                } else {
+                    break;
                 }
-                logger.error(e.getLocalizedMessage(), e);
-                setExchangeStatus(exchange, GENERIC_EXCEPTION, e.getMessage());
-                return;
             }
-            String requestBody = StandardCharsets.UTF_8.decode(buffer.getBuffer().duplicate()).toString();
-            boolean attached = attachJsonBody(exchange, requestBody);
-            if (!attached) {
-                return;
+            boolean attached = this.attachJsonBody(exchange, completeBody.toString());
+            if(attached) {
+                for(PooledByteBuffer pooledByteBuffer : existing) {
+                    pooledByteBuffer.close();
+                }
             }
         }
         Handler.next(exchange, next);

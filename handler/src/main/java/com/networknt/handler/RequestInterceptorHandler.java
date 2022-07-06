@@ -5,5 +5,5 @@ package com.networknt.handler;
  * indicators.
  */
 public interface RequestInterceptorHandler extends MiddlewareHandler {
-
+    boolean isRequiredContent();
 }

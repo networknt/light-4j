@@ -50,8 +50,7 @@ public class BuffersUtils {
 
         ByteBuffer dst = ByteBuffer.allocate(MAX_CONTENT_SIZE);
 
-        for (int i = 0; i < srcs.length; i++) {
-            PooledByteBuffer src = srcs[i];
+        for (PooledByteBuffer src : srcs) {
             if (src != null) {
                 final ByteBuffer srcBuffer = src.getBuffer();
 
