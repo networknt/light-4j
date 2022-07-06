@@ -231,9 +231,11 @@ public class Http2Client {
         final FutureResult<ClientConnection> result = new FutureResult<>();
         ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
         if(connection != null && connection.isOpen()) {
+            logger.info("Got an open connection from http2ClientConnectionPool");
             result.setResult(connection);
             return result.getIoFuture();
         }
+        logger.info("Got a null or non open connection: {} from http2ClientConnectionPool. Creating a new one ...", connection);
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         return connect((InetSocketAddress) null, uri, worker, ssl, bufferPool, options);
     }
@@ -245,6 +247,7 @@ public class Http2Client {
         provider.connect(new ClientCallback<ClientConnection>() {
             @Override
             public void completed(ClientConnection r) {
+                logger.info("Adding the new connection: {} to FutureResult and cache it for uri: {}", r, uri);
                 result.setResult(r);
                 http2ClientConnectionPool.cacheConnection(uri, r);
             }
