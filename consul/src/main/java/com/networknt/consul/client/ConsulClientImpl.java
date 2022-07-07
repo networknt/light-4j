@@ -246,14 +246,16 @@ public class ConsulClientImpl implements ConsulClient {
 			request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
 			connection.sendRequest(request, client.createClientCallback(reference, latch, json));
 		}
-		latch.await(ConsulUtils.getWaitInSecond(wait), TimeUnit.SECONDS);
-        if(reference != null) {
-			if(logger.isTraceEnabled()) logger.trace("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
+		int waitInSecond = ConsulUtils.getWaitInSecond(wait);
+		boolean isNotTimeout = latch.await(waitInSecond, TimeUnit.SECONDS);
+		if (isNotTimeout) {
+			logger.debug("The response from Consul: {} = {}", uri, reference != null ? reference.get() : null);
 		} else {
             // timeout happens, do not know if the Consul server is still alive. Close the connection to force reconnect. The next time this connection
 			// is borrowed from the pool, a new connection will be created as the one returned is not open.
 			if(connection != null && connection.isOpen()) IoUtils.safeClose(connection);
-			if(logger.isTraceEnabled()) logger.trace("The request is timeout after {} seconds and reference is null.", ConsulUtils.getWaitInSecond(wait));
+			throw new RuntimeException(
+					String.format("The request to Consul: %s timed out after %d seconds", uri, waitInSecond));
 		}
 		return reference;
 	}
