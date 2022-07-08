@@ -34,16 +34,13 @@ import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -182,13 +179,17 @@ public class ConsulClientImpl implements ConsulClient {
 		}
 		logger.trace("path = {}", path);
 		try {
+			logger.debug("Getting connection from pool with {}", uri);
 			connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
+			logger.info("Got connection: {} from pool and send request to {}", connection, path);
 			AtomicReference<ClientResponse> reference  = send(connection, Methods.GET, path, token, null);
 			int statusCode = reference.get().getResponseCode();
+			logger.info("Got status code: {} from the consul query", statusCode);
 			if(statusCode >= UNUSUAL_STATUS_CODE){
 				throw new Exception("Failed to unregister on Consul: " + statusCode);
 			} else {
 				String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+				logger.debug("Got response body: {} from the consul query", body);
 				List<Map<String, Object>> services = Config.getInstance().getMapper().readValue(body, new TypeReference<List<Map<String, Object>>>(){});
 				List<ConsulService> ConsulServcies = new ArrayList<>(
 						services.size());
@@ -238,21 +239,23 @@ public class ConsulClientImpl implements ConsulClient {
 		ClientRequest request = new ClientRequest().setMethod(method).setPath(path);
 		request.getRequestHeaders().put(Headers.HOST, "localhost");
 		if (token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
-		if(logger.isTraceEnabled()) logger.trace("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
+		if (logger.isTraceEnabled()) logger.trace("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
 		if(StringUtils.isBlank(json)) {
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 		} else {
 			request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
 			connection.sendRequest(request, client.createClientCallback(reference, latch, json));
 		}
-		latch.await(ConsulUtils.getWaitInSecond(wait), TimeUnit.SECONDS);
-        if(reference != null) {
-			if(logger.isTraceEnabled()) logger.trace("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
+		int waitInSecond = ConsulUtils.getWaitInSecond(wait);
+		boolean isNotTimeout = latch.await(waitInSecond, TimeUnit.SECONDS);
+		if (isNotTimeout) {
+			logger.debug("The response from Consul: {} = {}", uri, reference != null ? reference.get() : null);
 		} else {
             // timeout happens, do not know if the Consul server is still alive. Close the connection to force reconnect. The next time this connection
 			// is borrowed from the pool, a new connection will be created as the one returned is not open.
 			if(connection != null && connection.isOpen()) IoUtils.safeClose(connection);
-			if(logger.isTraceEnabled()) logger.trace("The request is timeout after {} seconds and reference is null.", ConsulUtils.getWaitInSecond(wait));
+			throw new RuntimeException(
+					String.format("The request to Consul: %s timed out after %d seconds", uri, waitInSecond));
 		}
 		return reference;
 	}
