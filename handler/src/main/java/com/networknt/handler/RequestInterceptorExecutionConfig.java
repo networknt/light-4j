@@ -4,8 +4,8 @@ import com.networknt.config.Config;
 
 import java.util.Map;
 
-public class SourceConduitConfig {
-    public static final String CONFIG_NAME = "source-conduit";
+public class RequestInterceptorExecutionConfig {
+    public static final String CONFIG_NAME = "request-interceptor-execution";
     private static final String ENABLED = "enabled";
 
     private boolean enabled;
@@ -13,7 +13,7 @@ public class SourceConduitConfig {
     private Map<String, Object> mappedConfig;
     private Config config;
 
-    public SourceConduitConfig() {
+    public RequestInterceptorExecutionConfig() {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
         setConfigData();
@@ -24,18 +24,18 @@ public class SourceConduitConfig {
      * to test different configurations.
      * @param configName String
      */
-    public SourceConduitConfig(String configName) {
+    public RequestInterceptorExecutionConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(configName);
         setConfigData();
     }
 
-    static SourceConduitConfig load() {
-        return new SourceConduitConfig();
+    static RequestInterceptorExecutionConfig load() {
+        return new RequestInterceptorExecutionConfig();
     }
 
-    static SourceConduitConfig load(String configName) {
-        return new SourceConduitConfig(configName);
+    static RequestInterceptorExecutionConfig load(String configName) {
+        return new RequestInterceptorExecutionConfig(configName);
     }
 
     void reload() {

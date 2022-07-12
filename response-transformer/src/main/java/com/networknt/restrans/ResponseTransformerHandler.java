@@ -1,6 +1,5 @@
 package com.networknt.restrans;
 
-import com.networknt.config.Config;
 import com.networknt.handler.BuffersUtils;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.ResponseInterceptorHandler;

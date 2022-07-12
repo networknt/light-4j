@@ -1,0 +1,3 @@
+# source-conduit injector configuration
+# indicator of enabled
+enabled: ${source-conduit.enabled:true}

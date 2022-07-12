@@ -1,2 +1,6 @@
 # service.yml
-service.singletons: [{"com.networknt.handler.ResponseInterceptorHandler":["com.networknt.restrans.ResponseTransformerHandler"]}]
+service.singletons:
+  - "com.networknt.handler.ResponseInterceptorHandler":
+      - "com.networknt.restrans.ResponseTransformerHandler"
+  - "com.networknt.handler.RequestInterceptorHandler":
+      - "com.networknt.reqtrans.RequestTransformerHandler"

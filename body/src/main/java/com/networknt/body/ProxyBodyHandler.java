@@ -76,7 +76,7 @@ public class ProxyBodyHandler implements MiddlewareHandler {
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         if (this.shouldParseBody(exchange)) {
-            PooledByteBuffer[] existing = (PooledByteBuffer[])exchange.getAttachment(AttachmentConstants.BUFFERED_REQUEST_DATA_KEY);
+            var existing = (PooledByteBuffer[])exchange.getAttachment(AttachmentConstants.BUFFERED_REQUEST_DATA_KEY);
             StringBuilder completeBody = new StringBuilder();
             for(PooledByteBuffer buffer : existing) {
                 if(buffer != null) {
@@ -86,10 +86,8 @@ public class ProxyBodyHandler implements MiddlewareHandler {
                 }
             }
             boolean attached = this.attachJsonBody(exchange, completeBody.toString());
-            if(attached) {
-                for(PooledByteBuffer pooledByteBuffer : existing) {
-                    pooledByteBuffer.close();
-                }
+            if(!attached) {
+                return;
             }
         }
         Handler.next(exchange, next);

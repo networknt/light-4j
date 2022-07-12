@@ -29,7 +29,6 @@ public class SinkConduitInjectorHandler implements MiddlewareHandler {
 
     public static final AttachmentKey<HeaderMap> ORIGINAL_ACCEPT_ENCODINGS_KEY = AttachmentKey.create(HeaderMap.class);
 
-    @SuppressWarnings("rawtypes")
     private ResponseInterceptorHandler[] interceptors = null;
     private volatile HttpHandler next;
     private SinkConduitConfig config;
