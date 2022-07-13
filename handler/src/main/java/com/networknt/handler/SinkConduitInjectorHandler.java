@@ -86,7 +86,7 @@ public class SinkConduitInjectorHandler implements MiddlewareHandler {
      * @param exchange
      */
     private void forceIdentityEncodingForInterceptors(HttpServerExchange exchange) {
-        if (Arrays.stream(interceptors).anyMatch(ri -> ri.isRequiredContent())) {
+        if (interceptors != null && Arrays.stream(interceptors).anyMatch(ri -> ri.isRequiredContent())) {
             var before = new HeaderMap();
 
             if (exchange.getRequestHeaders().contains(Headers.ACCEPT_ENCODING)) {
@@ -123,7 +123,7 @@ public class SinkConduitInjectorHandler implements MiddlewareHandler {
             //     MDC.setContextMap(mdcCtx);
             // }
 
-            if (Arrays.stream(interceptors).anyMatch(ri -> ri.isRequiredContent())) {
+            if (interceptors != null && Arrays.stream(interceptors).anyMatch(ri -> ri.isRequiredContent())) {
                 var mcsc = new ModifiableContentSinkConduit(factory.create(), cexchange);
                 cexchange.putAttachment(MCSC_KEY, mcsc);
                 return mcsc;

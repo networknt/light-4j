@@ -6,6 +6,7 @@ import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.service.SingletonServiceFactory;
 import io.undertow.connector.PooledByteBuffer;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.server.protocol.http.ServerFixedLengthStreamSinkConduit;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ import org.xnio.conduits.Conduits;
 import org.xnio.conduits.StreamSinkConduit;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
@@ -138,27 +140,27 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
 
         exchange.getResponseHeaders().put(Headers.CONTENT_LENGTH, length);
 
-//        // need also to update lenght of ServerFixedLengthStreamSinkConduit
-//        if (next instanceof ServerFixedLengthStreamSinkConduit) {
-//            Method m;
-//
-//            try {
-//                m = ServerFixedLengthStreamSinkConduit.class.getDeclaredMethod("reset", long.class, HttpServerExchange.class);
-//                m.setAccessible(true);
-//            } catch (NoSuchMethodException | SecurityException ex) {
-//                logger.error("could not find ServerFixedLengthStreamSinkConduit.reset method", ex);
-//                throw new RuntimeException("could not find ServerFixedLengthStreamSinkConduit.reset method", ex);
-//            }
-//
-//            try {
-//                m.invoke(next, length, exchange);
-//            } catch (Throwable ex) {
-//                logger.error("could not access BUFFERED_REQUEST_DATA field", ex);
-//                throw new RuntimeException("could not access BUFFERED_REQUEST_DATA field", ex);
-//            }
-//        } else {
-//            logger.warn("updateContentLenght() next is {}", next.getClass().getSimpleName());
-//        }
+        // need also to update lenght of ServerFixedLengthStreamSinkConduit
+        if (next instanceof ServerFixedLengthStreamSinkConduit) {
+            Method m;
+
+            try {
+                m = ServerFixedLengthStreamSinkConduit.class.getDeclaredMethod("reset", long.class, HttpServerExchange.class);
+                m.setAccessible(true);
+            } catch (NoSuchMethodException | SecurityException ex) {
+                logger.error("could not find ServerFixedLengthStreamSinkConduit.reset method", ex);
+                throw new RuntimeException("could not find ServerFixedLengthStreamSinkConduit.reset method", ex);
+            }
+
+            try {
+                m.invoke(next, length, exchange);
+            } catch (Throwable ex) {
+                logger.error("could not access BUFFERED_REQUEST_DATA field", ex);
+                throw new RuntimeException("could not access BUFFERED_REQUEST_DATA field", ex);
+            }
+        } else {
+            logger.warn("updateContentLenght() next is {}", next.getClass().getSimpleName());
+        }
     }
 
 }

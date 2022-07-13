@@ -33,7 +33,7 @@ public class ContentStreamSinkConduit extends AbstractStreamSinkConduit<StreamSi
         // load the interceptors from the service.yml
         interceptors = SingletonServiceFactory.getBeans(ResponseInterceptorHandler.class);
         try {
-            if(interceptors.length > 0) {
+            if(interceptors != null && interceptors.length > 0) {
                 // iterate all interceptor handlers.
                 for(ResponseInterceptorHandler interceptor : interceptors) {
                     if(logger.isDebugEnabled()) logger.debug("Executing interceptor " + interceptor.getClass());

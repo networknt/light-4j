@@ -166,6 +166,7 @@
         <module>rule-loader</module>
         <module>config-reload</module>
         <module>gateway</module>
+        <module>transformer</module>
         <module>request-transformer</module>
         <module>response-transformer</module>
     </modules>
@@ -402,7 +403,17 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
+                <artifactId>gateway</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
                 <artifactId>rule-loader</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>transformer</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -441,6 +452,11 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-annotations</artifactId>
+                <version>${version.jackson}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.dataformat</groupId>
+                <artifactId>jackson-dataformat-xml</artifactId>
                 <version>${version.jackson}</version>
             </dependency>
             <dependency>

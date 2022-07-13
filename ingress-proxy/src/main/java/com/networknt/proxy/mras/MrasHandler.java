@@ -67,7 +67,7 @@ public class MrasHandler implements MiddlewareHandler {
     private HttpClient client;
 
     public MrasHandler() {
-        config = new MrasConfig();
+        config = MrasConfig.load();
         if(logger.isInfoEnabled()) logger.info("MrasHandler is loaded.");
     }
 
@@ -92,8 +92,15 @@ public class MrasHandler implements MiddlewareHandler {
     public void register() {
         // As certPassword is in the config file, we need to mask them.
         List<String> masks = new ArrayList<>();
-        masks.add("certPassword");
+        masks.add("keyStorePass");
+        masks.add("keyPass");
+        masks.add("trustStorePass");
         ModuleRegistry.registerModule(MrasHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(MrasConfig.CONFIG_NAME), masks);
+    }
+
+    @Override
+    public void reload() {
+        config.reload();
     }
 
     @Override
