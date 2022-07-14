@@ -1,1 +1,5 @@
+# request-transformer.yml
+# indicate if this interceptor is enabled or not.
 enabled: ${request-transformer.enabled:true}
+# indicate if the transform interceptor needs to change the request body
+requiredContent: ${request-transform.requiredContent:true}

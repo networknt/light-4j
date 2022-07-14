@@ -66,6 +66,8 @@ public class ResponseTransformerHandler implements ResponseInterceptorHandler {
         if(logger.isTraceEnabled()) logger.trace("ResponseTransformerHandler.handleRequest is called.");
         String s = BuffersUtils.toString(getBuffer(exchange), StandardCharsets.UTF_8);
         if(logger.isTraceEnabled()) logger.trace("original response body = " + s);
+        // call the rule engine to transform the request body.
+
         // change the buffer
         s = "[{\"com.networknt.handler.ResponseInterceptorHandler\":[\"com.networknt.restrans.ResponseTransformerHandler\"]}]";
         PooledByteBuffer[] dest = new PooledByteBuffer[MAX_BUFFERS];
@@ -75,7 +77,7 @@ public class ResponseTransformerHandler implements ResponseInterceptorHandler {
 
     @Override
     public boolean isRequiredContent() {
-        return true;
+        return config.isRequiredContent();
     }
 
     public PooledByteBuffer[] getBuffer(HttpServerExchange exchange) {

@@ -1,2 +1,0 @@
----
-enabled: ${request-interceptor-execution.enabled:true}

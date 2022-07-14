@@ -1,0 +1,4 @@
+# request interceptor injection handler configuration
+
+# indicator of enabled
+enabled: ${request-injection.enabled:true}

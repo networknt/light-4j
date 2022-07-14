@@ -22,8 +22,8 @@ import java.util.Arrays;
  * the response content for interceptor handlers to update the response before returning to client.
  *
  */
-public class SinkConduitInjectorHandler implements MiddlewareHandler {
-    static final Logger logger = LoggerFactory.getLogger(SinkConduitInjectorHandler.class);
+public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
+    static final Logger logger = LoggerFactory.getLogger(ResponseInterceptorInjectionHandler.class);
 
     public static final AttachmentKey<ModifiableContentSinkConduit> MCSC_KEY = AttachmentKey.create(ModifiableContentSinkConduit.class);
 
@@ -31,9 +31,9 @@ public class SinkConduitInjectorHandler implements MiddlewareHandler {
 
     private ResponseInterceptorHandler[] interceptors = null;
     private volatile HttpHandler next;
-    private SinkConduitConfig config;
-    public SinkConduitInjectorHandler() throws Exception{
-        config = SinkConduitConfig.load();
+    private ResponseInjectionConfig config;
+    public ResponseInterceptorInjectionHandler() throws Exception{
+        config = ResponseInjectionConfig.load();
         interceptors = SingletonServiceFactory.getBeans(ResponseInterceptorHandler.class);
         logger.info("SinkConduitInjectorHandler is loaded!");
     }
@@ -46,7 +46,7 @@ public class SinkConduitInjectorHandler implements MiddlewareHandler {
      *
      */
     @Deprecated
-    public SinkConduitInjectorHandler(SinkConduitConfig cfg) throws Exception {
+    public ResponseInterceptorInjectionHandler(ResponseInjectionConfig cfg) throws Exception {
         config = cfg;
         logger.info("SinkConduitInjectorHandler is loaded!");
     }
@@ -70,7 +70,7 @@ public class SinkConduitInjectorHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(SinkConduitConfig.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ResponseInjectionConfig.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override

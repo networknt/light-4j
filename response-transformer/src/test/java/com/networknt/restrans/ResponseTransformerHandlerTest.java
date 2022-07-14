@@ -2,8 +2,7 @@ package com.networknt.restrans;
 
 import com.networknt.client.Http2Client;
 import com.networknt.exception.ClientException;
-import com.networknt.handler.SinkConduitInjectorHandler;
-import com.networknt.httpstring.HttpStringConstants;
+import com.networknt.handler.ResponseInterceptorInjectionHandler;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.client.ClientConnection;
@@ -37,7 +36,7 @@ public class ResponseTransformerHandlerTest {
         if(server == null) {
             logger.info("starting server");
             HttpHandler handler = getTestHandler();
-            SinkConduitInjectorHandler sinkHandler = new SinkConduitInjectorHandler();
+            ResponseInterceptorInjectionHandler sinkHandler = new ResponseInterceptorInjectionHandler();
             sinkHandler.setNext(handler);
             handler = sinkHandler;
             server = Undertow.builder()

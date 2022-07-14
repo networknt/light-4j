@@ -22,27 +22,29 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 /**
- * Injects the content from the request channel as an attachment. Content is only
- * read if one of the set request interceptors returns isContentRequired() as true.
+ * This is the middleware used in the request/response chain to inject the implementations of RequestInterceptorHandler interface
+ * to modify the request metadata and body. You can have multiple interceptors per application; however, we do provide a generic
+ * implementation in request-transform module to transform the request based on the rule engine rules.
  *
  * @author Kalev Gonvick
  *
  */
-public class RequestContentInjectorHandler implements MiddlewareHandler {
+public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
 
-    static final Logger logger = LoggerFactory.getLogger(RequestContentInjectorHandler.class);
+    static final Logger logger = LoggerFactory.getLogger(RequestInterceptorInjectionHandler.class);
     public static final int MAX_BUFFERS = 1024;
+
     private volatile HttpHandler next;
-    private RequestContentInjectorConfig config;
+    private RequestInjectionConfig config;
     private RequestInterceptorHandler[] interceptors = null;
 
-    public RequestContentInjectorHandler() {
-        config = RequestContentInjectorConfig.load();
+    public RequestInterceptorInjectionHandler() {
+        config = RequestInjectionConfig.load();
         logger.info("SourceConduitInjectorHandler is loaded!");
         interceptors = SingletonServiceFactory.getBeans(RequestInterceptorHandler.class);
     }
 
-    public RequestContentInjectorHandler(RequestContentInjectorConfig cfg) {
+    public RequestInterceptorInjectionHandler(RequestInjectionConfig cfg) {
         config = cfg;
         logger.info("SourceConduitInjectorHandler is loaded!");
         interceptors = SingletonServiceFactory.getBeans(RequestInterceptorHandler.class);
@@ -62,28 +64,21 @@ public class RequestContentInjectorHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled();
+        return this.config.isEnabled();
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(RequestContentInjectorConfig.class.getName(), config.getMappedConfig(), null);
-    }
-
-    @Override
-    public void reload() {
-        config.reload();
+        ModuleRegistry.registerModule(ResponseInjectionConfig.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
-
         // Make sure content is needed by request interceptors before grabbing the data. The process has a lot of overhead.
         if (this.injectorContentRequired()
                 && !httpServerExchange.isRequestComplete()
                 && !HttpContinue.requiresContinueResponse(httpServerExchange.getRequestHeaders())) {
 
-            this.next = Handler.getNext(httpServerExchange);
             final StreamSourceChannel channel = httpServerExchange.getRequestChannel();
             int readBuffers = 0;
             final PooledByteBuffer[] bufferedData = new PooledByteBuffer[MAX_BUFFERS];
@@ -125,6 +120,16 @@ public class RequestContentInjectorHandler implements MiddlewareHandler {
             }
 
         }
+
+        if(interceptors != null && interceptors.length > 0) {
+            Arrays.stream(interceptors).forEach((ri -> {
+                try {
+                    ri.handleRequest(httpServerExchange);
+                } catch (Exception e) {
+                    logger.error(e.getMessage(), e);
+                }
+            }));
+        }
         Handler.next(httpServerExchange, next);
     }
 
@@ -133,7 +138,7 @@ public class RequestContentInjectorHandler implements MiddlewareHandler {
      * @return - true if required.
      */
     private boolean injectorContentRequired() {
-        return interceptors.length > 0 && Arrays.stream(interceptors).anyMatch(RequestInterceptorHandler::isRequiredContent);
+        return interceptors != null && interceptors.length > 0 && Arrays.stream(interceptors).anyMatch(RequestInterceptorHandler::isRequiredContent);
     }
 
     /**
@@ -241,4 +246,5 @@ public class RequestContentInjectorHandler implements MiddlewareHandler {
         Connectors.ungetRequestBytes(httpServerExchange, bufferedData);
         Connectors.resetRequestChannel(httpServerExchange);
     }
+
 }

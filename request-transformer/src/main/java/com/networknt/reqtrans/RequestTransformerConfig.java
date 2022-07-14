@@ -18,10 +18,11 @@ public class RequestTransformerConfig {
     private static final Logger logger = LoggerFactory.getLogger(RequestTransformerConfig.class);
 
     private static final String ENABLED = "enabled";
-
+    private static final String REQUIRED_CONTENT = "requiredContent";
     private Map<String, Object> mappedConfig;
     private Config config;
     private boolean enabled;
+    private boolean requiredContent;
 
     private RequestTransformerConfig() {
         this(CONFIG_NAME);
@@ -51,14 +52,19 @@ public class RequestTransformerConfig {
         return enabled;
     }
 
+    public boolean isRequiredContent() { return requiredContent; }
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
 
     private void setConfigData() {
-        Object object = getMappedConfig().get(ENABLED);
+        Object object = mappedConfig.get(ENABLED);
         if(object != null && (Boolean) object) {
             enabled = true;
+        }
+        object = mappedConfig.get(REQUIRED_CONTENT);
+        if(object != null && (Boolean) object) {
+            requiredContent = true;
         }
     }
 

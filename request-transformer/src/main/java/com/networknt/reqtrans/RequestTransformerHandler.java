@@ -1,5 +1,6 @@
 package com.networknt.reqtrans;
 
+import com.networknt.handler.BuffersUtils;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.RequestInterceptorHandler;
 import com.networknt.httpstring.AttachmentConstants;
@@ -14,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.Buffers;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Transforms the request body of an active request being processed.
@@ -29,7 +31,7 @@ public class RequestTransformerHandler implements RequestInterceptorHandler {
     private volatile HttpHandler next;
 
     public RequestTransformerHandler() {
-        if(logger.isInfoEnabled()) logger.info("RequestManipulatorHandler is loaded");
+        if(logger.isInfoEnabled()) logger.info("RequestTransformerHandler is loaded");
         config = RequestTransformerConfig.load();
     }
 
@@ -62,15 +64,18 @@ public class RequestTransformerHandler implements RequestInterceptorHandler {
 
     @Override
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
+        logger.info("RequestTransformerHandler.handleRequest is called.");
+
         if (!httpServerExchange.isRequestComplete() && !HttpContinue.requiresContinueResponse(httpServerExchange.getRequestHeaders())) {
 
             // This object contains the reference to the request data buffer. Any modification done to this will be reflected in the request.
             PooledByteBuffer[] requestData = this.getBuffer(httpServerExchange);
-
-            logger.info("RequestTransformerHandler.handleRequest is called.");
+            String s = BuffersUtils.toString(requestData, StandardCharsets.UTF_8);
+            // Transform the request body with the rule engine.
+            if(logger.isDebugEnabled()) logger.debug("original request body = " + s);
 
             // Create a new buffer that will replace our request body.
-            String s = "[{\"com.networknt.handler.RequestInterceptorHandler\":[\"com.networknt.restrans.RequestTransformerHandler\"]}]";
+            s = "[{\"com.networknt.handler.RequestInterceptorHandler\":[\"com.networknt.reqtrans.RequestTransformerHandler\"]}]";
             ByteBuffer overwriteData = ByteBuffer.wrap(s.getBytes());
 
             // Do the overwrite operation by copying our overwriteData to the source buffer pool.
@@ -106,7 +111,7 @@ public class RequestTransformerHandler implements RequestInterceptorHandler {
 
     @Override
     public boolean isRequiredContent() {
-        return true;
+        return config.isRequiredContent();
     }
 
     public PooledByteBuffer[] getBuffer(HttpServerExchange exchange) {

@@ -4,8 +4,12 @@ import com.networknt.config.Config;
 
 import java.util.Map;
 
-public class RequestContentInjectorConfig {
-    public static final String CONFIG_NAME = "request-content-injector";
+/**
+ * The config class for the ResponseInterceptorInjectionHandler middleware handler.
+ *
+ */
+public class ResponseInjectionConfig {
+    public static final String CONFIG_NAME = "response-injection";
     private static final String ENABLED = "enabled";
 
     private boolean enabled;
@@ -13,7 +17,7 @@ public class RequestContentInjectorConfig {
     private Map<String, Object> mappedConfig;
     private Config config;
 
-    public RequestContentInjectorConfig() {
+    public ResponseInjectionConfig() {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
         setConfigData();
@@ -24,18 +28,18 @@ public class RequestContentInjectorConfig {
      * to test different configurations.
      * @param configName String
      */
-    public RequestContentInjectorConfig(String configName) {
+    public ResponseInjectionConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(configName);
         setConfigData();
     }
 
-    static RequestContentInjectorConfig load() {
-        return new RequestContentInjectorConfig();
+    static ResponseInjectionConfig load() {
+        return new ResponseInjectionConfig();
     }
 
-    static RequestContentInjectorConfig load(String configName) {
-        return new RequestContentInjectorConfig(configName);
+    static ResponseInjectionConfig load(String configName) {
+        return new ResponseInjectionConfig(configName);
     }
 
     void reload() {

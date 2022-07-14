@@ -1,5 +1,8 @@
 # server.yml
 server.serviceId: com.networknt.restrans-1.0.0
 
+# rule-loader.yml
+rule-Loader.ruleSource: config-folder
+
 # service.yml
 service.singletons: [{"com.networknt.server.StartupHookProvider":["com.networknt.rule.RuleLoaderStartupHook"]},{"com.networknt.handler.ResponseInterceptorHandler":["com.networknt.restrans.ResponseTransformerHandler"]}]

@@ -1,3 +1,0 @@
-# sink-conduit injector configuration
-# indicator of enabled
-enabled: ${sink-conduit.enabled:true}
