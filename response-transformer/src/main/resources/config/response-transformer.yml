@@ -4,3 +4,4 @@
 enabled: ${response-transformer.enabled:true}
 # indicate if the transformer needs to modify the response body in the transform rules.
 requiredContent: ${response-transformer.requiredContent:true}
+#

@@ -37,7 +37,7 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
     // shared rule map with ruleId as the key and Rule object as the value.
     public static Map<String, Object> endpointRules;
     public static Map<String, Rule> rules;
-    private static RuleLoaderConfig config = (RuleLoaderConfig) Config.getInstance().getJsonObjectConfig(RuleLoaderConfig.CONFIG_NAME, RuleLoaderConfig.class);
+    private static RuleLoaderConfig config = RuleLoaderConfig.load();
     static Http2Client client = Http2Client.getInstance();
     static final String GENERIC_EXCEPTION = "ERR10014";
     static final String DEFAULT_HOST = "lightapi.net";
@@ -48,9 +48,11 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
             // by default the rules for the service is loaded from the light-portal; however, it can be configured to loaded from config folder.
             if(RuleLoaderConfig.RULE_SOURCE_CONFIG_FOLDER.equals(config.getRuleSource())) {
                 // load the rules for the service from the externalized config folder. The filename is rules.yml
-                String ruleString = Config.getInstance().getStringFromFile("rules");
+                String ruleString = Config.getInstance().getStringFromFile("rules.yml");
                 rules = RuleMapper.string2RuleMap(ruleString);
                 if(logger.isInfoEnabled()) logger.info("Load YAML rules from config folder with size = " + rules.size());
+                // load the endpoint rule mapping from the rule-loader.yml
+                endpointRules = config.getEndpointRules();
             } else {
                 // by default, load from light-portal
                 ServerConfig serverConfig = (ServerConfig)Config.getInstance().getJsonObjectConfig(ServerConfig.CONFIG_NAME, ServerConfig.class);
