@@ -69,14 +69,14 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ResponseInjectionConfig.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(RequestInjectionConfig.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
         // Make sure content is needed by request interceptors before grabbing the data. The process has a lot of overhead.
         if (this.injectorContentRequired()
-                && !httpServerExchange.isRequestComplete()
+                //&& !httpServerExchange.isRequestComplete()
                 && !HttpContinue.requiresContinueResponse(httpServerExchange.getRequestHeaders())) {
 
             final StreamSourceChannel channel = httpServerExchange.getRequestChannel();

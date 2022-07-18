@@ -1,6 +1,14 @@
 # server.yml
 server.serviceId: com.networknt.reqtrans-1.0.0
 
+# rule-loader.yml
+rule-Loader.ruleSource: config-folder
+rule-loader.endpointRules: {"/pets@get":{"request-transform":[{"ruleId":"petstore-request-path"}]}}
+#   /v1/pets@get:
+#     request-transform:
+#       - ruleId: petstore-request-path
 
 # service.yml
 service.singletons: [{"com.networknt.server.StartupHookProvider":["com.networknt.rule.RuleLoaderStartupHook"]},{"com.networknt.handler.RequestInterceptorHandler":["com.networknt.reqtrans.RequestTransformerHandler"]}]
+# request-transformer.yml
+request-transformer.appliedPathPrefixes: ["/pets"]

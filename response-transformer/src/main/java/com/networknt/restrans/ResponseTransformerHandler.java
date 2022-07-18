@@ -78,73 +78,78 @@ public class ResponseTransformerHandler implements ResponseInterceptorHandler {
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isTraceEnabled()) logger.trace("ResponseTransformerHandler.handleRequest is called.");
-        if(engine == null) {
-            engine = new RuleEngine(RuleLoaderStartupHook.rules, null);
-        }
-        String s = BuffersUtils.toString(getBuffer(exchange), StandardCharsets.UTF_8);
-        if(logger.isTraceEnabled()) logger.trace("original response body = " + s);
-        // call the rule engine to transform the response body and response headers. The input contains all the request
-        // and response elements.
-        Map<String, Object> objMap = new HashMap<>();
-        objMap.put("requestHeaders", exchange.getRequestHeaders());
-        objMap.put("responseHeaders", exchange.getRequestHeaders());
-        objMap.put("queryParameters", exchange.getQueryParameters());
-        objMap.put("pathParameters", exchange.getPathParameters());
-        HttpString method = exchange.getRequestMethod();
-        objMap.put("method", method.toString());
-        objMap.put("requestURL", exchange.getRequestURL());
-        objMap.put("requestPath", exchange.getRequestPath());
-        if (method.toString().equalsIgnoreCase("post") || method.toString().equalsIgnoreCase("put") || method.toString().equalsIgnoreCase("patch")) {
-            Object bodyMap = exchange.getAttachment(AttachmentConstants.REQUEST_BODY);
-            objMap.put("requestBody", bodyMap);
-        }
-        Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
-        objMap.put("auditInfo", auditInfo);
-        objMap.put("responseBody", s);
-        objMap.put("statusCode", exchange.getStatusCode());
-        // need to get the rule/rules to execute from the RuleLoaderStartupHook. First, get the endpoint.
-        String endpoint = null;
-        if(auditInfo != null) {
-            endpoint = (String) auditInfo.get("endpoint");
-        } else {
-            endpoint = exchange.getRequestPath() + "@" + method.toString().toLowerCase();
-        }
-        // checked the RuleLoaderStartupHook to ensure it is loaded. If not, return an error to the caller.
-        if(RuleLoaderStartupHook.endpointRules == null) {
-            logger.error("RuleLoaderStartupHook endpointRules is null");
-        }
-        // get the rules (maybe multiple) based on the endpoint.
-        Map<String, List> endpointRules = (Map<String, List>)RuleLoaderStartupHook.endpointRules.get(endpoint);
-        // if there is no access rule for this endpoint, check the default deny flag in the config.
-        boolean finalResult = true;
-        List<Map<String, Object>> responseTransformRules = endpointRules.get(RESPONSE_TRANSFORM);
-        Map<String, Object> result = null;
-        String ruleId = null;
-        // iterate the rules and execute them in sequence. Break only if one rule is successful.
-        for(Map<String, Object> ruleMap: responseTransformRules) {
-            ruleId = (String)ruleMap.get(Constants.RULE_ID);
-            result = engine.executeRule(ruleId, objMap);
-            boolean res = (Boolean)result.get(RuleConstants.RESULT);
-            if(!res) {
-                finalResult = false;
-                break;
+        exchange.startBlocking();
+        String requestPath = exchange.getRequestPath();
+        if (config.getAppliedPathPrefixes().stream().anyMatch(s -> requestPath.startsWith(s))) {
+            if(engine == null) {
+                engine = new RuleEngine(RuleLoaderStartupHook.rules, null);
             }
-        }
-        if(finalResult) {
-            for(Map.Entry<String, Object> entry: result.entrySet()) {
-                if(logger.isTraceEnabled()) logger.trace("key = " + entry.getKey() + " value = " + entry.getValue());
-                // you can only update the response headers and response body in the transformation.
-                switch(entry.getKey()) {
-                    case "responseHeaders":
+            String s = BuffersUtils.toString(getBuffer(exchange), StandardCharsets.UTF_8);
+            if(logger.isTraceEnabled()) logger.trace("original response body = " + s);
+            // call the rule engine to transform the response body and response headers. The input contains all the request
+            // and response elements.
+            Map<String, Object> objMap = new HashMap<>();
+            objMap.put("requestHeaders", exchange.getRequestHeaders());
+            objMap.put("responseHeaders", exchange.getRequestHeaders());
+            objMap.put("queryParameters", exchange.getQueryParameters());
+            objMap.put("pathParameters", exchange.getPathParameters());
+            HttpString method = exchange.getRequestMethod();
+            objMap.put("method", method.toString());
+            objMap.put("requestURL", exchange.getRequestURL());
+            objMap.put("requestURI", exchange.getRequestURI());
+            objMap.put("requestPath", exchange.getRequestPath());
+            if (method.toString().equalsIgnoreCase("post") || method.toString().equalsIgnoreCase("put") || method.toString().equalsIgnoreCase("patch")) {
+                Object bodyMap = exchange.getAttachment(AttachmentConstants.REQUEST_BODY);
+                objMap.put("requestBody", bodyMap);
+            }
+            Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
+            objMap.put("auditInfo", auditInfo);
+            objMap.put("responseBody", s);
+            objMap.put("statusCode", exchange.getStatusCode());
+            // need to get the rule/rules to execute from the RuleLoaderStartupHook. First, get the endpoint.
+            String endpoint = null;
+            if(auditInfo != null) {
+                endpoint = (String) auditInfo.get("endpoint");
+            } else {
+                endpoint = exchange.getRequestPath() + "@" + method.toString().toLowerCase();
+            }
+            // checked the RuleLoaderStartupHook to ensure it is loaded. If not, return an error to the caller.
+            if(RuleLoaderStartupHook.endpointRules == null) {
+                logger.error("RuleLoaderStartupHook endpointRules is null");
+            }
+            // get the rules (maybe multiple) based on the endpoint.
+            Map<String, List> endpointRules = (Map<String, List>)RuleLoaderStartupHook.endpointRules.get(endpoint);
+            // if there is no access rule for this endpoint, check the default deny flag in the config.
+            boolean finalResult = true;
+            List<Map<String, Object>> responseTransformRules = endpointRules.get(RESPONSE_TRANSFORM);
+            Map<String, Object> result = null;
+            String ruleId = null;
+            // iterate the rules and execute them in sequence. Break only if one rule is successful.
+            for(Map<String, Object> ruleMap: responseTransformRules) {
+                ruleId = (String)ruleMap.get(Constants.RULE_ID);
+                result = engine.executeRule(ruleId, objMap);
+                boolean res = (Boolean)result.get(RuleConstants.RESULT);
+                if(!res) {
+                    finalResult = false;
+                    break;
+                }
+            }
+            if(finalResult) {
+                for(Map.Entry<String, Object> entry: result.entrySet()) {
+                    if(logger.isTraceEnabled()) logger.trace("key = " + entry.getKey() + " value = " + entry.getValue());
+                    // you can only update the response headers and response body in the transformation.
+                    switch(entry.getKey()) {
+                        case "responseHeaders":
 
-                        break;
-                    case "responseBody":
-                        s = (String)result.get("responseBody");
-                        // change the buffer
-                        PooledByteBuffer[] dest = new PooledByteBuffer[MAX_BUFFERS];
-                        setBuffer(exchange, dest);
-                        BuffersUtils.transfer(ByteBuffer.wrap(s.getBytes()), dest, exchange);
-                        break;
+                            break;
+                        case "responseBody":
+                            s = (String)result.get("responseBody");
+                            // change the buffer
+                            PooledByteBuffer[] dest = new PooledByteBuffer[MAX_BUFFERS];
+                            setBuffer(exchange, dest);
+                            BuffersUtils.transfer(ByteBuffer.wrap(s.getBytes()), dest, exchange);
+                            break;
+                    }
                 }
             }
         }

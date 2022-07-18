@@ -10,3 +10,6 @@ rule-loader.endpointRules: {"/v1/pets@get":{"response-transform":[{"ruleId":"pet
 
 # service.yml
 service.singletons: [{"com.networknt.server.StartupHookProvider":["com.networknt.rule.RuleLoaderStartupHook"]},{"com.networknt.handler.ResponseInterceptorHandler":["com.networknt.restrans.ResponseTransformerHandler"]}]
+
+# response-transformer.yml
+response-transformer.appliedPathPrefixes: ["/v1/notifications"]
