@@ -1,0 +1,11 @@
+# body.yml
+# A list of strings comma separated.
+body.appliedPathPrefixes: /test1,/test2
+
+# A list of strings in JSON format.
+# body.appliedPathPrefixes: ["/test1", "/test2"]
+
+# A list of strings in YAML format.
+# body.appliedPathPrefixes:
+#   - /test1
+#   - /test2

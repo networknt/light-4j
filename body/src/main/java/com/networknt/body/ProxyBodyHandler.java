@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.handler.RequestInterceptorHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
@@ -31,6 +32,9 @@ import static com.networknt.body.BodyHandler.REQUEST_BODY_STRING;
 import static com.networknt.body.BodyHandler.REQUEST_BODY;
 
 /**
+ * Note: With RequestInterceptorInjectionHandler implemented, this handler is changed from a
+ * pure middleware handler to RequestInterceptorHandler implementation.
+ *
  * This is the Body Parser handler used by the light-proxy and http-sidecar to not only parse
  * the body into an attachment in the exchange but also keep the stream to be forwarded to the
  * backend API. If the normal BodyHandler is used, once the stream is consumed, it is gone and
@@ -52,18 +56,19 @@ import static com.networknt.body.BodyHandler.REQUEST_BODY;
  *
  * @author Steve Hu
  */
-public class ProxyBodyHandler implements MiddlewareHandler {
+public class ProxyBodyHandler implements RequestInterceptorHandler {
     static final Logger logger = LoggerFactory.getLogger(ProxyBodyHandler.class);
     static final String CONTENT_TYPE_MISMATCH = "ERR10015";
     static final String PAYLOAD_TOO_LARGE = "ERR10068";
     static final String GENERIC_EXCEPTION = "ERR10014";
 
-    public static final BodyConfig config = (BodyConfig) Config.getInstance().getJsonObjectConfig(BodyConfig.CONFIG_NAME, BodyConfig.class);
+    public BodyConfig config;
 
     private volatile HttpHandler next;
 
     public ProxyBodyHandler() {
         if (logger.isInfoEnabled()) logger.info("ProxyBodyHandler is loaded.");
+        config = BodyConfig.load();
     }
 
     /**
@@ -101,9 +106,11 @@ public class ProxyBodyHandler implements MiddlewareHandler {
      */
     private boolean shouldParseBody(final HttpServerExchange exchange) {
         HttpString method = exchange.getRequestMethod();
+        String requestPath = exchange.getRequestPath();
         boolean hasBody = method.equals(Methods.POST) || method.equals(Methods.PUT) || method.equals(Methods.PATCH);
-        return !config.isSkipProxyBodyHandler() &&
-                hasBody &&
+        boolean isPathConfigured = config.getAppliedPathPrefixes() == null ? true : config.getAppliedPathPrefixes().stream().anyMatch(s -> requestPath.startsWith(s));
+        return hasBody &&
+                isPathConfigured &&
                 exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE) != null &&
                 exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE).startsWith("application/json");
     }
@@ -172,7 +179,16 @@ public class ProxyBodyHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ProxyBodyHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(BodyConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(ProxyBodyHandler.class.getName(), config.getMappedConfig(), null);
     }
 
+    @Override
+    public void reload() {
+        config.reload();
+    }
+
+    @Override
+    public boolean isRequiredContent() {
+        return true;
+    }
 }

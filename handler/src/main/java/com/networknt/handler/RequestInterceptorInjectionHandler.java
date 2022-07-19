@@ -11,6 +11,7 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.protocol.http.HttpContinue;
 import io.undertow.util.Headers;
+import io.undertow.util.HttpString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.ChannelListener;
@@ -75,8 +76,9 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
     @Override
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
         // Make sure content is needed by request interceptors before grabbing the data. The process has a lot of overhead.
+        String method = httpServerExchange.getRequestMethod().toString();
         if (this.injectorContentRequired()
-                //&& !httpServerExchange.isRequestComplete()
+                && ((method.equalsIgnoreCase("post") || method.equalsIgnoreCase("put") || method.equalsIgnoreCase("patch")) && !httpServerExchange.isRequestComplete())
                 && !HttpContinue.requiresContinueResponse(httpServerExchange.getRequestHeaders())) {
 
             final StreamSourceChannel channel = httpServerExchange.getRequestChannel();
@@ -223,6 +225,11 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
         saveBufferAndResetUndertowConnector(httpServerExchange, bufferedData);
         channel.getReadSetter().set(null);
         channel.suspendReads();
+        if(next == null) {
+            System.out.println("next is null");
+        } else {
+            System.out.println("next = " + next.getClass());
+        }
         Connectors.executeRootHandler(next, httpServerExchange);
     }
 

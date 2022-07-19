@@ -25,7 +25,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class BodyStringCachingTest {
+public class BodyStringNoCachingTest {
     static final Logger logger = LoggerFactory.getLogger(BodyHandlerTest.class);
 
     static Undertow server = null;
@@ -35,7 +35,7 @@ public class BodyStringCachingTest {
         if (server == null) {
             logger.info("starting server");
             HttpHandler handler = getTestHandler();
-            BodyHandler bodyHandler = new BodyHandler("body-cache");
+            BodyHandler bodyHandler = new BodyHandler();
             bodyHandler.setNext(handler);
             handler = bodyHandler;
             server = Undertow.builder()
@@ -72,7 +72,7 @@ public class BodyStringCachingTest {
     }
 
     @Test
-    public void testEnableCacheRequestBody() throws Exception {
+    public void testDisableCacheRequestBody() throws Exception {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
@@ -103,6 +103,7 @@ public class BodyStringCachingTest {
         } finally {
             IoUtils.safeClose(connection);
         }
-        Assert.assertEquals(post, reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+        Assert.assertEquals("nobody", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
     }
+
 }
