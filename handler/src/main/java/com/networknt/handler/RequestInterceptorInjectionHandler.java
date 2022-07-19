@@ -80,7 +80,7 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
         if (this.injectorContentRequired()
                 && ((method.equalsIgnoreCase("post") || method.equalsIgnoreCase("put") || method.equalsIgnoreCase("patch")) && !httpServerExchange.isRequestComplete())
                 && !HttpContinue.requiresContinueResponse(httpServerExchange.getRequestHeaders())) {
-
+            this.next = Handler.getNext(httpServerExchange);
             final StreamSourceChannel channel = httpServerExchange.getRequestChannel();
             int readBuffers = 0;
             final PooledByteBuffer[] bufferedData = new PooledByteBuffer[MAX_BUFFERS];
