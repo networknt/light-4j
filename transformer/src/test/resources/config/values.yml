@@ -1,2 +1,0 @@
-# service.yml
-service.singletons: [{"com.networknt.transformer.Transformer":["com.networknt.transformer.NotificationTransformer","com.networknt.transformer.Json2XmlTransformer","com.networknt.transformer.Xml2JsonTransformer"]}]
