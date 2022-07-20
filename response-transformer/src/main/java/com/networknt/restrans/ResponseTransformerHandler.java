@@ -90,7 +90,7 @@ public class ResponseTransformerHandler implements ResponseInterceptorHandler {
             // and response elements.
             Map<String, Object> objMap = new HashMap<>();
             objMap.put("requestHeaders", exchange.getRequestHeaders());
-            objMap.put("responseHeaders", exchange.getRequestHeaders());
+            objMap.put("responseHeaders", exchange.getResponseHeaders());
             objMap.put("queryParameters", exchange.getQueryParameters());
             objMap.put("pathParameters", exchange.getPathParameters());
             HttpString method = exchange.getRequestMethod();

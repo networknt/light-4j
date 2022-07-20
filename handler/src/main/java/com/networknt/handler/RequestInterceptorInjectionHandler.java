@@ -80,6 +80,7 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
         if (this.injectorContentRequired()
                 && ((method.equalsIgnoreCase("post") || method.equalsIgnoreCase("put") || method.equalsIgnoreCase("patch")) && !httpServerExchange.isRequestComplete())
                 && !HttpContinue.requiresContinueResponse(httpServerExchange.getRequestHeaders())) {
+            // need to calculate the next handler in the request/response chain, otherwise, it will be null in the following logic.
             this.next = Handler.getNext(httpServerExchange);
             final StreamSourceChannel channel = httpServerExchange.getRequestChannel();
             int readBuffers = 0;

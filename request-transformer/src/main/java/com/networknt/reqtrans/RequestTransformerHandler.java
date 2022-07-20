@@ -14,6 +14,7 @@ import io.undertow.connector.PooledByteBuffer;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.protocol.http.HttpContinue;
+import io.undertow.util.HeaderMap;
 import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import org.slf4j.Logger;
@@ -111,8 +112,12 @@ public class RequestTransformerHandler implements RequestInterceptorHandler {
                     objMap.put("requestURI", exchange.getRequestURI());
                     objMap.put("requestPath", exchange.getRequestPath());
                     if ((method.equalsIgnoreCase("post") || method.equalsIgnoreCase("put") || method.equalsIgnoreCase("patch")) && !exchange.isRequestComplete()) {
-                        Object bodyMap = exchange.getAttachment(AttachmentConstants.REQUEST_BODY);
-                        objMap.put("requestBody", bodyMap);
+                        // This object contains the reference to the request data buffer. Any modification done to this will be reflected in the request.
+                        PooledByteBuffer[] requestData = this.getBuffer(exchange);
+                        String s = BuffersUtils.toString(requestData, StandardCharsets.UTF_8);
+                        // Transform the request body with the rule engine.
+                        if(logger.isDebugEnabled()) logger.debug("original request body = " + s);
+                        objMap.put("requestBody", s);
                     }
                     Map<String, Object> result = null;
                     String ruleId = null;
@@ -141,13 +146,9 @@ public class RequestTransformerHandler implements RequestInterceptorHandler {
                                     exchange.setRequestURI(requestURI);
                                     break;
                                 case "requestBody":
-                                    // This object contains the reference to the request data buffer. Any modification done to this will be reflected in the request.
-                                    PooledByteBuffer[] requestData = this.getBuffer(exchange);
-                                    String s = BuffersUtils.toString(requestData, StandardCharsets.UTF_8);
-                                    // Transform the request body with the rule engine.
-                                    if(logger.isDebugEnabled()) logger.debug("original request body = " + s);
-                                    s = (String)result.get("requestBody");
+                                    String s = (String)result.get("requestBody");
                                     ByteBuffer overwriteData = ByteBuffer.wrap(s.getBytes());
+                                    PooledByteBuffer[] requestData = this.getBuffer(exchange);
                                     // Do the overwrite operation by copying our overwriteData to the source buffer pool.
                                     int pidx = 0;
                                     while (overwriteData.hasRemaining() && pidx < requestData.length) {
