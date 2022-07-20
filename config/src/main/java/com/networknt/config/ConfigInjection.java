@@ -16,6 +16,9 @@
 
 package com.networknt.config;
 
+import com.networknt.config.yml.DecryptConstructor;
+import com.networknt.decrypt.Decryptor;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -88,6 +91,30 @@ public class ConfigInjection {
                 || exclusionConfigFileList.contains(configName);
     }
 
+    static Decryptor getDecryptor() {
+        Config myConfig = Config.getInstance();
+        if (myConfig == null) {
+            throw new RuntimeException("Unable to retrieve the configuration.");
+        }
+        String decryptorClass = myConfig.getDecryptorClassPublic();
+        DecryptConstructor myDecryptCon = new DecryptConstructor(decryptorClass);
+        Decryptor myDecryptor = myDecryptCon.createDecryptorPublic(decryptorClass);
+
+        return myDecryptor;
+    }
+
+    static String convertEnvVars(String input)
+    {
+        // check for any non-alphanumeric chars and convert to underscore
+        // convert to uppcase
+
+        if (input == null) {
+            return null;
+        }
+        return input.replaceAll("[^A-Za-z0-9]", "_").toUpperCase();
+
+    }
+
     // Method used to parse the content inside pattern "${}"
     private static Object getValue(String content) {
         InjectionPattern injectionPattern = getInjectionPattern(content);
@@ -96,7 +123,8 @@ public class ConfigInjection {
             // Flag to validate whether the environment or values.yml contains the corresponding field
             Boolean containsField = false;
             // Use key of injectionPattern to get value from both environment variables and "values.yaml"
-            Object envValue = typeCast(System.getenv(injectionPattern.getKey()));
+            Decryptor decryptor = getDecryptor();
+            Object envValue = typeCast(convertEnvVars(decryptor.decrypt(System.getenv(injectionPattern.getKey()))));
             Map<String, Object> valueMap = Config.getInstance().getDefaultJsonMapConfig(CENTRALIZED_MANAGEMENT);
             Object fileValue = (valueMap != null) ? valueMap.get(injectionPattern.getKey()) : null;
             // Return different value from different sources based on injection order defined before
@@ -112,7 +140,7 @@ public class ConfigInjection {
             }
             // Return default value when no matched value found from environment variables and "values.yaml"
             if (value == null && !containsField) {
-                value = typeCast(injectionPattern.getDefaultValue());
+                value = typeCast(convertEnvVars(decryptor.decrypt(injectionPattern.getDefaultValue())));
                 // Throw exception when error text provided
                 if (value == null || value.equals("")) {
                     String error_text = injectionPattern.getErrorText();
