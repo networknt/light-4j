@@ -1,7 +1,5 @@
 package com.networknt.handler;
 
-import com.networknt.handler.MiddlewareHandler;
-
 /**
  * This handler is special middleware handler, and it is used to inject response interceptors in the request/response
  * chain to modify/transform the response before calling the next middleware handler.
