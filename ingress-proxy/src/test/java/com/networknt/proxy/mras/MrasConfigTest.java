@@ -7,6 +7,6 @@ public class MrasConfigTest {
     @Test
     public void testConfigLoad() {
         MrasConfig config = MrasConfig.load();
-        Assert.assertEquals(1, config.appliedPathPrefixes.size());
+        Assert.assertEquals(2, config.appliedPathPrefixes.size());
     }
 }
