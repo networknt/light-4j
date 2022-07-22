@@ -5,25 +5,19 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.handler.RequestInterceptorHandler;
+import com.networknt.handler.RequestInterceptor;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.connector.PooledByteBuffer;
-import io.undertow.server.Connectors;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.AttachmentKey;
 import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xnio.IoUtils;
-import org.xnio.channels.StreamSourceChannel;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -56,8 +50,8 @@ import static com.networknt.body.BodyHandler.REQUEST_BODY;
  *
  * @author Steve Hu
  */
-public class ProxyBodyHandler implements RequestInterceptorHandler {
-    static final Logger logger = LoggerFactory.getLogger(ProxyBodyHandler.class);
+public class ProxyBodyInterceptor implements RequestInterceptor {
+    static final Logger logger = LoggerFactory.getLogger(ProxyBodyInterceptor.class);
     static final String CONTENT_TYPE_MISMATCH = "ERR10015";
     static final String PAYLOAD_TOO_LARGE = "ERR10068";
     static final String GENERIC_EXCEPTION = "ERR10014";
@@ -66,7 +60,7 @@ public class ProxyBodyHandler implements RequestInterceptorHandler {
 
     private volatile HttpHandler next;
 
-    public ProxyBodyHandler() {
+    public ProxyBodyInterceptor() {
         if (logger.isInfoEnabled()) logger.info("ProxyBodyHandler is loaded.");
         config = BodyConfig.load();
     }
@@ -179,7 +173,7 @@ public class ProxyBodyHandler implements RequestInterceptorHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ProxyBodyHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ProxyBodyInterceptor.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override

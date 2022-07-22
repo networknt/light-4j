@@ -9,6 +9,6 @@ rule-loader.endpointRules: {"/pets@get":{"request-transform":[{"ruleId":"petstor
 #       - ruleId: petstore-request-path
 
 # service.yml
-service.singletons: [{"com.networknt.server.StartupHookProvider":["com.networknt.rule.RuleLoaderStartupHook"]},{"com.networknt.handler.RequestInterceptorHandler":["com.networknt.reqtrans.RequestTransformerHandler"]}]
+service.singletons: [{"com.networknt.server.StartupHookProvider":["com.networknt.rule.RuleLoaderStartupHook"]},{"com.networknt.handler.RequestInterceptorHandler":["com.networknt.reqtrans.RequestTransformerInterceptor"]}]
 # request-transformer.yml
 request-transformer.appliedPathPrefixes: ["/pets"]

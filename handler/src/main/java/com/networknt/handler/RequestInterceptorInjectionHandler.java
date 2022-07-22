@@ -11,7 +11,6 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.protocol.http.HttpContinue;
 import io.undertow.util.Headers;
-import io.undertow.util.HttpString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.ChannelListener;
@@ -37,18 +36,18 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
 
     private volatile HttpHandler next;
     private RequestInjectionConfig config;
-    private RequestInterceptorHandler[] interceptors = null;
+    private RequestInterceptor[] interceptors = null;
 
     public RequestInterceptorInjectionHandler() {
         config = RequestInjectionConfig.load();
         logger.info("SourceConduitInjectorHandler is loaded!");
-        interceptors = SingletonServiceFactory.getBeans(RequestInterceptorHandler.class);
+        interceptors = SingletonServiceFactory.getBeans(RequestInterceptor.class);
     }
 
     public RequestInterceptorInjectionHandler(RequestInjectionConfig cfg) {
         config = cfg;
         logger.info("SourceConduitInjectorHandler is loaded!");
-        interceptors = SingletonServiceFactory.getBeans(RequestInterceptorHandler.class);
+        interceptors = SingletonServiceFactory.getBeans(RequestInterceptor.class);
     }
 
     @Override
@@ -141,7 +140,7 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
      * @return - true if required.
      */
     private boolean injectorContentRequired() {
-        return interceptors != null && interceptors.length > 0 && Arrays.stream(interceptors).anyMatch(RequestInterceptorHandler::isRequiredContent);
+        return interceptors != null && interceptors.length > 0 && Arrays.stream(interceptors).anyMatch(RequestInterceptor::isRequiredContent);
     }
 
     /**

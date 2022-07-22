@@ -29,12 +29,12 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
 
     public static final AttachmentKey<HeaderMap> ORIGINAL_ACCEPT_ENCODINGS_KEY = AttachmentKey.create(HeaderMap.class);
 
-    private ResponseInterceptorHandler[] interceptors = null;
+    private ResponseInterceptor[] interceptors = null;
     private volatile HttpHandler next;
     private ResponseInjectionConfig config;
     public ResponseInterceptorInjectionHandler() throws Exception{
         config = ResponseInjectionConfig.load();
-        interceptors = SingletonServiceFactory.getBeans(ResponseInterceptorHandler.class);
+        interceptors = SingletonServiceFactory.getBeans(ResponseInterceptor.class);
         logger.info("SinkConduitInjectorHandler is loaded!");
     }
 

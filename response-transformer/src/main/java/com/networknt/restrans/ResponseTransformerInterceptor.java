@@ -1,15 +1,12 @@
 package com.networknt.restrans;
 
-import com.networknt.config.JsonMapper;
 import com.networknt.handler.BuffersUtils;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.handler.ResponseInterceptorHandler;
+import com.networknt.handler.ResponseInterceptor;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.rule.RuleConstants;
 import com.networknt.rule.RuleEngine;
 import com.networknt.rule.RuleLoaderStartupHook;
-import com.networknt.server.StartupHookProvider;
-import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
@@ -33,8 +30,8 @@ import java.util.Map;
  *
  * @author Steve Hu
  */
-public class ResponseTransformerHandler implements ResponseInterceptorHandler {
-    static final Logger logger = LoggerFactory.getLogger(ResponseTransformerHandler.class);
+public class ResponseTransformerInterceptor implements ResponseInterceptor {
+    static final Logger logger = LoggerFactory.getLogger(ResponseTransformerInterceptor.class);
     public static int MAX_BUFFERS = 1024;
     static final String STARTUP_HOOK_NOT_LOADED = "ERR11019";
     static final String RESPONSE_TRANSFORM = "response-transform";
@@ -43,7 +40,7 @@ public class ResponseTransformerHandler implements ResponseInterceptorHandler {
     private volatile HttpHandler next;
     private RuleEngine engine;
 
-    public ResponseTransformerHandler() {
+    public ResponseTransformerInterceptor() {
         if(logger.isInfoEnabled()) logger.info("ResponseManipulatorHandler is loaded");
         config = ResponseTransformerConfig.load();
     }
@@ -67,7 +64,7 @@ public class ResponseTransformerHandler implements ResponseInterceptorHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ResponseTransformerHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ResponseTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override

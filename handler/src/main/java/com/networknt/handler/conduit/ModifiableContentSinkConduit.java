@@ -1,7 +1,7 @@
 package com.networknt.handler.conduit;
 
 import com.networknt.handler.BuffersUtils;
-import com.networknt.handler.ResponseInterceptorHandler;
+import com.networknt.handler.ResponseInterceptor;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.service.SingletonServiceFactory;
 import io.undertow.connector.PooledByteBuffer;
@@ -29,7 +29,7 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
 
     private final HttpServerExchange exchange;
 
-    private final ResponseInterceptorHandler[] interceptors;
+    private final ResponseInterceptor[] interceptors;
 
     /**
      * Construct a new instance.
@@ -41,7 +41,7 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
         super(next);
         this.exchange = exchange;
         // load the interceptors from the service.yml
-        interceptors = SingletonServiceFactory.getBeans(ResponseInterceptorHandler.class);
+        interceptors = SingletonServiceFactory.getBeans(ResponseInterceptor.class);
         resetBufferPool(exchange);
     }
 
@@ -105,7 +105,7 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
         try {
             if(interceptors.length > 0) {
                 // iterate all interceptor handlers.
-                for(ResponseInterceptorHandler interceptor : interceptors) {
+                for(ResponseInterceptor interceptor : interceptors) {
                     if(logger.isDebugEnabled()) logger.debug("Executing interceptor " + interceptor.getClass());
                     interceptor.handleRequest(exchange);
                 }

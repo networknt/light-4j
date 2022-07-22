@@ -27,8 +27,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class RequestTransformerHandlerTest {
-    static final Logger logger = LoggerFactory.getLogger(RequestTransformerHandlerTest.class);
+public class RequestTransformerInterceptorTest {
+    static final Logger logger = LoggerFactory.getLogger(RequestTransformerInterceptorTest.class);
 
     static Undertow server = null;
 

@@ -5,7 +5,7 @@ package com.networknt.handler;
  * chain to modify/transform the response before calling the next middleware handler.
  *
  */
-public interface ResponseInterceptorHandler extends MiddlewareHandler {
+public interface ResponseInterceptor extends MiddlewareHandler {
     /**
      * This is an indicator to load modifiable sink conduit to allow the response body to be updated. It is true
      * if the interceptor wants to update the response body.

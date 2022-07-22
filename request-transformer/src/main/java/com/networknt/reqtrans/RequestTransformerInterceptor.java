@@ -2,7 +2,7 @@ package com.networknt.reqtrans;
 
 import com.networknt.handler.BuffersUtils;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.handler.RequestInterceptorHandler;
+import com.networknt.handler.RequestInterceptor;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.rule.RuleConstants;
 import com.networknt.rule.RuleEngine;
@@ -14,9 +14,7 @@ import io.undertow.connector.PooledByteBuffer;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.protocol.http.HttpContinue;
-import io.undertow.util.HeaderMap;
 import io.undertow.util.Headers;
-import io.undertow.util.HttpString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.Buffers;
@@ -33,15 +31,15 @@ import java.util.Map;
  * @author Kalev Gonvick
  *
  */
-public class RequestTransformerHandler implements RequestInterceptorHandler {
-    static final Logger logger = LoggerFactory.getLogger(RequestTransformerHandler.class);
+public class RequestTransformerInterceptor implements RequestInterceptor {
+    static final Logger logger = LoggerFactory.getLogger(RequestTransformerInterceptor.class);
     static final String REQUEST_TRANSFORM = "request-transform";
 
     private RequestTransformerConfig config;
     private volatile HttpHandler next;
     private RuleEngine engine;
 
-    public RequestTransformerHandler() {
+    public RequestTransformerInterceptor() {
         if(logger.isInfoEnabled()) logger.info("RequestTransformerHandler is loaded");
         config = RequestTransformerConfig.load();
     }
@@ -65,7 +63,7 @@ public class RequestTransformerHandler implements RequestInterceptorHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(RequestTransformerHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(RequestTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override

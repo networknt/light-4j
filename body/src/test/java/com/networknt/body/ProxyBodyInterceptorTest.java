@@ -37,8 +37,8 @@ import java.util.stream.Collectors;
  *
  * @author Steve Hu
  */
-public class ProxyBodyHandlerTest {
-    static final Logger logger = LoggerFactory.getLogger(ProxyBodyHandlerTest.class);
+public class ProxyBodyInterceptorTest {
+    static final Logger logger = LoggerFactory.getLogger(ProxyBodyInterceptorTest.class);
 
     static Undertow server = null;
 
@@ -47,7 +47,7 @@ public class ProxyBodyHandlerTest {
         if (server == null) {
             logger.info("starting server");
             HttpHandler handler = getTestHandler();
-            ProxyBodyHandler bodyHandler = new ProxyBodyHandler();
+            ProxyBodyInterceptor bodyHandler = new ProxyBodyInterceptor();
             bodyHandler.setNext(handler);
             handler = bodyHandler;
             server = Undertow.builder()

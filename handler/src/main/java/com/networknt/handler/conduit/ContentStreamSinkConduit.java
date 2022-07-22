@@ -1,6 +1,6 @@
 package com.networknt.handler.conduit;
 
-import com.networknt.handler.ResponseInterceptorHandler;
+import com.networknt.handler.ResponseInterceptor;
 import com.networknt.service.SingletonServiceFactory;
 import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
@@ -19,7 +19,7 @@ public class ContentStreamSinkConduit extends AbstractStreamSinkConduit<StreamSi
 
     private final StreamSinkConduit _next;
 
-    private final ResponseInterceptorHandler[] interceptors;
+    private final ResponseInterceptor[] interceptors;
 
     /**
      * Construct a new instance.
@@ -31,11 +31,11 @@ public class ContentStreamSinkConduit extends AbstractStreamSinkConduit<StreamSi
         super(next);
         this._next = next;
         // load the interceptors from the service.yml
-        interceptors = SingletonServiceFactory.getBeans(ResponseInterceptorHandler.class);
+        interceptors = SingletonServiceFactory.getBeans(ResponseInterceptor.class);
         try {
             if(interceptors != null && interceptors.length > 0) {
                 // iterate all interceptor handlers.
-                for(ResponseInterceptorHandler interceptor : interceptors) {
+                for(ResponseInterceptor interceptor : interceptors) {
                     if(logger.isDebugEnabled()) logger.debug("Executing interceptor " + interceptor.getClass());
                     interceptor.handleRequest(exchange);
                 }
