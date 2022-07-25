@@ -1,0 +1,20 @@
+# local rules
+
+petstore-response-transformer:
+  ruleId: petstore-response-transformer
+  host: lightapi.net
+  ruleType: response-transform
+  visibility: public
+  description: Transform the response body from a complicated structure to a simple one in the light-gateway or http-sidecar.
+  conditions:
+    - conditionId: path-pets
+      propertyPath: requestPath
+      operatorCode: EQ
+      joinCode: AND
+      index: 1
+      conditionValues:
+        - conditionValueId: path
+          conditionValue: /v1/pets
+  actions:
+    - actionId: body-transform
+      actionClassName: com.networknt.rule.FineGrainedAuthAction

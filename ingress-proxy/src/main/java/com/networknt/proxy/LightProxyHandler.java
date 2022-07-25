@@ -18,7 +18,6 @@ package com.networknt.proxy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
-import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.handler.ProxyHandler;

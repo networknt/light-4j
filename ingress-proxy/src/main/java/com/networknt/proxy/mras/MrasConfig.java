@@ -1,13 +1,18 @@
 package com.networknt.proxy.mras;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 public class MrasConfig {
+    private static final Logger logger = LoggerFactory.getLogger(MrasConfig.class);
     public static final String CONFIG_NAME = "mras";
     private static final String ENABLED = "enabled";
     private static final String TOKEN_URL = "tokenUrl";
@@ -17,10 +22,12 @@ public class MrasConfig {
     private static final String CACHE_ENABLED = "cacheEnabled";
     private static final String MEM_KEY = "memKey";
     private static final String GRACE_PERIOD = "gracePeriod";
-    private static final String KEY_STORE_ALIAS = "keyStoreAlias";
-    private static final String KEY_ALIAS = "keyAlias";
-    private static final String CERT_FILENAME = "certFilename";
-    private static final String CERT_PASSWORD = "certPassword";
+    private static final String KEY_STORE_NAME = "keyStoreName";
+    private static final String KEY_STORE_PASS = "keyStorePass";
+    private static final String KEY_PASS = "keyPass";
+
+    private static final String TRUST_STORE_NAME = "trustStoreName";
+    private static final String TRUST_STORE_PASS = "trustStorePass";
     private static final String PROXY_HOST = "proxyHost";
     private static final String PROXY_PORT = "proxyPort";
     private static final String ENABLE_HTTP2 = "enableHttp2";
@@ -34,10 +41,11 @@ public class MrasConfig {
     boolean cacheEnabled;
     String memKey;
     int gracePeriod;
-    String keyStoreAlias;
-    String keyAlias;
-    String certFilename;
-    String certPassword;
+    String keyStoreName;
+    String keyStorePass;
+    String keyPass;
+    String trustStoreName;
+    String trustStorePass;
     String proxyHost;
     int proxyPort;
     boolean enableHttp2;
@@ -46,11 +54,8 @@ public class MrasConfig {
     private Config config;
     private Map<String, Object> mappedConfig;
 
-    public MrasConfig() {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigList();
+    private MrasConfig() {
+        this(CONFIG_NAME);
     }
 
     /**
@@ -58,11 +63,19 @@ public class MrasConfig {
      * to test different configurations.
      * @param configName String
      */
-    public MrasConfig(String configName) {
+    private MrasConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(configName);
         setConfigData();
         setConfigList();
+    }
+
+    public static MrasConfig load() {
+        return new MrasConfig();
+    }
+
+    public static MrasConfig load(String configName) {
+        return new MrasConfig(configName);
     }
 
     void reload() {
@@ -71,184 +84,139 @@ public class MrasConfig {
         setConfigList();
     }
 
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
+
     public boolean isEnabled() {
         return enabled;
     }
 
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
     public String getTokenUrl() {
         return tokenUrl;
-    }
-    public void setTokenUrl(String tokenUrl) {
-        this.tokenUrl = tokenUrl;
     }
 
     public String getUsername() {
         return username;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
     public String getPassword() {
         return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public boolean isCacheEnabled() {
         return cacheEnabled;
     }
 
-    public void setCacheEnabled(boolean cacheEnabled) {
-        this.cacheEnabled = cacheEnabled;
-    }
-
     public String getMemKey() {
         return memKey;
-    }
-
-    public void setMemKey(String memKey) {
-        this.memKey = memKey;
     }
 
     public int getGracePeriod() {
         return gracePeriod;
     }
 
-    public void setGracePeriod(int gracePeriod) {
-        this.gracePeriod = gracePeriod;
+    public String getKeyStoreName() {
+        return keyStoreName;
     }
 
-    public String getKeyStoreAlias() {
-        return keyStoreAlias;
+    public String getKeyStorePass() {
+        return keyStorePass;
     }
 
-    public void setKeyStoreAlias(String keyStoreAlias) {
-        this.keyStoreAlias = keyStoreAlias;
+    public String getKeyPass() {
+        return keyPass;
     }
 
-    public String getKeyAlias() {
-        return keyAlias;
+    public String getTrustStoreName() {
+        return trustStoreName;
     }
 
-    public void setKeyAlias(String keyAlias) {
-        this.keyAlias = keyAlias;
+    public String getTrustStorePass() {
+        return trustStorePass;
     }
 
-    public String getCertFilename() {
-        return certFilename;
-    }
-
-    public void setCertFilename(String certFilename) {
-        this.certFilename = certFilename;
-    }
-
-    public String getCertPassword() {
-        return certPassword;
-    }
-
-    public void setCertPassword(String certPassword) {
-        this.certPassword = certPassword;
-    }
 
     public String getProxyHost() {
         return proxyHost;
     }
-
-    public void setProxyHost(String proxyHost) {
-        this.proxyHost = proxyHost;
-    }
-
     public int getProxyPort() {
         return proxyPort;
     }
 
-    public void setProxyPort(int proxyPort) {
-        this.proxyPort = proxyPort;
-    }
 
     public boolean isEnableHttp2() {
         return enableHttp2;
-    }
-
-    public void setEnableHttp2(boolean enableHttp2) {
-        this.enableHttp2 = enableHttp2;
     }
 
     public String getServiceHost() {
         return serviceHost;
     }
 
-    public void setServiceHost(String serviceHost) {
-        this.serviceHost = serviceHost;
-    }
-
     private void setConfigData() {
         Object object = mappedConfig.get(ENABLED);
         if (object != null && (Boolean) object) {
-            setEnabled((Boolean)object);
+            enabled = (Boolean)object;
         }
         object = mappedConfig.get(TOKEN_URL);
         if (object != null) {
-            setTokenUrl((String) object);
+            tokenUrl = (String) object;
         }
         object = mappedConfig.get(USERNAME);
         if (object != null) {
-            setUsername((String)object);
+            username = (String)object;
         }
         object = mappedConfig.get(PASSWORD);
         if (object != null) {
-            setPassword((String)object);
+            password = (String)object;
         }
         object = mappedConfig.get(CACHE_ENABLED);
         if (object != null && (Boolean) object) {
-            setCacheEnabled((Boolean)object);
+            cacheEnabled = (Boolean)object;
         }
         object = mappedConfig.get(MEM_KEY);
         if (object != null) {
-            setMemKey((String)object);
+            memKey = (String)object;
         }
         object = mappedConfig.get(GRACE_PERIOD);
         if (object != null) {
-            setGracePeriod((int) object);
+            gracePeriod = (Integer)object;
         }
-        object = mappedConfig.get(KEY_STORE_ALIAS);
+        object = mappedConfig.get(KEY_STORE_NAME);
         if (object != null) {
-            setKeyStoreAlias((String)object);
+            keyStoreName = (String)object;
         }
-        object = mappedConfig.get(KEY_ALIAS);
+        object = mappedConfig.get(KEY_STORE_PASS);
         if (object != null) {
-            setKeyAlias((String)object);
+            keyStorePass = (String)object;
         }
-        object = mappedConfig.get(CERT_FILENAME);
+        object = mappedConfig.get(KEY_PASS);
         if (object != null) {
-            setCertFilename((String)object);
+            keyPass = (String)object;
         }
-        object = mappedConfig.get(CERT_PASSWORD);
+        object = mappedConfig.get(TRUST_STORE_NAME);
         if (object != null) {
-            setCertPassword((String)object);
+            trustStoreName = (String)object;
+        }
+        object = mappedConfig.get(TRUST_STORE_PASS);
+        if (object != null) {
+            trustStorePass = (String)object;
         }
         object = mappedConfig.get(PROXY_HOST);
         if (object != null) {
-            setProxyHost((String) object);
+            proxyHost = (String) object;
         }
         object = mappedConfig.get(PROXY_PORT);
         if (object != null) {
-            setProxyPort((int) object);
+            proxyPort = (Integer) object;
         }
         object = mappedConfig.get(ENABLE_HTTP2);
         if (object != null && (Boolean) object) {
-            setEnableHttp2((Boolean)object);
+            enableHttp2 = (Boolean)object;
         }
         object = mappedConfig.get(SERVICE_HOST);
         if (object != null) {
-            setServiceHost((String) object);
+            serviceHost = (String) object;
         }
     }
 
@@ -265,8 +233,20 @@ public class MrasConfig {
             Object object = mappedConfig.get(APPLIED_PATH_PREFIXES);
             appliedPathPrefixes = new ArrayList<>();
             if(object instanceof String) {
-                // there is only one path available
-                appliedPathPrefixes.add((String)object);
+                String s = (String)object;
+                s = s.trim();
+                if(logger.isTraceEnabled()) logger.trace("s = " + s);
+                if(s.startsWith("[")) {
+                    // json format
+                    try {
+                        appliedPathPrefixes = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
+                    } catch (Exception e) {
+                        throw new ConfigException("could not parse the appliedPathPrefixes json with a list of strings.");
+                    }
+                } else {
+                    // comma separated
+                    appliedPathPrefixes = Arrays.asList(s.split("\\s*,\\s*"));
+                }
             } else if (object instanceof List) {
                 List prefixes = (List)object;
                 prefixes.forEach(item -> {

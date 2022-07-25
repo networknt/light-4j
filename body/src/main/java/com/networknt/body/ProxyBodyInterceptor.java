@@ -5,10 +5,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.handler.RequestInterceptor;
+import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.connector.PooledByteBuffer;
-import io.undertow.server.Connectors;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
@@ -16,11 +17,7 @@ import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xnio.IoUtils;
-import org.xnio.channels.StreamSourceChannel;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +26,9 @@ import static com.networknt.body.BodyHandler.REQUEST_BODY_STRING;
 import static com.networknt.body.BodyHandler.REQUEST_BODY;
 
 /**
+ * Note: With RequestInterceptorInjectionHandler implemented, this handler is changed from a
+ * pure middleware handler to RequestInterceptorHandler implementation.
+ *
  * This is the Body Parser handler used by the light-proxy and http-sidecar to not only parse
  * the body into an attachment in the exchange but also keep the stream to be forwarded to the
  * backend API. If the normal BodyHandler is used, once the stream is consumed, it is gone and
@@ -50,18 +50,19 @@ import static com.networknt.body.BodyHandler.REQUEST_BODY;
  *
  * @author Steve Hu
  */
-public class ProxyBodyHandler implements MiddlewareHandler {
-    static final Logger logger = LoggerFactory.getLogger(ProxyBodyHandler.class);
+public class ProxyBodyInterceptor implements RequestInterceptor {
+    static final Logger logger = LoggerFactory.getLogger(ProxyBodyInterceptor.class);
     static final String CONTENT_TYPE_MISMATCH = "ERR10015";
     static final String PAYLOAD_TOO_LARGE = "ERR10068";
     static final String GENERIC_EXCEPTION = "ERR10014";
 
-    public static final BodyConfig config = (BodyConfig) Config.getInstance().getJsonObjectConfig(BodyConfig.CONFIG_NAME, BodyConfig.class);
+    public BodyConfig config;
 
     private volatile HttpHandler next;
 
-    public ProxyBodyHandler() {
+    public ProxyBodyInterceptor() {
         if (logger.isInfoEnabled()) logger.info("ProxyBodyHandler is loaded.");
+        config = BodyConfig.load();
     }
 
     /**
@@ -74,43 +75,17 @@ public class ProxyBodyHandler implements MiddlewareHandler {
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         if (this.shouldParseBody(exchange)) {
-            final StreamSourceChannel channel = exchange.getRequestChannel();
-            int readBuffers = 0;
-            PooledByteBuffer buffer = exchange.getConnection().getByteBufferPool().allocate();
-            try {
-                do {
-                    ByteBuffer dst = buffer.getBuffer();
-                    int r = channel.read(dst);
-                    if (r == -1) {
-                        if (dst.position() == 0) {
-                            buffer.close();
-                        } else {
-                            dst.flip();
-                        }
-                        break;
-                    } else if (!dst.hasRemaining()) {
-                        dst.flip();
-                        readBuffers++;
-                        if (readBuffers == 1) {
-                            break;
-                        }
-                        buffer = exchange.getConnection().getByteBufferPool().allocate();
-                    }
-                } while (true);
-
-                Connectors.ungetRequestBytes(exchange, buffer);
-                Connectors.resetRequestChannel(exchange);
-            } catch (IOException e) {
-                if (buffer.isOpen()) {
-                    IoUtils.safeClose(buffer);
+            var existing = (PooledByteBuffer[])exchange.getAttachment(AttachmentConstants.BUFFERED_REQUEST_DATA_KEY);
+            StringBuilder completeBody = new StringBuilder();
+            for(PooledByteBuffer buffer : existing) {
+                if(buffer != null) {
+                    completeBody.append(StandardCharsets.UTF_8.decode(buffer.getBuffer().duplicate()).toString());
+                } else {
+                    break;
                 }
-                logger.error(e.getLocalizedMessage(), e);
-                setExchangeStatus(exchange, GENERIC_EXCEPTION, e.getMessage());
-                return;
             }
-            String requestBody = StandardCharsets.UTF_8.decode(buffer.getBuffer().duplicate()).toString();
-            boolean attached = attachJsonBody(exchange, requestBody);
-            if (!attached) {
+            boolean attached = this.attachJsonBody(exchange, completeBody.toString());
+            if(!attached) {
                 return;
             }
         }
@@ -125,9 +100,11 @@ public class ProxyBodyHandler implements MiddlewareHandler {
      */
     private boolean shouldParseBody(final HttpServerExchange exchange) {
         HttpString method = exchange.getRequestMethod();
+        String requestPath = exchange.getRequestPath();
         boolean hasBody = method.equals(Methods.POST) || method.equals(Methods.PUT) || method.equals(Methods.PATCH);
-        return !config.isSkipProxyBodyHandler() &&
-                hasBody &&
+        boolean isPathConfigured = config.getAppliedPathPrefixes() == null ? true : config.getAppliedPathPrefixes().stream().anyMatch(s -> requestPath.startsWith(s));
+        return hasBody &&
+                isPathConfigured &&
                 exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE) != null &&
                 exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE).startsWith("application/json");
     }
@@ -196,7 +173,16 @@ public class ProxyBodyHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ProxyBodyHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(BodyConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(ProxyBodyInterceptor.class.getName(), config.getMappedConfig(), null);
     }
 
+    @Override
+    public void reload() {
+        config.reload();
+    }
+
+    @Override
+    public boolean isRequiredContent() {
+        return true;
+    }
 }

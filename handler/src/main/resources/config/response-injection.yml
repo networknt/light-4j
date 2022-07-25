@@ -1,0 +1,4 @@
+# response interceptor injection handler configuration
+
+# indicator of enabled
+enabled: ${response-injection.enabled:true}
