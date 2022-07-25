@@ -67,12 +67,23 @@ public class BodyHandler implements MiddlewareHandler {
 
     public static final String CONFIG_NAME = "body";
 
-    public static  BodyConfig config = (BodyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, BodyConfig.class);
+    public static  BodyConfig config;
 
     private volatile HttpHandler next;
 
     public BodyHandler() {
         if (logger.isInfoEnabled()) logger.info("BodyHandler is loaded.");
+        config = BodyConfig.load();
+    }
+
+    /**
+     * Please don't use this constructor as it is designed for testing only.
+     * @param configName String
+     * @deprecated
+     */
+    public BodyHandler(String configName) {
+        if (logger.isInfoEnabled()) logger.info("BodyHandler is loaded.");
+        config = BodyConfig.load(configName);
     }
 
     /**

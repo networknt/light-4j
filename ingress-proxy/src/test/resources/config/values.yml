@@ -22,12 +22,16 @@ mras.password: client_secret
 mras.cacheEnabled: true
 mras.memKey: MRASToken
 mras.gracePeriod: 50
-mras.keyStoreAlias: mras
-mras.keyAlias: api.ais-dev
-mras.certFilename: mras_ts.jks
-mras.certPassword: password
-mras.appliedPathPrefixes:
-  - /mras
+mras.keyStoreName: api.ais-dev
+mras.keyStorePass: password
+mras.keyPass: password
+mras.trustStoreName: mras_ts.jks
+mras.truststorePass: password
+#mras.appliedPathPrefixes:
+#  - /mras
+#  - /test
+mras.appliedPathPrefixes: /mras,/test
+# mras.appliedPathPrefixes: ["/mras","/test"]
 mras.serviceHost: https://mras.com
 
 # external-service.yml

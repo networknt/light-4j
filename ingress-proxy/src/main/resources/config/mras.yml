@@ -13,14 +13,16 @@ cacheEnabled: ${mras.cacheEnabled:}
 memKey: ${mras.memKey}
 # grace period
 gracePeriod: ${mras.gracePeriod:}
-# keyStoreAlias
-keyStoreAlias: ${mras.keyStoreAlias:}
-# keyAlias
-keyAlias: ${mras.keyAlias:}
-# Certificate file name. The private key alias is the filename without the extension.
-certFilename: ${mras.certFilename:apigatewayuat.pfx}
-# Certificate file password
-certPassword: ${mras.certPassword:password}
+# keyStoreName
+keyStoreName: ${mras.keyStoreName:}
+# keyStorePass
+keyStorePass: ${mras.keyStorePass:}
+# keyPass
+keyPass: ${mras.keyAlias:}
+# trustStoreName
+trustStoreName: ${mras.trustStoreName:apigatewayuat.pfx}
+# trustStorePass
+trustStorePass: ${mras.trustStorePass:password}
 # Proxy Host if calling within the corp network with a gateway like Mcafee gateway.
 proxyHost: ${mras.proxyHost:}
 # Proxy Port if proxy host is used. default value will be 443 which means HTTPS.

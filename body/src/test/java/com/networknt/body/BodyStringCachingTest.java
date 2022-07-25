@@ -35,7 +35,7 @@ public class BodyStringCachingTest {
         if (server == null) {
             logger.info("starting server");
             HttpHandler handler = getTestHandler();
-            BodyHandler bodyHandler = new BodyHandler();
+            BodyHandler bodyHandler = new BodyHandler("body-cache");
             bodyHandler.setNext(handler);
             handler = bodyHandler;
             server = Undertow.builder()
@@ -83,7 +83,6 @@ public class BodyStringCachingTest {
         } catch (Exception e) {
             throw new ClientException(e);
         }
-        BodyHandler.config.setCacheRequestBody(true);
         try {
             post = "[{\"key1\":\"value1\"}, {\"key2\":\"value2\"}]";
             connection.getIoThread().execute(new Runnable() {
@@ -105,41 +104,5 @@ public class BodyStringCachingTest {
             IoUtils.safeClose(connection);
         }
         Assert.assertEquals(post, reference.get().getAttachment(Http2Client.RESPONSE_BODY));
-    }
-
-    @Test
-    public void testDisableCacheRequestBody() throws Exception {
-        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
-        final Http2Client client = Http2Client.getInstance();
-        final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
-        String post;
-        try {
-            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
-        } catch (Exception e) {
-            throw new ClientException(e);
-        }
-        BodyHandler.config.setCacheRequestBody(false);
-        try {
-            post = "[{\"key1\":\"value1\"}, {\"key2\":\"value2\"}]";
-            connection.getIoThread().execute(new Runnable() {
-                @Override
-                public void run() {
-                    final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath("/post");
-                    request.getRequestHeaders().put(Headers.HOST, "localhost");
-                    request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/json");
-                    request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
-                    connection.sendRequest(request, client.createClientCallback(reference, latch, post));
-                }
-            });
-
-            latch.await(10, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            logger.error("IOException: ", e);
-            throw new ClientException(e);
-        } finally {
-            IoUtils.safeClose(connection);
-        }
-        Assert.assertEquals("nobody", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
     }
 }

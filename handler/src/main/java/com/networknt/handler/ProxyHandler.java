@@ -440,6 +440,8 @@ public class ProxyHandler implements HttpHandler {
                     }
                 }
             }
+            // TODO call the rule engine here for the request transformation.
+
             request.setPath(requestURI.toString())
                     .setMethod(method);
             if(logger.isTraceEnabled()) logger.trace("targetURI = " + targetURI + " requestURI = " + requestURI + " method = " + method);
@@ -716,6 +718,8 @@ public class ProxyHandler implements HttpHandler {
             final HeaderMap inboundResponseHeaders = response.getResponseHeaders();
             final HeaderMap outboundResponseHeaders = exchange.getResponseHeaders();
             exchange.setStatusCode(response.getResponseCode());
+            // TODO see if we can get the response body here.
+
             copyHeaders(outboundResponseHeaders, inboundResponseHeaders, headerRewriteRules == null ? null : headerRewriteRules.get(exchange.getRequestPath()));
 
             if (exchange.isUpgrade()) {

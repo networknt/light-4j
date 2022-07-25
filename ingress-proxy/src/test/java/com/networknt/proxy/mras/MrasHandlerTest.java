@@ -24,7 +24,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class MrasHandlerTest {
     static final Logger logger = LoggerFactory.getLogger(MrasHandlerTest.class);
-    static final MrasConfig config = new MrasConfig();
     static Undertow server = null;
 
     @BeforeClass
