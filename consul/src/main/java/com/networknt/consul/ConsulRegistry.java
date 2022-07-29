@@ -212,7 +212,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
             if(logger.isDebugEnabled()) try {logger.debug("services = " + Config.getInstance().getMapper().writeValueAsString(services));} catch (Exception e) {}
             if (services != null && !services.isEmpty()
                     && response.getConsulIndex() > lastConsulIndexId) {
-                logger.info("Got updated urls for service: {} ({} found)", serviceName, services.size());
+                logger.info("Got updated urls from Consul: {} instances of service {} found", services.size(), serviceName);
                 for (ConsulService service : services) {
                     try {
                         URL url = ConsulUtils.buildUrl(protocol, service);
@@ -234,11 +234,11 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                 logger.info("Consul index reset to 0 for service: {} when lastIndex={}; response consul index={}", serviceName, lastConsulIndexId, response.getConsulIndex());
                 lookupServices.put(serviceName, 0L);
             } else {
-                logger.info("No need update local discovery cache for service: {}, lastIndex={}", serviceName, lastConsulIndexId);
+                logger.info("No need to update local discovery cache for service: {}, lastIndex={}", serviceName, lastConsulIndexId);
             }
         } else {
             serviceUrls.put(serviceName, new ArrayList<>());
-            logger.info("No consul response for service: {}, clear its local cache", serviceName);
+            logger.info("No Consul response for service: {}, clear its local cache", serviceName);
         }
         return serviceUrls;
     }
