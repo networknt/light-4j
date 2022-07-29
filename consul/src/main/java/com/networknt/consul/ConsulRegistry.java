@@ -234,7 +234,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                 logger.info("Consul index reset to 0 for service: {} when lastIndex={}; response consul index={}", serviceName, lastConsulIndexId, response.getConsulIndex());
                 lookupServices.put(serviceName, 0L);
             } else {
-                logger.info("No need to update local discovery cache for service: {}, lastIndex={}", serviceName, lastConsulIndexId);
+                logger.info("No need to update local Consul discovery cache for service: {}, lastIndex={}", serviceName, lastConsulIndexId);
             }
         } else {
             serviceUrls.put(serviceName, new ArrayList<>());
