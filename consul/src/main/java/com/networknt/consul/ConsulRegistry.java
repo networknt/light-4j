@@ -212,7 +212,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
             if(logger.isDebugEnabled()) try {logger.debug("services = " + Config.getInstance().getMapper().writeValueAsString(services));} catch (Exception e) {}
             if (services != null && !services.isEmpty()
                     && response.getConsulIndex() > lastConsulIndexId) {
-                logger.info("Got {} updated urls for service: {}", services.size(), serviceName);
+                logger.info("Got updated urls for service: {}, {} found", serviceName, services.size());
                 for (ConsulService service : services) {
                     try {
                         URL url = ConsulUtils.buildUrl(protocol, service);
@@ -228,17 +228,17 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                     }
                 }
                 lookupServices.put(serviceName, response.getConsulIndex());
-                logger.info("Service {} consul index {} put into lookupServices", serviceName, response.getConsulIndex());
+                logger.info("Consul index put into lookupServices for service {}, index={}", serviceName, response.getConsulIndex());
                 return serviceUrls;
             } else if (response.getConsulIndex() < lastConsulIndexId) {
-                logger.info(serviceName + "  lastIndex:" + lastConsulIndexId + "; response consul Index:" + response.getConsulIndex());
+                logger.info("Consul index reset to 0 for service: {} when lastIndex={}; response consul index={}", serviceName, lastConsulIndexId, response.getConsulIndex());
                 lookupServices.put(serviceName, 0L);
             } else {
-                logger.info(serviceName + " no need update, lastIndex:" + lastConsulIndexId);
+                logger.info("No need update local discovery cache for service: {}, lastIndex={}", serviceName, lastConsulIndexId);
             }
         } else {
             serviceUrls.put(serviceName, new ArrayList<>());
-            logger.info("no response for service: {}, set urls to null", serviceName);
+            logger.info("No consul response for service: {}, clear its local cache", serviceName);
         }
         return serviceUrls;
     }

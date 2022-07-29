@@ -255,7 +255,7 @@ public class ConsulClientImpl implements ConsulClient {
 			// is borrowed from the pool, a new connection will be created as the one returned is not open.
 			if(connection != null && connection.isOpen()) IoUtils.safeClose(connection);
 			throw new RuntimeException(
-					String.format("The request to Consul: %s timed out after %d seconds", uri, waitInSecond));
+					String.format("The request to Consul timed out after %d seconds to: %s", waitInSecond, uri));
 		}
 		return reference;
 	}
