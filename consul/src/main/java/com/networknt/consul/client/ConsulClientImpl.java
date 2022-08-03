@@ -66,13 +66,13 @@ public class ConsulClientImpl implements ConsulClient {
 	public ConsulClientImpl() {
 		String consulUrl = config.getConsulUrl().toLowerCase();
 		optionMap =  isHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY;
-		logger.debug("url = {}", consulUrl);
+		logger.debug("Consul URL = {}", consulUrl);
 		if(config.getWait() != null && config.getWait().length() > 2) wait = config.getWait();
 		logger.debug("wait = {}", wait);
 		try {
 			uri = new URI(consulUrl);
 		} catch (URISyntaxException e) {
-			logger.error("Invalid URI " + consulUrl, e);
+			logger.error("Consul URL generated invalid URI! Consul URL: " + consulUrl, e);
 			throw new RuntimeException("Invalid URI " + consulUrl, e);
 		}
 	}
@@ -177,19 +177,19 @@ public class ConsulClientImpl implements ConsulClient {
 		if(tag != null) {
 			path = path + "&tag=" + tag;
 		}
-		logger.trace("path = {}", path);
+		logger.trace("Consul health service path = {}", path);
 		try {
 			logger.debug("Getting connection from pool with {}", uri);
 			connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
 			logger.info("Got connection: {} from pool and send request to {}", connection, path);
 			AtomicReference<ClientResponse> reference  = send(connection, Methods.GET, path, token, null);
 			int statusCode = reference.get().getResponseCode();
-			logger.info("Got status code: {} from the consul query", statusCode);
+			logger.info("Got Consul Query status code: {}", statusCode);
 			if(statusCode >= UNUSUAL_STATUS_CODE){
 				throw new Exception("Failed to unregister on Consul: " + statusCode);
 			} else {
 				String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-				logger.debug("Got response body: {} from the consul query", body);
+				logger.debug("Got Consul Query response body: {}", body);
 				List<Map<String, Object>> services = Config.getInstance().getMapper().readValue(body, new TypeReference<List<Map<String, Object>>>(){});
 				List<ConsulService> ConsulServcies = new ArrayList<>(
 						services.size());
@@ -239,7 +239,7 @@ public class ConsulClientImpl implements ConsulClient {
 		ClientRequest request = new ClientRequest().setMethod(method).setPath(path);
 		request.getRequestHeaders().put(Headers.HOST, "localhost");
 		if (token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
-		if (logger.isTraceEnabled()) logger.trace("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
+		if (logger.isTraceEnabled()) logger.trace("The request sent to Consul URI {} - request header: {}, request body is empty", uri.toString(), request.toString());
 		if(StringUtils.isBlank(json)) {
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 		} else {

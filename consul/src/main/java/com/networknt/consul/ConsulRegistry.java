@@ -209,7 +209,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
         ConcurrentHashMap<String, List<URL>> serviceUrls = new ConcurrentHashMap<>();
         if (response != null) {
             List<ConsulService> services = response.getValue();
-            if(logger.isDebugEnabled()) try {logger.debug("services = " + Config.getInstance().getMapper().writeValueAsString(services));} catch (Exception e) {}
+            if(logger.isDebugEnabled()) try {logger.debug("Consul-registered services = " + Config.getInstance().getMapper().writeValueAsString(services));} catch (Exception e) {}
             if (services != null && !services.isEmpty()
                     && response.getConsulIndex() > lastConsulIndexId) {
                 logger.info("Got updated urls from Consul: {} instances of service {} found", services.size(), serviceName);
@@ -221,24 +221,24 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                             urlList = new ArrayList<>();
                             serviceUrls.put(serviceName, urlList);
                         }
-                        if(logger.isTraceEnabled()) logger.trace("lookupServiceUpdate url = " + url);
+                        if(logger.isTraceEnabled()) logger.trace("Consul lookupServiceUpdate url = " + url);
                         urlList.add(url);
                     } catch (Exception e) {
-                        logger.error("convert consul service to url fail! service:" + service, e);
+                        logger.error("Failed to convert Consul service to url! service: " + service, e);
                     }
                 }
                 lookupServices.put(serviceName, response.getConsulIndex());
                 logger.info("Consul index put into lookupServices for service: {}, index={}", serviceName, response.getConsulIndex());
                 return serviceUrls;
             } else if (response.getConsulIndex() < lastConsulIndexId) {
-                logger.info("Consul index reset to 0 for service: {} when lastIndex={}; response consul index={}", serviceName, lastConsulIndexId, response.getConsulIndex());
+                logger.info("Consul returned stale index: Index reset to 0 for service {} - Consul response index < last Consul index: {} < {}", serviceName, response.getConsulIndex(), lastConsulIndexId);
                 lookupServices.put(serviceName, 0L);
             } else {
-                logger.info("No need to update local Consul discovery cache for service: {}, lastIndex={}", serviceName, lastConsulIndexId);
+                logger.info("Consul returned no service updates: No need to update local Consul discovery cache for service {}, lastIndex={}", serviceName, lastConsulIndexId);
             }
         } else {
             serviceUrls.put(serviceName, new ArrayList<>());
-            logger.info("No Consul response for service: {}, clear its local cache", serviceName);
+            logger.info("No Consul response for service! Clearing local cache for service {}", serviceName);
         }
         return serviceUrls;
     }
@@ -268,7 +268,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
             List<URL> cachedUrls = serviceCache.get(serviceName);
             List<URL> newUrls = serviceUrls.get(serviceName);
             try {
-                logger.trace("serviceUrls = {}", Config.getInstance().getMapper().writeValueAsString(serviceUrls));
+                logger.trace("Consul service URLs = {}", Config.getInstance().getMapper().writeValueAsString(serviceUrls));
             } catch(Exception e) {
             }
             boolean change = true;
@@ -284,7 +284,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                 for (URL url : newUrls) {
                     sb.append(url.getUri()).append(";");
                 }
-                logger.info("consul notify urls:" + sb.toString());
+                logger.info("Consul notify URLs:" + sb.toString());
             }
         }
     }
@@ -300,18 +300,18 @@ public class ConsulRegistry extends CommandFailbackRegistry {
 
         @Override
         public void run() {
-            logger.info("start service lookup thread. lookup interval: {}ms, service: {}", lookupInterval, serviceName);
+            logger.info("Start Consul lookupServiceUpdate thread - Lookup interval: {}ms, service {}", lookupInterval, serviceName);
             while (true) {
                 try {
-                    logger.info("Start to sleep {} ms for the next lookupServiceUpdate of service: {}", lookupInterval, serviceName);
+                    logger.info("Consul lookupServiceUpdate Thread - SLEEP: Start to sleep {}ms for service {}", lookupInterval, serviceName);
                     sleep(lookupInterval);
-                    logger.info("Woke up from the sleep for the next lookupServiceUpdate of service: {}", serviceName);
+                    logger.info("Consul lookupServiceUpdate Thread - WAKE UP: Woke up from sleep for lookupServiceUpdate for service {}", serviceName);
                     ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(protocol, serviceName);
-                    logger.info("Got {} serviceUrls from lookupServiceUpdate({}, {})", serviceUrls.size(), protocol, serviceName);
+                    logger.info("Got service URLs from Consul lookupServiceUpdate: {} service URLs found for service {} ({})", serviceUrls.size(), serviceName, protocol);
                     updateServiceCache(serviceName, serviceUrls, true);
-                    logger.info("Service cache updated with the serviceUrls from lookupServiceUpdate of service: {}", serviceName);
+                    logger.info("Local Consul service cache updated with service URLs from lookupServiceUpdate for {}", serviceName);
                 } catch (Throwable e) {
-                    logger.error("service lookup thread fail!", e);
+                    logger.error("Consul lookupServiceUpdate thread failed!", e);
                     try {
                         Thread.sleep(2000);
                     } catch (InterruptedException ignored) {
