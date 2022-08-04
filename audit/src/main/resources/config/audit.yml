@@ -15,12 +15,8 @@ responseTime: ${audit.responseTime:true}
 
 # when auditOnError is true:
 #  - it will only log when status code >= 400
-#  - response body will be only logged when auditOnError is true
-#  - status detail will be only logged when auditOnError is true
 # when auditOnError is false:
 #  - it will log on every request
-#  - no response body will be logged.
-#  - no status detail will be logged.
 # log level is controlled by logLevel
 auditOnError: ${audit.auditOnError:false}
 
