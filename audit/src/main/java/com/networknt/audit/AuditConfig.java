@@ -34,14 +34,20 @@ import java.util.function.Consumer;
 class AuditConfig {
     private static final Logger logger = LoggerFactory.getLogger(AuditConfig.class);
 
+    public static final String REQUEST_BODY = "requestBody";
+    public static final String RESPONSE_BODY = "responseBody";
+
     private static final String HEADERS = "headers";
     private static final String AUDIT = "audit";
     private static final String STATUS_CODE = "statusCode";
     private static final String RESPONSE_TIME = "responseTime";
     private static final String AUDIT_ON_ERROR = "auditOnError";
-    private static final String IS_LOG_LEVEL_ERROR = "logLevelIsError";
-    private static final String IS_MASK_ENABLED = "mask";
+    private static final String LOG_LEVEL_IS_ERROR = "logLevelIsError";
+    private static final String MASK = "mask";
     private static final String TIMESTAMP_FORMAT = "timestampFormat";
+
+    private static final String ENABLED = "enabled";
+
     private  Map<String, Object> mappedConfig;
     public static final String CONFIG_NAME = "audit";
     private List<String> headerList;
@@ -53,8 +59,10 @@ class AuditConfig {
     private boolean statusCode;
     private boolean responseTime;
     private boolean auditOnError;
-    private boolean isMaskEnabled;
+    private boolean mask;
     private String timestampFormat;
+
+    private boolean enabled;
 
     private AuditConfig() {
         this(CONFIG_NAME);
@@ -101,9 +109,11 @@ class AuditConfig {
         return auditOnError;
     }
 
-    public boolean isMaskEnabled() {
-        return isMaskEnabled;
+    public boolean isMask() {
+        return mask;
     }
+
+    public boolean isEnabled() { return enabled; }
 
     public boolean isResponseTime() {
         return responseTime;
@@ -134,7 +144,7 @@ class AuditConfig {
     }
 
     private void setLogLevel() {
-        Object object = getMappedConfig().get(IS_LOG_LEVEL_ERROR);
+        Object object = getMappedConfig().get(LOG_LEVEL_IS_ERROR);
         auditFunc = (object != null && (Boolean) object) ?
                 LoggerFactory.getLogger(Constants.AUDIT_LOGGER)::error : LoggerFactory.getLogger(Constants.AUDIT_LOGGER)::info;
     }
@@ -197,9 +207,13 @@ class AuditConfig {
         if(object != null && (Boolean) object) {
             auditOnError = true;
         }
-        object = getMappedConfig().get(IS_MASK_ENABLED);
+        object = getMappedConfig().get(MASK);
         if(object != null && (Boolean) object) {
-            isMaskEnabled = true;
+            mask = true;
+        }
+        object = getMappedConfig().get(ENABLED);
+        if(object != null && (Boolean) object) {
+
         }
         timestampFormat = (String)getMappedConfig().get(TIMESTAMP_FORMAT);
     }

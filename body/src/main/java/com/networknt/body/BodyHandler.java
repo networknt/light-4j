@@ -59,7 +59,7 @@ public class BodyHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(BodyHandler.class);
     static final String CONTENT_TYPE_MISMATCH = "ERR10015";
 
-    // request body will be parse during validation and it is attached to the exchange, in JSON,
+    // request body will be parsed during validation and it is attached to the exchange, in JSON,
     // it could be a map or list. So treat it as Object in the attachment.
     public static final AttachmentKey<Object> REQUEST_BODY = AttachmentConstants.REQUEST_BODY;
 

@@ -36,10 +36,13 @@ public class BodyConfig {
     public static final String CONFIG_NAME = "body";
     private static final String ENABLED = "enabled";
     private static final String CACHE_REQUEST_BODY = "cacheRequestBody";
+
+    private static final String CACHE_RESPONSE_BODY = "cacheResponseBody";
     private static final String APPLIED_PATH_PREFIXES = "appliedPathPrefixes";
 
     boolean enabled;
     boolean cacheRequestBody;
+    boolean cacheResponseBody;
     List<String> appliedPathPrefixes;
 
     private Config config;
@@ -86,6 +89,9 @@ public class BodyConfig {
     public boolean isCacheRequestBody() {
         return cacheRequestBody;
     }
+    public boolean isCacheResponseBody() {
+        return cacheResponseBody;
+    }
 
     public List<String> getAppliedPathPrefixes() {
         return appliedPathPrefixes;
@@ -99,6 +105,10 @@ public class BodyConfig {
         object = mappedConfig.get(CACHE_REQUEST_BODY);
         if (object != null && (Boolean) object) {
             cacheRequestBody = (Boolean)object;
+        }
+        object = mappedConfig.get(CACHE_RESPONSE_BODY);
+        if (object != null && (Boolean) object) {
+            cacheResponseBody = (Boolean)object;
         }
     }
 
