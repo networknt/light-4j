@@ -37,8 +37,8 @@ import java.util.stream.Collectors;
  *
  * @author Steve Hu
  */
-public class ProxyBodyInterceptorTest {
-    static final Logger logger = LoggerFactory.getLogger(ProxyBodyInterceptorTest.class);
+public class RequestBodyInterceptorTest {
+    static final Logger logger = LoggerFactory.getLogger(RequestBodyInterceptorTest.class);
 
     static Undertow server = null;
 
@@ -47,7 +47,7 @@ public class ProxyBodyInterceptorTest {
         if (server == null) {
             logger.info("starting server");
             HttpHandler handler = getTestHandler();
-            ProxyBodyInterceptor bodyHandler = new ProxyBodyInterceptor();
+            RequestBodyInterceptor bodyHandler = new RequestBodyInterceptor();
             bodyHandler.setNext(handler);
             handler = bodyHandler;
             server = Undertow.builder()
@@ -431,6 +431,8 @@ public class ProxyBodyInterceptorTest {
         } finally {
             IoUtils.safeClose(connection);
         }
-        Assert.assertEquals("nobody", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+        String responseBody = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+        System.out.println("response body = " + responseBody);
+        Assert.assertEquals("nobody", responseBody);
     }
 }

@@ -157,14 +157,6 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
         return config.isRequiredContent();
     }
 
-    public PooledByteBuffer[] getBuffer(HttpServerExchange exchange) {
-        PooledByteBuffer[] buffer = exchange.getAttachment(AttachmentConstants.BUFFERED_RESPONSE_DATA_KEY);
-        if (buffer == null) {
-            throw new IllegalStateException("Response content is not available in exchange attachment as there is no interceptors.");
-        }
-        return buffer;
-    }
-
     public void setBuffer(HttpServerExchange exchange, PooledByteBuffer[] raw) {
         // close the current buffer pool
         PooledByteBuffer[] oldBuffers = exchange.getAttachment(AttachmentConstants.BUFFERED_RESPONSE_DATA_KEY);

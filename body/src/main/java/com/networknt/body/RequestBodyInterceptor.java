@@ -27,11 +27,11 @@ import static com.networknt.body.BodyHandler.REQUEST_BODY;
 
 /**
  * Note: With RequestInterceptorInjectionHandler implemented, this handler is changed from a
- * pure middleware handler to RequestInterceptorHandler implementation.
+ * pure middleware handler to RequestInterceptor implementation.
  *
- * This is the Body Parser handler used by the light-proxy and http-sidecar to not only parse
- * the body into an attachment in the exchange but also keep the stream to be forwarded to the
- * backend API. If the normal BodyHandler is used, once the stream is consumed, it is gone and
+ * This is the Body Parser interceptor used by the light-4j, light-proxy and http-sidecar to
+ * not only parse the body into an attachment in the exchange but also to keep the stream to
+ * be forwarded to the subsequent middleware handlers or backend API. If the normal BodyHandler is used, once the stream is consumed, it is gone and
  * cannot be transfer/forward to the backend with socket to socket transfer.
  * <p>
  * The body validation will only support smaller size JSON request body, so we check the method
@@ -50,8 +50,8 @@ import static com.networknt.body.BodyHandler.REQUEST_BODY;
  *
  * @author Steve Hu
  */
-public class ProxyBodyInterceptor implements RequestInterceptor {
-    static final Logger logger = LoggerFactory.getLogger(ProxyBodyInterceptor.class);
+public class RequestBodyInterceptor implements RequestInterceptor {
+    static final Logger logger = LoggerFactory.getLogger(RequestBodyInterceptor.class);
     static final String CONTENT_TYPE_MISMATCH = "ERR10015";
     static final String PAYLOAD_TOO_LARGE = "ERR10068";
     static final String GENERIC_EXCEPTION = "ERR10014";
@@ -60,7 +60,7 @@ public class ProxyBodyInterceptor implements RequestInterceptor {
 
     private volatile HttpHandler next;
 
-    public ProxyBodyInterceptor() {
+    public RequestBodyInterceptor() {
         if (logger.isInfoEnabled()) logger.info("ProxyBodyHandler is loaded.");
         config = BodyConfig.load();
     }
@@ -86,7 +86,7 @@ public class ProxyBodyInterceptor implements RequestInterceptor {
             }
             boolean attached = this.attachJsonBody(exchange, completeBody.toString());
             if(!attached) {
-                return;
+                if(logger.isInfoEnabled()) logger.info("Failed to attached the request body to the exchange");
             }
         }
         Handler.next(exchange, next);
@@ -148,9 +148,9 @@ public class ProxyBodyInterceptor implements RequestInterceptor {
             return false;
         }
         if (config.isCacheRequestBody()) {
-            exchange.putAttachment(REQUEST_BODY_STRING, string);
+            exchange.putAttachment(AttachmentConstants.REQUEST_BODY_STRING, string);
         }
-        exchange.putAttachment(REQUEST_BODY, body);
+        exchange.putAttachment(AttachmentConstants.REQUEST_BODY, body);
         return true;
     }
 
@@ -173,7 +173,7 @@ public class ProxyBodyInterceptor implements RequestInterceptor {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ProxyBodyInterceptor.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(RequestBodyInterceptor.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override

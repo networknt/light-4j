@@ -41,7 +41,7 @@ public class AuditConfigTest {
         Assert.assertTrue(config.isStatusCode());
         Assert.assertTrue(config.isResponseTime());
         Assert.assertFalse(config.isAuditOnError());
-        Assert.assertFalse(config.isMaskEnabled());
+        Assert.assertFalse(config.isMask());
         Assert.assertNotNull(config.getTimestampFormat());
     }
 
