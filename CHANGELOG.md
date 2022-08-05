@@ -1,5 +1,14 @@
 # Change Log
 
+## [1.6.40](https://github.com/networknt/light-4j/tree/1.6.40) (2022-08-05)
+
+
+**Merged pull requests:**
+
+
+- Update log messages to make it easier for monitoring [\#1316](https://github.com/networknt/light-4j/pull/1316) ([jsu216](https://github.com/jsu216))
+- Issue1304 - Add more debug and info messages [\#1309](https://github.com/networknt/light-4j/pull/1309) ([jsu216](https://github.com/jsu216))
+- fixes \#1304 Consul ServiceLookupThread connect to consul server get s… [\#1305](https://github.com/networknt/light-4j/pull/1305) ([stevehu](https://github.com/stevehu))
 ## [1.6.39](https://github.com/networknt/light-4j/tree/1.6.39) (2022-04-26)
 
 
