@@ -40,7 +40,7 @@ headers: ${audit.headers:X-Correlation-Id, X-Traceability-Id,caller_id}
 
 # Output from id token and access token. If multiple values, you can use a comma separated string as default
 # value in the template and values.yml. You can also use a list of strings in YAML format.
-audit: ${audit.audit:client_id, user_id, scope_client_id, endpoint, serviceId, requestBody, responseBody, status}
+audit: ${audit.audit:client_id, user_id, scope_client_id, endpoint, serviceId, requestBody, responseBody}
 
 # Client Id
 # - client_id
@@ -56,5 +56,3 @@ audit: ${audit.audit:client_id, user_id, scope_client_id, endpoint, serviceId, r
 # - requestBody
 # Response payload, this is optional and must be set by the service in its implementation
 # - responseBody
-# Response error status payload
-# - status
