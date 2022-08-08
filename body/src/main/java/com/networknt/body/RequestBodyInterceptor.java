@@ -74,7 +74,7 @@ public class RequestBodyInterceptor implements RequestInterceptor {
      */
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        if (this.shouldParseBody(exchange)) {
+        if (this.shouldAttachBody(exchange)) {
             var existing = (PooledByteBuffer[])exchange.getAttachment(AttachmentConstants.BUFFERED_REQUEST_DATA_KEY);
             StringBuilder completeBody = new StringBuilder();
             for(PooledByteBuffer buffer : existing) {
@@ -84,7 +84,16 @@ public class RequestBodyInterceptor implements RequestInterceptor {
                     break;
                 }
             }
-            boolean attached = this.attachJsonBody(exchange, completeBody.toString());
+            boolean attached = false;
+            String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
+            if(contentType.startsWith("application/json")) {
+                attached = this.attachJsonBody(exchange, completeBody.toString());
+            } else if(contentType.startsWith("text")) { // include text/plain and text/xml etc.
+                if (config.isCacheRequestBody()) {
+                    exchange.putAttachment(AttachmentConstants.REQUEST_BODY_STRING, completeBody.toString());
+                    attached = true;
+                }
+            }
             if(!attached) {
                 if(logger.isInfoEnabled()) logger.info("Failed to attached the request body to the exchange");
             }
@@ -98,15 +107,14 @@ public class RequestBodyInterceptor implements RequestInterceptor {
      * @param exchange - http exchange
      * @return - return true if we should run the body parser.
      */
-    private boolean shouldParseBody(final HttpServerExchange exchange) {
+    private boolean shouldAttachBody(final HttpServerExchange exchange) {
         HttpString method = exchange.getRequestMethod();
         String requestPath = exchange.getRequestPath();
         boolean hasBody = method.equals(Methods.POST) || method.equals(Methods.PUT) || method.equals(Methods.PATCH);
         boolean isPathConfigured = config.getAppliedPathPrefixes() == null ? true : config.getAppliedPathPrefixes().stream().anyMatch(s -> requestPath.startsWith(s));
         return hasBody &&
                 isPathConfigured &&
-                exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE) != null &&
-                exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE).startsWith("application/json");
+                exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE) != null;
     }
 
     /**
