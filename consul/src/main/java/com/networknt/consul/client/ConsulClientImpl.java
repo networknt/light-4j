@@ -58,6 +58,7 @@ public class ConsulClientImpl implements ConsulClient {
 	private OptionMap optionMap;
 	private URI uri;
 	private String wait = "600s";
+	private String timeoutBuffer = "5s";
 
 	/**
 	 * Construct ConsulClient with all parameters from consul.yml config file. The other two constructors are
@@ -69,6 +70,8 @@ public class ConsulClientImpl implements ConsulClient {
 		logger.debug("Consul URL = {}", consulUrl);
 		if(config.getWait() != null && config.getWait().length() > 2) wait = config.getWait();
 		logger.debug("wait = {}", wait);
+		if(config.getTimeoutBuffer() != null) timeoutBuffer = config.getTimeoutBuffer();
+		logger.debug("timeoutBuffer = {}", timeoutBuffer);
 		try {
 			uri = new URI(consulUrl);
 		} catch (URISyntaxException e) {
@@ -247,7 +250,8 @@ public class ConsulClientImpl implements ConsulClient {
 			connection.sendRequest(request, client.createClientCallback(reference, latch, json));
 		}
 		int waitInSecond = ConsulUtils.getWaitInSecond(wait);
-		boolean isNotTimeout = latch.await(waitInSecond, TimeUnit.SECONDS);
+		int timeoutBufferInSecond = ConsulUtils.getTimeoutBufferInSecond(timeoutBuffer);
+		boolean isNotTimeout = latch.await(waitInSecond + timeoutBufferInSecond, TimeUnit.SECONDS);
 		if (isNotTimeout) {
 			logger.debug("The response from Consul: {} = {}", uri, reference != null ? reference.get() : null);
 		} else {
@@ -255,7 +259,7 @@ public class ConsulClientImpl implements ConsulClient {
 			// is borrowed from the pool, a new connection will be created as the one returned is not open.
 			if(connection != null && connection.isOpen()) IoUtils.safeClose(connection);
 			throw new RuntimeException(
-					String.format("The request to Consul timed out after %d seconds to: %s", waitInSecond, uri));
+					String.format("The request to Consul timed out after %d + %d seconds to: %s", waitInSecond, timeoutBufferInSecond, uri));
 		}
 		return reference;
 	}
