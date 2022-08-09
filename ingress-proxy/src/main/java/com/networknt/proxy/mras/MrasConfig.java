@@ -25,6 +25,7 @@ public class MrasConfig {
     public static final String TOKEN_URL = "tokenUrl";
     public static final String USERNAME = "username";
     public static final String PASSWORD = "password";
+    public static final String RESOURCE = "resource";
     public static final String CACHE_ENABLED = "cacheEnabled";
     public static final String MEM_KEY = "memKey";
     public static final String GRACE_PERIOD = "gracePeriod";
