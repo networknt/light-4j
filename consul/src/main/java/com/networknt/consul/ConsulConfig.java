@@ -27,6 +27,7 @@ public class ConsulConfig {
     boolean ttlCheck;
     boolean enableHttp2;
     String wait;
+    String timeoutBuffer;
 
     public String getConsulUrl() {
         return consulUrl;
@@ -86,6 +87,10 @@ public class ConsulConfig {
     public void setWait(String wait) {
         this.wait = wait;
     }
+
+    public String getTimeoutBuffer() { return timeoutBuffer; }
+
+    public void setTimeoutBuffer(String timeoutBuffer) { this.timeoutBuffer = timeoutBuffer; }
 
     public boolean isEnableHttp2() {
         return enableHttp2;
