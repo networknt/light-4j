@@ -17,6 +17,7 @@ import com.networknt.monad.Success;
 import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
+import com.sun.net.httpserver.HttpsServer;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -67,8 +68,11 @@ public class MrasHandler implements MiddlewareHandler {
     private MrasConfig config;
     // the cached jwt token so that we can use the same token for different requests.
     private String accessToken;
+    private String microsoft;
     // the expiration time of access token in millisecond to control if we need to renew the token.
-    private long expiration = 0;
+    private long accessTokenExpiration = 0;
+    private long microsoftExpiration = 0;
+
     private HttpClient client;
 
     public MrasHandler() {
@@ -100,6 +104,7 @@ public class MrasHandler implements MiddlewareHandler {
         masks.add("keyStorePass");
         masks.add("keyPass");
         masks.add("trustStorePass");
+        masks.add("password");
         // use a new no cache instance to avoid the default config to be overwritten.
         ModuleRegistry.registerModule(MrasHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(MrasConfig.CONFIG_NAME), masks);
     }
@@ -118,92 +123,121 @@ public class MrasHandler implements MiddlewareHandler {
         exchange.startBlocking();
         String requestPath = exchange.getRequestPath();
         if(logger.isTraceEnabled()) logger.trace("requestPath = " + requestPath);
-        if (config.getAppliedPathPrefixes().stream().anyMatch(s -> requestPath.startsWith(s))) {
-            // the request path matches at least one of the prefixes.
-            if(System.currentTimeMillis() >= (expiration - 5000)) { // leave 5 seconds room.
-                if(logger.isTraceEnabled()) logger.trace("Token is about or already expired. current time = " + System.currentTimeMillis() + " expiration = " + expiration);
-                Result<TokenResponse> result = getAccessToken();
-                if(result.isSuccess()) {
-                    expiration = System.currentTimeMillis() + 300 * 1000;
-                    accessToken = result.getResult().getAccessToken();
-                } else {
-                    setExchangeStatus(exchange, result.getError());
-                    return;
+        for(String key: config.getPathPrefixAuth().keySet()) {
+            // iterate the key set from the pathPrefixAuth map.
+            if(config.getPathPrefixAuth().get(key).equals(config.ACCESS_TOKEN)) {
+                // private access token for authentication.
+                if(System.currentTimeMillis() >= (accessTokenExpiration - 5000)) { // leave 5 seconds room.
+                    if(logger.isTraceEnabled()) logger.trace("accessToken is about or already expired. current time = " + System.currentTimeMillis() + " expiration = " + accessTokenExpiration);
+                    Result<TokenResponse> result = getAccessToken();
+                    if(result.isSuccess()) {
+                        accessTokenExpiration = System.currentTimeMillis() + 300 * 1000;
+                        accessToken = result.getResult().getAccessToken();
+                    } else {
+                        setExchangeStatus(exchange, result.getError());
+                        return;
+                    }
                 }
-            }
-            // call the MRAS API directly here with the token from the cache.
-            String method = exchange.getRequestMethod().toString();
-            String requestHost = config.getServiceHost();
-            String queryString = exchange.getQueryString();
-            String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
-            if(logger.isTraceEnabled()) logger.trace("Access MRAS API with method = " + method + " requestHost = " + requestHost + " queryString = " + queryString + " contentType = " + contentType);
-            HttpRequest request = null;
-            if(method.equalsIgnoreCase("GET")) {
-                request = HttpRequest.newBuilder()
-                        .uri(new URI(requestHost + requestPath + "?" + queryString))
-                        .headers("Authorization", "Bearer " + accessToken, "Content-Type", contentType)
-                        .GET()
-                        .build();
-
-            } else if(method.equalsIgnoreCase("DELETE")) {
-                request = HttpRequest.newBuilder()
-                        .uri(new URI(requestHost + requestPath + "?" + queryString))
-                        .headers("Authorization", "Bearer " + accessToken, "Content-Type", contentType)
-                        .DELETE()
-                        .build();
-
-
-            } else if(method.equalsIgnoreCase("POST")) {
-                String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
-                if(bodyString == null) {
-                    InputStream inputStream = exchange.getInputStream();
-                    bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
+                invokeApi(exchange, (String)config.getAccessToken().get(config.SERVICE_HOST), "Bearer " + accessToken);
+                break;
+            } else if(config.getPathPrefixAuth().get(key).equals(config.BASIC_AUTH)) {
+                // only basic authentication is used for the access.
+                invokeApi(exchange, (String)config.getBasicAuth().get(config.SERVICE_HOST), "Basic " + encodeCredentials((String)config.getBasicAuth().get(config.USERNAME), (String)config.getBasicAuth().get(config.PASSWORD)));
+                break;
+            } else if(config.getPathPrefixAuth().get(key).equals(config.ANONYMOUS)) {
+                // no authorization header for this type of the request.
+                invokeApi(exchange, (String)config.getBasicAuth().get(config.SERVICE_HOST), null);
+                break;
+            } else if(config.getPathPrefixAuth().get(key).equals(config.MICROSOFT)) {
+                // microsoft access token for authentication.
+                if(System.currentTimeMillis() >= (microsoftExpiration - 5000)) { // leave 5 seconds room.
+                    if(logger.isTraceEnabled()) logger.trace("microsoft token is about or already expired. current time = " + System.currentTimeMillis() + " expiration = " + microsoftExpiration);
+                    Result<TokenResponse> result = getMicrosoftToken();
+                    if(result.isSuccess()) {
+                        microsoftExpiration = System.currentTimeMillis() + 300 * 1000;
+                        microsoft = result.getResult().getAccessToken();
+                    } else {
+                        setExchangeStatus(exchange, result.getError());
+                        return;
+                    }
                 }
-                request = HttpRequest.newBuilder()
-                        .uri(new URI(requestHost + requestPath))
-                        .headers("Authorization", "Bearer " + accessToken, "Content-Type", contentType)
-                        .POST(HttpRequest.BodyPublishers.ofString(bodyString))
-                        .build();
-            } else if(method.equalsIgnoreCase("PUT")) {
-                String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
-                if(bodyString == null) {
-                    InputStream inputStream = exchange.getInputStream();
-                    bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
-                }
-                request = HttpRequest.newBuilder()
-                        .uri(new URI(requestHost + requestPath))
-                        .headers("Authorization", "Bearer " + accessToken, "Content-Type", contentType)
-                        .PUT(HttpRequest.BodyPublishers.ofString(bodyString))
-                        .build();
-            } else if(method.equalsIgnoreCase("PATCH")) {
-                String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
-                if(bodyString == null) {
-                    InputStream inputStream = exchange.getInputStream();
-                    bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
-                }
-                request = HttpRequest.newBuilder()
-                        .uri(new URI(requestHost + requestPath))
-                        .headers("Authorization", "Bearer " + accessToken, "Content-Type", contentType)
-                        .method("PATCH", HttpRequest.BodyPublishers.ofString(bodyString))
-                        .build();
+                invokeApi(exchange, (String)config.getMicrosoft().get(config.SERVICE_HOST), "Bearer " + microsoft);
+                break;
             } else {
-                logger.error("wrong http method " + method + " for request path " + requestPath);
-                setExchangeStatus(exchange, METHOD_NOT_ALLOWED, method, requestPath);
-                return;
+                // not the MRAS path, go to the next middleware handlers.
+                Handler.next(exchange, next);
+                break;
             }
-            HttpResponse<String> response  = client.send(request, HttpResponse.BodyHandlers.ofString());
-            HttpHeaders responseHeaders = response.headers();
-            String responseBody = response.body();
-            exchange.setStatusCode(response.statusCode());
-            if(responseHeaders.firstValue(Headers.CONTENT_TYPE.toString()).isPresent()) {
-                exchange.getRequestHeaders().put(Headers.CONTENT_TYPE, responseHeaders.firstValue(Headers.CONTENT_TYPE.toString()).get());
+        }
+    }
+
+    private void invokeApi(HttpServerExchange exchange, String serviceHost, String authorization) throws Exception {
+        // call the MRAS API directly here with the token from the cache.
+        String requestPath = exchange.getRequestPath();
+        String method = exchange.getRequestMethod().toString();
+        String queryString = exchange.getQueryString();
+        String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
+        if(logger.isTraceEnabled()) logger.trace("Access MRAS API with method = " + method + " requestHost = " + serviceHost + " queryString = " + queryString + " contentType = " + contentType);
+        HttpRequest request = null;
+        if(method.equalsIgnoreCase("GET")) {
+            request = HttpRequest.newBuilder()
+                    .uri(new URI(serviceHost + requestPath + "?" + queryString))
+                    .headers("Authorization", authorization, "Content-Type", contentType)
+                    .GET()
+                    .build();
+
+        } else if(method.equalsIgnoreCase("DELETE")) {
+            request = HttpRequest.newBuilder()
+                    .uri(new URI(serviceHost + requestPath + "?" + queryString))
+                    .headers("Authorization", authorization, "Content-Type", contentType)
+                    .DELETE()
+                    .build();
+        } else if(method.equalsIgnoreCase("POST")) {
+            String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
+            if(bodyString == null) {
+                InputStream inputStream = exchange.getInputStream();
+                bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
             }
-            exchange.getResponseSender().send(responseBody);
+            request = HttpRequest.newBuilder()
+                    .uri(new URI(serviceHost + requestPath))
+                    .headers("Authorization", authorization, "Content-Type", contentType)
+                    .POST(HttpRequest.BodyPublishers.ofString(bodyString))
+                    .build();
+        } else if(method.equalsIgnoreCase("PUT")) {
+            String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
+            if(bodyString == null) {
+                InputStream inputStream = exchange.getInputStream();
+                bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
+            }
+            request = HttpRequest.newBuilder()
+                    .uri(new URI(serviceHost + requestPath))
+                    .headers("Authorization", authorization, "Content-Type", contentType)
+                    .PUT(HttpRequest.BodyPublishers.ofString(bodyString))
+                    .build();
+        } else if(method.equalsIgnoreCase("PATCH")) {
+            String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
+            if(bodyString == null) {
+                InputStream inputStream = exchange.getInputStream();
+                bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
+            }
+            request = HttpRequest.newBuilder()
+                    .uri(new URI(serviceHost + requestPath))
+                    .headers("Authorization", authorization, "Content-Type", contentType)
+                    .method("PATCH", HttpRequest.BodyPublishers.ofString(bodyString))
+                    .build();
+        } else {
+            logger.error("wrong http method " + method + " for request path " + requestPath);
+            setExchangeStatus(exchange, METHOD_NOT_ALLOWED, method, requestPath);
             return;
         }
-        // this line can never be reached.
-        logger.error("This line should never be reached.");
-        Handler.next(exchange, next);
+        HttpResponse<String> response  = client.send(request, HttpResponse.BodyHandlers.ofString());
+        HttpHeaders responseHeaders = response.headers();
+        String responseBody = response.body();
+        exchange.setStatusCode(response.statusCode());
+        if(responseHeaders.firstValue(Headers.CONTENT_TYPE.toString()).isPresent()) {
+            exchange.getRequestHeaders().put(Headers.CONTENT_TYPE, responseHeaders.firstValue(Headers.CONTENT_TYPE.toString()).get());
+        }
+        exchange.getResponseSender().send(responseBody);
     }
 
     private Result<TokenResponse> getAccessToken() throws Exception {
@@ -230,9 +264,9 @@ public class MrasHandler implements MiddlewareHandler {
             }
         }
         try {
-            String serverUrl = config.getTokenUrl();
+            String serverUrl = (String)config.getAccessToken().get(config.TOKEN_URL);
             if(serverUrl == null) {
-                return Failure.of(new Status(OAUTH_SERVER_URL_ERROR, "tokenUrl"));
+                return Failure.of(new Status(OAUTH_SERVER_URL_ERROR, "accessToken.tokenUrl"));
             }
 
             Map<String, String> parameters = new HashMap<>();
@@ -245,7 +279,7 @@ public class MrasHandler implements MiddlewareHandler {
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(serverUrl))
-                    .headers("Content-Type", "application/x-www-form-urlencoded", "Authorization", "BASIC " + encodeCredentials(config.getUsername(), config.getPassword()))
+                    .headers("Content-Type", "application/x-www-form-urlencoded", "Authorization", "BASIC " + encodeCredentials((String)config.getAccessToken().get(config.USERNAME), (String)config.getAccessToken().get(config.PASSWORD)))
                     .POST(HttpRequest.BodyPublishers.ofString(form))
                     .build();
 
@@ -269,7 +303,74 @@ public class MrasHandler implements MiddlewareHandler {
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
-            return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR, config.getTokenUrl()));
+            return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR, config.getAccessToken().get(config.TOKEN_URL)));
+        }
+    }
+
+    private Result<TokenResponse> getMicrosoftToken() throws Exception {
+        TokenResponse tokenResponse = null;
+        if(client == null) {
+            try {
+                HttpClient.Builder clientBuilder = HttpClient.newBuilder()
+                        .followRedirects(HttpClient.Redirect.NORMAL)
+                        .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
+                        // we cannot use the Http2Client SSL Context as we need two-way TLS here.
+                        .sslContext(createSSLContext());
+                if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
+                if(config.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
+                // this a workaround to bypass the hostname verification in jdk11 http client.
+                Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+                if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
+                    final Properties props = System.getProperties();
+                    props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
+                }
+                client = clientBuilder.build();
+            } catch (IOException e) {
+                logger.error("Cannot create HttpClient:", e);
+                return Failure.of(new Status(TLS_TRUSTSTORE_ERROR));
+            }
+        }
+        try {
+            String serverUrl = (String)config.getMicrosoft().get(config.TOKEN_URL);
+            if(serverUrl == null) {
+                return Failure.of(new Status(OAUTH_SERVER_URL_ERROR, "microsoft.tokenUrl"));
+            }
+
+            Map<String, String> parameters = new HashMap<>();
+            parameters.put("grant_type", "client_credentials");
+
+            String form = parameters.entrySet()
+                    .stream()
+                    .map(e -> e.getKey() + "=" + URLEncoder.encode(e.getValue(), StandardCharsets.UTF_8))
+                    .collect(Collectors.joining("&"));
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(serverUrl))
+                    .headers("Content-Type", "application/x-www-form-urlencoded", "Authorization", "BASIC " + encodeCredentials((String)config.getMicrosoft().get(config.USERNAME), (String)config.getMicrosoft().get(config.PASSWORD)))
+                    .POST(HttpRequest.BodyPublishers.ofString(form))
+                    .build();
+
+            HttpResponse<?> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            if(logger.isTraceEnabled()) logger.trace(response.statusCode() + " " + response.body().toString());
+            if(response.statusCode() == 200) {
+                // construct a token response and return it.
+                Map<String, Object> map = JsonMapper.string2Map(response.body().toString());
+                if(map != null) {
+                    tokenResponse = new TokenResponse();
+                    tokenResponse.setAccessToken((String)map.get("access_token"));
+                    tokenResponse.setTokenType((String)map.get("token_type"));
+                    tokenResponse.setScope((String)map.get("scope"));
+                    return Success.of(tokenResponse);
+                } else {
+                    return Failure.of(new Status(GET_TOKEN_ERROR, "response body is not a JSON"));
+                }
+            } else {
+                logger.error("Error in getting the token with status code " + response.statusCode() + " and body " + response.body().toString());
+                return Failure.of(new Status(GET_TOKEN_ERROR, response.body().toString()));
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR, config.getMicrosoft().get(config.TOKEN_URL)));
         }
     }
 

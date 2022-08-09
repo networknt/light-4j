@@ -3,44 +3,44 @@ package com.networknt.proxy.mras;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import com.networknt.config.JsonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MrasConfig {
     private static final Logger logger = LoggerFactory.getLogger(MrasConfig.class);
     public static final String CONFIG_NAME = "mras";
-    private static final String ENABLED = "enabled";
-    private static final String TOKEN_URL = "tokenUrl";
+    public static final String ENABLED = "enabled";
 
-    private static final String USERNAME = "username";
-    private static final String PASSWORD = "password";
-    private static final String CACHE_ENABLED = "cacheEnabled";
-    private static final String MEM_KEY = "memKey";
-    private static final String GRACE_PERIOD = "gracePeriod";
-    private static final String KEY_STORE_NAME = "keyStoreName";
-    private static final String KEY_STORE_PASS = "keyStorePass";
-    private static final String KEY_PASS = "keyPass";
+    public static final String ACCESS_TOKEN = "accessToken";
 
-    private static final String TRUST_STORE_NAME = "trustStoreName";
-    private static final String TRUST_STORE_PASS = "trustStorePass";
-    private static final String PROXY_HOST = "proxyHost";
-    private static final String PROXY_PORT = "proxyPort";
-    private static final String ENABLE_HTTP2 = "enableHttp2";
-    private static final String APPLIED_PATH_PREFIXES = "appliedPathPrefixes";
-    private static final String SERVICE_HOST = "serviceHost";
+    public static final String BASIC_AUTH = "basicAuth";
+
+    public static final String ANONYMOUS = "anonymous";
+
+    public static final String MICROSOFT = "microsoft";
+
+    public static final String TOKEN_URL = "tokenUrl";
+    public static final String USERNAME = "username";
+    public static final String PASSWORD = "password";
+    public static final String CACHE_ENABLED = "cacheEnabled";
+    public static final String MEM_KEY = "memKey";
+    public static final String GRACE_PERIOD = "gracePeriod";
+    public static final String SERVICE_HOST = "serviceHost";
+
+    public static final String KEY_STORE_NAME = "keyStoreName";
+    public static final String KEY_STORE_PASS = "keyStorePass";
+    public static final String KEY_PASS = "keyPass";
+    public static final String TRUST_STORE_NAME = "trustStoreName";
+    public static final String TRUST_STORE_PASS = "trustStorePass";
+    public static final String PROXY_HOST = "proxyHost";
+    public static final String PROXY_PORT = "proxyPort";
+    public static final String ENABLE_HTTP2 = "enableHttp2";
+    public static final String PATH_PREFIX_AUTH = "pathPrefixAuth";
 
     boolean enabled;
-    String tokenUrl;
-    String username;
-    String password;
-    boolean cacheEnabled;
-    String memKey;
-    int gracePeriod;
     String keyStoreName;
     String keyStorePass;
     String keyPass;
@@ -49,7 +49,16 @@ public class MrasConfig {
     String proxyHost;
     int proxyPort;
     boolean enableHttp2;
-    List<String> appliedPathPrefixes;
+    Map<String, Object> pathPrefixAuth;
+
+    Map<String, Object> accessToken;
+
+    Map<String, Object> anonymous;
+
+    Map<String, Object> microsoft;
+
+    Map<String, Object> basicAuth;
+
     String serviceHost;
     private Config config;
     private Map<String, Object> mappedConfig;
@@ -67,7 +76,7 @@ public class MrasConfig {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(configName);
         setConfigData();
-        setConfigList();
+        setConfigMap();
     }
 
     public static MrasConfig load() {
@@ -81,74 +90,39 @@ public class MrasConfig {
     void reload() {
         mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
         setConfigData();
-        setConfigList();
+        setConfigMap();
     }
 
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
-
     public boolean isEnabled() {
         return enabled;
     }
-
-    public String getTokenUrl() {
-        return tokenUrl;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public boolean isCacheEnabled() {
-        return cacheEnabled;
-    }
-
-    public String getMemKey() {
-        return memKey;
-    }
-
-    public int getGracePeriod() {
-        return gracePeriod;
-    }
-
     public String getKeyStoreName() {
         return keyStoreName;
     }
-
     public String getKeyStorePass() {
         return keyStorePass;
     }
-
     public String getKeyPass() {
         return keyPass;
     }
-
     public String getTrustStoreName() {
         return trustStoreName;
     }
-
     public String getTrustStorePass() {
         return trustStorePass;
     }
-
-
     public String getProxyHost() {
         return proxyHost;
     }
     public int getProxyPort() {
         return proxyPort;
     }
-
-
     public boolean isEnableHttp2() {
         return enableHttp2;
     }
-
     public String getServiceHost() {
         return serviceHost;
     }
@@ -157,30 +131,6 @@ public class MrasConfig {
         Object object = mappedConfig.get(ENABLED);
         if (object != null && (Boolean) object) {
             enabled = (Boolean)object;
-        }
-        object = mappedConfig.get(TOKEN_URL);
-        if (object != null) {
-            tokenUrl = (String) object;
-        }
-        object = mappedConfig.get(USERNAME);
-        if (object != null) {
-            username = (String)object;
-        }
-        object = mappedConfig.get(PASSWORD);
-        if (object != null) {
-            password = (String)object;
-        }
-        object = mappedConfig.get(CACHE_ENABLED);
-        if (object != null && (Boolean) object) {
-            cacheEnabled = (Boolean)object;
-        }
-        object = mappedConfig.get(MEM_KEY);
-        if (object != null) {
-            memKey = (String)object;
-        }
-        object = mappedConfig.get(GRACE_PERIOD);
-        if (object != null) {
-            gracePeriod = (Integer)object;
         }
         object = mappedConfig.get(KEY_STORE_NAME);
         if (object != null) {
@@ -220,42 +170,177 @@ public class MrasConfig {
         }
     }
 
-    public List<String> getAppliedPathPrefixes() {
-        return appliedPathPrefixes;
+    public Map<String, Object> getPathPrefixAuth() {
+        return pathPrefixAuth;
     }
 
-    public void setAppliedPathPrefixes(List<String> appliedPathPrefixes) {
-        this.appliedPathPrefixes = appliedPathPrefixes;
+    public void setPathPrefixAuth(Map<String, Object> pathPrefixAuth) {
+        this.pathPrefixAuth = pathPrefixAuth;
     }
 
-    private void setConfigList() {
-        if (mappedConfig.get(APPLIED_PATH_PREFIXES) != null) {
-            Object object = mappedConfig.get(APPLIED_PATH_PREFIXES);
-            appliedPathPrefixes = new ArrayList<>();
+    public Map<String, Object> getAccessToken() {
+        return accessToken;
+    }
+    public Map<String, Object> getBasicAuth() { return basicAuth; }
+
+    public Map<String, Object> getAnonymous() { return anonymous; }
+
+    public Map<String, Object> getMicrosoft() { return microsoft; }
+
+    private void setConfigMap() {
+        // path prefix auth mapping
+        if (mappedConfig.get(PATH_PREFIX_AUTH) != null) {
+            Object object = mappedConfig.get(PATH_PREFIX_AUTH);
+            pathPrefixAuth = new HashMap<>();
             if(object instanceof String) {
                 String s = (String)object;
                 s = s.trim();
-                if(logger.isTraceEnabled()) logger.trace("s = " + s);
-                if(s.startsWith("[")) {
+                if(logger.isTraceEnabled()) logger.trace("pathPrefixAuth s = " + s);
+                if(s.startsWith("{")) {
                     // json format
                     try {
-                        appliedPathPrefixes = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
+                        pathPrefixAuth = JsonMapper.string2Map(s);
                     } catch (Exception e) {
-                        throw new ConfigException("could not parse the appliedPathPrefixes json with a list of strings.");
+                        throw new ConfigException("could not parse the pathPrefixAuth json with a map of string and object.");
                     }
                 } else {
                     // comma separated
-                    appliedPathPrefixes = Arrays.asList(s.split("\\s*,\\s*"));
+                    String[] pairs = s.split(",");
+                    for (int i = 0; i < pairs.length; i++) {
+                        String pair = pairs[i];
+                        String[] keyValue = pair.split(":");
+                        pathPrefixAuth.put(keyValue[0], keyValue[1]);
+                    }
                 }
-            } else if (object instanceof List) {
-                List prefixes = (List)object;
-                prefixes.forEach(item -> {
-                    appliedPathPrefixes.add((String)item);
-                });
+            } else if (object instanceof Map) {
+                pathPrefixAuth = (Map)object;
             } else {
-                throw new ConfigException("appliedPathPrefixes must be a string or a list of strings.");
+                throw new ConfigException("pathPrefixAuth must be a string object map.");
             }
         }
+        // accessToken map
+        if (mappedConfig.get(ACCESS_TOKEN) != null) {
+            Object object = mappedConfig.get(ACCESS_TOKEN);
+            accessToken = new HashMap<>();
+            if(object instanceof String) {
+                String s = (String)object;
+                s = s.trim();
+                if(logger.isTraceEnabled()) logger.trace("accessToken s = " + s);
+                if(s.startsWith("{")) {
+                    // json format
+                    try {
+                        accessToken = JsonMapper.string2Map(s);
+                    } catch (Exception e) {
+                        throw new ConfigException("could not parse the accessToken json with a map of string and object.");
+                    }
+                } else {
+                    // comma separated
+                    String[] pairs = s.split(",");
+                    for (int i = 0; i < pairs.length; i++) {
+                        String pair = pairs[i];
+                        String[] keyValue = pair.split(":");
+                        accessToken.put(keyValue[0], keyValue[1]);
+                    }
+                }
+            } else if (object instanceof Map) {
+                accessToken = (Map)object;
+            } else {
+                throw new ConfigException("accessToken must be a string object map.");
+            }
+        }
+        // anonymous
+        if (mappedConfig.get(ANONYMOUS) != null) {
+            Object object = mappedConfig.get(ANONYMOUS);
+            anonymous = new HashMap<>();
+            if(object instanceof String) {
+                String s = (String)object;
+                s = s.trim();
+                if(logger.isTraceEnabled()) logger.trace("anonymous string = " + s);
+                if(s.startsWith("{")) {
+                    // json format
+                    try {
+                        anonymous = JsonMapper.string2Map(s);
+                    } catch (Exception e) {
+                        throw new ConfigException("could not parse the anonymous json with a map of string and object.");
+                    }
+                } else {
+                    // comma separated
+                    String[] pairs = s.split(",");
+                    for (int i = 0; i < pairs.length; i++) {
+                        String pair = pairs[i];
+                        String[] keyValue = pair.split(":");
+                        anonymous.put(keyValue[0], keyValue[1]);
+                    }
+                }
+            } else if (object instanceof Map) {
+                anonymous = (Map)object;
+            } else {
+                throw new ConfigException("anonymous must be a string object map.");
+            }
+        }
+
+        // basicAuth
+        if (mappedConfig.get(BASIC_AUTH) != null) {
+            Object object = mappedConfig.get(BASIC_AUTH);
+            basicAuth = new HashMap<>();
+            if(object instanceof String) {
+                String s = (String)object;
+                s = s.trim();
+                if(logger.isTraceEnabled()) logger.trace("basicAuth string = " + s);
+                if(s.startsWith("{")) {
+                    // json format
+                    try {
+                        basicAuth = JsonMapper.string2Map(s);
+                    } catch (Exception e) {
+                        throw new ConfigException("could not parse the basicAuth json with a map of string and object.");
+                    }
+                } else {
+                    // comma separated
+                    String[] pairs = s.split(",");
+                    for (int i = 0; i < pairs.length; i++) {
+                        String pair = pairs[i];
+                        String[] keyValue = pair.split(":");
+                        basicAuth.put(keyValue[0], keyValue[1]);
+                    }
+                }
+            } else if (object instanceof Map) {
+                basicAuth = (Map)object;
+            } else {
+                throw new ConfigException("basicAuth must be a string object map.");
+            }
+        }
+
+        // Microsoft
+        if (mappedConfig.get(MICROSOFT) != null) {
+            Object object = mappedConfig.get(MICROSOFT);
+            microsoft = new HashMap<>();
+            if(object instanceof String) {
+                String s = (String)object;
+                s = s.trim();
+                if(logger.isTraceEnabled()) logger.trace("microsoft string = " + s);
+                if(s.startsWith("{")) {
+                    // json format
+                    try {
+                        microsoft = JsonMapper.string2Map(s);
+                    } catch (Exception e) {
+                        throw new ConfigException("could not parse the microsoft json with a map of string and object.");
+                    }
+                } else {
+                    // comma separated
+                    String[] pairs = s.split(",");
+                    for (int i = 0; i < pairs.length; i++) {
+                        String pair = pairs[i];
+                        String[] keyValue = pair.split(":");
+                        microsoft.put(keyValue[0], keyValue[1]);
+                    }
+                }
+            } else if (object instanceof Map) {
+                microsoft = (Map)object;
+            } else {
+                throw new ConfigException("microsoft must be a string object map.");
+            }
+        }
+
     }
 
 }
