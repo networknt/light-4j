@@ -16,23 +16,34 @@ salesforce.serviceHost: https://nnt-sit.my.salesforce.com
 
 # mras.yml
 mras.enabled: true
-
-
-mras.tokenUrl: https://ais-dev.networknt.munichre.cloud/allfinanz/auth/oauth/token
-mras.username: client_id
-mras.password: client_secret
-mras.cacheEnabled: true
-mras.memKey: MRASToken
-mras.gracePeriod: 50
-
-
 mras.keyStoreName: api.ais-dev
 mras.keyStorePass: password
 mras.keyPass: password
 mras.trustStoreName: mras_ts.jks
 mras.truststorePass: password
 
+mras.accessToken.serviceHost: https://localhost:8443
 mras.accessToken.tokenUrl: https://test.mras.com/services/oauth2/token
+mras.accessToken.username: client_id
+mras.accessToken.password: client_secret
+mras.accessToken.cacheEnabled: true
+mras.accessToken.memKey: MRASToken
+mras.accessToken.gracePeriod: 50
+
+mras.microsoft.serviceHost: https://localhost:8443
+mras.microsoft.tokenUrl: https://test.mras.com/services/oauth2/token
+mras.microsoft.username: client_id
+mras.microsoft.password: client_secret
+mras.microsoft.cacheEnabled: true
+mras.microsoft.memKey: MRASToken
+mras.microsoft.gracePeriod: 50
+mras.microsoft.resource: 9bcadce-3312-4c2b-9a5d-0e90e8b92c67"
+
+mras.anonymous.serviceHost: https://localhost:8443
+
+mras.basicAuth.serviceHost: https://localhost:8443
+mras.basicAuth.username: username
+mras.basicAuth.password: password
 
 mras.pathPrefixAuth:
   /mras: accessToken

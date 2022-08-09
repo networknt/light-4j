@@ -14,5 +14,10 @@ public class MrasConfigTest {
         Assert.assertTrue(config.getBasicAuth().size() > 0);
         Assert.assertTrue(config.getAnonymous().size() > 0);
         Assert.assertTrue(config.getMicrosoft().size() > 0);
+
+        Assert.assertTrue(config.getMicrosoft().get(config.SERVICE_HOST) != null);
+        Assert.assertTrue(config.getAccessToken().get(config.SERVICE_HOST) != null);
+        Assert.assertTrue(config.getAnonymous().get(config.SERVICE_HOST) != null);
+        Assert.assertTrue(config.getBasicAuth().get(config.SERVICE_HOST) != null);
     }
 }

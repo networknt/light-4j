@@ -338,6 +338,7 @@ public class MrasHandler implements MiddlewareHandler {
 
             Map<String, String> parameters = new HashMap<>();
             parameters.put("grant_type", "client_credentials");
+            parameters.put("resource", (String)config.getMicrosoft().get(config.RESOURCE));
 
             String form = parameters.entrySet()
                     .stream()

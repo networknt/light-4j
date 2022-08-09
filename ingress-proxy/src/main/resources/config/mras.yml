@@ -61,6 +61,8 @@ microsoft:
   username: ${mras.microsoft.username:}
   # password for the authentication
   password: ${mras.microsoft.password:}
+  # resource for the authentication
+  resource: ${mras.microsoft.resource:}
   # is cache enabled for the token
   cacheEnabled: ${mras.microsoft.cacheEnabled:}
   # memory key
