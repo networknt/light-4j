@@ -16,23 +16,30 @@ salesforce.serviceHost: https://nnt-sit.my.salesforce.com
 
 # mras.yml
 mras.enabled: true
+
+
 mras.tokenUrl: https://ais-dev.networknt.munichre.cloud/allfinanz/auth/oauth/token
 mras.username: client_id
 mras.password: client_secret
 mras.cacheEnabled: true
 mras.memKey: MRASToken
 mras.gracePeriod: 50
+
+
 mras.keyStoreName: api.ais-dev
 mras.keyStorePass: password
 mras.keyPass: password
 mras.trustStoreName: mras_ts.jks
 mras.truststorePass: password
-#mras.appliedPathPrefixes:
-#  - /mras
-#  - /test
-mras.appliedPathPrefixes: /mras,/test
-# mras.appliedPathPrefixes: ["/mras","/test"]
-mras.serviceHost: https://mras.com
+
+mras.accessToken.tokenUrl: https://test.mras.com/services/oauth2/token
+
+mras.pathPrefixAuth:
+  /mras: accessToken
+  /test: basicAuth
+  /pdf/generator: anonymous
+  /advisor: microsoft
+
 
 # external-service.yml
 externalService.enabled: true
