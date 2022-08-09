@@ -29,6 +29,7 @@ import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.Cookie;
+import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -241,7 +242,11 @@ public class AuditHandler implements MiddlewareHandler {
         }
         // Mask requestBody json string if mask enabled
         if (requestBodyString != null) {
-            auditMap.put(REQUEST_BODY_KEY, config.isMask() ? Mask.maskJson(requestBodyString, REQUEST_BODY_KEY) : requestBodyString);
+            if(exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE).startsWith("application/json")) {
+                auditMap.put(REQUEST_BODY_KEY, config.isMask() ? Mask.maskJson(requestBodyString, REQUEST_BODY_KEY) : requestBodyString);
+            } else {
+                auditMap.put(REQUEST_BODY_KEY, requestBodyString);
+            }
         }
     }
 
