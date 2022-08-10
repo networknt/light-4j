@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class SalesforceHandlerTest {
     static final Logger logger = LoggerFactory.getLogger(SalesforceHandlerTest.class);
-    static final SalesforceConfig config = new SalesforceConfig();
+    static final SalesforceConfig config = SalesforceConfig.load();
     static Undertow server = null;
 
     @BeforeClass

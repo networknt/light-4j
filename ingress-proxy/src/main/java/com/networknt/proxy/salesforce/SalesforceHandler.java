@@ -69,13 +69,18 @@ public class SalesforceHandler implements MiddlewareHandler {
     private volatile HttpHandler next;
     private SalesforceConfig config;
     // the cached jwt token so that we can use the same token for different requests.
-    private String accessToken;
+    private String morningStarAccessToken;
+    private String conquestAccessToken;
+    private String advisorHubAccessToken;
     // the expiration time of access token in millisecond to control if we need to renew the token.
-    private long expiration = 0;
+    private long morningStarExpiration = 0;
+    private long conquestExpiration = 0;
+    private long advisorHubExpiration = 0;
+
     private HttpClient client;
 
     public SalesforceHandler() {
-        config = new SalesforceConfig();
+        config = SalesforceConfig.load();
         if(logger.isInfoEnabled()) logger.info("SalesforceAuthHandler is loaded.");
     }
 
@@ -105,6 +110,11 @@ public class SalesforceHandler implements MiddlewareHandler {
     }
 
     @Override
+    public void reload() {
+        config.reload();
+    }
+
+    @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if (exchange.isInIoThread()) {
             exchange.dispatch(this);
@@ -112,94 +122,62 @@ public class SalesforceHandler implements MiddlewareHandler {
         }
         exchange.startBlocking();
         String requestPath = exchange.getRequestPath();
-        if (config.getAppliedPathPrefixes().stream().anyMatch(s -> requestPath.startsWith(s))) {
-            // the request path matches at least one of the prefixes.
-            if(System.currentTimeMillis() >= (expiration - 5000)) { // leave 5 seconds room.
-                String jwt = createJwt();  // created a self-signed jwt token locally
-                Result<TokenResponse> result = getAccessToken(jwt);
-                if(result.isSuccess()) {
-                    expiration = System.currentTimeMillis() + 300 * 1000;
-                    accessToken = result.getResult().getAccessToken();
-                } else {
-                    setExchangeStatus(exchange, result.getError());
-                    return;
+        if(logger.isTraceEnabled()) logger.trace("requestPath = " + requestPath);
+        for(String key: config.getPathPrefixAuth().keySet()) {
+            // iterate the key set from the pathPrefixAuth map
+            if(config.getPathPrefixAuth().get(key).equals(config.MORNING_STAR)) {
+                // morningStar
+                if(System.currentTimeMillis() >= (morningStarExpiration - 5000)) { // leave 5 seconds room.
+                    String jwt = createJwt((String)config.getMorningStar().get(SalesforceConfig.AUTH_ISSUER), (String)config.getMorningStar().get(SalesforceConfig.AUTH_SUBJECT));
+                    Result<TokenResponse> result = getAccessToken(jwt);
+                    if(result.isSuccess()) {
+                        morningStarExpiration = System.currentTimeMillis() + 300 * 1000;
+                        morningStarAccessToken = result.getResult().getAccessToken();
+                    } else {
+                        setExchangeStatus(exchange, result.getError());
+                        return;
+                    }
                 }
-            }
-            // call the salesforce API directly here with the token from the cache.
-            String method = exchange.getRequestMethod().toString();
-            String requestHost = config.getServiceHost();
-            String queryString = exchange.getQueryString();
-            String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
-            HttpRequest request = null;
-            if(method.equalsIgnoreCase("GET")) {
-                request = HttpRequest.newBuilder()
-                        .uri(new URI(requestHost + requestPath + "?" + queryString))
-                        .headers("Authorization", "Bearer " + accessToken, "Content-Type", contentType)
-                        .GET()
-                        .build();
-
-            } else if(method.equalsIgnoreCase("DELETE")) {
-                request = HttpRequest.newBuilder()
-                        .uri(new URI(requestHost + requestPath + "?" + queryString))
-                        .headers("Authorization", "Bearer " + accessToken, "Content-Type", contentType)
-                        .DELETE()
-                        .build();
-
-
-            } else if(method.equalsIgnoreCase("POST")) {
-                String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
-                if(bodyString == null) {
-                    InputStream inputStream = exchange.getInputStream();
-                    bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
+                invokeApi(exchange, "Bearer " + morningStarAccessToken);
+                break;
+            } else if(config.getPathPrefixAuth().get(key).equals(config.CONQUEST)) {
+                // morningStar
+                if(System.currentTimeMillis() >= (conquestExpiration - 5000)) { // leave 5 seconds room.
+                    String jwt = createJwt((String)config.getConquest().get(SalesforceConfig.AUTH_ISSUER), (String)config.getConquest().get(SalesforceConfig.AUTH_SUBJECT));
+                    Result<TokenResponse> result = getAccessToken(jwt);
+                    if(result.isSuccess()) {
+                        conquestExpiration = System.currentTimeMillis() + 300 * 1000;
+                        conquestAccessToken = result.getResult().getAccessToken();
+                    } else {
+                        setExchangeStatus(exchange, result.getError());
+                        return;
+                    }
                 }
-                request = HttpRequest.newBuilder()
-                        .uri(new URI(requestHost + requestPath))
-                        .headers("Authorization", "Bearer " + accessToken, "Content-Type", contentType)
-                        .POST(HttpRequest.BodyPublishers.ofString(bodyString))
-                        .build();
-            } else if(method.equalsIgnoreCase("PUT")) {
-                String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
-                if(bodyString == null) {
-                    InputStream inputStream = exchange.getInputStream();
-                    bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
+                invokeApi(exchange, "Bearer " + conquestAccessToken);
+                break;
+            } else if(config.getPathPrefixAuth().get(key).equals(config.ADVISOR_HUB)) {
+                if(System.currentTimeMillis() >= (advisorHubExpiration - 5000)) { // leave 5 seconds room.
+                    String jwt = createJwt((String)config.getAdvisorHub().get(SalesforceConfig.AUTH_ISSUER), (String)config.getAdvisorHub().get(SalesforceConfig.AUTH_SUBJECT));
+                    Result<TokenResponse> result = getAccessToken(jwt);
+                    if(result.isSuccess()) {
+                        advisorHubExpiration = System.currentTimeMillis() + 300 * 1000;
+                        advisorHubAccessToken = result.getResult().getAccessToken();
+                    } else {
+                        setExchangeStatus(exchange, result.getError());
+                        return;
+                    }
                 }
-                request = HttpRequest.newBuilder()
-                        .uri(new URI(requestHost + requestPath))
-                        .headers("Authorization", "Bearer " + accessToken, "Content-Type", contentType)
-                        .PUT(HttpRequest.BodyPublishers.ofString(bodyString))
-                        .build();
-            } else if(method.equalsIgnoreCase("PATCH")) {
-                String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
-                if(bodyString == null) {
-                    InputStream inputStream = exchange.getInputStream();
-                    bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
-                }
-                request = HttpRequest.newBuilder()
-                        .uri(new URI(requestHost + requestPath))
-                        .headers("Authorization", "Bearer " + accessToken, "Content-Type", contentType)
-                        .method("PATCH", HttpRequest.BodyPublishers.ofString(bodyString))
-                        .build();
+                invokeApi(exchange, "Bearer " + advisorHubAccessToken);
+                break;
             } else {
-                logger.error("wrong http method " + method + " for request path " + requestPath);
-                setExchangeStatus(exchange, METHOD_NOT_ALLOWED, method, requestPath);
-                return;
+                // not the Salesforce path, go to the next middleware handler
+                Handler.next(exchange, next);
+                break;
             }
-            HttpResponse<String> response  = client.send(request, HttpResponse.BodyHandlers.ofString());
-            HttpHeaders responseHeaders = response.headers();
-            String responseBody = response.body();
-            exchange.setStatusCode(response.statusCode());
-            if(responseHeaders.firstValue(Headers.CONTENT_TYPE.toString()).isPresent()) {
-                exchange.getRequestHeaders().put(Headers.CONTENT_TYPE, responseHeaders.firstValue(Headers.CONTENT_TYPE.toString()).get());
-            }
-            exchange.getResponseSender().send(responseBody);
-            return;
         }
-        Handler.next(exchange, next);
     }
 
-    private String createJwt() throws Exception {
-        String issuer = config.getAuthIssuer();
-        String subject = config.getAuthSubject();
+    private String createJwt(String issuer, String subject) throws Exception {
         String audience = config.getAuthAudience();
         String certFileName = config.getCertFilename();
         String certPassword = config.getCertPassword();
@@ -309,4 +287,75 @@ public class SalesforceHandler implements MiddlewareHandler {
             return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR, config.getTokenUrl()));
         }
     }
+
+    private void invokeApi(HttpServerExchange exchange, String authorization) throws Exception {
+        // call the Salesforce API directly here with the token from the cache.
+        String requestPath = exchange.getRequestPath();
+        String method = exchange.getRequestMethod().toString();
+        String requestHost = config.getServiceHost();
+        String queryString = exchange.getQueryString();
+        String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
+        HttpRequest request = null;
+        if(method.equalsIgnoreCase("GET")) {
+            request = HttpRequest.newBuilder()
+                    .uri(new URI(requestHost + requestPath + "?" + queryString))
+                    .headers("Authorization", authorization, "Content-Type", contentType)
+                    .GET()
+                    .build();
+
+        } else if(method.equalsIgnoreCase("DELETE")) {
+            request = HttpRequest.newBuilder()
+                    .uri(new URI(requestHost + requestPath + "?" + queryString))
+                    .headers("Authorization", authorization, "Content-Type", contentType)
+                    .DELETE()
+                    .build();
+
+        } else if(method.equalsIgnoreCase("POST")) {
+            String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
+            if(bodyString == null) {
+                InputStream inputStream = exchange.getInputStream();
+                bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
+            }
+            request = HttpRequest.newBuilder()
+                    .uri(new URI(requestHost + requestPath))
+                    .headers("Authorization", authorization, "Content-Type", contentType)
+                    .POST(HttpRequest.BodyPublishers.ofString(bodyString))
+                    .build();
+        } else if(method.equalsIgnoreCase("PUT")) {
+            String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
+            if(bodyString == null) {
+                InputStream inputStream = exchange.getInputStream();
+                bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
+            }
+            request = HttpRequest.newBuilder()
+                    .uri(new URI(requestHost + requestPath))
+                    .headers("Authorization", authorization, "Content-Type", contentType)
+                    .PUT(HttpRequest.BodyPublishers.ofString(bodyString))
+                    .build();
+        } else if(method.equalsIgnoreCase("PATCH")) {
+            String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
+            if(bodyString == null) {
+                InputStream inputStream = exchange.getInputStream();
+                bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
+            }
+            request = HttpRequest.newBuilder()
+                    .uri(new URI(requestHost + requestPath))
+                    .headers("Authorization", authorization, "Content-Type", contentType)
+                    .method("PATCH", HttpRequest.BodyPublishers.ofString(bodyString))
+                    .build();
+        } else {
+            logger.error("wrong http method " + method + " for request path " + requestPath);
+            setExchangeStatus(exchange, METHOD_NOT_ALLOWED, method, requestPath);
+            return;
+        }
+        HttpResponse<String> response  = client.send(request, HttpResponse.BodyHandlers.ofString());
+        HttpHeaders responseHeaders = response.headers();
+        String responseBody = response.body();
+        exchange.setStatusCode(response.statusCode());
+        if(responseHeaders.firstValue(Headers.CONTENT_TYPE.toString()).isPresent()) {
+            exchange.getRequestHeaders().put(Headers.CONTENT_TYPE, responseHeaders.firstValue(Headers.CONTENT_TYPE.toString()).get());
+        }
+        exchange.getResponseSender().send(responseBody);
+    }
+
 }
