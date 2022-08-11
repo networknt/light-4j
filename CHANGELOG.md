@@ -1,5 +1,13 @@
 # Change Log
 
+## [1.6.41](https://github.com/networknt/light-4j/tree/1.6.41) (2022-08-11)
+
+
+**Merged pull requests:**
+
+
+- Fix confusing service discovery result message [\#1334](https://github.com/networknt/light-4j/pull/1334) ([jsu216](https://github.com/jsu216))
+- Add a time buffer before terminate the blocking query connection to C… [\#1323](https://github.com/networknt/light-4j/pull/1323) ([jsu216](https://github.com/jsu216))
 ## [1.6.40](https://github.com/networknt/light-4j/tree/1.6.40) (2022-08-05)
 
 
