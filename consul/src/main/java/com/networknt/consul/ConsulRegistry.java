@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -307,7 +308,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                     sleep(lookupInterval);
                     logger.info("Consul lookupServiceUpdate Thread - WAKE UP: Woke up from sleep for lookupServiceUpdate for service {}", serviceName);
                     ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(protocol, serviceName);
-                    logger.info("Got service URLs from Consul lookupServiceUpdate: {} service URLs found for service {} ({})", serviceUrls.size(), serviceName, protocol);
+                    logger.info("Got service URLs from Consul lookupServiceUpdate: {} service URLs found for service {} ({})", serviceUrls.getOrDefault(serviceName, Collections.emptyList()).size(), serviceName, protocol);
                     updateServiceCache(serviceName, serviceUrls, true);
                     logger.info("Local Consul service cache updated with service URLs from lookupServiceUpdate for {}", serviceName);
                 } catch (Throwable e) {
