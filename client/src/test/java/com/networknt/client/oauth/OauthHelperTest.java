@@ -31,10 +31,7 @@ import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.lang.JoseException;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -211,6 +208,7 @@ public class OauthHelperTest {
     }
 
     @Test
+    @Ignore
     public void testGetTokenResult() throws Exception {
         AuthorizationCodeRequest tokenRequest = new AuthorizationCodeRequest();
         tokenRequest.setClientId("test_client");
@@ -234,6 +232,7 @@ public class OauthHelperTest {
 
     @Test
     @Deprecated
+    @Ignore
     public void testGetToken() throws Exception {
         AuthorizationCodeRequest tokenRequest = new AuthorizationCodeRequest();
         tokenRequest.setClientId("test_client");

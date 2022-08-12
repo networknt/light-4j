@@ -534,6 +534,7 @@ public class Http2ClientTest extends Http2ClientBase {
 
 
     @Test
+    @Ignore
     public void testSingleAsych() throws Exception {
         callApiAsync();
     }
