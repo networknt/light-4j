@@ -124,51 +124,51 @@ public class MrasHandler implements MiddlewareHandler {
         String requestPath = exchange.getRequestPath();
         if(logger.isTraceEnabled()) logger.trace("requestPath = " + requestPath);
         for(String key: config.getPathPrefixAuth().keySet()) {
-            // iterate the key set from the pathPrefixAuth map.
-            if(config.getPathPrefixAuth().get(key).equals(config.ACCESS_TOKEN)) {
-                // private access token for authentication.
-                if(System.currentTimeMillis() >= (accessTokenExpiration - 5000)) { // leave 5 seconds room.
-                    if(logger.isTraceEnabled()) logger.trace("accessToken is about or already expired. current time = " + System.currentTimeMillis() + " expiration = " + accessTokenExpiration);
-                    Result<TokenResponse> result = getAccessToken();
-                    if(result.isSuccess()) {
-                        accessTokenExpiration = System.currentTimeMillis() + 300 * 1000;
-                        accessToken = result.getResult().getAccessToken();
-                    } else {
-                        setExchangeStatus(exchange, result.getError());
-                        return;
+            if(requestPath.startsWith(key)) {
+                // iterate the key set from the pathPrefixAuth map.
+                if(config.getPathPrefixAuth().get(key).equals(config.ACCESS_TOKEN)) {
+                    // private access token for authentication.
+                    if(System.currentTimeMillis() >= (accessTokenExpiration - 5000)) { // leave 5 seconds room.
+                        if(logger.isTraceEnabled()) logger.trace("accessToken is about or already expired. current time = " + System.currentTimeMillis() + " expiration = " + accessTokenExpiration);
+                        Result<TokenResponse> result = getAccessToken();
+                        if(result.isSuccess()) {
+                            accessTokenExpiration = System.currentTimeMillis() + 300 * 1000;
+                            accessToken = result.getResult().getAccessToken();
+                        } else {
+                            setExchangeStatus(exchange, result.getError());
+                            return;
+                        }
                     }
-                }
-                invokeApi(exchange, (String)config.getAccessToken().get(config.SERVICE_HOST), "Bearer " + accessToken);
-                break;
-            } else if(config.getPathPrefixAuth().get(key).equals(config.BASIC_AUTH)) {
-                // only basic authentication is used for the access.
-                invokeApi(exchange, (String)config.getBasicAuth().get(config.SERVICE_HOST), "Basic " + encodeCredentials((String)config.getBasicAuth().get(config.USERNAME), (String)config.getBasicAuth().get(config.PASSWORD)));
-                break;
-            } else if(config.getPathPrefixAuth().get(key).equals(config.ANONYMOUS)) {
-                // no authorization header for this type of the request.
-                invokeApi(exchange, (String)config.getBasicAuth().get(config.SERVICE_HOST), null);
-                break;
-            } else if(config.getPathPrefixAuth().get(key).equals(config.MICROSOFT)) {
-                // microsoft access token for authentication.
-                if(System.currentTimeMillis() >= (microsoftExpiration - 5000)) { // leave 5 seconds room.
-                    if(logger.isTraceEnabled()) logger.trace("microsoft token is about or already expired. current time = " + System.currentTimeMillis() + " expiration = " + microsoftExpiration);
-                    Result<TokenResponse> result = getMicrosoftToken();
-                    if(result.isSuccess()) {
-                        microsoftExpiration = System.currentTimeMillis() + 300 * 1000;
-                        microsoft = result.getResult().getAccessToken();
-                    } else {
-                        setExchangeStatus(exchange, result.getError());
-                        return;
+                    invokeApi(exchange, (String)config.getAccessToken().get(config.SERVICE_HOST), "Bearer " + accessToken);
+                    return;
+                } else if(config.getPathPrefixAuth().get(key).equals(config.BASIC_AUTH)) {
+                    // only basic authentication is used for the access.
+                    invokeApi(exchange, (String)config.getBasicAuth().get(config.SERVICE_HOST), "Basic " + encodeCredentials((String)config.getBasicAuth().get(config.USERNAME), (String)config.getBasicAuth().get(config.PASSWORD)));
+                    return;
+                } else if(config.getPathPrefixAuth().get(key).equals(config.ANONYMOUS)) {
+                    // no authorization header for this type of the request.
+                    invokeApi(exchange, (String)config.getBasicAuth().get(config.SERVICE_HOST), null);
+                    return;
+                } else if(config.getPathPrefixAuth().get(key).equals(config.MICROSOFT)) {
+                    // microsoft access token for authentication.
+                    if(System.currentTimeMillis() >= (microsoftExpiration - 5000)) { // leave 5 seconds room.
+                        if(logger.isTraceEnabled()) logger.trace("microsoft token is about or already expired. current time = " + System.currentTimeMillis() + " expiration = " + microsoftExpiration);
+                        Result<TokenResponse> result = getMicrosoftToken();
+                        if(result.isSuccess()) {
+                            microsoftExpiration = System.currentTimeMillis() + 300 * 1000;
+                            microsoft = result.getResult().getAccessToken();
+                        } else {
+                            setExchangeStatus(exchange, result.getError());
+                            return;
+                        }
                     }
+                    invokeApi(exchange, (String)config.getMicrosoft().get(config.SERVICE_HOST), "Bearer " + microsoft);
+                    return;
                 }
-                invokeApi(exchange, (String)config.getMicrosoft().get(config.SERVICE_HOST), "Bearer " + microsoft);
-                break;
-            } else {
-                // not the MRAS path, go to the next middleware handlers.
-                Handler.next(exchange, next);
-                break;
             }
         }
+        // not the MRAS path, go to the next middleware handlers.
+        Handler.next(exchange, next);
     }
 
     private void invokeApi(HttpServerExchange exchange, String serviceHost, String authorization) throws Exception {
