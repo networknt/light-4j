@@ -268,6 +268,7 @@ public class OauthHelperTest {
     }
 
     @Test
+    @Ignore
     public void testGetTokenKey() throws Exception {
         TokenKeyRequest request = new TokenKeyRequest("100");
         request.setClientId("test_client");
