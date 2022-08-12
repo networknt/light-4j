@@ -123,58 +123,60 @@ public class SalesforceHandler implements MiddlewareHandler {
         exchange.startBlocking();
         String requestPath = exchange.getRequestPath();
         if(logger.isTraceEnabled()) logger.trace("requestPath = " + requestPath);
+        // make sure that the request path is in the key set. remember that key set only contains prefix not the full request path.
         for(String key: config.getPathPrefixAuth().keySet()) {
-            // iterate the key set from the pathPrefixAuth map
-            if(config.getPathPrefixAuth().get(key).equals(config.MORNING_STAR)) {
-                // morningStar
-                if(System.currentTimeMillis() >= (morningStarExpiration - 5000)) { // leave 5 seconds room.
-                    String jwt = createJwt((String)config.getMorningStar().get(SalesforceConfig.AUTH_ISSUER), (String)config.getMorningStar().get(SalesforceConfig.AUTH_SUBJECT));
-                    Result<TokenResponse> result = getAccessToken(jwt);
-                    if(result.isSuccess()) {
-                        morningStarExpiration = System.currentTimeMillis() + 300 * 1000;
-                        morningStarAccessToken = result.getResult().getAccessToken();
-                    } else {
-                        setExchangeStatus(exchange, result.getError());
-                        return;
+            if(requestPath.startsWith(key)) {
+                // iterate the key set from the pathPrefixAuth map
+                if(config.getPathPrefixAuth().get(key).equals(config.MORNING_STAR)) {
+                    // morningStar
+                    if(System.currentTimeMillis() >= (morningStarExpiration - 5000)) { // leave 5 seconds room.
+                        String jwt = createJwt((String)config.getMorningStar().get(SalesforceConfig.AUTH_ISSUER), (String)config.getMorningStar().get(SalesforceConfig.AUTH_SUBJECT));
+                        Result<TokenResponse> result = getAccessToken(jwt);
+                        if(result.isSuccess()) {
+                            morningStarExpiration = System.currentTimeMillis() + 300 * 1000;
+                            morningStarAccessToken = result.getResult().getAccessToken();
+                        } else {
+                            setExchangeStatus(exchange, result.getError());
+                            return;
+                        }
                     }
-                }
-                invokeApi(exchange, "Bearer " + morningStarAccessToken);
-                break;
-            } else if(config.getPathPrefixAuth().get(key).equals(config.CONQUEST)) {
-                // morningStar
-                if(System.currentTimeMillis() >= (conquestExpiration - 5000)) { // leave 5 seconds room.
-                    String jwt = createJwt((String)config.getConquest().get(SalesforceConfig.AUTH_ISSUER), (String)config.getConquest().get(SalesforceConfig.AUTH_SUBJECT));
-                    Result<TokenResponse> result = getAccessToken(jwt);
-                    if(result.isSuccess()) {
-                        conquestExpiration = System.currentTimeMillis() + 300 * 1000;
-                        conquestAccessToken = result.getResult().getAccessToken();
-                    } else {
-                        setExchangeStatus(exchange, result.getError());
-                        return;
+                    invokeApi(exchange, "Bearer " + morningStarAccessToken);
+                    return;
+                } else if(config.getPathPrefixAuth().get(key).equals(config.CONQUEST)) {
+                    // morningStar
+                    if(System.currentTimeMillis() >= (conquestExpiration - 5000)) { // leave 5 seconds room.
+                        String jwt = createJwt((String)config.getConquest().get(SalesforceConfig.AUTH_ISSUER), (String)config.getConquest().get(SalesforceConfig.AUTH_SUBJECT));
+                        Result<TokenResponse> result = getAccessToken(jwt);
+                        if(result.isSuccess()) {
+                            conquestExpiration = System.currentTimeMillis() + 300 * 1000;
+                            conquestAccessToken = result.getResult().getAccessToken();
+                        } else {
+                            setExchangeStatus(exchange, result.getError());
+                            return;
+                        }
                     }
-                }
-                invokeApi(exchange, "Bearer " + conquestAccessToken);
-                break;
-            } else if(config.getPathPrefixAuth().get(key).equals(config.ADVISOR_HUB)) {
-                if(System.currentTimeMillis() >= (advisorHubExpiration - 5000)) { // leave 5 seconds room.
-                    String jwt = createJwt((String)config.getAdvisorHub().get(SalesforceConfig.AUTH_ISSUER), (String)config.getAdvisorHub().get(SalesforceConfig.AUTH_SUBJECT));
-                    Result<TokenResponse> result = getAccessToken(jwt);
-                    if(result.isSuccess()) {
-                        advisorHubExpiration = System.currentTimeMillis() + 300 * 1000;
-                        advisorHubAccessToken = result.getResult().getAccessToken();
-                    } else {
-                        setExchangeStatus(exchange, result.getError());
-                        return;
+                    invokeApi(exchange, "Bearer " + conquestAccessToken);
+                    return;
+                } else if(config.getPathPrefixAuth().get(key).equals(config.ADVISOR_HUB)) {
+                    if(System.currentTimeMillis() >= (advisorHubExpiration - 5000)) { // leave 5 seconds room.
+                        String jwt = createJwt((String)config.getAdvisorHub().get(SalesforceConfig.AUTH_ISSUER), (String)config.getAdvisorHub().get(SalesforceConfig.AUTH_SUBJECT));
+                        Result<TokenResponse> result = getAccessToken(jwt);
+                        if(result.isSuccess()) {
+                            advisorHubExpiration = System.currentTimeMillis() + 300 * 1000;
+                            advisorHubAccessToken = result.getResult().getAccessToken();
+                        } else {
+                            setExchangeStatus(exchange, result.getError());
+                            return;
+                        }
                     }
+                    invokeApi(exchange, "Bearer " + advisorHubAccessToken);
+                    return;
                 }
-                invokeApi(exchange, "Bearer " + advisorHubAccessToken);
-                break;
-            } else {
-                // not the Salesforce path, go to the next middleware handler
-                Handler.next(exchange, next);
-                break;
+
             }
         }
+        // not the Salesforce path, go to the next middleware handler
+        Handler.next(exchange, next);
     }
 
     private String createJwt(String issuer, String subject) throws Exception {
