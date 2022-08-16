@@ -34,7 +34,7 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
     /**
      * Construct a new instance.
      *
-     * @param next the delegate conduit to set
+     * @param next     the delegate conduit to set
      * @param exchange
      */
     public ModifiableContentSinkConduit(StreamSinkConduit next, HttpServerExchange exchange) {
@@ -55,7 +55,7 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
         var oldBuffers = exchange.getAttachment(AttachmentConstants.BUFFERED_RESPONSE_DATA_KEY);
         // close the current buffer pool
         if (oldBuffers != null) {
-            for (var oldBuffer: oldBuffers) {
+            for (var oldBuffer : oldBuffers) {
                 if (oldBuffer != null) {
                     oldBuffer.close();
                 }
@@ -103,22 +103,24 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
     public void terminateWrites() throws IOException {
         logger.info("terminating writes");
         try {
-            if(interceptors.length > 0) {
+            if (this.interceptors.length > 0) {
                 // iterate all interceptor handlers.
-                for(ResponseInterceptor interceptor : interceptors) {
-                    if(logger.isDebugEnabled()) logger.debug("Executing interceptor " + interceptor.getClass());
+                for (ResponseInterceptor interceptor : interceptors) {
+                    if (logger.isDebugEnabled()) logger.debug("Executing interceptor " + interceptor.getClass());
                     interceptor.handleRequest(exchange);
                 }
             }
         } catch (Exception e) {
-            logger.error("Error executing interceptors", e);
-            // ByteArrayProxyRequest.of(exchange).setInError(true);
+            logger.error("Error executing interceptors: " + e.getMessage(), e);
             throw new RuntimeException(e);
         }
 
-        var dests = exchange.getAttachment(AttachmentConstants.BUFFERED_RESPONSE_DATA_KEY);
+        var dests = this.exchange.getAttachment(AttachmentConstants.BUFFERED_RESPONSE_DATA_KEY);
 
-        updateContentLength(exchange, dests);
+        /* only update content-length header if it exists. Response might have transfer encoding */
+        if (this.exchange.getResponseHeaders().get(Headers.CONTENT_LENGTH) != null) {
+            this.updateContentLength(this.exchange, dests);
+        }
 
         for (PooledByteBuffer dest : dests) {
             if (dest != null) {
@@ -129,6 +131,13 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
         next.terminateWrites();
     }
 
+    /**
+     * Calculates the length of the buffered data and updates the content-length header.
+     * Do not call this method when content-length is not already set in the response. This is to preserve transfer-encoding restrictions.
+     *
+     * @param exchange - current http exchange.
+     * @param dests - the updated buffered response data.
+     */
     private void updateContentLength(HttpServerExchange exchange, PooledByteBuffer[] dests) {
         long length = 0;
 
@@ -140,8 +149,8 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
 
         exchange.getResponseHeaders().put(Headers.CONTENT_LENGTH, length);
 
-        // need also to update lenght of ServerFixedLengthStreamSinkConduit
-        if (next instanceof ServerFixedLengthStreamSinkConduit) {
+        // need also to update length of ServerFixedLengthStreamSinkConduit. Should we do this for anything that extends AbstractFixedLengthStreamSinkConduit?
+        if (this.next instanceof ServerFixedLengthStreamSinkConduit) {
             Method m;
 
             try {
@@ -159,7 +168,7 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
                 throw new RuntimeException("could not access BUFFERED_REQUEST_DATA field", ex);
             }
         } else {
-            logger.warn("updateContentLenght() next is {}", next.getClass().getSimpleName());
+            logger.warn("updateContentLength() next is {}", this.next.getClass().getSimpleName());
         }
     }
 
