@@ -43,18 +43,19 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * This is a customized Salesforce for authentication and authorization with cloud Salesforce service
+ * This is a customized Salesforce handler for authentication and authorization with cloud Salesforce service
  * within an enterprise environment. It is converted from a customized flow for the business logic.
- * For any external Salesforce request, this handler will check if there is a cached salesforce token
- * that is not expired. If true, put the token into the header. If false, get a new token by following
- * the flow and put it into the header and cache it.
  *
- * The way to get a salesforce token is to sign a token with your private key and salesforce will have
- * the public key to verify your token. Send a request with grant_type and assertion as body to the url
- * defined in the config file. Salesforce will issue an access token for API access.
+ * For any external Salesforce request, this handler will check if there is a cached salesforce token that is
+ * not expired. If true, put the token into the header. If false, get a new token by following the flow and put
+ * it into the header and cache it.
  *
- * For the token caching, we only cache the salesforce token. The token we created only last 5 minutes,
- * and it is not cached.
+ * The way to get a salesforce token is to sign a token with your private key and salesforce will have the public
+ * key to verify your token. Send a request with grant_type and assertion as body to the url defined in the config
+ * file. Salesforce will issue an access token for API access.
+ *
+ * For the token caching, we only cache the salesforce token. The jwt token we created only last 5 minutes, and it
+ * is not cached.
  *
  * @author Steve Hu
  */
@@ -69,13 +70,6 @@ public class SalesforceHandler implements MiddlewareHandler {
     private volatile HttpHandler next;
     private SalesforceConfig config;
     // the cached jwt token so that we can use the same token for different requests.
-    private String morningStarAccessToken;
-    private String conquestAccessToken;
-    private String advisorHubAccessToken;
-    // the expiration time of access token in millisecond to control if we need to renew the token.
-    private long morningStarExpiration = 0;
-    private long conquestExpiration = 0;
-    private long advisorHubExpiration = 0;
 
     private HttpClient client;
 
@@ -124,63 +118,30 @@ public class SalesforceHandler implements MiddlewareHandler {
         String requestPath = exchange.getRequestPath();
         if(logger.isTraceEnabled()) logger.trace("requestPath = " + requestPath);
         // make sure that the request path is in the key set. remember that key set only contains prefix not the full request path.
-        for(String key: config.getPathPrefixAuth().keySet()) {
-            if(requestPath.startsWith(key)) {
-                // iterate the key set from the pathPrefixAuth map
-                if(config.getPathPrefixAuth().get(key).equals(config.MORNING_STAR)) {
-                    // morningStar
-                    if(System.currentTimeMillis() >= (morningStarExpiration - 5000)) { // leave 5 seconds room.
-                        String jwt = createJwt((String)config.getMorningStar().get(SalesforceConfig.AUTH_ISSUER), (String)config.getMorningStar().get(SalesforceConfig.AUTH_SUBJECT));
-                        Result<TokenResponse> result = getAccessToken(jwt);
-                        if(result.isSuccess()) {
-                            morningStarExpiration = System.currentTimeMillis() + 300 * 1000;
-                            morningStarAccessToken = result.getResult().getAccessToken();
-                        } else {
-                            setExchangeStatus(exchange, result.getError());
-                            return;
-                        }
+        for(PathPrefixAuth pathPrefixAuth: config.getPathPrefixAuths()) {
+            if(requestPath.startsWith(pathPrefixAuth.getPathPrefix())) {
+                if(logger.isTraceEnabled()) logger.trace("found with requestPath = " + requestPath + " prefix = " + pathPrefixAuth.getPathPrefix());
+                // matched the prefix found. handler it with the config for this prefix.
+                if(System.currentTimeMillis() >= (pathPrefixAuth.getExpiration() - 5000)) { // leave 5 seconds room and default value is 0
+                    String jwt = createJwt(pathPrefixAuth.getAuthIssuer(), pathPrefixAuth.getAuthSubject(), pathPrefixAuth.getAuthAudience());
+                    Result<TokenResponse> result = getAccessToken(pathPrefixAuth.getTokenUrl(), jwt);
+                    if(result.isSuccess()) {
+                        pathPrefixAuth.setExpiration(System.currentTimeMillis() + 300 * 1000);
+                        pathPrefixAuth.setAccessToken(result.getResult().getAccessToken());
+                    } else {
+                        setExchangeStatus(exchange, result.getError());
+                        return;
                     }
-                    invokeApi(exchange, "Bearer " + morningStarAccessToken);
-                    return;
-                } else if(config.getPathPrefixAuth().get(key).equals(config.CONQUEST)) {
-                    // morningStar
-                    if(System.currentTimeMillis() >= (conquestExpiration - 5000)) { // leave 5 seconds room.
-                        String jwt = createJwt((String)config.getConquest().get(SalesforceConfig.AUTH_ISSUER), (String)config.getConquest().get(SalesforceConfig.AUTH_SUBJECT));
-                        Result<TokenResponse> result = getAccessToken(jwt);
-                        if(result.isSuccess()) {
-                            conquestExpiration = System.currentTimeMillis() + 300 * 1000;
-                            conquestAccessToken = result.getResult().getAccessToken();
-                        } else {
-                            setExchangeStatus(exchange, result.getError());
-                            return;
-                        }
-                    }
-                    invokeApi(exchange, "Bearer " + conquestAccessToken);
-                    return;
-                } else if(config.getPathPrefixAuth().get(key).equals(config.ADVISOR_HUB)) {
-                    if(System.currentTimeMillis() >= (advisorHubExpiration - 5000)) { // leave 5 seconds room.
-                        String jwt = createJwt((String)config.getAdvisorHub().get(SalesforceConfig.AUTH_ISSUER), (String)config.getAdvisorHub().get(SalesforceConfig.AUTH_SUBJECT));
-                        Result<TokenResponse> result = getAccessToken(jwt);
-                        if(result.isSuccess()) {
-                            advisorHubExpiration = System.currentTimeMillis() + 300 * 1000;
-                            advisorHubAccessToken = result.getResult().getAccessToken();
-                        } else {
-                            setExchangeStatus(exchange, result.getError());
-                            return;
-                        }
-                    }
-                    invokeApi(exchange, "Bearer " + advisorHubAccessToken);
-                    return;
                 }
-
+                invokeApi(exchange, "Bearer " + pathPrefixAuth.getAccessToken(), pathPrefixAuth.getServiceHost());
+                return;
             }
         }
         // not the Salesforce path, go to the next middleware handler
         Handler.next(exchange, next);
     }
 
-    private String createJwt(String issuer, String subject) throws Exception {
-        String audience = config.getAuthAudience();
+    private String createJwt(String issuer, String subject, String audience) throws Exception {
         String certFileName = config.getCertFilename();
         String certPassword = config.getCertPassword();
 
@@ -222,7 +183,7 @@ public class SalesforceHandler implements MiddlewareHandler {
         return token.toString();
     }
 
-    private Result<TokenResponse> getAccessToken(String jwt) throws Exception {
+    private Result<TokenResponse> getAccessToken(String serverUrl, String jwt) throws Exception {
         TokenResponse tokenResponse = null;
         if(client == null) {
             try {
@@ -246,7 +207,6 @@ public class SalesforceHandler implements MiddlewareHandler {
             }
         }
         try {
-            String serverUrl = config.getTokenUrl();
             if(serverUrl == null) {
                 return Failure.of(new Status(OAUTH_SERVER_URL_ERROR, "tokenUrl"));
             }
@@ -286,15 +246,14 @@ public class SalesforceHandler implements MiddlewareHandler {
             }
         } catch (Exception e) {
             logger.error("Exception:", e);
-            return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR, config.getTokenUrl()));
+            return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR, serverUrl));
         }
     }
 
-    private void invokeApi(HttpServerExchange exchange, String authorization) throws Exception {
+    private void invokeApi(HttpServerExchange exchange, String authorization, String requestHost) throws Exception {
         // call the Salesforce API directly here with the token from the cache.
         String requestPath = exchange.getRequestPath();
         String method = exchange.getRequestMethod().toString();
-        String requestHost = config.getServiceHost();
         String queryString = exchange.getQueryString();
         String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
         HttpRequest request = null;
