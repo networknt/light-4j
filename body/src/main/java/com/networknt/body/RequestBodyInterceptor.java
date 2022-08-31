@@ -98,7 +98,8 @@ public class RequestBodyInterceptor implements RequestInterceptor {
                 if(logger.isInfoEnabled()) logger.info("Failed to attached the request body to the exchange");
             }
         }
-        Handler.next(exchange, next);
+        // as an interceptor, we don't need to call the next handler in the chain.
+        // Handler.next(exchange, next);
     }
 
     /**

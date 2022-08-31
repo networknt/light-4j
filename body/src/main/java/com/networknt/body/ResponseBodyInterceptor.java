@@ -81,7 +81,8 @@ public class ResponseBodyInterceptor implements ResponseInterceptor {
                 if(logger.isInfoEnabled()) logger.info("Failed to attached the response body to the exchange");
             }
         }
-        Handler.next(exchange, next);
+        // as an interceptor, we don't need to call the next handler in the chain.
+        // Handler.next(exchange, next);
     }
 
     private boolean shouldParseBody(final HttpServerExchange exchange) {
