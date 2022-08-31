@@ -41,7 +41,7 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
         super(next);
         this.exchange = exchange;
         // load the interceptors from the service.yml
-        interceptors = SingletonServiceFactory.getBeans(ResponseInterceptor.class);
+        this.interceptors = SingletonServiceFactory.getBeans(ResponseInterceptor.class);
         resetBufferPool(exchange);
     }
 
@@ -101,11 +101,11 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
 
     @Override
     public void terminateWrites() throws IOException {
-        logger.info("terminating writes");
+        if(logger.isTraceEnabled()) logger.trace("terminating writes with interceptors length = " + (this.interceptors == null ? 0: this.interceptors.length));
         try {
             if (this.interceptors.length > 0) {
                 // iterate all interceptor handlers.
-                for (ResponseInterceptor interceptor : interceptors) {
+                for (ResponseInterceptor interceptor : this.interceptors) {
                     if (logger.isDebugEnabled()) logger.debug("Executing interceptor " + interceptor.getClass());
                     interceptor.handleRequest(exchange);
                 }

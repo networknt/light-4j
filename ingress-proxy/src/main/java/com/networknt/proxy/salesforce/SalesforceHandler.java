@@ -138,6 +138,7 @@ public class SalesforceHandler implements MiddlewareHandler {
             }
         }
         // not the Salesforce path, go to the next middleware handler
+        if(logger.isDebugEnabled()) logger.debug("The requestPath is not matched to salesforce, go to the next handler in the chain.");
         Handler.next(exchange, next);
     }
 
@@ -277,6 +278,7 @@ public class SalesforceHandler implements MiddlewareHandler {
                 InputStream inputStream = exchange.getInputStream();
                 bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
             }
+            if(logger.isTraceEnabled()) logger.trace("Post request body = " + bodyString);
             request = HttpRequest.newBuilder()
                     .uri(new URI(requestHost + requestPath))
                     .headers("Authorization", authorization, "Content-Type", contentType)
@@ -288,6 +290,7 @@ public class SalesforceHandler implements MiddlewareHandler {
                 InputStream inputStream = exchange.getInputStream();
                 bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
             }
+            if(logger.isTraceEnabled()) logger.trace("Put request body = " + bodyString);
             request = HttpRequest.newBuilder()
                     .uri(new URI(requestHost + requestPath))
                     .headers("Authorization", authorization, "Content-Type", contentType)
@@ -299,6 +302,7 @@ public class SalesforceHandler implements MiddlewareHandler {
                 InputStream inputStream = exchange.getInputStream();
                 bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
             }
+            if(logger.isTraceEnabled()) logger.trace("Patch request body = " + bodyString);
             request = HttpRequest.newBuilder()
                     .uri(new URI(requestHost + requestPath))
                     .headers("Authorization", authorization, "Content-Type", contentType)
@@ -314,8 +318,9 @@ public class SalesforceHandler implements MiddlewareHandler {
         String responseBody = response.body();
         exchange.setStatusCode(response.statusCode());
         if(responseHeaders.firstValue(Headers.CONTENT_TYPE.toString()).isPresent()) {
-            exchange.getRequestHeaders().put(Headers.CONTENT_TYPE, responseHeaders.firstValue(Headers.CONTENT_TYPE.toString()).get());
+            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, responseHeaders.firstValue(Headers.CONTENT_TYPE.toString()).get());
         }
+        if(logger.isTraceEnabled()) logger.trace("response body = " + responseBody);
         exchange.getResponseSender().send(responseBody);
     }
 
