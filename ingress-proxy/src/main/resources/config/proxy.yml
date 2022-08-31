@@ -22,7 +22,7 @@ rewriteHostHeader: ${proxy.rewriteHostHeader:true}
 reuseXForwarded: ${proxy.reuseXForwarded:false}
 
 # Max Connection Retries
-maxConnectionRetries: ${proxy.reuseXForwarded:3}
+maxConnectionRetries: ${proxy.maxConnectionRetries:3}
 
-# Decode the the JWT token claims and forward to the backend api in the form of json string
+# Decode the JWT token claims and forward to the backend api in the form of json string
 forwardJwtClaims: ${proxy.forwardJwtClaims:false}
