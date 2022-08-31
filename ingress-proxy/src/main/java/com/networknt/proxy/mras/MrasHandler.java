@@ -235,7 +235,7 @@ public class MrasHandler implements MiddlewareHandler {
         String responseBody = response.body();
         exchange.setStatusCode(response.statusCode());
         if(responseHeaders.firstValue(Headers.CONTENT_TYPE.toString()).isPresent()) {
-            exchange.getRequestHeaders().put(Headers.CONTENT_TYPE, responseHeaders.firstValue(Headers.CONTENT_TYPE.toString()).get());
+            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, responseHeaders.firstValue(Headers.CONTENT_TYPE.toString()).get());
         }
         exchange.getResponseSender().send(responseBody);
     }
