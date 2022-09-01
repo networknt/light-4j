@@ -88,7 +88,7 @@ public class ResponseBodyInterceptor implements ResponseInterceptor {
     private boolean shouldParseBody(final HttpServerExchange exchange) {
         String requestPath = exchange.getRequestPath();
         boolean isPathConfigured = config.getAppliedPathPrefixes() == null ? true : config.getAppliedPathPrefixes().stream().anyMatch(s -> requestPath.startsWith(s));
-        return isPathConfigured &&
+        return !exchange.isResponseStarted() && isPathConfigured &&
                 exchange.getResponseHeaders().getFirst(Headers.CONTENT_TYPE) != null &&
                 exchange.getResponseHeaders().getFirst(Headers.CONTENT_TYPE).startsWith("application/json");
     }
