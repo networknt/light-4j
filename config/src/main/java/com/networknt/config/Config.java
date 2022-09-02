@@ -30,6 +30,7 @@ import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.networknt.config.yml.ConfigLoaderConstructor;
+import com.networknt.decrypt.Decryptor;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,7 +115,7 @@ public abstract class Config {
     public abstract String getDecryptorClassPublic();
 
     private static final class FileConfigImpl extends Config {
-    	static final String CONFIG_NAME = "config";
+        static final String CONFIG_NAME = "config";
         static final String CONFIG_EXT_JSON = ".json";
         static final String CONFIG_EXT_YAML = ".yaml";
         static final String CONFIG_EXT_YML = ".yml";
@@ -144,20 +145,22 @@ public abstract class Config {
             mapper.registerModule(new JavaTimeModule());
             mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         }
-        
+
         final Yaml yaml;
-        
-        FileConfigImpl(){
-        	super();
-        	String decryptorClass = getDecryptorClass();
-        	configLoaderClass = getConfigLoaderClass();
-        	if (null==decryptorClass || decryptorClass.trim().isEmpty()) {
-        		yaml = new Yaml();
-        	}else {
-	            final Resolver resolver = new Resolver();
-	            resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
-	        	yaml = new Yaml(new DecryptConstructor(decryptorClass), new Representer(), new DumperOptions(), resolver);
-        	}
+
+
+
+        FileConfigImpl() {
+            super();
+            String decryptorClass = getDecryptorClass();
+            configLoaderClass = getConfigLoaderClass();
+            if (null == decryptorClass || decryptorClass.trim().isEmpty()) {
+                yaml = new Yaml();
+            } else {
+                final Resolver resolver = new Resolver();
+                resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
+                yaml = new Yaml(new DecryptConstructor(decryptorClass), new Representer(), new DumperOptions(), resolver);
+            }
         }
 
         private static Config initialize() {
