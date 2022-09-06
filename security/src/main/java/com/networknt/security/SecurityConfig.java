@@ -36,6 +36,7 @@ public class SecurityConfig {
     private static final String BOOTSTRAP_FROM_KEY_SERVICE = "bootstrapFromKeyService";
     private static final String IGNORE_JWT_EXPIRY = "ignoreJwtExpiry";
     private static final String PROVIDER_ID = "providerId";
+    private static final String ENABLE_H2C = "enableH2c";
 
     private Map<String, Object> mappedConfig;
     private Map<String, Object> certificate;
@@ -53,6 +54,7 @@ public class SecurityConfig {
     private boolean bootstrapFromKeyService;
     private boolean ignoreJwtExpiry;
     private String providerId;
+    private boolean enableH2c;
 
 
     private SecurityConfig(String configName) {
@@ -79,6 +81,8 @@ public class SecurityConfig {
     public boolean isEnableVerifyJwt() {
         return enableVerifyJwt;
     }
+
+    public boolean isEnableH2c() { return enableH2c; }
 
     public boolean isEnableExtractScopeToken() {
         return enableExtractScopeToken;
@@ -160,6 +164,10 @@ public class SecurityConfig {
             Object object = getMappedConfig().get(ENABLE_VERIFY_JWT);
             if(object != null && (Boolean) object) {
                 enableVerifyJwt = true;
+            }
+            object = getMappedConfig().get(ENABLE_H2C);
+            if(object != null && (Boolean) object) {
+                enableH2c = true;
             }
             object = getMappedConfig().get(ENABLE_EXTRACT_SCOPE_TOKEN);
             if(object != null && (Boolean) object) {
