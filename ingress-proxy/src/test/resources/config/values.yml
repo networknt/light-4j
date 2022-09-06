@@ -1,0 +1,73 @@
+# client.yml
+client.verifyHostname: false
+client.timeout: 10000
+
+# salesforce.yml
+salesforce.enabled: true
+salesforce.certFilename: apigatewayuat.pfx
+salesforce.certPassword: password01
+salesforce.pathPrefixAuths: "[{\"pathPrefix\":\"/salesforce\",\"authIssuer\":\"3MVG9S11UK8FGR3O.vJebzXvWgAE211Z9KX_7vmKt6k300-2913g_AdsTWtzBTLI232Y1w21kw2HANBfU9jTTJF9h5mL.2tJdY142hyaPW\",\"authSubject\":\"apiuser.conquestintegration@networknt.sit\",\"authAudience\":\"https://test.salesforce.com\",\"iv\":\"Yeocae324eAvs2a/P33y3Ea3Rqg\",\"tokenTtl\":60,\"waitLength\":5000,\"tokenUrl\":\"https://test.salesforce.com/services/oauth2/token\",\"serviceHost\":\"https://nnt-sit.my.salesforce.com\"},{\"pathPrefix\":\"/services/apexrest\",\"authIssuer\":\"3MVG9S11UK8FGR3O.vJebzXvWgAE211Z9KX_7vmKt6k300-2913g_AdsTWtzBTLI232Y1w21kw2HANBfU9jTTJF9h5mL.2tJdY142hyaPW\",\"authSubject\":\"apiuser.conquestintegration@networknt.sit\",\"authAudience\":\"https://test.salesforce.com\",\"iv\":\"Yeocae324eAvs2a/P33y3Ea3Rqg\",\"tokenTtl\":60,\"waitLength\":5000,\"tokenUrl\":\"https://test.salesforce.com/services/oauth2/token\",\"serviceHost\":\"https://nnt-sit.my.salesforce.com\"}]"
+#  - pathPrefix: /salesforce
+#    authIssuer: 3MVG9S11UK8FGR3O.vJebzXvWgAE211Z9KX_7vmKt6k300-2913g_AdsTWtzBTLI232Y1w21kw2HANBfU9jTTJF9h5mL.2tJdY142hyaPW
+#    authSubject: apiuser.conquestintegration@networknt.sit
+#    authAudience: https://test.salesforce.com
+#    iv: Yeocae324eAvs2a/P33y3Ea3Rqg
+#    tokenTtl: 60
+#    waitLength: 5000
+#    tokenUrl: https://test.salesforce.com/services/oauth2/token
+#    serviceHost: https://nnt-sit.my.salesforce.com
+#  - pathPrefix: /services/apexrest
+#    authIssuer: 3MVG9S11UK8FGR3O.vJebzXvWgAE211Z9KX_7vmKt6k300-2913g_AdsTWtzBTLI232Y1w21kw2HANBfU9jTTJF9h5mL.2tJdY142hyaPW
+#    authSubject: apiuser.conquestintegration@networknt.sit
+#    authAudience: https://test.salesforce.com
+#    iv: Yeocae324eAvs2a/P33y3Ea3Rqg
+#    tokenTtl: 60
+#    waitLength: 5000
+#    tokenUrl: https://test.salesforce.com/services/oauth2/token
+#    serviceHost: https://nnt-sit.my.salesforce.com
+
+# mras.yml
+mras.enabled: true
+mras.keyStoreName: api.ais-dev
+mras.keyStorePass: password
+mras.keyPass: password
+mras.trustStoreName: mras_ts.jks
+mras.truststorePass: password
+
+mras.accessToken.serviceHost: https://localhost:8443
+mras.accessToken.tokenUrl: https://test.mras.com/services/oauth2/token
+mras.accessToken.username: client_id
+mras.accessToken.password: client_secret
+mras.accessToken.cacheEnabled: true
+mras.accessToken.memKey: MRASToken
+mras.accessToken.gracePeriod: 50
+
+mras.microsoft.serviceHost: https://localhost:8443
+mras.microsoft.tokenUrl: https://test.mras.com/services/oauth2/token
+mras.microsoft.username: client_id
+mras.microsoft.password: client_secret
+mras.microsoft.cacheEnabled: true
+mras.microsoft.memKey: MRASToken
+mras.microsoft.gracePeriod: 50
+mras.microsoft.resource: 9bcadce-3312-4c2b-9a5d-0e90e8b92c67"
+
+mras.anonymous.serviceHost: https://localhost:8443
+
+mras.basicAuth.serviceHost: https://localhost:8443
+mras.basicAuth.username: username
+mras.basicAuth.password: password
+
+mras.pathPrefixAuth:
+  /mras: accessToken
+  /test: basicAuth
+  /pdf/generator: anonymous
+  /advisor: microsoft
+
+
+# external-service.yml
+externalService.enabled: true
+externalService.pathHostMappings:
+  - /sharepoint https://sharepoint.microsoft.com
+  - /get https://postman-echo.com
+  - /post https://postman-echo.com
+  - /abc https://abc.com

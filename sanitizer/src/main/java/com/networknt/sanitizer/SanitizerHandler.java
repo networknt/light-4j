@@ -26,9 +26,8 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderMap;
 import io.undertow.util.HeaderValues;
-import org.owasp.encoder.Encode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.owasp.encoder.EncoderWrapper;
+import org.owasp.encoder.Encoders;
 
 import java.util.*;
 
@@ -36,68 +35,61 @@ import java.util.*;
  * This is a middleware component that sanitize cross site scripting tags in request. As potentially
  * sanitizing body of the request, this middleware must be plugged into the chain after body parser.
  *
+ * Note: the sanitizer only works with JSON body, for other types, it will be skipped.
+ *
  * @author Steve Hu
  */
 public class SanitizerHandler implements MiddlewareHandler {
-    public static final String CONFIG_NAME = "sanitizer";
 
+    static SanitizerConfig config;
 
-    static final Logger logger = LoggerFactory.getLogger(SanitizerHandler.class);
-
-    static SanitizerConfig config = (SanitizerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, SanitizerConfig.class);
-
+    EncoderWrapper bodyEncoder;
+    EncoderWrapper headerEncoder;
     private volatile HttpHandler next;
 
     public SanitizerHandler() {
+        config = SanitizerConfig.load();
+        bodyEncoder = new EncoderWrapper(Encoders.forName(config.getBodyEncoder()), config.getBodyAttributesToIgnore(), config.getBodyAttributesToEncode());
+        headerEncoder = new EncoderWrapper(Encoders.forName(config.getHeaderEncoder()), config.getHeaderAttributesToIgnore(), config.getHeaderAttributesToEncode());
+    }
 
+    // integration test purpose only.
+    @Deprecated
+    public SanitizerHandler(String configName) {
+        config = SanitizerConfig.load(configName);
+        bodyEncoder = new EncoderWrapper(Encoders.forName(config.getBodyEncoder()), config.getBodyAttributesToIgnore(), config.getBodyAttributesToEncode());
+        headerEncoder = new EncoderWrapper(Encoders.forName(config.getHeaderEncoder()), config.getHeaderAttributesToIgnore(), config.getHeaderAttributesToEncode());
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         String method = exchange.getRequestMethod().toString();
-        if(config.isSanitizeHeader()) {
+        if (config.isHeaderEnabled()) {
             HeaderMap headerMap = exchange.getRequestHeaders();
-            if(headerMap != null) {
+            if (headerMap != null) {
                 for (HeaderValues values : headerMap) {
                     if (values != null) {
                         ListIterator<String> itValues = values.listIterator();
                         while (itValues.hasNext()) {
-                            String value = Encode.forJavaScriptSource(itValues.next());
-                            itValues.set(value);
+                            itValues.set(headerEncoder.applyEncoding(itValues.next()));
                         }
                     }
                 }
             }
         }
-        /*
-        It looks like undertow has done a lot of things to prevent passing in invalid query parameters,
-        Until there are some use cases, this is not implemented.
 
-        if(config.isSanitizeParameter()) {
-            if (!exchange.getQueryString().isEmpty()) {
-                final TreeMap<String, Deque<String>> newParams = new TreeMap<>();
-                for (Map.Entry<String, Deque<String>> param : exchange.getQueryParameters().entrySet()) {
-                    final Deque<String> newVales = new ArrayDeque<>(param.getValue().size());
-                    for (String val : param.getValue()) {
-                        newVales.add(Encode.forJavaScriptSource(val));
-                    }
-                    newParams.put(param.getKey(), newVales);
-                }
-                exchange.getQueryParameters().clear();
-                exchange.getQueryParameters().putAll(newParams);
-            }
-        }
-        */
-        if(config.isSanitizeBody() && ("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method) || "PATCH".equalsIgnoreCase(method))) {
+        if (config.isBodyEnabled() && ("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method) || "PATCH".equalsIgnoreCase(method))) {
             // assume that body parser is installed before this middleware and body is parsed as a map.
             // we are talking about JSON api now.
             Object body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
-            if(body != null) {
+            if (body != null) {
                 if(body instanceof List) {
-                    encodeList((List<Map<String, Object>>)body);
-                } else {
+                    bodyEncoder.encodeList((List<Map<String, Object>>)body);
+                } else if (body instanceof Map){
                     // assume it is a map here.
-                    encodeNode((Map<String, Object>)body);
+                    bodyEncoder.encodeNode((Map<String, Object>)body);
+                } else {
+                    // Body is not in JSON format or form data, skip...
                 }
             }
         }
@@ -126,30 +118,9 @@ public class SanitizerHandler implements MiddlewareHandler {
         ModuleRegistry.registerModule(SanitizerHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
-    public void encodeNode(Map<String, Object> map) {
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            String key = entry.getKey();
-            Object value = entry.getValue();
-            if (value instanceof String)
-                map.put(key, Encode.forJavaScriptSource((String) value));
-            else if (value instanceof Map)
-                encodeNode((Map) value);
-            else if (value instanceof List) {
-                encodeList((List)value);
-            }
-        }
-    }
-
-    public void encodeList(List list) {
-        for (int i = 0; i < list.size(); i++) {
-            if (list.get(i) instanceof String) {
-                list.set(i, Encode.forJavaScriptSource((String)list.get(i)));
-            } else if(list.get(i) instanceof Map) {
-                encodeNode((Map<String, Object>)list.get(i));
-            } else if(list.get(i) instanceof List) {
-                encodeList((List)list.get(i));
-            }
-        }
+    @Override
+    public void reload() {
+        config = SanitizerConfig.load();
     }
 
 }

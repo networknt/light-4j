@@ -28,25 +28,20 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
  * This is the only concrete implementation of cluster interface. It basically integrates
  * service discovery, service registry and load balance together to provide a common way
- * to convert a protocal, service id and request key to a url that can be addressed and
+ * to convert a protocol, service id and request key to a url that can be addressed and
  * invoked.
  *
  * Created by stevehu on 2017-01-27.
  */
 public class LightCluster implements Cluster {
-    private final static String GENERAL_TAG = "*";
-
     private static Logger logger = LoggerFactory.getLogger(LightCluster.class);
     private static Registry registry = SingletonServiceFactory.getBean(Registry.class);
     private static LoadBalance loadBalance = SingletonServiceFactory.getBean(LoadBalance.class);
-    private static Set<URL> subscribedSet = new ConcurrentHashSet<>();
-    private static Map<String, List<URL>> serviceMap = new ConcurrentHashMap<>();
 
     public LightCluster() {
         if(logger.isInfoEnabled()) logger.info("A LightCluster instance is started");
@@ -62,7 +57,7 @@ public class LightCluster implements Cluster {
      */
     @Override
     public String serviceToUrl(String protocol, String serviceId, String tag, String requestKey) {
-        URL url = loadBalance.select(discovery(protocol, serviceId, tag), requestKey);
+        URL url = loadBalance.select(discovery(protocol, serviceId, tag), serviceId, tag, requestKey);
         if (url != null) {
             logger.debug("Final url after load balance = {}.", url);
             // construct a url in string
@@ -89,34 +84,17 @@ public class LightCluster implements Cluster {
     }
 
     private List<URL> discovery(String protocol, String serviceId, String tag) {
-        if(logger.isDebugEnabled()) logger.debug("protocol = " + protocol + " serviceId = " + serviceId);
-        // lookup in serviceMap first, if not there, then subscribe and discover.
-        List<URL> urls = serviceMap.get(serviceId);
-        if(logger.isDebugEnabled()) logger.debug("cached serviceId " + serviceId + " urls = " + urls);
-        if((urls == null) || (urls.isEmpty())) {
-            URL subscribeUrl = URLImpl.valueOf(protocol + "://localhost/" + serviceId);
-            if(tag != null) {
-                subscribeUrl.addParameter(Constants.TAG_ENVIRONMENT, tag);
-            }
-            if(logger.isDebugEnabled()) logger.debug("subscribeUrl = " + subscribeUrl);
-            // you only need to subscribe once.
-            if(!subscribedSet.contains(subscribeUrl)) {
-                registry.subscribe(subscribeUrl, new ClusterNotifyListener(serviceId));
-                subscribedSet.add(subscribeUrl);
-            }
-            urls = registry.discover(subscribeUrl);
-            if(logger.isDebugEnabled()) logger.debug("discovered urls = " + urls);
-            serviceMap.put(serviceId, urls == null ? new ArrayList<>() : urls);
+        if(logger.isDebugEnabled()) logger.debug("protocol = " + protocol + " serviceId = " + serviceId + " tag = " + tag);
+        URL subscribeUrl = URLImpl.valueOf(protocol + "://localhost/" + serviceId);
+        if(tag != null) {
+            subscribeUrl.addParameter(Constants.TAG_ENVIRONMENT, tag);
         }
-        //if doesn't specify envTag at all, return all the urls
-        if(tag == null) {return urls;}
-        //otherwise return corresponding urls, especially, when don't register with an envTag, envTag should be "" instead of null;
-        if(urls != null) {
-            return urls.stream()
-                    .filter(url -> url.getParameter(URLParamType.environment.getName()) != null
-                            && (url.getParameter(URLParamType.environment.getName()).equals(tag) || url.getParameter(URLParamType.environment.getName()).equals(GENERAL_TAG)))
-                    .collect(Collectors.toList());
-        }
+        if(logger.isDebugEnabled()) logger.debug("subscribeUrl = " + subscribeUrl);
+        // subscribe is async and the result won't come back immediately.
+        registry.subscribe(subscribeUrl, null);
+        // do a lookup for the quick response from either cache or registry service.
+        List<URL> urls = registry.discover(subscribeUrl);
+        if(logger.isDebugEnabled()) logger.debug("discovered urls = " + urls);
         return urls;
     }
 
@@ -128,22 +106,5 @@ public class LightCluster implements Cluster {
             logger.error("URISyntaxExcpetion", e);
         }
         return uri;
-    }
-
-    static class ClusterNotifyListener implements NotifyListener {
-        private String serviceId;
-
-        ClusterNotifyListener(String serviceId) {
-            this.serviceId = serviceId;
-        }
-
-        @Override
-        public void notify(URL registryUrl, List<URL> urls) {
-            logger.debug("registryUrl is: {}", registryUrl);
-            logger.debug("notify service: {} with updated urls: {}", serviceId, urls.toString());
-            if(StringUtils.isNotBlank(serviceId)) {
-                serviceMap.put(serviceId, urls == null ? new ArrayList<>() : urls);
-            }
-        }
     }
 }

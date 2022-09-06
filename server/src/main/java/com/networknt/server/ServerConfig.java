@@ -30,8 +30,11 @@ public class ServerConfig {
     boolean enableHttps;
     boolean enableHttp2;
     String keystoreName;
+    String keystorePass;
+    String keyPass;
     boolean enableTwoWayTls;
     String truststoreName;
+    String truststorePass;
     boolean enableRegistry;
     String serviceId;
     String serviceName;    
@@ -44,11 +47,15 @@ public class ServerConfig {
     int ioThreads;
     int workerThreads;
     int backlog;
+    int shutdownTimeout;
+    int shutdownGracefulPeriod;
     boolean alwaysSetDate;
     boolean allowUnescapedCharactersInUrl;
     String serverString;
     String bootstrapStoreName;
     String bootstrapStorePass;
+    long maxTransferFileSize;
+    boolean startOnRegistryFailure;
 
 	public ServerConfig() {
     }
@@ -127,6 +134,30 @@ public class ServerConfig {
 
     public void setTruststoreName(String truststoreName) {
         this.truststoreName = truststoreName;
+    }
+
+    public String getKeystorePass() {
+        return keystorePass;
+    }
+
+    public void setKeystorePass(String keystorePass) {
+        this.keystorePass = keystorePass;
+    }
+
+    public String getKeyPass() {
+        return keyPass;
+    }
+
+    public void setKeyPass(String keyPass) {
+        this.keyPass = keyPass;
+    }
+
+    public String getTruststorePass() {
+        return truststorePass;
+    }
+
+    public void setTruststorePass(String truststorePass) {
+        this.truststorePass = truststorePass;
     }
 
     public boolean isEnableTwoWayTls() {
@@ -241,6 +272,22 @@ public class ServerConfig {
         this.backlog = backlog;
     }
 
+    public int getShutdownTimeout() {
+        return shutdownTimeout;
+    }
+
+    public void setShutdownTimeout(int shutdownTimeout) {
+        this.shutdownTimeout = shutdownTimeout;
+    }
+
+    public int getShutdownGracefulPeriod() {
+        return shutdownGracefulPeriod;
+    }
+
+    public void setShutdownGracefulPeriod(int shutdownGracefulPeriod) {
+        this.shutdownGracefulPeriod = shutdownGracefulPeriod;
+    }
+
     public boolean isAlwaysSetDate() {
         return alwaysSetDate;
     }
@@ -279,5 +326,21 @@ public class ServerConfig {
 
     public void setBootstrapStorePass(String bootstrapStorePass) {
         this.bootstrapStorePass = bootstrapStorePass;
+    }
+
+    public long getMaxTransferFileSize() {
+        return maxTransferFileSize;
+    }
+
+    public void setMaxTransferFileSize(long maxTransferFileSize) {
+        this.maxTransferFileSize = maxTransferFileSize;
+    }
+
+    public boolean isStartOnRegistryFailure() {
+        return startOnRegistryFailure;
+    }
+
+    public void setStartOnRegistryFailure(boolean startOnRegistryFailure) {
+        this.startOnRegistryFailure = startOnRegistryFailure;
     }
 }

@@ -1,5 +1,7 @@
 # Consul URL for accessing APIs
 consulUrl: http://localhost:8500
+# Consul Token for service registry and discovery
+consulToken: the_one_ring
 # number of requests before reset the shared connection.
 maxReqPerConn: 1000000
 # deregister the service after the amount of time after health check failed.

@@ -53,7 +53,7 @@ public class RegistryTest {
         map.put("description", "server config");
         map.put("enableHttp", true);
         map.put("ip", "0.0.0.0");
-        map.put("httpPort", 8080);
+        map.put("httpPort", 7080);
         map.put("enableHttps", true);
         map.put("httpsPort", 8443);
         map.put("keystoreName", "server.keystore");

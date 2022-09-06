@@ -76,4 +76,12 @@ public class ServerConfigTest {
         Assert.assertEquals("TEST", serverConfig.getServerString());
         Assert.assertEquals(true, serverConfig.isAllowUnescapedCharactersInUrl());
     }
+
+    @Test
+    public void testMaxTransferFileSize() {
+        config.clear();
+        ServerConfig serverConfig = (ServerConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServerConfig.class);
+        ServerOption.serverOptionInit(config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME),serverConfig);
+        Assert.assertEquals(1000000, serverConfig.getMaxTransferFileSize());
+    }
 }

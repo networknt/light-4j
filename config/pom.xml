@@ -21,8 +21,8 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>1.6.43-SNAPSHOT</version>
-        <relativePath>..</relativePath>
+        <version>2.1.2-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>config</artifactId>
@@ -33,6 +33,10 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jdk8</artifactId>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
@@ -53,7 +57,7 @@
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>decryptor</artifactId>
-        </dependency>        
+        </dependency>
 
         <dependency>
             <groupId>ch.qos.logback</groupId>

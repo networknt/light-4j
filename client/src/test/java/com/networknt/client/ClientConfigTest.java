@@ -14,9 +14,9 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import java.util.HashMap;
 
 import static com.networknt.client.ClientConfig.CONFIG_NAME;
-import static com.networknt.client.ClientConfig.CONFIG_SECRET;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 
 @RunWith(PowerMockRunner.class)
@@ -47,7 +47,7 @@ public class ClientConfigTest {
         assertEquals(ClientConfig.DEFAULT_RESET_TIMEOUT, clientConfig.getResetTimeout());
         assertEquals(ClientConfig.DEFAULT_TIMEOUT, clientConfig.getTimeout());
         assertEquals(ClientConfig.DEFAULT_BUFFER_SIZE, clientConfig.getBufferSize());
-        assertNull(clientConfig.getSecretConfig());
+        assertFalse(clientConfig.isInjectOpenTracing());
         assertNull(clientConfig.getTokenConfig());
     }
 
@@ -55,7 +55,6 @@ public class ClientConfigTest {
     @Test
     public void shouldLoadEmptyConfig() {
         Mockito.when(config.getJsonMapConfig(CONFIG_NAME)).thenReturn(new HashMap<>());
-        Mockito.when(config.getJsonMapConfig(CONFIG_SECRET)).thenReturn(new HashMap<>());
 
         ClientConfig clientConfig = ClientConfig.get();
 
@@ -63,7 +62,7 @@ public class ClientConfigTest {
         assertEquals(ClientConfig.DEFAULT_RESET_TIMEOUT, clientConfig.getResetTimeout());
         assertEquals(ClientConfig.DEFAULT_TIMEOUT, clientConfig.getTimeout());
         assertEquals(ClientConfig.DEFAULT_BUFFER_SIZE, clientConfig.getBufferSize());
-        assertTrue(clientConfig.getSecretConfig() instanceof HashMap);
+        assertFalse(clientConfig.isInjectOpenTracing());
         assertNull(clientConfig.getTokenConfig());
     }
 
@@ -77,7 +76,7 @@ public class ClientConfigTest {
         assertEquals(3600000, clientConfig.getResetTimeout());
         assertEquals(2000, clientConfig.getTimeout());
         assertEquals(1024, clientConfig.getBufferSize());
-        assertTrue(clientConfig.getSecretConfig() instanceof HashMap);
+        assertTrue(clientConfig.isInjectOpenTracing());
         assertTrue(clientConfig.getTokenConfig() instanceof HashMap);
     }
 
@@ -89,6 +88,7 @@ public class ClientConfigTest {
         configMap.put("errorThreshold", 3);
         configMap.put("timeout", 2000);
         configMap.put("resetTimeout", 3600000);
+        configMap.put("injectOpenTracing", true);
 
         HashMap<String, Object> map = new HashMap<>();
         map.put("bufferSize", 1024);

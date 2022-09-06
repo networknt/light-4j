@@ -45,6 +45,9 @@ public class TokenResponse extends Status {
     @JsonProperty(value="refresh_token")
     private String refreshToken;
 
+    @JsonProperty(value="remember")
+    private String remember;
+
     @JsonProperty(value="example_parameter")
     private String exampleParameter;
 
@@ -96,6 +99,14 @@ public class TokenResponse extends Status {
         this.refreshToken = refreshToken;
     }
 
+    public String getRemember() {
+        return remember;
+    }
+
+    public void setRemember(String remember) {
+        this.remember = remember;
+    }
+
     public String getExampleParameter() {
         return exampleParameter;
     }
@@ -113,6 +124,7 @@ public class TokenResponse extends Status {
                 ", scope='" + scope + '\'' +
                 ", state='" + state + '\'' +
                 ", refreshToken='" + refreshToken + '\'' +
+                ", remember'" + remember + '\'' +
                 ", exampleParameter='" + exampleParameter + '\'' +
                 '}';
     }

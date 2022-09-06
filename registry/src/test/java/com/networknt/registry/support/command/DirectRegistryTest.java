@@ -32,11 +32,11 @@ public class DirectRegistryTest {
     public void testDirectRegistry() {
         Registry registry = SingletonServiceFactory.getBean(Registry.class);
 
-        URL subscribeUrl = URLImpl.valueOf("light://localhost:8080/token");
+        URL subscribeUrl = URLImpl.valueOf("light://localhost:7080/token");
         List<URL> urls = registry.discover(subscribeUrl);
         Assert.assertEquals(1, urls.size());
 
-        subscribeUrl = URLImpl.valueOf("light://localhost:8080/code");
+        subscribeUrl = URLImpl.valueOf("light://localhost:7080/code");
         urls = registry.discover(subscribeUrl);
         Assert.assertEquals(2, urls.size());
 
@@ -47,21 +47,21 @@ public class DirectRegistryTest {
     public void testDirectRegistryWithEnvironment() {
         Registry registry = SingletonServiceFactory.getBean(Registry.class);
 
-        URL subscribeUrl = URLImpl.valueOf("light://localhost:8080/command?environment=0000");
+        URL subscribeUrl = URLImpl.valueOf("light://localhost:7080/command?environment=0000");
 
         List<URL> urls = registry.discover(subscribeUrl);
-        Assert.assertEquals(3, urls.size());
+        Assert.assertEquals(1, urls.size());
         Assert.assertTrue(urls.get(0).getPort() == 8440);
 
-        subscribeUrl = URLImpl.valueOf("light://localhost:8080/command?environment=0001");
+        subscribeUrl = URLImpl.valueOf("light://localhost:7080/command?environment=0001");
         urls = registry.discover(subscribeUrl);
-        Assert.assertEquals(3, urls.size());
-        Assert.assertTrue(urls.get(1).getPort() == 8441);
+        Assert.assertEquals(1, urls.size());
+        Assert.assertTrue(urls.get(0).getPort() == 8441);
 
-        subscribeUrl = URLImpl.valueOf("light://localhost:8080/command?environment=0002");
+        subscribeUrl = URLImpl.valueOf("light://localhost:7080/command?environment=0002");
         urls = registry.discover(subscribeUrl);
-        Assert.assertEquals(3, urls.size());
-        Assert.assertTrue(urls.get(2).getPort() == 8442);
+        Assert.assertEquals(1, urls.size());
+        Assert.assertTrue(urls.get(0).getPort() == 8442);
     }
 
 }

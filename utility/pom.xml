@@ -21,8 +21,8 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>1.6.43-SNAPSHOT</version>
-        <relativePath>..</relativePath>
+        <version>2.1.2-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>utility</artifactId>
@@ -30,10 +30,6 @@
     <description>A utility module that contains all the utilities shared across other modules.</description>
 
     <dependencies>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>config</artifactId>
-        </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -48,9 +44,15 @@
             <artifactId>logback-classic</artifactId>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>config</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

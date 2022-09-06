@@ -19,7 +19,10 @@ package com.networknt.consul.client;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
-import com.networknt.consul.*;
+import com.networknt.consul.ConsulConfig;
+import com.networknt.consul.ConsulConstants;
+import com.networknt.consul.ConsulResponse;
+import com.networknt.consul.ConsulService;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.StringUtils;
 import io.undertow.UndertowOptions;
@@ -31,16 +34,17 @@ import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -58,7 +62,6 @@ public class ConsulClientImpl implements ConsulClient {
 	private OptionMap optionMap;
 	private URI uri;
 	private String wait = "600s";
-	private String timeoutBuffer = "5s";
 
 	/**
 	 * Construct ConsulClient with all parameters from consul.yml config file. The other two constructors are
@@ -67,15 +70,13 @@ public class ConsulClientImpl implements ConsulClient {
 	public ConsulClientImpl() {
 		String consulUrl = config.getConsulUrl().toLowerCase();
 		optionMap =  isHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY;
-		logger.debug("Consul URL = {}", consulUrl);
+		logger.debug("url = {}", consulUrl);
 		if(config.getWait() != null && config.getWait().length() > 2) wait = config.getWait();
 		logger.debug("wait = {}", wait);
-		if(config.getTimeoutBuffer() != null) timeoutBuffer = config.getTimeoutBuffer();
-		logger.debug("timeoutBuffer = {}", timeoutBuffer);
 		try {
 			uri = new URI(consulUrl);
 		} catch (URISyntaxException e) {
-			logger.error("Consul URL generated invalid URI! Consul URL: " + consulUrl, e);
+			logger.error("Invalid URI " + consulUrl, e);
 			throw new RuntimeException("Invalid URI " + consulUrl, e);
 		}
 	}
@@ -180,19 +181,15 @@ public class ConsulClientImpl implements ConsulClient {
 		if(tag != null) {
 			path = path + "&tag=" + tag;
 		}
-		logger.trace("Consul health service path = {}", path);
+		logger.trace("path = {}", path);
 		try {
-			logger.debug("Getting connection from pool with {}", uri);
 			connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
-			logger.info("Got connection: {} from pool and send request to {}", connection, path);
 			AtomicReference<ClientResponse> reference  = send(connection, Methods.GET, path, token, null);
 			int statusCode = reference.get().getResponseCode();
-			logger.info("Got Consul Query status code: {}", statusCode);
 			if(statusCode >= UNUSUAL_STATUS_CODE){
 				throw new Exception("Failed to unregister on Consul: " + statusCode);
 			} else {
 				String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-				logger.debug("Got Consul Query response body: {}", body);
 				List<Map<String, Object>> services = Config.getInstance().getMapper().readValue(body, new TypeReference<List<Map<String, Object>>>(){});
 				List<ConsulService> ConsulServcies = new ArrayList<>(
 						services.size());
@@ -242,25 +239,15 @@ public class ConsulClientImpl implements ConsulClient {
 		ClientRequest request = new ClientRequest().setMethod(method).setPath(path);
 		request.getRequestHeaders().put(Headers.HOST, "localhost");
 		if (token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
-		if (logger.isTraceEnabled()) logger.trace("The request sent to Consul URI {} - request header: {}, request body is empty", uri.toString(), request.toString());
+		logger.trace("The request sent to consul: {} = request header: {}, request body is empty", uri.toString(), request.toString());
 		if(StringUtils.isBlank(json)) {
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 		} else {
 			request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
 			connection.sendRequest(request, client.createClientCallback(reference, latch, json));
 		}
-		int waitInSecond = ConsulUtils.getWaitInSecond(wait);
-		int timeoutBufferInSecond = ConsulUtils.getTimeoutBufferInSecond(timeoutBuffer);
-		boolean isNotTimeout = latch.await(waitInSecond + timeoutBufferInSecond, TimeUnit.SECONDS);
-		if (isNotTimeout) {
-			logger.debug("The response from Consul: {} = {}", uri, reference != null ? reference.get() : null);
-		} else {
-            // timeout happens, do not know if the Consul server is still alive. Close the connection to force reconnect. The next time this connection
-			// is borrowed from the pool, a new connection will be created as the one returned is not open.
-			if(connection != null && connection.isOpen()) IoUtils.safeClose(connection);
-			throw new RuntimeException(
-					String.format("The request to Consul timed out after %d + %d seconds to: %s", waitInSecond, timeoutBufferInSecond, uri));
-		}
+		latch.await();
+		logger.trace("The response got from consul: {} = {}", uri.toString(), reference.get().toString());
 		return reference;
 	}
 

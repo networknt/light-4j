@@ -17,11 +17,8 @@
 package com.networknt.consul;
 
 import com.networknt.consul.client.ConsulClient;
+import com.networknt.registry.NotifyListener;
 import com.networknt.registry.Registry;
-import com.networknt.registry.URLImpl;
-import com.networknt.registry.URLParamType;
-import com.networknt.registry.support.command.CommandListener;
-import com.networknt.registry.support.command.ServiceListener;
 import com.networknt.registry.URL;
 import com.networknt.service.SingletonServiceFactory;
 import org.junit.After;
@@ -30,7 +27,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
-import java.util.logging.ConsoleHandler;
 
 public class ConsulRegistryTest {
     private MockConsulClient client;
@@ -90,10 +86,10 @@ public class ConsulRegistryTest {
         Assert.assertFalse(client.isRegistered(serviceid2));
     }
 
-    private ServiceListener createNewServiceListener(final URL serviceUrl) {
-        return new ServiceListener() {
+    private NotifyListener createNewNotifyListener(final URL serviceUrl) {
+        return new NotifyListener() {
             @Override
-            public void notifyService(URL refUrl, URL registryUrl, List<URL> urls) {
+            public void notify(URL registryUrl, List<URL> urls) {
                 if (!urls.isEmpty()) {
                     Assert.assertTrue(urls.contains(serviceUrl));
                 }
@@ -103,43 +99,57 @@ public class ConsulRegistryTest {
 
     @Test
     public void subAndUnsubService() throws Exception {
-        ServiceListener serviceListener = createNewServiceListener(serviceUrl);
-        ServiceListener serviceListener2 = createNewServiceListener(serviceUrl);
+        NotifyListener notifyListener = createNewNotifyListener(serviceUrl);
+        NotifyListener notifylistener2 = createNewNotifyListener(serviceUrl);
 
-        registry.subscribeService(clientUrl, serviceListener);
-        registry.subscribeService(clientUrl2, serviceListener2);
-        Assert.assertTrue(containsServiceListener(serviceUrl, clientUrl, serviceListener));
-        Assert.assertTrue(containsServiceListener(serviceUrl, clientUrl2, serviceListener2));
+        // subscribe
+        registry.doSubscribe(clientUrl, notifyListener);
+        registry.doSubscribe(clientUrl2, notifylistener2);
+        Assert.assertTrue(containsNotifyListener(serviceUrl, clientUrl, notifyListener));
+        Assert.assertTrue(containsNotifyListener(serviceUrl, clientUrl2, notifylistener2));
 
+        // register
         registry.doRegister(serviceUrl);
         registry.doRegister(serviceUrl2);
         registry.doAvailable(null);
         Thread.sleep(sleepTime);
+        
+        // unregister
+        registry.doUnavailable(null);
+        Thread.sleep(sleepTime);
+        registry.doUnregister(serviceUrl);
+        registry.doUnregister(serviceUrl2);
 
-        registry.unsubscribeService(clientUrl, serviceListener);
-        Assert.assertFalse(containsServiceListener(serviceUrl, clientUrl, serviceListener));
-        Assert.assertTrue(containsServiceListener(serviceUrl, clientUrl2, serviceListener2));
+        // unsubscrib
+        registry.doUnsubscribe(clientUrl, notifyListener);
+        Assert.assertFalse(containsNotifyListener(serviceUrl, clientUrl, notifyListener));
+        Assert.assertTrue(containsNotifyListener(serviceUrl, clientUrl2, notifylistener2));
 
-        registry.unsubscribeService(clientUrl2, serviceListener2);
-        Assert.assertFalse(containsServiceListener(serviceUrl, clientUrl2, serviceListener2));
+        registry.doUnsubscribe(clientUrl2, notifylistener2);
+        Assert.assertFalse(containsNotifyListener(serviceUrl, clientUrl2, notifylistener2));
 
     }
 
     @Test
     public void discoverService() throws Exception {
         registry.doRegister(serviceUrl);
-        List<URL> urls = registry.discoverService(serviceUrl);
-        Assert.assertNull(urls);
+        List<URL> urls = registry.discover(serviceUrl);
+        Assert.assertEquals(0, urls.size());
 
         registry.doAvailable(null);
         Thread.sleep(sleepTime);
-        urls = registry.discoverService(serviceUrl);
+        urls = registry.discover(serviceUrl);
         Assert.assertTrue(urls.contains(serviceUrl));
+        
+        // unavailable & unregister
+        registry.doUnavailable(null);
+        Thread.sleep(sleepTime);
+        registry.doUnregister(serviceUrl);
     }
 
-    private Boolean containsServiceListener(URL serviceUrl, URL clientUrl, ServiceListener serviceListener) {
+    private Boolean containsNotifyListener(URL serviceUrl, URL clientUrl, NotifyListener listener) {
         String service = ConsulUtils.getUrlClusterInfo(serviceUrl);
-        return registry.getServiceListeners().get(service).get(clientUrl) == serviceListener;
+        return registry.getNotifyListeners().get(service).get(clientUrl) == listener;
     }
 
 }

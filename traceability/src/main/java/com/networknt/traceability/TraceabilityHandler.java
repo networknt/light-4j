@@ -28,6 +28,7 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HttpString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 /**
  * This is a handler that checks if X-Traceability-Id exists in request header and put it into
@@ -43,8 +44,8 @@ import org.slf4j.LoggerFactory;
  */
 public class TraceabilityHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(TraceabilityHandler.class);
-
-    public static final String CONFIG_NAME = "traceability";
+    private static final String TID = "tId";
+    private static final String CONFIG_NAME = "traceability";
 
     public static TraceabilityConfig config = null;
     static {
@@ -62,6 +63,7 @@ public class TraceabilityHandler implements MiddlewareHandler {
         String tid = exchange.getRequestHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
         if(tid != null) {
             exchange.getResponseHeaders().put(HttpStringConstants.TRACEABILITY_ID, tid);
+            MDC.put(TID, tid);
         }
         Handler.next(exchange, next);
     }
@@ -88,4 +90,8 @@ public class TraceabilityHandler implements MiddlewareHandler {
         ModuleRegistry.registerModule(TraceabilityHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
+    @Override
+    public void reload() {
+        config = (TraceabilityConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, TraceabilityConfig.class);
+    }
 }

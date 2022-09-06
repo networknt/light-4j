@@ -20,6 +20,8 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 
@@ -27,6 +29,8 @@ import java.util.Arrays;
  * Created by steve on 2016-11-26.
  */
 public class SingletonServiceFactoryTest {
+    private static Logger logger = LoggerFactory.getLogger(SingletonServiceFactoryTest.class);
+
     @BeforeClass
     public static void setup() {
         InjectedBean injectedBean = new InjectedBean();
@@ -55,7 +59,7 @@ public class SingletonServiceFactoryTest {
     public void testGetMultipleBean() {
         Processor[] processors = SingletonServiceFactory.getBeans(Processor.class);
         Assert.assertEquals(processors.length, 3);
-        Arrays.stream(processors).forEach(processor -> System.out.println(processor.process()));
+        Arrays.stream(processors).forEach(processor -> logger.debug(processor.process()));
     }
 
     @Test
@@ -68,9 +72,9 @@ public class SingletonServiceFactoryTest {
     @Test
     public void testMultipleToMultiple() {
         E[] e = SingletonServiceFactory.getBeans(E.class);
-        Arrays.stream(e).forEach(o -> System.out.println(o.e()));
+        Arrays.stream(e).forEach(o -> logger.debug(o.e()));
         F[] f = SingletonServiceFactory.getBeans(F.class);
-        Arrays.stream(f).forEach(o -> System.out.println(o.f()));
+        Arrays.stream(f).forEach(o -> logger.debug(o.f()));
     }
 
     @Test
@@ -85,9 +89,9 @@ public class SingletonServiceFactoryTest {
     @Ignore
     public void testMultipleWithProperties() {
         J[] j = SingletonServiceFactory.getBeans(J.class);
-        Arrays.stream(j).forEach(o -> System.out.println(o.getJack()));
+        Arrays.stream(j).forEach(o -> logger.debug(o.getJack()));
         K[] k = SingletonServiceFactory.getBeans(K.class);
-        Arrays.stream(k).forEach(o -> System.out.println(o.getKing()));
+        Arrays.stream(k).forEach(o -> logger.debug(o.getKing()));
 
     }
 
@@ -152,5 +156,10 @@ public class SingletonServiceFactoryTest {
         Assert.assertTrue(channelMapping.transform("ReplyTo").startsWith("aggregate-destination-"));
     }
 
-
+    @Test
+    public void testTwoGenericTypes() {
+        Pair p = SingletonServiceFactory.getBean(Pair.class);
+        Assert.assertEquals("key1", p.getKey());
+        Assert.assertEquals("value1", p.getValue());
+    }
 }

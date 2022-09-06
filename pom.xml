@@ -1,4 +1,3 @@
-
 <!--
   ~ Copyright (c) 2016 Network New Technologies Inc.
   ~
@@ -20,7 +19,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.networknt</groupId>
     <artifactId>light-4j</artifactId>
-    <version>1.6.43-SNAPSHOT</version>
+    <version>2.1.2-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Parent POM</name>
     <description>Light 4J Framework Components</description>
@@ -65,8 +64,7 @@
     </distributionManagement>
 
     <properties>
-        <java.version>8</java.version>
-        <javac.version>9+181-r4173-1</javac.version>
+        <java.version>11</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <version.jackson>2.13.3</version.jackson>
         <version.slf4j>1.7.36</version.slf4j>
@@ -83,38 +81,38 @@
         <version.hdrhistogram>2.1.10</version.hdrhistogram>
         <version.jsr305>3.0.2</version.jsr305>
         <version.json-schema-validator>1.0.65</version.json-schema-validator>
-        <version.zookeeper>3.5.3-beta</version.zookeeper>
-        <version.zkclient>0.3</version.zkclient>
-        <version.curator>4.0.1</version.curator>
+        <version.yaml-rule>1.0.1</version.yaml-rule>
         <version.snakeyaml>1.26</version.snakeyaml>
         <version.caffeine>2.6.2</version.caffeine>
         <version.prometheus>0.6.0</version.prometheus>
         <version.javamail>1.6.1</version.javamail>
-        <version.hikaricp>3.1.0</version.hikaricp>
-        <version.h2>1.4.196</version.h2>
+        <version.hikaricp>3.2.0</version.hikaricp>
+        <version.h2>2.1.210</version.h2>
         <version.mysql>8.0.16</version.mysql>
-        <version.postgres>9.4.1211</version.postgres>
+        <version.postgres>42.4.1</version.postgres>
         <version.oracle>11.2.0.3</version.oracle>
-        <version.sqlserver>6.5.1.jre8-preview</version.sqlserver>
-        <version.httpclient>4.5.6</version.httpclient>
-        <version.jsonpath>2.4.0</version.jsonpath>
+        <version.sqlserver>7.0.0.jre10</version.sqlserver>
+        <version.httpclient>4.5.13</version.httpclient>
+        <versions.maven-version>2.4</versions.maven-version>
+        <version.jsonpath>2.7.0</version.jsonpath>
         <version.maven-version>2.7</version.maven-version>
         <version.nexus-staging-maven>1.6.8</version.nexus-staging-maven>
         <version.maven-source>3.0.1</version.maven-source>
-        <version.maven-surefire>3.0.0-M3</version.maven-surefire>
+        <version.maven-surefire>2.19.1</version.maven-surefire>
         <version.maven-failsafe>2.22.0</version.maven-failsafe>
-        <!--<version.maven-release>2.5.3</version.maven-release>-->
-        <version.maven-javadoc>3.1.0</version.maven-javadoc>
         <version.jacoco>0.8.3</version.jacoco>
-        <version.maven-compiler>3.6.1</version.maven-compiler>
+        <version.maven-compiler>3.8.0</version.maven-compiler>
         <version.build-helper-maven>3.0.0</version.build-helper-maven>
-        <version.plexus-compiler-javac-errorprone>2.8</version.plexus-compiler-javac-errorprone>
-        <version.error_prone_core>2.0.15</version.error_prone_core>
         <version.lifecycle-mapping>1.0.0</version.lifecycle-mapping>
         <version.maven-gpg>1.6</version.maven-gpg>
         <version.testcontainers>1.8.0</version.testcontainers>
+        <version.jaeger>1.8.0</version.jaeger>
+        <version.thrift>0.15.0</version.thrift>
+        <version.opentracing>0.32.0</version.opentracing>
         <skipTests>false</skipTests>
         <matched.test.resources>**/*</matched.test.resources>
+        <version.javadoc-packagelist-plugin>1.0.0</version.javadoc-packagelist-plugin>
+        <version.maven-javadoc>3.1.0</version.maven-javadoc>
     </properties>
 
     <modules>
@@ -144,7 +142,7 @@
         <module>registry</module>
         <module>balance</module>
         <module>consul</module>
-        <module>zookeeper</module>
+        <module>portal-registry</module>
         <module>cors</module>
         <module>cluster</module>
         <module>rate-limit</module>
@@ -161,6 +159,15 @@
         <module>encode-decode</module>
         <module>monad-result</module>
         <module>logger-config</module>
+        <module>jaeger-tracing</module>
+        <module>http-entity</module>
+        <module>egress-router</module>
+        <module>ingress-proxy</module>
+        <module>rule-loader</module>
+        <module>config-reload</module>
+        <module>gateway</module>
+        <module>request-transformer</module>
+        <module>response-transformer</module>
     </modules>
 
     <dependencyManagement>
@@ -218,7 +225,7 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
-                <artifactId>logging</artifactId>
+                <artifactId>logger-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -298,9 +305,8 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
-                <artifactId>zookeeper</artifactId>
+                <artifactId>portal-registry</artifactId>
                 <version>${project.version}</version>
-                <optional>true</optional>
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
@@ -373,12 +379,58 @@
                 <artifactId>server</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>jaeger-tracing</artifactId>
+                <version>${project.version}</version>
+                <optional>true</optional>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>http-entity</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>egress-router</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>ingress-proxy</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>gateway</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>rule-loader</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>request-transformer</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>response-transformer</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <!-- External dependencies -->
 
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>json-schema-validator</artifactId>
                 <version>${version.json-schema-validator}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>yaml-rule</artifactId>
+                <version>${version.yaml-rule}</version>
             </dependency>
 
             <dependency>
@@ -394,6 +446,16 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-annotations</artifactId>
+                <version>${version.jackson}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.dataformat</groupId>
+                <artifactId>jackson-dataformat-xml</artifactId>
+                <version>${version.jackson}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-jdk8</artifactId>
                 <version>${version.jackson}</version>
             </dependency>
             <dependency>
@@ -419,12 +481,6 @@
                 <groupId>com.jayway.jsonpath</groupId>
                 <artifactId>json-path</artifactId>
                 <version>${version.jsonpath}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>net.minidev</groupId>
-                        <artifactId>json-smart</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
@@ -482,36 +538,6 @@
                 <version>${version.prometheus}</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.zookeeper</groupId>
-                <artifactId>zookeeper</artifactId>
-                <version>${version.zookeeper}</version>
-                <scope>compile</scope>
-                <optional>true</optional>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.slf4j</groupId>
-                        <artifactId>slf4j-log4j12</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>io.netty</groupId>
-                        <artifactId>netty</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>com.101tec</groupId>
-                <artifactId>zkclient</artifactId>
-                <version>${version.zkclient}</version>
-                <scope>compile</scope>
-                <optional>true</optional>
-                <exclusions>
-                    <exclusion>
-                        <groupId>log4j</groupId>
-                        <artifactId>log4j</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
                 <groupId>org.yaml</groupId>
                 <artifactId>snakeyaml</artifactId>
                 <version>${version.snakeyaml}</version>
@@ -535,6 +561,27 @@
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
                 <version>${version.logback}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jaegertracing</groupId>
+                <artifactId>jaeger-client</artifactId>
+                <version>${version.jaeger}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.thrift</groupId>
+                <artifactId>libthrift</artifactId>
+                <version>${version.thrift}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>javax.annotation</groupId>
+                        <artifactId>javax.annotation-api</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>io.opentracing</groupId>
+                <artifactId>opentracing-api</artifactId>
+                <version>${version.opentracing}</version>
             </dependency>
 
             <!-- Test dependencies -->
@@ -644,6 +691,19 @@
 
         <plugins>
             <plugin>
+                <groupId>com.networknt</groupId>
+                <artifactId>javadoc-packagelist-maven-plugin</artifactId>
+                <version>${version.javadoc-packagelist-plugin}</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>gen-package-list</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>versions-maven-plugin</artifactId>
                 <version>${version.maven-version}</version>
@@ -657,6 +717,14 @@
                     <serverId>ossrh</serverId>
                     <nexusUrl>https://oss.sonatype.org/</nexusUrl>
                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${version.maven-compiler}</version>
+                <configuration>
+                    <release>${java.version}</release>
                 </configuration>
             </plugin>
             <!--
@@ -808,26 +876,6 @@
                 </executions>
             </plugin>
             <!-- end JACOCO -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.0</version>
-                <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
-                    <compilerArgs>
-                        <arg>-XDcompilePolicy=simple</arg>
-                        <arg>-Xplugin:ErrorProne</arg>
-                    </compilerArgs>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>com.google.errorprone</groupId>
-                            <artifactId>error_prone_core</artifactId>
-                            <version>2.3.3</version>
-                        </path>
-                    </annotationProcessorPaths>
-                </configuration>
-            </plugin>
         </plugins>
         <pluginManagement>
             <plugins>
@@ -1041,26 +1089,6 @@
                                 </configuration>
                             </execution>
                         </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>jdk8</id>
-            <activation>
-                <jdk>1.8</jdk>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <configuration>
-                            <fork>true</fork>
-                            <compilerArgs combine.children="append">
-                                <arg>-J-Xbootclasspath/p:${settings.localRepository}/com/google/errorprone/javac/${javac.version}/javac-${javac.version}.jar</arg>
-                            </compilerArgs>
-                        </configuration>
                     </plugin>
                 </plugins>
             </build>

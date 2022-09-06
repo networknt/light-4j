@@ -1,0 +1,53 @@
+---
+# Rate Limit Handler Configuration
+
+# If this handler is enabled or not. It is disabled by default as this handle might be in
+# most http-sidecar, light-proxy and light-router instances. However, it should only be used
+# internally to throttle request for a slow backend service or externally for DDoS attacks.
+enabled: ${limit.enabled:true}
+# Maximum concurrent requests allowed per second on the entire server. This is property is
+# here to keep backward compatible. New users should use the rateLimit property for config
+# with different keys and different time unit.
+concurrentRequest: ${limit.concurrentRequest:2}
+# This property is kept to ensure backward compatibility. Please don't use it anymore. All
+# requests will return the rate limit headers with error messages after the limit is reached.
+queueSize: ${limit.queueSize:-1}
+# If the rate limit is exposed to the Internet to prevent DDoS attacks, it will return 503
+# error code to trick the DDoS client/tool to stop the attacks as it considers the server
+# is down. However, if the rate limit is used internally to throttle the client requests to
+# protect a slow backend API, it will return 429 error code to indicate too many requests
+# for the client to wait a grace period to resent the request. By default, 503 is returned.
+errorCode: ${limit.errorCode:503}
+# Default request rate limit 10 requests per second and 10000 quota per day. This is the
+# default for the server shared by all the services. If the key is not server, then the
+# quota is not applicable.
+# 10 requests per second limit and 10000 requests per day quota.
+rateLimit: ${limit.rateLimit:10/s 10000/d}
+# Key of the rate limit: server, address, client, user
+# server: The entire server has one rate limit key, and it means all users share the same.
+# address: The IP address is the key and each IP will have its rate limit configuration.
+# client: The client id in the JWT token so that we can give rate limit per client.
+# user: The user id in the JWT token so that we can set rate limit and quota based on user.
+key: ${limit.key:server}
+# If server is the key, we can set up different rate limit per path or service.
+server: ${limit.server:}
+# If address is the key, we can set up different rate limit per address and optional per
+# path or service for certain addresses. All other un-specified addresses will share the
+# limit defined in rateLimit.
+address: ${limit.address:}
+# If client is the key, we can set up different rate limit per client and optional per
+# path or service for certain clients. All other un-specified clients will share the limit
+# defined in rateLimit. When client is select, the rate-limit handler must be after the
+## JwtVerifierHandler so that the client_id can be retrieved from the auditInfo attachment.
+client: ${limit.client:}
+# If user is the key, we can set up different rate limit per user and optional per
+# path or service for certain users. All other un-specified users will share the limit
+# defined in rateLimit. When user is select, the rate-limit handler must be after the
+# JwtVerifierHandler so that the user_id can be retrieved from the auditInfo attachment.
+user: ${limit.user:}
+# Client id Key Resolver.
+clientIdKeyResolver: ${limit.clientIdKeyResolver:com.networknt.limit.key.JwtClientIdKeyResolver}
+# Ip Address Key Resolver.
+addressKeyResolver: ${limit.addressKeyResolver:com.networknt.limit.key.RemoteAddressKeyResolver}
+# User Id Key Resolver.
+userIdKeyResolver: ${limit.userIdKeyResolver:com.networknt.limit.key.JwtUserIdKeyResolver}

@@ -24,7 +24,8 @@ import java.util.Map;
 
 /**
  * The configuration is coming from the sign/key section in the client.yml file. This request is used
- * to get the key for sign verification.
+ * to get the key for sign verification. The proxy configuration is defined in the sign section as it
+ * is not possible the same service using two different proxy servers.  
  *
  * @author Steve Hu
  */
@@ -45,6 +46,9 @@ public class SignKeyRequest extends KeyRequest {
             Map<String, Object> keyConfig = (Map<String, Object>)signConfig.get(ClientConfig.KEY);
             if(keyConfig != null) {
                 setServerUrl((String)keyConfig.get(ClientConfig.SERVER_URL));
+                setProxyHost((String)signConfig.get(ClientConfig.PROXY_HOST));
+                int port = signConfig.get(ClientConfig.PROXY_PORT) == null ? 443 : (Integer)signConfig.get(ClientConfig.PROXY_PORT);
+                setProxyPort(port);
                 setServiceId((String)keyConfig.get(ClientConfig.SERVICE_ID));
                 Object object = keyConfig.get(ClientConfig.ENABLE_HTTP2);
                 setEnableHttp2(object != null && (Boolean) object);

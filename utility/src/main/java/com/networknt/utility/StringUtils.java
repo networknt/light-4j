@@ -32,6 +32,8 @@ import java.util.regex.Pattern;
  */
 public class StringUtils {
 
+    private static final String[] EMPTY_STRING_ARRAY = {};
+
     private static final int STRING_BUILDER_SIZE = 256;
 
     /**
@@ -1283,4 +1285,174 @@ public class StringUtils {
         return matcher.matches();
     }
 
+    /**
+     * Check whether the given {@code String} contains actual <em>text</em>.
+     * <p>More specifically, this method returns {@code true} if the
+     * {@code String} is not {@code null}, its length is greater than 0,
+     * and it contains at least one non-whitespace character.
+     * @param str the {@code String} to check (may be {@code null})
+     * @return {@code true} if the {@code String} is not {@code null}, its
+     * length is greater than 0, and it does not contain whitespace only
+     * @see Character#isWhitespace
+     */
+    public static boolean hasText(String str) {
+        return (str != null && !str.isEmpty() && containsText(str));
+    }
+
+    private static boolean containsText(CharSequence str) {
+        int strLen = str.length();
+        for (int i = 0; i < strLen; i++) {
+            if (!Character.isWhitespace(str.charAt(i))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check that the given {@code String} is neither {@code null} nor of length 0.
+     * <p>Note: this method returns {@code true} for a {@code String} that
+     * purely consists of whitespace.
+     * @param str the {@code String} to check (may be {@code null})
+     * @return {@code true} if the {@code String} is not {@code null} and has length
+     * @see #hasText(String)
+     */
+    public static boolean hasLength(String str) {
+        return (str != null && !str.isEmpty());
+    }
+
+    /**
+     * Tokenize the given {@code String} into a {@code String} array via a
+     * {@link StringTokenizer}.
+     * <p>Trims tokens and omits empty tokens.
+     * <p>The given {@code delimiters} string can consist of any number of
+     * delimiter characters. Each of those characters can be used to separate
+     * tokens. A delimiter is always a single character; for multi-character
+     * delimiters, consider using delimitedListToStringArray.
+     * @param str the {@code String} to tokenize (potentially {@code null} or empty)
+     * @param delimiters the delimiter characters, assembled as a {@code String}
+     * (each of the characters is individually considered as a delimiter)
+     * @return an array of the tokens
+     * @see java.util.StringTokenizer
+     * @see String#trim()
+     */
+    public static String[] tokenizeToStringArray(String str, String delimiters) {
+        return tokenizeToStringArray(str, delimiters, true, true);
+    }
+
+    /**
+     * Tokenize the given {@code String} into a {@code String} array via a
+     * {@link StringTokenizer}.
+     * <p>The given {@code delimiters} string can consist of any number of
+     * delimiter characters. Each of those characters can be used to separate
+     * tokens. A delimiter is always a single character; for multi-character
+     * delimiters, consider using delimitedListToStringArray.
+     * @param str the {@code String} to tokenize (potentially {@code null} or empty)
+     * @param delimiters the delimiter characters, assembled as a {@code String}
+     * (each of the characters is individually considered as a delimiter)
+     * @param trimTokens trim the tokens via {@link String#trim()}
+     * @param ignoreEmptyTokens omit empty tokens from the result array
+     * (only applies to tokens that are empty after trimming; StringTokenizer
+     * will not consider subsequent delimiters as token in the first place).
+     * @return an array of the tokens
+     * @see java.util.StringTokenizer
+     * @see String#trim()
+     */
+    public static String[] tokenizeToStringArray(
+            String str, String delimiters, boolean trimTokens, boolean ignoreEmptyTokens) {
+
+        if (str == null) {
+            return EMPTY_STRING_ARRAY;
+        }
+
+        StringTokenizer st = new StringTokenizer(str, delimiters);
+        List<String> tokens = new ArrayList<>();
+        while (st.hasMoreTokens()) {
+            String token = st.nextToken();
+            if (trimTokens) {
+                token = token.trim();
+            }
+            if (!ignoreEmptyTokens || token.length() > 0) {
+                tokens.add(token);
+            }
+        }
+        return toStringArray(tokens);
+    }
+
+    /**
+     * Copy the given {@link Collection} into a {@code String} array.
+     * <p>The {@code Collection} must contain {@code String} elements only.
+     * @param collection the {@code Collection} to copy
+     * (potentially {@code null} or empty)
+     * @return the resulting {@code String} array
+     */
+    public static String[] toStringArray(Collection<String> collection) {
+        return (!CollectionUtils.isEmpty(collection) ? collection.toArray(EMPTY_STRING_ARRAY) : EMPTY_STRING_ARRAY);
+    }
+
+    /**
+     * Convert a {@link Collection} to a delimited {@code String} (e.g. CSV).
+     * <p>Useful for {@code toString()} implementations.
+     * @param coll the {@code Collection} to convert (potentially {@code null} or empty)
+     * @param delim the delimiter to use (typically a ",")
+     * @param prefix the {@code String} to start each element with
+     * @param suffix the {@code String} to end each element with
+     * @return the delimited {@code String}
+     */
+    public static String collectionToDelimitedString(
+            Collection<?> coll, String delim, String prefix, String suffix) {
+
+        if (CollectionUtils.isEmpty(coll)) {
+            return "";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        Iterator<?> it = coll.iterator();
+        while (it.hasNext()) {
+            sb.append(prefix).append(it.next()).append(suffix);
+            if (it.hasNext()) {
+                sb.append(delim);
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Convert a {@code Collection} into a delimited {@code String} (e.g. CSV).
+     * <p>Useful for {@code toString()} implementations.
+     * @param coll the {@code Collection} to convert (potentially {@code null} or empty)
+     * @param delim the delimiter to use (typically a ",")
+     * @return the delimited {@code String}
+     */
+    public static String collectionToDelimitedString(Collection<?> coll, String delim) {
+        return collectionToDelimitedString(coll, delim, "", "");
+    }
+
+    /**
+     * Convert a {@code Collection} into a delimited {@code String} (e.g., CSV).
+     * <p>Useful for {@code toString()} implementations.
+     * @param coll the {@code Collection} to convert (potentially {@code null} or empty)
+     * @return the delimited {@code String}
+     */
+    public static String collectionToCommaDelimitedString(Collection<?> coll) {
+        return collectionToDelimitedString(coll, ",");
+    }
+
+    /**
+     * Check if a string is numeric.
+     * @param str input
+     * @return boolean true is numeric
+     */
+    public static boolean isNumeric(String str) {
+        if (str == null) {
+            return false;
+        }
+        int sz = str.length();
+        for (int i = 0; i < sz; i++) {
+            if (Character.isDigit(str.charAt(i)) == false) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

@@ -22,9 +22,11 @@ package com.networknt.email;
  * @author Steve Hu
  */
 public class EmailConfig {
+    public static final String CONFIG_NAME = "email";
     String host;
     String port;
     String user;
+    String pass;
     String debug;
     String auth;
 
@@ -50,6 +52,14 @@ public class EmailConfig {
 
     public void setUser(String user) {
         this.user = user;
+    }
+
+    public String getPass() {
+        return pass;
+    }
+
+    public void setPass(String pass) {
+        this.pass = pass;
     }
 
     public String getDebug() {

@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.networknt.client.oauth;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
+import com.networknt.client.ssl.TLSConfig;
 import com.networknt.cluster.Cluster;
 import com.networknt.config.Config;
+import com.networknt.config.JsonMapper;
 import com.networknt.exception.ClientException;
 import com.networknt.httpstring.ContentType;
 import com.networknt.monad.Failure;
@@ -30,29 +31,26 @@ import com.networknt.monad.Success;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.status.Status;
 import com.networknt.utility.StringUtils;
-import io.undertow.UndertowOptions;
-import io.undertow.client.*;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.*;
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xnio.IoUtils;
-import org.xnio.OptionMap;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.InetSocketAddress;
+import java.net.ProxySelector;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
+import java.net.http.HttpClient;
+import java.net.http.HttpHeaders;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
-import static com.networknt.client.oauth.TokenRequest.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class OauthHelper {
@@ -62,40 +60,19 @@ public class OauthHelper {
     private static final String USER_ID = "userId";
     private static final String USER_TYPE = "userType";
     private static final String ROLES = "roles";
-
-    /**
-     * @deprecated will be moved to {@link ClientConfig#SCOPE}
-     */
-    @Deprecated
-    static final String SCOPE = "scope";
-
-    /**
-     * @deprecated will be moved to {@link ClientConfig#SERVICE_ID}
-     */
-    @Deprecated
-    static final String SERVICE_ID = "service_id";
     private static final String FAIL_TO_SEND_REQUEST = "ERR10051";
     private static final String GET_TOKEN_ERROR = "ERR10052";
     private static final String ESTABLISH_CONNECTION_ERROR = "ERR10053";
     private static final String GET_TOKEN_TIMEOUT = "ERR10054";
+    private static final String TLS_TRUSTSTORE_ERROR = "ERR10055";
+    private static final String OAUTH_SERVER_URL_ERROR = "ERR10056";
     public static final String STATUS_CLIENT_CREDENTIALS_TOKEN_NOT_AVAILABLE = "ERR10009";
 
     private static final Logger logger = LoggerFactory.getLogger(OauthHelper.class);
 
-    /**
-     * @deprecated As of release 1.5.29, replaced with @link #getTokenResult(TokenRequest tokenRequest)
-     * @param tokenRequest Request details for the token
-     * @return A TokenResponse on success
-     * @throws ClientException If any issues
-     */
-    @Deprecated
-    public static TokenResponse getToken(TokenRequest tokenRequest) throws ClientException {
-        Result<TokenResponse> responseResult = getTokenResult(tokenRequest);
-        if (responseResult.isSuccess()) {
-            return responseResult.getResult();
-        }
-        throw new ClientException(responseResult.getError());
-    }
+    private static HttpClient tokenClient = null;
+    private static HttpClient signClient = null;
+    private static HttpClient derefClient = null;
 
     /**
      * Get an access token from the token service. A Result of TokenResponse will be returned if the invocation is successfully.
@@ -117,42 +94,51 @@ public class OauthHelper {
      * @return Result of TokenResponse or error Status.
      */
     public static Result<TokenResponse> getTokenResult(TokenRequest tokenRequest, String envTag) {
-        final AtomicReference<Result<TokenResponse>> reference = new AtomicReference<>();
-        final Http2Client client = Http2Client.getInstance();
-        final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
-        try {
-            if(tokenRequest.getServerUrl() != null) {
-                connection = client.connect(new URI(tokenRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, tokenRequest.isEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
-            } else if(tokenRequest.getServiceId() != null) {
-                Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
-                String url = cluster.serviceToUrl("https", tokenRequest.getServiceId(), envTag, null);
-                connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, tokenRequest.isEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
-            } else {
-                // both server_url and serviceId are empty in the config.
-                logger.error("Error: both server_url and serviceId are not configured in client.yml for " + tokenRequest.getClass());
-                throw new ClientException("both server_url and serviceId are not configured in client.yml for " + tokenRequest.getClass());
+        // As the tokenClient will be reused frequently, we create it once and cache it.
+        if(logger.isTraceEnabled()) logger.trace("tokenRequest = " + JsonMapper.toJson(tokenRequest));
+        if(tokenClient == null) {
+            try {
+                HttpClient.Builder clientBuilder = HttpClient.newBuilder()
+                        .followRedirects(HttpClient.Redirect.NORMAL)
+                        .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
+                        .sslContext(Http2Client.createSSLContext());
+                if(logger.isTraceEnabled()) logger.trace("proxyHost = " + tokenRequest.getProxyHost() + " proxyPort = " + tokenRequest.getProxyPort());
+                if(!StringUtils.isBlank(tokenRequest.getProxyHost())) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(tokenRequest.getProxyHost(), tokenRequest.getProxyPort() == 0 ? 443 : tokenRequest.getProxyPort())));
+                if(tokenRequest.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
+                // this a workaround to bypass the hostname verification in jdk11 http client.
+                Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+                if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
+                    final Properties props = System.getProperties();
+                    props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
+                }
+                tokenClient = clientBuilder.build();
+            } catch (IOException e) {
+                logger.error("Cannot create HttpClient:", e);
+                return Failure.of(new Status(TLS_TRUSTSTORE_ERROR));
             }
-        } catch (Exception e) {
-            logger.error("cannot establish connection:", e);
-            return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR, tokenRequest.getServerUrl() != null? tokenRequest.getServerUrl() : tokenRequest.getServiceId()));
         }
-
         try {
+            String serverUrl = tokenRequest.getServerUrl();
+            if(serverUrl == null) {
+                Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
+                tokenRequest.setServerUrl(cluster.serviceToUrl("https", tokenRequest.getServiceId(), envTag, null));
+                if(logger.isTraceEnabled()) logger.trace("serviceUrl is null, discovered url = " + tokenRequest.getServerUrl());
+            }
+            if(tokenRequest.getServerUrl() == null) {
+                if(logger.isTraceEnabled()) logger.trace("serviceUrl is empty and could not discovery serviceUrl. tokenRequest = " + JsonMapper.toJson(tokenRequest));
+                return Failure.of(new Status(OAUTH_SERVER_URL_ERROR, "token"));
+            }
+            if(logger.isTraceEnabled()) logger.trace("token service url = " + serverUrl);
             IClientRequestComposable requestComposer = ClientRequestComposerProvider.getInstance().getComposer(ClientRequestComposerProvider.ClientRequestComposers.CLIENT_CREDENTIAL_REQUEST_COMPOSER);
-
-            connection.getIoThread().execute(new TokenRequestAction(tokenRequest, requestComposer, connection, reference, latch));
-
-            latch.await(4, TimeUnit.SECONDS);
+            final HttpRequest request = requestComposer.composeClientRequest(tokenRequest);
+            CompletableFuture<HttpResponse<String>> response = tokenClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+            String body = response.thenApply(HttpResponse::body).get();
+            HttpHeaders headers = response.thenApply(HttpResponse::headers).get();
+            return handleResponse(getContentTypeHeaders(headers), body);
         } catch (Exception e) {
-            logger.error("IOException: ", e);
-            return Failure.of(new Status(FAIL_TO_SEND_REQUEST));
-        } finally {
-            IoUtils.safeClose(connection);
+            logger.error("Exception:", e);
+            return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR, tokenRequest.getServerUrl()));
         }
-
-        //if reference.get() is null at this point, mostly likely couldn't get token within latch.await() timeout.
-        return reference.get() == null ? Failure.of(new Status(GET_TOKEN_TIMEOUT)) : reference.get();
     }
 
     /**
@@ -177,208 +163,117 @@ public class OauthHelper {
      * @return Result that contains TokenResponse or error status when failed.
      */
     public static Result<TokenResponse> getSignResult(SignRequest signRequest, String envTag) {
-        final AtomicReference<Result<TokenResponse>> reference = new AtomicReference<>();
-        final Http2Client client = Http2Client.getInstance();
-        final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
-        try {
-            if(signRequest.getServerUrl() != null) {
-                connection = client.connect(new URI(signRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, signRequest.isEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
-            } else if(signRequest.getServiceId() != null) {
-                Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
-                String url = cluster.serviceToUrl("https", signRequest.getServiceId(), envTag, null);
-                connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, signRequest.isEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
-            } else {
-                // both server_url and serviceId are empty in the config.
-                logger.error("Error: both server_url and serviceId are not configured in client.yml for " + signRequest.getClass());
-                throw new ClientException("both server_url and serviceId are not configured in client.yml for " + signRequest.getClass());
+        if(signClient == null) {
+            try {
+                HttpClient.Builder clientBuilder = HttpClient.newBuilder()
+                        .followRedirects(HttpClient.Redirect.NORMAL)
+                        .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
+                        .sslContext(Http2Client.createSSLContext());
+                if(signRequest.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(signRequest.getProxyHost(), signRequest.getProxyPort() == 0 ? 443 : signRequest.getProxyPort())));
+                if(signRequest.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
+                // this a workaround to bypass the hostname verification in jdk11 http client.
+                Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+                if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
+                    final Properties props = System.getProperties();
+                    props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
+                }
+                signClient = clientBuilder.build();
+            } catch (IOException e) {
+                logger.error("Cannot create HttpClient:", e);
+                return Failure.of(new Status(TLS_TRUSTSTORE_ERROR));
             }
-        } catch (Exception e) {
-            logger.error("cannot establish connection:", e);
-            return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR, signRequest.getServerUrl() != null ? signRequest.getServerUrl() : signRequest.getServiceId()));
         }
-
         try {
+            String serverUrl = signRequest.getServerUrl();
+            if(serverUrl == null) {
+                Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
+                signRequest.setServerUrl(cluster.serviceToUrl("https", signRequest.getServiceId(), envTag, null));
+            }
+            if(signRequest.getServerUrl() == null) {
+                return Failure.of(new Status(OAUTH_SERVER_URL_ERROR, "sign"));
+            }
             Map<String, Object> map = new HashMap<>();
             map.put("expires", signRequest.getExpires());
             map.put("payload", signRequest.getPayload());
             String requestBody = Config.getInstance().getMapper().writeValueAsString(map);
-            connection.getIoThread().execute(() -> {
-                final ClientRequest request = new ClientRequest().setMethod(Methods.POST).setPath(signRequest.getUri());
-                request.getRequestHeaders().put(Headers.HOST, "localhost");
-                request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
-                request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
-                request.getRequestHeaders().put(Headers.AUTHORIZATION, getBasicAuthHeader(signRequest.getClientId(), signRequest.getClientSecret()));
-                connection.sendRequest(request, new ClientCallback<ClientExchange>() {
-                    @Override
-                    public void completed(ClientExchange result) {
-                        new StringWriteChannelListener(requestBody).setup(result.getRequestChannel());
-                        result.setResponseListener(new ClientCallback<ClientExchange>() {
-                            @Override
-                            public void completed(ClientExchange result) {
-                                new StringReadChannelListener(Http2Client.BUFFER_POOL) {
-
-                                    @Override
-                                    protected void stringDone(String string) {
-
-                                        logger.debug("getToken response = " + string);
-                                        reference.set(handleResponse(getContentTypeFromExchange(result), string));
-                                        latch.countDown();
-                                    }
-
-                                    @Override
-                                    protected void error(IOException e) {
-                                        logger.error("IOException:", e);
-                                        reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
-                                        latch.countDown();
-                                    }
-                                }.setup(result.getResponseChannel());
-                            }
-
-                            @Override
-                            public void failed(IOException e) {
-                                logger.error("IOException:", e);
-                                reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
-                                latch.countDown();
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void failed(IOException e) {
-                        logger.error("IOException:", e);
-                        reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
-                        latch.countDown();
-                    }
-                });
-            });
-
-            latch.await(signRequest.getTimeout(), TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
-            logger.error("IOException: ", e);
-            return Failure.of(new Status(FAIL_TO_SEND_REQUEST));
-        } finally {
-            IoUtils.safeClose(connection);
-        }
-
-        //if reference.get() is null at this point, mostly likely couldn't get token within latch.await() timeout.
-        return reference.get() == null ? Failure.of(new Status(GET_TOKEN_TIMEOUT)) : reference.get();
-    }
-
-    /**
-     * @deprecated As of release 1.5.29, replaced with @link #getTokenFromSamlResult(SAMLBearerRequest tokenRequest)
-     *
-     * @param tokenRequest Request details for the token
-     * @return A TokenResponse object on success
-     * @throws ClientException If any issues
-     */
-    @Deprecated
-    public static TokenResponse getTokenFromSaml(SAMLBearerRequest tokenRequest) throws ClientException {
-        Result<TokenResponse> responseResult = getTokenFromSamlResult(tokenRequest);
-        if (responseResult.isSuccess()) {
-            return responseResult.getResult();
-        }
-        throw new ClientException(responseResult.getError());
-    }
-
-    public static Result<TokenResponse> getTokenFromSamlResult(SAMLBearerRequest tokenRequest) {
-        final AtomicReference<Result<TokenResponse>> reference = new AtomicReference<>();
-        final Http2Client client = Http2Client.getInstance();
-        final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
-        try {
-            connection = client.connect(new URI(tokenRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, tokenRequest.isEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
-        } catch (Exception e) {
-            logger.error("cannot establish connection:", e);
-            return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR));
-        }
-        try {
-            IClientRequestComposable requestComposer = ClientRequestComposerProvider.getInstance().getComposer(ClientRequestComposerProvider.ClientRequestComposers.SAML_BEARER_REQUEST_COMPOSER);
-
-            connection.getIoThread().execute(new TokenRequestAction(tokenRequest, requestComposer, connection, reference, latch));
-
-            latch.await(4, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            logger.error("IOException: ", e);
-            return Failure.of(new Status(FAIL_TO_SEND_REQUEST));
-        } finally {
-            IoUtils.safeClose(connection);
-        }
-        //if reference.get() is null at this point, mostly likely couldn't get token within latch.await() timeout.
-        return reference.get() == null ? Failure.of(new Status(GET_TOKEN_TIMEOUT)) : reference.get();
-    }
-
-    /**
-     * This private class is to encapsulate the action to send request, and handling response,
-     * because of the way of sending request to get token and handle exceptions are the same for both JWT and SAML.
-     * The only difference is how to compose the request based on TokenRequest model.
-     */
-    private static class TokenRequestAction implements Runnable{
-        private ClientConnection connection;
-        private AtomicReference<Result<TokenResponse>> reference;
-        private CountDownLatch latch;
-        private IClientRequestComposable requestComposer;
-        private TokenRequest tokenRequest;
-
-        TokenRequestAction(TokenRequest tokenRequest, IClientRequestComposable requestComposer, ClientConnection connection, AtomicReference<Result<TokenResponse>> reference, CountDownLatch latch){
-            this.tokenRequest = tokenRequest;
-            this.connection = connection;
-            this.reference = reference;
-            this.latch = latch;
-            this.requestComposer = requestComposer;
-        }
-        @Override
-        public void run() {
-            final ClientRequest request = requestComposer.composeClientRequest(tokenRequest);
-            String requestBody = requestComposer.composeRequestBody(tokenRequest);
-            if (logger.isDebugEnabled()) {
-                logger.debug("The request sent to the oauth server = request header(s): {}, request body: {}", request.getRequestHeaders().toString(), requestBody);
+            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                    .uri(URI.create(signRequest.getServerUrl() + signRequest.getUri()));
+            if(signRequest.getClientId() != null && signRequest.getClientSecret() != null) {
+                requestBuilder.setHeader(Headers.AUTHORIZATION_STRING, getBasicAuthHeader(signRequest.getClientId(), signRequest.getClientSecret()));
             }
-            adjustNoChunkedEncoding(request, requestBody);
-            connection.sendRequest(request, new ClientCallback<ClientExchange>() {
+            requestBuilder.setHeader(Headers.CONTENT_TYPE_STRING, "application/json");
 
-                @Override
-                public void completed(ClientExchange result) {
-                    new StringWriteChannelListener(requestBody).setup(result.getRequestChannel());
-                    result.setResponseListener(new ClientCallback<ClientExchange>() {
-                        @Override
-                        public void completed(ClientExchange result) {
-                            new StringReadChannelListener(Http2Client.BUFFER_POOL) {
+            HttpRequest request = requestBuilder.build();
 
-                                @Override
-                                protected void stringDone(String string) {
-                                    if (logger.isDebugEnabled()) {
-                                        logger.debug("getToken response = " + string);
-                                    }
-                                    reference.set(handleResponse(getContentTypeFromExchange(result), string));
-                                    latch.countDown();
-                                }
+            CompletableFuture<HttpResponse<String>> response = signClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+            String body = response.thenApply(HttpResponse::body).get();
+            HttpHeaders headers = response.thenApply(HttpResponse::headers).get();
+            return handleResponse(getContentTypeHeaders(headers), body);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR, signRequest.getServerUrl()));
+        }
+    }
 
-                                @Override
-                                protected void error(IOException e) {
-                                    logger.error("IOException:", e);
-                                    reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
-                                    latch.countDown();
-                                }
-                            }.setup(result.getResponseChannel());
-                        }
+    /**
+     * Get an access token from the token service based on a SAML token request. A Result of TokenResponse will be returned
+     * if the invocation is successfully. Otherwise, a Result of Status will be returned.
+     *
+     * @param tokenRequest token request constructed from the client.yml token section.
+     * @return Result of TokenResponse or error Status.
+     */
+    public static Result<TokenResponse> getTokenFromSamlResult(SAMLBearerRequest tokenRequest) {
+        return getTokenResult(tokenRequest, null);
+    }
 
-                        @Override
-                        public void failed(IOException e) {
-                            logger.error("IOException:", e);
-                            reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
-                            latch.countDown();
-                        }
-                    });
+    /**
+     * Get an access token from the token service based on a SAML token request. A Result of TokenResponse will be returned
+     * if the invocation is successfully. Otherwise, a Result of Status will be returned.
+     *
+     * @param tokenRequest token request constructed from the client.yml token section.
+     * @param envTag environment tag for service lookup.
+     * @return Result of TokenResponse or error Status.
+     */
+    public static Result<TokenResponse> getTokenFromSamlResult(SAMLBearerRequest tokenRequest, String envTag) {
+        if(tokenClient == null) {
+            try {
+                HttpClient.Builder clientBuilder = HttpClient.newBuilder()
+                        .followRedirects(HttpClient.Redirect.NORMAL)
+                        .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
+                        .sslContext(Http2Client.createSSLContext());
+                if(tokenRequest.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(tokenRequest.getProxyHost(), tokenRequest.getProxyPort() == 0 ? 443 : tokenRequest.getProxyPort())));
+                if(tokenRequest.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
+                // this a workaround to bypass the hostname verification in jdk11 http client.
+                Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+                if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
+                    final Properties props = System.getProperties();
+                    props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
                 }
-
-                @Override
-                public void failed(IOException e) {
-                    logger.error("IOException:", e);
-                    reference.set(Failure.of(new Status(FAIL_TO_SEND_REQUEST)));
-                    latch.countDown();
-                }
-            });
+                tokenClient = clientBuilder.build();
+            } catch (IOException e) {
+                logger.error("Cannot create HttpClient:", e);
+                return Failure.of(new Status(TLS_TRUSTSTORE_ERROR));
+            }
+        }
+        try {
+            String serverUrl = tokenRequest.getServerUrl();
+            if(serverUrl == null) {
+                Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
+                tokenRequest.setServerUrl(cluster.serviceToUrl("https", tokenRequest.getServiceId(), envTag, null));
+            }
+            if(tokenRequest.getServerUrl() == null) {
+                return Failure.of(new Status(OAUTH_SERVER_URL_ERROR, "token"));
+            }
+            IClientRequestComposable requestComposer = ClientRequestComposerProvider.getInstance().getComposer(ClientRequestComposerProvider.ClientRequestComposers.SAML_BEARER_REQUEST_COMPOSER);
+            final HttpRequest request = requestComposer.composeClientRequest(tokenRequest);
+            CompletableFuture<HttpResponse<String>> response = tokenClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+            String body = response.thenApply(HttpResponse::body).get();
+            HttpHeaders headers = response.thenApply(HttpResponse::headers).get();
+            return handleResponse(getContentTypeHeaders(headers), body);
+        } catch (Exception e) {
+            logger.error("IOException: ", e);
+            return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR, tokenRequest.getServerUrl()));
         }
     }
 
@@ -390,6 +285,7 @@ public class OauthHelper {
      * @throws ClientException throw exception if communication with the service fails.
      */
     public static String getKey(KeyRequest keyRequest) throws ClientException {
+        if(logger.isDebugEnabled()) logger.debug("keyRequest = " + keyRequest.toString());
         return getKey(keyRequest, null);
     }
 
@@ -402,42 +298,45 @@ public class OauthHelper {
      * @throws ClientException throw exception if communication with the service fails.
      */
     public static String getKey(KeyRequest keyRequest, String envTag) throws ClientException {
-        final Http2Client client = Http2Client.getInstance();
-        final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
-        try {
-            if(keyRequest.getServerUrl() != null) {
-                connection = client.connect(new URI(keyRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, keyRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
-            } else if(keyRequest.getServiceId() != null) {
-                Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
-                String url = cluster.serviceToUrl("https", keyRequest.getServiceId(), envTag, null);
-                connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, keyRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
-            } else {
-                // both server_url and serviceId are empty in the config.
-                logger.error("Error: both server_url and serviceId are not configured in client.yml for " + keyRequest.getClass());
-                throw new ClientException("both server_url and serviceId are not configured in client.yml for " + keyRequest.getClass());
-            }
-        } catch (Exception e) {
-            throw new ClientException(e);
+        String serverUrl = keyRequest.getServerUrl();
+        if(serverUrl == null) {
+            Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
+            serverUrl = cluster.serviceToUrl("https", keyRequest.getServiceId(), envTag, null);
         }
-        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        if(serverUrl == null) {
+            throw new ClientException(new Status(OAUTH_SERVER_URL_ERROR, "key"));
+        }
         try {
-            ClientRequest request = new ClientRequest().setPath(keyRequest.getUri()).setMethod(Methods.GET);
+            // The key client is used only during the server startup or jwt key is rotated. Don't cache the keyClient.
+            HttpClient.Builder clientBuilder = HttpClient.newBuilder()
+                    .followRedirects(HttpClient.Redirect.NORMAL)
+                    .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
+                    .sslContext(Http2Client.createSSLContext());
+            if(!StringUtils.isBlank(keyRequest.getProxyHost())) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(keyRequest.getProxyHost(), keyRequest.getProxyPort() == 0 ? 443 : keyRequest.getProxyPort())));
+            if(keyRequest.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
+            // this a workaround to bypass the hostname verification in jdk11 http client.
+            Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+            if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
+                final Properties props = System.getProperties();
+                props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
+            }
+            HttpClient keyClient = clientBuilder.build();
 
-            if (keyRequest.getClientId()!=null) {
-                request.getRequestHeaders().put(Headers.AUTHORIZATION, getBasicAuthHeader(keyRequest.getClientId(), keyRequest.getClientSecret()));
+            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+                    .GET()
+                    .uri(URI.create(serverUrl + keyRequest.getUri()));
+            if(keyRequest.getClientId() != null && keyRequest.getClientSecret() != null) {
+                requestBuilder.setHeader(Headers.AUTHORIZATION_STRING, getBasicAuthHeader(keyRequest.getClientId(), keyRequest.getClientSecret()));
             }
-            request.getRequestHeaders().put(Headers.HOST, "localhost");
-            adjustNoChunkedEncoding(request, "");
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
-            latch.await();
+            HttpRequest request = requestBuilder.build();
+
+            CompletableFuture<HttpResponse<String>> response =
+                    keyClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+            return response.thenApply(HttpResponse::body).get(ClientConfig.get().getTimeout(), TimeUnit.MILLISECONDS);
         } catch (Exception e) {
-            logger.error("Exception: ", e);
+            logger.error("Exception:", e);
             throw new ClientException(e);
-        } finally {
-            IoUtils.safeClose(connection);
         }
-        return reference.get().getAttachment(Http2Client.RESPONSE_BODY);
     }
 
     /**
@@ -456,43 +355,53 @@ public class OauthHelper {
      *
      * @param derefRequest a DerefRequest object that is constructed from the client.yml file.
      * @param envTag an environment tag from the server.yml for cluster service lookup.
-     * @return String of JWT token
+     * @return String of JWT token or a status json if there is an error.
      * @throws ClientException when error occurs.
      */
     public static String derefToken(DerefRequest derefRequest, String envTag) throws ClientException {
-        final Http2Client client = Http2Client.getInstance();
-        final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
-        try {
-            if(derefRequest.getServerUrl() != null) {
-                connection = client.connect(new URI(derefRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, derefRequest.isEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
-            } else if(derefRequest.getServiceId() != null) {
-                Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
-                String url = cluster.serviceToUrl("https", derefRequest.getServiceId(), envTag, null);
-                connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, derefRequest.isEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
-            } else {
-                // both server_url and serviceId are empty in the config.
-                logger.error("Error: both server_url and serviceId are not configured in client.yml for " + derefRequest.getClass());
-                throw new ClientException("both server_url and serviceId are not configured in client.yml for " + derefRequest.getClass());
+        if(derefClient == null) {
+            try {
+                HttpClient.Builder clientBuilder = HttpClient.newBuilder()
+                        .followRedirects(HttpClient.Redirect.NORMAL)
+                        .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
+                        .sslContext(Http2Client.createSSLContext());
+                if(derefRequest.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(derefRequest.getProxyHost(), derefRequest.getProxyPort() == 0 ? 443 : derefRequest.getProxyPort())));
+                if(derefRequest.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
+                // this a workaround to bypass the hostname verification in jdk11 http client.
+                Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+                if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
+                    final Properties props = System.getProperties();
+                    props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
+                }
+                derefClient = clientBuilder.build();
+            } catch (IOException e) {
+                logger.error("Cannot create HttpClient:", e);
+                throw new ClientException(e);
             }
-        } catch (Exception e) {
-            logger.error("Exception: ", e);
-            throw new ClientException(e);
         }
-        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
-            ClientRequest request = new ClientRequest().setPath(derefRequest.getUri()).setMethod(Methods.GET);
-            request.getRequestHeaders().put(Headers.AUTHORIZATION, getBasicAuthHeader(derefRequest.getClientId(), derefRequest.getClientSecret()));
-            request.getRequestHeaders().put(Headers.HOST, "localhost");
-            connection.sendRequest(request, client.createClientCallback(reference, latch));
-            latch.await();
+            String serverUrl = derefRequest.getServerUrl();
+            if(serverUrl == null) {
+                Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
+                serverUrl = cluster.serviceToUrl("https", derefRequest.getServiceId(), envTag, null);
+            }
+            if(serverUrl == null) {
+                throw new ClientException(new Status(OAUTH_SERVER_URL_ERROR, "deref"));
+            }
+            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+                    .GET()
+                    .uri(URI.create(serverUrl + derefRequest.getUri()));
+            if(derefRequest.getClientId() != null && derefRequest.getClientSecret() != null) {
+                requestBuilder.setHeader(Headers.AUTHORIZATION_STRING, getBasicAuthHeader(derefRequest.getClientId(), derefRequest.getClientSecret()));
+            }
+            HttpRequest request = requestBuilder.build();
+
+            CompletableFuture<HttpResponse<String>> response = derefClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+            return response.thenApply(HttpResponse::body).get(ClientConfig.get().getTimeout(), TimeUnit.MILLISECONDS);
         } catch (Exception e) {
-            logger.error("Exception: ", e);
+            logger.error("Exception:", e);
             throw new ClientException(e);
-        } finally {
-            IoUtils.safeClose(connection);
         }
-        return reference.get().getAttachment(Http2Client.RESPONSE_BODY);
     }
 
     public static String getBasicAuthHeader(String clientId, String clientSecret) {
@@ -519,11 +428,11 @@ public class OauthHelper {
             params.put(CODE, ((AuthorizationCodeRequest)request).getAuthCode());
             // The redirectUri can be null so that OAuth 2.0 provider will use the redirectUri defined in the client registration
             if(((AuthorizationCodeRequest)request).getRedirectUri() != null) {
-                params.put(REDIRECT_URI, ((AuthorizationCodeRequest)request).getRedirectUri());
+                params.put(ClientConfig.REDIRECT_URI, ((AuthorizationCodeRequest)request).getRedirectUri());
             }
             String csrf = request.getCsrf();
             if(csrf != null) {
-                params.put(CSRF, csrf);
+                params.put(ClientConfig.CSRF, csrf);
             }
         }
         if(ClientConfig.CLIENT_AUTHENTICATED_USER.equals(request.getGrantType())) {
@@ -532,29 +441,31 @@ public class OauthHelper {
             params.put(ROLES, ((ClientAuthenticatedUserRequest)request).getRoles());
             // The redirectUri can be null so that OAuth 2.0 provider will use the redirectUri defined in the client registration
             if(((ClientAuthenticatedUserRequest)request).getRedirectUri() != null) {
-                params.put(REDIRECT_URI, ((ClientAuthenticatedUserRequest)request).getRedirectUri());
+                params.put(ClientConfig.REDIRECT_URI, ((ClientAuthenticatedUserRequest)request).getRedirectUri());
             }
             String csrf = request.getCsrf();
             if(csrf != null) {
-                params.put(CSRF, csrf);
+                params.put(ClientConfig.CSRF, csrf);
             }
         }
         if(ClientConfig.REFRESH_TOKEN.equals(request.getGrantType())) {
-            params.put(REFRESH_TOKEN, ((RefreshTokenRequest)request).getRefreshToken());
+            params.put(ClientConfig.REFRESH_TOKEN, ((RefreshTokenRequest)request).getRefreshToken());
             String csrf = request.getCsrf();
             if(csrf != null) {
-                params.put(CSRF, csrf);
+                params.put(ClientConfig.CSRF, csrf);
             }
         }
         if(request.getScope() != null) {
             params.put(ClientConfig.SCOPE, String.join(" ", request.getScope()));
         }
+        if(logger.isTraceEnabled()) logger.trace("token request form data = " + JsonMapper.toJson(params));
         return Http2Client.getFormDataString(params);
     }
 
     private static Result<TokenResponse> handleResponse(ContentType contentType, String responseBody) {
         TokenResponse tokenResponse;
         Result<TokenResponse> result;
+        if(logger.isTraceEnabled()) logger.trace("contentType = " + contentType + " responseBody = " +  responseBody);
         try {
             //only accept json format response so that can map to a TokenResponse, otherwise escapes server's response and return to the client.
             if(!contentType.equals(ContentType.APPLICATION_JSON)) {
@@ -575,6 +486,7 @@ public class OauthHelper {
         } catch (UnrecognizedPropertyException e) {
             //in this case, cannot parse success token, which means the server doesn't response a successful token but some messages, we need to pass this message out.
             result = Failure.of(new Status(GET_TOKEN_ERROR, escapeBasedOnType(contentType, responseBody)));
+            logger.error("Error in token parsing", e);
         } catch (IOException | RuntimeException e) {
             result = Failure.of(new Status(GET_TOKEN_ERROR, e.getMessage()));
             logger.error("Error in token retrieval", e);
@@ -592,8 +504,15 @@ public class OauthHelper {
         exchange.setStatusCode(status.getStatusCode());
         exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
         exchange.getResponseSender().send(status.toString());
-        StackTraceElement[] elements = Thread.currentThread().getStackTrace();
-        logger.error(status.toString() + " at " + elements[2].getClassName() + "." + elements[2].getMethodName() + "(" + elements[2].getFileName() + ":" + elements[2].getLineNumber() + ")");
+        logger.error(status.toString());
+        // in case to trace where the status is created, enable the trace level logging to diagnose.
+        if (logger.isTraceEnabled()) {
+            StackTraceElement[] elements = Thread.currentThread().getStackTrace();
+            String stackTrace = Arrays.stream(elements)
+                    .map(StackTraceElement::toString)
+                    .collect(Collectors.joining("\n"));
+            logger.trace(stackTrace);
+        }
     }
 
     /**
@@ -634,7 +553,7 @@ public class OauthHelper {
     private static Result<Jwt> renewCCTokenSync(final Jwt jwt) {
         // Already expired, try to renew getCCTokenSynchronously but let requests use the old token.
         logger.trace("In renew window and token is already expired.");
-        //the token can be renew when it's not on renewing or current time is lager than retrying interval
+        //the token can be renewed when it's not on renewing or current time is lager than retrying interval
         if (!jwt.isRenewing() || System.currentTimeMillis() > jwt.getExpiredRetryTimeout()) {
             jwt.setRenewing(true);
             jwt.setEarlyRetryTimeout(System.currentTimeMillis() + Jwt.getExpiredRefreshRetryDelay());
@@ -683,16 +602,17 @@ public class OauthHelper {
      * @return Jwt when success, it will be the same object as the jwt you passed in; return Status when fail;
      */
     private static Result<Jwt> getCCTokenRemotely(final Jwt jwt) {
-        TokenRequest tokenRequest = new ClientCredentialsRequest();
+        TokenRequest tokenRequest = new ClientCredentialsRequest(jwt.getCcConfig());
         //scopes at this point is may not be set yet when issuing a new token.
         setScope(tokenRequest, jwt);
+        if(logger.isTraceEnabled()) logger.trace("TokenRequest = " + JsonMapper.toJson(tokenRequest));
         Result<TokenResponse> result = OauthHelper.getTokenResult(tokenRequest);
         if(result.isSuccess()) {
             TokenResponse tokenResponse = result.getResult();
             jwt.setJwt(tokenResponse.getAccessToken());
             // the expiresIn is seconds and it is converted to millisecond in the future.
             jwt.setExpire(System.currentTimeMillis() + tokenResponse.getExpiresIn() * 1000);
-            logger.info("Get client credentials token {} with expire_in {} seconds", jwt, tokenResponse.getExpiresIn());
+            logger.info("Get client credentials token {} with expire_in {} seconds", jwt.getJwt().substring(0, 20), tokenResponse.getExpiresIn());
             //set the scope for future usage.
             jwt.setScopes(tokenResponse.getScope());
             return Success.of(jwt);
@@ -709,14 +629,14 @@ public class OauthHelper {
      * @param jwt
      */
     private static void setScope(TokenRequest tokenRequest, Jwt jwt) {
-        if(jwt.getKey() != null && !jwt.getKey().getScopes().isEmpty()) {
-            tokenRequest.setScope(new ArrayList<String>() {{ addAll(jwt.getKey().getScopes()); }});
+        if(jwt.getKey() != null && jwt.getKey().getScopes() != null && !jwt.getKey().getScopes().isEmpty()) {
+            tokenRequest.setScope(new ArrayList<>() {{ addAll(jwt.getKey().getScopes()); }});
         }
     }
 
-    public static ContentType getContentTypeFromExchange(ClientExchange exchange) {
-        HeaderValues headerValues = exchange.getResponse().getResponseHeaders().get(Headers.CONTENT_TYPE);
-        return headerValues == null ? ContentType.ANY_TYPE : ContentType.toContentType(headerValues.getFirst());
+    public static ContentType getContentTypeHeaders(HttpHeaders headers) {
+        Optional<String> contentType = headers.firstValue(Headers.CONTENT_TYPE_STRING);
+        return contentType.isEmpty() ? ContentType.ANY_TYPE : ContentType.toContentType(contentType.get());
     }
 
     private static String escapeBasedOnType(ContentType contentType, String responseBody) {
@@ -773,25 +693,4 @@ public class OauthHelper {
         return escapedXML.toString();
     }
 
-    /**
-     * this method is to support sending a server which doesn't support chunked transfer encoding.
-     * @param request ClientRequest
-     * @param requestBody String
-     */
-    public static void adjustNoChunkedEncoding(ClientRequest request, String requestBody) {
-        String fixedLengthString = request.getRequestHeaders().getFirst(Headers.CONTENT_LENGTH);
-        String transferEncodingString = request.getRequestHeaders().getLast(Headers.TRANSFER_ENCODING);
-        if(transferEncodingString != null) {
-            request.getRequestHeaders().remove(Headers.TRANSFER_ENCODING);
-        }
-        //if already specify a content-length, should use what they provided
-        if(fixedLengthString != null && Long.parseLong(fixedLengthString) > 0) {
-            return;
-        }
-        if(!StringUtils.isEmpty(requestBody)) {
-            long contentLength = requestBody.getBytes(UTF_8).length;
-            request.getRequestHeaders().put(Headers.CONTENT_LENGTH, contentLength);
-        }
-
-    }
 }

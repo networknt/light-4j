@@ -21,8 +21,8 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>1.6.43-SNAPSHOT</version>
-        <relativePath>..</relativePath>
+        <version>2.1.2-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>email-sender</artifactId>

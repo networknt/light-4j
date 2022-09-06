@@ -17,6 +17,8 @@
 package com.networknt.service;
 
 import com.networknt.config.Config;
+import com.networknt.config.JsonMapper;
+import com.networknt.utility.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,14 +34,13 @@ import java.util.stream.Collectors;
  */
 @SuppressWarnings("unchecked")
 public class SingletonServiceFactory {
-    private static String CONFIG_NAME = "service";
     private static Logger logger = LoggerFactory.getLogger(SingletonServiceFactory.class);
 
     private static Map<String, Object> serviceMap = new HashMap<>();
     // map is statically loaded to make sure there is only one instance per jvm
     static {
-        ServiceConfig serviceConfig =
-                (ServiceConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServiceConfig.class);
+        ServiceConfig serviceConfig = ServiceConfig.load();
+        if(logger.isTraceEnabled()) logger.trace("serviceConfig = " + JsonMapper.toJson(serviceConfig.getMappedConfig()));
         List<Map<String, Object>> singletons = serviceConfig.getSingletons();
         //logger.debug("singletons " + singletons);
         try {
@@ -66,6 +67,7 @@ public class SingletonServiceFactory {
             e.printStackTrace();
             logger.error("Exception:", e);
         }
+        ModuleRegistry.registerModule(SingletonServiceFactory.class.getName(), serviceConfig.getMappedConfig(), null);
     }
 
     private static Object handleSingleImpl(List<String> interfaceClasses, List<Object> value) throws Exception {
@@ -92,6 +94,7 @@ public class SingletonServiceFactory {
      * @throws Exception
      */
     private static List<Object> constructAndAddToServiceMap(List<String> interfaceClasses, Map map) throws Exception {
+        if(logger.isTraceEnabled()) logger.trace("map = " + JsonMapper.toJson(map));
         Iterator it = map.entrySet().iterator();
         List<Object> items = new ArrayList<>();
         if (it.hasNext()) {
@@ -341,7 +344,7 @@ public class SingletonServiceFactory {
      * but just for test cases in order to simulate certain scenarios.
      *
      * @param className full classname with package
-     * @param object The object that you want to binding to the class
+     * @param object The object that you want to bind to the class
      */
     public static void setBean(String className, Object object) {
         serviceMap.put(className, object);

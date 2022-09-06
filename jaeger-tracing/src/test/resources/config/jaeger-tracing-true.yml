@@ -1,0 +1,3 @@
+enabled: true
+type: ratelimiting
+param: 1000

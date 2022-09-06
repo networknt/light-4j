@@ -16,8 +16,6 @@
 
 package com.networknt.client.oauth;
 
-import com.networknt.client.ClientConfig;
-
 /**
  * This is the generic key request with an id as parameter. The static serverUrl will be used if
  * available. Otherwise, the serviceId will be used to lookup the key service. There are two sub
@@ -28,56 +26,9 @@ import com.networknt.client.ClientConfig;
  *
  */
 public class KeyRequest {
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#OAUTH}
-     */
-    @Deprecated
-    public static String OAUTH = "oauth";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#KEY}
-     */
-    @Deprecated
-    public static String KEY = "key";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#SERVER_URL}
-     */
-    @Deprecated
-    public static String SERVER_URL = "server_url";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#SERVICE_ID}
-     */
-    @Deprecated
-    public static String SERVICE_ID = "serviceId";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#URI}
-     */
-    @Deprecated
-    public static String URI = "uri";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#CLIENT_ID}
-     */
-    @Deprecated
-    public static String CLIENT_ID = "client_id";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#CLIENT_SECRET}
-     */
-    @Deprecated
-    public static String CLIENT_SECRET = "client_secret";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#ENABLE_HTTP2}
-     */
-    @Deprecated
-    public static String ENABLE_HTTP2 = "enableHttp2";
-
     protected String serverUrl;
+    protected String proxyHost;
+    protected int proxyPort;
     protected String serviceId;
     protected String uri;
     protected String clientId;
@@ -139,5 +90,36 @@ public class KeyRequest {
 
     public void setKid(String kid) {
         this.kid = kid;
+    }
+
+    public String getProxyHost() {
+        return proxyHost;
+    }
+
+    public void setProxyHost(String proxyHost) {
+        this.proxyHost = proxyHost;
+    }
+
+    public int getProxyPort() {
+        return proxyPort;
+    }
+
+    public void setProxyPort(int proxyPort) {
+        this.proxyPort = proxyPort;
+    }
+
+    @Override
+    public String toString() {
+        return "KeyRequest{" +
+                "serverUrl='" + serverUrl + '\'' +
+                ", proxyHost='" + proxyHost + '\'' +
+                ", proxyPort=" + proxyPort +
+                ", serviceId='" + serviceId + '\'' +
+                ", uri='" + uri + '\'' +
+                ", clientId='" + clientId + '\'' +
+                ", clientSecret='" + clientSecret + '\'' +
+                ", enableHttp2=" + enableHttp2 +
+                ", kid='" + kid + '\'' +
+                '}';
     }
 }

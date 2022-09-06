@@ -121,7 +121,7 @@ SUC10308:
   severity: NA
   description: The request and all future requests should be repeated with another URI
 
-# 10000-11000 Light Java Framework validation errors
+# 10000-10999 Light Java Framework validation errors
 ERR10000:
   statusCode: 401
   code: ERR10000
@@ -166,7 +166,7 @@ ERR10008:
   statusCode: 405
   code: ERR10008
   message: METHOD_NOT_ALLOWED
-  description: Request method cannot be found in the spec.
+  description: Request method %s cannot be found in the path %s.
 ERR10009:
   statusCode: 408
   code: ERR10009
@@ -201,7 +201,7 @@ ERR10015:
   statusCode: 400
   code: ERR10015
   message: CONTENT_TYPE_MISMATCH
-  description: Content type in header %s doesn't match the body. The body might be trucated due to bufferSize to small in client.xml
+  description: Content type in header %s doesn't match the body.
 ERR10016:
   statusCode: 400
   code: ERR10016
@@ -386,7 +386,7 @@ ERR10052:
   statusCode: 401
   code: ERR10052
   message: GET_TOKEN_ERROR
-  description: "Cannot get valid token: %s."
+  description: Cannot get valid token %s.
 ERR10053:
   statusCode: 401
   code: ERR10053
@@ -397,8 +397,110 @@ ERR10054:
   code: ERR10054
   message: GET_TOKEN_TIMEOUT
   description: Cannot get valid token, probably due to a timeout.
+ERR10055:
+  statusCode: 400
+  code: ERR10055
+  message: TLS_TRUSTSTORE_ERROR
+  description: Cannot load client.truststore to create HttpClient.
+ERR10056:
+  statusCode: 400
+  code: ERR10056
+  message: OAUTH_SERVER_URL_ERROR
+  description: Neither server_url nor serviceId is configured in client.yml for %s.
+ERR10057:
+  statusCode: 400
+  code: ERR10057
+  message: CONFIG_PROPERTY_MISSING
+  description: Config property %s is missing in config file %s.
+ERR10058:
+  statusCode: 400
+  code: ERR10058
+  message: ERROR_CONNECT_REGISTRY
+  description: Failed to connect to the registry %s.
+ERR10059:
+  statusCode: 400
+  code: ERR10059
+  message: REQUEST_BODY_MISSING
+  description: Request body is missing.
+ERR10060:
+  statusCode: 400
+  code: ERR10060
+  message: CONFIG_VALUE_INVALID
+  description: Config value %s for key %s invalid in config file %s.
+ERR10061:
+  statusCode: 401
+  code: ERR10061
+  message: MISSING_GATEWAY_AUTHORIZER
+  description: JWT Authorizer is not configured or without permission on AWS API Gateway.
+ERR10062:
+  statusCode: 401
+  code: ERR10062
+  message: MISSING_PRIMARY_SCOPES
+  description: Scopes from the JWT token in Authorization header are missing.
+ERR10063:
+  statusCode: 400
+  code: ERR10063
+  message: MISSING_ENDPOINT_FUNCTION
+  description: Missing funcation in the mapping for endpoint %s.
+ERR10064:
+  statusCode: 400
+  code: ERR10064
+  message: EMPTY_LAMBDA_RESPONSE
+  description: Empty lambda function response for %s.
+ERR10065:
+  statusCode: 400
+  code: ERR10065
+  message: HANDLER_IS_DISABLED
+  description: Handler %s is disabled.
+ERR10066:
+  statusCode: 400
+  code: ERR10066
+  message: OAUTH_KEY_ERROR
+  description: Unable to download jwk set.
+ERR10067:
+  statusCode: 403
+  code: ERR10067
+  message: ACCESS_CONTROL_ERROR
+  description: Failed to pass the fine-grained authorization with rule %s.
+ERR10068:
+  statusCode: 413
+  code: ERR10068
+  message: PAYLOAD_TOO_LARGE
+  description: The request body has exceeded the set max size.
+ERR10069:
+  statusCode: 403
+  code: ERR10069
+  message: ACCESS_CONTROL_MISSING
+  description: Access control rule is missing for endpoint %s and default deny is true.
+ERR10070:
+  statusCode: 400
+  code: ERR10070
+  message: OBJECT_NOT_UNIQUE
+  description: The object %s is not unique with value %s.
+ERR10071:
+  statusCode: 403
+  code: ERR10071
+  message: NOT_AUTHORIZED_REQUEST_PATH
+  description: The request path %s is not authorized for user %s.
+ERR10072:
+  statusCode: 400
+  code: ERR10072
+  message: BEARER_USER_NOT_FOUND
+  description: Bearer token is allowed but bearer user is not found.
+ERR10073:
+  statusCode: 400
+  code: ERR10073
+  message: LIMIT_KEY_NOT_FOUND
+  description: Could not resolve the rate limit key with key type %s and resolver %s.
+ERR10074:
+  statusCode: 400
+  code: ERR10074
+  message: HANDLER_DEPENDENCY_ERROR
+  description: Handler %s depends on handler %s in the chain.
 
-# 11000-11500 swagger-validator errors
+
+
+# 11000-11499 swagger-validator errors
 ERR11000:
   statusCode: 400
   code: ERR11000
@@ -494,6 +596,11 @@ ERR11018:
   code: ERR11018
   message: VALIDATOR_RESPONSE_CONTENT_UNEXPECTED
   description: No response body content or schema is expected for %s on path %s.
+ERR11019:
+  statusCode: 400
+  code: ERR11019
+  message: STARTUP_HOOK_NOT_LOADED
+  description: Startup hook %s is not loaded properly.
 
 # 11100-11199 Light Code Generator validation errors
 ERR11100:
@@ -593,8 +700,34 @@ ERR11402:
   code: ERR11402
   message: ERROR_WRITING_KEY_FILE
   description: Error writing key file to path %s.
+ERR11403:
+  statusCode: 400
+  code: ERR11403
+  message: ERROR_SERVICE_ID_MISMATCH
+  description: The service claim %s in the JWT token does not match the serviceId %s from the request path.
+ERR11404:
+  statusCode: 400
+  code: ERR11404
+  message: ERROR_SERVICE_ID_MISSING
+  description: The service claim in the JWT token is missing.
+ERR11405:
+  statusCode: 400
+  code: ERR11405
+  message: ERROR_SERVICE_EXISTS
+  description: The service %s already exists.
+ERR11406:
+  statusCode: 404
+  code: ERR11406
+  message: ERROR_SERVICE_NOT_FOUND
+  description: The service %s not found.
+ERR11407:
+  statusCode: 400
+  code: ERR11407
+  message: ERROR_BAD_BODY_PARAMETER
+  description: The body doesn't follow the correct format.
 
-# 11500 - 11600 GraphQL valdator errors
+
+# 11500 - 11599 GraphQL validator errors
 ERR11500:
   statusCode: 400
   code: ERR11500
@@ -611,7 +744,7 @@ ERR11502:
   message: GRAHPQL_MISSING_QUERY
   description: Missing GraphQL query.
 
-# 11601 - 11999 light-portal errors
+# 11600 - 11999 light-portal errors
 ERR11601:
   statusCode: 400
   code: ERR11601
@@ -711,25 +844,100 @@ ERR11620:
   statusCode: 400
   code: ERR11620
   message: PERMISSION_DENIED
-  description: Fail to access the endpoint for roles %s.
+  description: Fail to access the endpoint for user or roles %s.
 ERR11621:
   statusCode: 400
   code: ERR11621
   message: CITY_REGISTERED
-  description: The city has been registered with key %s.
+  description: The city has been registered with key %s, %s, %s.
 ERR11622:
   statusCode: 400
   code: ERR11622
   message: PROFILE_LOCATION_INCOMPLETE
   description: Country, Province or City is missing in user profile.
 ERR11623:
-  statusCode: 400
+  statusCode: 404
   code: ERR11623
-  message: CITY_NOT_REGISTERED
-  description: The location %s has not been registered.
+  message: CITY_NOT_FOUND
+  description: City not found for %s, %s, %s.
+ERR11624:
+  statusCode: 400
+  code: ERR11624
+  message: COUNTRY_PROVINCE_CITY_EMPTY
+  description: Country %s or province %s or city %s is empty.
+ERR11625:
+  statusCode: 404
+  code: ERR11625
+  message: ENTITY_NOT_FOUND
+  description: Entity not found for %s at %s, %s and %s defined in your profile. Please create an entity first.
+ERR11626:
+  statusCode: 404
+  code: ERR11626
+  message: STATUS_NOT_FOUND
+  description: Status not found for email or userId %s.
+ERR11627:
+  statusCode: 404
+  code: ERR11627
+  message: PRIVATE_MESSAGE_NOT_FOUND
+  description: Private message not found for email %s.
+ERR11628:
+  statusCode: 404
+  code: ERR11628
+  message: WEBSITE_NOT_FOUND
+  description: Website not found for email %s.
+ERR11629:
+  statusCode: 400
+  code: ERR11629
+  message: WALLET_QUERY_DENIED
+  description: Taiji Wallet %s email is not matched the JWT user_id %s and not admin role.
+ERR11630:
+  statusCode: 404
+  code: ERR11630
+  message: EMAIL_NOT_FOUND_BY_WALLET
+  description: Email not found for Taiji wallet %s.
+ERR11631:
+  statusCode: 404
+  code: ERR11631
+  message: NO_ENTITY_REGISTERED
+  description: No entity has been registered for the %s, %s, %s, %s, %s combination.
+ERR11632:
+  statusCode: 404
+  code: ERR11632
+  message: PAYMENT_NOT_FOUND_BY_EMAIL
+  description: Payment not found for email %s.
+ERR11633:
+  statusCode: 404
+  code: ERR11633
+  message: ORDER_NOT_FOUND_BY_EMAIL
+  description: Order not found for email %s.
+ERR11634:
+  statusCode: 404
+  code: ERR11634
+  message: REFERENCE_NOT_FOUND
+  description: Reference not found for name %s and language %s.
+ERR11635:
+  statusCode: 400
+  code: ERR11635
+  message: HOST_NOT_MATCH_EMAIL
+  description: Host %s doesn't match the email domain %s.
+ERR11636:
+  statusCode: 400
+  code: ERR11636
+  message: SQL_EXCEPTION
+  description: SQLException with error %s.
+ERR11637:
+  statusCode: 404
+  code: ERR11637
+  message: OBJECT_NOT_FOUND
+  description: Object %s not found for key %s.
+ERR11638:
+  statusCode: 400
+  code: ERR11638
+  message: FILESYSTEM_ERROR
+  description: Error while access filesystem with file %s and error message %s.
 
 
-# OAuth2 service error 12000-13000
+# OAuth2 service error 12000-12099
 
 ERR12000:
   statusCode: 400
@@ -752,8 +960,7 @@ ERR12003:
   statusCode: 401
   code: ERR12003
   message: INVALID_AUTHORIZATION_HEADER
-  description: Invalid authorization header %s. Basic authentication with credentials
-    is required.
+  description: Invalid authorization header %s.
 ERR12004:
   statusCode: 401
   code: ERR12004
@@ -980,6 +1187,21 @@ ERR12049:
   code: ERR12049
   message: PROVIDER_ID_INVALID
   description: Provider id invalid
+ERR12050:
+  statusCode: 400
+  code: ERR12050
+  message: FAILED_TO_POPULATE_HEADER
+  description: Failed to populate client credentials scope token in header in method %s
+ERR12051:
+  statusCode: 400
+  code: ERR12051
+  message: HOST_IS_REQUIRED
+  description: Host is required
+ERR12052:
+  statusCode: 400
+  code: ERR12052
+  message: AUTHORIZATION_CODE_NOT_FOUND
+  description: Authorization code %s not found when getting an authorization code token
 
 # Tokenization service
 ERR12100:
@@ -1032,14 +1254,110 @@ ERR12109:
   code: ERR12109
   message: LOGGING_LEVEL_NOT_PROVIDED
   description: Logging level is not provided
+ERR12110:
+  statusCode: 500
+  code: ERR12110
+  message: Failed to parse log file appender
+  description: log file requested does not exist or has improper formatting
+# light-mesh error 12200-12299
+ERR12200:
+  statusCode: 404
+  code: ERR12200
+  message: CONSUMER_INSTANCE_NOT_FOUND
+  description: Consumer instance not found for group %s and instance %s
+ERR12201:
+  statusCode: 400
+  code: ERR12201
+  message: CONSUMER_CONFIG_EXCEPTION
+  description: Consumer configuration exception with message %s
+ERR12202:
+  statusCode: 400
+  code: ERR12202
+  message: CONSUMER_ALREADY_EXISTS
+  description: Consumer already exists with id %s
+ERR12203:
+  statusCode: 400
+  code: ERR12203
+  message: INVALID_EMBEDDED_FORMAT
+  description: Invalid embedded format key %s or value %s
+ERR12204:
+  statusCode: 400
+  code: ERR12204
+  message: CONSUMER_FORMAT_MISMATCH
+  description: The request data format does not match the deserializer for this consumer instance
+ERR12205:
+  statusCode: 400
+  code: ERR12205
+  message: UNEXPECTED_CONSUMER_READ_EXCEPTION
+  description: Unexpected exception in consumer read task with id %s
+ERR12206:
+  statusCode: 400
+  code: ERR12206
+  message: SERIALIZE_SCHEMA_EXCEPTION
+  description: Unexpected exception in serializing %s format with message %s
+ERR12207:
+  statusCode: 400
+  code: ERR12207
+  message: FAILED_TO_COMMIT_OFFSETS
+  description: Failed to commit offsets for consumer id %s with message %s
+ERR12208:
+  statusCode: 400
+  code: ERR12208
+  message: FAILED_TO_GET_SCHEMA
+  description: Failed to get schema with SchemaManager
+ERR12209:
+  statusCode: 400
+  code: ERR12209
+  message: FORMAT_WITH_SCHEMA_ID
+  description: Format exists along with Schema Id for %s in ProduceRequest
+ERR12210:
+  statusCode: 400
+  code: ERR12210
+  message: VERSION_WITH_SCHEMA_ID
+  description: Schema version exists along with Schema Id for %s in ProduceRequest
+ERR12211:
+  statusCode: 400
+  code: ERR12211
+  message: SCHEMA_WITH_SCHEMA_ID
+  description: Raw schema exists along with Schema Id for %s in ProduceRequest
+ERR12212:
+  statusCode: 400
+  code: ERR12212
+  message: FORMAT_WITH_SCHEMA_VERSION
+  description: Format exists along with Schema version for %s in ProduceRequest
+ERR12213:
+  statusCode: 400
+  code: ERR12213
+  message: SCHEMA_WITH_SCHEMA_VERSION
+  description: Raw schema exists along with Schema version for %s in ProduceRequest
+ERR12214:
+  statusCode: 400
+  code: ERR12214
+  message: RAW_SCHEMA_WITHOUT_FORMAT
+  description: Format does not exists along with Raw schema for %s in ProduceRequest
+ERR12215:
+  statusCode: 400
+  code: ERR12215
+  message: FORMAT_WITH_SUBJECT
+  description: Format exists along with Schema subject for %s in ProduceRequest
+ERR12216:
+  statusCode: 400
+  code: ERR12216
+  message: PRODUCER_NOT_ENABLED
+  description: The producer startup hook is not enabled in the service.yml
 
-# http2client error 13000-14000
+ERR12217:
+  statusCode: 400
+  code: ERR12217
+  message: CONFIG_RELOAD_DISABLED
+  description: Config reload is disabled in configreload.yml
+
+# http2client error 13000-13999
 ERR13001:
   statusCode: 403
   code: ERR13001
   message: UNABLE_PARSE_SCOPES_FROM_HEADER
   description: Cannot parse scopes from request headers.
-
 # 20000-29999 common error codes within your business domain.
 # It is highly recommended to have your error code shared within your organization or your line of business.
 # In that case, all your services can share the same status.yml which in org default config

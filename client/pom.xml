@@ -21,8 +21,8 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
-        <version>1.6.43-SNAPSHOT</version>
-        <relativePath>..</relativePath>
+        <version>2.1.2-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>client</artifactId>
@@ -41,7 +41,15 @@
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
+            <artifactId>http-entity</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
             <artifactId>config</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>service</artifactId>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
@@ -54,7 +62,6 @@
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>cluster</artifactId>
-
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -71,6 +78,11 @@
         <dependency>
             <groupId>io.undertow</groupId>
             <artifactId>undertow-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jaegertracing</groupId>
+            <artifactId>jaeger-client</artifactId>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.bitbucket.b_c</groupId>

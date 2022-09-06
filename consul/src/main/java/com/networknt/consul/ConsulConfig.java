@@ -17,7 +17,9 @@
 package com.networknt.consul;
 
 public class ConsulConfig {
+    public static final String CONFIG_NAME = "consul";
     String consulUrl;
+    String consulToken;
     int maxReqPerConn;
     String deregisterAfter;
     //the time period that consul determines health status of the server.
@@ -35,6 +37,14 @@ public class ConsulConfig {
 
     public void setConsulUrl(String consulUrl) {
         this.consulUrl = consulUrl;
+    }
+
+    public String getConsulToken() {
+        return consulToken;
+    }
+
+    public void setConsulToken(String consulToken) {
+        this.consulToken = consulToken;
     }
 
     public int getMaxReqPerConn() { return maxReqPerConn; }

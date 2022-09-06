@@ -18,7 +18,10 @@ package com.networknt.body;
 
 import io.undertow.server.handlers.form.FormData;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * To convert the form into a map, we first convert the formValue into a String and then put into the map.
@@ -28,13 +31,25 @@ public class BodyConverter {
     static Map<String, Object> convert(FormData data) {
         Map<String, Object> map = new HashMap<>();
         for (String key : data) {
+
             if (data.get(key).size() == 1) {
-                String value = data.getFirst(key).getValue();
-                map.put(key, value);
+                // If the form data is file, read it as FileItem, else read as String.
+                if (data.getFirst(key).getFileName() == null) {
+                    String value = data.getFirst(key).getValue();
+                    map.put(key, value);
+                } else {
+                    FormData.FileItem value = data.getFirst(key).getFileItem();
+                    map.put(key, value);
+                }
             } else if (data.get(key).size() > 1) {
                 List<Object> list = new ArrayList<>();
                 for (FormData.FormValue value : data.get(key)) {
-                    list.add(value.getValue());
+                    // If the form data is file, read it as FileItem, else read as String.
+                    if (value.getFileName() == null) {
+                        list.add(value.getValue());
+                    } else {
+                        list.add(value.getFileItem());
+                    }
                 }
                 map.put(key, list);
             }

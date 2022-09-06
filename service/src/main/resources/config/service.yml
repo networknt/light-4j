@@ -1,0 +1,5 @@
+# Singleton service factory configuration/IoC injection
+# When overwrite the singletons in values.yml, you can use a json string for the list interface object mappings.
+# For example:
+# service.singletons: [{"com.networknt.service.L":[{"com.networknt.service.LImpl":{"protocol":"https","host":"localhost","port":8080,"parameters":{"key1":"value1","key2":"value2"}}}]}]
+singletons: ${service.singletons:}

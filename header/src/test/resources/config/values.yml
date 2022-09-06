@@ -1,0 +1,14 @@
+header.enabled: true
+header.request.remove:
+  - header1
+  - header2
+header.request.update:
+  key1: value1
+  key2: value2
+
+header.response.remove:
+  - header1
+  - header2
+header.response.update:
+  key1: value1
+  key2: value2

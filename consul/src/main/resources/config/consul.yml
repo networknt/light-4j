@@ -1,5 +1,7 @@
 # Consul URL for accessing APIs
-consulUrl: https://localhost:8500
+consulUrl: http://localhost:8500
+# access token to the consul server
+consulToken: the_one_ring
 # number of requests before reset the shared connection.
 maxReqPerConn: 1000000
 # deregister the service after the amount of time after health check failed.
@@ -24,9 +26,7 @@ ttlCheck: true
 # This is limited to 10 minutes.This value can be specified in the form of "10s" or "5m" (i.e., 10 seconds or 5 minutes,
 # respectively).
 wait: 600s
-# Additional buffer of time to allow Consul to terminate the blocking query connection
-timeoutBuffer: 5s
-# enable HTTP/2
+# enable HTTP/2 
 # must disable when using HTTP with Consul (mostly using local Consul agent), Consul only supports HTTP/1.1 when not using TLS
 # optional to enable when using HTTPS with Consul, it will have better performance
 enableHttp2: false

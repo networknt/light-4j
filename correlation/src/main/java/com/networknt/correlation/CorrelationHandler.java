@@ -99,4 +99,8 @@ public class CorrelationHandler implements MiddlewareHandler {
         ModuleRegistry.registerModule(CorrelationHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
+    @Override
+    public void reload() {
+        config =  (CorrelationConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, CorrelationConfig.class);
+    }
 }

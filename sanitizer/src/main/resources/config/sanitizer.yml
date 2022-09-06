@@ -1,11 +1,37 @@
 ---
-# Sanitize request for cross site scripting during runtime
+# Sanitize request for cross-site scripting during runtime
 
 # indicate if sanitizer is enabled or not
-enabled: false
+enabled: ${sanitizer.enabled:false}
 
-# if it is enabled, does body need to be sanitized
-sanitizeBody: true
+# if it is enabled, the body needs to be sanitized
+bodyEnabled: ${sanitizer.bodyEnabled:true}
+# the encoder for the body. javascript, javascript-attribute, javascript-block or javascript-source
+# There are other encoders that you can choose depending on your requirement. Please refer to site
+# https://github.com/OWASP/owasp-java-encoder/blob/main/core/src/main/java/org/owasp/encoder/Encoders.java
+bodyEncoder: ${sanitizer.bodyEncoder:javascript-source}
+# pick up a list of keys to encode the values to limit the scope to only selected keys. You can
+# choose this option if you want to only encode certain fields in the body. When this option is
+# selected, you can not use the bodyAttributesToIgnore list.
+bodyAttributesToEncode: ${sanitizer.bodyAttributesToEncode:}
+# pick up a list of keys to ignore the values encoding to skip some of the values so that these
+# values won't be encoded. You can choose this option if you want to encode everything except
+# several values with a list of the keys. When this option is selected, you can not use the
+# bodyAttributesToEncode list.
+bodyAttributesToIgnore: ${sanitizer.bodyAttributesToIgnore:}
 
-# if it is enabled, does header need to be sanitized
-sanitizeHeader: false
+# if it is enabled, the header needs to be sanitized
+headerEnabled: ${sanitizer.headerEnabled:true}
+# the encoder for the header. javascript, javascript-attribute, javascript-block or javascript-source
+# There are other encoders that you can choose depending on your requirement. Please refer to site
+# https://github.com/OWASP/owasp-java-encoder/blob/main/core/src/main/java/org/owasp/encoder/Encoders.java
+headerEncoder: ${sanitizer.headerEncoder:javascript-source}
+# pick up a list of keys to encode the values to limit the scope to only selected keys. You can
+# choose this option if you want to only encode certain fields in the body. When this option is
+# selected, you can not use the headerAttributesToIgnore list.
+headerAttributesToEncode: ${sanitizer.headerAttributesToEncode:}
+# pick up a list of keys to ignore the values encoding to skip some of the values so that these
+# values won't be encoded. You can choose this option if you want to encode everything except
+# several values with a list of the keys. When this option is selected, you can not use the
+# headerAttributesToEncode list.
+headerAttributesToIgnore: ${sanitizer.headerAttributesToIgnore:}

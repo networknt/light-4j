@@ -60,10 +60,12 @@ public class HeaderHandlerTest {
             logger.info("starting server");
             HttpHandler handler = getTestHandler();
             HeaderHandler headerHandler = new HeaderHandler();
-            headerHandler.setNext(handler);
-            handler = headerHandler;
+            if(headerHandler.isEnabled()) {
+                headerHandler.setNext(handler);
+                handler = headerHandler;
+            }
             server = Undertow.builder()
-                    .addHttpListener(8080, "localhost")
+                    .addHttpListener(7080, "localhost")
                     .setHandler(handler)
                     .build();
             server.start();
@@ -118,7 +120,7 @@ public class HeaderHandlerTest {
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
         try {
-            connection = client.connect(new URI("http://localhost:8080"), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
         } catch (Exception e) {
             throw new ClientException(e);
         }

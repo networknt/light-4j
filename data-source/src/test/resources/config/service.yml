@@ -11,8 +11,8 @@ singletons:
     - java.lang.String: MysqlDataSource
 
 - com.networknt.db.CustomMysqlDataSource:
-    - com.networknt.db.CustomMysqlDataSource:
-        - java.lang.String: CustomMysqlDataSource
+  - com.networknt.db.CustomMysqlDataSource:
+    - java.lang.String: CustomMysqlDataSource
 
 - com.networknt.db.MariaDataSource:
   - com.networknt.db.MariaDataSource:

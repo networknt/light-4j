@@ -9,7 +9,7 @@ import java.util.Map;
 
 /**
  * The HttpResponseValue used to set the multipart  http response body
- * This object should only used for content in reponse body, please do not include http headers in it.
+ * This object should only used for content in response body, please do not include http headers in it.
  * For Headers, please use HttpServerExchange to set response  header:
  *  exchange.getResponseHeaders().add(new HttpString("Content-Type"), "application/json");
  *
@@ -52,6 +52,8 @@ public class HttpResponseValue implements Serializable{
 
     /**
      * Indicates whether this entity has a body part by the key.
+     * @param key String
+     * @return boolean to indicate if body exists
      */
     public boolean hasBody(String key) {
         return (this.bodyPartMap==null? false : this.bodyPartMap.containsKey(key) );

@@ -17,6 +17,7 @@
 package com.networknt.header;
 
 import com.networknt.config.Config;
+import com.networknt.exception.ExceptionConfig;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.ModuleRegistry;
@@ -49,7 +50,7 @@ public class HeaderHandler implements MiddlewareHandler {
     public static final String REMOVE = "remove";
     public static final String UPDATE = "update";
 
-    public static final Map<String, Object> config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
+    public static  Map<String, Object> config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
 
     private volatile HttpHandler next;
 
@@ -116,5 +117,10 @@ public class HeaderHandler implements MiddlewareHandler {
     @Override
     public void register() {
         ModuleRegistry.registerModule(HeaderHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+    }
+
+    @Override
+    public void reload() {
+        config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
     }
 }

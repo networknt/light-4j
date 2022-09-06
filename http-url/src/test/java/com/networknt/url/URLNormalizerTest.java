@@ -169,8 +169,8 @@ public class URLNormalizerTest {
         s = "http://www.example.com/bar.html";
         t = "http://www.example.com/bar.html";
         assertEquals(t, n(s).removeDefaultPort().toString());
-        s = "http://www.example.com:8080/bar.html";
-        t = "http://www.example.com:8080/bar.html";
+        s = "http://www.example.com:7080/bar.html";
+        t = "http://www.example.com:7080/bar.html";
         assertEquals(t, n(s).removeDefaultPort().toString());
         s = "http://www.example.com:80";
         t = "http://www.example.com";
@@ -339,6 +339,7 @@ public class URLNormalizerTest {
     public void testReplaceIPWithDomainName() {
         s = "http://208.80.154.224/wiki/Main_Page";
         t = null;
+//        System.out.println("Result: " + n(s).replaceIPWithDomainName().toString());
         Assert.assertTrue(
                 n(s).replaceIPWithDomainName().toString().contains("wikimedia"));
         s = "http://wikipedia.org/wiki/Main_Page";

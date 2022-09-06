@@ -47,7 +47,6 @@ public class EmailSender {
     public static final String CONFIG_SECRET = "secret";
 
     static final EmailConfig emailConfg = (EmailConfig)Config.getInstance().getJsonObjectConfig(CONFIG_EMAIL, EmailConfig.class);
-    static final Map<String, Object> secret = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
 
     public EmailSender() {
     }
@@ -70,7 +69,13 @@ public class EmailSender {
         props.put("mail.smtp.auth", emailConfg.getAuth());
         props.put("mail.smtp.ssl.trust", emailConfg.host);
 
-        SMTPAuthenticator auth = new SMTPAuthenticator(emailConfg.getUser(), (String)secret.get(SecretConstants.EMAIL_PASSWORD));
+        String pass = emailConfg.getPass();
+        if(pass == null) {
+            Map<String, Object> secret = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
+            pass = (String)secret.get(SecretConstants.EMAIL_PASSWORD);
+        }
+
+        SMTPAuthenticator auth = new SMTPAuthenticator(emailConfg.getUser(), pass);
         Session session = Session.getInstance(props, auth);
 
         MimeMessage message = new MimeMessage(session);
@@ -106,7 +111,13 @@ public class EmailSender {
         props.put("mail.smtp.auth", emailConfg.getAuth());
         props.put("mail.smtp.ssl.trust", emailConfg.host);
 
-        SMTPAuthenticator auth = new SMTPAuthenticator(emailConfg.getUser(), (String)secret.get(SecretConstants.EMAIL_PASSWORD));
+        String pass = emailConfg.getPass();
+        if(pass == null) {
+            Map<String, Object> secret = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
+            pass = (String)secret.get(SecretConstants.EMAIL_PASSWORD);
+        }
+
+        SMTPAuthenticator auth = new SMTPAuthenticator(emailConfg.getUser(), pass);
         Session session = Session.getInstance(props, auth);
 
         MimeMessage message = new MimeMessage(session);

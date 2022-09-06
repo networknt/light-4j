@@ -17,7 +17,10 @@
 package com.networknt.limit;
 
 import com.networknt.client.Http2Client;
+import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
+import com.networknt.limit.key.KeyResolver;
+import com.networknt.service.SingletonServiceFactory;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
@@ -28,10 +31,7 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -43,6 +43,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 
 /**
@@ -50,20 +51,20 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class LimitHandlerTest {
     static final Logger logger = LoggerFactory.getLogger(LimitHandlerTest.class);
-
+    static final LimitConfig config = LimitConfig.load();
     static Undertow server = null;
 
     @BeforeClass
-    public static void setUp() {
+    public static void setUp() throws Exception{
         if(server == null) {
-            logger.info("starting server");
+            logger.info("starting serverconfig");
             HttpHandler handler = getTestHandler();
             LimitHandler limitHandler = new LimitHandler();
             limitHandler.setNext(handler);
             handler = limitHandler;
             server = Undertow.builder()
                     .setServerOption(UndertowOptions.ENABLE_HTTP2, true)
-                    .addHttpListener(8080, "localhost")
+                    .addHttpListener(7080, "localhost")
                     .setHandler(handler)
                     .build();
             server.start();
@@ -86,11 +87,6 @@ public class LimitHandlerTest {
     static RoutingHandler getTestHandler() {
         return Handlers.routing()
                 .add(Methods.GET, "/", exchange -> {
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException e) {
-
-                    }
                     exchange.getResponseSender().send("OK");
                 });
     }
@@ -101,7 +97,7 @@ public class LimitHandlerTest {
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
         try {
-            connection = client.connect(new URI("http://localhost:8080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
         } catch (Exception e) {
             throw new ClientException(e);
         }
@@ -130,7 +126,7 @@ public class LimitHandlerTest {
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
         try {
-            connection = client.connect(new URI("http://localhost:8080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
         } catch (Exception e) {
             throw new ClientException(e);
         }
@@ -149,14 +145,14 @@ public class LimitHandlerTest {
         return reference.get().getAttachment(Http2Client.RESPONSE_BODY) + ":" + reference.get().getResponseCode();
     }
 
-    /*
     @Test
     // For some reason, travis become really slow or not allow multi-thread anymore and this test fails always.
+    // You can run it within the IDE or remove the @Ignore and run it locally with mvn clean install.
     public void testMoreRequests() throws Exception {
         Callable<String> task = this::callApi;
-        List<Callable<String>> tasks = Collections.nCopies(10, task);
+        List<Callable<String>> tasks = Collections.nCopies(12, task);
         long start = System.currentTimeMillis();
-        ExecutorService executorService = Executors.newFixedThreadPool(10);
+        ExecutorService executorService = Executors.newFixedThreadPool(2);
         List<Future<String>> futures = executorService.invokeAll(tasks);
         List<String> resultList = new ArrayList<>(futures.size());
         // Check for exceptions
@@ -167,8 +163,8 @@ public class LimitHandlerTest {
             resultList.add(s);
         }
         long last = (System.currentTimeMillis() - start);
-        // make sure that there are at least one element in resultList is :513
-        Assert.assertTrue(resultList.contains(":513"));
+        // make sure that there are at least one element in resultList is :503 or :429
+        List<String> errorList = resultList.stream().filter(r->r.contains(":" + config.getErrorCode())).collect(Collectors.toList());
+        Assert.assertTrue(errorList.size()>0);
     }
-    */
 }

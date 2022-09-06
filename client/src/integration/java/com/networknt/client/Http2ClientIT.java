@@ -20,7 +20,6 @@ package com.networknt.client;
 
 import com.networknt.config.Config;
 import com.networknt.httpstring.HttpStringConstants;
-import com.networknt.utility.Constants;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.client.*;
@@ -424,6 +423,7 @@ public class Http2ClientIT {
     }
     */
 
+    // FIXME Causes server.close to hang on JDK11.
     @Test
     public void testMultipleHttpGetSsl() throws Exception {
         //
@@ -462,6 +462,7 @@ public class Http2ClientIT {
         }
     }
 
+    // FIXME Causes server.close to hang.
     @Test
     public void testMultipleHttp2GetSsl() throws Exception {
         //
@@ -506,6 +507,7 @@ public class Http2ClientIT {
     }
 
 
+    // FIXME Causes server.close to hang.
     @Test
     public void testMultipleHttpPostSsl() throws Exception {
         //
@@ -579,6 +581,7 @@ public class Http2ClientIT {
         }
     }
 
+    // FIXME Causes server.close to hang.
     @Test
     public void testMultipleHttp2PostSsl() throws Exception {
         //

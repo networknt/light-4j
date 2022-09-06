@@ -1,0 +1,40 @@
+# Configuration for SalesforceHandler
+# Indicate if the handler is enabled or not
+enabled: ${salesforce.enabled:false}
+# Certificate file name. The private key alias is the filename without the extension.
+certFilename: ${salesforce.certFilename:apigatewayuat.pfx}
+# Certificate file password
+certPassword: ${salesforce.certPassword:password}
+# Proxy Host if calling within the corp network with a gateway like Mcafee gateway.
+proxyHost: ${salesforce.proxyHost:}
+# Proxy Port if proxy host is used. default value will be 443 which means HTTPS.
+proxyPort: ${salesforce.proxyPort:}
+# If HTTP2 is used to connect to the salesforce site.
+enableHttp2: ${salesforce.enableHttp2:true}
+
+# A list of applied request path prefixes and authentication mappings, other requests will skip this handler.
+# Each item will have properties to help get the token from the salesforce access token service. For each API
+# or request path prefix, you need to define an item in the list for authentication.
+pathPrefixAuths: ${salesforce.pathPrefixAuths:}
+# format with JSON for config server
+#  [{"pathPrefix":"/salesforce","authIssuer":"3MVG9S11UK8FGR3O.vJebzXvWgAE211Z9KX_7vmKt6k300-2913g_AdsTWtzBTLI232Y1w21kw2HANBfU9jTTJF9h5mL.2tJdY142hyaPW","authSubject":"apiuser.conquestintegration@networknt.sit","authAudience":"https://test.salesforce.com","iv":"Yeocae324eAvs2a/P33y3Ea3Rqg","tokenTtl":60,"waitLength":5000,"serviceHost":"https://nnt-sit.my.salesforce.com"},{"pathPrefix":"/services/apexrest","authIssuer":"3MVG9S11UK8FGR3O.vJebzXvWgAE211Z9KX_7vmKt6k300-2913g_AdsTWtzBTLI232Y1w21kw2HANBfU9jTTJF9h5mL.2tJdY142hyaPW","authSubject":"apiuser.conquestintegration@networknt.sit","authAudience":"https://test.salesforce.com","iv":"Yeocae324eAvs2a/P33y3Ea3Rqg","tokenTtl":60,"waitLength":5000,"serviceHost":"https://nnt-sit.my.salesforce.com"}]
+
+# format with YAML for readability
+#  - pathPrefix: /salesforce
+#    authIssuer: 3MVG9S11UK8FGR3O.vJebzXvWgAE211Z9KX_7vmKt6k300-2913g_AdsTWtzBTLI232Y1w21kw2HANBfU9jTTJF9h5mL.2tJdY142hyaPW
+#    authSubject: apiuser.conquestintegration@networknt.sit
+#    authAudience: https://test.salesforce.com
+#    iv: Yeocae324eAvs2a/P33y3Ea3Rqg
+#    tokenTtl: 60
+#    waitLength: 5000
+#    tokenUrl: https://test.salesforce.com/services/oauth2/token
+#    serviceHost: https://nnt-sit.my.salesforce.com
+#  - pathPrefix: /services/apexrest
+#    authIssuer: 3MVG9S11UK8FGR3O.vJebzXvWgAE211Z9KX_7vmKt6k300-2913g_AdsTWtzBTLI232Y1w21kw2HANBfU9jTTJF9h5mL.2tJdY142hyaPW
+#    authSubject: apiuser.conquestintegration@networknt.sit
+#    authAudience: https://test.salesforce.com
+#    iv: Yeocae324eAvs2a/P33y3Ea3Rqg
+#    tokenTtl: 60
+#    waitLength: 5000
+#    tokenUrl: https://test.salesforce.com/services/oauth2/token
+#    serviceHost: https://nnt-sit.my.salesforce.com

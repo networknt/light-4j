@@ -23,7 +23,6 @@ package com.networknt.db;
  */
 public class MysqlDataSource extends GenericDataSource {
     private static final String MYSQL_DS = "MysqlDataSource";
-    private static final String MYSQL_PASSWORD = "mysqlPassword";
 
     @Override
     public String getDsName() {
@@ -32,11 +31,6 @@ public class MysqlDataSource extends GenericDataSource {
         } else {
             return MYSQL_DS;
         }
-    }
-
-    @Override
-    public String getDbPassKey() {
-        return MYSQL_PASSWORD;
     }
 
     public MysqlDataSource(String dsName) {

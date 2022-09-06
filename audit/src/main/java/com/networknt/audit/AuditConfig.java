@@ -15,25 +15,41 @@
  */
 package com.networknt.audit;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
+import com.networknt.config.ConfigException;
+import com.networknt.config.JsonMapper;
 import com.networknt.utility.Constants;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yaml.snakeyaml.Yaml;
 
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
 class AuditConfig {
+    private static final Logger logger = LoggerFactory.getLogger(AuditConfig.class);
+
+    public static final String REQUEST_BODY = "requestBody";
+    public static final String RESPONSE_BODY = "responseBody";
 
     private static final String HEADERS = "headers";
     private static final String AUDIT = "audit";
     private static final String STATUS_CODE = "statusCode";
     private static final String RESPONSE_TIME = "responseTime";
     private static final String AUDIT_ON_ERROR = "auditOnError";
-    private static final String IS_LOG_LEVEL_ERROR = "logLevelIsError";
-    private static final String IS_MASK_ENABLED = "mask";
-    private final Map<String, Object> mappedConfig;
-    static final String CONFIG_NAME = "audit";
+    private static final String LOG_LEVEL_IS_ERROR = "logLevelIsError";
+    private static final String MASK = "mask";
+    private static final String TIMESTAMP_FORMAT = "timestampFormat";
+
+    private static final String ENABLED = "enabled";
+
+    private  Map<String, Object> mappedConfig;
+    public static final String CONFIG_NAME = "audit";
     private List<String> headerList;
     private List<String> auditList;
 
@@ -43,10 +59,33 @@ class AuditConfig {
     private boolean statusCode;
     private boolean responseTime;
     private boolean auditOnError;
-    private boolean isMaskEnabled;
+    private boolean mask;
+    private String timestampFormat;
+
+    private boolean enabled;
 
     private AuditConfig() {
+        this(CONFIG_NAME);
+    }
+
+    private AuditConfig(String configName) {
         config = Config.getInstance();
+        mappedConfig = config.getJsonMapConfigNoCache(configName);
+
+        setLists();
+        setLogLevel();
+        setConfigData();
+    }
+
+    public static AuditConfig load() {
+        return new AuditConfig();
+    }
+
+    public static AuditConfig load(String configName) {
+        return new AuditConfig(configName);
+    }
+
+    public void reload() {
         mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
 
         setLists();
@@ -54,48 +93,50 @@ class AuditConfig {
         setConfigData();
     }
 
-    static AuditConfig load() {
-        return new AuditConfig();
-    }
-
-    List<String> getHeaderList() {
+    public List<String> getHeaderList() {
         return headerList;
     }
 
-    List<String> getAuditList() {
+    public List<String> getAuditList() {
         return auditList;
     }
 
-    Consumer<String> getAuditFunc() {
+    public Consumer<String> getAuditFunc() {
         return auditFunc;
     }
 
-    boolean isAuditOnError() {
+    public boolean isAuditOnError() {
         return auditOnError;
     }
 
-    boolean isMaskEnabled() {
-        return isMaskEnabled;
+    public boolean isMask() {
+        return mask;
     }
 
-    boolean isResponseTime() {
+    public boolean isEnabled() { return enabled; }
+
+    public boolean isResponseTime() {
         return responseTime;
     }
 
-    boolean isStatusCode() {
+    public boolean isStatusCode() {
         return statusCode;
     }
 
-    Map<String, Object> getMappedConfig() {
+    public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
 
-    boolean hasHeaderList() {
+    public boolean hasHeaderList() {
         return getHeaderList() != null && getHeaderList().size() > 0;
     }
 
-    boolean hasAuditList() {
+    public boolean hasAuditList() {
         return getAuditList() != null && getAuditList().size() > 0;
+    }
+
+    public String getTimestampFormat() {
+        return timestampFormat;
     }
 
     Config getConfig() {
@@ -103,14 +144,52 @@ class AuditConfig {
     }
 
     private void setLogLevel() {
-        Object object = getMappedConfig().get(IS_LOG_LEVEL_ERROR);
+        Object object = getMappedConfig().get(LOG_LEVEL_IS_ERROR);
         auditFunc = (object != null && (Boolean) object) ?
                 LoggerFactory.getLogger(Constants.AUDIT_LOGGER)::error : LoggerFactory.getLogger(Constants.AUDIT_LOGGER)::info;
     }
 
     private void setLists() {
-        headerList = (List<String>) getMappedConfig().get(HEADERS);
-        auditList = (List<String>) getMappedConfig().get(AUDIT);
+        if(getMappedConfig().get(HEADERS) instanceof String) {
+            String s = (String)getMappedConfig().get(HEADERS);
+            s = s.trim();
+            if(logger.isTraceEnabled()) logger.trace("s = " + s);
+            if(s.startsWith("[")) {
+                // this is a JSON string, and we need to parse it.
+                try {
+                    headerList = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
+                } catch (Exception e) {
+                    throw new ConfigException("could not parse the headers json with a list of strings.");
+                }
+            } else {
+                // this is a comma separated string.
+                headerList = Arrays.asList(s.split("\\s*,\\s*"));
+            }
+        } else if (getMappedConfig().get(HEADERS) instanceof List) {
+            headerList = (List<String>) getMappedConfig().get(HEADERS);
+        } else {
+            throw new ConfigException("headers list is missing or wrong type.");
+        }
+        if(getMappedConfig().get(AUDIT) instanceof String) {
+            String s = (String)getMappedConfig().get(AUDIT);
+            s = s.trim();
+            if(logger.isTraceEnabled()) logger.trace("s = " + s);
+            if(s.startsWith("[")) {
+                // this is a JSON string, and we need to parse it.
+                try {
+                    auditList = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
+                } catch (Exception e) {
+                    throw new ConfigException("could not parse the audit json with a list of strings.");
+                }
+            } else {
+                // this is a comma separated string.
+                auditList = Arrays.asList(s.split("\\s*,\\s*"));
+            }
+        } else if (getMappedConfig().get(AUDIT) instanceof List) {
+            auditList = (List<String>) getMappedConfig().get(AUDIT);
+        } else {
+            throw new ConfigException("audit list is missing or wrong type.");
+        }
     }
 
     private void setConfigData() {
@@ -128,9 +207,14 @@ class AuditConfig {
         if(object != null && (Boolean) object) {
             auditOnError = true;
         }
-        object = getMappedConfig().get(IS_MASK_ENABLED);
+        object = getMappedConfig().get(MASK);
         if(object != null && (Boolean) object) {
-            isMaskEnabled = true;
+            mask = true;
         }
+        object = getMappedConfig().get(ENABLED);
+        if(object != null && (Boolean) object) {
+
+        }
+        timestampFormat = (String)getMappedConfig().get(TIMESTAMP_FORMAT);
     }
 }

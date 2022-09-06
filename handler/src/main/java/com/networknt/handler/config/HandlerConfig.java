@@ -31,6 +31,7 @@ public class HandlerConfig {
     private List<String> defaultHandlers;
     private boolean auditOnError;
     private boolean auditStackTrace;
+    private String basePath;
 
     public boolean isEnabled() {
         return enabled;
@@ -86,6 +87,15 @@ public class HandlerConfig {
     
     public void setAuditStackTrace(boolean auditStackTrace) {
     	this.auditStackTrace = auditStackTrace;
+    }
+
+
+    public String getBasePath() {
+        return basePath;
+    }
+
+    public void setBasePath(String basePath) {
+        this.basePath = basePath;
     }
 }
 

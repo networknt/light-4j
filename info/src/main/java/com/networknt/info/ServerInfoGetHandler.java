@@ -56,12 +56,7 @@ public class ServerInfoGetHandler implements LightHttpHandler {
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         ServerInfoConfig config = (ServerInfoConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServerInfoConfig.class);
         if(config.isEnableServerInfo()) {
-            Map<String, Object> infoMap = new LinkedHashMap<>();
-            infoMap.put("deployment", getDeployment());
-            infoMap.put("environment", getEnvironment(exchange));
-            infoMap.put("security", getSecurity());
-            infoMap.put("specification", Config.getInstance().getJsonMapConfigNoCache("swagger"));
-            infoMap.put("component", ModuleRegistry.getRegistry());
+            Map<String,Object> infoMap = getServerInfo(exchange);
             exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
             exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(infoMap));
         } else {
@@ -69,14 +64,25 @@ public class ServerInfoGetHandler implements LightHttpHandler {
         }
     }
 
-    public Map<String, Object> getDeployment() {
+    public static Map<String, Object> getServerInfo(final HttpServerExchange exchange) {
+        Map<String, Object> infoMap = new LinkedHashMap<>();
+        infoMap.put("deployment", getDeployment());
+        infoMap.put("environment", getEnvironment(exchange));
+        infoMap.put("security", getSecurity());
+        // remove this as it is a rest specific. The specification is loaded in the specific handler.
+        // infoMap.put("specification", Config.getInstance().getJsonMapConfigNoCache("openapi"));
+        infoMap.put("component", ModuleRegistry.getRegistry());
+        return infoMap;
+    }
+
+    public static Map<String, Object> getDeployment() {
         Map<String, Object> deploymentMap = new LinkedHashMap<>();
         deploymentMap.put("apiVersion", Util.getJarVersion());
         deploymentMap.put("frameworkVersion", getFrameworkVersion());
         return deploymentMap;
     }
 
-    public Map<String, Object> getEnvironment(HttpServerExchange exchange) {
+    public static Map<String, Object> getEnvironment(HttpServerExchange exchange) {
         Map<String, Object> envMap = new LinkedHashMap<>();
         envMap.put("host", getHost(exchange));
         envMap.put("runtime", getRuntime());
@@ -84,7 +90,7 @@ public class ServerInfoGetHandler implements LightHttpHandler {
         return envMap;
     }
 
-    public Map<String, Object> getSecurity() {
+    public static Map<String, Object> getSecurity() {
         Map<String, Object> secMap = new LinkedHashMap<>();
         // as we have replaced the static JwtHelper to JwtVerifier, we cannot use the static method to
         // get the fingerprints anymore, need to iterate the registered security module to do so.
@@ -105,7 +111,7 @@ public class ServerInfoGetHandler implements LightHttpHandler {
         return secMap;
     }
 
-    public Map<String, Object> getHost(HttpServerExchange exchange) {
+    public static Map<String, Object> getHost(HttpServerExchange exchange) {
         Map<String, Object> hostMap = new LinkedHashMap<>();
         String ip = "unknown";
         String hostname = "unknown";
@@ -118,7 +124,7 @@ public class ServerInfoGetHandler implements LightHttpHandler {
         return hostMap;
     }
 
-    public Map<String, Object> getRuntime() {
+    public static Map<String, Object> getRuntime() {
         Map<String, Object> runtimeMap = new LinkedHashMap<>();
         Runtime runtime = Runtime.getRuntime();
         runtimeMap.put("availableProcessors", runtime.availableProcessors());
@@ -128,7 +134,7 @@ public class ServerInfoGetHandler implements LightHttpHandler {
         return runtimeMap;
     }
 
-    public Map<String, Object> getSystem() {
+    public static Map<String, Object> getSystem() {
         Map<String, Object> systemMap = new LinkedHashMap<>();
         Properties properties = System.getProperties();
         systemMap.put("javaVendor", properties.getProperty("java.vendor"));
@@ -139,7 +145,7 @@ public class ServerInfoGetHandler implements LightHttpHandler {
         return systemMap;
     }
 
-    public String getFrameworkVersion() {
+    public static String getFrameworkVersion() {
         String version = null;
         String path = "META-INF/maven/com.networknt/info/pom.properties";
         InputStream in = ClassLoader.getSystemResourceAsStream(path);
@@ -162,17 +168,16 @@ public class ServerInfoGetHandler implements LightHttpHandler {
      *
      * @return String TLS server certificate finger print
      */
-    private String getServerTlsFingerPrint() {
+    private static String getServerTlsFingerPrint() {
         String fingerPrint = null;
         Map<String, Object> serverConfig = Config.getInstance().getJsonMapConfigNoCache("server");
-        Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfigNoCache("secret");
         // load keystore here based on server config and secret config
         String keystoreName = (String)serverConfig.get("keystoreName");
-        String serverKeystorePass = (String)secretConfig.get("serverKeystorePass");
+        String keystorePass = (String)serverConfig.get("keystorePass");
         if(keystoreName != null) {
             try (InputStream stream = Config.getInstance().getInputStreamFromFile(keystoreName)) {
                 KeyStore loadedKeystore = KeyStore.getInstance("JKS");
-                loadedKeystore.load(stream, serverKeystorePass.toCharArray());
+                loadedKeystore.load(stream, keystorePass.toCharArray());
                 X509Certificate cert = (X509Certificate)loadedKeystore.getCertificate("server");
                 if(cert != null) {
                     fingerPrint = FingerPrintUtil.getCertFingerPrint(cert);

@@ -7,6 +7,7 @@ MysqlDataSource:
   DriverClassName: com.mysql.jdbc.Driver
   jdbcUrl: jdbc:mysql://localhost:3306/eventuate?useSSL=false
   username: mysqluser
+  password: mysqlpw
   maximumPoolSize: 2
   connectionTimeout: 500
   parameters:
@@ -43,6 +44,7 @@ MariaDataSource:
   DriverClassName: org.mariadb.jdbc.MariaDbDataSource
   jdbcUrl: jdbc:mariadb://mariadb:3306/oauth2?useSSL=false
   username: mysqluser
+  password: mysqlpw
   maximumPoolSize: 2
   connectionTimeout: 500
   parameters:
@@ -56,6 +58,7 @@ PostgresDataSource:
   DriverClassName: org.postgresql.ds.PGSimpleDataSource
   jdbcUrl: jdbc:postgresql://postgresdb:5432/oauth2
   username: postgres
+  password: my-secret-pw
   maximumPoolSize: 2
   connectionTimeout: 500
 
@@ -63,6 +66,7 @@ SqlServerDataSource:
   DriverClassName: com.microsoft.sqlserver.jdbc.SQLServerDataSource
   jdbcUrl: jdbc:sqlserver://sqlserver:1433;databaseName=oauth2
   username: sa
+  password: StrongPassw0rd
   maximumPoolSize: 2
   connectionTimeout: 500
 
@@ -70,6 +74,7 @@ OracleDataSource:
   DriverClassName: oracle.jdbc.pool.OracleDataSource
   jdbcUrl: jdbc:oracle:thin:@localhost:1521:XE
   username: SYSTEM
+  password: oracle
   maximumPoolSize: 2
   connectionTimeout: 500
   parameters:
@@ -83,6 +88,6 @@ H2DataSource:
   DriverClassName: org.h2.jdbcx.JdbcDataSource
   jdbcUrl: jdbc:h2:mem:XE;MODE=MYSQL;INIT=runscript from 'classpath:scripts/test-oauth2.sql'\;runscript from 'classpath:scripts/test-tokenization.sql'\;runscript from 'classpath:scripts/test-vault.sql'\;runscript from 'classpath:scripts/test-todo.sql';
   username: sa
-  H2Password: sa
+  password: sa
   maximumPoolSize: 2
   connectionTimeout: 500

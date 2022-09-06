@@ -34,6 +34,7 @@ json:
 #    "$.list.*.accounts": "(.*)"
     "$.list1": "(.*)"
     "$.password": "(.*)"
+    
 # I want to mask creditCardNumber field in all the list elements which in my test case include just one element
-  testIssue1055:
+  testIssue942:
     "$.list.[*].creditCardNumber": "(.*)"

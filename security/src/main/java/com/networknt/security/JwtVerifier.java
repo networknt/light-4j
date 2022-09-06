@@ -18,11 +18,15 @@ package com.networknt.security;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.networknt.client.ClientConfig;
 import com.networknt.client.oauth.OauthHelper;
 import com.networknt.client.oauth.SignKeyRequest;
 import com.networknt.client.oauth.TokenKeyRequest;
 import com.networknt.config.Config;
+import com.networknt.config.ConfigException;
+import com.networknt.config.JsonMapper;
 import com.networknt.exception.ExpiredTokenException;
+import com.networknt.status.Status;
 import com.networknt.utility.FingerPrintUtil;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.JsonWebKeySet;
@@ -68,24 +72,15 @@ import java.util.regex.Pattern;
  */
 public class JwtVerifier {
     static final Logger logger = LoggerFactory.getLogger(JwtVerifier.class);
+    static final String GET_KEY_ERROR = "ERR10066";
 
     public static final String KID = "kid";
     public static final String SECURITY_CONFIG = "security";
-    public static final String JWT_CONFIG = "jwt";
-    public static final String JWT_CERTIFICATE = "certificate";
-    public static final String JWT_CLOCK_SKEW_IN_SECONDS = "clockSkewInSeconds";
-    public static final String ENABLE_VERIFY_JWT = "enableVerifyJwt";
-    private static final String ENABLE_JWT_CACHE = "enableJwtCache";
-    private static final String BOOTSTRAP_FROM_KEY_SERVICE = "bootstrapFromKeyService";
     private static final int CACHE_EXPIRED_IN_MINUTES = 15;
-
-    public static final String JWT_KEY_RESOLVER = "keyResolver";
     public static final String JWT_KEY_RESOLVER_X509CERT = "X509Certificate";
     public static final String JWT_KEY_RESOLVER_JWKS = "JsonWebKeySet";
 
-
-    Map<String, Object> config;
-    Map<String, Object> jwtConfig;
+    SecurityConfig config;
     int secondsOfAllowedClockSkew;
     Boolean enableJwtCache;
     Boolean bootstrapFromKeyService;
@@ -95,45 +90,42 @@ public class JwtVerifier {
     static Map<String, List<JsonWebKey>> jwksMap;
     static List<String> fingerPrints;
 
-    public JwtVerifier(Map<String, Object> config) {
+    public JwtVerifier(SecurityConfig config) {
         this.config = config;
-        this.jwtConfig = (Map)config.get(JWT_CONFIG);
-        this.secondsOfAllowedClockSkew = (Integer)jwtConfig.get(JWT_CLOCK_SKEW_IN_SECONDS);
-        this.bootstrapFromKeyService = (Boolean)config.get(BOOTSTRAP_FROM_KEY_SERVICE);
-        this.enableJwtCache = (Boolean)config.get(ENABLE_JWT_CACHE);
+        this.secondsOfAllowedClockSkew = config.getClockSkewInSeconds();
+        this.bootstrapFromKeyService = config.isBootstrapFromKeyService();
+        this.enableJwtCache = config.isEnableJwtCache();
         if(Boolean.TRUE.equals(enableJwtCache)) {
             cache = Caffeine.newBuilder()
                     // assuming that the clock screw time is less than 5 minutes
                     .expireAfterWrite(CACHE_EXPIRED_IN_MINUTES, TimeUnit.MINUTES)
                     .build();
         }
-        switch ((String) jwtConfig.getOrDefault(JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT)) {
-            case JWT_KEY_RESOLVER_JWKS:
-                jwksMap = new HashMap<>();
-                break;
-            case JWT_KEY_RESOLVER_X509CERT:
-                // load local public key certificates only if bootstrapFromKeyService is false
-                if(bootstrapFromKeyService == null || Boolean.FALSE.equals(bootstrapFromKeyService)) {
-                    certMap = new HashMap<>();
-                    fingerPrints = new ArrayList<>();
-                    if (jwtConfig.get(JWT_CERTIFICATE)!=null) {
-                        Map<String, Object> keyMap = (Map<String, Object>) jwtConfig.get(JWT_CERTIFICATE);
-                        for(String kid: keyMap.keySet()) {
-                            X509Certificate cert = null;
-                            try {
-                                cert = readCertificate((String)keyMap.get(kid));
-                            } catch (Exception e) {
-                                logger.error("Exception:", e);
-                            }
-                            certMap.put(kid, cert);
-                            fingerPrints.add(FingerPrintUtil.getCertFingerPrint(cert));
-                        }
-                   }
+        // init getting JWK during the initialization. The other part is in the resolver for OAuth 2.0 provider to
+        // rotate keys when the first token is received with the new kid.
+        String keyResolver = config.getKeyResolver();
+        // cache the certificates
+        certMap = new HashMap<>();
+        fingerPrints = new ArrayList<>();
+        if (config.getCertificate() != null) {
+            Map<String, Object> keyMap = config.getCertificate();
+            for(String kid: keyMap.keySet()) {
+                X509Certificate cert = null;
+                try {
+                    cert = readCertificate((String)keyMap.get(kid));
+                } catch (Exception e) {
+                    logger.error("Exception:", e);
                 }
-                break;
-            default:
-                logger.info("{} not found or not recognized in jwt config. Use {} as default {}",
-                        JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT, JWT_KEY_RESOLVER);
+                certMap.put(kid, cert);
+                fingerPrints.add(FingerPrintUtil.getCertFingerPrint(cert));
+            }
+        }
+        logger.debug("Successfully cached Certificate");
+        // if KeyResolver is jwk and bootstrap from jwk is true, load jwk during server startup.
+        if(JWT_KEY_RESOLVER_JWKS.equals(keyResolver) && bootstrapFromKeyService) {
+            jwksMap = getJsonWebKeyMap();
+        } else {
+            jwksMap = new HashMap<>();
         }
     }
 
@@ -193,7 +185,23 @@ public class JwtVerifier {
     }
 
     /**
-     * This method is to keep backward compatible for those call without VerificationKeyResolver.
+     * This method is to keep backward compatible for those call without VerificationKeyResolver. The single
+     * auth server is used in this case.
+     * @param jwt JWT token
+     * @param ignoreExpiry indicate if the expiry will be ignored
+     * @param isToken indicate if the JWT is a token
+     * @param requestPath request path
+     * @return JwtClaims
+     * @throws InvalidJwtException throw when the token is invalid
+     * @throws ExpiredTokenException throw when the token is expired
+     */
+    public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken, String requestPath) throws InvalidJwtException, ExpiredTokenException {
+        return verifyJwt(jwt, ignoreExpiry, isToken, requestPath, this::getKeyResolver);
+    }
+
+    /**
+     * This method is to keep backward compatible for those call without VerificationKeyResolver. The single
+     * auth server is used in this case.
      * @param jwt JWT token
      * @param ignoreExpiry indicate if the expiry will be ignored
      * @param isToken indicate if the JWT is a token
@@ -202,7 +210,7 @@ public class JwtVerifier {
      * @throws ExpiredTokenException throw when the token is expired
      */
     public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken) throws InvalidJwtException, ExpiredTokenException {
-        return verifyJwt(jwt, ignoreExpiry, isToken, this::getKeyResolver);
+        return verifyJwt(jwt, ignoreExpiry, isToken, null, this::getKeyResolver);
     }
 
     /**
@@ -217,11 +225,12 @@ public class JwtVerifier {
      * @param ignoreExpiry If true, don't verify if the token is expired.
      * @param isToken True if the jwt is an OAuth 2.0 access token
      * @param getKeyResolver How to get VerificationKeyResolver
+     * @param requestPath the request path that used to find the right auth server config
      * @return JwtClaims object
      * @throws InvalidJwtException InvalidJwtException
      * @throws ExpiredTokenException ExpiredTokenException
      */
-    public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken, BiFunction<String, Boolean, VerificationKeyResolver> getKeyResolver)
+    public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken, String requestPath, BiFunction<String, String, VerificationKeyResolver> getKeyResolver)
             throws InvalidJwtException, ExpiredTokenException {
         JwtClaims claims;
 
@@ -278,7 +287,7 @@ public class JwtVerifier {
                 .setRequireExpirationTime()
                 .setAllowedClockSkewInSeconds(315360000) // use seconds of 10 years to skip expiration validation as we need skip it in some cases.
                 .setSkipDefaultAudienceValidation()
-                .setVerificationKeyResolver(getKeyResolver.apply(kid, isToken))
+                .setVerificationKeyResolver(getKeyResolver.apply(kid, requestPath))
                 .build();
 
         // Validate the JWT and process it to the Claims
@@ -291,71 +300,163 @@ public class JwtVerifier {
     }
 
     /**
-     * Get VerificationKeyResolver based on the configuration settings
-     * @param kid
-     * @param isToken
+     * Get VerificationKeyResolver based on the kid and isToken indicator. For the implementation, we check
+     * the jwk first and 509Certificate if the jwk cannot find the kid. Basically, we want to iterate all
+     * the resolvers and find the right one with the kid.
+     *
+     * @param kid key id from the JWT token
+     * @param requestPath the request path of incoming request used to identify the serviceId to get the JWK.
      * @return VerificationKeyResolver
      */
-    private VerificationKeyResolver getKeyResolver(String kid, boolean isToken) {
-
-        VerificationKeyResolver verificationKeyResolver = null;
-        String keyResolver = (String) jwtConfig.getOrDefault(JWT_KEY_RESOLVER, JWT_KEY_RESOLVER_X509CERT);
-        switch (keyResolver) {
-            default:
-            case JWT_KEY_RESOLVER_X509CERT:
-                // get the public key certificate from the cache that is loaded from security.yml if it is not there,
-                // go to OAuth2 server /oauth2/key endpoint to get the public key certificate with kid as parameter.
-                X509Certificate certificate = certMap == null? null : certMap.get(kid);
-                if(certificate == null) {
-                    certificate = isToken? getCertForToken(kid) : getCertForSign(kid);
-                    if(certMap == null) certMap = new HashMap<>();  // null if bootstrapFromKeyService is true
-                    certMap.put(kid, certificate);
-                } else {
-                    logger.debug("Got raw certificate for kid: {} from local cache", kid);
-                }
-                X509VerificationKeyResolver x509VerificationKeyResolver = new X509VerificationKeyResolver(certificate);
-
-                x509VerificationKeyResolver.setTryAllOnNoThumbHeader(true);
-
-                verificationKeyResolver = x509VerificationKeyResolver;
-                break;
-            case JWT_KEY_RESOLVER_JWKS:
-                List<JsonWebKey> jwkList = jwksMap == null ? null : jwksMap.get(kid);
+    private VerificationKeyResolver getKeyResolver(String kid, String requestPath) {
+        // try the X509 certificate first
+        String keyResolver = config.getKeyResolver();
+        // get the public key certificate from the cache that is loaded from security.yml. If it is not there,
+        // go to the next step to access JWK if it is enabled. We need to update the light-oauth2 and oauth-kafka
+        // to support JWK instead of X509Certificate endpoint. 
+        X509Certificate certificate = certMap == null ? null : certMap.get(kid);
+        if(certificate != null) {
+            X509VerificationKeyResolver x509VerificationKeyResolver = new X509VerificationKeyResolver(certificate);
+            x509VerificationKeyResolver.setTryAllOnNoThumbHeader(true);
+            return x509VerificationKeyResolver;
+        } else {
+            if(JWT_KEY_RESOLVER_JWKS.equals(keyResolver)) {
+                // try jwk if kid cannot be found in the certificate map.
+                List<JsonWebKey> jwkList = jwksMap.get(kid);
                 if (jwkList == null) {
-                    jwkList = getJsonWebKeySetForToken(kid);
-                    if (jwkList != null) {
-                        if (jwksMap == null) jwksMap = new HashMap<>();  // null if bootstrapFromKeyService is true
-                        jwksMap.put(kid, jwkList);
+                    jwkList = getJsonWebKeySetForToken(kid, requestPath);
+                    if (jwkList == null || jwkList.isEmpty()) {
+                        throw new RuntimeException("no JWK for kid: " + kid);
                     }
-                } else {
-                    logger.debug("Got Json web key set for kid: {} from local cache", kid);
+                    for(JsonWebKey jwk: jwkList) {
+                        jwksMap.put(jwk.getKeyId(), jwkList);
+                        logger.info("Got Json web key set for kid: {} from Oauth server", jwk.getKeyId());
+                    }
                 }
-                if (jwkList != null) {
-                    verificationKeyResolver = new JwksVerificationKeyResolver(jwkList);
-                }
-                break;
+                logger.debug("Got Json web key set from local cache");
+                return new JwksVerificationKeyResolver(jwkList);
+            } else {
+                logger.error("Both X509Certificate and JWK are not configured.");
+                return null;
+            }
         }
-        return verificationKeyResolver;
     }
 
     /**
-     * Retrieve JWK set from oauth server with the given kid
-     * @param kid
-     * @return
+     * Retrieve JWK set from all possible oauth servers. If there are multiple servers in the client.yml, get all
+     * the jwk by iterate all of them.
+     *
+     * @return {@link Map} of {@link List}
      */
-    private List<JsonWebKey> getJsonWebKeySetForToken(String kid) {
+    private Map<String, List<JsonWebKey>> getJsonWebKeyMap() {
+        // the jwk indicator will ensure that the kid is not concat to the uri for path parameter.
+        // the kid is not needed to get JWK. We need to figure out only one jwk server or multiple.
+        jwksMap = new HashMap<>();
+        ClientConfig clientConfig = ClientConfig.get();
+        if(clientConfig.isMultipleAuthServers()) {
+            // iterate all the configured auth server to get JWK.
+            Map<String, Object> tokenConfig = clientConfig.getTokenConfig();
+            Map<String, Object> keyConfig = (Map<String, Object>)tokenConfig.get(ClientConfig.KEY);
+            Map<String, Object> serviceIdAuthServers = (Map<String, Object>)keyConfig.get(ClientConfig.SERVICE_ID_AUTH_SERVERS);
+            if(serviceIdAuthServers == null) {
+                throw new RuntimeException("serviceIdAuthServers property is missing in the token key configuration");
+            }
+            for(Map.Entry<String, Object> entry : serviceIdAuthServers.entrySet()) {
+                Map<String, Object> authServerConfig = (Map<String, Object>)entry.getValue();
+                TokenKeyRequest keyRequest = new TokenKeyRequest(null, true, authServerConfig);
+                try {
+                    logger.debug("Getting Json Web Key list from {} for serviceId {}", keyRequest.getServerUrl(), entry.getKey());
+                    String key = OauthHelper.getKey(keyRequest);
+                    logger.debug("Got Json Web Key = " + key);
+                    List<JsonWebKey> jwkList = new JsonWebKeySet(key).getJsonWebKeys();
+                    if (jwkList == null || jwkList.isEmpty()) {
+                        throw new RuntimeException("cannot get JWK from OAuth server");
+                    }
+                    for(JsonWebKey jwk: jwkList) {
+                        jwksMap.put(jwk.getKeyId(), jwkList);
+                        logger.debug("Successfully cached JWK for kid {} serviceId {}", jwk.getKeyId(), entry.getKey());
+                    }
+                } catch (Exception e) {
+                    logger.error("Exception: ", e);
+                    logger.error(new Status(GET_KEY_ERROR).toString());
+                    throw new RuntimeException(e);
+                }
+            }
+        } else {
+            // there is only one jwk server.
+            TokenKeyRequest keyRequest = new TokenKeyRequest(null, true, null);
+            try {
+                logger.debug("Getting Json Web Key list from {}", keyRequest.getServerUrl());
+                String key = OauthHelper.getKey(keyRequest);
+                logger.debug("Got Json Web Key = " + key);
+                List<JsonWebKey> jwkList = new JsonWebKeySet(key).getJsonWebKeys();
+                if (jwkList == null || jwkList.isEmpty()) {
+                    throw new RuntimeException("cannot get JWK from OAuth server");
+                }
+                for(JsonWebKey jwk: jwkList) {
+                    jwksMap.put(jwk.getKeyId(), jwkList);
+                    logger.debug("Successfully cached JWK for kid {}", jwk.getKeyId());
+                }
+            } catch (Exception e) {
+                logger.error("Exception: ", e);
+                logger.error(new Status(GET_KEY_ERROR).toString());
+                throw new RuntimeException(e);
+            }
+        }
+        return jwksMap;
+    }
 
-        TokenKeyRequest keyRequest = new TokenKeyRequest(kid);
+    /**
+     * Retrieve JWK set from an oauth server with the kid. This method is used when a new kid is received
+     * and the corresponding jwk doesn't exist in the cache. It will look up the key service by kid first.
+     * @param kid String of kid
+     * @param requestPath String of request path
+     * @return {@link List} of {@link JsonWebKey}
+     */
+    private List<JsonWebKey> getJsonWebKeySetForToken(String kid, String requestPath) {
+        // the jwk indicator will ensure that the kid is not concat to the uri for path parameter.
+        // the kid is not needed to get JWK, but if requestPath is not null, it will be used to get the keyConfig
+        if(logger.isTraceEnabled()) logger.trace("kid = " + kid + " requestPath = " + requestPath);
+        Map<String, Object> config = null;
+        ClientConfig clientConfig = ClientConfig.get();
+        if(requestPath != null && clientConfig.isMultipleAuthServers()) {
+            if(logger.isTraceEnabled()) logger.trace("requestPath = " + requestPath);
+            Map<String, String> pathPrefixServices = clientConfig.getPathPrefixServices();
+            if(pathPrefixServices == null || pathPrefixServices.size() == 0) {
+                throw new ConfigException("pathPrefixServices property is missing or empty in client.yml");
+            }
+            // lookup the serviceId based on the full path and the prefix mapping by iteration here.
+            String serviceId = null;
+            for(Map.Entry<String, String> entry: pathPrefixServices.entrySet()) {
+                if(requestPath.startsWith(entry.getKey())) {
+                    serviceId = entry.getValue();
+                }
+            }
+            if(serviceId == null) {
+                throw new ConfigException("serviceId cannot be identified in client.yml with the requestPath = " + requestPath);
+            }
+            if(logger.isTraceEnabled()) logger.trace("serviceId = " + serviceId);
+            // get the serviceIdAuthServers for key definition
+            Map<String, Object> tokenConfig = clientConfig.getTokenConfig();
+            Map<String, Object> keyConfig = (Map<String, Object>)tokenConfig.get(ClientConfig.KEY);
+            Map<String, Object> serviceIdAuthServers = (Map<String, Object>)keyConfig.get(ClientConfig.SERVICE_ID_AUTH_SERVERS);
+            if(serviceIdAuthServers == null) {
+                throw new ConfigException("serviceIdAuthServers property is missing in the token key configuration in client.yml");
+            }
+            config = (Map<String, Object>)serviceIdAuthServers.get(serviceId);
+        }
+        if(logger.isTraceEnabled() && config != null) logger.trace("multiple oauth config based on path = " + JsonMapper.toJson(config));
+        TokenKeyRequest keyRequest = new TokenKeyRequest(kid, true, config);
         try {
-            logger.debug("Getting Json Web Key for kid: {} from {}", kid, keyRequest.getServerUrl());
+            logger.debug("Getting Json Web Key list from {}", keyRequest.getServerUrl());
             String key = OauthHelper.getKey(keyRequest);
-            logger.debug("Got Json Web Key '{}' for kid: {}", key, kid);
+            logger.debug("Got Json Web Key list from {}", keyRequest.getServerUrl());
             return new JsonWebKeySet(key).getJsonWebKeys();
         } catch (Exception e) {
             logger.error("Exception: ", e);
+            logger.error(new Status(GET_KEY_ERROR).toString());
             throw new RuntimeException(e);
         }
-
     }
 
     public X509Certificate getCertForToken(String kid) {

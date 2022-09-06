@@ -1,0 +1,8 @@
+# request-transformer.yml
+# indicate if this interceptor is enabled or not.
+enabled: ${request-transformer.enabled:true}
+# indicate if the transform interceptor needs to change the request body
+requiredContent: ${request-transformer.requiredContent:true}
+# A list of applied request path prefixes, other requests will skip this handler. The value can be a string
+# if there is only one request path prefix needs this handler. or a list of strings if there are multiple.
+appliedPathPrefixes: ${request-transformer.appliedPathPrefixes:}

@@ -1,0 +1,60 @@
+---
+# Light Router Configuration
+# As this router is built to support discovery and security for light-4j services,
+# the outbound connection is always HTTP 2.0 with TLS enabled.
+# If HTTP 2.0 protocol will be accepted from incoming request.
+http2Enabled: ${router.http2Enabled:true}
+
+# If TLS is enabled when accepting incoming request. Should be true on test and prod.
+httpsEnabled: ${router.httpsEnabled:true}
+
+# Max request time in milliseconds before timeout to the server.
+maxRequestTime: ${router.maxRequestTime:1000}
+
+# Rewrite Host Header with the target host and port and write X_FORWARDED_HOST with original host
+rewriteHostHeader: ${router.rewriteHostHeader:true}
+
+# Reuse XForwarded for the target XForwarded header
+reuseXForwarded: ${router.reuseXForwarded:false}
+
+# Max Connection Retries
+maxConnectionRetries: ${router.maxConnectionRetries:3}
+
+# allowed host list. Use Regex to do wildcard match
+hostWhitelist: ${router.hostWhitelist:}
+
+# support serviceId in the query parameter for routing to overwrite serviceId in header routing.
+# by default, it is false and should not be used unless you are dealing with a legacy client that
+# does not support header manipulation. Once this flag is true, we are going to overwrite the header
+# service_id derived with other handlers from prefix, path, endpoint etc.
+serviceIdQueryParameter: ${router.serviceIdQueryParameter:false}
+
+# URL rewrite rules, each line will have two parts: the regex patten and replace string separated
+# with a space. The light-router has service discovery for host routing, so whe working on the
+# url rewrite rules, we only need to create about the path in the URL.
+# Test your rules at https://www.freeformatter.com/java-regex-tester.html
+urlRewriteRules: ${router.urlRewriteRules:}
+
+# Method rewrite rules for legacy clients that do not support DELETE, PUT, and PATCH HTTP methods to
+# send a request with GET and POST instead. The gateway will rewrite the method from GET to DELETE or
+# from POST to PUT or PATCH. This will be set up at the endpoint level to limit the application.
+# The format of the rule will be "path source-method target-method". Please refer to test values.yml for
+# examples.
+# Note: you cannot rewrite a method with a body to a method without a body or vice versa.
+methodRewriteRules: ${router.methodRewriteRules:}
+
+# Query parameter rewrite rules for client applications that send different query parameter keys or values
+# than the target server expecting. When overwriting a value, the key must be specified in order to
+# identify the right query parameter. If only the oldK and newK are specified, the router will rewrite the
+# query parameter key oldK with different key newK and keep the value.
+# The format of the rules will be a map with the path as the key. Please refer to test values.yml for
+# examples. You can define a list of rules under the same path.
+queryParamRewriteRules: ${router.queryParamRewriteRules:}
+
+# Header rewrite rules for client applications that send different header keys or values than the target
+# server expecting. When overwriting a value, the key must be specified in order to identify the right
+# header. If only the oldK and newK are specified, the router will rewrite the header key oldK with different
+# key newK and keep the value.
+# The format of the rule will be a map with the path as the key. Please refer to test values.yml for
+# examples. You can define a list of rules under the same path.
+headerRewriteRules: ${router.headerRewriteRules:}

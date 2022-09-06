@@ -1,51 +1,98 @@
+# This is the configuration file for Http2Client.
 ---
+# Settings for TLS
 tls:
-  # if the server is using self-signed certificate, this need to be false.
+  # if the server is using self-signed certificate, this need to be false. If true, you have to use CA signed certificate
+  # or load truststore that contains the self-signed cretificate.
   verifyHostname: true
   # The default trustedNames group used to created default SSL context. This is used to create Http2Client.SSL if set.
   defaultGroupKey: trustedNames.local
   # trusted hostnames, service names, service Ids, and so on.
   # Note: localhost and 127.0.0.1 are not trustable hostname/ip in general. So, these values should not be used as trusted names in production.
-  trustedNames: 
+  trustedNames:
     local: localhost
-    negativeTest: invalidhost 
+    negativeTest: invalidhost
     empty:
   # trust store contains certifictes that server needs. Enable if tls is used.
   loadTrustStore: true
   # trust store location can be specified here or system properties javax.net.ssl.trustStore and password javax.net.ssl.trustStorePassword
   trustStore: client.truststore
+  # trust store password
+  trustStorePass: password
   # key store contains client key and it should be loaded if two-way ssl is uesed.
   loadKeyStore: true
   # key store location
   keyStore: client.keystore
+  # key store password
+  keyStorePass: password
+  # private key password
+  keyPass: password
+# settings for OAuth2 server communication
 oauth:
+  # OAuth 2.0 token endpoint configuration
   token:
+    cache:
+      #capacity of caching TOKENs
+      capacity: 200
+    # The scope token will be renewed automatically 1 minutes before expiry
     tokenRenewBeforeExpired: 4000
+    # if scope token is expired, we need short delay so that we can retry faster.
     expiredRefreshRetryDelay: 5000
+    # if scope token is not expired but in renew windown, we need slow retry delay.
     earlyRefreshRetryDelay: 30000
-    # static token service url in case the service is deployed to a VM. It will be used if it is configured here.
+    # token server url. The default port number for token service is 6882.
     server_url: http://localhost:7777
-    # serviceId for the token service, it will be used to do the lookup if above server_url is not configured.
+    # token service unique id for OAuth 2.0 provider
     serviceId: com.networknt.oauth2-token-1.0.0
+    # For users who leverage SaaS OAuth 2.0 provider from lightapi.net or others in the public cloud
+    # and has an internal proxy server to access code, token and key services of OAuth 2.0, set up the
+    # proxyHost here for the HTTPS traffic. This option is only working with server_url and serviceId
+    # below should be commented out. OAuth 2.0 services cannot be discovered if a proxy server is used.
+    # proxyHost: ${client.tokenProxyHost:proxy.lightapi.net}
+    # We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has
+    # a different port, please specify it here. If proxyHost is available and proxyPort is missing, then
+    # the default value 443 is going to be used for the HTTP connection.
+    # proxyPort: ${client.tokenProxyPort:3128}
+    # set to true if the oauth2 provider supports HTTP/2
+    # enableHttp2: true
+    # the following section defines uri and parameters for authorization code grant type
     authorization_code:
+      # token endpoint for authorization code grant
       uri: "/oauth2/token"
+      # client_id for authorization code grant flow.
       client_id: test_client
+      # client_secret for authorization code grant flow.
       client_secret: test_secret
+      # the web server uri that will receive the redirected authorization code
       redirect_uri: https://localhost:8080/authorization_code
-      scope:
-      - test.r
-      - test.w
+      # optional scope, default scope in the client registration will be used if not defined.
+      # In values.yml, you define a list of strings for the scope(s).
+      scope: ${client.tokenAcScope:}
+    # the following section defines uri and parameters for client credentials grant type
     client_credentials:
+      # token endpoint for client credentials grant
       uri: "/oauth2/token"
+      # client_id for client credentials grant flow.
       client_id: test_client
+      # client_secret for client credentials grant flow.
       client_secret: test_secret
-      scope:
-      - test.r
-      - test.w
+      # optional scope, default scope in the client registration will be used if not defined.
+      # In values.yml, you define a list of strings for the scope(s).
+      scope: ${client.tokenCcScope:}
+    refresh_token:
+      # token endpoint for refresh token grant
+      uri: "/oauth2/token"
+      # client_id for refresh token grant flow.
+      client_id: f7d42348-c647-4efb-a52d-4c5787421e72
+      # client_secret for refresh token grant flow
+      client_secret: f6h1FTI8Q3-7UScPZDzfXA
+      # optional scope, default scope in the client registration will be used if not defined.
+      # In values.yml, you define a list of strings for the scope(s).
+      scope: ${client.tokenRtScope:}
     # light-oauth2 key distribution endpoint configuration for token verification
     key:
       # key distribution server url for token verification. It will be used if it is configured.
-      server_url: https://localhost:6886
+      server_url: https://localhost:7777
       # key serviceId for key distribution service, it will be used if above server_url is not configured.
       serviceId: com.networknt.oauth2-key-1.0.0
       # the path for the key distribution endpoint
@@ -98,12 +145,20 @@ oauth:
     uri: "/oauth2/deref"
     # client_id used to access key distribution service. It can be the same client_id with token service or not.
     client_id: f7d42348-c647-4efb-a52d-4c5787421e72
+    # client_secret for deref
+    client_secret: f6h1FTI8Q3-7UScPZDzfXA
+# circuit breaker configuration for the client
 request:
+  # number of timeouts/errors to break the circuit
   errorThreshold: 2
+  # timeout in millisecond to indicate a client error.
   timeout: 3000
+  # reset the circuit after this timeout in millisecond
   resetTimeout: 7000
   # connection expire time.
-  connectionExpireTime: 2000000
+  connectionExpireTime: 1800000
+  # if inject OpenTracing with the Http2Client in header
+  injectOpenTracing: false
   # the flag to indicate whether http/2 is enabled when calling client.callService()
   enableHttp2: true
   # the maximum host capacity of connection pool

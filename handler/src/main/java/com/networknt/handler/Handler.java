@@ -16,6 +16,7 @@
 
 package com.networknt.handler;
 
+import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.Tuple;
 import com.networknt.config.Config;
 import com.networknt.handler.config.EndpointSource;
@@ -27,9 +28,11 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
 import io.undertow.util.HttpString;
 import io.undertow.util.PathTemplateMatcher;
+import io.undertow.websockets.WebSocketConnectionCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -38,6 +41,7 @@ import java.util.Map;
 import java.util.Random;
 
 import static io.undertow.util.PathTemplateMatch.ATTACHMENT_KEY;
+import static io.undertow.Handlers.websocket;
 
 /**
  * @author Nicholas Azar
@@ -71,6 +75,7 @@ public class Handler {
 		initChains();
 		initPaths();
 		initDefaultHandlers();
+		ModuleRegistry.registerModule(Handler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
 	}
 
 	/**
@@ -147,7 +152,7 @@ public class Handler {
 	private static void addSourceChain(PathChain sourceChain) {
 		try {
 			Class sourceClass = Class.forName(sourceChain.getSource());
-			EndpointSource source = (EndpointSource)sourceClass.newInstance();
+			EndpointSource source = (EndpointSource)(sourceClass.getDeclaredConstructor().newInstance());
 			for (EndpointSource.Endpoint endpoint : source.listEndpoints()) {
 				PathChain sourcedPath = new PathChain();
 				sourcedPath.setPath(endpoint.getPath());
@@ -415,9 +420,9 @@ public class Handler {
 		// create an instance of the handler
 		Object handlerOrProviderObject = null;
 		try {
-			handlerOrProviderObject = namedClass.second.newInstance();
-		} catch (Exception e) {
-			logger.error("Exception:", e);
+			handlerOrProviderObject = namedClass.second.getDeclaredConstructor().newInstance();
+		} catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+			logger.error("Could not instantiate handler class " + namedClass.second, e);
 			throw new RuntimeException("Could not instantiate handler class: " + namedClass.second);
 		}
 
@@ -426,6 +431,8 @@ public class Handler {
 			resolvedHandler = (HttpHandler) handlerOrProviderObject;
 		} else if (handlerOrProviderObject instanceof HandlerProvider) {
 			resolvedHandler = ((HandlerProvider) handlerOrProviderObject).getHandler();
+		} else if (handlerOrProviderObject instanceof WebSocketConnectionCallback) {
+			resolvedHandler = websocket((WebSocketConnectionCallback)handlerOrProviderObject);
 		} else {
 			throw new RuntimeException("Unsupported type of handler provided: " + handlerOrProviderObject);
 		}

@@ -54,7 +54,7 @@ public class ServerInfoGetHandlerTest {
             logger.info("starting server");
             HttpHandler handler = getTestHandler();
             server = Undertow.builder()
-                    .addHttpListener(8080, "localhost")
+                    .addHttpListener(7080, "localhost")
                     .setHandler(handler)
                     .build();
             server.start();
@@ -84,7 +84,7 @@ public class ServerInfoGetHandlerTest {
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
         try {
-            connection = client.connect(new URI("http://localhost:8080"), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
         } catch (Exception e) {
             throw new ClientException(e);
         }
@@ -102,11 +102,10 @@ public class ServerInfoGetHandlerTest {
         }
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+        logger.debug("body = " + body);
         Assert.assertEquals(200, statusCode);
         if(statusCode == 200) {
             Assert.assertNotNull(body);
-            logger.debug(body);
         }
     }
-
 }

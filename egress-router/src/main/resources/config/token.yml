@@ -1,0 +1,6 @@
+# This is the configuration file for the TokenHandler that is responsible for getting
+# a client credentials token in http-sidecar and light-gateway when calling others.
+# The configuration for one or multiple OAuth 2.0 providers is in the client.yml file.
+
+# indicate if the handler is enabled.
+enabled: ${token.enabled:false}

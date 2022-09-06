@@ -27,15 +27,20 @@ import com.networknt.client.oauth.TokenManager;
 import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
 import com.networknt.client.ssl.TLSConfig;
 import com.networknt.cluster.Cluster;
-import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
+import com.networknt.config.JsonMapper;
+import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.exception.ClientException;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.service.SingletonServiceFactory;
+import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
-import com.networknt.utility.TlsUtil;
+import com.networknt.config.TlsUtil;
+import io.opentracing.Tracer;
+import io.opentracing.propagation.Format;
+import io.opentracing.tag.Tags;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.client.*;
@@ -56,12 +61,14 @@ import org.xnio.ssl.XnioSsl;
 
 import javax.net.ssl.*;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.security.*;
+import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -76,9 +83,9 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class Http2Client {
     private static final Logger logger = LoggerFactory.getLogger(Http2Client.class);
-
+    private static final String CONFIG_PROPERTY_MISSING = "ERR10057";
     public static final String CONFIG_NAME = "client";
-    public static final String CONFIG_SECRET = "secret";
+    public static final String CONFIG_SERVER = "server";
     public static final OptionMap DEFAULT_OPTIONS = OptionMap.builder()
             .set(Options.WORKER_IO_THREADS, 8)
             .set(Options.TCP_NODELAY, true)
@@ -94,15 +101,24 @@ public class Http2Client {
     public static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
     public static AttachmentKey<ByteBuffer> BUFFER_BODY = AttachmentKey.create(ByteBuffer.class);
 
-    static final String TLS = "tls";
+    public static final String TLS = "tls";
     static final String LOAD_TRUST_STORE = "loadTrustStore";
     static final String LOAD_KEY_STORE = "loadKeyStore";
     static final String TRUST_STORE = "trustStore";
+    static final String TRUST_STORE_PASS = "trustStorePass";
     static final String KEY_STORE = "keyStore";
+    static final String KEY_STORE_PASS = "keyStorePass";
+    static final String KEY_PASS = "keyPass";
     static final String KEY_STORE_PROPERTY = "javax.net.ssl.keyStore";
     static final String KEY_STORE_PASSWORD_PROPERTY = "javax.net.ssl.keyStorePassword";
     static final String TRUST_STORE_PROPERTY = "javax.net.ssl.trustStore";
     static final String TRUST_STORE_PASSWORD_PROPERTY = "javax.net.ssl.trustStorePassword";
+    static final String SERVICE_ID = "serviceId";
+    static String callerId = "unknown";
+    static String MASK_KEY_CLIENT_SECRET = "client_secret";
+    static String MASK_KEY_TRUST_STORE_PASS = "trustStorePass";
+    static String MASK_KEY_KEY_STORE_PASS = "keyStorePass";
+    static String MASK_KEY_KEY_PASS = "keyPass";
 
     // TokenManager is to manage cached jwt tokens for this client.
     private TokenManager tokenManager = TokenManager.getInstance();
@@ -111,8 +127,17 @@ public class Http2Client {
     private Http2ClientConnectionPool http2ClientConnectionPool = Http2ClientConnectionPool.getInstance();
 
     static {
-        List<String> masks = new ArrayList<>();
-        ModuleRegistry.registerModule(Http2Client.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), masks);
+        List<String> masks = List.of(MASK_KEY_CLIENT_SECRET, MASK_KEY_TRUST_STORE_PASS, MASK_KEY_KEY_STORE_PASS, MASK_KEY_KEY_PASS);
+        Map<String, Object> config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
+        ModuleRegistry.registerModule(Http2Client.class.getName(), JsonMapper.fromJson(JsonMapper.toJson(config), Map.class), masks);
+        // take the best effort to get the serviceId from the server.yml file. It might not exist if this is a standalone client.
+        boolean injectCallerId = ClientConfig.get().isInjectCallerId();
+        if(injectCallerId) {
+            Map<String, Object> serverConfig = Config.getInstance().getJsonMapConfigNoCache(CONFIG_SERVER);
+            if(serverConfig != null) {
+                callerId = (String)serverConfig.get(SERVICE_ID);
+            }
+        }
     }
 
     public static final ByteBufferPool BUFFER_POOL = new DefaultByteBufferPool(true, ClientConfig.get().getBufferSize() * 1024);
@@ -231,11 +256,9 @@ public class Http2Client {
         final FutureResult<ClientConnection> result = new FutureResult<>();
         ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
         if(connection != null && connection.isOpen()) {
-            logger.info("Got an open connection from http2ClientConnectionPool");
             result.setResult(connection);
             return result.getIoFuture();
         }
-        logger.info("Got a null or non open connection: {} from http2ClientConnectionPool. Creating a new one ...", connection);
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         return connect((InetSocketAddress) null, uri, worker, ssl, bufferPool, options);
     }
@@ -247,7 +270,6 @@ public class Http2Client {
         provider.connect(new ClientCallback<ClientConnection>() {
             @Override
             public void completed(ClientConnection r) {
-                logger.info("Adding the new connection: {} to FutureResult and cache it for uri: {}", r, uri);
                 result.setResult(r);
                 http2ClientConnectionPool.cacheConnection(uri, r);
             }
@@ -420,6 +442,33 @@ public class Http2Client {
     }
 
     /**
+     * Add Authorization Code grant token the caller app gets from OAuth2 server and inject OpenTracing context
+     *
+     * This is the method called from client like web server that want to have Tracer context pass through.
+     *
+     * @param request the http request
+     * @param token the bearer token
+     * @param tracer the OpenTracing tracer
+     */
+    public void addAuthTokenTrace(ClientRequest request, String token, Tracer tracer) {
+        if(token != null && !token.startsWith("Bearer ")) {
+            if(token.toUpperCase().startsWith("BEARER ")) {
+                // other cases of Bearer
+                token = "Bearer " + token.substring(7);
+            } else {
+                token = "Bearer " + token;
+            }
+        }
+        request.getRequestHeaders().put(Headers.AUTHORIZATION, token);
+        if(tracer != null && tracer.activeSpan() != null) {
+            Tags.SPAN_KIND.set(tracer.activeSpan(), Tags.SPAN_KIND_CLIENT);
+            Tags.HTTP_METHOD.set(tracer.activeSpan(), request.getMethod().toString());
+            Tags.HTTP_URL.set(tracer.activeSpan(), request.getPath());
+            tracer.inject(tracer.activeSpan().context(), Format.Builtin.HTTP_HEADERS, new ClientRequestCarrier(request));
+        }
+    }
+
+    /**
      * Add Client Credentials token cached in the client for standalone application
      *
      * This is the method called from standalone application like enterprise scheduler for batch jobs
@@ -464,10 +513,16 @@ public class Http2Client {
      * @return Result
      */
     public Result propagateHeaders(ClientRequest request, final HttpServerExchange exchange) {
-        String tid = exchange.getRequestHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
         String token = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
-        String cid = exchange.getRequestHeaders().getFirst(HttpStringConstants.CORRELATION_ID);
-        return populateHeader(request, token, cid, tid);
+        boolean injectOpenTracing = ClientConfig.get().isInjectOpenTracing();
+        if(injectOpenTracing) {
+            Tracer tracer = exchange.getAttachment(AttachmentConstants.EXCHANGE_TRACER);
+            return populateHeader(request, token, tracer);
+        } else {
+            String tid = exchange.getRequestHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
+            String cid = exchange.getRequestHeaders().getFirst(HttpStringConstants.CORRELATION_ID);
+            return populateHeader(request, token, cid, tid);
+        }
     }
 
     /**
@@ -484,16 +539,73 @@ public class Http2Client {
      * @return Result when fail to get jwt, it will return a Status.
      */
     public Result populateHeader(ClientRequest request, String authToken, String correlationId, String traceabilityId) {
+        Result<Jwt> result = tokenManager.getJwt(request);
+        if(result.isFailure()) { return Failure.of(result.getError()); }
+        // we cannot assume that the authToken is passed from the original caller. If it is null, then promote.
+        if(authToken == null) {
+            authToken = "Bearer " + result.getResult().getJwt();
+        } else {
+            request.getRequestHeaders().put(HttpStringConstants.SCOPE_TOKEN, "Bearer " + result.getResult().getJwt());
+        }
+        request.getRequestHeaders().put(HttpStringConstants.CORRELATION_ID, correlationId);
         if(traceabilityId != null) {
             addAuthTokenTrace(request, authToken, traceabilityId);
         } else {
             addAuthToken(request, authToken);
         }
+        if(ClientConfig.get().isInjectCallerId()) {
+            request.getRequestHeaders().put(HttpStringConstants.CALLER_ID, callerId);
+        }
+        return result;
+    }
+
+    /**
+     * Support API to API calls with scope token. The token is the original token from consumer and
+     * the client credentials token of caller API is added from cache. This method doesn't have correlationId
+     * and traceabilityId but has a Tracer for OpenTracing context passing. For standalone client, you create
+     * the Tracer instance and in the service to service call, the Tracer can be found in the JaegerStartupHookProvider
+     *
+     * This method is used in API to API call
+     *
+     * @param request the http request
+     * @param authToken the authorization token
+     * @param tracer the OpenTracing Tracer
+     * @return Result when fail to get jwt, it will return a Status.
+     */
+    public Result populateHeader(ClientRequest request, String authToken, Tracer tracer) {
         Result<Jwt> result = tokenManager.getJwt(request);
         if(result.isFailure()) { return Failure.of(result.getError()); }
-        request.getRequestHeaders().put(HttpStringConstants.CORRELATION_ID, correlationId);
-        request.getRequestHeaders().put(HttpStringConstants.SCOPE_TOKEN, "Bearer " + result.getResult().getJwt());
+        // we cannot assume the original caller always has an authorization token. If authToken is null, then promote...
+        if(authToken == null) {
+            authToken = "Bearer " + result.getResult().getJwt();
+        } else {
+            request.getRequestHeaders().put(HttpStringConstants.SCOPE_TOKEN, "Bearer " + result.getResult().getJwt());
+        }
+        if(tracer != null) {
+            addAuthTokenTrace(request, authToken, tracer);
+        } else {
+            addAuthToken(request, authToken);
+        }
         return result;
+    }
+
+
+
+    private static KeyStore loadKeyStore(final String name, final char[] password) throws IOException {
+        final InputStream stream = Config.getInstance().getInputStreamFromFile(name);
+        if(stream == null) {
+            throw new RuntimeException("Could not load keystore");
+        }
+        try {
+            KeyStore loadedKeystore = KeyStore.getInstance("JKS");
+            loadedKeystore.load(stream, password);
+
+            return loadedKeystore;
+        } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException e) {
+            throw new IOException(String.format("Unable to load KeyStore %s", name), e);
+        } finally {
+            IoUtils.safeClose(stream);
+        }
     }
 
     /**
@@ -531,11 +643,17 @@ public class Http2Client {
                         if(logger.isInfoEnabled()) logger.info("Loading key store from system property at " + Encode.forJava(keyStoreName));
                     } else {
                         keyStoreName = (String) tlsMap.get(KEY_STORE);
-                        keyStorePass = (String) ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_KEYSTORE_PASS);
+                        keyStorePass = (String) tlsMap.get(KEY_STORE_PASS);
+                        if(keyStorePass == null) {
+                            logger.error(new Status(CONFIG_PROPERTY_MISSING, KEY_STORE_PASS, "client.yml").toString());
+                        }
                         if(logger.isInfoEnabled()) logger.info("Loading key store from config at " + Encode.forJava(keyStoreName));
                     }
                     if (keyStoreName != null && keyStorePass != null) {
-                        String keyPass = (String) ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_KEY_PASS);
+                        String keyPass = (String) tlsMap.get(KEY_PASS);
+                        if(keyPass == null) {
+                            logger.error(new Status(CONFIG_PROPERTY_MISSING, KEY_PASS, "client.yml").toString());
+                        }
                         KeyStore keyStore = TlsUtil.loadKeyStore(keyStoreName, keyStorePass.toCharArray());
                         KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                         keyManagerFactory.init(keyStore, keyPass.toCharArray());
@@ -559,7 +677,10 @@ public class Http2Client {
                         if(logger.isInfoEnabled()) logger.info("Loading trust store from system property at " + Encode.forJava(trustStoreName));
                     } else {
                         trustStoreName = (String) tlsMap.get(TRUST_STORE);
-                        trustStorePass = (String)ClientConfig.get().getSecretConfig().get(SecretConstants.CLIENT_TRUSTSTORE_PASS);
+                        trustStorePass = (String) tlsMap.get(TRUST_STORE_PASS);
+                        if(trustStorePass == null) {
+                            logger.error(new Status(CONFIG_PROPERTY_MISSING, TRUST_STORE_PASS, "client.yml").toString());
+                        }
                         if(logger.isInfoEnabled()) logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
                     }
                     if (trustStoreName != null && trustStorePass != null) {

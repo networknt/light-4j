@@ -1,31 +1,51 @@
 # Server configuration
 ---
 # This is the default binding address if the service is dockerized.
-ip: 0.0.0.0
+ip: ${server.ip:0.0.0.0}
 
-# Http port if enableHttp is true.
-httpPort: 8080
+# Http port if enableHttp is true. It will be ignored if dynamicPort is true.
+httpPort: ${server.httpPort:8080}
 
-# Enable HTTP should be false by default.
-enableHttp: false
+# Enable HTTP should be false by default. It should be only used for testing with clients or tools
+# that don't support https or very hard to import the certificate. Otherwise, https should be used.
+# When enableHttp, you must set enableHttps to false, otherwise, this flag will be ignored. There is
+# only one protocol will be used for the server at anytime. If both http and https are true, only
+# https listener will be created and the server will bind to https port only.
+enableHttp: ${server.enableHttp:false}
 
-# Https port if enableHttps is true.
-httpsPort: 8443
+# Https port if enableHttps is true. It will be ignored if dynamicPort is true.
+httpsPort: ${server.httpsPort:8443}
 
-# Enable HTTPS should be true on official environment.
-enableHttps: true
+# Enable HTTPS should be true on official environment and most dev environments.
+enableHttps: ${server.enableHttps:true}
 
 # Http/2 is enabled by default for better performance and it works with the client module
-enableHttp2: true
+# Please note that HTTP/2 only works with HTTPS.
+enableHttp2: ${server.enableHttp2:true}
 
-# Keystore file name in config folder. KeystorePass is in secret.yml to access it.
-keystoreName: server.keystore
+# Keystore file name in config folder.
+keystoreName: ${server.keystoreName:server.keystore}
+
+# Keystore password
+keystorePass: ${SERVER_KEY_STORE_PASS:password}
+
+# Private key password
+keyPass: ${SERVER_KEY_PASS:password}
 
 # Flag that indicate if two way TLS is enabled. Not recommended in docker container.
-enableTwoWayTls: false
+enableTwoWayTls: ${server.enableTwoWayTls:false}
 
-# Truststore file name in config folder. TruststorePass is in secret.yml to access it.
-truststoreName: server.truststore
+# Truststore file name in config folder.
+truststoreName: ${server.truststoreName:server.truststore}
+
+# Truststore password
+truststorePass: ${SERVER_TRUST_STORE_PASS:password}
+
+# Bootstrap truststore name used to connect to the light-config-server if it is used.
+bootstrapStoreName: ${server.bootstrapStoreName:bootstrap.truststore}
+
+# Bootstrap truststore password
+bootstrapStorePass: ${SERVER_BOOTSTRAP_STORE_PASS:password}
 
 # Bootstrap truststore name used to connect to the light-config-server if it is used.
 bootstrapStoreName: bootstrap.truststore
@@ -34,20 +54,75 @@ bootstrapStoreName: bootstrap.truststore
 bootstrapStorePass: password
 
 # Unique service identifier. Used in service registration and discovery etc.
-serviceId: com.networknt.petstore-1.0.0
+serviceId: ${server.serviceId:com.networknt.petstore-1.0.0}
 
-# Unique service name. Used in microservices to associate a given name to a service with configuration 
-# or as a key within the configuration of a particular domain
-serviceName: petstore
+# Flag to enable self service registration. This should be turned on on official test and production. And
+# dyanmicPort should be enabled if any orchestration tool is used like Kubernetes.
+enableRegistry: ${server.enableRegistry:false}
 
-# Flag to enable service registration. Only be true if running as standalone Java jar.
-enableRegistry: false
+# When enableRegistry is true and the registry/discovery service is not reachable. Stop the server or continue
+# starting the server. When your global registry is not setup as high availability and only for monitoring, you
+# can set it true. If you are using it for global service discovery, leave it with false.
+startOnRegistryFailure: ${server.startOnRegistryFailure:false}
+
+# Dynamic port is used in situation that multiple services will be deployed on the same host and normally
+# you will have enableRegistry set to true so that other services can find the dynamic port service. When
+# deployed to Kubernetes cluster, the Pod must be annotated as hostNetwork: true
+dynamicPort: ${server.dynamicPort:false}
+
+# Minimum port range. This define a range for the dynamic allocated ports so that it is easier to setup
+# firewall rule to enable this range. Default 2400 to 2500 block has 100 port numbers and should be
+# enough for most cases unless you are using a big bare metal box as Kubernetes node that can run 1000s pods
+minPort: ${server.minPort:2400}
+
+# Maximum port rang. The range can be customized to adopt your network security policy and can be increased or
+# reduced to ease firewall rules.
+maxPort: ${server.maxPort:2500}
 
 # environment tag that will be registered on consul to support multiple instances per env for testing.
 # https://github.com/networknt/light-doc/blob/master/docs/content/design/env-segregation.md
 # This tag should only be set for testing env, not production. The production certification process will enforce it.
-# environment: test1
+# environment: ${server.environment:test1}
 
-# Build number, to be set by teams for auditing purposes. 
-# This build number is independent of the API version, and it set by teams according to their release management process
-buildNumber: latest
+# Build Number, to be set by teams for auditing or tracing purposes. 
+# Allows teams to audit the value and set it according to their release management process
+buildNumber: ${server.buildNumber:latest}
+
+# Shutdown gracefully wait period in milliseconds
+# In this period, it allows the in-flight requests to complete but new requests are not allowed. It needs to be set
+# based on the slowest request possible.
+shutdownGracefulPeriod: ${server.shutdownGracefulPeriod:2000}
+
+# -----------------------------------------------------------------------------------------------------------
+# The following parameters are for advanced users to fine tune the service in a container environment. Please leave
+# these values default if you do not understand. For more info, visit https://doc.networknt.com/concern/server/
+
+# Unique service name. Used in microservice to associate a given name to a service with configuration
+# or as a key within the configuration of a particular domain
+serviceName: ${server.serviceName:petstore}
+
+# Buffer size of undertow server. Default to 16K
+bufferSize: ${server.bufferSize:16384}
+
+# Number of IO thread. Default to number of processor * 2
+ioThreads: ${server.ioThreads:4}
+
+# Number of worker threads. Default to 200 and it can be reduced to save memory usage in a container with only one cpu
+workerThreads: ${server.workerThreads:200}
+
+# Backlog size. Default to 10000
+backlog: ${server.backlog:10000}
+
+# Flag to set UndertowOptions.ALWAYS_SET_DATE
+alwaysSetDate: ${server.alwaysSetDate:false}
+
+# Server string used to mark the server. Default to L for light-4j.
+serverString: ${server.serverString:L}
+
+# Flag to set UndertowOptions.ALLOW_UNESCAPED_CHARACTERS_IN_URL. Default to false.
+# Please note that this option widens the attack surface and attacker can potentially access your filesystem.
+# This should only be used on an internal server and never be used on a server accessed from the Internet.
+allowUnescapedCharactersInUrl: ${server.allowUnescapedCharactersInUrl:false}
+
+# Set the max transfer file size for uploading files. Default to 1000000 which is 1 MB.
+maxTransferFileSize: ${server.maxTransferFileSize:1000000}

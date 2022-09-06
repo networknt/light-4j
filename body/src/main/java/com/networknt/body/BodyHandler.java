@@ -16,7 +16,6 @@
 
 package com.networknt.body;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
@@ -60,7 +59,7 @@ public class BodyHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(BodyHandler.class);
     static final String CONTENT_TYPE_MISMATCH = "ERR10015";
 
-    // request body will be parse during validation and it is attached to the exchange, in JSON,
+    // request body will be parsed during validation and it is attached to the exchange, in JSON,
     // it could be a map or list. So treat it as Object in the attachment.
     public static final AttachmentKey<Object> REQUEST_BODY = AttachmentConstants.REQUEST_BODY;
 
@@ -68,12 +67,23 @@ public class BodyHandler implements MiddlewareHandler {
 
     public static final String CONFIG_NAME = "body";
 
-    public static final BodyConfig config = (BodyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, BodyConfig.class);
+    public static  BodyConfig config;
 
     private volatile HttpHandler next;
 
     public BodyHandler() {
         if (logger.isInfoEnabled()) logger.info("BodyHandler is loaded.");
+        config = BodyConfig.load();
+    }
+
+    /**
+     * Please don't use this constructor as it is designed for testing only.
+     * @param configName String
+     * @deprecated
+     */
+    public BodyHandler(String configName) {
+        if (logger.isInfoEnabled()) logger.info("BodyHandler is loaded.");
+        config = BodyConfig.load(configName);
     }
 
     /**
@@ -104,12 +114,7 @@ public class BodyHandler implements MiddlewareHandler {
                         exchange.putAttachment(REQUEST_BODY_STRING, unparsedRequestBody);
                     }
                     // attach the parsed request body into exchange if the body parser is enabled
-                    try {
-                        attachJsonBody(exchange, unparsedRequestBody);
-                    } catch (JsonParseException jsonParseException) {
-                        exchange.putAttachment(REQUEST_BODY_STRING, unparsedRequestBody);
-                        throw jsonParseException;
-                    }
+                    attachJsonBody(exchange, unparsedRequestBody);
                 } else if (contentType.startsWith("text/plain")) {
                     InputStream inputStream = exchange.getInputStream();
                     String unparsedRequestBody = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
@@ -196,5 +201,10 @@ public class BodyHandler implements MiddlewareHandler {
     @Override
     public void register() {
         ModuleRegistry.registerModule(BodyHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+    }
+
+    @Override
+    public void reload() {
+        config = (BodyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, BodyConfig.class);
     }
 }

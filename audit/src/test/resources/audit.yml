@@ -20,48 +20,11 @@ auditOnError: false
 # log level; by default set to info
 logLevelIsError: false
 
+# the format for outputting the timestamp
+timestampFormat: yyyy-MM-dd'T'HH:mm:ss.SSSZ
 
 # Output header elements. You can add more if you want.
-headers:
-
-# Correlation Id
-- X-Correlation-Id
-
-# Traceability Id
-- X-Traceability-Id
+headers: ${audit.headers:X-Correlation-Id, X-Traceability-Id}
 
 # Output from id token and access token
-audit:
-
-# Client Id
-- client_id
-
-# User Id in id token, this is optional
-- user_id
-
-# Client Id in scope/access token, this is optional
-- scope_client_id
-
-# Request endpoint uri@method.
-- endpoint
-
-# Service ID assigned to the service, this is optional and must be set by the service in its implementation
-- serviceId
-
-# Request Body, this is optional and must be set by the service in its implementation
-- requestBody
-
-# Response payload, this is optional and must be set by the service in its implementation
-- responseBody
-
-# Request query parameters
-- queryParameters
-
-# Request path parameters
-- pathParameters
-
-# Request cookies
-- requestCookies
-
-# Response error status payload
-- Status
+audit: ${audit.audit:client_id, user_id}

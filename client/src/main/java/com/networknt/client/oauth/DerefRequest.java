@@ -20,56 +20,19 @@ import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
+import com.networknt.status.Status;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
 public class DerefRequest {
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#OAUTH}
-     */
-    @Deprecated
-    public static String OAUTH = "oauth";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#DEREF}
-     */
-    @Deprecated
-    public static String DEREF = "deref";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#SERVER_URL}
-     */
-    @Deprecated
-    public static String SERVER_URL = "server_url";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#SERVICE_ID}
-     */
-    @Deprecated
-    public static String SERVICE_ID = "serviceId";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#URI}
-     */
-    @Deprecated
-    public static String URI = "uri";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#CLIENT_ID}
-     */
-    @Deprecated
-    public static String CLIENT_ID = "client_id";
-
-    /**
-     * @deprecated will be move to {@link ClientConfig#ENABLE_HTTP2}
-     */
-    @Deprecated
-    public static String ENABLE_HTTP2 = "enableHttp2";
-
-    private static Map<String, Object> secret = Config.getInstance().getJsonMapConfig(Http2Client.CONFIG_SECRET);
+    private static final Logger logger = LoggerFactory.getLogger(DerefRequest.class);
+    private static final String CONFIG_PROPERTY_MISSING = "ERR10057";
 
     private String serverUrl;
+    private String proxyHost;
+    private int proxyPort;
     private String serviceId;
     private String uri;
     private String clientId;
@@ -77,16 +40,22 @@ public class DerefRequest {
     private boolean enableHttp2;
 
     public DerefRequest(String token) {
-        // client_secret is in secret.yml instead of client.yml
         Map<String, Object> derefConfig = ClientConfig.get().getDerefConfig();
         if(derefConfig != null) {
             setServerUrl((String)derefConfig.get(ClientConfig.SERVER_URL));
+            setProxyHost((String)derefConfig.get(ClientConfig.PROXY_HOST));
+            int port = derefConfig.get(ClientConfig.PROXY_PORT) == null ? 443 : (Integer)derefConfig.get(ClientConfig.PROXY_PORT);
+            setProxyPort(port);
             setServiceId((String)derefConfig.get(ClientConfig.SERVICE_ID));
             Object object = derefConfig.get(ClientConfig.ENABLE_HTTP2);
             setEnableHttp2(object != null && (Boolean) object);
             setUri(derefConfig.get(ClientConfig.URI) + "/" + token);
             setClientId((String)derefConfig.get(ClientConfig.CLIENT_ID));
-            setClientSecret((String)secret.get(SecretConstants.DEREF_CLIENT_SECRET));
+            if(derefConfig.get(ClientConfig.CLIENT_SECRET) != null) {
+                setClientSecret((String)derefConfig.get(ClientConfig.CLIENT_SECRET));
+            } else {
+                logger.error(new Status(CONFIG_PROPERTY_MISSING, "deref client_secret", "client.yml").toString());
+            }
         }
     }
 
@@ -133,4 +102,20 @@ public class DerefRequest {
     public boolean isEnableHttp2() { return enableHttp2; }
 
     public void setEnableHttp2(boolean enableHttp2) { this.enableHttp2 = enableHttp2; }
+
+    public String getProxyHost() {
+        return proxyHost;
+    }
+
+    public void setProxyHost(String proxyHost) {
+        this.proxyHost = proxyHost;
+    }
+
+    public int getProxyPort() {
+        return proxyPort;
+    }
+
+    public void setProxyPort(int proxyPort) {
+        this.proxyPort = proxyPort;
+    }
 }
