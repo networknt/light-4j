@@ -59,7 +59,7 @@ public class ConfigInjection {
 
     private static String[] trueArray = {"y", "Y", "yes", "Yes", "YES", "true", "True", "TRUE", "on", "On", "ON"};
     private static String[] falseArray = {"n", "N", "no", "No", "NO", "false", "False", "FALSE", "off", "Off", "OFF"};
-
+    private static Decryptor decryptor = getDecryptor();
 
     // Method used to generate the values from environment variables or "values.yaml"
     public static Object getInjectValue(String string) {
@@ -132,10 +132,7 @@ public class ConfigInjection {
             // Flag to validate whether the environment or values.yml contains the corresponding field
             Boolean containsField = false;
             // Use key of injectionPattern to get value from both environment variables and "values.yaml"
-
-
-            Decryptor decryptor = getDecryptor();
-            String envValString = (System.getenv(convertEnvVars(injectionPattern.getKey())));
+            String envValString = System.getenv(convertEnvVars(injectionPattern.getKey()));
             Object envValue = decryptEnvValue(decryptor, envValString);
 
             Map<String, Object> valueMap = Config.getInstance().getDefaultJsonMapConfig(CENTRALIZED_MANAGEMENT);
