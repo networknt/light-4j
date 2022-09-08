@@ -230,6 +230,28 @@ public class MrasHandler implements MiddlewareHandler {
             setExchangeStatus(exchange, METHOD_NOT_ALLOWED, method, requestPath);
             return;
         }
+        if(client == null) {
+            try {
+                HttpClient.Builder clientBuilder = HttpClient.newBuilder()
+                        .followRedirects(HttpClient.Redirect.NORMAL)
+                        .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
+                        // we cannot use the Http2Client SSL Context as we need two-way TLS here.
+                        .sslContext(createSSLContext());
+                if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
+                if(config.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
+                // this a workaround to bypass the hostname verification in jdk11 http client.
+                Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+                if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
+                    final Properties props = System.getProperties();
+                    props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
+                }
+                client = clientBuilder.build();
+            } catch (IOException e) {
+                logger.error("Cannot create HttpClient:", e);
+                setExchangeStatus(exchange, TLS_TRUSTSTORE_ERROR);
+                return;
+            }
+        }
         HttpResponse<String> response  = client.send(request, HttpResponse.BodyHandlers.ofString());
         HttpHeaders responseHeaders = response.headers();
         String responseBody = response.body();
@@ -400,7 +422,7 @@ public class MrasHandler implements MiddlewareHandler {
             String keyStoreName = config.getKeyStoreName();
             String keyStorePass = config.getKeyStorePass();
             String keyPass = config.getKeyPass();
-            if(logger.isTraceEnabled()) logger.trace("keyStoreName = " + keyStoreName + " keyStorePass = " + (keyStorePass == null ? null : keyStorePass.substring(0, 4)) + " keyStorePass = " + (keyPass == null ? null : keyPass.substring(0, 4)));
+            if(logger.isTraceEnabled()) logger.trace("keyStoreName = " + keyStoreName + " keyStorePass = " + (keyStorePass == null ? null : keyStorePass.substring(0, 4)) + " keyPass = " + (keyPass == null ? null : keyPass.substring(0, 4)));
             if (keyStoreName != null && keyStorePass != null && keyPass != null) {
                 KeyStore keyStore = TlsUtil.loadKeyStore(keyStoreName, keyStorePass.toCharArray());
                 KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
@@ -408,13 +430,15 @@ public class MrasHandler implements MiddlewareHandler {
                 keyManagers = keyManagerFactory.getKeyManagers();
             }
         } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
+            logger.error("Exception:", e);
             throw new IOException("Unable to initialise KeyManager[]", e);
         }
 
         TrustManager[] trustManagers = null;
         try {
-            String trustStoreName = config.getTrustStoreName();
-            String trustStorePass = config.getTrustStorePass();
+            // temp loading the certificate from the keystore instead of truststore from the config.
+            String trustStoreName = config.getKeyStoreName();
+            String trustStorePass = config.getKeyStorePass();
             if(logger.isTraceEnabled()) logger.trace("trustStoreName = " + trustStoreName + " trustStorePass = " + (trustStorePass == null ? null : trustStorePass.substring(0, 4)));
             if (trustStoreName != null && trustStorePass != null) {
                 KeyStore trustStore = TlsUtil.loadTrustStore(trustStoreName, trustStorePass.toCharArray());
@@ -426,6 +450,7 @@ public class MrasHandler implements MiddlewareHandler {
                 trustManagers = ClientX509ExtendedTrustManager.decorate(trustManagerFactory.getTrustManagers(), tlsConfig);
             }
         } catch (NoSuchAlgorithmException | KeyStoreException e) {
+            logger.error("Exception:", e);
             throw new IOException("Unable to initialise TrustManager[]", e);
         }
 
@@ -433,6 +458,7 @@ public class MrasHandler implements MiddlewareHandler {
             sslContext = SSLContext.getInstance("TLS");
             sslContext.init(keyManagers, trustManagers, null);
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            logger.error("Exception:", e);
             throw new IOException("Unable to create and initialise the SSLContext", e);
         }
 
