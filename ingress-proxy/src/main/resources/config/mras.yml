@@ -6,7 +6,7 @@ keyStoreName: ${mras.keyStoreName:}
 # keyStorePass
 keyStorePass: ${mras.keyStorePass:}
 # keyPass
-keyPass: ${mras.keyAlias:}
+keyPass: ${mras.keyPass:}
 # trustStoreName
 trustStoreName: ${mras.trustStoreName:apigatewayuat.pfx}
 # trustStorePass
