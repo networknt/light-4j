@@ -62,6 +62,10 @@ public class LightProxyHandler implements HttpHandler {
         if(logger.isTraceEnabled()) logger.trace("hosts = " + JsonMapper.toJson(hosts));
         LoadBalancingProxyClient loadBalancer = new LoadBalancingProxyClient()
                 .setConnectionsPerThread(config.getConnectionsPerThread());
+        // we want to duplicate the host to double if there is only one host in the configuration.
+        if(hosts.size() == 1) {
+            hosts.add(hosts.get(0));
+        }
         for(String host: hosts) {
             try {
                 URI uri = new URI(host);
