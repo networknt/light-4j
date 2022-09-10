@@ -165,6 +165,10 @@ public class LoadBalancingRouterProxyClient implements ProxyClient {
     public synchronized void addHosts(final String serviceId, final String envTag) {
         String key = envTag == null ? serviceId : serviceId + "|" + envTag;
         List<URI> uris = cluster.services(ssl == null ? "http" : "https", serviceId, envTag);
+        // If there is only one entry, duplicated to ensure that retry will be enabled.
+        if(uris != null && uris.size() == 1) {
+            uris.add(uris.get(0));
+        }
         hosts.remove(key);
         Host[] newHosts = new Host[uris.size()];
         for (int i = 0; i < uris.size(); i++) {
