@@ -17,6 +17,11 @@ proxyHost: ${mras.proxyHost:}
 proxyPort: ${mras.proxyPort:}
 # If HTTP2 is used to connect to the MRAS site.
 enableHttp2: ${mras.enableHttp2:false}
+# URL rewrite rules, each line will have two parts: the regex patten and replace string separated
+# with a space. For details, please refer to the light-router router.yml configuration.
+# Test your rules at https://www.freeformatter.com/java-regex-tester.html
+urlRewriteRules: ${mras.urlRewriteRules:}
+
 # A list of applied request path prefixes and authentication config, other requests will skip this handler.
 pathPrefixAuth: ${mras.pathPrefixAuth:}
 # format with JSON for config server

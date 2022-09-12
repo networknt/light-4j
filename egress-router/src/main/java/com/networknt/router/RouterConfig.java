@@ -155,26 +155,15 @@ public class RouterConfig {
     public void setUrlRewriteRules() {
         this.urlRewriteRules = new ArrayList<>();
         if (mappedConfig.get("urlRewriteRules") !=null && mappedConfig.get("urlRewriteRules") instanceof String) {
-            urlRewriteRules.add(convertToUrlRewriteRule((String)mappedConfig.get("urlRewriteRules")));
+            urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule((String)mappedConfig.get("urlRewriteRules")));
         } else {
             List<String> rules = (List)mappedConfig.get("urlRewriteRules");
             if(rules != null) {
                 for (String s : rules) {
-                    urlRewriteRules.add(convertToUrlRewriteRule(s));
+                    urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule(s));
                 }
             }
         }
-    }
-
-    private UrlRewriteRule convertToUrlRewriteRule(String s) {
-        // make sure that the string has two parts and the first part can be compiled to a pattern.
-        String[] parts = StringUtils.split(s, ' ');
-        if(parts.length != 2) {
-            String error = "The URL rewrite rule " + s + " must have two parts";
-            logger.error(error);
-            throw new ConfigException(error);
-        }
-        return new UrlRewriteRule(Pattern.compile(parts[0]), parts[1]);
     }
 
     public void setUrlRewriteRules(List<UrlRewriteRule> urlRewriteRules) {
