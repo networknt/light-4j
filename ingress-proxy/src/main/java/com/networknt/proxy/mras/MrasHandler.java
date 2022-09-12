@@ -11,6 +11,7 @@ import com.networknt.config.JsonMapper;
 import com.networknt.config.TlsUtil;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.handler.config.UrlRewriteRule;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;
@@ -42,6 +43,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.time.Duration;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -122,7 +124,27 @@ public class MrasHandler implements MiddlewareHandler {
         }
         exchange.startBlocking();
         String requestPath = exchange.getRequestPath();
-        if(logger.isTraceEnabled()) logger.trace("requestPath = " + requestPath);
+        if(logger.isTraceEnabled()) logger.trace("original requestPath = " + requestPath);
+
+        // handle the url rewrite here.
+        if(config.getUrlRewriteRules() != null && config.getUrlRewriteRules().size() > 0) {
+            boolean matched = false;
+            for(UrlRewriteRule rule : config.getUrlRewriteRules()) {
+                Matcher matcher = rule.getPattern().matcher(requestPath);
+                if(matcher.matches()) {
+                    matched = true;
+                    requestPath = matcher.replaceAll(rule.getReplace());
+                    if(logger.isTraceEnabled()) logger.trace("rewritten requestPath = " + requestPath);
+                    break;
+                }
+            }
+            // if no matched rule in the list, use the original requestPath.
+            if(!matched) requestPath = exchange.getRequestPath();
+        } else {
+            // there is no url rewrite rules, so use the original requestPath
+            requestPath = exchange.getRequestPath();
+        }
+
         for(String key: config.getPathPrefixAuth().keySet()) {
             if(requestPath.startsWith(key)) {
                 // iterate the key set from the pathPrefixAuth map.
@@ -139,15 +161,15 @@ public class MrasHandler implements MiddlewareHandler {
                             return;
                         }
                     }
-                    invokeApi(exchange, (String)config.getAccessToken().get(config.SERVICE_HOST), "Bearer " + accessToken);
+                    invokeApi(exchange, (String)config.getAccessToken().get(config.SERVICE_HOST), requestPath, "Bearer " + accessToken);
                     return;
                 } else if(config.getPathPrefixAuth().get(key).equals(config.BASIC_AUTH)) {
                     // only basic authentication is used for the access.
-                    invokeApi(exchange, (String)config.getBasicAuth().get(config.SERVICE_HOST), "Basic " + encodeCredentials((String)config.getBasicAuth().get(config.USERNAME), (String)config.getBasicAuth().get(config.PASSWORD)));
+                    invokeApi(exchange, (String)config.getBasicAuth().get(config.SERVICE_HOST), requestPath, "Basic " + encodeCredentials((String)config.getBasicAuth().get(config.USERNAME), (String)config.getBasicAuth().get(config.PASSWORD)));
                     return;
                 } else if(config.getPathPrefixAuth().get(key).equals(config.ANONYMOUS)) {
                     // no authorization header for this type of the request.
-                    invokeApi(exchange, (String)config.getBasicAuth().get(config.SERVICE_HOST), null);
+                    invokeApi(exchange, (String)config.getBasicAuth().get(config.SERVICE_HOST), requestPath, null);
                     return;
                 } else if(config.getPathPrefixAuth().get(key).equals(config.MICROSOFT)) {
                     // microsoft access token for authentication.
@@ -162,7 +184,7 @@ public class MrasHandler implements MiddlewareHandler {
                             return;
                         }
                     }
-                    invokeApi(exchange, (String)config.getMicrosoft().get(config.SERVICE_HOST), "Bearer " + microsoft);
+                    invokeApi(exchange, (String)config.getMicrosoft().get(config.SERVICE_HOST), requestPath, "Bearer " + microsoft);
                     return;
                 }
             }
@@ -171,9 +193,8 @@ public class MrasHandler implements MiddlewareHandler {
         Handler.next(exchange, next);
     }
 
-    private void invokeApi(HttpServerExchange exchange, String serviceHost, String authorization) throws Exception {
+    private void invokeApi(HttpServerExchange exchange, String serviceHost, String requestPath, String authorization) throws Exception {
         // call the MRAS API directly here with the token from the cache.
-        String requestPath = exchange.getRequestPath();
         String method = exchange.getRequestMethod().toString();
         String queryString = exchange.getQueryString();
         String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);

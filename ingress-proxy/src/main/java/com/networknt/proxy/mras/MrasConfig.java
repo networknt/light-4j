@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.JsonMapper;
+import com.networknt.handler.config.UrlRewriteRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +51,7 @@ public class MrasConfig {
     String proxyHost;
     int proxyPort;
     boolean enableHttp2;
+    List<UrlRewriteRule> urlRewriteRules;
     Map<String, Object> pathPrefixAuth;
 
     Map<String, Object> accessToken;
@@ -77,6 +79,7 @@ public class MrasConfig {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(configName);
         setConfigData();
+        setUrlRewriteRules();
         setConfigMap();
     }
 
@@ -109,12 +112,6 @@ public class MrasConfig {
     public String getKeyPass() {
         return keyPass;
     }
-    public String getTrustStoreName() {
-        return trustStoreName;
-    }
-    public String getTrustStorePass() {
-        return trustStorePass;
-    }
     public String getProxyHost() {
         return proxyHost;
     }
@@ -124,8 +121,26 @@ public class MrasConfig {
     public boolean isEnableHttp2() {
         return enableHttp2;
     }
-    public String getServiceHost() {
-        return serviceHost;
+
+    public List<UrlRewriteRule> getUrlRewriteRules() {
+        return urlRewriteRules;
+    }
+
+    public void setUrlRewriteRules() {
+        this.urlRewriteRules = new ArrayList<>();
+        if (mappedConfig.get("urlRewriteRules") !=null && mappedConfig.get("urlRewriteRules") instanceof String) {
+            urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule((String)mappedConfig.get("urlRewriteRules")));
+        } else {
+            List<String> rules = (List)mappedConfig.get("urlRewriteRules");
+            if(rules != null) {
+                for (String s : rules) {
+                    urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule(s));
+                }
+            }
+        }
+    }
+    public void setUrlRewriteRules(List<UrlRewriteRule> urlRewriteRules) {
+        this.urlRewriteRules = urlRewriteRules;
     }
 
     private void setConfigData() {
