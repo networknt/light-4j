@@ -12,6 +12,7 @@ import com.networknt.config.TlsUtil;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.config.UrlRewriteRule;
+import com.networknt.httpstring.ContentType;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;
@@ -198,6 +199,7 @@ public class MrasHandler implements MiddlewareHandler {
         String method = exchange.getRequestMethod().toString();
         String queryString = exchange.getQueryString();
         String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
+        if(contentType == null) contentType = ContentType.APPLICATION_JSON.value();
         if(logger.isTraceEnabled()) logger.trace("Access MRAS API with method = " + method + " requestHost = " + serviceHost + " queryString = " + queryString + " contentType = " + contentType);
         HttpRequest request = null;
         if(method.equalsIgnoreCase("GET")) {
