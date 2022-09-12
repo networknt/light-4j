@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -58,7 +59,7 @@ public class LightProxyHandler implements HttpHandler {
     ProxyHandler proxyHandler;
 
     public LightProxyHandler() {
-        List<String> hosts = Arrays.asList(config.getHosts().split(","));
+        List<String> hosts = new ArrayList<>(Arrays.asList(config.getHosts().split(",")));
         if(logger.isTraceEnabled()) logger.trace("hosts = " + JsonMapper.toJson(hosts));
         LoadBalancingProxyClient loadBalancer = new LoadBalancingProxyClient()
                 .setConnectionsPerThread(config.getConnectionsPerThread());
