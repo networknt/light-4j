@@ -112,6 +112,8 @@ public abstract class Config {
         return FileConfigImpl.DEFAULT;
     }
 
+    public abstract String getDecryptorClassPublic();
+
     private static final class FileConfigImpl extends Config {
     	static final String CONFIG_NAME = "config";
         static final String CONFIG_EXT_JSON = ".json";
@@ -576,6 +578,8 @@ public abstract class Config {
             }
             return DecryptConstructor.DEFAULT_DECRYPTOR_CLASS;
         }
+
+        public String getDecryptorClassPublic() { return getDecryptorClass(); }
 
         private String getConfigLoaderClass() {
             Map<String, Object> config = loadModuleConfig();

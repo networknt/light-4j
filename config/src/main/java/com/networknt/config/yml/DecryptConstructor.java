@@ -56,6 +56,10 @@ public class DecryptConstructor extends Constructor {
 		
 		return null;
 	}
+
+	public Decryptor createDecryptorPublic(String decryptorClass) {
+		return createDecryptor(decryptorClass);
+	}
 	
     public class ConstructYamlDecryptedStr extends AbstractConstruct {
         @Override
