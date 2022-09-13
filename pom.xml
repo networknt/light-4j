@@ -86,7 +86,7 @@
         <version.zookeeper>3.5.3-beta</version.zookeeper>
         <version.zkclient>0.3</version.zkclient>
         <version.curator>4.0.1</version.curator>
-        <version.snakeyaml>1.26</version.snakeyaml>
+        <version.snakeyaml>1.31</version.snakeyaml>
         <version.caffeine>2.6.2</version.caffeine>
         <version.prometheus>0.6.0</version.prometheus>
         <version.javamail>1.6.1</version.javamail>
