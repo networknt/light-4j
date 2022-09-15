@@ -327,8 +327,7 @@ public class AuditHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        Object object = config.getMappedConfig().get(ENABLED);
-        return object != null && (Boolean) object;
+        return config.isEnabled();
     }
 
     @Override
@@ -338,10 +337,6 @@ public class AuditHandler implements MiddlewareHandler {
 
     @Override
     public void reload() {
-        if (config==null) {
-            config = AuditConfig.load();
-        } else {
-            config.reload();
-        }
+        config.reload();
     }
 }
