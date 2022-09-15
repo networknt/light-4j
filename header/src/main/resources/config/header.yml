@@ -15,3 +15,6 @@ response:
   # Add or update the header with key/value pairs. The value is a map of key and value pairs.
   # Although HTTP header supports multiple values per key, it is not supported here.
   update: ${header.response.update:}
+# requestPath specific header configuration. The entire object is a map with path prefix as the
+# key and request/response like above as the value. For config format, please refer to test folder.
+pathPrefixHeader: ${header.pathPrefixHeader:}
