@@ -17,10 +17,42 @@ request:
 response:
   # Remove all the headers listed here
   remove:
-  - header1
-  - header2
+  - header3
+  - header4
   # Add or update the header with key/value pairs
   # Although HTTP header supports multiple values per key, it is not supported here.
   update:
-    key1: value1
-    key2: value2
+    key3: value3
+    key4: value4
+# This is the section that we can define the headers per path prefix.
+pathPrefixHeader:
+  /petstore:
+    request:
+      remove:
+        - headerA
+        - headerB
+      update:
+        keyA: valueA
+        keyB: valueB
+    response:
+      remove:
+        - headerC
+        - headerD
+      update:
+        keyC: valueC
+        keyD: valueD
+  /market:
+    request:
+      remove:
+        - headerE
+        - headerF
+      update:
+        keyE: valueE
+        keyF: valueF
+    response:
+      remove:
+        - headerG
+        - headerH
+      update:
+        keyG: valueG
+        keyH: valueH
