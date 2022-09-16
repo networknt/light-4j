@@ -117,50 +117,54 @@ public class HeaderConfig {
         if (mappedConfig.get(REQUEST) != null) {
             Map<String, Object> requestMap = (Map<String, Object>)mappedConfig.get(REQUEST);
             Object requestRemove = requestMap.get(REMOVE);
-            if(requestRemove instanceof String) {
-                String s = (String)requestRemove;
-                s = s.trim();
-                if(logger.isTraceEnabled()) logger.trace("request remove s = " + s);
-                if(s.startsWith("[")) {
-                    // this is a JSON string, and we need to parse it.
-                    try {
-                        requestRemoveList = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
-                    } catch (Exception e) {
-                        throw new ConfigException("could not parse the request.remove json with a list of strings.");
+            if(requestRemove != null) {
+                if(requestRemove instanceof String) {
+                    String s = (String)requestRemove;
+                    s = s.trim();
+                    if(logger.isTraceEnabled()) logger.trace("request remove s = " + s);
+                    if(s.startsWith("[")) {
+                        // this is a JSON string, and we need to parse it.
+                        try {
+                            requestRemoveList = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
+                        } catch (Exception e) {
+                            throw new ConfigException("could not parse the request.remove json with a list of strings.");
+                        }
+                    } else {
+                        // this is a comma separated string.
+                        requestRemoveList = Arrays.asList(s.split("\\s*,\\s*"));
                     }
+                } else if (requestRemove instanceof List) {
+                    requestRemoveList = (List<String>)requestRemove;
                 } else {
-                    // this is a comma separated string.
-                    requestRemoveList = Arrays.asList(s.split("\\s*,\\s*"));
+                    throw new ConfigException("request remove list is missing or wrong type.");
                 }
-            } else if (requestRemove instanceof List) {
-                requestRemoveList = (List<String>)requestRemove;
-            } else {
-                throw new ConfigException("request remove list is missing or wrong type.");
             }
         }
 
         if (mappedConfig.get(RESPONSE) != null) {
             Map<String, Object> responseMap = (Map<String, Object>)mappedConfig.get(RESPONSE);
             Object responseRemove = responseMap.get(REMOVE);
-            if(responseRemove instanceof String) {
-                String s = (String)responseRemove;
-                s = s.trim();
-                if(logger.isTraceEnabled()) logger.trace("response remove s = " + s);
-                if(s.startsWith("[")) {
-                    // this is a JSON string, and we need to parse it.
-                    try {
-                        responseRemoveList = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
-                    } catch (Exception e) {
-                        throw new ConfigException("could not parse the response.remove json with a list of strings.");
+            if(responseRemove != null) {
+                if(responseRemove instanceof String) {
+                    String s = (String)responseRemove;
+                    s = s.trim();
+                    if(logger.isTraceEnabled()) logger.trace("response remove s = " + s);
+                    if(s.startsWith("[")) {
+                        // this is a JSON string, and we need to parse it.
+                        try {
+                            responseRemoveList = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
+                        } catch (Exception e) {
+                            throw new ConfigException("could not parse the response.remove json with a list of strings.");
+                        }
+                    } else {
+                        // this is a comma separated string.
+                        responseRemoveList = Arrays.asList(s.split("\\s*,\\s*"));
                     }
+                } else if (responseRemove instanceof List) {
+                    responseRemoveList = (List<String>)responseRemove;
                 } else {
-                    // this is a comma separated string.
-                    responseRemoveList = Arrays.asList(s.split("\\s*,\\s*"));
+                    throw new ConfigException("response remove list is missing or wrong type.");
                 }
-            } else if (responseRemove instanceof List) {
-                responseRemoveList = (List<String>)responseRemove;
-            } else {
-                throw new ConfigException("response remove list is missing or wrong type.");
             }
         }
     }
@@ -169,62 +173,66 @@ public class HeaderConfig {
         if (mappedConfig.get(REQUEST) != null) {
             Map<String, Object> requestMap = (Map<String, Object>)mappedConfig.get(REQUEST);
             Object requestUpdate = requestMap.get(UPDATE);
-            if(requestUpdate instanceof String) {
-                String s = (String)requestUpdate;
-                s = s.trim();
-                if(logger.isTraceEnabled()) logger.trace("request update s = " + s);
-                if(s.startsWith("{")) {
-                    // json format
-                    try {
-                        requestUpdateMap = JsonMapper.string2Map(s);
-                    } catch (Exception e) {
-                        throw new ConfigException("could not parse the request.update json with a map of string and object.");
+            if(requestUpdate != null) {
+                if(requestUpdate instanceof String) {
+                    String s = (String)requestUpdate;
+                    s = s.trim();
+                    if(logger.isTraceEnabled()) logger.trace("request update s = " + s);
+                    if(s.startsWith("{")) {
+                        // json format
+                        try {
+                            requestUpdateMap = JsonMapper.string2Map(s);
+                        } catch (Exception e) {
+                            throw new ConfigException("could not parse the request.update json with a map of string and object.");
+                        }
+                    } else {
+                        // comma separated
+                        requestUpdateMap = new HashMap<>();
+                        String[] pairs = s.split(",");
+                        for (int i = 0; i < pairs.length; i++) {
+                            String pair = pairs[i];
+                            String[] keyValue = pair.split(":");
+                            requestUpdateMap.put(keyValue[0], keyValue[1]);
+                        }
                     }
+                } else if (requestUpdate instanceof Map) {
+                    requestUpdateMap = (Map)requestUpdate;
                 } else {
-                    // comma separated
-                    requestUpdateMap = new HashMap<>();
-                    String[] pairs = s.split(",");
-                    for (int i = 0; i < pairs.length; i++) {
-                        String pair = pairs[i];
-                        String[] keyValue = pair.split(":");
-                        requestUpdateMap.put(keyValue[0], keyValue[1]);
-                    }
+                    throw new ConfigException("request update must be a string object map.");
                 }
-            } else if (requestUpdate instanceof Map) {
-                requestUpdateMap = (Map)requestUpdate;
-            } else {
-                throw new ConfigException("request update must be a string object map.");
             }
         }
 
         if (mappedConfig.get(RESPONSE) != null) {
             Map<String, Object> responseMap = (Map<String, Object>)mappedConfig.get(RESPONSE);
             Object responseUpdate = responseMap.get(UPDATE);
-            if(responseUpdate instanceof String) {
-                String s = (String)responseUpdate;
-                s = s.trim();
-                if(logger.isTraceEnabled()) logger.trace("response update s = " + s);
-                if(s.startsWith("{")) {
-                    // json format
-                    try {
-                        responseUpdateMap = JsonMapper.string2Map(s);
-                    } catch (Exception e) {
-                        throw new ConfigException("could not parse the response.update json with a map of string and object.");
+            if(responseUpdate != null) {
+                if(responseUpdate instanceof String) {
+                    String s = (String)responseUpdate;
+                    s = s.trim();
+                    if(logger.isTraceEnabled()) logger.trace("response update s = " + s);
+                    if(s.startsWith("{")) {
+                        // json format
+                        try {
+                            responseUpdateMap = JsonMapper.string2Map(s);
+                        } catch (Exception e) {
+                            throw new ConfigException("could not parse the response.update json with a map of string and object.");
+                        }
+                    } else {
+                        // comma separated
+                        responseUpdateMap = new HashMap<>();
+                        String[] pairs = s.split(",");
+                        for (int i = 0; i < pairs.length; i++) {
+                            String pair = pairs[i];
+                            String[] keyValue = pair.split(":");
+                            responseUpdateMap.put(keyValue[0], keyValue[1]);
+                        }
                     }
+                } else if (responseUpdate instanceof Map) {
+                    responseUpdateMap = (Map)responseUpdate;
                 } else {
-                    // comma separated
-                    responseUpdateMap = new HashMap<>();
-                    String[] pairs = s.split(",");
-                    for (int i = 0; i < pairs.length; i++) {
-                        String pair = pairs[i];
-                        String[] keyValue = pair.split(":");
-                        responseUpdateMap.put(keyValue[0], keyValue[1]);
-                    }
+                    throw new ConfigException("response update must be a string object map.");
                 }
-            } else if (responseUpdate instanceof Map) {
-                responseUpdateMap = (Map)responseUpdate;
-            } else {
-                throw new ConfigException("response update must be a string object map.");
             }
         }
 
