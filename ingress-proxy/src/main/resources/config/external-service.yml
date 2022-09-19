@@ -11,3 +11,7 @@ enableHttp2: ${externalService.enableHttp2:false}
 # a string with two parts. The first part is the path and the second is the target host the request is
 # finally routed to.
 pathHostMappings: ${externalService.pathHostMappings:}
+# URL rewrite rules, each line will have two parts: the regex patten and replace string separated
+# with a space. For details, please refer to the light-router router.yml configuration.
+# Test your rules at https://www.freeformatter.com/java-regex-tester.html
+urlRewriteRules: ${externalService.urlRewriteRules:}
