@@ -7,6 +7,7 @@ import com.networknt.client.ssl.TLSConfig;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.handler.config.UrlRewriteRule;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
@@ -30,6 +31,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
 
 /**
  * This is a generic handler to route request from a corporate network to external services
@@ -87,6 +89,27 @@ public class ExternalServiceHandler implements MiddlewareHandler {
         }
         exchange.startBlocking();
         String requestPath = exchange.getRequestPath();
+        if(logger.isTraceEnabled()) logger.trace("original requestPath = " + requestPath);
+
+        // handle the url rewrite here.
+        if(config.getUrlRewriteRules() != null && config.getUrlRewriteRules().size() > 0) {
+            boolean matched = false;
+            for(UrlRewriteRule rule : config.getUrlRewriteRules()) {
+                Matcher matcher = rule.getPattern().matcher(requestPath);
+                if(matcher.matches()) {
+                    matched = true;
+                    requestPath = matcher.replaceAll(rule.getReplace());
+                    if(logger.isTraceEnabled()) logger.trace("rewritten requestPath = " + requestPath);
+                    break;
+                }
+            }
+            // if no matched rule in the list, use the original requestPath.
+            if(!matched) requestPath = exchange.getRequestPath();
+        } else {
+            // there is no url rewrite rules, so use the original requestPath
+            requestPath = exchange.getRequestPath();
+        }
+
         if (config.getPathHostMappings() != null) {
             for(String[] parts: config.getPathHostMappings()) {
                 if(requestPath.startsWith(parts[0])) {
