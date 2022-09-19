@@ -53,8 +53,6 @@ import static com.networknt.body.BodyHandler.REQUEST_BODY;
 public class RequestBodyInterceptor implements RequestInterceptor {
     static final Logger logger = LoggerFactory.getLogger(RequestBodyInterceptor.class);
     static final String CONTENT_TYPE_MISMATCH = "ERR10015";
-    static final String PAYLOAD_TOO_LARGE = "ERR10068";
-    static final String GENERIC_EXCEPTION = "ERR10014";
 
     public BodyConfig config;
 
@@ -95,11 +93,10 @@ public class RequestBodyInterceptor implements RequestInterceptor {
                 }
             }
             if(!attached) {
-                if(logger.isInfoEnabled()) logger.info("Failed to attached the request body to the exchange");
+                if(logger.isErrorEnabled())
+                    logger.error("Failed to attached the request body to the exchange");
             }
         }
-        // as an interceptor, we don't need to call the next handler in the chain.
-        // Handler.next(exchange, next);
     }
 
     /**
@@ -132,11 +129,9 @@ public class RequestBodyInterceptor implements RequestInterceptor {
                 body = Config.getInstance().getMapper().readValue(string, new TypeReference<Map<String, Object>>() {
                 });
             } catch (JsonProcessingException e) {
-                if(exchange.getConnection().getBufferSize() <= string.length()) {
-                    setExchangeStatus(exchange, PAYLOAD_TOO_LARGE, "application/json");
-                } else {
-                    setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
-                }
+                setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
+                if(logger.isTraceEnabled())
+                    logger.trace("Full request body: {}", string);
                 return false;
             }
         } else if (string.startsWith("[")) {
@@ -144,16 +139,16 @@ public class RequestBodyInterceptor implements RequestInterceptor {
                 body = Config.getInstance().getMapper().readValue(string, new TypeReference<List<Object>>() {
                 });
             } catch (JsonProcessingException e) {
-                if(exchange.getConnection().getBufferSize() <= string.length()) {
-                    setExchangeStatus(exchange, PAYLOAD_TOO_LARGE, "application/json");
-                } else {
-                    setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
-                }
+                setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
+                if(logger.isTraceEnabled())
+                    logger.trace("Full request body: {}", string);
                 return false;
             }
         } else {
             // error here. The content type in head doesn't match the body.
             setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
+            if(logger.isTraceEnabled())
+                logger.trace("Full request body: {}", string);
             return false;
         }
         if (config.isCacheRequestBody()) {
