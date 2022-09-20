@@ -201,7 +201,7 @@ ERR10015:
   statusCode: 400
   code: ERR10015
   message: CONTENT_TYPE_MISMATCH
-  description: Content type in header %s doesn't match the body.
+  description: Either the Content-Type header %s does not match the body, or the body was serialized incorrectly.
 ERR10016:
   statusCode: 400
   code: ERR10016
