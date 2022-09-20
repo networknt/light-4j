@@ -109,7 +109,7 @@ public class RequestBodyInterceptor implements RequestInterceptor {
         HttpString method = exchange.getRequestMethod();
         String requestPath = exchange.getRequestPath();
         boolean hasBody = method.equals(Methods.POST) || method.equals(Methods.PUT) || method.equals(Methods.PATCH);
-        boolean isPathConfigured = config.getAppliedPathPrefixes() == null ? true : config.getAppliedPathPrefixes().stream().anyMatch(s -> requestPath.startsWith(s));
+        boolean isPathConfigured = config.getAppliedPathPrefixes() == null || config.getAppliedPathPrefixes().stream().anyMatch(requestPath::startsWith);
         return hasBody &&
                 isPathConfigured &&
                 exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE) != null;
