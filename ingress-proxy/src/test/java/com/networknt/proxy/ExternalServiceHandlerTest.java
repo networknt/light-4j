@@ -132,4 +132,37 @@ public class ExternalServiceHandlerTest {
         Assert.assertEquals(200, statusCode);
     }
 
+    @Test
+    @Ignore
+    public void testEmptyPostBodyRequest() throws Exception {
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection;
+        try {
+            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+        } catch (Exception e) {
+            throw new ClientException(e);
+        }
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        String requestBody = "";
+        try {
+            ClientRequest request = new ClientRequest().setPath("/post").setMethod(Methods.POST);
+            request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/json");
+            request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
+            connection.sendRequest(request, client.createClientCallback(reference, latch, requestBody));
+            latch.await();
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw new ClientException(e);
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+        int statusCode = reference.get().getResponseCode();
+        String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+        System.out.println("statusCode = " + statusCode + " body = " + body);
+        Assert.assertEquals(400, statusCode);
+    }
+
+
 }
