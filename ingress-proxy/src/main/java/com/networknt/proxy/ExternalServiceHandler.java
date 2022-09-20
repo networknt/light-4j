@@ -42,6 +42,7 @@ import java.util.regex.Matcher;
 public class ExternalServiceHandler implements MiddlewareHandler {
     private static final Logger logger = LoggerFactory.getLogger(ExternalServiceHandler.class);
     private static final String ESTABLISH_CONNECTION_ERROR = "ERR10053";
+    private static final String REQUEST_BODY_MISSING = "ERR10059";
     private static final String METHOD_NOT_ALLOWED  = "ERR10008";
 
     private volatile HttpHandler next;
@@ -140,6 +141,10 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                             bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
                             if(logger.isTraceEnabled()) logger.trace("Get post body from input stream = " + bodyString);
                         }
+                        if(bodyString == null) {
+                            setExchangeStatus(exchange, REQUEST_BODY_MISSING);
+                            return;
+                        }
                         request = builder.POST(HttpRequest.BodyPublishers.ofString(bodyString)).build();
                     } else if(method.equalsIgnoreCase("PUT")) {
                         String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
@@ -149,6 +154,10 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                             bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
                             if(logger.isTraceEnabled()) logger.trace("Get put body from input stream = " + bodyString);
                         }
+                        if(bodyString == null) {
+                            setExchangeStatus(exchange, REQUEST_BODY_MISSING);
+                            return;
+                        }
                         request = builder.PUT(HttpRequest.BodyPublishers.ofString(bodyString)).build();
                     } else if(method.equalsIgnoreCase("PATCH")) {
                         String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
@@ -157,6 +166,10 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                             InputStream inputStream = exchange.getInputStream();
                             bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
                             if(logger.isTraceEnabled()) logger.trace("Get patch body from input stream = " + bodyString);
+                        }
+                        if(bodyString == null) {
+                            setExchangeStatus(exchange, REQUEST_BODY_MISSING);
+                            return;
                         }
                         request = builder.method("PATCH", HttpRequest.BodyPublishers.ofString(bodyString)).build();
                     } else {
