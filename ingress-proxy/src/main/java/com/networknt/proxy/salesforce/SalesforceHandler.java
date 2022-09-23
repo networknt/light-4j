@@ -66,7 +66,6 @@ public class SalesforceHandler implements MiddlewareHandler {
     private static final String ESTABLISH_CONNECTION_ERROR = "ERR10053";
     private static final String GET_TOKEN_ERROR = "ERR10052";
     private static final String METHOD_NOT_ALLOWED  = "ERR10008";
-    private static final String REQUEST_BODY_MISSING = "ERR10059";
 
     private volatile HttpHandler next;
     private SalesforceConfig config;
@@ -280,14 +279,10 @@ public class SalesforceHandler implements MiddlewareHandler {
                 bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
             }
             if(logger.isTraceEnabled()) logger.trace("Post request body = " + bodyString);
-            if(bodyString == null) {
-                setExchangeStatus(exchange, REQUEST_BODY_MISSING);
-                return;
-            }
             request = HttpRequest.newBuilder()
                     .uri(new URI(requestHost + requestPath))
                     .headers("Authorization", authorization, "Content-Type", contentType)
-                    .POST(HttpRequest.BodyPublishers.ofString(bodyString))
+                    .POST(bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString))
                     .build();
         } else if(method.equalsIgnoreCase("PUT")) {
             String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
@@ -296,14 +291,10 @@ public class SalesforceHandler implements MiddlewareHandler {
                 bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
             }
             if(logger.isTraceEnabled()) logger.trace("Put request body = " + bodyString);
-            if(bodyString == null) {
-                setExchangeStatus(exchange, REQUEST_BODY_MISSING);
-                return;
-            }
             request = HttpRequest.newBuilder()
                     .uri(new URI(requestHost + requestPath))
                     .headers("Authorization", authorization, "Content-Type", contentType)
-                    .PUT(HttpRequest.BodyPublishers.ofString(bodyString))
+                    .PUT(bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString))
                     .build();
         } else if(method.equalsIgnoreCase("PATCH")) {
             String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
@@ -312,14 +303,10 @@ public class SalesforceHandler implements MiddlewareHandler {
                 bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
             }
             if(logger.isTraceEnabled()) logger.trace("Patch request body = " + bodyString);
-            if(bodyString == null) {
-                setExchangeStatus(exchange, REQUEST_BODY_MISSING);
-                return;
-            }
             request = HttpRequest.newBuilder()
                     .uri(new URI(requestHost + requestPath))
                     .headers("Authorization", authorization, "Content-Type", contentType)
-                    .method("PATCH", HttpRequest.BodyPublishers.ofString(bodyString))
+                    .method("PATCH", bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString))
                     .build();
         } else {
             logger.error("wrong http method " + method + " for request path " + requestPath);
