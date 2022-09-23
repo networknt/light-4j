@@ -793,8 +793,10 @@ public class ProxyHandler implements HttpHandler {
                     channel.shutdownWrites();
                 }
             } catch (IOException e) {
+                logger.error("IOException: ", e);
                 handleFailure(exchange, proxyClientHandler, idempotentPredicate, e);
             } catch (Exception e) {
+                logger.error("Exception: ", e);
                 handleFailure(exchange, proxyClientHandler, idempotentPredicate, new IOException(e));
             }
 

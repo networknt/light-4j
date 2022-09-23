@@ -73,23 +73,25 @@ public class RequestBodyInterceptor implements RequestInterceptor {
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         if (this.shouldAttachBody(exchange)) {
-            var existing = (PooledByteBuffer[])exchange.getAttachment(AttachmentConstants.BUFFERED_REQUEST_DATA_KEY);
-            StringBuilder completeBody = new StringBuilder();
-            for(PooledByteBuffer buffer : existing) {
-                if(buffer != null) {
-                    completeBody.append(StandardCharsets.UTF_8.decode(buffer.getBuffer().duplicate()).toString());
-                } else {
-                    break;
-                }
-            }
             boolean attached = false;
-            String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
-            if(contentType.startsWith("application/json")) {
-                attached = this.attachJsonBody(exchange, completeBody.toString());
-            } else if(contentType.startsWith("text")) { // include text/plain and text/xml etc.
-                if (config.isCacheRequestBody()) {
-                    exchange.putAttachment(AttachmentConstants.REQUEST_BODY_STRING, completeBody.toString());
-                    attached = true;
+            var existing = (PooledByteBuffer[])exchange.getAttachment(AttachmentConstants.BUFFERED_REQUEST_DATA_KEY);
+            if(existing != null) {
+                StringBuilder completeBody = new StringBuilder();
+                for(PooledByteBuffer buffer : existing) {
+                    if(buffer != null) {
+                        completeBody.append(StandardCharsets.UTF_8.decode(buffer.getBuffer().duplicate()).toString());
+                    } else {
+                        break;
+                    }
+                }
+                String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
+                if(contentType.startsWith("application/json")) {
+                    attached = this.attachJsonBody(exchange, completeBody.toString());
+                } else if(contentType.startsWith("text")) { // include text/plain and text/xml etc.
+                    if (config.isCacheRequestBody()) {
+                        exchange.putAttachment(AttachmentConstants.REQUEST_BODY_STRING, completeBody.toString());
+                        attached = true;
+                    }
                 }
             }
             if(!attached) {
