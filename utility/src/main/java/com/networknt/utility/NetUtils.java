@@ -333,4 +333,30 @@ public class NetUtils {
         return buf.toString();
     }
 
+    public static String resolveHost2Address(String fqdn) {
+        String ip = null;
+        try {
+            InetAddress address = InetAddress.getByName(fqdn);
+            ip = address.getHostAddress();
+        } catch (UnknownHostException e) {
+            logger.error("UnknownHostException " + fqdn, e);
+        }
+        return ip;
+    }
+
+    public static URI resolveUriHost2Address(URI uri) {
+        // convert the uri to URL.
+        try {
+            URL url = uri.toURL();
+            String host = url.getHost();
+            String ip = resolveHost2Address(host);
+            if(ip != null) {
+                url = new URL(url.getProtocol(), ip, url.getPort(), url.getFile());
+                uri = url.toURI();
+            }
+        } catch (MalformedURLException | URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+        return uri;
+    }
 }

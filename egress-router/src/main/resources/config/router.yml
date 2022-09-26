@@ -20,6 +20,10 @@ reuseXForwarded: ${router.reuseXForwarded:false}
 # Max Connection Retries
 maxConnectionRetries: ${router.maxConnectionRetries:3}
 
+# Pre-resolve FQDN to IP for downstream connections. Default to false in most case, and it should be
+# only used when the downstream FQDN is a load balancer for multiple real API servers.
+preResolveFQDN2IP: ${router.preResolveFQDN2IP:false}
+
 # allowed host list. Use Regex to do wildcard match
 hostWhitelist: ${router.hostWhitelist:}
 
