@@ -42,6 +42,8 @@ public class RouterConfig {
     boolean rewriteHostHeader;
     boolean reuseXForwarded;
     int maxConnectionRetries;
+
+    boolean preResolveFQDN2IP;
     List<String> hostWhitelist;
     List<UrlRewriteRule> urlRewriteRules;
     List<MethodRewriteRule> methodRewriteRules;
@@ -107,6 +109,11 @@ public class RouterConfig {
         if(object != null) {
             serviceIdQueryParameter = (Boolean)object;
         }
+        object = getMappedConfig().get("preResolveFQDN2IP");
+        if(object != null && (Boolean) object) {
+            preResolveFQDN2IP = true;
+        }
+
     }
 
     public Map<String, Object> getMappedConfig() {
@@ -128,6 +135,7 @@ public class RouterConfig {
     public boolean isRewriteHostHeader() { return rewriteHostHeader; }
 
     public boolean isReuseXForwarded() { return reuseXForwarded; }
+    public boolean isPreResolveFQDN2IP() { return preResolveFQDN2IP; }
 
     public int getMaxConnectionRetries() { return maxConnectionRetries; }
 

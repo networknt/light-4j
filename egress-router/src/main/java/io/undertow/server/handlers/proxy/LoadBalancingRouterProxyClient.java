@@ -29,6 +29,7 @@ import com.networknt.router.HostWhitelist;
 import com.networknt.router.RouterConfig;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.Constants;
+import com.networknt.utility.NetUtils;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
@@ -167,12 +168,19 @@ public class LoadBalancingRouterProxyClient implements ProxyClient {
         List<URI> uris = cluster.services(ssl == null ? "http" : "https", serviceId, envTag);
         // If there is only one entry, duplicated to ensure that retry will be enabled.
         if(uris != null && uris.size() == 1) {
+            if(logger.isTraceEnabled()) logger.trace("Only one uri found in the service.yml, so duplicated it to enable retry.");
             uris.add(uris.get(0));
         }
         hosts.remove(key);
         Host[] newHosts = new Host[uris.size()];
         for (int i = 0; i < uris.size(); i++) {
-            Host h = new Host(serviceId, bindAddress, uris.get(i), ssl, options);
+            // TODO convert the uris to IP address from host if preResolveFQDN2IP is true.
+            Host h = null;
+            if (config.isPreResolveFQDN2IP()) {
+                h = new Host(serviceId, bindAddress, NetUtils.resolveUriHost2Address(uris.get(i)), ssl, options);
+            } else {
+                h = new Host(serviceId, bindAddress, uris.get(i), ssl, options);
+            }
             newHosts[i] = h;
         }
         hosts.put(key, newHosts);
@@ -209,6 +217,7 @@ public class LoadBalancingRouterProxyClient implements ProxyClient {
         HeaderMap headers = exchange.getRequestHeaders();
         String serviceId = headers.getFirst(HttpStringConstants.SERVICE_ID);
         String serviceUrl = headers.getFirst(HttpStringConstants.SERVICE_URL);
+        if(logger.isTraceEnabled()) logger.trace("From headers serviceId = " + serviceId + " serviceUrl = " + serviceUrl);
         // remove the header here in case the downstream service is another light-router instance.
         if(serviceUrl != null) headers.remove(HttpStringConstants.SERVICE_URL);
         if(serviceId != null) headers.remove(HttpStringConstants.SERVICE_ID);
@@ -220,6 +229,7 @@ public class LoadBalancingRouterProxyClient implements ProxyClient {
             Deque<String> dequeServiceId = queryParameters.remove(Constants.SERVICE_ID_STRING);
             if(dequeServiceId != null) {
                 serviceId = dequeServiceId.getFirst();
+                if(logger.isTraceEnabled()) logger.trace("Query parameter overwritten serviceId = " + serviceId);
             }
         }
         String envTag = headers.getFirst(HttpStringConstants.ENV_TAG);
