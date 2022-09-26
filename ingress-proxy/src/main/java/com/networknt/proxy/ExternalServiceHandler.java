@@ -16,6 +16,7 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderMap;
 import io.undertow.util.HeaderValues;
 import io.undertow.util.Headers;
+import io.undertow.util.HttpString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +30,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -189,8 +191,10 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                     HttpHeaders responseHeaders = response.headers();
                     String responseBody = response.body();
                     exchange.setStatusCode(response.statusCode());
-                    if(responseHeaders.firstValue(Headers.CONTENT_TYPE.toString()).isPresent()) {
-                        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, responseHeaders.firstValue(Headers.CONTENT_TYPE.toString()).get());
+                    for (Map.Entry<String, List<String>> header : responseHeaders.map().entrySet()) {
+                        if(header.getKey() != null && header.getValue().get(0) != null) {
+                            exchange.getResponseHeaders().put(new HttpString(header.getKey()), header.getValue().get(0));
+                        }
                     }
                     exchange.getResponseSender().send(responseBody);
                     return;
