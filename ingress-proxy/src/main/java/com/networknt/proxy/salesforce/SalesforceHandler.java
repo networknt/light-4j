@@ -20,6 +20,7 @@ import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
+import io.undertow.util.HttpString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -317,8 +318,10 @@ public class SalesforceHandler implements MiddlewareHandler {
         HttpHeaders responseHeaders = response.headers();
         String responseBody = response.body();
         exchange.setStatusCode(response.statusCode());
-        if(responseHeaders.firstValue(Headers.CONTENT_TYPE.toString()).isPresent()) {
-            exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, responseHeaders.firstValue(Headers.CONTENT_TYPE.toString()).get());
+        for (Map.Entry<String, List<String>> header : responseHeaders.map().entrySet()) {
+            if(header.getKey() != null && header.getValue().get(0) != null) {
+                exchange.getResponseHeaders().put(new HttpString(header.getKey()), header.getValue().get(0));
+            }
         }
         if(logger.isTraceEnabled()) logger.trace("response body = " + responseBody);
         exchange.getResponseSender().send(responseBody);
