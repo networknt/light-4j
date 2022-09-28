@@ -124,13 +124,17 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
         }
 
         if(interceptors != null && interceptors.length > 0) {
-            Arrays.stream(interceptors).forEach((ri -> {
+            for(RequestInterceptor ri: interceptors) {
                 try {
                     ri.handleRequest(httpServerExchange);
+                    // if any of the interceptor response with an error, then return this handler and stop the chain.
+                    if(httpServerExchange.isResponseStarted()) return;
                 } catch (Exception e) {
                     logger.error(e.getMessage(), e);
+                    // do not try the next interceptor in the list and the rest of middleware handlers in the chain.
+                    return;
                 }
-            }));
+            }
         }
         Handler.next(httpServerExchange, next);
     }

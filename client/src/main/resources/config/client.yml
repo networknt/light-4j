@@ -200,7 +200,7 @@ request:
   timeout: ${client.timeout:3000}
   # reset the circuit after this timeout in millisecond
   resetTimeout: ${client.resetTimeout:7000}
-  # if open tracing is enable. traceability, correlation and metrics should not be in the chain if opentracing is used.
+  # if open tracing is enabled. traceability, correlation and metrics should not be in the chain if opentracing is used.
   injectOpenTracing: ${client.injectOpenTracing:false}
   # inject serviceId as callerId into the http header for metrics to collect the caller. The serviceId is from server.yml
   injectCallerId: ${client.injectCallerId:false}
@@ -212,7 +212,7 @@ request:
   # This is one way to force the connection to be closed so that the client-side discovery can be balanced.
   connectionExpireTime: ${client.connectionExpireTime:1800000}
   # The maximum request limitation for each connection in the connection pool. By default, a connection will be closed after
-  # sending 1 million requests. This is one way to force the client-side discovery to rebalence the connections.
+  # sending 1 million requests. This is one way to force the client-side discovery to re-balance the connections.
   maxReqPerConn: ${client.maxReqPerConn:1000000}
   # maximum quantity of connection in connection pool for each host
   maxConnectionNumPerHost: ${client.maxConnectionNumPerHost:1000}
