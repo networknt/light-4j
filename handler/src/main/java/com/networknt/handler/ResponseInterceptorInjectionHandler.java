@@ -133,7 +133,8 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
         });
 
         forceIdentityEncodingForInterceptors(exchange);
-        Handler.next(exchange, next);
+        // if any of the interceptors send response, don't call other middleware handlers in the chain.
+        if(!exchange.isResponseStarted()) Handler.next(exchange, next);
     }
 
 }
