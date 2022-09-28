@@ -201,7 +201,6 @@ class AuditConfig {
         if(object != null && (Boolean) object) {
             responseTime = true;
         }
-
         // audit on error response flag
         object = getMappedConfig().get(AUDIT_ON_ERROR);
         if(object != null && (Boolean) object) {
@@ -213,7 +212,7 @@ class AuditConfig {
         }
         object = getMappedConfig().get(ENABLED);
         if(object != null && (Boolean) object) {
-
+            enabled = true;
         }
         timestampFormat = (String)getMappedConfig().get(TIMESTAMP_FORMAT);
     }
