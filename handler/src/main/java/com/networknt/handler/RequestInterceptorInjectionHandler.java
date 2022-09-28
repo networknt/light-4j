@@ -76,11 +76,12 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
         // Make sure content is needed by request interceptors before grabbing the data. The process has a lot of overhead.
         String method = httpServerExchange.getRequestMethod().toString();
+        this.next = Handler.getNext(httpServerExchange);
         if (this.injectorContentRequired()
                 && ((method.equalsIgnoreCase("post") || method.equalsIgnoreCase("put") || method.equalsIgnoreCase("patch")) && !httpServerExchange.isRequestComplete())
                 && !HttpContinue.requiresContinueResponse(httpServerExchange.getRequestHeaders())) {
             // need to calculate the next handler in the request/response chain, otherwise, it will be null in the following logic.
-            this.next = Handler.getNext(httpServerExchange);
+
             final StreamSourceChannel channel = httpServerExchange.getRequestChannel();
             int readBuffers = 0;
             final PooledByteBuffer[] bufferedData = new PooledByteBuffer[MAX_BUFFERS];
@@ -246,13 +247,16 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
      */
     private static void saveBufferAndResetUndertowConnector(final HttpServerExchange httpServerExchange, final PooledByteBuffer[] bufferedData) {
         httpServerExchange.putAttachment(AttachmentConstants.BUFFERED_REQUEST_DATA_KEY, bufferedData);
-        long length = 0;
-        for (PooledByteBuffer dest : bufferedData) {
-            if (dest != null) {
-                length += dest.getBuffer().limit();
+
+        if (httpServerExchange.getRequestHeaders().getFirst("content-length") != null) {
+            long length = 0;
+            for (PooledByteBuffer dest : bufferedData) {
+                if (dest != null) {
+                    length += dest.getBuffer().limit();
+                }
             }
+            httpServerExchange.getRequestHeaders().put(Headers.CONTENT_LENGTH, length);
         }
-        httpServerExchange.getRequestHeaders().put(Headers.CONTENT_LENGTH, length);
 
         Connectors.ungetRequestBytes(httpServerExchange, bufferedData);
         Connectors.resetRequestChannel(httpServerExchange);
