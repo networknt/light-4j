@@ -79,21 +79,29 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
         }
         String method = exchange.getRequestMethod().toString();
         if (!HttpContinue.requiresContinueResponse(exchange.getRequestHeaders())) {
-
+            if(logger.isDebugEnabled()) logger.debug("request can be transformed since no Expect headers found");
+            
             Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
-            // need to get the rule/rules to execute from the RuleLoaderStartupHook. First, get the endpoint.
-            String endpoint = null;
-            if(auditInfo != null) {
-                endpoint = (String) auditInfo.get("endpoint");
-            } else {
-                endpoint = exchange.getRequestPath() + "@" + method.toString().toLowerCase();
-            }
+            // TODO any auditInfo properties to be added here?
+
             // checked the RuleLoaderStartupHook to ensure it is loaded. If not, return an error to the caller.
             if(RuleLoaderStartupHook.endpointRules == null) {
                 logger.error("RuleLoaderStartupHook endpointRules is null");
             }
+            // need to get the rule/rules to execute from the RuleLoaderStartupHook. First, get the endpoint.            
+            String endpoint, serviceEntry = null;
+            // Grab ServiceEntry from config
+            endpoint = ConfigUtils.toInternalKey(exchange.getRequestMethod().toString().toLowerCase(), exchange.getRequestURI());
+            if(logger.isDebugEnabled()) logger.debug("request endpoint: " + endpoint);
+            serviceEntry = ConfigUtils.findServiceEntry(exchange.getRequestMethod().toString().toLowerCase(), exchange.getRequestURI(), RuleLoaderStartupHook.endpointRules);
+            if(logger.isDebugEnabled()) logger.debug("request serviceEntry: " + serviceEntry);
+            
             // get the rules (maybe multiple) based on the endpoint.
-            Map<String, List> endpointRules = (Map<String, List>)RuleLoaderStartupHook.endpointRules.get(endpoint);
+            Map<String, List> endpointRules = (Map<String, List>)RuleLoaderStartupHook.endpointRules.get(serviceEntry);
+            if(endpointRules == null) {
+            	if(logger.isDebugEnabled()) 
+            		logger.debug("endpointRules iS NULL");
+            } else { if(logger.isDebugEnabled()) logger.debug("endpointRules: " + endpointRules.get(REQUEST_TRANSFORM).size()); }            
             if(endpointRules != null) {
                 List<Map<String, Object>> requestTransformRules = endpointRules.get(REQUEST_TRANSFORM);
                 if(requestTransformRules != null) {
@@ -120,10 +128,13 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
                     Map<String, Object> result = null;
                     String ruleId = null;
                     // iterate the rules and execute them in sequence. Break only if one rule is successful.
+                    if(logger.isDebugEnabled()) logger.debug("requestTransformRules list count: " + requestTransformRules.size());
                     for(Map<String, Object> ruleMap: requestTransformRules) {
                         ruleId = (String)ruleMap.get(Constants.RULE_ID);
+                        if(logger.isDebugEnabled()) logger.debug("ruleID found: " + ruleId);
                         result = engine.executeRule(ruleId, objMap);
                         boolean res = (Boolean)result.get(RuleConstants.RESULT);
+                        if(logger.isDebugEnabled() && res) logger.debug("ruleID result is true");
                         if(!res) {
                             finalResult = false;
                             break;
