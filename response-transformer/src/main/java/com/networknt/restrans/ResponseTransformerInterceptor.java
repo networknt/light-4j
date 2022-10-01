@@ -106,16 +106,23 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
             // need to get the rule/rules to execute from the RuleLoaderStartupHook. First, get the endpoint.
             String endpoint = null;
             if(auditInfo != null) {
+            	if(logger.isDebugEnabled()) logger.debug("auditInfo exists. Grab endpoint from it.");
                 endpoint = (String) auditInfo.get("endpoint");
             } else {
+            	if(logger.isDebugEnabled()) logger.debug("auditInfo is NULL. Grab endpoint from exchange.");
                 endpoint = exchange.getRequestPath() + "@" + method.toString().toLowerCase();
             }
+            if(logger.isDebugEnabled()) logger.debug("request endpoint: " + endpoint);
             // checked the RuleLoaderStartupHook to ensure it is loaded. If not, return an error to the caller.
             if(RuleLoaderStartupHook.endpointRules == null) {
                 logger.error("RuleLoaderStartupHook endpointRules is null");
             }
             // get the rules (maybe multiple) based on the endpoint.
             Map<String, List> endpointRules = (Map<String, List>)RuleLoaderStartupHook.endpointRules.get(endpoint);
+            if(endpointRules == null) {
+            	if(logger.isDebugEnabled()) 
+            		logger.debug("endpointRules iS NULL");
+            } else { if(logger.isDebugEnabled()) logger.debug("endpointRules: " + endpointRules.get(RESPONSE_TRANSFORM).size()); }        
             // if there is no access rule for this endpoint, check the default deny flag in the config.
             boolean finalResult = true;
             List<Map<String, Object>> responseTransformRules = endpointRules.get(RESPONSE_TRANSFORM);
