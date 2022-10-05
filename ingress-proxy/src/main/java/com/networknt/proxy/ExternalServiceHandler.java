@@ -192,8 +192,11 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                     String responseBody = response.body();
                     exchange.setStatusCode(response.statusCode());
                     for (Map.Entry<String, List<String>> header : responseHeaders.map().entrySet()) {
-                        if(header.getKey() != null && header.getValue().get(0) != null) {
-                            exchange.getResponseHeaders().put(new HttpString(header.getKey()), header.getValue().get(0));
+                        // remove empty key in the response header start with a colon.
+                        if(header.getKey() != null && !header.getKey().startsWith(":") && header.getValue().get(0) != null) {
+                            for(String s : header.getValue()) {
+                                exchange.getResponseHeaders().add(new HttpString(header.getKey()), s);
+                            }
                         }
                     }
                     exchange.getResponseSender().send(responseBody);

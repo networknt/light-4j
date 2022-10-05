@@ -1,4 +1,4 @@
-package com.networknt.proxy.salesforce;
+package com.networknt.proxy.conquest;
 
 import com.networknt.body.BodyHandler;
 import com.networknt.client.ClientConfig;
@@ -14,6 +14,8 @@ import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;
 import com.networknt.proxy.PathPrefixAuth;
+import com.networknt.proxy.salesforce.SalesforceConfig;
+import com.networknt.proxy.salesforce.SalesforceHandler;
 import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
@@ -44,25 +46,8 @@ import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * This is a customized Salesforce handler for authentication and authorization with cloud Salesforce service
- * within an enterprise environment. It is converted from a customized flow for the business logic.
- *
- * For any external Salesforce request, this handler will check if there is a cached salesforce token that is
- * not expired. If true, put the token into the header. If false, get a new token by following the flow and put
- * it into the header and cache it.
- *
- * The way to get a salesforce token is to sign a token with your private key and salesforce will have the public
- * key to verify your token. Send a request with grant_type and assertion as body to the url defined in the config
- * file. Salesforce will issue an access token for API access.
- *
- * For the token caching, we only cache the salesforce token. The jwt token we created only last 5 minutes, and it
- * is not cached.
- *
- * @author Steve Hu
- */
-public class SalesforceHandler implements MiddlewareHandler {
-    private static final Logger logger = LoggerFactory.getLogger(SalesforceHandler.class);
+public class ConquestHandler implements MiddlewareHandler {
+    private static final Logger logger = LoggerFactory.getLogger(ConquestHandler.class);
     private static final String TLS_TRUSTSTORE_ERROR = "ERR10055";
     private static final String OAUTH_SERVER_URL_ERROR = "ERR10056";
     private static final String ESTABLISH_CONNECTION_ERROR = "ERR10053";
@@ -70,14 +55,14 @@ public class SalesforceHandler implements MiddlewareHandler {
     private static final String METHOD_NOT_ALLOWED  = "ERR10008";
 
     private volatile HttpHandler next;
-    private SalesforceConfig config;
+    private ConquestConfig config;
     // the cached jwt token so that we can use the same token for different requests.
 
     private HttpClient client;
 
-    public SalesforceHandler() {
-        config = SalesforceConfig.load();
-        if(logger.isInfoEnabled()) logger.info("SalesforceAuthHandler is loaded.");
+    public ConquestHandler() {
+        config = ConquestConfig.load();
+        if(logger.isInfoEnabled()) logger.info("ConquestHandler is loaded.");
     }
 
     @Override
@@ -125,7 +110,7 @@ public class SalesforceHandler implements MiddlewareHandler {
                 if(logger.isTraceEnabled()) logger.trace("found with requestPath = " + requestPath + " prefix = " + pathPrefixAuth.getPathPrefix());
                 // matched the prefix found. handler it with the config for this prefix.
                 if(System.currentTimeMillis() >= (pathPrefixAuth.getExpiration() - 5000)) { // leave 5 seconds room and default value is 0
-                    String jwt = createJwt(pathPrefixAuth.getAuthIssuer(), pathPrefixAuth.getAuthSubject(), pathPrefixAuth.getAuthAudience());
+                    String jwt = createJwt(pathPrefixAuth.getAuthIssuer(), pathPrefixAuth.getAuthSubject(), pathPrefixAuth.getAuthAudience(), "jti", pathPrefixAuth.getTokenTtl());
                     Result<TokenResponse> result = getAccessToken(pathPrefixAuth.getTokenUrl(), jwt);
                     if(result.isSuccess()) {
                         pathPrefixAuth.setExpiration(System.currentTimeMillis() + 300 * 1000);
@@ -144,23 +129,25 @@ public class SalesforceHandler implements MiddlewareHandler {
         Handler.next(exchange, next);
     }
 
-    private String createJwt(String issuer, String subject, String audience) throws Exception {
+    private String createJwt(String issuer, String subject, String audience, String jti, int tokenTtl) throws Exception {
         String certFileName = config.getCertFilename();
         String certPassword = config.getCertPassword();
 
-        String header = "{\"alg\":\"RS256\"}";
-        String claimTemplate = "'{'\"iss\": \"{0}\", \"sub\": \"{1}\", \"aud\": \"{2}\", \"exp\": \"{3}\"'}'";
+        String header = "{\"typ\":\"JWT\", \"alg\":\"RS256\"}";
+        String claimTemplate = "'{'\"iss\": \"{0}\", \"sub\": \"{1}\", \"aud\": \"{2}\", \"jti\": \"{3}\", \"iat\": {4}, \"exp\": {5}'}'";
         StringBuffer token = new StringBuffer();
         // Encode the JWT Header and add it to our string to sign
         token.append(org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString(header.getBytes("UTF-8")));
         // Separate with a period
         token.append(".");
 
-        String[] claimArray = new String[4];
+        String[] claimArray = new String[6];
         claimArray[0] = issuer;
         claimArray[1] = subject;
         claimArray[2] = audience;
-        claimArray[3] =  Long.toString( ( System.currentTimeMillis()/1000 ) + 300);
+        claimArray[3] = jti;
+        claimArray[4] = Long.toString(( System.currentTimeMillis()/1000 ));
+        claimArray[5] = Long.toString(( System.currentTimeMillis()/1000 ) + tokenTtl);
 
         MessageFormat claims;
         claims = new MessageFormat(claimTemplate);
@@ -330,5 +317,4 @@ public class SalesforceHandler implements MiddlewareHandler {
         if(logger.isTraceEnabled()) logger.trace("response body = " + responseBody);
         exchange.getResponseSender().send(responseBody);
     }
-
 }

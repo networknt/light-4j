@@ -1,4 +1,4 @@
-package com.networknt.proxy.salesforce;
+package com.networknt.proxy;
 
 /**
  * This is an object that contains all the authentication info for each path prefix in the pathPrefixAuth config
