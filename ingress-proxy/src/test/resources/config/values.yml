@@ -63,6 +63,11 @@ mras.pathPrefixAuth:
   /pdf/generator: anonymous
   /advisor: microsoft
 
+# conquest.yml
+conquest.enabled: true
+conquest.certFilename:
+conquest.certPassword: conquest2021
+conquest.pathPrefixAuths: [{"pathPrefix":"/conquest","authIssuer":"Sunlife","authSubject":"conquest-public-uat-sunlife-jwt-integration","authAudience":"app://d5b1cb55-3835-52fc-9ef3-e38d58856394","tokenTtl":180,"tokenUrl":"https://sunlife-auth.uat.conquest-public.conquestplanning.com/login/oauth2/realms/root/realms/con/realms/uat/access_token","serviceHost":"https://conquestplanning.com"}]
 
 # external-service.yml
 externalService.enabled: true

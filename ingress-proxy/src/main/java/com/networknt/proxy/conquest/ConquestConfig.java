@@ -1,4 +1,4 @@
-package com.networknt.proxy.salesforce;
+package com.networknt.proxy.conquest;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
@@ -11,10 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class SalesforceConfig {
-    private static final Logger logger = LoggerFactory.getLogger(SalesforceConfig.class);
+public class ConquestConfig {
+    private static final Logger logger = LoggerFactory.getLogger(ConquestConfig.class);
 
-    public static final String CONFIG_NAME = "salesforce";
+    public static final String CONFIG_NAME = "conquest";
     public static final String ENABLED = "enabled";
     public static final String PATH_PREFIX = "pathPrefix";
     public static final String TOKEN_URL = "tokenUrl";
@@ -23,13 +23,10 @@ public class SalesforceConfig {
     public static final String AUTH_AUDIENCE = "authAudience";
     public static final String CERT_FILENAME = "certFilename";
     public static final String CERT_PASSWORD = "certPassword";
-    public static final String IV = "iv";
     public static final String TOKEN_TTL = "tokenTtl";
-    public static final String WAIT_LENGTH = "waitLength";
     public static final String PROXY_HOST = "proxyHost";
     public static final String PROXY_PORT = "proxyPort";
     public static final String ENABLE_HTTP2 = "enableHttps";
-
     public static final String PATH_PREFIX_AUTHS = "pathPrefixAuths";
     public static final String SERVICE_HOST = "serviceHost";
 
@@ -43,7 +40,7 @@ public class SalesforceConfig {
     private Config config;
     private Map<String, Object> mappedConfig;
 
-    private SalesforceConfig() {
+    private ConquestConfig() {
         this(CONFIG_NAME);
     }
 
@@ -52,18 +49,18 @@ public class SalesforceConfig {
      * to test different configurations.
      * @param configName String
      */
-    private SalesforceConfig(String configName) {
+    private ConquestConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(configName);
         setConfigData();
         setConfigList();
     }
-    public static SalesforceConfig load() {
-        return new SalesforceConfig();
+    public static ConquestConfig load() {
+        return new ConquestConfig();
     }
 
-    public static SalesforceConfig load(String configName) {
-        return new SalesforceConfig(configName);
+    public static ConquestConfig load(String configName) {
+        return new ConquestConfig(configName);
     }
 
     void reload() {
@@ -183,10 +180,8 @@ public class SalesforceConfig {
                     pathPrefixAuth.setAuthIssuer((String)value.get(AUTH_ISSUER));
                     pathPrefixAuth.setAuthSubject((String)value.get(AUTH_SUBJECT));
                     pathPrefixAuth.setAuthAudience((String)value.get(AUTH_AUDIENCE));
-                    pathPrefixAuth.setIv((String)value.get(IV));
                     pathPrefixAuth.setServiceHost((String)value.get(SERVICE_HOST));
                     pathPrefixAuth.setTokenTtl((Integer)value.get(TOKEN_TTL));
-                    pathPrefixAuth.setWaitLength((Integer)value.get(WAIT_LENGTH));
                     pathPrefixAuth.setTokenUrl((String)value.get(TOKEN_URL));
                     pathPrefixAuths.add(pathPrefixAuth);
                 }
@@ -195,4 +190,5 @@ public class SalesforceConfig {
             }
         }
     }
+
 }
