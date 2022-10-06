@@ -87,7 +87,7 @@ public class RequestBodyInterceptor implements RequestInterceptor {
                 String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
                 if(contentType.startsWith("application/json")) {
                     attached = this.attachJsonBody(exchange, completeBody.toString());
-                } else if(contentType.startsWith("text")) { // include text/plain and text/xml etc.
+                } else if(contentType.startsWith("text") || contentType.startsWith("application/xml")) { // include text/plain and text/xml etc.
                     if (config.isCacheRequestBody()) {
                         exchange.putAttachment(AttachmentConstants.REQUEST_BODY_STRING, completeBody.toString());
                         attached = true;

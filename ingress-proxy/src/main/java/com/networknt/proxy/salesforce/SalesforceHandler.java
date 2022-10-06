@@ -112,11 +112,6 @@ public class SalesforceHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
-        if (exchange.isInIoThread()) {
-            exchange.dispatch(this);
-            return;
-        }
-        exchange.startBlocking();
         String requestPath = exchange.getRequestPath();
         if(logger.isTraceEnabled()) logger.trace("requestPath = " + requestPath);
         // make sure that the request path is in the key set. remember that key set only contains prefix not the full request path.
