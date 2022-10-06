@@ -75,7 +75,6 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isTraceEnabled()) logger.trace("ResponseTransformerHandler.handleRequest is called.");
-        exchange.startBlocking();
         String requestPath = exchange.getRequestPath();
         if (config.getAppliedPathPrefixes().stream().anyMatch(s -> requestPath.startsWith(s))) {
             if(engine == null) {
