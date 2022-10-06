@@ -153,15 +153,17 @@ public class AuditHandler implements MiddlewareHandler {
                 // add additional fields accumulated during the microservice execution
                 // according to the config
                 Map<String, Object> auditInfo1 = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
-                if (auditInfo1 != null) {
-                    if (config.getAuditList() != null && config.getAuditList().size() > 0) {
-                        for (String name : config.getAuditList()) {
-                            if (name.equals(RESPONSE_BODY_KEY)) {
-                                auditResponseBody(exchange, auditMap);
-                            }
-                            auditMap.putIfAbsent(name, auditInfo1.get(name));
+                if (auditInfo1 != null && config.getAuditList() != null) {
+                    for (String name : config.getAuditList()) {
+                        Object object = auditInfo1.get(name);
+                        if(object != null) {
+                            auditMap.putIfAbsent(name, object);
                         }
                     }
+                }
+                // audit the response body.
+                if(config.getAuditList() != null && config.getAuditList().contains(RESPONSE_BODY_KEY)) {
+                    auditResponseBody(exchange, auditMap);
                 }
 
                 try {
@@ -262,8 +264,17 @@ public class AuditHandler implements MiddlewareHandler {
             }
         }
         // mask the response body json string if mask is enabled.
-        if(responseBodyString != null) {
-            auditMap.put(RESPONSE_BODY_KEY, config.isMask() ? Mask.maskJson(responseBodyString, RESPONSE_BODY_KEY) : responseBodyString);
+        if(responseBodyString != null && responseBodyString.length() > 0) {
+            String contentType = exchange.getResponseHeaders().getFirst(Headers.CONTENT_TYPE);
+            if(contentType != null) {
+                if(contentType.startsWith("application/json")) {
+                    auditMap.put(RESPONSE_BODY_KEY, config.isMask() ? Mask.maskJson(responseBodyString, RESPONSE_BODY_KEY) : responseBodyString);
+                } else if(contentType.startsWith("text") || contentType.startsWith("application/xml")) {
+                    auditMap.put(RESPONSE_BODY_KEY, config.isMask() ? Mask.maskString(responseBodyString, RESPONSE_BODY_KEY) : responseBodyString);
+                } else {
+                    logger.error("Incorrect response content type " + contentType);
+                }
+            }
         }
     }
 

@@ -125,6 +125,7 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
 
             if (interceptors != null && Arrays.stream(interceptors).anyMatch(ri -> ri.isRequiredContent())) {
                 var mcsc = new ModifiableContentSinkConduit(factory.create(), cexchange);
+                if(logger.isTraceEnabled()) logger.trace("created a ModifiableContentSinkConduit instance " + mcsc);
                 cexchange.putAttachment(MCSC_KEY, mcsc);
                 return mcsc;
             } else {
