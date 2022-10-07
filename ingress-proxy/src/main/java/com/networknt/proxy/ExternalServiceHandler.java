@@ -171,8 +171,10 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                             if(config.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
                             // this a workaround to bypass the hostname verification in jdk11 http client.
                             Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+                            final Properties props = System.getProperties();
+                            props.setProperty("jdk.httpclient.allowRestrictedHeaders", "Host");
+                            props.setProperty("jdk.httpclient.allowRestrictedHeaders", "Connection");
                             if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
-                                final Properties props = System.getProperties();
                                 props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
                             }
                             client = clientBuilder.build();
