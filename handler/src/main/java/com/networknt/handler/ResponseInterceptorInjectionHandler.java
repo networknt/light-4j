@@ -79,7 +79,7 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
     }
 
     /**
-     * if the ModificableContentSinkConduit is set, set the Accept-Encoding
+     * if the ModifiableContentSinkConduit is set, set the Accept-Encoding
      * header to identity this is required to avoid response interceptors
      * dealing with compressed data
      *

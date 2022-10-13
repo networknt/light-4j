@@ -18,7 +18,6 @@ import com.networknt.proxy.salesforce.SalesforceConfig;
 import com.networknt.proxy.salesforce.SalesforceHandler;
 import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
-import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -28,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.net.URI;
@@ -258,10 +256,6 @@ public class ConquestHandler implements MiddlewareHandler {
 
         } else if(method.equalsIgnoreCase("POST")) {
             String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
-            if(bodyString == null) {
-                InputStream inputStream = exchange.getInputStream();
-                bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
-            }
             if(logger.isTraceEnabled()) logger.trace("Post request body = " + bodyString);
             request = HttpRequest.newBuilder()
                     .uri(new URI(requestHost + requestPath))
@@ -270,10 +264,6 @@ public class ConquestHandler implements MiddlewareHandler {
                     .build();
         } else if(method.equalsIgnoreCase("PUT")) {
             String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
-            if(bodyString == null) {
-                InputStream inputStream = exchange.getInputStream();
-                bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
-            }
             if(logger.isTraceEnabled()) logger.trace("Put request body = " + bodyString);
             request = HttpRequest.newBuilder()
                     .uri(new URI(requestHost + requestPath))
@@ -282,10 +272,6 @@ public class ConquestHandler implements MiddlewareHandler {
                     .build();
         } else if(method.equalsIgnoreCase("PATCH")) {
             String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
-            if(bodyString == null) {
-                InputStream inputStream = exchange.getInputStream();
-                bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
-            }
             if(logger.isTraceEnabled()) logger.trace("Patch request body = " + bodyString);
             request = HttpRequest.newBuilder()
                     .uri(new URI(requestHost + requestPath))
