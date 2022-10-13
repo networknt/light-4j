@@ -142,9 +142,11 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
         // check if the request has a header accept encoding with gzip and deflate.
         boolean compressed = false;
         var acceptedEncodings = exchange.getRequestHeaders().get(Headers.ACCEPT_ENCODING_STRING);
-        for(String values: acceptedEncodings) {
-            if(Arrays.stream(values.split(",")).anyMatch((v) -> Headers.GZIP.toString().equals(v) || Headers.DEFLATE.toString().equals(v))) {
-                compressed = true;
+        if(acceptedEncodings != null) {
+            for(String values: acceptedEncodings) {
+                if(Arrays.stream(values.split(",")).anyMatch((v) -> Headers.GZIP.toString().equals(v) || Headers.DEFLATE.toString().equals(v))) {
+                    compressed = true;
+                }
             }
         }
         return compressed;
