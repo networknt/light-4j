@@ -9,18 +9,15 @@ import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.config.UrlRewriteRule;
 import com.networknt.utility.ModuleRegistry;
-import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderMap;
 import io.undertow.util.HeaderValues;
-import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.net.URI;
@@ -28,7 +25,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -132,29 +128,14 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         // if body handler is in the chain before this handler, we should have it in the exchange attachment.
                         String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
                         if(logger.isTraceEnabled() && bodyString != null) logger.trace("Get post body from the exchange attachment = " + bodyString);
-                        if(bodyString == null) {
-                            InputStream inputStream = exchange.getInputStream();
-                            bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
-                            if(logger.isTraceEnabled()) logger.trace("Get post body from input stream = " + bodyString);
-                        }
                         request = builder.POST(bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString)).build();
                     } else if(method.equalsIgnoreCase("PUT")) {
                         String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
                         if(logger.isTraceEnabled() && bodyString != null) logger.trace("Get put body from the exchange attachment = " + bodyString);
-                        if(bodyString == null) {
-                            InputStream inputStream = exchange.getInputStream();
-                            bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
-                            if(logger.isTraceEnabled()) logger.trace("Get put body from input stream = " + bodyString);
-                        }
                         request = builder.PUT(bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString)).build();
                     } else if(method.equalsIgnoreCase("PATCH")) {
                         String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
                         if(logger.isTraceEnabled() && bodyString != null) logger.trace("Get patch body from the exchange attachment = " + bodyString);
-                        if(bodyString == null) {
-                            InputStream inputStream = exchange.getInputStream();
-                            bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
-                            if(logger.isTraceEnabled()) logger.trace("Get patch body from input stream = " + bodyString);
-                        }
                         request = builder.method("PATCH", bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString)).build();
                     } else {
                         logger.error("wrong http method " + method + " for request path " + requestPath);
