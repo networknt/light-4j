@@ -35,6 +35,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.security.PrivateKey;
@@ -283,9 +284,9 @@ public class ConquestHandler implements MiddlewareHandler {
             setExchangeStatus(exchange, METHOD_NOT_ALLOWED, method, requestPath);
             return;
         }
-        HttpResponse<String> response  = client.send(request, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<byte[]> response  = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
         HttpHeaders responseHeaders = response.headers();
-        String responseBody = response.body();
+        byte[] responseBody = response.body();
         exchange.setStatusCode(response.statusCode());
         for (Map.Entry<String, List<String>> header : responseHeaders.map().entrySet()) {
             // remove empty key in the response header start with a colon.
@@ -295,7 +296,6 @@ public class ConquestHandler implements MiddlewareHandler {
                 }
             }
         }
-        if(logger.isTraceEnabled()) logger.trace("response body = " + responseBody);
-        exchange.getResponseSender().send(responseBody);
+        exchange.getResponseSender().send(ByteBuffer.wrap(responseBody));
     }
 }

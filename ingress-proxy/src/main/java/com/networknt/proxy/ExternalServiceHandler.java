@@ -25,6 +25,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -165,19 +166,20 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         }
                     }
 
-                    HttpResponse<String> response  = client.send(request, HttpResponse.BodyHandlers.ofString());
+                    HttpResponse<byte[]> response  = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
                     HttpHeaders responseHeaders = response.headers();
-                    String responseBody = response.body();
+                    byte[] responseBody = response.body();
                     exchange.setStatusCode(response.statusCode());
                     for (Map.Entry<String, List<String>> header : responseHeaders.map().entrySet()) {
                         // remove empty key in the response header start with a colon.
                         if(header.getKey() != null && !header.getKey().startsWith(":") && header.getValue().get(0) != null) {
                             for(String s : header.getValue()) {
+                                if(logger.isTraceEnabled()) logger.trace("Add response header key = " + header.getKey() + " value = " + s);
                                 exchange.getResponseHeaders().add(new HttpString(header.getKey()), s);
                             }
                         }
                     }
-                    exchange.getResponseSender().send(responseBody);
+                    exchange.getResponseSender().send(ByteBuffer.wrap(responseBody));
                     return;
                 }
             }
