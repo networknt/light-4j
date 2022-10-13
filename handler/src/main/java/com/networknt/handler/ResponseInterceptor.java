@@ -30,10 +30,6 @@ public interface ResponseInterceptor extends MiddlewareHandler {
      * @return PooledByteBuffer[] array
      */
     default PooledByteBuffer[] getBuffer(HttpServerExchange exchange) {
-        PooledByteBuffer[] buffer = exchange.getAttachment(AttachmentConstants.BUFFERED_RESPONSE_DATA_KEY);
-        if (buffer == null) {
-            throw new IllegalStateException("Response content is not available in exchange attachment as there is no interceptors.");
-        }
-        return buffer;
+        return exchange.getAttachment(AttachmentConstants.BUFFERED_RESPONSE_DATA_KEY);
     }
 }
