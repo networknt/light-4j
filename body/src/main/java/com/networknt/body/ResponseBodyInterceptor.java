@@ -71,7 +71,7 @@ public class ResponseBodyInterceptor implements ResponseInterceptor {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
-        if(shouldParseBody(exchange)) {
+        if(shouldParseBody(exchange) && getBuffer(exchange) != null) {
             String s = BuffersUtils.toString(getBuffer(exchange), StandardCharsets.UTF_8);
             if(logger.isTraceEnabled()) logger.trace("original response body = " + s);
             // put the response body in the attachment for auditing and validation.
