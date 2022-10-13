@@ -18,21 +18,17 @@ import com.networknt.monad.Result;
 import com.networknt.monad.Success;
 import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
-import com.networknt.utility.StringUtils;
-import com.sun.net.httpserver.HttpsServer;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import org.apache.commons.codec.binary.Base64;
-import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.*;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.net.URI;
@@ -213,10 +209,6 @@ public class MrasHandler implements MiddlewareHandler {
                     .build();
         } else if(method.equalsIgnoreCase("POST")) {
             String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
-            if(bodyString == null) {
-                InputStream inputStream = exchange.getInputStream();
-                bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
-            }
             request = HttpRequest.newBuilder()
                     .uri(new URI(serviceHost + requestPath))
                     .headers("Authorization", authorization, "Content-Type", contentType)
@@ -224,10 +216,6 @@ public class MrasHandler implements MiddlewareHandler {
                     .build();
         } else if(method.equalsIgnoreCase("PUT")) {
             String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
-            if(bodyString == null) {
-                InputStream inputStream = exchange.getInputStream();
-                bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
-            }
             request = HttpRequest.newBuilder()
                     .uri(new URI(serviceHost + requestPath))
                     .headers("Authorization", authorization, "Content-Type", contentType)
@@ -235,10 +223,6 @@ public class MrasHandler implements MiddlewareHandler {
                     .build();
         } else if(method.equalsIgnoreCase("PATCH")) {
             String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
-            if(bodyString == null) {
-                InputStream inputStream = exchange.getInputStream();
-                bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
-            }
             request = HttpRequest.newBuilder()
                     .uri(new URI(serviceHost + requestPath))
                     .headers("Authorization", authorization, "Content-Type", contentType)
