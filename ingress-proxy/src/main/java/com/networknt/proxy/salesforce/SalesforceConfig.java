@@ -3,6 +3,7 @@ package com.networknt.proxy.salesforce;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import com.networknt.handler.config.UrlRewriteRule;
 import com.networknt.proxy.PathPrefixAuth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +30,7 @@ public class SalesforceConfig {
     public static final String PROXY_HOST = "proxyHost";
     public static final String PROXY_PORT = "proxyPort";
     public static final String ENABLE_HTTP2 = "enableHttps";
-
+    List<UrlRewriteRule> urlRewriteRules;
     public static final String PATH_PREFIX_AUTHS = "pathPrefixAuths";
     public static final String SERVICE_HOST = "serviceHost";
 
@@ -56,6 +57,7 @@ public class SalesforceConfig {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(configName);
         setConfigData();
+        setUrlRewriteRules();
         setConfigList();
     }
     public static SalesforceConfig load() {
@@ -126,6 +128,26 @@ public class SalesforceConfig {
 
     public void setPathPrefixAuths(List<PathPrefixAuth> pathPrefixAuths) {
         this.pathPrefixAuths = pathPrefixAuths;
+    }
+    public List<UrlRewriteRule> getUrlRewriteRules() {
+        return urlRewriteRules;
+    }
+
+    public void setUrlRewriteRules() {
+        this.urlRewriteRules = new ArrayList<>();
+        if (mappedConfig.get("urlRewriteRules") !=null && mappedConfig.get("urlRewriteRules") instanceof String) {
+            urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule((String)mappedConfig.get("urlRewriteRules")));
+        } else {
+            List<String> rules = (List)mappedConfig.get("urlRewriteRules");
+            if(rules != null) {
+                for (String s : rules) {
+                    urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule(s));
+                }
+            }
+        }
+    }
+    public void setUrlRewriteRules(List<UrlRewriteRule> urlRewriteRules) {
+        this.urlRewriteRules = urlRewriteRules;
     }
 
     private void setConfigData() {

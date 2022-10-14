@@ -10,6 +10,7 @@ import com.networknt.config.JsonMapper;
 import com.networknt.config.TlsUtil;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.handler.config.UrlRewriteRule;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;
@@ -41,6 +42,7 @@ import java.security.Signature;
 import java.text.MessageFormat;
 import java.time.Duration;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 /**
@@ -113,6 +115,26 @@ public class SalesforceHandler implements MiddlewareHandler {
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         String requestPath = exchange.getRequestPath();
         if(logger.isTraceEnabled()) logger.trace("requestPath = " + requestPath);
+
+        // handle the url rewrite here.
+        if(config.getUrlRewriteRules() != null && config.getUrlRewriteRules().size() > 0) {
+            boolean matched = false;
+            for(UrlRewriteRule rule : config.getUrlRewriteRules()) {
+                Matcher matcher = rule.getPattern().matcher(requestPath);
+                if(matcher.matches()) {
+                    matched = true;
+                    requestPath = matcher.replaceAll(rule.getReplace());
+                    if(logger.isTraceEnabled()) logger.trace("rewritten requestPath = " + requestPath);
+                    break;
+                }
+            }
+            // if no matched rule in the list, use the original requestPath.
+            if(!matched) requestPath = exchange.getRequestPath();
+        } else {
+            // there is no url rewrite rules, so use the original requestPath
+            requestPath = exchange.getRequestPath();
+        }
+
         // make sure that the request path is in the key set. remember that key set only contains prefix not the full request path.
         for(PathPrefixAuth pathPrefixAuth: config.getPathPrefixAuths()) {
             if(requestPath.startsWith(pathPrefixAuth.getPathPrefix())) {
