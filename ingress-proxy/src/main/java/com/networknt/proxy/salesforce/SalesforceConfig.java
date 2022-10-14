@@ -71,6 +71,7 @@ public class SalesforceConfig {
     void reload() {
         mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
         setConfigData();
+        setUrlRewriteRules();
         setConfigList();
     }
 
