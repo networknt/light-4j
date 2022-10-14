@@ -94,6 +94,7 @@ public class MrasConfig {
     void reload() {
         mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
         setConfigData();
+        setUrlRewriteRules();
         setConfigMap();
     }
 

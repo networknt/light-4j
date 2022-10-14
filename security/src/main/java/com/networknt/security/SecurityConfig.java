@@ -1,13 +1,12 @@
 package com.networknt.security;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Create this class to load security.yml or openapi-security or graphql-security
@@ -37,6 +36,7 @@ public class SecurityConfig {
     private static final String IGNORE_JWT_EXPIRY = "ignoreJwtExpiry";
     private static final String PROVIDER_ID = "providerId";
     private static final String ENABLE_H2C = "enableH2c";
+    private static final String SKIP_PATH_PREFIXES = "skipPathPrefixes";
 
     private Map<String, Object> mappedConfig;
     private Map<String, Object> certificate;
@@ -55,13 +55,14 @@ public class SecurityConfig {
     private boolean ignoreJwtExpiry;
     private String providerId;
     private boolean enableH2c;
-
+    private List<String> skipPathPrefixes;
 
     private SecurityConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(configName);
         setCertificate();
         setConfigData();
+        setSkipPathPrefixes();
     }
 
     public static SecurityConfig load(String configName) {
@@ -72,6 +73,7 @@ public class SecurityConfig {
         mappedConfig = config.getJsonMapConfigNoCache(configName);
         setCertificate();
         setConfigData();
+        setSkipPathPrefixes();
     }
 
     public Map<String, Object> getCertificate() {
@@ -126,6 +128,9 @@ public class SecurityConfig {
 
     public boolean isBootstrapFromKeyService() {
         return bootstrapFromKeyService;
+    }
+    public List<String> getSkipPathPrefixes() {
+        return skipPathPrefixes;
     }
 
     public Map<String, Object> getMappedConfig() {
@@ -212,6 +217,36 @@ public class SecurityConfig {
             if(jwtMap != null) {
                 clockSkewInSeconds = (Integer) jwtMap.get(CLOCK_SKEW_IN_SECONDS);
                 keyResolver = (String) jwtMap.get(KEY_RESOLVER);
+            }
+        }
+    }
+
+    private void setSkipPathPrefixes() {
+        if (mappedConfig.get(SKIP_PATH_PREFIXES) != null) {
+            Object object = mappedConfig.get(SKIP_PATH_PREFIXES);
+            skipPathPrefixes = new ArrayList<>();
+            if(object instanceof String) {
+                String s = (String)object;
+                s = s.trim();
+                if(logger.isTraceEnabled()) logger.trace("s = " + s);
+                if(s.startsWith("[")) {
+                    // json format
+                    try {
+                        skipPathPrefixes = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
+                    } catch (Exception e) {
+                        throw new ConfigException("could not parse the skipPathPrefixes json with a list of strings.");
+                    }
+                } else {
+                    // comma separated
+                    skipPathPrefixes = Arrays.asList(s.split("\\s*,\\s*"));
+                }
+            } else if (object instanceof List) {
+                List prefixes = (List)object;
+                prefixes.forEach(item -> {
+                    skipPathPrefixes.add((String)item);
+                });
+            } else {
+                throw new ConfigException("skipPathPrefixes must be a string or a list of strings.");
             }
         }
     }
