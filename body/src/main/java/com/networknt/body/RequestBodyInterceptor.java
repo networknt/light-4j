@@ -3,7 +3,6 @@ package com.networknt.body;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
-import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.RequestInterceptor;
 import com.networknt.httpstring.AttachmentConstants;
@@ -18,6 +17,7 @@ import io.undertow.util.Methods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -92,6 +92,9 @@ public class RequestBodyInterceptor implements RequestInterceptor {
                         exchange.putAttachment(AttachmentConstants.REQUEST_BODY_STRING, completeBody.toString());
                         attached = true;
                     }
+                } else if (contentType.startsWith("multipart/form-data") || contentType.startsWith("application/x-www-form-urlencoded")) {
+                    if(logger.isTraceEnabled()) logger.trace("contentType = " + contentType + " stringBody = " + completeBody);
+                    attached = this.attachFormDataBody(exchange, completeBody.toString());
                 }
             }
             if(!attached) {
@@ -157,6 +160,32 @@ public class RequestBodyInterceptor implements RequestInterceptor {
             exchange.putAttachment(AttachmentConstants.REQUEST_BODY_STRING, string);
         }
         exchange.putAttachment(AttachmentConstants.REQUEST_BODY, body);
+        return true;
+    }
+
+    /**
+     * Method used to parse the body into FormData and attach it into exchange
+     *
+     * @param exchange exchange to be attached
+     * @param s the string of the  request body
+     * @return boolean to indicate if attached.
+     */
+    private boolean attachFormDataBody(final HttpServerExchange exchange, String s) {
+        // form-data
+        // ----------------------------520069623932425279826636
+        //Content-Disposition: form-data; name="key1"
+        //
+        //value1
+        //----------------------------520069623932425279826636
+        //Content-Disposition: form-data; name="key2"
+        //
+        //value2
+        //----------------------------520069623932425279826636--
+
+        // x-www-form-urlencoded
+        // key1=value1&key2=value2
+
+        exchange.putAttachment(REQUEST_BODY_STRING, s);
         return true;
     }
 
