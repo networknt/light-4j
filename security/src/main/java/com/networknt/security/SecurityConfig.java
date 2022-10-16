@@ -222,7 +222,7 @@ public class SecurityConfig {
     }
 
     private void setSkipPathPrefixes() {
-        if (mappedConfig.get(SKIP_PATH_PREFIXES) != null) {
+        if (mappedConfig != null && mappedConfig.get(SKIP_PATH_PREFIXES) != null) {
             Object object = mappedConfig.get(SKIP_PATH_PREFIXES);
             skipPathPrefixes = new ArrayList<>();
             if(object instanceof String) {
