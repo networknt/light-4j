@@ -72,10 +72,12 @@ public class RequestBodyInterceptor implements RequestInterceptor {
      */
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        if(logger.isTraceEnabled()) logger.trace("RequestBodyInterceptor is called.");
         if (this.shouldAttachBody(exchange)) {
             boolean attached = false;
             var existing = (PooledByteBuffer[])exchange.getAttachment(AttachmentConstants.BUFFERED_REQUEST_DATA_KEY);
             if(existing != null) {
+                if(logger.isTraceEnabled()) logger.trace("Attach request body requirement is met and butter exists.");
                 StringBuilder completeBody = new StringBuilder();
                 for(PooledByteBuffer buffer : existing) {
                     if(buffer != null) {
@@ -85,6 +87,7 @@ public class RequestBodyInterceptor implements RequestInterceptor {
                     }
                 }
                 String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
+                if(logger.isTraceEnabled()) logger.trace("contentType = " + contentType + " request body = " + (completeBody.length() > 16384 ? completeBody.substring(0, 16384) : completeBody));
                 if(contentType.startsWith("application/json")) {
                     attached = this.attachJsonBody(exchange, completeBody.toString());
                 } else if(contentType.startsWith("text") || contentType.startsWith("application/xml")) { // include text/plain and text/xml etc.
@@ -115,6 +118,7 @@ public class RequestBodyInterceptor implements RequestInterceptor {
         String requestPath = exchange.getRequestPath();
         boolean hasBody = method.equals(Methods.POST) || method.equals(Methods.PUT) || method.equals(Methods.PATCH);
         boolean isPathConfigured = config.getAppliedPathPrefixes() == null || config.getAppliedPathPrefixes().stream().anyMatch(requestPath::startsWith);
+        if(logger.isTraceEnabled()) logger.trace("hasBody = " + hasBody +  " isPathConfigured = " + isPathConfigured);
         return hasBody &&
                 isPathConfigured &&
                 exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE) != null;
