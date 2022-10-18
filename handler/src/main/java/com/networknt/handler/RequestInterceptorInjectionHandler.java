@@ -40,13 +40,13 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
 
     public RequestInterceptorInjectionHandler() {
         config = RequestInjectionConfig.load();
-        logger.info("SourceConduitInjectorHandler is loaded!");
+        logger.info("RequestInterceptorInjectionHandler is loaded!");
         interceptors = SingletonServiceFactory.getBeans(RequestInterceptor.class);
     }
 
     public RequestInterceptorInjectionHandler(RequestInjectionConfig cfg) {
         config = cfg;
-        logger.info("SourceConduitInjectorHandler is loaded!");
+        logger.info("RequestInterceptorInjectionHandler is loaded!");
         interceptors = SingletonServiceFactory.getBeans(RequestInterceptor.class);
     }
 

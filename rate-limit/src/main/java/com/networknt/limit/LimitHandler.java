@@ -37,11 +37,11 @@ import org.slf4j.LoggerFactory;
  * @author Steve Hu
  */
 public class LimitHandler implements MiddlewareHandler {
-    public static LimitConfig config;
     static final Logger logger = LoggerFactory.getLogger(LimitHandler.class);
 
     private volatile HttpHandler next;
     private  RateLimiter rateLimiter;
+    private LimitConfig config;
     private static final ObjectMapper mapper = Config.getInstance().getMapper();
 
 
@@ -107,7 +107,6 @@ public class LimitHandler implements MiddlewareHandler {
 
     @Override
     public void reload() {
-        config = LimitConfig.load();
+        config.reload();
     }
-
 }

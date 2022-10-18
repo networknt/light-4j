@@ -50,11 +50,11 @@ public class ProxyConfig {
     private Config config;
     private Map<String, Object> mappedConfig;
 
-    public ProxyConfig() {
+    private ProxyConfig() {
         this(CONFIG_NAME);
     }
 
-    public ProxyConfig(String configName) {
+    private ProxyConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(configName);
         setConfigData();

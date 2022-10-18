@@ -71,7 +71,7 @@ public class RouterHandler implements HttpHandler {
     }
 
     public void reload() {
-        config = RouterConfig.load();
+        config.reload();
     }
 
 }

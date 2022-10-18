@@ -17,13 +17,11 @@ import io.undertow.util.Methods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
 import static com.networknt.body.BodyHandler.REQUEST_BODY_STRING;
-import static com.networknt.body.BodyHandler.REQUEST_BODY;
 
 /**
  * Note: With RequestInterceptorInjectionHandler implemented, this handler is changed from a
@@ -59,7 +57,7 @@ public class RequestBodyInterceptor implements RequestInterceptor {
     private volatile HttpHandler next;
 
     public RequestBodyInterceptor() {
-        if (logger.isInfoEnabled()) logger.info("ProxyBodyHandler is loaded.");
+        if (logger.isInfoEnabled()) logger.info("RequestBodyInterceptor is loaded.");
         config = BodyConfig.load();
     }
 

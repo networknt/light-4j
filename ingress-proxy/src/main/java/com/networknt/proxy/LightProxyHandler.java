@@ -54,11 +54,12 @@ public class LightProxyHandler implements HttpHandler {
     private static final int LONG_CLOCK_SKEW = 1000000;
 
     static final Logger logger = LoggerFactory.getLogger(LightProxyHandler.class);
-    static ProxyConfig config = ProxyConfig.load();
+    ProxyConfig config;
 
     ProxyHandler proxyHandler;
 
     public LightProxyHandler() {
+        config = ProxyConfig.load();
         List<String> hosts = new ArrayList<>(Arrays.asList(config.getHosts().split(",")));
         if(logger.isTraceEnabled()) logger.trace("hosts = " + JsonMapper.toJson(hosts));
         LoadBalancingProxyClient loadBalancer = new LoadBalancingProxyClient()
