@@ -21,7 +21,6 @@ package io.undertow.server.handlers.proxy;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.ServerExchangeCarrier;
 import com.networknt.cluster.Cluster;
-import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.HttpStringConstants;
@@ -174,7 +173,6 @@ public class LoadBalancingRouterProxyClient implements ProxyClient {
         hosts.remove(key);
         Host[] newHosts = new Host[uris.size()];
         for (int i = 0; i < uris.size(); i++) {
-            // TODO convert the uris to IP address from host if preResolveFQDN2IP is true.
             Host h = null;
             if (config.isPreResolveFQDN2IP()) {
                 h = new Host(serviceId, bindAddress, NetUtils.resolveUriHost2Address(uris.get(i)), ssl, options);
