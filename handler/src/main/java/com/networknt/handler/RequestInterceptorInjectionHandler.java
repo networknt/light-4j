@@ -78,7 +78,10 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
         String method = httpServerExchange.getRequestMethod().toString();
         this.next = Handler.getNext(httpServerExchange);
         if (this.injectorContentRequired()
-                && ((method.equalsIgnoreCase("post") || method.equalsIgnoreCase("put") || method.equalsIgnoreCase("patch")) && !httpServerExchange.isRequestComplete())
+                && ((method.equalsIgnoreCase("post") ||
+                method.equalsIgnoreCase("put") ||
+                method.equalsIgnoreCase("patch")) &&
+                !httpServerExchange.isRequestComplete())
                 && !HttpContinue.requiresContinueResponse(httpServerExchange.getRequestHeaders())) {
             // need to calculate the next handler in the request/response chain, otherwise, it will be null in the following logic.
 
@@ -123,20 +126,6 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
             }
 
         }
-
-        if(interceptors != null && interceptors.length > 0) {
-            for(RequestInterceptor ri: interceptors) {
-                try {
-                    ri.handleRequest(httpServerExchange);
-                    // if any of the interceptor response with an error, then return this handler and stop the chain.
-                    if(httpServerExchange.isResponseStarted()) return;
-                } catch (Exception e) {
-                    logger.error(e.getMessage(), e);
-                    // do not try the next interceptor in the list and the rest of middleware handlers in the chain.
-                    return;
-                }
-            }
-        }
         Handler.next(httpServerExchange, next);
     }
 
@@ -145,7 +134,8 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
      * @return - true if required.
      */
     private boolean injectorContentRequired() {
-        return interceptors != null && interceptors.length > 0 && Arrays.stream(interceptors).anyMatch(RequestInterceptor::isRequiredContent);
+        return interceptors != null && interceptors.length > 0 &&
+                Arrays.stream(interceptors).anyMatch(RequestInterceptor::isRequiredContent);
     }
 
     /**
@@ -226,15 +216,12 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
      * @param channel - request channel
      * @param next - next http handler
      */
-    private static void suspendReads(final HttpServerExchange httpServerExchange, final PooledByteBuffer[] bufferedData, StreamSourceChannel channel, HttpHandler next) {
+    private void suspendReads(final HttpServerExchange httpServerExchange, final PooledByteBuffer[] bufferedData, StreamSourceChannel channel, HttpHandler next) {
         saveBufferAndResetUndertowConnector(httpServerExchange, bufferedData);
         channel.getReadSetter().set(null);
         channel.suspendReads();
-        if(next == null) {
-            System.out.println("next is null");
-        } else {
-            System.out.println("next = " + next.getClass());
-        }
+        if(logger.isTraceEnabled())
+            logger.info("Next is: {}", next.getClass());
         Connectors.executeRootHandler(next, httpServerExchange);
     }
 
@@ -245,7 +232,7 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
      * @param httpServerExchange - current exchange
      * @param bufferedData - total buffered data
      */
-    private static void saveBufferAndResetUndertowConnector(final HttpServerExchange httpServerExchange, final PooledByteBuffer[] bufferedData) {
+    private void saveBufferAndResetUndertowConnector(final HttpServerExchange httpServerExchange, final PooledByteBuffer[] bufferedData) {
         httpServerExchange.putAttachment(AttachmentConstants.BUFFERED_REQUEST_DATA_KEY, bufferedData);
 
         if (httpServerExchange.getRequestHeaders().getFirst("content-length") != null) {
@@ -257,9 +244,31 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
             }
             httpServerExchange.getRequestHeaders().put(Headers.CONTENT_LENGTH, length);
         }
+        this.invokeInterceptors(httpServerExchange);
 
         Connectors.ungetRequestBytes(httpServerExchange, bufferedData);
         Connectors.resetRequestChannel(httpServerExchange);
+    }
+
+    /**
+     * Invokes the interceptors that use request body.
+     *
+     * @param httpServerExchange - current server exchange.
+     */
+    private void invokeInterceptors(HttpServerExchange httpServerExchange) {
+        if(this.interceptors != null && this.interceptors.length > 0) {
+            for(RequestInterceptor ri: this.interceptors) {
+                try {
+                    ri.handleRequest(httpServerExchange);
+                    // if any of the interceptor response with an error, then return this handler and stop the chain.
+                    if(httpServerExchange.isResponseStarted()) return;
+                } catch (Exception e) {
+                    logger.error(e.getMessage(), e);
+                    // do not try the next interceptor in the list and the rest of middleware handlers in the chain.
+                    return;
+                }
+            }
+        }
     }
 
 }
