@@ -18,7 +18,6 @@ package com.networknt.audit;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.networknt.config.Config;
-import com.networknt.config.JsonMapper;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
@@ -328,7 +327,7 @@ public class AuditHandler implements MiddlewareHandler {
                 String mask = config.isMask() ? Mask.maskRegex(value, REQUEST_COOKIES_KEY, name) : value;
                 res.put(name, mask);
             }
-            auditMap.put(REQUEST_COOKIES_KEY, JsonMapper.toJson(res));
+            auditMap.put(REQUEST_COOKIES_KEY, res.toString());
         }
     }
 
