@@ -123,6 +123,6 @@ public class PathPrefixServiceHandler implements MiddlewareHandler {
 
     @Override
     public void reload() {
-        config.reload();;
+        config.reload();
     }
 }
