@@ -17,6 +17,7 @@ import com.networknt.proxy.PathPrefixAuth;
 import com.networknt.proxy.salesforce.SalesforceConfig;
 import com.networknt.proxy.salesforce.SalesforceHandler;
 import com.networknt.status.Status;
+import com.networknt.utility.HashUtil;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -104,7 +105,7 @@ public class ConquestHandler implements MiddlewareHandler {
                 if(logger.isTraceEnabled()) logger.trace("found with requestPath = " + requestPath + " prefix = " + pathPrefixAuth.getPathPrefix());
                 // matched the prefix found. handler it with the config for this prefix.
                 if(System.currentTimeMillis() >= (pathPrefixAuth.getExpiration() - 5000)) { // leave 5 seconds room and default value is 0
-                    String jwt = createJwt(pathPrefixAuth.getAuthIssuer(), pathPrefixAuth.getAuthSubject(), pathPrefixAuth.getAuthAudience(), "jti", pathPrefixAuth.getTokenTtl());
+                    String jwt = createJwt(pathPrefixAuth.getAuthIssuer(), pathPrefixAuth.getAuthSubject(), pathPrefixAuth.getAuthAudience(), HashUtil.generateUUID(), pathPrefixAuth.getTokenTtl());
                     Result<TokenResponse> result = getAccessToken(pathPrefixAuth.getTokenUrl(), jwt);
                     if(result.isSuccess()) {
                         pathPrefixAuth.setExpiration(System.currentTimeMillis() + 300 * 1000);
@@ -196,7 +197,8 @@ public class ConquestHandler implements MiddlewareHandler {
             }
 
             Map<String, String> parameters = new HashMap<>();
-            parameters.put("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer");
+            parameters.put("grant_type", "client_credentials");
+            parameters.put("clientAssertionType", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
             parameters.put("assertion", jwt);
 
             String form = parameters.entrySet()
