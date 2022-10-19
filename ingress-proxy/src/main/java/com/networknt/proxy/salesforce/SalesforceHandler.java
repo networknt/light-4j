@@ -114,30 +114,29 @@ public class SalesforceHandler implements MiddlewareHandler {
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         String requestPath = exchange.getRequestPath();
-        if(logger.isTraceEnabled()) logger.trace("requestPath = " + requestPath);
-
-        // handle the url rewrite here.
-        if(config.getUrlRewriteRules() != null && config.getUrlRewriteRules().size() > 0) {
-            boolean matched = false;
-            for(UrlRewriteRule rule : config.getUrlRewriteRules()) {
-                Matcher matcher = rule.getPattern().matcher(requestPath);
-                if(matcher.matches()) {
-                    matched = true;
-                    requestPath = matcher.replaceAll(rule.getReplace());
-                    if(logger.isTraceEnabled()) logger.trace("rewritten requestPath = " + requestPath);
-                    break;
-                }
-            }
-            // if no matched rule in the list, use the original requestPath.
-            if(!matched) requestPath = exchange.getRequestPath();
-        } else {
-            // there is no url rewrite rules, so use the original requestPath
-            requestPath = exchange.getRequestPath();
-        }
-
+        if(logger.isTraceEnabled()) logger.trace("original requestPath = " + requestPath);
         // make sure that the request path is in the key set. remember that key set only contains prefix not the full request path.
         for(PathPrefixAuth pathPrefixAuth: config.getPathPrefixAuths()) {
             if(requestPath.startsWith(pathPrefixAuth.getPathPrefix())) {
+                // handle the url rewrite here.
+                if(config.getUrlRewriteRules() != null && config.getUrlRewriteRules().size() > 0) {
+                    boolean matched = false;
+                    for(UrlRewriteRule rule : config.getUrlRewriteRules()) {
+                        Matcher matcher = rule.getPattern().matcher(requestPath);
+                        if(matcher.matches()) {
+                            matched = true;
+                            requestPath = matcher.replaceAll(rule.getReplace());
+                            if(logger.isTraceEnabled()) logger.trace("rewritten requestPath = " + requestPath);
+                            break;
+                        }
+                    }
+                    // if no matched rule in the list, use the original requestPath.
+                    if(!matched) requestPath = exchange.getRequestPath();
+                } else {
+                    // there is no url rewrite rules, so use the original requestPath
+                    requestPath = exchange.getRequestPath();
+                }
+
                 if(logger.isTraceEnabled()) logger.trace("found with requestPath = " + requestPath + " prefix = " + pathPrefixAuth.getPathPrefix());
                 // matched the prefix found. handler it with the config for this prefix.
                 if(System.currentTimeMillis() >= (pathPrefixAuth.getExpiration() - 5000)) { // leave 5 seconds room and default value is 0
