@@ -84,33 +84,32 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         String requestPath = exchange.getRequestPath();
         if(logger.isTraceEnabled()) logger.trace("original requestPath = " + requestPath);
-
-        // handle the url rewrite here.
-        if(config.getUrlRewriteRules() != null && config.getUrlRewriteRules().size() > 0) {
-            boolean matched = false;
-            for(UrlRewriteRule rule : config.getUrlRewriteRules()) {
-                Matcher matcher = rule.getPattern().matcher(requestPath);
-                if(matcher.matches()) {
-                    matched = true;
-                    requestPath = matcher.replaceAll(rule.getReplace());
-                    if(logger.isTraceEnabled()) logger.trace("rewritten requestPath = " + requestPath);
-                    break;
-                }
-            }
-            // if no matched rule in the list, use the original requestPath.
-            if(!matched) requestPath = exchange.getRequestPath();
-        } else {
-            // there is no url rewrite rules, so use the original requestPath
-            requestPath = exchange.getRequestPath();
-        }
-
         if (config.getPathHostMappings() != null) {
             for(String[] parts: config.getPathHostMappings()) {
                 if(requestPath.startsWith(parts[0])) {
+                    // handle the url rewrite here. It has to be the right path that applied for external service to do the url rewrite.
+                    if(config.getUrlRewriteRules() != null && config.getUrlRewriteRules().size() > 0) {
+                        boolean matched = false;
+                        for(UrlRewriteRule rule : config.getUrlRewriteRules()) {
+                            Matcher matcher = rule.getPattern().matcher(requestPath);
+                            if(matcher.matches()) {
+                                matched = true;
+                                requestPath = matcher.replaceAll(rule.getReplace());
+                                if(logger.isTraceEnabled()) logger.trace("rewritten requestPath = " + requestPath);
+                                break;
+                            }
+                        }
+                        // if no matched rule in the list, use the original requestPath.
+                        if(!matched) requestPath = exchange.getRequestPath();
+                    } else {
+                        // there is no url rewrite rules, so use the original requestPath
+                        requestPath = exchange.getRequestPath();
+                    }
+
                     String method = exchange.getRequestMethod().toString();
                     String requestHost = parts[1];
                     String queryString = exchange.getQueryString();
-                    if(logger.isTraceEnabled()) logger.trace("request host = " + requestHost + " method = " + method + " queryString = " + queryString);
+                    if(logger.isTraceEnabled()) logger.trace("request host = " + requestHost + " method = " + method + "requestPath = " + requestPath + " queryString = " + queryString);
                     HttpRequest.Builder builder = HttpRequest.newBuilder();
                     HttpRequest request = null;
                     if(queryString != null && !queryString.trim().isEmpty()) {
