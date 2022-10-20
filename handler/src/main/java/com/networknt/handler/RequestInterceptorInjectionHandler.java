@@ -244,10 +244,11 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
             }
             httpServerExchange.getRequestHeaders().put(Headers.CONTENT_LENGTH, length);
         }
-        this.invokeInterceptors(httpServerExchange);
 
         Connectors.ungetRequestBytes(httpServerExchange, bufferedData);
         Connectors.resetRequestChannel(httpServerExchange);
+
+        this.invokeInterceptors(httpServerExchange);
     }
 
     /**
