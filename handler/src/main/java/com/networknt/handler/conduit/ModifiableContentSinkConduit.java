@@ -4,6 +4,7 @@ import com.networknt.handler.BuffersUtils;
 import com.networknt.handler.ResponseInterceptor;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.service.SingletonServiceFactory;
+import io.undertow.conduits.ChunkedStreamSinkConduit;
 import io.undertow.connector.PooledByteBuffer;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.protocol.http.ServerFixedLengthStreamSinkConduit;
@@ -21,6 +22,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 
 public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<StreamSinkConduit> {
     public static int MAX_BUFFERS = 1024;
@@ -122,10 +124,14 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
             this.updateContentLength(this.exchange, dests);
         }
 
+        var ind = 0;
         for (PooledByteBuffer dest : dests) {
             if (dest != null) {
+                if (logger.isTraceEnabled())
+                    logger.info("PooledBufferIndex: {}, BufferInStringFormat: {}", StandardCharsets.UTF_8.decode(dest.getBuffer().duplicate()), ind);
                 next.write(dest.getBuffer());
             }
+            ind++;
         }
 
         next.terminateWrites();
