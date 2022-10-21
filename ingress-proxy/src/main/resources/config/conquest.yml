@@ -17,13 +17,13 @@ enableHttp2: ${conquest.enableHttp2:false}
 # or request path prefix, you need to define an item in the list for authentication.
 pathPrefixAuths: ${conquest.pathPrefixAuths:}
 # format with JSON for config server
-#  [{"pathPrefix":"/conquest","authIssuer":"Sunlife","authSubject":"conquest-public-uat-sunlife-jwt-integration","authAudience":"app://d5b1cb55-3835-52fc-9ef3-e38d58856394","tokenTtl":180,"tokenUrl":"https://sunlife-auth.uat.conquest-public.conquestplanning.com/login/oauth2/realms/root/realms/con/realms/uat/access_token","serviceHost":"https://conquestplanning.com"}]
+#  [{"pathPrefix":"/conquest","authIssuer":"Networknt","authSubject":"conquest-public-uat-networknt-jwt-integration","authAudience":"app://d5b1cb55-3835-52fc-9ef3-e38d58856396","tokenTtl":180,"tokenUrl":"https://sunlife-auth.uat.conquest-public.conquestplanning.com/login/oauth2/realms/root/realms/con/realms/uat/access_token","serviceHost":"https://conquestplanning.com"}]
 
 # format with YAML for readability
 #  - pathPrefix: /conquest
-#    authIssuer: Sunlife
-#    authSubject: conquest-public-uat-sunlife-jwt-integration
-#    authAudience: app://d5b1cb55-3835-52fc-9ef3-e38d58856394
+#    authIssuer: Networknt
+#    authSubject: conquest-public-uat-networknt-jwt-integration
+#    authAudience: app://d5b1cb55-3835-52fc-9ef3-e38d58856396
 #    tokenTtl: 180
 #    tokenUrl: https://sunlife-auth.uat.conquest-public.conquestplanning.com/login/oauth2/realms/root/realms/con/realms/uat/access_token
 #    serviceHost: https://conquestplanning.com
