@@ -72,88 +72,94 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  */
 public class TokenHandler implements MiddlewareHandler {
-    public static final String CONFIG_NAME = "token";
-    public static final String ENABLED = "enabled";
     private static final String HANDLER_DEPENDENCY_ERROR = "ERR10074";
 
-    public static Map<String, Object> config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
+    private TokenConfig config;
     static Logger logger = LoggerFactory.getLogger(TokenHandler.class);
     protected volatile HttpHandler next;
     // Cached jwt token for this handler on behalf of a client by serviceId as the key
     private final Map<String, Jwt> cache = new ConcurrentHashMap();
-    public TokenHandler() { }
+    public TokenHandler() {
+        if(logger.isInfoEnabled()) logger.info("TokenHandler is loaded.");
+        config = TokenConfig.load();
+    }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         // This handler must be put after the prefix or dict handler so that the serviceId is
         // readily available in the header resolved by the path or the endpoint from the request.
-        HeaderValues headerValues = exchange.getRequestHeaders().get(HttpStringConstants.SERVICE_ID);
-        String serviceId = null;
-        if(headerValues != null) serviceId = headerValues.getFirst();
-        if(serviceId == null) {
-            // this handler should be before the router and after the handler to resolve the serviceId from path
-            // or endpoint like the PathPrefixServiceHandler or ServiceDictHandler.
-            logger.error("The serviceId cannot be resolved. Do you have PathPrefixServiceHandler or ServiceDictHandler before this handler?");
-            setExchangeStatus(exchange, HANDLER_DEPENDENCY_ERROR, "TokenHandler", "PathPrefixServiceHandler");
-            return;
-        }
-        ClientConfig clientConfig = ClientConfig.get();
-        Map<String, Object> tokenConfig = clientConfig.getTokenConfig();
-        Map<String, Object> ccConfig = (Map<String, Object>)tokenConfig.get(ClientConfig.CLIENT_CREDENTIALS);
-
-        Jwt cachedJwt = cache.get(serviceId);
-        // get a new token if cachedJwt is null or the jwt is about expired.
-        if(cachedJwt == null || cachedJwt.getExpire() - Long.valueOf((Integer)tokenConfig.get(ClientConfig.TOKEN_RENEW_BEFORE_EXPIRED)) < System.currentTimeMillis()) {
-            Jwt.Key key = new Jwt.Key(serviceId);
-            cachedJwt = new Jwt(key); // create a new instance if the cache is empty for the serviceId.
-
-            if(clientConfig.isMultipleAuthServers()) {
-                // get the right client credentials configuration based on the serviceId
-                Map<String, Object> serviceIdAuthServers = (Map<String, Object>)ccConfig.get(ClientConfig.SERVICE_ID_AUTH_SERVERS);
-                if(serviceIdAuthServers == null) {
-                    throw new RuntimeException("serviceIdAuthServers property is missing in the token client credentials configuration");
-                }
-                Map<String, Object> authServerConfig = (Map<String, Object>)serviceIdAuthServers.get(serviceId);
-                // overwrite some elements in the auth server config if it is not defined.
-                if(authServerConfig.get(ClientConfig.PROXY_HOST) == null) authServerConfig.put(ClientConfig.PROXY_HOST, tokenConfig.get(ClientConfig.PROXY_HOST));
-                if(authServerConfig.get(ClientConfig.PROXY_PORT) == null) authServerConfig.put(ClientConfig.PROXY_PORT, tokenConfig.get(ClientConfig.PROXY_PORT));
-                if(authServerConfig.get(ClientConfig.TOKEN_RENEW_BEFORE_EXPIRED) == null) authServerConfig.put(ClientConfig.TOKEN_RENEW_BEFORE_EXPIRED, tokenConfig.get(ClientConfig.TOKEN_RENEW_BEFORE_EXPIRED));
-                if(authServerConfig.get(ClientConfig.EXPIRED_REFRESH_RETRY_DELAY) == null) authServerConfig.put(ClientConfig.EXPIRED_REFRESH_RETRY_DELAY, tokenConfig.get(ClientConfig.EXPIRED_REFRESH_RETRY_DELAY));
-                if(authServerConfig.get(ClientConfig.EARLY_REFRESH_RETRY_DELAY) == null) authServerConfig.put(ClientConfig.EARLY_REFRESH_RETRY_DELAY, tokenConfig.get(ClientConfig.EARLY_REFRESH_RETRY_DELAY));
-                cachedJwt.setCcConfig(authServerConfig);
-            } else {
-                // only one client credentials configuration, populate some common elements to the ccConfig from tokenConfig.
-                ccConfig.put(ClientConfig.PROXY_HOST, tokenConfig.get(ClientConfig.PROXY_HOST));
-                ccConfig.put(ClientConfig.PROXY_PORT, tokenConfig.get(ClientConfig.PROXY_PORT));
-                ccConfig.put(ClientConfig.TOKEN_RENEW_BEFORE_EXPIRED, tokenConfig.get(ClientConfig.TOKEN_RENEW_BEFORE_EXPIRED));
-                ccConfig.put(ClientConfig.EXPIRED_REFRESH_RETRY_DELAY, tokenConfig.get(ClientConfig.EXPIRED_REFRESH_RETRY_DELAY));
-                ccConfig.put(ClientConfig.EARLY_REFRESH_RETRY_DELAY, tokenConfig.get(ClientConfig.EARLY_REFRESH_RETRY_DELAY));
-                cachedJwt.setCcConfig(ccConfig);
-            }
-            Result result = OauthHelper.populateCCToken(cachedJwt);
-            if(result.isFailure()) {
-                logger.error("Cannot populate or renew jwt for client credential grant type: " + result.getError().toString());
-                setExchangeStatus(exchange, result.getError());
+        if(logger.isTraceEnabled()) logger.trace("TokenHandler.handleRequest is called.");
+        String requestPath = exchange.getRequestPath();
+        // this handler will only work with a list of applied path prefixes in the token.yml config file.
+        if (config.getAppliedPathPrefixes().stream().anyMatch(s -> requestPath.startsWith(s))) {
+            HeaderValues headerValues = exchange.getRequestHeaders().get(HttpStringConstants.SERVICE_ID);
+            String serviceId = null;
+            if(headerValues != null) serviceId = headerValues.getFirst();
+            if(serviceId == null) {
+                // this handler should be before the router and after the handler to resolve the serviceId from path
+                // or endpoint like the PathPrefixServiceHandler or ServiceDictHandler.
+                logger.error("The serviceId cannot be resolved. Do you have PathPrefixServiceHandler or ServiceDictHandler before this handler?");
+                setExchangeStatus(exchange, HANDLER_DEPENDENCY_ERROR, "TokenHandler", "PathPrefixServiceHandler");
                 return;
             }
-            // put the cachedJwt to the cache.
-            cache.put(serviceId, cachedJwt);
-        }
-        // check if there is a bear token in the authorization header in the request. If there
-        // is one, then this must be the subject token that is linked to the original user.
-        // We will keep this token in the Authorization header but create a new token with
-        // client credentials grant type with scopes for the particular client. (Can we just
-        // assume that the subject token has the scope already?)
-        String token = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
-        if(token == null) {
-            if(logger.isTraceEnabled()) logger.trace("Adding jwt token to Authorization header with Bearer " + cachedJwt.getJwt().substring(0, 20));
-            exchange.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + cachedJwt.getJwt());
-        } else {
-            if(logger.isTraceEnabled()) {
-                logger.trace("Authorization header is used with " + token.substring(0, 20));
-                logger.trace("Adding jwt token to X-Scope-Token header with Bearer " + cachedJwt.getJwt().substring(0, 20));
+            ClientConfig clientConfig = ClientConfig.get();
+            Map<String, Object> tokenConfig = clientConfig.getTokenConfig();
+            Map<String, Object> ccConfig = (Map<String, Object>)tokenConfig.get(ClientConfig.CLIENT_CREDENTIALS);
+
+            Jwt cachedJwt = cache.get(serviceId);
+            // get a new token if cachedJwt is null or the jwt is about expired.
+            if(cachedJwt == null || cachedJwt.getExpire() - Long.valueOf((Integer)tokenConfig.get(ClientConfig.TOKEN_RENEW_BEFORE_EXPIRED)) < System.currentTimeMillis()) {
+                Jwt.Key key = new Jwt.Key(serviceId);
+                cachedJwt = new Jwt(key); // create a new instance if the cache is empty for the serviceId.
+
+                if(clientConfig.isMultipleAuthServers()) {
+                    // get the right client credentials configuration based on the serviceId
+                    Map<String, Object> serviceIdAuthServers = (Map<String, Object>)ccConfig.get(ClientConfig.SERVICE_ID_AUTH_SERVERS);
+                    if(serviceIdAuthServers == null) {
+                        throw new RuntimeException("serviceIdAuthServers property is missing in the token client credentials configuration");
+                    }
+                    Map<String, Object> authServerConfig = (Map<String, Object>)serviceIdAuthServers.get(serviceId);
+                    // overwrite some elements in the auth server config if it is not defined.
+                    if(authServerConfig.get(ClientConfig.PROXY_HOST) == null) authServerConfig.put(ClientConfig.PROXY_HOST, tokenConfig.get(ClientConfig.PROXY_HOST));
+                    if(authServerConfig.get(ClientConfig.PROXY_PORT) == null) authServerConfig.put(ClientConfig.PROXY_PORT, tokenConfig.get(ClientConfig.PROXY_PORT));
+                    if(authServerConfig.get(ClientConfig.TOKEN_RENEW_BEFORE_EXPIRED) == null) authServerConfig.put(ClientConfig.TOKEN_RENEW_BEFORE_EXPIRED, tokenConfig.get(ClientConfig.TOKEN_RENEW_BEFORE_EXPIRED));
+                    if(authServerConfig.get(ClientConfig.EXPIRED_REFRESH_RETRY_DELAY) == null) authServerConfig.put(ClientConfig.EXPIRED_REFRESH_RETRY_DELAY, tokenConfig.get(ClientConfig.EXPIRED_REFRESH_RETRY_DELAY));
+                    if(authServerConfig.get(ClientConfig.EARLY_REFRESH_RETRY_DELAY) == null) authServerConfig.put(ClientConfig.EARLY_REFRESH_RETRY_DELAY, tokenConfig.get(ClientConfig.EARLY_REFRESH_RETRY_DELAY));
+                    cachedJwt.setCcConfig(authServerConfig);
+                } else {
+                    // only one client credentials configuration, populate some common elements to the ccConfig from tokenConfig.
+                    ccConfig.put(ClientConfig.PROXY_HOST, tokenConfig.get(ClientConfig.PROXY_HOST));
+                    ccConfig.put(ClientConfig.PROXY_PORT, tokenConfig.get(ClientConfig.PROXY_PORT));
+                    ccConfig.put(ClientConfig.TOKEN_RENEW_BEFORE_EXPIRED, tokenConfig.get(ClientConfig.TOKEN_RENEW_BEFORE_EXPIRED));
+                    ccConfig.put(ClientConfig.EXPIRED_REFRESH_RETRY_DELAY, tokenConfig.get(ClientConfig.EXPIRED_REFRESH_RETRY_DELAY));
+                    ccConfig.put(ClientConfig.EARLY_REFRESH_RETRY_DELAY, tokenConfig.get(ClientConfig.EARLY_REFRESH_RETRY_DELAY));
+                    cachedJwt.setCcConfig(ccConfig);
+                }
+                Result result = OauthHelper.populateCCToken(cachedJwt);
+                if(result.isFailure()) {
+                    logger.error("Cannot populate or renew jwt for client credential grant type: " + result.getError().toString());
+                    setExchangeStatus(exchange, result.getError());
+                    return;
+                }
+                // put the cachedJwt to the cache.
+                cache.put(serviceId, cachedJwt);
             }
-            exchange.getRequestHeaders().put(HttpStringConstants.SCOPE_TOKEN, "Bearer " + cachedJwt.getJwt());
+            // check if there is a bear token in the authorization header in the request. If there
+            // is one, then this must be the subject token that is linked to the original user.
+            // We will keep this token in the Authorization header but create a new token with
+            // client credentials grant type with scopes for the particular client. (Can we just
+            // assume that the subject token has the scope already?)
+            String token = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
+            if(token == null) {
+                if(logger.isTraceEnabled()) logger.trace("Adding jwt token to Authorization header with Bearer " + cachedJwt.getJwt().substring(0, 20));
+                exchange.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + cachedJwt.getJwt());
+            } else {
+                if(logger.isTraceEnabled()) {
+                    logger.trace("Authorization header is used with " + token.substring(0, 20));
+                    logger.trace("Adding jwt token to X-Scope-Token header with Bearer " + cachedJwt.getJwt().substring(0, 20));
+                }
+                exchange.getRequestHeaders().put(HttpStringConstants.SCOPE_TOKEN, "Bearer " + cachedJwt.getJwt());
+            }
         }
         Handler.next(exchange, next);
     }
@@ -172,17 +178,16 @@ public class TokenHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        Object object = config.get(ENABLED);
-        return object != null && (Boolean) object;
+        return config.isEnabled();
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(TokenHandler.class.getName(), config, null);
+        ModuleRegistry.registerModule(TokenHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void reload() {
-        config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
+        config.reload();
     }
 }
