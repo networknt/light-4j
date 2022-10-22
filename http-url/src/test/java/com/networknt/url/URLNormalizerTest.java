@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class URLNormalizerTest {
 
@@ -66,7 +67,10 @@ public class URLNormalizerTest {
 //          System.out.println("toURI()   : " + n.toURI());
         assertEquals(t,  n.toString());
         assertEquals(t,  n.toURL().toString());
-        assertEquals(t,  n.toURI().toString());
+        String t1 = "http://example.org/1/~a_b:c%5Cd_%7Ce~f!g%20h/%5Ei%5EJ%5Bk%5D/l./"
+                        + "m/p/q/r/?dd=ee&bb=aa";
+        String res = n.toURI().toString();
+        assertTrue(res, t.equals(res) || t1.equals(res));
     }
 
     @Test
