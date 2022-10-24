@@ -15,6 +15,7 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.protocol.http.HttpContinue;
 import io.undertow.util.Headers;
+import io.undertow.util.HttpString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.Buffers;
@@ -84,8 +85,6 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
                 if(logger.isDebugEnabled()) logger.debug("request can be transformed since no Expect headers found");
 
                 Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
-                // TODO any auditInfo properties to be added here?
-
                 // checked the RuleLoaderStartupHook to ensure it is loaded. If not, return an error to the caller.
                 if(RuleLoaderStartupHook.endpointRules == null) {
                     logger.error("RuleLoaderStartupHook endpointRules is null");
@@ -155,6 +154,21 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
                                     case "requestURI":
                                         String requestURI = (String)result.get("requestURI");
                                         exchange.setRequestURI(requestURI);
+                                        break;
+                                    case "requestHeader":
+                                        // if requestHeaders object is null, ignore it.
+                                        Map<String, Object> requestHeaders = (Map)result.get("requestHeaders");
+                                        if(requestHeaders != null) {
+                                            // manipulate the request headers.
+                                            List<String> removeList = (List)requestHeaders.get("remove");
+                                            if(removeList != null) {
+                                                removeList.forEach(s -> exchange.getRequestHeaders().remove(s));
+                                            }
+                                            Map<String, Object> updateMap = (Map)requestHeaders.get("update");
+                                            if(updateMap != null) {
+                                                updateMap.forEach((k, v) -> exchange.getRequestHeaders().put(new HttpString(k), (String)v));
+                                            }
+                                        }
                                         break;
                                     case "requestBody":
                                         String s = (String)result.get("requestBody");

@@ -80,8 +80,8 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
             if(engine == null) {
                 engine = new RuleEngine(RuleLoaderStartupHook.rules, null);
             }
-            String s = BuffersUtils.toString(getBuffer(exchange), StandardCharsets.UTF_8);
-            if(logger.isTraceEnabled()) logger.trace("original response body = " + s);
+            String responseBody = BuffersUtils.toString(getBuffer(exchange), StandardCharsets.UTF_8);
+            if(logger.isTraceEnabled()) logger.trace("original response body = " + responseBody);
             // call the rule engine to transform the response body and response headers. The input contains all the request
             // and response elements.
             Map<String, Object> objMap = new HashMap<>();
@@ -100,7 +100,7 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
             }
             Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
             objMap.put("auditInfo", auditInfo);
-            objMap.put("responseBody", s);
+            objMap.put("responseBody", responseBody);
             objMap.put("statusCode", exchange.getStatusCode());
             // need to get the rule/rules to execute from the RuleLoaderStartupHook. First, get the endpoint.
             String endpoint = null;
@@ -143,14 +143,26 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
                     // you can only update the response headers and response body in the transformation.
                     switch(entry.getKey()) {
                         case "responseHeaders":
-
+                            // if responseHeaders object is null, ignore it.
+                            Map<String, Object> responseHeaders = (Map)result.get("responseHeaders");
+                            if(responseHeaders != null) {
+                                // manipulate the response headers.
+                                List<String> removeList = (List)responseHeaders.get("remove");
+                                if(removeList != null) {
+                                    removeList.forEach(s -> exchange.getResponseHeaders().remove(s));
+                                }
+                                Map<String, Object> updateMap = (Map)responseHeaders.get("update");
+                                if(updateMap != null) {
+                                    updateMap.forEach((k, v) -> exchange.getResponseHeaders().put(new HttpString(k), (String)v));
+                                }
+                            }
                             break;
                         case "responseBody":
-                            s = (String)result.get("responseBody");
+                            responseBody = (String)result.get("responseBody");
                             // change the buffer
                             PooledByteBuffer[] dest = new PooledByteBuffer[MAX_BUFFERS];
                             setBuffer(exchange, dest);
-                            BuffersUtils.transfer(ByteBuffer.wrap(s.getBytes()), dest, exchange);
+                            BuffersUtils.transfer(ByteBuffer.wrap(responseBody.getBytes()), dest, exchange);
                             break;
                     }
                 }
