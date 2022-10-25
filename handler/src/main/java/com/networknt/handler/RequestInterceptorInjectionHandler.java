@@ -125,6 +125,9 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
                 throw e;
             }
 
+        } else {
+            // no need to inject the content for the body. just call the interceptors here.
+            this.invokeInterceptors(httpServerExchange);
         }
         Handler.next(httpServerExchange, next);
     }
