@@ -13,12 +13,14 @@ import io.undertow.Handlers;
 import io.undertow.connector.PooledByteBuffer;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,8 +82,11 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
             if(engine == null) {
                 engine = new RuleEngine(RuleLoaderStartupHook.rules, null);
             }
-            String responseBody = BuffersUtils.toString(getBuffer(exchange), StandardCharsets.UTF_8);
-            if(logger.isTraceEnabled()) logger.trace("original response body = " + responseBody);
+            String responseBody = null;
+            if(!isCompressed(exchange)) {
+                responseBody = BuffersUtils.toString(getBuffer(exchange), StandardCharsets.UTF_8);
+                if(logger.isTraceEnabled()) logger.trace("original response body = " + responseBody);
+            }
             // call the rule engine to transform the response body and response headers. The input contains all the request
             // and response elements.
             Map<String, Object> objMap = new HashMap<>();
@@ -100,7 +105,7 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
             }
             Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
             objMap.put("auditInfo", auditInfo);
-            objMap.put("responseBody", responseBody);
+            if(responseBody != null) objMap.put("responseBody", responseBody);
             objMap.put("statusCode", exchange.getStatusCode());
             // need to get the rule/rules to execute from the RuleLoaderStartupHook. First, get the endpoint.
             String endpoint = null;
@@ -159,10 +164,12 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
                             break;
                         case "responseBody":
                             responseBody = (String)result.get("responseBody");
-                            // change the buffer
-                            PooledByteBuffer[] dest = new PooledByteBuffer[MAX_BUFFERS];
-                            setBuffer(exchange, dest);
-                            BuffersUtils.transfer(ByteBuffer.wrap(responseBody.getBytes()), dest, exchange);
+                            if(responseBody != null && !isCompressed(exchange)) {
+                                // change the buffer
+                                PooledByteBuffer[] dest = new PooledByteBuffer[MAX_BUFFERS];
+                                setBuffer(exchange, dest);
+                                BuffersUtils.transfer(ByteBuffer.wrap(responseBody.getBytes()), dest, exchange);
+                            }
                             break;
                     }
                 }
@@ -186,6 +193,20 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
             }
         }
         exchange.putAttachment(AttachmentConstants.BUFFERED_RESPONSE_DATA_KEY, raw);
+    }
+
+    private boolean isCompressed(HttpServerExchange exchange) {
+        // check if the request has a header accept encoding with gzip and deflate.
+        boolean compressed = false;
+        var contentEncodings = exchange.getResponseHeaders().get(Headers.CONTENT_ENCODING_STRING);
+        if(contentEncodings != null) {
+            for(String values: contentEncodings) {
+                if(Arrays.stream(values.split(",")).anyMatch((v) -> Headers.GZIP.toString().equals(v) || Headers.COMPRESS.toString().equals(v) || Headers.DEFLATE.toString().equals(v))) {
+                    compressed = true;
+                }
+            }
+        }
+        return compressed;
     }
 
 }
