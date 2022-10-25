@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -87,7 +88,7 @@ public class ResponseBodyInterceptor implements ResponseInterceptor {
     private boolean shouldParseBody(final HttpServerExchange exchange) {
         String requestPath = exchange.getRequestPath();
         boolean isPathConfigured = config.getAppliedPathPrefixes() == null ? true : config.getAppliedPathPrefixes().stream().anyMatch(s -> requestPath.startsWith(s));
-        return isPathConfigured && isAttachContentType(exchange);
+        return isPathConfigured && isAttachContentType(exchange) && !isCompressed(exchange);
     }
     private boolean isAttachContentType(final HttpServerExchange exchange) {
         String contentType = exchange.getResponseHeaders().getFirst(Headers.CONTENT_TYPE);
@@ -138,6 +139,19 @@ public class ResponseBodyInterceptor implements ResponseInterceptor {
             exchange.putAttachment(AttachmentConstants.RESPONSE_BODY_STRING, string);
         }
         return true;
+    }
+    private boolean isCompressed(HttpServerExchange exchange) {
+        // check if the request has a header accept encoding with gzip and deflate.
+        boolean compressed = false;
+        var contentEncodings = exchange.getResponseHeaders().get(Headers.CONTENT_ENCODING_STRING);
+        if(contentEncodings != null) {
+            for(String values: contentEncodings) {
+                if(Arrays.stream(values.split(",")).anyMatch((v) -> Headers.GZIP.toString().equals(v) || Headers.COMPRESS.toString().equals(v) || Headers.DEFLATE.toString().equals(v))) {
+                    compressed = true;
+                }
+            }
+        }
+        return compressed;
     }
 
 }

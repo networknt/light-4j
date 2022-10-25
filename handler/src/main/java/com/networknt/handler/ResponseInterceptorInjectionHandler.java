@@ -123,7 +123,7 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
             //     MDC.setContextMap(mdcCtx);
             // }
 
-            if (interceptors != null && !isCompressed(exchange) && Arrays.stream(interceptors).anyMatch(ri -> ri.isRequiredContent())) {
+            if (interceptors != null && Arrays.stream(interceptors).anyMatch(ri -> ri.isRequiredContent())) {
                 var mcsc = new ModifiableContentSinkConduit(factory.create(), cexchange);
                 if(logger.isTraceEnabled()) logger.trace("created a ModifiableContentSinkConduit instance " + mcsc);
                 cexchange.putAttachment(MCSC_KEY, mcsc);
@@ -137,19 +137,4 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
         // if any of the interceptors send response, don't call other middleware handlers in the chain.
         if(!exchange.isResponseStarted()) Handler.next(exchange, next);
     }
-
-    private boolean isCompressed(HttpServerExchange exchange) {
-        // check if the request has a header accept encoding with gzip and deflate.
-        boolean compressed = false;
-        var acceptedEncodings = exchange.getRequestHeaders().get(Headers.ACCEPT_ENCODING_STRING);
-        if(acceptedEncodings != null) {
-            for(String values: acceptedEncodings) {
-                if(Arrays.stream(values.split(",")).anyMatch((v) -> Headers.GZIP.toString().equals(v) || Headers.DEFLATE.toString().equals(v))) {
-                    compressed = true;
-                }
-            }
-        }
-        return compressed;
-    }
-
 }
