@@ -155,7 +155,7 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
                                         String requestURI = (String)result.get("requestURI");
                                         exchange.setRequestURI(requestURI);
                                         break;
-                                    case "requestHeader":
+                                    case "requestHeaders":
                                         // if requestHeaders object is null, ignore it.
                                         Map<String, Object> requestHeaders = (Map)result.get("requestHeaders");
                                         if(requestHeaders != null) {
