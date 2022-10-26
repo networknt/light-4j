@@ -266,20 +266,26 @@ public class ProxyHandler implements HttpHandler {
 
         @Override
         public void failed(final HttpServerExchange exchange) {
+            if(logger.isDebugEnabled()) logger.debug("Failed calling backend with tries = " + tries + " maxRetryAttempts = " + maxRetryAttempts);
             final long time = System.currentTimeMillis();
             if (tries++ < maxRetryAttempts) {
                 if (timeout > 0 && time > timeout) {
+                    if(logger.isTraceEnabled()) logger.trace("Current time = " + time + " passes timeout " + timeout);
                     cancel(exchange);
                 } else {
                     target = proxyClient.findTarget(exchange);
+                    if(logger.isTraceEnabled()) logger.trace("Retry target = " + target);
                     if (target != null) {
                         final long remaining = timeout > 0 ? timeout - time : -1;
+                        if(logger.isTraceEnabled()) logger.trace("Retry with remaining = " + remaining);
                         proxyClient.getConnection(target, exchange, this, remaining, TimeUnit.MILLISECONDS);
                     } else {
+                        if(logger.isTraceEnabled()) logger.trace("Target is null, cannot resolve the backend");
                         couldNotResolveBackend(exchange); // The context was registered when we started, so return 503
                     }
                 }
             } else {
+                if(logger.isTraceEnabled()) logger.trace("Max number fo retry attempts reached.");
                 couldNotResolveBackend(exchange);
             }
         }
