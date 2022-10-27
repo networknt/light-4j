@@ -124,14 +124,14 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
             this.updateContentLength(this.exchange, dests);
         }
 
-        var ind = 0;
+//        var ind = 0;
         for (PooledByteBuffer dest : dests) {
             if (dest != null) {
-                if (logger.isTraceEnabled())
-                    logger.info("PooledBufferIndex: {}, BufferInStringFormat: {}", StandardCharsets.UTF_8.decode(dest.getBuffer().duplicate()), ind);
+//                if (logger.isTraceEnabled())
+//                    logger.info("PooledBufferIndex: {}, BufferInStringFormat: {}", StandardCharsets.UTF_8.decode(dest.getBuffer().duplicate()), ind);
                 next.write(dest.getBuffer());
             }
-            ind++;
+//            ind++;
         }
 
         next.terminateWrites();
@@ -152,13 +152,13 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
                 length += dest.getBuffer().limit();
             }
         }
-
+        if(logger.isTraceEnabled()) logger.trace("PooledByteBuffer array added up length = " + length);
         exchange.getResponseHeaders().put(Headers.CONTENT_LENGTH, length);
 
         // need also to update length of ServerFixedLengthStreamSinkConduit. Should we do this for anything that extends AbstractFixedLengthStreamSinkConduit?
         if (this.next instanceof ServerFixedLengthStreamSinkConduit) {
             Method m;
-
+            if(logger.isTraceEnabled()) logger.trace("The next conduit is ServerFixedLengthStreamSinkConduit and reset the length.");
             try {
                 m = ServerFixedLengthStreamSinkConduit.class.getDeclaredMethod("reset", long.class, HttpServerExchange.class);
                 m.setAccessible(true);
@@ -169,6 +169,7 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
 
             try {
                 m.invoke(next, length, exchange);
+                if(logger.isTraceEnabled()) logger.trace("reset ServerFixedLengthStreamSinkConduit length = " + length);
             } catch (Throwable ex) {
                 logger.error("could not access BUFFERED_REQUEST_DATA field", ex);
                 throw new RuntimeException("could not access BUFFERED_REQUEST_DATA field", ex);
