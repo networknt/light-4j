@@ -124,14 +124,14 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
             this.updateContentLength(this.exchange, dests);
         }
 
-//        var ind = 0;
+        var ind = 0;
         for (PooledByteBuffer dest : dests) {
             if (dest != null) {
-//                if (logger.isTraceEnabled())
-//                    logger.info("PooledBufferIndex: {}, BufferInStringFormat: {}", StandardCharsets.UTF_8.decode(dest.getBuffer().duplicate()), ind);
+                if (logger.isTraceEnabled())
+                    logger.info("PooledBufferIndex: {}, BufferInStringFormat: {}", StandardCharsets.UTF_8.decode(dest.getBuffer().duplicate()), ind);
                 next.write(dest.getBuffer());
             }
-//            ind++;
+            ind++;
         }
 
         next.terminateWrites();
