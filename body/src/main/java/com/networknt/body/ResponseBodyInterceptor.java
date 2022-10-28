@@ -27,7 +27,6 @@ import static com.networknt.body.BodyHandler.REQUEST_BODY_STRING;
 public class ResponseBodyInterceptor implements ResponseInterceptor {
     static final Logger logger = LoggerFactory.getLogger(ResponseBodyInterceptor.class);
     static final String CONTENT_TYPE_MISMATCH = "ERR10015";
-    static final String PAYLOAD_TOO_LARGE = "ERR10068";
 
     public static int MAX_BUFFERS = 1024;
     private BodyConfig config;
@@ -81,8 +80,6 @@ public class ResponseBodyInterceptor implements ResponseInterceptor {
                 if(logger.isInfoEnabled()) logger.info("Failed to attached the response body to the exchange");
             }
         }
-        // as an interceptor, we don't need to call the next handler in the chain.
-        // Handler.next(exchange, next);
     }
 
     private boolean shouldParseBody(final HttpServerExchange exchange) {
@@ -101,7 +98,7 @@ public class ResponseBodyInterceptor implements ResponseInterceptor {
      * Method used to parse the body into a Map or a List and attach it into exchange
      *
      * @param exchange exchange to be attached
-     * @param string   raw request body
+     * @param string   raw response body
      */
     private boolean attachJsonBody(final HttpServerExchange exchange, String string) {
         Object body;
@@ -113,11 +110,9 @@ public class ResponseBodyInterceptor implements ResponseInterceptor {
                 });
                 exchange.putAttachment(AttachmentConstants.RESPONSE_BODY, body);
             } catch (JsonProcessingException e) {
-                if(exchange.getConnection().getBufferSize() <= string.length()) {
-                    setExchangeStatus(exchange, PAYLOAD_TOO_LARGE, "application/json");
-                } else {
-                    setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
-                }
+                if(logger.isTraceEnabled())
+                    logger.error("Response body failed to attach with exception {}", e.getMessage(), e);
+                setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
                 return false;
             }
         } else if (string.startsWith("[")) {
@@ -126,11 +121,10 @@ public class ResponseBodyInterceptor implements ResponseInterceptor {
                 });
                 exchange.putAttachment(AttachmentConstants.RESPONSE_BODY, body);
             } catch (JsonProcessingException e) {
-                if(exchange.getConnection().getBufferSize() <= string.length()) {
-                    setExchangeStatus(exchange, PAYLOAD_TOO_LARGE, "application/json");
-                } else {
-                    setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
-                }
+                if(logger.isTraceEnabled())
+                    logger.error("Response body failed to attach with exception: {}", e.getMessage(), e);
+                setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
+
                 return false;
             }
         }
