@@ -82,11 +82,8 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
             if(engine == null) {
                 engine = new RuleEngine(RuleLoaderStartupHook.rules, null);
             }
-            String responseBody = null;
-            if(!isCompressed(exchange)) {
-                responseBody = BuffersUtils.toString(getBuffer(exchange), StandardCharsets.UTF_8);
-                if(logger.isTraceEnabled()) logger.trace("original response body = " + responseBody);
-            }
+            String responseBody = BuffersUtils.toString(getBuffer(exchange), StandardCharsets.UTF_8);
+            if(logger.isTraceEnabled()) logger.trace("original response body = " + responseBody);
             // call the rule engine to transform the response body and response headers. The input contains all the request
             // and response elements.
             Map<String, Object> objMap = new HashMap<>();
@@ -164,7 +161,7 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
                             break;
                         case "responseBody":
                             responseBody = (String)result.get("responseBody");
-                            if(responseBody != null && !isCompressed(exchange)) {
+                            if(responseBody != null) {
                                 // change the buffer
                                 PooledByteBuffer[] dest = new PooledByteBuffer[MAX_BUFFERS];
                                 setBuffer(exchange, dest);
@@ -194,19 +191,4 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
         }
         exchange.putAttachment(AttachmentConstants.BUFFERED_RESPONSE_DATA_KEY, raw);
     }
-
-    private boolean isCompressed(HttpServerExchange exchange) {
-        // check if the request has a header accept encoding with gzip and deflate.
-        boolean compressed = false;
-        var contentEncodings = exchange.getResponseHeaders().get(Headers.CONTENT_ENCODING_STRING);
-        if(contentEncodings != null) {
-            for(String values: contentEncodings) {
-                if(Arrays.stream(values.split(",")).anyMatch((v) -> Headers.GZIP.toString().equals(v) || Headers.COMPRESS.toString().equals(v) || Headers.DEFLATE.toString().equals(v))) {
-                    compressed = true;
-                }
-            }
-        }
-        return compressed;
-    }
-
 }
