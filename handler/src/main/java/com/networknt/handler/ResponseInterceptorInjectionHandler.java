@@ -135,7 +135,7 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
         // forceIdentityEncodingForInterceptors(exchange);
         // if any of the interceptors send response, don't call other middleware handlers in the chain.
         if(!exchange.isResponseStarted()) {
-            if(logger.isTraceEnabled()) logger.trace("response is not started, calling next handler = " + next.getClass().getName());
+            if(logger.isTraceEnabled()) logger.trace("response is not started, calling next handler.");
             Handler.next(exchange, next);
         } else {
             if(logger.isTraceEnabled()) logger.trace("response is started already, do not call next handler in the chain.");
