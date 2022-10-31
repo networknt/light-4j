@@ -91,7 +91,7 @@ public class TokenHandler implements MiddlewareHandler {
         if(logger.isTraceEnabled()) logger.trace("TokenHandler.handleRequest is called.");
         String requestPath = exchange.getRequestPath();
         // this handler will only work with a list of applied path prefixes in the token.yml config file.
-        if (config.getAppliedPathPrefixes().stream().anyMatch(s -> requestPath.startsWith(s))) {
+        if (config.getAppliedPathPrefixes() != null && config.getAppliedPathPrefixes().stream().anyMatch(s -> requestPath.startsWith(s))) {
             HeaderValues headerValues = exchange.getRequestHeaders().get(HttpStringConstants.SERVICE_ID);
             String serviceId = null;
             if(headerValues != null) serviceId = headerValues.getFirst();
