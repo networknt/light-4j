@@ -110,7 +110,7 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
             // and response elements.
             HttpString method = exchange.getRequestMethod();
             Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
-            Map<String, Object> exchangeInfoMap = this.createExchangeInfoMap(exchange, method, responseBody, auditInfo);
+            Map<String, Object> objMap = this.createExchangeInfoMap(exchange, method, responseBody, auditInfo);
             // need to get the rule/rules to execute from the RuleLoaderStartupHook. First, get the endpoint.
             String endpoint;
             if (auditInfo != null) {
@@ -141,8 +141,21 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
                     logger.debug("endpointRules: " + endpointRules.get(RESPONSE_TRANSFORM).size());
             }
 
-            Map<String, Object> result = this.executeRules(exchangeInfoMap, endpointRules);
-            if (result != null) {
+            boolean finalResult = true;
+            List<Map<String, Object>> responseTransformRules = endpointRules.get(RESPONSE_TRANSFORM);
+            Map<String, Object> result = null;
+            String ruleId = null;
+            // iterate the rules and execute them in sequence. Break only if one rule is successful.
+            for(Map<String, Object> ruleMap: responseTransformRules) {
+                ruleId = (String)ruleMap.get(Constants.RULE_ID);
+                result = engine.executeRule(ruleId, objMap);
+                boolean res = (Boolean)result.get(RuleConstants.RESULT);
+                if(!res) {
+                    finalResult = false;
+                    break;
+                }
+            }
+            if(finalResult) {
                 for (Map.Entry<String, Object> entry : result.entrySet()) {
 
                     if (logger.isTraceEnabled())
