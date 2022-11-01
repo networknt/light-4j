@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 
 public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<StreamSinkConduit> {
     public static int MAX_BUFFERS = 1024;
@@ -101,9 +102,12 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
 
     @Override
     public void terminateWrites() throws IOException {
-        if(logger.isTraceEnabled()) logger.trace("terminating writes with interceptors length = " + (this.interceptors == null ? 0: this.interceptors.length));
+
+        if(logger.isTraceEnabled())
+            logger.trace("terminating writes with interceptors length = " + (this.interceptors == null ? 0: this.interceptors.length));
+
         try {
-            if (this.interceptors.length > 0) {
+            if (this.interceptors != null && this.interceptors.length > 0) {
                 // iterate all interceptor handlers.
                 for (ResponseInterceptor interceptor : this.interceptors) {
                     if (logger.isDebugEnabled()) logger.debug("Executing interceptor " + interceptor.getClass());
@@ -121,14 +125,37 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
         if (this.exchange.getResponseHeaders().get(Headers.CONTENT_LENGTH) != null) {
             this.updateContentLength(this.exchange, dests);
         }
+        this.writeToNextConduit(dests);
 
-        for (PooledByteBuffer dest : dests) {
-            if (dest != null) {
-                next.write(dest.getBuffer());
+        super.terminateWrites();
+    }
+
+    /**
+     * Writes to the next conduit.
+     * We track the position of the buffer after writing because of cases where the conduit does not consume everything.
+     * e.g. When transfer is chunked.
+     *
+     * @param responseDataPooledBuffers - pooled response buffers (after modification)
+     * @throws IOException - throws IO exception when writing to next conduits buffers.
+     */
+    private void writeToNextConduit(PooledByteBuffer[] responseDataPooledBuffers) throws IOException {
+        for (PooledByteBuffer responseDataBuffer : responseDataPooledBuffers) {
+            if (responseDataBuffer == null) {
+                break;
+            }
+
+            while (responseDataBuffer.getBuffer().position() < responseDataBuffer.getBuffer().limit()) {
+                if (logger.isTraceEnabled()) {
+                    logger.trace("Before write decoded buffer: {}\nBefore write buffer position: {}", StandardCharsets.UTF_8.decode(responseDataBuffer.getBuffer().duplicate()), responseDataBuffer.getBuffer().position());
+                }
+
+                super.write(responseDataBuffer.getBuffer());
+
+                if (logger.isTraceEnabled()) {
+                    logger.trace("After write decoded buffer: {}\nAfter write buffer position: {}", StandardCharsets.UTF_8.decode(responseDataBuffer.getBuffer().duplicate()), responseDataBuffer.getBuffer().position());
+                }
             }
         }
-
-        next.terminateWrites();
     }
 
     /**
