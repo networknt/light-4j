@@ -126,7 +126,6 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
             if (interceptors != null && !isCompressed(exchange) && Arrays.stream(interceptors).anyMatch(ri -> ri.isRequiredContent())) {
                 var mcsc = new ModifiableContentSinkConduit(factory.create(), cexchange);
                 if(logger.isTraceEnabled()) logger.trace("created a ModifiableContentSinkConduit instance " + mcsc);
-                cexchange.putAttachment(MCSC_KEY, mcsc);
                 return mcsc;
             } else {
                 return new ContentStreamSinkConduit(factory.create(), cexchange);
@@ -135,16 +134,21 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
 
         // forceIdentityEncodingForInterceptors(exchange);
         // if any of the interceptors send response, don't call other middleware handlers in the chain.
-        if(!exchange.isResponseStarted()) Handler.next(exchange, next);
+        if(!exchange.isResponseStarted()) {
+            if(logger.isTraceEnabled()) logger.trace("response is not started, calling next handler.");
+            Handler.next(exchange, next);
+        } else {
+            if(logger.isTraceEnabled()) logger.trace("response is started already, do not call next handler in the chain.");
+        }
     }
 
     private boolean isCompressed(HttpServerExchange exchange) {
         // check if the request has a header accept encoding with gzip and deflate.
         boolean compressed = false;
-        var acceptedEncodings = exchange.getRequestHeaders().get(Headers.ACCEPT_ENCODING_STRING);
-        if(acceptedEncodings != null) {
-            for(String values: acceptedEncodings) {
-                if(Arrays.stream(values.split(",")).anyMatch((v) -> Headers.GZIP.toString().equals(v) || Headers.DEFLATE.toString().equals(v))) {
+        var contentEncodings = exchange.getResponseHeaders().get(Headers.CONTENT_ENCODING_STRING);
+        if(contentEncodings != null) {
+            for(String values: contentEncodings) {
+                if(Arrays.stream(values.split(",")).anyMatch((v) -> Headers.GZIP.toString().equals(v) || Headers.COMPRESS.toString().equals(v) || Headers.DEFLATE.toString().equals(v))) {
                     compressed = true;
                 }
             }

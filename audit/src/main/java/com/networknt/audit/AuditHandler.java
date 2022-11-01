@@ -39,7 +39,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
- * This is a simple audit handler that dump most important info per request basis. The following
+ * This is a simple audit handler that dump most important info per-request basis. The following
  * elements will be logged if it's available in auditInfo object attached to exchange. This object
  * wil be populated by other upstream handlers like swagger-meta and swagger-security for
  * light-rest-4j framework.
@@ -48,8 +48,8 @@ import java.util.*;
  * Turning off statusCode and responseTime can make it faster as these have to be captured on the
  * response chain instead of request chain.
  *
- * For most business and majority of microservices, you don't need to enable this handler due to
- * performance reason. The default audit log will be audit.log config in the default logback.xml;
+ * For most business and the majority of microservices, you don't need to enable this handler due to
+ * performance reason. The default audit log will be the audit.log configured in the default logback.xml;
  * however, it can be changed to syslog or Kafka with customized appender.
  *
  * Majority of the fields in audit log are collected in request and response; however, to allow
@@ -75,8 +75,6 @@ import java.util.*;
  */
 public class AuditHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(AuditHandler.class);
-
-    public static final String ENABLED = "enabled";
     static final String STATUS_CODE = "statusCode";
     static final String RESPONSE_TIME = "responseTime";
     static final String TIMESTAMP = "timestamp";
@@ -86,7 +84,6 @@ public class AuditHandler implements MiddlewareHandler {
     static final String QUERY_PARAMETERS_KEY = "queryParameters";
     static final String PATH_PARAMETERS_KEY = "pathParameters";
     static final String REQUEST_COOKIES_KEY = "requestCookies";
-    static final String STATUS_KEY = "status";
     static final String SERVER_CONFIG = "server";
     static final String SERVICE_ID_KEY = "serviceId";
     static final String INVALID_CONFIG_VALUE_CODE = "ERR10060";
@@ -243,12 +240,21 @@ public class AuditHandler implements MiddlewareHandler {
             }
         }
         // Mask requestBody json string if mask enabled
-        if (requestBodyString != null) {
-            if(exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE).startsWith("application/json")) {
-                auditMap.put(REQUEST_BODY_KEY, config.isMask() ? Mask.maskJson(requestBodyString, REQUEST_BODY_KEY) : requestBodyString);
-            } else {
-                auditMap.put(REQUEST_BODY_KEY, requestBodyString);
+        if (requestBodyString != null && requestBodyString.length() > 0) {
+            String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
+            if(contentType != null) {
+                if(contentType.startsWith("application/json")) {
+                    if(config.isMask()) requestBodyString = Mask.maskJson(requestBodyString, REQUEST_BODY_KEY);
+                } else if(contentType.startsWith("text") || contentType.startsWith("application/xml")) {
+                    if(config.isMask()) requestBodyString = Mask.maskString(requestBodyString, REQUEST_BODY_KEY);
+                } else {
+                    logger.error("Incorrect request content type " + contentType);
+                }
             }
+            if(requestBodyString.length() > config.getRequestBodyMaxSize()) {
+                requestBodyString = requestBodyString.substring(0, config.getRequestBodyMaxSize());
+            }
+            auditMap.put(REQUEST_BODY_KEY, requestBodyString);
         }
     }
 
@@ -268,13 +274,17 @@ public class AuditHandler implements MiddlewareHandler {
             String contentType = exchange.getResponseHeaders().getFirst(Headers.CONTENT_TYPE);
             if(contentType != null) {
                 if(contentType.startsWith("application/json")) {
-                    auditMap.put(RESPONSE_BODY_KEY, config.isMask() ? Mask.maskJson(responseBodyString, RESPONSE_BODY_KEY) : responseBodyString);
+                    if(config.isMask()) responseBodyString =Mask.maskJson(responseBodyString, RESPONSE_BODY_KEY);
                 } else if(contentType.startsWith("text") || contentType.startsWith("application/xml")) {
-                    auditMap.put(RESPONSE_BODY_KEY, config.isMask() ? Mask.maskString(responseBodyString, RESPONSE_BODY_KEY) : responseBodyString);
+                    if(config.isMask()) responseBodyString = Mask.maskString(responseBodyString, RESPONSE_BODY_KEY);
                 } else {
                     logger.error("Incorrect response content type " + contentType);
                 }
             }
+            if(responseBodyString.length() > config.getResponseBodyMaxSize()) {
+                responseBodyString = responseBodyString.substring(0, config.getResponseBodyMaxSize());
+            }
+            auditMap.put(RESPONSE_BODY_KEY, responseBodyString);
         }
     }
 
@@ -307,11 +317,14 @@ public class AuditHandler implements MiddlewareHandler {
 
     private void auditRequestCookies(HttpServerExchange exchange, Map<String, Object> auditMap) {
         Map<String, String> res = new HashMap<>();
-        Map<String, Cookie> cookieMap = exchange.getRequestCookies();
-        if (cookieMap != null && cookieMap.size() > 0) {
-            for (String name : cookieMap.keySet()) {
-                String cookieString = cookieMap.get(name).getValue();
-                String mask = config.isMask() ? Mask.maskRegex(cookieString, REQUEST_COOKIES_KEY, name) : cookieString;
+        Iterable<Cookie> iterable = exchange.requestCookies();
+        if(iterable != null) {
+            Iterator<Cookie> iterator = iterable.iterator();
+            while(iterator.hasNext()) {
+                Cookie cookie = iterator.next();
+                String name = cookie.getName();
+                String value = cookie.getValue();
+                String mask = config.isMask() ? Mask.maskRegex(value, REQUEST_COOKIES_KEY, name) : value;
                 res.put(name, mask);
             }
             auditMap.put(REQUEST_COOKIES_KEY, res.toString());

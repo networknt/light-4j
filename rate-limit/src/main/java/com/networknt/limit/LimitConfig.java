@@ -63,11 +63,8 @@ public class LimitConfig {
     private Config config;
 
 
-    public LimitConfig() {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setRateLimitConfig();
+    private LimitConfig() {
+        this(CONFIG_NAME);
     }
 
     /**
@@ -75,7 +72,7 @@ public class LimitConfig {
      * to test different configurations.
      * @param configName String
      */
-    public LimitConfig(String configName) {
+    private LimitConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(configName);
         setConfigData();

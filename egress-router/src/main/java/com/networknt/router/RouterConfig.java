@@ -35,6 +35,14 @@ import java.util.regex.Pattern;
 public class RouterConfig {
     private static final Logger logger = LoggerFactory.getLogger(RouterConfig.class);
     static final String CONFIG_NAME = "router";
+    private static final String HTTP2_ENABLED = "http2Enabled";
+    private static final String HTTPS_ENABLED = "httpsEnabled";
+    private static final String REWRITE_HOST_HEADER = "rewriteHostHeader";
+    private static final String REUSE_X_FORWARDED = "reuseXForwarded";
+    private static final String MAX_REQUEST_TIME = "maxRequestTime";
+    private static final String MAX_CONNECTION_RETRIES = "maxConnectionRetries";
+    private static final String SERVICE_ID_QUERY_PARAMETER = "serviceIdQueryParameter";
+    private static final String PRE_RESOLVE_FQDN_2_IP = "preResolveFQDN2IP";
 
     boolean http2Enabled;
     boolean httpsEnabled;
@@ -54,10 +62,13 @@ public class RouterConfig {
 
     Set httpMethods;
     private Config config;
-    private final Map<String, Object> mappedConfig;
+    private Map<String, Object> mappedConfig;
     boolean serviceIdQueryParameter;
 
-    public RouterConfig() {
+    private RouterConfig() {
+        this(CONFIG_NAME);
+    }
+    private RouterConfig(String configName) {
         httpMethods = new HashSet();
         httpMethods.add("GET");
         httpMethods.add("POST");
@@ -66,6 +77,24 @@ public class RouterConfig {
         httpMethods.add("PATCH");
 
         config = Config.getInstance();
+        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        setHostWhitelist();
+        setUrlRewriteRules();
+        setMethodRewriteRules();
+        setQueryParamRewriteRules();
+        setHeaderRewriteRules();
+        setConfigData();
+    }
+
+    public static RouterConfig load() {
+        return new RouterConfig();
+    }
+
+    public static RouterConfig load(String configName) {
+        return new RouterConfig(configName);
+    }
+
+    public void reload() {
         mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
         setHostWhitelist();
         setUrlRewriteRules();
@@ -73,43 +102,37 @@ public class RouterConfig {
         setQueryParamRewriteRules();
         setHeaderRewriteRules();
         setConfigData();
-
     }
-
-    public static RouterConfig load() {
-        return new RouterConfig();
-    }
-
     public void setConfigData() {
-        Object object = getMappedConfig().get("http2Enabled");
+        Object object = getMappedConfig().get(HTTP2_ENABLED);
         if(object != null && (Boolean) object) {
             http2Enabled = true;
         }
-        object = getMappedConfig().get("httpsEnabled");
+        object = getMappedConfig().get(HTTPS_ENABLED);
         if(object != null && (Boolean) object) {
             httpsEnabled = true;
         }
-        object = getMappedConfig().get("rewriteHostHeader");
+        object = getMappedConfig().get(REWRITE_HOST_HEADER);
         if(object != null && (Boolean) object) {
             rewriteHostHeader = true;
         }
-        object = getMappedConfig().get("reuseXForwarded");
+        object = getMappedConfig().get(REUSE_X_FORWARDED);
         if(object != null && (Boolean) object) {
             reuseXForwarded = true;
         }
-        object = getMappedConfig().get("maxRequestTime");
+        object = getMappedConfig().get(MAX_REQUEST_TIME);
         if(object != null ) {
             maxRequestTime = (Integer)object;
         }
-        object = getMappedConfig().get("maxConnectionRetries");
+        object = getMappedConfig().get(MAX_CONNECTION_RETRIES);
         if(object != null ) {
             maxConnectionRetries = (Integer)object;
         }
-        object = getMappedConfig().get("serviceIdQueryParameter");
+        object = getMappedConfig().get(SERVICE_ID_QUERY_PARAMETER);
         if(object != null) {
             serviceIdQueryParameter = (Boolean)object;
         }
-        object = getMappedConfig().get("preResolveFQDN2IP");
+        object = getMappedConfig().get(PRE_RESOLVE_FQDN_2_IP);
         if(object != null && (Boolean) object) {
             preResolveFQDN2IP = true;
         }

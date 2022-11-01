@@ -4,6 +4,7 @@ import com.networknt.handler.BuffersUtils;
 import com.networknt.handler.ResponseInterceptor;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.service.SingletonServiceFactory;
+import io.undertow.conduits.ChunkedStreamSinkConduit;
 import io.undertow.connector.PooledByteBuffer;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.protocol.http.ServerFixedLengthStreamSinkConduit;
@@ -173,13 +174,13 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
                 length += dest.getBuffer().limit();
             }
         }
-
+        if(logger.isTraceEnabled()) logger.trace("PooledByteBuffer array added up length = " + length);
         exchange.getResponseHeaders().put(Headers.CONTENT_LENGTH, length);
 
         // need also to update length of ServerFixedLengthStreamSinkConduit. Should we do this for anything that extends AbstractFixedLengthStreamSinkConduit?
         if (this.next instanceof ServerFixedLengthStreamSinkConduit) {
             Method m;
-
+            if(logger.isTraceEnabled()) logger.trace("The next conduit is ServerFixedLengthStreamSinkConduit and reset the length.");
             try {
                 m = ServerFixedLengthStreamSinkConduit.class.getDeclaredMethod("reset", long.class, HttpServerExchange.class);
                 m.setAccessible(true);
@@ -190,6 +191,7 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
 
             try {
                 m.invoke(next, length, exchange);
+                if(logger.isTraceEnabled()) logger.trace("reset ServerFixedLengthStreamSinkConduit length = " + length);
             } catch (Throwable ex) {
                 logger.error("could not access BUFFERED_REQUEST_DATA field", ex);
                 throw new RuntimeException("could not access BUFFERED_REQUEST_DATA field", ex);

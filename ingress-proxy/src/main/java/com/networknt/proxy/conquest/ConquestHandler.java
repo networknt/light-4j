@@ -17,6 +17,7 @@ import com.networknt.proxy.PathPrefixAuth;
 import com.networknt.proxy.salesforce.SalesforceConfig;
 import com.networknt.proxy.salesforce.SalesforceHandler;
 import com.networknt.status.Status;
+import com.networknt.utility.HashUtil;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -104,10 +105,10 @@ public class ConquestHandler implements MiddlewareHandler {
                 if(logger.isTraceEnabled()) logger.trace("found with requestPath = " + requestPath + " prefix = " + pathPrefixAuth.getPathPrefix());
                 // matched the prefix found. handler it with the config for this prefix.
                 if(System.currentTimeMillis() >= (pathPrefixAuth.getExpiration() - 5000)) { // leave 5 seconds room and default value is 0
-                    String jwt = createJwt(pathPrefixAuth.getAuthIssuer(), pathPrefixAuth.getAuthSubject(), pathPrefixAuth.getAuthAudience(), "jti", pathPrefixAuth.getTokenTtl());
+                    String jwt = createJwt(pathPrefixAuth.getAuthIssuer(), pathPrefixAuth.getAuthSubject(), pathPrefixAuth.getAuthAudience(), HashUtil.generateUUID(), pathPrefixAuth.getTokenTtl());
                     Result<TokenResponse> result = getAccessToken(pathPrefixAuth.getTokenUrl(), jwt);
                     if(result.isSuccess()) {
-                        pathPrefixAuth.setExpiration(System.currentTimeMillis() + 300 * 1000);
+                        pathPrefixAuth.setExpiration(System.currentTimeMillis() + result.getResult().getExpiresIn() * 1000 - 60000); // give 60 seconds buffer.
                         pathPrefixAuth.setAccessToken(result.getResult().getAccessToken());
                     } else {
                         setExchangeStatus(exchange, result.getError());
@@ -196,8 +197,9 @@ public class ConquestHandler implements MiddlewareHandler {
             }
 
             Map<String, String> parameters = new HashMap<>();
-            parameters.put("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer");
-            parameters.put("assertion", jwt);
+            parameters.put("grant_type", "client_credentials");
+            parameters.put("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+            parameters.put("client_assertion", jwt);
 
             String form = parameters.entrySet()
                     .stream()
@@ -211,6 +213,7 @@ public class ConquestHandler implements MiddlewareHandler {
                     .build();
 
             HttpResponse<?> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            // {"access_token":"eyJ0eXAiOiJKV1QiLCJ6aXAiOiJOT05FIiwia2lkIjoiM0ptbzhUWFJtQTJ2U2hkcFJ6UHpUbC9Xak1zPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJjb25xdWVzdC1wdWJsaWMtdWF0LXN1bmxpZmUtand0LWludGVncmF0aW9uIiwiYXVkaXRUcmFja2luZ0lkIjoiM2UwNjc5ODYtMzRmYy00MzhjLThiYmEtOWJlODhiNGUzZTgxIiwiaXNzIjoiaHR0cHM6Ly9zdW5saWZlLWF1dGgudWF0LmNvbnF1ZXN0LXB1YmxpYy5jb25xdWVzdHBsYW5uaW5nLmNvbTo0NDMvbG9naW4vb2F1dGgyL3JlYWxtcy9yb290L3JlYWxtcy9jb24vcmVhbG1zL3VhdCIsInRva2VuTmFtZSI6ImFjY2Vzc190b2tlbiIsInR5cCI6IkJlYXJlciIsInRva2VuX3R5cGUiOiJCZWFyZXIiLCJhdXRoR3JhbnRJZCI6IjhmODVjOTFkLTQ1NzAtNDA5Ni1iYTdkLWI3Mzk2NDJiZGVhMiIsImF1ZCI6ImNvbnF1ZXN0LXB1YmxpYy11YXQtc3VubGlmZS1qd3QtaW50ZWdyYXRpb24iLCJuYmYiOjE2NjYyOTg1OTksInJlYWxtX2FjY2VzcyI6e30sInNjb3BlIjoiYXBpLmNvbnF1ZXN0cGxhbm5pbmcuY29tIiwiYXV0aF90aW1lIjoxNjY2Mjk4NTk5LCJyZWFsbSI6Ii9jb24vdWF0IiwiZXhwIjoxNjY2MzAwMzk5LCJpYXQiOjE2NjYyOTg1OTksImV4cGlyZXNfaW4iOjE4MDAwMDAsImp0aSI6IjU0ZjMzYzU2LTRhYjktNGI2OC1hYWU2LTAwZGJhZWJiNmVhOSJ9.Fvp2bs2h4pRo9Dcd_w7yMJGwY0Acq4h1fouYbo6b0WVVu8KTTC3Xxrl59kPT7f8Rsd-BjeORM83VypgAVWBvEhZWSOY_PpEIgPL0_EHBDOsOyd9x6Q_78WtVxpQ37Vag3nGT_EZA2b5ECWX1fg4C0qIJ4uUf4wyI6a91fui-95EgVBRsdsNa7TaX4AcsCX4T_96X-sqUY127YGyKV20S9ppKzwpg2kR1Xp43_HxtyBu5i-oSj8ry1EVZd5I0hTl2dzddyYUT8SfCiitS-BrAXC_1MM91td00kn3WlMjFahE5PcC6rg8yVFGpG0OQyIbElvCnfSeqNLjx3FPyVx3rqw","scope":"api.conquestplanning.com","token_type":"Bearer","expires_in":1799}
             System.out.println(response.statusCode() + " " + response.body().toString());
             if(response.statusCode() == 200) {
                 // construct a token response and return it.
@@ -220,6 +223,7 @@ public class ConquestHandler implements MiddlewareHandler {
                     tokenResponse.setAccessToken((String)map.get("access_token"));
                     tokenResponse.setTokenType((String)map.get("token_type"));
                     tokenResponse.setScope((String)map.get("scope"));
+                    tokenResponse.setExpiresIn((Integer)map.get("expires_in"));
                     return Success.of(tokenResponse);
                 } else {
                     return Failure.of(new Status(GET_TOKEN_ERROR, "response body is not a JSON"));

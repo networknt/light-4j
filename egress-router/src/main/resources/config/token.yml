@@ -4,3 +4,8 @@
 
 # indicate if the handler is enabled.
 enabled: ${token.enabled:false}
+# applied path prefixes for the token handler. Only the path prefixes listed here will
+# get the token based on the configuration in the client.yml section. This will allow
+# the share gateway to define only one default chain with some endpoints get the token
+# and others bypass this handler.
+appliedPathPrefixes: ${token.appliedPathPrefixes:}

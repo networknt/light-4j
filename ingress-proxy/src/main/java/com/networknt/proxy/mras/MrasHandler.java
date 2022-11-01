@@ -120,27 +120,26 @@ public class MrasHandler implements MiddlewareHandler {
         String requestPath = exchange.getRequestPath();
         if(logger.isTraceEnabled()) logger.trace("original requestPath = " + requestPath);
 
-        // handle the url rewrite here.
-        if(config.getUrlRewriteRules() != null && config.getUrlRewriteRules().size() > 0) {
-            boolean matched = false;
-            for(UrlRewriteRule rule : config.getUrlRewriteRules()) {
-                Matcher matcher = rule.getPattern().matcher(requestPath);
-                if(matcher.matches()) {
-                    matched = true;
-                    requestPath = matcher.replaceAll(rule.getReplace());
-                    if(logger.isTraceEnabled()) logger.trace("rewritten requestPath = " + requestPath);
-                    break;
-                }
-            }
-            // if no matched rule in the list, use the original requestPath.
-            if(!matched) requestPath = exchange.getRequestPath();
-        } else {
-            // there is no url rewrite rules, so use the original requestPath
-            requestPath = exchange.getRequestPath();
-        }
-
         for(String key: config.getPathPrefixAuth().keySet()) {
             if(requestPath.startsWith(key)) {
+                // handle the url rewrite here.
+                if(config.getUrlRewriteRules() != null && config.getUrlRewriteRules().size() > 0) {
+                    boolean matched = false;
+                    for(UrlRewriteRule rule : config.getUrlRewriteRules()) {
+                        Matcher matcher = rule.getPattern().matcher(requestPath);
+                        if(matcher.matches()) {
+                            matched = true;
+                            requestPath = matcher.replaceAll(rule.getReplace());
+                            if(logger.isTraceEnabled()) logger.trace("rewritten requestPath = " + requestPath);
+                            break;
+                        }
+                    }
+                    // if no matched rule in the list, use the original requestPath.
+                    if(!matched) requestPath = exchange.getRequestPath();
+                } else {
+                    // there is no url rewrite rules, so use the original requestPath
+                    requestPath = exchange.getRequestPath();
+                }
                 // iterate the key set from the pathPrefixAuth map.
                 if(config.getPathPrefixAuth().get(key).equals(config.ACCESS_TOKEN)) {
                     // private access token for authentication.

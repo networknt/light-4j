@@ -25,7 +25,7 @@ public class ConfigUtils {
             if(logger.isDebugEnabled()) logger.debug("method: " + ConfigMethod);
             if(searchKey.startsWith(ConfigPrefix)) {
                 if((searchKey.length() == ConfigPrefix.length() || searchKey.charAt(ConfigPrefix.length()) == '/')
-                		&& method.equals​(ConfigMethod)) {
+                		&& method.equals(ConfigMethod)) {
                     result = entry.getKey();
                     break;
                 }

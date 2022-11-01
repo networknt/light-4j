@@ -28,3 +28,11 @@ headers: ${audit.headers:X-Correlation-Id, X-Traceability-Id}
 
 # Output from id token and access token
 audit: ${audit.audit:client_id, user_id}
+
+# The limit of the request body to put into the audit entry. If the request body is bigger than the max size,
+# it will be truncated to the max size.
+requestBodyMaxSize: ${audit.requestBodyMaxSize:4096}
+
+# The limit of the response body to put into the audit entry. If the response body is bigger than the max size,
+# it will be truncated to the max size
+responseBodyMaxSize: ${audit.responseBodyMaxSize:4096}
