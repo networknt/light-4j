@@ -1,6 +1,7 @@
 package com.networknt.apikey;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +13,7 @@ public class ApiKeyJsonConfigTest {
     static final ApiKeyConfig config = ApiKeyConfig.load("apikey-json");
 
     @Test
+    @Ignore
     public void testDecryption() {
         logger.debug("apiKey for /test2 = " + config.getPathPrefixAuths().get(1).getApiKey());
         Assert.assertEquals("password", config.getPathPrefixAuths().get(1).getApiKey());
