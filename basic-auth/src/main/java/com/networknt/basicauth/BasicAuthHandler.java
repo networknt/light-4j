@@ -45,7 +45,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public class BasicAuthHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(BasicAuthHandler.class);
-    static BasicAuthConfig config = BasicAuthConfig.load();
+    BasicAuthConfig config;
 
     static final String MISSING_AUTH_TOKEN = "ERR10002";
     static final String INVALID_BASIC_HEADER = "ERR10046";
@@ -57,6 +57,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
     private volatile HttpHandler next;
 
     public BasicAuthHandler() {
+        config = BasicAuthConfig.load();
         if(logger.isInfoEnabled()) logger.info("BasicAuthHandler is loaded.");
     }
 
@@ -191,7 +192,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
         // As passwords are in the config file, we need to mask them.
         List<String> masks = new ArrayList<>();
         masks.add("password");
-        ModuleRegistry.registerModule(BasicAuthHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), masks);
+        ModuleRegistry.registerModule(BasicAuthHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(BasicAuthConfig.CONFIG_NAME), masks);
     }
 
     @Override
