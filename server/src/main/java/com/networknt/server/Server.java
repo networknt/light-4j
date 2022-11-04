@@ -345,6 +345,10 @@ public class Server {
         return true;
     }
 
+    public static void shutdownApp(final String[] args) {
+        shutdown();
+    }
+
     static public void stop() {
         if (server != null)
             server.stop();
