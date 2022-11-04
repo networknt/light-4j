@@ -1,0 +1,5 @@
+# oauth-server.yml
+# indicate if the handler is enabled or not in the handler chain.
+enabled: ${oauthServer.enabled:true}
+# A list of client_id and client_secret concat with a colon.
+client_credentials: ${oauthServer.client_credentials:}

@@ -497,6 +497,11 @@ ERR10074:
   code: ERR10074
   message: HANDLER_DEPENDENCY_ERROR
   description: Handler %s depends on handler %s in the chain.
+ERR10075:
+  statusCode: 401
+  code: ERR10075
+  message: API_KEY_MISMATCH
+  description: APIKEY from header %s is not matched for request path prefix %s.
 
 
 

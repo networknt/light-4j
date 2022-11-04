@@ -167,6 +167,7 @@
         <module>gateway</module>
         <module>request-transformer</module>
         <module>response-transformer</module>
+        <module>api-key</module>
     </modules>
 
     <dependencyManagement>
@@ -417,6 +418,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>response-transformer</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>api-key</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <!-- External dependencies -->
