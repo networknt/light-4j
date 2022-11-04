@@ -1,0 +1,15 @@
+# ApiKey Authentication Security Configuration for light-4j
+# Enable ApiKey Authentication Handler, default is false.
+enabled: ${apikey.enabled:true}
+# path prefix to the api key mapping. It is a list of map between the path prefix and the api key
+# for apikey authentication. In the handler, it loops through the list and find the matching path
+# prefix. Once found, it will check if the apikey is equal to allow the access or return an error.
+# The map object has three properties: pathPrefix, headerName and apiKey. Take a look at the test
+# resources/config folder for configuration examples.
+pathPrefixAuths:
+  - pathPrefix: /test1
+    headerName: x-gateway-apikey
+    apiKey: abcdefg
+  - pathPrefix: /test2
+    headerName: x-apikey
+    apiKey: CRYPT:08eXg9TmK604+w06RaBlsPQbplU1F1Ez5pkBO/hNr8w=
