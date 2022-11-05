@@ -13,7 +13,7 @@ import java.util.Map;
 
 public class OAuthServerConfig {
     private static final Logger logger = LoggerFactory.getLogger(OAuthServerConfig.class);
-    public static final String CONFIG_NAME = "oauth-server";
+    public static final String CONFIG_NAME = "oauthServer";
 
     private static final String ENABLED = "enabled";
     private static final String CLIENT_CREDENTIALS = "client_credentials";

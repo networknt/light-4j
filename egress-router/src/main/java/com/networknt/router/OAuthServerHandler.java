@@ -32,7 +32,7 @@ public class OAuthServerHandler implements LightHttpHandler {
     private static final String INVALID_BASIC_CREDENTIALS = "ERR12004";
 
     OAuthServerConfig config;
-    public void OAuthServerHandler() {
+    public OAuthServerHandler() {
         config = OAuthServerConfig.load();
         if(logger.isInfoEnabled()) logger.info("OAuthServerHandler is loaded.");
     }
