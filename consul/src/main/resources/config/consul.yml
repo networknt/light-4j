@@ -1,32 +1,32 @@
 # Consul URL for accessing APIs
-consulUrl: http://localhost:8500
+consulUrl: ${consul.consulUrl:http://localhost:8500}
 # access token to the consul server
-consulToken: the_one_ring
+consulToken: ${consul.consulToken:the_one_ring}
 # number of requests before reset the shared connection.
-maxReqPerConn: 1000000
+maxReqPerConn: ${consul.maxReqPerConn:1000000}
 # deregister the service after the amount of time after health check failed.
-deregisterAfter: 2m
+deregisterAfter: ${consul.deregisterAfter:2m}
 # health check interval for TCP or HTTP check. Or it will be the TTL for TTL check. Every 10 seconds,
 # TCP or HTTP check request will be sent. Or if there is no heart beat request from service after 10 seconds,
 # then mark the service is critical.
-checkInterval: 10s
+checkInterval: ${consul.checkInterval:10s}
 # One of the following health check approach will be selected. Two passive (TCP and HTTP) and one active (TTL)
 # enable health check TCP. Ping the IP/port to ensure that the service is up. This should be used for most of
 # the services with simple dependencies. If the port is open on the address, it indicates that the service is up.
-tcpCheck: false
+tcpCheck: ${consul.tcpCheck:false}
 # enable health check HTTP. A http get request will be sent to the service to ensure that 200 response status is
 # coming back. This is suitable for service that depending on database or other infrastructure services. You should
 # implement a customized health check handler that checks dependencies. i.e. if db is down, return status 400.
-httpCheck: false
+httpCheck: ${consul.httpCheck:false}
 # enable health check TTL. When this is enabled, Consul won't actively check your service to ensure it is healthy,
 # but your service will call check endpoint with heart beat to indicate it is alive. This requires that the service
 # is built on top of light-4j and the above options are not available. For example, your service is behind NAT.
-ttlCheck: true
+ttlCheck: ${consul.ttlCheck:true}
 # endpoints that support blocking will also honor a wait parameter specifying a maximum duration for the blocking request.
 # This is limited to 10 minutes.This value can be specified in the form of "10s" or "5m" (i.e., 10 seconds or 5 minutes,
 # respectively).
-wait: 600s
+wait: ${consul.wait:600s}
 # enable HTTP/2 
 # must disable when using HTTP with Consul (mostly using local Consul agent), Consul only supports HTTP/1.1 when not using TLS
 # optional to enable when using HTTPS with Consul, it will have better performance
-enableHttp2: false
+enableHttp2: ${consul.enableHttp2:false}

@@ -1,1 +1,2 @@
-enabled: false
+# indicate if the deref handler is enabled or not.
+enabled: ${deref.enabled:false}
