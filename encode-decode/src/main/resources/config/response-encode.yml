@@ -1,6 +1,6 @@
 ---
 # response encode handler for gzip and deflate
-enabled: false
+enabled: ${encode.enabled:false}
 encoders:
   - gzip
   - deflate
