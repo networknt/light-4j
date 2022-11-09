@@ -13,8 +13,8 @@ import com.networknt.server.model.ServerShutdownResponse;
 import io.undertow.server.HttpServerExchange;
 
 /**
- * Light-4j handler to shutdown/restart the service.
- * 
+ * Light-4j handler to shut down and force restart the service deployed to the Kubernetes cluster
+ * Or running as a service in Windows Server or Linux.
  *
  */
 public class ServerShutdownHandler implements LightHttpHandler {

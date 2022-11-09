@@ -6,8 +6,9 @@ client.timeout: 10000
 salesforce.enabled: true
 salesforce.certFilename: apigatewayuat.pfx
 salesforce.certPassword: password01
-salesforce.pathPrefixAuths: "[{\"pathPrefix\":\"/salesforce\",\"authIssuer\":\"3MVG9S11UK8FGR3O.vJebzXvWgAE211Z9KX_7vmKt6k300-2913g_AdsTWtzBTLI232Y1w21kw2HANBfU9jTTJF9h5mL.2tJdY142hyaPW\",\"authSubject\":\"apiuser.conquestintegration@networknt.sit\",\"authAudience\":\"https://test.salesforce.com\",\"iv\":\"Yeocae324eAvs2a/P33y3Ea3Rqg\",\"tokenTtl\":60,\"waitLength\":5000,\"tokenUrl\":\"https://test.salesforce.com/services/oauth2/token\",\"serviceHost\":\"https://nnt-sit.my.salesforce.com\"},{\"pathPrefix\":\"/services/apexrest\",\"authIssuer\":\"3MVG9S11UK8FGR3O.vJebzXvWgAE211Z9KX_7vmKt6k300-2913g_AdsTWtzBTLI232Y1w21kw2HANBfU9jTTJF9h5mL.2tJdY142hyaPW\",\"authSubject\":\"apiuser.conquestintegration@networknt.sit\",\"authAudience\":\"https://test.salesforce.com\",\"iv\":\"Yeocae324eAvs2a/P33y3Ea3Rqg\",\"tokenTtl\":60,\"waitLength\":5000,\"tokenUrl\":\"https://test.salesforce.com/services/oauth2/token\",\"serviceHost\":\"https://nnt-sit.my.salesforce.com\"}]"
+salesforce.pathPrefixAuths: [{"pathPrefix":"/salesforce","grantType":"urn:ietf:params:oauth:grant-type:jwt-bearer","authIssuer":"3MVG9S11UK8FGR3O.vJebzXvWgAE211Z9KX_7vmKt6k300-2913g_AdsTWtzBTLI232Y1w21kw2HANBfU9jTTJF9h5mL.2tJdY142hyaPW","authSubject":"apiuser.conquestintegration@networknt.sit","authAudience":"https://test.salesforce.com","iv":"Yeocae324eAvs2a/P33y3Ea3Rqg","tokenTtl":60,"waitLength":5000,"serviceHost":"https://nnt-sit.my.salesforce.com"},{"pathPrefix":"/services/apexrest","grantType":"urn:ietf:params:oauth:grant-type:jwt-bearer","authIssuer":"3MVG9S11UK8FGR3O.vJebzXvWgAE211Z9KX_7vmKt6k300-2913g_AdsTWtzBTLI232Y1w21kw2HANBfU9jTTJF9h5mL.2tJdY142hyaPW","authSubject":"apiuser.conquestintegration@networknt.sit","authAudience":"https://test.salesforce.com","iv":"Yeocae324eAvs2a/P33y3Ea3Rqg","tokenTtl":60,"waitLength":5000,"serviceHost":"https://nnt-sit.my.salesforce.com"},{"pathPrefix":"/services/apexrest","grantType":"password","username":"dummy","password":"password123","clientId":"clientId","clientSecret":"clientSecret","responseType":"token","serviceHost":"https://nnt-sit.my.salesforce.com"}]
 #  - pathPrefix: /salesforce
+#    grantType: urn:ietf:params:oauth:grant-type:jwt-bearer
 #    authIssuer: 3MVG9S11UK8FGR3O.vJebzXvWgAE211Z9KX_7vmKt6k300-2913g_AdsTWtzBTLI232Y1w21kw2HANBfU9jTTJF9h5mL.2tJdY142hyaPW
 #    authSubject: apiuser.conquestintegration@networknt.sit
 #    authAudience: https://test.salesforce.com
@@ -17,12 +18,22 @@ salesforce.pathPrefixAuths: "[{\"pathPrefix\":\"/salesforce\",\"authIssuer\":\"3
 #    tokenUrl: https://test.salesforce.com/services/oauth2/token
 #    serviceHost: https://nnt-sit.my.salesforce.com
 #  - pathPrefix: /services/apexrest
+#    grantType: urn:ietf:params:oauth:grant-type:jwt-bearer
 #    authIssuer: 3MVG9S11UK8FGR3O.vJebzXvWgAE211Z9KX_7vmKt6k300-2913g_AdsTWtzBTLI232Y1w21kw2HANBfU9jTTJF9h5mL.2tJdY142hyaPW
 #    authSubject: apiuser.conquestintegration@networknt.sit
 #    authAudience: https://test.salesforce.com
 #    iv: Yeocae324eAvs2a/P33y3Ea3Rqg
 #    tokenTtl: 60
 #    waitLength: 5000
+#    tokenUrl: https://test.salesforce.com/services/oauth2/token
+#    serviceHost: https://nnt-sit.my.salesforce.com
+#  - pathPrefix: /services/password
+#    grantType: password
+#    username: dummy
+#    password: password123
+#    clientId: clientId
+#    clientSecret: clientSecret
+#    responseType: token
 #    tokenUrl: https://test.salesforce.com/services/oauth2/token
 #    serviceHost: https://nnt-sit.my.salesforce.com
 
