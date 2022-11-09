@@ -1,5 +1,13 @@
 # Change Log
 
+## [1.6.43](https://github.com/networknt/light-4j/tree/1.6.43) (2022-11-09)
+
+
+**Merged pull requests:**
+
+
+- do not clear the local service registry cache when a consul connection fails [\#1457](https://github.com/networknt/light-4j/pull/1457) ([miklish](https://github.com/miklish))
+- Changes made to the code as required. Mentioned in issue \#1274 & \#1287 [\#1357](https://github.com/networknt/light-4j/pull/1357) ([AkashWorkGit](https://github.com/AkashWorkGit))
 ## [1.6.42](https://github.com/networknt/light-4j/tree/1.6.42) (2022-08-23)
 
 
