@@ -30,6 +30,14 @@ public class SalesforceConfig {
     public static final String PROXY_HOST = "proxyHost";
     public static final String PROXY_PORT = "proxyPort";
     public static final String ENABLE_HTTP2 = "enableHttps";
+
+    public static final String GRANT_TYPE = "grant_type";
+    public static final String USERNAME = "username";
+    public static final String PASSWORD = "password";
+    public static final String CLIENT_ID = "clientId";
+    public static final String CLIENT_SECRET = "clientSecret";
+    public static final String RESPONSE_TYPE = "responseType";
+
     List<UrlRewriteRule> urlRewriteRules;
     public static final String PATH_PREFIX_AUTHS = "pathPrefixAuths";
     public static final String SERVICE_HOST = "serviceHost";
@@ -40,6 +48,14 @@ public class SalesforceConfig {
     String proxyHost;
     int proxyPort;
     boolean enableHttp2;
+
+    String grantType;
+    String username;
+    String password;
+    String clientId;
+    String clientSecret;
+    String responseType;
+
     List<PathPrefixAuth> pathPrefixAuths;
     private Config config;
     private Map<String, Object> mappedConfig;
@@ -203,14 +219,21 @@ public class SalesforceConfig {
                 for(Map<String, Object> value: values) {
                     PathPrefixAuth pathPrefixAuth = new PathPrefixAuth();
                     pathPrefixAuth.setPathPrefix((String)value.get(PATH_PREFIX));
+                    pathPrefixAuth.setGrantType((String)value.get(GRANT_TYPE));
                     pathPrefixAuth.setAuthIssuer((String)value.get(AUTH_ISSUER));
                     pathPrefixAuth.setAuthSubject((String)value.get(AUTH_SUBJECT));
                     pathPrefixAuth.setAuthAudience((String)value.get(AUTH_AUDIENCE));
                     pathPrefixAuth.setIv((String)value.get(IV));
                     pathPrefixAuth.setServiceHost((String)value.get(SERVICE_HOST));
-                    pathPrefixAuth.setTokenTtl((Integer)value.get(TOKEN_TTL));
-                    pathPrefixAuth.setWaitLength((Integer)value.get(WAIT_LENGTH));
+                    pathPrefixAuth.setTokenTtl(value.get(TOKEN_TTL) == null ? 60 : (Integer)value.get(TOKEN_TTL));
+                    pathPrefixAuth.setWaitLength(value.get(WAIT_LENGTH) == null ? 5000 : (Integer)value.get(WAIT_LENGTH));
                     pathPrefixAuth.setTokenUrl((String)value.get(TOKEN_URL));
+                    // grant type password
+                    pathPrefixAuth.setUsername((String)value.get(USERNAME));
+                    pathPrefixAuth.setPassword((String)value.get(PASSWORD));
+                    pathPrefixAuth.setClientId((String)value.get(CLIENT_ID));
+                    pathPrefixAuth.setClientSecret((String)value.get(CLIENT_SECRET));
+                    pathPrefixAuth.setResponseType((String)value.get(RESPONSE_TYPE));
                     pathPrefixAuths.add(pathPrefixAuth);
                 }
             } else {
