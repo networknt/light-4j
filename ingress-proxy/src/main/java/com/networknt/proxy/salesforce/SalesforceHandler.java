@@ -140,8 +140,14 @@ public class SalesforceHandler implements MiddlewareHandler {
                 if(logger.isTraceEnabled()) logger.trace("found with requestPath = " + requestPath + " prefix = " + pathPrefixAuth.getPathPrefix());
                 // matched the prefix found. handler it with the config for this prefix.
                 if(System.currentTimeMillis() >= (pathPrefixAuth.getExpiration() - 5000)) { // leave 5 seconds room and default value is 0
-                    String jwt = createJwt(pathPrefixAuth.getAuthIssuer(), pathPrefixAuth.getAuthSubject(), pathPrefixAuth.getAuthAudience());
-                    Result<TokenResponse> result = getAccessToken(pathPrefixAuth.getTokenUrl(), jwt);
+                    Result<TokenResponse> result;
+                    if("password".equals(pathPrefixAuth.getGrantType())) {
+                        result = getPasswordToken(pathPrefixAuth);
+                    } else {
+                        // jwt
+                        String jwt = createJwt(pathPrefixAuth.getAuthIssuer(), pathPrefixAuth.getAuthSubject(), pathPrefixAuth.getAuthAudience());
+                        result = getAccessToken(pathPrefixAuth.getTokenUrl(), jwt);
+                    }
                     if(result.isSuccess()) {
                         pathPrefixAuth.setExpiration(System.currentTimeMillis() + 300 * 1000);
                         pathPrefixAuth.setAccessToken(result.getResult().getAccessToken());
@@ -201,6 +207,84 @@ public class SalesforceHandler implements MiddlewareHandler {
         return token.toString();
     }
 
+    private Result<TokenResponse> getPasswordToken(PathPrefixAuth pathPrefixAuth) throws Exception {
+        TokenResponse tokenResponse = null;
+        if(client == null) {
+            try {
+                HttpClient.Builder clientBuilder = HttpClient.newBuilder()
+                        .followRedirects(HttpClient.Redirect.NORMAL)
+                        .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
+                        .sslContext(Http2Client.createSSLContext());
+                if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
+                if(config.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
+                // this a workaround to bypass the hostname verification in jdk11 http client.
+                Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+                if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
+                    final Properties props = System.getProperties();
+                    props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
+                }
+                client = clientBuilder.build();
+
+            } catch (IOException e) {
+                logger.error("Cannot create HttpClient:", e);
+                return Failure.of(new Status(TLS_TRUSTSTORE_ERROR));
+            }
+        }
+        try {
+            if(pathPrefixAuth.getTokenUrl() == null) {
+                return Failure.of(new Status(OAUTH_SERVER_URL_ERROR, "tokenUrl"));
+            }
+
+            Map<String, String> formData = new HashMap<>();
+            formData.put("username", pathPrefixAuth.getUsername());
+            formData.put("password", pathPrefixAuth.getPassword());
+            formData.put("grant_type", pathPrefixAuth.getGrantType());
+            formData.put("client_id", pathPrefixAuth.getClientId());
+            formData.put("client_secret", pathPrefixAuth.getClientSecret());
+            formData.put("response_type", pathPrefixAuth.getResponseType());
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(pathPrefixAuth.getTokenUrl()))
+                    .headers("Content-Type", "multipart/form-data")
+                    .POST(HttpRequest.BodyPublishers.ofString(getFormDataAsString(formData)))
+                    .build();
+
+            HttpResponse<?> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.statusCode() + " " + response.body().toString());
+            if(response.statusCode() == 200) {
+                // construct a token response and return it.
+                Map<String, Object> map = JsonMapper.string2Map(response.body().toString());
+                if(map != null) {
+                    tokenResponse = new TokenResponse();
+                    tokenResponse.setAccessToken((String)map.get("access_token"));
+                    tokenResponse.setTokenType((String)map.get("token_type"));
+                    tokenResponse.setScope((String)map.get("scope"));
+                    return Success.of(tokenResponse);
+                } else {
+                    return Failure.of(new Status(GET_TOKEN_ERROR, "response body is not a JSON"));
+                }
+            } else {
+                logger.error("Error in getting the token with status code " + response.statusCode() + " and body " + response.body().toString());
+                return Failure.of(new Status(GET_TOKEN_ERROR, response.body().toString()));
+            }
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            return Failure.of(new Status(ESTABLISH_CONNECTION_ERROR, pathPrefixAuth.getTokenUrl()));
+        }
+    }
+
+    private static String getFormDataAsString(Map<String, String> formData) {
+        StringBuilder formBodyBuilder = new StringBuilder();
+        for (Map.Entry<String, String> singleEntry : formData.entrySet()) {
+            if (formBodyBuilder.length() > 0) {
+                formBodyBuilder.append("&");
+            }
+            formBodyBuilder.append(URLEncoder.encode(singleEntry.getKey(), StandardCharsets.UTF_8));
+            formBodyBuilder.append("=");
+            formBodyBuilder.append(URLEncoder.encode(singleEntry.getValue(), StandardCharsets.UTF_8));
+        }
+        return formBodyBuilder.toString();
+    }
     private Result<TokenResponse> getAccessToken(String serverUrl, String jwt) throws Exception {
         TokenResponse tokenResponse = null;
         if(client == null) {
