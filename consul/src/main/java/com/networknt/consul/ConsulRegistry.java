@@ -236,8 +236,7 @@ public class ConsulRegistry extends AbstractRegistry {
                 logger.info(serviceName + " no need update, lastIndex:" + lastConsulIndexId);
             }
         } else {
-            serviceUrls.put(serviceName, new ArrayList<>());
-            logger.info("no response for service: {}, set urls to null", serviceName);
+            logger.info("Consul UNRESPONSIVE - Service {}'s local Service Registry Cache potentially out of date", serviceName);
         }
         return serviceUrls;
     }
