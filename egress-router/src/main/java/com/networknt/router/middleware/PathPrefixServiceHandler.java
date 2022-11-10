@@ -47,8 +47,10 @@ import java.util.Map;
  * Unlike {@link PathServiceHandler}, this handler does not require OpenAPIHandler or SwaggerHandler
  * but is also unable to do any validation beyond the path prefix.
  *
- * The handler will first check if the service URL is in the header. If it is, then this handler
- * will be skipped.
+ * Previously, this handler will skip the logic when server_url is in the header. However, since we
+ * have updated the TokenHandler to support multiple downstream hosts with different OAuth 2.0 servers,
+ * we need to put the service_id into the header regardless if the server_url is in the header. Also,
+ * this handler work on the best effort basis, so it only works if the prefix is in the config.
  *
  * This is the simplest mapping with the prefix and all APIs behind the http-sidecar or light-router
  * should have a unique prefix. All the services of light-router is following this convention.
@@ -72,23 +74,18 @@ public class PathPrefixServiceHandler implements MiddlewareHandler {
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         String[] serviceEntry = null;
-        HeaderValues serviceUrlHeader = exchange.getRequestHeaders().get(HttpStringConstants.SERVICE_URL);
-        String serviceUrl = serviceUrlHeader != null ? serviceUrlHeader.peekFirst() : null;
-        if (serviceUrl == null) {
-            // if service URL is in the header, we don't need to do the service discovery with serviceId.
-            HeaderValues serviceIdHeader = exchange.getRequestHeaders().get(HttpStringConstants.SERVICE_ID);
-            String serviceId = serviceIdHeader != null ? serviceIdHeader.peekFirst() : null;
-            if(serviceId == null) {
-                String requestPath = exchange.getRequestURI();
-                serviceEntry = HandlerUtils.findServiceEntry(HandlerUtils.normalisePath(requestPath), config.getMapping());
-                if(serviceEntry == null) {
-                    setExchangeStatus(exchange, STATUS_INVALID_REQUEST_PATH, requestPath);
-                    return;
-                } else {
-                    exchange.getRequestHeaders().put(HttpStringConstants.SERVICE_ID, serviceEntry[1]);
-                }
+        // if service URL is in the header, we don't need to do the service discovery with serviceId.
+        HeaderValues serviceIdHeader = exchange.getRequestHeaders().get(HttpStringConstants.SERVICE_ID);
+        String serviceId = serviceIdHeader != null ? serviceIdHeader.peekFirst() : null;
+        if(serviceId == null) {
+            String requestPath = exchange.getRequestURI();
+            serviceEntry = HandlerUtils.findServiceEntry(HandlerUtils.normalisePath(requestPath), config.getMapping());
+            if(serviceEntry != null) {
+                if(logger.isTraceEnabled()) logger.trace("serviceEntry found and service_id is set in the header.");
+                exchange.getRequestHeaders().put(HttpStringConstants.SERVICE_ID, serviceEntry[1]);
             }
         }
+
         Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
         if(auditInfo == null && serviceEntry != null) {
             // AUDIT_INFO is created for light-gateway to populate the endpoint as the OpenAPI handlers might not be available.
