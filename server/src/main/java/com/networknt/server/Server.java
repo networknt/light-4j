@@ -124,6 +124,7 @@ public class Server {
             masks.add("keystorePass");
             masks.add("keyPass");
             masks.add("truststorePass");
+            masks.add("bootstrapStorePass");
             ModuleRegistry.registerModule(Server.class.getName(), Config.getInstance().getJsonMapConfigNoCache(SERVER_CONFIG_NAME), masks);
 
             // start the server
