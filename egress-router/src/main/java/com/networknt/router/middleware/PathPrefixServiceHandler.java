@@ -64,8 +64,6 @@ public class PathPrefixServiceHandler implements MiddlewareHandler {
     protected volatile HttpHandler next;
     protected PathPrefixServiceConfig config;
 
-    static final String STATUS_INVALID_REQUEST_PATH = "ERR10007";
-
     public PathPrefixServiceHandler() {
         logger.info("PathServiceHandler is constructed");
         config = PathPrefixServiceConfig.load();
@@ -81,7 +79,7 @@ public class PathPrefixServiceHandler implements MiddlewareHandler {
             String requestPath = exchange.getRequestURI();
             serviceEntry = HandlerUtils.findServiceEntry(HandlerUtils.normalisePath(requestPath), config.getMapping());
             if(serviceEntry != null) {
-                if(logger.isTraceEnabled()) logger.trace("serviceEntry found and service_id is set in the header.");
+                if(logger.isTraceEnabled()) logger.trace("serviceEntry found and header is set for service_id = " + serviceEntry[1]);
                 exchange.getRequestHeaders().put(HttpStringConstants.SERVICE_ID, serviceEntry[1]);
             }
         }
