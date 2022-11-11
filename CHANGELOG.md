@@ -1,5 +1,31 @@
 # Change Log
 
+## [2.1.3](https://github.com/networknt/light-4j/tree/2.1.3) (2022-11-10)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1466 recreate RateLimiter object after the config reload [\#1467](https://github.com/networknt/light-4j/pull/1467) ([stevehu](https://github.com/stevehu))
+- fixes \#1464 update path handlers to allow the mapping to be empty [\#1465](https://github.com/networknt/light-4j/pull/1465) ([stevehu](https://github.com/stevehu))
+- fixes \#1460 do not skip PathPrefixServiceHandler if server_url is in … [\#1463](https://github.com/networknt/light-4j/pull/1463) ([stevehu](https://github.com/stevehu))
+- fixes \#1461 mask bootstrapStorePass in the server config during regis… [\#1462](https://github.com/networknt/light-4j/pull/1462) ([stevehu](https://github.com/stevehu))
+- fixes \#1458 implement the password grant_type for salesforce handler [\#1459](https://github.com/networknt/light-4j/pull/1459) ([stevehu](https://github.com/stevehu))
+- fixes \#1454 standardize the built-in config files for some modules [\#1455](https://github.com/networknt/light-4j/pull/1455) ([stevehu](https://github.com/stevehu))
+- fixes \#1451 add api-key module and dummy OAuth server [\#1452](https://github.com/networknt/light-4j/pull/1452) ([stevehu](https://github.com/stevehu))
+- fixes \#1449 udpate the BasicAuthHandler to make the config an instanc… [\#1450](https://github.com/networknt/light-4j/pull/1450) ([stevehu](https://github.com/stevehu))
+- Added shutdownApp method [\#1447](https://github.com/networknt/light-4j/pull/1447) ([fortunadoralph](https://github.com/fortunadoralph))
+- fixes \#1445 support multiple rules in the response transformer interc… [\#1446](https://github.com/networknt/light-4j/pull/1446) ([stevehu](https://github.com/stevehu))
+- Fixed Chunked Encoding When writing transformed Payload to SinkConduit (+ some refactor) [\#1444](https://github.com/networknt/light-4j/pull/1444) ([KalevGonvick](https://github.com/KalevGonvick))
+- fixes \#1442 resolve NPE in TokenHandler is appliedPathPrefixes missin… [\#1443](https://github.com/networknt/light-4j/pull/1443) ([stevehu](https://github.com/stevehu))
+- fixes \#1439 request and response transform interceptors though NPE if… [\#1440](https://github.com/networknt/light-4j/pull/1440) ([stevehu](https://github.com/stevehu))
+- ResponseBodyInterceptor Update [\#1437](https://github.com/networknt/light-4j/pull/1437) ([KalevGonvick](https://github.com/KalevGonvick))
+- fixes \#1435 checked content encoding in the response interceptor inje… [\#1436](https://github.com/networknt/light-4j/pull/1436) ([stevehu](https://github.com/stevehu))
+- fixes \#1433 update the ModifiableContentSinkConduit to add some trace… [\#1434](https://github.com/networknt/light-4j/pull/1434) ([stevehu](https://github.com/stevehu))
+- fixes \#1431 add debug and trace to the ProxyHandler to confirm retry [\#1432](https://github.com/networknt/light-4j/pull/1432) ([stevehu](https://github.com/stevehu))
+- fixes \#1429 check the response headers to identify if the response co… [\#1430](https://github.com/networknt/light-4j/pull/1430) ([stevehu](https://github.com/stevehu))
+- fixes \#1426 call the interceptors directly if there is no request body [\#1427](https://github.com/networknt/light-4j/pull/1427) ([stevehu](https://github.com/stevehu))
+- fixes \#1424 add requestHeaders and responseHeaders to the request res… [\#1425](https://github.com/networknt/light-4j/pull/1425) ([stevehu](https://github.com/stevehu))
 ## [2.1.2](https://github.com/networknt/light-4j/tree/2.1.2) (2022-10-22)
 
 
