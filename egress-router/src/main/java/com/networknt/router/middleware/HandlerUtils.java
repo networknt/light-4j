@@ -23,7 +23,10 @@ public class HandlerUtils {
     public static String[] findServiceEntry(String searchKey, Map<String, String> mapping) {
         if(logger.isDebugEnabled()) logger.debug("findServiceEntry for " + searchKey);
         String[] result = null;
-
+        if(mapping == null) {
+            if(logger.isDebugEnabled()) logger.debug("mapping is empty in the configuration.");
+            return null;
+        }
         for (Map.Entry<String, String> entry : mapping.entrySet()) {
             String prefix = entry.getKey();
             if(searchKey.startsWith(prefix)) {
