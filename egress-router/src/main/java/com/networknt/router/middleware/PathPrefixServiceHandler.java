@@ -62,7 +62,7 @@ import java.util.Map;
 public class PathPrefixServiceHandler implements MiddlewareHandler {
     static Logger logger = LoggerFactory.getLogger(PathPrefixServiceHandler.class);
     protected volatile HttpHandler next;
-    protected PathPrefixServiceConfig config;
+    protected static PathPrefixServiceConfig config;
 
     public PathPrefixServiceHandler() {
         logger.info("PathServiceHandler is constructed");
