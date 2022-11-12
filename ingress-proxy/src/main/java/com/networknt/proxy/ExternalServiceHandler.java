@@ -44,7 +44,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     private static final String METHOD_NOT_ALLOWED  = "ERR10008";
 
     private volatile HttpHandler next;
-    private ExternalServiceConfig config;
+    private static ExternalServiceConfig config;
     private HttpClient client;
 
     public ExternalServiceHandler() {
@@ -72,12 +72,13 @@ public class ExternalServiceHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ExternalServiceConfig.class.getName(), Config.getInstance().getJsonMapConfigNoCache(ExternalServiceConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(ExternalServiceHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void reload() {
         config.reload();
+        ModuleRegistry.registerModule(ExternalServiceHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override

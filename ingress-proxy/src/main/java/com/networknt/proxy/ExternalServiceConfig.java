@@ -50,6 +50,9 @@ public class ExternalServiceConfig {
         setUrlRewriteRules();
         setConfigList();
     }
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
 
     public boolean isEnabled() {
         return enabled;

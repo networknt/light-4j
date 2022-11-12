@@ -45,7 +45,7 @@ import java.util.List;
 /**
  * This is a wrapper class for LightProxyHandler as it is implemented as final. This class implements
  * the HttpHandler which can be injected into the handler.yml configuration file as another option
- * for the handlers injection. The other option is to use RouterHandlerProvider in service.yml file.
+ * for the handler injection. The other option is to use RouterHandlerProvider in service.yml file.
  *
  * @author Steve Hu
  */
@@ -54,12 +54,13 @@ public class LightProxyHandler implements HttpHandler {
     private static final int LONG_CLOCK_SKEW = 1000000;
 
     static final Logger logger = LoggerFactory.getLogger(LightProxyHandler.class);
-    ProxyConfig config;
+    static ProxyConfig config;
 
     ProxyHandler proxyHandler;
 
     public LightProxyHandler() {
         config = ProxyConfig.load();
+        ModuleRegistry.registerModule(LightProxyHandler.class.getName(), config.getMappedConfig(), null);
         List<String> hosts = new ArrayList<>(Arrays.asList(config.getHosts().split(",")));
         if(logger.isTraceEnabled()) logger.trace("hosts = " + JsonMapper.toJson(hosts));
         LoadBalancingProxyClient loadBalancer = new LoadBalancingProxyClient()
@@ -140,5 +141,6 @@ public class LightProxyHandler implements HttpHandler {
 
     public void reload() {
         config.reload();
+        ModuleRegistry.registerModule(LightProxyHandler.class.getName(), config.getMappedConfig(), null);
     }
 }

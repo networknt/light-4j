@@ -27,7 +27,7 @@ import java.util.Map;
 public class ServiceDictHandler implements MiddlewareHandler {
 	private static final Logger logger = LoggerFactory.getLogger(ServiceDictHandler.class);
     protected volatile HttpHandler next;
-    protected ServiceDictConfig config;
+    protected static ServiceDictConfig config;
 
     public ServiceDictHandler() {
         logger.info("ServiceDictHandler is constructed");
@@ -83,5 +83,6 @@ public class ServiceDictHandler implements MiddlewareHandler {
     @Override
     public void reload() {
         config.reload();
+        ModuleRegistry.registerModule(ServiceDictHandler.class.getName(), config.getMappedConfig(), null);
     }
 }
