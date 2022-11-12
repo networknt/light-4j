@@ -135,8 +135,8 @@ public class ConfigInjection {
             // Use key of injectionPattern to get value from both environment variables and "values.yaml"
             String envValString = System.getenv(convertEnvVars(injectionPattern.getKey()));
             Object envValue = decryptEnvValue(decryptor, envValString);
-
-            Map<String, Object> valueMap = Config.getInstance().getDefaultJsonMapConfig(CENTRALIZED_MANAGEMENT);
+            // change to no cache method to support config-reload.
+            Map<String, Object> valueMap = Config.getInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
             Object fileValue = (valueMap != null) ? valueMap.get(injectionPattern.getKey()) : null;
             // Return different value from different sources based on injection order defined before
             if ((INJECTION_ORDER_CODE.equals("2") && envValue != null) || (INJECTION_ORDER_CODE.equals("1") && fileValue == null)) {
