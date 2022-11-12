@@ -40,7 +40,7 @@ public class LimitHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(LimitHandler.class);
 
     private volatile HttpHandler next;
-    private  RateLimiter rateLimiter;
+    private static RateLimiter rateLimiter;
     private LimitConfig config;
     private static final ObjectMapper mapper = Config.getInstance().getMapper();
 
