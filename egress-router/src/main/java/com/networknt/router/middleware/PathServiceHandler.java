@@ -57,7 +57,7 @@ import java.util.Map;
 public class PathServiceHandler implements MiddlewareHandler {
     static Logger logger = LoggerFactory.getLogger(PathServiceHandler.class);
     private volatile HttpHandler next;
-    private PathServiceConfig config;
+    private static PathServiceConfig config;
     public PathServiceHandler() {
         logger.info("PathServiceHandler is constructed");
         config = PathServiceConfig.load();
@@ -112,11 +112,12 @@ public class PathServiceHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(TokenHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(PathServiceHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void reload() {
         config.reload();
+        ModuleRegistry.registerModule(PathServiceHandler.class.getName(), config.getMappedConfig(), null);
     }
 }

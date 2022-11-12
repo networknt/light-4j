@@ -39,7 +39,7 @@ public class ModuleRegistry {
             }
             registry.put(moduleName, config);
         } else {
-            // we don't have any module without config but we cannot guarantee user created modules
+            // we don't have any module without config, but we cannot guarantee user created modules
             registry.put(moduleName, new HashMap<String, Object>());
         }
     }

@@ -119,5 +119,6 @@ public class PathPrefixServiceHandler implements MiddlewareHandler {
     @Override
     public void reload() {
         config.reload();
+        ModuleRegistry.registerModule(PathPrefixServiceHandler.class.getName(), config.getMappedConfig(), null);
     }
 }

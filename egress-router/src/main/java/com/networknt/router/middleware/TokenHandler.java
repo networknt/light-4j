@@ -74,7 +74,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TokenHandler implements MiddlewareHandler {
     private static final String HANDLER_DEPENDENCY_ERROR = "ERR10074";
 
-    private TokenConfig config;
+    private static TokenConfig config;
     static Logger logger = LoggerFactory.getLogger(TokenHandler.class);
     protected volatile HttpHandler next;
     // Cached jwt token for this handler on behalf of a client by serviceId as the key
@@ -189,5 +189,6 @@ public class TokenHandler implements MiddlewareHandler {
     @Override
     public void reload() {
         config.reload();
+        ModuleRegistry.registerModule(TokenHandler.class.getName(), config.getMappedConfig(), null);
     }
 }
