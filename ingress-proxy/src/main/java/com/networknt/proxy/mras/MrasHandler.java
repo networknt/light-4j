@@ -162,7 +162,7 @@ public class MrasHandler implements MiddlewareHandler {
                     return;
                 } else if(config.getPathPrefixAuth().get(key).equals(config.ANONYMOUS)) {
                     // no authorization header for this type of the request.
-                    invokeApi(exchange, (String)config.getBasicAuth().get(config.SERVICE_HOST), requestPath, null);
+                    invokeApi(exchange, (String)config.getAnonymous().get(config.SERVICE_HOST), requestPath, null);
                     return;
                 } else if(config.getPathPrefixAuth().get(key).equals(config.MICROSOFT)) {
                     // microsoft access token for authentication.
