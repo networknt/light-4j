@@ -195,39 +195,58 @@ public class MrasHandler implements MiddlewareHandler {
         if(logger.isTraceEnabled()) logger.trace("Access MRAS API with method = " + method + " requestHost = " + serviceHost + " queryString = " + queryString + " contentType = " + contentType);
         HttpRequest request = null;
         if(method.equalsIgnoreCase("GET")) {
-            request = HttpRequest.newBuilder()
+            HttpRequest.Builder builder = HttpRequest.newBuilder()
                     .uri(new URI(serviceHost + requestPath + "?" + queryString))
-                    .headers("Authorization", authorization, "Content-Type", contentType)
-                    .GET()
-                    .build();
-
+                    .GET();
+            if(authorization != null) {
+                builder.headers("Authorization", authorization, "Content-Type", contentType);
+            } else {
+                builder.header("Content-Type", contentType);
+            }
+            request = builder.build();
         } else if(method.equalsIgnoreCase("DELETE")) {
-            request = HttpRequest.newBuilder()
+            HttpRequest.Builder builder = HttpRequest.newBuilder()
                     .uri(new URI(serviceHost + requestPath + "?" + queryString))
-                    .headers("Authorization", authorization, "Content-Type", contentType)
-                    .DELETE()
-                    .build();
+                    .DELETE();
+            if(authorization != null) {
+                builder.headers("Authorization", authorization, "Content-Type", contentType);
+            } else {
+                builder.header("Content-Type", contentType);
+            }
+            request = builder.build();
         } else if(method.equalsIgnoreCase("POST")) {
             String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
-            request = HttpRequest.newBuilder()
+            HttpRequest.Builder builder = HttpRequest.newBuilder()
                     .uri(new URI(serviceHost + requestPath))
-                    .headers("Authorization", authorization, "Content-Type", contentType)
-                    .POST(bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString))
-                    .build();
+                    .POST(bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString));
+            if(authorization != null) {
+                builder.headers("Authorization", authorization, "Content-Type", contentType);
+            } else {
+                builder.header("Content-Type", contentType);
+            }
+            request = builder.build();
         } else if(method.equalsIgnoreCase("PUT")) {
             String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
-            request = HttpRequest.newBuilder()
+            HttpRequest.Builder builder = HttpRequest.newBuilder()
                     .uri(new URI(serviceHost + requestPath))
-                    .headers("Authorization", authorization, "Content-Type", contentType)
-                    .PUT(bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString))
-                    .build();
+                    .PUT(bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString));
+            if(authorization != null) {
+                builder.headers("Authorization", authorization, "Content-Type", contentType);
+            } else {
+                builder.header("Content-Type", contentType);
+            }
+            request = builder.build();
         } else if(method.equalsIgnoreCase("PATCH")) {
             String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
-            request = HttpRequest.newBuilder()
+            HttpRequest.Builder builder = HttpRequest.newBuilder()
                     .uri(new URI(serviceHost + requestPath))
-                    .headers("Authorization", authorization, "Content-Type", contentType)
-                    .method("PATCH", bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString))
-                    .build();
+                    .method("PATCH", bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString));
+            if(authorization != null) {
+                builder.headers("Authorization", authorization, "Content-Type", contentType);
+            } else {
+                builder.header("Content-Type", contentType);
+            }
+            request = builder.build();
         } else {
             logger.error("wrong http method " + method + " for request path " + requestPath);
             setExchangeStatus(exchange, METHOD_NOT_ALLOWED, method, requestPath);
