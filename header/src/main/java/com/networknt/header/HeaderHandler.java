@@ -16,8 +16,6 @@
 
 package com.networknt.header;
 
-import com.networknt.config.Config;
-import com.networknt.exception.ExceptionConfig;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.ModuleRegistry;
@@ -46,7 +44,7 @@ import java.util.Map;
 public class HeaderHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(HeaderHandler.class);
 
-    private HeaderConfig config;
+    private static HeaderConfig config;
 
     private volatile HttpHandler next;
 
@@ -148,11 +146,12 @@ public class HeaderHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(HeaderHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        ModuleRegistry.registerModule(HeaderHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void reload() {
         config.reload();
+        ModuleRegistry.registerModule(HeaderHandler.class.getName(), config.getMappedConfig(), null);
     }
 }

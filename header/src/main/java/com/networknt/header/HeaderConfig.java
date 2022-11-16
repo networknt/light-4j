@@ -113,6 +113,9 @@ public class HeaderConfig {
         this.responseUpdateMap = responseUpdateMap;
     }
 
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
     private void setConfigList() {
         if (mappedConfig.get(REQUEST) != null) {
             Map<String, Object> requestMap = (Map<String, Object>)mappedConfig.get(REQUEST);
