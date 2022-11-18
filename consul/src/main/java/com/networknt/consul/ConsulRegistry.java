@@ -238,7 +238,8 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                 logger.info("Consul returned no service updates: No need to update local Consul discovery cache for service {}, lastIndex={}", serviceName, lastConsulIndexId);
             }
         } else {
-            logger.info("Consul UNRESPONSIVE - Service {}'s local Service Registry Cache potentially out of date", serviceName);
+            serviceUrls.put(serviceName, new ArrayList<>());
+            logger.info("Clearing local cache for service {}", serviceName);
         }
         return serviceUrls;
     }
