@@ -65,6 +65,7 @@ import java.security.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -178,6 +179,20 @@ public class Http2Client {
         return new UndertowXnioSsl(WORKER.getXnio(), OptionMap.EMPTY, BUFFER_POOL, sslContext);
     }
 
+    public static ClientConnection safeConnect(long timeoutSeconds, IoFuture<ClientConnection> future)
+    {
+        if(future.await(timeoutSeconds, TimeUnit.SECONDS) != IoFuture.Status.DONE)
+            throw new RuntimeException("Connection establishment timed out");
+
+        ClientConnection connection = null;
+        try {
+            connection = future.get();
+        } catch (IOException e) {
+            throw new RuntimeException("Connection establishment timed out", e);
+        }
+        return connection;
+    }
+
     public IoFuture<ClientConnection> connect(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         return connect(uri, worker, null, bufferPool, options);
     }
@@ -192,6 +207,11 @@ public class Http2Client {
         return connect(uri, worker, null, bufferPool, options);
     }
 
+    public ClientConnection safeBorrowConnection(long timeoutSeconds, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
+        IoFuture<ClientConnection> future = borrowConnection(uri, worker, bufferPool, options);
+        return safeConnect(timeoutSeconds, future);
+    }
+
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         return connect(bindAddress, uri, worker, null, bufferPool, options);
     }
@@ -204,6 +224,11 @@ public class Http2Client {
             return result.getIoFuture();
         }
         return connect(bindAddress, uri, worker, null, bufferPool, options);
+    }
+
+    public ClientConnection safeBorrowConnection(long timeoutSeconds, InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
+        IoFuture<ClientConnection> future = borrowConnection(bindAddress, uri, worker, bufferPool, options);
+        return safeConnect(timeoutSeconds, future);
     }
 
     public XnioSsl getDefaultXnioSsl() {
@@ -240,6 +265,11 @@ public class Http2Client {
         return connect((InetSocketAddress) null, uri, worker, ssl, bufferPool, options);
     }
 
+    public ClientConnection safeBorrowConnection(long timeoutSeconds, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        IoFuture<ClientConnection> future = borrowConnection(uri, worker, ssl, bufferPool, options);
+        return safeConnect(timeoutSeconds, future);
+    }
+
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         ClientProvider provider = getClientProvider(uri);
@@ -274,6 +304,11 @@ public class Http2Client {
         return connect((InetSocketAddress) null, uri, ioThread, null, bufferPool, options);
     }
 
+    public ClientConnection safeBorrowConnection(long timeoutSeconds, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
+        IoFuture<ClientConnection> future = borrowConnection(uri, ioThread, bufferPool, options);
+        return safeConnect(timeoutSeconds, future);
+    }
+
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
         return connect(bindAddress, uri, ioThread, null, bufferPool, options);
     }
@@ -286,6 +321,11 @@ public class Http2Client {
             return result.getIoFuture();
         }
         return connect(bindAddress, uri, ioThread, null, bufferPool, options);
+    }
+
+    public ClientConnection safeBorrowConnection(long timeoutSeconds, InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
+        IoFuture<ClientConnection> future = borrowConnection(bindAddress, uri, ioThread, bufferPool, options);
+        return safeConnect(timeoutSeconds, future);
     }
 
     public IoFuture<ClientConnection> connect(final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
@@ -302,6 +342,11 @@ public class Http2Client {
         }
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         return connect((InetSocketAddress) null, uri, ioThread, ssl, bufferPool, options);
+    }
+
+    public ClientConnection safeBorrowConnection(long timeoutSeconds, final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        IoFuture<ClientConnection> future = borrowConnection(uri, ioThread, ssl, bufferPool, options);
+        return safeConnect(timeoutSeconds, future);
     }
 
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {

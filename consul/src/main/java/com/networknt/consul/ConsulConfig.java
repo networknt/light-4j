@@ -28,6 +28,8 @@ public class ConsulConfig {
     boolean enableHttp2;
     String wait;
     String timeoutBuffer;
+    long connectionTimeout = 5;  // Consul connection timeout in seconds
+    long requestTimeout = 5;     // Consul request timeout in seconds (excluding /v1/health/service)
 
     public String getConsulUrl() {
         return consulUrl;
@@ -99,4 +101,8 @@ public class ConsulConfig {
     public void setEnableHttp2(boolean enableHttp2) {
         this.enableHttp2 = enableHttp2;
     }
+
+    public long getConnectionTimeout() { return connectionTimeout; }
+
+    public long getRequestTimeout() { return requestTimeout; }
 }

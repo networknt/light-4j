@@ -86,7 +86,9 @@ public class ConsulClientImpl implements ConsulClient {
 		String path = "/v1/agent/check/pass/" + "check-" + serviceId;
 		ClientConnection connection = null;
 		try {
-			connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
+			connection = client.safeBorrowConnection(
+					config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+
 			AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, null);
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= UNUSUAL_STATUS_CODE){
@@ -106,7 +108,9 @@ public class ConsulClientImpl implements ConsulClient {
 		String path = "/v1/agent/check/fail/" + "check-" + serviceId;
 		ClientConnection connection = null;
 		try {
-			connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
+			connection = client.safeBorrowConnection(
+					config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+
 			AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, null);
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= UNUSUAL_STATUS_CODE){
@@ -125,7 +129,9 @@ public class ConsulClientImpl implements ConsulClient {
 		String path = "/v1/agent/service/register";
 		ClientConnection connection = null;
 		try {
-			connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
+			connection = client.safeBorrowConnection(
+					config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+
 			AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, json);
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= UNUSUAL_STATUS_CODE){
@@ -144,7 +150,9 @@ public class ConsulClientImpl implements ConsulClient {
 		String path = "/v1/agent/service/deregister/" + serviceId;
 		ClientConnection connection = null;
 		try {
-			connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
+			connection = client.safeBorrowConnection(
+					config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+
 	        final AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, null);
             int statusCode = reference.get().getResponseCode();
             if(statusCode >= UNUSUAL_STATUS_CODE){
@@ -183,7 +191,9 @@ public class ConsulClientImpl implements ConsulClient {
 		logger.trace("Consul health service path = {}", path);
 		try {
 			logger.debug("Getting connection from pool with {}", uri);
-			connection = client.borrowConnection(uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap).get();
+			connection = client.safeBorrowConnection(
+					config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+
 			logger.info("Got connection: {} from pool and send request to {}", connection, path);
 			AtomicReference<ClientResponse> reference  = send(connection, Methods.GET, path, token, null);
 			int statusCode = reference.get().getResponseCode();
