@@ -31,7 +31,7 @@ public class SalesforceConfig {
     public static final String PROXY_PORT = "proxyPort";
     public static final String ENABLE_HTTP2 = "enableHttps";
 
-    public static final String GRANT_TYPE = "grant_type";
+    public static final String GRANT_TYPE = "grantType";
     public static final String USERNAME = "username";
     public static final String PASSWORD = "password";
     public static final String CLIENT_ID = "clientId";
@@ -48,13 +48,6 @@ public class SalesforceConfig {
     String proxyHost;
     int proxyPort;
     boolean enableHttp2;
-
-    String grantType;
-    String username;
-    String password;
-    String clientId;
-    String clientSecret;
-    String responseType;
 
     List<PathPrefixAuth> pathPrefixAuths;
     private Config config;

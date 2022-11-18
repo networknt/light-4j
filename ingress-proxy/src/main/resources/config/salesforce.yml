@@ -38,3 +38,8 @@ pathPrefixAuths: ${salesforce.pathPrefixAuths:}
 #    waitLength: 5000
 #    tokenUrl: https://test.salesforce.com/services/oauth2/token
 #    serviceHost: https://nnt-sit.my.salesforce.com
+
+# URL rewrite rules, each line will have two parts: the regex patten and replace string separated
+# with a space. For details, please refer to the light-router router.yml configuration.
+# Test your rules at https://www.freeformatter.com/java-regex-tester.html
+urlRewriteRules: ${salesforce.urlRewriteRules:}

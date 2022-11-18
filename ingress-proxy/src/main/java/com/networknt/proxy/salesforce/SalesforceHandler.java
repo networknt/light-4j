@@ -14,6 +14,7 @@ import com.networknt.handler.config.UrlRewriteRule;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;
+import com.networknt.proxy.MultiPartBodyPublisher;
 import com.networknt.proxy.PathPrefixAuth;
 import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
@@ -139,7 +140,7 @@ public class SalesforceHandler implements MiddlewareHandler {
 
                 if(logger.isTraceEnabled()) logger.trace("found with requestPath = " + requestPath + " prefix = " + pathPrefixAuth.getPathPrefix());
                 // matched the prefix found. handler it with the config for this prefix.
-                if(System.currentTimeMillis() >= (pathPrefixAuth.getExpiration() - 5000)) { // leave 5 seconds room and default value is 0
+                if(System.currentTimeMillis() >= (pathPrefixAuth.getExpiration() - pathPrefixAuth.getWaitLength())) { // leave 5 seconds room by default
                     Result<TokenResponse> result;
                     if("password".equals(pathPrefixAuth.getGrantType())) {
                         result = getPasswordToken(pathPrefixAuth);
@@ -149,14 +150,14 @@ public class SalesforceHandler implements MiddlewareHandler {
                         result = getAccessToken(pathPrefixAuth.getTokenUrl(), jwt);
                     }
                     if(result.isSuccess()) {
-                        pathPrefixAuth.setExpiration(System.currentTimeMillis() + 300 * 1000);
+                        pathPrefixAuth.setExpiration(System.currentTimeMillis() + pathPrefixAuth.getTokenTtl() * 1000); // tokenTtl is the seconds the token is cached.
                         pathPrefixAuth.setAccessToken(result.getResult().getAccessToken());
                     } else {
                         setExchangeStatus(exchange, result.getError());
                         return;
                     }
                 }
-                invokeApi(exchange, "Bearer " + pathPrefixAuth.getAccessToken(), pathPrefixAuth.getServiceHost());
+                invokeApi(exchange, "Bearer " + pathPrefixAuth.getAccessToken(), pathPrefixAuth.getServiceHost(), requestPath);
                 return;
             }
         }
@@ -234,23 +235,23 @@ public class SalesforceHandler implements MiddlewareHandler {
             if(pathPrefixAuth.getTokenUrl() == null) {
                 return Failure.of(new Status(OAUTH_SERVER_URL_ERROR, "tokenUrl"));
             }
-
-            Map<String, String> formData = new HashMap<>();
-            formData.put("username", pathPrefixAuth.getUsername());
-            formData.put("password", pathPrefixAuth.getPassword());
-            formData.put("grant_type", pathPrefixAuth.getGrantType());
-            formData.put("client_id", pathPrefixAuth.getClientId());
-            formData.put("client_secret", pathPrefixAuth.getClientSecret());
-            formData.put("response_type", pathPrefixAuth.getResponseType());
+            MultiPartBodyPublisher publisher = new MultiPartBodyPublisher()
+                    .addPart("username", pathPrefixAuth.getUsername())
+                    .addPart("password", pathPrefixAuth.getPassword())
+                    .addPart("grant_type", pathPrefixAuth.getGrantType())
+                    .addPart("client_id", pathPrefixAuth.getClientId())
+                    .addPart("client_secret", pathPrefixAuth.getClientSecret())
+                    .addPart("response_type", pathPrefixAuth.getResponseType());
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(pathPrefixAuth.getTokenUrl()))
-                    .headers("Content-Type", "multipart/form-data")
-                    .POST(HttpRequest.BodyPublishers.ofString(getFormDataAsString(formData)))
+                    .headers("Content-Type", "multipart/form-data; boundary=" + publisher.getBoundary())
+                    .POST(publisher.build())
                     .build();
 
             HttpResponse<?> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            System.out.println(response.statusCode() + " " + response.body().toString());
+            // {"access_token":"00D4c0000008cs2!AQgAQEz6V7E2zicFNvmfn5vZhMqVwqfx6lw1_iIH6HeqdiwUpfJdzRBwyP5WZmdastpC2whXl5XAadJ6yTiw5p9NhpnLuvh5","instance_url":"https://networknt-sit.my.salesforce.com","id":"https://test.salesforce.com/id/00D4c0000008cs2EAA/0054c000000etGWAAY","token_type":"Bearer","issued_at":"1668791215099","signature":"L9dAAP0spmigt5nJcwrU2C1nu2iMV37hBFXAXIMZrg8="}
+            if(logger.isTraceEnabled()) logger.trace(response.statusCode() + " " + response.body().toString());
             if(response.statusCode() == 200) {
                 // construct a token response and return it.
                 Map<String, Object> map = JsonMapper.string2Map(response.body().toString());
@@ -258,7 +259,7 @@ public class SalesforceHandler implements MiddlewareHandler {
                     tokenResponse = new TokenResponse();
                     tokenResponse.setAccessToken((String)map.get("access_token"));
                     tokenResponse.setTokenType((String)map.get("token_type"));
-                    tokenResponse.setScope((String)map.get("scope"));
+                    if(map.get("scope") != null) tokenResponse.setScope((String)map.get("scope"));
                     return Success.of(tokenResponse);
                 } else {
                     return Failure.of(new Status(GET_TOKEN_ERROR, "response body is not a JSON"));
@@ -273,18 +274,6 @@ public class SalesforceHandler implements MiddlewareHandler {
         }
     }
 
-    private static String getFormDataAsString(Map<String, String> formData) {
-        StringBuilder formBodyBuilder = new StringBuilder();
-        for (Map.Entry<String, String> singleEntry : formData.entrySet()) {
-            if (formBodyBuilder.length() > 0) {
-                formBodyBuilder.append("&");
-            }
-            formBodyBuilder.append(URLEncoder.encode(singleEntry.getKey(), StandardCharsets.UTF_8));
-            formBodyBuilder.append("=");
-            formBodyBuilder.append(URLEncoder.encode(singleEntry.getValue(), StandardCharsets.UTF_8));
-        }
-        return formBodyBuilder.toString();
-    }
     private Result<TokenResponse> getAccessToken(String serverUrl, String jwt) throws Exception {
         TokenResponse tokenResponse = null;
         if(client == null) {
@@ -352,9 +341,8 @@ public class SalesforceHandler implements MiddlewareHandler {
         }
     }
 
-    private void invokeApi(HttpServerExchange exchange, String authorization, String requestHost) throws Exception {
+    private void invokeApi(HttpServerExchange exchange, String authorization, String requestHost, String requestPath) throws Exception {
         // call the Salesforce API directly here with the token from the cache.
-        String requestPath = exchange.getRequestPath();
         String method = exchange.getRequestMethod().toString();
         String queryString = exchange.getQueryString();
         String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
