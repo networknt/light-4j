@@ -188,7 +188,7 @@ public class Http2Client {
         try {
             connection = future.get();
         } catch (IOException e) {
-            throw new RuntimeException("Connection establishment timed out", e);
+            throw new RuntimeException("Connection establishment generated I/O exception", e);
         }
         return connection;
     }
