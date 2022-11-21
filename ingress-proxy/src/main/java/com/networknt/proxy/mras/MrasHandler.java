@@ -117,6 +117,7 @@ public class MrasHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest starts.");
         String requestPath = exchange.getRequestPath();
         if(logger.isTraceEnabled()) logger.trace("original requestPath = " + requestPath);
 
@@ -151,18 +152,22 @@ public class MrasHandler implements MiddlewareHandler {
                             accessToken = result.getResult().getAccessToken();
                         } else {
                             setExchangeStatus(exchange, result.getError());
+                            if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends with an error.");
                             return;
                         }
                     }
                     invokeApi(exchange, (String)config.getAccessToken().get(config.SERVICE_HOST), requestPath, "Bearer " + accessToken);
+                    if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
                     return;
                 } else if(config.getPathPrefixAuth().get(key).equals(config.BASIC_AUTH)) {
                     // only basic authentication is used for the access.
                     invokeApi(exchange, (String)config.getBasicAuth().get(config.SERVICE_HOST), requestPath, "Basic " + encodeCredentials((String)config.getBasicAuth().get(config.USERNAME), (String)config.getBasicAuth().get(config.PASSWORD)));
+                    if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
                     return;
                 } else if(config.getPathPrefixAuth().get(key).equals(config.ANONYMOUS)) {
                     // no authorization header for this type of the request.
                     invokeApi(exchange, (String)config.getAnonymous().get(config.SERVICE_HOST), requestPath, null);
+                    if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
                     return;
                 } else if(config.getPathPrefixAuth().get(key).equals(config.MICROSOFT)) {
                     // microsoft access token for authentication.
@@ -174,15 +179,18 @@ public class MrasHandler implements MiddlewareHandler {
                             microsoft = result.getResult().getAccessToken();
                         } else {
                             setExchangeStatus(exchange, result.getError());
+                            if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends with an error.");
                             return;
                         }
                     }
                     invokeApi(exchange, (String)config.getMicrosoft().get(config.SERVICE_HOST), requestPath, "Bearer " + microsoft);
+                    if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
                     return;
                 }
             }
         }
         // not the MRAS path, go to the next middleware handlers.
+        if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
         Handler.next(exchange, next);
     }
 

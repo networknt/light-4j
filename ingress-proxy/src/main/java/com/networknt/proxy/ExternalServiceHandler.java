@@ -83,6 +83,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest starts.");
         String requestPath = exchange.getRequestPath();
         if(logger.isTraceEnabled()) logger.trace("original requestPath = " + requestPath);
         if (config.getPathHostMappings() != null) {
@@ -141,6 +142,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                     } else {
                         logger.error("wrong http method " + method + " for request path " + requestPath);
                         setExchangeStatus(exchange, METHOD_NOT_ALLOWED, method, requestPath);
+                        if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest ends with an error.");
                         return;
                     }
                     if(client == null) {
@@ -180,10 +182,12 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         }
                     }
                     exchange.getResponseSender().send(ByteBuffer.wrap(responseBody));
+                    if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest ends.");
                     return;
                 }
             }
         }
+        if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest ends.");
         Handler.next(exchange, next);
     }
 

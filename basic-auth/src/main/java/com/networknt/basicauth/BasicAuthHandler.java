@@ -73,6 +73,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("BasicAuthHandler.handleRequest starts.");
         String auth = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
         String requestPath = exchange.getRequestPath();
         if(auth == null || auth.trim().length() == 0) {
@@ -88,11 +89,13 @@ public class BasicAuthHandler implements MiddlewareHandler {
                 if(!match) {
                     logger.error("Request path" + requestPath + " is not authorized for user " + BasicAuthConfig.ANONYMOUS);
                     setExchangeStatus(exchange, NOT_AUTHORIZED_REQUEST_PATH, requestPath, BasicAuthConfig.ANONYMOUS);
+                    if(logger.isDebugEnabled()) logger.debug("BasicAuthHandler.handleRequest ends with an error.");
                     return;
                 }
             } else {
                 logger.error("Anonymous is not allowed and authorization header is missing.");
                 setExchangeStatus(exchange, MISSING_AUTH_TOKEN);
+                if(logger.isDebugEnabled()) logger.debug("BasicAuthHandler.handleRequest ends with an error.");
                 return;
             }
         } else {
@@ -111,6 +114,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
                     if(user == null || !(user != null && user.getUsername().equals(username) && user.getPassword().equals(password))) {
                         logger.error("Invalid username or password with authorization header starts = " + auth.substring(0, 10));
                         setExchangeStatus(exchange, INVALID_USERNAME_OR_PASSWORD);
+                        if(logger.isDebugEnabled()) logger.debug("BasicAuthHandler.handleRequest ends with an error.");
                         return;
                     }
                     // Here we have passed the authentication. Let's do the authorization with the paths.
@@ -124,11 +128,13 @@ public class BasicAuthHandler implements MiddlewareHandler {
                     if(!match) {
                         logger.error("Request path" + requestPath + " is not authorized for user " + user.getUsername());
                         setExchangeStatus(exchange, NOT_AUTHORIZED_REQUEST_PATH, requestPath, user.getUsername());
+                        if(logger.isDebugEnabled()) logger.debug("BasicAuthHandler.handleRequest ends with an error.");
                         return;
                     }
                 } else {
                     logger.error("Invalid basic authentication header. It must be username:password base64 encode.");
                     setExchangeStatus(exchange, INVALID_BASIC_HEADER, auth.substring(0, 10));
+                    if(logger.isDebugEnabled()) logger.debug("BasicAuthHandler.handleRequest ends with an error.");
                     return;
                 }
             } else if("BEARER".equalsIgnoreCase(auth.substring(0, 6))){
@@ -136,6 +142,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
                 if(!config.allowBearerToken) {
                     logger.error("Not a basic authentication header and bearer token is not allowed.");
                     setExchangeStatus(exchange, INVALID_BASIC_HEADER, auth.substring(0, 10));
+                    if(logger.isDebugEnabled()) logger.debug("BasicAuthHandler.handleRequest ends with an error.");
                     return;
                 } else {
                     // bearer token is allowed, we need to validate it and check the allowed paths.
@@ -153,19 +160,23 @@ public class BasicAuthHandler implements MiddlewareHandler {
                         if(!match) {
                             logger.error("Request path" + requestPath + " is not authorized for user " + BasicAuthConfig.BEARER);
                             setExchangeStatus(exchange, NOT_AUTHORIZED_REQUEST_PATH, requestPath, BasicAuthConfig.BEARER);
+                            if(logger.isDebugEnabled()) logger.debug("BasicAuthHandler.handleRequest ends with an error.");
                             return;
                         }
                     } else {
                         logger.error("Bearer token is allowed but missing the bearer user path definitions for authorization");
                         setExchangeStatus(exchange, BEARER_USER_NOT_FOUND);
+                        if(logger.isDebugEnabled()) logger.debug("BasicAuthHandler.handleRequest ends with an error.");
                         return;
                     }
                 }
             } else {
                 logger.error("Invalid authorization header " + auth.substring(0, 10));
                 setExchangeStatus(exchange, INVALID_AUTHORIZATION_HEADER, auth.substring(0, 10));
+                if(logger.isDebugEnabled()) logger.debug("BasicAuthHandler.handleRequest ends with an error.");
                 return;
             }
+            if(logger.isDebugEnabled()) logger.debug("BasicAuthHandler.handleRequest ends.");
             Handler.next(exchange, next);
         }
     }

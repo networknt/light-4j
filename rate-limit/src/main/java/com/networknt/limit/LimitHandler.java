@@ -67,10 +67,10 @@ public class LimitHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("LimitHandler.handleRequest starts.");
         RateLimitResponse rateLimitResponse = rateLimiter.handleRequest(exchange, config.getKey());
-
-
         if (rateLimitResponse.allow) {
+            if(logger.isDebugEnabled()) logger.debug("LimitHandler.handleRequest ends.");
             Handler.next(exchange, next);
         } else {
             exchange.getResponseHeaders().add(new HttpString(Constants.RATELIMIT_LIMIT), rateLimitResponse.getHeaders().get(Constants.RATELIMIT_LIMIT));
@@ -79,6 +79,7 @@ public class LimitHandler implements MiddlewareHandler {
 
             exchange.getResponseHeaders().add(new HttpString("Content-Type"), "application/json");
             exchange.setStatusCode(config.getErrorCode()==0 ? HttpStatus.TOO_MANY_REQUESTS.value():config.getErrorCode());
+            if(logger.isDebugEnabled()) logger.debug("LimitHandler.handleRequest ends with an error.");
             exchange.getResponseSender().send(mapper.writeValueAsString(rateLimitResponse));
         }
     }

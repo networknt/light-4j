@@ -63,6 +63,7 @@ public class SanitizerHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        if (logger.isDebugEnabled()) logger.trace("SanitizerHandler.handleRequest starts.");
         String method = exchange.getRequestMethod().toString();
         if (config.isHeaderEnabled()) {
             HeaderMap headerMap = exchange.getRequestHeaders();
@@ -93,6 +94,7 @@ public class SanitizerHandler implements MiddlewareHandler {
                 }
             }
         }
+        if (logger.isDebugEnabled()) logger.trace("SanitizerHandler.handleRequest ends.");
         Handler.next(exchange, next);
     }
 

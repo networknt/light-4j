@@ -93,10 +93,7 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
-
-        if (logger.isTraceEnabled())
-            logger.trace("ResponseTransformerHandler.handleRequest is called.");
-
+        if (logger.isDebugEnabled()) logger.trace("ResponseTransformerInterceptor.handleRequest starts.");
         String requestPath = exchange.getRequestPath();
         if (config.getAppliedPathPrefixes() != null && config.getAppliedPathPrefixes().stream().anyMatch(requestPath::startsWith)) {
             if (engine == null) {
@@ -190,6 +187,7 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
                 }
             }
         }
+        if (logger.isDebugEnabled()) logger.trace("ResponseTransformerInterceptor.handleRequest ends.");
     }
 
     private Map<String, Object> executeRules(Map<String, Object> objMap, Map<String, List> endpointRules) throws Exception {
