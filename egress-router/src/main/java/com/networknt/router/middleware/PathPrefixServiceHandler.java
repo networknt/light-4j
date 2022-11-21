@@ -71,6 +71,7 @@ public class PathPrefixServiceHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("PathPrefixServiceHandler.handleRequest starts.");
         String[] serviceEntry = null;
         // if service URL is in the header, we don't need to do the service discovery with serviceId.
         HeaderValues serviceIdHeader = exchange.getRequestHeaders().get(HttpStringConstants.SERVICE_ID);
@@ -91,6 +92,7 @@ public class PathPrefixServiceHandler implements MiddlewareHandler {
             auditInfo.put(Constants.ENDPOINT_STRING, serviceEntry[0] + "@" + exchange.getRequestMethod().toString().toLowerCase());
             exchange.putAttachment(AttachmentConstants.AUDIT_INFO, auditInfo);
         }
+        if(logger.isDebugEnabled()) logger.debug("PathPrefixServiceHandler.handleRequest ends.");
         Handler.next(exchange, next);
     }
 

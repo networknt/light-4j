@@ -70,7 +70,7 @@ public class RequestBodyInterceptor implements RequestInterceptor {
      */
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        if(logger.isTraceEnabled()) logger.trace("RequestBodyInterceptor is called.");
+        if(logger.isDebugEnabled()) logger.debug("RequestBodyInterceptor.handleRequest starts.");
         if (this.shouldAttachBody(exchange)) {
             boolean attached = false;
             var existing = (PooledByteBuffer[])exchange.getAttachment(AttachmentConstants.BUFFERED_REQUEST_DATA_KEY);
@@ -103,6 +103,7 @@ public class RequestBodyInterceptor implements RequestInterceptor {
                     logger.error("Failed to attached the request body to the exchange");
             }
         }
+        if(logger.isDebugEnabled()) logger.debug("RequestBodyInterceptor.handleRequest ends.");
     }
 
     /**

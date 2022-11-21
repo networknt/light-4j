@@ -88,7 +88,7 @@ public class TokenHandler implements MiddlewareHandler {
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         // This handler must be put after the prefix or dict handler so that the serviceId is
         // readily available in the header resolved by the path or the endpoint from the request.
-        if(logger.isTraceEnabled()) logger.trace("TokenHandler.handleRequest is called.");
+        if(logger.isDebugEnabled()) logger.debug("TokenHandler.handleRequest starts.");
         String requestPath = exchange.getRequestPath();
         // this handler will only work with a list of applied path prefixes in the token.yml config file.
         if (config.getAppliedPathPrefixes() != null && config.getAppliedPathPrefixes().stream().anyMatch(s -> requestPath.startsWith(s))) {
@@ -100,6 +100,7 @@ public class TokenHandler implements MiddlewareHandler {
                 // or endpoint like the PathPrefixServiceHandler or ServiceDictHandler.
                 logger.error("The serviceId cannot be resolved. Do you have PathPrefixServiceHandler or ServiceDictHandler before this handler?");
                 setExchangeStatus(exchange, HANDLER_DEPENDENCY_ERROR, "TokenHandler", "PathPrefixServiceHandler");
+                if(logger.isDebugEnabled()) logger.debug("TokenHandler.handleRequest ends with an error.");
                 return;
             }
             ClientConfig clientConfig = ClientConfig.get();
@@ -139,6 +140,7 @@ public class TokenHandler implements MiddlewareHandler {
                 if(result.isFailure()) {
                     logger.error("Cannot populate or renew jwt for client credential grant type: " + result.getError().toString());
                     setExchangeStatus(exchange, result.getError());
+                    if(logger.isDebugEnabled()) logger.debug("TokenHandler.handleRequest ends with an error.");
                     return;
                 }
                 // put the cachedJwt to the cache.
@@ -161,6 +163,7 @@ public class TokenHandler implements MiddlewareHandler {
                 exchange.getRequestHeaders().put(HttpStringConstants.SCOPE_TOKEN, "Bearer " + cachedJwt.getJwt());
             }
         }
+        if(logger.isDebugEnabled()) logger.debug("TokenHandler.handleRequest ends.");
         Handler.next(exchange, next);
     }
 

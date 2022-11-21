@@ -117,6 +117,7 @@ public class AuditHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("AuditHandler.handleRequest starts.");
         Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
         Map<String, Object> auditMap = new LinkedHashMap<>();
         final long start = System.currentTimeMillis();
@@ -180,6 +181,7 @@ public class AuditHandler implements MiddlewareHandler {
         } else {
             config.getAuditFunc().accept(config.getConfig().getMapper().writeValueAsString(auditMap));
         }
+        if(logger.isDebugEnabled()) logger.debug("AuditHandler.handleRequest ends.");
         next(exchange);
     }
 

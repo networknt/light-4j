@@ -63,6 +63,7 @@ public class ExceptionHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("ExceptionHandler.handleRequest starts.");
         // dispatch here to make sure that all exceptions will be capture in this handler
         // otherwise, some of the exceptions will be captured in Connectors class in Undertow
         // As we've updated Server.java to redirect the logs to slf4j but still it make sense
@@ -73,6 +74,7 @@ public class ExceptionHandler implements MiddlewareHandler {
         }
 
         try {
+            if(logger.isDebugEnabled()) logger.debug("ExceptionHandler.handleRequest ends.");
             Handler.next(exchange, next);
         } catch (Throwable e) {
             logger.error("Exception:", e);

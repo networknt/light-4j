@@ -38,6 +38,7 @@ public class ProxyServerInfoHandler implements LightHttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("ProxyServerInfoHandler.handleRequest starts.");
         Map<String, Object> result = new HashMap<>();
         Map<String, Object> proxyInfo = ServerInfoGetHandler.getServerInfo(exchange);
         result.put(PROXY_INFO_KEY, proxyInfo);
@@ -55,6 +56,7 @@ public class ProxyServerInfoHandler implements LightHttpHandler {
             }
             result.put(url, serverInfo);
         }
+        if(logger.isDebugEnabled()) logger.debug("ProxyServerInfoHandler.handleRequest ends.");
         exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(result));
 
     }

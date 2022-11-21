@@ -85,6 +85,7 @@ public class MetricsHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("MetricsHandler.handleRequest starts.");
         if(firstTime) {
             commonTags.put("api", Server.getServerConfig().getServiceId());
             commonTags.put("env", Server.getServerConfig().getEnvironment());
@@ -137,7 +138,7 @@ public class MetricsHandler implements MiddlewareHandler {
             }
             nextListener.proceed();
         });
-        
+        if(logger.isDebugEnabled()) logger.debug("MetricsHandler.handleRequest ends.");
         Handler.next(exchange, next);
     }
 

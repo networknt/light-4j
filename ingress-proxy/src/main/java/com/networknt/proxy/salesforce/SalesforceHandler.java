@@ -114,6 +114,7 @@ public class SalesforceHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("SalesforceHandler.handleRequest starts.");
         String requestPath = exchange.getRequestPath();
         if(logger.isTraceEnabled()) logger.trace("original requestPath = " + requestPath);
         // make sure that the request path is in the key set. remember that key set only contains prefix not the full request path.
@@ -154,15 +155,17 @@ public class SalesforceHandler implements MiddlewareHandler {
                         pathPrefixAuth.setAccessToken(result.getResult().getAccessToken());
                     } else {
                         setExchangeStatus(exchange, result.getError());
+                        if(logger.isDebugEnabled()) logger.debug("SalesforceHandler.handleRequest ends with an error.");
                         return;
                     }
                 }
                 invokeApi(exchange, "Bearer " + pathPrefixAuth.getAccessToken(), pathPrefixAuth.getServiceHost(), requestPath);
+                if(logger.isDebugEnabled()) logger.debug("SalesforceHandler.handleRequest ends.");
                 return;
             }
         }
         // not the Salesforce path, go to the next middleware handler
-        if(logger.isDebugEnabled()) logger.debug("The requestPath is not matched to salesforce, go to the next handler in the chain.");
+        if(logger.isDebugEnabled()) logger.debug("SalesforceHandler.handleRequest ends.");
         Handler.next(exchange, next);
     }
 

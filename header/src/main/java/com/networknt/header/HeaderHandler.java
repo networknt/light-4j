@@ -69,6 +69,7 @@ public class HeaderHandler implements MiddlewareHandler {
      */
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("HeaderHandler.handleRequest starts.");
         // handle all request header
         List<String> requestHeaderRemove = config.getRequestRemoveList();
         if(requestHeaderRemove != null) {
@@ -123,7 +124,7 @@ public class HeaderHandler implements MiddlewareHandler {
                 }
             }
         }
-
+        if(logger.isDebugEnabled()) logger.debug("HeaderHandler.handleRequest ends.");
         Handler.next(exchange, next);
     }
 

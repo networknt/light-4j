@@ -28,6 +28,8 @@ import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderValues;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -42,7 +44,7 @@ import static com.networknt.httpstring.HttpStringConstants.SERVICE_ID;
  * @author Gavin Chen
  */
 public class GatewayRouterHandler extends RouterHandler implements MiddlewareHandler{
-
+    private static final Logger logger = LoggerFactory.getLogger(GatewayRouterHandler.class);
 
     private volatile HttpHandler next;
     public static final String ROUTER_CONFIG_NAME = "router";
@@ -52,6 +54,7 @@ public class GatewayRouterHandler extends RouterHandler implements MiddlewareHan
 
     @Override
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("GatewayRouterHandler.handleRequest starts.");
         if (Constants.HEADER.equalsIgnoreCase(gatewayConfig.getEgressIngressIndicator())) {
             HeaderValues serviceIdHeader = httpServerExchange.getRequestHeaders().get(SERVICE_ID);
             String serviceId = serviceIdHeader != null ? serviceIdHeader.peekFirst() : null;
@@ -64,11 +67,14 @@ public class GatewayRouterHandler extends RouterHandler implements MiddlewareHan
                     httpServerExchange.getRequestHeaders().put(HttpStringConstants.CALLER_ID, (String)serverConfig.get(SERVICE_ID));
                 }
             } else {
+                if(logger.isDebugEnabled()) logger.debug("GatewayRouterHandler.handleRequest ends.");
                 Handler.next(httpServerExchange, next);
             }
         } else if (Constants.PROTOCOL.equalsIgnoreCase(gatewayConfig.getEgressIngressIndicator()) && HttpURL.PROTOCOL_HTTP.equalsIgnoreCase(httpServerExchange.getRequestScheme())){
+            if(logger.isDebugEnabled()) logger.debug("GatewayRouterHandler.handleRequest ends.");
             proxyHandler.handleRequest(httpServerExchange);
         } else {
+            if(logger.isDebugEnabled()) logger.debug("GatewayRouterHandler.handleRequest ends.");
             Handler.next(httpServerExchange, next);
         }
     }
