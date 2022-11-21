@@ -82,6 +82,7 @@ public class ApiKeyHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("ApiKeyHandler.handleRequest starts.");
         String requestPath = exchange.getRequestPath();
         if(logger.isTraceEnabled()) logger.trace("requestPath = " + requestPath);
         if (config.getPathPrefixAuths() != null) {
@@ -96,11 +97,13 @@ public class ApiKeyHandler implements MiddlewareHandler {
                     } else {
                         logger.error("APIKEY from header " + apiKey.getHeaderName() + " is not matched for path prefix " + apiKey.getPathPrefix());
                         setExchangeStatus(exchange, API_KEY_MISMATCH, apiKey.getHeaderName(), apiKey.getPathPrefix());
+                        if(logger.isDebugEnabled()) logger.debug("ApiKeyHandler.handleRequest ends with an error.");
                         return;
                     }
                 }
             }
         }
+        if(logger.isDebugEnabled()) logger.debug("ApiKeyHandler.handleRequest ends.");
         Handler.next(exchange, next);
     }
 }

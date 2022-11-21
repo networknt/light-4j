@@ -71,6 +71,7 @@ public class ResponseBodyInterceptor implements ResponseInterceptor {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("ResponseBodyInterceptor.handleRequest starts.");
         if(shouldParseBody(exchange) && getBuffer(exchange) != null) {
             String s = BuffersUtils.toString(getBuffer(exchange), StandardCharsets.UTF_8);
             if(logger.isTraceEnabled()) logger.trace("original response body = " + s);
@@ -80,6 +81,7 @@ public class ResponseBodyInterceptor implements ResponseInterceptor {
                 if(logger.isInfoEnabled()) logger.info("Failed to attached the response body to the exchange");
             }
         }
+        if(logger.isDebugEnabled()) logger.debug("ResponseBodyInterceptor.handleRequest ends.");
     }
 
     private boolean shouldParseBody(final HttpServerExchange exchange) {

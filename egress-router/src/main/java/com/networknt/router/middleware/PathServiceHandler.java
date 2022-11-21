@@ -65,6 +65,7 @@ public class PathServiceHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("PathServiceConfig.handleRequest starts.");
         // if service URL is in the header, we don't need to do the service discovery with serviceId.
         HeaderValues serviceIdHeader = exchange.getRequestHeaders().get(HttpStringConstants.SERVICE_ID);
         String serviceId = serviceIdHeader != null ? serviceIdHeader.peekFirst() : null;
@@ -90,6 +91,7 @@ public class PathServiceHandler implements MiddlewareHandler {
                 logger.error("could not find auditInfo object in exchange attachment.");
             }
         }
+        if(logger.isDebugEnabled()) logger.debug("PathServiceConfig.handleRequest ends.");
         Handler.next(exchange, next);
     }
 

@@ -100,12 +100,14 @@ public class LightProxyHandler implements HttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("LightProxyHandler.handleRequest starts.");
         if(config.isForwardJwtClaims()) {
             HeaderMap headerValues = httpServerExchange.getRequestHeaders();
             JwtClaims jwtClaims = extractClaimsFromJwt(headerValues);
             httpServerExchange.getRequestHeaders().put(HttpString.tryFromString(CLAIMS_KEY), new ObjectMapper().writeValueAsString(jwtClaims.getClaimsMap()));
         }
         proxyHandler.handleRequest(httpServerExchange);
+        if(logger.isDebugEnabled()) logger.debug("LightProxyHandler.handleRequest ends.");
     }
 
     /**

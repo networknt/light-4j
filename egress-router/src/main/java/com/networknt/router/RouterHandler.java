@@ -25,6 +25,8 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.ResponseCodeHandler;
 import io.undertow.server.handlers.proxy.LoadBalancingRouterProxyClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xnio.OptionMap;
 
 /**
@@ -35,6 +37,7 @@ import org.xnio.OptionMap;
  * @author Steve Hu
  */
 public class RouterHandler implements HttpHandler {
+    private static final Logger logger = LoggerFactory.getLogger(RouterHandler.class);
     private static RouterConfig config;
 
     protected ProxyHandler proxyHandler;
@@ -67,7 +70,9 @@ public class RouterHandler implements HttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("RouterHandler.handleRequest starts.");
         proxyHandler.handleRequest(httpServerExchange);
+        if(logger.isDebugEnabled()) logger.debug("RouterHandler.handleRequest ends.");
     }
 
     public void reload() {
