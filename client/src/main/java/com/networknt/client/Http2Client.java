@@ -181,8 +181,9 @@ public class Http2Client {
 
     public static ClientConnection safeConnect(long timeoutSeconds, IoFuture<ClientConnection> future)
     {
-        if(future.await(timeoutSeconds, TimeUnit.SECONDS) != IoFuture.Status.DONE)
+        if(future.await(timeoutSeconds, TimeUnit.SECONDS) != IoFuture.Status.DONE) {
             throw new RuntimeException("Connection establishment timed out");
+        }
 
         ClientConnection connection = null;
         try {
@@ -190,6 +191,10 @@ public class Http2Client {
         } catch (IOException e) {
             throw new RuntimeException("Connection establishment generated I/O exception", e);
         }
+
+        if(connection == null)
+            throw new RuntimeException("Connection establishment failed (null) - Full connection terminated");
+
         return connection;
     }
 
@@ -277,13 +282,14 @@ public class Http2Client {
         provider.connect(new ClientCallback<ClientConnection>() {
             @Override
             public void completed(ClientConnection r) {
-                logger.info("Adding the new connection: {} to FutureResult and cache it for uri: {}", r, uri);
+                logger.debug("Adding the new connection: {} to FutureResult and cache it for uri: {}", r, uri);
                 result.setResult(r);
                 http2ClientConnectionPool.cacheConnection(uri, r);
             }
 
             @Override
             public void failed(IOException e) {
+                logger.debug("Failed to get new connection for uri: {}", uri);
                 result.setException(e);
             }
         }, bindAddress, uri, worker, ssl, bufferPool, options);
@@ -356,12 +362,14 @@ public class Http2Client {
         provider.connect(new ClientCallback<ClientConnection>() {
             @Override
             public void completed(ClientConnection r) {
+                logger.debug("Adding the new connection: {} to FutureResult and cache it for uri: {}", r, uri);
                 result.setResult(r);
                 http2ClientConnectionPool.cacheConnection(uri, r);
             }
 
             @Override
             public void failed(IOException e) {
+                logger.debug("Failed to get new connection for uri: {}", uri);
                 result.setException(e);
             }
         }, bindAddress, uri, ioThread, ssl, bufferPool, options);
