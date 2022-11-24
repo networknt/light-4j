@@ -99,10 +99,10 @@ public class URLTest {
         Assert.assertTrue(canServe);
 
         String fullStr = url.toFullStr();
-        Assert.assertEquals("http://localhost:7080/config?key1=value1&key2=true&key5=10L&key3=10&key4=3.14&nodeType=service&version=1.0&", fullStr);
+        Assert.assertEquals("http://localhost:7080/config?key1=value1&key2=true&key3=10&key4=3.14&key5=10L&nodeType=service&version=1.0&", fullStr);
 
 
-        URL newUrl = URLImpl.valueOf("http://localhost:7080/config?key1=value1&key2=true&key5=10L&key3=10&key4=3.14&nodeType=service&version=1.0");
+        URL newUrl = URLImpl.valueOf("http://localhost:7080/config?key1=value1&key2=true&key3=10&key4=3.14&key5=10L&nodeType=service&version=1.0&");
 
         Assert.assertNotNull(newUrl);
     }
