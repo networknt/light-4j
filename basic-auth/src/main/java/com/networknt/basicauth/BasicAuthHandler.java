@@ -87,9 +87,9 @@ public class BasicAuthHandler implements MiddlewareHandler {
         /* contains auth header */
         } else {
             // verify the header with the config file. assuming it is basic authentication first.
-            if (BASIC_PREFIX.startsWith(auth.toUpperCase())) {
+            if (BASIC_PREFIX.equalsIgnoreCase(auth.substring(0, 5))) {
                 this.handleBasicAuth(exchange, requestPath, auth);
-            } else if (BEARER_PREFIX.startsWith(auth.toUpperCase())) {
+            } else if (BEARER_PREFIX.equalsIgnoreCase(auth.substring(0, 6))) {
                 this.handleBearerToken(exchange, requestPath, auth);
             } else {
                 logger.error("Invalid/Unsupported authorization header {}", auth.substring(0, 10));
