@@ -41,6 +41,8 @@ import org.xnio.OptionMap;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -193,7 +195,8 @@ public class HeaderHandlerTest {
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
         Assert.assertEquals(200, statusCode);
-        Assert.assertEquals("{\"requestHeaders\":{\"key1\":\"value1\",\"key2\":\"value2\"},\"responseHeaders\":{\"key1\":\"value1\",\"key2\":\"value2\"}}", body);
+	List<String> possibleJson = getPossibleJson("key1", "value1", "key2", "value2", "key1", "value1", "key2", "value2");
+        Assert.assertTrue(possibleJson.contains(body));
     }
 
     @Test
@@ -225,7 +228,8 @@ public class HeaderHandlerTest {
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
         Assert.assertEquals(200, statusCode);
-        Assert.assertEquals("{\"requestHeaders\":{\"keyA\":\"valueA\",\"keyB\":\"valueB\"},\"responseHeaders\":{\"keyC\":\"valueC\",\"keyD\":\"valueD\"}}", body);
+	List<String> possibleJson = getPossibleJson("keyA", "valueA", "keyB", "valueB", "keyC", "valueC", "keyD", "valueD");
+        Assert.assertTrue(possibleJson.contains(body));
     }
 
     @Test
@@ -257,7 +261,21 @@ public class HeaderHandlerTest {
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
         Assert.assertEquals(200, statusCode);
-        Assert.assertEquals("{\"requestHeaders\":{\"keyE\":\"valueE\",\"keyF\":\"valueF\"},\"responseHeaders\":{\"keyG\":\"valueG\",\"keyH\":\"valueH\"}}", body);
+	List<String> possibleJson = getPossibleJson("keyE", "valueE", "keyF", "valueF", "keyG", "valueG", "keyH", "valueH");
+        Assert.assertTrue(possibleJson.contains(body));
+    }
+	
+    List<String> getPossibleJson(String key1, String value1, String key2, String value2, String key3, String value3, String key4, String value4){
+        List<String> possibleJson = new ArrayList<>();
+        possibleJson.add("{\"requestHeaders\":{\""+key1+"\":\""+value1+"\",\""+key2+"\":\""+value2+"\"},\"responseHeaders\":{\""+key3+"\":\""+value3+"\",\""+key4+"\":\""+value4+"\"}}");
+        possibleJson.add("{\"requestHeaders\":{\""+key1+"\":\""+value1+"\",\""+key2+"\":\""+value2+"\"},\"responseHeaders\":{\""+key4+"\":\""+value4+"\",\""+key3+"\":\""+value3+"\"}}");
+        possibleJson.add("{\"requestHeaders\":{\""+key2+"\":\""+value2+"\",\""+key1+"\":\""+value1+"\"},\"responseHeaders\":{\""+key3+"\":\""+value3+"\",\""+key4+"\":\""+value4+"\"}}");
+        possibleJson.add("{\"requestHeaders\":{\""+key2+"\":\""+value2+"\",\""+key1+"\":\""+value1+"\"},\"responseHeaders\":{\""+key4+"\":\""+value4+"\",\""+key3+"\":\""+value3+"\"}}");
+        possibleJson.add("{\"responseHeaders\":{\""+key3+"\":\""+value3+"\",\""+key4+"\":\""+value4+"\"},\"requestHeaders\":{\""+key1+"\":\""+value1+"\",\""+key2+"\":\""+value2+"\"}}");
+        possibleJson.add("{\"responseHeaders\":{\""+key3+"\":\""+value3+"\",\""+key4+"\":\""+value4+"\"},\"requestHeaders\":{\""+key2+"\":\""+value2+"\",\""+key1+"\":\""+value1+"\"}}");
+        possibleJson.add("{\"responseHeaders\":{\""+key4+"\":\""+value4+"\",\""+key3+"\":\""+value3+"\"},\"requestHeaders\":{\""+key1+"\":\""+value1+"\",\""+key2+"\":\""+value2+"\"}}");
+        possibleJson.add("{\"responseHeaders\":{\""+key4+"\":\""+value4+"\",\""+key3+"\":\""+value3+"\"},\"requestHeaders\":{\""+key2+"\":\""+value2+"\",\""+key1+"\":\""+value1+"\"}}");
+        return possibleJson;
     }
 
 }
