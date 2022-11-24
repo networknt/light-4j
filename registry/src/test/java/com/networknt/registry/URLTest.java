@@ -18,6 +18,7 @@ package com.networknt.registry;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.networknt.utility.Constants;
@@ -53,7 +54,7 @@ public class URLTest {
 
     @Test
     public void testURL() {
-        Map<String, String> parameters = new HashMap<>();
+        Map<String, String> parameters = new LinkedHashMap<>();
         parameters.put("key1", "value1");
         parameters.put("key2", "true");
         parameters.put("key3", "10");
