@@ -27,6 +27,7 @@ import com.networknt.registry.support.command.CommandFailbackRegistry;
 import com.networknt.registry.support.command.CommandServiceManager;
 import com.networknt.registry.support.command.ServiceListener;
 import com.networknt.utility.Constants;
+import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -135,9 +136,14 @@ public class ConsulRegistry extends CommandFailbackRegistry {
      *
      * @param url
      */
-    private void startListenerThreadIfNewService(URL url) {
-        // TODO: Do NOT start a listener thread if serviceName is blank
+    private void startListenerThreadIfNewService(URL url)
+    {
         String serviceName = url.getPath();
+
+        // Do NOT start a listener thread if serviceName is blank
+        if(StringUtils.isBlank(serviceName))
+            return;
+
         String protocol = url.getProtocol();
         if (!lookupServices.containsKey(serviceName)) {
             Long value = lookupServices.putIfAbsent(serviceName, 0L);
