@@ -113,9 +113,9 @@ public class ConsulRegistry extends CommandFailbackRegistry {
     }
 
     /**
-     * Override the method in <code>com.networknt.registry.support.commandCommandFailbackRegistry</code>
-     * to skip calling the <code>com.networknt.registry.support.commandCommandFailbackRegistry#doDiscover()</code> and
-     * <code>com.networknt.registry.support.commandCommandFailbackRegistry#notify()</code>
+     * Override the method in <code>com.networknt.registry.support.command.CommandFailbackRegistry</code>
+     * to skip calling the <code>com.networknt.registry.support.command.CommandFailbackRegistry#doDiscover()</code> and
+     * <code>com.networknt.registry.support.command.CommandFailbackRegistry#notify()</code>
      * @param url The subscribed service URL
      * @param listener  The listener to be notified when service registration changed.
      */
@@ -136,6 +136,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
      * @param url
      */
     private void startListenerThreadIfNewService(URL url) {
+        // TODO: Do NOT start a listener thread if serviceName is blank
         String serviceName = url.getPath();
         String protocol = url.getProtocol();
         if (!lookupServices.containsKey(serviceName)) {
@@ -180,7 +181,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
         if (urls == null || urls .isEmpty()) {
             synchronized (serviceName.intern()) {
                 urls = serviceCache.get(serviceName);
-                if (urls == null || urls .isEmpty()) {
+                if (urls == null || urls.isEmpty()) {
                     ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(protocol, serviceName, false);
                     updateServiceCache(serviceName, serviceUrls, false);
                     urls = serviceCache.get(serviceName);
@@ -194,43 +195,59 @@ public class ConsulRegistry extends CommandFailbackRegistry {
         return lookupServiceUpdate(protocol, serviceName, true);
     }
 
-    private ConcurrentHashMap<String, List<URL>> lookupServiceUpdate(String protocol, String serviceName, boolean isBlockQuery) {
+    private ConcurrentHashMap<String, List<URL>> lookupServiceUpdate(String protocol, String serviceName, boolean isBlockQuery)
+    {
+        // get Consul index if blocking query
         Long lastConsulIndexId = 0L;
         if (isBlockQuery) {
             lastConsulIndexId = lookupServices.get(serviceName) == null ? 0L : lookupServices.get(serviceName);
         }
-
         logger.debug("serviceName = {} lastConsulIndexId = {}", serviceName, lastConsulIndexId);
+
+        // TODO: response should be null iff there was an error connecting to Consul
         ConsulResponse<List<ConsulService>> response = lookupConsulService(serviceName, lastConsulIndexId);
         if(logger.isTraceEnabled()) {
-            try {
-                logger.trace("response = " + Config.getInstance().getMapper().writeValueAsString(response));
+            try { logger.trace("response = " + Config.getInstance().getMapper().writeValueAsString(response));
             } catch (Exception e) {}
         }
+
         ConcurrentHashMap<String, List<URL>> serviceUrls = new ConcurrentHashMap<>();
-        if (response != null) {
+        if (response != null)
+        {
             List<ConsulService> services = response.getValue();
-            if(logger.isDebugEnabled()) try {logger.debug("Consul-registered services = " + Config.getInstance().getMapper().writeValueAsString(services));} catch (Exception e) {}
-            if (services != null && !services.isEmpty()
-                    && response.getConsulIndex() > lastConsulIndexId) {
+            if(logger.isDebugEnabled())
+                try { logger.debug("Consul-registered services = " + Config.getInstance().getMapper().writeValueAsString(services));
+                } catch (Exception e) {}
+
+            if (services != null && !services.isEmpty() && response.getConsulIndex() > lastConsulIndexId)
+            {
                 logger.info("Got updated urls from Consul: {} instances of service {} found", services.size(), serviceName);
                 for (ConsulService service : services) {
                     try {
+
                         URL url = ConsulUtils.buildUrl(protocol, service);
                         List<URL> urlList = serviceUrls.get(serviceName);
+
                         if (urlList == null) {
                             urlList = new ArrayList<>();
                             serviceUrls.put(serviceName, urlList);
                         }
-                        if(logger.isTraceEnabled()) logger.trace("Consul lookupServiceUpdate url = " + url);
+
+                        if(logger.isTraceEnabled())
+                            logger.trace("Consul lookupServiceUpdate url = " + url);
+
                         urlList.add(url);
+
                     } catch (Exception e) {
                         logger.error("Failed to convert Consul service to url! service: " + service, e);
                     }
                 }
+
                 lookupServices.put(serviceName, response.getConsulIndex());
                 logger.info("Consul index put into lookupServices for service: {}, index={}", serviceName, response.getConsulIndex());
+
                 return serviceUrls;
+
             } else if (response.getConsulIndex() < lastConsulIndexId) {
                 logger.info("Consul returned stale index: Index reset to 0 for service {} - Consul response index < last Consul index: {} < {}", serviceName, response.getConsulIndex(), lastConsulIndexId);
                 lookupServices.put(serviceName, 0L);
@@ -241,6 +258,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
             serviceUrls.put(serviceName, new ArrayList<>());
             logger.info("Clearing local cache for service {}", serviceName);
         }
+
         return serviceUrls;
     }
 
@@ -264,20 +282,25 @@ public class ConsulRegistry extends CommandFailbackRegistry {
      * @param serviceUrls
      * @param needNotify
      */
-    private void updateServiceCache(String serviceName, ConcurrentHashMap<String, List<URL>> serviceUrls, boolean needNotify) {
-        if (serviceUrls != null && !serviceUrls.isEmpty()) {
+    private void updateServiceCache(String serviceName, ConcurrentHashMap<String, List<URL>> serviceUrls, boolean needNotify)
+    {
+        // TODO: Why do we not update if serviceUrls.isEmpty() == true ?
+        if (serviceUrls != null && !serviceUrls.isEmpty())
+        {
             List<URL> cachedUrls = serviceCache.get(serviceName);
             List<URL> newUrls = serviceUrls.get(serviceName);
             try {
                 logger.trace("Consul service URLs = {}", Config.getInstance().getMapper().writeValueAsString(serviceUrls));
             } catch(Exception e) {
             }
+
             boolean change = true;
             if (ConsulUtils.isSame(newUrls, cachedUrls)) {
                 change = false;
             } else {
                 serviceCache.put(serviceName, newUrls);
             }
+
             if (change && needNotify) {
                 notifyExecutor.execute(new NotifyService(serviceName, newUrls));
                 logger.info("light service notify-service: " + serviceName);
@@ -299,6 +322,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
             this.serviceName = serviceName;
         }
 
+        // TODO: The MAIN CONSUL LOOP
         @Override
         public void run() {
             logger.info("Start Consul lookupServiceUpdate thread - Lookup interval: {}ms, service {}", lookupInterval, serviceName);
@@ -306,11 +330,17 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                 try {
                     logger.info("Consul lookupServiceUpdate Thread - SLEEP: Start to sleep {}ms for service {}", lookupInterval, serviceName);
                     sleep(lookupInterval);
+
                     logger.info("Consul lookupServiceUpdate Thread - WAKE UP: Woke up from sleep for lookupServiceUpdate for service {}", serviceName);
                     ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(protocol, serviceName);
+
                     logger.info("Got service URLs from Consul lookupServiceUpdate: {} service URLs found for service {} ({})", serviceUrls.getOrDefault(serviceName, Collections.emptyList()).size(), serviceName, protocol);
+                    // TODO: DO NOT update local service cache if serviceUrls == null
+                    // TODO: BUT *DO* update local service cache if serviceUrls != null (even if empty list)
                     updateServiceCache(serviceName, serviceUrls, true);
+
                     logger.info("Local Consul service cache updated with service URLs from lookupServiceUpdate for {}", serviceName);
+
                 } catch (Throwable e) {
                     logger.error("Consul lookupServiceUpdate thread failed!", e);
                     try {

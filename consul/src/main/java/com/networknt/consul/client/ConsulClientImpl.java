@@ -173,46 +173,60 @@ public class ConsulClientImpl implements ConsulClient {
 	 * @param tag tag that is used for filtering
 	 * @param lastConsulIndex last consul index
 	 * @param token consul token for security
-	 * @return null if serviceName is blank
+	 * @return null if serviceName is blank	// TODO: We only want null returned if there is an error connecting to Consul
 	 */
 	@Override
 	public ConsulResponse<List<ConsulService>> lookupHealthService(String serviceName, String tag, long lastConsulIndex, String token) {
 
 		ConsulResponse<List<ConsulService>> newResponse = null;
 
+		// TODO: Remove this if possible - We only want null returned if there is an error connecting to Consul
 		if(StringUtils.isBlank(serviceName)) {
 			return null;
 		}
+
 		ClientConnection connection = null;
 		String path = "/v1/health/service/" + serviceName + "?passing&wait="+wait+"&index=" + lastConsulIndex;
 		if(tag != null) {
 			path = path + "&tag=" + tag;
 		}
 		logger.trace("Consul health service path = {}", path);
+
 		try {
 			logger.debug("Getting connection from pool with {}", uri);
+			// this will throw a Runtime Exception if creation of Consul connection fails
 			connection = client.safeBorrowConnection(
 					config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
 
 			logger.info("Got connection: {} from pool and send request to {}", connection, path);
-			AtomicReference<ClientResponse> reference  = send(connection, Methods.GET, path, token, null);
+			// TODO: Ask NetworkNT why an AtomicReference is used here
+			// TODO: Pass timeout value into send() methods since different methods require different timeouts
+			AtomicReference<ClientResponse> reference = send(connection, Methods.GET, path, token, null);
+
+			// TODO: Check that reference.get() is not null
 			int statusCode = reference.get().getResponseCode();
 			logger.info("Got Consul Query status code: {}", statusCode);
+
 			if(statusCode >= UNUSUAL_STATUS_CODE){
 				throw new Exception("Failed to unregister on Consul: " + statusCode);
 			} else {
+				// TODO: This can generate a NullPointerException
 				String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
 				logger.debug("Got Consul Query response body: {}", body);
-				List<Map<String, Object>> services = Config.getInstance().getMapper().readValue(body, new TypeReference<List<Map<String, Object>>>(){});
-				List<ConsulService> ConsulServcies = new ArrayList<>(
-						services.size());
+
+				// convert the service instances of serviceName to Java objects
+				List<Map<String, Object>> services =
+						Config.getInstance().getMapper().readValue(body, new TypeReference<List<Map<String, Object>>>(){});
+				List<ConsulService> consulServices = new ArrayList<>(services.size());
 				for (Map<String, Object> service : services) {
 					ConsulService newService = convertToConsulService((Map<String,Object>)service.get("Service"));
-					ConsulServcies.add(newService);
+					consulServices.add(newService);
 				}
-				if (!ConsulServcies.isEmpty()) {
+
+				// TODO: !isEmpty() causes this method to return null on a successful Consul request, if no IPs registered
+				if (!consulServices.isEmpty()) {
 					newResponse = new ConsulResponse<>();
-					newResponse.setValue(ConsulServcies);
+					newResponse.setValue(consulServices);
 					newResponse.setConsulIndex(Long.parseLong(reference.get().getResponseHeaders().getFirst("X-Consul-Index")));
 					newResponse.setConsulLastContact(Long.parseLong(reference.get().getResponseHeaders().getFirst("X-Consul-Lastcontact")));
 					newResponse.setConsulKnownLeader(Boolean.parseBoolean(reference.get().getResponseHeaders().getFirst("X-Consul-Knownleader")));
@@ -223,6 +237,7 @@ public class ConsulClientImpl implements ConsulClient {
 		} finally {
 			client.returnConnection(connection);
 		}
+
 		return newResponse;
 	}
 
@@ -245,28 +260,40 @@ public class ConsulClientImpl implements ConsulClient {
 	 * @param json request body to send
 	 * @return AtomicReference<ClientResponse> response
 	 */
-	AtomicReference<ClientResponse> send(ClientConnection connection, HttpString method, String path, String token, String json) throws InterruptedException {
-		final CountDownLatch latch = new CountDownLatch(1);
-		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
-
+	AtomicReference<ClientResponse> send(ClientConnection connection, HttpString method, String path, String token, String json)
+			throws InterruptedException
+	{
+		// construct request
 		ClientRequest request = new ClientRequest().setMethod(method).setPath(path);
 		request.getRequestHeaders().put(Headers.HOST, "localhost");
-		if (token != null) request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
-		if (logger.isTraceEnabled()) logger.trace("The request sent to Consul URI {} - request header: {}, request body is empty", uri.toString(), request.toString());
+		if (token != null)
+			request.getRequestHeaders().put(HttpStringConstants.CONSUL_TOKEN, token);
+		if (logger.isTraceEnabled())
+			logger.trace("The request sent to Consul URI {} - request header: {}, request body is empty", uri.toString(), request.toString());
+
+		// send request
+		final CountDownLatch latch = new CountDownLatch(1);
+		final AtomicReference<ClientResponse> reference = new AtomicReference<>();
 		if(StringUtils.isBlank(json)) {
 			connection.sendRequest(request, client.createClientCallback(reference, latch));
 		} else {
 			request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
 			connection.sendRequest(request, client.createClientCallback(reference, latch, json));
 		}
+
+		// Await response and ensure we do not block if there are network or Consul server issues
+		// TODO: Add random jitter to timeout
+		// TODO: Have caller specify the timeout, since not all calls should have a getWaitInSecond() length timeout
 		int waitInSecond = ConsulUtils.getWaitInSecond(wait);
 		int timeoutBufferInSecond = ConsulUtils.getTimeoutBufferInSecond(timeoutBuffer);
 		boolean isNotTimeout = latch.await(waitInSecond + timeoutBufferInSecond, TimeUnit.SECONDS);
+
 		if (isNotTimeout) {
 			logger.debug("The response from Consul: {} = {}", uri, reference != null ? reference.get() : null);
 		} else {
-            // timeout happens, do not know if the Consul server is still alive. Close the connection to force reconnect. The next time this connection
-			// is borrowed from the pool, a new connection will be created as the one returned is not open.
+            // If a timeout occurs, it is not known whether Consul is still alive.
+			// Close the connection to force reconnect: The next time this connection is borrowed from the pool, a new
+			// connection will be created as the one returned is not open.
 			if(connection != null && connection.isOpen()) IoUtils.safeClose(connection);
 			throw new RuntimeException(
 					String.format("The request to Consul timed out after %d + %d seconds to: %s", waitInSecond, timeoutBufferInSecond, uri));

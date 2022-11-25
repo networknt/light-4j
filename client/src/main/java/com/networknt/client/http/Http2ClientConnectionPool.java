@@ -65,6 +65,7 @@ public class Http2ClientConnectionPool {
         String uriString = uri.toString();
         List<CachedConnection> result = connectionPool.get(uriString);
         if (result == null) {
+            // TODO: Why is the entire class synchronized here?
             synchronized (Http2ClientConnectionPool.class) {
                 logger.info("Second try of getting connections for uri: {}", uriString);
                 result = connectionPool.get(uriString);
