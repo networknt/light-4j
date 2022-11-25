@@ -181,6 +181,8 @@ public class ConsulClientImpl implements ConsulClient {
 		ConsulResponse<List<ConsulService>> newResponse = null;
 
 		// TODO: Remove this if possible - We only want null returned if there is an error connecting to Consul
+		// Calls to lookupHealthService with a blank serviceName should now be impossible due to updates
+		// in LightCluster (commit 6e5c29b2) and ConsulRegistry (commit d2957a8d)
 		if(StringUtils.isBlank(serviceName)) {
 			return null;
 		}
@@ -203,14 +205,16 @@ public class ConsulClientImpl implements ConsulClient {
 			// TODO: Pass timeout value into send() methods since different methods require different timeouts
 			AtomicReference<ClientResponse> reference = send(connection, Methods.GET, path, token, null);
 
-			// TODO: Check that reference.get() is not null
+			// Check that reference.get() is not null
+			if(reference.get() == null)
+				throw new RuntimeException("Connection to Consul failed - Received null response");
+
 			int statusCode = reference.get().getResponseCode();
 			logger.info("Got Consul Query status code: {}", statusCode);
 
 			if(statusCode >= UNUSUAL_STATUS_CODE){
-				throw new Exception("Failed to unregister on Consul: " + statusCode);
+				throw new Exception("Consul Query returned an error: " + statusCode);
 			} else {
-				// TODO: This can generate a NullPointerException
 				String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
 				logger.debug("Got Consul Query response body: {}", body);
 
@@ -218,27 +222,46 @@ public class ConsulClientImpl implements ConsulClient {
 				List<Map<String, Object>> services =
 						Config.getInstance().getMapper().readValue(body, new TypeReference<List<Map<String, Object>>>(){});
 				List<ConsulService> consulServices = new ArrayList<>(services.size());
+
 				for (Map<String, Object> service : services) {
 					ConsulService newService = convertToConsulService((Map<String,Object>)service.get("Service"));
 					consulServices.add(newService);
 				}
 
 				// TODO: !isEmpty() causes this method to return null on a successful Consul request, if no IPs registered
-				if (!consulServices.isEmpty()) {
-					newResponse = new ConsulResponse<>();
-					newResponse.setValue(consulServices);
-					newResponse.setConsulIndex(Long.parseLong(reference.get().getResponseHeaders().getFirst("X-Consul-Index")));
-					newResponse.setConsulLastContact(Long.parseLong(reference.get().getResponseHeaders().getFirst("X-Consul-Lastcontact")));
-					newResponse.setConsulKnownLeader(Boolean.parseBoolean(reference.get().getResponseHeaders().getFirst("X-Consul-Knownleader")));
-				}
+				//if (!consulServices.isEmpty()) {
+				newResponse = new ConsulResponse<>();
+				newResponse.setValue(consulServices);
+				newResponse.setConsulIndex(Long.parseLong(reference.get().getResponseHeaders().getFirst("X-Consul-Index")));
+				newResponse.setConsulLastContact(Long.parseLong(reference.get().getResponseHeaders().getFirst("X-Consul-Lastcontact")));
+				newResponse.setConsulKnownLeader(Boolean.parseBoolean(reference.get().getResponseHeaders().getFirst("X-Consul-Knownleader")));
+				//}
 			}
-		} catch (Exception e) {
+		} catch (ConsulConnectionException e) {
+			// This should only return null if Consul connection fails
 			logger.error("Exception:", e);
+
+			logger.debug("Terminating connection to Consul");
+			if(connection != null && connection.isOpen())
+				IoUtils.safeClose(connection);
+			return null;
+
+		} catch(Exception e) {
+			logger.error("Exception:", e);
+			return null;
+
 		} finally {
 			client.returnConnection(connection);
 		}
 
 		return newResponse;
+	}
+
+	private static class ConsulConnectionException extends RuntimeException
+	{
+		public ConsulConnectionException(String message) {
+			super(message);
+		}
 	}
 
 	private ConsulService convertToConsulService(Map<String, Object> serviceMap) {
