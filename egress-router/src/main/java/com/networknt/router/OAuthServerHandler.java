@@ -96,7 +96,7 @@ public class OAuthServerHandler implements LightHttpHandler {
                                 Jwt jwt = result.getResult();
                                 resMap.put("access_token", jwt.getJwt());
                                 resMap.put("token_type", "bearer");
-                                resMap.put("expires_in", jwt.getExpire() / 1000); // milliseconds to seconds.
+                                resMap.put("expires_in", (jwt.getExpire() - System.currentTimeMillis()) / 1000); // milliseconds to seconds.
                             }
                         } else {
                             // generate a dummy token just to complete the consumer workflow without code change.
