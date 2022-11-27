@@ -261,8 +261,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                 logger.info("Consul returned no service updates: No need to update local Consul discovery cache for service {}, lastIndex={}", serviceName, lastConsulIndexId);
             }
         } else {
-            serviceUrls.put(serviceName, new ArrayList<>());
-            logger.info("Clearing local cache for service {}", serviceName);
+            logger.info("Connection to Consul failed for service {} - Local service cache may be out of date", serviceName);
         }
 
         return serviceUrls;
