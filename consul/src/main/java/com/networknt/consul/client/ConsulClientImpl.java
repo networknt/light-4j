@@ -207,7 +207,7 @@ public class ConsulClientImpl implements ConsulClient {
 
 			// Check that reference.get() is not null
 			if(reference.get() == null)
-				throw new RuntimeException("Connection to Consul failed - Received null response");
+				throw new ConsulConnectionException("Connection to Consul failed - Received null response");
 
 			int statusCode = reference.get().getResponseCode();
 			logger.info("Got Consul Query status code: {}", statusCode);
@@ -228,7 +228,8 @@ public class ConsulClientImpl implements ConsulClient {
 					consulServices.add(newService);
 				}
 
-				// TODO: !isEmpty() causes this method to return null on a successful Consul request, if no IPs registered
+				// Previously, consulServices.isEmpty()==true causes this method to return null on a successful Consul
+				// request, when no IPs are returned
 				//if (!consulServices.isEmpty()) {
 				newResponse = new ConsulResponse<>();
 				newResponse.setValue(consulServices);
@@ -247,6 +248,7 @@ public class ConsulClientImpl implements ConsulClient {
 			return null;
 
 		} catch(Exception e) {
+			// This should only return null if Consul connection fails
 			logger.error("Exception:", e);
 			return null;
 
