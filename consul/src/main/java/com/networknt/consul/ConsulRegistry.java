@@ -403,7 +403,12 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                     logger.info("Consul lookupServiceUpdate Thread - WAKE UP: Woke up from sleep for lookupServiceUpdate for service {}", serviceName);
                     ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(protocol, serviceName);
 
-                    logger.info("Got service URLs from Consul lookupServiceUpdate: {} service URLs found for service {} ({})", serviceUrls.getOrDefault(serviceName, Collections.emptyList()).size(), serviceName, protocol);
+                    if(serviceUrls == null || serviceUrls.size() == 0)
+                        logger.debug("No service URL updates from Consul lookupServiceUpdate for service {}", serviceName);
+                    else
+                        logger.debug("Got service URLs from Consul lookupServiceUpdate: {} service URLs found for service {} ({})",
+                                serviceUrls.getOrDefault(serviceName, Collections.emptyList()).size(), serviceName, protocol);
+
                     // TODO: DO NOT update local service cache if serviceUrls == null
                     // TODO: BUT *DO* update local service cache if serviceUrls != null (even if empty list)
                     updateServiceCache(serviceName, serviceUrls, true);
