@@ -58,11 +58,20 @@ public interface ConsulClient {
 	/**
 	 * get latest service list with a tag filter and a security token
 	 *
-	 * @param serviceName service name
+	 * to lookup health services based on serviceName,
+	 * if lastConsulIndex == 0, will get result right away.
+	 * if lastConsulIndex != 0, will establish a long query with consul with {@link #wait} seconds.
+	 *
+	 * @param serviceName service name (service_id)
+	 * @param tag tag that is used for filtering (env_tag)
 	 * @param lastConsulIndex last consul index
-	 * @param tag tag that is used for filtering
-	 * @param token consul token for security
-	 * @return T
+	 * @param token Consul token for security (Consul ACL)
+	 * @return	if Consul connection fails:
+	 * 				- newResponse is null
+	 * 			if Consul connection successful:
+	 * 				- newResponse is non-null, and
+	 *         		- newResponse.getValue() != null, and
+	 *				- newResponse.getValue().size() == number of IPs registered for serviceName in Consul
 	 */
 	ConsulResponse<List<ConsulService>> lookupHealthService(String serviceName, String tag, long lastConsulIndex, String token);
 

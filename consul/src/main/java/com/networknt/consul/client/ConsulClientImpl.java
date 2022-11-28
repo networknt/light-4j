@@ -169,20 +169,25 @@ public class ConsulClientImpl implements ConsulClient {
 	 * to lookup health services based on serviceName,
 	 * if lastConsulIndex == 0, will get result right away.
 	 * if lastConsulIndex != 0, will establish a long query with consul with {@link #wait} seconds.
-	 * @param serviceName service name
-	 * @param tag tag that is used for filtering
+	 *
+	 * @param serviceName service name (service_id)
+	 * @param tag tag that is used for filtering (env_tag)
 	 * @param lastConsulIndex last consul index
-	 * @param token consul token for security
-	 * @return null if serviceName is blank	// TODO: We only want null returned if there is an error connecting to Consul
+	 * @param token Consul token for security (Consul ACL)
+	 * @return	if Consul connection fails:
+	 * 				- newResponse is null
+	 * 			if Consul connection successful:
+	 * 				- newResponse is non-null, and
+	 *         		- newResponse.getValue() != null, and
+	 *				- newResponse.getValue().size() == number of IPs registered for serviceName in Consul
 	 */
 	@Override
 	public ConsulResponse<List<ConsulService>> lookupHealthService(String serviceName, String tag, long lastConsulIndex, String token) {
 
 		ConsulResponse<List<ConsulService>> newResponse = null;
 
-		// TODO: Remove this if possible - We only want null returned if there is an error connecting to Consul
-		// Calls to lookupHealthService with a blank serviceName should now be impossible due to updates
-		// in LightCluster (commit 6e5c29b2) and ConsulRegistry (commit d2957a8d)
+		// - Calls to lookupHealthService with a blank serviceName should now be impossible due to updates
+		//   in LightCluster (commit 6e5c29b2) and ConsulRegistry (commit d2957a8d)
 		if(StringUtils.isBlank(serviceName)) {
 			return null;
 		}
@@ -218,21 +223,25 @@ public class ConsulClientImpl implements ConsulClient {
 				String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
 				logger.debug("Got Consul Query response body: {}", body);
 
-				// convert the service instances of serviceName to Java objects
+				// Convert the service instances of serviceName to Java objects
 				List<Map<String, Object>> services =
 						Config.getInstance().getMapper().readValue(body, new TypeReference<List<Map<String, Object>>>(){});
+
+				// consulServices guaranteed to be created if Consul connection successful
 				List<ConsulService> consulServices = new ArrayList<>(services.size());
 
 				for (Map<String, Object> service : services) {
-					ConsulService newService = convertToConsulService((Map<String,Object>)service.get("Service"));
+					ConsulService newService = convertToConsulService((Map<String,Object>) service.get("Service"));
 					consulServices.add(newService);
 				}
 
-				// Previously, consulServices.isEmpty()==true causes this method to return null on a successful Consul
-				// request, when no IPs are returned
+				// - Previously, consulServices.isEmpty() == true caused this method to return null ** even on a
+				//   successful Consul request ** (when an empty JSON list '[]' of IPs are returned from Consul)
+				// - We now guarantee that newResponse is non-null unless there is a Consul connection failure
+
 				//if (!consulServices.isEmpty()) {
-				newResponse = new ConsulResponse<>();
-				newResponse.setValue(consulServices);
+				newResponse = new ConsulResponse<>();	// newResponse guaranteed to be non-null if Consul connection successful
+				newResponse.setValue(consulServices);	// newResponse.getValue() guaranteed to be non-null if Consul connection successful
 				newResponse.setConsulIndex(Long.parseLong(reference.get().getResponseHeaders().getFirst("X-Consul-Index")));
 				newResponse.setConsulLastContact(Long.parseLong(reference.get().getResponseHeaders().getFirst("X-Consul-Lastcontact")));
 				newResponse.setConsulKnownLeader(Boolean.parseBoolean(reference.get().getResponseHeaders().getFirst("X-Consul-Knownleader")));
@@ -242,7 +251,7 @@ public class ConsulClientImpl implements ConsulClient {
 			// This should only return null if Consul connection fails
 			logger.error("Exception:", e);
 
-			logger.debug("Terminating connection to Consul");
+			logger.debug("No response from Consul - Terminating connection to Consul");
 			if(connection != null && connection.isOpen())
 				IoUtils.safeClose(connection);
 			return null;
@@ -316,9 +325,9 @@ public class ConsulClientImpl implements ConsulClient {
 		if (isNotTimeout) {
 			logger.debug("The response from Consul: {} = {}", uri, reference != null ? reference.get() : null);
 		} else {
-            // If a timeout occurs, it is not known whether Consul is still alive.
-			// Close the connection to force reconnect: The next time this connection is borrowed from the pool, a new
-			// connection will be created as the one returned is not open.
+            // - If a timeout occurs, it is not known whether Consul is still alive.
+			// - Close the connection to force reconnect: The next time this connection is borrowed from the pool, a new
+			//   connection will be created as the one returned is not open.
 			if(connection != null && connection.isOpen()) IoUtils.safeClose(connection);
 			throw new RuntimeException(
 					String.format("The request to Consul timed out after %d + %d seconds to: %s", waitInSecond, timeoutBufferInSecond, uri));
