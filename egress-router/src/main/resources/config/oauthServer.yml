@@ -3,3 +3,9 @@
 enabled: ${oauthServer.enabled:true}
 # A list of client_id and client_secret concat with a colon.
 client_credentials: ${oauthServer.client_credentials:}
+# An indicator to for path through to an OAuth 2.0 server to get a real token.
+passThrough: ${oauthServer.passThrough:false}
+# If pathThrough is set to true, this is the serviceId that is used in the client.yml configuration as the key
+# to get all the properties to connect to the target OAuth 2.0 provider to get client_credentials access token.
+# The client.yml must be set to true for multipleAuthServers and the token will be verified on the same LPC.
+tokenServiceId: ${oauthServer.tokenServiceId:light-proxy-client}
