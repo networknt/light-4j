@@ -1,7 +1,10 @@
 package com.networknt.router;
 
+import com.networknt.client.oauth.Jwt;
 import com.networknt.config.JsonMapper;
 import com.networknt.handler.LightHttpHandler;
+import com.networknt.monad.Result;
+import com.networknt.router.middleware.TokenHandler;
 import com.networknt.utility.HashUtil;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
@@ -81,9 +84,26 @@ public class OAuthServerHandler implements LightHttpHandler {
                     }
                     if(config.getClientCredentials() != null && config.getClientCredentials().stream().anyMatch(credentials::equals)) {
                         Map<String, Object> resMap = new HashMap<>();
-                        resMap.put("access_token", HashUtil.generateUUID());
-                        resMap.put("token_type", "bearer");
-                        resMap.put("expires_in", 600);
+
+                        if(config.isPassThrough()) {
+                            // get a jwt token from the real OAuth 2.0 provider.
+                            Result<Jwt> result = TokenHandler.getJwtToken(config.getTokenServiceId());
+                            if(result.isFailure()) {
+                                logger.error("Cannot populate or renew jwt for client credential grant type: " + result.getError().toString());
+                                setExchangeStatus(exchange, result.getError());
+                                return;
+                            } else {
+                                Jwt jwt = result.getResult();
+                                resMap.put("access_token", jwt.getJwt());
+                                resMap.put("token_type", "bearer");
+                                resMap.put("expires_in", (jwt.getExpire() - System.currentTimeMillis()) / 1000); // milliseconds to seconds.
+                            }
+                        } else {
+                            // generate a dummy token just to complete the consumer workflow without code change.
+                            resMap.put("access_token", HashUtil.generateUUID());
+                            resMap.put("token_type", "bearer");
+                            resMap.put("expires_in", 600);
+                        }
                         if(logger.isTraceEnabled()) logger.trace("matched credential, sending response.");
                         exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
                         exchange.getResponseSender().send(JsonMapper.toJson(resMap));

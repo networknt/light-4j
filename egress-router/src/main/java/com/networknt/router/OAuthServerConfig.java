@@ -17,10 +17,13 @@ public class OAuthServerConfig {
 
     private static final String ENABLED = "enabled";
     private static final String CLIENT_CREDENTIALS = "client_credentials";
-
+    private static final String PASS_THROUGH = "passThrough";
+    private static final String TOKEN_SERVICE_ID = "tokenServiceId";
     private Map<String, Object> mappedConfig;
     private Config config;
     private boolean enabled;
+    private boolean passThrough;
+    private String tokenServiceId;
     List<String> clientCredentials;
 
     private OAuthServerConfig() {
@@ -56,6 +59,22 @@ public class OAuthServerConfig {
         return clientCredentials;
     }
 
+    public boolean isPassThrough() {
+        return passThrough;
+    }
+
+    public void setPassThrough(boolean passThrough) {
+        this.passThrough = passThrough;
+    }
+
+    public String getTokenServiceId() {
+        return tokenServiceId;
+    }
+
+    public void setTokenServiceId(String tokenServiceId) {
+        this.tokenServiceId = tokenServiceId;
+    }
+
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
@@ -65,6 +84,11 @@ public class OAuthServerConfig {
         if(object != null && (Boolean) object) {
             enabled = true;
         }
+        object = mappedConfig.get(PASS_THROUGH);
+        if(object != null && (Boolean) object) {
+            passThrough = true;
+        }
+        tokenServiceId = (String)getMappedConfig().get(TOKEN_SERVICE_ID);
     }
 
     private void setConfigList() {
@@ -96,5 +120,4 @@ public class OAuthServerConfig {
             }
         }
     }
-
 }
