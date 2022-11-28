@@ -201,6 +201,27 @@ public class ConsulRegistry extends CommandFailbackRegistry {
         return lookupServiceUpdate(protocol, serviceName, true);
     }
 
+    /***
+     *
+     * @param   protocol
+     * @param   serviceName
+     * @param   isBlockQuery
+     * @return  serviceUrls.size() == 0 (e.g.: Map has no k/v pairs),
+     *          if:
+     *              - Consul index was stale, or
+     *              - Consul reported no updates since last query, or
+     *              - Connection to Consul failed
+     *
+     *              This result indicates to updateServiceCache() to leave local registry cache unchanged
+     *
+     *          serviceUrls.size() > 0 &&
+     *          serviceUrls.get(serviceName) != null &&
+     *          serviceUrls.get(serviceName).size() == number of IPs registered for serviceName in Consul,
+     *          if:
+     *              - the IP set registered for serviceName has changed
+     *
+     *              This result indicates to updateServiceCache() to update the local registry cache
+     */
     private ConcurrentHashMap<String, List<URL>> lookupServiceUpdate(String protocol, String serviceName, boolean isBlockQuery)
     {
         // get Consul index if blocking query
@@ -210,14 +231,18 @@ public class ConsulRegistry extends CommandFailbackRegistry {
         }
         logger.debug("serviceName = {} lastConsulIndexId = {}", serviceName, lastConsulIndexId);
 
-        // TODO: response should be null iff there was an error connecting to Consul
+        // response should be null iff there was an error connecting to Consul
         ConsulResponse<List<ConsulService>> response = lookupConsulService(serviceName, lastConsulIndexId);
+
         if(logger.isTraceEnabled()) {
             try { logger.trace("response = " + Config.getInstance().getMapper().writeValueAsString(response));
             } catch (Exception e) {}
         }
 
+        // initialize serviceUrls such that serviceUrls.size() == 0, this indicate to updateServiceCache() to leave
+        // cache unchanged
         ConcurrentHashMap<String, List<URL>> serviceUrls = new ConcurrentHashMap<>();
+
         if (response != null)
         {
             List<ConsulService> services = response.getValue();
@@ -225,9 +250,25 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                 try { logger.debug("Consul-registered services = " + Config.getInstance().getMapper().writeValueAsString(services));
                 } catch (Exception e) {}
 
-            if (services != null && !services.isEmpty() && response.getConsulIndex() > lastConsulIndexId)
+            /***
+             * Since response != null, and services = response.getValue(), we know (from the specification for
+             * ConsulClient.lookupHealthService()) that:
+             *
+             *      - Consul connection was successful, and
+             *      - services != null, and
+             *      - services.size() == number of IPs registered for serviceName in Consul
+             */
+            // if (services != null && !services.isEmpty() && response.getConsulIndex() > lastConsulIndexId)
+            if (response.getConsulIndex() > lastConsulIndexId)
             {
                 logger.info("Got updated urls from Consul: {} instances of service {} found", services.size(), serviceName);
+
+                // - Update has occurred: Ensure that the serviceUrls Map has at least one (possibly empty List)
+                //   entry for the serviceName key.
+                //   This will ensure that updateServiceCache() will do an update.
+                if(services.size() == 0)
+                    serviceUrls.put(serviceName, new ArrayList<>());
+
                 for (ConsulService service : services) {
                     try {
 
@@ -256,12 +297,23 @@ public class ConsulRegistry extends CommandFailbackRegistry {
 
             } else if (response.getConsulIndex() < lastConsulIndexId) {
                 logger.info("Consul returned stale index: Index reset to 0 for service {} - Consul response index < last Consul index: {} < {}", serviceName, response.getConsulIndex(), lastConsulIndexId);
+
+                // force a fresh list of services from Consul
                 lookupServices.put(serviceName, 0L);
+
+                // Indicate to updateServiceCache() to leave cache unchanged for now:
+                // - serviceUrls.isEmpty() == true && serviceUrls.get(serviceName) != null && serviceUrls.get(serviceName).size() == 0
             } else {
                 logger.info("Consul returned no service updates: No need to update local Consul discovery cache for service {}, lastIndex={}", serviceName, lastConsulIndexId);
+
+                // Indicate to updateServiceCache() to leave cache unchanged for now:
+                // - serviceUrls.isEmpty() == true && serviceUrls.get(serviceName) != null && serviceUrls.get(serviceName).size() == 0
             }
         } else {
             logger.info("Connection to Consul failed for service {} - Local service cache may be out of date", serviceName);
+
+            // Indicate to updateServiceCache() to leave cache unchanged for now:
+            // - serviceUrls.isEmpty() == true && serviceUrls.get(serviceName) != null && serviceUrls.get(serviceName).size() == 0
         }
 
         return serviceUrls;
@@ -283,13 +335,25 @@ public class ConsulRegistry extends CommandFailbackRegistry {
      * update local cache when service list changed,
      * if need notify, notify service
      *
+     *  Q: Why do we not update if serviceUrls.isEmpty() == true ?
+     *  A: serviceUrls.isEmpty() == true indicates that the local cache should not be changed.
+     *     Leaving the local cache unchanged can allow consumer requests to continue to be proxied
+     *     even in the event that the connection to Consul temporarily fails.
+     *     This provides time to re-establish the connection with Consul while not disrupting
+     *     consumer requests (as long as the services the consumer is targetting have not changed
+     *     their IP addresses during the time the Consul connection is offline)
+     *
+     *  Q: How we know when cache needs to be emptied?
+     *  A: serviceUrls.isEmpty() == false              // - indicates connection to Consul is OK
+     *     serviceUrls.get(serviceName) != null &&     // - indicates that Consul has reported that serviceName
+     *     serviceUrls.get(serviceName).size() == 0    //   has no IPs registered
+     *
      * @param serviceName
-     * @param serviceUrls
+     * @param serviceUrls   Leave cache as-is and do not notify if serviceUrls == null || serviceUrls.isEmpty()
      * @param needNotify
      */
     private void updateServiceCache(String serviceName, ConcurrentHashMap<String, List<URL>> serviceUrls, boolean needNotify)
     {
-        // TODO: Why do we not update if serviceUrls.isEmpty() == true ?
         if (serviceUrls != null && !serviceUrls.isEmpty())
         {
             List<URL> cachedUrls = serviceCache.get(serviceName);
