@@ -409,11 +409,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                         logger.debug("Got service URLs from Consul lookupServiceUpdate: {} service URLs found for service {} ({})",
                                 serviceUrls.getOrDefault(serviceName, Collections.emptyList()).size(), serviceName, protocol);
 
-                    // TODO: DO NOT update local service cache if serviceUrls == null
-                    // TODO: BUT *DO* update local service cache if serviceUrls != null (even if empty list)
                     updateServiceCache(serviceName, serviceUrls, true);
-
-                    logger.info("Local Consul service cache updated with service URLs from lookupServiceUpdate for {}", serviceName);
 
                 } catch (Throwable e) {
                     logger.error("Consul lookupServiceUpdate thread failed!", e);
