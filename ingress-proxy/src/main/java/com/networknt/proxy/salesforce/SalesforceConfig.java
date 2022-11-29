@@ -1,53 +1,60 @@
 package com.networknt.proxy.salesforce;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import com.networknt.handler.config.UrlRewriteRule;
+import com.networknt.proxy.PathPrefixAuth;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class SalesforceConfig {
+    private static final Logger logger = LoggerFactory.getLogger(SalesforceConfig.class);
+
     public static final String CONFIG_NAME = "salesforce";
-    private static final String ENABLED = "enabled";
-    private static final String TOKEN_URL = "tokenUrl";
-    private static final String AUTH_ISSUER = "authIssuer";
-    private static final String AUTH_SUBJECT = "authSubject";
-    private static final String AUTH_AUDIENCE = "authAudience";
-    private static final String CERT_FILENAME = "certFilename";
-    private static final String CERT_PASSWORD = "certPassword";
-    private static final String IV = "iv";
-    private static final String TOKEN_TTL = "tokenTtl";
-    private static final String WAIT_LENGTH = "waitLength";
-    private static final String PROXY_HOST = "proxyHost";
-    private static final String PROXY_PORT = "proxyPort";
-    private static final String ENABLE_HTTP2 = "enableHttps";
-    private static final String APPLIED_PATH_PREFIXES = "appliedPathPrefixes";
-    private static final String SERVICE_HOST = "serviceHost";
+    public static final String ENABLED = "enabled";
+    public static final String PATH_PREFIX = "pathPrefix";
+    public static final String TOKEN_URL = "tokenUrl";
+    public static final String AUTH_ISSUER = "authIssuer";
+    public static final String AUTH_SUBJECT = "authSubject";
+    public static final String AUTH_AUDIENCE = "authAudience";
+    public static final String CERT_FILENAME = "certFilename";
+    public static final String CERT_PASSWORD = "certPassword";
+    public static final String IV = "iv";
+    public static final String TOKEN_TTL = "tokenTtl";
+    public static final String WAIT_LENGTH = "waitLength";
+    public static final String PROXY_HOST = "proxyHost";
+    public static final String PROXY_PORT = "proxyPort";
+    public static final String ENABLE_HTTP2 = "enableHttps";
+
+    public static final String GRANT_TYPE = "grantType";
+    public static final String USERNAME = "username";
+    public static final String PASSWORD = "password";
+    public static final String CLIENT_ID = "clientId";
+    public static final String CLIENT_SECRET = "clientSecret";
+    public static final String RESPONSE_TYPE = "responseType";
+
+    List<UrlRewriteRule> urlRewriteRules;
+    public static final String PATH_PREFIX_AUTHS = "pathPrefixAuths";
+    public static final String SERVICE_HOST = "serviceHost";
 
     boolean enabled;
-    String tokenUrl;
-    String authIssuer;
-    String authSubject;
-    String authAudience;
     String certFilename;
     String certPassword;
-    String iv;
-    int tokenTtl;
-    int waitLength;
     String proxyHost;
     int proxyPort;
     boolean enableHttp2;
-    List<String> appliedPathPrefixes;
-    String serviceHost;
+
+    List<PathPrefixAuth> pathPrefixAuths;
     private Config config;
     private Map<String, Object> mappedConfig;
 
-    public SalesforceConfig() {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigList();
+    private SalesforceConfig() {
+        this(CONFIG_NAME);
     }
 
     /**
@@ -55,16 +62,25 @@ public class SalesforceConfig {
      * to test different configurations.
      * @param configName String
      */
-    public SalesforceConfig(String configName) {
+    private SalesforceConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(configName);
         setConfigData();
+        setUrlRewriteRules();
         setConfigList();
+    }
+    public static SalesforceConfig load() {
+        return new SalesforceConfig();
+    }
+
+    public static SalesforceConfig load(String configName) {
+        return new SalesforceConfig(configName);
     }
 
     void reload() {
         mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
         setConfigData();
+        setUrlRewriteRules();
         setConfigList();
     }
 
@@ -74,38 +90,6 @@ public class SalesforceConfig {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
-    }
-
-    public String getTokenUrl() {
-        return tokenUrl;
-    }
-
-    public void setTokenUrl(String tokenUrl) {
-        this.tokenUrl = tokenUrl;
-    }
-
-    public String getAuthIssuer() {
-        return authIssuer;
-    }
-
-    public void setAuthIssuer(String authIssuer) {
-        this.authIssuer = authIssuer;
-    }
-
-    public String getAuthSubject() {
-        return authSubject;
-    }
-
-    public void setAuthSubject(String authSubject) {
-        this.authSubject = authSubject;
-    }
-
-    public String getAuthAudience() {
-        return authAudience;
-    }
-
-    public void setAuthAudience(String authAudience) {
-        this.authAudience = authAudience;
     }
 
     public String getCertFilename() {
@@ -122,30 +106,6 @@ public class SalesforceConfig {
 
     public void setCertPassword(String certPassword) {
         this.certPassword = certPassword;
-    }
-
-    public String getIv() {
-        return iv;
-    }
-
-    public void setIv(String iv) {
-        this.iv = iv;
-    }
-
-    public int getTokenTtl() {
-        return tokenTtl;
-    }
-
-    public void setTokenTtl(int tokenTtl) {
-        this.tokenTtl = tokenTtl;
-    }
-
-    public int getWaitLength() {
-        return waitLength;
-    }
-
-    public void setWaitLength(int waitLength) {
-        this.waitLength = waitLength;
     }
 
     public String getProxyHost() {
@@ -172,42 +132,38 @@ public class SalesforceConfig {
         this.enableHttp2 = enableHttp2;
     }
 
-    public String getServiceHost() {
-        return serviceHost;
+    public List<PathPrefixAuth> getPathPrefixAuths() {
+        return pathPrefixAuths;
     }
 
-    public void setServiceHost(String serviceHost) {
-        this.serviceHost = serviceHost;
+    public void setPathPrefixAuths(List<PathPrefixAuth> pathPrefixAuths) {
+        this.pathPrefixAuths = pathPrefixAuths;
+    }
+    public List<UrlRewriteRule> getUrlRewriteRules() {
+        return urlRewriteRules;
     }
 
-    public List<String> getAppliedPathPrefixes() {
-        return appliedPathPrefixes;
+    public void setUrlRewriteRules() {
+        this.urlRewriteRules = new ArrayList<>();
+        if (mappedConfig.get("urlRewriteRules") !=null && mappedConfig.get("urlRewriteRules") instanceof String) {
+            urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule((String)mappedConfig.get("urlRewriteRules")));
+        } else {
+            List<String> rules = (List)mappedConfig.get("urlRewriteRules");
+            if(rules != null) {
+                for (String s : rules) {
+                    urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule(s));
+                }
+            }
+        }
     }
-
-    public void setAppliedPathPrefixes(List<String> appliedPathPrefixes) {
-        this.appliedPathPrefixes = appliedPathPrefixes;
+    public void setUrlRewriteRules(List<UrlRewriteRule> urlRewriteRules) {
+        this.urlRewriteRules = urlRewriteRules;
     }
 
     private void setConfigData() {
         Object object = mappedConfig.get(ENABLED);
         if(object != null && (Boolean) object) {
             setEnabled(true);
-        }
-        object = mappedConfig.get(TOKEN_URL);
-        if(object != null) {
-            setTokenUrl((String) object);
-        }
-        object = mappedConfig.get(AUTH_ISSUER);
-        if(object != null) {
-            setAuthIssuer((String) object);
-        }
-        object = mappedConfig.get(AUTH_SUBJECT);
-        if(object != null) {
-            setAuthSubject((String) object);
-        }
-        object = mappedConfig.get(AUTH_AUDIENCE);
-        if(object != null) {
-            setAuthAudience((String) object);
         }
         object = mappedConfig.get(CERT_FILENAME);
         if(object != null) {
@@ -216,18 +172,6 @@ public class SalesforceConfig {
         object = mappedConfig.get(CERT_PASSWORD);
         if(object != null) {
             setCertPassword((String) object);
-        }
-        object = mappedConfig.get(IV);
-        if(object != null) {
-            setIv((String) object);
-        }
-        object = mappedConfig.get(TOKEN_TTL);
-        if (object != null) {
-            setTokenTtl((int) object);
-        }
-        object = mappedConfig.get(WAIT_LENGTH);
-        if (object != null) {
-            setWaitLength((int) object);
         }
         object = mappedConfig.get(PROXY_HOST);
         if(object != null) {
@@ -241,26 +185,52 @@ public class SalesforceConfig {
         if(object != null && (Boolean) object) {
             setEnableHttp2(true);
         }
-        object = mappedConfig.get(SERVICE_HOST);
-        if(object != null) {
-            setServiceHost((String) object);
-        }
     }
 
     private void setConfigList() {
-        if (mappedConfig.get(APPLIED_PATH_PREFIXES) != null) {
-            Object object = mappedConfig.get(APPLIED_PATH_PREFIXES);
-            appliedPathPrefixes = new ArrayList<>();
+        // path prefix auth mapping
+        if (mappedConfig.get(PATH_PREFIX_AUTHS) != null) {
+            Object object = mappedConfig.get(PATH_PREFIX_AUTHS);
+            pathPrefixAuths = new ArrayList<>();
             if(object instanceof String) {
-                // there is only one path available
-                appliedPathPrefixes.add((String)object);
+                String s = (String)object;
+                s = s.trim();
+                if(logger.isTraceEnabled()) logger.trace("pathPrefixAuth s = " + s);
+                if(s.startsWith("[")) {
+                    // json format
+                    try {
+                        pathPrefixAuths = Config.getInstance().getMapper().readValue(s, new TypeReference<List<PathPrefixAuth>>() {});
+                    } catch (Exception e) {
+                        throw new ConfigException("could not parse the pathPrefixAuth json with a list of string and object.");
+                    }
+                } else {
+                    throw new ConfigException("pathPrefixAuth must be a list of string object map.");
+                }
             } else if (object instanceof List) {
-                List prefixes = (List)object;
-                prefixes.forEach(item -> {
-                    appliedPathPrefixes.add((String)item);
-                });
+                // the object is a list of map, we need convert it to PathPrefixAuth object.
+                List<Map<String, Object>> values = (List<Map<String, Object>>)object;
+                for(Map<String, Object> value: values) {
+                    PathPrefixAuth pathPrefixAuth = new PathPrefixAuth();
+                    pathPrefixAuth.setPathPrefix((String)value.get(PATH_PREFIX));
+                    pathPrefixAuth.setGrantType((String)value.get(GRANT_TYPE));
+                    pathPrefixAuth.setAuthIssuer((String)value.get(AUTH_ISSUER));
+                    pathPrefixAuth.setAuthSubject((String)value.get(AUTH_SUBJECT));
+                    pathPrefixAuth.setAuthAudience((String)value.get(AUTH_AUDIENCE));
+                    pathPrefixAuth.setIv((String)value.get(IV));
+                    pathPrefixAuth.setServiceHost((String)value.get(SERVICE_HOST));
+                    pathPrefixAuth.setTokenTtl(value.get(TOKEN_TTL) == null ? 60 : (Integer)value.get(TOKEN_TTL));
+                    pathPrefixAuth.setWaitLength(value.get(WAIT_LENGTH) == null ? 5000 : (Integer)value.get(WAIT_LENGTH));
+                    pathPrefixAuth.setTokenUrl((String)value.get(TOKEN_URL));
+                    // grant type password
+                    pathPrefixAuth.setUsername((String)value.get(USERNAME));
+                    pathPrefixAuth.setPassword((String)value.get(PASSWORD));
+                    pathPrefixAuth.setClientId((String)value.get(CLIENT_ID));
+                    pathPrefixAuth.setClientSecret((String)value.get(CLIENT_SECRET));
+                    pathPrefixAuth.setResponseType((String)value.get(RESPONSE_TYPE));
+                    pathPrefixAuths.add(pathPrefixAuth);
+                }
             } else {
-                throw new ConfigException("appliedPathPrefixes must be a string or a list of strings.");
+                throw new ConfigException("pathPrefixAuth must be a list of string object map.");
             }
         }
     }

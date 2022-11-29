@@ -24,7 +24,9 @@ import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.HttpStringConstants;
+import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
+import com.networknt.monad.Success;
 import com.networknt.status.Status;
 import com.networknt.utility.ConcurrentHashSet;
 import com.networknt.utility.ModuleRegistry;
@@ -72,35 +74,72 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  */
 public class TokenHandler implements MiddlewareHandler {
-    public static final String CONFIG_NAME = "token";
-    public static final String ENABLED = "enabled";
     private static final String HANDLER_DEPENDENCY_ERROR = "ERR10074";
 
-    public static Map<String, Object> config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
+    private static TokenConfig config;
     static Logger logger = LoggerFactory.getLogger(TokenHandler.class);
     protected volatile HttpHandler next;
     // Cached jwt token for this handler on behalf of a client by serviceId as the key
-    private final Map<String, Jwt> cache = new ConcurrentHashMap();
-    public TokenHandler() { }
+    public final static Map<String, Jwt> cache = new ConcurrentHashMap();
+    public TokenHandler() {
+        if(logger.isInfoEnabled()) logger.info("TokenHandler is loaded.");
+        config = TokenConfig.load();
+    }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         // This handler must be put after the prefix or dict handler so that the serviceId is
         // readily available in the header resolved by the path or the endpoint from the request.
-        HeaderValues headerValues = exchange.getRequestHeaders().get(HttpStringConstants.SERVICE_ID);
-        String serviceId = null;
-        if(headerValues != null) serviceId = headerValues.getFirst();
-        if(serviceId == null) {
-            // this handler should be before the router and after the handler to resolve the serviceId from path
-            // or endpoint like the PathPrefixServiceHandler or ServiceDictHandler.
-            logger.error("The serviceId cannot be resolved. Do you have PathPrefixServiceHandler or ServiceDictHandler before this handler?");
-            setExchangeStatus(exchange, HANDLER_DEPENDENCY_ERROR, "TokenHandler", "PathPrefixServiceHandler");
-            return;
+        if(logger.isDebugEnabled()) logger.debug("TokenHandler.handleRequest starts.");
+        String requestPath = exchange.getRequestPath();
+        // this handler will only work with a list of applied path prefixes in the token.yml config file.
+        if (config.getAppliedPathPrefixes() != null && config.getAppliedPathPrefixes().stream().anyMatch(s -> requestPath.startsWith(s))) {
+            HeaderValues headerValues = exchange.getRequestHeaders().get(HttpStringConstants.SERVICE_ID);
+            String serviceId = null;
+            if(headerValues != null) serviceId = headerValues.getFirst();
+            if(serviceId == null) {
+                // this handler should be before the router and after the handler to resolve the serviceId from path
+                // or endpoint like the PathPrefixServiceHandler or ServiceDictHandler.
+                logger.error("The serviceId cannot be resolved. Do you have PathPrefixServiceHandler or ServiceDictHandler before this handler?");
+                setExchangeStatus(exchange, HANDLER_DEPENDENCY_ERROR, "TokenHandler", "PathPrefixServiceHandler");
+                if(logger.isDebugEnabled()) logger.debug("TokenHandler.handleRequest ends with an error.");
+                return;
+            }
+            Result<Jwt> result = getJwtToken(serviceId);
+            if(result.isFailure()) {
+                logger.error("Cannot populate or renew jwt for client credential grant type: " + result.getError().toString());
+                setExchangeStatus(exchange, result.getError());
+                if(logger.isDebugEnabled()) logger.debug("TokenHandler.handleRequest ends with an error.");
+                return;
+            } else {
+                Jwt cachedJwt = result.getResult();
+                // check if there is a bear token in the authorization header in the request. If there
+                // is one, then this must be the subject token that is linked to the original user.
+                // We will keep this token in the Authorization header but create a new token with
+                // client credentials grant type with scopes for the particular client. (Can we just
+                // assume that the subject token has the scope already?)
+                String token = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
+                if(token == null) {
+                    if(logger.isTraceEnabled()) logger.trace("Adding jwt token to Authorization header with Bearer " + cachedJwt.getJwt().substring(0, 20));
+                    exchange.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + cachedJwt.getJwt());
+                } else {
+                    if(logger.isTraceEnabled()) {
+                        logger.trace("Authorization header is used with " + token.substring(0, 10));
+                        logger.trace("Adding jwt token to X-Scope-Token header with Bearer " + cachedJwt.getJwt().substring(0, 10));
+                    }
+                    exchange.getRequestHeaders().put(HttpStringConstants.SCOPE_TOKEN, "Bearer " + cachedJwt.getJwt());
+                }
+            }
         }
+        if(logger.isDebugEnabled()) logger.debug("TokenHandler.handleRequest ends.");
+        Handler.next(exchange, next);
+    }
+
+    public static Result<Jwt> getJwtToken(String serviceId) {
         ClientConfig clientConfig = ClientConfig.get();
         Map<String, Object> tokenConfig = clientConfig.getTokenConfig();
         Map<String, Object> ccConfig = (Map<String, Object>)tokenConfig.get(ClientConfig.CLIENT_CREDENTIALS);
-
+        Result<Jwt> result;
         Jwt cachedJwt = cache.get(serviceId);
         // get a new token if cachedJwt is null or the jwt is about expired.
         if(cachedJwt == null || cachedJwt.getExpire() - Long.valueOf((Integer)tokenConfig.get(ClientConfig.TOKEN_RENEW_BEFORE_EXPIRED)) < System.currentTimeMillis()) {
@@ -130,32 +169,16 @@ public class TokenHandler implements MiddlewareHandler {
                 ccConfig.put(ClientConfig.EARLY_REFRESH_RETRY_DELAY, tokenConfig.get(ClientConfig.EARLY_REFRESH_RETRY_DELAY));
                 cachedJwt.setCcConfig(ccConfig);
             }
-            Result result = OauthHelper.populateCCToken(cachedJwt);
-            if(result.isFailure()) {
-                logger.error("Cannot populate or renew jwt for client credential grant type: " + result.getError().toString());
-                setExchangeStatus(exchange, result.getError());
-                return;
+            result = OauthHelper.populateCCToken(cachedJwt);
+            if(result.isSuccess()) {
+                // put the cachedJwt to the cache.
+                cache.put(serviceId, cachedJwt);
             }
-            // put the cachedJwt to the cache.
-            cache.put(serviceId, cachedJwt);
-        }
-        // check if there is a bear token in the authorization header in the request. If there
-        // is one, then this must be the subject token that is linked to the original user.
-        // We will keep this token in the Authorization header but create a new token with
-        // client credentials grant type with scopes for the particular client. (Can we just
-        // assume that the subject token has the scope already?)
-        String token = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
-        if(token == null) {
-            if(logger.isTraceEnabled()) logger.trace("Adding jwt token to Authorization header with Bearer " + cachedJwt.getJwt().substring(0, 20));
-            exchange.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + cachedJwt.getJwt());
         } else {
-            if(logger.isTraceEnabled()) {
-                logger.trace("Authorization header is used with " + token.substring(0, 20));
-                logger.trace("Adding jwt token to X-Scope-Token header with Bearer " + cachedJwt.getJwt().substring(0, 20));
-            }
-            exchange.getRequestHeaders().put(HttpStringConstants.SCOPE_TOKEN, "Bearer " + cachedJwt.getJwt());
+            // the cached jwt is not null and still valid.
+            result = Success.of(cachedJwt);
         }
-        Handler.next(exchange, next);
+        return result;
     }
 
     @Override
@@ -172,17 +195,17 @@ public class TokenHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        Object object = config.get(ENABLED);
-        return object != null && (Boolean) object;
+        return config.isEnabled();
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(TokenHandler.class.getName(), config, null);
+        ModuleRegistry.registerModule(TokenHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void reload() {
-        config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
+        config.reload();
+        ModuleRegistry.registerModule(TokenHandler.class.getName(), config.getMappedConfig(), null);
     }
 }

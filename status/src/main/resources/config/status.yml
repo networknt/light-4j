@@ -201,7 +201,7 @@ ERR10015:
   statusCode: 400
   code: ERR10015
   message: CONTENT_TYPE_MISMATCH
-  description: Content type in header %s doesn't match the body.
+  description: Either the Content-Type header %s does not match the body, or the body was serialized incorrectly.
 ERR10016:
   statusCode: 400
   code: ERR10016
@@ -497,6 +497,21 @@ ERR10074:
   code: ERR10074
   message: HANDLER_DEPENDENCY_ERROR
   description: Handler %s depends on handler %s in the chain.
+ERR10075:
+  statusCode: 401
+  code: ERR10075
+  message: API_KEY_MISMATCH
+  description: APIKEY from header %s is not matched for request path prefix %s.
+ERR10076:
+  statusCode: 400
+  code: ERR10076
+  message: CONTENT_TYPE_MISSING
+  description: Content type header is missing and it is required.
+ERR10077:
+  statusCode: 400
+  code: ERR10077
+  message: INVALID_CONTENT_TYPE
+  description: Invalid content type %s.
 
 
 
@@ -954,8 +969,7 @@ ERR12002:
   statusCode: 401
   code: ERR12002
   message: MISSING_AUTHORIZATION_HEADER
-  description: Missing authorization header. client credentials must be passed in
-    as Authorization header.
+  description: Missing authorization header. client credentials must be passed in as Authorization header.
 ERR12003:
   statusCode: 401
   code: ERR12003

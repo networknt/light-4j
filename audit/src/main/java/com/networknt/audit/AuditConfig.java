@@ -45,8 +45,9 @@ class AuditConfig {
     private static final String LOG_LEVEL_IS_ERROR = "logLevelIsError";
     private static final String MASK = "mask";
     private static final String TIMESTAMP_FORMAT = "timestampFormat";
-
     private static final String ENABLED = "enabled";
+    private static final String REQUEST_BODY_MAX_SIZE = "requestBodyMaxSize";
+    private static final String RESPONSE_BODY_MAX_SIZE = "responseBodyMaxSize";
 
     private  Map<String, Object> mappedConfig;
     public static final String CONFIG_NAME = "audit";
@@ -61,7 +62,8 @@ class AuditConfig {
     private boolean auditOnError;
     private boolean mask;
     private String timestampFormat;
-
+    private int requestBodyMaxSize;
+    private int responseBodyMaxSize;
     private boolean enabled;
 
     private AuditConfig() {
@@ -139,6 +141,10 @@ class AuditConfig {
         return timestampFormat;
     }
 
+    public int getRequestBodyMaxSize() { return requestBodyMaxSize; }
+
+    public int getResponseBodyMaxSize() { return responseBodyMaxSize; }
+
     Config getConfig() {
         return config;
     }
@@ -201,7 +207,6 @@ class AuditConfig {
         if(object != null && (Boolean) object) {
             responseTime = true;
         }
-
         // audit on error response flag
         object = getMappedConfig().get(AUDIT_ON_ERROR);
         if(object != null && (Boolean) object) {
@@ -211,9 +216,17 @@ class AuditConfig {
         if(object != null && (Boolean) object) {
             mask = true;
         }
+        object = mappedConfig.get(REQUEST_BODY_MAX_SIZE);
+        if (object != null) {
+            requestBodyMaxSize = (Integer) object;
+        }
+        object = mappedConfig.get(RESPONSE_BODY_MAX_SIZE);
+        if (object != null) {
+            responseBodyMaxSize = (Integer) object;
+        }
         object = getMappedConfig().get(ENABLED);
         if(object != null && (Boolean) object) {
-
+            enabled = true;
         }
         timestampFormat = (String)getMappedConfig().get(TIMESTAMP_FORMAT);
     }

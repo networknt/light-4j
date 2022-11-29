@@ -37,6 +37,7 @@ public class ProxyHealthGetHandler implements LightHttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("ProxyHealthGetHandler.handleRequest starts.");
         String result = HEALTH_RESULT_OK;
         // if backend is not connected, then error. Check the configuration to see if it is enabled.
         if(config.isDownstreamEnabled()) {
@@ -45,9 +46,11 @@ public class ProxyHealthGetHandler implements LightHttpHandler {
         // for security reason, we don't output the details about the error. Users can check the log for the failure.
         if(HEALTH_RESULT_ERROR == result) {
             exchange.setStatusCode(400);
+            if(logger.isDebugEnabled()) logger.debug("ProxyHealthGetHandler.handleRequest ends with an error.");
             exchange.getResponseSender().send(HEALTH_RESULT_ERROR);
         } else {
             exchange.setStatusCode(200);
+            if(logger.isDebugEnabled()) logger.debug("ProxyHealthGetHandler.handleRequest ends.");
             exchange.getResponseSender().send(HEALTH_RESULT_OK);
         }
     }

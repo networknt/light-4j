@@ -303,6 +303,7 @@ public class Http2ClientPoolTest {
 
 
     @Test
+    @Ignore
     public void testSingleAsych() throws Exception {
         callApiAsync();
     }

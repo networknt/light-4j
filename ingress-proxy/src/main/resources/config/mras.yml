@@ -1,24 +1,12 @@
 # Configuration for MrasHandler
 # Indicate if the handler is enabled or not
 enabled: ${mras.enabled:false}
-# MRAS get token URL to send the request
-tokenUrl: ${mras.tokenUrl:https://test.mras.com/services/oauth2/token}
-# username for the authentication
-username: ${mras.username:}
-# password for the authentication
-password: ${mras:password:}
-# is cache enabled for the token
-cacheEnabled: ${mras.cacheEnabled:}
-# memory key
-memKey: ${mras.memKey}
-# grace period
-gracePeriod: ${mras.gracePeriod:}
 # keyStoreName
 keyStoreName: ${mras.keyStoreName:}
 # keyStorePass
 keyStorePass: ${mras.keyStorePass:}
 # keyPass
-keyPass: ${mras.keyAlias:}
+keyPass: ${mras.keyPass:}
 # trustStoreName
 trustStoreName: ${mras.trustStoreName:apigatewayuat.pfx}
 # trustStorePass
@@ -29,8 +17,67 @@ proxyHost: ${mras.proxyHost:}
 proxyPort: ${mras.proxyPort:}
 # If HTTP2 is used to connect to the MRAS site.
 enableHttp2: ${mras.enableHttp2:false}
-# A list of applied request path prefixes, other requests will skip this handler. The value can be a string
-# if there is only one request path prefix needs this handler. or a list of strings if there are multiple.
-appliedPathPrefixes: ${mras.appliedPathPrefixes:}
-# MRAS target service host for service access with the token get with above property.
-serviceHost: ${mras.serviceHost}
+# URL rewrite rules, each line will have two parts: the regex patten and replace string separated
+# with a space. For details, please refer to the light-router router.yml configuration.
+# Test your rules at https://www.freeformatter.com/java-regex-tester.html
+urlRewriteRules: ${mras.urlRewriteRules:}
+
+# A list of applied request path prefixes and authentication config, other requests will skip this handler.
+pathPrefixAuth: ${mras.pathPrefixAuth:}
+# format with JSON for config server
+#  {"/mras":"accessToken","/test":"basicAuth","/pdf/generator":"anonymous","/advisor":"microsoft"}
+
+# format with YAML for readability
+#  /mras: accessToken
+#  /test: basicAuth
+#  /pdf/generator: anonymous
+#  /advisor: microsoft
+
+# MRAS basic authentication configuration for some endpoints
+basicAuth:
+  # username for the authentication
+  username: ${mras.basicAuth.username:}
+  # password for the authentication
+  password: ${mras.basicAuth.password:}
+  # host for the endpoint
+  serviceHost: ${mras.basicAuth.serviceHost:}
+# MRAS accessToken issued by the MRAS service
+accessToken:
+  # MRAS get token URL to send the request
+  tokenUrl: ${mras.accessToken.tokenUrl:https://test.mras.com/services/oauth2/token}
+  # username for the authentication
+  username: ${mras.accessToken.username:}
+  # password for the authentication
+  password: ${mras.accessToken.password:}
+  # is cache enabled for the token
+  cacheEnabled: ${mras.accessToken.cacheEnabled:}
+  # memory key
+  memKey: ${mras.accessToken.memKey:}
+  # grace period
+  gracePeriod: ${mras.accessToken.gracePeriod:}
+  # host for the endpoint
+  serviceHost: ${mras.accessToken.serviceHost:}
+
+# MRAS Microsoft token issued by Microsoft service
+microsoft:
+  # MRAS get token URL to send the request
+  tokenUrl: ${mras.microsoft.tokenUrl:https://test.mras.com/services/oauth2/token}
+  # username for the authentication
+  username: ${mras.microsoft.username:}
+  # password for the authentication
+  password: ${mras.microsoft.password:}
+  # resource for the authentication
+  resource: ${mras.microsoft.resource:}
+  # is cache enabled for the token
+  cacheEnabled: ${mras.microsoft.cacheEnabled:}
+  # memory key
+  memKey: ${mras.microsoft.memKey:}
+  # grace period
+  gracePeriod: ${mras.microsoft.gracePeriod:}
+  # host for the endpoint
+  serviceHost: ${mras.microsoft.serviceHost:}
+
+# MRAS anonymous access for some endpoints.
+anonymous:
+  # MRAS target service host for service access with the token get with above property.
+  serviceHost: ${mras.anonymous.serviceHost:}

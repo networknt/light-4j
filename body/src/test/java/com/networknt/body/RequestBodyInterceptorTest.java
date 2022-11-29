@@ -369,6 +369,7 @@ public class RequestBodyInterceptorTest {
     }
 
     @Test
+    @Ignore
     public void testPostJsonMapWithoutContentTypeHeader() throws Exception {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
@@ -402,6 +403,7 @@ public class RequestBodyInterceptorTest {
     }
 
     @Test
+    @Ignore
     public void testPostFormWithoutContentTypeHeader() throws Exception {
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();

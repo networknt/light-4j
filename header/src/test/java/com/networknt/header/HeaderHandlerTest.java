@@ -41,6 +41,8 @@ import org.xnio.OptionMap;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -87,6 +89,56 @@ public class HeaderHandlerTest {
 
     static RoutingHandler getTestHandler() {
         return Handlers.routing()
+                .add(Methods.GET, "/petstore", exchange -> {
+                    Map<String, Map<String, String>> headers = new HashMap<>();
+                    Map<String, String> requestHeaders = new HashMap<>();
+                    String headerA = exchange.getRequestHeaders().getFirst("headerA");
+                    if(headerA != null) requestHeaders.put("headerA", headerA);
+                    String headerB = exchange.getRequestHeaders().getFirst("headerB");
+                    if(headerB != null) requestHeaders.put("headerB", headerB);
+                    String keyA = exchange.getRequestHeaders().getFirst("keyA");
+                    if(keyA != null) requestHeaders.put("keyA", keyA);
+                    String keyB = exchange.getRequestHeaders().getFirst("keyB");
+                    if(keyB != null) requestHeaders.put("keyB", keyB);
+                    headers.put("requestHeaders", requestHeaders);
+
+                    Map<String, String> responseHeaders = new HashMap<>();
+                    String headerC = exchange.getResponseHeaders().getFirst("headerC");
+                    if(headerC != null) responseHeaders.put("headerC", headerC);
+                    String headerD = exchange.getResponseHeaders().getFirst("headerD");
+                    if(headerD != null) responseHeaders.put("headerD", headerD);
+                    String keyC = exchange.getResponseHeaders().getFirst("keyC");
+                    if(keyC != null) responseHeaders.put("keyC", keyC);
+                    String keyD = exchange.getResponseHeaders().getFirst("keyD");
+                    if(keyD != null) responseHeaders.put("keyD", keyD);
+                    headers.put("responseHeaders", responseHeaders);
+                    exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(headers));
+                })
+                .add(Methods.GET, "/market", exchange -> {
+                    Map<String, Map<String, String>> headers = new HashMap<>();
+                    Map<String, String> requestHeaders = new HashMap<>();
+                    String headerE = exchange.getRequestHeaders().getFirst("headerE");
+                    if(headerE != null) requestHeaders.put("headerE", headerE);
+                    String headerF = exchange.getRequestHeaders().getFirst("headerF");
+                    if(headerF != null) requestHeaders.put("headerF", headerF);
+                    String keyE = exchange.getRequestHeaders().getFirst("keyE");
+                    if(keyE != null) requestHeaders.put("keyE", keyE);
+                    String keyF = exchange.getRequestHeaders().getFirst("keyF");
+                    if(keyF != null) requestHeaders.put("keyF", keyF);
+                    headers.put("requestHeaders", requestHeaders);
+
+                    Map<String, String> responseHeaders = new HashMap<>();
+                    String headerG = exchange.getResponseHeaders().getFirst("headerG");
+                    if(headerG != null) responseHeaders.put("headerG", headerG);
+                    String headerH = exchange.getResponseHeaders().getFirst("headerH");
+                    if(headerH != null) responseHeaders.put("headerH", headerH);
+                    String keyG = exchange.getResponseHeaders().getFirst("keyG");
+                    if(keyG != null) responseHeaders.put("keyG", keyG);
+                    String keyH = exchange.getResponseHeaders().getFirst("keyH");
+                    if(keyH != null) responseHeaders.put("keyH", keyH);
+                    headers.put("responseHeaders", responseHeaders);
+                    exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(headers));
+                })
                 .add(Methods.GET, "/get", exchange -> {
                     Map<String, Map<String, String>> headers = new HashMap<>();
                     Map<String, String> requestHeaders = new HashMap<>();
@@ -143,6 +195,87 @@ public class HeaderHandlerTest {
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
         Assert.assertEquals(200, statusCode);
-        Assert.assertEquals("{\"requestHeaders\":{\"key1\":\"value1\",\"key2\":\"value2\"},\"responseHeaders\":{\"key1\":\"value1\",\"key2\":\"value2\"}}", body);
+	List<String> possibleJson = getPossibleJson("key1", "value1", "key2", "value2", "key1", "value1", "key2", "value2");
+        Assert.assertTrue(possibleJson.contains(body));
     }
+
+    @Test
+    public void testPetstoreHeader() throws Exception {
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection;
+        try {
+            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        } catch (Exception e) {
+            throw new ClientException(e);
+        }
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        try {
+            ClientRequest request = new ClientRequest().setPath("/petstore").setMethod(Methods.GET);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
+            request.getRequestHeaders().put(new HttpString("headerA"), "headerA");
+            request.getRequestHeaders().put(new HttpString("headerB"), "headerB");
+            request.getRequestHeaders().put(new HttpString("keyA"), "oldA");
+            request.getRequestHeaders().put(new HttpString("keyB"), "oldB");
+            connection.sendRequest(request, client.createClientCallback(reference, latch));
+            latch.await();
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw new ClientException(e);
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+        int statusCode = reference.get().getResponseCode();
+        String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+        Assert.assertEquals(200, statusCode);
+	List<String> possibleJson = getPossibleJson("keyA", "valueA", "keyB", "valueB", "keyC", "valueC", "keyD", "valueD");
+        Assert.assertTrue(possibleJson.contains(body));
+    }
+
+    @Test
+    public void testMarketHeader() throws Exception {
+        final Http2Client client = Http2Client.getInstance();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ClientConnection connection;
+        try {
+            connection = client.connect(new URI("http://localhost:7080"), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY).get();
+        } catch (Exception e) {
+            throw new ClientException(e);
+        }
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        try {
+            ClientRequest request = new ClientRequest().setPath("/market").setMethod(Methods.GET);
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
+            request.getRequestHeaders().put(new HttpString("headerE"), "headerE");
+            request.getRequestHeaders().put(new HttpString("headerF"), "headerF");
+            request.getRequestHeaders().put(new HttpString("keyE"), "oldE");
+            request.getRequestHeaders().put(new HttpString("keyF"), "oldF");
+            connection.sendRequest(request, client.createClientCallback(reference, latch));
+            latch.await();
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw new ClientException(e);
+        } finally {
+            IoUtils.safeClose(connection);
+        }
+        int statusCode = reference.get().getResponseCode();
+        String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+        Assert.assertEquals(200, statusCode);
+	List<String> possibleJson = getPossibleJson("keyE", "valueE", "keyF", "valueF", "keyG", "valueG", "keyH", "valueH");
+        Assert.assertTrue(possibleJson.contains(body));
+    }
+	
+    List<String> getPossibleJson(String key1, String value1, String key2, String value2, String key3, String value3, String key4, String value4){
+        List<String> possibleJson = new ArrayList<>();
+        possibleJson.add("{\"requestHeaders\":{\""+key1+"\":\""+value1+"\",\""+key2+"\":\""+value2+"\"},\"responseHeaders\":{\""+key3+"\":\""+value3+"\",\""+key4+"\":\""+value4+"\"}}");
+        possibleJson.add("{\"requestHeaders\":{\""+key1+"\":\""+value1+"\",\""+key2+"\":\""+value2+"\"},\"responseHeaders\":{\""+key4+"\":\""+value4+"\",\""+key3+"\":\""+value3+"\"}}");
+        possibleJson.add("{\"requestHeaders\":{\""+key2+"\":\""+value2+"\",\""+key1+"\":\""+value1+"\"},\"responseHeaders\":{\""+key3+"\":\""+value3+"\",\""+key4+"\":\""+value4+"\"}}");
+        possibleJson.add("{\"requestHeaders\":{\""+key2+"\":\""+value2+"\",\""+key1+"\":\""+value1+"\"},\"responseHeaders\":{\""+key4+"\":\""+value4+"\",\""+key3+"\":\""+value3+"\"}}");
+        possibleJson.add("{\"responseHeaders\":{\""+key3+"\":\""+value3+"\",\""+key4+"\":\""+value4+"\"},\"requestHeaders\":{\""+key1+"\":\""+value1+"\",\""+key2+"\":\""+value2+"\"}}");
+        possibleJson.add("{\"responseHeaders\":{\""+key3+"\":\""+value3+"\",\""+key4+"\":\""+value4+"\"},\"requestHeaders\":{\""+key2+"\":\""+value2+"\",\""+key1+"\":\""+value1+"\"}}");
+        possibleJson.add("{\"responseHeaders\":{\""+key4+"\":\""+value4+"\",\""+key3+"\":\""+value3+"\"},\"requestHeaders\":{\""+key1+"\":\""+value1+"\",\""+key2+"\":\""+value2+"\"}}");
+        possibleJson.add("{\"responseHeaders\":{\""+key4+"\":\""+value4+"\",\""+key3+"\":\""+value3+"\"},\"requestHeaders\":{\""+key2+"\":\""+value2+"\",\""+key1+"\":\""+value1+"\"}}");
+        return possibleJson;
+    }
+
 }

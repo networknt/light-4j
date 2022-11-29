@@ -3,7 +3,6 @@ package com.networknt.body;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
-import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.RequestInterceptor;
 import com.networknt.httpstring.AttachmentConstants;
@@ -23,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.networknt.body.BodyHandler.REQUEST_BODY_STRING;
-import static com.networknt.body.BodyHandler.REQUEST_BODY;
 
 /**
  * Note: With RequestInterceptorInjectionHandler implemented, this handler is changed from a
@@ -53,15 +51,13 @@ import static com.networknt.body.BodyHandler.REQUEST_BODY;
 public class RequestBodyInterceptor implements RequestInterceptor {
     static final Logger logger = LoggerFactory.getLogger(RequestBodyInterceptor.class);
     static final String CONTENT_TYPE_MISMATCH = "ERR10015";
-    static final String PAYLOAD_TOO_LARGE = "ERR10068";
-    static final String GENERIC_EXCEPTION = "ERR10014";
 
     public BodyConfig config;
 
     private volatile HttpHandler next;
 
     public RequestBodyInterceptor() {
-        if (logger.isInfoEnabled()) logger.info("ProxyBodyHandler is loaded.");
+        if (logger.isInfoEnabled()) logger.info("RequestBodyInterceptor is loaded.");
         config = BodyConfig.load();
     }
 
@@ -74,22 +70,40 @@ public class RequestBodyInterceptor implements RequestInterceptor {
      */
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        if (this.shouldParseBody(exchange)) {
+        if(logger.isDebugEnabled()) logger.debug("RequestBodyInterceptor.handleRequest starts.");
+        if (this.shouldAttachBody(exchange)) {
+            boolean attached = false;
             var existing = (PooledByteBuffer[])exchange.getAttachment(AttachmentConstants.BUFFERED_REQUEST_DATA_KEY);
-            StringBuilder completeBody = new StringBuilder();
-            for(PooledByteBuffer buffer : existing) {
-                if(buffer != null) {
-                    completeBody.append(StandardCharsets.UTF_8.decode(buffer.getBuffer().duplicate()).toString());
-                } else {
-                    break;
+            if(existing != null) {
+                if(logger.isTraceEnabled()) logger.trace("Attach request body requirement is met and butter exists.");
+                StringBuilder completeBody = new StringBuilder();
+                for(PooledByteBuffer buffer : existing) {
+                    if(buffer != null) {
+                        completeBody.append(StandardCharsets.UTF_8.decode(buffer.getBuffer().duplicate()).toString());
+                    } else {
+                        break;
+                    }
+                }
+                String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
+                if(logger.isTraceEnabled()) logger.trace("contentType = " + contentType + " request body = " + (completeBody.length() > 16384 ? completeBody.substring(0, 16384) : completeBody));
+                if(contentType.startsWith("application/json")) {
+                    attached = this.attachJsonBody(exchange, completeBody.toString());
+                } else if(contentType.startsWith("text") || contentType.startsWith("application/xml")) { // include text/plain and text/xml etc.
+                    if (config.isCacheRequestBody()) {
+                        exchange.putAttachment(AttachmentConstants.REQUEST_BODY_STRING, completeBody.toString());
+                        attached = true;
+                    }
+                } else if (contentType.startsWith("multipart/form-data") || contentType.startsWith("application/x-www-form-urlencoded")) {
+                    if(logger.isTraceEnabled()) logger.trace("contentType = " + contentType + " stringBody = " + completeBody);
+                    attached = this.attachFormDataBody(exchange, completeBody.toString());
                 }
             }
-            boolean attached = this.attachJsonBody(exchange, completeBody.toString());
             if(!attached) {
-                if(logger.isInfoEnabled()) logger.info("Failed to attached the request body to the exchange");
+                if(logger.isErrorEnabled())
+                    logger.error("Failed to attached the request body to the exchange");
             }
         }
-        Handler.next(exchange, next);
+        if(logger.isDebugEnabled()) logger.debug("RequestBodyInterceptor.handleRequest ends.");
     }
 
     /**
@@ -98,15 +112,15 @@ public class RequestBodyInterceptor implements RequestInterceptor {
      * @param exchange - http exchange
      * @return - return true if we should run the body parser.
      */
-    private boolean shouldParseBody(final HttpServerExchange exchange) {
+    private boolean shouldAttachBody(final HttpServerExchange exchange) {
         HttpString method = exchange.getRequestMethod();
         String requestPath = exchange.getRequestPath();
         boolean hasBody = method.equals(Methods.POST) || method.equals(Methods.PUT) || method.equals(Methods.PATCH);
-        boolean isPathConfigured = config.getAppliedPathPrefixes() == null ? true : config.getAppliedPathPrefixes().stream().anyMatch(s -> requestPath.startsWith(s));
+        boolean isPathConfigured = config.getAppliedPathPrefixes() == null || config.getAppliedPathPrefixes().stream().anyMatch(requestPath::startsWith);
+        if(logger.isTraceEnabled()) logger.trace("hasBody = " + hasBody +  " isPathConfigured = " + isPathConfigured);
         return hasBody &&
                 isPathConfigured &&
-                exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE) != null &&
-                exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE).startsWith("application/json");
+                exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE) != null;
     }
 
     /**
@@ -123,11 +137,9 @@ public class RequestBodyInterceptor implements RequestInterceptor {
                 body = Config.getInstance().getMapper().readValue(string, new TypeReference<Map<String, Object>>() {
                 });
             } catch (JsonProcessingException e) {
-                if(exchange.getConnection().getBufferSize() <= string.length()) {
-                    setExchangeStatus(exchange, PAYLOAD_TOO_LARGE, "application/json");
-                } else {
-                    setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
-                }
+                setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
+                if(logger.isTraceEnabled())
+                    logger.trace("Full request body: {}", string);
                 return false;
             }
         } else if (string.startsWith("[")) {
@@ -135,22 +147,48 @@ public class RequestBodyInterceptor implements RequestInterceptor {
                 body = Config.getInstance().getMapper().readValue(string, new TypeReference<List<Object>>() {
                 });
             } catch (JsonProcessingException e) {
-                if(exchange.getConnection().getBufferSize() <= string.length()) {
-                    setExchangeStatus(exchange, PAYLOAD_TOO_LARGE, "application/json");
-                } else {
-                    setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
-                }
+                setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
+                if(logger.isTraceEnabled())
+                    logger.trace("Full request body: {}", string);
                 return false;
             }
         } else {
             // error here. The content type in head doesn't match the body.
             setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
+            if(logger.isTraceEnabled())
+                logger.trace("Full request body: {}", string);
             return false;
         }
         if (config.isCacheRequestBody()) {
             exchange.putAttachment(AttachmentConstants.REQUEST_BODY_STRING, string);
         }
         exchange.putAttachment(AttachmentConstants.REQUEST_BODY, body);
+        return true;
+    }
+
+    /**
+     * Method used to parse the body into FormData and attach it into exchange
+     *
+     * @param exchange exchange to be attached
+     * @param s the string of the  request body
+     * @return boolean to indicate if attached.
+     */
+    private boolean attachFormDataBody(final HttpServerExchange exchange, String s) {
+        // form-data
+        // ----------------------------520069623932425279826636
+        //Content-Disposition: form-data; name="key1"
+        //
+        //value1
+        //----------------------------520069623932425279826636
+        //Content-Disposition: form-data; name="key2"
+        //
+        //value2
+        //----------------------------520069623932425279826636--
+
+        // x-www-form-urlencoded
+        // key1=value1&key2=value2
+
+        exchange.putAttachment(REQUEST_BODY_STRING, s);
         return true;
     }
 

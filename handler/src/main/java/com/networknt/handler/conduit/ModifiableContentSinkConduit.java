@@ -4,6 +4,7 @@ import com.networknt.handler.BuffersUtils;
 import com.networknt.handler.ResponseInterceptor;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.service.SingletonServiceFactory;
+import io.undertow.conduits.ChunkedStreamSinkConduit;
 import io.undertow.connector.PooledByteBuffer;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.protocol.http.ServerFixedLengthStreamSinkConduit;
@@ -21,6 +22,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 
 public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<StreamSinkConduit> {
     public static int MAX_BUFFERS = 1024;
@@ -34,14 +36,14 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
     /**
      * Construct a new instance.
      *
-     * @param next the delegate conduit to set
+     * @param next     the delegate conduit to set
      * @param exchange
      */
     public ModifiableContentSinkConduit(StreamSinkConduit next, HttpServerExchange exchange) {
         super(next);
         this.exchange = exchange;
         // load the interceptors from the service.yml
-        interceptors = SingletonServiceFactory.getBeans(ResponseInterceptor.class);
+        this.interceptors = SingletonServiceFactory.getBeans(ResponseInterceptor.class);
         resetBufferPool(exchange);
     }
 
@@ -55,7 +57,7 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
         var oldBuffers = exchange.getAttachment(AttachmentConstants.BUFFERED_RESPONSE_DATA_KEY);
         // close the current buffer pool
         if (oldBuffers != null) {
-            for (var oldBuffer: oldBuffers) {
+            for (var oldBuffer : oldBuffers) {
                 if (oldBuffer != null) {
                     oldBuffer.close();
                 }
@@ -101,34 +103,69 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
 
     @Override
     public void terminateWrites() throws IOException {
-        logger.info("terminating writes");
+
+        if(logger.isTraceEnabled())
+            logger.trace("terminating writes with interceptors length = " + (this.interceptors == null ? 0: this.interceptors.length));
+
         try {
-            if(interceptors.length > 0) {
+            if (this.interceptors != null && this.interceptors.length > 0) {
                 // iterate all interceptor handlers.
-                for(ResponseInterceptor interceptor : interceptors) {
-                    if(logger.isDebugEnabled()) logger.debug("Executing interceptor " + interceptor.getClass());
+                for (ResponseInterceptor interceptor : this.interceptors) {
+                    if (logger.isDebugEnabled()) logger.debug("Executing interceptor " + interceptor.getClass());
                     interceptor.handleRequest(exchange);
                 }
             }
         } catch (Exception e) {
-            logger.error("Error executing interceptors", e);
-            // ByteArrayProxyRequest.of(exchange).setInError(true);
+            logger.error("Error executing interceptors: " + e.getMessage(), e);
             throw new RuntimeException(e);
         }
 
-        var dests = exchange.getAttachment(AttachmentConstants.BUFFERED_RESPONSE_DATA_KEY);
+        var dests = this.exchange.getAttachment(AttachmentConstants.BUFFERED_RESPONSE_DATA_KEY);
 
-        updateContentLength(exchange, dests);
-
-        for (PooledByteBuffer dest : dests) {
-            if (dest != null) {
-                next.write(dest.getBuffer());
-            }
+        /* only update content-length header if it exists. Response might have transfer encoding */
+        if (this.exchange.getResponseHeaders().get(Headers.CONTENT_LENGTH) != null) {
+            this.updateContentLength(this.exchange, dests);
         }
+        this.writeToNextConduit(dests);
 
-        next.terminateWrites();
+        super.terminateWrites();
     }
 
+    /**
+     * Writes to the next conduit.
+     * We track the position of the buffer after writing because of cases where the conduit does not consume everything.
+     * e.g. When transfer is chunked.
+     *
+     * @param responseDataPooledBuffers - pooled response buffers (after modification)
+     * @throws IOException - throws IO exception when writing to next conduits buffers.
+     */
+    private void writeToNextConduit(PooledByteBuffer[] responseDataPooledBuffers) throws IOException {
+        for (PooledByteBuffer responseDataBuffer : responseDataPooledBuffers) {
+            if (responseDataBuffer == null) {
+                break;
+            }
+
+            while (responseDataBuffer.getBuffer().position() < responseDataBuffer.getBuffer().limit()) {
+                if (logger.isTraceEnabled()) {
+                    logger.trace("Before write decoded buffer: {}\nBefore write buffer position: {}", StandardCharsets.UTF_8.decode(responseDataBuffer.getBuffer().duplicate()), responseDataBuffer.getBuffer().position());
+                }
+
+                super.write(responseDataBuffer.getBuffer());
+
+                if (logger.isTraceEnabled()) {
+                    logger.trace("After write decoded buffer: {}\nAfter write buffer position: {}", StandardCharsets.UTF_8.decode(responseDataBuffer.getBuffer().duplicate()), responseDataBuffer.getBuffer().position());
+                }
+            }
+        }
+    }
+
+    /**
+     * Calculates the length of the buffered data and updates the content-length header.
+     * Do not call this method when content-length is not already set in the response. This is to preserve transfer-encoding restrictions.
+     *
+     * @param exchange - current http exchange.
+     * @param dests - the updated buffered response data.
+     */
     private void updateContentLength(HttpServerExchange exchange, PooledByteBuffer[] dests) {
         long length = 0;
 
@@ -137,13 +174,13 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
                 length += dest.getBuffer().limit();
             }
         }
-
+        if(logger.isTraceEnabled()) logger.trace("PooledByteBuffer array added up length = " + length);
         exchange.getResponseHeaders().put(Headers.CONTENT_LENGTH, length);
 
-        // need also to update lenght of ServerFixedLengthStreamSinkConduit
-        if (next instanceof ServerFixedLengthStreamSinkConduit) {
+        // need also to update length of ServerFixedLengthStreamSinkConduit. Should we do this for anything that extends AbstractFixedLengthStreamSinkConduit?
+        if (this.next instanceof ServerFixedLengthStreamSinkConduit) {
             Method m;
-
+            if(logger.isTraceEnabled()) logger.trace("The next conduit is ServerFixedLengthStreamSinkConduit and reset the length.");
             try {
                 m = ServerFixedLengthStreamSinkConduit.class.getDeclaredMethod("reset", long.class, HttpServerExchange.class);
                 m.setAccessible(true);
@@ -154,12 +191,13 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
 
             try {
                 m.invoke(next, length, exchange);
+                if(logger.isTraceEnabled()) logger.trace("reset ServerFixedLengthStreamSinkConduit length = " + length);
             } catch (Throwable ex) {
                 logger.error("could not access BUFFERED_REQUEST_DATA field", ex);
                 throw new RuntimeException("could not access BUFFERED_REQUEST_DATA field", ex);
             }
         } else {
-            logger.warn("updateContentLenght() next is {}", next.getClass().getSimpleName());
+            logger.warn("updateContentLength() next is {}", this.next.getClass().getSimpleName());
         }
     }
 

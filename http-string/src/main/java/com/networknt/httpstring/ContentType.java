@@ -16,10 +16,8 @@
 
 package com.networknt.httpstring;
 
-import java.io.Serializable;
-
 /**
- * a enum for http Content-Type header
+ * an enum for http Content-Type header
  *
  */
 public enum ContentType {

@@ -97,6 +97,7 @@ public class BodyHandler implements MiddlewareHandler {
      */
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("BodyHandler.handleRequest starts.");
         // parse the body to map or list if content type is application/json
         String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
         if (contentType != null) {
@@ -129,9 +130,11 @@ public class BodyHandler implements MiddlewareHandler {
             } catch (IOException e) {
                 logger.error("IOException: ", e);
                 setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, contentType);
+                if(logger.isDebugEnabled()) logger.debug("BodyHandler.handleRequest ends with an error.");
                 return;
             }
         }
+        if(logger.isDebugEnabled()) logger.debug("BodyHandler.handleRequest ends.");
         Handler.next(exchange, next);
     }
 

@@ -60,11 +60,13 @@ public class TraceabilityHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        if (logger.isDebugEnabled()) logger.trace("TraceabilityHandler.handleRequest starts.");
         String tid = exchange.getRequestHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
         if(tid != null) {
             exchange.getResponseHeaders().put(HttpStringConstants.TRACEABILITY_ID, tid);
             MDC.put(TID, tid);
         }
+        if (logger.isDebugEnabled()) logger.trace("TraceabilityHandler.handleRequest ends.");
         Handler.next(exchange, next);
     }
 

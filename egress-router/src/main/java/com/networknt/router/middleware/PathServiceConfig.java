@@ -5,6 +5,7 @@ import com.networknt.config.ConfigException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -74,17 +75,27 @@ public class PathServiceConfig {
     private void setMap() {
         if(getMappedConfig().get(MAPPING) instanceof String) {
             String s = (String)getMappedConfig().get(MAPPING);
+            s = s.trim();
             if(logger.isTraceEnabled()) logger.trace("s = " + s);
-            Map<String, String> map = new LinkedHashMap<>();
-            for(String keyValue : s.split(" *& *")) {
-                String[] pairs = keyValue.split(" *= *", 2);
-                map.put(pairs[0], pairs.length == 1 ? "" : pairs[1]);
+            if(s.startsWith("{")) {
+                // json map
+                try {
+                    mapping = Config.getInstance().getMapper().readValue(s, Map.class);
+                } catch (IOException e) {
+                    logger.error("IOException:", e);
+                }
+            } else {
+                Map<String, String> map = new LinkedHashMap<>();
+                for(String keyValue : s.split(" *& *")) {
+                    String[] pairs = keyValue.split(" *= *", 2);
+                    map.put(pairs[0], pairs.length == 1 ? "" : pairs[1]);
+                }
+                mapping = map;
             }
-            mapping = map;
         } else if (getMappedConfig().get(MAPPING) instanceof Map) {
             mapping = (Map<String, String>) getMappedConfig().get(MAPPING);
         } else {
-            throw new ConfigException("mapping is missing or wrong type.");
+            logger.error("mapping is missing or wrong type.");
         }
     }
 

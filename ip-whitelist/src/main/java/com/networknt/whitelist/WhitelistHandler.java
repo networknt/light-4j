@@ -48,12 +48,14 @@ public class WhitelistHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("WhitelistHandler.handleRequest starts.");
         InetSocketAddress peer = exchange.getSourceAddress();
         String endpoint = exchange.getRelativePath() + "@" + exchange.getRequestMethod().toString().toLowerCase();
         if (!isAllowed(peer.getAddress(), endpoint)) {
             setExchangeStatus(exchange, INVALID_IP_FOR_PATH, peer.toString(), endpoint);
             return;
         }
+        if(logger.isDebugEnabled()) logger.debug("WhitelistHandler.handleRequest ends.");
         Handler.next(exchange, next);
     }
 

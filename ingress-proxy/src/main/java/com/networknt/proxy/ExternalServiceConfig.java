@@ -2,6 +2,7 @@ package com.networknt.proxy;
 
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import com.networknt.handler.config.UrlRewriteRule;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,14 +22,13 @@ public class ExternalServiceConfig {
     int proxyPort;
     boolean enableHttp2;
     List<String[]> pathHostMappings;
+
+    List<UrlRewriteRule> urlRewriteRules;
     private Config config;
     private Map<String, Object> mappedConfig;
 
     public ExternalServiceConfig() {
-        config = Config.getInstance();
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
-        setConfigData();
-        setConfigList();
+        this(CONFIG_NAME);
     }
 
     /**
@@ -36,17 +36,22 @@ public class ExternalServiceConfig {
      * to test different configurations.
      * @param configName String
      */
-    public ExternalServiceConfig(String configName) {
+    protected ExternalServiceConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(configName);
         setConfigData();
+        setUrlRewriteRules();
         setConfigList();
     }
 
     void reload() {
         mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
         setConfigData();
+        setUrlRewriteRules();
         setConfigList();
+    }
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
     }
 
     public boolean isEnabled() {
@@ -106,6 +111,28 @@ public class ExternalServiceConfig {
 
     public void setPathHostMappings(List<String[]> pathHostMappings) {
         this.pathHostMappings = pathHostMappings;
+    }
+
+    public List<UrlRewriteRule> getUrlRewriteRules() {
+        return urlRewriteRules;
+    }
+
+    public void setUrlRewriteRules() {
+        this.urlRewriteRules = new ArrayList<>();
+        if (mappedConfig.get("urlRewriteRules") !=null && mappedConfig.get("urlRewriteRules") instanceof String) {
+            urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule((String)mappedConfig.get("urlRewriteRules")));
+        } else {
+            List<String> rules = (List)mappedConfig.get("urlRewriteRules");
+            if(rules != null) {
+                for (String s : rules) {
+                    urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule(s));
+                }
+            }
+        }
+    }
+
+    public void setUrlRewriteRules(List<UrlRewriteRule> urlRewriteRules) {
+        this.urlRewriteRules = urlRewriteRules;
     }
 
     private void setConfigList() {

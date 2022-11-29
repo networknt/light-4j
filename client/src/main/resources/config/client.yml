@@ -18,15 +18,15 @@ tls:
   # trust store location can be specified here or system properties javax.net.ssl.trustStore and password javax.net.ssl.trustStorePassword
   trustStore: ${client.trustStore:client.truststore}
   # trust store password
-  trustStorePass: ${CLIENT_TRUST_STORE_PASS:password}
+  trustStorePass: ${client.trustStorePass:password}
   # key store contains client key and it should be loaded if two-way ssl is uesed.
   loadKeyStore: ${client.loadKeyStore:false}
   # key store location
   keyStore: ${client.keyStore:client.keystore}
   # key store password
-  keyStorePass: ${CLIENT_KEY_STORE_PASS:password}
+  keyStorePass: ${client.keyStorePass:password}
   # private key password
-  keyPass: ${CLIENT_KEY_PASS:password}
+  keyPass: ${client.keyPass:password}
 # settings for OAuth2 server communication
 oauth:
   # OAuth 2.0 token endpoint configuration
@@ -67,7 +67,7 @@ oauth:
       # client_id for authorization code grant flow.
       client_id: ${client.tokenAcClientId:f7d42348-c647-4efb-a52d-4c5787421e72}
       # client_secret for authorization code grant flow.
-      client_secret: ${CLIENT_TOKEN_AC_CLIENT_SECRET:f6h1FTI8Q3-7UScPZDzfXA}
+      client_secret: ${client.tokenAcClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
       # the web server uri that will receive the redirected authorization code
       redirect_uri: ${client.tokenAcRedirectUri:https://localhost:3000/authorization}
       # optional scope, default scope in the client registration will be used if not defined.
@@ -83,7 +83,7 @@ oauth:
       # client_id for client credentials grant flow.
       client_id: ${client.tokenCcClientId:f7d42348-c647-4efb-a52d-4c5787421e72}
       # client_secret for client credentials grant flow.
-      client_secret: ${CLIENT_TOKEN_CC_CLIENT_SECRET:f6h1FTI8Q3-7UScPZDzfXA}
+      client_secret: ${client.tokenCcClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
       # optional scope, default scope in the client registration will be used if not defined.
       # If there are scopes specified here, they will be verified against the registered scopes.
       # In values.yml, you define a list of strings for the scope(s).
@@ -99,7 +99,7 @@ oauth:
       # client_id for refresh token grant flow.
       client_id: ${client.tokenRtClientId:f7d42348-c647-4efb-a52d-4c5787421e72}
       # client_secret for refresh token grant flow
-      client_secret: ${CLIENT_TOKEN_RT_CLIENT_SECRET:f6h1FTI8Q3-7UScPZDzfXA}
+      client_secret: ${client.tokenRtClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
       # optional scope, default scope in the client registration will be used if not defined.
       # If there are scopes specified here, they will be verified against the registered scopes.
       # In values.yml, you define a list of strings for the scope(s).
@@ -118,7 +118,7 @@ oauth:
       # client_id used to access key distribution service. It can be the same client_id with token service or not.
       client_id: ${client.tokenKeyClientId:f7d42348-c647-4efb-a52d-4c5787421e72}
       # client secret used to access the key distribution service.
-      client_secret: ${CLIENT_TOKEN_KEY_CLIENT_SECRET:f6h1FTI8Q3-7UScPZDzfXA}
+      client_secret: ${client.tokenKeyClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
       # set to true if the oauth2 provider supports HTTP/2
       enableHttp2: ${client.tokenKeyEnableHttp2:true}
       # The serviceId to the service specific OAuth 2.0 configuration. Used only when multipleOAuthServer is
@@ -149,7 +149,7 @@ oauth:
     # client_id for client authentication
     client_id: ${client.signClientId:f7d42348-c647-4efb-a52d-4c5787421e72}
     # client secret for client authentication and it can be encrypted here.
-    client_secret: ${CLIENT_SIGN_CLIENT_SECRET:f6h1FTI8Q3-7UScPZDzfXA}
+    client_secret: ${client.signClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
     # the key distribution sever config for sign. It can be different then token key distribution server.
     key:
       # key distribution server url. It will be used to establish connection if it exists.
@@ -162,7 +162,7 @@ oauth:
       # client_id used to access key distribution service. It can be the same client_id with token service or not.
       client_id: ${client.signKeyClientId:f7d42348-c647-4efb-a52d-4c5787421e72}
       # client secret used to access the key distribution service.
-      client_secret: ${CLIENT_SIGN_KEY_CLIENT_SECRET:f6h1FTI8Q3-7UScPZDzfXA}
+      client_secret: ${client.signKeyClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
       # set to true if the oauth2 provider supports HTTP/2
       enableHttp2: ${client.signKeyEnableHttp2:true}
   # de-ref by reference token to JWT token. It is separate service as it might be the external OAuth 2.0 provider.
@@ -200,7 +200,7 @@ request:
   timeout: ${client.timeout:3000}
   # reset the circuit after this timeout in millisecond
   resetTimeout: ${client.resetTimeout:7000}
-  # if open tracing is enable. traceability, correlation and metrics should not be in the chain if opentracing is used.
+  # if open tracing is enabled. traceability, correlation and metrics should not be in the chain if opentracing is used.
   injectOpenTracing: ${client.injectOpenTracing:false}
   # inject serviceId as callerId into the http header for metrics to collect the caller. The serviceId is from server.yml
   injectCallerId: ${client.injectCallerId:false}
@@ -212,7 +212,7 @@ request:
   # This is one way to force the connection to be closed so that the client-side discovery can be balanced.
   connectionExpireTime: ${client.connectionExpireTime:1800000}
   # The maximum request limitation for each connection in the connection pool. By default, a connection will be closed after
-  # sending 1 million requests. This is one way to force the client-side discovery to rebalence the connections.
+  # sending 1 million requests. This is one way to force the client-side discovery to re-balance the connections.
   maxReqPerConn: ${client.maxReqPerConn:1000000}
   # maximum quantity of connection in connection pool for each host
   maxConnectionNumPerHost: ${client.maxConnectionNumPerHost:1000}

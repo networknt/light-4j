@@ -7,18 +7,17 @@ import com.networknt.client.ssl.TLSConfig;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.handler.config.UrlRewriteRule;
 import com.networknt.utility.ModuleRegistry;
-import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderMap;
 import io.undertow.util.HeaderValues;
-import io.undertow.util.Headers;
+import io.undertow.util.HttpString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.net.URI;
@@ -26,10 +25,12 @@ import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
+import java.nio.ByteBuffer;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
 
 /**
  * This is a generic handler to route request from a corporate network to external services
@@ -43,7 +44,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     private static final String METHOD_NOT_ALLOWED  = "ERR10008";
 
     private volatile HttpHandler next;
-    private ExternalServiceConfig config;
+    private static ExternalServiceConfig config;
     private HttpClient client;
 
     public ExternalServiceHandler() {
@@ -71,24 +72,46 @@ public class ExternalServiceHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ExternalServiceConfig.class.getName(), Config.getInstance().getJsonMapConfigNoCache(ExternalServiceConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(ExternalServiceHandler.class.getName(), config.getMappedConfig(), null);
+    }
+
+    @Override
+    public void reload() {
+        config.reload();
+        ModuleRegistry.registerModule(ExternalServiceHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
-        if (exchange.isInIoThread()) {
-            exchange.dispatch(this);
-            return;
-        }
-        exchange.startBlocking();
+        if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest starts.");
         String requestPath = exchange.getRequestPath();
+        if(logger.isTraceEnabled()) logger.trace("original requestPath = " + requestPath);
         if (config.getPathHostMappings() != null) {
             for(String[] parts: config.getPathHostMappings()) {
                 if(requestPath.startsWith(parts[0])) {
+                    // handle the url rewrite here. It has to be the right path that applied for external service to do the url rewrite.
+                    if(config.getUrlRewriteRules() != null && config.getUrlRewriteRules().size() > 0) {
+                        boolean matched = false;
+                        for(UrlRewriteRule rule : config.getUrlRewriteRules()) {
+                            Matcher matcher = rule.getPattern().matcher(requestPath);
+                            if(matcher.matches()) {
+                                matched = true;
+                                requestPath = matcher.replaceAll(rule.getReplace());
+                                if(logger.isTraceEnabled()) logger.trace("rewritten requestPath = " + requestPath);
+                                break;
+                            }
+                        }
+                        // if no matched rule in the list, use the original requestPath.
+                        if(!matched) requestPath = exchange.getRequestPath();
+                    } else {
+                        // there is no url rewrite rules, so use the original requestPath
+                        requestPath = exchange.getRequestPath();
+                    }
+
                     String method = exchange.getRequestMethod().toString();
                     String requestHost = parts[1];
                     String queryString = exchange.getQueryString();
-                    if(logger.isTraceEnabled()) logger.trace("request host = " + requestHost + " method = " + method + " queryString = " + queryString);
+                    if(logger.isTraceEnabled()) logger.trace("request host = " + requestHost + " method = " + method + "requestPath = " + requestPath + " queryString = " + queryString);
                     HttpRequest.Builder builder = HttpRequest.newBuilder();
                     HttpRequest request = null;
                     if(queryString != null && !queryString.trim().isEmpty()) {
@@ -107,33 +130,19 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         // if body handler is in the chain before this handler, we should have it in the exchange attachment.
                         String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
                         if(logger.isTraceEnabled() && bodyString != null) logger.trace("Get post body from the exchange attachment = " + bodyString);
-                        if(bodyString == null) {
-                            InputStream inputStream = exchange.getInputStream();
-                            bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
-                            if(logger.isTraceEnabled()) logger.trace("Get post body from input stream = " + bodyString);
-                        }
-                        request = builder.POST(HttpRequest.BodyPublishers.ofString(bodyString)).build();
+                        request = builder.POST(bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString)).build();
                     } else if(method.equalsIgnoreCase("PUT")) {
                         String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
                         if(logger.isTraceEnabled() && bodyString != null) logger.trace("Get put body from the exchange attachment = " + bodyString);
-                        if(bodyString == null) {
-                            InputStream inputStream = exchange.getInputStream();
-                            bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
-                            if(logger.isTraceEnabled()) logger.trace("Get put body from input stream = " + bodyString);
-                        }
-                        request = builder.PUT(HttpRequest.BodyPublishers.ofString(bodyString)).build();
+                        request = builder.PUT(bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString)).build();
                     } else if(method.equalsIgnoreCase("PATCH")) {
                         String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
                         if(logger.isTraceEnabled() && bodyString != null) logger.trace("Get patch body from the exchange attachment = " + bodyString);
-                        if(bodyString == null) {
-                            InputStream inputStream = exchange.getInputStream();
-                            bodyString = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
-                            if(logger.isTraceEnabled()) logger.trace("Get patch body from input stream = " + bodyString);
-                        }
-                        request = builder.method("PATCH", HttpRequest.BodyPublishers.ofString(bodyString)).build();
+                        request = builder.method("PATCH", bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString)).build();
                     } else {
                         logger.error("wrong http method " + method + " for request path " + requestPath);
                         setExchangeStatus(exchange, METHOD_NOT_ALLOWED, method, requestPath);
+                        if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest ends with an error.");
                         return;
                     }
                     if(client == null) {
@@ -146,8 +155,10 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                             if(config.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
                             // this a workaround to bypass the hostname verification in jdk11 http client.
                             Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+                            final Properties props = System.getProperties();
+                            props.setProperty("jdk.httpclient.allowRestrictedHeaders", "Host");
+                            props.setProperty("jdk.httpclient.allowRestrictedHeaders", "Connection");
                             if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
-                                final Properties props = System.getProperties();
                                 props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
                             }
                             client = clientBuilder.build();
@@ -157,18 +168,26 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         }
                     }
 
-                    HttpResponse<String> response  = client.send(request, HttpResponse.BodyHandlers.ofString());
+                    HttpResponse<byte[]> response  = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
                     HttpHeaders responseHeaders = response.headers();
-                    String responseBody = response.body();
+                    byte[] responseBody = response.body();
                     exchange.setStatusCode(response.statusCode());
-                    if(responseHeaders.firstValue(Headers.CONTENT_TYPE.toString()).isPresent()) {
-                        exchange.getRequestHeaders().put(Headers.CONTENT_TYPE, responseHeaders.firstValue(Headers.CONTENT_TYPE.toString()).get());
+                    for (Map.Entry<String, List<String>> header : responseHeaders.map().entrySet()) {
+                        // remove empty key in the response header start with a colon.
+                        if(header.getKey() != null && !header.getKey().startsWith(":") && header.getValue().get(0) != null) {
+                            for(String s : header.getValue()) {
+                                if(logger.isTraceEnabled()) logger.trace("Add response header key = " + header.getKey() + " value = " + s);
+                                exchange.getResponseHeaders().add(new HttpString(header.getKey()), s);
+                            }
+                        }
                     }
-                    exchange.getResponseSender().send(responseBody);
+                    exchange.getResponseSender().send(ByteBuffer.wrap(responseBody));
+                    if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest ends.");
                     return;
                 }
             }
         }
+        if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest ends.");
         Handler.next(exchange, next);
     }
 

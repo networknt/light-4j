@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -26,7 +27,6 @@ import static com.networknt.body.BodyHandler.REQUEST_BODY_STRING;
 public class ResponseBodyInterceptor implements ResponseInterceptor {
     static final Logger logger = LoggerFactory.getLogger(ResponseBodyInterceptor.class);
     static final String CONTENT_TYPE_MISMATCH = "ERR10015";
-    static final String PAYLOAD_TOO_LARGE = "ERR10068";
 
     public static int MAX_BUFFERS = 1024;
     private BodyConfig config;
@@ -71,8 +71,8 @@ public class ResponseBodyInterceptor implements ResponseInterceptor {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
-        exchange.startBlocking();
-        if(shouldParseBody(exchange)) {
+        if(logger.isDebugEnabled()) logger.debug("ResponseBodyInterceptor.handleRequest starts.");
+        if(shouldParseBody(exchange) && getBuffer(exchange) != null) {
             String s = BuffersUtils.toString(getBuffer(exchange), StandardCharsets.UTF_8);
             if(logger.isTraceEnabled()) logger.trace("original response body = " + s);
             // put the response body in the attachment for auditing and validation.
@@ -81,59 +81,59 @@ public class ResponseBodyInterceptor implements ResponseInterceptor {
                 if(logger.isInfoEnabled()) logger.info("Failed to attached the response body to the exchange");
             }
         }
-        Handler.next(exchange, next);
+        if(logger.isDebugEnabled()) logger.debug("ResponseBodyInterceptor.handleRequest ends.");
     }
 
     private boolean shouldParseBody(final HttpServerExchange exchange) {
         String requestPath = exchange.getRequestPath();
         boolean isPathConfigured = config.getAppliedPathPrefixes() == null ? true : config.getAppliedPathPrefixes().stream().anyMatch(s -> requestPath.startsWith(s));
-        return isPathConfigured &&
-                exchange.getResponseHeaders().getFirst(Headers.CONTENT_TYPE) != null &&
-                exchange.getResponseHeaders().getFirst(Headers.CONTENT_TYPE).startsWith("application/json");
+        return isPathConfigured && isAttachContentType(exchange);
+    }
+    private boolean isAttachContentType(final HttpServerExchange exchange) {
+        String contentType = exchange.getResponseHeaders().getFirst(Headers.CONTENT_TYPE);
+        // do not attach if content type is null
+        if(contentType == null) return false;
+        return contentType.startsWith("application/json") || contentType.startsWith("text") || contentType.startsWith("application/xml");
     }
 
     /**
      * Method used to parse the body into a Map or a List and attach it into exchange
      *
      * @param exchange exchange to be attached
-     * @param string   raw request body
+     * @param string   raw response body
      */
     private boolean attachJsonBody(final HttpServerExchange exchange, String string) {
         Object body;
         string = string.trim();
+        // handle the json body on the best effort.
         if (string.startsWith("{")) {
             try {
                 body = Config.getInstance().getMapper().readValue(string, new TypeReference<Map<String, Object>>() {
                 });
+                exchange.putAttachment(AttachmentConstants.RESPONSE_BODY, body);
             } catch (JsonProcessingException e) {
-                if(exchange.getConnection().getBufferSize() <= string.length()) {
-                    setExchangeStatus(exchange, PAYLOAD_TOO_LARGE, "application/json");
-                } else {
-                    setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
-                }
+                if(logger.isTraceEnabled())
+                    logger.error("Response body failed to attach with exception {}", e.getMessage(), e);
+                setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
                 return false;
             }
         } else if (string.startsWith("[")) {
             try {
                 body = Config.getInstance().getMapper().readValue(string, new TypeReference<List<Object>>() {
                 });
+                exchange.putAttachment(AttachmentConstants.RESPONSE_BODY, body);
             } catch (JsonProcessingException e) {
-                if(exchange.getConnection().getBufferSize() <= string.length()) {
-                    setExchangeStatus(exchange, PAYLOAD_TOO_LARGE, "application/json");
-                } else {
-                    setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
-                }
+                if(logger.isTraceEnabled())
+                    logger.error("Response body failed to attach with exception: {}", e.getMessage(), e);
+                setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
+
                 return false;
             }
-        } else {
-            // error here. The content type in head doesn't match the body.
-            setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
-            return false;
         }
+        // cache other content type of body if it is enabled for auditing purpose.
         if (config.isCacheRequestBody()) {
             exchange.putAttachment(AttachmentConstants.RESPONSE_BODY_STRING, string);
         }
-        exchange.putAttachment(AttachmentConstants.RESPONSE_BODY, body);
         return true;
     }
 

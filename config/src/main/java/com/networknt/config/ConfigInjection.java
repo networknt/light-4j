@@ -16,6 +16,9 @@
 
 package com.networknt.config;
 
+import com.networknt.config.yml.DecryptConstructor;
+import com.networknt.decrypt.Decryptor;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +60,7 @@ public class ConfigInjection {
 
     private static String[] trueArray = {"y", "Y", "yes", "Yes", "YES", "true", "True", "TRUE", "on", "On", "ON"};
     private static String[] falseArray = {"n", "N", "no", "No", "NO", "false", "False", "FALSE", "off", "Off", "OFF"};
+    private static Decryptor decryptor = getDecryptor();
 
     // Method used to generate the values from environment variables or "values.yaml"
     public static Object getInjectValue(String string) {
@@ -89,6 +93,38 @@ public class ConfigInjection {
                 || exclusionConfigFileList.contains(configName);
     }
 
+    static Decryptor getDecryptor() {
+        Config myConfig = Config.getInstance();
+        if (myConfig == null) {
+            throw new RuntimeException("Unable to retrieve the configuration.");
+        }
+        String decryptorClass = myConfig.getDecryptorClassPublic();
+        DecryptConstructor myDecryptCon = new DecryptConstructor(decryptorClass);
+        Decryptor myDecryptor = myDecryptCon.createDecryptorPublic(decryptorClass);
+
+        return myDecryptor;
+    }
+
+    static String convertEnvVars(String input){
+        // check for any non-alphanumeric chars and convert to underscore
+        // convert to uppcase
+        if (input == null) {
+            return null;
+        }
+        return input.replaceAll("[^A-Za-z0-9]", "_").toUpperCase();
+    }
+
+    static Object decryptEnvValue(Decryptor decryptor, String envVal) {
+        Object decryptedEnvValue;
+        //checking if the value put in env is encrypted. If yes then decrypting it.
+        if (envVal != null && envVal.trim().startsWith(Decryptor.CRYPT_PREFIX)) {
+            decryptedEnvValue = typeCast(decryptor.decrypt(envVal));
+        }else
+            decryptedEnvValue = envVal;
+        return decryptedEnvValue;
+    }
+
+
     // Method used to parse the content inside pattern "${}"
     private static Object getValue(String content) {
         InjectionPattern injectionPattern = getInjectionPattern(content);
@@ -97,8 +133,10 @@ public class ConfigInjection {
             // Flag to validate whether the environment or values.yml contains the corresponding field
             Boolean containsField = false;
             // Use key of injectionPattern to get value from both environment variables and "values.yaml"
-            Object envValue = typeCast(System.getenv(injectionPattern.getKey()));
-            Map<String, Object> valueMap = Config.getInstance().getDefaultJsonMapConfig(CENTRALIZED_MANAGEMENT);
+            String envValString = System.getenv(convertEnvVars(injectionPattern.getKey()));
+            Object envValue = decryptEnvValue(decryptor, envValString);
+            // change to no cache method to support config-reload.
+            Map<String, Object> valueMap = Config.getInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
             Object fileValue = (valueMap != null) ? valueMap.get(injectionPattern.getKey()) : null;
             // Return different value from different sources based on injection order defined before
             if ((INJECTION_ORDER_CODE.equals("2") && envValue != null) || (INJECTION_ORDER_CODE.equals("1") && fileValue == null)) {

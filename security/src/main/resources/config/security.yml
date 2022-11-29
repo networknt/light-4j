@@ -27,6 +27,10 @@ ignoreJwtExpiry: ${security.ignoreJwtExpiry:false}
 # User for test only. should be always be false on official environment.
 enableMockJwt: ${security.enableMockJwt:false}
 
+# Enables relaxed verification for jwt. e.g. Disables key length requirements.
+# Should be used in test environments only.
+enableRelaxedKeyValidation: ${security.enableRelaxedKeyValidation:false}
+
 # JWT signature public certificates. kid and certificate path mappings.
 jwt:
   certificate: ${security.certificate:100=primary.crt&101=secondary.crt}
@@ -57,3 +61,11 @@ bootstrapFromKeyService: ${security.bootstrapFromKeyService:false}
 # will have a providerId, and it will be part of the kid to allow each instance to get the
 # JWK from other instance based on the providerId in the kid.
 providerId: ${security.providerId:}
+
+# Define a list of path prefixes to skip the security to ease the configuration for the
+# handler.yml so that users can define some endpoint without security even through it uses
+# the default chain. This is particularly useful in the light-gateway use case as the same
+# instance might be shared with multiple consumers and providers with different security
+# requirement. The format is a list of strings separated with commas or a JSON list in
+# values.yml definition from config server, or you can use yaml format in this file.
+skipPathPrefixes: ${security.skipPathPrefixes:}

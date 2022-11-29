@@ -37,11 +37,11 @@ import org.slf4j.LoggerFactory;
  * @author Steve Hu
  */
 public class LimitHandler implements MiddlewareHandler {
-    public static LimitConfig config;
     static final Logger logger = LoggerFactory.getLogger(LimitHandler.class);
 
     private volatile HttpHandler next;
-    private  RateLimiter rateLimiter;
+    private static RateLimiter rateLimiter;
+    private LimitConfig config;
     private static final ObjectMapper mapper = Config.getInstance().getMapper();
 
 
@@ -67,10 +67,10 @@ public class LimitHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("LimitHandler.handleRequest starts.");
         RateLimitResponse rateLimitResponse = rateLimiter.handleRequest(exchange, config.getKey());
-
-
         if (rateLimitResponse.allow) {
+            if(logger.isDebugEnabled()) logger.debug("LimitHandler.handleRequest ends.");
             Handler.next(exchange, next);
         } else {
             exchange.getResponseHeaders().add(new HttpString(Constants.RATELIMIT_LIMIT), rateLimitResponse.getHeaders().get(Constants.RATELIMIT_LIMIT));
@@ -79,6 +79,7 @@ public class LimitHandler implements MiddlewareHandler {
 
             exchange.getResponseHeaders().add(new HttpString("Content-Type"), "application/json");
             exchange.setStatusCode(config.getErrorCode()==0 ? HttpStatus.TOO_MANY_REQUESTS.value():config.getErrorCode());
+            if(logger.isDebugEnabled()) logger.debug("LimitHandler.handleRequest ends with an error.");
             exchange.getResponseSender().send(mapper.writeValueAsString(rateLimitResponse));
         }
     }
@@ -102,12 +103,18 @@ public class LimitHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(LimitHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        ModuleRegistry.registerModule(LimitHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void reload() {
-        config = LimitConfig.load();
+        config.reload();
+        try {
+            rateLimiter = new RateLimiter(config);
+        } catch (Exception e) {
+            logger.error("Failed to recreate RateLimiter with reloaded config.", e);
+        }
+        // after reload, we need to update the config in the module registry to ensure that server info returns the latest configuration.
+        ModuleRegistry.registerModule(LimitHandler.class.getName(), config.getMappedConfig(), null);
     }
-
 }

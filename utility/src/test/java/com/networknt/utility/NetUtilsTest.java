@@ -22,8 +22,7 @@ package com.networknt.utility;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.net.*;
 
 /**
  * @author bozheng
@@ -49,5 +48,27 @@ public class NetUtilsTest {
     public void testGetLocalAddressByDatagram() {
         String ip = NetUtils.getLocalAddressByDatagram();
         System.out.println("ip = " + ip);
+    }
+
+    @Test
+    public void testResolveHost2ip() {
+        String ip = NetUtils.resolveHost2Address("www.google.ca");
+        System.out.println("ip = " + ip);
+    }
+
+    @Test
+    public void testInetSocketAddress() throws UnknownHostException {
+        InetSocketAddress inetSocketAddress1 = new InetSocketAddress("google.ca", 443);
+        System.out.println("inetSocketAddress1 = " + inetSocketAddress1);
+        InetAddress inetAddress = InetAddress.getByName("142.251.41.67");
+        InetSocketAddress inetSocketAddress2 = new InetSocketAddress(inetAddress, 443);
+        System.out.println("inetSocketAddress2 = " + inetSocketAddress2);
+    }
+
+    @Test
+    public void testReplaceUriHostname2Address() throws URISyntaxException {
+        URI uri = new URI("https://localhost:8443");
+        uri = NetUtils.resolveUriHost2Address(uri);
+        System.out.println("uri = " + uri);
     }
 }

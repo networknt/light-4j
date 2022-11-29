@@ -25,23 +25,26 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.ResponseCodeHandler;
 import io.undertow.server.handlers.proxy.LoadBalancingRouterProxyClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xnio.OptionMap;
 
 /**
  * This is a wrapper class for ProxyHandler as it is implemented as final. This class implements
  * the HttpHandler which can be injected into the handler.yml configuration file as another option
- * for the handlers injection. The other option is to use RouterHandlerProvider in service.yml file.
+ * for the handler injection. The other option is to use RouterHandlerProvider in service.yml file.
  *
  * @author Steve Hu
  */
 public class RouterHandler implements HttpHandler {
-    private RouterConfig config;
+    private static final Logger logger = LoggerFactory.getLogger(RouterHandler.class);
+    private static RouterConfig config;
 
     protected ProxyHandler proxyHandler;
 
     public RouterHandler() {
         config = RouterConfig.load();
-        ModuleRegistry.registerModule(RouterHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(RouterConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(RouterHandler.class.getName(), config.getMappedConfig(), null);
         // As we are building a client side router for the light platform, the assumption is the server will
         // be on HTTP 2.0 TSL always. No need to handle HTTP 1.1 case here.
         LoadBalancingRouterProxyClient client = new LoadBalancingRouterProxyClient();
@@ -67,11 +70,13 @@ public class RouterHandler implements HttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("RouterHandler.handleRequest starts.");
         proxyHandler.handleRequest(httpServerExchange);
+        if(logger.isDebugEnabled()) logger.debug("RouterHandler.handleRequest ends.");
     }
 
     public void reload() {
-        config = RouterConfig.load();
+        config.reload();
+        ModuleRegistry.registerModule(RouterHandler.class.getName(), config.getMappedConfig(), null);
     }
-
 }

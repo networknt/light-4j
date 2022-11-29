@@ -63,6 +63,7 @@ public class CorsHttpHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("CorsHttpHandler.handleRequest starts.");
         HeaderMap headers = exchange.getRequestHeaders();
         if (CorsUtil.isCoreRequest(headers)) {
             if (isPreflightedRequest(exchange)) {
@@ -71,6 +72,7 @@ public class CorsHttpHandler implements MiddlewareHandler {
             }
             setCorsResponseHeaders(exchange);
         }
+        if(logger.isDebugEnabled()) logger.debug("CorsHttpHandler.handleRequest ends.");
         Handler.next(exchange, next);
     }
 

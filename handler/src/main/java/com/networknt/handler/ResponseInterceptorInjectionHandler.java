@@ -79,7 +79,7 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
     }
 
     /**
-     * if the ModificableContentSinkConduit is set, set the Accept-Encoding
+     * if the ModifiableContentSinkConduit is set, set the Accept-Encoding
      * header to identity this is required to avoid response interceptors
      * dealing with compressed data
      *
@@ -123,17 +123,37 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
             //     MDC.setContextMap(mdcCtx);
             // }
 
-            if (interceptors != null && Arrays.stream(interceptors).anyMatch(ri -> ri.isRequiredContent())) {
+            if (interceptors != null && !isCompressed(exchange) && Arrays.stream(interceptors).anyMatch(ri -> ri.isRequiredContent())) {
                 var mcsc = new ModifiableContentSinkConduit(factory.create(), cexchange);
-                cexchange.putAttachment(MCSC_KEY, mcsc);
+                if(logger.isTraceEnabled()) logger.trace("created a ModifiableContentSinkConduit instance " + mcsc);
                 return mcsc;
             } else {
                 return new ContentStreamSinkConduit(factory.create(), cexchange);
             }
         });
 
-        forceIdentityEncodingForInterceptors(exchange);
-        Handler.next(exchange, next);
+        // forceIdentityEncodingForInterceptors(exchange);
+        // if any of the interceptors send response, don't call other middleware handlers in the chain.
+        if(!exchange.isResponseStarted()) {
+            if(logger.isTraceEnabled()) logger.trace("response is not started, calling next handler.");
+            Handler.next(exchange, next);
+        } else {
+            if(logger.isTraceEnabled()) logger.trace("response is started already, do not call next handler in the chain.");
+        }
+    }
+
+    private boolean isCompressed(HttpServerExchange exchange) {
+        // check if the request has a header accept encoding with gzip and deflate.
+        boolean compressed = false;
+        var contentEncodings = exchange.getResponseHeaders().get(Headers.CONTENT_ENCODING_STRING);
+        if(contentEncodings != null) {
+            for(String values: contentEncodings) {
+                if(Arrays.stream(values.split(",")).anyMatch((v) -> Headers.GZIP.toString().equals(v) || Headers.COMPRESS.toString().equals(v) || Headers.DEFLATE.toString().equals(v))) {
+                    compressed = true;
+                }
+            }
+        }
+        return compressed;
     }
 
 }

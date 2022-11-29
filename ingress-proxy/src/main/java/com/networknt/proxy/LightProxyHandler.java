@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -44,7 +45,7 @@ import java.util.List;
 /**
  * This is a wrapper class for LightProxyHandler as it is implemented as final. This class implements
  * the HttpHandler which can be injected into the handler.yml configuration file as another option
- * for the handlers injection. The other option is to use RouterHandlerProvider in service.yml file.
+ * for the handler injection. The other option is to use RouterHandlerProvider in service.yml file.
  *
  * @author Steve Hu
  */
@@ -53,15 +54,21 @@ public class LightProxyHandler implements HttpHandler {
     private static final int LONG_CLOCK_SKEW = 1000000;
 
     static final Logger logger = LoggerFactory.getLogger(LightProxyHandler.class);
-    static ProxyConfig config = ProxyConfig.load();
+    static ProxyConfig config;
 
-    ProxyHandler proxyHandler;
+    static ProxyHandler proxyHandler;
 
     public LightProxyHandler() {
-        List<String> hosts = Arrays.asList(config.getHosts().split(","));
+        config = ProxyConfig.load();
+        ModuleRegistry.registerModule(LightProxyHandler.class.getName(), config.getMappedConfig(), null);
+        List<String> hosts = new ArrayList<>(Arrays.asList(config.getHosts().split(",")));
         if(logger.isTraceEnabled()) logger.trace("hosts = " + JsonMapper.toJson(hosts));
         LoadBalancingProxyClient loadBalancer = new LoadBalancingProxyClient()
                 .setConnectionsPerThread(config.getConnectionsPerThread());
+        // we want to duplicate the host to double if there is only one host in the configuration.
+        if(hosts.size() == 1) {
+            hosts.add(hosts.get(0));
+        }
         for(String host: hosts) {
             try {
                 URI uri = new URI(host);
@@ -88,17 +95,18 @@ public class LightProxyHandler implements HttpHandler {
                 .setRewriteHostHeader(config.isRewriteHostHeader())
                 .setNext(ResponseCodeHandler.HANDLE_404)
                 .build();
-        ModuleRegistry.registerModule(ProxyHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("LightProxyHandler.handleRequest starts.");
         if(config.isForwardJwtClaims()) {
             HeaderMap headerValues = httpServerExchange.getRequestHeaders();
             JwtClaims jwtClaims = extractClaimsFromJwt(headerValues);
             httpServerExchange.getRequestHeaders().put(HttpString.tryFromString(CLAIMS_KEY), new ObjectMapper().writeValueAsString(jwtClaims.getClaimsMap()));
         }
         proxyHandler.handleRequest(httpServerExchange);
+        if(logger.isDebugEnabled()) logger.debug("LightProxyHandler.handleRequest ends.");
     }
 
     /**
@@ -134,5 +142,40 @@ public class LightProxyHandler implements HttpHandler {
 
     public void reload() {
         config.reload();
+        ModuleRegistry.registerModule(LightProxyHandler.class.getName(), config.getMappedConfig(), null);
+        List<String> hosts = new ArrayList<>(Arrays.asList(config.getHosts().split(",")));
+        if(logger.isTraceEnabled()) logger.trace("hosts = " + JsonMapper.toJson(hosts));
+        LoadBalancingProxyClient loadBalancer = new LoadBalancingProxyClient()
+                .setConnectionsPerThread(config.getConnectionsPerThread());
+        // we want to duplicate the host to double if there is only one host in the configuration.
+        if(hosts.size() == 1) {
+            hosts.add(hosts.get(0));
+        }
+        for(String host: hosts) {
+            try {
+                URI uri = new URI(host);
+                switch (uri.getScheme()) {
+                    case "http":
+                        loadBalancer.addHost(new URI(host));
+                        break;
+                    case "https":
+                        loadBalancer.addHost(new URI(host), Http2Client.getInstance().getDefaultXnioSsl());
+                        break;
+                    default:
+                        logger.error("Incorrect schema " + uri.getScheme());
+                }
+            } catch (URISyntaxException e) {
+                logger.error("Exception for host " + host, e);
+                throw new RuntimeException(e);
+            }
+        }
+        proxyHandler = ProxyHandler.builder()
+                .setProxyClient(loadBalancer)
+                .setMaxConnectionRetries(config.getMaxConnectionRetries())
+                .setMaxRequestTime(config.getMaxRequestTime())
+                .setReuseXForwarded(config.isReuseXForwarded())
+                .setRewriteHostHeader(config.isRewriteHostHeader())
+                .setNext(ResponseCodeHandler.HANDLE_404)
+                .build();
     }
 }
