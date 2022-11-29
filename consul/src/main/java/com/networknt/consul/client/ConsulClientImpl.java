@@ -256,6 +256,15 @@ public class ConsulClientImpl implements ConsulClient {
 				IoUtils.safeClose(connection);
 			return null;
 
+		} catch (InterruptedException e) {
+			// Issue occurred while waiting for await/timeout thread to complete
+			logger.error("Exception:", e);
+
+			logger.debug("Consul connection timeout thread interrupted - Terminating connection to Consul");
+			if(connection != null && connection.isOpen())
+				IoUtils.safeClose(connection);
+			return null;
+			
 		} catch(Exception e) {
 			// This should only return null if Consul connection fails
 			logger.error("Exception:", e);
