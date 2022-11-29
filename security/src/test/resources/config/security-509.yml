@@ -17,6 +17,10 @@ enableVerifyScope: true
 # doesn't support long-lived token for dev environment or test automation.
 ignoreJwtExpiry: ${security.ignoreJwtExpiry:false}
 
+# Enables relaxed verification for jwt. e.g. Disables key length requirements.
+# Should be used in test environments only.
+enableRelaxedKeyValidation: ${security.enableRelaxedKeyValidation:false}
+
 # User for test only. should be always be false on official environment.
 enableMockJwt: false
 
