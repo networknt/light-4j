@@ -17,7 +17,6 @@
 package com.networknt.security;
 
 import com.networknt.config.Config;
-import com.networknt.config.ConfigException;
 import com.networknt.utility.Constants;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.JsonWebKeySet;
@@ -28,7 +27,6 @@ import org.jose4j.jwt.JwtClaims;
 import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
 import org.jose4j.lang.JoseException;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.security.Key;
@@ -43,6 +41,8 @@ import java.util.Map;
 public class JwtVerifierTest {
     static final String CONFIG_NAME = "security-509";
     static final String CONFIG_NAME_OPENAPI = "openapi-security-no-default-jwtcertificate";
+
+    static final String CONFIG_RELAXED_VERIFICATION = "security-relaxedVerification";
     @Test
     public void testReadCertificate() {
         SecurityConfig config = SecurityConfig.load(CONFIG_NAME);
@@ -234,6 +234,34 @@ public class JwtVerifierTest {
             e.printStackTrace();
         }
 
+        System.out.println("jwtClaims = " + claims);
+    }
+    
+    @Test
+    public void testRelaxedKeyValidation() throws Exception {
+        String jwt = "eyJraWQiOiJ7XCJwcm92aWRlcl90eXBlXCI6XCJkYlwiLFwiYWxpYXNcIjpcImtleXRlc3RcIixcInR5cGVcIjpcImxvY2FsXCIsXCJ2ZXJzaW9uXCI6XCIxXCJ9IiwiYWxnIjoiUlMyNTYifQ" +
+                "." +
+                "eyJzdWIiOiJDT05TVU1FUlxcMTYwMTIzMDIxNjUzIiwicGFydHlJZCI6IjMxNzMyNDk3IiwiZXhwIjoxNjA2NDk5NjgzLCJpYXQiOjE2MDY0OTg3ODMsImp0aSI6IjAzYjA5YmY3LTFlMzktNDNlOC05NDAwLWQzYTcxMDkwYjMxNCJ9" +
+                "." +
+                "ob9aglgNHcdr2wYXnhwL_P-m76MCd2tZyRJWl9GIhRaZkR_FYoQTXQKz3WINGwn4aynzmkqZx28HlhKttA-A4WQNwEgETFOoq1tCrZ9ZQOrxaexccYdhLCuqzNllDD8OfXm-vFLp52-UpLvVIr3ySPvv9d034IhSw38EkZmV0Vc";
+
+        JwtClaims claims = null;
+
+        /* config points to our test pub cert for this JWT */
+        JwtVerifier jwtVerifier = new JwtVerifier(SecurityConfig.load(CONFIG_RELAXED_VERIFICATION));
+
+        Assert.assertTrue(jwtVerifier.enableRelaxedKeyValidation);
+
+        try {
+            claims = jwtVerifier.verifyJwt(jwt, true, true);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        /* assert that our claims are not null, and that we can find the claim 'sub' */
+        Assert.assertNotNull(claims);
+        Assert.assertEquals("CONSUMER\\160123021653", claims.getStringClaimValue("sub"));
+        System.out.println("jwt = " + jwt);
         System.out.println("jwtClaims = " + claims);
     }
 
