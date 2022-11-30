@@ -1,0 +1,7 @@
+# ldap.yml
+ldap.uri: ldaps://localhost:10636/ou=users,dc=undertow,dc=io
+ldap.domain: undertow.io
+ldap.principal: uid=oauth,ou=users,dc=undertow,dc=io
+ldap.credential: theoauth
+ldap.searchFilter: (&(uid=%s)(objectClass=person))
+ldap.searchBase: ''

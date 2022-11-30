@@ -1,0 +1,6 @@
+uri: ${ldap.uri:}
+domain: ${ldap.domain:}
+principal: ${ldap.principal:}
+credential: ${ldap.credential:}
+searchFilter: ${ldap.searchFilter:}
+searchBase: ${ldap.searchBase:}
