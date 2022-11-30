@@ -94,6 +94,7 @@
         <version.sqlserver>7.0.0.jre10</version.sqlserver>
         <version.httpclient>4.5.13</version.httpclient>
         <version.jsonpath>2.7.0</version.jsonpath>
+        <version.org.apache.directory.server>2.0.0-M15</version.org.apache.directory.server>
         <version.maven-version>2.7</version.maven-version>
         <version.nexus-staging-maven>1.6.8</version.nexus-staging-maven>
         <version.maven-source>3.0.1</version.maven-source>
@@ -168,6 +169,7 @@
         <module>request-transformer</module>
         <module>response-transformer</module>
         <module>api-key</module>
+        <module>ldap-util</module>
     </modules>
 
     <dependencyManagement>
@@ -425,6 +427,11 @@
                 <artifactId>api-key</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>ldap-util</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <!-- External dependencies -->
 
             <dependency>
@@ -667,6 +674,22 @@
                 <artifactId>testcontainers</artifactId>
                 <version>${version.testcontainers}</version>
                 <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.directory.server</groupId>
+                <artifactId>apacheds-all</artifactId>
+                <version>${version.org.apache.directory.server}</version>
+                <scope>test</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>commons-io</groupId>
+                        <artifactId>commons-io</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
         </dependencies>
     </dependencyManagement>
