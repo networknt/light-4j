@@ -1,5 +1,31 @@
 # Change Log
 
+## [2.1.4](https://github.com/networknt/light-4j/tree/2.1.4) (2022-11-30)
+
+
+**Merged pull requests:**
+
+
+- Bump postgresql from 42.4.1 to 42.4.3 [\#1497](https://github.com/networknt/light-4j/pull/1497) ([dependabot](https://github.com/apps/dependabot))
+- Added relaxed verification debug flag [\#1505](https://github.com/networknt/light-4j/pull/1505) ([KalevGonvick](https://github.com/KalevGonvick))
+- Issue1501 [\#1502](https://github.com/networknt/light-4j/pull/1502) ([stevehu](https://github.com/stevehu))
+- basic-auth handler test fix [\#1500](https://github.com/networknt/light-4j/pull/1500) ([KalevGonvick](https://github.com/KalevGonvick))
+- Fix flaky test [\#1469](https://github.com/networknt/light-4j/pull/1469) ([anantdahiya8](https://github.com/anantdahiya8))
+- Fix flaky test [\#1499](https://github.com/networknt/light-4j/pull/1499) ([tt0suzy](https://github.com/tt0suzy))
+- BasicAuthHandler Refactor [\#1496](https://github.com/networknt/light-4j/pull/1496) ([KalevGonvick](https://github.com/KalevGonvick))
+- fixes \#1494 update LightProxyHandler to recreate the ProxyHandler aft… [\#1495](https://github.com/networknt/light-4j/pull/1495) ([stevehu](https://github.com/stevehu))
+- fixes \#1490 add debug log for handler start and end time for performa… [\#1493](https://github.com/networknt/light-4j/pull/1493) ([stevehu](https://github.com/stevehu))
+- fixes \#1491 remove conquest handler from ingress-proxy module [\#1492](https://github.com/networknt/light-4j/pull/1492) ([stevehu](https://github.com/stevehu))
+- fixes \#1488 update the register and reload for LimitHandler [\#1489](https://github.com/networknt/light-4j/pull/1489) ([stevehu](https://github.com/stevehu))
+- fixes \#1486 update salesforce password grant type multipart form-data… [\#1487](https://github.com/networknt/light-4j/pull/1487) ([stevehu](https://github.com/stevehu))
+- fixes \#1494 support header config reload [\#1485](https://github.com/networknt/light-4j/pull/1485) ([stevehu](https://github.com/stevehu))
+- fixes \#1482 dummy oauth server support other content type and basic a… [\#1483](https://github.com/networknt/light-4j/pull/1483) ([stevehu](https://github.com/stevehu))
+- fixes \#1480 Mras Anonymous authorization header is null [\#1481](https://github.com/networknt/light-4j/pull/1481) ([stevehu](https://github.com/stevehu))
+- fixes \#1478 fix the anonymous serviceHost in the MrasHandler [\#1479](https://github.com/networknt/light-4j/pull/1479) ([stevehu](https://github.com/stevehu))
+- fixes \#1476 Update middleware handlers to register the module after r… [\#1477](https://github.com/networknt/light-4j/pull/1477) ([stevehu](https://github.com/stevehu))
+- fixes \#1474 update PathPrefixServiceHandler config to static to suppo… [\#1475](https://github.com/networknt/light-4j/pull/1475) ([stevehu](https://github.com/stevehu))
+- fixes \#1472 update the LimitHandler to use a static RateLimiter object [\#1473](https://github.com/networknt/light-4j/pull/1473) ([stevehu](https://github.com/stevehu))
+- fixes \#1470 allow values.yml to be reloaded after config-reload [\#1471](https://github.com/networknt/light-4j/pull/1471) ([stevehu](https://github.com/stevehu))
 ## [2.1.3](https://github.com/networknt/light-4j/tree/2.1.3) (2022-11-10)
 
 
