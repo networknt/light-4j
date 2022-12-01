@@ -205,14 +205,16 @@ public class ConsulClientImpl implements ConsulClient {
 			connection = client.safeBorrowConnection(
 					config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
 
-			logger.info("Got connection: {} from pool and send request to {}", connection, path);
+			logger.debug("CONSUL CONNECTION ESTABLISHED: {} from pool and send request to {}", connection, path);
 			// TODO: Ask NetworkNT why an AtomicReference is used here
 			// TODO: Pass timeout value into send() methods since different methods require different timeouts
 			AtomicReference<ClientResponse> reference = send(connection, Methods.GET, path, token, null);
 
 			// Check that reference.get() is not null
 			if(reference.get() == null)
-				throw new ConsulConnectionException("Connection to Consul failed - Received null response");
+				throw new ConsulRequestException("REQUEST TO CONSUL FAILED - Received null response");
+
+			logger.debug("CONSUL REQUEST WAS SUCCESSFUL");
 
 			int statusCode = reference.get().getResponseCode();
 			logger.info("Got Consul Query status code: {}", statusCode);
@@ -247,27 +249,28 @@ public class ConsulClientImpl implements ConsulClient {
 				newResponse.setConsulKnownLeader(Boolean.parseBoolean(reference.get().getResponseHeaders().getFirst("X-Consul-Knownleader")));
 				//}
 			}
-		} catch (ConsulConnectionException e) {
+		} catch (ConsulRequestException e) {
 			// This should only return null if Consul connection fails
 			logger.error("Exception:", e);
 
-			logger.debug("No response from Consul - Terminating connection to Consul");
-			if(connection != null && connection.isOpen())
-				IoUtils.safeClose(connection);
+			logger.error("No response from Consul - Terminating connection to Consul");
+			if(connection != null && connection.isOpen()) IoUtils.safeClose(connection);
 			return null;
 
 		} catch (InterruptedException e) {
 			// Issue occurred while waiting for await/timeout thread to complete
 			logger.error("Exception:", e);
 
-			logger.debug("Consul connection timeout thread interrupted - Terminating connection to Consul");
-			if(connection != null && connection.isOpen())
-				IoUtils.safeClose(connection);
+			logger.error("Consul connection timeout thread interrupted - Terminating connection to Consul");
+			if(connection != null && connection.isOpen()) IoUtils.safeClose(connection);
 			return null;
-			
+
 		} catch(Exception e) {
 			// This should only return null if Consul connection fails
 			logger.error("Exception:", e);
+
+			logger.error("Consul connection or request failed - Terminating connection to Consul");
+			if(connection != null && connection.isOpen()) IoUtils.safeClose(connection);
 			return null;
 
 		} finally {
@@ -277,9 +280,9 @@ public class ConsulClientImpl implements ConsulClient {
 		return newResponse;
 	}
 
-	private static class ConsulConnectionException extends RuntimeException
+	private static class ConsulRequestException extends RuntimeException
 	{
-		public ConsulConnectionException(String message) {
+		public ConsulRequestException(String message) {
 			super(message);
 		}
 	}
