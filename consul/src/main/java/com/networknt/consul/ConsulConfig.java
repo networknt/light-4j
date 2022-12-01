@@ -26,10 +26,13 @@ public class ConsulConfig {
     boolean httpCheck;
     boolean ttlCheck;
     boolean enableHttp2;
-    String wait;
+    String wait;                // length of blocking query with Consul
     String timeoutBuffer;
-    long connectionTimeout = 5;  // Consul connection timeout in seconds
-    long requestTimeout = 5;     // Consul request timeout in seconds (excluding /v1/health/service)
+    long connectionTimeout = 5; // Consul connection timeout in seconds
+    long requestTimeout = 5;    // Consul request timeout in seconds (excluding /v1/health/service)
+    long reconnectInterval = 2; // Time to wait in seconds between reconnect attempts when Consul connection fails
+    long reconnectJitter = 2;   // Random seconds in [0..reconnectJitter) added to reconnectInterval
+    long lookupInterval = 15;   // Time in seconds between blocking queries with Consul
 
     public String getConsulUrl() {
         return consulUrl;
@@ -105,4 +108,10 @@ public class ConsulConfig {
     public long getConnectionTimeout() { return connectionTimeout; }
 
     public long getRequestTimeout() { return requestTimeout; }
+
+    public long getReconnectInterval() { return reconnectInterval; }
+
+    public long getReconnectJitter() { return reconnectJitter; }
+
+    public long getLookupInterval() { return lookupInterval; }
 }
