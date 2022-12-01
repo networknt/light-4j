@@ -22,7 +22,6 @@ import com.networknt.config.Config;
 import com.networknt.consul.client.ConsulClient;
 import com.networknt.registry.NotifyListener;
 import com.networknt.registry.URL;
-import com.networknt.registry.URLParamType;
 import com.networknt.registry.support.command.CommandFailbackRegistry;
 import com.networknt.registry.support.command.CommandServiceManager;
 import com.networknt.registry.support.command.ServiceListener;
@@ -39,12 +38,15 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class ConsulRegistry extends CommandFailbackRegistry {
     private static final Logger logger = LoggerFactory.getLogger(ConsulRegistry.class);
     private ConsulClient client;
     private ConsulHeartbeatManager heartbeatManager;
-    private int lookupInterval;
+    private long lookupInterval;
+    private long reconnectInterval;
+    private long reconnectJitter;
 
     // service local cache. key: serviceName, value: <service url list>
     private ConcurrentHashMap<String, List<URL>> serviceCache = new ConcurrentHashMap<String, List<URL>>();
@@ -64,7 +66,10 @@ public class ConsulRegistry extends CommandFailbackRegistry {
             heartbeatManager = new ConsulHeartbeatManager(client, getConsulToken());
             heartbeatManager.start();
         }
-        lookupInterval = getUrl().getIntParameter(URLParamType.registrySessionTimeout.getName(), ConsulConstants.DEFAULT_LOOKUP_INTERVAL);
+
+        lookupInterval = getConsulConfig().getLookupInterval() * 1000;
+        reconnectInterval = getConsulConfig().getReconnectInterval() * 1000;
+        reconnectJitter = getConsulConfig().getReconnectJitter() * 1000;
 
         ArrayBlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<Runnable>(20000);
         notifyExecutor = new ThreadPoolExecutor(10, 30, 30 * 1000, TimeUnit.MILLISECONDS, workQueue);
@@ -197,6 +202,28 @@ public class ConsulRegistry extends CommandFailbackRegistry {
         return urls;
     }
 
+    /***
+     *
+     * @param   protocol
+     * @param   serviceName
+     * @return if:
+     *           - There is a Consul connection issue
+     *         then:
+     *           - serviceUrls == null
+     *
+     *         if:
+     *           - Consul index was stale, or
+     *           - Consul reported no updates since last query
+     *         then:
+     *           - serviceUrls.size() == 0 (e.g.: Map has no k/v pairs)
+     *
+     *         if:
+     *           - the IP set registered for serviceName has changed
+     *         then:
+     *           - serviceUrls.size() > 0, and
+     *           - serviceUrls.get(serviceName) != null, and
+     *           - serviceUrls.get(serviceName).size() == number of IPs registered for serviceName in Consul
+     */
     private ConcurrentHashMap<String, List<URL>> lookupServiceUpdate(String protocol, String serviceName) {
         return lookupServiceUpdate(protocol, serviceName, true);
     }
@@ -206,21 +233,23 @@ public class ConsulRegistry extends CommandFailbackRegistry {
      * @param   protocol
      * @param   serviceName
      * @param   isBlockQuery
-     * @return  serviceUrls.size() == 0 (e.g.: Map has no k/v pairs),
-     *          if:
-     *              - Consul index was stale, or
-     *              - Consul reported no updates since last query, or
-     *              - Connection to Consul failed
+     * @return if:
+     *           - There is a Consul connection issue
+     *         then:
+     *           - serviceUrls == null
      *
-     *              This result indicates to updateServiceCache() to leave local registry cache unchanged
+     *         if:
+     *           - Consul index was stale, or
+     *           - Consul reported no updates since last query
+     *         then:
+     *           - serviceUrls.size() == 0 (e.g.: Map has no k/v pairs)
      *
-     *          serviceUrls.size() > 0 &&
-     *          serviceUrls.get(serviceName) != null &&
-     *          serviceUrls.get(serviceName).size() == number of IPs registered for serviceName in Consul,
-     *          if:
-     *              - the IP set registered for serviceName has changed
-     *
-     *              This result indicates to updateServiceCache() to update the local registry cache
+     *         if:
+     *           - the IP set registered for serviceName has changed
+     *         then:
+     *           - serviceUrls.size() > 0, and
+     *           - serviceUrls.get(serviceName) != null, and
+     *           - serviceUrls.get(serviceName).size() == number of IPs registered for serviceName in Consul
      */
     private ConcurrentHashMap<String, List<URL>> lookupServiceUpdate(String protocol, String serviceName, boolean isBlockQuery)
     {
@@ -239,8 +268,8 @@ public class ConsulRegistry extends CommandFailbackRegistry {
             } catch (Exception e) {}
         }
 
-        // initialize serviceUrls such that serviceUrls.size() == 0, this indicate to updateServiceCache() to leave
-        // cache unchanged
+        // initialize serviceUrls such that serviceUrls.size() == 0
+        // this indicates to updateServiceCache() to leave cache unchanged
         ConcurrentHashMap<String, List<URL>> serviceUrls = new ConcurrentHashMap<>();
 
         if (response != null)
@@ -310,10 +339,11 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                 // - serviceUrls.isEmpty() == true && serviceUrls.get(serviceName) != null && serviceUrls.get(serviceName).size() == 0
             }
         } else {
-            logger.info("Connection to Consul failed for service {} - Local service cache may be out of date", serviceName);
+            logger.error("CONNECTION TO CONSUL FAILED for service {} - Local service cache may be out of date", serviceName);
 
-            // Indicate to updateServiceCache() to leave cache unchanged for now:
-            // - serviceUrls.isEmpty() == true && serviceUrls.get(serviceName) != null && serviceUrls.get(serviceName).size() == 0
+            // Indicate to updateServiceCache() to leave cache unchanged for now, and
+            // Indicate to ServiceLookupThread.run() that Consul connection failed
+            return null;
         }
 
         return serviceUrls;
@@ -335,12 +365,12 @@ public class ConsulRegistry extends CommandFailbackRegistry {
      * update local cache when service list changed,
      * if need notify, notify service
      *
-     *  Q: Why do we not update if serviceUrls.isEmpty() == true ?
-     *  A: serviceUrls.isEmpty() == true indicates that the local cache should not be changed.
+     *  Q: Why do we not update if serviceUrls == null || serviceUrls.isEmpty() == true ?
+     *  A: serviceUrls == null || serviceUrls.isEmpty() == true indicates that the local cache should not be changed.
      *     Leaving the local cache unchanged can allow consumer requests to continue to be proxied
      *     even in the event that the connection to Consul temporarily fails.
      *     This provides time to re-establish the connection with Consul while not disrupting
-     *     consumer requests (as long as the services the consumer is targetting have not changed
+     *     consumer requests (as long as the services the consumer is targeting have not changed
      *     their IP addresses during the time the Consul connection is offline)
      *
      *  Q: How we know when cache needs to be emptied?
@@ -403,7 +433,23 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                     logger.info("Consul lookupServiceUpdate Thread - WAKE UP: Woke up from sleep for lookupServiceUpdate for service {}", serviceName);
                     ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(protocol, serviceName);
 
-                    if(serviceUrls == null || serviceUrls.size() == 0)
+                    // lookupServiceUpdate returns null iff Consul connection has failed - attempt to recover
+                    if(serviceUrls == null)
+                    {
+                        logger.error("CONSUL CONNECTION RECOVERY MODE ENABLED for {}", serviceName);
+
+                        while(serviceUrls == null)
+                        {
+                            long randomJitter = ThreadLocalRandom.current().nextLong(0, reconnectJitter);
+                            Thread.sleep(reconnectInterval + randomJitter);
+                            logger.error("CONSUL CONNECTION RECOVERY MODE ENABLED for {}", serviceName);
+                            serviceUrls = lookupServiceUpdate(protocol, serviceName);
+                        }
+
+                        logger.error("CONSUL CONNECTION RECOVERED - RECOVERY MODE COMPLETED for {}", serviceName);
+                    }
+
+                    if(serviceUrls.size() == 0)
                         logger.debug("No service URL updates from Consul lookupServiceUpdate for service {}", serviceName);
                     else
                         logger.debug("Got service URLs from Consul lookupServiceUpdate: {} service URLs found for service {} ({})",
