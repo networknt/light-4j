@@ -440,9 +440,9 @@ public class ConsulRegistry extends CommandFailbackRegistry {
 
                         while(serviceUrls == null)
                         {
+                            logger.error("CONSUL CONNECTION RECOVERY MODE ENABLED for {}", serviceName);
                             long randomJitter = ThreadLocalRandom.current().nextLong(0, reconnectJitter);
                             Thread.sleep(reconnectInterval + randomJitter);
-                            logger.error("CONSUL CONNECTION RECOVERY MODE ENABLED for {}", serviceName);
                             serviceUrls = lookupServiceUpdate(protocol, serviceName);
                         }
 
