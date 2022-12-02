@@ -60,7 +60,7 @@ public interface ConsulClient {
 	 *
 	 * to lookup health services based on serviceName,
 	 * if lastConsulIndex == 0, will get result right away.
-	 * if lastConsulIndex != 0, will establish a long query with consul with {@link #wait} seconds.
+	 * if lastConsulIndex != 0, will establish a long query with Consul.
 	 *
 	 * @param serviceName service name (service_id)
 	 * @param tag tag that is used for filtering (env_tag)
