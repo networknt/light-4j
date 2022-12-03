@@ -199,7 +199,26 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                 }
             }
         }
-        return urls;
+
+        // Existing code using discoverService() expects it to return a null response if there are no IPs
+        // for serviceName. However, lookupServiceUpdate has been updated to return..
+        //
+        // - serviceUrls.size() > 0, and
+        // - serviceUrls.get(serviceName) != null, and
+        // - serviceUrls.get(serviceName).size() == number of IPs registered for serviceName in Consul
+        //
+        // ..if Consul connection is successful and there are no IP's for serviceName
+        //
+        // This will result in updateServiceCache creating a 0-URL entry in the service cache for serviceName.
+        // This results in discoverService() returning a non-null empty list of URLs (urls.size() == 0).
+        // This conflicts with the expectations of code using discoverService().
+        //
+        // This conflict is corrected below:
+        //
+        if(urls != null && urls.size() == 0)
+            return null;
+        else
+            return urls;
     }
 
     /***
