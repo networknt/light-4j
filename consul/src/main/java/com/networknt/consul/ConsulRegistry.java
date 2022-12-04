@@ -257,11 +257,15 @@ public class ConsulRegistry extends CommandFailbackRegistry {
      *         then:
      *           - serviceUrls == null
      *
+     *           This result indicates to updateServiceCache() to leave local registry cache unchanged
+     *
      *         if:
      *           - Consul index was stale, or
      *           - Consul reported no updates since last query
      *         then:
      *           - serviceUrls.size() == 0 (e.g.: Map has no k/v pairs)
+     *
+     *           This result indicates to updateServiceCache() to leave local registry cache unchanged
      *
      *         if:
      *           - the IP set registered for serviceName has changed
@@ -269,6 +273,9 @@ public class ConsulRegistry extends CommandFailbackRegistry {
      *           - serviceUrls.size() > 0, and
      *           - serviceUrls.get(serviceName) != null, and
      *           - serviceUrls.get(serviceName).size() == number of IPs registered for serviceName in Consul
+     *
+     *           This result indicates to updateServiceCache() to update local registry cache
+     *
      */
     private ConcurrentHashMap<String, List<URL>> lookupServiceUpdate(String protocol, String serviceName, boolean isBlockQuery)
     {
