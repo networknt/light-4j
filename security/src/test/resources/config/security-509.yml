@@ -41,8 +41,19 @@ logJwtToken: true
 logClientUserScope: false
 
 # Enable JWT token cache to speed up verification. This will only verify expired time
-# and skip the signature verification as it takes more CPU power and long time.
+# and skip the signature verification as it takes more CPU power and long time. If
+# each request has a different jwt token like authorization code flow, this indicator
+# should be turned off. Otherwise, the cached jwt will only be removed after 15 minutes
+# and the cache can grow bigger if the number of the requests are very high. This will
+# cause memory kill in a Kubernetes pod if the memory setting is limited.
 enableJwtCache: true
+
+# If enableJwtCache is true, then an error message will be shown up in the log if the
+# cache size is bigger than the jwtCacheFullSize. This helps the developers to detect
+# cache problem if many distinct tokens flood the cache in a short period time. If you
+# see JWT cache exceeds size limit in logs, you need to turn off the enableJwtCache or
+# increase the cache full size to a bigger number from the default 100.
+jwtCacheFullSize: 100
 
 # If you are using light-oauth2, then you don't need to have oauth subfolder for public
 # key certificate to verify JWT token, the key will be retrieved from key endpoint once

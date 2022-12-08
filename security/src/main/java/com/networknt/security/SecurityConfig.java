@@ -32,6 +32,7 @@ public class SecurityConfig {
     private static final String LOG_JWT_TOKEN = "logJwtToken";
     private static final String LOG_CLIENT_USER_SCOPE = "logClientUserScope";
     private static final String ENABLE_JWT_CACHE = "enableJwtCache";
+    private static final String JWT_CACHE_FULL_SIZE = "jwtCacheFullSize";
     private static final String BOOTSTRAP_FROM_KEY_SERVICE = "bootstrapFromKeyService";
     private static final String IGNORE_JWT_EXPIRY = "ignoreJwtExpiry";
     private static final String PROVIDER_ID = "providerId";
@@ -53,6 +54,7 @@ public class SecurityConfig {
     private boolean logJwtToken;
     private boolean logClientUserScope;
     private boolean enableJwtCache;
+    private int jwtCacheFullSize;
     private boolean bootstrapFromKeyService;
     private boolean ignoreJwtExpiry;
     private String providerId;
@@ -132,6 +134,9 @@ public class SecurityConfig {
         return enableJwtCache;
     }
 
+    public int getJwtCacheFullSize() {
+        return jwtCacheFullSize;
+    }
     public boolean isBootstrapFromKeyService() {
         return bootstrapFromKeyService;
     }
@@ -211,6 +216,10 @@ public class SecurityConfig {
             object = getMappedConfig().get(ENABLE_JWT_CACHE);
             if(object != null && (Boolean) object) {
                 enableJwtCache = true;
+            }
+            object = getMappedConfig().get(JWT_CACHE_FULL_SIZE);
+            if(object != null ) {
+                jwtCacheFullSize = (Integer)object;
             }
             object = getMappedConfig().get(BOOTSTRAP_FROM_KEY_SERVICE);
             if(object != null && (Boolean) object) {

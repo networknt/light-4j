@@ -303,6 +303,9 @@ public class JwtVerifier {
         claims = jwtContext.getJwtClaims();
         if (Boolean.TRUE.equals(enableJwtCache)) {
             cache.put(jwt, claims);
+            if(cache.estimatedSize() > config.getJwtCacheFullSize()) {
+                logger.error("JWT cache exceeds the size limit " + config.getJwtCacheFullSize());
+            }
         }
         return claims;
     }
