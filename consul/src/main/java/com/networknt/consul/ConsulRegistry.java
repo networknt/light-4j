@@ -365,7 +365,7 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                 // - serviceUrls.isEmpty() == true && serviceUrls.get(serviceName) != null && serviceUrls.get(serviceName).size() == 0
             }
         } else {
-            logger.error("CONNECTION TO CONSUL FAILED for service {} - Local service cache may be out of date", serviceName);
+            logger.error("Local service cache may be out of date for {} - Consul connection failed", serviceName);
 
             // Indicate to updateServiceCache() to leave cache unchanged for now, and
             // Indicate to ServiceLookupThread.run() that Consul connection failed
@@ -450,6 +450,8 @@ public class ConsulRegistry extends CommandFailbackRegistry {
         // TODO: The MAIN CONSUL LOOP
         @Override
         public void run() {
+            ConsulRecoveryManager consulRecovery = new ConsulRecoveryManager(serviceName);
+
             logger.info("Start Consul lookupServiceUpdate thread - Lookup interval: {}ms, service {}", lookupInterval, serviceName);
             while (true) {
                 try {
@@ -462,17 +464,18 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                     // lookupServiceUpdate returns null iff Consul connection has failed - attempt to recover
                     if(serviceUrls == null)
                     {
-                        logger.error("CONSUL CONNECTION RECOVERY MODE ENABLED for {}", serviceName);
-
                         while(serviceUrls == null)
                         {
-                            logger.error("CONSUL CONNECTION RECOVERY MODE ENABLED for {}", serviceName);
+                            // if max connection reattempts have been reached, shut down the host application
+                            boolean moreAttemptsPermitted = consulRecovery.newFailedAttempt();
+                            if(!moreAttemptsPermitted)
+                                ConsulRecoveryManager.gracefulShutdown();
+
                             long randomJitter = ThreadLocalRandom.current().nextLong(0, reconnectJitter);
                             Thread.sleep(reconnectInterval + randomJitter);
                             serviceUrls = lookupServiceUpdate(protocol, serviceName);
                         }
-
-                        logger.error("CONSUL CONNECTION RECOVERED - RECOVERY MODE COMPLETED for {}", serviceName);
+                        consulRecovery.exitRecoveryMode();
                     }
 
                     if(serviceUrls.size() == 0)

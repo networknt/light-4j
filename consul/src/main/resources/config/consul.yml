@@ -32,7 +32,8 @@ timeoutBuffer: 5s
 enableHttp2: false
 # Consul connection establishment timeout in seconds
 connectionTimeout: 5
-# Consul request completion timeout in seconds (excluding /v1/health/service)
+# Consul request completion timeout in seconds
+# This does NOT apply to Consul service discovery lookups (see the 'wait' and 'timeoutBuffer' properties for that)
 requestTimeout: 5
 # Time to wait in seconds between reconnect attempts when Consul connection fails
 reconnectInterval: 2
@@ -41,4 +42,6 @@ reconnectInterval: 2
 reconnectJitter: 2
 # Time in seconds between blocking queries with Consul
 lookupInterval: 15
-
+# Max number of failed Consul connection or request attempts before self-termination
+# -1 means an infinite # of attempts are allowed
+maxAttemptsBeforeShutdown: -1

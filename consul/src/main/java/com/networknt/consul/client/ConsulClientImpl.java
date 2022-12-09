@@ -212,9 +212,9 @@ public class ConsulClientImpl implements ConsulClient {
 
 			// Check that reference.get() is not null
 			if(reference.get() == null)
-				throw new ConsulRequestException("REQUEST TO CONSUL FAILED - Received null response");
+				throw new ConsulRequestException("Request to Consul failed - null response returned from Consul");
 
-			logger.debug("CONSUL REQUEST WAS SUCCESSFUL");
+			logger.debug("Consul connection is OK for service {}", serviceName);
 
 			int statusCode = reference.get().getResponseCode();
 			logger.info("Got Consul Query status code: {}", statusCode);
@@ -269,7 +269,7 @@ public class ConsulClientImpl implements ConsulClient {
 			// This should only return null if Consul connection fails
 			logger.error("Exception:", e);
 
-			logger.error("Consul connection or request failed - Terminating connection to Consul");
+			logger.error("Consul connection or request failed - Terminating and retrying connection to Consul...");
 			if(connection != null && connection.isOpen()) IoUtils.safeClose(connection);
 			return null;
 
