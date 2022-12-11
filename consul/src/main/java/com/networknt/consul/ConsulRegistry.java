@@ -447,13 +447,15 @@ public class ConsulRegistry extends CommandFailbackRegistry {
             this.serviceName = serviceName;
         }
 
-        // TODO: The MAIN CONSUL LOOP
         @Override
         public void run() {
             ConsulRecoveryManager consulRecovery = new ConsulRecoveryManager(serviceName);
 
             logger.info("Start Consul lookupServiceUpdate thread - Lookup interval: {}ms, service {}", lookupInterval, serviceName);
             while (true) {
+                // check in with the recovery manager
+                consulRecovery.checkin();
+
                 try {
                     logger.info("Consul lookupServiceUpdate Thread - SLEEP: Start to sleep {}ms for service {}", lookupInterval, serviceName);
                     sleep(lookupInterval);
@@ -466,6 +468,9 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                     {
                         while(serviceUrls == null)
                         {
+                            // check in with the recovery manager
+                            consulRecovery.checkin();
+
                             // if max connection reattempts have been reached, shut down the host application
                             boolean moreAttemptsPermitted = consulRecovery.newFailedAttempt();
                             if(!moreAttemptsPermitted)
