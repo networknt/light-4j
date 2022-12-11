@@ -23,6 +23,7 @@ public class SecurityConfig {
     private static final String ENABLE_VERIFY_JWT = "enableVerifyJwt";
     private static final String ENABLE_EXTRACT_SCOPE_TOKEN = "enableExtractScopeToken";
     private static final String ENABLE_VERIFY_SCOPE = "enableVerifyScope";
+    private static final String SKIP_VERIFY_SCOPE_WITHOUT_SPEC = "skipVerifyScopeWithoutSpec";
     private static final String ENABLE_VERIFY_JWT_SCOPE_TOKEN = "enableVerifyJWTScopeToken";
     private static final String ENABLE_MOCK_JWT = "enableMockJwt";
     private static final String JWT = "jwt";
@@ -47,6 +48,7 @@ public class SecurityConfig {
     private boolean enableVerifyJwt;
     private boolean enableExtractScopeToken;
     private boolean enableVerifyScope;
+    private boolean skipVerifyScopeWithoutSpec;
     private boolean enableVerifyJwtScopeToken;
     private boolean enableMockJwt;
     private int clockSkewInSeconds;
@@ -100,6 +102,10 @@ public class SecurityConfig {
 
     public boolean isEnableVerifyScope() {
         return enableVerifyScope;
+    }
+
+    public boolean isSkipVerifyScopeWithoutSpec() {
+        return skipVerifyScopeWithoutSpec;
     }
 
     public boolean isEnableVerifyJwtScopeToken() {
@@ -196,6 +202,10 @@ public class SecurityConfig {
             object = getMappedConfig().get(ENABLE_VERIFY_SCOPE);
             if(object != null && (Boolean) object) {
                 enableVerifyScope = true;
+            }
+            object = getMappedConfig().get(SKIP_VERIFY_SCOPE_WITHOUT_SPEC);
+            if(object != null && (Boolean) object) {
+                skipVerifyScopeWithoutSpec = true;
             }
             object = getMappedConfig().get(ENABLE_VERIFY_JWT_SCOPE_TOKEN);
             if(object != null && (Boolean) object) {

@@ -6,14 +6,29 @@
 # is no framework specific security configuration available. The fallback security config
 # is read from this file. Hence, we leave the enableVerifyJwt and enableVerifyScope to true.
 ---
-# Enable JWT verification flag.
+# Enable the JWT verification flag. The JwtVerifierHandler will skip the JWT token verification
+# if this flag is false. It should only be set to false on the dev environment for testing
+# purposes. If you have some endpoints that want to skip the JWT verification, you can put the
+# request path prefix in skipPathPrefixes.
 enableVerifyJwt: ${security.enableVerifyJwt:true}
 
 # Extract JWT scope token from the X-Scope-Token header and validate the JWT token
 enableExtractScopeToken: ${security.enableExtractScopeToken:true}
 
-# Enable JWT scope verification. Only valid when enableVerifyJwt is true.
+# Enable JWT scope verification. This flag is valid when enableVerifyJwt is true. When using the
+# light gateway as a centralized gateway without backend API specifications, you can still enable
+# this flag to allow the admin endpoints to have scopes verified. And all backend APIs without
+# specifications skip the scope verification if the spec does not exist with the skipVerifyScopeWithoutSpec
+# flag to true. Also, you need to have the openapi.yml specification file in the config folder to
+# enable it, as the scope verification compares the scope from the JWT token and the scope in the
+# endpoint specification.
 enableVerifyScope: ${security.enableVerifyScope:true}
+
+# Users should only use this flag in a shared light gateway if the backend API specifications are
+# unavailable in the gateway config folder. If this flag is true and the enableVerifyScope is true,
+# the security handler will invoke the scope verification for all endpoints. However, if the endpoint
+# doesn't have a specification to retrieve the defined scopes, the handler will skip the scope verification.
+skipVerifyScopeWithoutSpec: ${security.skipVerifyScopeWithoutSpec:false}
 
 # Enable JWT scope verification. 
 # Only valid when (enableVerifyJwt is true) AND (enableVerifyScope is true)
