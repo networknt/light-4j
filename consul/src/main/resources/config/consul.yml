@@ -41,7 +41,10 @@ reconnectInterval: 2
 # requests at one time)
 reconnectJitter: 2
 # Time in seconds between blocking queries with Consul
-lookupInterval: 15
+lookupInterval: 30
 # Max number of failed Consul connection or request attempts before self-termination
 # -1 means an infinite # of attempts are allowed
 maxAttemptsBeforeShutdown: -1
+# Shuts down host application if any Consul lookup thread stops reporting a heartbeat for
+# 2 * ( lookupInterval + wait (in seconds) + timeoutBuffer (in seconds) ) seconds
+shutdownIfThreadFrozen: false
