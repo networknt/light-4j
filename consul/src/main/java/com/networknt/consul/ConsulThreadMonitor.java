@@ -31,7 +31,7 @@ public class ConsulThreadMonitor extends Thread {
                 for(Map.Entry<String,Long> beat : heartbeats.entrySet()) {
                     if(now - beat.getValue().longValue() > MAX_TIME_BETWEEN_BEATS_MS) {
                         if(shutdownIfThreadFrozen) {
-                            logger.error("Service {} has missed its check in... Restarting host", beat.getKey());
+                            logger.error("Service {} has missed its check in... Shutting down host...", beat.getKey());
                             ConsulRecoveryManager.gracefulShutdown();
                         } else
                             logger.error("Service {} has missed its check in - Please restart host", beat.getKey());
