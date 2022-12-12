@@ -88,7 +88,15 @@ public class BasicAuthHandler implements MiddlewareHandler {
         } else {
             // verify the header with the config file. assuming it is basic authentication first.
             if (BASIC_PREFIX.equalsIgnoreCase(auth.substring(0, 5))) {
-                this.handleBasicAuth(exchange, requestPath, auth);
+                // check if the length is greater than 6 for issue1513
+                if(auth.trim().length() == 5) {
+                    logger.error("Invalid/Unsupported authorization header {}", auth);
+                    setExchangeStatus(exchange, INVALID_AUTHORIZATION_HEADER, auth);
+                    exchange.endExchange();
+                    return;
+                } else {
+                    this.handleBasicAuth(exchange, requestPath, auth);
+                }
             } else if (BEARER_PREFIX.equalsIgnoreCase(auth.substring(0, 6))) {
                 this.handleBearerToken(exchange, requestPath, auth);
             } else {
