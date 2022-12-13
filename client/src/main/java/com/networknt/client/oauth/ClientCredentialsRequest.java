@@ -71,10 +71,17 @@ public class ClientCredentialsRequest extends TokenRequest {
                     setServiceId((String)ccConfig.get(ClientConfig.SERVICE_ID));
                 }
                 if(ccConfig.get(ClientConfig.PROXY_HOST) != null) {
-                    setProxyHost((String)ccConfig.get(ClientConfig.PROXY_HOST));
-                }
-                if(ccConfig.get(ClientConfig.PROXY_PORT) != null) {
-                    setProxyPort((Integer)ccConfig.get(ClientConfig.PROXY_PORT));
+                    // give a chance to set proxyHost to null if a service doesn't need proxy.
+                    String proxyHost = (String)ccConfig.get(ClientConfig.PROXY_HOST);
+                    if(proxyHost.length() > 1) {
+                        setProxyHost((String)ccConfig.get(ClientConfig.PROXY_HOST));
+                        port = ccConfig.get(ClientConfig.PROXY_PORT) == null ? 443 : (Integer)ccConfig.get(ClientConfig.PROXY_PORT);
+                        setProxyPort(port);
+                    } else {
+                        // overwrite the inherited proxyHost from the tokenConfig.
+                        setProxyHost(null);
+                        setProxyPort(0);
+                    }
                 }
                 if(ccConfig.get(ClientConfig.ENABLE_HTTP2) != null) {
                     setEnableHttp2((Boolean)ccConfig.get(ClientConfig.ENABLE_HTTP2));
