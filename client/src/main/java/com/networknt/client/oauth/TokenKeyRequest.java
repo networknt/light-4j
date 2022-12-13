@@ -49,6 +49,7 @@ public class TokenKeyRequest extends KeyRequest {
                 // there is no key section under oauth. look up in the oauth/token section for key
                 Map<String, Object> tokenConfig = ClientConfig.get().getTokenConfig();
                 if(tokenConfig != null) {
+                    // first inherit the proxy config from the token config.
                     setProxyHost((String)tokenConfig.get(ClientConfig.PROXY_HOST));
                     int port = tokenConfig.get(ClientConfig.PROXY_PORT) == null ? 443 : (Integer)tokenConfig.get(ClientConfig.PROXY_PORT);
                     setProxyPort(port);
@@ -87,6 +88,20 @@ public class TokenKeyRequest extends KeyRequest {
         // clientSecret is optional
         if(keyConfig.get(ClientConfig.CLIENT_SECRET) != null) {
             setClientSecret((String)keyConfig.get(ClientConfig.CLIENT_SECRET));
+        }
+        // proxyHost and proxyPort are optional to overwrite the token config inherited.
+        if(keyConfig.get(ClientConfig.PROXY_HOST) != null) {
+            String proxyHost = (String)keyConfig.get(ClientConfig.PROXY_HOST);
+            if(proxyHost.length() > 1) {
+                // overwrite the tokenConfig proxyHost and proxyPort if this particular service has different proxy server
+                setProxyHost(proxyHost);
+                int port = keyConfig.get(ClientConfig.PROXY_PORT) == null ? 443 : (Integer)keyConfig.get(ClientConfig.PROXY_PORT);
+                setProxyPort(port);
+            } else {
+                // if this service doesn't need a proxy server, just use an empty string to remove the tokenConfig proxy host.
+                setProxyHost(null);
+                setProxyPort(0);
+            }
         }
     }
 }
