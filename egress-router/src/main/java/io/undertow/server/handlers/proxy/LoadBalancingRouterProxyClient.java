@@ -75,9 +75,9 @@ public class LoadBalancingRouterProxyClient implements ProxyClient {
     /**
      * The number of connections to create per thread
      */
-    private volatile int connectionsPerThread = 10;
+    private volatile int connectionsPerThread = config.getConnectionsPerThread();
     private volatile int maxQueueSize = 0;
-    private volatile int softMaxConnectionsPerThread = 5;
+    private volatile int softMaxConnectionsPerThread = config.getSoftMaxConnectionsPerThread();
     private volatile int ttl = -1;
 
     /**

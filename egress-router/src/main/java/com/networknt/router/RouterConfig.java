@@ -40,6 +40,8 @@ public class RouterConfig {
     private static final String REWRITE_HOST_HEADER = "rewriteHostHeader";
     private static final String REUSE_X_FORWARDED = "reuseXForwarded";
     private static final String MAX_REQUEST_TIME = "maxRequestTime";
+    private static final String CONNECTION_PER_THREAD = "connectionsPerThread";
+    private static final String SOFT_MAX_CONNECTIONS_PER_THREAD = "softMaxConnectionsPerThread";
     private static final String MAX_CONNECTION_RETRIES = "maxConnectionRetries";
     private static final String SERVICE_ID_QUERY_PARAMETER = "serviceIdQueryParameter";
     private static final String PRE_RESOLVE_FQDN_2_IP = "preResolveFQDN2IP";
@@ -47,6 +49,8 @@ public class RouterConfig {
     boolean http2Enabled;
     boolean httpsEnabled;
     int maxRequestTime;
+    int connectionsPerThread;
+    int softMaxConnectionsPerThread;
     boolean rewriteHostHeader;
     boolean reuseXForwarded;
     int maxConnectionRetries;
@@ -124,6 +128,14 @@ public class RouterConfig {
         if(object != null ) {
             maxRequestTime = (Integer)object;
         }
+        object = getMappedConfig().get(CONNECTION_PER_THREAD);
+        if(object != null ) {
+            connectionsPerThread = (Integer)object;
+        }
+        object = getMappedConfig().get(SOFT_MAX_CONNECTIONS_PER_THREAD);
+        if(object != null ) {
+            softMaxConnectionsPerThread = (Integer)object;
+        }
         object = getMappedConfig().get(MAX_CONNECTION_RETRIES);
         if(object != null ) {
             maxConnectionRetries = (Integer)object;
@@ -154,7 +166,10 @@ public class RouterConfig {
     public int getMaxRequestTime() {
         return maxRequestTime;
     }
-
+    public int getConnectionsPerThread() {
+        return connectionsPerThread;
+    }
+    public int getSoftMaxConnectionsPerThread() { return softMaxConnectionsPerThread; }
     public boolean isRewriteHostHeader() { return rewriteHostHeader; }
 
     public boolean isReuseXForwarded() { return reuseXForwarded; }

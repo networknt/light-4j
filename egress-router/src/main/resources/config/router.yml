@@ -11,6 +11,12 @@ httpsEnabled: ${router.httpsEnabled:true}
 # Max request time in milliseconds before timeout to the server.
 maxRequestTime: ${router.maxRequestTime:1000}
 
+# Connections per thread.
+connectionsPerThread: ${router.connectionsPerThread:10}
+
+# Soft max connections per thread.
+softMaxConnectionsPerThread: ${router.softMaxConnectionsPerThread:5}
+
 # Rewrite Host Header with the target host and port and write X_FORWARDED_HOST with original host
 rewriteHostHeader: ${router.rewriteHostHeader:true}
 
