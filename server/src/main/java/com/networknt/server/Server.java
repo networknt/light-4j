@@ -468,7 +468,7 @@ public class Server {
             }
 
             SSLContext sslContext;
-            sslContext = SSLContext.getInstance("TLSv1");
+            sslContext = SSLContext.getInstance("TLSv1.2");
             sslContext.init(keyManagers, trustManagers, null);
             return sslContext;
         } catch (Exception e) {

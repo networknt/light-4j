@@ -109,6 +109,7 @@ public class Http2Client {
     static final String KEY_STORE = "keyStore";
     static final String KEY_STORE_PASS = "keyStorePass";
     static final String KEY_PASS = "keyPass";
+    static final String TLS_VERSION = "tlsVersion";
     static final String KEY_STORE_PROPERTY = "javax.net.ssl.keyStore";
     static final String KEY_STORE_PASSWORD_PROPERTY = "javax.net.ssl.keyStorePassword";
     static final String TRUST_STORE_PROPERTY = "javax.net.ssl.trustStore";
@@ -697,7 +698,9 @@ public class Http2Client {
             }
 
             try {
-                sslContext = SSLContext.getInstance("TLS");
+                String tlsVersion = (String)tlsMap.get(TLS_VERSION);
+                if(tlsVersion == null) tlsVersion = "TLSv1.2";
+                sslContext = SSLContext.getInstance(tlsVersion);
                 sslContext.init(keyManagers, trustManagers, null);
             } catch (NoSuchAlgorithmException | KeyManagementException e) {
                 throw new IOException("Unable to create and initialise the SSLContext", e);

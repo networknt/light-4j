@@ -27,6 +27,9 @@ tls:
   keyStorePass: ${client.keyStorePass:password}
   # private key password
   keyPass: ${client.keyPass:password}
+  # TLS version. Default is TSLv1.2, and you can downgrade to TLSv1 to support some internal old servers that support only TLSv1.1(deprecated
+  # and risky). You can also upgrade to TSLv1.3 for maximum security if all your servers support it.
+  tlsVersion: ${client.tlsVersion:TLSv1.2}
 # settings for OAuth2 server communication
 oauth:
   # OAuth 2.0 token endpoint configuration

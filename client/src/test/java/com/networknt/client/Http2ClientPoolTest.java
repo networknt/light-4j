@@ -422,11 +422,7 @@ public class Http2ClientPoolTest {
 
         SSLContext sslContext;
         try {
-            if(!client) {
-                sslContext = SSLContext.getInstance("TLS");
-            } else {
-                sslContext = SSLContext.getInstance("TLS");
-            }
+            sslContext = SSLContext.getInstance("TLSv1.2");
             sslContext.init(keyManagers, trustManagers, null);
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
             throw new IOException("Unable to create and initialise the SSLContext", e);
@@ -613,7 +609,7 @@ public class Http2ClientPoolTest {
             }
 
             try {
-                sslContext = SSLContext.getInstance("TLS");
+                sslContext = SSLContext.getInstance("TLSv1.2");
                 sslContext.init(keyManagers, trustManagers, null);
 
             } catch (NoSuchAlgorithmException | KeyManagementException e) {
