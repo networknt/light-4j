@@ -490,7 +490,7 @@ public class MrasHandler implements MiddlewareHandler {
         }
 
         try {
-            sslContext = SSLContext.getInstance("TLS");
+            sslContext = SSLContext.getInstance("TLSv1.2");
             sslContext.init(keyManagers, trustManagers, null);
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
             logger.error("Exception:", e);

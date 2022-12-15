@@ -69,6 +69,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
+import static com.networknt.client.Http2Client.TLS_VERSION;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -873,7 +874,7 @@ public class Http2ClientTest extends Http2ClientBase {
             }
 
             try {
-                sslContext = SSLContext.getInstance("TLS");
+                sslContext = SSLContext.getInstance((String)tlsMap.get(TLS_VERSION));
                 sslContext.init(keyManagers, trustManagers, null);
                 
             } catch (NoSuchAlgorithmException | KeyManagementException e) {
