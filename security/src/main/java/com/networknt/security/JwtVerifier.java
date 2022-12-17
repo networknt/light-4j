@@ -103,6 +103,7 @@ public class JwtVerifier {
         this.enableJwtCache = config.isEnableJwtCache();
         if (Boolean.TRUE.equals(enableJwtCache)) {
             cache = Caffeine.newBuilder()
+                    .maximumSize(config.getJwtCacheFullSize())
                     // assuming that the clock screw time is less than 5 minutes
                     .expireAfterWrite(CACHE_EXPIRED_IN_MINUTES, TimeUnit.MINUTES)
                     .build();
