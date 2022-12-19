@@ -223,7 +223,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
     private static boolean handleLdapAuth(UserAuth user, String password) {
         boolean isAuthenticated = LdapUtil.authenticate(user.getUsername(), password);
         if (!isAuthenticated) {
-            logger.error("user '" + user.getUsername() + "' authentication failed");
+            logger.error("user '" + user.getUsername() + "' Ldap authentication failed");
             return false;
         }
         return true;
