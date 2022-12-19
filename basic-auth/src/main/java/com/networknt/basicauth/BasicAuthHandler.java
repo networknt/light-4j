@@ -19,7 +19,9 @@ package com.networknt.basicauth;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.ldap.LdapUtil;
 import com.networknt.utility.ModuleRegistry;
+import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -164,15 +166,31 @@ public class BasicAuthHandler implements MiddlewareHandler {
             String username = credentials.substring(0, pos);
             String password = credentials.substring(pos + 1);
             UserAuth user = config.getUsers().get(username);
-            if (user == null || !(user.getUsername().equals(username) && user.getPassword().equals(password))) {
-                logger.error("Invalid username or password with authorization header starts = {}", auth.substring(0, 10));
-                setExchangeStatus(exchange, INVALID_USERNAME_OR_PASSWORD);
-                exchange.endExchange();
-                if(logger.isDebugEnabled())
-                    logger.debug("BasicAuthHandler.handleRequest ends with an error.");
-                return;
+            // if user name matches config, no password entry in config and enableAD is true, use LDAP auth
+            if (user != null
+                    && username.equals(user.getUsername())
+                    && StringUtils.isEmpty(user.getPassword())
+                    && config.enableAD) {
+                // Call LdapUtil with LDAP authentication and authorization
+                if (!handleLdapAuth(user, password)) {
+                    setExchangeStatus(exchange, INVALID_USERNAME_OR_PASSWORD);
+                    exchange.endExchange();
+                    if(logger.isDebugEnabled())
+                        logger.debug("BasicAuthHandler.handleRequest ends with an error.");
+                    return;
+                }
+            } else {
+                //
+                if (user == null || !(user.getUsername().equals(username)
+                        && password.equals(user.getPassword()))) {
+                    logger.error("Invalid username or password with authorization header starts = {}", auth.substring(0, 10));
+                    setExchangeStatus(exchange, INVALID_USERNAME_OR_PASSWORD);
+                    exchange.endExchange();
+                    if (logger.isDebugEnabled())
+                        logger.debug("BasicAuthHandler.handleRequest ends with an error.");
+                    return;
+                }
             }
-
             // Here we have passed the authentication. Let's do the authorization with the paths.
             boolean match = false;
             for (String path : user.getPaths()) {
@@ -195,6 +213,20 @@ public class BasicAuthHandler implements MiddlewareHandler {
                 logger.debug("BasicAuthHandler.handleRequest ends with an error.");
             exchange.endExchange();
         }
+    }
+
+    /**
+     * Handle LDAP authentication and authorization
+     * @param user
+     * @return true if Ldap auth success, false if Ldap auth failure
+     */
+    private static boolean handleLdapAuth(UserAuth user, String password) {
+        boolean isAuthenticated = LdapUtil.authenticate(user.getUsername(), password);
+        if (!isAuthenticated) {
+            logger.error("user '" + user.getUsername() + "' authentication failed");
+            return false;
+        }
+        return true;
     }
 
     /**

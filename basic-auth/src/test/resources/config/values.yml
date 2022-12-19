@@ -1,0 +1,9 @@
+# ldap.yml
+ldap.uri: ldaps://example.com:636/dc=example,dc=com
+ldap.domain: example.com
+ldap.principal: cn=id_ldap,ou=Services,ou=UserAccounts,dc=example,dc=com
+ldap.credential: CRYPT:/aIs9Qjulvc6PrkrbeonE7gPsSR1QLZqIHIDm8NRaI0=
+ldap.searchFilter: (&(samaccountname=%s)(objectClass=person))
+ldap.searchBase: ''
+
+client.verifyHostname: false
