@@ -47,7 +47,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(BasicAuthHandler.class);
     static final String BEARER_PREFIX = "BEARER";
     static final String BASIC_PREFIX = "BASIC";
-    BasicAuthConfig config;
+    static BasicAuthConfig config;
 
     static final String MISSING_AUTH_TOKEN = "ERR10002";
     static final String INVALID_BASIC_HEADER = "ERR10046";
@@ -152,7 +152,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
      * @param requestPath - path found within current request.
      * @param auth - auth string
      */
-    private void handleBasicAuth(HttpServerExchange exchange, String requestPath, String auth) {
+    public void handleBasicAuth(HttpServerExchange exchange, String requestPath, String auth) {
         String credentials = auth.substring(6);
         int pos = credentials.indexOf(':');
         if (pos == -1) {
