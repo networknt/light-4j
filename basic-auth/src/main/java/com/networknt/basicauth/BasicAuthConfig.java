@@ -28,6 +28,7 @@ import java.util.Map;
 public class BasicAuthConfig {
     public static final String CONFIG_NAME = "basic-auth";
     private static final String ENABLED = "enabled";
+    private static final String ENABLE_AD = "enableAD";
     private static final String ALLOW_ANONYMOUS = "allowAnonymous";
     private static final String ALLOW_BEARER_TOKEN = "allowBearerToken";
     private static final String USERS = "users";
@@ -38,6 +39,7 @@ public class BasicAuthConfig {
     public static final String BEARER = "bearer";
 
     boolean enabled;
+    boolean enableAD;
     boolean allowAnonymous;
     boolean allowBearerToken;
     Map<String, UserAuth> users;  // the key is the username to locate the object
@@ -84,6 +86,14 @@ public class BasicAuthConfig {
         this.enabled = enabled;
     }
 
+    public boolean isEnableAD() {
+        return enabled;
+    }
+
+    public void setEnableAD(boolean enabled) {
+        this.enableAD = enabled;
+    }
+
     public boolean isAllowAnonymous() {
         return allowAnonymous;
     }
@@ -106,6 +116,10 @@ public class BasicAuthConfig {
         Object object = mappedConfig.get(ENABLED);
         if(object != null && (Boolean) object) {
             setEnabled(true);
+        }
+        object = mappedConfig.get(ENABLE_AD);
+        if(object != null && (Boolean) object) {
+            setEnableAD(true);
         }
         object = mappedConfig.get(ALLOW_ANONYMOUS);
         if(object != null && (Boolean) object) {
