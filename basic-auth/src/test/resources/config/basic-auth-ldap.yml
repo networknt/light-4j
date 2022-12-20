@@ -1,7 +1,7 @@
 # Basic Authentication Security Configuration for light-4j
 ---
 # Enable Basic Authentication Handler, default is false.
-enabled: ${basic.enabled:false}
+enabled: ${basic.enabled:true}
 # Enable Ldap Authentication, default is true.
 enableAD: ${basic.enableAD:true}
 # Do we allow the anonymous to pass the authentication and limit it with some paths
@@ -11,9 +11,22 @@ allowAnonymous: ${basic.allowAnonymous:false}
 # authorization defined under username bearer. This feature is used in proxy-client
 # that support multiple clients with different authorizations.
 allowBearerToken: ${basic.allowBearerToken:false}
-# usernames and passwords in a list, the password can be encrypted like user2 in test.
-# As we are supporting multiple users, so leave the passwords in this file with users.
-# For each user, you can specify a list of optional paths that this user is allowed to
-# access. A special user anonymous can be used to set the paths for client without an
-# authorization header. The paths are optional and used for proxy only to authorize.
-users: ${basic.users:}
+# usernames and passwords, the password can be encrypted like user2
+# As we are supporting multiple users, so leave the passwords in this file.
+# For each user, you can specify a list of paths that this user is allowed
+# a special user anonymous can be used to set the paths for client without
+# Basic auth and Bearer auth. The paths are optional and used for proxy only.
+users:
+  - username: user1
+    paths:
+      - /v1/address
+  - username: ldapUser
+    paths:
+      - /v2/pet
+      - /v2/address
+      - /v2/party
+  # a special user to indicate the Authorization header does not exist.
+  - username: anonymous
+    paths:
+      - /v1/party
+      - /info
