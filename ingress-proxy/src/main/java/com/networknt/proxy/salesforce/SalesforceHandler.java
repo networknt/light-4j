@@ -110,6 +110,9 @@ public class SalesforceHandler implements MiddlewareHandler {
     @Override
     public void reload() {
         config.reload();
+        List<String> masks = new ArrayList<>();
+        masks.add("certPassword");
+        ModuleRegistry.registerModule(SalesforceHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(SalesforceConfig.CONFIG_NAME), masks);
     }
 
     @Override
