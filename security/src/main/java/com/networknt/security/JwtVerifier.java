@@ -213,8 +213,8 @@ public class JwtVerifier {
      * @throws InvalidJwtException   throw when the token is invalid
      * @throws ExpiredTokenException throw when the token is expired
      */
-    public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken, String requestPath) throws InvalidJwtException, ExpiredTokenException {
-        return verifyJwt(jwt, ignoreExpiry, isToken, requestPath, this::getKeyResolver);
+    public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken, String pathPrefix, String requestPath, List<String> jwkServiceIds) throws InvalidJwtException, ExpiredTokenException {
+        return verifyJwt(jwt, ignoreExpiry, isToken, pathPrefix, requestPath, jwkServiceIds, this::getKeyResolver);
     }
 
     /**
@@ -229,7 +229,7 @@ public class JwtVerifier {
      * @throws ExpiredTokenException throw when the token is expired
      */
     public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken) throws InvalidJwtException, ExpiredTokenException {
-        return verifyJwt(jwt, ignoreExpiry, isToken, null, this::getKeyResolver);
+        return verifyJwt(jwt, ignoreExpiry, isToken, null, null, null, this::getKeyResolver);
     }
 
     /**
@@ -245,16 +245,21 @@ public class JwtVerifier {
      * @param isToken        True if the jwt is an OAuth 2.0 access token
      * @param getKeyResolver How to get VerificationKeyResolver
      * @param requestPath    the request path that used to find the right auth server config
+     * @param jwkServiceIds  a list of jwk serviceIds defined in the client.yml to retrieve jwk.
      * @return JwtClaims object
      * @throws InvalidJwtException   InvalidJwtException
      * @throws ExpiredTokenException ExpiredTokenException
      */
-    public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken, String requestPath, BiFunction<String, String, VerificationKeyResolver> getKeyResolver)
+    public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken, String pathPrefix, String requestPath, List<String> jwkServiceIds, BiFunction<String, Object, VerificationKeyResolver> getKeyResolver)
             throws InvalidJwtException, ExpiredTokenException {
         JwtClaims claims;
 
         if (Boolean.TRUE.equals(enableJwtCache)) {
-            claims = cache.getIfPresent(jwt);
+            if(pathPrefix != null) {
+                claims = cache.getIfPresent(pathPrefix + ":" + jwt);
+            } else {
+                claims = cache.getIfPresent(jwt);
+            }
             if (claims != null) {
 
                 checkExpiry(ignoreExpiry, claims, secondsOfAllowedClockSkew, null);
@@ -291,7 +296,7 @@ public class JwtVerifier {
                 .setRequireExpirationTime()
                 .setAllowedClockSkewInSeconds(315360000) // use seconds of 10 years to skip expiration validation as we need skip it in some cases.
                 .setSkipDefaultAudienceValidation()
-                .setVerificationKeyResolver(getKeyResolver.apply(kid, requestPath));
+                .setVerificationKeyResolver(getKeyResolver.apply(kid, jwkServiceIds != null ? jwkServiceIds : requestPath));
 
         if (this.enableRelaxedKeyValidation) {
             jwtBuilder.setRelaxVerificationKeyValidation();
@@ -303,7 +308,11 @@ public class JwtVerifier {
         jwtContext = consumer.process(jwt);
         claims = jwtContext.getJwtClaims();
         if (Boolean.TRUE.equals(enableJwtCache)) {
-            cache.put(jwt, claims);
+            if(pathPrefix != null) {
+                cache.put(pathPrefix + ":" + jwt, claims);
+            } else {
+                cache.put(jwt, claims);
+            }
             if(cache.estimatedSize() > config.getJwtCacheFullSize()) {
                 logger.error("JWT cache exceeds the size limit " + config.getJwtCacheFullSize());
             }
@@ -325,7 +334,7 @@ public class JwtVerifier {
         if (!ignoreExpiry) {
             try {
                 // if using our own client module, the jwt token should be renewed automatically
-                // and it will never expired here. However, we need to handle other clients.
+                // and it will never expire here. However, we need to handle other clients.
                 if ((NumericDate.now().getValue() - allowedClockSkew) >= claim.getExpirationTime().getValue()) {
                     logger.info("Cached jwt token is expired!");
                     throw new ExpiredTokenException("Token is expired");
@@ -344,10 +353,10 @@ public class JwtVerifier {
      * the resolvers and find the right one with the kid.
      *
      * @param kid         key id from the JWT token
-     * @param requestPath the request path of incoming request used to identify the serviceId to get the JWK.
+     * @param requestPathOrJwkServiceIds the request path or jwkServiceIds of incoming request used to identify the serviceId to get the JWK.
      * @return VerificationKeyResolver
      */
-    private VerificationKeyResolver getKeyResolver(String kid, String requestPath) {
+    private VerificationKeyResolver getKeyResolver(String kid, Object requestPathOrJwkServiceIds) {
         // try the X509 certificate first
         String keyResolver = config.getKeyResolver();
         // get the public key certificate from the cache that is loaded from security.yml. If it is not there,
@@ -363,7 +372,7 @@ public class JwtVerifier {
                 // try jwk if kid cannot be found in the certificate map.
                 List<JsonWebKey> jwkList = jwksMap.get(kid);
                 if (jwkList == null) {
-                    jwkList = getJsonWebKeySetForToken(kid, requestPath);
+                    jwkList = getJsonWebKeySetForToken(kid, requestPathOrJwkServiceIds);
                     if (jwkList == null || jwkList.isEmpty()) {
                         throw new RuntimeException("no JWK for kid: " + kid);
                     }
@@ -483,63 +492,74 @@ public class JwtVerifier {
      * and the corresponding jwk doesn't exist in the cache. It will look up the key service by kid first.
      *
      * @param kid         String of kid
-     * @param requestPath String of request path
+     * @param requestPathOrJwkServiceIds String of request path or list of strings for jwkServiceIds
      * @return {@link List} of {@link JsonWebKey}
      */
     @SuppressWarnings("unchecked")
-    private List<JsonWebKey> getJsonWebKeySetForToken(String kid, String requestPath) {
+    private List<JsonWebKey> getJsonWebKeySetForToken(String kid, Object requestPathOrJwkServiceIds) {
         // the jwk indicator will ensure that the kid is not concat to the uri for path parameter.
         // the kid is not needed to get JWK, but if requestPath is not null, it will be used to get the keyConfig
-        if (logger.isTraceEnabled())
-            logger.trace("kid = " + kid + " requestPath = " + requestPath);
-
+        if (logger.isTraceEnabled()) {
+            logger.trace("kid = " + kid + requestPathOrJwkServiceIds instanceof String ? " requestPath = " + requestPathOrJwkServiceIds : " jwkServiceIds = " + requestPathOrJwkServiceIds);
+        }
+        ClientConfig clientConfig = ClientConfig.get();
+        List<JsonWebKey> jwks = null;
         Map<String, Object> config = null;
 
-        ClientConfig clientConfig = ClientConfig.get();
-
-        if (requestPath != null && clientConfig.isMultipleAuthServers()) {
-
-            if (logger.isTraceEnabled())
-                logger.trace("requestPath = " + requestPath);
-
-            Map<String, String> pathPrefixServices = clientConfig.getPathPrefixServices();
-
-            if (pathPrefixServices == null || pathPrefixServices.size() == 0) {
-                throw new ConfigException("pathPrefixServices property is missing or has an empty value in client.yml");
-            }
-
-            // lookup the serviceId based on the full path and the prefix mapping by iteration here.
-            String serviceId = null;
-            for (Map.Entry<String, String> entry : pathPrefixServices.entrySet()) {
-
-                if (requestPath.startsWith(entry.getKey())) {
-                    serviceId = entry.getValue();
+        if (requestPathOrJwkServiceIds != null && clientConfig.isMultipleAuthServers()) {
+            if(requestPathOrJwkServiceIds instanceof String) {
+                String requestPath = (String)requestPathOrJwkServiceIds;
+                Map<String, String> pathPrefixServices = clientConfig.getPathPrefixServices();
+                if (pathPrefixServices == null || pathPrefixServices.size() == 0) {
+                    throw new ConfigException("pathPrefixServices property is missing or has an empty value in client.yml");
                 }
-
+                // lookup the serviceId based on the full path and the prefix mapping by iteration here.
+                String serviceId = null;
+                for (Map.Entry<String, String> entry : pathPrefixServices.entrySet()) {
+                    if (requestPath.startsWith(entry.getKey())) {
+                        serviceId = entry.getValue();
+                    }
+                }
+                if (serviceId == null) {
+                    throw new ConfigException("serviceId cannot be identified in client.yml with the requestPath = " + requestPath);
+                }
+                config = getJwkConfig(clientConfig, serviceId);
+                jwks = retrieveJwk(kid, config);
+            } else if (requestPathOrJwkServiceIds instanceof List) {
+                List<String> jwkServiceIds = (List<String>)requestPathOrJwkServiceIds;
+                jwks = new ArrayList<>();
+                for(String serviceId: jwkServiceIds) {
+                    config = getJwkConfig(clientConfig, serviceId);
+                    jwks.addAll(retrieveJwk(kid, config));
+                }
+            } else {
+                throw new ConfigException("requestPathOrJwkServiceIds must be a string or a list of strings");
             }
-
-            if (serviceId == null) {
-                throw new ConfigException("serviceId cannot be identified in client.yml with the requestPath = " + requestPath);
-            }
-
-            if (logger.isTraceEnabled())
-                logger.trace("serviceId = " + serviceId);
-
-            // get the serviceIdAuthServers for key definition
-            Map<String, Object> tokenConfig = clientConfig.getTokenConfig();
-            Map<String, Object> keyConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.KEY);
-            Map<String, Object> serviceIdAuthServers = (Map<String, Object>) keyConfig.get(ClientConfig.SERVICE_ID_AUTH_SERVERS);
-
-            if (serviceIdAuthServers == null) {
-                throw new ConfigException("serviceIdAuthServers property is missing in the token key configuration in client.yml");
-            }
-
-            config = (Map<String, Object>) serviceIdAuthServers.get(serviceId);
+        } else {
+            // get the jwk from the key section in the client.yml token key.
+            jwks = retrieveJwk(kid, null);
         }
+        return jwks;
+    }
 
+    private Map<String, Object> getJwkConfig(ClientConfig clientConfig, String serviceId) {
+        if (logger.isTraceEnabled())
+            logger.trace("serviceId = " + serviceId);
+        // get the serviceIdAuthServers for key definition
+        Map<String, Object> tokenConfig = clientConfig.getTokenConfig();
+        Map<String, Object> keyConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.KEY);
+        Map<String, Object> serviceIdAuthServers = (Map<String, Object>) keyConfig.get(ClientConfig.SERVICE_ID_AUTH_SERVERS);
+        if (serviceIdAuthServers == null) {
+            throw new ConfigException("serviceIdAuthServers property is missing in the token key configuration in client.yml");
+        }
+        return (Map<String, Object>) serviceIdAuthServers.get(serviceId);
+    }
+
+    private List<JsonWebKey> retrieveJwk(String kid, Map<String, Object> config) {
+        // get the jwk with the kid and config map.
         if (logger.isTraceEnabled() && config != null)
             logger.trace("multiple oauth config based on path = " + JsonMapper.toJson(config));
-
+        // config is not null if isMultipleAuthServers is true. If it is null, then the key section is used from the client.yml
         TokenKeyRequest keyRequest = new TokenKeyRequest(kid, true, config);
 
         try {
@@ -553,15 +573,11 @@ public class JwtVerifier {
 
             return new JsonWebKeySet(key).getJsonWebKeys();
         } catch (JoseException ce) {
-
             if (logger.isErrorEnabled())
                 logger.error("Failed to get JWK. - {} - {}", new Status(GET_KEY_ERROR), ce.getMessage(), ce);
-
         } catch (ClientException ce) {
-
             if (logger.isErrorEnabled())
                 logger.error("Failed to get key - {} - {}", new Status(GET_KEY_ERROR), ce.getMessage(), ce);
-
         }
         return null;
     }
