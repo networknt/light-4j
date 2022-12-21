@@ -33,10 +33,7 @@ import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class JwtVerifierTest {
     static final String CONFIG_NAME = "security-509";
@@ -124,7 +121,7 @@ public class JwtVerifierTest {
         System.out.print("JWT = " + jwt);
 
         JwtVerifier jwtVerifier = new JwtVerifier(SecurityConfig.load(CONFIG_NAME));
-        JwtClaims claims = jwtVerifier.verifyJwt(jwt, true, true, null, (kId, requestPath) -> {
+        JwtClaims claims = jwtVerifier.verifyJwt(jwt, true, true, null, null, null, (kId, requestPath) -> {
             try {
                 // use public key to create the the JsonWebKey
                 Key publicKey = ks.getCertificate(alias).getPublicKey();
@@ -265,5 +262,11 @@ public class JwtVerifierTest {
         System.out.println("jwtClaims = " + claims);
     }
 
-
+    @Test
+    public void testStringList() {
+        List<String> ids = new ArrayList<>();
+        ids.add("abc");
+        ids.add("xyz");
+        System.out.println("ids = " + ids);
+    }
 }
