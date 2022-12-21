@@ -524,4 +524,7 @@ public class Handler {
 		initHandlers();
 		initPaths();
 	}
+	public static Map<String, HttpHandler> getHandlers() {
+		return handlers;
+	}
 }
