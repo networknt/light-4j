@@ -93,7 +93,7 @@ public class JwtVerifierSingleJwkTest extends JwtVerifierJwkBase {
                                 String scopeToken = exchange.getRequestHeaders().get(HttpStringConstants.SCOPE_TOKEN, 0).substring(7);
                                 // verify the jwt token with JWK.
                                 JwtVerifier jwtVerifier = new JwtVerifier(securityConfig);
-                                JwtClaims claims = jwtVerifier.verifyJwt(scopeToken, true, true, requestPath);
+                                JwtClaims claims = jwtVerifier.verifyJwt(scopeToken, true, true, null, requestPath, null);
                                 exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
                                 exchange.getResponseSender().send(ByteBuffer.wrap(
                                         Config.getInstance().getMapper().writeValueAsBytes(
