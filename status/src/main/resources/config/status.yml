@@ -512,6 +512,11 @@ ERR10077:
   code: ERR10077
   message: INVALID_CONTENT_TYPE
   description: Invalid content type %s.
+ERR10078:
+  statusCode: 400
+  code: ERR10078
+  message: MISSING_PATH_PREFIX_AUTH
+  description: Missing path prefix auth entry for request path %s.
 
 
 
