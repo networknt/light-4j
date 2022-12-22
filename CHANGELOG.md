@@ -1,5 +1,14 @@
 # Change Log
 
+## [1.6.44](https://github.com/networknt/light-4j/tree/1.6.44) (2022-12-22)
+
+
+**Merged pull requests:**
+
+
+- Consul connection creation can block forever and service cache erased if Consul connection fails [\#1504](https://github.com/networknt/light-4j/pull/1504) ([miklish](https://github.com/miklish))
+- Fix the potential risks of ExchangeCompleteListener [\#1342](https://github.com/networknt/light-4j/pull/1342) ([atmoshaman](https://github.com/atmoshaman))
+- fixes \#1522 upgrade 1.6.x server TLS version to 1.2 [\#1523](https://github.com/networknt/light-4j/pull/1523) ([stevehu](https://github.com/stevehu))
 ## [1.6.43](https://github.com/networknt/light-4j/tree/1.6.43) (2022-11-09)
 
 
