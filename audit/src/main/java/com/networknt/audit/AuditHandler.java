@@ -109,54 +109,58 @@ public class AuditHandler implements MiddlewareHandler {
 
         if (auditConfig.isStatusCode() || auditConfig.isResponseTime()) {
             exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
-                Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
-                // dump audit info fields according to config
-                boolean needAuditData = auditInfo != null && auditConfig.hasAuditList();
-                if (needAuditData) {
-                    auditFields(auditInfo, auditMap);
-                }
-
-                // dump request header, request body, path parameters, query parameters and request cookies according to config
-                auditRequest(exchange, auditMap, auditConfig);
-
-                // dump serviceId from server.yml
-                if (auditConfig.hasAuditList() && auditConfig.getAuditList().contains(SERVICEID_KEY)) {
-                    auditServiceId(auditMap);
-                }
-
-                if (auditConfig.isStatusCode()) {
-                    auditMap.put(STATUS_CODE, exchange1.getStatusCode());
-                }
-                if (auditConfig.isResponseTime()) {
-                    auditMap.put(RESPONSE_TIME, System.currentTimeMillis() - start);
-                }
-                // add additional fields accumulated during the microservice execution
-                // according to the config
-                Map<String, Object> auditInfo1 = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
-                if (auditInfo1 != null) {
-                    if (auditConfig.getAuditList() != null && auditConfig.getAuditList().size() > 0) {
-                        for (String name : auditConfig.getAuditList()) {
-                            if (name.equals(RESPONSE_BODY_KEY)) {
-                                auditResponseOnError(exchange, auditMap);
+                try {
+                    Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
+                    // dump audit info fields according to config
+                    boolean needAuditData = auditInfo != null && auditConfig.hasAuditList();
+                    if (needAuditData) {
+                        auditFields(auditInfo, auditMap);
+                    }
+    
+                    // dump request header, request body, path parameters, query parameters and request cookies according to config
+                    auditRequest(exchange, auditMap, auditConfig);
+    
+                    // dump serviceId from server.yml
+                    if (auditConfig.hasAuditList() && auditConfig.getAuditList().contains(SERVICEID_KEY)) {
+                        auditServiceId(auditMap);
+                    }
+    
+                    if (auditConfig.isStatusCode()) {
+                        auditMap.put(STATUS_CODE, exchange1.getStatusCode());
+                    }
+                    if (auditConfig.isResponseTime()) {
+                        auditMap.put(RESPONSE_TIME, System.currentTimeMillis() - start);
+                    }
+                    // add additional fields accumulated during the microservice execution
+                    // according to the config
+                    Map<String, Object> auditInfo1 = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
+                    if (auditInfo1 != null) {
+                        if (auditConfig.getAuditList() != null && auditConfig.getAuditList().size() > 0) {
+                            for (String name : auditConfig.getAuditList()) {
+                                if (name.equals(RESPONSE_BODY_KEY)) {
+                                    auditResponseOnError(exchange, auditMap);
+                                }
+                                auditMap.putIfAbsent(name, auditInfo1.get(name));
                             }
-                            auditMap.putIfAbsent(name, auditInfo1.get(name));
                         }
                     }
-                }
-
-                try {
-                    // audit entries only is it is an error, if auditOnError flag is set
-                    if (auditConfig.isAuditOnError()) {
-                        if (exchange1.getStatusCode() >= 400)
+    
+                    try {
+                        // audit entries only is it is an error, if auditOnError flag is set
+                        if (auditConfig.isAuditOnError()) {
+                            if (exchange1.getStatusCode() >= 400)
+                                auditConfig.getAuditFunc().accept(Config.getInstance().getMapper().writeValueAsString(auditMap));
+                        } else {
                             auditConfig.getAuditFunc().accept(Config.getInstance().getMapper().writeValueAsString(auditMap));
-                    } else {
-                        auditConfig.getAuditFunc().accept(Config.getInstance().getMapper().writeValueAsString(auditMap));
+                        }
+                    } catch (JsonProcessingException e) {
+                        throw e;
                     }
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
+                } catch (Throwable e) {
+                    logger.error("ExchangeListenerThrowable", e);
+                } finally {
+                    nextListener.proceed();
                 }
-
-                nextListener.proceed();
             });
         } else {
             auditConfig.getAuditFunc().accept(auditConfig.getConfig().getMapper().writeValueAsString(auditMap));
