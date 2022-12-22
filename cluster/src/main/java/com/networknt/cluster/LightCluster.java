@@ -56,12 +56,18 @@ public class LightCluster implements Cluster {
      * Implement serviceToUrl with client side service discovery.
      *
      * @param protocol either http or https
-     * @param serviceId unique service identifier
+     * @param serviceId unique service identifier - cannot be blank
      * @param requestKey String
      * @return Url discovered after the load balancing. Return null if the corresponding service cannot be found
      */
     @Override
-    public String serviceToUrl(String protocol, String serviceId, String tag, String requestKey) {
+    public String serviceToUrl(String protocol, String serviceId, String tag, String requestKey)
+    {
+        if(StringUtils.isBlank(serviceId)) {
+            logger.debug("The serviceId cannot be blank");
+            return null;
+        }
+
         URL url = loadBalance.select(discovery(protocol, serviceId, tag), requestKey);
         if (url != null) {
             logger.debug("Final url after load balance = {}.", url);
@@ -76,12 +82,18 @@ public class LightCluster implements Cluster {
     /**
      *
      * @param protocol either http or https
-     * @param serviceId unique service identifier
+     * @param serviceId unique service identifier - cannot be blank
      * @param tag an environment tag use along with serviceId for discovery
      * @return List of URI objects
      */
     @Override
-    public List<URI> services(String protocol, String serviceId, String tag) {
+    public List<URI> services(String protocol, String serviceId, String tag)
+    {
+        if(StringUtils.isBlank(serviceId)) {
+            logger.debug("The serviceId cannot be blank");
+            return new ArrayList<>();
+        }
+
         // transform to a list of URIs
         return discovery(protocol, serviceId, tag).stream()
                 .map(this::toUri)
