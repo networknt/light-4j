@@ -84,10 +84,15 @@ public class DumpHandler implements MiddlewareHandler {
             }
             //when complete exchange, dump response info to result, and log the result.
             exchange.addExchangeCompleteListener((exchange1, nextListener) ->{
-                rootDumper.dumpResponse(result);
-                //log the result
-                DumpHelper.logResult(result, config);
-                nextListener.proceed();
+                try {
+                    rootDumper.dumpResponse(result);
+                    //log the result
+                    DumpHelper.logResult(result, config);
+                } catch (Throwable e) {
+                    logger.error("ExchangeListenerThrowable", e);
+                } finally {
+                    nextListener.proceed();
+                }
             });
         }
         Handler.next(exchange, next);
