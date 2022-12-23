@@ -108,6 +108,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
                 return;
             }
         }
+        if(logger.isDebugEnabled()) logger.debug("BasicAuthHandler.handleRequest ends.");
         Handler.next(exchange, next);
 
     }
