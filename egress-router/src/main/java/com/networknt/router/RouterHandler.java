@@ -40,7 +40,7 @@ public class RouterHandler implements HttpHandler {
     private static final Logger logger = LoggerFactory.getLogger(RouterHandler.class);
     private static RouterConfig config;
 
-    protected ProxyHandler proxyHandler;
+    protected static ProxyHandler proxyHandler;
 
     public RouterHandler() {
         config = RouterConfig.load();
@@ -78,5 +78,24 @@ public class RouterHandler implements HttpHandler {
     public void reload() {
         config.reload();
         ModuleRegistry.registerModule(RouterHandler.class.getName(), config.getMappedConfig(), null);
+        LoadBalancingRouterProxyClient client = new LoadBalancingRouterProxyClient();
+        if(config.httpsEnabled) client.setSsl(Http2Client.getInstance().getDefaultXnioSsl());
+        if(config.http2Enabled) {
+            client.setOptionMap(OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+        } else {
+            client.setOptionMap(OptionMap.EMPTY);
+        }
+        proxyHandler = ProxyHandler.builder()
+                .setProxyClient(client)
+                .setMaxConnectionRetries(config.maxConnectionRetries)
+                .setMaxRequestTime(config.maxRequestTime)
+                .setReuseXForwarded(config.reuseXForwarded)
+                .setRewriteHostHeader(config.rewriteHostHeader)
+                .setUrlRewriteRules(config.urlRewriteRules)
+                .setMethodRewriteRules(config.methodRewriteRules)
+                .setQueryParamRewriteRules(config.queryParamRewriteRules)
+                .setHeaderRewriteRules(config.headerRewriteRules)
+                .setNext(ResponseCodeHandler.HANDLE_404)
+                .build();
     }
 }
