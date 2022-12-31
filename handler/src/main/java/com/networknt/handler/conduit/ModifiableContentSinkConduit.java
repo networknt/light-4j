@@ -144,7 +144,7 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
             if (responseDataBuffer == null) {
                 break;
             }
-
+            if(logger.isTraceEnabled()) logger.trace("buffer position {} and buffer limit {}", responseDataBuffer.getBuffer().position(), responseDataBuffer.getBuffer().limit());
             while (responseDataBuffer.getBuffer().position() < responseDataBuffer.getBuffer().limit()) {
                 if (logger.isTraceEnabled()) {
                     logger.trace("Before write decoded buffer: {}\nBefore write buffer position: {}", StandardCharsets.UTF_8.decode(responseDataBuffer.getBuffer().duplicate()), responseDataBuffer.getBuffer().position());
@@ -167,18 +167,19 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
      * @param dests - the updated buffered response data.
      */
     private void updateContentLength(HttpServerExchange exchange, PooledByteBuffer[] dests) {
-        long length = 0;
-
-        for (PooledByteBuffer dest : dests) {
-            if (dest != null) {
-                length += dest.getBuffer().limit();
-            }
-        }
-        if(logger.isTraceEnabled()) logger.trace("PooledByteBuffer array added up length = " + length);
-        exchange.getResponseHeaders().put(Headers.CONTENT_LENGTH, length);
-
         // need also to update length of ServerFixedLengthStreamSinkConduit. Should we do this for anything that extends AbstractFixedLengthStreamSinkConduit?
         if (this.next instanceof ServerFixedLengthStreamSinkConduit) {
+            long length = 0;
+
+            for (PooledByteBuffer dest : dests) {
+                if (dest != null) {
+                    length += dest.getBuffer().limit();
+                }
+            }
+            if(logger.isTraceEnabled()) logger.trace("PooledByteBuffer array added up length = " + length);
+            // only when the next conduit is the ServerFixedLengthStreamSinkConduit, then we need to update the content length in the header.
+            exchange.getResponseHeaders().put(Headers.CONTENT_LENGTH, length);
+
             Method m;
             if(logger.isTraceEnabled()) logger.trace("The next conduit is ServerFixedLengthStreamSinkConduit and reset the length.");
             try {
