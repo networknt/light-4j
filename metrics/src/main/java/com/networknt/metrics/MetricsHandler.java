@@ -122,21 +122,26 @@ public class MetricsHandler implements MiddlewareHandler {
 
         long startTime = Clock.defaultClock().getTick();
         exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
-            Map<String, Object> auditInfo = exchange1.getAttachment(AttachmentConstants.AUDIT_INFO);
-            if(auditInfo != null) {
-                Map<String, String> tags = new HashMap<>();
-                tags.put("endpoint", (String)auditInfo.get(Constants.ENDPOINT_STRING));
-                tags.put("clientId", auditInfo.get(Constants.CLIENT_ID_STRING) != null ? (String)auditInfo.get(Constants.CLIENT_ID_STRING) : "unknown");
-                tags.put("scopeClientId", auditInfo.get(Constants.SCOPE_CLIENT_ID_STRING) != null ? (String)auditInfo.get(Constants.SCOPE_CLIENT_ID_STRING) : "unknown");
-                tags.put("callerId", auditInfo.get(Constants.CALLER_ID_STRING) != null ? (String)auditInfo.get(Constants.CALLER_ID_STRING) : "unknown");
-                long time = Clock.defaultClock().getTick() - startTime;
-                MetricName metricName = new MetricName("response_time");
-                metricName = metricName.tagged(commonTags);
-                metricName = metricName.tagged(tags);
-                registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.TIMERS).update(time, TimeUnit.NANOSECONDS);
-                incCounterForStatusCode(exchange1.getStatusCode(), commonTags, tags);
+            try {
+                Map<String, Object> auditInfo = exchange1.getAttachment(AttachmentConstants.AUDIT_INFO);
+                if(auditInfo != null) {
+                    Map<String, String> tags = new HashMap<>();
+                    tags.put("endpoint", (String)auditInfo.get(Constants.ENDPOINT_STRING));
+                    tags.put("clientId", auditInfo.get(Constants.CLIENT_ID_STRING) != null ? (String)auditInfo.get(Constants.CLIENT_ID_STRING) : "unknown");
+                    tags.put("scopeClientId", auditInfo.get(Constants.SCOPE_CLIENT_ID_STRING) != null ? (String)auditInfo.get(Constants.SCOPE_CLIENT_ID_STRING) : "unknown");
+                    tags.put("callerId", auditInfo.get(Constants.CALLER_ID_STRING) != null ? (String)auditInfo.get(Constants.CALLER_ID_STRING) : "unknown");
+                    long time = Clock.defaultClock().getTick() - startTime;
+                    MetricName metricName = new MetricName("response_time");
+                    metricName = metricName.tagged(commonTags);
+                    metricName = metricName.tagged(tags);
+                    registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.TIMERS).update(time, TimeUnit.NANOSECONDS);
+                    incCounterForStatusCode(exchange1.getStatusCode(), commonTags, tags);
+                }
+            } catch (Throwable e) {
+                logger.error("ExchangeListener throwable",  e);
+            } finally {
+                nextListener.proceed();
             }
-            nextListener.proceed();
         });
         if(logger.isDebugEnabled()) logger.debug("MetricsHandler.handleRequest ends.");
         Handler.next(exchange, next);

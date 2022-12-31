@@ -91,29 +91,34 @@ public class PrometheusHandler implements MiddlewareHandler {
         SimpleTimer respTimer = new SimpleTimer();
 
         exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
-            Map<String, Object> auditInfo = exchange1.getAttachment(AttachmentConstants.AUDIT_INFO);
-            if(auditInfo != null) {
-                Map<String, String> tags = new HashMap<>();
-                tags.put("endpoint", (String)auditInfo.get(Constants.ENDPOINT_STRING));
-                tags.put("clientId", auditInfo.get(Constants.CLIENT_ID_STRING) != null ? (String)auditInfo.get(Constants.CLIENT_ID_STRING) : "unknown");
+            try {
+                Map<String, Object> auditInfo = exchange1.getAttachment(AttachmentConstants.AUDIT_INFO);
+                if(auditInfo != null) {
+                    Map<String, String> tags = new HashMap<>();
+                    tags.put("endpoint", (String)auditInfo.get(Constants.ENDPOINT_STRING));
+                    tags.put("clientId", auditInfo.get(Constants.CLIENT_ID_STRING) != null ? (String)auditInfo.get(Constants.CLIENT_ID_STRING) : "unknown");
 
-                // The tags can be empty in error cases.
-                if (!tags.isEmpty()) {
-                    List<String> labels = new ArrayList<>(tags.keySet());
-                    List<String> labelValues = new ArrayList<>(tags.values());
+                    // The tags can be empty in error cases.
+                    if (!tags.isEmpty()) {
+                        List<String> labels = new ArrayList<>(tags.keySet());
+                        List<String> labelValues = new ArrayList<>(tags.values());
 
-                    summary(RESPONSE_TIME_SECOND, labels).labels(labelValues.stream().toArray(String[]::new)).observe(respTimer.elapsedSeconds());
+                        summary(RESPONSE_TIME_SECOND, labels).labels(labelValues.stream().toArray(String[]::new)).observe(respTimer.elapsedSeconds());
 
-                    incCounterForStatusCode(exchange1.getStatusCode(), labels, labelValues);
-                    if (config.enableHotspot) {
-                        logger.info("Prometheus hotspot monitor enabled.");
-                        DefaultExports.initialize();
+                        incCounterForStatusCode(exchange1.getStatusCode(), labels, labelValues);
+                        if (config.enableHotspot) {
+                            logger.info("Prometheus hotspot monitor enabled.");
+                            DefaultExports.initialize();
+                        }
+                    } else {
+                        logger.debug("Tags was empty. AuditInfo size " + auditInfo.size());
                     }
-                } else {
-                    logger.debug("Tags was empty. AuditInfo size " + auditInfo.size());
                 }
+            } catch (Throwable e) {
+                logger.error("ExchangeListener throwable", e);
+            } finally {
+                nextListener.proceed();
             }
-            nextListener.proceed();
         });
 
         Handler.next(exchange, next);
