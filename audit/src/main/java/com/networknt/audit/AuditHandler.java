@@ -71,7 +71,6 @@ import java.util.*;
  * responseTime
  *
  * Created by steve on 17/09/16.
- * This handler is replaced by the AuditInterceptor for logging request body and response body.
  */
 public class AuditHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(AuditHandler.class);
@@ -142,41 +141,45 @@ public class AuditHandler implements MiddlewareHandler {
         if (config.isStatusCode() || config.isResponseTime()) {
             exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
                 // response status code and response time.
-                if (config.isStatusCode()) {
-                    auditMap.put(STATUS_CODE, exchange1.getStatusCode());
-                }
-                if (config.isResponseTime()) {
-                    auditMap.put(RESPONSE_TIME, System.currentTimeMillis() - start);
-                }
-                // add additional fields accumulated during the microservice execution
-                // according to the config
-                Map<String, Object> auditInfo1 = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
-                if (auditInfo1 != null && config.getAuditList() != null) {
-                    for (String name : config.getAuditList()) {
-                        Object object = auditInfo1.get(name);
-                        if(object != null) {
-                            auditMap.putIfAbsent(name, object);
+                try {
+                    if (config.isStatusCode()) {
+                        auditMap.put(STATUS_CODE, exchange1.getStatusCode());
+                    }
+                    if (config.isResponseTime()) {
+                        auditMap.put(RESPONSE_TIME, System.currentTimeMillis() - start);
+                    }
+                    // add additional fields accumulated during the microservice execution
+                    // according to the config
+                    Map<String, Object> auditInfo1 = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
+                    if (auditInfo1 != null && config.getAuditList() != null) {
+                        for (String name : config.getAuditList()) {
+                            Object object = auditInfo1.get(name);
+                            if(object != null) {
+                                auditMap.putIfAbsent(name, object);
+                            }
                         }
                     }
-                }
-                // audit the response body.
-                if(config.getAuditList() != null && config.getAuditList().contains(RESPONSE_BODY_KEY)) {
-                    auditResponseBody(exchange, auditMap);
-                }
-
-                try {
-                    // audit entries only is it is an error, if auditOnError flag is set
-                    if (config.isAuditOnError()) {
-                        if (exchange1.getStatusCode() >= 400)
-                            config.getAuditFunc().accept(Config.getInstance().getMapper().writeValueAsString(auditMap));
-                    } else {
-                        config.getAuditFunc().accept(Config.getInstance().getMapper().writeValueAsString(auditMap));
+                    // audit the response body.
+                    if(config.getAuditList() != null && config.getAuditList().contains(RESPONSE_BODY_KEY)) {
+                        auditResponseBody(exchange, auditMap);
                     }
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
-                }
 
-                nextListener.proceed();
+                    try {
+                        // audit entries only is it is an error, if auditOnError flag is set
+                        if (config.isAuditOnError()) {
+                            if (exchange1.getStatusCode() >= 400)
+                                config.getAuditFunc().accept(Config.getInstance().getMapper().writeValueAsString(auditMap));
+                        } else {
+                            config.getAuditFunc().accept(Config.getInstance().getMapper().writeValueAsString(auditMap));
+                        }
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
+                    }
+                } catch (Throwable e) {
+                    logger.error("ExchangeListener Throwable", e);
+                } finally {
+                    nextListener.proceed();
+                }
             });
         } else {
             config.getAuditFunc().accept(config.getConfig().getMapper().writeValueAsString(auditMap));
