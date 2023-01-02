@@ -66,10 +66,13 @@ public class Http2ClientConnectionPool {
         List<CachedConnection> result = connectionPool.get(uriString);
         if (result == null) {
             synchronized (Http2ClientConnectionPool.class) {
+                if(logger.isDebugEnabled()) logger.debug("Second try of getting connections for uri: {}", uriString);
                 result = connectionPool.get(uriString);
             }
         }
+        if(logger.isDebugEnabled()) logger.debug("Got {} connections for uri: {}", result != null ? result.size() : null, uriString);
         CachedConnection cachedConnection = selectConnection(uri, result, false);
+        if(logger.isDebugEnabled()) logger.debug("Got cached connection: {} for uri: {}", cachedConnection, uriString);
         if (cachedConnection != null) {
             hangConnection(uri, cachedConnection);
             return cachedConnection.get();
@@ -80,6 +83,7 @@ public class Http2ClientConnectionPool {
     public synchronized void cacheConnection(URI uri, ClientConnection connection) {
         CachedConnection cachedConnection = getAndRemoveClosedConnection(uri);
         if (cachedConnection == null || getConnectionStatus(uri, cachedConnection) != ConnectionStatus.MULTIPLEX_SUPPORT) {
+            if(logger.isDebugEnabled()) logger.debug("Cached connection: {} is either null or not support multiplex", cachedConnection);
             CachedConnection newConnection = new CachedConnection(connection);
             connectionPool.computeIfAbsent(uri.toString(), k -> new LinkedList<>()).add(newConnection);
             connectionCount.getAndIncrement();
@@ -97,6 +101,7 @@ public class Http2ClientConnectionPool {
                 result = connectionPool.get(uriString);
             }
         }
+        if(logger.isDebugEnabled()) logger.debug("Got {} cache connections for uri: {} from connectionPool", result != null ? result.size() : null, uriString);
         return selectConnection(uri, result, true);
     }
 
@@ -113,33 +118,35 @@ public class Http2ClientConnectionPool {
             parkedConList = new ArrayList<>();
             clientConnectionParkedMap.put(host, parkedConList);
         }
-        logger.info("Total parked connection for the host {} is {}", host, parkedConList.size());
+        if(logger.isDebugEnabled()) logger.debug("Total parked connection for the host {} is {}", host, parkedConList.size());
         Iterator<CachedConnection> iter = parkedConList.iterator();
         while(iter.hasNext()) {
             // the isParkedConnectionExpired will close the connection.
             if(iter.next().isParkedConnectionExpired()) {
                 iter.remove();
-                logger.info("Removing the expired Parked Connection for the host {}", host);
+                if(logger.isDebugEnabled()) logger.debug("Removing the expired Parked Connection for the host {}", host);
             }
         }
         try {
             if(connection.get().isOpen()) {
                 parkedConList.add(connection);
-                logger.info("Parked the coonection for the host {}, total parked count is {}", host, parkedConList.size());
+                if(logger.isDebugEnabled()) logger.debug("Parked the connection for the host {}, total parked count is {}", host, parkedConList.size());
             }
         } catch(Exception ignored) {
             //ignore any exceptions in this catch. Exception logged on info level.
-            logger.info("Exception while handling the parked connection. Exception is :", ignored);
+            if(logger.isInfoEnabled()) logger.info("Exception while handling the parked connection. Exception is :", ignored);
         }
     }
 
     private synchronized CachedConnection selectConnection(URI uri, List<CachedConnection> connections, boolean isRemoveClosedConnection) {
         if (connections != null) {
+            if(logger.isDebugEnabled()) logger.debug("Before removing max connections per host from list of {} connections for uri: {} ...", connections.size(), uri);
             if (connections.size() > ClientConfig.get().getMaxConnectionNumPerHost() * 0.75) {
                 while (connections.size() > ClientConfig.get().getMinConnectionNumPerHost() && connections.size() > 0) {
                     connections.remove(0);
                 }
             }
+            if(logger.isDebugEnabled()) logger.debug("After removing max connections per host from list of {} connections for uri: {} ...", connections.size(), uri);
             if (isRemoveClosedConnection) {
                 Iterator<CachedConnection> iterator = connections.iterator();
                 while (iterator.hasNext()) {
@@ -154,8 +161,10 @@ public class Http2ClientConnectionPool {
                         }
                     }
                 }
+                if(logger.isDebugEnabled()) logger.debug("After removing closed connections, {} connections left in the list for uri: {}", connections.size(), uri);
             }
             if (connections.size() > 0) {
+                if(logger.isDebugEnabled()) logger.debug("Selecting a valid connections from cached {} connections for uri: {} ...", connections.size(), uri);
                 // Balance the selection of each connection
                 int randomInt = ThreadLocalRandom.current().nextInt(0, connections.size());
                 for (int i = 0; i < connections.size(); i++) {
@@ -165,7 +174,9 @@ public class Http2ClientConnectionPool {
                     if (status == ConnectionStatus.AVAILABLE || status == ConnectionStatus.MULTIPLEX_SUPPORT) {
                         return connection;
                     }
+                    logger.warn("Connection status for uri: {} is {}", uri, status);
                 }
+                logger.warn("None of the connection cached can be used for uri: {}", uri);
             }
         }
         return null;
@@ -209,6 +220,7 @@ public class Http2ClientConnectionPool {
             // Increase the request count for the connection for every invocation
             connection.incrementRequestCount();
             ConnectionStatus status = getConnectionStatus(uri, connection);
+            if(logger.isDebugEnabled()) logger.debug("Got connection status: {} for uri: {} before hang it", status, uri);
             // Hanging new or old Http/1.1 connection
             if ((status == null && !connection.isHttp2Connection()) || status == ConnectionStatus.AVAILABLE) {
                 connectionStatusMap.put(connection.get(), ConnectionStatus.HANGING);
@@ -270,11 +282,11 @@ public class Http2ClientConnectionPool {
 
         public boolean isParkedConnectionExpired() {
             if(System.currentTimeMillis() > (this.lifeStartTimeParked + this.ttlParked)) {
-                logger.info("ParkedConnection expired. Start time of this parked connection is {}", new Date(this.lifeStartTimeParked));
+                if(logger.isDebugEnabled()) logger.debug("ParkedConnection expired. Start time of this parked connection is {}", new Date(this.lifeStartTimeParked));
                 try {
                     this.clientConnection.close();
                 } catch (Exception ignored){
-                    logger.info("Exception while closing the parked connection. This exception is suppressed. Exception is {}", ignored);
+                    if(logger.isInfoEnabled()) logger.info("Exception while closing the parked connection. This exception is suppressed. Exception is {}", ignored);
                 }
                 return true;
             }
