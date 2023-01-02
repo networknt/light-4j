@@ -72,6 +72,7 @@ import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -204,6 +205,32 @@ public class Http2Client {
         return new UndertowXnioSsl(WORKER.getXnio(), OptionMap.EMPTY, BUFFER_POOL, sslContext);
     }
 
+    /**
+     * This is a public static method to get a ClientConnection object returned
+     * from the borrowConnection methods.
+     *
+     * @param timeoutSeconds timeout in seconds
+     * @param future IoFuture object that contains the ClientConnection.
+     * @return ClientConnection object.
+     */
+    public ClientConnection getFutureConnection(long timeoutSeconds, IoFuture<ClientConnection> future) {
+        if(future.await(timeoutSeconds, TimeUnit.SECONDS) != IoFuture.Status.DONE) {
+            throw new RuntimeException("Connection establishment timed out");
+        }
+
+        ClientConnection connection = null;
+        try {
+            connection = future.get();
+        } catch (IOException e) {
+            throw new RuntimeException("Connection establishment generated I/O exception", e);
+        }
+
+        if(connection == null)
+            throw new RuntimeException("Connection establishment failed (null) - Full connection terminated");
+
+        return connection;
+    }
+
     public IoFuture<ClientConnection> connect(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         return connect(uri, worker, null, bufferPool, options);
     }
@@ -212,10 +239,17 @@ public class Http2Client {
         final FutureResult<ClientConnection> result = new FutureResult<>();
         ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
         if(connection != null && connection.isOpen()) {
+            if(logger.isDebugEnabled()) logger.debug("Got an open connection from http2ClientConnectionPool");
             result.setResult(connection);
             return result.getIoFuture();
         }
+        if(logger.isDebugEnabled()) logger.debug("Got a null or non open connection: {} from http2ClientConnectionPool. Creating a new one ...", connection);
         return connect(uri, worker, null, bufferPool, options);
+    }
+
+    public ClientConnection borrowConnection(long timeoutSeconds, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
+        IoFuture<ClientConnection> future = borrowConnection(uri, worker, bufferPool, options);
+        return getFutureConnection(timeoutSeconds, future);
     }
 
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
@@ -226,10 +260,17 @@ public class Http2Client {
         final FutureResult<ClientConnection> result = new FutureResult<>();
         ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
         if(connection != null && connection.isOpen()) {
+            if(logger.isDebugEnabled()) logger.debug("Got an open connection from http2ClientConnectionPool");
             result.setResult(connection);
             return result.getIoFuture();
         }
+        if(logger.isDebugEnabled()) logger.debug("Got a null or non open connection: {} from http2ClientConnectionPool. Creating a new one ...", connection);
         return connect(bindAddress, uri, worker, null, bufferPool, options);
+    }
+
+    public ClientConnection borrowConnection(long timeoutSeconds, InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
+        IoFuture<ClientConnection> future = borrowConnection(bindAddress, uri, worker, bufferPool, options);
+        return getFutureConnection(timeoutSeconds, future);
     }
 
     public XnioSsl getDefaultXnioSsl() {
@@ -257,11 +298,18 @@ public class Http2Client {
         final FutureResult<ClientConnection> result = new FutureResult<>();
         ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
         if(connection != null && connection.isOpen()) {
+            if(logger.isDebugEnabled()) logger.debug("Got an open connection from http2ClientConnectionPool");
             result.setResult(connection);
             return result.getIoFuture();
         }
+        if(logger.isDebugEnabled()) logger.debug("Got a null or non open connection: {} from http2ClientConnectionPool. Creating a new one ...", connection);
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         return connect((InetSocketAddress) null, uri, worker, ssl, bufferPool, options);
+    }
+
+    public ClientConnection borrowConnection(long timeoutSeconds, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        IoFuture<ClientConnection> future = borrowConnection(uri, worker, ssl, bufferPool, options);
+        return getFutureConnection(timeoutSeconds, future);
     }
 
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
@@ -271,12 +319,14 @@ public class Http2Client {
         provider.connect(new ClientCallback<ClientConnection>() {
             @Override
             public void completed(ClientConnection r) {
+                if(logger.isDebugEnabled()) logger.debug("Adding the new connection: {} to FutureResult and cache it for uri: {}", r, uri);
                 result.setResult(r);
                 http2ClientConnectionPool.cacheConnection(uri, r);
             }
 
             @Override
             public void failed(IOException e) {
+                if(logger.isDebugEnabled()) logger.debug("Failed to get new connection for uri: {}", uri);
                 result.setException(e);
             }
         }, bindAddress, uri, worker, ssl, bufferPool, options);
@@ -291,10 +341,17 @@ public class Http2Client {
         final FutureResult<ClientConnection> result = new FutureResult<>();
         ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
         if(connection != null && connection.isOpen()) {
+            if(logger.isDebugEnabled()) logger.debug("Got an open connection from http2ClientConnectionPool");
             result.setResult(connection);
             return result.getIoFuture();
         }
+        if(logger.isDebugEnabled()) logger.debug("Got a null or non open connection: {} from http2ClientConnectionPool. Creating a new one ...", connection);
         return connect((InetSocketAddress) null, uri, ioThread, null, bufferPool, options);
+    }
+
+    public ClientConnection borrowConnection(long timeoutSeconds, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
+        IoFuture<ClientConnection> future = borrowConnection(uri, ioThread, bufferPool, options);
+        return getFutureConnection(timeoutSeconds, future);
     }
 
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
@@ -305,10 +362,17 @@ public class Http2Client {
         final FutureResult<ClientConnection> result = new FutureResult<>();
         ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
         if(connection != null && connection.isOpen()) {
+            if(logger.isDebugEnabled()) logger.debug("Got an open connection from http2ClientConnectionPool");
             result.setResult(connection);
             return result.getIoFuture();
         }
+        if(logger.isDebugEnabled()) logger.debug("Got a null or non open connection: {} from http2ClientConnectionPool. Creating a new one ...", connection);
         return connect(bindAddress, uri, ioThread, null, bufferPool, options);
+    }
+
+    public ClientConnection borrowConnection(long timeoutSeconds, InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
+        IoFuture<ClientConnection> future = borrowConnection(bindAddress, uri, ioThread, bufferPool, options);
+        return getFutureConnection(timeoutSeconds, future);
     }
 
     public IoFuture<ClientConnection> connect(final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
@@ -320,11 +384,18 @@ public class Http2Client {
         final FutureResult<ClientConnection> result = new FutureResult<>();
         ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
         if(connection != null && connection.isOpen()) {
+            if(logger.isDebugEnabled()) logger.debug("Got an open connection from http2ClientConnectionPool");
             result.setResult(connection);
             return result.getIoFuture();
         }
+        if(logger.isDebugEnabled()) logger.debug("Got a null or non open connection: {} from http2ClientConnectionPool. Creating a new one ...", connection);
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         return connect((InetSocketAddress) null, uri, ioThread, ssl, bufferPool, options);
+    }
+
+    public ClientConnection borrowConnection(long timeoutSeconds, final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        IoFuture<ClientConnection> future = borrowConnection(uri, ioThread, ssl, bufferPool, options);
+        return getFutureConnection(timeoutSeconds, future);
     }
 
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
@@ -334,12 +405,14 @@ public class Http2Client {
         provider.connect(new ClientCallback<ClientConnection>() {
             @Override
             public void completed(ClientConnection r) {
+                if(logger.isDebugEnabled()) logger.debug("Adding the new connection: {} to FutureResult and cache it for uri: {}", r, uri);
                 result.setResult(r);
                 http2ClientConnectionPool.cacheConnection(uri, r);
             }
 
             @Override
             public void failed(IOException e) {
+                if(logger.isDebugEnabled()) logger.debug("Failed to get new connection for uri: {}", uri);
                 result.setException(e);
             }
         }, bindAddress, uri, ioThread, ssl, bufferPool, options);
@@ -1035,7 +1108,7 @@ public class Http2Client {
         CompletableFuture<ClientResponse> futureClientResponse;
         AtomicReference<ClientConnection> currentConnection = new AtomicReference<>(http2ClientConnectionPool.getConnection(uri));
         if (currentConnection.get() != null && currentConnection.get().isOpen()) {
-            logger.debug("Reusing the connection: {} to {}", currentConnection.toString(), uri.toString());
+            if(logger.isDebugEnabled()) logger.debug("Reusing the connection: {} to {}", currentConnection.toString(), uri.toString());
             futureClientResponse = getFutureClientResponse(currentConnection.get(), uri, request, requestBody);
         } else {
             CompletableFuture<ClientConnection> futureConnection = this.connectAsync(uri);
