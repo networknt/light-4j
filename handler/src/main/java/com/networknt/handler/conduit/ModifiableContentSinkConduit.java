@@ -167,19 +167,21 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
      * @param dests - the updated buffered response data.
      */
     private void updateContentLength(HttpServerExchange exchange, PooledByteBuffer[] dests) {
+        long length = 0;
+
+        for (PooledByteBuffer dest : dests) {
+            if (dest != null) {
+                length += dest.getBuffer().limit();
+            }
+        }
+        if(logger.isTraceEnabled()) logger.trace("PooledByteBuffer array added up length = " + length);
+        // only when content length is already in the response headers and the value is not null, we update the value. We don't want to
+        // introduce a new header that doesn't exist. We update the length just in case that response body transformer updated the body.
+        if(exchange.getResponseHeaders().contains(Headers.CONTENT_LENGTH)) {
+            exchange.getResponseHeaders().put(Headers.CONTENT_LENGTH, length);
+        }
         // need also to update length of ServerFixedLengthStreamSinkConduit. Should we do this for anything that extends AbstractFixedLengthStreamSinkConduit?
         if (this.next instanceof ServerFixedLengthStreamSinkConduit) {
-            long length = 0;
-
-            for (PooledByteBuffer dest : dests) {
-                if (dest != null) {
-                    length += dest.getBuffer().limit();
-                }
-            }
-            if(logger.isTraceEnabled()) logger.trace("PooledByteBuffer array added up length = " + length);
-            // only when the next conduit is the ServerFixedLengthStreamSinkConduit, then we need to update the content length in the header.
-            exchange.getResponseHeaders().put(Headers.CONTENT_LENGTH, length);
-
             Method m;
             if(logger.isTraceEnabled()) logger.trace("The next conduit is ServerFixedLengthStreamSinkConduit and reset the length.");
             try {
