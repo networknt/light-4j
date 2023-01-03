@@ -26,7 +26,27 @@ ttlCheck: ${consul.ttlCheck:true}
 # This is limited to 10 minutes.This value can be specified in the form of "10s" or "5m" (i.e., 10 seconds or 5 minutes,
 # respectively).
 wait: ${consul.wait:600s}
-# enable HTTP/2 
+# Additional buffer of time to allow Consul to terminate the blocking query connection
+timeoutBuffer: ${consul.timeoutBuffer:5s}
+# enable HTTP/2
 # must disable when using HTTP with Consul (mostly using local Consul agent), Consul only supports HTTP/1.1 when not using TLS
 # optional to enable when using HTTPS with Consul, it will have better performance
 enableHttp2: ${consul.enableHttp2:false}
+# Consul connection establishment timeout in seconds
+connectionTimeout: ${consul.connectionTimeout:5}
+# Consul request completion timeout in seconds
+# This does NOT apply to Consul service discovery lookups (see the 'wait' and 'timeoutBuffer' properties for that)
+requestTimeout: ${consul.requestTimeout:5}
+# Time to wait in seconds between reconnect attempts when Consul connection fails
+reconnectInterval: ${consul.reconnectInterval:2}
+# A random number of seconds in between 0 and reconnectJitter added to reconnectInterval (to avoid too many reconnect
+# requests at one time)
+reconnectJitter: ${consul.reconnectJitter:2}
+# Time in seconds between blocking queries with Consul
+lookupInterval: ${consul.lookupInterval:30}
+# Max number of failed Consul connection or request attempts before self-termination
+# -1 means an infinite # of attempts are allowed
+maxAttemptsBeforeShutdown: ${consul.maxAttemptsBeforeShutdown:-1}
+# Shuts down host application if any Consul lookup thread stops reporting a heartbeat for
+# 2 * ( lookupInterval + wait (in seconds) + timeoutBuffer (in seconds) ) seconds
+shutdownIfThreadFrozen: ${consul.shutdownIfThreadFrozen:false}

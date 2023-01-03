@@ -158,4 +158,39 @@ public class ConsulUtils {
         return host + ":" + path + ":" + port;
     }
 
+    /**
+     * convert the string wait to integer seconds from the config file. The possible format might be
+     * 600s or 10m etc. And the result will be 600 after the conversion.
+     *
+     * @param wait String format of wait from the config
+     * @return int of the wait seconds
+     */
+    public static int getWaitInSecond(String wait) {
+        int w = 600;
+        if(wait.endsWith("s")) {
+            w = Integer.valueOf(wait.substring(0, wait.length() - 1));
+        } else if (wait.endsWith("m")) {
+            w = Integer.valueOf(wait.substring(0, wait.length() - 1)) * 60;
+        }
+        return w;
+    }
+
+    /**
+     * convert the string timeoutBuffer to integer seconds from the config file. The possible format might be
+     * 600s or 10m etc. And the result will be 600 after the conversion.
+     *
+     * Default timeoutBuffer value is 5s
+     *
+     * @param timeoutBuffer String format of timeoutBuffer from the config
+     * @return int of the timeoutBuffer in seconds
+     */
+    public static int getTimeoutBufferInSecond(String timeoutBuffer) {
+        int w = 5;
+        if(timeoutBuffer.endsWith("s")) {
+            w = Integer.valueOf(timeoutBuffer.substring(0, timeoutBuffer.length() - 1));
+        } else if (timeoutBuffer.endsWith("m")) {
+            w = Integer.valueOf(timeoutBuffer.substring(0, timeoutBuffer.length() - 1)) * 60;
+        }
+        return w;
+    }
 }
