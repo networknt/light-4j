@@ -1,0 +1,22 @@
+# direct-registry.yml
+# For light-gateway or http-sidecar that needs to reload configuration for the router hosts, you can define the
+# service to hosts mapping in this configuration to overwrite the definition in the service.yml file as part of
+# the parameters. This configuration will only be used if parameters in the service.yml for DirectRegistry is null.
+
+# directUrls is the mapping between the serviceId to the hosts separated by comma. If environment tag is used, you
+# can add it to the serviceId separated with a vertical bar |
+directUrls: ${direct-registry.directUrls:}
+
+# The following is in YAML format.
+#  code: http://192.168.1.100:6881,http://192.168.1.101:6881
+#  token: http://192.168.1.100:6882
+#  com.networknt.test-1.0.0: http://localhost,https://localhost
+#  command|0000: https://192.168.1.142:8440
+#  command|0001: https://192.168.1.142:8441
+#  command|0002: https://192.168.1.142:8442
+
+# The following is in JSON string format.
+# directUrls: {"code":"http://192.168.1.100:6881,http://192.168.1.101:6881","token":"http://192.168.1.100:6882","com.networknt.test-1.0.0":"http://localhost,https://localhost","command|0000":"https://192.168.1.142:8440","command|0001":"https://192.168.1.142:8441","command|0002":"https://192.168.1.142:8442"}
+
+# The following is in string map format.
+# directUrls: code=http://192.168.1.100:6881,http://192.168.1.101:6881&token=http://192.168.1.100:6882&com.networknt.test-1.0.0=http://localhost,https://localhost&command|0000=https://192.168.1.142:8440&command|0001=https://192.168.1.142:8441&command|0002=https://192.168.1.142:8442
