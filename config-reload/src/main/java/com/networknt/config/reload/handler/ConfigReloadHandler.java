@@ -13,6 +13,7 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HttpString;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -79,10 +80,14 @@ public class ConfigReloadHandler implements LightHttpHandler {
     private boolean processReloadMethod(Class<?> handler) {
         try {
             Method reload = handler.getDeclaredMethod(RELOAD_METHOD);
-            Object processorObject = handler.getDeclaredConstructor().newInstance();
-            Object result = reload.invoke(processorObject);
-
-            logger.info("Invoke reload method " + result);
+            if(Modifier.isStatic(reload.getModifiers())) {
+                Object result = reload.invoke(null, null);
+                logger.info("Invoke static reload method " + result);
+            } else {
+                Object processorObject = handler.getDeclaredConstructor().newInstance();
+                Object result = reload.invoke(processorObject);
+                logger.info("Invoke reload method " + result);
+            }
             return true;
         } catch (Exception e) {
             logger.error("Cannot invoke reload method for :" + handler.getName());
