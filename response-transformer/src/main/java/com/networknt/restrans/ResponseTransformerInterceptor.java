@@ -9,6 +9,7 @@ import com.networknt.rule.RuleEngine;
 import com.networknt.rule.RuleLoaderStartupHook;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
+import com.networknt.utility.ConfigUtils;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -109,7 +110,7 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
             Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
             Map<String, Object> objMap = this.createExchangeInfoMap(exchange, method, responseBody, auditInfo);
             // need to get the rule/rules to execute from the RuleLoaderStartupHook. First, get the endpoint.
-            String endpoint;
+            String endpoint, serviceEntry = null;
             if (auditInfo != null) {
                 if (logger.isDebugEnabled())
                     logger.debug("auditInfo exists. Grab endpoint from it.");
@@ -120,16 +121,19 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
                 endpoint = exchange.getRequestPath() + "@" + method.toString().toLowerCase();
             }
 
-            if (logger.isDebugEnabled())
-                logger.debug("request endpoint: " + endpoint);
-
             // checked the RuleLoaderStartupHook to ensure it is loaded. If not, return an error to the caller.
             if (RuleLoaderStartupHook.endpointRules == null) {
                 logger.error("RuleLoaderStartupHook endpointRules is null");
             }
+            
+            // Grab ServiceEntry from config
+            endpoint = ConfigUtils.toInternalKey(exchange.getRequestMethod().toString().toLowerCase(), exchange.getRequestURI());
+            if(logger.isDebugEnabled()) logger.debug("request endpoint: " + endpoint);
+            serviceEntry = ConfigUtils.findServiceEntry(exchange.getRequestMethod().toString().toLowerCase(), exchange.getRequestURI(), RuleLoaderStartupHook.endpointRules);
+            if(logger.isDebugEnabled()) logger.debug("request serviceEntry: " + serviceEntry);
 
             // get the rules (maybe multiple) based on the endpoint.
-            Map<String, List> endpointRules = (Map<String, List>) RuleLoaderStartupHook.endpointRules.get(endpoint);
+            Map<String, List> endpointRules = (Map<String, List>) RuleLoaderStartupHook.endpointRules.get(serviceEntry);
             if (endpointRules == null) {
                 if (logger.isDebugEnabled())
                     logger.debug("endpointRules iS NULL");
