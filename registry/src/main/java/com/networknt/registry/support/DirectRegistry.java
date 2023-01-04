@@ -15,12 +15,14 @@
  */
 package com.networknt.registry.support;
 
+import com.networknt.config.Config;
 import com.networknt.registry.URLImpl;
 import com.networknt.status.Status;
 import com.networknt.exception.FrameworkException;
 import com.networknt.registry.NotifyListener;
 import com.networknt.registry.URL;
 import com.networknt.utility.Constants;
+import com.networknt.utility.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,43 +45,55 @@ public class DirectRegistry extends AbstractRegistry {
     private final static String PARSE_DIRECT_URL_ERROR = "ERR10019";
     private final static String GENERAL_TAG = "*";
     private ConcurrentHashMap<URL, Object> subscribeUrls = new ConcurrentHashMap();
-    private Map<String, List<URL>> directUrls = new HashMap();
+    private static Map<String, List<URL>> directUrls = new HashMap();
+    private static DirectRegistryConfig config;
 
     public DirectRegistry(URL url) {
         super(url);
-        for (Map.Entry<String, String> entry : url.getParameters().entrySet()) {
-            String tag = null;
-            try {
-                if(logger.isTraceEnabled()) logger.trace("entry key = " + entry.getKey() + " entry value = " + entry.getValue());
-                if(entry.getValue().contains(",")) {
-                    String[] directUrlArray = entry.getValue().split(",");
-                    for (String directUrl : directUrlArray) {
-                        String s = buildUrl(directUrl, entry.getKey());
+        config = DirectRegistryConfig.load();
+        if(config.directUrls != null) {
+            ModuleRegistry.registerModule(DirectRegistry.class.getName(), Config.getInstance().getJsonMapConfigNoCache(DirectRegistryConfig.CONFIG_NAME), null);
+        }
+        if(url.getParameters() != null && url.getParameters().size() > 0) {
+            // The parameters come from the service.yml injection. If it is empty, then load it from the direct-registry.yml
+            for (Map.Entry<String, String> entry : url.getParameters().entrySet()) {
+                String tag = null;
+                try {
+                    if (logger.isTraceEnabled())
+                        logger.trace("entry key = " + entry.getKey() + " entry value = " + entry.getValue());
+                    if (entry.getValue().contains(",")) {
+                        String[] directUrlArray = entry.getValue().split(",");
+                        for (String directUrl : directUrlArray) {
+                            String s = buildUrl(directUrl, entry.getKey());
+                            URL u = URLImpl.valueOf(s);
+                            tag = u.getParameter(Constants.TAG_ENVIRONMENT);
+                            String key = tag == null ? entry.getKey() : entry.getKey() + "|" + tag;
+                            List<URL> urls = directUrls.get(key);
+                            if (urls != null) {
+                                urls.add(u);
+                            } else {
+                                urls = new ArrayList<>();
+                                urls.add(u);
+                            }
+                            directUrls.put(key, urls);
+                        }
+                    } else {
+                        List<URL> urls = new ArrayList<>();
+                        String s = buildUrl(entry.getValue(), entry.getKey());
                         URL u = URLImpl.valueOf(s);
                         tag = u.getParameter(Constants.TAG_ENVIRONMENT);
                         String key = tag == null ? entry.getKey() : entry.getKey() + "|" + tag;
-                        List<URL> urls = directUrls.get(key);
-                        if(urls != null) {
-                            urls.add(u);
-                        } else {
-                            urls = new ArrayList<>();
-                            urls.add(u);
-                        }
+                        urls.add(u);
                         directUrls.put(key, urls);
                     }
-                } else {
-                    List<URL> urls = new ArrayList<>();
-                    String s = buildUrl(entry.getValue(), entry.getKey());
-                    URL u = URLImpl.valueOf(s);
-                    tag = u.getParameter(Constants.TAG_ENVIRONMENT);
-                    String key = tag == null ? entry.getKey() : entry.getKey() + "|" + tag;
-                    urls.add(u);
-                    directUrls.put(key, urls);
+                } catch (Exception e) {
+                    logger.error("Exception: ", e);
+                    throw new FrameworkException(new Status(PARSE_DIRECT_URL_ERROR, url.toString()));
                 }
-            } catch (Exception e) {
-                logger.error("Exception: ", e);
-                throw new FrameworkException(new Status(PARSE_DIRECT_URL_ERROR, url.toString()));
             }
+        } else {
+            // load from the direct-registry.yml file for the directUrls.
+            directUrls = config.getDirectUrls();
         }
     }
 
@@ -137,5 +151,11 @@ public class DirectRegistry extends AbstractRegistry {
     @Override
     protected void doUnavailable(URL url) {
         // do nothing
+    }
+
+    public static void reload() {
+        config.reload();
+        directUrls = config.getDirectUrls();
+        if(directUrls != null) ModuleRegistry.registerModule(DirectRegistry.class.getName(), Config.getInstance().getJsonMapConfigNoCache(DirectRegistryConfig.CONFIG_NAME), null);
     }
 }
