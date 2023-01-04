@@ -1,5 +1,36 @@
 # Change Log
 
+## [2.1.5](https://github.com/networknt/light-4j/tree/2.1.5) (2023-01-04)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1557 update DirectRegistry to load serviceId to hosts configur… [\#1558](https://github.com/networknt/light-4j/pull/1558) ([stevehu](https://github.com/stevehu))
+- fixes \#1555 update config-loader to support static reload method to a… [\#1556](https://github.com/networknt/light-4j/pull/1556) ([stevehu](https://github.com/stevehu))
+- fixes \#1543 revert back to the old implementation but update header o… [\#1554](https://github.com/networknt/light-4j/pull/1554) ([stevehu](https://github.com/stevehu))
+- fixes \#1552 Port consul updates from 1.6.x to master to make the modu… [\#1553](https://github.com/networknt/light-4j/pull/1553) ([stevehu](https://github.com/stevehu))
+- fixes \#1550 add another set of borrowConnection methods with timeoutS… [\#1551](https://github.com/networknt/light-4j/pull/1551) ([stevehu](https://github.com/stevehu))
+- fixes \#1548 make sure the serviceId is not blank when lookup in the L… [\#1549](https://github.com/networknt/light-4j/pull/1549) ([stevehu](https://github.com/stevehu))
+- fixes \#1546 Port 1.6.x PR to put exchange listener call back into a t… [\#1547](https://github.com/networknt/light-4j/pull/1547) ([stevehu](https://github.com/stevehu))
+- fixes \#1543 only set the response content length header with ServerFi… [\#1544](https://github.com/networknt/light-4j/pull/1544) ([stevehu](https://github.com/stevehu))
+- fixes \#1541 missing handleRequest ends in the debug log for BasicAuth… [\#1542](https://github.com/networknt/light-4j/pull/1542) ([stevehu](https://github.com/stevehu))
+- fixes \#1539 update RouterHandler to support reload on light-gateway [\#1540](https://github.com/networknt/light-4j/pull/1540) ([stevehu](https://github.com/stevehu))
+- fixes \#1537 refactor JwtVerifier to support UnifiedSecurityHandler [\#1538](https://github.com/networknt/light-4j/pull/1538) ([stevehu](https://github.com/stevehu))
+- Issue1535 [\#1536](https://github.com/networknt/light-4j/pull/1536) ([stevehu](https://github.com/stevehu))
+- fixes \#1533 refactor ApiKeyHandler to extact logic to another public … [\#1534](https://github.com/networknt/light-4j/pull/1534) ([stevehu](https://github.com/stevehu))
+- fixes \#1531 update reload to fresh the registry for SalesforceHandler [\#1532](https://github.com/networknt/light-4j/pull/1532) ([stevehu](https://github.com/stevehu))
+- fixes \#1529 status/src/main/resources/config/status.yml [\#1530](https://github.com/networknt/light-4j/pull/1530) ([stevehu](https://github.com/stevehu))
+- Feature/jasonxhl/basic auth enable ad [\#1528](https://github.com/networknt/light-4j/pull/1528) ([jasonxhl](https://github.com/jasonxhl))
+- fixes \#1526 refactor BasicAuthHandler to change the config to static … [\#1527](https://github.com/networknt/light-4j/pull/1527) ([stevehu](https://github.com/stevehu))
+- fixes \#1524 use the jwt cache full size as the max cache size in JwtV… [\#1525](https://github.com/networknt/light-4j/pull/1525) ([stevehu](https://github.com/stevehu))
+- fixes \#1520 upgrade TLS version to minimum 1.2 [\#1521](https://github.com/networknt/light-4j/pull/1521) ([stevehu](https://github.com/stevehu))
+- fixes \#1517 Expose connectionPerThread configuration for router handler [\#1518](https://github.com/networknt/light-4j/pull/1518) ([stevehu](https://github.com/stevehu))
+- fixes \#1515 allow the client crendentials token and token key to over… [\#1516](https://github.com/networknt/light-4j/pull/1516) ([stevehu](https://github.com/stevehu))
+- fixes \#1513 BasicAuthHandler throws 500 error when authorization head… [\#1514](https://github.com/networknt/light-4j/pull/1514) ([stevehu](https://github.com/stevehu))
+- fixes \#1510 Add a flag in security.yml to skip scope verification if … [\#1511](https://github.com/networknt/light-4j/pull/1511) ([stevehu](https://github.com/stevehu))
+- fixes \#1508 add jwtCacheFullSize to security.yml and log an error whe… [\#1509](https://github.com/networknt/light-4j/pull/1509) ([stevehu](https://github.com/stevehu))
+- fixes \#1506 create a ldap-util module and move the implementation cod… [\#1507](https://github.com/networknt/light-4j/pull/1507) ([stevehu](https://github.com/stevehu))
 ## [2.1.4](https://github.com/networknt/light-4j/tree/2.1.4) (2022-11-30)
 
 
