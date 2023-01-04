@@ -1,4 +1,4 @@
-package com.networknt.reqtrans;
+package com.networknt.utility;
 
 import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
