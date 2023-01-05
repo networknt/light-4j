@@ -145,6 +145,7 @@ public class ProxyHandler implements HttpHandler {
         }
         if(exchange.isResponseStarted()) {
             //we can't proxy a request that has already started, this is basically a server configuration error
+            logger.error("Cannot proxy a request that has already started.");
             UndertowLogger.REQUEST_LOGGER.cannotProxyStartedRequest(exchange);
             exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
             exchange.endExchange();

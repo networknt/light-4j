@@ -98,7 +98,7 @@
         <version.maven-version>2.7</version.maven-version>
         <version.nexus-staging-maven>1.6.8</version.nexus-staging-maven>
         <version.maven-source>3.0.1</version.maven-source>
-        <version.maven-surefire>2.19.1</version.maven-surefire>
+        <version.maven-surefire>2.22.2</version.maven-surefire>
         <version.maven-failsafe>2.22.0</version.maven-failsafe>
         <version.jacoco>0.8.3</version.jacoco>
         <version.maven-compiler>3.8.0</version.maven-compiler>

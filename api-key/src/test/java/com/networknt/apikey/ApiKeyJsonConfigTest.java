@@ -13,7 +13,6 @@ public class ApiKeyJsonConfigTest {
     static final ApiKeyConfig config = ApiKeyConfig.load("apikey-json");
 
     @Test
-    @Ignore
     public void testDecryption() {
         logger.debug("apiKey for /test2 = " + config.getPathPrefixAuths().get(1).getApiKey());
         Assert.assertEquals("password", config.getPathPrefixAuths().get(1).getApiKey());

@@ -1,5 +1,7 @@
 package com.networknt.proxy;
 
+import com.networknt.config.ConfigInjection;
+
 /**
  * This is an object that contains all the authentication info for each path prefix in the pathPrefixAuth config
  * section. By making it a list of objects, we can support unlimited number of APIs with different authentication
@@ -50,7 +52,7 @@ public class PathPrefixAuth {
     }
 
     public void setPassword(String password) {
-        this.password = password;
+        this.password = (String) ConfigInjection.decryptEnvValue(ConfigInjection.getDecryptor(), password);
     }
 
     public String getClientId() {
@@ -66,7 +68,7 @@ public class PathPrefixAuth {
     }
 
     public void setClientSecret(String clientSecret) {
-        this.clientSecret = clientSecret;
+        this.clientSecret = (String) ConfigInjection.decryptEnvValue(ConfigInjection.getDecryptor(), clientSecret);
     }
 
     public String getResponseType() {
