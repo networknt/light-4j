@@ -70,6 +70,9 @@ datasource.MysqlDataSource:
   password: CRYPT:odPqWOazjDxeVcOU3j0YCc2+LdwfgiJmoFcWTSoKRUw=
   maximumPoolSize: 2
   connectionTimeout: 5000
+  settings:
+    idleTimeout: 50000
+    minimumIdle: 1
   parameters:
     useServerPrepStmts: 'true'
     cachePrepStmts: 'true'
@@ -82,7 +85,16 @@ datasource.MysqlDataSource:
 
 
 ```
+The Database config value include three parts:
 
+- main section which include major config for HikariDataSource, for example connection string,username/password, etc.
+
+- settings section, which used to invoke HikariDataSource set methods for the specified parameters.
+  for example, if there is a parameter:  idleTimeout: 50000
+  it will call HikariDataSource setIdleTimeout() method for specified value
+    
+- parameters section which used to specify the datasource config properties for HikariDataSource(addDataSourceProperty())                                            
+ 
 DAO java class:
 
 ```
