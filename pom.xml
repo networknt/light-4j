@@ -86,7 +86,7 @@
         <version.caffeine>2.6.2</version.caffeine>
         <version.prometheus>0.6.0</version.prometheus>
         <version.javamail>1.6.1</version.javamail>
-        <version.hikaricp>3.2.0</version.hikaricp>
+        <version.hikaricp>5.0.1</version.hikaricp>
         <version.h2>2.1.210</version.h2>
         <version.mysql>8.0.28</version.mysql>
         <version.postgres>42.4.3</version.postgres>

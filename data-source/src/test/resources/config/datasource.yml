@@ -26,10 +26,14 @@ CustomMysqlDataSource:
   username: account_user
   password: passWord00
   maximumPoolSize: 2
-  connectionTimeout: 500
+  connectionTimeout: 700
   leakDetectionThreshold: 100
   registerMBeans: true
   testQuery: select version()
+  settings:
+    idleTimeout: 50000
+    minimumIdle: 1
+    connectionTestQueryErr: select version()
   parameters:
     useServerPrepStmts: 'true'
     cachePrepStmts: 'true'
