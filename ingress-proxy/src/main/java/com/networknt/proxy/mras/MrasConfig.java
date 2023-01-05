@@ -1,6 +1,5 @@
 package com.networknt.proxy.mras;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.JsonMapper;

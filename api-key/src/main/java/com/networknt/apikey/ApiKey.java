@@ -1,5 +1,7 @@
 package com.networknt.apikey;
 
+import com.networknt.config.ConfigInjection;
+
 public class ApiKey {
     String pathPrefix;
     String headerName;
@@ -26,6 +28,7 @@ public class ApiKey {
     }
 
     public void setApiKey(String apiKey) {
-        this.apiKey = apiKey;
+        // if apiKey is encrypted, we need to decrypted it here.
+        this.apiKey = (String)ConfigInjection.decryptEnvValue(ConfigInjection.getDecryptor(), apiKey);
     }
 }

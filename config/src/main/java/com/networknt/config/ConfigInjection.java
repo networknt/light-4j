@@ -93,7 +93,7 @@ public class ConfigInjection {
                 || exclusionConfigFileList.contains(configName);
     }
 
-    static Decryptor getDecryptor() {
+    public static Decryptor getDecryptor() {
         Config myConfig = Config.getInstance();
         if (myConfig == null) {
             throw new RuntimeException("Unable to retrieve the configuration.");
@@ -114,7 +114,7 @@ public class ConfigInjection {
         return input.replaceAll("[^A-Za-z0-9]", "_").toUpperCase();
     }
 
-    static Object decryptEnvValue(Decryptor decryptor, String envVal) {
+    public static Object decryptEnvValue(Decryptor decryptor, String envVal) {
         Object decryptedEnvValue;
         //checking if the value put in env is encrypted. If yes then decrypting it.
         if (envVal != null && envVal.trim().startsWith(Decryptor.CRYPT_PREFIX)) {

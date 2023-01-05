@@ -158,7 +158,6 @@ public class BasicAuthConfig {
         userList.forEach(user -> {
             if (user instanceof Map) {
                 // the password might be encrypted.
-                user = DecryptUtil.decryptMap(user);
                 UserAuth userAuth = new UserAuth();
                 user.forEach((k, v) -> {
                     if (USERNAME.equals(k)) {

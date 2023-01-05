@@ -1,5 +1,7 @@
 package com.networknt.basicauth;
 
+import com.networknt.config.ConfigInjection;
+
 import java.util.List;
 
 public class UserAuth {
@@ -29,7 +31,7 @@ public class UserAuth {
     }
 
     public void setPassword(String password) {
-        this.password = password;
+        this.password = (String) ConfigInjection.decryptEnvValue(ConfigInjection.getDecryptor(), password);
     }
 
     public List<String> getPaths() {
