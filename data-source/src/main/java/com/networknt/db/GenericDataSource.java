@@ -88,7 +88,6 @@ public class GenericDataSource {
             for (Map.Entry<String, Object> entry: settings.entrySet()) {
                 String fieldName = entry.getKey();
                 try {
-                    String methodName = "set" + convertFirstLetterUpper(fieldName);
                     Method method =  findMethod(ds.getClass(), "set" + convertFirstLetterUpper(fieldName), entry.getValue().getClass());
                     method.invoke(ds, entry.getValue());
                 } catch (Exception e) {
@@ -135,8 +134,8 @@ public class GenericDataSource {
             if (acceptedParameterTypes.length != parameterTypes.length) { // Must have right number of parameters.
                 continue;
             }
-            //TODO do we need verify the type here?
 
+            //For some special cases, we may need add type cast or class isAssignableFrom here to verify method
             return method;
         }
 
