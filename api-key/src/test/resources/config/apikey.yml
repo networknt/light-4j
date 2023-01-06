@@ -10,6 +10,10 @@ pathPrefixAuths:
   - pathPrefix: /test1
     headerName: x-gateway-apikey
     apiKey: abcdefg
+  # The same prefix has another apikey header and value.
+  - pathPrefix: /test1
+    headerName: authorization
+    apiKey: xyz
   - pathPrefix: /test2
     headerName: x-apikey
     apiKey: CRYPT:08eXg9TmK604+w06RaBlsPQbplU1F1Ez5pkBO/hNr8w=
