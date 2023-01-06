@@ -154,8 +154,9 @@ public class BasicAuthHandler implements MiddlewareHandler {
      * @param exchange - current exchange.
      * @param requestPath - path found within current request.
      * @param auth - auth string
+     * @return boolean to indicate if an error or success.
      */
-    public void handleBasicAuth(HttpServerExchange exchange, String requestPath, String auth) {
+    public boolean handleBasicAuth(HttpServerExchange exchange, String requestPath, String auth) {
         String credentials = auth.substring(6);
         int pos = credentials.indexOf(':');
         if (pos == -1) {
@@ -178,7 +179,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
                     exchange.endExchange();
                     if(logger.isDebugEnabled())
                         logger.debug("BasicAuthHandler.handleRequest ends with an error.");
-                    return;
+                    return false;
                 }
             } else {
                 //
@@ -189,7 +190,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
                     exchange.endExchange();
                     if (logger.isDebugEnabled())
                         logger.debug("BasicAuthHandler.handleRequest ends with an error.");
-                    return;
+                    return false;
                 }
             }
             // Here we have passed the authentication. Let's do the authorization with the paths.
@@ -206,6 +207,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
                 if(logger.isDebugEnabled())
                     logger.debug("BasicAuthHandler.handleRequest ends with an error.");
                 exchange.endExchange();
+                return false;
             }
         } else {
             logger.error("Invalid basic authentication header. It must be username:password base64 encode.");
@@ -213,7 +215,9 @@ public class BasicAuthHandler implements MiddlewareHandler {
             if(logger.isDebugEnabled())
                 logger.debug("BasicAuthHandler.handleRequest ends with an error.");
             exchange.endExchange();
+            return false;
         }
+        return true;
     }
 
     /**

@@ -84,31 +84,44 @@ public class ApiKeyHandler implements MiddlewareHandler {
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("ApiKeyHandler.handleRequest starts.");
         String requestPath = exchange.getRequestPath();
-        handleApiKey(exchange, requestPath);
-        if(logger.isDebugEnabled()) logger.debug("ApiKeyHandler.handleRequest ends.");
-        Handler.next(exchange, next);
+        if(handleApiKey(exchange, requestPath)) {
+            if(logger.isDebugEnabled()) logger.debug("ApiKeyHandler.handleRequest ends.");
+            // only goes to the next handler the APIKEY verification is passed successfully.
+            Handler.next(exchange, next);
+        }
     }
 
-    public void handleApiKey(HttpServerExchange exchange, String requestPath) {
+    public boolean handleApiKey(HttpServerExchange exchange, String requestPath) {
         if(logger.isTraceEnabled()) logger.trace("requestPath = " + requestPath);
         if (config.getPathPrefixAuths() != null) {
+            boolean matched = false;
+            boolean found = false;
             // iterate all the ApiKey entries to find if any of them matches the request path.
             for(ApiKey apiKey: config.getPathPrefixAuths()) {
                 if(requestPath.startsWith(apiKey.getPathPrefix())) {
+                    found = true;
                     // found the matched prefix, validate the apiKey by getting the header and compare.
                     String k = exchange.getRequestHeaders().getFirst(apiKey.getHeaderName());
                     if(apiKey.getApiKey().equals(k)) {
-                        if(logger.isTraceEnabled()) logger.trace("Found matched apiKey with prefix = " + apiKey.getPathPrefix() + " headerName = " + apiKey.getHeaderName());
+                        if (logger.isTraceEnabled()) logger.trace("Found matched apiKey with prefix = " + apiKey.getPathPrefix() + " headerName = " + apiKey.getHeaderName());
+                        matched = true;
                         break;
-                    } else {
-                        logger.error("APIKEY from header " + apiKey.getHeaderName() + " is not matched for path prefix " + apiKey.getPathPrefix());
-                        setExchangeStatus(exchange, API_KEY_MISMATCH, apiKey.getHeaderName(), apiKey.getPathPrefix());
-                        if(logger.isDebugEnabled()) logger.debug("ApiKeyHandler.handleRequest ends with an error.");
-                        exchange.endExchange();
-                        return;
                     }
                 }
             }
+            if(!found) {
+                // the request path is no in the configuration, consider pass and go to the next handler.
+                return true;
+            }
+            if(!matched) {
+                // at this moment, if not matched, then return an error message.
+                logger.error("Could not find matched APIKEY for request path " + requestPath);
+                setExchangeStatus(exchange, API_KEY_MISMATCH, requestPath);
+                if(logger.isDebugEnabled()) logger.debug("ApiKeyHandler.handleRequest ends with an error.");
+                exchange.endExchange();
+                return false;
+            }
         }
+        return true;
     }
 }
