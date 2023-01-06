@@ -501,7 +501,7 @@ ERR10075:
   statusCode: 401
   code: ERR10075
   message: API_KEY_MISMATCH
-  description: APIKEY from header %s is not matched for request path prefix %s.
+  description: Could not find matched APIKEY for request path %s.
 ERR10076:
   statusCode: 400
   code: ERR10076
