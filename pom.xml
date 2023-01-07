@@ -112,7 +112,7 @@
         <skipTests>false</skipTests>
         <matched.test.resources>**/*</matched.test.resources>
         <version.javadoc-packagelist-plugin>1.0.0</version.javadoc-packagelist-plugin>
-        <version.maven-javadoc>3.1.0</version.maven-javadoc>
+        <version.maven-javadoc>3.4.1</version.maven-javadoc>
     </properties>
 
     <modules>
