@@ -396,6 +396,8 @@ public class MrasHandler implements MiddlewareHandler {
             Map<String, String> parameters = new HashMap<>();
             parameters.put("grant_type", "client_credentials");
             parameters.put("resource", (String)config.getMicrosoft().get(config.RESOURCE));
+            parameters.put("client_id", (String)config.getMicrosoft().get(config.CLIENT_ID));
+            parameters.put("client_secret", (String)config.getMicrosoft().get(config.CLIENT_SECRET));
 
             String form = parameters.entrySet()
                     .stream()
@@ -404,7 +406,7 @@ public class MrasHandler implements MiddlewareHandler {
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(serverUrl))
-                    .headers("Content-Type", "application/x-www-form-urlencoded", "Authorization", "BASIC " + encodeCredentials((String)config.getMicrosoft().get(config.USERNAME), (String)config.getMicrosoft().get(config.PASSWORD)))
+                    .headers("Content-Type", "application/x-www-form-urlencoded")
                     .POST(HttpRequest.BodyPublishers.ofString(form))
                     .build();
 
