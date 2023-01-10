@@ -63,9 +63,9 @@ microsoft:
   # MRAS get token URL to send the request
   tokenUrl: ${mras.microsoft.tokenUrl:https://test.mras.com/services/oauth2/token}
   # username for the authentication
-  username: ${mras.microsoft.username:}
+  clientId: ${mras.microsoft.clientId:}
   # password for the authentication
-  password: ${mras.microsoft.password:}
+  clientSecret: ${mras.microsoft.clientSecret:}
   # resource for the authentication
   resource: ${mras.microsoft.resource:}
   # is cache enabled for the token
