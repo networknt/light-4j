@@ -171,11 +171,11 @@ public class MrasHandler implements MiddlewareHandler {
                     return;
                 } else if(config.getPathPrefixAuth().get(key).equals(config.MICROSOFT)) {
                     // microsoft access token for authentication.
-                    if(System.currentTimeMillis() >= (microsoftExpiration - 5000)) { // leave 5 seconds room.
+                    if(System.currentTimeMillis() >= (microsoftExpiration - 50000)) { // leave 50 seconds room.
                         if(logger.isTraceEnabled()) logger.trace("microsoft token is about or already expired. current time = " + System.currentTimeMillis() + " expiration = " + microsoftExpiration);
                         Result<TokenResponse> result = getMicrosoftToken();
                         if(result.isSuccess()) {
-                            microsoftExpiration = System.currentTimeMillis() + 300 * 1000;
+                            microsoftExpiration = System.currentTimeMillis() + result.getResult().getExpiresIn() * 1000;
                             microsoft = result.getResult().getAccessToken();
                         } else {
                             setExchangeStatus(exchange, result.getError());
@@ -290,6 +290,7 @@ public class MrasHandler implements MiddlewareHandler {
             // remove empty key in the response header start with a colon.
             if(header.getKey() != null && !header.getKey().startsWith(":") && header.getValue().get(0) != null) {
                 for(String s : header.getValue()) {
+                    if(logger.isTraceEnabled()) logger.trace("copy response header key = " + header.getKey() + " value = " + s);
                     exchange.getResponseHeaders().add(new HttpString(header.getKey()), s);
                 }
             }
@@ -419,7 +420,8 @@ public class MrasHandler implements MiddlewareHandler {
                     tokenResponse = new TokenResponse();
                     tokenResponse.setAccessToken((String)map.get("access_token"));
                     tokenResponse.setTokenType((String)map.get("token_type"));
-                    tokenResponse.setScope((String)map.get("scope"));
+                    tokenResponse.setExpiresIn(Long.valueOf((String)map.get("expires_in"))); // seconds
+                    // tokenResponse.setScope((String)map.get("scope")); // microsoft response doesn't have scope in the JSON
                     return Success.of(tokenResponse);
                 } else {
                     return Failure.of(new Status(GET_TOKEN_ERROR, "response body is not a JSON"));
