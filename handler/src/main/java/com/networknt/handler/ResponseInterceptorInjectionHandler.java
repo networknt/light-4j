@@ -31,7 +31,7 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
 
     private ResponseInterceptor[] interceptors = null;
     private volatile HttpHandler next;
-    private ResponseInjectionConfig config;
+    private static ResponseInjectionConfig config;
     public ResponseInterceptorInjectionHandler() throws Exception{
         config = ResponseInjectionConfig.load();
         interceptors = SingletonServiceFactory.getBeans(ResponseInterceptor.class);
@@ -72,10 +72,11 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
     public void register() {
         ModuleRegistry.registerModule(ResponseInjectionConfig.class.getName(), config.getMappedConfig(), null);
     }
-
     @Override
     public void reload() {
         config.reload();
+        if(logger.isTraceEnabled()) logger.trace("response-injection.yml is reloaded");
+        ModuleRegistry.registerModule(ResponseInjectionConfig.class.getName(), config.getMappedConfig(), null);
     }
 
     /**
@@ -123,7 +124,7 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
             //     MDC.setContextMap(mdcCtx);
             // }
 
-            if (interceptors != null && !isCompressed(exchange) && Arrays.stream(interceptors).anyMatch(ri -> ri.isRequiredContent())) {
+            if (interceptors != null && isAppliedBodyInjectionPathPrefix(exchange.getRequestPath()) && !isCompressed(exchange) && Arrays.stream(interceptors).anyMatch(ri -> ri.isRequiredContent())) {
                 var mcsc = new ModifiableContentSinkConduit(factory.create(), cexchange);
                 if(logger.isTraceEnabled()) logger.trace("created a ModifiableContentSinkConduit instance " + mcsc);
                 return mcsc;
@@ -138,6 +139,7 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
             if(logger.isTraceEnabled()) logger.trace("response is not started, calling next handler.");
             Handler.next(exchange, next);
         } else {
+            // It must be the ResponseBodyInterceptor returns an error message.
             if(logger.isTraceEnabled()) logger.trace("response is started already, do not call next handler in the chain.");
         }
     }
@@ -156,4 +158,7 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
         return compressed;
     }
 
+    private boolean isAppliedBodyInjectionPathPrefix(String requestPath) {
+        return config.getAppliedBodyInjectionPathPrefixes() != null && config.getAppliedBodyInjectionPathPrefixes().stream().anyMatch(requestPath::startsWith);
+    }
 }

@@ -35,7 +35,7 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
     public static final int MAX_BUFFERS = 1024;
 
     private volatile HttpHandler next;
-    private RequestInjectionConfig config;
+    private static RequestInjectionConfig config;
     private RequestInterceptor[] interceptors = null;
 
     public RequestInterceptorInjectionHandler() {
@@ -68,6 +68,13 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
     }
 
     @Override
+    public void reload() {
+        config.reload();
+        if(logger.isTraceEnabled()) logger.trace("request-injection.yml is reloaded");
+        ModuleRegistry.registerModule(RequestInjectionConfig.class.getName(), config.getMappedConfig(), null);
+    }
+
+    @Override
     public void register() {
         ModuleRegistry.registerModule(RequestInjectionConfig.class.getName(), config.getMappedConfig(), null);
     }
@@ -78,6 +85,7 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
         String method = httpServerExchange.getRequestMethod().toString();
         this.next = Handler.getNext(httpServerExchange);
         if (this.injectorContentRequired()
+                && this.isAppliedBodyInjectionPathPrefix(httpServerExchange.getRequestPath())
                 && ((method.equalsIgnoreCase("post") ||
                 method.equalsIgnoreCase("put") ||
                 method.equalsIgnoreCase("patch")) &&
@@ -275,4 +283,7 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
         }
     }
 
+    private boolean isAppliedBodyInjectionPathPrefix(String requestPath) {
+        return config.getAppliedBodyInjectionPathPrefixes() != null && config.getAppliedBodyInjectionPathPrefixes().stream().anyMatch(requestPath::startsWith);
+    }
 }
