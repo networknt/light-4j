@@ -38,12 +38,10 @@ public class BodyConfig {
     private static final String CACHE_REQUEST_BODY = "cacheRequestBody";
 
     private static final String CACHE_RESPONSE_BODY = "cacheResponseBody";
-    private static final String APPLIED_PATH_PREFIXES = "appliedPathPrefixes";
 
     boolean enabled;
     boolean cacheRequestBody;
     boolean cacheResponseBody;
-    List<String> appliedPathPrefixes;
 
     private Config config;
     private Map<String, Object> mappedConfig;
@@ -61,7 +59,6 @@ public class BodyConfig {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(configName);
         setConfigData();
-        setConfigList();
     }
 
     public static BodyConfig load() {
@@ -75,7 +72,6 @@ public class BodyConfig {
     void reload() {
         mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
         setConfigData();
-        setConfigList();
     }
 
     public Map<String, Object> getMappedConfig() {
@@ -93,10 +89,6 @@ public class BodyConfig {
         return cacheResponseBody;
     }
 
-    public List<String> getAppliedPathPrefixes() {
-        return appliedPathPrefixes;
-    }
-
     private void setConfigData() {
         Object object = mappedConfig.get(ENABLED);
         if (object != null && (Boolean) object) {
@@ -111,35 +103,4 @@ public class BodyConfig {
             cacheResponseBody = (Boolean)object;
         }
     }
-
-    private void setConfigList() {
-        if (mappedConfig.get(APPLIED_PATH_PREFIXES) != null) {
-            Object object = mappedConfig.get(APPLIED_PATH_PREFIXES);
-            appliedPathPrefixes = new ArrayList<>();
-            if(object instanceof String) {
-                String s = (String)object;
-                s = s.trim();
-                if(logger.isTraceEnabled()) logger.trace("s = " + s);
-                if(s.startsWith("[")) {
-                    // json format
-                    try {
-                        appliedPathPrefixes = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
-                    } catch (Exception e) {
-                        throw new ConfigException("could not parse the appliedPathPrefixes json with a list of strings.");
-                    }
-                } else {
-                    // comma separated
-                    appliedPathPrefixes = Arrays.asList(s.split("\\s*,\\s*"));
-                }
-            } else if (object instanceof List) {
-                List prefixes = (List)object;
-                prefixes.forEach(item -> {
-                    appliedPathPrefixes.add((String)item);
-                });
-            } else {
-                throw new ConfigException("appliedPathPrefixes must be a string or a list of strings.");
-            }
-        }
-    }
-
 }

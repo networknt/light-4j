@@ -12,6 +12,7 @@ public class BodyConfigTest {
     @Test
     public void canLoadPathPrefixes() {
         BodyConfig config = BodyConfig.load();
-        Assert.assertEquals(2, config.getAppliedPathPrefixes().size());
+        Assert.assertFalse(config.isCacheRequestBody());
+        Assert.assertFalse(config.isCacheResponseBody());
     }
 }
