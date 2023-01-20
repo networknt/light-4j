@@ -106,6 +106,20 @@ DAO java class:
 
 ```
 
+- By using datasource factory 
+
+service.yml
+```
+- com.networknt.db.factory.DataSourceFactory:
+    - com.networknt.db.factory.DefaultDataSourceFactory
+```
+
+Get the datasource by default datasource factory
+
+```
+        DataSource dataSource = SingletonServiceFactory.getBean(DataSourceFactory.class).getDataSource("OracleDataSource");
+```
+
 
 ### For the detail document, pleases refer to
 
