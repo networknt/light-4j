@@ -77,7 +77,10 @@ public class ApiKeyHandler implements MiddlewareHandler {
 
     @Override
     public void reload() {
-        config = ApiKeyConfig.load();
+        config.reload();
+        List<String> masks = new ArrayList<>();
+        masks.add("apiKey");
+        ModuleRegistry.registerModule(ApiKeyHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(ApiKeyConfig.CONFIG_NAME), masks);
     }
 
     @Override
