@@ -33,3 +33,6 @@ singletons:
 - com.networknt.db.H2DataSource:
   - com.networknt.db.H2DataSource:
     - java.lang.String: H2DataSource
+
+- com.networknt.db.factory.DataSourceFactory:
+    - com.networknt.db.factory.DefaultDataSourceFactory
