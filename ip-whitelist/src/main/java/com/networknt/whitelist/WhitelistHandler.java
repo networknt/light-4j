@@ -31,28 +31,30 @@ import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
+import java.util.Map;
 
 public class WhitelistHandler implements MiddlewareHandler {
     private static final Logger logger = LoggerFactory.getLogger(WhitelistHandler.class);
-    private static final String CONFIG_NAME = "whitelist";
     private static final String INVALID_IP_FOR_PATH = "ERR10049";
 
-    public static WhitelistConfig config =
-            (WhitelistConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, WhitelistConfig.class);
+    public static WhitelistConfig config;
 
     private volatile HttpHandler next;
 
     public WhitelistHandler() {
         if(logger.isInfoEnabled()) logger.info("WhitelistHandler is constructed.");
+        config = WhitelistConfig.load();
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("WhitelistHandler.handleRequest starts.");
         InetSocketAddress peer = exchange.getSourceAddress();
-        String endpoint = exchange.getRelativePath() + "@" + exchange.getRequestMethod().toString().toLowerCase();
-        if (!isAllowed(peer.getAddress(), endpoint)) {
-            setExchangeStatus(exchange, INVALID_IP_FOR_PATH, peer.toString(), endpoint);
+        String reqPath = exchange.getRequestPath();
+        if(logger.isTraceEnabled()) logger.trace("IP = {} request path = {}", peer.toString(), reqPath);
+        if (!isAllowed(peer.getAddress(), reqPath)) {
+            if(logger.isTraceEnabled()) logger.trace("Invalid IP for the path");
+            setExchangeStatus(exchange, INVALID_IP_FOR_PATH, peer.toString(), reqPath);
             return;
         }
         if(logger.isDebugEnabled()) logger.debug("WhitelistHandler.handleRequest ends.");
@@ -78,14 +80,29 @@ public class WhitelistHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(WhitelistHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        ModuleRegistry.registerModule(WhitelistHandler.class.getName(), config.getMappedConfig(), null);
     }
 
-    boolean isAllowed(InetAddress address, String endpoint) {
+    @Override
+    public void reload() {
+        config.reload();
+        ModuleRegistry.registerModule(WhitelistHandler.class.getName(), config.getMappedConfig(), null);
+    }
+
+    IpAcl findIpAcl(String reqPath) {
+        for(Map.Entry<String, IpAcl> entry: config.getPrefixAcl().entrySet()) {
+            if(reqPath.startsWith(entry.getKey())) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+    boolean isAllowed(InetAddress address, String reqPath) {
         boolean isWhitelisted = false;
         if(address instanceof Inet4Address) {
-            IpAcl ipAcl = config.endpointAcl.get(endpoint);
+            IpAcl ipAcl = findIpAcl(reqPath);
             if(ipAcl != null) {
+                if(logger.isTraceEnabled()) logger.trace("IPv4 address and found a prefix entry for the request path");
                 for (PeerMatch rule : ipAcl.getIpv4acl()) {
                     if (rule.matches(address)) {
                         return !rule.isDeny();
@@ -94,7 +111,7 @@ public class WhitelistHandler implements MiddlewareHandler {
                 isWhitelisted = true;
             }
         } else if(address instanceof Inet6Address) {
-            IpAcl ipAcl = config.endpointAcl.get(endpoint);
+            IpAcl ipAcl = findIpAcl(reqPath);
             if(ipAcl != null) {
                 for (PeerMatch rule : ipAcl.getIpv6acl()) {
                     if (rule.matches(address)) {
@@ -215,5 +232,4 @@ public class WhitelistHandler implements MiddlewareHandler {
             return true;
         }
     }
-
 }

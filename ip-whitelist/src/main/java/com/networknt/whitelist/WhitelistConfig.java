@@ -19,6 +19,11 @@
 
 package com.networknt.whitelist;
 
+import com.networknt.config.Config;
+import com.networknt.config.ConfigException;
+import com.networknt.config.JsonMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xnio.Bits;
 
 import java.util.HashMap;
@@ -27,6 +32,13 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 public class WhitelistConfig {
+    public static final Logger logger = LoggerFactory.getLogger(WhitelistConfig.class);
+
+    public static final String CONFIG_NAME = "whitelist";
+    public static final String ENABLED = "enabled";
+    public static final String DEFAULT_ALLOW = "defaultAllow";
+    public static final String PATHS = "paths";
+
     /**
      * Standard IP address
      */
@@ -59,7 +71,38 @@ public class WhitelistConfig {
 
     boolean enabled;
     boolean defaultAllow;
-    Map<String, IpAcl> endpointAcl = new HashMap<>();
+    Map<String, IpAcl> prefixAcl = new HashMap<>();
+    private Config config;
+    private Map<String, Object> mappedConfig;
+
+    private WhitelistConfig() {
+        this(CONFIG_NAME);
+    }
+
+    /**
+     * Please note that this constructor is only for testing to load different config files
+     * to test different configurations.
+     * @param configName String
+     */
+    private WhitelistConfig(String configName) {
+        config = Config.getInstance();
+        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        setConfigData();
+        setConfigMap();
+    }
+    public static WhitelistConfig load() {
+        return new WhitelistConfig();
+    }
+
+    public static WhitelistConfig load(String configName) {
+        return new WhitelistConfig(configName);
+    }
+
+    void reload() {
+        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
+        setConfigData();
+        setConfigMap();
+    }
 
     public boolean isEnabled() {
         return enabled;
@@ -77,33 +120,82 @@ public class WhitelistConfig {
         this.defaultAllow = defaultAllow;
     }
 
-    public void setPaths(Map<String, List<String>> paths) {
-        for(Map.Entry<String, List<String>> entry: paths.entrySet()) {
-            for(String peer: entry.getValue()) {
+    public Map<String, IpAcl> getPrefixAcl() {
+        return prefixAcl;
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
+
+    private void setConfigData() {
+        Object object = mappedConfig.get(ENABLED);
+        if(object != null && (Boolean) object) {
+            setEnabled(true);
+        }
+        object = mappedConfig.get(DEFAULT_ALLOW);
+        if(object != null && (Boolean) object) {
+            setDefaultAllow(true);
+        }
+    }
+
+    private void setConfigMap() {
+        // paths white list mapping
+        if (mappedConfig.get(PATHS) != null) {
+            Object object = mappedConfig.get(PATHS);
+            if(object != null) {
+                Map<String, Object> paths;
+                if(object instanceof String) {
+                    String s = (String)object;
+                    s = s.trim();
+                    if(logger.isTraceEnabled()) logger.trace("paths = " + s);
+                    if(s.startsWith("{")) {
+                        // json format
+                        try {
+                            paths = JsonMapper.string2Map(s);
+                        } catch (Exception e) {
+                            throw new ConfigException("could not parse the paths with a map of string to string list.");
+                        }
+                    } else {
+                        throw new ConfigException("paths must be a string start with { in json format.");
+                    }
+                } else if (object instanceof Map) {
+                    paths = (Map)object;
+                } else {
+                    throw new ConfigException("paths must be string to string list map.");
+                }
+                setPaths(paths);
+            }
+        }
+    }
+
+    public void setPaths(Map<String, Object> paths) {
+        for(Map.Entry<String, Object> entry: paths.entrySet()) {
+            for(String peer: (List<String>)entry.getValue()) {
                 addRule(entry.getKey(), peer, !this.defaultAllow);
             }
         }
     }
 
-    private void addRule(final String endpoint, final String peer, final boolean deny) {
+    private void addRule(final String pathPrefix, final String peer, final boolean deny) {
         if (IP4_EXACT.matcher(peer).matches()) {
-            addIpV4ExactMatch(endpoint, peer, deny);
+            addIpV4ExactMatch(pathPrefix, peer, deny);
         } else if (IP4_WILDCARD.matcher(peer).matches()) {
-            addIpV4WildcardMatch(endpoint, peer, deny);
+            addIpV4WildcardMatch(pathPrefix, peer, deny);
         } else if (IP4_SLASH.matcher(peer).matches()) {
-            addIpV4SlashPrefix(endpoint, peer, deny);
+            addIpV4SlashPrefix(pathPrefix, peer, deny);
         } else if (IP6_EXACT.matcher(peer).matches()) {
-            addIpV6ExactMatch(endpoint, peer, deny);
+            addIpV6ExactMatch(pathPrefix, peer, deny);
         } else if (IP6_WILDCARD.matcher(peer).matches()) {
-            addIpV6WildcardMatch(endpoint, peer, deny);
+            addIpV6WildcardMatch(pathPrefix, peer, deny);
         } else if (IP6_SLASH.matcher(peer).matches()) {
-            addIpV6SlashPrefix(endpoint, peer, deny);
+            addIpV6SlashPrefix(pathPrefix, peer, deny);
         } else {
             throw new RuntimeException("InvalidIpPattern:" + peer);
         }
     }
 
-    private void addIpV6SlashPrefix(final String endpoint, final String peer, final boolean deny) {
+    private void addIpV6SlashPrefix(final String pathPrefix, final String peer, final boolean deny) {
         String[] components = peer.split("\\/");
         String[] parts = components[0].split("\\:");
         int maskLen = Integer.parseInt(components[1]);
@@ -129,15 +221,15 @@ public class WhitelistConfig {
                 break;
             }
         }
-        IpAcl ipAcl = endpointAcl.get(endpoint);
+        IpAcl ipAcl = prefixAcl.get(pathPrefix);
         if(ipAcl == null) {
             ipAcl = new IpAcl();
-            endpointAcl.put(endpoint, ipAcl);
+            prefixAcl.put(pathPrefix, ipAcl);
         }
         ipAcl.getIpv6acl().add(new WhitelistHandler.PrefixIpV6PeerMatch(deny, peer, mask, pattern));
     }
 
-    private void addIpV4SlashPrefix(final String endpoint, final String peer, final boolean deny) {
+    private void addIpV4SlashPrefix(final String pathPrefix, final String peer, final boolean deny) {
         String[] components = peer.split("\\/");
         String[] parts = components[0].split("\\.");
         int maskLen = Integer.parseInt(components[1]);
@@ -149,15 +241,15 @@ public class WhitelistConfig {
             int no = Integer.parseInt(part);
             prefix |= no;
         }
-        IpAcl ipAcl = endpointAcl.get(endpoint);
+        IpAcl ipAcl = prefixAcl.get(pathPrefix);
         if(ipAcl == null) {
             ipAcl = new IpAcl();
-            endpointAcl.put(endpoint, ipAcl);
+            prefixAcl.put(pathPrefix, ipAcl);
         }
         ipAcl.getIpv4acl().add(new WhitelistHandler.PrefixIpV4PeerMatch(deny, peer, mask, prefix));
     }
 
-    private void addIpV6WildcardMatch(final String endpoint, final String peer, final boolean deny) {
+    private void addIpV6WildcardMatch(final String pathPrefix, final String peer, final boolean deny) {
         byte[] pattern = new byte[16];
         byte[] mask = new byte[16];
         String[] parts = peer.split("\\:");
@@ -171,15 +263,15 @@ public class WhitelistConfig {
                 mask[i * 2 + 1] = (byte) (0xFF);
             }
         }
-        IpAcl ipAcl = endpointAcl.get(endpoint);
+        IpAcl ipAcl = prefixAcl.get(pathPrefix);
         if(ipAcl == null) {
             ipAcl = new IpAcl();
-            endpointAcl.put(endpoint, ipAcl);
+            prefixAcl.put(pathPrefix, ipAcl);
         }
         ipAcl.getIpv6acl().add(new WhitelistHandler.PrefixIpV6PeerMatch(deny, peer, mask, pattern));
     }
 
-    private void addIpV4WildcardMatch(final String endpoint, final String peer, final boolean deny) {
+    private void addIpV4WildcardMatch(final String pathPrefix, final String peer, final boolean deny) {
         String[] parts = peer.split("\\.");
         int mask = 0;
         int prefix = 0;
@@ -193,15 +285,15 @@ public class WhitelistConfig {
                 prefix |= no;
             }
         }
-        IpAcl ipAcl = endpointAcl.get(endpoint);
+        IpAcl ipAcl = prefixAcl.get(pathPrefix);
         if(ipAcl == null) {
             ipAcl = new IpAcl();
-            endpointAcl.put(endpoint, ipAcl);
+            prefixAcl.put(pathPrefix, ipAcl);
         }
         ipAcl.getIpv4acl().add(new WhitelistHandler.PrefixIpV4PeerMatch(deny, peer, mask, prefix));
     }
 
-    private void addIpV6ExactMatch(final String endpoint, final String peer, final boolean deny) {
+    private void addIpV6ExactMatch(final String pathPrefix, final String peer, final boolean deny) {
         byte[] bytes = new byte[16];
         String[] parts = peer.split("\\:");
         assert parts.length == 8;
@@ -210,21 +302,21 @@ public class WhitelistConfig {
             bytes[i * 2] = (byte) (val >> 8);
             bytes[i * 2 + 1] = (byte) (val & 0xFF);
         }
-        IpAcl ipAcl = endpointAcl.get(endpoint);
+        IpAcl ipAcl = prefixAcl.get(pathPrefix);
         if(ipAcl == null) {
             ipAcl = new IpAcl();
-            endpointAcl.put(endpoint, ipAcl);
+            prefixAcl.put(pathPrefix, ipAcl);
         }
         ipAcl.getIpv6acl().add(new WhitelistHandler.ExactIpV6PeerMatch(deny, peer, bytes));
     }
 
-    private void addIpV4ExactMatch(final String endpoint, final String peer, final boolean deny) {
+    private void addIpV4ExactMatch(final String pathPrefix, final String peer, final boolean deny) {
         String[] parts = peer.split("\\.");
         byte[] bytes = {(byte) Integer.parseInt(parts[0]), (byte) Integer.parseInt(parts[1]), (byte) Integer.parseInt(parts[2]), (byte) Integer.parseInt(parts[3])};
-        IpAcl ipAcl = endpointAcl.get(endpoint);
+        IpAcl ipAcl = prefixAcl.get(pathPrefix);
         if(ipAcl == null) {
             ipAcl = new IpAcl();
-            endpointAcl.put(endpoint, ipAcl);
+            prefixAcl.put(pathPrefix, ipAcl);
         }
         ipAcl.getIpv4acl().add(new WhitelistHandler.ExactIpV4PeerMatch(deny, peer, bytes));
     }
@@ -234,7 +326,7 @@ public class WhitelistConfig {
         return "WhitelistConfig{" +
                 "enabled=" + enabled +
                 ", defaultAllow=" + defaultAllow +
-                ", endpointAcl=" + endpointAcl +
+                ", prefixAcl=" + prefixAcl +
                 '}';
     }
 }
