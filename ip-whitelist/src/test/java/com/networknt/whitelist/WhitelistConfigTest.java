@@ -26,4 +26,26 @@ public class WhitelistConfigTest {
         WhitelistConfig config = (WhitelistConfig) Config.getInstance().getJsonObjectConfig("whitelist", WhitelistConfig.class);
         System.out.println(config);
     }
+
+    @Test
+    public void testConfigMapFormat() {
+        WhitelistConfig config = WhitelistConfig.load("whitelist-map");
+        System.out.println(config);
+    }
+
+    @Test
+    public void testConfigJsonFormat() {
+        WhitelistConfig config = WhitelistConfig.load("whitelist-json");
+        System.out.println(config);
+    }
+
+    @Test
+    public void testComparison() {
+        WhitelistConfig configYaml = WhitelistConfig.load("whitelist-map");
+        WhitelistConfig configJson = WhitelistConfig.load("whitelist-json");
+        System.out.println(JsonMapper.toJson(configYaml));
+        System.out.println(JsonMapper.toJson(configJson));
+
+
+    }
 }

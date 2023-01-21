@@ -1,13 +1,30 @@
 # IP Whitelist configuration
 ---
 # Indicate if this handler is enabled or not. It is normally used for the third party integration
-# so that only approved IPs can connect to the light-router or light-proxy at certain endpoints.
-enabled: ${whitelist.enabled:false}
+# so that only approved IPs can connect to the light-gateway or http-sidecar at certain endpoints.
+# The default value is true, and it will take effect as long as this handler is in the chain.
+enabled: ${whitelist.enabled:true}
 # Default allowed or denied if there is no rules defined for the path. Default is false so only
 # defined paths with IP ACL rules will be allowed to access. Other paths or other IPs are not
 # allowed to access the service. If this is set to true, then other IPs can access other paths
 # not defined below. However, for the paths defined below, only the listed IPs can access.
-defaultAllow: ${whitelist.defaultAllow:true}
-# List of endpoints and their access rules. It supports IPv4 and IPv6 with Exact, Wildcard and
-# Slash format. The endpoint is defined as path@method.
+defaultAllow: ${whitelist.defaultAllow:false}
+# List of path prefixes and their access rules. It supports IPv4 and IPv6 with Exact, Wildcard and
+# Slash format. The path prefix is defined as request path prefix only without differentiate method.
 paths: ${whitelist.paths:}
+# The following format is the YAML format suitable for externalized values.yml in local filesystem.
+#  /health/com.networknt.petstore-1.0.0:
+#    - '127.0.0.1'
+#    - '10.10.*.*'
+#    - '127.0.0.48/30'
+#  /prometheus:
+#    - 'FE45:00:00:000:0:AAA:FFFF:0045'
+#    - 'FE45:00:00:000:0:AAA:FFFF:*'
+#    - 'FE45:00:00:000:0:AAA:FFFF:01F4/127'
+#  '/data':
+#    - '127.0.0.2'
+#    - '10.10.*.*'
+#    - '127.0.0.48/30'
+
+# The following format is the JSON format suitable for both local values.yml and config server.
+# paths: {"/health/com.networknt.petstore-1.0.0":["127.0.0.1","10.10.*.*","127.0.0.48/30"],"/prometheus":["FE45:00:00:000:0:AAA:FFFF:0045","FE45:00:00:000:0:AAA:FFFF:*","FE45:00:00:000:0:AAA:FFFF:01F4/127"],"/data":["127.0.0.2","10.10.*.*","127.0.0.48/30"]}

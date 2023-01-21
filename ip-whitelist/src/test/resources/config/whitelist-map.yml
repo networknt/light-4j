@@ -1,6 +1,11 @@
-whitelist.enabled: true
-whitelist.defaultAllow: true
-whitelist.paths:
+# IP Whitelist configuration
+---
+# Indicate if this handler is enabled or not
+enabled: true
+
+defaultAllow: true
+
+paths:
   # For a particular path prefix, there are three IPs can access
   '/health/com.networknt.petstore-1.0.0':
     # IPv4 Exact
@@ -19,7 +24,7 @@ whitelist.paths:
     # IPv6 Slash
     - 'FE45:00:00:000:0:AAA:FFFF:01F4/127'
 
-  # For a particular path, there are three IPs can access
+  # For a particular path prefix, there are three IPs can access
   '/data':
     # IPv4 Exact
     - '127.0.0.2'
