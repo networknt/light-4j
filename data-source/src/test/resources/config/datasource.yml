@@ -95,3 +95,17 @@ H2DataSource:
   password: sa
   maximumPoolSize: 2
   connectionTimeout: 500
+
+OracleDataSource2:
+  DriverClassName: oracle.jdbc.pool.OracleDataSource
+  jdbcUrl: jdbc:oracle:thin:@localhost:1521:XE
+  username: SYSTEM
+  password: oracle
+  maximumPoolSize: 2
+  connectionTimeout: 500
+  parameters:
+    useServerPrepStmts: 'true'
+    cachePrepStmts: 'true'
+    cacheCallableStmts: 'true'
+    prepStmtCacheSize: '10'
+    prepStmtCacheSqlLimit: '2048'
