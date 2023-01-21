@@ -1,7 +1,7 @@
 ---
 # Logging endpoint that can output the logger with logging levels.
 
-# Indicate if the logging info is enable or not.
+# Indicate if the logging info is enabled or not.
 enabled: ${logging.enabled:true}
 # Indicate the default time period backward in millisecond for log content retrieve. Default is  hour which indicate system will retrieve one hour log by default
 logStart: ${logging.logStart:600000}
