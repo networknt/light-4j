@@ -225,19 +225,17 @@ public class RateLimiter {
      */
     public RateLimitResponse isAllowByServer(String path) {
         long currentTimeWindow = Instant.now().getEpochSecond();
-        if (!serverTimeMap.containsKey(path)) {
+        Map<Long, AtomicLong> timeMap = lookupServerTimeMap(path);
+        if(timeMap == null) {
+            timeMap = new ConcurrentHashMap<>();
             synchronized(this) {
-                serverTimeMap.put(path, new ConcurrentHashMap<>());
+                serverTimeMap.put(path, timeMap);
             }
         }
-        LimitQuota limitQuota;
-        if (config.getServer() != null && config.getServer().containsKey(path)) {
-            limitQuota = this.config.getServer().get(path);
-        } else {
+        LimitQuota limitQuota = config.getServer() != null ? lookupLimitQuota(path) : null;
+        if(limitQuota == null) {
             limitQuota = this.config.getRateLimit().get(0);
         }
-
-        Map<Long, AtomicLong> timeMap =  serverTimeMap.get(path);
         synchronized(this) {
             if (timeMap.isEmpty()) {
                 timeMap.put(currentTimeWindow, new AtomicLong(1L));
@@ -256,6 +254,37 @@ public class RateLimiter {
             }
         }
         return new RateLimitResponse(true, null);
+    }
+
+    private Map<Long, AtomicLong> lookupServerTimeMap(String path) {
+        String prefix = null;
+        for(String s: serverTimeMap.keySet()) {
+            if(path.startsWith(s)) {
+                prefix = s;
+                break;
+            }
+        }
+        if(prefix == null) {
+            return null;
+        } else {
+            return serverTimeMap.get(prefix);
+        }
+
+    }
+
+    private LimitQuota lookupLimitQuota(String path) {
+        String prefix = null;
+        for(String s: this.config.getServer().keySet()) {
+            if(path.startsWith(s)) {
+                prefix = s;
+                break;
+            }
+        }
+        if(prefix == null) {
+            return null;
+        } else {
+            return this.config.getServer().get(prefix);
+        }
     }
 
     private String getRateLimitReset(Long currentTimeWindow, Map<Long, AtomicLong> timeMap,  LimitQuota limitQuota) {

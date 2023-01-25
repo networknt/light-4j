@@ -59,6 +59,38 @@ public class RateLimiterTest {
         return rateLimiter.isAllowByServer( "/v1/address");
     }
 
+    /**
+     * Test with a longer request path with the configuration /v1/address only as path prefix.
+     * @throws Exception
+     */
+    @Test
+    public void testByServerWithPathPrefix() throws Exception{
+        List<RateLimitResponse> responseList = new ArrayList<>();
+        Callable<RateLimitResponse> task =this::callByServerAsyncWithLongPath;
+        List<Callable<RateLimitResponse>> tasks = Collections.nCopies(12, task);
+
+        //change the thread number here to test multi-threads
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
+        List<Future<RateLimitResponse>> futures = executorService.invokeAll(tasks);
+        for (Future<RateLimitResponse> future : futures) {
+            responseList.add(future.get());
+        }
+//        LimitQuota limitQuota = limitConfig.getServer().get("/v1/address");
+//           for (int i=0; i<12; i++) {
+//            responseList.add(rateLimiter.isAllowByServer(limitQuota, "/v1/address"));
+//        }
+
+        // Assert.assertEquals(responseList.size(), 12);
+        List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
+        Assert.assertEquals(rejects.size(), 2);
+        executorService.shutdown();
+    }
+
+    public RateLimitResponse callByServerAsyncWithLongPath() throws Exception {
+        LimitQuota limitQuota = limitConfig.getServer().get("/v1/address");
+        return rateLimiter.isAllowByServer( "/v1/address/anything/else");
+    }
+
     @Test
     public void testByClient() throws Exception{
         List<RateLimitResponse> responseList = new ArrayList<>();
