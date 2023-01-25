@@ -29,7 +29,7 @@ rateLimit: ${limit.rateLimit:10/s 10000/d}
 # client: The client id in the JWT token so that we can give rate limit per client.
 # user: The user id in the JWT token so that we can set rate limit and quota based on user.
 key: ${limit.key:server}
-# If server is the key, we can set up different rate limit per path or service.
+# If server is the key, we can set up different rate limit per request path prefix.
 server: ${limit.server:}
 # If address is the key, we can set up different rate limit per address and optional per
 # path or service for certain addresses. All other un-specified addresses will share the
