@@ -41,6 +41,17 @@ public class WhitelistHandler implements MiddlewareHandler {
 
     private volatile HttpHandler next;
 
+    /**
+     * This is the constructor that is not supposed to be used. It should only be called by the test cases
+     * to load different configuration for testing.
+     * @param configName configuration file name
+     */
+    @Deprecated
+    public WhitelistHandler(String configName) {
+        if(logger.isInfoEnabled()) logger.info("WhitelistHandler is constructed.");
+        config = WhitelistConfig.load(configName);
+    }
+
     public WhitelistHandler() {
         if(logger.isInfoEnabled()) logger.info("WhitelistHandler is constructed.");
         config = WhitelistConfig.load();
@@ -55,6 +66,7 @@ public class WhitelistHandler implements MiddlewareHandler {
         if (!isAllowed(peer.getAddress(), reqPath)) {
             if(logger.isTraceEnabled()) logger.trace("Invalid IP for the path");
             setExchangeStatus(exchange, INVALID_IP_FOR_PATH, peer.toString(), reqPath);
+            exchange.endExchange();
             return;
         }
         if(logger.isDebugEnabled()) logger.debug("WhitelistHandler.handleRequest ends.");
@@ -105,23 +117,29 @@ public class WhitelistHandler implements MiddlewareHandler {
                 if(logger.isTraceEnabled()) logger.trace("IPv4 address and found a prefix entry for the request path");
                 for (PeerMatch rule : ipAcl.getIpv4acl()) {
                     if (rule.matches(address)) {
+                        if(logger.isTraceEnabled()) logger.trace("Found matched rule for address and rule isAllow {}", !rule.isDeny());
                         return !rule.isDeny();
                     }
                 }
-                isWhitelisted = true;
+                // the path is defined but the IP is not in the list. Will allow if defaultAllow is false and will reject is defaultAllow is true
+                return !config.defaultAllow;
             }
         } else if(address instanceof Inet6Address) {
             IpAcl ipAcl = findIpAcl(reqPath);
             if(ipAcl != null) {
+                if(logger.isTraceEnabled()) logger.trace("IPv6 address {} and found a prefix entry for the request path {}", address, reqPath);
                 for (PeerMatch rule : ipAcl.getIpv6acl()) {
                     if (rule.matches(address)) {
+                        if(logger.isTraceEnabled()) logger.trace("Found matched rule for address and rule isAllow {}", !rule.isDeny());
                         return !rule.isDeny();
                     }
                 }
-                isWhitelisted = true;
+                // the path is defined but the IP is not in the list. Will allow if defaultAllow is false and will reject is defaultAllow is true
+                return !config.defaultAllow;
             }
         }
-        return !isWhitelisted && config.defaultAllow;
+        if(logger.isTraceEnabled()) logger.trace("No matched path is found. isWhitelist is {} and defaultAllow is {}", isWhitelisted, config.defaultAllow);
+        return config.defaultAllow;
     }
 
 
