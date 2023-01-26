@@ -500,7 +500,8 @@ public class JwtVerifier {
                             logger.error("Cannot get JWK from OAuth server.");
 
                     } else {
-                        String prefix = keys(pathPrefixServices, serviceId).findFirst().get();
+                        if(logger.isTraceEnabled()) logger.trace("reverse lookup path prefix for serviceId {}", serviceId);
+                        String prefix = lookupPrefix(pathPrefixServices, serviceId);
                         for (JsonWebKey jwk : jwkList) {
                             jwksMap.put(prefix + ":" + jwk.getKeyId(), jwkList);
 
@@ -557,12 +558,15 @@ public class JwtVerifier {
         return jwksMap;
     }
 
-    private <K, V> Stream<K> keys(Map<K, V> map, V value) {
-        return map
-                .entrySet()
-                .stream()
-                .filter(entry -> value.equals(entry.getValue()))
-                .map(Map.Entry::getKey);
+    private String lookupPrefix(Map<String, String> map, String serviceId) {
+        for(Map.Entry<String, String> entry: map.entrySet()) {
+            if(logger.isTraceEnabled()) logger.trace("Iterate an entry with key = {} value = {} from client.pathPrefixServices.", entry.getKey(), entry.getValue());
+            if(serviceId.equals(entry.getValue())) {
+                return entry.getKey();
+            }
+        }
+        if(logger.isInfoEnabled()) logger.info("Could not find the path prefix in client.pathPrefixServices for serviceId {} as the value.", serviceId);
+        return null;
     }
 
     /**
