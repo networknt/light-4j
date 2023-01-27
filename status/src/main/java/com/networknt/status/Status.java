@@ -60,7 +60,7 @@ public class Status {
     private String description;
     private Map<String, Object> metadata;
     // make sure that the status.yml is cached in a static variable to avoid loading everytime.
-    private static Map<String, Object> config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
+    private static Map<String, Object> config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
 
     static {
         ModuleRegistry.registerModule(Status.class.getName(), config, null);
@@ -302,7 +302,7 @@ public class Status {
     }
 
     public static void reload() {
-        config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
+        config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
         ModuleRegistry.registerModule(Status.class.getName(), config, null);
     }
 }
