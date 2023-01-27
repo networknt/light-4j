@@ -43,7 +43,7 @@ public class OrchestrationHandler implements LightHttpHandler {
             if(Handler.startDefaultHandlers(exchange)) {
                 Handler.next(exchange);
             } else {
-                setExchangeStatus(exchange, MISSING_HANDlER, exchange.getRequestPath());
+                setExchangeStatus(exchange, MISSING_HANDlER, exchange.getRequestPath(), exchange.getRequestMethod().toString());
             }
         }
     }
