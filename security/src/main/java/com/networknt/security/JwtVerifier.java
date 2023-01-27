@@ -209,7 +209,9 @@ public class JwtVerifier {
      * @param jwt          JWT token
      * @param ignoreExpiry indicate if the expiry will be ignored
      * @param isToken      indicate if the JWT is a token
+     * @param pathPrefix   pathPrefix used to cache the jwt token
      * @param requestPath  request path
+     * @param jwkServiceIds A list of serviceIds from the UnifiedSecurityHandler
      * @return JwtClaims
      * @throws InvalidJwtException   throw when the token is invalid
      * @throws ExpiredTokenException throw when the token is expired
@@ -244,6 +246,7 @@ public class JwtVerifier {
      * @param jwt            String of Json web token
      * @param ignoreExpiry   If true, don't verify if the token is expired.
      * @param isToken        True if the jwt is an OAuth 2.0 access token
+     * @param pathPrefix     pathPrefix for the jwt token cache key
      * @param getKeyResolver How to get VerificationKeyResolver
      * @param requestPath    the request path that used to find the right auth server config
      * @param jwkServiceIds  a list of jwk serviceIds defined in the client.yml to retrieve jwk.
@@ -373,25 +376,29 @@ public class JwtVerifier {
                 // try jwk if kid cannot be found in the certificate map.
                 ClientConfig clientConfig = ClientConfig.get();
                 List<JsonWebKey> jwkList = null;
-                String prefix = null;
                 if(requestPathOrJwkServiceIds == null) {
                     // single oauth server, kid is the key for the jwk cache
                     jwkList = jwksMap.get(kid);
                 } else if(requestPathOrJwkServiceIds instanceof String) {
                     String requestPath = (String)requestPathOrJwkServiceIds;
                     // a single request path is passed in.
-                    prefix = getPrefixByRequestPath(clientConfig, requestPath);
-                    if(prefix == null) {
+                    String serviceId = getServiceIdByRequestPath(clientConfig, requestPath);
+                    if(serviceId == null) {
                         jwkList = jwksMap.get(kid);
                     } else {
-                        jwkList = jwksMap.get(prefix + ":" + kid);
+                        jwkList = jwksMap.get(serviceId + ":" + kid);
                     }
                 } else if(requestPathOrJwkServiceIds instanceof List) {
                     List<String> serviceIds = (List)requestPathOrJwkServiceIds;
                     if(serviceIds != null && serviceIds.size() > 0) {
-                        // more than one serviceIds are passed in.
-                        prefix = getPrefixByServiceIds(clientConfig, serviceIds);
-                        jwkList = jwksMap.get(prefix + ":" + kid);
+                        // more than one serviceIds are passed in from the UnifiedSecurityHandler. Just use the serviceId and kid
+                        // combination to look up the jwkList. Once found, break the loop.
+                        for(String serviceId: serviceIds) {
+                            jwkList = jwksMap.get(serviceId + ":" + kid);
+                            if(jwkList != null && jwkList.size() > 0) {
+                                break;
+                            }
+                        }
                     }
                 }
 
@@ -400,13 +407,18 @@ public class JwtVerifier {
                     if (jwkList == null || jwkList.isEmpty()) {
                         throw new RuntimeException("no JWK for kid: " + kid);
                     }
-                    for (JsonWebKey jwk : jwkList) {
-                        if(prefix != null) {
-                            jwksMap.put(prefix + ":" + jwk.getKeyId(), jwkList);
-                        } else {
-                            jwksMap.put(jwk.getKeyId(), jwkList);
+                    if(requestPathOrJwkServiceIds == null) {
+                        // single jwk setup and kid is the key for the jwk cache.
+                        cacheJwkList(jwkList, null);
+                    } else if(requestPathOrJwkServiceIds instanceof String) {
+                        // a single request path is passed in.
+                        String serviceId = getServiceIdByRequestPath(clientConfig, (String)requestPathOrJwkServiceIds);
+                        cacheJwkList(jwkList, serviceId);
+                    } else if(requestPathOrJwkServiceIds instanceof List) {
+                        // called with a list of serviceIds from the UnifiedSecurityHandler.
+                        for(String serviceId: (List<String>)requestPathOrJwkServiceIds) {
+                            cacheJwkList(jwkList, serviceId);
                         }
-                        logger.info("Got Json web key set for kid: {} from Oauth server", jwk.getKeyId());
                     }
                 }
                 logger.debug("Got Json web key set from local cache");
@@ -417,49 +429,44 @@ public class JwtVerifier {
             }
         }
     }
-    private String getPrefixByRequestPath(ClientConfig clientConfig, String requestPath) {
+
+    private void cacheJwkList(List<JsonWebKey> jwkList, String serviceId) {
+        for (JsonWebKey jwk : jwkList) {
+            if(serviceId != null) {
+                if(logger.isTraceEnabled()) logger.trace("cache the jwkList with serviceId {} kid {} and key {}", serviceId, jwk.getKeyId(), serviceId + ":" + jwk.getKeyId());
+                jwksMap.put(serviceId + ":" + jwk.getKeyId(), jwkList);
+            } else {
+                if(logger.isTraceEnabled()) logger.trace("cache the jwkList with kid and only kid as key", jwk.getKeyId());
+                jwksMap.put(jwk.getKeyId(), jwkList);
+            }
+        }
+    }
+    private String getServiceIdByRequestPath(ClientConfig clientConfig, String requestPath) {
         Map<String, String> pathPrefixServices = clientConfig.getPathPrefixServices();
         if(clientConfig.isMultipleAuthServers()) {
             if (pathPrefixServices == null || pathPrefixServices.size() == 0) {
                 throw new ConfigException("pathPrefixServices property is missing or has an empty value in client.yml");
             }
             // lookup the serviceId based on the full path and the prefix mapping by iteration here.
-            String prefix = null;
+            String serviceId = null;
             for (Map.Entry<String, String> entry : pathPrefixServices.entrySet()) {
                 if (requestPath.startsWith(entry.getKey())) {
-                    prefix = entry.getKey();
+                    serviceId = entry.getValue();
                 }
             }
-            if (prefix == null) {
-                throw new ConfigException("prefix cannot be identified in client.yml with the requestPath = " + requestPath);
+            if (serviceId == null) {
+                throw new ConfigException("serviceId cannot be identified in client.yml with the requestPath = " + requestPath);
             }
-            return prefix;
+            return serviceId;
         } else {
             return null;
         }
     }
 
-    private String getPrefixByServiceIds(ClientConfig clientConfig, List<String> serviceIds) {
-        // get the first serviceId as all serviceIds will have the same prefix.
-        String serviceId = serviceIds.get(0);
-        Map<String, String> pathPrefixServices = clientConfig.getPathPrefixServices();
-        if (pathPrefixServices == null || pathPrefixServices.size() == 0) {
-            throw new ConfigException("pathPrefixServices property is missing or has an empty value in client.yml");
-        }
-        String prefix = null;
-        for (Map.Entry<String, String> entry : pathPrefixServices.entrySet()) {
-            if (serviceId.equals(entry.getValue())) {
-                prefix = entry.getKey();
-            }
-        }
-        if (prefix == null) {
-            throw new ConfigException("prefix cannot be identified in client.yml with the serviceId = " + serviceId);
-        }
-        return prefix;
-    }
     /**
      * Retrieve JWK set from all possible oauth servers. If there are multiple servers in the client.yml, get all
-     * the jwk by iterate all of them.
+     * the jwk by iterate all of them. In case we have multiple jwks, the cache will have a prefix so that verify
+     * action won't cross fired.
      *
      * @return {@link Map} of {@link List}
      */
@@ -483,35 +490,23 @@ public class JwtVerifier {
                 Map<String, Object> authServerConfig = (Map<String, Object>) entry.getValue();
                 TokenKeyRequest keyRequest = new TokenKeyRequest(null, true, authServerConfig);
                 try {
-
                     if (logger.isDebugEnabled())
                         logger.debug("Getting Json Web Key list from {} for serviceId {}", keyRequest.getServerUrl(), entry.getKey());
-
                     String key = OauthHelper.getKey(keyRequest);
-
                     if (logger.isDebugEnabled())
                         logger.debug("Got Json Web Key = " + key);
-
                     List<JsonWebKey> jwkList = new JsonWebKeySet(key).getJsonWebKeys();
-
                     if (jwkList == null || jwkList.isEmpty()) {
-
                         if (logger.isErrorEnabled())
                             logger.error("Cannot get JWK from OAuth server.");
-
                     } else {
-                        if(logger.isTraceEnabled()) logger.trace("reverse lookup path prefix for serviceId {}", serviceId);
-                        String prefix = lookupPrefix(pathPrefixServices, serviceId);
                         for (JsonWebKey jwk : jwkList) {
-                            jwksMap.put(prefix + ":" + jwk.getKeyId(), jwkList);
-
+                            jwksMap.put(serviceId + ":" + jwk.getKeyId(), jwkList);
                             if (logger.isDebugEnabled())
-                                logger.debug("Successfully cached JWK for prefix {} kid {} serviceId {}", prefix, jwk.getKeyId(), entry.getKey());
+                                logger.debug("Successfully cached JWK for serviceId {} kid {} with key {}", serviceId, jwk.getKeyId(), serviceId + ":" + jwk.getKeyId());
                         }
                     }
-
                 } catch (JoseException ce) {
-
                     if (logger.isErrorEnabled())
                         logger.error("Failed to get JWK set. - {} - {}", new Status(GET_KEY_ERROR), ce.getMessage(), ce);
 
@@ -519,7 +514,6 @@ public class JwtVerifier {
 
                     if (logger.isErrorEnabled())
                         logger.error("Failed to get key. - {} - {} ", new Status(GET_KEY_ERROR), ce.getMessage(), ce);
-
                 }
             }
         } else {
@@ -556,17 +550,6 @@ public class JwtVerifier {
             }
         }
         return jwksMap;
-    }
-
-    private String lookupPrefix(Map<String, String> map, String serviceId) {
-        for(Map.Entry<String, String> entry: map.entrySet()) {
-            if(logger.isTraceEnabled()) logger.trace("Iterate an entry with key = {} value = {} from client.pathPrefixServices.", entry.getKey(), entry.getValue());
-            if(serviceId.equals(entry.getValue())) {
-                return entry.getKey();
-            }
-        }
-        if(logger.isInfoEnabled()) logger.info("Could not find the path prefix in client.pathPrefixServices for serviceId {} as the value.", serviceId);
-        return null;
     }
 
     /**
