@@ -59,9 +59,11 @@ public class Status {
     private String message;
     private String description;
     private Map<String, Object> metadata;
+    // make sure that the status.yml is cached in a static variable to avoid loading everytime.
+    private static Map<String, Object> config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
 
     static {
-        ModuleRegistry.registerModule(Status.class.getName(), getConfig(), null);
+        ModuleRegistry.registerModule(Status.class.getName(), config, null);
         try {
             statusSerializer = SingletonServiceFactory.getBean(StatusSerializer.class);
         } catch (ExceptionInInitializerError e) {
@@ -85,7 +87,7 @@ public class Status {
     public Status(final String code, final Object... args) {
         this.code = code;
         @SuppressWarnings("unchecked")
-        Map<String, Object> map = (Map<String, Object>) getConfig().get(code);
+        Map<String, Object> map = (Map<String, Object>) config.get(code);
         if (map != null) {
             this.statusCode = (Integer) map.get("statusCode");
             this.message = (String) map.get("message");
@@ -112,7 +114,7 @@ public class Status {
     public Status(final String code, final Map<String, Object> metadata, final Object... args) {
         this.code = code;
         @SuppressWarnings("unchecked")
-        Map<String, Object> map = (Map<String, Object>) getConfig().get(code);
+        Map<String, Object> map = (Map<String, Object>) config.get(code);
         if (map != null) {
             this.statusCode = (Integer) map.get("statusCode");
             this.message = (String) map.get("message");
@@ -230,15 +232,15 @@ public class Status {
     }
 
     public static boolean shouldShowMetadata() {
-        return getConfig().get(SHOW_METADATA) == null ? false : (boolean)getConfig().get(SHOW_METADATA);
+        return config.get(SHOW_METADATA) == null ? false : (boolean)config.get(SHOW_METADATA);
     }
 
     public static boolean shouldShowMessage() {
-        return getConfig().get(SHOW_MESSAGE) == null ? true : (boolean)getConfig().get(SHOW_MESSAGE);
+        return config.get(SHOW_MESSAGE) == null ? true : (boolean)config.get(SHOW_MESSAGE);
     }
 
     public static boolean shouldShowDescription() {
-        return getConfig().get(SHOW_DESCRIPTION) == null ? true : (boolean)getConfig().get(SHOW_DESCRIPTION);
+        return config.get(SHOW_DESCRIPTION) == null ? true : (boolean)config.get(SHOW_DESCRIPTION);
     }
 
     /**
@@ -299,8 +301,8 @@ public class Status {
         return sb.toString();
     }
 
-    public static Map<String, Object> getConfig() {
-        return Config.getInstance().getJsonMapConfig(CONFIG_NAME);
+    public static void reload() {
+        config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
+        ModuleRegistry.registerModule(Status.class.getName(), config, null);
     }
-
 }
