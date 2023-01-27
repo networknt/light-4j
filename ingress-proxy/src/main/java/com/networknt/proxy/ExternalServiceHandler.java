@@ -129,15 +129,15 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                     } else if(method.equalsIgnoreCase("POST")) {
                         // if body handler is in the chain before this handler, we should have it in the exchange attachment.
                         String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
-                        if(logger.isTraceEnabled() && bodyString != null) logger.trace("Get post body from the exchange attachment = " + bodyString);
+                        if(bodyString == null && logger.isDebugEnabled()) logger.debug("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
                         request = builder.POST(bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString)).build();
                     } else if(method.equalsIgnoreCase("PUT")) {
                         String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
-                        if(logger.isTraceEnabled() && bodyString != null) logger.trace("Get put body from the exchange attachment = " + bodyString);
+                        if(bodyString == null && logger.isDebugEnabled()) logger.debug("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
                         request = builder.PUT(bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString)).build();
                     } else if(method.equalsIgnoreCase("PATCH")) {
                         String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
-                        if(logger.isTraceEnabled() && bodyString != null) logger.trace("Get patch body from the exchange attachment = " + bodyString);
+                        if(bodyString == null && logger.isDebugEnabled()) logger.debug("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
                         request = builder.method("PATCH", bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString)).build();
                     } else {
                         logger.error("wrong http method " + method + " for request path " + requestPath);

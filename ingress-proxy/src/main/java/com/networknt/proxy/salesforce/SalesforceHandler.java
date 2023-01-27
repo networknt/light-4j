@@ -369,7 +369,7 @@ public class SalesforceHandler implements MiddlewareHandler {
 
         } else if(method.equalsIgnoreCase("POST")) {
             String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
-            if(logger.isTraceEnabled()) logger.trace("Post request body = " + bodyString);
+            if(bodyString == null && logger.isDebugEnabled()) logger.debug("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
             request = HttpRequest.newBuilder()
                     .uri(new URI(requestHost + requestPath))
                     .headers("Authorization", authorization, "Content-Type", contentType)
@@ -377,7 +377,7 @@ public class SalesforceHandler implements MiddlewareHandler {
                     .build();
         } else if(method.equalsIgnoreCase("PUT")) {
             String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
-            if(logger.isTraceEnabled()) logger.trace("Put request body = " + bodyString);
+            if(bodyString == null && logger.isDebugEnabled()) logger.debug("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
             request = HttpRequest.newBuilder()
                     .uri(new URI(requestHost + requestPath))
                     .headers("Authorization", authorization, "Content-Type", contentType)
@@ -385,7 +385,7 @@ public class SalesforceHandler implements MiddlewareHandler {
                     .build();
         } else if(method.equalsIgnoreCase("PATCH")) {
             String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
-            if(logger.isTraceEnabled()) logger.trace("Patch request body = " + bodyString);
+            if(bodyString == null && logger.isDebugEnabled()) logger.debug("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
             request = HttpRequest.newBuilder()
                     .uri(new URI(requestHost + requestPath))
                     .headers("Authorization", authorization, "Content-Type", contentType)
