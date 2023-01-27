@@ -366,7 +366,7 @@ ERR10048:
   statusCode: 404
   code: ERR10048
   message: PATH_NOT_IMPLEMENTED
-  description: No handler defined for path '%s'
+  description: No handler defined for path '%s' and method %s
 ERR10049:
   statusCode: 403
   code: ERR10049
