@@ -97,6 +97,8 @@ public class RequestBodyInterceptor implements RequestInterceptor {
                     if(logger.isTraceEnabled()) logger.trace("contentType = " + contentType + " stringBody = " + completeBody);
                     attached = this.attachFormDataBody(exchange, completeBody.toString());
                 }
+            } else {
+                if(logger.isTraceEnabled()) logger.trace("Request body interceptor is skipped due to the request path is not in request-injection.appliedBodyInjectionPathPrefixes configuration");
             }
             if(!attached) {
                 if(logger.isErrorEnabled())
