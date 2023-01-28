@@ -148,18 +148,20 @@ public abstract class Config {
         }
         
         final Yaml yaml;
-        
+
         FileConfigImpl(){
         	super();
-        	String decryptorClass = getDecryptorClass();
-        	configLoaderClass = getConfigLoaderClass();
-        	if (null==decryptorClass || decryptorClass.trim().isEmpty()) {
-        		yaml = new Yaml();
-        	}else {
-	            final Resolver resolver = new Resolver();
-	            resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
-	        	yaml = new Yaml(new DecryptConstructor(decryptorClass), new Representer(), new DumperOptions(), resolver);
-        	}
+      	    String decryptorClass = getDecryptorClass();
+       	    configLoaderClass = getConfigLoaderClass();
+            synchronized (FileConfigImpl.class) {
+                if (null == decryptorClass || decryptorClass.trim().isEmpty()) {
+                    yaml = new Yaml();
+                } else {
+                    final Resolver resolver = new Resolver();
+                    resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
+                    yaml = new Yaml(new DecryptConstructor(decryptorClass), new Representer(), new DumperOptions(), resolver);
+                }
+            }
         }
 
         private static Config initialize() {
