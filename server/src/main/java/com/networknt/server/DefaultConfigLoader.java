@@ -206,10 +206,11 @@ public class DefaultConfigLoader implements IConfigLoader{
     }
 
     /**
-     * load config properties from light config server
+     * load config properties from light config server. This method should only be accessed by one
+     * thread only as it is synchronized due to the Yaml constructor is not thread safe.
      * @param configPath
      */
-    private void loadConfigs(String configPath) {
+    private synchronized void loadConfigs(String configPath) {
         //config Server Configs Path
         String configServerConfigsPath = CONFIG_SERVER_CONFIGS_CONTEXT_ROOT + configPath;
         //get service configs and put them in config cache

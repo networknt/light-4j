@@ -92,8 +92,6 @@ public class UrlConfigLoader implements IConfigLoader {
 	static final String CONFIG_EXT_YAML = ".yaml";
 	static final String CONFIG_EXT_YML = ".yml";
 	static final String[] configExtensionsOrdered = { CONFIG_EXT_YML, CONFIG_EXT_YAML, CONFIG_EXT_JSON };
-
-	final static Yaml yaml = new Yaml();
 	final static ObjectMapper mapper = new ObjectMapper();
 	final static TypeReference<Map<String, Object>> mapType = new TypeReference<Map<String, Object>>() {
 	};
@@ -232,7 +230,7 @@ public class UrlConfigLoader implements IConfigLoader {
 		if (StringUtils.isNotBlank(respBody)) {
 			try {
 				if (!CONFIG_EXT_JSON.equals(fileExtension)) {
-					respBody = JSONValue.toJSONString(yaml.load(respBody));
+					respBody = JSONValue.toJSONString(Config.getInstance().getYaml().load(respBody));
 				}
 				return mapper.readValue(respBody, mapType);
 			} catch (Exception e) {
