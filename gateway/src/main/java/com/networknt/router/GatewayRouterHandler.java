@@ -51,6 +51,7 @@ public class GatewayRouterHandler extends RouterHandler implements MiddlewareHan
 
     public static Map<String, Object> config = Config.getInstance().getJsonMapConfigNoCache(ROUTER_CONFIG_NAME);
     public static GatewayConfig gatewayConfig = (GatewayConfig)Config.getInstance().getJsonObjectConfig(GatewayConfig.CONFIG_NAME, GatewayConfig.class);
+    public static ServerConfig serverConfig = (ServerConfig)Config.getInstance().getJsonObjectConfig(ServerConfig.CONFIG_NAME, ServerConfig.class);
 
     @Override
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
@@ -62,9 +63,8 @@ public class GatewayRouterHandler extends RouterHandler implements MiddlewareHan
             if (serviceId != null || serviceUrl != null) {
                 proxyHandler.handleRequest(httpServerExchange);
                 // get the serviceId and put it into the request as callerId for metrics
-                Map<String, Object> serverConfig = Config.getInstance().getJsonMapConfigNoCache(ServerConfig.CONFIG_NAME);
                 if(serverConfig != null) {
-                    httpServerExchange.getRequestHeaders().put(HttpStringConstants.CALLER_ID, (String)serverConfig.get(SERVICE_ID));
+                    httpServerExchange.getRequestHeaders().put(HttpStringConstants.CALLER_ID, serverConfig.getServiceId());
                 }
             } else {
                 if(logger.isDebugEnabled()) logger.debug("GatewayRouterHandler.handleRequest ends.");
