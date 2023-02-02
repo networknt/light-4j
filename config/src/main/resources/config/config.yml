@@ -16,9 +16,11 @@ exclusionConfigFileList:
   - values
   - status
 
-decryptorClass: com.networknt.decrypt.AESDecryptor
+decryptorClass: com.networknt.decrypt.AutoAESSaltDecryptor
 #  com.networknt.decrypt.ManualAESDecryptor
 #  com.networknt.decrypt.AutoAESDecryptor
+
+#DecrptPassword:
 
 # For some configuration files, we have left some properties without default values as there
 # would be negative impact on the application security. The following config will ensure that

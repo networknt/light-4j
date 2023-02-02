@@ -40,6 +40,13 @@ public class Http2ClientConnectionPool {
             protected boolean removeEldestEntry(Map.Entry<String, List<CachedConnection>> eldest) {
                 if (connectionPool.size() > poolSize) {
                     for (CachedConnection connection : eldest.getValue()) {
+                        try {
+                            connection.get().close();
+                            connection = null;
+                        } catch (Exception e) {
+                            logger.error("Cannot close the eldest connection from connection pool");
+                            connection = null;
+                        }
                         connectionStatusMap.remove(connection.get());
                         connectionCount.getAndDecrement();
                     }
@@ -143,7 +150,12 @@ public class Http2ClientConnectionPool {
             if(logger.isDebugEnabled()) logger.debug("Before removing max connections per host from list of {} connections for uri: {} ...", connections.size(), uri);
             if (connections.size() > ClientConfig.get().getMaxConnectionNumPerHost() * 0.75) {
                 while (connections.size() > ClientConfig.get().getMinConnectionNumPerHost() && connections.size() > 0) {
-                    connections.remove(0);
+                    try {
+                        CachedConnection cachedConnection = connections.remove(0);
+                        cachedConnection.get().close();
+                    } catch (Exception e) {
+                        logger.error("Cannot close the oversize connection from connection pool for connections per host:" + uri.getHost());
+                    }
                 }
             }
             if(logger.isDebugEnabled()) logger.debug("After removing max connections per host from list of {} connections for uri: {} ...", connections.size(), uri);
