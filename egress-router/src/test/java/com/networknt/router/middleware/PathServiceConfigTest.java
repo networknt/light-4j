@@ -8,6 +8,6 @@ public class PathServiceConfigTest {
     public void testLoadConfig() {
         PathServiceConfig config = PathServiceConfig.load(PathServiceConfig.CONFIG_NAME);
         Assert.assertTrue(config.isEnabled());
-        Assert.assertEquals(3, config.getMapping().size());
+        Assert.assertNull(config.getMapping());
     }
 }

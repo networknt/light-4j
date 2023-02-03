@@ -76,36 +76,38 @@ public class ServiceDictConfig {
 
     private void setMap() {
         Map<String, String> rawMapping = null;
-        if(getMappedConfig().get(MAPPING) instanceof String) {
-            String s = (String)getMappedConfig().get(MAPPING);
-            s = s.trim();
-            if(logger.isTraceEnabled()) logger.trace("s = " + s);
-            if(s.startsWith("{")) {
-                // json map
-                try {
-                    mapping = Config.getInstance().getMapper().readValue(s, Map.class);
-                } catch (IOException e) {
-                    logger.error("IOException:", e);
+        if(mappedConfig.get(MAPPING) != null) {
+            if(mappedConfig.get(MAPPING) instanceof String) {
+                String s = (String)mappedConfig.get(MAPPING);
+                s = s.trim();
+                if(logger.isTraceEnabled()) logger.trace("s = " + s);
+                if(s.startsWith("{")) {
+                    // json map
+                    try {
+                        mapping = Config.getInstance().getMapper().readValue(s, Map.class);
+                    } catch (IOException e) {
+                        logger.error("IOException:", e);
+                    }
+                } else {
+                    Map<String, String> map = new LinkedHashMap<>();
+                    for(String keyValue : s.split(" *& *")) {
+                        String[] pairs = keyValue.split(" *= *", 2);
+                        map.put(pairs[0], pairs.length == 1 ? "" : pairs[1]);
+                    }
+                    rawMapping = map;
                 }
+            } else if (mappedConfig.get(MAPPING) instanceof Map) {
+                rawMapping = (Map<String, String>) mappedConfig.get(MAPPING);
             } else {
-                Map<String, String> map = new LinkedHashMap<>();
-                for(String keyValue : s.split(" *& *")) {
-                    String[] pairs = keyValue.split(" *= *", 2);
-                    map.put(pairs[0], pairs.length == 1 ? "" : pairs[1]);
-                }
-                rawMapping = map;
+                logger.error("mapping is the wrong type. Only JSON string and YAML map are supported.");
             }
-        } else if (getMappedConfig().get(MAPPING) instanceof Map) {
-            rawMapping = (Map<String, String>) getMappedConfig().get(MAPPING);
-        } else {
-            logger.error("mapping is missing or wrong type.");
+            // convert the mapping to internal format.
+            mapping = new HashMap<>();
+            for (Map.Entry<String, String> entry : rawMapping.entrySet()) {
+                mapping.put(HandlerUtils.toInternalKey(entry.getKey()), entry.getValue());
+            }
+            mapping = Collections.unmodifiableMap(mapping);
         }
-        // convert the mapping to internal format.
-        mapping = new HashMap<>();
-        for (Map.Entry<String, String> entry : rawMapping.entrySet()) {
-            mapping.put(HandlerUtils.toInternalKey(entry.getKey()), entry.getValue());
-        }
-        mapping = Collections.unmodifiableMap(mapping);
     }
 
     private void setConfigData() {
