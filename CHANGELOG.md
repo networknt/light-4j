@@ -1,5 +1,36 @@
 # Change Log
 
+## [2.1.6](https://github.com/networknt/light-4j/tree/2.1.6) (2023-02-06)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1606 NPE error in prefix config when mapping is empty in the c… [\#1608](https://github.com/networknt/light-4j/pull/1608) ([stevehu](https://github.com/stevehu))
+- fixes \#1603 update the gateway module to make the server config static [\#1604](https://github.com/networknt/light-4j/pull/1604) ([stevehu](https://github.com/stevehu))
+- fixes \#1601 synchronized Yaml constructor as it is not thread safe [\#1602](https://github.com/networknt/light-4j/pull/1602) ([stevehu](https://github.com/stevehu))
+- fixes \#1593 Multiple serviceIds share the same path prefix with diffe… [\#1600](https://github.com/networknt/light-4j/pull/1600) ([stevehu](https://github.com/stevehu))
+- fixes \#1598 make sure that the status.yml is cached and reloadable [\#1599](https://github.com/networknt/light-4j/pull/1599) ([stevehu](https://github.com/stevehu))
+- fixes \#1596 adding trace or debug statements for body interceptor and… [\#1597](https://github.com/networknt/light-4j/pull/1597) ([stevehu](https://github.com/stevehu))
+- fixes \#1594 For path not implemented error code, add the method to th… [\#1595](https://github.com/networknt/light-4j/pull/1595) ([stevehu](https://github.com/stevehu))
+- fixes \#1591 update test-vault.sql to change value colume to val [\#1592](https://github.com/networknt/light-4j/pull/1592) ([stevehu](https://github.com/stevehu))
+- fixes \#1589 update the lookup path prefix from serviceId in JwtVerifier [\#1590](https://github.com/networknt/light-4j/pull/1590) ([stevehu](https://github.com/stevehu))
+- fixes \#1587 update whitelist configuration and add test cases [\#1588](https://github.com/networknt/light-4j/pull/1588) ([stevehu](https://github.com/stevehu))
+- fixes \#1587 RateLimit handler does not support path prefix [\#1586](https://github.com/networknt/light-4j/pull/1586) ([stevehu](https://github.com/stevehu))
+-  fixes \#1581 [\#1582](https://github.com/networknt/light-4j/pull/1582) ([GavinChenYan](https://github.com/GavinChenYan))
+- fixes \#1583 update the ip-whitelist to support path prefix [\#1584](https://github.com/networknt/light-4j/pull/1584) ([stevehu](https://github.com/stevehu))
+- Added http2 stream support + ProxyHandler refactor [\#1580](https://github.com/networknt/light-4j/pull/1580) ([KalevGonvick](https://github.com/KalevGonvick))
+- fixes \#1578 update the body.yml to sync with body module in config-re… [\#1579](https://github.com/networknt/light-4j/pull/1579) ([stevehu](https://github.com/stevehu))
+- fixes \#1576 prevent an NPE issue in TokenHandler [\#1577](https://github.com/networknt/light-4j/pull/1577) ([stevehu](https://github.com/stevehu))
+- fixes \#1574 remove the appliedPathPrefix from the body.yml [\#1575](https://github.com/networknt/light-4j/pull/1575) ([stevehu](https://github.com/stevehu))
+- fixes \#1572 update MrasHandler to cache the token based on the expire… [\#1573](https://github.com/networknt/light-4j/pull/1573) ([stevehu](https://github.com/stevehu))
+- fixes \#1570 add appiedBodyInjectionPathPrefixes to the Request and Re… [\#1571](https://github.com/networknt/light-4j/pull/1571) ([stevehu](https://github.com/stevehu))
+- Issue1568 [\#1569](https://github.com/networknt/light-4j/pull/1569) ([stevehu](https://github.com/stevehu))
+- fixes \#1566 update the JwtVerifyHandler to cache the jwk with prefix … [\#1567](https://github.com/networknt/light-4j/pull/1567) ([stevehu](https://github.com/stevehu))
+- fixes \#1564 update ApiKeyHandler to support one path with multiple AP… [\#1565](https://github.com/networknt/light-4j/pull/1565) ([stevehu](https://github.com/stevehu))
+- fixes \#1560 [\#1563](https://github.com/networknt/light-4j/pull/1563) ([GavinChenYan](https://github.com/GavinChenYan))
+- fixes \#1453 encryped apikey is not decripted automatically when json … [\#1562](https://github.com/networknt/light-4j/pull/1562) ([stevehu](https://github.com/stevehu))
+- Moving ConfigUtils to utility module and updates to Interceptors [\#1561](https://github.com/networknt/light-4j/pull/1561) ([DiogoFKT](https://github.com/DiogoFKT))
 ## [2.1.5](https://github.com/networknt/light-4j/tree/2.1.5) (2023-01-04)
 
 
