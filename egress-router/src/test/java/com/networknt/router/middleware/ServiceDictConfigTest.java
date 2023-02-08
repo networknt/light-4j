@@ -8,6 +8,6 @@ public class ServiceDictConfigTest {
     public void testLoadConfig() {
         ServiceDictConfig config = ServiceDictConfig.load(ServiceDictConfig.CONFIG_NAME);
         Assert.assertTrue(config.isEnabled());
-        Assert.assertEquals(3, config.getMapping().size());
+        Assert.assertNull(config.getMapping());
     }
 }

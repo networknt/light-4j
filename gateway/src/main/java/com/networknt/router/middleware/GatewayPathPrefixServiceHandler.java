@@ -26,7 +26,7 @@ import java.util.Map;
 public class GatewayPathPrefixServiceHandler extends PathPrefixServiceHandler {
     private static final Logger logger = LoggerFactory.getLogger(GatewayPathPrefixServiceHandler.class);
 
-    private GatewayConfig gatewayConfig;
+    private static GatewayConfig gatewayConfig;
 
     public GatewayPathPrefixServiceHandler() {
         logger.info("GatewayPathPrefixServiceHandler is constructed");

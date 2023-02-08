@@ -26,7 +26,7 @@ import java.util.Map;
 public class GatewayServiceDictHandler extends ServiceDictHandler {
     private static final Logger logger = LoggerFactory.getLogger(GatewayServiceDictHandler.class);
 
-    private GatewayConfig gatewayConfig;
+    private static GatewayConfig gatewayConfig;
 
     public GatewayServiceDictHandler() {
         logger.info("GatewayServiceDictHandler is constructed");
