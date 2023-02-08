@@ -8,8 +8,22 @@ http2Enabled: ${router.http2Enabled:true}
 # If TLS is enabled when accepting incoming request. Should be true on test and prod.
 httpsEnabled: ${router.httpsEnabled:true}
 
-# Max request time in milliseconds before timeout to the server.
+# Max request time in milliseconds before timeout to the server. This is the global setting shared
+# by all backend services if they don't have service specific timeout.
 maxRequestTime: ${router.maxRequestTime:1000}
+
+# If a particular downstream service has different timeout than the above global definition, you can
+# add the path prefix and give it another timeout in millisecond. For downstream APIs not defined here,
+# they will use the global timeout defined in router.maxRequestTime. The value is a map with key is the
+# path prefix and value is the timeout.
+# JSON format:
+# router.pathPrefixMaxRequestTime: {"/v1/address":5000,"/v2/address":10000,"/v3/address":30000}
+# YAML format:
+# router.pathPrefixMaxRequestTime:
+#   /v1/address: 5000
+#   /v2/address: 10000
+#   /v3/address: 30000
+pathPrefixMaxRequestTime: ${router.pathPrefixMaxRequestTime:}
 
 # Connections per thread.
 connectionsPerThread: ${router.connectionsPerThread:10}

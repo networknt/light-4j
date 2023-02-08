@@ -24,6 +24,7 @@ import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -40,6 +41,7 @@ public class RouterConfig {
     private static final String REWRITE_HOST_HEADER = "rewriteHostHeader";
     private static final String REUSE_X_FORWARDED = "reuseXForwarded";
     private static final String MAX_REQUEST_TIME = "maxRequestTime";
+    private static final String PATH_PREFIX_MAX_REQUEST_TIME = "pathPrefixMaxRequestTime";
     private static final String CONNECTION_PER_THREAD = "connectionsPerThread";
     private static final String SOFT_MAX_CONNECTIONS_PER_THREAD = "softMaxConnectionsPerThread";
     private static final String MAX_CONNECTION_RETRIES = "maxConnectionRetries";
@@ -49,6 +51,7 @@ public class RouterConfig {
     boolean http2Enabled;
     boolean httpsEnabled;
     int maxRequestTime;
+    Map<String, Integer> pathPrefixMaxRequestTime;
     int connectionsPerThread;
     int softMaxConnectionsPerThread;
     boolean rewriteHostHeader;
@@ -82,12 +85,13 @@ public class RouterConfig {
 
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(configName);
+        setConfigData();
         setHostWhitelist();
         setUrlRewriteRules();
         setMethodRewriteRules();
         setQueryParamRewriteRules();
         setHeaderRewriteRules();
-        setConfigData();
+        setPathPrefixMaxRequestTime();
     }
 
     public static RouterConfig load() {
@@ -100,12 +104,13 @@ public class RouterConfig {
 
     public void reload() {
         mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
+        setConfigData();
         setHostWhitelist();
         setUrlRewriteRules();
         setMethodRewriteRules();
         setQueryParamRewriteRules();
         setHeaderRewriteRules();
-        setConfigData();
+        setPathPrefixMaxRequestTime();
     }
     public void setConfigData() {
         Object object = getMappedConfig().get(HTTP2_ENABLED);
@@ -165,6 +170,9 @@ public class RouterConfig {
 
     public int getMaxRequestTime() {
         return maxRequestTime;
+    }
+    public Map<String, Integer> getPathPrefixMaxRequestTime() {
+        return pathPrefixMaxRequestTime;
     }
     public int getConnectionsPerThread() {
         return connectionsPerThread;
@@ -329,6 +337,36 @@ public class RouterConfig {
                     }
                     headerRewriteRules.put(key, rules);
                 }
+            }
+        }
+    }
+
+    public void setPathPrefixMaxRequestTime() {
+        pathPrefixMaxRequestTime = new HashMap<>();
+        if (mappedConfig.get(PATH_PREFIX_MAX_REQUEST_TIME) != null) {
+            if (mappedConfig.get(PATH_PREFIX_MAX_REQUEST_TIME) instanceof Map) {
+                pathPrefixMaxRequestTime = (Map<String, Integer>)mappedConfig.get(PATH_PREFIX_MAX_REQUEST_TIME);
+            } else if (mappedConfig.get(PATH_PREFIX_MAX_REQUEST_TIME) instanceof String) {
+                String s = (String)mappedConfig.get(PATH_PREFIX_MAX_REQUEST_TIME);
+                s = s.trim();
+                if(logger.isTraceEnabled()) logger.trace("s = " + s);
+                if(s.startsWith("{")) {
+                    // json map
+                    try {
+                        pathPrefixMaxRequestTime = Config.getInstance().getMapper().readValue(s, Map.class);
+                    } catch (IOException e) {
+                        logger.error("IOException:", e);
+                    }
+                } else {
+                    Map<String, Integer> map = new LinkedHashMap<>();
+                    for(String keyValue : s.split(" *& *")) {
+                        String[] pairs = keyValue.split(" *= *", 2);
+                        map.put(pairs[0], pairs.length == 1 ? maxRequestTime : Integer.valueOf(pairs[1])); // use the default maxRequestTime if value is missed.
+                    }
+                    pathPrefixMaxRequestTime = map;
+                }
+            } else {
+                logger.error("pathPrefixMaxRequestTime is the wrong type. Only JSON map or YAML map is supported.");
             }
         }
     }

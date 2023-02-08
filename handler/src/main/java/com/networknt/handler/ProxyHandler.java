@@ -90,7 +90,8 @@ public class ProxyHandler implements HttpHandler {
     public static final AttachmentKey<XnioExecutor.Key> TIMEOUT_KEY = AttachmentKey.create(XnioExecutor.Key.class);
 
     private final ProxyClient proxyClient;
-    private final int maxRequestTime;
+    private int maxRequestTime;
+    private final Map<String, Integer> pathPrefixMaxRequestTime;
 
     /**
      * Map of additional headers to add to the request.
@@ -114,6 +115,7 @@ public class ProxyHandler implements HttpHandler {
     private ProxyHandler(Builder builder) {
         this.proxyClient = builder.proxyClient;
         this.maxRequestTime = builder.maxRequestTime;
+        this.pathPrefixMaxRequestTime = builder.pathPrefixMaxRequestTime;
         this.next = builder.next;
         this.rewriteHostHeader = builder.rewriteHostHeader;
         this.reuseXForwarded = builder.reuseXForwarded;
@@ -143,7 +145,20 @@ public class ProxyHandler implements HttpHandler {
             exchange.endExchange();
             return;
         }
-        final long timeout = maxRequestTime > 0 ? System.currentTimeMillis() + maxRequestTime : 0;
+        // check the path prefix for the timeout and then fall back to maxRequestTime.
+        String reqPath = exchange.getRequestPath();
+        long timeout = maxRequestTime > 0 ? System.currentTimeMillis() + maxRequestTime : 0;
+        if(pathPrefixMaxRequestTime != null) {
+            for(Map.Entry<String, Integer> entry: pathPrefixMaxRequestTime.entrySet()) {
+                String key = entry.getKey();
+                if(reqPath.startsWith(key)) {
+                    maxRequestTime = entry.getValue();
+                    timeout = System.currentTimeMillis() + maxRequestTime;
+                    if(logger.isTraceEnabled()) logger.trace("Overwritten maxRequestTime {} and timeout {}.", maxRequestTime, timeout);
+                    break;
+                }
+            }
+        }
         int maxRetries = maxConnectionRetries;
         if (target instanceof ProxyClient.MaxRetriesProxyTarget) {
             maxRetries = Math.max(maxRetries, ((ProxyClient.MaxRetriesProxyTarget) target).getMaxRetries());
@@ -989,6 +1004,7 @@ public class ProxyHandler implements HttpHandler {
 
         private ProxyClient proxyClient;
         private int maxRequestTime = -1;
+        private Map<String, Integer> pathPrefixMaxRequestTime;
         private final Map<HttpString, ExchangeAttribute> requestHeaders = new CopyOnWriteMap<>();
         private HttpHandler next = ResponseCodeHandler.HANDLE_404;
         private boolean rewriteHostHeader;
@@ -1014,6 +1030,11 @@ public class ProxyHandler implements HttpHandler {
 
         public Builder setMaxRequestTime(int maxRequestTime) {
             this.maxRequestTime = maxRequestTime;
+            return this;
+        }
+
+        public Builder setPathPrefixMaxRequestTime(Map<String, Integer> pathPrefixMaxRequestTime) {
+            this.pathPrefixMaxRequestTime = pathPrefixMaxRequestTime;
             return this;
         }
 
