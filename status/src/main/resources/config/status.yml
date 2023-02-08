@@ -1373,7 +1373,7 @@ ERR12218:
   statusCode: 400
   code: ERR12218
   message: TOPICREPLAY_METADATA_ERROR
-  description: Topci replay metadata posted is wrong
+  description: Topic replay metadata posted is wrong , %s
 
 # http2client error 13000-13999
 ERR13001:
