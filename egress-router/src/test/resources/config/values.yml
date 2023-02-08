@@ -70,6 +70,12 @@ router.headerRewriteRules:
   /v3/address:
     - oldK: path
       newK: route
+# set the timeout per path for test cases
+#router.pathPrefixMaxRequestTime:
+#  /v1/address: 5000
+#  /v2/address: 10000
+#  /v3/address: 30000
+router.pathPrefixMaxRequestTime: {"/v1/address":5000,"/v2/address":10000,"/v3/address":30000}
 
 # client.yml
 # test configuration for the TokenHandler with multiple OAuth 2.0 providers.

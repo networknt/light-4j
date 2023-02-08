@@ -20,6 +20,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -109,4 +110,9 @@ public class RouterConfigTest {
         System.out.println(s);
     }
 
+    @Test
+    public void testPathPrefixMaxRequestTime() {
+        Map<String, Integer> map = routerConfig.getPathPrefixMaxRequestTime();
+        System.out.println("map size = " + map.size());
+    }
 }
