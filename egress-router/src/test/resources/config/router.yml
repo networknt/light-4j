@@ -11,6 +11,11 @@ httpsEnabled: true
 # Max request time in milliseconds before timeout to the server.
 maxRequestTime: 1000
 
+# If a particular downstream service has different timeout than the above global definition, you can
+# add the path prefix and give it another timeout in millisecond. For downstream APIs not defined here,
+# they will use the global timeout defined in router.maxRequestTime.
+pathPrefixMaxRequestTime: ${router.pathPrefixMaxRequestTime:}
+
 # Connections per thread.
 connectionsPerThread: 10
 
