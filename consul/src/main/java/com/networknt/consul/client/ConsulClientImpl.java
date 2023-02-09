@@ -21,6 +21,7 @@ import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.consul.*;
 import com.networknt.httpstring.HttpStringConstants;
+import com.networknt.utility.ConcurrentHashSet;
 import com.networknt.utility.StringUtils;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
@@ -36,9 +37,7 @@ import org.xnio.OptionMap;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -181,6 +180,7 @@ public class ConsulClientImpl implements ConsulClient {
 	 *         		- newResponse.getValue() != null, and
 	 *				- newResponse.getValue().size() == number of IPs registered for serviceName in Consul
 	 */
+	Set<String> consulConnections = new ConcurrentHashSet<>();
 	@Override
 	public ConsulResponse<List<ConsulService>> lookupHealthService(String serviceName, String tag, long lastConsulIndex, String token) {
 
@@ -205,7 +205,17 @@ public class ConsulClientImpl implements ConsulClient {
 			connection = client.safeBorrowConnection(
 					config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
 
-			logger.debug("CONSUL CONNECTION ESTABLISHED: {} from pool and send request to {}", connection, path);
+			if(connection != null) {
+				if(!consulConnections.contains(connection.getLocalAddress().toString()))
+					logger.debug("*NEW* CONNECTION BORROWED! {} -> {}", connection.getLocalAddress().toString(), connection.getPeerAddress().toString());
+				else
+					logger.debug("*OLD* CONNECTION BORROWED {} -> {}", connection.getLocalAddress().toString(), connection.getPeerAddress().toString());
+				consulConnections.add(connection.getLocalAddress().toString());
+				logger.debug("CONNECT SUPPORTS HTTP/2? {}", connection.isMultiplexingSupported());
+			}
+
+			logger.debug("CONSUL CONNECTION ESTABLISHED: {} -> {} from pool and send request to {}",
+					connection.getLocalAddress().toString(), connection.getPeerAddress().toString(), path);
 			// TODO: Ask NetworkNT why an AtomicReference is used here
 			// TODO: Pass timeout value into send() methods since different methods require different timeouts
 			AtomicReference<ClientResponse> reference = send(connection, Methods.GET, path, token, null);
@@ -274,6 +284,10 @@ public class ConsulClientImpl implements ConsulClient {
 			return null;
 
 		} finally {
+			logger.debug("RETURNING CONNECTION {} -> {}",
+					connection != null ? connection.getLocalAddress().toString() : "connection is null",
+					connection != null ? connection.getPeerAddress().toString() : "connection is null"
+			);
 			client.returnConnection(connection);
 		}
 
