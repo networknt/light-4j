@@ -508,40 +508,40 @@ public abstract class Config {
                     inStream = new FileInputStream(absolutePath + "/" + configFilename);
                     configFileDir = absolutePath;
                 } catch (FileNotFoundException ex) {
-                    if (logger.isInfoEnabled()) {
-                        logger.info("Unable to load config from externalized folder for " + Encode.forJava(configFilename + " in " + absolutePath));
+                    if (logger.isTraceEnabled()) {
+                        logger.trace("Unable to load config from externalized folder for " + Encode.forJava(configFilename + " in " + absolutePath));
                     }
                 }
                 // absolute path do not need to continue
                 if (path.startsWith("/")) break;
             }
             if (inStream != null) {
-                if (logger.isInfoEnabled()) {
-                    logger.info("Config loaded from externalized folder for " + Encode.forJava(configFilename + " in " + configFileDir));
+                if (logger.isTraceEnabled()) {
+                    logger.trace("Config loaded from externalized folder for " + Encode.forJava(configFilename + " in " + configFileDir));
                 }
                 return inStream;
             }
-            if (logger.isInfoEnabled()) {
-                logger.info("Trying to load config from classpath directory for file " + Encode.forJava(configFilename));
+            if (logger.isTraceEnabled()) {
+                logger.trace("Trying to load config from classpath directory for file " + Encode.forJava(configFilename));
             }
             inStream = this.getClassLoader().getResourceAsStream(configFilename);
             if (inStream != null) {
-                if (logger.isInfoEnabled()) {
-                    logger.info("config loaded from classpath for " + Encode.forJava(configFilename));
+                if (logger.isTraceEnabled()) {
+                    logger.trace("config loaded from classpath for " + Encode.forJava(configFilename));
                 }
                 return inStream;
             }
             inStream = this.getClassLoader().getResourceAsStream("config/" + configFilename);
             if (inStream != null) {
-                if (logger.isInfoEnabled()) {
-                    logger.info("Config loaded from default folder for " + Encode.forJava(configFilename));
+                if (logger.isTraceEnabled()) {
+                    logger.trace("Config loaded from default folder for " + Encode.forJava(configFilename));
                 }
                 return inStream;
             }
             if (configFilename.endsWith(CONFIG_EXT_YML)) {
-                logger.info("Unable to load config " + Encode.forJava(configFilename) + ". Looking for the same file name with extension yaml...");
+                logger.trace("Unable to load config " + Encode.forJava(configFilename) + ". Looking for the same file name with extension yaml...");
             } else if (configFilename.endsWith(CONFIG_EXT_YAML)) {
-                logger.info("Unable to load config " + Encode.forJava(configFilename) + ". Looking for the same file name with extension json...");
+                logger.trace("Unable to load config " + Encode.forJava(configFilename) + ". Looking for the same file name with extension json...");
             } else if (configFilename.endsWith(CONFIG_EXT_JSON)) {
                 System.out.println("Unable to load config '" + Encode.forJava(configFilename.substring(0, configFilename.indexOf("."))) + "' with extension yml, yaml and json from external config, application config and module config. Please ignore this message if you are sure that your application is not using this config file.");
             }
@@ -571,8 +571,8 @@ public abstract class Config {
             Map<String, Object> config = loadModuleConfig();
             if (null != config) {
                 String decryptorClass = (String) config.get(DecryptConstructor.CONFIG_ITEM_DECRYPTOR_CLASS);
-                if (logger.isDebugEnabled()) {
-                    logger.debug("found decryptorClass={}", decryptorClass);
+                if (logger.isTraceEnabled()) {
+                    logger.trace("found decryptorClass={}", decryptorClass);
                 }
                 return decryptorClass == null ? DecryptConstructor.DEFAULT_DECRYPTOR_CLASS : decryptorClass;
             }else {
@@ -587,8 +587,8 @@ public abstract class Config {
             Map<String, Object> config = loadModuleConfig();
             if (null != config) {
                 String configLoaderClass = (String) config.get(ConfigLoaderConstructor.CONFIG_LOADER_CLASS);
-                if (logger.isDebugEnabled()) {
-                    logger.debug("found configLoaderClass={}", configLoaderClass);
+                if (logger.isTraceEnabled()) {
+                    logger.trace("found configLoaderClass={}", configLoaderClass);
                 }
                 return configLoaderClass;
             }else {
@@ -598,7 +598,7 @@ public abstract class Config {
         }
 
         private Map<String, Object> loadModuleConfigNoCache() {
-            Yaml yml = new Yaml();
+            Yaml yml = new Yaml();  // The caller is synced, so it is thread safe here.
 
             Map<String, Object> config = null;
             for (String extension : configExtensionsOrdered) {
@@ -612,10 +612,9 @@ public abstract class Config {
                 }
 
                 if (config != null) {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("loaded config from file {}", ymlFilename);
+                    if (logger.isTraceEnabled()) {
+                        logger.trace("loaded config from file {}", ymlFilename);
                     }
-
                     break;
                 }
             }
@@ -643,7 +642,7 @@ public abstract class Config {
                 this.configLoader = new ConfigLoaderConstructor(configLoaderClass).getConfigLoader();
             }
             if (configLoader != null) {
-                logger.info("Trying to load {} with extension yaml, yml or json by using ConfigLoader: {}.", configName, configLoader.getClass().getName());
+                logger.trace("Trying to load {} with extension yaml, yml or json by using ConfigLoader: {}.", configName, configLoader.getClass().getName());
                 if (path == null || path.equals("")) {
                     config = configLoader.loadMapConfig(configName);
                 } else {
@@ -652,7 +651,7 @@ public abstract class Config {
             }
             // Fall back to default loading method if the configuration cannot be loaded by specific config loader
             if (config == null) {
-                logger.info("Trying to load {} with extension yaml, yml or json by using default loading method.", configName);
+                logger.trace("Trying to load {} with extension yaml, yml or json by using default loading method.", configName);
                 config = loadMapConfig(configName, path);
             }
             return config;
@@ -665,7 +664,7 @@ public abstract class Config {
                 this.configLoader = new ConfigLoaderConstructor(configLoaderClass).getConfigLoader();
             }
             if (this.configLoader != null) {
-                logger.info("Trying to load {} with extension yaml, yml or json by using ConfigLoader: {}.", configName, configLoader.getClass().getName());
+                logger.trace("Trying to load {} with extension yaml, yml or json by using ConfigLoader: {}.", configName, configLoader.getClass().getName());
                 if (path == null || path.equals("")) {
                     config = configLoader.loadObjectConfig(configName, clazz);
                 } else {
@@ -674,7 +673,7 @@ public abstract class Config {
             }
             // Fall back to default loading method if the configuration cannot be loaded by specific config loader
             if (config == null) {
-                logger.info("Trying to load {} with extension yaml, yml or json by using default loading method.", configName);
+                logger.trace("Trying to load {} with extension yaml, yml or json by using default loading method.", configName);
                 config = loadObjectConfig(configName, clazz, path);
             }
             return config;

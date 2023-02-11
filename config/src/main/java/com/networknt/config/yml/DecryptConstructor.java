@@ -37,8 +37,8 @@ public class DecryptConstructor extends Constructor {
 	}
 	
 	private Decryptor createDecryptor(String decryptorClass) {
-		if (logger.isDebugEnabled()) {
-			logger.debug("creating decryptor {}", decryptorClass);
+		if (logger.isTraceEnabled()) {
+			logger.trace("creating decryptor {}", decryptorClass);
 		}
 		
 		try {
