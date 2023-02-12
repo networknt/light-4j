@@ -224,7 +224,8 @@ public class SimpleConnectionHolder {
         This is vital to ensure that connections are never closed until after all processes that
         borrowed them are no longer using them
         */
-        if(!borrowed() && expired(now))
+        boolean notBorrowedExpired = !borrowed() && expired(now);
+        if(notBorrowedExpired != true)
             throw new IllegalStateException();
 
         closed = true;
