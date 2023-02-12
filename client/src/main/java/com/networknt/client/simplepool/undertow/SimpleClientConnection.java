@@ -1,5 +1,6 @@
-package com.networknt.client.http;
+package com.networknt.client.simplepool.undertow;
 
+import com.networknt.client.simplepool.SimpleConnection;
 import io.undertow.client.ClientConnection;
 import org.xnio.IoUtils;
 

@@ -1,4 +1,4 @@
-package com.networknt.client.http;
+package com.networknt.client.simplepool;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,16 +18,14 @@ import java.util.concurrent.ThreadLocalRandom;
 */
 public class SimpleURIConnectionPool {
     private static final Logger logger = LoggerFactory.getLogger(SimpleURIConnectionPool.class);
-    private SimpleConnectionMaker connectionMaker;
-    private long EXPIRY_TIME;
-    private int poolSize;
-    private URI uri;
+    private final SimpleConnectionMaker connectionMaker;
+    private final long EXPIRY_TIME;
+    private final int poolSize;
+    private final URI uri;
     private final Set<SimpleConnectionHolder> all = new HashSet<>();
     private final Set<SimpleConnectionHolder> borrowable = new HashSet<>();
     private final Set<SimpleConnectionHolder> borrowed = new HashSet<>();
     private final Set<SimpleConnectionHolder> notBorrowedExpired = new HashSet<>();
-
-    private SimpleURIConnectionPool() {}
 
     public SimpleURIConnectionPool(URI uri, long expireTime, int poolSize, SimpleConnectionMaker connectionMaker) {
         EXPIRY_TIME = expireTime;
@@ -131,7 +129,7 @@ public class SimpleURIConnectionPool {
      *
      * @param set the set to potentially add or remove the holder from
      * @param isMember if true, it will add holder to set, otherwise, it will remove holder from set
-     * @param holder
+     * @param holder the holder to add or remove from the set
      */
     // TODO: Ensure this does not throw errors!
     private void updateSet(Set<SimpleConnectionHolder> set, boolean isMember, SimpleConnectionHolder holder) {

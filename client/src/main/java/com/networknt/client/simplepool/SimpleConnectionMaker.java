@@ -1,4 +1,4 @@
-package com.networknt.client.http;
+package com.networknt.client.simplepool;
 
 import java.net.URI;
 

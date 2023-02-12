@@ -1,4 +1,4 @@
-package com.networknt.client.http;
+package com.networknt.client.simplepool;
 
 public interface SimpleConnection {
     public boolean isOpen();

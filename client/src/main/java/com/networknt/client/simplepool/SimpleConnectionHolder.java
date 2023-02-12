@@ -1,4 +1,4 @@
-package com.networknt.client.http;
+package com.networknt.client.simplepool;
 
 import com.networknt.utility.ConcurrentHashSet;
 import org.slf4j.Logger;
@@ -213,7 +213,7 @@ public class SimpleConnectionHolder {
         logger.debug("{} close - attempt to close connection with {} borrows...", logLabel(connection, now), borrowedTokens.size());
 
         /**
-        Connection may still be open if close == true
+        Connection may still be open even if closed == true
         However, for consistency, we treat the connection as closed as soon as closed == true,
         even if IoUtils.safeClose(connection) has not completed closing the connection yet
         */

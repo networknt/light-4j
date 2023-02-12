@@ -1,6 +1,8 @@
-package com.networknt.client.http;
+package com.networknt.client.simplepool.undertow;
 
 import com.networknt.client.ClientConfig;
+import com.networknt.client.simplepool.SimpleConnection;
+import com.networknt.client.simplepool.SimpleConnectionMaker;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientCallback;
