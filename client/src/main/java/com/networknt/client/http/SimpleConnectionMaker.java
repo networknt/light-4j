@@ -56,8 +56,11 @@ public class SimpleConnectionMaker
 
     public static ClientConnection reuseConnection(long timeoutSeconds, ClientConnection connection) throws RuntimeException
     {
-        if(connection == null || !connection.isOpen())
+        if(connection == null)
             return null;
+
+        if(!connection.isOpen())
+            throw new RuntimeException("Reused-connection has been unexpectedly closed");
 
         final FutureResult<ClientConnection> result = new FutureResult<>();
         result.setResult(connection);
@@ -120,6 +123,13 @@ public class SimpleConnectionMaker
         return SSL.get();
     }
 
+    /***
+     * Never returns null
+     *
+     * @param timeoutSeconds
+     * @param future
+     * @return
+     */
     private static ClientConnection safeConnect(long timeoutSeconds, IoFuture<ClientConnection> future)
     {
         ClientConnection connection = null;

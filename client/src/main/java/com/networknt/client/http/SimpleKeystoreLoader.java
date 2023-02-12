@@ -6,6 +6,10 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 import java.security.KeyStore;
 
+/**
+ * Originally from com.networknt.utility.TlsUtil developed by Balloon
+ */
+
 public class SimpleKeystoreLoader
 {
     private static final Logger logger = LoggerFactory.getLogger(SimpleKeystoreLoader.class);

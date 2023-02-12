@@ -13,6 +13,10 @@ import java.io.IOException;
 import java.security.*;
 import java.util.Map;
 
+/**
+ * Extracted from com.networknt.client.Http2Client
+ */
+
 public class SimpleSSLContextMaker
 {
     private static final Logger logger = LoggerFactory.getLogger(SimpleSSLContextMaker.class);

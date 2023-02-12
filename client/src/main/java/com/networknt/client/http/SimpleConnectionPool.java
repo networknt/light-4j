@@ -20,12 +20,18 @@ public class SimpleConnectionPool {
         this.poolSize = poolSize;
     }
 
-    public synchronized SimpleConnectionHolder.ConnectionToken borrow(long timeout, long createConnectionTimeout, boolean isHttp2, URI uri) {
-        if(!pools.containsKey(uri)) pools.put(uri, new SimpleURIConnectionPool(uri, expireTime, poolSize));
-        return pools.get(uri).borrow(timeout, createConnectionTimeout, isHttp2);
+    public SimpleConnectionHolder.ConnectionToken borrow(long createConnectionTimeout, boolean isHttp2, URI uri) {
+        if(!pools.containsKey(uri)) {
+            synchronized (pools) {
+                if (!pools.containsKey(uri))
+                    pools.put(uri, new SimpleURIConnectionPool(uri, expireTime, poolSize));
+            }
+        }
+        return pools.get(uri).borrow(createConnectionTimeout, isHttp2);
     }
 
-    public synchronized void restore(SimpleConnectionHolder.ConnectionToken token) {
-        pools.get(token.uri()).restore(token);
+    public void restore(SimpleConnectionHolder.ConnectionToken connectionToken) {
+        if(pools.containsKey(connectionToken.uri()))
+            pools.get(connectionToken.uri()).restore(connectionToken);
     }
 }

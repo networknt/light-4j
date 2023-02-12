@@ -35,9 +35,7 @@ public class SimpleURIConnectionPool {
         this.poolSize = poolSize;
     }
 
-    public synchronized SimpleConnectionHolder.ConnectionToken borrow(long createConnectionTimeout, boolean isHttp2)
-        throws RuntimeException
-    {
+    public synchronized SimpleConnectionHolder.ConnectionToken borrow(long createConnectionTimeout, boolean isHttp2) throws RuntimeException {
         long now = System.currentTimeMillis();
         SimpleConnectionHolder holder = null;
 
@@ -53,55 +51,26 @@ public class SimpleURIConnectionPool {
                 throw new RuntimeException("An attempt to exceed the connection pool's maximum size was made. Increase request.connectionPoolSize in client.yml");
         }
 
-        SimpleConnectionHolder.ConnectionToken token = holder.borrow(createConnectionTimeout, now);
+        SimpleConnectionHolder.ConnectionToken connectionToken = holder.borrow(createConnectionTimeout, now);
         readSingleHolder(holder, now);
 
         logger.debug(showConnections("borrow"));
 
-        return token;
+        return connectionToken;
     }
 
-    public synchronized void restore(SimpleConnectionHolder.ConnectionToken token) {
-        if(token == null)
+    public synchronized void restore(SimpleConnectionHolder.ConnectionToken connectionToken) {
+        if(connectionToken == null)
             return;
 
         //SimpleConnectionHolder holder = null;
-        SimpleConnectionHolder holder = token.holder();
+        SimpleConnectionHolder holder = connectionToken.holder();
         long now = System.currentTimeMillis();
 
+        holder.restore(connectionToken);
         readAllHolders(now);
-        holder.restore(token);
-        readSingleHolder(holder, now);
 
         logger.debug(showConnections("restore"));
-    }
-
-    /***
-     * This method reads a holder and updates the state of the SimpleURIConnectionPool based on the state of connection.
-     *
-     *
-     * @param holder
-     * @param now
-     */
-    private void readSingleHolder(SimpleConnectionHolder holder, long now) {
-
-        if(holder.closed()) {
-            all.remove(holder);
-            borrowable.remove(holder);
-            borrowed.remove(holder);
-            notBorrowedExpired.remove(holder);
-            return;
-        }
-
-        boolean isExpired =             holder.expired(now);
-        boolean isBorrowed =            holder.borrowed();
-        boolean isBorrowable =          holder.borrowable(now);
-        boolean isNotBorrowedExpired =  !isBorrowed && isExpired;
-
-        // check whether holder should be added or removed from these sets based on its current state
-        updateSet(borrowable, isBorrowable, holder);
-        updateSet(borrowed, isBorrowed, holder);
-        updateSet(notBorrowedExpired, isNotBorrowedExpired, holder);
     }
 
     /**
@@ -116,16 +85,48 @@ public class SimpleURIConnectionPool {
             readSingleHolder(holder, now);
 
         // close any connections found in a closeable set
-        for(SimpleConnectionHolder closeable: notBorrowedExpired) {
-            closeable.close(now);
-            notBorrowedExpired.remove(closeable);  // after a sweep
-            all.remove(closeable);
+        for(SimpleConnectionHolder closeableConnection: notBorrowedExpired)
+        {
+            closeableConnection.close(now);
+
+            notBorrowedExpired.remove(closeableConnection);
+            all.remove(closeableConnection);
         }
     }
 
     /***
+     * This method reads a holder and updates the state of the SimpleURIConnectionPool based on the state of connection.
+     *
+     *
+     * @param holder
+     * @param now
+     */
+    private void readSingleHolder(SimpleConnectionHolder holder, long now) {
+
+        if(holder.closed())
+        {
+            all.remove(holder);
+            borrowable.remove(holder);
+            borrowed.remove(holder);
+            notBorrowedExpired.remove(holder);
+
+            return;
+        }
+
+        boolean isExpired =             holder.expired(now);
+        boolean isBorrowed =            holder.borrowed();
+        boolean isBorrowable =          holder.borrowable(now);
+        boolean isNotBorrowedExpired =  !isBorrowed && isExpired;
+
+        // check whether holder should be added or removed from these sets based on its current state
+        updateSet(borrowable, isBorrowable, holder);
+        updateSet(borrowed, isBorrowed, holder);
+        updateSet(notBorrowedExpired, isNotBorrowedExpired, holder);
+    }
+
+    /***
      * Takes a Set, a boolean, and a holder
-     * If the boolean is true, it will add the holder from the Set, otherwise, it will remove it from the Set
+     * If the boolean is true, it will add the holder to the Set, otherwise, it will remove it from the Set
      *
      * @param set the set to potentially add or remove the holder from
      * @param isMember if true, it will add holder to set, otherwise, it will remove holder from set

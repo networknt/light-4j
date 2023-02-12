@@ -55,21 +55,21 @@ import java.util.Set;
  *   occur if a borrowed token is not returned.
  *
  *   TODO: add a setting that sets the max time after expiry to give connections that still have unrestored tokens
+ *
+ * Time-fixing
+ *   Calculates the state of the connection based on its internal properties at a specific point in time.
+ *
+ *   Users must provide a fixed 'now' value for the current time.
+ *   This freezes a single time value for all time-dependent properties.
+ *   This is important when calculating an aggregate state based on the values of 2 or more time-dependent states.
+ *
+ *   Not doing so (i.e.: not fixing the time) may allow inconsistent states to be reached.
  */
 public class SimpleConnectionHolder {
     private static final Logger logger = LoggerFactory.getLogger(SimpleConnectionHolder.class);
 
-    enum HolderState {
-        CLOSED,
-        NOT_BORROWED_VALID,
-        NOT_BORROWED_EXPIRED,
-        BORROWED_VALID,
-        BORROWED_EXPIRED,
-        BORROWABLE
-    }
-
     // how long a connection can be eligible to be borrowed
-    private volatile long EXPIRE_TIME;
+    private long EXPIRE_TIME;
 
     // the maximum number of borrowed tokens a connection can have at a time
     private int MAX_BORROWS;
@@ -78,7 +78,7 @@ public class SimpleConnectionHolder {
     private long startTime;
 
     // the URI this connection is connected to
-    private volatile URI uri;
+    private URI uri;
 
     // if true, this connection should be treated as closed
     // note: closed may be true before a connection is actually closed since there may be a delay
@@ -87,7 +87,7 @@ public class SimpleConnectionHolder {
 
     // If the connection is HTTP/1.1, it can only be borrowed by 1 process at a time
     // If the connection is HTTP/2, it can be borrowed by an unlimited number of processes at a time
-    private volatile ClientConnection connection;
+    private ClientConnection connection;
 
     // a Set containing all borrowed connection tokens
     private final Set<ConnectionToken> borrowedTokens = new ConcurrentHashSet<>();
@@ -153,84 +153,53 @@ public class SimpleConnectionHolder {
          * This means that users need to check the state of the connection (i.e.: the state of the ConnectionHolder)
          * before using it, e.g.:
          *
-         *     ConnectionToken token = null;
+         *     ConnectionToken connectionToken = null;
          *     long now = System.currentTimeMillis();
          *
          *     if(connectionHolder.borrowable(now))
-         *         token = connectionHolder.borrow(createConnectionTimeout, now);
+         *         connectionToken = connectionHolder.borrow(createConnectionTimeout, now);
          *
          * Also note the use of a single consistent value for the current time ('now'). This ensures
          * that the state returned in the 'if' statement will still be true in the 'borrow' statement
          * (as long as the connection does not close between the 'if' and 'borrow').
          */
-        ConnectionToken token;
-        switch(state(now)) {
-            case BORROWABLE:
-                if(firstUse) {
-                    firstUse = false;
-                    token = new ConnectionToken(connection);
-                } else {
-                    token = new ConnectionToken(SimpleConnectionMaker.reuseConnection(createConnectionTimeout, connection));
-                }
+        ConnectionToken connectionToken;
 
-                // add token to the Set of borrowed tokens
-                borrowedTokens.add(token);
+        if(borrowable(now)) {
+            if (firstUse) {
+                firstUse = false;
+                connectionToken = new ConnectionToken(connection);
+            } else {
+                ClientConnection reusedConnection = SimpleConnectionMaker.reuseConnection(createConnectionTimeout, connection);
+                connectionToken = new ConnectionToken(reusedConnection);
+            }
 
-                logger.debug("{} borrow - connection now has {} borrows", logLabel(connection, now), borrowedTokens.size());
+            // add connectionToken to the Set of borrowed tokens
+            borrowedTokens.add(connectionToken);
 
-                return token;
+            logger.debug("{} borrow - connection now has {} borrows", logLabel(connection, now), borrowedTokens.size());
 
-            default:
-                if(closed())
-                    throw new RuntimeException("Connection was unexpectedly closed");
-                else
-                    throw new IllegalStateException("Attempt made to borrow connection outside BORROWABLE state");
+            return connectionToken;
+        }
+        else {
+            if(closed())
+                throw new RuntimeException("Connection was unexpectedly closed");
+            else
+                throw new IllegalStateException("Attempt made to borrow connection outside BORROWABLE state");
         }
     }
 
     /**
      *
-     * @param token
+     * @param connectionToken
      */
     // state transition
-    public synchronized void restore(ConnectionToken token) {
+    public synchronized void restore(ConnectionToken connectionToken) {
         //
-        borrowedTokens.remove(token);
+        borrowedTokens.remove(connectionToken);
 
         long now = System.currentTimeMillis();
         logger.debug("{} restore - connection now has {} borrows", logLabel(connection, now), borrowedTokens.size());
-    }
-
-    /**
-     * Calculates the state of the connection based on its internal properties.
-     *
-     * This method must be provided with a fixed 'now' value for the current time.
-     * This freezes a single time value for all time-dependent properties.
-     *
-     * For example:
-     * Without freezing the time, it would be possible for 'expired' to be false while
-     * updating half of the connection's properties, but be true when updating
-     * the remainder.
-     *
-     * This could result in nonsensical / inconsistent states to be reached.
-     *
-     * @param now
-     * @return
-     * @throws IllegalStateException
-     */
-    private HolderState state(long now) throws IllegalStateException {
-        if(closed())                        return HolderState.CLOSED; // not used
-        if(borrowable(now))                 return HolderState.BORROWABLE; // used once
-        if(!borrowed() && !expired(now))    return HolderState.NOT_BORROWED_VALID; // not used
-        if(borrowed() && !expired(now))     return HolderState.BORROWED_VALID;  // not used
-        if(borrowed() && expired(now))      return HolderState.BORROWED_EXPIRED; // not used
-        if(!borrowed() && expired(now))     return HolderState.NOT_BORROWED_EXPIRED; // used once
-
-        // check that the connection did not close after the call to closed() above
-        if(closed())
-            return HolderState.CLOSED;
-        else
-            throw new IllegalStateException();
     }
 
     /**
@@ -255,7 +224,7 @@ public class SimpleConnectionHolder {
         This is vital to ensure that connections are never closed until after all processes that
         borrowed them are no longer using them
         */
-        if(state(now) != HolderState.NOT_BORROWED_EXPIRED)
+        if(!borrowed() && expired(now))
             throw new IllegalStateException();
 
         closed = true;
@@ -341,7 +310,7 @@ public class SimpleConnectionHolder {
 
     // for logging
     public String logLabel(ClientConnection connection, long now) {
-        return "[" + port(connection) + ": " + state(now).name() + "]:";
+        return "[" + port(connection) + ": " + state(now) + "]:";
     }
 
     public static String port(ClientConnection connection) {
@@ -350,5 +319,20 @@ public class SimpleConnectionHolder {
         int semiColon = url.lastIndexOf(":");
         if(semiColon == - 1) return "PORT?";
         return url.substring(url.lastIndexOf(":")+1);
+    }
+
+    private String state(long now) {
+        if(closed())                        return "CLOSED";
+        if(borrowable(now))                 return "BORROWABLE";
+        if(!borrowed() && !expired(now))    return "NOT_BORROWED_VALID";
+        if(borrowed() && !expired(now))     return "BORROWED_VALID";
+        if(borrowed() && expired(now))      return "BORROWED_EXPIRED";
+        if(!borrowed() && expired(now))     return "NOT_BORROWED_EXPIRED";
+
+        // check that the connection did not close after the call to closed() above
+        if(closed())
+            return "CLOSED";
+
+        return "ILLEGAL_STATE";
     }
 }
