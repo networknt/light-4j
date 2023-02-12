@@ -1,6 +1,5 @@
 package com.networknt.client.http;
 
-import io.undertow.client.ClientConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +18,7 @@ import java.util.concurrent.ThreadLocalRandom;
 */
 public class SimpleURIConnectionPool {
     private static final Logger logger = LoggerFactory.getLogger(SimpleURIConnectionPool.class);
+    private SimpleConnectionMaker connectionMaker;
     private long EXPIRY_TIME;
     private int poolSize;
     private URI uri;
@@ -29,10 +29,11 @@ public class SimpleURIConnectionPool {
 
     private SimpleURIConnectionPool() {}
 
-    public SimpleURIConnectionPool(URI uri, long expireTime, int poolSize) {
+    public SimpleURIConnectionPool(URI uri, long expireTime, int poolSize, SimpleConnectionMaker connectionMaker) {
         EXPIRY_TIME = expireTime;
         this.uri = uri;
         this.poolSize = poolSize;
+        this.connectionMaker = connectionMaker;
     }
 
     public synchronized SimpleConnectionHolder.ConnectionToken borrow(long createConnectionTimeout, boolean isHttp2) throws RuntimeException {
@@ -45,7 +46,7 @@ public class SimpleURIConnectionPool {
             holder = borrowable.toArray(new SimpleConnectionHolder[0])[ThreadLocalRandom.current().nextInt(borrowable.size())];
         } else {
             if (borrowed.size() < poolSize) {
-                holder = new SimpleConnectionHolder(EXPIRY_TIME, createConnectionTimeout, isHttp2, uri);
+                holder = new SimpleConnectionHolder(EXPIRY_TIME, createConnectionTimeout, isHttp2, uri, connectionMaker);
                 all.add(holder);
             } else
                 throw new RuntimeException("An attempt to exceed the connection pool's maximum size was made. Increase request.connectionPoolSize in client.yml");
@@ -156,7 +157,7 @@ public class SimpleURIConnectionPool {
         sb.append("] ");
         return sb.toString();
     }
-    public static String port(ClientConnection connection) {
+    public static String port(SimpleConnection connection) {
         if(connection == null) return "NULL";
         String url = connection.getLocalAddress().toString();
         int semiColon = url.lastIndexOf(":");

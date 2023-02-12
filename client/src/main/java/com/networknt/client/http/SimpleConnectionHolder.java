@@ -1,10 +1,8 @@
 package com.networknt.client.http;
 
 import com.networknt.utility.ConcurrentHashSet;
-import io.undertow.client.ClientConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xnio.IoUtils;
 import java.net.URI;
 import java.util.Set;
 
@@ -87,7 +85,8 @@ public class SimpleConnectionHolder {
 
     // If the connection is HTTP/1.1, it can only be borrowed by 1 process at a time
     // If the connection is HTTP/2, it can be borrowed by an unlimited number of processes at a time
-    private ClientConnection connection;
+    private SimpleConnectionMaker connectionMaker;
+    private SimpleConnection connection;
 
     // a Set containing all borrowed connection tokens
     private final Set<ConnectionToken> borrowedTokens = new ConcurrentHashSet<>();
@@ -110,7 +109,9 @@ public class SimpleConnectionHolder {
      * @param isHttp2 if true, tries to upgrade to HTTP/2. if false, will try to open an HTTP/1.1 connection
      * @param uri the URI the connection will try to connect to
      */
-    public SimpleConnectionHolder(long expireTime, long createConnectionTimeout, boolean isHttp2, URI uri) {
+    public SimpleConnectionHolder(long expireTime, long createConnectionTimeout, boolean isHttp2, URI uri, SimpleConnectionMaker connectionMaker) {
+        this.connectionMaker = connectionMaker;
+
         this.uri = uri;
         EXPIRE_TIME = expireTime;
 
@@ -118,7 +119,7 @@ public class SimpleConnectionHolder {
         long now = System.currentTimeMillis();
 
         // create initial connection to uri
-        connection = SimpleConnectionMaker.makeConnection(createConnectionTimeout, isHttp2, uri);
+        connection = connectionMaker.makeConnection(createConnectionTimeout, isHttp2, uri);
 
         // throw exception if connection creation failed
         if(!connection.isOpen()) {
@@ -170,7 +171,7 @@ public class SimpleConnectionHolder {
                 firstUse = false;
                 connectionToken = new ConnectionToken(connection);
             } else {
-                ClientConnection reusedConnection = SimpleConnectionMaker.reuseConnection(createConnectionTimeout, connection);
+                SimpleConnection reusedConnection = connectionMaker.reuseConnection(createConnectionTimeout, connection);
                 connectionToken = new ConnectionToken(reusedConnection);
             }
 
@@ -230,7 +231,7 @@ public class SimpleConnectionHolder {
 
         closed = true;
         if(connection.isOpen())
-            IoUtils.safeClose(connection);
+            connection.safeClose();
 
         logger.debug("{}", logLabel(connection, now));
 
@@ -289,34 +290,34 @@ public class SimpleConnectionHolder {
      *
      * @return
      */
-    public ClientConnection connection() { return connection; }
+    public SimpleConnection connection() { return connection; }
 
     public class ConnectionToken {
-        private ClientConnection connection;
+        private SimpleConnection connection;
         private SimpleConnectionHolder holder;
         private URI uri;
 
         private ConnectionToken() {}
 
-        public ConnectionToken(ClientConnection connection) {
+        public ConnectionToken(SimpleConnection connection) {
             this.connection = connection;
             this.holder = SimpleConnectionHolder.this;
             this.uri = SimpleConnectionHolder.this.uri;
         }
 
         public SimpleConnectionHolder holder() { return holder; }
-        public ClientConnection connection() { return connection; }
+        public SimpleConnection connection() { return connection; }
         public URI uri() { return uri; }
     }
 
     // for logging
-    public String logLabel(ClientConnection connection, long now) {
+    public String logLabel(SimpleConnection connection, long now) {
         return "[" + port(connection) + ": " + state(now) + "]:";
     }
 
-    public static String port(ClientConnection connection) {
+    public static String port(SimpleConnection connection) {
         if(connection == null) return "NULL";
-        String url = connection.getLocalAddress().toString();
+        String url = connection.getLocalAddress();
         int semiColon = url.lastIndexOf(":");
         if(semiColon == - 1) return "PORT?";
         return url.substring(url.lastIndexOf(":")+1);
