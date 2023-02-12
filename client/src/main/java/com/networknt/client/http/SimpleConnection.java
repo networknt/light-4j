@@ -1,8 +1,8 @@
 package com.networknt.client.http;
 
-public interface SimpleConnection<Connection> {
+public interface SimpleConnection {
     public boolean isOpen();
-    public Connection getRawConnection();
+    public Object getRawConnection();
     public boolean isMultiplexingSupported();
     public String getLocalAddress();
     public void safeClose();
