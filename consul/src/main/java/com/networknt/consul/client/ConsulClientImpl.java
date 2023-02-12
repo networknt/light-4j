@@ -17,7 +17,11 @@
 package com.networknt.consul.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
+import com.networknt.client.http.SimpleConnectionHolder;
+import com.networknt.client.http.SimpleClientConnectionMaker;
+import com.networknt.client.http.SimpleURIConnectionPool;
 import com.networknt.config.Config;
 import com.networknt.consul.*;
 import com.networknt.httpstring.HttpStringConstants;
@@ -59,6 +63,9 @@ public class ConsulClientImpl implements ConsulClient {
 	private String wait = "600s";
 	private String timeoutBuffer = "5s";
 
+	// connection pool
+	private SimpleURIConnectionPool pool = null;
+
 	/**
 	 * Construct ConsulClient with all parameters from consul.yml config file. The other two constructors are
 	 * just for backward compatibility.
@@ -77,6 +84,10 @@ public class ConsulClientImpl implements ConsulClient {
 			logger.error("Consul URL generated invalid URI! Consul URL: " + consulUrl, e);
 			throw new RuntimeException("Invalid URI " + consulUrl, e);
 		}
+
+		// create connection pool
+		pool = new SimpleURIConnectionPool(
+				uri, ClientConfig.get().getConnectionExpireTime(), ClientConfig.get().getConnectionPoolSize(), SimpleClientConnectionMaker.instance());
 	}
 
 	@Override
@@ -199,11 +210,17 @@ public class ConsulClientImpl implements ConsulClient {
 		}
 		logger.trace("Consul health service path = {}", path);
 
+		SimpleConnectionHolder.ConnectionToken connectionToken = null;
 		try {
 			logger.debug("Getting connection from pool with {}", uri);
+
+			// // this will throw a Runtime Exception if creation of Consul connection fails
+			// connection = client.safeBorrowConnection(
+			// 		config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+
 			// this will throw a Runtime Exception if creation of Consul connection fails
-			connection = client.safeBorrowConnection(
-					config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+			connectionToken = pool.borrow(config.getConnectionTimeout(), isHttp2());
+			connection = (ClientConnection) connectionToken.connection().getRawConnection();
 
 			if(connection != null) {
 				if(!consulConnections.contains(connection.getLocalAddress().toString()))
@@ -288,7 +305,10 @@ public class ConsulClientImpl implements ConsulClient {
 					connection != null ? connection.getLocalAddress().toString() : "connection is null",
 					connection != null ? connection.getPeerAddress().toString() : "connection is null"
 			);
-			client.returnConnection(connection);
+
+			// client.returnConnection(connection);
+
+			pool.restore(connectionToken);
 		}
 
 		return newResponse;
