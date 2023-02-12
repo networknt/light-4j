@@ -19,9 +19,7 @@ package com.networknt.consul.client;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
-import com.networknt.client.http.SimpleConnectionHolder;
-import com.networknt.client.http.SimpleClientConnectionMaker;
-import com.networknt.client.http.SimpleURIConnectionPool;
+import com.networknt.client.simplepool.SimpleConnectionMaker;
 import com.networknt.config.Config;
 import com.networknt.consul.*;
 import com.networknt.httpstring.HttpStringConstants;
@@ -45,6 +43,13 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
+// use SimpleURIConnectionPool as the connection pool
+import com.networknt.client.simplepool.SimpleConnectionHolder;
+import com.networknt.client.simplepool.SimpleURIConnectionPool;
+
+// Use Undertow ClientConnection as raw connection
+import com.networknt.client.simplepool.undertow.SimpleClientConnectionMaker;
 
 /**
  * A client that talks to Consul agent with REST API.
@@ -86,8 +91,9 @@ public class ConsulClientImpl implements ConsulClient {
 		}
 
 		// create connection pool
+		SimpleConnectionMaker undertowConnectionMaker = SimpleClientConnectionMaker.instance();
 		pool = new SimpleURIConnectionPool(
-				uri, ClientConfig.get().getConnectionExpireTime(), ClientConfig.get().getConnectionPoolSize(), SimpleClientConnectionMaker.instance());
+				uri, ClientConfig.get().getConnectionExpireTime(), ClientConfig.get().getConnectionPoolSize(), undertowConnectionMaker);
 	}
 
 	@Override
