@@ -226,7 +226,7 @@ public class ConsulClientImpl implements ConsulClient {
 
 			// this will throw a Runtime Exception if creation of Consul connection fails
 			connectionToken = pool.borrow(config.getConnectionTimeout(), isHttp2());
-			connection = (ClientConnection) connectionToken.connection().getRawConnection();
+			connection = (ClientConnection) connectionToken.getRawConnection();
 
 			if(connection != null) {
 				if(!consulConnections.contains(connection.getLocalAddress().toString()))

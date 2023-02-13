@@ -38,7 +38,7 @@ public class SimpleURIConnectionPool {
         long now = System.currentTimeMillis();
         SimpleConnectionHolder holder = null;
 
-        readAllHolders(now);
+        readAllConnectionHolders(now);
 
         if(borrowable.size() > 0) {
             holder = borrowable.toArray(new SimpleConnectionHolder[0])[ThreadLocalRandom.current().nextInt(borrowable.size())];
@@ -51,7 +51,7 @@ public class SimpleURIConnectionPool {
         }
 
         SimpleConnectionHolder.ConnectionToken connectionToken = holder.borrow(createConnectionTimeout, now);
-        readSingleHolder(holder, now);
+        readConnectionHolder(holder, now);
 
         logger.debug(showConnections("borrow"));
 
@@ -66,7 +66,7 @@ public class SimpleURIConnectionPool {
         long now = System.currentTimeMillis();
 
         holder.restore(connectionToken);
-        readAllHolders(now);
+        readAllConnectionHolders(now);
 
         logger.debug(showConnections("restore"));
     }
@@ -77,10 +77,10 @@ public class SimpleURIConnectionPool {
      *
      * @param now the current time in ms
      */
-    private void readAllHolders(long now) {
+    private void readAllConnectionHolders(long now) {
         // sweep all connections and update sets
-        for(SimpleConnectionHolder holder: all)
-            readSingleHolder(holder, now);
+        for(SimpleConnectionHolder connection: all)
+            readConnectionHolder(connection, now);
 
         // close any connections found in a closeable set
         for(SimpleConnectionHolder closeableConnection: notBorrowedExpired)
@@ -93,49 +93,49 @@ public class SimpleURIConnectionPool {
     }
 
     /***
-     * This method reads a holder and updates the state of the SimpleURIConnectionPool based on the state of connection.
+     * This method reads a connection and updates the state of the SimpleURIConnectionPool based on the state of connection.
      *
      *
-     * @param holder
+     * @param connection
      * @param now
      */
-    private void readSingleHolder(SimpleConnectionHolder holder, long now) {
+    private void readConnectionHolder(SimpleConnectionHolder connection, long now) {
 
-        if(holder.closed())
+        if(connection.closed())
         {
-            all.remove(holder);
-            borrowable.remove(holder);
-            borrowed.remove(holder);
-            notBorrowedExpired.remove(holder);
+            all.remove(connection);
+            borrowable.remove(connection);
+            borrowed.remove(connection);
+            notBorrowedExpired.remove(connection);
 
             return;
         }
 
-        boolean isExpired =             holder.expired(now);
-        boolean isBorrowed =            holder.borrowed();
-        boolean isBorrowable =          holder.borrowable(now);
+        boolean isExpired =             connection.expired(now);
+        boolean isBorrowed =            connection.borrowed();
+        boolean isBorrowable =          connection.borrowable(now);
         boolean isNotBorrowedExpired =  !isBorrowed && isExpired;
 
-        // check whether holder should be added or removed from these sets based on its current state
-        updateSet(borrowable, isBorrowable, holder);
-        updateSet(borrowed, isBorrowed, holder);
-        updateSet(notBorrowedExpired, isNotBorrowedExpired, holder);
+        // check whether connection should be added or removed from these sets based on its current state
+        updateSet(borrowable, isBorrowable, connection);
+        updateSet(borrowed, isBorrowed, connection);
+        updateSet(notBorrowedExpired, isNotBorrowedExpired, connection);
     }
 
     /***
-     * Takes a Set, a boolean, and a holder
-     * If the boolean is true, it will add the holder to the Set, otherwise, it will remove it from the Set
+     * Takes a Set, a boolean, and a connection
+     * If the boolean is true, it will add the connection to the Set, otherwise, it will remove it from the Set
      *
-     * @param set the set to potentially add or remove the holder from
-     * @param isMember if true, it will add holder to set, otherwise, it will remove holder from set
-     * @param holder the holder to add or remove from the set
+     * @param set the set to potentially add or remove the connection from
+     * @param isMember if true, it will add connection to set, otherwise, it will remove connection from set
+     * @param connection the connection to add or remove from the set
      */
     // TODO: Ensure this does not throw errors!
-    private void updateSet(Set<SimpleConnectionHolder> set, boolean isMember, SimpleConnectionHolder holder) {
-        if(isMember && !set.contains(holder))
-            set.add(holder);
+    private void updateSet(Set<SimpleConnectionHolder> set, boolean isMember, SimpleConnectionHolder connection) {
+        if(isMember && !set.contains(connection))
+            set.add(connection);
         else if(!isMember)
-            set.remove(holder);
+            set.remove(connection);
     }
 
     // for logging

@@ -185,7 +185,7 @@ public class SimpleConnectionHolder {
             if(closed())
                 throw new RuntimeException("Connection was unexpectedly closed");
             else
-                throw new IllegalStateException("Attempt made to borrow connection outside BORROWABLE state");
+                throw new IllegalStateException("Attempt made to borrow connection outside of BORROWABLE state");
         }
     }
 
@@ -195,7 +195,6 @@ public class SimpleConnectionHolder {
      */
     // state transition
     public synchronized void restore(ConnectionToken connectionToken) {
-        //
         borrowedTokens.remove(connectionToken);
 
         long now = System.currentTimeMillis();
@@ -304,6 +303,7 @@ public class SimpleConnectionHolder {
 
         public SimpleConnectionHolder holder() { return holder; }
         public SimpleConnection connection() { return connection; }
+        public Object getRawConnection() { return connection.getRawConnection(); }
         public URI uri() { return uri; }
     }
 
