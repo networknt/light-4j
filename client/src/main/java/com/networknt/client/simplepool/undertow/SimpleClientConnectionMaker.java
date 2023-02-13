@@ -34,7 +34,7 @@ public class SimpleClientConnectionMaker implements SimpleConnectionMaker
     }
 
     @Override
-    public SimpleConnection makeConnection(long timeoutSeconds, boolean isHttp2, final URI uri) throws RuntimeException
+    public SimpleConnection makeConnection(long createConnectionTimeout, boolean isHttp2, final URI uri) throws RuntimeException
     {
         boolean isHttps = uri.getScheme().equalsIgnoreCase("https");
         XnioSsl ssl = getSSL(isHttps, isHttp2);
@@ -61,11 +61,11 @@ public class SimpleClientConnectionMaker implements SimpleConnectionMaker
         undertowClient.connect(connectionCallback, bindAddress, uri, worker, ssl, BUFFER_POOL, connectionOptions);
 
         IoFuture<ClientConnection> future = result.getIoFuture();
-        ClientConnection connection = safeConnect(timeoutSeconds, future);
+        ClientConnection connection = safeConnect(createConnectionTimeout, future);
         return new SimpleClientConnection(connection);
     }
 
-    public SimpleConnection reuseConnection(long timeoutSeconds, SimpleConnection connection) throws RuntimeException
+    public SimpleConnection reuseConnection(long createConnectionTimeout, SimpleConnection connection) throws RuntimeException
     {
         if(connection == null)
             return null;
@@ -81,7 +81,7 @@ public class SimpleClientConnectionMaker implements SimpleConnectionMaker
         final FutureResult<ClientConnection> result = new FutureResult<>();
         result.setResult(rawConnection);
         IoFuture<ClientConnection> future = result.getIoFuture();
-        ClientConnection reusedConnection = safeConnect(timeoutSeconds, future);
+        ClientConnection reusedConnection = safeConnect(createConnectionTimeout, future);
         return new SimpleClientConnection(reusedConnection);
     }
 

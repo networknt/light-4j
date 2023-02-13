@@ -7,7 +7,7 @@ import java.net.URI;
 import java.util.Set;
 
 /***
- * A SimpleConnectionHolder is a simplfied interface for a connection, that also keeps track of the connection's state.
+ * A SimpleConnectionHolder is a simplified interface for a connection, that also keeps track of the connection's state.
  * (In fact--in this document--the state of a connection and the state of its holder are used interchangeably)
  *
  * Connection States
@@ -106,6 +106,7 @@ public class SimpleConnectionHolder {
      * @param createConnectionTimeout how long it can take a connection be created before an exception thrown
      * @param isHttp2 if true, tries to upgrade to HTTP/2. if false, will try to open an HTTP/1.1 connection
      * @param uri the URI the connection will try to connect to
+     * @param connectionMaker a class that SimpleConnectionHolder uses to create new SimpleConnection objects
      */
     public SimpleConnectionHolder(long expireTime, long createConnectionTimeout, boolean isHttp2, URI uri, SimpleConnectionMaker connectionMaker) {
         this.connectionMaker = connectionMaker;
