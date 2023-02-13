@@ -67,16 +67,16 @@ public class SimpleConnectionHolder {
     private static final Logger logger = LoggerFactory.getLogger(SimpleConnectionHolder.class);
 
     // how long a connection can be eligible to be borrowed
-    private long EXPIRE_TIME;
+    private final long EXPIRE_TIME;
 
     // the maximum number of borrowed tokens a connection can have at a time
-    private int MAX_BORROWS;
+    private final int MAX_BORROWS;
 
     // the time this connection was created
-    private long startTime;
+    private final long startTime;
 
     // the URI this connection is connected to
-    private URI uri;
+    private final URI uri;
 
     // if true, this connection should be treated as closed
     // note: closed may be true before a connection is actually closed since there may be a delay
@@ -85,13 +85,11 @@ public class SimpleConnectionHolder {
 
     // If the connection is HTTP/1.1, it can only be borrowed by 1 process at a time
     // If the connection is HTTP/2, it can be borrowed by an unlimited number of processes at a time
-    private SimpleConnectionMaker connectionMaker;
-    private SimpleConnection connection;
+    private final SimpleConnectionMaker connectionMaker;
+    private final SimpleConnection connection;
 
     // a Set containing all borrowed connection tokens
     private final Set<ConnectionToken> borrowedTokens = new ConcurrentHashSet<>();
-
-    private SimpleConnectionHolder() {}
 
     /***
      * Connections and ConnectionHolders are paired 1-1. For every connection there is a single ConnectionHolder and
@@ -293,11 +291,9 @@ public class SimpleConnectionHolder {
     public SimpleConnection connection() { return connection; }
 
     public class ConnectionToken {
-        private SimpleConnection connection;
-        private SimpleConnectionHolder holder;
-        private URI uri;
-
-        private ConnectionToken() {}
+        private final SimpleConnection connection;
+        private final SimpleConnectionHolder holder;
+        private final URI uri;
 
         public ConnectionToken(SimpleConnection connection) {
             this.connection = connection;

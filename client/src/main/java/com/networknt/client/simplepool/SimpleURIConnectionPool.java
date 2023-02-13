@@ -62,7 +62,6 @@ public class SimpleURIConnectionPool {
         if(connectionToken == null)
             return;
 
-        //SimpleConnectionHolder holder = null;
         SimpleConnectionHolder holder = connectionToken.holder();
         long now = System.currentTimeMillis();
 
@@ -143,8 +142,7 @@ public class SimpleURIConnectionPool {
     public String showConnections(String transitionName) {
         return "After " + transitionName + " - CONNECTIONS: " +
                 showConnections("BORROWABLE", borrowable) +
-                showConnections("BORROWED", borrowed) +
-                showConnections("NOT_BORROWED_EXPIRED", notBorrowedExpired);
+                showConnections("BORROWED", borrowed);
     }
 
     public static String showConnections(String name, Set<SimpleConnectionHolder> set) {
