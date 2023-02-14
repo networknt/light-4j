@@ -78,6 +78,7 @@ public class PathPrefixServiceHandler implements MiddlewareHandler {
         String serviceId = serviceIdHeader != null ? serviceIdHeader.peekFirst() : null;
         if(serviceId == null) {
             String requestPath = exchange.getRequestURI();
+            if(logger.isTraceEnabled()) logger.trace("serviceId is null, looking up the serviceEntry...");
             serviceEntry = HandlerUtils.findServiceEntry(HandlerUtils.normalisePath(requestPath), config.getMapping());
             if(serviceEntry != null) {
                 if(logger.isTraceEnabled()) logger.trace("serviceEntry found and header is set for service_id = " + serviceEntry[1]);
