@@ -12,6 +12,8 @@
 - removing JsonMapper changes [\#1612](https://github.com/networknt/light-4j/pull/1612) ([Debashisa](https://github.com/Debashisa))
 - I1804 [\#1609](https://github.com/networknt/light-4j/pull/1609) ([Debashisa](https://github.com/Debashisa))
 - fixes \#1610 Router handler to support request timeout based on the pa… [\#1611](https://github.com/networknt/light-4j/pull/1611) ([stevehu](https://github.com/stevehu))
+
+
 ## [2.1.6](https://github.com/networknt/light-4j/tree/2.1.6) (2023-02-06)
 
 
