@@ -305,4 +305,15 @@ public class Status {
         config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
         ModuleRegistry.registerModule(Status.class.getName(), config, null);
     }
+
+    /**
+     * This static method is very important for any customized status wrapper to get the light-4j
+     * status before customizing it. There are several organizations that have their own customized
+     * wrapper to translate the status code to something else in order to hide the real error message
+     * for security reasons.
+     * @return
+     */
+    public static Map<String, Object> getConfig() {
+        return config;
+    }
 }
