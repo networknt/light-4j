@@ -123,19 +123,19 @@ public class SimpleURIConnectionPool {
     }
 
     /***
-     * Takes a Set, a boolean, and a connection
-     * If the boolean is true, it will add the connection to the Set, otherwise, it will remove it from the Set
+     * Takes a Set, a boolean, and a connectionHolder
+     * If the boolean is true, it will add the connectionHolder to the Set, otherwise, it will remove it from the Set
      *
-     * @param set the set to potentially add or remove the connection from
-     * @param isMember if true, it will add connection to set, otherwise, it will remove connection from set
-     * @param connection the connection to add or remove from the set
+     * @param set the set to potentially add or remove the connectionHolder from
+     * @param isMember if true, it will add connectionHolder to set, otherwise, it will remove connectionHolder from set
+     * @param connectionHolder the connectionHolder to add or remove from the set
      */
     // TODO: Ensure this does not throw errors!
-    private void updateSet(Set<SimpleConnectionHolder> set, boolean isMember, SimpleConnectionHolder connection) {
-        if(isMember && !set.contains(connection))
-            set.add(connection);
+    private void updateSet(Set<SimpleConnectionHolder> set, boolean isMember, SimpleConnectionHolder connectionHolder) {
+        if(isMember && !set.contains(connectionHolder))
+            set.add(connectionHolder);
         else if(!isMember)
-            set.remove(connection);
+            set.remove(connectionHolder);
     }
 
     // for logging
