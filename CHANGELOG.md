@@ -1,5 +1,17 @@
 # Change Log
 
+## [2.1.7](https://github.com/networknt/light-4j/tree/2.1.7) (2023-02-14)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1617 add trace info for PathPrefix and LB RouterProxyClient [\#1618](https://github.com/networknt/light-4j/pull/1618) ([stevehu](https://github.com/stevehu))
+- fixes \#1615 add back the getConfig static method in Status [\#1616](https://github.com/networknt/light-4j/pull/1616) ([stevehu](https://github.com/stevehu))
+- fixes \#1613 change the logging level to trace from info for the confi… [\#1614](https://github.com/networknt/light-4j/pull/1614) ([stevehu](https://github.com/stevehu))
+- removing JsonMapper changes [\#1612](https://github.com/networknt/light-4j/pull/1612) ([Debashisa](https://github.com/Debashisa))
+- I1804 [\#1609](https://github.com/networknt/light-4j/pull/1609) ([Debashisa](https://github.com/Debashisa))
+- fixes \#1610 Router handler to support request timeout based on the pa… [\#1611](https://github.com/networknt/light-4j/pull/1611) ([stevehu](https://github.com/stevehu))
 ## [2.1.6](https://github.com/networknt/light-4j/tree/2.1.6) (2023-02-06)
 
 
