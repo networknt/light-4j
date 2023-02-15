@@ -18,6 +18,7 @@ import org.xnio.ssl.XnioSsl;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -34,7 +35,11 @@ public class SimpleClientConnectionMaker implements SimpleConnectionMaker
     }
 
     @Override
-    public SimpleConnection makeConnection(long createConnectionTimeout, boolean isHttp2, final URI uri) throws RuntimeException
+    public SimpleConnection makeConnection(
+        long createConnectionTimeout,
+        boolean isHttp2,
+        final URI uri,
+        final Set<SimpleConnection> allCreatedConnections) throws RuntimeException
     {
         boolean isHttps = uri.getScheme().equalsIgnoreCase("https");
         XnioSsl ssl = getSSL(isHttps, isHttp2);
@@ -42,12 +47,16 @@ public class SimpleClientConnectionMaker implements SimpleConnectionMaker
         OptionMap connectionOptions = getConnectionOptions(isHttp2);
         InetSocketAddress bindAddress = null;
 
-        final FutureResult<ClientConnection> result = new FutureResult<>();
+        final FutureResult<SimpleConnection> result = new FutureResult<>();
         ClientCallback<ClientConnection> connectionCallback = new ClientCallback<ClientConnection>() {
             @Override
-            public void completed(ClientConnection r) {
-                logger.debug("New Connection established with {}", uri);
-                result.setResult(r);
+            public void completed(ClientConnection connection) {
+                logger.debug("New connection {} established with {}", port(connection), uri);
+                SimpleConnection simpleConnection = new SimpleClientConnection(connection);
+
+                // note: its vital that allCreatedConnections and result contain the same SimpleConnection reference
+                allCreatedConnections.add(simpleConnection);
+                result.setResult(simpleConnection);
             }
 
             @Override
@@ -60,9 +69,8 @@ public class SimpleClientConnectionMaker implements SimpleConnectionMaker
         UndertowClient undertowClient = UndertowClient.getInstance();
         undertowClient.connect(connectionCallback, bindAddress, uri, worker, ssl, BUFFER_POOL, connectionOptions);
 
-        IoFuture<ClientConnection> future = result.getIoFuture();
-        ClientConnection connection = safeConnect(createConnectionTimeout, future);
-        return new SimpleClientConnection(connection);
+        IoFuture<SimpleConnection> future = result.getIoFuture();
+        return safeConnect(createConnectionTimeout, future);
     }
 
     public SimpleConnection reuseConnection(long createConnectionTimeout, SimpleConnection connection) throws RuntimeException
@@ -73,16 +81,13 @@ public class SimpleClientConnectionMaker implements SimpleConnectionMaker
         if(!(connection.getRawConnection() instanceof ClientConnection))
             throw new IllegalArgumentException("Attempt to reuse wrong connection type. Must be of type ClientConnection");
 
-        ClientConnection rawConnection = (ClientConnection) connection.getRawConnection();
-
         if(!connection.isOpen())
             throw new RuntimeException("Reused-connection has been unexpectedly closed");
 
-        final FutureResult<ClientConnection> result = new FutureResult<>();
-        result.setResult(rawConnection);
-        IoFuture<ClientConnection> future = result.getIoFuture();
-        ClientConnection reusedConnection = safeConnect(createConnectionTimeout, future);
-        return new SimpleClientConnection(reusedConnection);
+        final FutureResult<SimpleConnection> result = new FutureResult<>();
+        result.setResult(connection);
+        IoFuture<SimpleConnection> future = result.getIoFuture();
+        return safeConnect(createConnectionTimeout, future);
     }
 
     // PRIVATE METHODS
@@ -147,20 +152,30 @@ public class SimpleClientConnectionMaker implements SimpleConnectionMaker
      * @param future
      * @return
      */
-    private static ClientConnection safeConnect(long timeoutSeconds, IoFuture<ClientConnection> future)
+    private static SimpleConnection safeConnect(long timeoutSeconds, IoFuture<SimpleConnection> future)
     {
-        ClientConnection connection = null;
+        SimpleConnection connection = null;
 
         if(future.await(timeoutSeconds, TimeUnit.SECONDS) != org.xnio.IoFuture.Status.DONE)
             throw new RuntimeException("Connection establishment timed out");
+
         try {
             connection = future.get();
         } catch (IOException e) {
             throw new RuntimeException("Connection establishment generated I/O exception", e);
         }
+
         if(connection == null)
             throw new RuntimeException("Connection establishment failed (null) - Full connection terminated");
 
         return connection;
+    }
+
+    public static String port(ClientConnection connection) {
+        if(connection == null) return "NULL";
+        String url = connection.getLocalAddress().toString();
+        int semiColon = url.lastIndexOf(":");
+        if(semiColon == - 1) return "PORT?";
+        return url.substring(url.lastIndexOf(":")+1);
     }
 }

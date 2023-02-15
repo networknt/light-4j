@@ -1,10 +1,10 @@
 package com.networknt.client.simplepool;
 
-import com.networknt.utility.ConcurrentHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /***
  * A SimpleConnectionHolder is a simplified interface for a connection, that also keeps track of the connection's state.
@@ -89,7 +89,7 @@ public class SimpleConnectionHolder {
     private final SimpleConnection connection;
 
     // a Set containing all borrowed connection tokens
-    private final Set<ConnectionToken> borrowedTokens = new ConcurrentHashSet<>();
+    private final Set<ConnectionToken> borrowedTokens = ConcurrentHashMap.newKeySet();
 
     /***
      * Connections and ConnectionHolders are paired 1-1. For every connection there is a single ConnectionHolder and
@@ -108,7 +108,14 @@ public class SimpleConnectionHolder {
      * @param uri the URI the connection will try to connect to
      * @param connectionMaker a class that SimpleConnectionHolder uses to create new SimpleConnection objects
      */
-    public SimpleConnectionHolder(long expireTime, long createConnectionTimeout, boolean isHttp2, URI uri, SimpleConnectionMaker connectionMaker) {
+    public SimpleConnectionHolder(
+        long expireTime,
+        long createConnectionTimeout,
+        boolean isHttp2,
+        URI uri,
+        Set<SimpleConnection> allCreatedConnections,
+        SimpleConnectionMaker connectionMaker)
+    {
         this.connectionMaker = connectionMaker;
 
         this.uri = uri;
@@ -118,7 +125,7 @@ public class SimpleConnectionHolder {
         long now = System.currentTimeMillis();
 
         // create initial connection to uri
-        connection = connectionMaker.makeConnection(createConnectionTimeout, isHttp2, uri);
+        connection = connectionMaker.makeConnection(createConnectionTimeout, isHttp2, uri, allCreatedConnections);
 
         // throw exception if connection creation failed
         if(!connection.isOpen()) {
@@ -228,8 +235,7 @@ public class SimpleConnectionHolder {
             throw new IllegalStateException();
 
         closed = true;
-        if(connection.isOpen())
-            connection.safeClose();
+        connection.safeClose();
 
         logger.debug("{}", logLabel(connection, now));
 
@@ -312,7 +318,7 @@ public class SimpleConnectionHolder {
         return "[" + port(connection) + ": " + state(now) + "]:";
     }
 
-    public static String port(SimpleConnection connection) {
+    public static synchronized String port(SimpleConnection connection) {
         if(connection == null) return "NULL";
         String url = connection.getLocalAddress();
         int semiColon = url.lastIndexOf(":");
@@ -320,7 +326,7 @@ public class SimpleConnectionHolder {
         return url.substring(url.lastIndexOf(":")+1);
     }
 
-    private String state(long now) {
+    private synchronized String state(long now) {
         if(closed())                        return "CLOSED";
         if(borrowable(now))                 return "BORROWABLE";
         if(!borrowed() && !expired(now))    return "NOT_BORROWED_VALID";

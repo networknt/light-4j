@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 /***
@@ -21,6 +22,7 @@ public class SimpleURIConnectionPool {
     private final SimpleConnectionMaker connectionMaker;
     private final long EXPIRY_TIME;
     private final int poolSize;
+    private final Set<SimpleConnection> allCreatedConnections = ConcurrentHashMap.newKeySet();
     private final URI uri;
     private final Set<SimpleConnectionHolder> all = new HashSet<>();
     private final Set<SimpleConnectionHolder> borrowable = new HashSet<>();
@@ -44,7 +46,7 @@ public class SimpleURIConnectionPool {
             holder = borrowable.toArray(new SimpleConnectionHolder[0])[ThreadLocalRandom.current().nextInt(borrowable.size())];
         } else {
             if (borrowed.size() < poolSize) {
-                holder = new SimpleConnectionHolder(EXPIRY_TIME, createConnectionTimeout, isHttp2, uri, connectionMaker);
+                holder = new SimpleConnectionHolder(EXPIRY_TIME, createConnectionTimeout, isHttp2, uri, allCreatedConnections, connectionMaker);
                 all.add(holder);
             } else
                 throw new RuntimeException("An attempt to exceed the connection pool's maximum size was made. Increase request.connectionPoolSize in client.yml");
@@ -77,7 +79,7 @@ public class SimpleURIConnectionPool {
      *
      * @param now the current time in ms
      */
-    private void readAllConnectionHolders(long now) {
+    private synchronized void readAllConnectionHolders(long now) {
         // sweep all connections and update sets
         for(SimpleConnectionHolder connection: all)
             readConnectionHolder(connection, now);
@@ -90,6 +92,33 @@ public class SimpleURIConnectionPool {
             notBorrowedExpired.remove(closeableConnection);
             all.remove(closeableConnection);
         }
+
+        /**
+         * This will remove any connections that were created by the SimpleConnectionMaker, but were not returned. This
+         * can occur if a connection-creation callback thread finishes creating a connection after a timeout has
+         * occurred.
+         *
+         * If this happens, then the created-connection will not be tracked by the connection pool, and therefore
+         * never closed causing a connection leak.
+         */
+
+        // create a Set containing only the SimpleConnections that the connection pool is tracking
+        Set<SimpleConnection> knownConnections = new HashSet<>();
+        for(SimpleConnectionHolder connectionHolder: all)
+            knownConnections.add(connectionHolder.connection());
+
+        // remove all connections that the connection pool is tracking from the set of all created connections
+        allCreatedConnections.removeAll(knownConnections);
+
+        // any remaining connections are leaks, and can now be safely closed
+        if(allCreatedConnections.size() == 0)
+            logger.debug("No leaked connections to {} found", uri.toString());
+        else
+            logger.debug("{} leaked connections found", allCreatedConnections.size());
+        for(SimpleConnection leakedConnection: allCreatedConnections) {
+            leakedConnection.safeClose();
+            logger.debug("Closing leaked connection {} to {}", port(leakedConnection), uri.toString());
+        }
     }
 
     /***
@@ -99,7 +128,7 @@ public class SimpleURIConnectionPool {
      * @param connection
      * @param now
      */
-    private void readConnectionHolder(SimpleConnectionHolder connection, long now) {
+    private synchronized void readConnectionHolder(SimpleConnectionHolder connection, long now) {
 
         if(connection.closed())
         {
@@ -131,7 +160,7 @@ public class SimpleURIConnectionPool {
      * @param connectionHolder the connectionHolder to add or remove from the set
      */
     // TODO: Ensure this does not throw errors!
-    private void updateSet(Set<SimpleConnectionHolder> set, boolean isMember, SimpleConnectionHolder connectionHolder) {
+    private synchronized void updateSet(Set<SimpleConnectionHolder> set, boolean isMember, SimpleConnectionHolder connectionHolder) {
         if(isMember && !set.contains(connectionHolder))
             set.add(connectionHolder);
         else if(!isMember)
@@ -139,13 +168,13 @@ public class SimpleURIConnectionPool {
     }
 
     // for logging
-    public String showConnections(String transitionName) {
+    public synchronized String showConnections(String transitionName) {
         return "After " + transitionName + " - CONNECTIONS: " +
                 showConnections("BORROWABLE", borrowable) +
                 showConnections("BORROWED", borrowed);
     }
 
-    public static String showConnections(String name, Set<SimpleConnectionHolder> set) {
+    public static synchronized String showConnections(String name, Set<SimpleConnectionHolder> set) {
         StringBuilder sb = new StringBuilder();
         sb.append("[").append(name).append(": ");
         for(SimpleConnectionHolder holder: set)
@@ -153,7 +182,7 @@ public class SimpleURIConnectionPool {
         sb.append("] ");
         return sb.toString();
     }
-    public static String port(SimpleConnection connection) {
+    public static synchronized String port(SimpleConnection connection) {
         if(connection == null) return "NULL";
         String url = connection.getLocalAddress().toString();
         int semiColon = url.lastIndexOf(":");

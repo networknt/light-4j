@@ -4,11 +4,16 @@ import com.networknt.client.simplepool.SimpleConnection;
 import com.networknt.client.simplepool.SimpleConnectionMaker;
 
 import java.net.URI;
+import java.util.Set;
 
 public class SimpleForeverConnectionMaker implements SimpleConnectionMaker {
     @Override
-    public SimpleConnection makeConnection(long createConnectionTimeout, boolean isHttp2, URI uri) throws RuntimeException {
-        return new SimpleForeverConnection();
+    public SimpleConnection makeConnection(long createConnectionTimeout, boolean isHttp2, URI uri, Set allConnections)
+        throws RuntimeException
+    {
+        SimpleConnection connection = new SimpleForeverConnection();
+        allConnections.add(connection);
+        return connection;
     }
 
     @Override
