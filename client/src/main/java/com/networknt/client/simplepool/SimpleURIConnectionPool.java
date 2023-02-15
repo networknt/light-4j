@@ -113,11 +113,20 @@ public class SimpleURIConnectionPool {
         // any remaining connections are leaks, and can now be safely closed
         if(allCreatedConnections.size() == 0)
             logger.debug("No leaked connections to {} found", uri.toString());
-        else
+        else {
             logger.debug("{} leaked connections found", allCreatedConnections.size());
-        for(SimpleConnection leakedConnection: allCreatedConnections) {
-            leakedConnection.safeClose();
-            logger.debug("Closing leaked connection {} to {}", port(leakedConnection), uri.toString());
+
+            Set<SimpleConnection> closedLeakedConnections = new HashSet<>();
+            for (SimpleConnection leakedConnection: allCreatedConnections)
+            {
+                leakedConnection.safeClose();
+                logger.debug("Closing leaked connection {} to {}", port(leakedConnection), uri.toString());
+
+                closedLeakedConnections.add(leakedConnection);
+            }
+
+            for(SimpleConnection leakedConnection: closedLeakedConnections)
+                allCreatedConnections.removeAll(closedLeakedConnections);
         }
     }
 
