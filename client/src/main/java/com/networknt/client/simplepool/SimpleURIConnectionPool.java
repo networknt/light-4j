@@ -24,7 +24,7 @@ public class SimpleURIConnectionPool {
     private final int poolSize;
     private final Set<SimpleConnection> allCreatedConnections = ConcurrentHashMap.newKeySet();
     private final URI uri;
-    private final Set<SimpleConnectionHolder> all = new HashSet<>();
+    private final Set<SimpleConnectionHolder> allKnownConnections = new HashSet<>();
     private final Set<SimpleConnectionHolder> borrowable = new HashSet<>();
     private final Set<SimpleConnectionHolder> borrowed = new HashSet<>();
     private final Set<SimpleConnectionHolder> notBorrowedExpired = new HashSet<>();
@@ -47,7 +47,7 @@ public class SimpleURIConnectionPool {
         } else {
             if (borrowed.size() < poolSize) {
                 holder = new SimpleConnectionHolder(EXPIRY_TIME, createConnectionTimeout, isHttp2, uri, allCreatedConnections, connectionMaker);
-                all.add(holder);
+                allKnownConnections.add(holder);
             } else
                 throw new RuntimeException("An attempt to exceed the connection pool's maximum size was made. Increase request.connectionPoolSize in client.yml");
         }
@@ -81,16 +81,16 @@ public class SimpleURIConnectionPool {
      */
     private synchronized void readAllConnectionHolders(long now) {
         // sweep all connections and update sets
-        for(SimpleConnectionHolder connection: all)
+        for(SimpleConnectionHolder connection: allKnownConnections)
             readConnectionHolder(connection, now);
 
         // close any connections found in a closeable set
         for(SimpleConnectionHolder closeableConnection: notBorrowedExpired)
         {
-            closeableConnection.close(now);
+            closeableConnection.safeClose(now);
 
             notBorrowedExpired.remove(closeableConnection);
-            all.remove(closeableConnection);
+            allKnownConnections.remove(closeableConnection);
         }
 
         /**
@@ -99,23 +99,24 @@ public class SimpleURIConnectionPool {
          * occurred.
          *
          * If this happens, then the created-connection will not be tracked by the connection pool, and therefore
-         * never closed causing a connection leak.
+         * never closed, causing a connection leak.
          */
 
-        // create a Set containing only the SimpleConnections that the connection pool is tracking
+        // create a Set containing only the open SimpleConnections that the connection pool knows about
         Set<SimpleConnection> knownConnections = new HashSet<>();
-        for(SimpleConnectionHolder connectionHolder: all)
+        for(SimpleConnectionHolder connectionHolder: allKnownConnections)
             knownConnections.add(connectionHolder.connection());
 
-        // remove all connections that the connection pool is tracking from the set of all created connections
+        // remove all open connections that the connection pool knows about from the set of all created connections
         allCreatedConnections.removeAll(knownConnections);
 
-        // any remaining connections are leaks, and can now be safely closed
+        // any remaining connections must be leaks, and can now be safely closed
         if(allCreatedConnections.size() == 0)
             logger.debug("No leaked connections to {} found", uri.toString());
         else {
             logger.debug("{} leaked connections found", allCreatedConnections.size());
 
+            // close leaked connections
             Set<SimpleConnection> closedLeakedConnections = new HashSet<>();
             for (SimpleConnection leakedConnection: allCreatedConnections)
             {
@@ -125,6 +126,7 @@ public class SimpleURIConnectionPool {
                 closedLeakedConnections.add(leakedConnection);
             }
 
+            // remove references to leaked connections to ensure they are garbage collected
             for(SimpleConnection leakedConnection: closedLeakedConnections)
                 allCreatedConnections.removeAll(closedLeakedConnections);
         }
@@ -133,7 +135,6 @@ public class SimpleURIConnectionPool {
     /***
      * This method reads a connection and updates the state of the SimpleURIConnectionPool based on the state of connection.
      *
-     *
      * @param connection
      * @param now
      */
@@ -141,7 +142,7 @@ public class SimpleURIConnectionPool {
 
         if(connection.closed())
         {
-            all.remove(connection);
+            allKnownConnections.remove(connection);
             borrowable.remove(connection);
             borrowed.remove(connection);
             notBorrowedExpired.remove(connection);
@@ -168,7 +169,6 @@ public class SimpleURIConnectionPool {
      * @param isMember if true, it will add connectionHolder to set, otherwise, it will remove connectionHolder from set
      * @param connectionHolder the connectionHolder to add or remove from the set
      */
-    // TODO: Ensure this does not throw errors!
     private synchronized void updateSet(Set<SimpleConnectionHolder> set, boolean isMember, SimpleConnectionHolder connectionHolder) {
         if(isMember && !set.contains(connectionHolder))
             set.add(connectionHolder);
