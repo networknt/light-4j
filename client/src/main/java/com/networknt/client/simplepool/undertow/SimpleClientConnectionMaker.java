@@ -84,10 +84,7 @@ public class SimpleClientConnectionMaker implements SimpleConnectionMaker
         if(!connection.isOpen())
             throw new RuntimeException("Reused-connection has been unexpectedly closed");
 
-        final FutureResult<SimpleConnection> result = new FutureResult<>();
-        result.setResult(connection);
-        IoFuture<SimpleConnection> future = result.getIoFuture();
-        return safeConnect(createConnectionTimeout, future);
+        return connection;
     }
 
     // PRIVATE METHODS
