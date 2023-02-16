@@ -12,9 +12,9 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * Connection States
  *
- *   NOT_BORROWED_VALID     - not borrowed and valid (i.e.: not expired)
- *   BORROWED_VALID         - borrowed and valid (i.e.: not expired)
- *   NOT_BORROWED_EXPIRED   - not borrowed and valid (i.e.: not expired)
+ *   NOT_BORROWED_VALID     - not borrowed and valid (i.e.: borrowed and not expired)
+ *   BORROWED_VALID         - borrowed and valid (i.e.: borrowed not expired)
+ *   NOT_BORROWED_EXPIRED   - not borrowed and expired
  *   BORROWED_EXPIRED       - borrowed and expired
  *   CLOSED                 - closed
  *
@@ -33,12 +33,12 @@ import java.util.concurrent.ConcurrentHashMap;
  *            \/                                   \/
  *   [ NOT_BORROWED_EXPIRED ] <-(restore)-- [ BORROWED_EXPIRED ]
  *            |
- *         (close)*
+ *         (close) (*)
  *           |
  *          \/
  *       [ CLOSED ]
  *
- * * - A connection can be closed explicitly by the connection pool, or it can be closed at any time by the OS
+ * (*) A connection can be closed explicitly by the connection pool, or it can be closed at any time by the OS
  *     If it is closed unexpectedly by the OS, then the state can jump directly to CLOSED regardless of what state
  *     it is currently in
  *
@@ -144,13 +144,13 @@ public class SimpleConnectionHolder {
     }
 
     /**
+     * State Transition - Borrow
      *
      * @param createConnectionTimeout
      * @param now
      * @return
      * @throws RuntimeException
      */
-    // state transition
     private volatile boolean firstUse = true;
     public synchronized ConnectionToken borrow(long createConnectionTimeout, long now) throws RuntimeException {
         /***
@@ -197,10 +197,10 @@ public class SimpleConnectionHolder {
     }
 
     /**
+     * State Transition - Restore
      *
      * @param connectionToken
      */
-    // state transition
     public synchronized void restore(ConnectionToken connectionToken) {
         borrowedTokens.remove(connectionToken);
 
@@ -209,12 +209,13 @@ public class SimpleConnectionHolder {
     }
 
     /**
+     * State Transition - Close
      *
      * @param now
      * @return
      */
     // state transition
-    public synchronized boolean close(long now) {
+    public synchronized boolean safeClose(long now) {
         logger.debug("{} close - attempt to close connection with {} borrows...", logLabel(connection, now), borrowedTokens.size());
 
         /**
@@ -243,6 +244,7 @@ public class SimpleConnectionHolder {
     }
 
     /**
+     * State Property - isClosed
      *
      * @return
      */
@@ -257,6 +259,7 @@ public class SimpleConnectionHolder {
     }
 
     /**
+     * State Property - isExpired
      *
      * @param now
      * @return
@@ -266,6 +269,7 @@ public class SimpleConnectionHolder {
     }
 
     /**
+     * State Property - isBorrowed
      *
      * @return
      */
@@ -274,7 +278,8 @@ public class SimpleConnectionHolder {
     }
 
     /**
-     *
+     * State Property - isAtMaxBorrows
+     * 
      * @return
      */
     public synchronized boolean maxBorrowed() {
@@ -282,6 +287,7 @@ public class SimpleConnectionHolder {
     }
 
     /**
+     * State Property - isBorrowable
      *
      * @param now
      * @return
