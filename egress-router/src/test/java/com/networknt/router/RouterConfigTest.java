@@ -41,6 +41,7 @@ public class RouterConfigTest {
         Assert.assertTrue(routerConfig.isRewriteHostHeader());
         Assert.assertEquals(routerConfig.getMaxRequestTime(), 1000);
         Assert.assertEquals(routerConfig.getMaxConnectionRetries(), 3);
+        Assert.assertEquals(routerConfig.getMaxQueueSize(), 0);
     }
 
     @Test

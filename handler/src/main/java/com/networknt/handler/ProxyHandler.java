@@ -80,6 +80,7 @@ import java.util.stream.Collectors;
 public class ProxyHandler implements HttpHandler {
 
     private static final int DEFAULT_MAX_RETRY_ATTEMPTS = Integer.getInteger("maxRetries", 1);
+    private static final int DEFAULT_MAX_QUEUE_SIZE = Integer.getInteger("maxQueueSize", 0);
 
     private static final Logger logger = LoggerFactory.getLogger(ProxyHandler.class);
 
@@ -103,6 +104,7 @@ public class ProxyHandler implements HttpHandler {
     private volatile boolean rewriteHostHeader;
     private volatile boolean reuseXForwarded;
     private volatile int maxConnectionRetries;
+    private volatile int maxQueueSize;
     private volatile List<UrlRewriteRule> urlRewriteRules;
     private volatile List<MethodRewriteRule> methodRewriteRules;
 
@@ -120,6 +122,7 @@ public class ProxyHandler implements HttpHandler {
         this.rewriteHostHeader = builder.rewriteHostHeader;
         this.reuseXForwarded = builder.reuseXForwarded;
         this.maxConnectionRetries = builder.maxConnectionRetries;
+        this.maxQueueSize = builder.maxQueueSize;
         this.urlRewriteRules = builder.urlRewriteRules;
         this.methodRewriteRules = builder.methodRewriteRules;
         this.queryParamRewriteRules = builder.queryParamRewriteRules;
@@ -1010,6 +1013,7 @@ public class ProxyHandler implements HttpHandler {
         private boolean rewriteHostHeader;
         private boolean reuseXForwarded;
         private int maxConnectionRetries = DEFAULT_MAX_RETRY_ATTEMPTS;
+        private int maxQueueSize = DEFAULT_MAX_QUEUE_SIZE;
         private Predicate idempotentRequestPredicate = IdempotentPredicate.INSTANCE;
         private List<UrlRewriteRule> urlRewriteRules;
         private List<MethodRewriteRule> methodRewriteRules;
@@ -1092,6 +1096,11 @@ public class ProxyHandler implements HttpHandler {
 
         public Builder setMaxConnectionRetries(int maxConnectionRetries) {
             this.maxConnectionRetries = maxConnectionRetries;
+            return this;
+        }
+
+        public Builder setMaxQueueSize(int maxQueueSize) {
+            this.maxQueueSize = maxQueueSize;
             return this;
         }
 
