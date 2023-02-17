@@ -31,6 +31,7 @@ import java.security.cert.CertificateEncodingException;
 import com.networknt.handler.config.MethodRewriteRule;
 import com.networknt.handler.config.QueryHeaderRewriteRule;
 import com.networknt.handler.config.UrlRewriteRule;
+import com.networknt.httpstring.HttpStringConstants;
 import io.undertow.UndertowLogger;
 import io.undertow.UndertowMessages;
 import io.undertow.server.*;
@@ -557,6 +558,12 @@ public class ProxyHandler implements HttpHandler {
                     r.getRequestHeaders().put(Headers.TRANSFER_ENCODING, Headers.CHUNKED.toString());
                 }
             }
+
+            // remove the serviceId and serviceUrl so that they won't be sent to the downstream API as it might be a gateway or sidecar.
+            // the serviceId and serviceUrl might impact the pathPrefixServiceHandler to detect the serviceId.
+            r.getRequestHeaders().remove(HttpStringConstants.SERVICE_URL);
+            r.getRequestHeaders().remove(HttpStringConstants.SERVICE_ID);
+
         }
 
         /**

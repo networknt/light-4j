@@ -223,8 +223,8 @@ public class LoadBalancingRouterProxyClient implements ProxyClient {
         String serviceUrl = headers.getFirst(HttpStringConstants.SERVICE_URL);
         if(logger.isTraceEnabled()) logger.trace("From headers serviceId = " + serviceId + " serviceUrl = " + serviceUrl);
         // remove the header here in case the downstream service is another light-router instance.
-        if(serviceUrl != null) headers.remove(HttpStringConstants.SERVICE_URL);
-        if(serviceId != null) headers.remove(HttpStringConstants.SERVICE_ID);
+        // if(serviceUrl != null) headers.remove(HttpStringConstants.SERVICE_URL);
+        // if(serviceId != null) headers.remove(HttpStringConstants.SERVICE_ID);
         // if the serviceId doesn't exist in the header, check if there is one in the query parameter.
         // also remove it from the query parameters to ensure that the downstream call doesn't have it.
         // it is for legacy client that is easy to manipulate the query parameters than headers.
