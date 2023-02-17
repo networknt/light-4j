@@ -35,6 +35,7 @@ public class ProxyConfig {
     private static final String REWRITE_HOST_HEADER = "rewriteHostHeader";
     private static final String REUSE_X_FORWARDED = "reuseXForwarded";
     private static final String MAX_CONNECTION_RETRIES = "maxConnectionRetries";
+    private static final String MAX_QUEUE_SIZE = "maxQueueSize";
     private static final String FORWARD_JWT_CLAIMS = "forwardJwtClaims";
 
     boolean enabled;
@@ -45,6 +46,7 @@ public class ProxyConfig {
     boolean rewriteHostHeader;
     boolean reuseXForwarded;
     int maxConnectionRetries;
+    int maxQueueSize;
     private boolean forwardJwtClaims;
 
     private Config config;
@@ -103,6 +105,8 @@ public class ProxyConfig {
 
     public int getMaxConnectionRetries() { return maxConnectionRetries; }
 
+    public int getMaxQueueSize() { return maxQueueSize; }
+
     public boolean isForwardJwtClaims() {
         return forwardJwtClaims;
     }
@@ -128,5 +132,6 @@ public class ProxyConfig {
         connectionsPerThread = (Integer)getMappedConfig().get(CONNECTIONS_PER_THREAD);
         maxRequestTime = (Integer)getMappedConfig().get(MAX_REQUEST_TIME);
         maxConnectionRetries = (Integer)getMappedConfig().get(MAX_CONNECTION_RETRIES);
+        maxQueueSize = (Integer)getMappedConfig().get(MAX_QUEUE_SIZE);
     }
 }

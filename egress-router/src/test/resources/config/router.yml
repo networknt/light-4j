@@ -19,6 +19,12 @@ pathPrefixMaxRequestTime: ${router.pathPrefixMaxRequestTime:}
 # Connections per thread.
 connectionsPerThread: 10
 
+# The max queue size for the requests if there is no connection to the downstream API in the connection pool.
+# The default value is 0 that means there is queued requests. As we have maxConnectionRetries, there is no
+# need to use the request queue to increase the memory usage. It should only be used when you see 503 errors
+# in the log after maxConnectionRetries to accommodate slow backend API.
+maxQueueSize: ${router.maxQueueSize:0}
+
 # Soft max connections per thread.
 softMaxConnectionsPerThread: 5
 
