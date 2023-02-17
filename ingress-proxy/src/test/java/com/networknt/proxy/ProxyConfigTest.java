@@ -8,5 +8,6 @@ public class ProxyConfigTest {
     public void testLoadConfig() {
         ProxyConfig config = ProxyConfig.load();
         Assert.assertNotNull(config.getHosts());
+        Assert.assertEquals(config.getMaxQueueSize(), 0);
     }
 }
