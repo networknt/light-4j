@@ -74,7 +74,7 @@ import java.util.stream.Stream;
  *
  * @author Steve Hu
  */
-public class JwtVerifier {
+public class JwtVerifier extends TokenVerifier {
     static final Logger logger = LoggerFactory.getLogger(JwtVerifier.class);
     static final String GET_KEY_ERROR = "ERR10066";
 
@@ -85,7 +85,7 @@ public class JwtVerifier {
     public static final String JWT_KEY_RESOLVER_X509CERT = "X509Certificate";
     public static final String JWT_KEY_RESOLVER_JWKS = "JsonWebKeySet";
 
-    SecurityConfig config;
+    static SecurityConfig config;
     int secondsOfAllowedClockSkew;
     Boolean enableJwtCache;
     Boolean enableRelaxedKeyValidation;
@@ -178,28 +178,6 @@ public class JwtVerifier {
             }
         }
         return cert;
-    }
-
-    /**
-     * Parse the jwt token from Authorization header.
-     *
-     * @param authorization authorization header.
-     * @return JWT token
-     */
-    public static String getJwtFromAuthorization(String authorization) {
-        String jwt = null;
-        if (authorization != null) {
-            String[] parts = authorization.split(" ");
-            if (parts.length == 2) {
-                String scheme = parts[0];
-                String credentials = parts[1];
-                Pattern pattern = Pattern.compile("^Bearer$", Pattern.CASE_INSENSITIVE);
-                if (pattern.matcher(scheme).matches()) {
-                    jwt = credentials;
-                }
-            }
-        }
-        return jwt;
     }
 
     /**
@@ -607,18 +585,6 @@ public class JwtVerifier {
         return jwks;
     }
 
-    private Map<String, Object> getJwkConfig(ClientConfig clientConfig, String serviceId) {
-        if (logger.isTraceEnabled())
-            logger.trace("serviceId = " + serviceId);
-        // get the serviceIdAuthServers for key definition
-        Map<String, Object> tokenConfig = clientConfig.getTokenConfig();
-        Map<String, Object> keyConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.KEY);
-        Map<String, Object> serviceIdAuthServers = (Map<String, Object>) keyConfig.get(ClientConfig.SERVICE_ID_AUTH_SERVERS);
-        if (serviceIdAuthServers == null) {
-            throw new ConfigException("serviceIdAuthServers property is missing in the token key configuration in client.yml");
-        }
-        return (Map<String, Object>) serviceIdAuthServers.get(serviceId);
-    }
 
     private List<JsonWebKey> retrieveJwk(String kid, Map<String, Object> config) {
         // get the jwk with the kid and config map.
