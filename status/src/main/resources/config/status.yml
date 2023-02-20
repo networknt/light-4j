@@ -517,8 +517,26 @@ ERR10078:
   code: ERR10078
   message: MISSING_PATH_PREFIX_AUTH
   description: Missing path prefix auth entry for request path %s.
-
-
+ERR10079:
+  statusCode: 400
+  code: ERR10079
+  message: OAUTH_INTROSPECTION_ERROR
+  description: Unable to introspect token from %s server for token %s.
+ERR10080:
+  statusCode: 400
+  code: ERR10080
+  message: TOKEN_INFO_ERROR
+  description: Token introspection error % with error description %.
+ERR10081:
+  statusCode: 400
+  code: ERR10081
+  message: INTROSPECTED_TOKEN_EXPIRED
+  description: Introspected token %s is expired.
+ERR10082:
+  statusCode: 400
+  code: ERR10082
+  message: CLIENT_EXCEPTION
+  description: Client exception with message %s.
 
 # 11000-11499 swagger-validator errors
 ERR11000:

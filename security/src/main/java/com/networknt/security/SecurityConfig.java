@@ -21,10 +21,10 @@ public class SecurityConfig {
     private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
 
     private static final String ENABLE_VERIFY_JWT = "enableVerifyJwt";
+    private static final String ENABLE_VERIFY_SWT = "enableVerifySwt";
     private static final String ENABLE_EXTRACT_SCOPE_TOKEN = "enableExtractScopeToken";
     private static final String ENABLE_VERIFY_SCOPE = "enableVerifyScope";
     private static final String SKIP_VERIFY_SCOPE_WITHOUT_SPEC = "skipVerifyScopeWithoutSpec";
-    private static final String ENABLE_VERIFY_JWT_SCOPE_TOKEN = "enableVerifyJWTScopeToken";
     private static final String ENABLE_MOCK_JWT = "enableMockJwt";
     private static final String JWT = "jwt";
     private static final String CERTIFICATE = "certificate";
@@ -46,10 +46,10 @@ public class SecurityConfig {
     private Map<String, Object> certificate;
     private Config config;
     private boolean enableVerifyJwt;
+    private boolean enableVerifySwt;
     private boolean enableExtractScopeToken;
     private boolean enableVerifyScope;
     private boolean skipVerifyScopeWithoutSpec;
-    private boolean enableVerifyJwtScopeToken;
     private boolean enableMockJwt;
     private int clockSkewInSeconds;
     private String keyResolver;
@@ -91,6 +91,9 @@ public class SecurityConfig {
     public boolean isEnableVerifyJwt() {
         return enableVerifyJwt;
     }
+    public boolean isEnableVerifySwt() {
+        return enableVerifySwt;
+    }
 
     public boolean isEnableH2c() { return enableH2c; }
 
@@ -106,10 +109,6 @@ public class SecurityConfig {
 
     public boolean isSkipVerifyScopeWithoutSpec() {
         return skipVerifyScopeWithoutSpec;
-    }
-
-    public boolean isEnableVerifyJwtScopeToken() {
-        return enableVerifyJwtScopeToken;
     }
 
     public boolean isIgnoreJwtExpiry() {
@@ -187,6 +186,10 @@ public class SecurityConfig {
             if(object != null && (Boolean) object) {
                 enableVerifyJwt = true;
             }
+            object = getMappedConfig().get(ENABLE_VERIFY_SWT);
+            if(object != null && (Boolean) object) {
+                enableVerifySwt = true;
+            }
             object = getMappedConfig().get(ENABLE_H2C);
             if(object != null && (Boolean) object) {
                 enableH2c = true;
@@ -206,10 +209,6 @@ public class SecurityConfig {
             object = getMappedConfig().get(SKIP_VERIFY_SCOPE_WITHOUT_SPEC);
             if(object != null && (Boolean) object) {
                 skipVerifyScopeWithoutSpec = true;
-            }
-            object = getMappedConfig().get(ENABLE_VERIFY_JWT_SCOPE_TOKEN);
-            if(object != null && (Boolean) object) {
-                enableVerifyJwtScopeToken = true;
             }
             object = getMappedConfig().get(ENABLE_MOCK_JWT);
             if(object != null && (Boolean) object) {
