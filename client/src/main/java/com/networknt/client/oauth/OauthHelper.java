@@ -42,15 +42,18 @@ import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
+import static com.networknt.http.MediaType.APPLICATION_FORM_URLENCODED_VALUE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class OauthHelper {
@@ -71,6 +74,7 @@ public class OauthHelper {
     private static final Logger logger = LoggerFactory.getLogger(OauthHelper.class);
 
     private static HttpClient tokenClient = null;
+    private static HttpClient introspectionClient = null;
     private static HttpClient signClient = null;
     private static HttpClient derefClient = null;
 
@@ -290,6 +294,18 @@ public class OauthHelper {
     }
 
     /**
+     * Get the token info from the introspection endpoint of OAuth 2.0 provider with the swt.
+     * @param token The simple web token that needs to be introspected.
+     * @param introspectionRequest One of the subclasses to get the token info.
+     * @return String of the token info in JSON
+     * @throws ClientException throw exception if communication with the service fails.
+     */
+    public static Result<String> getIntrospection(String token, IntrospectionRequest introspectionRequest) throws ClientException {
+        if(logger.isTraceEnabled()) logger.debug("introspectionRequest = " + introspectionRequest.toString());
+        return getIntrospection(token, introspectionRequest, null);
+    }
+
+    /**
      * Get the certificate from key distribution service of OAuth 2.0 provider with the kid.
      *
      * @param keyRequest One of the sub classes to get the key for access token or sign token.
@@ -333,6 +349,74 @@ public class OauthHelper {
             CompletableFuture<HttpResponse<String>> response =
                     keyClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
             return response.thenApply(HttpResponse::body).get(ClientConfig.get().getTimeout(), TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            throw new ClientException(e);
+        }
+    }
+
+    /**
+     * Get the introspection of the simple web token from OAuth 2.0 provider with the swt.
+     * @param token The simple web token to be introspected.
+     * @param introspectionRequest One of the subclasses to get the introspection for access token.
+     * @param envTag the environment tag from the server.yml for the cluster lookup.
+     * @return String of the token info in JSON
+     * @throws ClientException throw exception if communication with the service fails.
+     */
+    public static Result<String> getIntrospection(String token, IntrospectionRequest introspectionRequest, String envTag) throws ClientException {
+        if(introspectionClient == null) {
+            try {
+                HttpClient.Builder clientBuilder = HttpClient.newBuilder()
+                        .followRedirects(HttpClient.Redirect.NORMAL)
+                        .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
+                        .sslContext(Http2Client.createSSLContext());
+                if(logger.isTraceEnabled()) logger.trace("proxyHost = " + introspectionRequest.getProxyHost() + " proxyPort = " + introspectionRequest.getProxyPort());
+                if(!StringUtils.isBlank(introspectionRequest.getProxyHost())) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(introspectionRequest.getProxyHost(), introspectionRequest.getProxyPort() == 0 ? 443 : introspectionRequest.getProxyPort())));
+                if(introspectionRequest.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
+                // this a workaround to bypass the hostname verification in jdk11 http client.
+                Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+                if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
+                    final Properties props = System.getProperties();
+                    props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
+                }
+                introspectionClient = clientBuilder.build();
+            } catch (IOException e) {
+                logger.error("Cannot create HttpClient:", e);
+                return Failure.of(new Status(TLS_TRUSTSTORE_ERROR));
+            }
+        }
+
+        String serverUrl = introspectionRequest.getServerUrl();
+        if(serverUrl == null) {
+            Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
+            serverUrl = cluster.serviceToUrl("https", introspectionRequest.getServiceId(), envTag, null);
+        }
+        if(serverUrl == null) {
+            throw new ClientException(new Status(OAUTH_SERVER_URL_ERROR, "key"));
+        }
+        try {
+            Map<String, String> parameters = new HashMap<>();
+            parameters.put("token", token);
+
+            String form = parameters.entrySet()
+                    .stream()
+                    .map(e -> e.getKey() + "=" + URLEncoder.encode(e.getValue(), StandardCharsets.UTF_8))
+                    .collect(Collectors.joining("&"));
+
+            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+                    .POST(HttpRequest.BodyPublishers.ofString(form))
+                    .uri(URI.create(serverUrl + introspectionRequest.getUri()));
+            if(introspectionRequest.getClientId() != null && introspectionRequest.getClientSecret() != null) {
+                requestBuilder.setHeader(Headers.AUTHORIZATION_STRING, getBasicAuthHeader(introspectionRequest.getClientId(), introspectionRequest.getClientSecret()));
+            }
+            requestBuilder.setHeader(Headers.CONTENT_TYPE_STRING, APPLICATION_FORM_URLENCODED_VALUE);
+
+            HttpRequest request = requestBuilder.build();
+
+            CompletableFuture<HttpResponse<String>> response =
+                    introspectionClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+            String body = response.thenApply(HttpResponse::body).get();
+            return Success.of(body);
         } catch (Exception e) {
             logger.error("Exception:", e);
             throw new ClientException(e);

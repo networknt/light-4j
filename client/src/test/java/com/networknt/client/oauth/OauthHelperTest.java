@@ -63,6 +63,19 @@ public class OauthHelperTest {
                                         exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
                                         exchange.getResponseSender().send("OK");
                                     })
+                                    .addPrefixPath("/oauth2/introspection", (exchange) -> {
+                                        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+                                        Map<String, Object> map = new HashMap<>();
+                                        map.put("active", true);
+                                        map.put("client_id", "bb8293f6-ceef-4e7a-90c8-1492e97df19f");
+                                        map.put("token_type", "access_token");
+                                        map.put("scope", "openid profile");
+                                        map.put("sub", "cn=odicuser,dc=example,dc=com");
+                                        map.put("exp", "86400");
+                                        map.put("iat", "1506513918");
+                                        map.put("iss", "https://wa.example.com");
+                                        exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(map));
+                                    })
                                     .addPrefixPath("/oauth2/deref", (exchange) -> {
                                         exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
                                         exchange.getResponseSender().send(token);
@@ -292,6 +305,20 @@ public class OauthHelperTest {
 
         String jwt = OauthHelper.derefToken(derefRequest);
         System.out.println("jwt = " + jwt);
+    }
+
+    @Test
+    @Ignore
+    public void testTokenIntrospection() throws Exception {
+        TokenIntrospectionRequest request = new TokenIntrospectionRequest("Simple Web Token");
+        request.setClientId("test_client");
+        request.setClientSecret("test_secret");
+        request.setServerUrl("http://localhost:8887");
+        request.setUri("/oauth2/introspection");
+        request.setEnableHttp2(true);
+
+        Result<String> introspection = OauthHelper.getIntrospection("dummy", request);
+        System.out.println("introspection = " + introspection.getResult());
     }
 
 }
