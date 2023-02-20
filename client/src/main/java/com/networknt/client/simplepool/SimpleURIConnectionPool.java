@@ -79,7 +79,7 @@ public class SimpleURIConnectionPool {
      *
      * @param now the current time in ms
      */
-    private synchronized void readAllConnectionHolders(long now) {
+    private void readAllConnectionHolders(long now) {
         // sweep all connections and update sets
         for(SimpleConnectionHolder connection: allKnownConnections)
             readConnectionHolder(connection, now);
@@ -138,7 +138,7 @@ public class SimpleURIConnectionPool {
      * @param connection
      * @param now
      */
-    private synchronized void readConnectionHolder(SimpleConnectionHolder connection, long now) {
+    private void readConnectionHolder(SimpleConnectionHolder connection, long now) {
 
         if(connection.closed())
         {
@@ -169,7 +169,7 @@ public class SimpleURIConnectionPool {
      * @param isMember if true, it will add connectionHolder to set, otherwise, it will remove connectionHolder from set
      * @param connectionHolder the connectionHolder to add or remove from the set
      */
-    private synchronized void updateSet(Set<SimpleConnectionHolder> set, boolean isMember, SimpleConnectionHolder connectionHolder) {
+    private void updateSet(Set<SimpleConnectionHolder> set, boolean isMember, SimpleConnectionHolder connectionHolder) {
         if(isMember && !set.contains(connectionHolder))
             set.add(connectionHolder);
         else if(!isMember)
@@ -177,13 +177,13 @@ public class SimpleURIConnectionPool {
     }
 
     // for logging
-    public synchronized String showConnections(String transitionName) {
+    private String showConnections(String transitionName) {
         return "After " + transitionName + " - CONNECTIONS: " +
                 showConnections("BORROWABLE", borrowable) +
                 showConnections("BORROWED", borrowed);
     }
 
-    public static synchronized String showConnections(String name, Set<SimpleConnectionHolder> set) {
+    private static String showConnections(String name, Set<SimpleConnectionHolder> set) {
         StringBuilder sb = new StringBuilder();
         sb.append("[").append(name).append(": ");
         for(SimpleConnectionHolder holder: set)
@@ -191,7 +191,7 @@ public class SimpleURIConnectionPool {
         sb.append("] ");
         return sb.toString();
     }
-    public static synchronized String port(SimpleConnection connection) {
+    private static String port(SimpleConnection connection) {
         if(connection == null) return "NULL";
         String url = connection.getLocalAddress().toString();
         int semiColon = url.lastIndexOf(":");
