@@ -47,21 +47,21 @@ import java.util.concurrent.ConcurrentHashMap;
  *   users need to borrow a connection, they are given a connection token. This token contains a reference to the
  *   connection as well as other metadata.
  *
- *   When users are done with the connection, they must return the connection token to connection pool.
+ *   When users are done with the connection, they must return the connection token to the connection pool.
  *
  *   The correct use requires some discipline on the part of the connection pool user. Connection leaks can
  *   occur if a borrowed token is not returned.
  *
  *   TODO: add a setting that sets the max time after expiry to give connections that still have unrestored tokens
  *
- * Time-fixing
+ * Time-freezing
  *   Calculates the state of the connection based on its internal properties at a specific point in time.
  *
  *   Users must provide a fixed 'now' value for the current time.
  *   This freezes a single time value for all time-dependent properties.
  *   This is important when calculating an aggregate state based on the values of 2 or more time-dependent states.
  *
- *   Not doing so (i.e.: not fixing the time) may allow inconsistent states to be reached.
+ *   Not doing so (i.e.: not freezing the time) may allow inconsistent states to be reached.
  */
 public class SimpleConnectionHolder {
     private static final Logger logger = LoggerFactory.getLogger(SimpleConnectionHolder.class);
@@ -78,17 +78,21 @@ public class SimpleConnectionHolder {
     // the URI this connection is connected to
     private final URI uri;
 
-    // if true, this connection should be treated as closed
-    // note: closed may be true before a connection is actually closed since there may be a delay
-    //       between setting close = false, and IoUtils.safeCloseConnection() actually closing it
+    /**
+      if true, this connection should be treated as CLOSED
+      note: CLOSED may be true before a connection is actually closed since there may be a delay
+            between setting close = false, and the network connection actually being fully closed
+    */
     private volatile boolean closed = false;
 
-    // If the connection is HTTP/1.1, it can only be borrowed by 1 process at a time
-    // If the connection is HTTP/2, it can be borrowed by an unlimited number of processes at a time
+    /**
+      If the connection is HTTP/1.1, it can only be borrowed by 1 process at a time
+      If the connection is HTTP/2, it can be borrowed by an unlimited number of processes at a time
+    */
     private final SimpleConnectionMaker connectionMaker;
     private final SimpleConnection connection;
 
-    // a Set containing all borrowed connection tokens
+    /** a Set containing all borrowed connection tokens */
     private final Set<ConnectionToken> borrowedTokens = ConcurrentHashMap.newKeySet();
 
     /***
@@ -106,6 +110,9 @@ public class SimpleConnectionHolder {
      * @param createConnectionTimeout how long it can take a connection be created before an exception thrown
      * @param isHttp2 if true, tries to upgrade to HTTP/2. if false, will try to open an HTTP/1.1 connection
      * @param uri the URI the connection will try to connect to
+     * @param allCreatedConnections this Set will be passed to the callback thread that creates the connection.
+     *                              The connectionMaker will always add every successfully created connection
+     *                              to this Set.
      * @param connectionMaker a class that SimpleConnectionHolder uses to create new SimpleConnection objects
      */
     public SimpleConnectionHolder(
@@ -169,6 +176,7 @@ public class SimpleConnectionHolder {
          * Also note the use of a single consistent value for the current time ('now'). This ensures
          * that the state returned in the 'if' statement will still be true in the 'borrow' statement
          * (as long as the connection does not close between the 'if' and 'borrow').
+         *
          */
         ConnectionToken connectionToken;
 
@@ -320,11 +328,11 @@ public class SimpleConnectionHolder {
     }
 
     // for logging
-    public String logLabel(SimpleConnection connection, long now) {
+    private String logLabel(SimpleConnection connection, long now) {
         return "[" + port(connection) + ": " + state(now) + "]:";
     }
 
-    public static synchronized String port(SimpleConnection connection) {
+    private static String port(SimpleConnection connection) {
         if(connection == null) return "NULL";
         String url = connection.getLocalAddress();
         int semiColon = url.lastIndexOf(":");
@@ -332,7 +340,7 @@ public class SimpleConnectionHolder {
         return url.substring(url.lastIndexOf(":")+1);
     }
 
-    private synchronized String state(long now) {
+    private String state(long now) {
         if(closed())                        return "CLOSED";
         if(borrowable(now))                 return "BORROWABLE";
         if(!borrowed() && !expired(now))    return "NOT_BORROWED_VALID";
