@@ -77,6 +77,12 @@ public class SimpleURIConnectionPool {
      * A key method that actually closes connections
      * It is guaranteed to run every time a transition method is called on SimpleURIConnectionPool
      *
+     * WARNING: Thread Safety Note
+     *     This method *must* remain private, and *must only* be called either directly or transitively by synchronized
+     *     methods in this class.
+     *
+     *     Any changes to this will almost certainly result in multi-threading related FAILURES of this connection pool
+     *
      * @param now the current time in ms
      */
     private void readAllConnectionHolders(long now) {
@@ -135,6 +141,12 @@ public class SimpleURIConnectionPool {
     /***
      * This method reads a connection and updates the state of the SimpleURIConnectionPool based on the state of connection.
      *
+     * WARNING: Thread Safety Note
+     *     This method *must* remain private, and *must only* be called either directly or transitively by synchronized
+     *     methods in this class.
+     *
+     *     Any changes to this will almost certainly result in multi-threading related FAILURES of this connection pool
+     *
      * @param connection
      * @param now
      */
@@ -165,6 +177,12 @@ public class SimpleURIConnectionPool {
      * Takes a Set, a boolean, and a connectionHolder
      * If the boolean is true, it will add the connectionHolder to the Set, otherwise, it will remove it from the Set
      *
+     * WARNING: Thread Safety Note
+     *     This method *must* remain private, and *must only* be called either directly or transitively by synchronized
+     *     methods in this class.
+     *
+     *     Any changes to this will almost certainly result in multi-threading related FAILURES of this connection pool
+     *
      * @param set the set to potentially add or remove the connectionHolder from
      * @param isMember if true, it will add connectionHolder to set, otherwise, it will remove connectionHolder from set
      * @param connectionHolder the connectionHolder to add or remove from the set
@@ -176,13 +194,32 @@ public class SimpleURIConnectionPool {
             set.remove(connectionHolder);
     }
 
-    // for logging
+    /***
+     * For logging
+     *
+     * WARNING: Thread Safety Note
+     *     This method *must* remain private, and *must only* be called either directly or transitively by synchronized
+     *     methods in this class.
+     *
+     *     Any changes to this will almost certainly result in multi-threading related FAILURES of this connection pool
+     *
+     */
     private String showConnections(String transitionName) {
         return "After " + transitionName + " - CONNECTIONS: " +
                 showConnections("BORROWABLE", borrowable) +
                 showConnections("BORROWED", borrowed);
     }
 
+    /***
+     * For logging
+     *
+     * WARNING: Thread Safety Note
+     *     This method *must* remain private, and *must only* be called either directly or transitively by synchronized
+     *     methods in this class.
+     *
+     *     Any changes to this will almost certainly result in multi-threading related FAILURES of this connection pool
+     *
+     */
     private static String showConnections(String name, Set<SimpleConnectionHolder> set) {
         StringBuilder sb = new StringBuilder();
         sb.append("[").append(name).append(": ");
@@ -191,6 +228,17 @@ public class SimpleURIConnectionPool {
         sb.append("] ");
         return sb.toString();
     }
+
+    /***
+     * For logging
+     *
+     * WARNING: Thread Safety Note
+     *     This method *must* remain private, and *must only* be called either directly or transitively by synchronized
+     *     methods in this class.
+     *
+     *     Any changes to this will almost certainly result in multi-threading related FAILURES of this connection pool
+     *
+     */
     private static String port(SimpleConnection connection) {
         if(connection == null) return "NULL";
         String url = connection.getLocalAddress().toString();

@@ -327,11 +327,30 @@ public class SimpleConnectionHolder {
         public URI uri() { return uri; }
     }
 
-    // for logging
+    /***
+     * For logging
+     *
+     * WARNING: Thread Safety Note
+     *     This method *must* remain private, and *must only* be called either directly or transitively by synchronized
+     *     methods in this class.
+     *
+     *     Any changes to this will almost certainly result in multi-threading related FAILURES of this connection pool
+     *
+     */
     private String logLabel(SimpleConnection connection, long now) {
         return "[" + port(connection) + ": " + state(now) + "]:";
     }
 
+    /***
+     * For logging
+     *
+     * WARNING: Thread Safety Note
+     *     This method *must* remain private, and *must only* be called either directly or transitively by synchronized
+     *     methods in this class.
+     *
+     *     Any changes to this will almost certainly result in multi-threading related FAILURES of this connection pool
+     *
+     */
     private static String port(SimpleConnection connection) {
         if(connection == null) return "NULL";
         String url = connection.getLocalAddress();
@@ -340,6 +359,16 @@ public class SimpleConnectionHolder {
         return url.substring(url.lastIndexOf(":")+1);
     }
 
+    /***
+     * For logging
+     *
+     * WARNING: Thread Safety Note
+     *     This method *must* remain private, and *must only* be called either directly or transitively by synchronized
+     *     methods in this class.
+     *
+     *     Any changes to this will almost certainly result in multi-threading related FAILURES of this connection pool
+     *
+     */
     private String state(long now) {
         if(closed())                        return "CLOSED";
         if(borrowable(now))                 return "BORROWABLE";
