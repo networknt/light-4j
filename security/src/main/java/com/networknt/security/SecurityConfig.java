@@ -6,6 +6,7 @@ import com.networknt.config.ConfigException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -41,6 +42,7 @@ public class SecurityConfig {
 
     private static final String ENABLE_RELAXED_KEY_CONSTRAINTS = "enableRelaxedKeyValidation";
     private static final String SKIP_PATH_PREFIXES = "skipPathPrefixes";
+    private static final String PASS_THROUGH_CLAIMS = "passThroughClaims";
 
     private Map<String, Object> mappedConfig;
     private Map<String, Object> certificate;
@@ -65,12 +67,16 @@ public class SecurityConfig {
     private boolean enableRelaxedKeyValidation;
     private List<String> skipPathPrefixes;
 
+    private Map<String, String> passThroughClaims;
+
+
     private SecurityConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(configName);
         setCertificate();
         setConfigData();
         setSkipPathPrefixes();
+        setPassThroughClaims();
     }
 
     public static SecurityConfig load(String configName) {
@@ -82,6 +88,7 @@ public class SecurityConfig {
         setCertificate();
         setConfigData();
         setSkipPathPrefixes();
+        setPassThroughClaims();
     }
 
     public Map<String, Object> getCertificate() {
@@ -148,7 +155,7 @@ public class SecurityConfig {
     public List<String> getSkipPathPrefixes() {
         return skipPathPrefixes;
     }
-
+    public Map<String, String> getPassThroughClaims() { return passThroughClaims; }
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
@@ -275,6 +282,34 @@ public class SecurityConfig {
                 });
             } else {
                 throw new ConfigException("skipPathPrefixes must be a string or a list of strings.");
+            }
+        }
+    }
+
+    private void setPassThroughClaims() {
+        if(mappedConfig.get(PASS_THROUGH_CLAIMS) != null) {
+            Object obj = mappedConfig.get(PASS_THROUGH_CLAIMS);
+            if(obj instanceof String) {
+                String s = (String)obj;
+                if(logger.isTraceEnabled()) logger.trace("s = " + s);
+                if(s.startsWith("{")) {
+                    // json map
+                    try {
+                        passThroughClaims = Config.getInstance().getMapper().readValue(s, Map.class);
+                    } catch (IOException e) {
+                        logger.error("IOException:", e);
+                    }
+                } else {
+                    passThroughClaims = new HashMap<>();
+                    for(String keyValue : s.split(" *& *")) {
+                        String[] pairs = keyValue.split(" *= *", 2);
+                        passThroughClaims.put(pairs[0], pairs[1]);
+                    }
+                }
+            } else if (obj instanceof Map) {
+                passThroughClaims = (Map)obj;
+            } else {
+                logger.error("passThroughClaims is the wrong type. Only JSON map or YAML map is supported.");
             }
         }
     }
