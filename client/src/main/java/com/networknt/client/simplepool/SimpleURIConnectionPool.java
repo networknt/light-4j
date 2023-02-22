@@ -108,34 +108,26 @@ public class SimpleURIConnectionPool {
          * never closed, causing a connection leak.
          */
 
-        // create a Set containing only the open SimpleConnections that the connection pool knows about
+        // create a Set containing only the open SimpleConnections that the connection pool is aware of
         Set<SimpleConnection> knownConnections = new HashSet<>();
         for(SimpleConnectionHolder connectionHolder: allKnownConnections)
             knownConnections.add(connectionHolder.connection());
 
-        // remove all open connections that the connection pool knows about from the set of all created connections
-        allCreatedConnections.removeAll(knownConnections);
+        // close leaked connections
+        Set<SimpleConnection> closedLeakedConnections = new HashSet<>();
+        for (SimpleConnection connection: allCreatedConnections) {
+            // close any created connection that the connection pool is not aware of (these are leaks)
+            if(!knownConnections.contains(connection)) {
+                connection.safeClose();
+                logger.debug("Closing leaked connection {} to {}", port(connection), uri.toString());
 
-        // any remaining connections must be leaks, and can now be safely closed
-        if(allCreatedConnections.size() == 0)
-            logger.debug("No leaked connections to {} found", uri.toString());
-        else {
-            logger.debug("{} leaked connections found", allCreatedConnections.size());
-
-            // close leaked connections
-            Set<SimpleConnection> closedLeakedConnections = new HashSet<>();
-            for (SimpleConnection leakedConnection: allCreatedConnections)
-            {
-                leakedConnection.safeClose();
-                logger.debug("Closing leaked connection {} to {}", port(leakedConnection), uri.toString());
-
-                closedLeakedConnections.add(leakedConnection);
+                closedLeakedConnections.add(connection);
             }
-
-            // remove references to leaked connections to ensure they are garbage collected
-            for(SimpleConnection leakedConnection: closedLeakedConnections)
-                allCreatedConnections.removeAll(closedLeakedConnections);
         }
+
+        // remove references to leaked connections to ensure they are garbage collected
+        for(SimpleConnection leakedConnection: closedLeakedConnections)
+            allCreatedConnections.removeAll(closedLeakedConnections);
     }
 
     /***
