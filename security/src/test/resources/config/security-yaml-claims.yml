@@ -36,7 +36,7 @@ enableVerifyScope: ${security.enableVerifyScope:true}
 # doesn't have a specification to retrieve the defined scopes, the handler will skip the scope verification.
 skipVerifyScopeWithoutSpec: ${security.skipVerifyScopeWithoutSpec:false}
 
-# Enable JWT scope verification. 
+# Enable JWT scope verification.
 # Only valid when (enableVerifyJwt is true) AND (enableVerifyScope is true)
 enableVerifyJwtScopeToken: ${security.enableVerifyJwtScopeToken:true}
 
@@ -59,8 +59,8 @@ enableRelaxedKeyValidation: ${security.enableRelaxedKeyValidation:false}
 # JWT signature public certificates. kid and certificate path mappings.
 jwt:
   certificate: ${security.certificate:100=primary.crt&101=secondary.crt}
-#    '100': primary.crt
-#    '101': secondary.crt
+  #    '100': primary.crt
+  #    '101': secondary.crt
   clockSkewInSeconds: ${security.clockSkewInSeconds:60}
   # Key distribution server standard: JsonWebKeySet for other OAuth 2.0 provider| X509Certificate for light-oauth2
   keyResolver: ${security.keyResolver:JsonWebKeySet}
@@ -111,12 +111,13 @@ skipPathPrefixes: ${security.skipPathPrefixes:}
 # select some claims to pass to the backend API with HTTP headers. The format is a map of
 # claim in the token and a header name that the downstream API is expecting. You can use
 # both JSON or YAML format.
-# When SwtVerifyHandler is used, the claim names are in https://github.com/networknt/light-4j/blob/master/client/src/main/java/com/networknt/client/oauth/TokenInfo.java
-# When JwtVerifyHandler is used, the claim names is the JwtClaims claimName.
 # YAML
 # openapi-security.passThroughClaims:
-#   clientId: client_id
-#   tokenType: token_type
+#   cid: client_id
+#   uid: user_id
 # JSON
-# openapi-security.passThroughClaims: {"clientId":"client_id","tokenType":"token_type"}
-passThroughClaims: ${security.passThroughClaims:}
+# openapi-security.passThroughClaims: {"cid":"client_id","uid":"user_id"}
+passThroughClaims:
+  cid: client_id
+  uid: user_id
+
