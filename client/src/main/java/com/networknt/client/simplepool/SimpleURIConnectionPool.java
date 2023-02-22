@@ -83,55 +83,77 @@ public class SimpleURIConnectionPool {
      *
      *     Any changes to this will almost certainly result in multi-threading related FAILURES of this connection pool
      *
+     * WARNING: ConcurrentModificationException
+     *     Ensure that connections are not removed (using Set.remove()) from a Set that is currently being iterated over
+     *     Doing so can cause a ConcurrentModificationException
+     *
      * @param now the current time in ms
      */
-    private void readAllConnectionHolders(long now) {
-        // sweep all connections and update sets
-        for(SimpleConnectionHolder connection: allKnownConnections)
+    private void readAllConnectionHolders(long now)
+    {
+        /**
+         * Sweep all connections and update sets
+         *
+         * Move connections to appropriate sets based on their properties
+         * Also, remove any connections that have unexpectedly closed
+         *
+         * Note that we iterate using a copy of allKnownConnections (see below), since readConnectionHolder() may
+         * remove connections from allKnownConnections
+         */
+
+        for(SimpleConnectionHolder connection: new HashSet<>(allKnownConnections))
+            // move connection to correct set or remove it if it unexpectedly closed
             readConnectionHolder(connection, now);
 
-        // close any connections found in a closeable set
+        // close any open connections in a closeable set
+        HashSet<SimpleConnectionHolder> closedConnections = new HashSet<>();
         for(SimpleConnectionHolder closeableConnection: notBorrowedExpired)
         {
             closeableConnection.safeClose(now);
-
-            notBorrowedExpired.remove(closeableConnection);
-            allKnownConnections.remove(closeableConnection);
+            closedConnections.add(closeableConnection);     // record that this connection has been closed
         }
+        notBorrowedExpired.removeAll(closedConnections);
+        allKnownConnections.removeAll(closedConnections);
+
 
         /**
-         * This will remove any connections that were created by the SimpleConnectionMaker, but were not returned. This
-         * can occur if a connection-creation callback thread finishes creating a connection after a timeout has
+         * Remove leaked connections
+         *
+         * Remove any connections that were created by the SimpleConnectionMaker, but were not returned.
+         * This can occur if a connection-creation callback thread finishes creating a connection after a timeout has
          * occurred.
          *
          * If this happens, then the created-connection will not be tracked by the connection pool, and therefore
          * never closed, causing a connection leak.
          */
 
-        // create a Set containing only the open SimpleConnections that the connection pool is aware of
+        // create a Set containing only the open SimpleConnections that the connection pool is aware of (i.e.: tracking)
         Set<SimpleConnection> knownConnections = new HashSet<>();
         for(SimpleConnectionHolder connectionHolder: allKnownConnections)
             knownConnections.add(connectionHolder.connection());
 
-        // close leaked connections
-        Set<SimpleConnection> closedLeakedConnections = new HashSet<>();
-        for (SimpleConnection connection: allCreatedConnections) {
-            // close any created connection that the connection pool is not aware of (these are leaks)
-            if(!knownConnections.contains(connection)) {
-                connection.safeClose();
-                logger.debug("Closing leaked connection {} to {}", port(connection), uri.toString());
+        // remove all connections that the connection pool is tracking from the set of all created connections
+        allCreatedConnections.removeAll(knownConnections);
 
-                closedLeakedConnections.add(connection);
+        // any remaining connections are leaks, and can now be safely closed
+        if(allCreatedConnections.size() > 0) {
+            logger.debug("{} leaked connection found", allCreatedConnections.size());
+
+            Set<SimpleConnection> closedLeakedConnections = new HashSet<>();
+            for (SimpleConnection leakedConnection: allCreatedConnections)
+            {
+                logger.debug("Closing leaked connection {} to {}", port(leakedConnection), uri.toString());
+
+                leakedConnection.safeClose();
+                closedLeakedConnections.add(leakedConnection);
             }
-        }
-
-        // remove references to leaked connections to ensure they are garbage collected
-        for(SimpleConnection leakedConnection: closedLeakedConnections)
             allCreatedConnections.removeAll(closedLeakedConnections);
+        }
     }
 
     /***
      * This method reads a connection and updates the state of the SimpleURIConnectionPool based on the state of connection.
+     * It will also remove a connection from all sets (i.e.: stop tracking the connection) if it unexpectedly closed.
      *
      * WARNING: Thread Safety Note
      *     This method *must* remain private, and *must only* be called either directly or transitively by synchronized
