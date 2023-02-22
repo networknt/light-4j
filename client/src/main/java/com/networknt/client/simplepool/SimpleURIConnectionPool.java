@@ -22,9 +22,26 @@ public final class SimpleURIConnectionPool {
     private final SimpleConnectionMaker connectionMaker;
     private final long EXPIRY_TIME;
     private final int poolSize;
-    private final Set<SimpleConnection> allCreatedConnections = ConcurrentHashMap.newKeySet();
     private final URI uri;
+
+    /***
+     * The set of all connections created by the SimpleConnectionMaker for this uri
+     */
+    private final Set<SimpleConnection> allCreatedConnections = ConcurrentHashMap.newKeySet();
+
+    /***
+     * The set containing all connections known to this connection pool
+     * (It is not considered a state set)
+     */
     private final Set<SimpleConnectionHolder> allKnownConnections = new HashSet<>();
+
+    /***
+     * State Sets
+     * The existence or non-existence of a connection in one of these sets means that the connection is in one of these
+     * states or its opposite.
+     *
+     * A connection can be in multiple state sets at o time (e.g.: a connection can be both borrowable and not borrowed)
+     */
     private final Set<SimpleConnectionHolder> borrowable = new HashSet<>();
     private final Set<SimpleConnectionHolder> borrowed = new HashSet<>();
     private final Set<SimpleConnectionHolder> notBorrowedExpired = new HashSet<>();
@@ -88,27 +105,32 @@ public final class SimpleURIConnectionPool {
         /**
          * Sweep all connections and update sets
          *
-         * Move connections to appropriate sets based on their properties
-         * Also, remove any connections that have unexpectedly closed
+         * Remove any connections that have unexpectedly closed
+         * Move all remaining connections to appropriate sets based on their properties
          *
-         * Note that we iterate using a copy of allKnownConnections (see below), since readConnectionHolder() may
-         * remove connections from allKnownConnections using Set.remove(). If we iterated using allKnownConnections
-         * it could cause a ConcurrentModificationException.
          */
 
-        for(SimpleConnectionHolder connection: new HashSet<>(allKnownConnections))
-            // move connection to correct set or remove it if it unexpectedly closed
+        Iterator<SimpleConnectionHolder> allKnownConnectionsConnections = allKnownConnections.iterator();
+        while(allKnownConnectionsConnections.hasNext())
+        {
+            SimpleConnectionHolder connection = allKnownConnectionsConnections.next();
+
+            // remove connections that have unexpectedly closed
+            if(connection.closed()) {
+                allKnownConnectionsConnections.remove();
+                readConnectionHolder(connection, now);
+                continue;
+            }
+
+            // move connections to correct sets
             readConnectionHolder(connection, now);
 
-        // close any open connections in a closeable set
-        HashSet<SimpleConnectionHolder> closedConnections = new HashSet<>();
-        for(SimpleConnectionHolder closeableConnection: notBorrowedExpired)
-        {
-            closeableConnection.safeClose(now);
-            closedConnections.add(closeableConnection);     // record that this connection has been closed
+            // close and remove connections if they are in a closeable set
+            if(notBorrowedExpired.contains(connection)) {
+                connection.safeClose(now);
+                readConnectionHolder(connection, now);
+            }
         }
-        notBorrowedExpired.removeAll(closedConnections);
-        allKnownConnections.removeAll(closedConnections);
 
 
         /**
@@ -135,16 +157,21 @@ public final class SimpleURIConnectionPool {
             logger.debug("{} leaked connection found", allCreatedConnections.size());
 
             Iterator<SimpleConnection> closedLeakedCons = allCreatedConnections.iterator();
-            while(closedLeakedCons.hasNext()) {
-                closedLeakedCons.next().safeClose();
+            while(closedLeakedCons.hasNext())
+            {
+                SimpleConnection connection = closedLeakedCons.next();
+                connection.safeClose();
                 closedLeakedCons.remove();
+                logger.debug("Connection closed {} -> {}", port(connection), uri.toString());
             }
         }
     }
 
     /***
-     * This method reads a connection and updates the state of the SimpleURIConnectionPool based on the state of connection.
-     * It will also remove a connection from all sets (i.e.: stop tracking the connection) if it unexpectedly closed.
+     * This method reads a connection and moves it to the correct sets based on its properties.
+     * It will also remove a connection from all state sets (i.e.: stop tracking the connection) if it unexpectedly closed.
+     *
+     * NOTE: It does not remove it from the set of all connections (as that is not a state set)
      *
      * NOTE: Thread Safety
      *     This method is private, and is only called either directly or transitively by synchronized
@@ -154,16 +181,6 @@ public final class SimpleURIConnectionPool {
      * @param now
      */
     private void readConnectionHolder(SimpleConnectionHolder connection, long now) {
-
-        if(connection.closed())
-        {
-            allKnownConnections.remove(connection);
-            borrowable.remove(connection);
-            borrowed.remove(connection);
-            notBorrowedExpired.remove(connection);
-
-            return;
-        }
 
         boolean isExpired =             connection.expired(now);
         boolean isBorrowed =            connection.borrowed();
