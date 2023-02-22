@@ -116,7 +116,6 @@ public class RequestBodyInterceptor implements RequestInterceptor {
      */
     private boolean shouldAttachBody(final HttpServerExchange exchange) {
         HttpString method = exchange.getRequestMethod();
-        String requestPath = exchange.getRequestPath();
         boolean hasBody = method.equals(Methods.POST) || method.equals(Methods.PUT) || method.equals(Methods.PATCH);
         if(logger.isTraceEnabled()) logger.trace("hasBody = " + hasBody);
         return hasBody &&
