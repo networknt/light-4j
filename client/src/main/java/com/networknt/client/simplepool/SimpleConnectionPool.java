@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * This is a class through which multiple URI Connection Pools
  * can be accessed
  */
-public class SimpleConnectionPool {
+public final class SimpleConnectionPool {
     private Map<URI, SimpleURIConnectionPool> pools = new ConcurrentHashMap<>();
     private SimpleConnectionMaker connectionMaker;
     private long expireTime;

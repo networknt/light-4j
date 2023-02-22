@@ -17,7 +17,7 @@ import java.util.concurrent.ThreadLocalRandom;
         3. Borrowed:                holders that have borrowed tokens
         4. Not Borrowed Expired:    expired holders that have no borrowed tokens -- these can be closed
 */
-public class SimpleURIConnectionPool {
+public final class SimpleURIConnectionPool {
     private static final Logger logger = LoggerFactory.getLogger(SimpleURIConnectionPool.class);
     private final SimpleConnectionMaker connectionMaker;
     private final long EXPIRY_TIME;
@@ -77,15 +77,9 @@ public class SimpleURIConnectionPool {
      * A key method that actually closes connections
      * It is guaranteed to run every time a transition method is called on SimpleURIConnectionPool
      *
-     * WARNING: Thread Safety Note
-     *     This method *must* remain private, and *must only* be called either directly or transitively by synchronized
+     * NOTE: Thread Safety
+     *     This method is private, and is only called either directly or transitively by synchronized
      *     methods in this class.
-     *
-     *     Any changes to this will almost certainly result in multi-threading related FAILURES of this connection pool
-     *
-     * WARNING: ConcurrentModificationException
-     *     Ensure that connections are not removed (using Set.remove()) from a Set that is currently being iterated over
-     *     Doing so can cause a ConcurrentModificationException
      *
      * @param now the current time in ms
      */
@@ -98,7 +92,8 @@ public class SimpleURIConnectionPool {
          * Also, remove any connections that have unexpectedly closed
          *
          * Note that we iterate using a copy of allKnownConnections (see below), since readConnectionHolder() may
-         * remove connections from allKnownConnections
+         * remove connections from allKnownConnections using Set.remove(). If we iterated using allKnownConnections
+         * it could cause a ConcurrentModificationException.
          */
 
         for(SimpleConnectionHolder connection: new HashSet<>(allKnownConnections))
@@ -139,15 +134,11 @@ public class SimpleURIConnectionPool {
         if(allCreatedConnections.size() > 0) {
             logger.debug("{} leaked connection found", allCreatedConnections.size());
 
-            Set<SimpleConnection> closedLeakedConnections = new HashSet<>();
-            for (SimpleConnection leakedConnection: allCreatedConnections)
-            {
-                logger.debug("Closing leaked connection {} to {}", port(leakedConnection), uri.toString());
-
-                leakedConnection.safeClose();
-                closedLeakedConnections.add(leakedConnection);
+            Iterator<SimpleConnection> closedLeakedCons = allCreatedConnections.iterator();
+            while(closedLeakedCons.hasNext()) {
+                closedLeakedCons.next().safeClose();
+                closedLeakedCons.remove();
             }
-            allCreatedConnections.removeAll(closedLeakedConnections);
         }
     }
 
@@ -155,11 +146,9 @@ public class SimpleURIConnectionPool {
      * This method reads a connection and updates the state of the SimpleURIConnectionPool based on the state of connection.
      * It will also remove a connection from all sets (i.e.: stop tracking the connection) if it unexpectedly closed.
      *
-     * WARNING: Thread Safety Note
-     *     This method *must* remain private, and *must only* be called either directly or transitively by synchronized
+     * NOTE: Thread Safety
+     *     This method is private, and is only called either directly or transitively by synchronized
      *     methods in this class.
-     *
-     *     Any changes to this will almost certainly result in multi-threading related FAILURES of this connection pool
      *
      * @param connection
      * @param now
@@ -191,11 +180,9 @@ public class SimpleURIConnectionPool {
      * Takes a Set, a boolean, and a connectionHolder
      * If the boolean is true, it will add the connectionHolder to the Set, otherwise, it will remove it from the Set
      *
-     * WARNING: Thread Safety Note
-     *     This method *must* remain private, and *must only* be called either directly or transitively by synchronized
+     * NOTE: Thread Safety
+     *     This method is private, and is only called either directly or transitively by synchronized
      *     methods in this class.
-     *
-     *     Any changes to this will almost certainly result in multi-threading related FAILURES of this connection pool
      *
      * @param set the set to potentially add or remove the connectionHolder from
      * @param isMember if true, it will add connectionHolder to set, otherwise, it will remove connectionHolder from set
@@ -211,11 +198,9 @@ public class SimpleURIConnectionPool {
     /***
      * For logging
      *
-     * WARNING: Thread Safety Note
-     *     This method *must* remain private, and *must only* be called either directly or transitively by synchronized
+     * NOTE: Thread Safety
+     *     This method is private, and is only called either directly or transitively by synchronized
      *     methods in this class.
-     *
-     *     Any changes to this will almost certainly result in multi-threading related FAILURES of this connection pool
      *
      */
     private String showConnections(String transitionName) {
@@ -227,11 +212,9 @@ public class SimpleURIConnectionPool {
     /***
      * For logging
      *
-     * WARNING: Thread Safety Note
-     *     This method *must* remain private, and *must only* be called either directly or transitively by synchronized
+     * NOTE: Thread Safety
+     *     This method is private, and is only called either directly or transitively by synchronized
      *     methods in this class.
-     *
-     *     Any changes to this will almost certainly result in multi-threading related FAILURES of this connection pool
      *
      */
     private static String showConnections(String name, Set<SimpleConnectionHolder> set) {
@@ -246,11 +229,9 @@ public class SimpleURIConnectionPool {
     /***
      * For logging
      *
-     * WARNING: Thread Safety Note
-     *     This method *must* remain private, and *must only* be called either directly or transitively by synchronized
+     * NOTE: Thread Safety
+     *     This method is private, and is only called either directly or transitively by synchronized
      *     methods in this class.
-     *
-     *     Any changes to this will almost certainly result in multi-threading related FAILURES of this connection pool
      *
      */
     private static String port(SimpleConnection connection) {

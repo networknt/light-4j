@@ -63,7 +63,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  *   Not doing so (i.e.: not freezing the time) may allow inconsistent states to be reached.
  */
-public class SimpleConnectionHolder {
+public final class SimpleConnectionHolder {
     private static final Logger logger = LoggerFactory.getLogger(SimpleConnectionHolder.class);
 
     // how long a connection can be eligible to be borrowed
