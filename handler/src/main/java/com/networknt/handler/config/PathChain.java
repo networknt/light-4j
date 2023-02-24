@@ -76,6 +76,7 @@ public class PathChain {
         if(source == null) {
             if(path == null) {
                 problems.add("You must specify either path or source");
+                problems.add("It is possible that serviceId is missing from the values.yml and it is mandatory.");
             } else if(method == null) {
                 problems.add("You must specify method along with path: " + path);
             }
