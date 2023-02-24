@@ -287,7 +287,7 @@ public class SecurityConfig {
     }
 
     private void setPassThroughClaims() {
-        if(mappedConfig.get(PASS_THROUGH_CLAIMS) != null) {
+        if(mappedConfig != null && mappedConfig.get(PASS_THROUGH_CLAIMS) != null) {
             Object obj = mappedConfig.get(PASS_THROUGH_CLAIMS);
             if(obj instanceof String) {
                 String s = (String)obj;
