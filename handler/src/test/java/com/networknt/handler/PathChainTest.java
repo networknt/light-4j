@@ -61,7 +61,7 @@ public class PathChainTest {
             Assert.fail("Expected exception");
         } catch (Exception e) {
             System.out.println(e.toString());
-            String ex_message = "Bad paths element in unit test config [ You must specify either path or source ]";
+            String ex_message = "Bad paths element in unit test config [ You must specify either path or source | It is possible that serviceId is missing from the values.yml and it is mandatory. ]";
             Assert.assertEquals(ex_message, e.getMessage());
         }
     }
