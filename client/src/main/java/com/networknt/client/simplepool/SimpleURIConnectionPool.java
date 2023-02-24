@@ -117,6 +117,7 @@ public final class SimpleURIConnectionPool {
 
             // remove connections that have unexpectedly closed
             if(connection.closed()) {
+                logger.debug("[{}: CLOSED]: Connection unexpectedly closed - Removing from known-connections set", port(connection.connection()));
                 knownConnectionHolders.remove();
                 readConnectionHolder(connection, now);
                 continue;
@@ -128,6 +129,7 @@ public final class SimpleURIConnectionPool {
             // close and remove connections if they are in a closeable set
             if(notBorrowedExpired.contains(connection)) {
                 connection.safeClose(now);
+                knownConnectionHolders.remove();
                 readConnectionHolder(connection, now);
             }
         }
@@ -182,6 +184,16 @@ public final class SimpleURIConnectionPool {
      */
     private void readConnectionHolder(SimpleConnectionHolder connection, long now) {
 
+        if(connection.closed()) {
+            // remove all references to closed connections
+            logger.debug("[{}: CLOSED]: Connection closed - Stopping connection-state tracking", port(connection.connection()));
+
+            updateSet(borrowable, false, connection);
+            updateSet(borrowed, false, connection);
+            updateSet(notBorrowedExpired, false, connection);
+            return;
+        }
+
         boolean isExpired =             connection.expired(now);
         boolean isBorrowed =            connection.borrowed();
         boolean isBorrowable =          connection.borrowable(now);
@@ -219,11 +231,17 @@ public final class SimpleURIConnectionPool {
      *     This method is private, and is only called either directly or transitively by synchronized
      *     methods in this class.
      *
+     * NOTE: Iteration Safety
+     *     This method should not be used inside loops that iterate through elements of borrowable, borrowed,
+     *     notBorrowedExpired, or allKnownConnections sets
+     *
      */
     private String showConnections(String transitionName) {
         return "After " + transitionName + " - CONNECTIONS: " +
                 showConnections("BORROWABLE", borrowable) +
-                showConnections("BORROWED", borrowed);
+                showConnections("BORROWED", borrowed) +
+                showConnections("NOT_BORROWED_EXPIRED", notBorrowedExpired) +
+                showConnections("KNOWN_CONNECTIONS", allKnownConnections);
     }
 
     /***
