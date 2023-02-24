@@ -110,14 +110,14 @@ public final class SimpleURIConnectionPool {
          *
          */
 
-        Iterator<SimpleConnectionHolder> allKnownConnectionsConnections = allKnownConnections.iterator();
-        while(allKnownConnectionsConnections.hasNext())
+        Iterator<SimpleConnectionHolder> knownConnectionHolders = allKnownConnections.iterator();
+        while(knownConnectionHolders.hasNext())
         {
-            SimpleConnectionHolder connection = allKnownConnectionsConnections.next();
+            SimpleConnectionHolder connection = knownConnectionHolders.next();
 
             // remove connections that have unexpectedly closed
             if(connection.closed()) {
-                allKnownConnectionsConnections.remove();
+                knownConnectionHolders.remove();
                 readConnectionHolder(connection, now);
                 continue;
             }
@@ -149,12 +149,12 @@ public final class SimpleURIConnectionPool {
         for(SimpleConnectionHolder connectionHolder: allKnownConnections)
             knownConnections.add(connectionHolder.connection());
 
-        // remove all connections that the connection pool is tracking from the set of all created connections
+        // remove all connections that the connection pool is tracking, from the set of all created connections
         allCreatedConnections.removeAll(knownConnections);
 
         // any remaining connections are leaks, and can now be safely closed
         if(allCreatedConnections.size() > 0) {
-            logger.debug("{} leaked connection found", allCreatedConnections.size());
+            logger.debug("{} untracked connection found", allCreatedConnections.size());
 
             Iterator<SimpleConnection> closedLeakedCons = allCreatedConnections.iterator();
             while(closedLeakedCons.hasNext())
