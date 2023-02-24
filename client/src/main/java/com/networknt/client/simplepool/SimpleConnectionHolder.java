@@ -224,7 +224,7 @@ public final class SimpleConnectionHolder {
      */
     // state transition
     public synchronized boolean safeClose(long now) {
-        logger.debug("{} close - attempt to close connection with {} borrows...", logLabel(connection, now), borrowedTokens.size());
+        logger.debug("{} close - closing connection with {} borrows...", logLabel(connection, now), borrowedTokens.size());
 
         /**
         Connection may still be open even if closed == true
@@ -245,9 +245,6 @@ public final class SimpleConnectionHolder {
 
         closed = true;
         connection.safeClose();
-
-        logger.debug("{}", logLabel(connection, now));
-
         return closed;
     }
 
