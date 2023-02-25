@@ -109,64 +109,31 @@ public final class SimpleURIConnectionPool {
          * Move all remaining connections to appropriate sets based on their properties
          *
          */
-
         Iterator<SimpleConnectionHolder> knownConnectionHolders = allKnownConnections.iterator();
-        while(knownConnectionHolders.hasNext())
-        {
+        while (knownConnectionHolders.hasNext()) {
             SimpleConnectionHolder connection = knownConnectionHolders.next();
 
             // remove connections that have unexpectedly closed
-            if(connection.closed()) {
+            if (connection.closed()) {
                 logger.debug("[{}: CLOSED]: Connection unexpectedly closed - Removing from known-connections set", port(connection.connection()));
+
                 knownConnectionHolders.remove();
                 readConnectionHolder(connection, now);
-                continue;
-            }
-
-            // move connections to correct sets
-            readConnectionHolder(connection, now);
-
-            // close and remove connections if they are in a closeable set
-            if(notBorrowedExpired.contains(connection)) {
-                connection.safeClose(now);
-                knownConnectionHolders.remove();
+            } else {
+                // move connections to correct sets
                 readConnectionHolder(connection, now);
+
+                // close and remove connections if they are in a closeable set
+                if (notBorrowedExpired.contains(connection)) {
+                    connection.safeClose(now);
+                    knownConnectionHolders.remove();
+                    readConnectionHolder(connection, now);
+                }
             }
         }
 
-
-        /**
-         * Remove leaked connections
-         *
-         * Remove any connections that were created by the SimpleConnectionMaker, but were not returned.
-         * This can occur if a connection-creation callback thread finishes creating a connection after a timeout has
-         * occurred.
-         *
-         * If this happens, then the created-connection will not be tracked by the connection pool, and therefore
-         * never closed, causing a connection leak.
-         */
-
-        // create a Set containing only the open SimpleConnections that the connection pool is aware of (i.e.: tracking)
-        Set<SimpleConnection> knownConnections = new HashSet<>();
-        for(SimpleConnectionHolder connectionHolder: allKnownConnections)
-            knownConnections.add(connectionHolder.connection());
-
-        // remove all connections that the connection pool is tracking, from the set of all created connections
-        allCreatedConnections.removeAll(knownConnections);
-
-        // any remaining connections are leaks, and can now be safely closed
-        if(allCreatedConnections.size() > 0) {
-            logger.debug("{} untracked connection found", allCreatedConnections.size());
-
-            Iterator<SimpleConnection> closedLeakedCons = allCreatedConnections.iterator();
-            while(closedLeakedCons.hasNext())
-            {
-                SimpleConnection connection = closedLeakedCons.next();
-                connection.safeClose();
-                closedLeakedCons.remove();
-                logger.debug("Connection closed {} -> {}", port(connection), uri.toString());
-            }
-        }
+        // find and close any leaked connections
+        findAndCloseLeakedConnections();
     }
 
     /***
@@ -203,6 +170,37 @@ public final class SimpleURIConnectionPool {
         updateSet(borrowable, isBorrowable, connection);
         updateSet(borrowed, isBorrowed, connection);
         updateSet(notBorrowedExpired, isNotBorrowedExpired, connection);
+    }
+
+    /**
+     * Remove leaked connections
+     *
+     * Remove any connections that were created by the SimpleConnectionMaker, but were not returned.
+     * This can occur if a connection-creation callback thread finishes creating a connection after a timeout has
+     * occurred.
+     *
+     * If this happens, then the created-connection will not be tracked by the connection pool, and therefore
+     * never closed, causing a connection leak.
+     */
+    private void findAndCloseLeakedConnections()
+    {
+        // remove all connections that the connection pool is tracking, from the set of all created connections
+        for(SimpleConnectionHolder knownConnection: allKnownConnections)
+            allCreatedConnections.remove(knownConnection.connection());
+
+        // any remaining connections are leaks, and can now be safely closed
+        if(allCreatedConnections.size() > 0) {
+            logger.debug("{} untracked connection found", allCreatedConnections.size());
+
+            Iterator<SimpleConnection> closedLeakedCons = allCreatedConnections.iterator();
+            while(closedLeakedCons.hasNext())
+            {
+                SimpleConnection connection = closedLeakedCons.next();
+                connection.safeClose();
+                closedLeakedCons.remove();
+                logger.debug("Connection closed {} -> {}", port(connection), uri.toString());
+            }
+        }
     }
 
     /***
