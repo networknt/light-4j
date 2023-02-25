@@ -172,6 +172,25 @@ public final class SimpleURIConnectionPool {
         updateSet(notBorrowedExpired, isNotBorrowedExpired, connection);
     }
 
+    /***
+     * Takes a Set, a boolean, and a connectionHolder
+     * If the boolean is true, it will add the connectionHolder to the Set, otherwise, it will remove it from the Set
+     *
+     * NOTE: Thread Safety
+     *     This method is private, and is only called either directly or transitively by synchronized
+     *     methods in this class.
+     *
+     * @param set the set to potentially add or remove the connectionHolder from
+     * @param isMember if true, it will add connectionHolder to set, otherwise, it will remove connectionHolder from set
+     * @param connectionHolder the connectionHolder to add or remove from the set
+     */
+    private void updateSet(Set<SimpleConnectionHolder> set, boolean isMember, SimpleConnectionHolder connectionHolder) {
+        if(isMember)
+            set.add(connectionHolder);
+        else
+            set.remove(connectionHolder);
+    }
+
     /**
      * Remove leaked connections
      *
@@ -203,24 +222,6 @@ public final class SimpleURIConnectionPool {
         }
     }
 
-    /***
-     * Takes a Set, a boolean, and a connectionHolder
-     * If the boolean is true, it will add the connectionHolder to the Set, otherwise, it will remove it from the Set
-     *
-     * NOTE: Thread Safety
-     *     This method is private, and is only called either directly or transitively by synchronized
-     *     methods in this class.
-     *
-     * @param set the set to potentially add or remove the connectionHolder from
-     * @param isMember if true, it will add connectionHolder to set, otherwise, it will remove connectionHolder from set
-     * @param connectionHolder the connectionHolder to add or remove from the set
-     */
-    private void updateSet(Set<SimpleConnectionHolder> set, boolean isMember, SimpleConnectionHolder connectionHolder) {
-        if(isMember && !set.contains(connectionHolder))
-            set.add(connectionHolder);
-        else if(!isMember)
-            set.remove(connectionHolder);
-    }
 
     /***
      * For logging
