@@ -222,7 +222,6 @@ public final class SimpleConnectionHolder {
      * @param now
      * @return
      */
-    // state transition
     public synchronized boolean safeClose(long now) {
         logger.debug("{} close - closing connection with {} borrows...", logLabel(connection, now), borrowedTokens.size());
 
@@ -302,8 +301,9 @@ public final class SimpleConnectionHolder {
     }
 
     /**
+     * Returns the SimpleConnection that SimpleConnectionHolder holds
      *
-     * @return
+     * @return the SimpleConnection that SimpleConnectionHolder holds
      */
     public SimpleConnection connection() { return connection; }
 
@@ -327,11 +327,9 @@ public final class SimpleConnectionHolder {
     /***
      * For logging
      *
-     * WARNING: Thread Safety Note
-     *     This method *must* remain private, and *must only* be called either directly or transitively by synchronized
+     * NOTE: Thread Safety
+     *     This method is private, and is only called either directly or transitively by synchronized
      *     methods in this class.
-     *
-     *     Any changes to this will almost certainly result in multi-threading related FAILURES of this connection pool
      *
      */
     private String logLabel(SimpleConnection connection, long now) {
@@ -341,11 +339,9 @@ public final class SimpleConnectionHolder {
     /***
      * For logging
      *
-     * WARNING: Thread Safety Note
-     *     This method *must* remain private, and *must only* be called either directly or transitively by synchronized
+     * NOTE: Thread Safety
+     *     This method is private, and is only called either directly or transitively by synchronized
      *     methods in this class.
-     *
-     *     Any changes to this will almost certainly result in multi-threading related FAILURES of this connection pool
      *
      */
     private static String port(SimpleConnection connection) {
@@ -359,11 +355,9 @@ public final class SimpleConnectionHolder {
     /***
      * For logging
      *
-     * WARNING: Thread Safety Note
-     *     This method *must* remain private, and *must only* be called either directly or transitively by synchronized
+     * NOTE: Thread Safety
+     *     This method is private, and is only called either directly or transitively by synchronized
      *     methods in this class.
-     *
-     *     Any changes to this will almost certainly result in multi-threading related FAILURES of this connection pool
      *
      */
     private String state(long now) {
