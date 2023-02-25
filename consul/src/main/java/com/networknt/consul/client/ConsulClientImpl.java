@@ -395,6 +395,9 @@ public class ConsulClientImpl implements ConsulClient {
  	 * @return true if we want to use HTTP/2 to connect to the Consul.
 	 */
 	private boolean isHttp2() {
-		return config.isEnableHttp2() || config.getConsulUrl().toLowerCase().startsWith("https");
+		if(config.isForceNoHttp2())
+			return false;
+		else
+			return config.isEnableHttp2() || config.getConsulUrl().toLowerCase().startsWith("https");
 	}
 }
