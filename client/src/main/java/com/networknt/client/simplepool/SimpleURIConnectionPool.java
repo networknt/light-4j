@@ -212,11 +212,12 @@ public final class SimpleURIConnectionPool {
             logger.debug("{} untracked connection found", allCreatedConnections.size());
 
             Iterator<SimpleConnection> closedLeakedCons = allCreatedConnections.iterator();
-            while(closedLeakedCons.hasNext())
-            {
+            while(closedLeakedCons.hasNext()) {
                 SimpleConnection connection = closedLeakedCons.next();
+
                 connection.safeClose();
                 closedLeakedCons.remove();
+
                 logger.debug("Connection closed {} -> {}", port(connection), uri.toString());
             }
         }

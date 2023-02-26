@@ -107,7 +107,7 @@ public final class SimpleConnectionHolder {
      * is determined by the connections type: HTTP/1.1 (1 process at a time) or HTTP/2 (multiple processes at a time).
      *
      * @param expireTime how long a connection is eligible to be borrowed
-     * @param createConnectionTimeout how long it can take a connection be created before an exception thrown
+     * @param connectionCreateTimeout how long it can take a connection be created before an exception thrown
      * @param isHttp2 if true, tries to upgrade to HTTP/2. if false, will try to open an HTTP/1.1 connection
      * @param uri the URI the connection will try to connect to
      * @param allCreatedConnections this Set will be passed to the callback thread that creates the connection.
@@ -117,7 +117,7 @@ public final class SimpleConnectionHolder {
      */
     public SimpleConnectionHolder(
         long expireTime,
-        long createConnectionTimeout,
+        long connectionCreateTimeout,
         boolean isHttp2,
         URI uri,
         Set<SimpleConnection> allCreatedConnections,
@@ -132,7 +132,7 @@ public final class SimpleConnectionHolder {
         long now = System.currentTimeMillis();
 
         // create initial connection to uri
-        connection = connectionMaker.makeConnection(createConnectionTimeout, isHttp2, uri, allCreatedConnections);
+        connection = connectionMaker.makeConnection(connectionCreateTimeout, isHttp2, uri, allCreatedConnections);
 
         // throw exception if connection creation failed
         if(!connection.isOpen()) {
@@ -146,7 +146,7 @@ public final class SimpleConnectionHolder {
             // HTTP/1.1 connections have a MAX_BORROW of 1, while HTTP/2 connections can have > 1 MAX_BORROWS
             MAX_BORROWS = connection().isMultiplexingSupported() ? Integer.MAX_VALUE : 1;
 
-            logger.debug("{} New connection : HTTP/2: {}", logLabel(connection, now), MAX_BORROWS > 1);
+            logger.debug("{} New connection : {}", logLabel(connection, now), MAX_BORROWS > 1 ? "HTTP/2" : "HTTP/1.1");
         }
     }
 
@@ -159,7 +159,7 @@ public final class SimpleConnectionHolder {
      * @throws RuntimeException
      */
     private volatile boolean firstUse = true;
-    public synchronized ConnectionToken borrow(long createConnectionTimeout, long now) throws RuntimeException {
+    public synchronized ConnectionToken borrow(long connectionCreateTimeout, long now) throws RuntimeException {
         /***
          * Connections can only be borrowed when the connection is in a BORROWABLE state.
          *
@@ -171,7 +171,7 @@ public final class SimpleConnectionHolder {
          *     long now = System.currentTimeMillis();
          *
          *     if(connectionHolder.borrowable(now))
-         *         connectionToken = connectionHolder.borrow(createConnectionTimeout, now);
+         *         connectionToken = connectionHolder.borrow(connectionCreateTimeout, now);
          *
          * Also note the use of a single consistent value for the current time ('now'). This ensures
          * that the state returned in the 'if' statement will still be true in the 'borrow' statement
@@ -185,7 +185,7 @@ public final class SimpleConnectionHolder {
                 firstUse = false;
                 connectionToken = new ConnectionToken(connection);
             } else {
-                SimpleConnection reusedConnection = connectionMaker.reuseConnection(createConnectionTimeout, connection);
+                SimpleConnection reusedConnection = connectionMaker.reuseConnection(connectionCreateTimeout, connection);
                 connectionToken = new ConnectionToken(reusedConnection);
             }
 
@@ -312,14 +312,14 @@ public final class SimpleConnectionHolder {
         private final SimpleConnectionHolder holder;
         private final URI uri;
 
-        public ConnectionToken(SimpleConnection connection) {
+        ConnectionToken(SimpleConnection connection) {
             this.connection = connection;
             this.holder = SimpleConnectionHolder.this;
             this.uri = SimpleConnectionHolder.this.uri;
         }
 
-        public SimpleConnectionHolder holder() { return holder; }
-        public SimpleConnection connection() { return connection; }
+        SimpleConnectionHolder holder() { return holder; }
+        SimpleConnection connection() { return connection; }
         public Object getRawConnection() { return connection.getRawConnection(); }
         public URI uri() { return uri; }
     }
