@@ -150,15 +150,15 @@ public final class SimpleConnectionHolder {
         }
     }
 
+    private volatile boolean firstUse = true;
     /**
      * State Transition - Borrow
      *
-     * @param createConnectionTimeout
+     * @param connectionCreateTimeout
      * @param now
      * @return
      * @throws RuntimeException
      */
-    private volatile boolean firstUse = true;
     public synchronized ConnectionToken borrow(long connectionCreateTimeout, long now) throws RuntimeException {
         /***
          * Connections can only be borrowed when the connection is in a BORROWABLE state.
@@ -206,6 +206,9 @@ public final class SimpleConnectionHolder {
 
     /**
      * State Transition - Restore
+     *
+     * NOTE: A connection that unexpectedly closes may be removed from connection pool tracking before all of its
+     *       ConnectionTokens have been restored.
      *
      * @param connectionToken
      */
