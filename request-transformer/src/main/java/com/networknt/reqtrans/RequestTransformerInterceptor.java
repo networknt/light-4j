@@ -28,7 +28,8 @@ import java.util.Map;
 
 /**
  * Transforms the request body of an active request being processed.
- * This is executed by RequestInterceptorExecutionHandler.
+ * This is executed by RequestInterceptorExecutionHandler. Also, this class will be responsible for
+ * some special validations that the normal handlers cannot do or not easy to do.
  *
  * @author Kalev Gonvick
  *
@@ -203,6 +204,17 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
                                             }
                                         }
                                         exchange.getRequestHeaders().put(Headers.CONTENT_LENGTH, length);
+                                        break;
+                                    case "validationError":
+                                        // If the rule engine returns any validationError entry, stop the chain and send the res.
+                                        // this can be either XML or JSON or TEXT. Just make sure it matches the content type
+                                        String errorMessage = (String)result.get("errorMessage");
+                                        String contentType = (String)result.get("contentType");
+                                        int statusCode = (Integer)result.get("statusCode");
+                                        if(logger.isTraceEnabled()) logger.trace("Entry key validationError with errorMessage {} contentType {} statusCode {}");
+                                        exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, contentType);
+                                        exchange.setStatusCode(statusCode);
+                                        exchange.getResponseSender().send(errorMessage);
                                         break;
                                 }
                             }
