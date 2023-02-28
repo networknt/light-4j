@@ -55,7 +55,7 @@ public final class SimpleURIConnectionPool {
 
     public synchronized SimpleConnectionHolder.ConnectionToken borrow(long createConnectionTimeout, boolean isHttp2) throws RuntimeException {
         long now = System.currentTimeMillis();
-        SimpleConnectionHolder holder = null;
+        final SimpleConnectionHolder holder;
 
         readAllConnectionHolders(now);
 
@@ -66,17 +66,26 @@ public final class SimpleURIConnectionPool {
                 holder = new SimpleConnectionHolder(EXPIRY_TIME, createConnectionTimeout, isHttp2, uri, allCreatedConnections, connectionMaker);
                 allKnownConnections.add(holder);
             } else
-                throw new RuntimeException("An attempt to exceed the connection pool's maximum size was made. Increase request.connectionPoolSize in client.yml");
+                throw new RuntimeException("An attempt was made to exceed the maximum size was of the " + uri.toString() + " connection pool");
         }
 
         SimpleConnectionHolder.ConnectionToken connectionToken = holder.borrow(createConnectionTimeout, now);
-        readConnectionHolder(holder, now);
+        readConnectionHolder(holder, now, () -> allKnownConnections.remove(holder));
 
         logger.debug(showConnections("borrow"));
 
         return connectionToken;
     }
 
+    /***
+     * Restores borrowed connections
+     *
+     * NOTE: A connection that unexpectedly closes may be removed from connection pool tracking before all of its
+     *       ConnectionTokens have been restored. This can result in seeing log messages about CLOSED connections
+     *       being restored to the pool that are no longer tracked / known by the connection pool
+     *
+     * @param connectionToken the connection token that represents the borrowing of a connection by a thread
+     */
     public synchronized void restore(SimpleConnectionHolder.ConnectionToken connectionToken) {
         if(connectionToken == null)
             return;
@@ -91,43 +100,44 @@ public final class SimpleURIConnectionPool {
     }
 
     /**
-     * A key method that actually closes connections
+     * A key method that orchestrates the update of the connection pool's state
      * It is guaranteed to run every time a transition method is called on SimpleURIConnectionPool
      *
      * NOTE: Thread Safety
      *     This method is private, and is only called either directly or transitively by synchronized
      *     methods in this class.
      *
+     * Note:
+     *     'knownConnectionHolders::remove' is just Java syntactic sugar for '() -> knownConnectionHolders.remove()'
+     *
      * @param now the current time in ms
      */
     private void readAllConnectionHolders(long now)
     {
         /**
-         * Sweep all connections and update sets
+         * Sweep all known connections and update sets
          *
          * Remove any connections that have unexpectedly closed
          * Move all remaining connections to appropriate sets based on their properties
          *
          */
-        Iterator<SimpleConnectionHolder> knownConnectionHolders = allKnownConnections.iterator();
+        final Iterator<SimpleConnectionHolder> knownConnectionHolders = allKnownConnections.iterator();
         while (knownConnectionHolders.hasNext()) {
             SimpleConnectionHolder connection = knownConnectionHolders.next();
 
             // remove connections that have unexpectedly closed
             if (connection.closed()) {
                 logger.debug("[{}: CLOSED]: Connection unexpectedly closed - Removing from known-connections set", port(connection.connection()));
-
-                knownConnectionHolders.remove();
-                readConnectionHolder(connection, now);
-            } else {
-                // move connections to correct sets
-                readConnectionHolder(connection, now);
+                readConnectionHolder(connection, now, knownConnectionHolders::remove);
+            }
+            // else, move connections to correct sets
+            else {
+                readConnectionHolder(connection, now, knownConnectionHolders::remove);
 
                 // close and remove connections if they are in a closeable set
                 if (notBorrowedExpired.contains(connection)) {
                     connection.safeClose(now);
-                    knownConnectionHolders.remove();
-                    readConnectionHolder(connection, now);
+                    readConnectionHolder(connection, now, knownConnectionHolders::remove);
                 }
             }
         }
@@ -136,11 +146,14 @@ public final class SimpleURIConnectionPool {
         findAndCloseLeakedConnections();
     }
 
+    private interface RemoveFromAllKnownConnections { void remove(); }
     /***
      * This method reads a connection and moves it to the correct sets based on its properties.
-     * It will also remove a connection from all state sets (i.e.: stop tracking the connection) if it unexpectedly closed.
+     * It will also remove a connection from all sets (i.e.: stop tracking the connection) if it is closed.
      *
-     * NOTE: It does not remove it from the set of all connections (as that is not a state set)
+     * NOTE: Connection closing methods
+     *     This method and findAndCloseLeakedConnections() are the only two methods that close connections.
+     *     This can be helpful to know for debugging
      *
      * NOTE: Thread Safety
      *     This method is private, and is only called either directly or transitively by synchronized
@@ -148,25 +161,33 @@ public final class SimpleURIConnectionPool {
      *
      * @param connection
      * @param now
+     * @param knownConnections a lambda expression to remove a closed-connection from allKnownConnections, either using
+     *                         an Iterator of allKnownConnections, or directly using allKnownConnections.remove()
      */
-    private void readConnectionHolder(SimpleConnectionHolder connection, long now) {
+    private void readConnectionHolder(SimpleConnectionHolder connection, long now, RemoveFromAllKnownConnections knownConnections) {
 
+        /**
+         * Remove all references to closed connections
+         * After the connection is removed, the only reference to it will be in any unrestored ConnectionTokens
+         */
         if(connection.closed()) {
-            // remove all references to closed connections
-            logger.debug("[{}: CLOSED]: Connection closed - Stopping connection-state tracking", port(connection.connection()));
+            logger.debug("[{}: CLOSED]: Connection closed - Stopping connection tracking", port(connection.connection()));
 
-            updateSet(borrowable, false, connection);
-            updateSet(borrowed, false, connection);
-            updateSet(notBorrowedExpired, false, connection);
+            allCreatedConnections.remove(connection.connection());  // connection.connection() returns a SimpleConnection
+            knownConnections.remove();  // this will remove the connection from allKnownConnections directly, or via Iterator
+
+            borrowable.remove(connection);
+            borrowed.remove(connection);
+            notBorrowedExpired.remove(connection);
             return;
         }
 
+        // if connection is open, move it to the correct state-sets based on its properties
         boolean isExpired =             connection.expired(now);
         boolean isBorrowed =            connection.borrowed();
         boolean isBorrowable =          connection.borrowable(now);
         boolean isNotBorrowedExpired =  !isBorrowed && isExpired;
 
-        // check whether connection should be added or removed from these sets based on its current state
         updateSet(borrowable, isBorrowable, connection);
         updateSet(borrowed, isBorrowed, connection);
         updateSet(notBorrowedExpired, isNotBorrowedExpired, connection);
@@ -200,6 +221,11 @@ public final class SimpleURIConnectionPool {
      *
      * If this happens, then the created-connection will not be tracked by the connection pool, and therefore
      * never closed, causing a connection leak.
+     *
+     * NOTE: Connection closing methods
+     *     This method and readConnectionHolder() are the only two methods that close connections.
+     *     This can be helpful to know for debugging
+     *
      */
     private void findAndCloseLeakedConnections()
     {
@@ -271,7 +297,7 @@ public final class SimpleURIConnectionPool {
      */
     private static String port(SimpleConnection connection) {
         if(connection == null) return "NULL";
-        String url = connection.getLocalAddress().toString();
+        String url = connection.getLocalAddress();
         int semiColon = url.lastIndexOf(":");
         if(semiColon == - 1) return "PORT?";
         return url.substring(url.lastIndexOf(":")+1);
