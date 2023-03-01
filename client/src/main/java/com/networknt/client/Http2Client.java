@@ -1128,6 +1128,10 @@ public class Http2Client {
         return new CircuitBreaker(() -> callService(uri, request, requestBody));
     }
 
+    public CircuitBreaker getRequestService(URI uri, ClientRequest request, Optional<String> requestBody, boolean isHttp2) {
+        return new CircuitBreaker(() -> callService(uri, request, requestBody, isHttp2));
+    }
+
     /**
      * This method is used to call the service corresponding to the uri and obtain a response, connection pool is embedded.
      * @param uri URI of target service
@@ -1144,6 +1148,32 @@ public class Http2Client {
             futureClientResponse = getFutureClientResponse(currentConnection.get(), uri, request, requestBody);
         } else {
             CompletableFuture<ClientConnection> futureConnection = this.connectAsync(uri);
+            futureClientResponse = futureConnection.thenComposeAsync(clientConnection -> {
+                currentConnection.set(clientConnection);
+                return getFutureClientResponse(clientConnection, uri, request, requestBody);
+            });
+        }
+        futureClientResponse.thenAcceptAsync(clientResponse -> http2ClientConnectionPool.resetConnectionStatus(currentConnection.get()));
+        return futureClientResponse;
+    }
+
+    /**
+     * This method is used to call the service corresponding to the uri and obtain a response, connection pool is embedded.
+     * @param uri URI of target service
+     * @param request request
+     * @param requestBody request body
+     * @param isHttp2 indicate if client request is http2
+     * @return client response
+     */
+    public CompletableFuture<ClientResponse> callService(URI uri, ClientRequest request, Optional<String> requestBody, boolean isHttp2) {
+        addHostHeader(request);
+        CompletableFuture<ClientResponse> futureClientResponse;
+        AtomicReference<ClientConnection> currentConnection = new AtomicReference<>(http2ClientConnectionPool.getConnection(uri));
+        if (currentConnection.get() != null && currentConnection.get().isOpen()) {
+            if(logger.isDebugEnabled()) logger.debug("Reusing the connection: {} to {}", currentConnection.toString(), uri.toString());
+            futureClientResponse = getFutureClientResponse(currentConnection.get(), uri, request, requestBody);
+        } else {
+            CompletableFuture<ClientConnection> futureConnection = this.connectAsync(uri, isHttp2);
             futureClientResponse = futureConnection.thenComposeAsync(clientConnection -> {
                 currentConnection.set(clientConnection);
                 return getFutureClientResponse(clientConnection, uri, request, requestBody);
@@ -1179,11 +1209,49 @@ public class Http2Client {
     }
 
     /**
+     * This method is used to call the service by using the serviceId and obtain a response
+     * service discovery, load balancing and connection pool are embedded.
+     * @param protocol target service protocol
+     * @param serviceId target service's service Id
+     * @param envTag environment tag
+     * @param request request
+     * @param requestBody request body
+     * @param isHttp2 indicate if client request is http2
+     * @return client response
+     */
+    public CompletableFuture<ClientResponse> callService(String protocol, String serviceId, String envTag, ClientRequest request, Optional<String> requestBody, boolean isHttp2) {
+        try {
+            Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
+            String url = cluster.serviceToUrl(protocol, serviceId, envTag, null);
+            if (url == null) {
+                logger.error("Failed to discover service with serviceID: {}, and tag: {}", serviceId, envTag);
+                throw new ClientException(String.format("Failed to discover service with serviceID: %s, and tag: %s", serviceId, envTag));
+            }
+            return callService(new URI(url), request, requestBody, isHttp2);
+        } catch (Exception e) {
+            logger.error("Failed to call service: {}", serviceId);
+            throw new RuntimeException("Failed to call service: " + serviceId, e);
+        }
+    }
+
+    /**
      * Create async connection with default config value
      * @param uri URI
      * @return CompletableFuture
      */
     public CompletableFuture<ClientConnection> connectAsync(URI uri) {
+        if("https".equals(uri.getScheme()) && SSL == null) SSL = getDefaultXnioSsl();
+        return this.connectAsync(null, uri, WORKER, SSL, com.networknt.client.Http2Client.BUFFER_POOL,
+                isHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
+    }
+
+    /**
+     * Create async connection with default config value
+     * @param uri URI
+     * @param isHttp2 indicate if it is https2 request
+     * @return CompletableFuture
+     */
+    public CompletableFuture<ClientConnection> connectAsync(URI uri, boolean isHttp2) {
         if("https".equals(uri.getScheme()) && SSL == null) SSL = getDefaultXnioSsl();
         return this.connectAsync(null, uri, WORKER, SSL, com.networknt.client.Http2Client.BUFFER_POOL,
                 isHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
