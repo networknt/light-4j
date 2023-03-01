@@ -137,7 +137,11 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
             // no need to inject the content for the body. just call the interceptors here.
             this.invokeInterceptors(httpServerExchange);
         }
-        Handler.next(httpServerExchange, next);
+        // If there are any error and one of the interceptor response the error to the caller, we don't need to call the next.
+        if(logger.isTraceEnabled()) logger.trace("Exchange response started status = {}", httpServerExchange.isResponseStarted());
+        if(!httpServerExchange.isResponseStarted()) {
+            Handler.next(httpServerExchange, next);
+        }
     }
 
     /**
