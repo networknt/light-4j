@@ -121,6 +121,7 @@ public class Http2Client {
     static String MASK_KEY_TRUST_STORE_PASS = "trustStorePass";
     static String MASK_KEY_KEY_STORE_PASS = "keyStorePass";
     static String MASK_KEY_KEY_PASS = "keyPass";
+    static boolean isHttp2 = ClientConfig.get().getRequestEnableHttp2();
 
     // TokenManager is to manage cached jwt tokens for this client.
     private TokenManager tokenManager = TokenManager.getInstance();
@@ -231,9 +232,24 @@ public class Http2Client {
         return connection;
     }
 
+    /**
+     * This is the method to override the enableHttp2 value. The default is from client config.
+     *
+     * @param enableHttp2 client request to server is http2 or not
+     */
+    public void setEnableHttp2(boolean enableHttp2) {
+        isHttp2 = enableHttp2;
+    }
+
     public IoFuture<ClientConnection> connect(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         return connect(uri, worker, null, bufferPool, options);
     }
+
+    public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, boolean isHttp2) {
+        if(logger.isDebugEnabled()) logger.debug("The connection is http2?:" + isHttp2);
+        return borrowConnection(uri, worker,  bufferPool, isHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
+    }
+
 
     public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         final FutureResult<ClientConnection> result = new FutureResult<>();
@@ -294,6 +310,12 @@ public class Http2Client {
         return connect((InetSocketAddress) null, uri, worker, ssl, bufferPool, options);
     }
 
+    public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, boolean isHttp2) {
+        if(logger.isDebugEnabled()) logger.debug("The connection is http2?:" + isHttp2);
+        return borrowConnection(uri, worker, ssl, bufferPool, isHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
+
+    }
+
     public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         final FutureResult<ClientConnection> result = new FutureResult<>();
         ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
@@ -305,6 +327,11 @@ public class Http2Client {
         if(logger.isDebugEnabled()) logger.debug("Got a null or non open connection: {} from http2ClientConnectionPool. Creating a new one ...", connection);
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         return connect((InetSocketAddress) null, uri, worker, ssl, bufferPool, options);
+    }
+
+    public ClientConnection borrowConnection(long timeoutSeconds, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, boolean isHttp2) {
+        IoFuture<ClientConnection> future = borrowConnection(uri, worker, ssl, bufferPool, isHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
+        return getFutureConnection(timeoutSeconds, future);
     }
 
     public ClientConnection borrowConnection(long timeoutSeconds, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
@@ -351,6 +378,11 @@ public class Http2Client {
 
     public ClientConnection borrowConnection(long timeoutSeconds, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
         IoFuture<ClientConnection> future = borrowConnection(uri, ioThread, bufferPool, options);
+        return getFutureConnection(timeoutSeconds, future);
+    }
+
+    public ClientConnection borrowConnection(long timeoutSeconds, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, boolean isHttp2) {
+        IoFuture<ClientConnection> future = borrowConnection(uri, ioThread, bufferPool, isHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
         return getFutureConnection(timeoutSeconds, future);
     }
 
@@ -1154,7 +1186,7 @@ public class Http2Client {
     public CompletableFuture<ClientConnection> connectAsync(URI uri) {
         if("https".equals(uri.getScheme()) && SSL == null) SSL = getDefaultXnioSsl();
         return this.connectAsync(null, uri, WORKER, SSL, com.networknt.client.Http2Client.BUFFER_POOL,
-                ClientConfig.get().getRequestEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
+                isHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
     }
 
     public CompletableFuture<ClientConnection> connectAsync(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
