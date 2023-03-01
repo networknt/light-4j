@@ -121,7 +121,7 @@ public class Http2Client {
     static String MASK_KEY_TRUST_STORE_PASS = "trustStorePass";
     static String MASK_KEY_KEY_STORE_PASS = "keyStorePass";
     static String MASK_KEY_KEY_PASS = "keyPass";
-    static boolean isHttp2 = ClientConfig.get().getRequestEnableHttp2();
+
 
     // TokenManager is to manage cached jwt tokens for this client.
     private TokenManager tokenManager = TokenManager.getInstance();
@@ -231,16 +231,7 @@ public class Http2Client {
 
         return connection;
     }
-
-    /**
-     * This is the method to override the enableHttp2 value. The default is from client config.
-     *
-     * @param enableHttp2 client request to server is http2 or not
-     */
-    public void setEnableHttp2(boolean enableHttp2) {
-        isHttp2 = enableHttp2;
-    }
-
+    
     public IoFuture<ClientConnection> connect(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         return connect(uri, worker, null, bufferPool, options);
     }
@@ -1242,7 +1233,7 @@ public class Http2Client {
     public CompletableFuture<ClientConnection> connectAsync(URI uri) {
         if("https".equals(uri.getScheme()) && SSL == null) SSL = getDefaultXnioSsl();
         return this.connectAsync(null, uri, WORKER, SSL, com.networknt.client.Http2Client.BUFFER_POOL,
-                isHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
+                ClientConfig.get().getRequestEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
     }
 
     /**
