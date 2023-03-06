@@ -1,5 +1,22 @@
 # Change Log
 
+## [2.1.8](https://github.com/networknt/light-4j/tree/2.1.8) (2023-03-06)
+
+
+**Merged pull requests:**
+
+
+-  fix merge error/build error [\#1638](https://github.com/networknt/light-4j/pull/1638) ([GavinChenYan](https://github.com/GavinChenYan))
+- Issue 1663 2 [\#1637](https://github.com/networknt/light-4j/pull/1637) ([GavinChenYan](https://github.com/GavinChenYan))
+- fixes \#1633 [\#1636](https://github.com/networknt/light-4j/pull/1636) ([GavinChenYan](https://github.com/GavinChenYan))
+- fixes \#1634 do not call the next handler in the chain if any intercep… [\#1635](https://github.com/networknt/light-4j/pull/1635) ([stevehu](https://github.com/stevehu))
+- fixes \#1631 update request transformer to do some validation logic [\#1632](https://github.com/networknt/light-4j/pull/1632) ([stevehu](https://github.com/stevehu))
+- fixes \#1629 Make error message clear if serviceId is missing from the… [\#1630](https://github.com/networknt/light-4j/pull/1630) ([stevehu](https://github.com/stevehu))
+- fixes \#1627 null pointer check for security config pass through claims [\#1628](https://github.com/networknt/light-4j/pull/1628) ([stevehu](https://github.com/stevehu))
+- fixes \#1625 update the security.yml to add passThroughClaims [\#1626](https://github.com/networknt/light-4j/pull/1626) ([stevehu](https://github.com/stevehu))
+- fixes \#1623 add simple web token introspection to client and security [\#1624](https://github.com/networknt/light-4j/pull/1624) ([stevehu](https://github.com/stevehu))
+- fixes \#1621 move removal serviceId and serviceUrl from exchange heade… [\#1622](https://github.com/networknt/light-4j/pull/1622) ([stevehu](https://github.com/stevehu))
+- fixes \#1619 add maxQueueSize to egress-router and ingress-proxy [\#1620](https://github.com/networknt/light-4j/pull/1620) ([stevehu](https://github.com/stevehu))
 ## [2.1.7](https://github.com/networknt/light-4j/tree/2.1.7) (2023-02-14)
 
 
