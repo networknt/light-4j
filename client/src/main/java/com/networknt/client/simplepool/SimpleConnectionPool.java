@@ -5,16 +5,13 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * This is a class through which multiple URI Connection Pools
- * can be accessed
+ * This is a class through which multiple URI Connection Pools can be accessed
  */
 public final class SimpleConnectionPool {
-    private Map<URI, SimpleURIConnectionPool> pools = new ConcurrentHashMap<>();
-    private SimpleConnectionMaker connectionMaker;
-    private long expireTime;
-    private int poolSize;
-
-    private SimpleConnectionPool() {}
+    private final Map<URI, SimpleURIConnectionPool> pools = new ConcurrentHashMap<>();
+    private final SimpleConnectionMaker connectionMaker;
+    private final long expireTime;
+    private final int poolSize;
 
     public SimpleConnectionPool(long expireTime, int poolSize, SimpleConnectionMaker connectionMaker) {
         this.expireTime = expireTime;
@@ -22,7 +19,9 @@ public final class SimpleConnectionPool {
         this.connectionMaker = connectionMaker;
     }
 
-    public SimpleConnectionHolder.ConnectionToken borrow(long createConnectionTimeout, boolean isHttp2, URI uri) {
+    public SimpleConnectionHolder.ConnectionToken borrow(long createConnectionTimeout, boolean isHttp2, URI uri)
+        throws RuntimeException
+    {
         if(!pools.containsKey(uri)) {
             synchronized (pools) {
                 if (!pools.containsKey(uri))
