@@ -4,6 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 /***
@@ -136,7 +138,7 @@ public final class SimpleConnectionHolder {
 
         // throw exception if connection creation failed
         if(!connection.isOpen()) {
-            logger.debug("{} null or non-open connection", logLabel(connection, now));
+            logger.debug("{} closed connection", logLabel(connection, now));
             throw new RuntimeException("[" + port(connection) + "] Error creating connection to " + uri.toString());
 
         // start life-timer and determine connection type
@@ -154,9 +156,9 @@ public final class SimpleConnectionHolder {
     /**
      * State Transition - Borrow
      *
-     * @param connectionCreateTimeout
-     * @param now
-     * @return
+     * @param connectionCreateTimeout the amount of time to wait for a connection to be created before throwing an exception
+     * @param now the time at which to evaluate whether there are borrowable connections or not
+     * @return returns a ConnectionToken representing this borrow of the connection
      * @throws RuntimeException
      */
     public synchronized ConnectionToken borrow(long connectionCreateTimeout, long now) throws RuntimeException {
@@ -222,8 +224,8 @@ public final class SimpleConnectionHolder {
     /**
      * State Transition - Close
      *
-     * @param now
-     * @return
+     * @param now the time at which to evaluate whether this connection is closable or not
+     * @return true if the connection was closed and false otherwise
      */
     public synchronized boolean safeClose(long now) {
         logger.debug("{} close - closing connection with {} borrows...", logLabel(connection, now), borrowedTokens.size());
@@ -253,7 +255,7 @@ public final class SimpleConnectionHolder {
     /**
      * State Property - isClosed
      *
-     * @return
+     * @return true if the connection is closed and false otherwise
      */
     public synchronized boolean closed() {
         if(closed)
@@ -268,8 +270,8 @@ public final class SimpleConnectionHolder {
     /**
      * State Property - isExpired
      *
-     * @param now
-     * @return
+     * @param now the time at which to evaluate whether this connection has expired or not
+     * @return true if the connection has expired and false otherwise
      */
     public synchronized boolean expired(long now) {
         return now - startTime >= EXPIRE_TIME;
@@ -278,7 +280,7 @@ public final class SimpleConnectionHolder {
     /**
      * State Property - isBorrowed
      *
-     * @return
+     * @return true if the connection is currently borrowed and false otherwise
      */
     public synchronized boolean borrowed() {
         return borrowedTokens.size() > 0;
@@ -287,7 +289,7 @@ public final class SimpleConnectionHolder {
     /**
      * State Property - isAtMaxBorrows
      * 
-     * @return
+     * @return true if the connection is at its maximum number of borrows, and false otherwise
      */
     public synchronized boolean maxBorrowed() {
         return borrowedTokens.size() >= MAX_BORROWS;
@@ -296,8 +298,8 @@ public final class SimpleConnectionHolder {
     /**
      * State Property - isBorrowable
      *
-     * @param now
-     * @return
+     * @param now the time at which to evaluate the borrowability of this connection
+     * @return true if the connection is borrowable and false otherwise
      */
     public synchronized boolean borrowable(long now) {
         return connection.isOpen() && !expired(now) && !maxBorrowed();
@@ -333,10 +335,9 @@ public final class SimpleConnectionHolder {
      * NOTE: Thread Safety
      *     This method is private, and is only called either directly or transitively by synchronized
      *     methods in this class.
-     *
      */
     private String logLabel(SimpleConnection connection, long now) {
-        return "[" + port(connection) + ": " + state(now) + "]:";
+        return "[" + port(connection) + ": " + state(now) + "]";
     }
 
     /***
@@ -345,7 +346,6 @@ public final class SimpleConnectionHolder {
      * NOTE: Thread Safety
      *     This method is private, and is only called either directly or transitively by synchronized
      *     methods in this class.
-     *
      */
     private static String port(SimpleConnection connection) {
         if(connection == null) return "NULL";
@@ -361,20 +361,20 @@ public final class SimpleConnectionHolder {
      * NOTE: Thread Safety
      *     This method is private, and is only called either directly or transitively by synchronized
      *     methods in this class.
-     *
      */
+    private enum State { CLOSED, BORROWABLE, NOT_BORROWABLE, NOT_BORROWED, VALID, BORROWED, EXPIRED }
     private String state(long now) {
-        if(closed())                        return "CLOSED";
-        if(borrowable(now))                 return "BORROWABLE";
-        if(!borrowed() && !expired(now))    return "NOT_BORROWED_VALID";
-        if(borrowed() && !expired(now))     return "BORROWED_VALID";
-        if(borrowed() && expired(now))      return "BORROWED_EXPIRED";
-        if(!borrowed() && expired(now))     return "NOT_BORROWED_EXPIRED";
+        List<State> stateList = new ArrayList<>();
+        if(closed())        { stateList.add(State.CLOSED); }
+        if(borrowed())      { stateList.add(State.BORROWED);} else{ stateList.add(State.NOT_BORROWED);}
+        if(borrowable(now)) { stateList.add(State.BORROWABLE);} else{ if(!expired(now)) { stateList.add(State.NOT_BORROWABLE);}}
+        if(expired(now))    { stateList.add(State.EXPIRED);} /* else{ states.add(State.VALID);} */
 
-        // check that the connection did not close after the call to closed() above
-        if(closed())
-            return "CLOSED";
-
-        return "ILLEGAL_STATE";
+        StringBuilder state = new StringBuilder();
+        for(int i = 0; i < stateList.size(); ++i) {
+            state.append(stateList.get(i));
+            if(i+1 < stateList.size()) state.append(" ");
+        }
+        return stateList.size() > 0 ? state.toString() : "ILLEGAL_STATE";
     }
 }
