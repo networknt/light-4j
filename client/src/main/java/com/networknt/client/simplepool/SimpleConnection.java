@@ -29,7 +29,7 @@ public interface SimpleConnection {
     public boolean isMultiplexingSupported();
 
     /**
-     * Returns the client side address of the conection
+     * Returns the client side address of the connection
      * @return the client side address of the connection
      */
     public String getLocalAddress();
