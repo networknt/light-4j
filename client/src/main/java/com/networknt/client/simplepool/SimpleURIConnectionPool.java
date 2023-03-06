@@ -12,10 +12,11 @@ import java.util.concurrent.ThreadLocalRandom;
     A connection pool for a single URI.
     Connection pool contains 4 Sets of ConnectionHolders:
 
-        1. All:                     the complete set of holders
-        2. Borrowable:              holders that can be borrowed from
-        3. Borrowed:                holders that have borrowed tokens
-        4. Not Borrowed Expired:    expired holders that have no borrowed tokens -- these can be closed
+        1. allCreatedConnections    all connections created by connection makers are added to this set
+        2. allKnownConnections:     the set of all connections tracked by the connection pool
+        3. Borrowable:              connection that can be borrowed from
+        4. Borrowed:                connections that have borrowed tokens
+        5. notBorrowedExpired:      connections that have no borrowed tokens -- only these can be closed by the pool
 */
 public final class SimpleURIConnectionPool {
     private static final Logger logger = LoggerFactory.getLogger(SimpleURIConnectionPool.class);
@@ -24,24 +25,17 @@ public final class SimpleURIConnectionPool {
     private final int poolSize;
     private final URI uri;
 
-    /***
-     * The set of all connections created by the SimpleConnectionMaker for this uri
+    /** Connection Pool Sets
+     *  These sets determine the mutable state of the connection pool
      */
+    /** The set of all connections created by the SimpleConnectionMaker for this uri */
     private final Set<SimpleConnection> allCreatedConnections = ConcurrentHashMap.newKeySet();
-
-    /***
-     * The set containing all connections known to this connection pool
-     * (It is not considered a state set)
-     */
+    /** The set containing all connections known to this connection pool (It is not considered a state set) */
     private final Set<SimpleConnectionHolder> allKnownConnections = new HashSet<>();
-
-    /***
+    /**
      * State Sets
-     * The existence or non-existence of a connection in one of these sets means that the connection is in one of these
-     * states or its opposite.
-     *
-     * A connection can be in multiple state sets at o time (e.g.: a connection can be both borrowable and not borrowed)
-     */
+     * The existence or non-existence of a connection in one of these sets means that the connection is or is not in
+     * one of these states. A connection can be in multiple state sets at a time (e.g.: a connection can be both borrowed and borrowable) */
     private final Set<SimpleConnectionHolder> borrowable = new HashSet<>();
     private final Set<SimpleConnectionHolder> borrowed = new HashSet<>();
     private final Set<SimpleConnectionHolder> notBorrowedExpired = new HashSet<>();
@@ -53,6 +47,13 @@ public final class SimpleURIConnectionPool {
         this.connectionMaker = connectionMaker;
     }
 
+    /***
+     *
+     * @param createConnectionTimeout
+     * @param isHttp2
+     * @return
+     * @throws RuntimeException
+     */
     public synchronized SimpleConnectionHolder.ConnectionToken borrow(long createConnectionTimeout, boolean isHttp2) throws RuntimeException {
         long now = System.currentTimeMillis();
         final SimpleConnectionHolder holder;
@@ -62,7 +63,7 @@ public final class SimpleURIConnectionPool {
         if(borrowable.size() > 0) {
             holder = borrowable.toArray(new SimpleConnectionHolder[0])[ThreadLocalRandom.current().nextInt(borrowable.size())];
         } else {
-            if (borrowed.size() < poolSize) {
+            if (allKnownConnections.size() < poolSize) {
                 holder = new SimpleConnectionHolder(EXPIRY_TIME, createConnectionTimeout, isHttp2, uri, allCreatedConnections, connectionMaker);
                 allKnownConnections.add(holder);
             } else
@@ -119,7 +120,6 @@ public final class SimpleURIConnectionPool {
          *
          * Remove any connections that have unexpectedly closed
          * Move all remaining connections to appropriate sets based on their properties
-         *
          */
         final Iterator<SimpleConnectionHolder> knownConnectionHolders = allKnownConnections.iterator();
         while (knownConnectionHolders.hasNext()) {
@@ -151,9 +151,10 @@ public final class SimpleURIConnectionPool {
      * This method reads a connection and moves it to the correct sets based on its properties.
      * It will also remove a connection from all sets (i.e.: stop tracking the connection) if it is closed.
      *
-     * NOTE: Connection closing methods
-     *     This method and findAndCloseLeakedConnections() are the only two methods that close connections.
-     *     This can be helpful to know for debugging
+     * NOTE: Closing connections and modifying sets
+     *     readConnectionHolder() and findAndCloseLeakedConnections() are the only two methods that close connections
+     *     and modify sets. This can be helpful to know for debugging since the sets comprise the entirety of the
+     *     mutable state of this SimpleURIConnectionPool objects
      *
      * NOTE: Thread Safety
      *     This method is private, and is only called either directly or transitively by synchronized
@@ -168,7 +169,9 @@ public final class SimpleURIConnectionPool {
 
         /**
          * Remove all references to closed connections
-         * After the connection is removed, the only reference to it will be in any unrestored ConnectionTokens
+         * After the connection is removed, the only reference to it will be in any unrestored ConnectionTokens,
+         * however, ConnectionTokens restored after the connection is closed will not be re-added to any sets
+         * (and will therefore be garbage collected)
          */
         if(connection.closed()) {
             logger.debug("[{}: CLOSED]: Connection closed - Stopping connection tracking", port(connection.connection()));
@@ -214,18 +217,18 @@ public final class SimpleURIConnectionPool {
 
     /**
      * Remove leaked connections
+     * A leaked connection is any connection that was created by a SimpleConnectionMaker, but was not returned by the
+     * SimpleConnectionHolder.borrow() method. This can happen if an error occurs (specifically, if an exception is
+     * thrown) during the creation of a SimpleConnectionHolder. A SimpleConnectionHolder can fail to instantiate
+     * (after it has created a new connection) if, for example:
      *
-     * Remove any connections that were created by the SimpleConnectionMaker, but were not returned.
-     * This can occur if a connection-creation callback thread finishes creating a connection after a timeout has
-     * occurred.
+     *     1) the connection-creation callback thread finishes creating the connection after a timeout has occurred
+     *     2) the raw connection unexpectedly closes during the creation of its SimpleConnectionHolder
      *
-     * If this happens, then the created-connection will not be tracked by the connection pool, and therefore
-     * never closed, causing a connection leak.
-     *
-     * NOTE: Connection closing methods
-     *     This method and readConnectionHolder() are the only two methods that close connections.
-     *     This can be helpful to know for debugging
-     *
+     * NOTE: Closing connection and modifying sets
+     *     readConnectionHolder() and findAndCloseLeakedConnections() are the only two methods that close connections
+     *     and modify sets. This can be helpful to know for debugging since the sets comprise the entirety of the
+     *     mutable state of this SimpleURIConnectionPool objects
      */
     private void findAndCloseLeakedConnections()
     {
@@ -241,10 +244,13 @@ public final class SimpleURIConnectionPool {
             while(leakedConnections.hasNext()) {
                 SimpleConnection leakedConnection = leakedConnections.next();
 
-                leakedConnection.safeClose();
-                leakedConnections.remove();
+                if(leakedConnection.isOpen()) {
+                    leakedConnection.safeClose();
+                    logger.debug("Connection closed {} -> {}", port(leakedConnection), uri.toString());
+                } else
+                    logger.debug("Connection was already closed {} -> {}", port(leakedConnection), uri.toString());
 
-                logger.debug("Connection closed {} -> {}", port(leakedConnection), uri.toString());
+                leakedConnections.remove();
             }
         }
     }
@@ -260,14 +266,13 @@ public final class SimpleURIConnectionPool {
      * NOTE: Iteration Safety
      *     This method should not be used inside loops that iterate through elements of borrowable, borrowed,
      *     notBorrowedExpired, or allKnownConnections sets
-     *
      */
     private String showConnections(String transitionName) {
-        return "After " + transitionName + " - CONNECTIONS: " +
+        return "After " + transitionName + " - " +
                 showConnections("BORROWABLE", borrowable) +
                 showConnections("BORROWED", borrowed) +
                 showConnections("NOT_BORROWED_EXPIRED", notBorrowedExpired) +
-                showConnections("KNOWN_CONNECTIONS", allKnownConnections);
+                showConnections("TRACKED", allKnownConnections);
     }
 
     /***
@@ -276,13 +281,19 @@ public final class SimpleURIConnectionPool {
      * NOTE: Thread Safety
      *     This method is private, and is only called either directly or transitively by synchronized
      *     methods in this class.
-     *
      */
     private static String showConnections(String name, Set<SimpleConnectionHolder> set) {
         StringBuilder sb = new StringBuilder();
         sb.append("[").append(name).append(": ");
-        for(SimpleConnectionHolder holder: set)
-            sb.append(port(holder.connection())).append(" ");
+        if(set.size() == 0)
+            sb.append("0");
+        else {
+            int numCons = set.size();
+            for (SimpleConnectionHolder holder : set) {
+                sb.append(port(holder.connection()));
+                if (--numCons > 0) sb.append(" ");
+            }
+        }
         sb.append("] ");
         return sb.toString();
     }
@@ -293,7 +304,6 @@ public final class SimpleURIConnectionPool {
      * NOTE: Thread Safety
      *     This method is private, and is only called either directly or transitively by synchronized
      *     methods in this class.
-     *
      */
     private static String port(SimpleConnection connection) {
         if(connection == null) return "NULL";
