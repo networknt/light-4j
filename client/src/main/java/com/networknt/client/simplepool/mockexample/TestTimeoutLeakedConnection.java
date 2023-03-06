@@ -8,6 +8,7 @@ public class TestTimeoutLeakedConnection
         new TestRunner()
             .setConnectionClass(MockTimeoutLeakedConnection.class)
             .setHttp2(false)
+            .setCreateConnectionTimeout(5)
             .setNumCallers(8)
             .setTestLength(10*60)
             .executeTest();
