@@ -34,7 +34,9 @@ public class TestConnectionMaker implements SimpleConnectionMaker {
         return connection;
     }
 
-    private SimpleConnection instantiateConnection(long createConnectionTimeout, final boolean isHttp2, final Set<SimpleConnection> allConnections) throws RuntimeException {
+    private SimpleConnection instantiateConnection(long createConnectionTimeout, final boolean isHttp2, final Set<SimpleConnection> allConnections)
+            throws RuntimeException
+    {
         final ExecutorService executor = Executors.newSingleThreadExecutor();
         Future<SimpleConnection> future = executor.submit(() -> {
             executor.shutdown();
