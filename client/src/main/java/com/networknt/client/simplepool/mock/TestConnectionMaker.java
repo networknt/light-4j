@@ -37,15 +37,14 @@ public class TestConnectionMaker implements SimpleConnectionMaker {
     private SimpleConnection instantiateConnection(long createConnectionTimeout, final boolean isHttp2, final Set<SimpleConnection> allConnections) throws RuntimeException {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Future<SimpleConnection> future = executor.submit(() -> {
-            // create new SimpleConnection using SimpleConnection(boolean isHttp2) constructor
-            Class<?>[] type = { boolean.class };
-            Constructor<?> constructor = connectionClass.getConstructor(type);
-            SimpleConnection simpleConnection = (SimpleConnection) constructor.newInstance(new Boolean[] { isHttp2 });
+            executor.shutdown();
+
+            Constructor<SimpleConnection> constructor = connectionClass.getConstructor(boolean.class);
+            SimpleConnection simpleConnection = constructor.newInstance(isHttp2);
 
             allConnections.add(simpleConnection);
             logger.debug("allCreatedConnections: {}", logAllConnections(allConnections));
 
-            executor.shutdown();
             return simpleConnection;
         });
         SimpleConnection connection;
