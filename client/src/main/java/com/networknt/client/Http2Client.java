@@ -38,6 +38,7 @@ import com.networknt.service.SingletonServiceFactory;
 import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.config.TlsUtil;
+import com.networknt.utility.StringUtils;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
@@ -60,6 +61,7 @@ import org.xnio.channels.StreamSinkChannel;
 import org.xnio.ssl.XnioSsl;
 
 import javax.net.ssl.*;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -67,6 +69,9 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.*;
@@ -105,8 +110,10 @@ public class Http2Client {
     public static final String TLS = "tls";
     static final String LOAD_TRUST_STORE = "loadTrustStore";
     static final String LOAD_KEY_STORE = "loadKeyStore";
+    static final String LOAD_DEFAULT_TRUST = "loadDefaultTrustStore";
     static final String TRUST_STORE = "trustStore";
     static final String TRUST_STORE_PASS = "trustStorePass";
+    static final String DEFAULT_CERT_PASS = "defaultCertPassword";
     static final String KEY_STORE = "keyStore";
     static final String KEY_STORE_PASS = "keyStorePass";
     static final String KEY_PASS = "keyPass";
@@ -115,6 +122,7 @@ public class Http2Client {
     static final String KEY_STORE_PASSWORD_PROPERTY = "javax.net.ssl.keyStorePassword";
     static final String TRUST_STORE_PROPERTY = "javax.net.ssl.trustStore";
     static final String TRUST_STORE_PASSWORD_PROPERTY = "javax.net.ssl.trustStorePassword";
+    static final String TRUST_STORE_TYPE_PROPERTY = "javax.net.ssl.trustStoreType";
     static final String SERVICE_ID = "serviceId";
     static String callerId = "unknown";
     static String MASK_KEY_CLIENT_SECRET = "client_secret";
@@ -762,34 +770,39 @@ public class Http2Client {
             }
 
             TrustManager[] trustManagers = null;
+            Boolean loadDefaultTrust = (Boolean) tlsMap.get(LOAD_DEFAULT_TRUST);
+            List<TrustManager> trustManagerList = new ArrayList<>();
             try {
                 // load trust store, this is the server public key certificate
                 // first check if javax.net.ssl.trustStore system properties is set. It is only necessary if the server
                 // certificate doesn't have the entire chain.
                 Boolean loadTrustStore = (Boolean) tlsMap.get(LOAD_TRUST_STORE);
                 if (loadTrustStore != null && loadTrustStore) {
-                    String trustStoreName = System.getProperty(TRUST_STORE_PROPERTY);
-                    String trustStorePass = System.getProperty(TRUST_STORE_PASSWORD_PROPERTY);
-                    if (trustStoreName != null && trustStorePass != null) {
-                        if(logger.isInfoEnabled()) logger.info("Loading trust store from system property at " + Encode.forJava(trustStoreName));
-                    } else {
-                        trustStoreName = (String) tlsMap.get(TRUST_STORE);
-                        trustStorePass = (String) tlsMap.get(TRUST_STORE_PASS);
-                        if(trustStorePass == null) {
-                            logger.error(new Status(CONFIG_PROPERTY_MISSING, TRUST_STORE_PASS, "client.yml").toString());
-                        }
-                        if(logger.isInfoEnabled()) logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
+
+                    String trustStoreName = (String) tlsMap.get(TRUST_STORE);
+                    String trustStorePass = (String) tlsMap.get(TRUST_STORE_PASS);
+                    if(trustStorePass == null) {
+                        logger.error(new Status(CONFIG_PROPERTY_MISSING, TRUST_STORE_PASS, "client.yml").toString());
                     }
+                    if(logger.isInfoEnabled()) logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
                     if (trustStoreName != null && trustStorePass != null) {
                         KeyStore trustStore = TlsUtil.loadTrustStore(trustStoreName, trustStorePass.toCharArray());
-                        TLSConfig tlsConfig = TLSConfig.create(tlsMap, trustedNamesGroupKey);
 
                         TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                         trustManagerFactory.init(trustStore);
-                        trustManagers = ClientX509ExtendedTrustManager.decorate(trustManagerFactory.getTrustManagers(), tlsConfig);
+                        trustManagers = trustManagerFactory.getTrustManagers();
+                    }
+                    if (loadDefaultTrust != null && loadDefaultTrust) {
+                        TrustManager[] defaultTrusts = loadDefaultTrustStore();
+                        if (defaultTrusts!=null && defaultTrusts.length>0) {
+                            trustManagerList.addAll(Arrays.asList(defaultTrusts));
+                        }
+                    }
+                    if (trustManagers!=null && trustManagers.length>0) {
+                        trustManagerList.addAll(Arrays.asList(trustManagers));
                     }
                 }
-            } catch (NoSuchAlgorithmException | KeyStoreException e) {
+            } catch (Exception e) {
                 throw new IOException("Unable to initialise TrustManager[]", e);
             }
 
@@ -797,7 +810,12 @@ public class Http2Client {
                 String tlsVersion = (String)tlsMap.get(TLS_VERSION);
                 if(tlsVersion == null) tlsVersion = "TLSv1.2";
                 sslContext = SSLContext.getInstance(tlsVersion);
+                if (!trustManagerList.isEmpty()) {
+                    TLSConfig tlsConfig = TLSConfig.create(tlsMap, trustedNamesGroupKey);
+                    trustManagers = ClientX509ExtendedTrustManager.decorate(trustManagerList.toArray(new TrustManager[0]), tlsConfig);
+                }
                 sslContext.init(keyManagers, trustManagers, null);
+
             } catch (NoSuchAlgorithmException | KeyManagementException e) {
                 throw new IOException("Unable to create and initialise the SSLContext", e);
             }
@@ -806,6 +824,54 @@ public class Http2Client {
         }
 
         return sslContext;
+    }
+
+    public  static  TrustManager[] loadDefaultTrustStore() throws Exception {
+        Path location = null;
+        String password = "changeit"; //default value for cacerts, we can override it from config
+        Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(TLS);
+        if(tlsMap != null &&  tlsMap.get(DEFAULT_CERT_PASS)!=null) {
+            password = (String)tlsMap.get(DEFAULT_CERT_PASS);
+        }
+        String locationProperty = System.getProperty(TRUST_STORE_PROPERTY);
+        if (!StringUtils.isEmpty(locationProperty)) {
+            Path p = Paths.get(locationProperty);
+            File f = p.toFile();
+            if (f.exists() && f.isFile() && f.canRead()) {
+                location = p;
+            }
+        }  else {
+            String javaHome = System.getProperty("java.home");
+            location = Paths.get(javaHome, "lib", "security", "jssecacerts");
+            if (!location.toFile().exists()) {
+                location = Paths.get(javaHome, "lib", "security", "cacerts");
+            }
+        }
+        if (!location.toFile().exists()) {
+            logger.warn("Cannot find system default trust store");
+            return null;
+        }
+
+        String trustStorePass = System.getProperty(TRUST_STORE_PASSWORD_PROPERTY);
+        if (!StringUtils.isEmpty(trustStorePass)) {
+            password = trustStorePass;
+        }
+        String trustStoreType = System.getProperty(TRUST_STORE_TYPE_PROPERTY);
+        String type;
+        if (!StringUtils.isEmpty(trustStoreType)) {
+            type = trustStoreType;
+        } else {
+            type = KeyStore.getDefaultType();
+        }
+        KeyStore trustStore = KeyStore.getInstance(type, Security.getProvider("SUN"));
+        try (InputStream is = Files.newInputStream(location)) {
+            trustStore.load(is, password.toCharArray());
+            logger.info("JDK default trust store loaded from : {} .", location );
+        }
+        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("PKIX");
+        trustManagerFactory.init(trustStore);
+        return trustManagerFactory.getTrustManagers();
+
     }
 
     public static String getFormDataString(Map<String, String> params) throws UnsupportedEncodingException {
