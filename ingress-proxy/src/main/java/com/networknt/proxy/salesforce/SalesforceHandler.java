@@ -11,6 +11,8 @@ import com.networknt.config.TlsUtil;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.config.UrlRewriteRule;
+import com.networknt.metrics.MetricsConfig;
+import com.networknt.metrics.MetricsHandler;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;
@@ -71,6 +73,8 @@ public class SalesforceHandler implements MiddlewareHandler {
     private static final String GET_TOKEN_ERROR = "ERR10052";
     private static final String METHOD_NOT_ALLOWED  = "ERR10008";
 
+    private static MetricsHandler metricsHandler;
+
     private volatile HttpHandler next;
     private SalesforceConfig config;
     // the cached jwt token so that we can use the same token for different requests.
@@ -79,6 +83,13 @@ public class SalesforceHandler implements MiddlewareHandler {
 
     public SalesforceHandler() {
         config = SalesforceConfig.load();
+        // get the metrics handler from the handler chain for metrics registration. If we cannot get the
+        // metrics handler, then an error message will be logged.
+        Map<String, HttpHandler> handlers = Handler.getHandlers();
+        metricsHandler = (MetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+        if(metricsHandler == null) {
+            logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
+        }
         if(logger.isInfoEnabled()) logger.info("SalesforceAuthHandler is loaded.");
     }
 
@@ -118,6 +129,7 @@ public class SalesforceHandler implements MiddlewareHandler {
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("SalesforceHandler.handleRequest starts.");
+        long startTime = System.nanoTime();
         String requestPath = exchange.getRequestPath();
         if(logger.isTraceEnabled()) logger.trace("original requestPath = " + requestPath);
         // make sure that the request path is in the key set. remember that key set only contains prefix not the full request path.
@@ -162,7 +174,7 @@ public class SalesforceHandler implements MiddlewareHandler {
                         return;
                     }
                 }
-                invokeApi(exchange, "Bearer " + pathPrefixAuth.getAccessToken(), pathPrefixAuth.getServiceHost(), requestPath);
+                invokeApi(exchange, "Bearer " + pathPrefixAuth.getAccessToken(), pathPrefixAuth.getServiceHost(), requestPath, startTime);
                 if(logger.isDebugEnabled()) logger.debug("SalesforceHandler.handleRequest ends.");
                 return;
             }
@@ -347,7 +359,7 @@ public class SalesforceHandler implements MiddlewareHandler {
         }
     }
 
-    private void invokeApi(HttpServerExchange exchange, String authorization, String requestHost, String requestPath) throws Exception {
+    private void invokeApi(HttpServerExchange exchange, String authorization, String requestHost, String requestPath, long startTime) throws Exception {
         // call the Salesforce API directly here with the token from the cache.
         String method = exchange.getRequestMethod().toString();
         String queryString = exchange.getQueryString();
@@ -410,6 +422,7 @@ public class SalesforceHandler implements MiddlewareHandler {
         }
         if(logger.isTraceEnabled()) logger.trace("response body = " + responseBody);
         exchange.getResponseSender().send(ByteBuffer.wrap(responseBody));
+        metricsHandler.injectMetrics(exchange, startTime);
     }
 
 }

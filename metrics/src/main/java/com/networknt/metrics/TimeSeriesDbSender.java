@@ -20,7 +20,7 @@ import java.util.Map;
 
 import io.dropwizard.metrics.influxdb.data.InfluxDbPoint;
 
-public interface InfluxDbSender {
+public interface TimeSeriesDbSender {
     /**
      * Flushes buffer, if applicable.
      */

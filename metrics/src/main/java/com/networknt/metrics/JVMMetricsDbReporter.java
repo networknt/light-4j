@@ -11,15 +11,15 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 
-public class JVMMetricsInfluxDbReporter extends ScheduledReporter {
+public class JVMMetricsDbReporter extends ScheduledReporter {
 
-	private static final Logger logger = LoggerFactory.getLogger(JVMMetricsInfluxDbReporter.class);
+	private static final Logger logger = LoggerFactory.getLogger(JVMMetricsDbReporter.class);
 	private final TimeSeriesDbSender influxDb;
 	private final MetricRegistry registry;
 	private final Map<String, String> tags;
 	
-	public JVMMetricsInfluxDbReporter(final MetricRegistry registry, final TimeSeriesDbSender influxDb, String name, MetricFilter filter, TimeUnit rateUnit,
-                                      TimeUnit durationUnit, Map<String, String> tags) {
+	public JVMMetricsDbReporter(final MetricRegistry registry, final TimeSeriesDbSender influxDb, String name, MetricFilter filter, TimeUnit rateUnit,
+                                TimeUnit durationUnit, Map<String, String> tags) {
 		super(registry, name, filter, rateUnit, durationUnit);
 		this.influxDb = influxDb;
 		this.registry = registry;

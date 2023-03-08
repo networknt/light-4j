@@ -8,6 +8,8 @@ import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.config.UrlRewriteRule;
+import com.networknt.metrics.MetricsConfig;
+import com.networknt.metrics.MetricsHandler;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -42,6 +44,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     private static final Logger logger = LoggerFactory.getLogger(ExternalServiceHandler.class);
     private static final String ESTABLISH_CONNECTION_ERROR = "ERR10053";
     private static final String METHOD_NOT_ALLOWED  = "ERR10008";
+    private static MetricsHandler metricsHandler;
 
     private volatile HttpHandler next;
     private static ExternalServiceConfig config;
@@ -49,6 +52,13 @@ public class ExternalServiceHandler implements MiddlewareHandler {
 
     public ExternalServiceHandler() {
         config = new ExternalServiceConfig();
+        // get the metrics handler from the handler chain for metrics registration. If we cannot get the
+        // metrics handler, then an error message will be logged.
+        Map<String, HttpHandler> handlers = Handler.getHandlers();
+        metricsHandler = (MetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+        if(metricsHandler == null) {
+            logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
+        }
         if(logger.isInfoEnabled()) logger.info("ExternalServiceConfig is loaded.");
     }
 
@@ -84,6 +94,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest starts.");
+        long startTime = System.nanoTime();
         String requestPath = exchange.getRequestPath();
         if(logger.isTraceEnabled()) logger.trace("original requestPath = " + requestPath);
         if (config.getPathHostMappings() != null) {
@@ -143,6 +154,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         logger.error("wrong http method " + method + " for request path " + requestPath);
                         setExchangeStatus(exchange, METHOD_NOT_ALLOWED, method, requestPath);
                         if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest ends with an error.");
+                        metricsHandler.injectMetrics(exchange, startTime);
                         return;
                     }
                     if(client == null) {
@@ -183,6 +195,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                     }
                     exchange.getResponseSender().send(ByteBuffer.wrap(responseBody));
                     if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest ends.");
+                    metricsHandler.injectMetrics(exchange, startTime);
                     return;
                 }
             }
