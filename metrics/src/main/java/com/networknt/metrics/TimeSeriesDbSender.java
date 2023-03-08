@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.dropwizard.metrics.influxdb;
+package com.networknt.metrics;
 
 import java.util.Map;
 

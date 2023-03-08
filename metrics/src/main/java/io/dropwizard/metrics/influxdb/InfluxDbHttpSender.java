@@ -18,8 +18,8 @@ package io.dropwizard.metrics.influxdb;
 
 import com.networknt.client.Http2Client;
 import com.networknt.exception.ClientException;
-import com.networknt.httpstring.ContentType;
 import com.networknt.mask.Mask;
+import com.networknt.metrics.TimeSeriesDbSender;
 import io.dropwizard.metrics.influxdb.data.InfluxDbPoint;
 import io.dropwizard.metrics.influxdb.data.InfluxDbWriteObject;
 import io.undertow.client.*;
@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * An implementation of InfluxDbSender that writes to InfluxDb via http.
  */
-public class InfluxDbHttpSender implements InfluxDbSender {
+public class TimeSeriesDbHttpSender implements TimeSeriesDbSender {
     private static final Logger logger = LoggerFactory.getLogger(InfluxDbReporter.class);
     private final Http2Client client = Http2Client.getInstance();
 
@@ -61,7 +61,7 @@ public class InfluxDbHttpSender implements InfluxDbSender {
      * @param password   the password used to connect to influxDb
      * @throws Exception exception while creating the influxDb sender(MalformedURLException)
      */
-    public InfluxDbHttpSender(final String protocol, final String hostname, final int port, final String database, final String username, final String password) throws Exception {
+    public TimeSeriesDbHttpSender(final String protocol, final String hostname, final int port, final String database, final String username, final String password) throws Exception {
         this(protocol, hostname, port, database, username, password, TimeUnit.MILLISECONDS);
     }
 
@@ -77,8 +77,8 @@ public class InfluxDbHttpSender implements InfluxDbSender {
      * @param timePrecision the time precision of the metrics
      * @throws Exception exception while creating the influxDb sender(MalformedURLException)
      */
-    public InfluxDbHttpSender(final String protocol, final String hostname, final int port, final String database, final String username, final String password,
-                              final TimeUnit timePrecision) throws Exception {
+    public TimeSeriesDbHttpSender(final String protocol, final String hostname, final int port, final String database, final String username, final String password,
+                                  final TimeUnit timePrecision) throws Exception {
         this.url = new URL(protocol, hostname, port, "");
         String queryDb = String.format("db=%s", URLEncoder.encode(database, "UTF-8"));
         String queryCredential = String.format("u=%s&p=%s", URLEncoder.encode(username, "UTF8"), URLEncoder.encode(password, "UTF8"));

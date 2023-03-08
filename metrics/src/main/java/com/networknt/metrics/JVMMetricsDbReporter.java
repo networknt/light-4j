@@ -1,7 +1,6 @@
 package com.networknt.metrics;
 
 import io.dropwizard.metrics.*;
-import io.dropwizard.metrics.influxdb.InfluxDbSender;
 import io.dropwizard.metrics.influxdb.data.InfluxDbPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,11 +14,11 @@ import java.util.concurrent.TimeUnit;
 public class JVMMetricsInfluxDbReporter extends ScheduledReporter {
 
 	private static final Logger logger = LoggerFactory.getLogger(JVMMetricsInfluxDbReporter.class);
-	private final InfluxDbSender influxDb;
+	private final TimeSeriesDbSender influxDb;
 	private final MetricRegistry registry;
 	private final Map<String, String> tags;
 	
-	public JVMMetricsInfluxDbReporter(final MetricRegistry registry, final InfluxDbSender influxDb, String name, MetricFilter filter, TimeUnit rateUnit,
+	public JVMMetricsInfluxDbReporter(final MetricRegistry registry, final TimeSeriesDbSender influxDb, String name, MetricFilter filter, TimeUnit rateUnit,
                                       TimeUnit durationUnit, Map<String, String> tags) {
 		super(registry, name, filter, rateUnit, durationUnit);
 		this.influxDb = influxDb;
