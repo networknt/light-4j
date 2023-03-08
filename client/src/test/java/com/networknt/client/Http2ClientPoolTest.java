@@ -290,8 +290,8 @@ public class Http2ClientPoolTest {
             final AsyncResult<AsyncResponse> ar = reference.get();
             if(ar.succeeded()) {
                 Assert.assertEquals(message, ar.result().getResponseBody());
-                Assert.assertTrue(ar.result().getResponseTime() > 0);
                 System.out.println("responseTime = " + ar.result().getResponseTime());
+                Assert.assertTrue(ar.result().getResponseTime() > 0);
             } else {
                 ar.cause().printStackTrace();
             }
