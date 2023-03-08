@@ -18,8 +18,15 @@ package com.networknt.router;
 
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
+import com.networknt.handler.Handler;
 import com.networknt.handler.ProxyHandler;
+import com.networknt.httpstring.AttachmentConstants;
+import com.networknt.metrics.MetricsConfig;
+import com.networknt.metrics.MetricsHandler;
+import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
+import io.dropwizard.metrics.MetricName;
+import io.dropwizard.metrics.MetricRegistry;
 import io.undertow.UndertowOptions;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -28,6 +35,10 @@ import io.undertow.server.handlers.proxy.LoadBalancingRouterProxyClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.OptionMap;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This is a wrapper class for ProxyHandler as it is implemented as final. This class implements
@@ -41,6 +52,7 @@ public class RouterHandler implements HttpHandler {
     private static RouterConfig config;
 
     protected static ProxyHandler proxyHandler;
+    protected static MetricsHandler metricsHandler;
 
     public RouterHandler() {
         config = RouterConfig.load();
@@ -68,12 +80,34 @@ public class RouterHandler implements HttpHandler {
                 .setHeaderRewriteRules(config.headerRewriteRules)
                 .setNext(ResponseCodeHandler.HANDLE_404)
                 .build();
+        // get the metrics handler from the handler chain for metrics registration. If we cannot get the
+        // metrics handler, then an error message will be logged.
+        Map<String, HttpHandler> handlers = Handler.getHandlers();
+        metricsHandler = (MetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+        if(metricsHandler == null) {
+            logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
+        }
     }
 
     @Override
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("RouterHandler.handleRequest starts.");
+        long startTime = System.nanoTime();
         proxyHandler.handleRequest(httpServerExchange);
+        Map<String, Object> auditInfo = httpServerExchange.getAttachment(AttachmentConstants.AUDIT_INFO);
+        if (auditInfo != null) {
+            Map<String, String> tags = new HashMap<>();
+            tags.put("endpoint", (String)auditInfo.get(Constants.ENDPOINT_STRING));
+            tags.put("clientId", auditInfo.get(Constants.CLIENT_ID_STRING) != null ? (String)auditInfo.get(Constants.CLIENT_ID_STRING) : "unknown");
+            tags.put("scopeClientId", auditInfo.get(Constants.SCOPE_CLIENT_ID_STRING) != null ? (String)auditInfo.get(Constants.SCOPE_CLIENT_ID_STRING) : "unknown");
+            tags.put("callerId", auditInfo.get(Constants.CALLER_ID_STRING) != null ? (String)auditInfo.get(Constants.CALLER_ID_STRING) : "unknown");
+            MetricName metricName = new MetricName("api_response_time");
+            metricName = metricName.tagged(metricsHandler.commonTags);
+            metricName = metricName.tagged(tags);
+            long time = System.nanoTime() - startTime;
+            metricsHandler.registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.TIMERS).update(time, TimeUnit.NANOSECONDS);
+            metricsHandler.incCounterForStatusCode(httpServerExchange.getStatusCode(), metricsHandler.commonTags, tags);
+        }
         if(logger.isDebugEnabled()) logger.debug("RouterHandler.handleRequest ends.");
     }
 

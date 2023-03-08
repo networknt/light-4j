@@ -1,21 +1,25 @@
----
-# Metrics handler configuration
+# Metrics handler configuration that is shared by all the push metrics handlers.
 
-# If metrics handler is enabled or not
-enabled: ${metrics.enabled:false}
-# If metrics handler is enable for JVM MBean or not
+# If metrics handler is enabled or not. Default is true as long as one of the handlers is in the
+# request/response chain.
+enabled: ${metrics.enabled:true}
+# If metrics handler is enabled for JVM MBean or not. If enabled, the CPU and Memory usage will be
+# collected and send to the time series database.
 enableJVMMonitor: ${metrics.enableJVMMonitor:false}
-# influxdb protocal can be http, https
-influxdbProtocol: ${metrics.influxdbProtocol:http}
-# influxdb hostname
-influxdbHost: ${metrics.influxdbHost:localhost}
-# influxdb port number
-influxdbPort: ${metrics.influxdbPort:8086}
-# influxdb database name
-influxdbName: ${metrics.influxdbName:metrics}
-# influxdb user
-influxdbUser: ${metrics.influxdbUser:admin}
-# influx db password
-influxdbPass: ${metrics.influxdbPass:admin}
+# Time series database server protocol. It can be http or https. Others can be added upon request.
+serverProtocol: ${metrics.serverProtocol:http}
+# Time series database or metrics server hostname.
+serverHost: ${metrics.serverHost:localhost}
+# Time series database or metrics server request path. It is optional and only some metrics handlers
+# will use it. For example, the Broadcom APM metrics server needs the path to access the agent.
+serverPath: ${metrics.serverPath:/apm/metricFeed}
+# Time series database or metrics server port number.
+serverPort: ${metrics.serverPort:8086}
+# Time series database name.
+serverName: ${metrics.serverName:metrics}
+# Time series database or metrics server user.
+serverUser: ${metrics.serverUser:admin}
+# Time series database or metrics server password.
+serverPass: ${metrics.serverPass:admin}
 # report and reset metrics in minutes.
 reportInMinutes: ${metrics.reportInMinutes:1}

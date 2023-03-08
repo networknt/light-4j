@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package io.dropwizard.metrics.influxdb;
+package com.networknt.metrics;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import com.networknt.metrics.TimeSeriesDbSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +36,7 @@ import io.dropwizard.metrics.Snapshot;
 import io.dropwizard.metrics.Timer;
 import io.dropwizard.metrics.influxdb.data.InfluxDbPoint;
 
-public final class InfluxDbReporter extends ScheduledReporter {
+public final class APMInfluxDbReporter extends ScheduledReporter {
     public static final class Builder {
         private final MetricRegistry registry;
         private Map<String, String> tags;
@@ -109,18 +108,19 @@ public final class InfluxDbReporter extends ScheduledReporter {
             return this;
         }
 
-        public InfluxDbReporter build(final TimeSeriesDbSender influxDb) {
-            return new InfluxDbReporter(registry, influxDb, tags, rateUnit, durationUnit, filter, skipIdleMetrics);
+        public APMInfluxDbReporter build(final TimeSeriesDbSender influxDb) {
+            return new APMInfluxDbReporter(registry, influxDb, tags, rateUnit, durationUnit, filter, skipIdleMetrics);
         }
     }
 
-    private static final Logger logger = LoggerFactory.getLogger(InfluxDbReporter.class);
+    private static final Logger logger = LoggerFactory.getLogger(APMInfluxDbReporter.class);
+    private static final String COUNT = ".count";
     private final TimeSeriesDbSender influxDb;
     private final boolean skipIdleMetrics;
     private final Map<MetricName, Long> previousValues;
 
-    private InfluxDbReporter(final MetricRegistry registry, final TimeSeriesDbSender influxDb, final Map<String, String> tags,
-                             final TimeUnit rateUnit, final TimeUnit durationUnit, final MetricFilter filter, final boolean skipIdleMetrics) {
+    private APMInfluxDbReporter(final MetricRegistry registry, final TimeSeriesDbSender influxDb, final Map<String, String> tags,
+                                final TimeUnit rateUnit, final TimeUnit durationUnit, final MetricFilter filter, final boolean skipIdleMetrics) {
         super(registry, "influxDb-reporter", filter, rateUnit, durationUnit);
         this.influxDb = influxDb;
         influxDb.setTags(tags);
@@ -136,7 +136,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
     public void report(final SortedMap<MetricName, Gauge> gauges, final SortedMap<MetricName, Counter> counters,
                        final SortedMap<MetricName, Histogram> histograms, final SortedMap<MetricName, Meter> meters, final SortedMap<MetricName, Timer> timers) {
         final long now = System.currentTimeMillis();
-        if(logger.isDebugEnabled()) logger.debug("InfluxDbReporter report is called with counter size " + counters.size());
+        if(logger.isDebugEnabled()) logger.debug("InfluxDbReporter report is called with counter size {}", counters.size());
         try {
             influxDb.flush();
 
@@ -182,18 +182,11 @@ public final class InfluxDbReporter extends ScheduledReporter {
 
         Map<String, String> apiTags = new HashMap<>(name.getTags());
         String apiName = apiTags.remove("api");
-        Map<String, String> clientTags = new HashMap<>(name.getTags());
-        String clientId = clientTags.remove("clientId");
 
         influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".min", apiTags, now, format(convertDuration(snapshot.getMin()))));
         influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".max", apiTags, now, format(convertDuration(snapshot.getMax()))));
         influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".mean", apiTags, now, format(convertDuration(snapshot.getMean()))));
 
-        if(clientId != null) {
-            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".min", clientTags, now, format(convertDuration(snapshot.getMin()))));
-            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".max", clientTags, now, format(convertDuration(snapshot.getMax()))));
-            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".mean", clientTags, now, format(convertDuration(snapshot.getMean()))));
-        }
     }
 
     private void reportHistogram(MetricName name, Histogram histogram, long now) {
@@ -203,32 +196,18 @@ public final class InfluxDbReporter extends ScheduledReporter {
         final Snapshot snapshot = histogram.getSnapshot();
         Map<String, String> apiTags = new HashMap<>(name.getTags());
         String apiName = apiTags.remove("api");
-        Map<String, String> clientTags = new HashMap<>(name.getTags());
-        String clientId = clientTags.remove("clientId");
 
-        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".count", apiTags, now, format(histogram.getCount())));
+        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + COUNT, apiTags, now, format(histogram.getCount())));
         influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".min", apiTags, now, format(snapshot.getMin())));
         influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".max", apiTags, now, format(snapshot.getMax())));
         influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".mean", apiTags, now, format(snapshot.getMean())));
-
-        if(clientId != null) {
-            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".count", clientTags, now, format(histogram.getCount())));
-            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".min", clientTags, now, format(snapshot.getMin())));
-            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".max", clientTags, now, format(snapshot.getMax())));
-            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".mean", clientTags, now, format(snapshot.getMean())));
-        }
     }
 
     private void reportCounter(MetricName name, Counter counter, long now) {
         Map<String, String> apiTags = new HashMap<>(name.getTags());
         String apiName = apiTags.remove("api");
-        Map<String, String> clientTags = new HashMap<>(name.getTags());
-        String clientId = clientTags.remove("clientId");
 
-        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".count", apiTags, now, format(counter.getCount())));
-        if(clientId != null) {
-            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".count", clientTags, now, format(counter.getCount())));
-        }
+        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + COUNT, apiTags, now, format(counter.getCount())));
     }
 
     private void reportGauge(MetricName name, Gauge<?> gauge, long now) {
@@ -236,13 +215,8 @@ public final class InfluxDbReporter extends ScheduledReporter {
         if(value != null) {
             Map<String, String> apiTags = new HashMap<>(name.getTags());
             String apiName = apiTags.remove("api");
-            Map<String, String> clientTags = new HashMap<>(name.getTags());
-            String clientId = clientTags.remove("clientId");
 
             influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey(), apiTags, now, value));
-            if(clientId != null) {
-                influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey(), clientTags, now, value));
-            }
         }
     }
 
@@ -252,13 +226,8 @@ public final class InfluxDbReporter extends ScheduledReporter {
         }
         Map<String, String> apiTags = new HashMap<>(name.getTags());
         String apiName = apiTags.remove("api");
-        Map<String, String> clientTags = new HashMap<>(name.getTags());
-        String clientId = clientTags.remove("clientId");
 
-        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + ".count", apiTags, now, format(meter.getCount())));
-        if(clientId != null) {
-            influxDb.appendPoints(new InfluxDbPoint(clientId + "." + name.getKey() + ".count", clientTags, now, format(meter.getCount())));
-        }
+        influxDb.appendPoints(new InfluxDbPoint(apiName + "." + name.getKey() + COUNT, apiTags, now, format(meter.getCount())));
     }
 
     private boolean canSkipMetric(MetricName name, Counting counting) {

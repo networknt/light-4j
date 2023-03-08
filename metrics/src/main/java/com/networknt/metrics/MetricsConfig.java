@@ -16,29 +16,69 @@
 
 package com.networknt.metrics;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.networknt.config.Config;
+
+import java.util.Map;
 
 /**
- * Metrics middleware handler configuration that is mapped to all
- * properties in metrics.yml config file.
+ * Metrics middleware handler configuration that is mapped to all properties in metrics.yml config file.
+ * This config file is shared by all implementations of the push type metrics handlers, and it supports
+ * config reload from the control pane.
  *
  * @author Steve Hu
  */
 public class MetricsConfig {
+    public static final String CONFIG_NAME = "metrics";
+    private static final String ENABLED = "enabled";
+    private static final String ENABLED_JVM_MONITOR = "enableJVMMonitor";
+    private static final String SERVER_PROTOCOL = "serverProtocol";
+    private static final String SERVER_HOST = "serverHost";
+    private static final String SERVER_PORT = "serverPort";
+    private static final String SERVER_PATH = "serverPath";
+    private static final String SERVER_NAME = "serverName";
+    private static final String SERVER_USER = "serverUser";
+    private static final String SERVER_PASS = "serverPass";
+    private static final String REPORT_IN_MINUTES = "reportInMinutes";
     boolean enabled;
     boolean enableJVMMonitor;
-    String influxdbProtocol;
-    String influxdbHost;
-    int influxdbPort;
-    String influxdbName;
-    String influxdbUser;
-    String influxdbPass;
+    String serverProtocol;
+    String serverHost;
+    int serverPort;
+    String serverPath;
+    String serverName;
+    String serverUser;
+    String serverPass;
     int reportInMinutes;
+    private Map<String, Object> mappedConfig;
+    private Config config;
 
-    @JsonIgnore
-    String description;
 
-    public MetricsConfig() {
+    private MetricsConfig() {
+        this(CONFIG_NAME);
+    }
+
+    /**
+     * Please note that this constructor is only for testing to load different config files
+     * to test different configurations.
+     * @param configName String
+     */
+    private MetricsConfig(String configName) {
+        config = Config.getInstance();
+        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        setConfigData();
+    }
+
+    static MetricsConfig load() {
+        return new MetricsConfig();
+    }
+
+    static MetricsConfig load(String configName) {
+        return new MetricsConfig(configName);
+    }
+
+    void reload() {
+        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
+        setConfigData();
     }
 
     public boolean isEnabled() {
@@ -57,28 +97,28 @@ public class MetricsConfig {
         this.enableJVMMonitor = enableJVMMonitor;
     }
 
-    public String getInfluxdbHost() {
-        return influxdbHost;
+    public String getServerHost() {
+        return serverHost;
     }
 
-    public String getInfluxdbProtocol() {
-        return influxdbProtocol;
+    public String getServerProtocol() {
+        return serverProtocol;
     }
 
-    public void setInfluxdbProtocol(String influxdbProtocol) {
-        this.influxdbProtocol = influxdbProtocol;
+    public void setServerProtocol(String serverProtocol) {
+        this.serverProtocol = serverProtocol;
     }
 
-    public void setInfluxdbHost(String influxdbHost) {
-        this.influxdbHost = influxdbHost;
+    public void setServerHost(String serverHost) {
+        this.serverHost = serverHost;
     }
 
-    public int getInfluxdbPort() {
-        return influxdbPort;
+    public int getServerPort() {
+        return serverPort;
     }
 
-    public void setInfluxdbPort(int influxdbPort) {
-        this.influxdbPort = influxdbPort;
+    public void setServerPort(int serverPort) {
+        this.serverPort = serverPort;
     }
 
     public int getReportInMinutes() {
@@ -89,36 +129,80 @@ public class MetricsConfig {
         this.reportInMinutes = reportInMinutes;
     }
 
-    public String getInfluxdbName() {
-        return influxdbName;
+    public String getServerName() { return serverName; }
+
+    public void setServerName(String serverName) {
+        this.serverName = serverName;
     }
 
-    public void setInfluxdbName(String influxdbName) {
-        this.influxdbName = influxdbName;
+    public String getServerUser() {
+        return serverUser;
     }
 
-    public String getInfluxdbUser() {
-        return influxdbUser;
+    public void setServerUser(String serverUser) {
+        this.serverUser = serverUser;
     }
 
-    public void setInfluxdbUser(String influxdbUser) {
-        this.influxdbUser = influxdbUser;
+    public String getServerPass() {
+        return serverPass;
     }
 
-    public String getInfluxdbPass() {
-        return influxdbPass;
+    public void setServerPass(String serverPass) {
+        this.serverPass = serverPass;
     }
 
-    public void setInfluxdbPass(String influxdbPass) {
-        this.influxdbPass = influxdbPass;
+    public String getServerPath() {
+        return serverPath;
     }
 
-    public String getDescription() {
-        return description;
+    public void setServerPath(String serverPath) {
+        this.serverPath = serverPath;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    Map<String, Object> getMappedConfig() {
+        return mappedConfig;
     }
 
+    private void setConfigData() {
+        Object object = getMappedConfig().get(ENABLED);
+        if(object != null && (Boolean) object) {
+            setEnabled(true);
+        }
+        object = getMappedConfig().get(ENABLED_JVM_MONITOR);
+        if(object != null && (Boolean) object) {
+            setEnabled(true);
+        }
+        object = mappedConfig.get(SERVER_PROTOCOL);
+        if (object != null) {
+            setServerProtocol((String) object);;
+        }
+        object = mappedConfig.get(SERVER_HOST);
+        if (object != null) {
+            serverHost = (String) object;
+        }
+        object = mappedConfig.get(SERVER_PORT);
+        if (object != null) {
+            serverPort = (int) object;
+        }
+        object = getMappedConfig().get(SERVER_PATH);
+        if(object != null) {
+            serverPath = (String) object;
+        }
+        object = getMappedConfig().get(SERVER_NAME);
+        if(object != null) {
+            serverName = (String) object;
+        }
+        object = getMappedConfig().get(SERVER_USER);
+        if(object != null) {
+            serverUser = (String) object;
+        }
+        object = getMappedConfig().get(SERVER_PASS);
+        if(object != null) {
+            serverPass = (String) object;
+        }
+        object = getMappedConfig().get(REPORT_IN_MINUTES);
+        if(object != null) {
+            reportInMinutes = (int) object;
+        }
+    }
 }

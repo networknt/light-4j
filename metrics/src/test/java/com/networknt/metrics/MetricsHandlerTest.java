@@ -54,7 +54,7 @@ public class MetricsHandlerTest {
             logger.info("starting server");
             HttpHandler handler = getTestHandler();
 
-            MetricsHandler metricsHandler = new MetricsHandler();
+            MetricsHandler metricsHandler = new InfluxMetricsHandler();
             metricsHandler.setNext(handler);
             handler = metricsHandler;
 
