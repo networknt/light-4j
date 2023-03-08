@@ -12,12 +12,18 @@ import com.networknt.config.TlsUtil;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.config.UrlRewriteRule;
+import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.ContentType;
+import com.networknt.metrics.MetricsConfig;
+import com.networknt.metrics.MetricsHandler;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;
 import com.networknt.status.Status;
+import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
+import io.dropwizard.metrics.MetricName;
+import io.dropwizard.metrics.MetricRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -42,6 +48,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
@@ -65,6 +72,8 @@ public class MrasHandler implements MiddlewareHandler {
     private static final String GET_TOKEN_ERROR = "ERR10052";
     private static final String METHOD_NOT_ALLOWED  = "ERR10008";
 
+    private static MetricsHandler metricsHandler;
+
     private volatile HttpHandler next;
     private MrasConfig config;
     // the cached jwt token so that we can use the same token for different requests.
@@ -78,6 +87,13 @@ public class MrasHandler implements MiddlewareHandler {
 
     public MrasHandler() {
         config = MrasConfig.load();
+        // get the metrics handler from the handler chain for metrics registration. If we cannot get the
+        // metrics handler, then an error message will be logged.
+        Map<String, HttpHandler> handlers = Handler.getHandlers();
+        metricsHandler = (MetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+        if(metricsHandler == null) {
+            logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
+        }
         if(logger.isInfoEnabled()) logger.info("MrasHandler is loaded.");
     }
 
@@ -118,6 +134,7 @@ public class MrasHandler implements MiddlewareHandler {
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest starts.");
+        long startTime = System.nanoTime();
         String requestPath = exchange.getRequestPath();
         if(logger.isTraceEnabled()) logger.trace("original requestPath = " + requestPath);
 
@@ -156,17 +173,17 @@ public class MrasHandler implements MiddlewareHandler {
                             return;
                         }
                     }
-                    invokeApi(exchange, (String)config.getAccessToken().get(config.SERVICE_HOST), requestPath, "Bearer " + accessToken);
+                    invokeApi(exchange, (String)config.getAccessToken().get(config.SERVICE_HOST), requestPath, "Bearer " + accessToken, startTime);
                     if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
                     return;
                 } else if(config.getPathPrefixAuth().get(key).equals(config.BASIC_AUTH)) {
                     // only basic authentication is used for the access.
-                    invokeApi(exchange, (String)config.getBasicAuth().get(config.SERVICE_HOST), requestPath, "Basic " + encodeCredentials((String)config.getBasicAuth().get(config.USERNAME), (String)config.getBasicAuth().get(config.PASSWORD)));
+                    invokeApi(exchange, (String)config.getBasicAuth().get(config.SERVICE_HOST), requestPath, "Basic " + encodeCredentials((String)config.getBasicAuth().get(config.USERNAME), (String)config.getBasicAuth().get(config.PASSWORD)), startTime);
                     if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
                     return;
                 } else if(config.getPathPrefixAuth().get(key).equals(config.ANONYMOUS)) {
                     // no authorization header for this type of the request.
-                    invokeApi(exchange, (String)config.getAnonymous().get(config.SERVICE_HOST), requestPath, null);
+                    invokeApi(exchange, (String)config.getAnonymous().get(config.SERVICE_HOST), requestPath, null, startTime);
                     if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
                     return;
                 } else if(config.getPathPrefixAuth().get(key).equals(config.MICROSOFT)) {
@@ -183,18 +200,19 @@ public class MrasHandler implements MiddlewareHandler {
                             return;
                         }
                     }
-                    invokeApi(exchange, (String)config.getMicrosoft().get(config.SERVICE_HOST), requestPath, "Bearer " + microsoft);
+                    invokeApi(exchange, (String)config.getMicrosoft().get(config.SERVICE_HOST), requestPath, "Bearer " + microsoft, startTime);
                     if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
                     return;
                 }
             }
         }
         // not the MRAS path, go to the next middleware handlers.
+
         if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
         Handler.next(exchange, next);
     }
 
-    private void invokeApi(HttpServerExchange exchange, String serviceHost, String requestPath, String authorization) throws Exception {
+    private void invokeApi(HttpServerExchange exchange, String serviceHost, String requestPath, String authorization, long startTime) throws Exception {
         // call the MRAS API directly here with the token from the cache.
         String method = exchange.getRequestMethod().toString();
         String queryString = exchange.getQueryString();
@@ -299,6 +317,7 @@ public class MrasHandler implements MiddlewareHandler {
             }
         }
         exchange.getResponseSender().send(ByteBuffer.wrap(responseBody));
+        metricsHandler.injectMetrics(exchange, startTime);
     }
 
     private Result<TokenResponse> getAccessToken() throws Exception {
@@ -506,5 +525,4 @@ public class MrasHandler implements MiddlewareHandler {
 
         return sslContext;
     }
-
 }

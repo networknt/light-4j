@@ -20,6 +20,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
+import com.networknt.metrics.TimeSeriesDbSender;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -41,7 +42,7 @@ import io.dropwizard.metrics.influxdb.data.InfluxDbWriteObject;
 
 public class InfluxDbReporterTest {
     @Mock
-    private InfluxDbSender influxDb;
+    private TimeSeriesDbSender influxDb;
     @Mock
     private InfluxDbWriteObject writeObject;
     @Mock

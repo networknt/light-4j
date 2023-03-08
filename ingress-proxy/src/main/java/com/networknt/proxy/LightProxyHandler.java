@@ -19,8 +19,15 @@ package com.networknt.proxy;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
 import com.networknt.config.JsonMapper;
+import com.networknt.handler.Handler;
+import com.networknt.httpstring.AttachmentConstants;
+import com.networknt.metrics.MetricsConfig;
+import com.networknt.metrics.MetricsHandler;
+import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.handler.ProxyHandler;
+import io.dropwizard.metrics.MetricName;
+import io.dropwizard.metrics.MetricRegistry;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.ResponseCodeHandler;
@@ -37,9 +44,8 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -57,6 +63,7 @@ public class LightProxyHandler implements HttpHandler {
     static ProxyConfig config;
 
     static ProxyHandler proxyHandler;
+    static MetricsHandler metricsHandler;
 
     public LightProxyHandler() {
         config = ProxyConfig.load();
@@ -96,17 +103,40 @@ public class LightProxyHandler implements HttpHandler {
                 .setRewriteHostHeader(config.isRewriteHostHeader())
                 .setNext(ResponseCodeHandler.HANDLE_404)
                 .build();
+
+        // get the metrics handler from the handler chain for metrics registration. If we cannot get the
+        // metrics handler, then an error message will be logged.
+        Map<String, HttpHandler> handlers = Handler.getHandlers();
+        metricsHandler = (MetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+        if(metricsHandler == null) {
+            logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
+        }
     }
 
     @Override
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("LightProxyHandler.handleRequest starts.");
+        long startTime = System.nanoTime();
         if(config.isForwardJwtClaims()) {
             HeaderMap headerValues = httpServerExchange.getRequestHeaders();
             JwtClaims jwtClaims = extractClaimsFromJwt(headerValues);
             httpServerExchange.getRequestHeaders().put(HttpString.tryFromString(CLAIMS_KEY), new ObjectMapper().writeValueAsString(jwtClaims.getClaimsMap()));
         }
         proxyHandler.handleRequest(httpServerExchange);
+        Map<String, Object> auditInfo = httpServerExchange.getAttachment(AttachmentConstants.AUDIT_INFO);
+        if (auditInfo != null) {
+            Map<String, String> tags = new HashMap<>();
+            tags.put("endpoint", (String)auditInfo.get(Constants.ENDPOINT_STRING));
+            tags.put("clientId", auditInfo.get(Constants.CLIENT_ID_STRING) != null ? (String)auditInfo.get(Constants.CLIENT_ID_STRING) : "unknown");
+            tags.put("scopeClientId", auditInfo.get(Constants.SCOPE_CLIENT_ID_STRING) != null ? (String)auditInfo.get(Constants.SCOPE_CLIENT_ID_STRING) : "unknown");
+            tags.put("callerId", auditInfo.get(Constants.CALLER_ID_STRING) != null ? (String)auditInfo.get(Constants.CALLER_ID_STRING) : "unknown");
+            MetricName metricName = new MetricName("api_response_time");
+            metricName = metricName.tagged(metricsHandler.commonTags);
+            metricName = metricName.tagged(tags);
+            long time = System.nanoTime() - startTime;
+            metricsHandler.registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.TIMERS).update(time, TimeUnit.NANOSECONDS);
+            metricsHandler.incCounterForStatusCode(httpServerExchange.getStatusCode(), metricsHandler.commonTags, tags);
+        }
         if(logger.isDebugEnabled()) logger.debug("LightProxyHandler.handleRequest ends.");
     }
 

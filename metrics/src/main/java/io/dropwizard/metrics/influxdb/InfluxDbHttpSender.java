@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * An implementation of InfluxDbSender that writes to InfluxDb via http.
  */
-public class TimeSeriesDbHttpSender implements TimeSeriesDbSender {
+public class InfluxDbHttpSender implements TimeSeriesDbSender {
     private static final Logger logger = LoggerFactory.getLogger(InfluxDbReporter.class);
     private final Http2Client client = Http2Client.getInstance();
 
@@ -61,7 +61,7 @@ public class TimeSeriesDbHttpSender implements TimeSeriesDbSender {
      * @param password   the password used to connect to influxDb
      * @throws Exception exception while creating the influxDb sender(MalformedURLException)
      */
-    public TimeSeriesDbHttpSender(final String protocol, final String hostname, final int port, final String database, final String username, final String password) throws Exception {
+    public InfluxDbHttpSender(final String protocol, final String hostname, final int port, final String database, final String username, final String password) throws Exception {
         this(protocol, hostname, port, database, username, password, TimeUnit.MILLISECONDS);
     }
 
@@ -77,7 +77,7 @@ public class TimeSeriesDbHttpSender implements TimeSeriesDbSender {
      * @param timePrecision the time precision of the metrics
      * @throws Exception exception while creating the influxDb sender(MalformedURLException)
      */
-    public TimeSeriesDbHttpSender(final String protocol, final String hostname, final int port, final String database, final String username, final String password,
+    public InfluxDbHttpSender(final String protocol, final String hostname, final int port, final String database, final String username, final String password,
                                   final TimeUnit timePrecision) throws Exception {
         this.url = new URL(protocol, hostname, port, "");
         String queryDb = String.format("db=%s", URLEncoder.encode(database, "UTF-8"));
