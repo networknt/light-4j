@@ -159,7 +159,7 @@ public abstract class Config {
                 } else {
                     final Resolver resolver = new Resolver();
                     resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
-                    yaml = new Yaml(new DecryptConstructor(decryptorClass), new Representer(), new DumperOptions(), resolver);
+                    yaml = new Yaml(new DecryptConstructor(decryptorClass), new Representer(new DumperOptions()), new DumperOptions(), resolver);
                 }
             }
         }
