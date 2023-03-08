@@ -2,6 +2,7 @@ package com.networknt.config.yml;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.constructor.AbstractConstruct;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.nodes.Node;
@@ -29,7 +30,7 @@ public class DecryptConstructor extends Constructor {
 	}
 	
 	public DecryptConstructor(String decryptorClass) {
-		super();
+		super(new LoaderOptions());
 		
 		decryptor= createDecryptor(decryptorClass);
 		

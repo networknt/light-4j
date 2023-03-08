@@ -3,6 +3,7 @@ package com.networknt.config.yml;
 import com.networknt.config.ConfigLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.constructor.Constructor;
 
 /**
@@ -16,7 +17,7 @@ public class ConfigLoaderConstructor extends Constructor {
     private final ConfigLoader configLoader;
 
     public ConfigLoaderConstructor(String configLoaderClass) {
-        super();
+        super(new LoaderOptions());
         configLoader = createConfigLoader(configLoaderClass);
     }
 
