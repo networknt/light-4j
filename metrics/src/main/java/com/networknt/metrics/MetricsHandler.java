@@ -38,12 +38,12 @@ public class MetricsHandler extends AbstractMetricsHandler {
     public MetricsHandler() {
         config = MetricsConfig.load();
         ModuleRegistry.registerModule(MetricsHandler.class.getName(), config.getMappedConfig(), List.of(MASK_KEY_SERVER_PASS));
-        if(logger.isDebugEnabled()) logger.debug("InfluxMetricsHandler is constructed!");
+        if(logger.isDebugEnabled()) logger.debug("MetricsHandler is constructed!");
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        if(logger.isDebugEnabled()) logger.debug("InfluxMetricsHandler.handleRequest starts.");
+        if(logger.isDebugEnabled()) logger.debug("MetricsHandler.handleRequest starts.");
         if(firstTime) {
             commonTags.put("api", Server.getServerConfig().getServiceId());
             commonTags.put("env", Server.getServerConfig().getEnvironment());
@@ -101,7 +101,7 @@ public class MetricsHandler extends AbstractMetricsHandler {
                 nextListener.proceed();
             }
         });
-        if(logger.isDebugEnabled()) logger.debug("InfluxMetricsHandler.handleRequest ends.");
+        if(logger.isDebugEnabled()) logger.debug("MetricsHandler.handleRequest ends.");
         Handler.next(exchange, next);
     }
 
@@ -114,7 +114,7 @@ public class MetricsHandler extends AbstractMetricsHandler {
     public void reload() {
         config.reload();
         ModuleRegistry.registerModule(MetricsHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), List.of(MASK_KEY_SERVER_PASS));
-        if(logger.isTraceEnabled()) logger.trace("InfluxMetricsHandler is reloaded.");
+        if(logger.isTraceEnabled()) logger.trace("MetricsHandler is reloaded.");
     }
 
     @Override
