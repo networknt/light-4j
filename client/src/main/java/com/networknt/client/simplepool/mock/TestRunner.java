@@ -3,7 +3,7 @@ package com.networknt.client.simplepool.mock;
 import com.networknt.client.simplepool.SimpleConnectionHolder;
 import com.networknt.client.simplepool.SimpleConnectionMaker;
 import com.networknt.client.simplepool.SimpleURIConnectionPool;
-import com.networknt.client.simplepool.mockexample.MockKeepAliveConnection;
+import com.networknt.client.simplepool.mock.mockexample.MockKeepAliveConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.net.URI;
@@ -23,7 +23,7 @@ public class TestRunner
     private URI uri = URI.create("https://mock-uri.com");
     private long expireTime = 10;      // in seconds
     private int poolSize = 100;
-    private Class connectionClass = MockKeepAliveConnection.class;
+    private Class connectionClass;
     private SimpleConnectionMaker connectionMaker;
     private SimpleURIConnectionPool pool;
 
