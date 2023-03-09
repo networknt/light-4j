@@ -19,11 +19,9 @@ package com.networknt.consul.client;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
-import com.networknt.client.simplepool.SimpleConnectionMaker;
 import com.networknt.config.Config;
 import com.networknt.consul.*;
 import com.networknt.httpstring.HttpStringConstants;
-import com.networknt.utility.ConcurrentHashSet;
 import com.networknt.utility.StringUtils;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
@@ -39,16 +37,18 @@ import org.xnio.OptionMap;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 // use SimpleURIConnectionPool as the connection pool
-import com.networknt.client.simplepool.SimpleConnectionHolder;
 import com.networknt.client.simplepool.SimpleURIConnectionPool;
-
+import com.networknt.client.simplepool.SimpleConnectionHolder;
 // Use Undertow ClientConnection as raw connection
+import com.networknt.client.simplepool.SimpleConnectionMaker;
 import com.networknt.client.simplepool.undertow.SimpleClientConnectionMaker;
 
 /**
@@ -90,7 +90,7 @@ public class ConsulClientImpl implements ConsulClient {
 			throw new RuntimeException("Invalid URI " + consulUrl, e);
 		}
 
-		// create connection pool
+		// create SimpleURIConnection pool
 		SimpleConnectionMaker undertowConnectionMaker = SimpleClientConnectionMaker.instance();
 		pool = new SimpleURIConnectionPool(
 				uri, ClientConfig.get().getConnectionExpireTime(), ClientConfig.get().getConnectionPoolSize(), undertowConnectionMaker);
@@ -197,7 +197,6 @@ public class ConsulClientImpl implements ConsulClient {
 	 *         		- newResponse.getValue() != null, and
 	 *				- newResponse.getValue().size() == number of IPs registered for serviceName in Consul
 	 */
-	Set<String> consulConnections = new ConcurrentHashSet<>();
 	@Override
 	public ConsulResponse<List<ConsulService>> lookupHealthService(String serviceName, String tag, long lastConsulIndex, String token) {
 
@@ -219,27 +218,11 @@ public class ConsulClientImpl implements ConsulClient {
 		SimpleConnectionHolder.ConnectionToken connectionToken = null;
 		try {
 			logger.debug("Getting connection from pool with {}", uri);
-
-			// // this will throw a Runtime Exception if creation of Consul connection fails
-			// connection = client.safeBorrowConnection(
-			// 		config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
-
 			// this will throw a Runtime Exception if creation of Consul connection fails
 			connectionToken = pool.borrow(config.getConnectionTimeout(), isHttp2());
 			connection = (ClientConnection) connectionToken.getRawConnection();
 
-			if(connection != null) {
-				if(!consulConnections.contains(connection.getLocalAddress().toString()))
-					logger.debug("*NEW* CONNECTION BORROWED! {} -> {}", connection.getLocalAddress().toString(), connection.getPeerAddress().toString());
-				else
-					logger.debug("*OLD* CONNECTION BORROWED {} -> {}", connection.getLocalAddress().toString(), connection.getPeerAddress().toString());
-				consulConnections.add(connection.getLocalAddress().toString());
-				logger.debug("CONNECT SUPPORTS HTTP/2? {}", connection.isMultiplexingSupported());
-			}
-
-			logger.debug("CONSUL CONNECTION ESTABLISHED: {} -> {} from pool and send request to {}",
-					connection.getLocalAddress().toString(), connection.getPeerAddress().toString(), path);
-			// TODO: Ask NetworkNT why an AtomicReference is used here
+			logger.debug("CONSUL CONNECTION ESTABLISHED: {} from pool and send request to {}", connection, path);
 			// TODO: Pass timeout value into send() methods since different methods require different timeouts
 			AtomicReference<ClientResponse> reference = send(connection, Methods.GET, path, token, null);
 
@@ -307,13 +290,6 @@ public class ConsulClientImpl implements ConsulClient {
 			return null;
 
 		} finally {
-			logger.debug("RETURNING CONNECTION {} -> {}",
-					connection != null ? connection.getLocalAddress().toString() : "connection is null",
-					connection != null ? connection.getPeerAddress().toString() : "connection is null"
-			);
-
-			// client.returnConnection(connection);
-
 			pool.restore(connectionToken);
 		}
 
@@ -395,9 +371,6 @@ public class ConsulClientImpl implements ConsulClient {
  	 * @return true if we want to use HTTP/2 to connect to the Consul.
 	 */
 	private boolean isHttp2() {
-		if(config.isForceNoHttp2())
-			return false;
-		else
-			return config.isEnableHttp2() || config.getConsulUrl().toLowerCase().startsWith("https");
+		return config.isEnableHttp2() || config.getConsulUrl().toLowerCase().startsWith("https");
 	}
 }
