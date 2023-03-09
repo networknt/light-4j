@@ -48,5 +48,3 @@ maxAttemptsBeforeShutdown: -1
 # Shuts down host application if any Consul lookup thread stops reporting a heartbeat for
 # 2 * ( lookupInterval + wait (in seconds) + timeoutBuffer (in seconds) ) seconds
 shutdownIfThreadFrozen: false
-# if true this will force all Consul connections to be made using HTTP/1.1
-forceNoHttp2: false

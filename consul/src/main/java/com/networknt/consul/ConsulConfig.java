@@ -36,8 +36,7 @@ public class ConsulConfig {
     long maxAttemptsBeforeShutdown = -1;    // Max number of failed Consul reconnection attempts before self-termination
                                             // -1 means an infinite # of attempts
     boolean shutdownIfThreadFrozen = false; // Shuts down host application if any Consul lookup thread stops reporting a
-                                            // check in for 2 * ( lookupInterval + wait (s) + timeoutBuffer (s) ) seconds
-    boolean forceNoHttp2 = false;           // force the use of HTTP/1.1
+                                            // heartbeat for 2 * ( lookupInterval + wait (s) + timeoutBuffer (s) ) seconds
 
     public String getConsulUrl() {
         return consulUrl;
@@ -104,10 +103,6 @@ public class ConsulConfig {
 
     public boolean isEnableHttp2() {
         return enableHttp2;
-    }
-
-    public boolean isForceNoHttp2() {
-        return forceNoHttp2;
     }
 
     public void setEnableHttp2(boolean enableHttp2) {

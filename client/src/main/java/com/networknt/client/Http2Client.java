@@ -272,12 +272,7 @@ public class Http2Client {
 
     public ClientConnection safeBorrowConnection(long timeoutSeconds, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         IoFuture<ClientConnection> future = borrowConnection(uri, worker, ssl, bufferPool, options);
-
-        ClientConnection con = safeConnect(timeoutSeconds, future);
-        logger.debug("BORROWED CONNECTION: {} -> {} ", con.getLocalAddress().toString(), con.getPeerAddress().toString());
-        return con;
-
-        //return safeConnect(timeoutSeconds, future);
+        return safeConnect(timeoutSeconds, future);
     }
 
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
