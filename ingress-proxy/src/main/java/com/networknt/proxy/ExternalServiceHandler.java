@@ -4,12 +4,11 @@ import com.networknt.body.BodyHandler;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.client.ssl.TLSConfig;
-import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.config.UrlRewriteRule;
 import com.networknt.metrics.MetricsConfig;
-import com.networknt.metrics.MetricsHandler;
+import com.networknt.metrics.AbstractMetricsHandler;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -44,7 +43,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     private static final Logger logger = LoggerFactory.getLogger(ExternalServiceHandler.class);
     private static final String ESTABLISH_CONNECTION_ERROR = "ERR10053";
     private static final String METHOD_NOT_ALLOWED  = "ERR10008";
-    private static MetricsHandler metricsHandler;
+    private static AbstractMetricsHandler metricsHandler;
 
     private volatile HttpHandler next;
     private static ExternalServiceConfig config;
@@ -55,7 +54,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
         // get the metrics handler from the handler chain for metrics registration. If we cannot get the
         // metrics handler, then an error message will be logged.
         Map<String, HttpHandler> handlers = Handler.getHandlers();
-        metricsHandler = (MetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+        metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
         if(metricsHandler == null) {
             logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
         }

@@ -12,18 +12,14 @@ import com.networknt.config.TlsUtil;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.config.UrlRewriteRule;
-import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.ContentType;
 import com.networknt.metrics.MetricsConfig;
-import com.networknt.metrics.MetricsHandler;
+import com.networknt.metrics.AbstractMetricsHandler;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;
 import com.networknt.status.Status;
-import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
-import io.dropwizard.metrics.MetricName;
-import io.dropwizard.metrics.MetricRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -48,7 +44,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
@@ -72,7 +67,7 @@ public class MrasHandler implements MiddlewareHandler {
     private static final String GET_TOKEN_ERROR = "ERR10052";
     private static final String METHOD_NOT_ALLOWED  = "ERR10008";
 
-    private static MetricsHandler metricsHandler;
+    private static AbstractMetricsHandler metricsHandler;
 
     private volatile HttpHandler next;
     private MrasConfig config;
@@ -90,7 +85,7 @@ public class MrasHandler implements MiddlewareHandler {
         // get the metrics handler from the handler chain for metrics registration. If we cannot get the
         // metrics handler, then an error message will be logged.
         Map<String, HttpHandler> handlers = Handler.getHandlers();
-        metricsHandler = (MetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+        metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
         if(metricsHandler == null) {
             logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
         }

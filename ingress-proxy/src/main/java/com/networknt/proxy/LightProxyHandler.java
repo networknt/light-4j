@@ -20,14 +20,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
 import com.networknt.config.JsonMapper;
 import com.networknt.handler.Handler;
-import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.metrics.MetricsConfig;
-import com.networknt.metrics.MetricsHandler;
-import com.networknt.utility.Constants;
+import com.networknt.metrics.AbstractMetricsHandler;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.handler.ProxyHandler;
-import io.dropwizard.metrics.MetricName;
-import io.dropwizard.metrics.MetricRegistry;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.ResponseCodeHandler;
@@ -45,7 +41,6 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -63,7 +58,7 @@ public class LightProxyHandler implements HttpHandler {
     static ProxyConfig config;
 
     static ProxyHandler proxyHandler;
-    static MetricsHandler metricsHandler;
+    static AbstractMetricsHandler metricsHandler;
 
     public LightProxyHandler() {
         config = ProxyConfig.load();
@@ -107,7 +102,7 @@ public class LightProxyHandler implements HttpHandler {
         // get the metrics handler from the handler chain for metrics registration. If we cannot get the
         // metrics handler, then an error message will be logged.
         Map<String, HttpHandler> handlers = Handler.getHandlers();
-        metricsHandler = (MetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+        metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
         if(metricsHandler == null) {
             logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
         }
