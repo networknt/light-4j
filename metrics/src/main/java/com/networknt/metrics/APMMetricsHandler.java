@@ -29,7 +29,7 @@ import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 
-public class APMMetricsHandler extends MetricsHandler {
+public class APMMetricsHandler extends AbstractMetricsHandler {
     static final Logger logger = LoggerFactory.getLogger(APMMetricsHandler.class);
     public static ServerConfig serverConfig;
 

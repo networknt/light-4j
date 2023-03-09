@@ -17,16 +17,11 @@
 package com.networknt.router;
 
 import com.networknt.client.Http2Client;
-import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.ProxyHandler;
-import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.metrics.MetricsConfig;
-import com.networknt.metrics.MetricsHandler;
-import com.networknt.utility.Constants;
+import com.networknt.metrics.AbstractMetricsHandler;
 import com.networknt.utility.ModuleRegistry;
-import io.dropwizard.metrics.MetricName;
-import io.dropwizard.metrics.MetricRegistry;
 import io.undertow.UndertowOptions;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -36,9 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.OptionMap;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * This is a wrapper class for ProxyHandler as it is implemented as final. This class implements
@@ -52,7 +45,7 @@ public class RouterHandler implements HttpHandler {
     private static RouterConfig config;
 
     protected static ProxyHandler proxyHandler;
-    protected static MetricsHandler metricsHandler;
+    protected static AbstractMetricsHandler metricsHandler;
 
     public RouterHandler() {
         config = RouterConfig.load();
@@ -83,7 +76,7 @@ public class RouterHandler implements HttpHandler {
         // get the metrics handler from the handler chain for metrics registration. If we cannot get the
         // metrics handler, then an error message will be logged.
         Map<String, HttpHandler> handlers = Handler.getHandlers();
-        metricsHandler = (MetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+        metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
         if(metricsHandler == null) {
             logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
         }
