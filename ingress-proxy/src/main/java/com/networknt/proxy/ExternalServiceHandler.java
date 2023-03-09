@@ -154,7 +154,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         logger.error("wrong http method " + method + " for request path " + requestPath);
                         setExchangeStatus(exchange, METHOD_NOT_ALLOWED, method, requestPath);
                         if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest ends with an error.");
-                        metricsHandler.injectMetrics(exchange, startTime);
+                        if(metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime);
                         return;
                     }
                     if(client == null) {
@@ -195,7 +195,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                     }
                     exchange.getResponseSender().send(ByteBuffer.wrap(responseBody));
                     if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest ends.");
-                    metricsHandler.injectMetrics(exchange, startTime);
+                    if(metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime);
                     return;
                 }
             }

@@ -123,20 +123,7 @@ public class LightProxyHandler implements HttpHandler {
             httpServerExchange.getRequestHeaders().put(HttpString.tryFromString(CLAIMS_KEY), new ObjectMapper().writeValueAsString(jwtClaims.getClaimsMap()));
         }
         proxyHandler.handleRequest(httpServerExchange);
-        Map<String, Object> auditInfo = httpServerExchange.getAttachment(AttachmentConstants.AUDIT_INFO);
-        if (auditInfo != null) {
-            Map<String, String> tags = new HashMap<>();
-            tags.put("endpoint", (String)auditInfo.get(Constants.ENDPOINT_STRING));
-            tags.put("clientId", auditInfo.get(Constants.CLIENT_ID_STRING) != null ? (String)auditInfo.get(Constants.CLIENT_ID_STRING) : "unknown");
-            tags.put("scopeClientId", auditInfo.get(Constants.SCOPE_CLIENT_ID_STRING) != null ? (String)auditInfo.get(Constants.SCOPE_CLIENT_ID_STRING) : "unknown");
-            tags.put("callerId", auditInfo.get(Constants.CALLER_ID_STRING) != null ? (String)auditInfo.get(Constants.CALLER_ID_STRING) : "unknown");
-            MetricName metricName = new MetricName("api_response_time");
-            metricName = metricName.tagged(metricsHandler.commonTags);
-            metricName = metricName.tagged(tags);
-            long time = System.nanoTime() - startTime;
-            metricsHandler.registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.TIMERS).update(time, TimeUnit.NANOSECONDS);
-            metricsHandler.incCounterForStatusCode(httpServerExchange.getStatusCode(), metricsHandler.commonTags, tags);
-        }
+        if(metricsHandler != null) metricsHandler.injectMetrics(httpServerExchange, startTime);
         if(logger.isDebugEnabled()) logger.debug("LightProxyHandler.handleRequest ends.");
     }
 
