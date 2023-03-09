@@ -31,15 +31,11 @@ import io.undertow.server.HttpServerExchange;
 
 public class APMMetricsHandler extends MetricsHandler {
     static final Logger logger = LoggerFactory.getLogger(APMMetricsHandler.class);
-
-    public static MetricsConfig config;
     public static ServerConfig serverConfig;
 
     // this is the indicator to start the reporter and construct the common tags. It cannot be static as
     // the currentPort and currentAddress are not available during the handler initialization.
     private boolean firstTime = true;
-    public static Map<String, String> commonTags = new HashMap<>();
-
     private volatile HttpHandler next;
 
     public APMMetricsHandler() {

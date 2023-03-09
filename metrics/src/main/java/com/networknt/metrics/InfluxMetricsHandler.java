@@ -28,12 +28,10 @@ import java.util.concurrent.TimeUnit;
 
 public class InfluxMetricsHandler extends MetricsHandler {
     static final Logger logger = LoggerFactory.getLogger(InfluxMetricsHandler.class);
-    public static MetricsConfig config;
 
     // this is the indicator to start the reporter and construct the common tags. It cannot be static as
     // the currentPort and currentAddress are not available during the handler initialization.
     private boolean firstTime = true;
-    Map<String, String> commonTags = new HashMap<>();
     static String MASK_KEY_SERVER_PASS= "serverPass";
     private volatile HttpHandler next;
 
