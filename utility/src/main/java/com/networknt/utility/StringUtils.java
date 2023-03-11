@@ -1455,4 +1455,23 @@ public class StringUtils {
         }
         return true;
     }
+
+    /**
+     * Check if a string is a JWT token.
+     * @param str input
+     * @return boolean true is jwt
+     */
+    public static boolean isJwtToken(String str) {
+        if (str == null) {
+            return false;
+        } else {
+            // not null
+            if(str.indexOf("eyJ") >= 0 && str.indexOf(".") > 0) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
 }
