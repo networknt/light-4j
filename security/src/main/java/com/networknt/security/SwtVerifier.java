@@ -39,12 +39,12 @@ public class SwtVerifier extends TokenVerifier {
      *
      * @param swt          SWT Simple Web Token
      * @param requestPath  request path
-     * @param jwkServiceIds A list of serviceIds from the UnifiedSecurityHandler
+     * @param swtServiceIds A list of serviceIds from the UnifiedSecurityHandler
      * @return {@link Result} of {@link TokenInfo}.
      */
-    public Result<TokenInfo> verifySwt(String swt, String requestPath, List<String> jwkServiceIds) {
+    public Result<TokenInfo> verifySwt(String swt, String requestPath, List<String> swtServiceIds) {
         // based on the pathPrefix to find the serviceId, based on the serviceId to find the introspection configuration
-        return getTokenInfoForToken(swt, jwkServiceIds != null ? jwkServiceIds : requestPath);
+        return getTokenInfoForToken(swt, swtServiceIds != null ? swtServiceIds : requestPath);
     }
 
     /**
@@ -52,23 +52,21 @@ public class SwtVerifier extends TokenVerifier {
      * is received. It will look up the key service by request path or serviceId  first.
      *
      * @param swt         String of simple web token
-     * @param requestPathOrJwkServiceIds String of request path or list of strings for jwkServiceIds
+     * @param requestPathOrSwtServiceIds String of request path or list of strings for swtServiceIds
      * @return {@link Result} of {@link TokenInfo}.
      */
     @SuppressWarnings("unchecked")
-    private Result<TokenInfo> getTokenInfoForToken(String swt, Object requestPathOrJwkServiceIds) {
-        // the jwk indicator will ensure that the kid is not concat to the uri for path parameter.
-        // the kid is not needed to get JWK, but if requestPath is not null, it will be used to get the keyConfig
+    private Result<TokenInfo> getTokenInfoForToken(String swt, Object requestPathOrSwtServiceIds) {
         if (logger.isTraceEnabled()) {
-            logger.trace("swt = " + swt + requestPathOrJwkServiceIds instanceof String ? " requestPath = " + requestPathOrJwkServiceIds : " jwkServiceIds = " + requestPathOrJwkServiceIds);
+            logger.trace("swt = " + swt + requestPathOrSwtServiceIds instanceof String ? " requestPath = " + requestPathOrSwtServiceIds : " swtServiceIds = " + requestPathOrSwtServiceIds);
         }
         ClientConfig clientConfig = ClientConfig.get();
         Result<TokenInfo> result = null;
         Map<String, Object> config;
 
-        if (requestPathOrJwkServiceIds != null && clientConfig.isMultipleAuthServers()) {
-            if(requestPathOrJwkServiceIds instanceof String) {
-                String requestPath = (String)requestPathOrJwkServiceIds;
+        if (requestPathOrSwtServiceIds != null && clientConfig.isMultipleAuthServers()) {
+            if(requestPathOrSwtServiceIds instanceof String) {
+                String requestPath = (String)requestPathOrSwtServiceIds;
                 Map<String, String> pathPrefixServices = clientConfig.getPathPrefixServices();
                 if (pathPrefixServices == null || pathPrefixServices.size() == 0) {
                     throw new ConfigException("pathPrefixServices property is missing or has an empty value in client.yml");
@@ -85,11 +83,11 @@ public class SwtVerifier extends TokenVerifier {
                 }
                 config = getJwkConfig(clientConfig, serviceId);
                 result = inspectToken(swt, config);
-            } else if (requestPathOrJwkServiceIds instanceof List) {
+            } else if (requestPathOrSwtServiceIds instanceof List) {
                 // for this particular path prefix, there are two OAuth servers set up to inspect the token. Which one is success
                 // with active true will be used. Here we just return the one entry with active equal to true.
-                List<String> jwkServiceIds = (List<String>)requestPathOrJwkServiceIds;
-                for(String serviceId: jwkServiceIds) {
+                List<String> swtServiceIds = (List<String>)requestPathOrSwtServiceIds;
+                for(String serviceId: swtServiceIds) {
                     config = getJwkConfig(clientConfig, serviceId);
                     result  = inspectToken(swt, config);
                     if(result.isSuccess()) {
@@ -99,7 +97,7 @@ public class SwtVerifier extends TokenVerifier {
                 }
                 // at this moment, the last result will be return if all of them are failures.
             } else {
-                throw new ConfigException("requestPathOrJwkServiceIds must be a string or a list of strings");
+                throw new ConfigException("requestPathOrSwtServiceIds must be a string or a list of strings");
             }
         } else {
             // get the token introspection config from the key section in the client.yml token key.
