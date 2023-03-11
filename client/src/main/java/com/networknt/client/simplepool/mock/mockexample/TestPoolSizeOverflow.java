@@ -6,14 +6,21 @@ public class TestPoolSizeOverflow
 {
     public static void main(String[] args) {
         new TestRunner()
-            .setConnectionClass(MockKeepAliveConnection.class)
-            .setExpireTime(5)
+            // set connection properties
+            .setConnectionPoolSize(7)
+            .setSimpleConnectionClass(MockKeepAliveConnection.class)
             .setCreateConnectionTimeout(5)
+            .setConnectionExpireTime(5)
             .setHttp2(false)
-            .setBorrowTime(2)
-            .setBorrowTimeJitter(8)
-            .setPoolSize(7)
-            .setNumCallers(8)
+
+            // configure borrower-thread properties
+            .setNumBorrowerThreads(8)
+            .setBorrowerThreadStartJitter(0)
+            .setBorrowTimeLength(2)
+            .setBorrowTimeLengthJitter(8)
+            .setWaitTimeBeforeReborrow(1)
+            .setWaitTimeBeforeReborrowJitter(1)
+
             .setTestLength(10*60)
             .executeTest();
     }

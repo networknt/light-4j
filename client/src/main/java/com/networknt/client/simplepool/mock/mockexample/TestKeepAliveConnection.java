@@ -6,13 +6,21 @@ public class TestKeepAliveConnection
 {
     public static void main(String[] args) {
         new TestRunner()
-            .setConnectionClass(MockKeepAliveConnection.class)
-            .setExpireTime(5)
+            // set connection properties
+            .setConnectionPoolSize(100)
+            .setSimpleConnectionClass(MockKeepAliveConnection.class)
             .setCreateConnectionTimeout(5)
+            .setConnectionExpireTime(5)
             .setHttp2(false)
-            .setBorrowTime(5)
-            .setBorrowTimeJitter(5)
-            .setNumCallers(4)
+
+            // configure borrower-thread properties
+            .setNumBorrowerThreads(4)
+            .setBorrowerThreadStartJitter(0)
+            .setBorrowTimeLength(5)
+            .setBorrowTimeLengthJitter(5)
+            .setWaitTimeBeforeReborrow(2)
+            .setWaitTimeBeforeReborrowJitter(2)
+
             .setTestLength(10*60)
             .executeTest();
     }

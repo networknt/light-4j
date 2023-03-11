@@ -6,13 +6,21 @@ public class TestRandomlyClosingConnection
 {
     public static void main(String[] args) {
         new TestRunner()
-            .setConnectionClass(MockRandomlyClosingConnection.class)
-            .setExpireTime(5)
+            // set connection properties
+            .setConnectionPoolSize(100)
+            .setSimpleConnectionClass(MockRandomlyClosingConnection.class)
             .setCreateConnectionTimeout(5)
+            .setConnectionExpireTime(5)
             .setHttp2(true)
-            .setBorrowTime(5)
-            .setBorrowTimeJitter(5)
-            .setNumCallers(8)
+
+            // configure borrower-thread properties
+            .setNumBorrowerThreads(8)
+            .setBorrowerThreadStartJitter(3)
+            .setBorrowTimeLength(5)
+            .setBorrowTimeLengthJitter(5)
+            .setWaitTimeBeforeReborrow(2)
+            .setWaitTimeBeforeReborrowJitter(2)
+
             .setTestLength(10*60)
             .executeTest();
     }
