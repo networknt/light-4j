@@ -459,13 +459,18 @@ public class JwtVerifier extends TokenVerifier {
             Map<String, Object> tokenConfig = clientConfig.getTokenConfig();
             Map<String, Object> keyConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.KEY);
             Map<String, Object> serviceIdAuthServers = (Map<String, Object>) keyConfig.get(ClientConfig.SERVICE_ID_AUTH_SERVERS);
-            Map<String, String> pathPrefixServices = clientConfig.getPathPrefixServices();
             if (serviceIdAuthServers == null) {
                 throw new RuntimeException("serviceIdAuthServers property is missing in the token key configuration");
             }
             for (Map.Entry<String, Object> entry : serviceIdAuthServers.entrySet()) {
                 String serviceId = entry.getKey();
                 Map<String, Object> authServerConfig = (Map<String, Object>) entry.getValue();
+                // based on the configuration, we can identify if the entry is for jwk retrieval for jwt or swt introspection. For jwk,
+                // there is no clientId and clientSecret. For token introspection, clientId and clientSecret is in the config.
+                if(authServerConfig.get(ClientConfig.CLIENT_ID) != null && authServerConfig.get(ClientConfig.CLIENT_SECRET) != null) {
+                    // this is the entry for swt introspection, skip here.
+                    continue;
+                }
                 TokenKeyRequest keyRequest = new TokenKeyRequest(null, true, authServerConfig);
                 try {
                     if (logger.isDebugEnabled())
