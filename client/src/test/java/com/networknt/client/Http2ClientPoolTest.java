@@ -18,8 +18,7 @@
 
 package com.networknt.client;
 
-import com.networknt.client.circuitbreaker.CircuitBreaker;
-import com.networknt.client.http.Http2ClientConnectionPool;
+
 import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
 import com.networknt.client.ssl.TLSConfig;
 import com.networknt.common.SecretConstants;
@@ -30,7 +29,6 @@ import io.undertow.UndertowOptions;
 import io.undertow.client.*;
 import io.undertow.io.Receiver;
 import io.undertow.io.Sender;
-import io.undertow.protocols.ssl.UndertowXnioSsl;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.util.*;
@@ -50,27 +48,21 @@ import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.*;
-import org.xnio.ssl.XnioSsl;
 
 import javax.net.ssl.*;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
-import java.nio.channels.ClosedChannelException;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.interfaces.RSAPrivateKey;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class Http2ClientPoolTest {
     static final Logger logger = LoggerFactory.getLogger(Http2ClientTest.class);
