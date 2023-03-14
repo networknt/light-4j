@@ -1,7 +1,5 @@
 package com.networknt.client;
 
-
-
 import com.networknt.exception.ClientException;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
@@ -9,19 +7,18 @@ import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
 import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.OptionMap;
-
 import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
-
 
 @Ignore
 public class HttpRequestSSLContextTest {
@@ -56,7 +53,7 @@ public class HttpRequestSSLContextTest {
             ClientRequest request = new ClientRequest().setPath(requestUri).setMethod(Methods.GET);
 
             //customized header parameters
-            request.getRequestHeaders().put(new HttpString("host"), "localhost");
+            request.getRequestHeaders().put(new HttpString("host"), "www.google.com");
             connection.sendRequest(request, client.createClientCallback(reference, latch));
 
             latch.await();
@@ -66,8 +63,7 @@ public class HttpRequestSSLContextTest {
         } finally {
             client.returnConnection(connection);
         }
-        String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-
+        int statusCode = reference.get().getResponseCode();
     }
 
     @Test
@@ -91,8 +87,7 @@ public class HttpRequestSSLContextTest {
         try {
             ClientRequest request = new ClientRequest().setPath(requestUri).setMethod(Methods.GET);
 
-            //customized header parameters
-            request.getRequestHeaders().put(new HttpString("host"), "localhost");
+            request.getRequestHeaders().put(new HttpString("host"), "www.google.com");
             connection.sendRequest(request, client.createClientCallback(reference, latch));
 
             latch.await();
@@ -102,8 +97,8 @@ public class HttpRequestSSLContextTest {
         } finally {
             client.returnConnection(connection);
         }
-        String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-
+        int statusCode = reference.get().getResponseCode();
+        Assert.assertEquals(200, statusCode);
     }
 
 }
