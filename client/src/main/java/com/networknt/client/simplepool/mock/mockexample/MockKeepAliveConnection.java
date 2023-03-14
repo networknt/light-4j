@@ -13,8 +13,6 @@ public class MockKeepAliveConnection implements SimpleConnection {
      * This mock connection simulates a multiplexable connection that never dies unless closed
      *
      * Simulates a server connection with indefinite keep-alives enabled
-     *
-     * @return
      */
 
     public MockKeepAliveConnection(boolean isHttp2) { this.isHttp2 = isHttp2; }

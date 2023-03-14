@@ -27,13 +27,13 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  *             |
  *            \/
- *   [ NOT_BORROWED_VALID ] --(borrow)-->   [ BORROWED_VALID ]
- *             |            <-(restore)--           |
+ *   [ NOT_BORROWED_VALID ] --(borrow)--&gt;   [ BORROWED_VALID ]
+ *             |            &lt;-(restore)--           |
  *             |                                    |
  *          (expire)                             (expire)
  *             |                                    |
  *            \/                                   \/
- *   [ NOT_BORROWED_EXPIRED ] <-(restore)-- [ BORROWED_EXPIRED ]
+ *   [ NOT_BORROWED_EXPIRED ] &lt;-(restore)-- [ BORROWED_EXPIRED ]
  *            |
  *         (close) (*)
  *           |
@@ -159,7 +159,7 @@ public final class SimpleConnectionHolder {
      * @param connectionCreateTimeout the amount of time to wait for a connection to be created before throwing an exception
      * @param now the time at which to evaluate whether there are borrowable connections or not
      * @return returns a ConnectionToken representing this borrow of the connection
-     * @throws RuntimeException
+     * @throws RuntimeException if connection closed or attempt to borrow after pool is full
      */
     public synchronized ConnectionToken borrow(long connectionCreateTimeout, long now) throws RuntimeException {
         /***
