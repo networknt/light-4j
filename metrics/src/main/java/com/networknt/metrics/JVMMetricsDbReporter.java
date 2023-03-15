@@ -33,7 +33,7 @@ public class JVMMetricsDbReporter extends ScheduledReporter {
         
         JVMMetricsUtil.trackAllJVMMetrics(registry, tags);
         
-        if(logger.isDebugEnabled()) logger.debug("InfluxDbReporter report is called with counter size " + counters.size());
+        if(logger.isDebugEnabled()) logger.debug("JVMMetricsDbReporter report is called with counter size " + counters.size());
         try {
             influxDb.flush();
             
@@ -46,7 +46,7 @@ public class JVMMetricsDbReporter extends ScheduledReporter {
                 influxDb.writeData();
             }
         } catch (Exception e) {
-            logger.error("Unable to report to InfluxDB. Discarding data.", e);
+            logger.error("Unable to report to the time series database. Discarding data.", e);
         }
     }
 
