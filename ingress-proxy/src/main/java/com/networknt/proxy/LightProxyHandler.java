@@ -99,12 +99,14 @@ public class LightProxyHandler implements HttpHandler {
                 .setNext(ResponseCodeHandler.HANDLE_404)
                 .build();
 
-        // get the metrics handler from the handler chain for metrics registration. If we cannot get the
-        // metrics handler, then an error message will be logged.
-        Map<String, HttpHandler> handlers = Handler.getHandlers();
-        metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
-        if(metricsHandler == null) {
-            logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
+        if(config.isMetricsInjection()) {
+            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
+            // metrics handler, then an error message will be logged.
+            Map<String, HttpHandler> handlers = Handler.getHandlers();
+            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+            if(metricsHandler == null) {
+                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
+            }
         }
     }
 
@@ -118,7 +120,7 @@ public class LightProxyHandler implements HttpHandler {
             httpServerExchange.getRequestHeaders().put(HttpString.tryFromString(CLAIMS_KEY), new ObjectMapper().writeValueAsString(jwtClaims.getClaimsMap()));
         }
         proxyHandler.handleRequest(httpServerExchange);
-        if(metricsHandler != null) metricsHandler.injectMetrics(httpServerExchange, startTime);
+        if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(httpServerExchange, startTime, config.getMetricsName());
         if(logger.isDebugEnabled()) logger.debug("LightProxyHandler.handleRequest ends.");
     }
 

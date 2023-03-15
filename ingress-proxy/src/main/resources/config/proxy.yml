@@ -32,3 +32,14 @@ maxQueueSize: ${proxy.maxQueueSize:0}
 
 # Decode the JWT token claims and forward to the backend api in the form of json string
 forwardJwtClaims: ${proxy.forwardJwtClaims:false}
+
+# When LightProxyHandler is used in the http-sidecar or light-gateway, it can collect the metrics info for the
+# total response time of the downstream API. With this value injected, users can quickly determine how much
+# time the http-sidecar or light-gateway handlers spend and how much time the downstream API spends, including
+# the network latency. By default, it is false, and metrics will not be collected and injected into the metrics
+# handler configured in the request/response chain.
+metricsInjection: ${proxy.metricsInjection:false}
+# When the metrics info is injected into the metrics handler, we need to pass a metric name to it so that the
+# metrics info can be categorized in a tree structure under the name. By default, it is proxy-response, and
+# users can change it.
+metricsName: ${proxy.metricsName:proxy-response}

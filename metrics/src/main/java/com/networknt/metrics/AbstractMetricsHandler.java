@@ -82,7 +82,13 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
         }
     }
 
-    public void injectMetrics(HttpServerExchange httpServerExchange, long startTime) {
+    /**
+     * This is the method that is used for all other handlers to inject its metrics info to the real metrics handler impl.
+     * @param httpServerExchange the HttpServerExchange that is used to get the auditInfo to collect the metrics tag.
+     * @param startTime the start time passed in to calculate the response time.
+     * @param metricsName the name of the metrics that is collected.
+     */
+    public void injectMetrics(HttpServerExchange httpServerExchange, long startTime, String metricsName) {
         Map<String, Object> auditInfo = httpServerExchange.getAttachment(AttachmentConstants.AUDIT_INFO);
         if (auditInfo != null) {
             Map<String, String> tags = new HashMap<>();
@@ -90,7 +96,7 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
             tags.put("clientId", auditInfo.get(Constants.CLIENT_ID_STRING) != null ? (String)auditInfo.get(Constants.CLIENT_ID_STRING) : "unknown");
             tags.put("scopeClientId", auditInfo.get(Constants.SCOPE_CLIENT_ID_STRING) != null ? (String)auditInfo.get(Constants.SCOPE_CLIENT_ID_STRING) : "unknown");
             tags.put("callerId", auditInfo.get(Constants.CALLER_ID_STRING) != null ? (String)auditInfo.get(Constants.CALLER_ID_STRING) : "unknown");
-            MetricName metricName = new MetricName("api_response_time");
+            MetricName metricName = new MetricName(metricsName);
             metricName = metricName.tagged(commonTags);
             metricName = metricName.tagged(tags);
             long time = System.nanoTime() - startTime;
