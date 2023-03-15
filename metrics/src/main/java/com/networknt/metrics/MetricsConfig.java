@@ -39,6 +39,7 @@ public class MetricsConfig {
     private static final String SERVER_USER = "serverUser";
     private static final String SERVER_PASS = "serverPass";
     private static final String REPORT_IN_MINUTES = "reportInMinutes";
+    private static final String PRODUCT_NAME = "productName";
     boolean enabled;
     boolean enableJVMMonitor;
     String serverProtocol;
@@ -49,6 +50,7 @@ public class MetricsConfig {
     String serverUser;
     String serverPass;
     int reportInMinutes;
+    String productName;
     private Map<String, Object> mappedConfig;
     private Config config;
 
@@ -129,6 +131,14 @@ public class MetricsConfig {
         this.reportInMinutes = reportInMinutes;
     }
 
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
     public String getServerName() { return serverName; }
 
     public void setServerName(String serverName) {
@@ -203,6 +213,10 @@ public class MetricsConfig {
         object = getMappedConfig().get(REPORT_IN_MINUTES);
         if(object != null) {
             reportInMinutes = (int) object;
+        }
+        object = getMappedConfig().get(PRODUCT_NAME);
+        if(object != null) {
+            productName = (String) object;
         }
     }
 }

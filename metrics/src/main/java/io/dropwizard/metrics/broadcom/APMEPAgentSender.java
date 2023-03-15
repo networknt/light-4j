@@ -35,18 +35,20 @@ public class APMEPAgentSender implements TimeSeriesDbSender {
     private static final Logger logger = LoggerFactory.getLogger(APMEPAgentSender.class);
     private final String path;
     private final String serviceId;
+    private final String productName;
     
     private final URL url;
     private final InfluxDbWriteObject influxDbWriteObject;
 
-    public APMEPAgentSender(final String protocol, final String hostname, final int port, final String epAgentPath, final String serviceId) throws MalformedURLException {
-        this(protocol, hostname, port, epAgentPath, serviceId, TimeUnit.MILLISECONDS);
+    public APMEPAgentSender(final String protocol, final String hostname, final int port, final String epAgentPath, final String serviceId, final String productName) throws MalformedURLException {
+        this(protocol, hostname, port, epAgentPath, serviceId, productName, TimeUnit.MILLISECONDS);
     }
 
-    public APMEPAgentSender(final String protocol, final String hostname, final int port, final String epAgentPath, final String serviceId, final TimeUnit timePrecision) throws MalformedURLException {
+    public APMEPAgentSender(final String protocol, final String hostname, final int port, final String epAgentPath, final String serviceId, final String productName, final TimeUnit timePrecision) throws MalformedURLException {
         this.url = new URL(protocol, hostname, port, "");
         this.path = epAgentPath;
         this.serviceId = serviceId;
+        this.productName = productName;
         if(logger.isInfoEnabled()) logger.info("APMEPAgentSender is created with path = {}  and host = {}", Mask.maskString(path, "uri"), url);
         this.influxDbWriteObject = new InfluxDbWriteObject(timePrecision);
     }
@@ -152,7 +154,7 @@ public class APMEPAgentSender implements TimeSeriesDbSender {
 
         StringJoiner metricNameJoiner = new StringJoiner("|");
 
-        metricNameJoiner.add("Light Proxy");
+        metricNameJoiner.add(productName);
         metricNameJoiner.add(serviceId);
 
         for (Entry<String, String> pair : point.getTags().entrySet()) {
