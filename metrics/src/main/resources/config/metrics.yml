@@ -23,3 +23,9 @@ serverUser: ${metrics.serverUser:admin}
 serverPass: ${metrics.serverPass:admin}
 # report and reset metrics in minutes.
 reportInMinutes: ${metrics.reportInMinutes:1}
+# This is the metrics product name for the centralized time series database. The product name will be
+# the top level category under a Kubernetes cluster or a virtual machine. The following is the light-4j
+# product list. http-sidecar, kafka-sidecar, corp-gateway, aiz-gateway, proxy-server, proxy-client,
+# proxy-lambda, light-balancer etc. By default, http-sidecar is used as a placeholder. Please change it
+# based on your usage in the values.yml file.
+productName: ${metrics.productName:http-sidecar}

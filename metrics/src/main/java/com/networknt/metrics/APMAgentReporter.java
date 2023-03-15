@@ -36,7 +36,7 @@ import io.dropwizard.metrics.Snapshot;
 import io.dropwizard.metrics.Timer;
 import io.dropwizard.metrics.influxdb.data.InfluxDbPoint;
 
-public final class APMInfluxDbReporter extends ScheduledReporter {
+public final class APMAgentReporter extends ScheduledReporter {
     public static final class Builder {
         private final MetricRegistry registry;
         private Map<String, String> tags;
@@ -108,20 +108,20 @@ public final class APMInfluxDbReporter extends ScheduledReporter {
             return this;
         }
 
-        public APMInfluxDbReporter build(final TimeSeriesDbSender influxDb) {
-            return new APMInfluxDbReporter(registry, influxDb, tags, rateUnit, durationUnit, filter, skipIdleMetrics);
+        public APMAgentReporter build(final TimeSeriesDbSender influxDb) {
+            return new APMAgentReporter(registry, influxDb, tags, rateUnit, durationUnit, filter, skipIdleMetrics);
         }
     }
 
-    private static final Logger logger = LoggerFactory.getLogger(APMInfluxDbReporter.class);
+    private static final Logger logger = LoggerFactory.getLogger(APMAgentReporter.class);
     private static final String COUNT = ".count";
     private final TimeSeriesDbSender influxDb;
     private final boolean skipIdleMetrics;
     private final Map<MetricName, Long> previousValues;
 
-    private APMInfluxDbReporter(final MetricRegistry registry, final TimeSeriesDbSender influxDb, final Map<String, String> tags,
-                                final TimeUnit rateUnit, final TimeUnit durationUnit, final MetricFilter filter, final boolean skipIdleMetrics) {
-        super(registry, "influxDb-reporter", filter, rateUnit, durationUnit);
+    private APMAgentReporter(final MetricRegistry registry, final TimeSeriesDbSender influxDb, final Map<String, String> tags,
+                             final TimeUnit rateUnit, final TimeUnit durationUnit, final MetricFilter filter, final boolean skipIdleMetrics) {
+        super(registry, "apm-reporter", filter, rateUnit, durationUnit);
         this.influxDb = influxDb;
         influxDb.setTags(tags);
         this.skipIdleMetrics = skipIdleMetrics;
@@ -136,7 +136,7 @@ public final class APMInfluxDbReporter extends ScheduledReporter {
     public void report(final SortedMap<MetricName, Gauge> gauges, final SortedMap<MetricName, Counter> counters,
                        final SortedMap<MetricName, Histogram> histograms, final SortedMap<MetricName, Meter> meters, final SortedMap<MetricName, Timer> timers) {
         final long now = System.currentTimeMillis();
-        if(logger.isDebugEnabled()) logger.debug("InfluxDbReporter report is called with counter size {}", counters.size());
+        if(logger.isDebugEnabled()) logger.debug("APMAgentReporter report is called with counter size {}", counters.size());
         try {
             influxDb.flush();
 
@@ -170,7 +170,7 @@ public final class APMInfluxDbReporter extends ScheduledReporter {
                 counter.dec(count);
             }
         } catch (Exception e) {
-            logger.error("Unable to report to InfluxDB. Discarding data.", e);
+            logger.error("Unable to report to APM Agent. Discarding data.", e);
         }
     }
 

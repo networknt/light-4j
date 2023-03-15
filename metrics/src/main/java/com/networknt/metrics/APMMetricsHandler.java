@@ -59,14 +59,14 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
             }
             
             try {
-                TimeSeriesDbSender influxDb =
-                        new APMEPAgentSender(config.getServerProtocol(), config.getServerHost(), config.getServerPort(), config.getServerPath(), serverConfig.getServiceId());
-                APMInfluxDbReporter reporter = APMInfluxDbReporter
+                TimeSeriesDbSender sender =
+                        new APMEPAgentSender(config.getServerProtocol(), config.getServerHost(), config.getServerPort(), config.getServerPath(), serverConfig.getServiceId(),  config.getProductName());
+                APMAgentReporter reporter = APMAgentReporter
                         .forRegistry(registry)
                         .convertRatesTo(TimeUnit.SECONDS)
                         .convertDurationsTo(TimeUnit.MILLISECONDS)
                         .filter(MetricFilter.ALL)
-                        .build(influxDb);
+                        .build(sender);
                 reporter.start(config.getReportInMinutes(), TimeUnit.MINUTES);
 
                 logger.info("apmmetrics is enabled and reporter is started");
