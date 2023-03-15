@@ -16,11 +16,16 @@ public class ExternalServiceConfig {
     private static final String PROXY_PORT = "proxyPort";
     private static final String ENABLE_HTTP2 = "enableHttp2";
     private static final String PATH_HOST_MAPPINGS = "pathHostMappings";
+    private static final String METRICS_INJECTION = "metricsInjection";
+    private static final String METRICS_NAME = "metricsName";
 
     boolean enabled;
     String proxyHost;
     int proxyPort;
     boolean enableHttp2;
+    boolean metricsInjection;
+    String metricsName;
+
     List<String[]> pathHostMappings;
 
     List<UrlRewriteRule> urlRewriteRules;
@@ -86,6 +91,9 @@ public class ExternalServiceConfig {
         this.enableHttp2 = enableHttp2;
     }
 
+    public boolean isMetricsInjection() { return metricsInjection; }
+    public String getMetricsName() { return metricsName; }
+
     private void setConfigData() {
         Object object = mappedConfig.get(ENABLED);
         if (object != null && (Boolean) object) {
@@ -102,6 +110,14 @@ public class ExternalServiceConfig {
         object = mappedConfig.get(ENABLE_HTTP2);
         if (object != null && (Boolean) object) {
             setEnableHttp2((Boolean)object);
+        }
+        object = getMappedConfig().get(METRICS_INJECTION);
+        if(object != null && (Boolean) object) {
+            metricsInjection = true;
+        }
+        object = getMappedConfig().get(METRICS_NAME);
+        if(object != null ) {
+            metricsName = (String)object;
         }
     }
 

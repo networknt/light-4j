@@ -47,6 +47,8 @@ public class RouterConfig {
     private static final String MAX_QUEUE_SIZE = "maxQueueSize";
     private static final String SERVICE_ID_QUERY_PARAMETER = "serviceIdQueryParameter";
     private static final String PRE_RESOLVE_FQDN_2_IP = "preResolveFQDN2IP";
+    private static final String METRICS_INJECTION = "metricsInjection";
+    private static final String METRICS_NAME = "metricsName";
 
     boolean http2Enabled;
     boolean httpsEnabled;
@@ -61,6 +63,9 @@ public class RouterConfig {
 
 
     boolean preResolveFQDN2IP;
+    boolean metricsInjection;
+    String metricsName;
+
     List<String> hostWhitelist;
     List<UrlRewriteRule> urlRewriteRules;
     List<MethodRewriteRule> methodRewriteRules;
@@ -159,7 +164,14 @@ public class RouterConfig {
         if(object != null && (Boolean) object) {
             preResolveFQDN2IP = true;
         }
-
+        object = getMappedConfig().get(METRICS_INJECTION);
+        if(object != null && (Boolean) object) {
+            metricsInjection = true;
+        }
+        object = getMappedConfig().get(METRICS_NAME);
+        if(object != null ) {
+            metricsName = (String)object;
+        }
     }
 
     public Map<String, Object> getMappedConfig() {
@@ -188,7 +200,8 @@ public class RouterConfig {
 
     public boolean isReuseXForwarded() { return reuseXForwarded; }
     public boolean isPreResolveFQDN2IP() { return preResolveFQDN2IP; }
-
+    public boolean isMetricsInjection() { return metricsInjection; }
+    public String getMetricsName() { return metricsName; }
     public int getMaxConnectionRetries() { return maxConnectionRetries; }
 
     public int getMaxQueueSize() { return maxQueueSize; }

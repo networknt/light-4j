@@ -37,6 +37,8 @@ public class ProxyConfig {
     private static final String MAX_CONNECTION_RETRIES = "maxConnectionRetries";
     private static final String MAX_QUEUE_SIZE = "maxQueueSize";
     private static final String FORWARD_JWT_CLAIMS = "forwardJwtClaims";
+    private static final String METRICS_INJECTION = "metricsInjection";
+    private static final String METRICS_NAME = "metricsName";
 
     boolean enabled;
     boolean http2Enabled;
@@ -48,6 +50,8 @@ public class ProxyConfig {
     int maxConnectionRetries;
     int maxQueueSize;
     private boolean forwardJwtClaims;
+    boolean metricsInjection;
+    String metricsName;
 
     private Config config;
     private Map<String, Object> mappedConfig;
@@ -110,6 +114,8 @@ public class ProxyConfig {
     public boolean isForwardJwtClaims() {
         return forwardJwtClaims;
     }
+    public boolean isMetricsInjection() { return metricsInjection; }
+    public String getMetricsName() { return metricsName; }
 
     private void setConfigData() {
         Object object = getMappedConfig().get(HTTP2_ENABLED);
@@ -133,5 +139,14 @@ public class ProxyConfig {
         maxRequestTime = (Integer)getMappedConfig().get(MAX_REQUEST_TIME);
         maxConnectionRetries = (Integer)getMappedConfig().get(MAX_CONNECTION_RETRIES);
         maxQueueSize = (Integer)getMappedConfig().get(MAX_QUEUE_SIZE);
+        object = getMappedConfig().get(METRICS_INJECTION);
+        if(object != null && (Boolean) object) {
+            metricsInjection = true;
+        }
+        object = getMappedConfig().get(METRICS_NAME);
+        if(object != null ) {
+            metricsName = (String)object;
+        }
+
     }
 }

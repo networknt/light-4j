@@ -42,6 +42,8 @@ public class MrasConfig {
     public static final String PROXY_PORT = "proxyPort";
     public static final String ENABLE_HTTP2 = "enableHttp2";
     public static final String PATH_PREFIX_AUTH = "pathPrefixAuth";
+    private static final String METRICS_INJECTION = "metricsInjection";
+    private static final String METRICS_NAME = "metricsName";
 
     boolean enabled;
     String keyStoreName;
@@ -52,6 +54,9 @@ public class MrasConfig {
     String proxyHost;
     int proxyPort;
     boolean enableHttp2;
+    boolean metricsInjection;
+    String metricsName;
+
     List<UrlRewriteRule> urlRewriteRules;
     Map<String, Object> pathPrefixAuth;
 
@@ -123,6 +128,8 @@ public class MrasConfig {
     public boolean isEnableHttp2() {
         return enableHttp2;
     }
+    public boolean isMetricsInjection() { return metricsInjection; }
+    public String getMetricsName() { return metricsName; }
 
     public List<UrlRewriteRule> getUrlRewriteRules() {
         return urlRewriteRules;
@@ -185,6 +192,14 @@ public class MrasConfig {
         object = mappedConfig.get(SERVICE_HOST);
         if (object != null) {
             serviceHost = (String) object;
+        }
+        object = mappedConfig.get(METRICS_INJECTION);
+        if(object != null && (Boolean) object) {
+            metricsInjection = true;
+        }
+        object = mappedConfig.get(METRICS_NAME);
+        if(object != null ) {
+            metricsName = (String)object;
         }
     }
 
