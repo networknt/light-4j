@@ -51,12 +51,14 @@ public class ExternalServiceHandler implements MiddlewareHandler {
 
     public ExternalServiceHandler() {
         config = new ExternalServiceConfig();
-        // get the metrics handler from the handler chain for metrics registration. If we cannot get the
-        // metrics handler, then an error message will be logged.
-        Map<String, HttpHandler> handlers = Handler.getHandlers();
-        metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
-        if(metricsHandler == null) {
-            logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
+        if(config.isMetricsInjection()) {
+            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
+            // metrics handler, then an error message will be logged.
+            Map<String, HttpHandler> handlers = Handler.getHandlers();
+            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+            if(metricsHandler == null) {
+                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
+            }
         }
         if(logger.isInfoEnabled()) logger.info("ExternalServiceConfig is loaded.");
     }
@@ -153,7 +155,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         logger.error("wrong http method " + method + " for request path " + requestPath);
                         setExchangeStatus(exchange, METHOD_NOT_ALLOWED, method, requestPath);
                         if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest ends with an error.");
-                        if(metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime);
+                        if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName());
                         return;
                     }
                     if(client == null) {
@@ -194,7 +196,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                     }
                     exchange.getResponseSender().send(ByteBuffer.wrap(responseBody));
                     if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest ends.");
-                    if(metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime);
+                    if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName());
                     return;
                 }
             }

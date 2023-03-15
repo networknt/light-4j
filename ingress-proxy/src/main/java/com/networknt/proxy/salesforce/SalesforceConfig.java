@@ -41,6 +41,8 @@ public class SalesforceConfig {
     List<UrlRewriteRule> urlRewriteRules;
     public static final String PATH_PREFIX_AUTHS = "pathPrefixAuths";
     public static final String SERVICE_HOST = "serviceHost";
+    private static final String METRICS_INJECTION = "metricsInjection";
+    private static final String METRICS_NAME = "metricsName";
 
     boolean enabled;
     String certFilename;
@@ -48,6 +50,8 @@ public class SalesforceConfig {
     String proxyHost;
     int proxyPort;
     boolean enableHttp2;
+    boolean metricsInjection;
+    String metricsName;
 
     List<PathPrefixAuth> pathPrefixAuths;
     private Config config;
@@ -131,6 +135,8 @@ public class SalesforceConfig {
     public void setEnableHttp2(boolean enableHttp2) {
         this.enableHttp2 = enableHttp2;
     }
+    public boolean isMetricsInjection() { return metricsInjection; }
+    public String getMetricsName() { return metricsName; }
 
     public List<PathPrefixAuth> getPathPrefixAuths() {
         return pathPrefixAuths;
@@ -184,6 +190,14 @@ public class SalesforceConfig {
         object = mappedConfig.get(ENABLE_HTTP2);
         if(object != null && (Boolean) object) {
             setEnableHttp2(true);
+        }
+        object = mappedConfig.get(METRICS_INJECTION);
+        if(object != null && (Boolean) object) {
+            metricsInjection = true;
+        }
+        object = mappedConfig.get(METRICS_NAME);
+        if(object != null ) {
+            metricsName = (String)object;
         }
     }
 

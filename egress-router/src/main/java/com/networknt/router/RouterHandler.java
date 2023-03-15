@@ -75,10 +75,12 @@ public class RouterHandler implements HttpHandler {
                 .build();
         // get the metrics handler from the handler chain for metrics registration. If we cannot get the
         // metrics handler, then an error message will be logged.
-        Map<String, HttpHandler> handlers = Handler.getHandlers();
-        metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
-        if(metricsHandler == null) {
-            logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
+        if(config.isMetricsInjection()) {
+            Map<String, HttpHandler> handlers = Handler.getHandlers();
+            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+            if(metricsHandler == null) {
+                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
+            }
         }
     }
 
@@ -87,7 +89,7 @@ public class RouterHandler implements HttpHandler {
         if(logger.isDebugEnabled()) logger.debug("RouterHandler.handleRequest starts.");
         long startTime = System.nanoTime();
         proxyHandler.handleRequest(httpServerExchange);
-        if(metricsHandler != null) metricsHandler.injectMetrics(httpServerExchange, startTime);
+        if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(httpServerExchange, startTime, config.getMetricsName());
         if(logger.isDebugEnabled()) logger.debug("RouterHandler.handleRequest ends.");
     }
 
