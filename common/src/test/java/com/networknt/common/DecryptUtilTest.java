@@ -55,6 +55,17 @@ public class DecryptUtilTest {
     }
 
     @Test
+    public void testAESSaltEncryptorWithRealPass() {
+        String p = "tN-(kw^tQ\\46}Bq";
+        AESSaltEncryptor encryptor = new AESSaltEncryptor();
+        String s = encryptor.encrypt(p);
+        System.out.println("s = " + s);
+        AESSaltDecryptor decryptor = new AESSaltDecryptor();
+        String c = decryptor.decrypt(s);
+        System.out.println("c = " + c);
+    }
+
+    @Test
     public void test256() {
         String originalString = "howtodoinjava.com";
 
