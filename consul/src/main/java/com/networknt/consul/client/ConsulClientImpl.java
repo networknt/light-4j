@@ -17,6 +17,7 @@
 package com.networknt.consul.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.consul.*;
@@ -46,6 +47,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+// use SimpleURIConnectionPool as the connection pool
+import com.networknt.client.simplepool.SimpleURIConnectionPool;
+import com.networknt.client.simplepool.SimpleConnectionHolder;
+// Use Undertow ClientConnection as raw connection
+import com.networknt.client.simplepool.SimpleConnectionMaker;
+import com.networknt.client.simplepool.undertow.SimpleClientConnectionMaker;
+
 /**
  * A client that talks to Consul agent with REST API.
  * Client and connection are cached as instance variable in singleton class.
@@ -62,6 +70,9 @@ public class ConsulClientImpl implements ConsulClient {
 	private URI uri;
 	private String wait = "600s";
 	private String timeoutBuffer = "5s";
+
+	// connection pool
+	private SimpleURIConnectionPool pool = null;
 
 	/**
 	 * Construct ConsulClient with all parameters from consul.yml config file. The other two constructors are
@@ -81,6 +92,11 @@ public class ConsulClientImpl implements ConsulClient {
 			logger.error("Invalid URI " + consulUrl, e);
 			throw new RuntimeException("Invalid URI " + consulUrl, e);
 		}
+
+		// create SimpleURIConnection pool
+		SimpleConnectionMaker undertowConnectionMaker = SimpleClientConnectionMaker.instance();
+		pool = new SimpleURIConnectionPool(
+				uri, ClientConfig.get().getConnectionExpireTime(), ClientConfig.get().getConnectionPoolSize(), undertowConnectionMaker);
 	}
 
 	@Override
@@ -194,10 +210,12 @@ public class ConsulClientImpl implements ConsulClient {
 		}
 		logger.trace("Consul health service path = {}", path);
 
+		SimpleConnectionHolder.ConnectionToken connectionToken = null;
 		try {
 			if(logger.isDebugEnabled()) logger.debug("Getting connection from pool with {}", uri);
 			// this will throw a Runtime Exception if creation of Consul connection fails
-			connection = client.borrowConnection(config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+			connectionToken = pool.borrow(config.getConnectionTimeout(), isHttp2());
+			connection = (ClientConnection) connectionToken.getRawConnection();
 			if(logger.isDebugEnabled()) logger.debug("CONSUL CONNECTION ESTABLISHED: {} from pool and send request to {}", connection, path);
 			AtomicReference<ClientResponse> reference = send(connection, Methods.GET, path, token, null);
 
@@ -263,7 +281,7 @@ public class ConsulClientImpl implements ConsulClient {
 			return null;
 
 		} finally {
-			client.returnConnection(connection);
+			pool.restore(connectionToken);
 		}
 
 		return newResponse;
