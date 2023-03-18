@@ -311,7 +311,7 @@ public class Status {
      * status before customizing it. There are several organizations that have their own customized
      * wrapper to translate the status code to something else in order to hide the real error message
      * for security reasons.
-     * @return
+     * @return a map of config entries
      */
     public static Map<String, Object> getConfig() {
         return config;
