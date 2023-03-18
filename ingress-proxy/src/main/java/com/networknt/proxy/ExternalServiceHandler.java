@@ -50,7 +50,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     private HttpClient client;
 
     public ExternalServiceHandler() {
-        config = new ExternalServiceConfig();
+        config = ExternalServiceConfig.load();
         if(config.isMetricsInjection()) {
             // get the metrics handler from the handler chain for metrics registration. If we cannot get the
             // metrics handler, then an error message will be logged.
@@ -89,6 +89,15 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     @Override
     public void reload() {
         config.reload();
+        if(config.isMetricsInjection()) {
+            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
+            // metrics handler, then an error message will be logged.
+            Map<String, HttpHandler> handlers = Handler.getHandlers();
+            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+            if(metricsHandler == null) {
+                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
+            }
+        }
         ModuleRegistry.registerModule(ExternalServiceHandler.class.getName(), config.getMappedConfig(), null);
     }
 

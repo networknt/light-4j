@@ -76,7 +76,7 @@ public class SalesforceHandler implements MiddlewareHandler {
     private static AbstractMetricsHandler metricsHandler;
 
     private volatile HttpHandler next;
-    private SalesforceConfig config;
+    private static SalesforceConfig config;
     // the cached jwt token so that we can use the same token for different requests.
 
     private HttpClient client;
@@ -123,6 +123,15 @@ public class SalesforceHandler implements MiddlewareHandler {
     @Override
     public void reload() {
         config.reload();
+        if(config.isMetricsInjection()) {
+            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
+            // metrics handler, then an error message will be logged.
+            Map<String, HttpHandler> handlers = Handler.getHandlers();
+            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+            if(metricsHandler == null) {
+                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
+            }
+        }
         List<String> masks = new ArrayList<>();
         masks.add("certPassword");
         ModuleRegistry.registerModule(SalesforceHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(SalesforceConfig.CONFIG_NAME), masks);

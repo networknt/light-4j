@@ -3,6 +3,7 @@ package com.networknt.proxy;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.handler.config.UrlRewriteRule;
+import com.networknt.proxy.mras.MrasConfig;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,12 +42,19 @@ public class ExternalServiceConfig {
      * to test different configurations.
      * @param configName String
      */
-    protected ExternalServiceConfig(String configName) {
+    private ExternalServiceConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(configName);
         setConfigData();
         setUrlRewriteRules();
         setConfigList();
+    }
+    public static ExternalServiceConfig load() {
+        return new ExternalServiceConfig();
+    }
+
+    public static ExternalServiceConfig load(String configName) {
+        return new ExternalServiceConfig(configName);
     }
 
     void reload() {
