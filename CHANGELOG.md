@@ -1,5 +1,13 @@
 # Change Log
 
+## [1.6.45](https://github.com/networknt/light-4j/tree/1.6.45) (2023-03-18)
+
+
+**Merged pull requests:**
+
+
+- Resolve Consul connection leaks by using SimpleURIConnectionPool [\#1657](https://github.com/networknt/light-4j/pull/1657) ([miklish](https://github.com/miklish))
+-  fix jdk1.8 version for issue 1663 [\#1639](https://github.com/networknt/light-4j/pull/1639) ([GavinChenYan](https://github.com/GavinChenYan))
 ## [1.6.44](https://github.com/networknt/light-4j/tree/1.6.44) (2022-12-22)
 
 
