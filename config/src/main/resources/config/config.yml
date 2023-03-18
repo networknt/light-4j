@@ -14,7 +14,6 @@
 exclusionConfigFileList:
   - openapi
   - values
-  - status
 
 decryptorClass: com.networknt.decrypt.AESDecryptor
 #  com.networknt.decrypt.ManualAESDecryptor

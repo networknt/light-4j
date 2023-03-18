@@ -1,4 +1,23 @@
----
+# To control show or hide message field in the following error. Some organizations do not want to expose
+# the error message to allow the hackers to guess how the server is doing with invalid requests.
+showMessage: ${status.showMessage:true}
+# To control show or hide description field in the following error. Some organizations do not want to expose
+# the error description to allow the hackers to guess how the server is doing with invalid requests.
+showDescription: ${status.showDescription:true}
+# To control show or hide metadata field in the error. Light-4j default status code does not have metadata
+# defined as below. However, user defined error could have metadata that is a JSON object. If you do not want
+# to expose the error metadata to allow the hackers to guess how the server is doing with invalid requests, you
+# can turn it off with is flag. Here is an example of metadata in YAML format
+# ERR10000:
+#   statusCode: 401
+#   code: ERR10000
+#   message: INVALID_AUTH_TOKEN
+#   description: Incorrect signature or malformed token in authorization header
+#   metadata:
+#     link: https://lightapi.net/error/ERR10000
+showMetadata: ${status.showMetadata:true}
+
+# The rest of the content is the built-in error code of light-4j platform.
 SUC10200:
   statusCode: 200
   code: SUC10200
