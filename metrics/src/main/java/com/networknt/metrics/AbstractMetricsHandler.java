@@ -96,6 +96,7 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
             tags.put("clientId", auditInfo.get(Constants.CLIENT_ID_STRING) != null ? (String)auditInfo.get(Constants.CLIENT_ID_STRING) : "unknown");
             tags.put("scopeClientId", auditInfo.get(Constants.SCOPE_CLIENT_ID_STRING) != null ? (String)auditInfo.get(Constants.SCOPE_CLIENT_ID_STRING) : "unknown");
             tags.put("callerId", auditInfo.get(Constants.CALLER_ID_STRING) != null ? (String)auditInfo.get(Constants.CALLER_ID_STRING) : "unknown");
+            tags.put("issuer", auditInfo.get(Constants.ISSUER_CLAIMS) != null ? (String)auditInfo.get(Constants.ISSUER_CLAIMS) : "unknown");
             MetricName metricName = new MetricName(metricsName);
             metricName = metricName.tagged(commonTags);
             metricName = metricName.tagged(tags);
