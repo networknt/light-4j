@@ -40,6 +40,10 @@ public class MetricsConfig {
     private static final String SERVER_PASS = "serverPass";
     private static final String REPORT_IN_MINUTES = "reportInMinutes";
     private static final String PRODUCT_NAME = "productName";
+    private static final String SEND_SCOPE_CLIENT_ID = "sendScopeClientId";
+    private static final String SEND_CALLER_ID = "sendCallerId";
+    private static final String SEND_ISSUER = "sendIssuer";
+    private static final String ISSUER_REGEX = "issuerRegex";
     boolean enabled;
     boolean enableJVMMonitor;
     String serverProtocol;
@@ -51,6 +55,11 @@ public class MetricsConfig {
     String serverPass;
     int reportInMinutes;
     String productName;
+    boolean sendScopeClientId;
+    boolean sendCallerId;
+    boolean sendIssuer;
+    String issuerRegex;
+
     private Map<String, Object> mappedConfig;
     private Config config;
 
@@ -169,6 +178,38 @@ public class MetricsConfig {
         this.serverPath = serverPath;
     }
 
+    public boolean isSendScopeClientId() {
+        return sendScopeClientId;
+    }
+
+    public void setSendScopeClientId(boolean sendScopeClientId) {
+        this.sendScopeClientId = sendScopeClientId;
+    }
+
+    public boolean isSendCallerId() {
+        return sendCallerId;
+    }
+
+    public void setSendCallerId(boolean sendCallerId) {
+        this.sendCallerId = sendCallerId;
+    }
+
+    public boolean isSendIssuer() {
+        return sendIssuer;
+    }
+
+    public void setSendIssuer(boolean sendIssuer) {
+        this.sendIssuer = sendIssuer;
+    }
+
+    public String getIssuerRegex() {
+        return issuerRegex;
+    }
+
+    public void setIssuerRegex(String issuerRegex) {
+        this.issuerRegex = issuerRegex;
+    }
+
     Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
@@ -217,6 +258,22 @@ public class MetricsConfig {
         object = getMappedConfig().get(PRODUCT_NAME);
         if(object != null) {
             productName = (String) object;
+        }
+        object = getMappedConfig().get(SEND_SCOPE_CLIENT_ID);
+        if(object != null && (Boolean) object) {
+            sendScopeClientId = true;
+        }
+        object = getMappedConfig().get(SEND_CALLER_ID);
+        if(object != null && (Boolean) object) {
+            sendCallerId = true;
+        }
+        object = getMappedConfig().get(SEND_ISSUER);
+        if(object != null && (Boolean) object) {
+            sendIssuer = true;
+        }
+        object = getMappedConfig().get(ISSUER_REGEX);
+        if(object != null) {
+            issuerRegex = (String) object;
         }
     }
 }
