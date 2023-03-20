@@ -6,6 +6,7 @@ import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 import com.networknt.server.ServerConfig;
 import org.slf4j.Logger;
@@ -40,6 +41,9 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
 
     public APMMetricsHandler() {
         config = MetricsConfig.load();
+        if(config.getIssuerRegex() != null) {
+            pattern = Pattern.compile(config.getIssuerRegex());
+        }
         serverConfig = (ServerConfig) Config.getInstance().getJsonObjectConfig(ServerConfig.CONFIG_NAME, ServerConfig.class);
         ModuleRegistry.registerModule(MetricsConfig.class.getName(), config.getMappedConfig(), null);
         if(logger.isDebugEnabled()) logger.debug("APMMetricsHandler is constructed!");
