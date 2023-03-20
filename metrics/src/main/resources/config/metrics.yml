@@ -29,3 +29,32 @@ reportInMinutes: ${metrics.reportInMinutes:1}
 # proxy-lambda, light-balancer etc. By default, http-sidecar is used as a placeholder. Please change it
 # based on your usage in the values.yml file.
 productName: ${metrics.productName:http-sidecar}
+# A flag to indicate if the scope client id will be sent as a common tag. If it is true, try to retrieve
+# it from the audit info and send it if it is not null. If it does not exist, "unknown" will be sent.
+# By default, this tag is not sent regardless if it is in the audit info. You only enable this if your
+# API will be accessed by a Mobile or SPA application with authorization code flow. In this case, the
+# primary token is the authorization code token that contains user info and the secondary scope token
+# is the client_credentials token from the immediate caller service in the invocation chain.
+sendScopeClientId: ${metrics.sendScopeClientId:false}
+# A flag to indicate if the caller id will be sent as a common tag. If it is true, try to retrieve it
+# from the audit info and send it if it is not null. If it doesn't exist, "unknown" will be sent.
+# By default, this tag is not sent regardless if it is in the audit info. The purpose of this tag is
+# similar to the scopeClientId to identify the immediate caller service in a microservice application.
+# As the scopeClientId is only available when the scope token is used, it cannot be used for all apps.
+# light-4j client module has a config to enforce all services to send the callerId to the downstream
+# API, and it can be enforced within an organization. In most cases, this callerId is more reliable.
+sendCallerId: ${metrics.sendCallerId:false}
+# A flag to indicate if the issuer will be sent as a common tag. If it is true, try to retrieve it
+# from the audit info and send it if it is not null. If it doesn't exist, "unknown" will be sent.
+# By default, this tag is not sent regardless if it is in the audit info. This tag should only be
+# sent if the organization uses multiple OAuth 2.0 providers. For example, Okta will provide multiple
+# virtual instances, so each service can have its private OAuth 2.0 provider. If all services are
+# sharing the same OAuth 2.0 provide (same issuer in the token), this tag should not be used.
+sendIssuer: ${metrics.sendIssuer:false}
+# If issuer is sent, it might be necessary to extract only partial of the string with a regex pattern.
+# For example, Okta iss is something like: "https://networknt.oktapreview.com/oauth2/aus9xt6dd1cSYyRPH1d6"
+# We only need to extract the last part after the last slash. The following default regex is just for it.
+# The code in the light-4j is trying to extract the matcher.group(1) and there is a junit test to allow
+# users to test their regex. If you are using Okat, you can set metrics.issuerRegex: /([^/]+)$
+# By default, the regex is empty, and the original iss will be sent as a tag.
+issuerRegex: ${metrics.issuerRegex:}
