@@ -2,7 +2,7 @@
 ldap.uri: ldaps://example.com:636/dc=example,dc=com
 ldap.domain: example.com
 ldap.principal: cn=id_ldap,ou=Services,ou=UserAccounts,dc=example,dc=com
-ldap.credential: CRYPT:/aIs9Qjulvc6PrkrbeonE7gPsSR1QLZqIHIDm8NRaI0=
+ldap.credential: CRYPT:0754fbc37347c136be7725cbf62b6942:71756e13c2400985d0402ed6f49613d0
 ldap.searchFilter: (&(samaccountname=%s)(objectClass=person))
 ldap.searchBase: ''
 

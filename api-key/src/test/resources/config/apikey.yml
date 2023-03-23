@@ -16,4 +16,4 @@ pathPrefixAuths:
     apiKey: xyz
   - pathPrefix: /test2
     headerName: x-apikey
-    apiKey: CRYPT:08eXg9TmK604+w06RaBlsPQbplU1F1Ez5pkBO/hNr8w=
+    apiKey: CRYPT:3ddd6c8b9bf2afc24d1c94af1dffd518:1bf0cafb19c53e61ddeae626f8906d43
