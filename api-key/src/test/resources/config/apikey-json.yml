@@ -6,4 +6,4 @@ enabled: ${apikey.enabled:true}
 # prefix. Once found, it will check if the apikey is equal to allow the access or return an error.
 # The map object has three properties: pathPrefix, headerName and apiKey. Take a look at the test
 # resources/config folder for configuration examples.
-pathPrefixAuths: [{"pathPrefix":"/test1","headerName":"x-gateway-apikey","apiKey":"abcdefg"},{"pathPrefix":"/test2","headerName":"x-apikey","apiKey":"CRYPT:08eXg9TmK604+w06RaBlsPQbplU1F1Ez5pkBO/hNr8w="}]
+pathPrefixAuths: [{"pathPrefix":"/test1","headerName":"x-gateway-apikey","apiKey":"abcdefg"},{"pathPrefix":"/test2","headerName":"x-apikey","apiKey":"CRYPT:3ddd6c8b9bf2afc24d1c94af1dffd518:1bf0cafb19c53e61ddeae626f8906d43"}]
