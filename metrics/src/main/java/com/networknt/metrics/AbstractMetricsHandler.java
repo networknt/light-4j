@@ -97,7 +97,9 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
         if (auditInfo != null) {
             Map<String, String> tags = new HashMap<>();
             tags.put("endpoint", (String) auditInfo.get(Constants.ENDPOINT_STRING));
-            tags.put("clientId", auditInfo.get(Constants.CLIENT_ID_STRING) != null ? (String) auditInfo.get(Constants.CLIENT_ID_STRING) : "unknown");
+            String clientId = auditInfo.get(Constants.CLIENT_ID_STRING) != null ? (String) auditInfo.get(Constants.CLIENT_ID_STRING) : "unknown";
+            if(logger.isTraceEnabled()) logger.trace("clientId = " + clientId);
+            tags.put("clientId", clientId);
             // scope client id will only be available if two token is used. For example, authorization code flow.
             if (config.isSendScopeClientId()) {
                 tags.put("scopeClientId", auditInfo.get(Constants.SCOPE_CLIENT_ID_STRING) != null ? (String) auditInfo.get(Constants.SCOPE_CLIENT_ID_STRING) : "unknown");
