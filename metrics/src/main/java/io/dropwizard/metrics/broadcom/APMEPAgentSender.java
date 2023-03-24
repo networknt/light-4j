@@ -74,7 +74,7 @@ public class APMEPAgentSender implements TimeSeriesDbSender {
     public int writeData() throws Exception {
     	
         final String body = convertInfluxDBWriteObjectToJSON(influxDbWriteObject);
-        
+        if(logger.isTraceEnabled()) logger.trace("APMEPAgentSender is sending data to host = {} with body = {}", url, body);
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);

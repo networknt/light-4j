@@ -6,6 +6,7 @@ import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.networknt.server.ServerConfig;
@@ -87,14 +88,40 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
             Map<String, Object> auditInfo = exchange1.getAttachment(AttachmentConstants.AUDIT_INFO);
             if (auditInfo != null) {
                 Map<String, String> tags = new HashMap<>();
-                tags.put("endpoint", (String)auditInfo.get(Constants.ENDPOINT_STRING));
-                tags.put("clientId", auditInfo.get(Constants.CLIENT_ID_STRING) != null ? (String)auditInfo.get(Constants.CLIENT_ID_STRING) : "unknown");
-                tags.put("scopeClientId", auditInfo.get(Constants.SCOPE_CLIENT_ID_STRING) != null ? (String)auditInfo.get(Constants.SCOPE_CLIENT_ID_STRING) : "unknown");
-                tags.put("callerId", auditInfo.get(Constants.CALLER_ID_STRING) != null ? (String)auditInfo.get(Constants.CALLER_ID_STRING) : "unknown");
-                long time = Clock.defaultClock().getTick() - startTime;
+                tags.put("endpoint", (String) auditInfo.get(Constants.ENDPOINT_STRING));
+                String clientId = auditInfo.get(Constants.CLIENT_ID_STRING) != null ? (String) auditInfo.get(Constants.CLIENT_ID_STRING) : "unknown";
+                if(logger.isTraceEnabled()) logger.trace("clientId = " + clientId);
+                tags.put("clientId", clientId);
+                // scope client id will only be available if two token is used. For example, authorization code flow.
+                if (config.isSendScopeClientId()) {
+                    tags.put("scopeClientId", auditInfo.get(Constants.SCOPE_CLIENT_ID_STRING) != null ? (String) auditInfo.get(Constants.SCOPE_CLIENT_ID_STRING) : "unknown");
+                }
+                // caller id is the calling serviceId that is passed from the caller. It is not always available but some organizations enforce it.
+                if (config.isSendCallerId()) {
+                    tags.put("callerId", auditInfo.get(Constants.CALLER_ID_STRING) != null ? (String) auditInfo.get(Constants.CALLER_ID_STRING) : "unknown");
+                }
+                if (config.isSendIssuer()) {
+                    String issuer = (String) auditInfo.get(Constants.ISSUER_CLAIMS);
+                    if (issuer != null) {
+                        // we need to send issuer as a tag. Do we need to apply regex to extract only a part of the issuer?
+                        if(config.getIssuerRegex() != null) {
+                            Matcher matcher = pattern.matcher(issuer);
+                            if (matcher.find()) {
+                                String iss = matcher.group(1);
+                                if(logger.isTraceEnabled()) logger.trace("Extracted issuer {} from Original issuer {] is sent.", iss, issuer);
+                                tags.put("issuer", iss != null ? iss : "unknown");
+                            }
+                        } else {
+                            if(logger.isTraceEnabled()) logger.trace("Original issuer {} is sent.", issuer);
+                            tags.put("issuer", issuer);
+                        }
+                    }
+                }
+
                 MetricName metricName = new MetricName("response_time");
                 metricName = metricName.tagged(commonTags);
                 metricName = metricName.tagged(tags);
+                long time = Clock.defaultClock().getTick() - startTime;
                 registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.TIMERS).update(time, TimeUnit.NANOSECONDS);
                 incCounterForStatusCode(exchange1.getStatusCode(), commonTags, tags);
             }
