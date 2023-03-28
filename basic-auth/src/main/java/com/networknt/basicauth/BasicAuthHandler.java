@@ -167,13 +167,23 @@ public class BasicAuthHandler implements MiddlewareHandler {
         if (pos != -1) {
             String username = credentials.substring(0, pos);
             String password = credentials.substring(pos + 1);
+            if(logger.isTraceEnabled()) logger.trace("input username = {}, password = {}", username, StringUtils.maskHalfString(password));
             UserAuth user = config.getUsers().get(username);
-            // if user name matches config, no password entry in config and enableAD is true, use LDAP auth
-            if (user != null
-                    && username.equals(user.getUsername())
-                    && StringUtils.isEmpty(user.getPassword())
-                    && config.enableAD) {
-                // Call LdapUtil with LDAP authentication and authorization
+            // if user cannot be found in the config, return immediately.
+            if (user == null) {
+                logger.error("User '{}' is not found in the configuration file.", username);
+                setExchangeStatus(exchange, INVALID_USERNAME_OR_PASSWORD);
+                exchange.endExchange();
+                if(logger.isDebugEnabled())
+                    logger.debug("BasicAuthHandler.handleRequest ends with an error.");
+                return false;
+            }
+            // At this point, we know the user is found in the config file.
+            if (username.equals(user.getUsername())
+                && StringUtils.isEmpty(user.getPassword())
+                && config.enableAD) {
+                // Call LdapUtil with LDAP authentication and authorization given user is matched, password is empty, and AD is enabled.
+                if(logger.isTraceEnabled()) logger.trace("Call LdapUtil with LDAP authentication and authorization for user = {}", username);
                 if (!handleLdapAuth(user, password)) {
                     setExchangeStatus(exchange, INVALID_USERNAME_OR_PASSWORD);
                     exchange.endExchange();
@@ -182,10 +192,11 @@ public class BasicAuthHandler implements MiddlewareHandler {
                     return false;
                 }
             } else {
-                //
-                if (user == null || !(user.getUsername().equals(username)
-                        && password.equals(user.getPassword()))) {
-                    logger.error("Invalid username or password with authorization header starts = {}", auth.substring(0, 10));
+                if(logger.isTraceEnabled()) logger.trace("Validate basic auth based on config username {} and password {}", user.getUsername(), StringUtils.maskHalfString(user.getPassword()));
+                // if username matches config, password matches config, and path matches config, pass
+                if (!(user.getUsername().equals(username)
+                     && password.equals(user.getPassword()))) {
+                    logger.error("Invalid username or password with authorization header = {}", StringUtils.maskHalfString(auth));
                     setExchangeStatus(exchange, INVALID_USERNAME_OR_PASSWORD);
                     exchange.endExchange();
                     if (logger.isDebugEnabled())
@@ -194,6 +205,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
                 }
             }
             // Here we have passed the authentication. Let's do the authorization with the paths.
+            if(logger.isTraceEnabled()) logger.trace("Username and password validation is done for user = {}", username);
             boolean match = false;
             for (String path : user.getPaths()) {
                 if (requestPath.startsWith(path)) {
