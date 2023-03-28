@@ -51,4 +51,12 @@ public class StringUtilsTest {
         Assert.assertTrue(StringUtils.isJwtToken(jwt));
         Assert.assertFalse(StringUtils.isJwtToken(swt));
     }
+
+    @Test
+    public void testMaskHalfString() {
+        String s = "1234567890";
+        Assert.assertEquals("*****67890", StringUtils.maskHalfString(s));
+        s = "123456789";
+        Assert.assertEquals("****56789", StringUtils.maskHalfString(s));
+    }
 }

@@ -1474,4 +1474,20 @@ public class StringUtils {
         }
     }
 
+    /**
+     * Mask the first half of a string with asterisks for sensitive data before logging.
+     * @param str input
+     * @return masked string
+     */
+    public static String maskHalfString(String str) {
+        if (str == null) {
+            return null;
+        } else {
+            // not null
+            int halfLength = str.length() / 2;
+            String masked = "*".repeat(halfLength) + str.substring(halfLength);
+            return masked;
+        }
+    }
+
 }
