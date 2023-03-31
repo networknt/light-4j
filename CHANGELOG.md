@@ -1,5 +1,31 @@
 # Change Log
 
+## [2.1.9](https://github.com/networknt/light-4j/tree/2.1.9) (2023-03-30)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1680 update basic auth handle to add more trace info [\#1683](https://github.com/networknt/light-4j/pull/1683) ([stevehu](https://github.com/stevehu))
+- fixes \#1681 add maskHalfString to StringUtils for logging sensitive info [\#1682](https://github.com/networknt/light-4j/pull/1682) ([stevehu](https://github.com/stevehu))
+- fixes \#1677 remove requestBody and responseBody from audit in audit.yml [\#1678](https://github.com/networknt/light-4j/pull/1678) ([stevehu](https://github.com/stevehu))
+- fixes \#1675 make the common tag in sync between parent metrics and ap… [\#1676](https://github.com/networknt/light-4j/pull/1676) ([stevehu](https://github.com/stevehu))
+- fixes \#1672 update the AutoAESSaltDecryptor to support upper case env… [\#1673](https://github.com/networknt/light-4j/pull/1673) ([stevehu](https://github.com/stevehu))
+- fixes \#1670 update the default decryptorClass in config.yml in config… [\#1671](https://github.com/networknt/light-4j/pull/1671) ([stevehu](https://github.com/stevehu))
+- fixes \#1668 control the common tags with metrics.yml and add the issuer [\#1669](https://github.com/networknt/light-4j/pull/1669) ([stevehu](https://github.com/stevehu))
+- fixes \#1666 add jwt token iss to the audit info and subseqently metri… [\#1667](https://github.com/networknt/light-4j/pull/1667) ([stevehu](https://github.com/stevehu))
+- fixes \#1664 support proxy, router and external handlers config reload… [\#1665](https://github.com/networknt/light-4j/pull/1665) ([stevehu](https://github.com/stevehu))
+- fixes \#1662 update status.yml to add showMessage, showDescription and… [\#1663](https://github.com/networknt/light-4j/pull/1663) ([stevehu](https://github.com/stevehu))
+- fixes \#1660 update the RequestTransformerInterceptor to add queryString [\#1661](https://github.com/networknt/light-4j/pull/1661) ([stevehu](https://github.com/stevehu))
+- fixes \#1658 Add a new test case for password with back slash in encry… [\#1659](https://github.com/networknt/light-4j/pull/1659) ([stevehu](https://github.com/stevehu))
+- fixes \#1654 add productName to the metrics.yml to define the top cate… [\#1655](https://github.com/networknt/light-4j/pull/1655) ([stevehu](https://github.com/stevehu))
+- fixes \#1652 pass the metric name and allow proxy, router and external… [\#1653](https://github.com/networknt/light-4j/pull/1653) ([stevehu](https://github.com/stevehu))
+- fixes \#1650 update JwtVerfier to skip SWT token introspection config … [\#1651](https://github.com/networknt/light-4j/pull/1651) ([stevehu](https://github.com/stevehu))
+- fixed test case issues [\#1649](https://github.com/networknt/light-4j/pull/1649) ([GavinChenYan](https://github.com/GavinChenYan))
+- fixes \#1647 add jwt vs swt identification and swtServiceIds to SwtVer… [\#1648](https://github.com/networknt/light-4j/pull/1648) ([stevehu](https://github.com/stevehu))
+- fixes \#1645 upgrade snakeyaml to 2.0 [\#1646](https://github.com/networknt/light-4j/pull/1646) ([stevehu](https://github.com/stevehu))
+- fixes \#1643 add APM metrics handler and capture metrics for router, p… [\#1644](https://github.com/networknt/light-4j/pull/1644) ([stevehu](https://github.com/stevehu))
+- fixes \#1640 [\#1642](https://github.com/networknt/light-4j/pull/1642) ([GavinChenYan](https://github.com/GavinChenYan))
 ## [2.1.8](https://github.com/networknt/light-4j/tree/2.1.8) (2023-03-06)
 
 
