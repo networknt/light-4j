@@ -16,7 +16,11 @@ public class ConfigLoaderConstructor extends Constructor {
     public static final String CONFIG_LOADER_CLASS = "configLoaderClass";
     private final ConfigLoader configLoader;
 
-    public ConfigLoaderConstructor(String configLoaderClass) {
+    public static ConfigLoaderConstructor getInstance(String configLoaderClass) {
+        return new ConfigLoaderConstructor(configLoaderClass);
+    }
+
+    private ConfigLoaderConstructor(String configLoaderClass) {
         super(new LoaderOptions());
         configLoader = createConfigLoader(configLoaderClass);
     }
