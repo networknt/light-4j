@@ -1,9 +1,6 @@
 # Singleton service factory configuration
 
 singletons:
-- com.networknt.utility.Decryptor:
-  - com.networknt.decrypt.AESDecryptor
-
 - javax.sql.DataSource: com.networknt.db.H2DataSource::getDataSource
 
 - com.networknt.db.MysqlDataSource:
