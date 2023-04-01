@@ -45,6 +45,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.networknt.config.yml.DecryptConstructor;
 import com.networknt.config.yml.YmlConstants;
 
+import static com.networknt.config.ConfigInjection.CENTRALIZED_MANAGEMENT;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -159,7 +160,7 @@ public abstract class Config {
                 } else {
                     final Resolver resolver = new Resolver();
                     resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
-                    yaml = new Yaml(new DecryptConstructor(decryptorClass), new Representer(new DumperOptions()), new DumperOptions(), resolver);
+                    yaml = new Yaml(DecryptConstructor.getInstance(decryptorClass), new Representer(new DumperOptions()), new DumperOptions(), resolver);
                 }
             }
         }
@@ -508,7 +509,7 @@ public abstract class Config {
                     inStream = new FileInputStream(absolutePath + "/" + configFilename);
                     configFileDir = absolutePath;
                 } catch (FileNotFoundException ex) {
-                    if (logger.isTraceEnabled()) {
+                    if (logger.isTraceEnabled() && configFilename != null && !configFilename.contains(CENTRALIZED_MANAGEMENT)) {
                         logger.trace("Unable to load config from externalized folder for " + Encode.forJava(configFilename + " in " + absolutePath));
                     }
                 }
@@ -516,24 +517,24 @@ public abstract class Config {
                 if (path.startsWith("/")) break;
             }
             if (inStream != null) {
-                if (logger.isTraceEnabled()) {
+                if (logger.isTraceEnabled() && configFilename != null && !configFilename.contains(CENTRALIZED_MANAGEMENT)) {
                     logger.trace("Config loaded from externalized folder for " + Encode.forJava(configFilename + " in " + configFileDir));
                 }
                 return inStream;
             }
-            if (logger.isTraceEnabled()) {
+            if (logger.isTraceEnabled() && configFilename != null && !configFilename.contains(CENTRALIZED_MANAGEMENT)) {
                 logger.trace("Trying to load config from classpath directory for file " + Encode.forJava(configFilename));
             }
             inStream = this.getClassLoader().getResourceAsStream(configFilename);
             if (inStream != null) {
-                if (logger.isTraceEnabled()) {
+                if (logger.isTraceEnabled() && configFilename != null && !configFilename.contains(CENTRALIZED_MANAGEMENT)) {
                     logger.trace("config loaded from classpath for " + Encode.forJava(configFilename));
                 }
                 return inStream;
             }
             inStream = this.getClassLoader().getResourceAsStream("config/" + configFilename);
             if (inStream != null) {
-                if (logger.isTraceEnabled()) {
+                if (logger.isTraceEnabled() && configFilename != null && !configFilename.contains(CENTRALIZED_MANAGEMENT)) {
                     logger.trace("Config loaded from default folder for " + Encode.forJava(configFilename));
                 }
                 return inStream;
@@ -639,7 +640,7 @@ public abstract class Config {
             Map<String, Object> config = null;
             // Initialize config loader
             if (configLoaderClass != null && this.configLoader == null) {
-                this.configLoader = new ConfigLoaderConstructor(configLoaderClass).getConfigLoader();
+                this.configLoader = ConfigLoaderConstructor.getInstance(configLoaderClass).getConfigLoader();
             }
             if (configLoader != null) {
                 logger.trace("Trying to load {} with extension yaml, yml or json by using ConfigLoader: {}.", configName, configLoader.getClass().getName());
@@ -661,7 +662,7 @@ public abstract class Config {
             Object config = null;
             // Initialize config loader
             if (configLoaderClass != null && this.configLoader == null) {
-                this.configLoader = new ConfigLoaderConstructor(configLoaderClass).getConfigLoader();
+                this.configLoader = ConfigLoaderConstructor.getInstance(configLoaderClass).getConfigLoader();
             }
             if (this.configLoader != null) {
                 logger.trace("Trying to load {} with extension yaml, yml or json by using ConfigLoader: {}.", configName, configLoader.getClass().getName());
