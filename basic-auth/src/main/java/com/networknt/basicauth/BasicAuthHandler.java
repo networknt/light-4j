@@ -132,6 +132,8 @@ public class BasicAuthHandler implements MiddlewareHandler {
             }
             if (!match) {
                 logger.error("Request path '{}' is not authorized for user '{}'", requestPath, BasicAuthConfig.ANONYMOUS);
+                // this is to handler the client with pre-emptive authentication with response code 401
+                exchange.getResponseHeaders().put(Headers.WWW_AUTHENTICATE, "Basic realm=\"Default Realm\"");
                 setExchangeStatus(exchange, NOT_AUTHORIZED_REQUEST_PATH, requestPath, BasicAuthConfig.ANONYMOUS);
                 if(logger.isDebugEnabled())
                     logger.debug("BasicAuthHandler.handleRequest ends with an error.");
@@ -139,6 +141,8 @@ public class BasicAuthHandler implements MiddlewareHandler {
             }
         } else {
             logger.error("Anonymous is not allowed and authorization header is missing.");
+            // this is to handler the client with pre-emptive authentication with response code 401
+            exchange.getResponseHeaders().put(Headers.WWW_AUTHENTICATE, "Basic realm=\"Basic Auth\"");
             setExchangeStatus(exchange, MISSING_AUTH_TOKEN);
             if(logger.isDebugEnabled())
                 logger.debug("BasicAuthHandler.handleRequest ends with an error.");

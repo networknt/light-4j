@@ -127,8 +127,8 @@ public class AnonymousBearerTest {
         }
         int statusCode = reference.get().getResponseCode();
         String responseBody = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
-        Assert.assertEquals(403, statusCode);
-        if(statusCode == 403) {
+        Assert.assertEquals(401, statusCode);
+        if(statusCode == 401) {
             Assert.assertNotNull(responseBody);
         }
     }
@@ -218,8 +218,8 @@ public class AnonymousBearerTest {
         int statusCode = reference.get().getResponseCode();
         String responseBody = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
         System.out.println("responseBody = " + responseBody);
-        Assert.assertEquals(403, statusCode);
-        if(statusCode == 403) {
+        Assert.assertEquals(401, statusCode);
+        if(statusCode == 401) {
             Assert.assertNotNull(responseBody);
         }
     }
