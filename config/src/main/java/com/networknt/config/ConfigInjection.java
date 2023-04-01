@@ -48,7 +48,7 @@ public class ConfigInjection {
             System.getProperty(INJECTION_ORDER, "") : "2";
 
     // Define one of the injection value source "values.yaml" and list of exclusion config files
-    private static final String CENTRALIZED_MANAGEMENT = "values";
+    public static final String CENTRALIZED_MANAGEMENT = "values";
     private static final String SCALABLE_CONFIG = "config";
     private static final String EXCLUSION_CONFIG_FILE_LIST = "exclusionConfigFileList";
     private static final String ALLOW_DEFAULT_EMPTY = "allowDefaultValueEmpty";
@@ -60,7 +60,7 @@ public class ConfigInjection {
 
     private static String[] trueArray = {"y", "Y", "yes", "Yes", "YES", "true", "True", "TRUE", "on", "On", "ON"};
     private static String[] falseArray = {"n", "N", "no", "No", "NO", "false", "False", "FALSE", "off", "Off", "OFF"};
-    private static Decryptor decryptor = getDecryptor();
+    private static Decryptor decryptor = DecryptConstructor.getInstance().getDecryptor();
 
     // Method used to generate the values from environment variables or "values.yaml"
     public static Object getInjectValue(String string) {
@@ -94,15 +94,7 @@ public class ConfigInjection {
     }
 
     public static Decryptor getDecryptor() {
-        Config myConfig = Config.getInstance();
-        if (myConfig == null) {
-            throw new RuntimeException("Unable to retrieve the configuration.");
-        }
-        String decryptorClass = myConfig.getDecryptorClassPublic();
-        DecryptConstructor myDecryptCon = new DecryptConstructor(decryptorClass);
-        Decryptor myDecryptor = myDecryptCon.createDecryptorPublic(decryptorClass);
-
-        return myDecryptor;
+        return decryptor;
     }
 
     static String convertEnvVars(String input){

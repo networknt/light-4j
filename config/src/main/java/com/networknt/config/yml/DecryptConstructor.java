@@ -25,19 +25,32 @@ public class DecryptConstructor extends Constructor {
 	public static final String CONFIG_ITEM_DECRYPTOR_CLASS = "decryptorClass";
 	public static final String DEFAULT_DECRYPTOR_CLASS = AutoAESSaltDecryptor.class.getCanonicalName();
 
-	public DecryptConstructor() {
+	private DecryptConstructor() {
 		this(DEFAULT_DECRYPTOR_CLASS);
 	}
 	
-	public DecryptConstructor(String decryptorClass) {
+	private DecryptConstructor(String decryptorClass) {
 		super(new LoaderOptions());
 		
 		decryptor= createDecryptor(decryptorClass);
 		
 		this.yamlConstructors.put(YmlConstants.CRYPT_TAG, new ConstructYamlDecryptedStr());
 	}
-	
+
+	public static DecryptConstructor getInstance() {
+		return new DecryptConstructor();
+	}
+
+	public static DecryptConstructor getInstance(String decryptorClass) {
+		return new DecryptConstructor(decryptorClass);
+	}
+
 	private Decryptor createDecryptor(String decryptorClass) {
+		// do not create a new decryptor if it is already created.
+		if(decryptor != null) {
+			return decryptor;
+		}
+
 		if (logger.isTraceEnabled()) {
 			logger.trace("creating decryptor {}", decryptorClass);
 		}
@@ -58,11 +71,11 @@ public class DecryptConstructor extends Constructor {
 		return null;
 	}
 
-	public Decryptor createDecryptorPublic(String decryptorClass) {
-		return createDecryptor(decryptorClass);
+	public Decryptor getDecryptor() {
+		return decryptor;
 	}
-	
-    public class ConstructYamlDecryptedStr extends AbstractConstruct {
+
+	public class ConstructYamlDecryptedStr extends AbstractConstruct {
         @Override
         public Object construct(Node node) {
             return constructDecryptedScalar((ScalarNode) node);

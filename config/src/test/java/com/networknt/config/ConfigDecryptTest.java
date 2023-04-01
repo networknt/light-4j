@@ -90,7 +90,7 @@ public class ConfigDecryptTest {
     public void testDecryptorClass() {
         final Resolver resolver = new Resolver();
         resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
-        Yaml yaml = new Yaml(new DecryptConstructor("com.networknt.config.TestDecryptor"), new Representer(new DumperOptions()), new DumperOptions(), resolver);
+        Yaml yaml = new Yaml(DecryptConstructor.getInstance("com.networknt.config.TestDecryptor"), new Representer(new DumperOptions()), new DumperOptions(), resolver);
     	
         Map<String, Object> secret=yaml.load(Config.getInstance().getInputStreamFromFile("secret-map-test2.yml"));
         
@@ -102,7 +102,7 @@ public class ConfigDecryptTest {
         if (System.getenv("config_password") == null || !System.getenv("config_password").equals("light")) return;
         final Resolver resolver = new Resolver();
         resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
-        Yaml yaml = new Yaml(new DecryptConstructor("com.networknt.config.TestAutoDecryptor"), new Representer(new DumperOptions()), new DumperOptions(), resolver);
+        Yaml yaml = new Yaml(DecryptConstructor.getInstance("com.networknt.config.TestAutoDecryptor"), new Representer(new DumperOptions()), new DumperOptions(), resolver);
 
         Map<String, Object> secret=yaml.load(Config.getInstance().getInputStreamFromFile("secret-map-test2.yml"));
 
