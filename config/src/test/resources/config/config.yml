@@ -4,7 +4,7 @@ exclusionConfigFileList:
   - status
   - test_exclusion
 
-decryptorClass: com.networknt.decrypt.AESDecryptor
+decryptorClass: com.networknt.decrypt.AutoAESSaltDecryptor
 
 # Following config indicator if the application allow the default config as empty (null or empty string)
-#allowDefaultValueEmpty: false
+allowDefaultValueEmpty: false

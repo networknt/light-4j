@@ -1,5 +1,6 @@
 package com.networknt.config.yml;
 
+import com.networknt.decrypt.AutoAESSaltDecryptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.LoaderOptions;
@@ -8,7 +9,6 @@ import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.nodes.Node;
 import org.yaml.snakeyaml.nodes.ScalarNode;
 
-import com.networknt.decrypt.AESDecryptor;
 import com.networknt.decrypt.Decryptor;
 
 /**
@@ -23,7 +23,7 @@ public class DecryptConstructor extends Constructor {
 	private final Decryptor decryptor;
 	
 	public static final String CONFIG_ITEM_DECRYPTOR_CLASS = "decryptorClass";
-	public static final String DEFAULT_DECRYPTOR_CLASS = AESDecryptor.class.getCanonicalName();
+	public static final String DEFAULT_DECRYPTOR_CLASS = AutoAESSaltDecryptor.class.getCanonicalName();
 
 	public DecryptConstructor() {
 		this(DEFAULT_DECRYPTOR_CLASS);

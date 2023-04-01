@@ -7,13 +7,13 @@ public class AESDecryptorTest {
 
     @Test
     public void testConstructor() {
-        AESDecryptor decryptor = new AESDecryptor();
+        AESSaltDecryptor decryptor = new AESSaltDecryptor();
         Assert.assertNotNull(decryptor);
     }
 
     @Test
     public void testForName() {
-        String decryptorClass = "com.networknt.decrypt.AESDecryptor";
+        String decryptorClass = "com.networknt.decrypt.AESSaltDecryptor";
         try {
             Class<?> typeClass = Class.forName(decryptorClass);
 
