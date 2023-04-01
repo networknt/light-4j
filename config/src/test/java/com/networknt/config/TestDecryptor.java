@@ -1,8 +1,8 @@
 package com.networknt.config;
 
-import com.networknt.decrypt.AESDecryptor;
+import com.networknt.decrypt.AESSaltDecryptor;
 
-public class TestDecryptor extends AESDecryptor {
+public class TestDecryptor extends AESSaltDecryptor {
 
     @Override
 	public String decrypt(String input) {
