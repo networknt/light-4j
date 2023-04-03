@@ -1,0 +1,8 @@
+# cache.yml
+cache.caches:
+  - cacheName: cache1
+    expiryInMinutes: 60
+    maxSize: 1000
+  - cacheName: cache2
+    expiryInMinutes: 120
+    maxSize: 1000
