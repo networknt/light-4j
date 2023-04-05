@@ -1,0 +1,8 @@
+# db-provider.yml
+# For postgres database running in a docker container, you have to use the driverClassName. By
+# using the dataSourceClassName, you cannot connect to the database from another docker container.
+driverClassName: ${db-provider.driverClassName:org.postgresql.Driver}
+jdbcUrl: ${db-provider.jdbcUrl:jdbc:postgresql://timescale:5432/configserver}
+username: ${db-provider.username:postgres}
+password: ${db-provider.password:secret}
+maximumPoolSize: ${db-provider.maximumPoolSize:3}
