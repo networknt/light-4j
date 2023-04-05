@@ -85,7 +85,7 @@
         <version.snakeyaml>2.0</version.snakeyaml>
         <version.caffeine>3.1.5</version.caffeine>
         <version.prometheus>0.16.0</version.prometheus>
-        <version.javamail>1.6.1</version.javamail>
+        <version.javamail>1.6.2</version.javamail>
         <version.hikaricp>5.0.1</version.hikaricp>
         <version.h2>2.1.214</version.h2>
         <version.mysql>8.0.32</version.mysql>
