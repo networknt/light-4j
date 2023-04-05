@@ -68,7 +68,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <version.jackson>2.14.2</version.jackson>
         <version.slf4j>2.0.7</version.slf4j>
-        <version.jose4j>0.6.3</version.jose4j>
+        <version.jose4j>0.9.3</version.jose4j>
         <version.commons.codec>1.15</version.commons.codec>
         <version.encoder>1.2.1</version.encoder>
         <version.logback>1.4.6</version.logback>
