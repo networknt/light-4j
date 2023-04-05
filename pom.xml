@@ -84,7 +84,7 @@
         <version.yaml-rule>1.0.1</version.yaml-rule>
         <version.snakeyaml>2.0</version.snakeyaml>
         <version.caffeine>3.1.5</version.caffeine>
-        <version.prometheus>0.6.0</version.prometheus>
+        <version.prometheus>0.16.0</version.prometheus>
         <version.javamail>1.6.1</version.javamail>
         <version.hikaricp>5.0.1</version.hikaricp>
         <version.h2>2.1.214</version.h2>
