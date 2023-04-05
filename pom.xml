@@ -70,7 +70,7 @@
         <version.slf4j>2.0.7</version.slf4j>
         <version.jose4j>0.9.3</version.jose4j>
         <version.commons.codec>1.15</version.commons.codec>
-        <version.encoder>1.2.1</version.encoder>
+        <version.encoder>1.2.3</version.encoder>
         <version.logback>1.4.6</version.logback>
         <version.junit>4.13.1</version.junit>
         <version.mockito>2.23.0</version.mockito>
