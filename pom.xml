@@ -72,7 +72,7 @@
         <version.commons.codec>1.15</version.commons.codec>
         <version.encoder>1.2.3</version.encoder>
         <version.logback>1.4.6</version.logback>
-        <version.junit>4.13.1</version.junit>
+        <version.junit>4.13.2</version.junit>
         <version.mockito>2.23.0</version.mockito>
         <version.powermock>2.0.2</version.powermock>
         <version.undertow>2.3.5.Final</version.undertow>
