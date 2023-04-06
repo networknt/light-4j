@@ -1,5 +1,17 @@
 # Change Log
 
+## [2.1.10](https://github.com/networknt/light-4j/tree/2.1.10) (2023-04-06)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1695 update db-provider to have the default implementation [\#1696](https://github.com/networknt/light-4j/pull/1696) ([stevehu](https://github.com/stevehu))
+- fixes \#1693 disable one client test case as it fails after upgrade to… [\#1694](https://github.com/networknt/light-4j/pull/1694) ([stevehu](https://github.com/stevehu))
+- fixes \#1690 add cache-manager module for centralized cache [\#1691](https://github.com/networknt/light-4j/pull/1691) ([stevehu](https://github.com/stevehu))
+- fixes \#1688 refactor YAML constructors to singleton to avoid create m… [\#1689](https://github.com/networknt/light-4j/pull/1689) ([stevehu](https://github.com/stevehu))
+- fixes \#1686 remove less secure decryptor to favor long key and salt ones [\#1687](https://github.com/networknt/light-4j/pull/1687) ([stevehu](https://github.com/stevehu))
+- fixes \#1684 update basic auth handler to return WWW-Authenticate head… [\#1685](https://github.com/networknt/light-4j/pull/1685) ([stevehu](https://github.com/stevehu))
 ## [2.1.9](https://github.com/networknt/light-4j/tree/2.1.9) (2023-03-30)
 
 
