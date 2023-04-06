@@ -94,6 +94,9 @@
         <version.sqlserver>7.0.0.jre10</version.sqlserver>
         <version.httpclient>4.5.14</version.httpclient>
         <version.jsonpath>2.8.0</version.jsonpath>
+        <version.jaeger>1.8.1</version.jaeger>
+        <version.thrift>0.18.1</version.thrift>
+        <version.opentracing>0.33.0</version.opentracing>
         <version.org.apache.directory.server>2.0.0-M15</version.org.apache.directory.server>
         <version.maven-version>2.7</version.maven-version>
         <version.nexus-staging-maven>1.6.8</version.nexus-staging-maven>
@@ -106,9 +109,6 @@
         <version.lifecycle-mapping>1.0.0</version.lifecycle-mapping>
         <version.maven-gpg>1.6</version.maven-gpg>
         <version.testcontainers>1.8.0</version.testcontainers>
-        <version.jaeger>1.8.1</version.jaeger>
-        <version.thrift>0.18.1</version.thrift>
-        <version.opentracing>0.33.0</version.opentracing>
         <skipTests>false</skipTests>
         <matched.test.resources>**/*</matched.test.resources>
         <version.javadoc-packagelist-plugin>1.0.0</version.javadoc-packagelist-plugin>
