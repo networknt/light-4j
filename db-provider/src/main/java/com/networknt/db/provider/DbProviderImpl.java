@@ -11,6 +11,10 @@ import org.slf4j.LoggerFactory;
  * @author Steve Hu
  */
 public class DbProviderImpl implements DbProvider {
+    public static final String SQL_EXCEPTION = "ERR10017";
+    public static final String GENERIC_EXCEPTION = "ERR10014";
+    public static final String OBJECT_NOT_FOUND = "ERR11637";
+
     private static final Logger logger = LoggerFactory.getLogger(DbProviderImpl.class);
 
 
