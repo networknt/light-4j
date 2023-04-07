@@ -80,6 +80,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.networknt.client.ssl.TLSConfig.VERIFY_HOSTNAME;
+import static io.undertow.client.http.HttpClientProvider.DISABLE_HTTPS_ENDPOINT_IDENTIFICATION_PROPERTY;
+
 /**
  * This is a new client module that replaces the old Client module. The old version
  * only support HTTP 1.1 and the new version support both 1.1 and 2.0 and it is very
@@ -141,6 +144,11 @@ public class Http2Client {
         List<String> masks = List.of(MASK_KEY_CLIENT_SECRET, MASK_KEY_TRUST_STORE_PASS, MASK_KEY_KEY_STORE_PASS, MASK_KEY_KEY_PASS);
         Map<String, Object> config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
         ModuleRegistry.registerModule(Http2Client.class.getName(), JsonMapper.fromJson(JsonMapper.toJson(config), Map.class), masks);
+        // disable the hostname verification based on the config.
+        Map<String, Object> tlsMap = ClientConfig.get().getTlsConfig();
+        if(tlsMap != null && Boolean.FALSE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
+            System.setProperty(DISABLE_HTTPS_ENDPOINT_IDENTIFICATION_PROPERTY, "true");
+        }
         // take the best effort to get the serviceId from the server.yml file. It might not exist if this is a standalone client.
         boolean injectCallerId = ClientConfig.get().isInjectCallerId();
         if(injectCallerId) {
