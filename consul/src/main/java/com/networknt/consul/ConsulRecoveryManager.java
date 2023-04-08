@@ -25,11 +25,12 @@ public class ConsulRecoveryManager {
         startConsulThreadMonitor();
     }
 
-    private static synchronized void startConsulThreadMonitor() {
+    private static void startConsulThreadMonitor() {
         if(monitorThreadStarted.get()) return;
-        monitorThreadStarted.set(true);
-        logger.debug("Starting Consul Thread Monitor...");
-        consulThreadMonitor.start();
+        if(monitorThreadStarted.compareAndSet(false, true)) {
+            logger.debug("Starting Consul Thread Monitor...");
+            consulThreadMonitor.start();
+        }
     }
 
     /**
