@@ -17,14 +17,17 @@
  *   AkashWorkGit
  *   jaydeepparekh1311
  */
-package com.networknt.client.simplepool.mock;
+package com.networknt.client.simplepool;
 
-import com.networknt.client.simplepool.SimpleConnection;
-import com.networknt.client.simplepool.SimpleConnectionMaker;
+import io.undertow.connector.ByteBufferPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xnio.OptionMap;
+import org.xnio.XnioWorker;
+import org.xnio.ssl.XnioSsl;
 
 import java.lang.reflect.Constructor;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.Set;
 import java.util.concurrent.*;
@@ -42,6 +45,11 @@ public class TestConnectionMaker implements SimpleConnectionMaker {
     {
         SimpleConnection connection = instantiateConnection(createConnectionTimeout, isHttp2, allConnections);
         return connection;
+    }
+
+    @Override
+    public SimpleConnection makeConnection(long createConnectionTimeout, InetSocketAddress bindAddress, URI uri, XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options, Set<SimpleConnection> allCreatedConnections) {
+        return null;
     }
 
     @Override

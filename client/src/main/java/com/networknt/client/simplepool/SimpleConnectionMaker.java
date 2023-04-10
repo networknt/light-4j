@@ -19,7 +19,13 @@
  */
 package com.networknt.client.simplepool;
 
+import io.undertow.connector.ByteBufferPool;
+import org.xnio.OptionMap;
+import org.xnio.XnioWorker;
+import org.xnio.ssl.XnioSsl;
+
 import java.net.URI;
+import java.net.InetSocketAddress;
 import java.util.Set;
 
 /***
@@ -28,6 +34,20 @@ import java.util.Set;
  *
  */
 public interface SimpleConnectionMaker {
-    public SimpleConnection makeConnection(long createConnectionTimeout, boolean isHttp2, final URI uri, final Set<SimpleConnection> allCreatedConnections);
-    public SimpleConnection reuseConnection(long createConnectionTimeout, SimpleConnection connection) throws RuntimeException;
+    SimpleConnection makeConnection(long createConnectionTimeout, boolean isHttp2, final URI uri, final Set<SimpleConnection> allCreatedConnections);
+
+    /**
+     * This is the method uses the XnioWorker to create the connection.
+     * @param createConnectionTimeout in milliseconds
+     * @param bindAddress the address to bind to
+     * @param uri the uri to connect to
+     * @param worker the XnioWorker to use
+     * @param ssl the XnioSsl to use
+     * @param bufferPool the ByteBufferPool to use
+     * @param options the OptionMap to use
+     * @param allCreatedConnections the set of all connections created by this SimpleConnectionMaker
+     * @return SimpleConnection the connection
+     */
+    SimpleConnection makeConnection(long createConnectionTimeout, InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options, final Set<SimpleConnection> allCreatedConnections);
+    SimpleConnection reuseConnection(long createConnectionTimeout, SimpleConnection connection) throws RuntimeException;
 }

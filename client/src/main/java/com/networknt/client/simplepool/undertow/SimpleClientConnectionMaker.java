@@ -28,8 +28,8 @@ import io.undertow.UndertowOptions;
 import io.undertow.client.ClientCallback;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.UndertowClient;
-import io.undertow.connector.ByteBufferPool;
 import io.undertow.protocols.ssl.UndertowXnioSsl;
+import io.undertow.connector.ByteBufferPool;
 import io.undertow.server.DefaultByteBufferPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,6 +88,35 @@ public class SimpleClientConnectionMaker implements SimpleConnectionMaker
 
         UndertowClient undertowClient = UndertowClient.getInstance();
         undertowClient.connect(connectionCallback, bindAddress, uri, worker, ssl, BUFFER_POOL, connectionOptions);
+
+        IoFuture<SimpleConnection> future = result.getIoFuture();
+        return safeConnect(createConnectionTimeout, future);
+    }
+
+    @Override
+    public SimpleConnection makeConnection(long createConnectionTimeout, InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options, final Set<SimpleConnection> allCreatedConnections) {
+
+        final FutureResult<SimpleConnection> result = new FutureResult<>();
+        ClientCallback<ClientConnection> connectionCallback = new ClientCallback<ClientConnection>() {
+            @Override
+            public void completed(ClientConnection connection) {
+                logger.debug("New connection {} established with {}", port(connection), uri);
+                SimpleConnection simpleConnection = new SimpleClientConnection(connection);
+
+                // note: its vital that allCreatedConnections and result contain the same SimpleConnection reference
+                allCreatedConnections.add(simpleConnection);
+                result.setResult(simpleConnection);
+            }
+
+            @Override
+            public void failed(IOException e) {
+                logger.debug("Failed to establish new connection for uri: {}", uri);
+                result.setException(e);
+            }
+        };
+
+        Http2Client http2Client = Http2Client.getInstance();
+        http2Client.connect(connectionCallback, bindAddress, uri, worker, ssl, bufferPool, options);
 
         IoFuture<SimpleConnection> future = result.getIoFuture();
         return safeConnect(createConnectionTimeout, future);
