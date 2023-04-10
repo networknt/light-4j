@@ -273,7 +273,7 @@ public class ConsulClientImpl implements ConsulClient {
 			return null;
 
 		} finally {
-			client.restore(uri, connectionToken);
+			client.restore(connectionToken);
 		}
 
 		return newResponse;
