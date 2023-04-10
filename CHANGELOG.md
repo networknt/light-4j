@@ -1,5 +1,16 @@
 # Change Log
 
+## [2.1.11](https://github.com/networknt/light-4j/tree/2.1.11) (2023-04-10)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1705 update the client.restore to avoid passing in uri [\#1706](https://github.com/networknt/light-4j/pull/1706) ([stevehu](https://github.com/stevehu))
+- fixes \#1703 integrate Http2Client with Simple Pool [\#1704](https://github.com/networknt/light-4j/pull/1704) ([stevehu](https://github.com/stevehu))
+- fixes \#1701 simple connection pool ports from the 1.6.x [\#1702](https://github.com/networknt/light-4j/pull/1702) ([stevehu](https://github.com/stevehu))
+- fixes \#1699 verifyHostname stop working with 2.1.10 client [\#1700](https://github.com/networknt/light-4j/pull/1700) ([stevehu](https://github.com/stevehu))
+- fixes \#1697 check cache configuration first before creating CacheMana… [\#1698](https://github.com/networknt/light-4j/pull/1698) ([stevehu](https://github.com/stevehu))
 ## [2.1.10](https://github.com/networknt/light-4j/tree/2.1.10) (2023-04-06)
 
 
