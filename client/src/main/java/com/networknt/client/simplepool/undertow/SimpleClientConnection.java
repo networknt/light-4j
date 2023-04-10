@@ -24,7 +24,7 @@ import io.undertow.client.ClientConnection;
 import org.xnio.IoUtils;
 
 public class SimpleClientConnection implements SimpleConnection {
-    private ClientConnection connection;
+    private final ClientConnection connection;
 
     public SimpleClientConnection(ClientConnection connection) {
         this.connection = connection;

@@ -17,9 +17,9 @@
  *   AkashWorkGit
  *   jaydeepparekh1311
  */
-package com.networknt.client.simplepool.mock.mockexample;
+package com.networknt.client.simplepool.mockexample;
 
-import com.networknt.client.simplepool.mock.TestRunner;
+import com.networknt.client.simplepool.TestRunner;
 
 public class TestRandomlyClosingConnection
 {

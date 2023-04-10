@@ -17,28 +17,28 @@
  *   AkashWorkGit
  *   jaydeepparekh1311
  */
-package com.networknt.client.simplepool.mock.mockexample;
+package com.networknt.client.simplepool.mockexample;
 
-import com.networknt.client.simplepool.mock.TestRunner;
+import com.networknt.client.simplepool.TestRunner;
 
-public class TestPoolSizeOverflow
+public class TestTimeoutLeakedConnection
 {
     public static void main(String[] args) {
         new TestRunner()
             // set connection properties
-            .setConnectionPoolSize(7)
-            .setSimpleConnectionClass(MockKeepAliveConnection.class)
+            .setConnectionPoolSize(100)
+            .setSimpleConnectionClass(MockTimeoutLeakedConnection.class)
             .setCreateConnectionTimeout(5)
             .setConnectionExpireTime(5)
-            .setHttp2(false)
+            .setHttp2(true)
 
             // configure borrower-thread properties
             .setNumBorrowerThreads(8)
-            .setBorrowerThreadStartJitter(0)
-            .setBorrowTimeLength(2)
-            .setBorrowTimeLengthJitter(8)
-            .setWaitTimeBeforeReborrow(1)
-            .setWaitTimeBeforeReborrowJitter(1)
+            .setBorrowerThreadStartJitter(3)
+            .setBorrowTimeLength(5)
+            .setBorrowTimeLengthJitter(5)
+            .setWaitTimeBeforeReborrow(2)
+            .setWaitTimeBeforeReborrowJitter(2)
 
             .setTestLength(10*60)
             .executeTest();

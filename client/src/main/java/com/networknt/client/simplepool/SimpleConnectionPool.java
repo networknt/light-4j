@@ -47,7 +47,7 @@ public final class SimpleConnectionPool {
                     pools.put(uri, new SimpleURIConnectionPool(uri, expireTime, poolSize, connectionMaker));
             }
         }
-        return pools.get(uri).borrow(createConnectionTimeout, isHttp2);
+        return pools.get(uri).borrow(createConnectionTimeout);
     }
 
     public void restore(SimpleConnectionHolder.ConnectionToken connectionToken) {
