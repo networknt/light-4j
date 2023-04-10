@@ -337,11 +337,9 @@ public class Http2Client {
         http2ClientConnectionPool.resetConnectionStatus(connection);
     }
 
-    public void restore(URI uri, SimpleConnectionHolder.ConnectionToken token) {
-        SimpleURIConnectionPool pool = pools.get(uri);
-        if(pool != null) {
-            pool.restore(token);
-        }
+    public void restore(SimpleConnectionHolder.ConnectionToken token) {
+        if(token == null) return;
+        pools.get(token.uri()).restore(token);
     }
 
     @Deprecated
