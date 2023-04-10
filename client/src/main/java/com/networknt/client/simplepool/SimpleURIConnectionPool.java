@@ -19,9 +19,15 @@
  */
 package com.networknt.client.simplepool;
 
+import io.undertow.connector.ByteBufferPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xnio.OptionMap;
+import org.xnio.XnioIoThread;
+import org.xnio.XnioWorker;
+import org.xnio.ssl.XnioSsl;
 
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,6 +49,12 @@ public final class SimpleURIConnectionPool {
     private final long EXPIRY_TIME;
     private final int poolSize;
     private final URI uri;
+    private InetSocketAddress bindAddress;
+    private XnioWorker worker;
+    private ByteBufferPool bufferPool;
+    private XnioSsl ssl;
+    private OptionMap options;
+
 
     /** Connection Pool Sets
      *  These sets determine the mutable state of the connection pool
@@ -66,14 +78,25 @@ public final class SimpleURIConnectionPool {
         this.connectionMaker = connectionMaker;
     }
 
+    public SimpleURIConnectionPool(URI uri, long expireTime, int poolSize, InetSocketAddress bindAddress, XnioWorker worker, ByteBufferPool bufferPool, XnioSsl ssl, OptionMap options, SimpleConnectionMaker connectionMaker) {
+        EXPIRY_TIME = expireTime;
+        this.uri = uri;
+        this.poolSize = poolSize;
+        this.bindAddress = bindAddress;
+        this.worker = worker;
+        this.bufferPool = bufferPool;
+        this.ssl = ssl;
+        this.options = options;
+        this.connectionMaker = connectionMaker;
+    }
+
     /***
      *
-     * @param createConnectionTimeout
-     * @param isHttp2
-     * @return
-     * @throws RuntimeException
+     * @param createConnectionTimeout the maximum time to wait for a connection to be created
+     * @return a connection token that represents the borrowing of a connection by a thread
+     * @throws RuntimeException if an attempt is made to exceed the maximum size of the connection pool
      */
-    public synchronized SimpleConnectionHolder.ConnectionToken borrow(long createConnectionTimeout, boolean isHttp2) throws RuntimeException {
+    public synchronized SimpleConnectionHolder.ConnectionToken borrow(long createConnectionTimeout) throws RuntimeException {
         long now = System.currentTimeMillis();
         final SimpleConnectionHolder holder;
 
@@ -83,7 +106,7 @@ public final class SimpleURIConnectionPool {
             holder = borrowable.toArray(new SimpleConnectionHolder[0])[ThreadLocalRandom.current().nextInt(borrowable.size())];
         } else {
             if (allKnownConnections.size() < poolSize) {
-                holder = new SimpleConnectionHolder(EXPIRY_TIME, createConnectionTimeout, isHttp2, uri, allCreatedConnections, connectionMaker);
+                holder = new SimpleConnectionHolder(EXPIRY_TIME, createConnectionTimeout, uri, bindAddress, worker, bufferPool, ssl, options, allCreatedConnections, connectionMaker);
                 allKnownConnections.add(holder);
             } else
                 throw new RuntimeException("An attempt was made to exceed the maximum size was of the " + uri.toString() + " connection pool");

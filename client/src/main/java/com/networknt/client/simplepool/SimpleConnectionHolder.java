@@ -19,8 +19,14 @@
  */
 package com.networknt.client.simplepool;
 
+import io.undertow.connector.ByteBufferPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xnio.OptionMap;
+import org.xnio.XnioWorker;
+import org.xnio.ssl.XnioSsl;
+
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.Set;
 import java.util.List;
@@ -129,20 +135,28 @@ public final class SimpleConnectionHolder {
      *
      * @param expireTime how long a connection is eligible to be borrowed
      * @param connectionCreateTimeout how long it can take a connection be created before an exception thrown
-     * @param isHttp2 if true, tries to upgrade to HTTP/2. if false, will try to open an HTTP/1.1 connection
      * @param uri the URI the connection will try to connect to
+     * @param bindAddress the address the connection will bind to
+     * @param worker the XnioWorker that will create the connection
+     * @param bufferPool the buffer pool that will be used to create the connection
+     * @param ssl the ssl context that will be used to create the connection
+     * @param options the options that will be used to create the connection
      * @param allCreatedConnections this Set will be passed to the callback thread that creates the connection.
      *                              The connectionMaker will always add every successfully created connection
      *                              to this Set.
      * @param connectionMaker a class that SimpleConnectionHolder uses to create new SimpleConnection objects
      */
     public SimpleConnectionHolder(
-        long expireTime,
-        long connectionCreateTimeout,
-        boolean isHttp2,
-        URI uri,
-        Set<SimpleConnection> allCreatedConnections,
-        SimpleConnectionMaker connectionMaker)
+            long expireTime,
+            long connectionCreateTimeout,
+            URI uri,
+            InetSocketAddress bindAddress,
+            XnioWorker worker,
+            ByteBufferPool bufferPool,
+            XnioSsl ssl,
+            OptionMap options,
+            Set<SimpleConnection> allCreatedConnections,
+            SimpleConnectionMaker connectionMaker)
     {
         this.connectionMaker = connectionMaker;
 
@@ -153,8 +167,7 @@ public final class SimpleConnectionHolder {
         long now = System.currentTimeMillis();
 
         // create initial connection to uri
-        connection = connectionMaker.makeConnection(connectionCreateTimeout, isHttp2, uri, allCreatedConnections);
-
+        connection = connectionMaker.makeConnection(connectionCreateTimeout, bindAddress, uri, worker, ssl, bufferPool, options, allCreatedConnections);
         // throw exception if connection creation failed
         if(!connection.isOpen()) {
             logger.debug("{} closed connection", logLabel(connection, now));
@@ -231,7 +244,7 @@ public final class SimpleConnectionHolder {
      * NOTE: A connection that unexpectedly closes may be removed from connection pool tracking before all of its
      *       ConnectionTokens have been restored.
      *
-     * @param connectionToken
+     * @param connectionToken the ConnectionToken representing the borrow of the connection
      */
     public synchronized void restore(ConnectionToken connectionToken) {
         borrowedTokens.remove(connectionToken);

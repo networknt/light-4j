@@ -64,15 +64,12 @@ public class ConsulClientImpl implements ConsulClient {
 	private static final Logger logger = LoggerFactory.getLogger(ConsulClientImpl.class);
 	private static final ConsulConfig config = (ConsulConfig)Config.getInstance().getJsonObjectConfig(ConsulConstants.CONFIG_NAME, ConsulConfig.class);
 	private static final int UNUSUAL_STATUS_CODE = 300;
-	private Http2Client client = Http2Client.getInstance();
+	private final Http2Client client = Http2Client.getInstance();
 
-	private OptionMap optionMap;
-	private URI uri;
+	private final OptionMap optionMap;
+	private final URI uri;
 	private String wait = "600s";
 	private String timeoutBuffer = "5s";
-
-	// connection pool
-	private SimpleURIConnectionPool pool = null;
 
 	/**
 	 * Construct ConsulClient with all parameters from consul.yml config file. The other two constructors are
@@ -92,11 +89,6 @@ public class ConsulClientImpl implements ConsulClient {
 			logger.error("Invalid URI " + consulUrl, e);
 			throw new RuntimeException("Invalid URI " + consulUrl, e);
 		}
-
-		// create SimpleURIConnection pool
-		SimpleConnectionMaker undertowConnectionMaker = SimpleClientConnectionMaker.instance();
-		pool = new SimpleURIConnectionPool(
-				uri, ClientConfig.get().getConnectionExpireTime(), ClientConfig.get().getConnectionPoolSize(), undertowConnectionMaker);
 	}
 
 	@Override
@@ -214,7 +206,7 @@ public class ConsulClientImpl implements ConsulClient {
 		try {
 			if(logger.isDebugEnabled()) logger.debug("Getting connection from pool with {}", uri);
 			// this will throw a Runtime Exception if creation of Consul connection fails
-			connectionToken = pool.borrow(config.getConnectionTimeout(), isHttp2());
+			connectionToken = client.borrow(uri, Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, optionMap);
 			connection = (ClientConnection) connectionToken.getRawConnection();
 			if(logger.isDebugEnabled()) logger.debug("CONSUL CONNECTION ESTABLISHED: {} from pool and send request to {}", connection, path);
 			AtomicReference<ClientResponse> reference = send(connection, Methods.GET, path, token, null);
@@ -281,7 +273,7 @@ public class ConsulClientImpl implements ConsulClient {
 			return null;
 
 		} finally {
-			pool.restore(connectionToken);
+			client.restore(uri, connectionToken);
 		}
 
 		return newResponse;
