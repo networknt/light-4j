@@ -29,6 +29,7 @@ import com.networknt.client.simplepool.SimpleConnectionMaker;
 import com.networknt.client.simplepool.SimpleURIConnectionPool;
 import com.networknt.client.simplepool.undertow.SimpleClientConnectionMaker;
 import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
+import com.networknt.client.ssl.CompositeX509TrustManager;
 import com.networknt.client.ssl.TLSConfig;
 import com.networknt.cluster.Cluster;
 import com.networknt.config.Config;
@@ -766,26 +767,13 @@ public class Http2Client {
     }
 
     /**
-     * default method for creating ssl context. trustedNames config is not used.
-     *
-     * @return SSLContext
-     * @throws IOException IOException
-     */
-    public static SSLContext createSSLContext() throws IOException {
-    	Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(TLS);
-
-    	return null==tlsMap?null:createSSLContext((String)tlsMap.get(TLSConfig.DEFAULT_GROUP_KEY));
-    }
-
-    /**
      * create ssl context using specified trustedName config
      *
-     * @param trustedNamesGroupKey - the trustedName config to be used
      * @return SSLContext
      * @throws IOException IOException
      */
     @SuppressWarnings("unchecked")
-	public static SSLContext createSSLContext(String trustedNamesGroupKey) throws IOException {
+	public static SSLContext createSSLContext() throws IOException {
         SSLContext sslContext = null;
         KeyManager[] keyManagers = null;
         Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(TLS);
@@ -839,10 +827,10 @@ public class Http2Client {
                     if(logger.isInfoEnabled()) logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
                     if (trustStoreName != null && trustStorePass != null) {
                         KeyStore trustStore = TlsUtil.loadTrustStore(trustStoreName, trustStorePass.toCharArray());
-
                         TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                         trustManagerFactory.init(trustStore);
                         trustManagers = trustManagerFactory.getTrustManagers();
+                        // the client.truststore is loaded.
                     }
                     if (loadDefaultTrust != null && loadDefaultTrust) {
                         TrustManager[] defaultTrusts = loadDefaultTrustStore();
@@ -862,12 +850,17 @@ public class Http2Client {
                 String tlsVersion = (String)tlsMap.get(TLS_VERSION);
                 if(tlsVersion == null) tlsVersion = "TLSv1.2";
                 sslContext = SSLContext.getInstance(tlsVersion);
-                if (!trustManagerList.isEmpty()) {
-                    TLSConfig tlsConfig = TLSConfig.create(tlsMap, trustedNamesGroupKey);
-                    trustManagers = ClientX509ExtendedTrustManager.decorate(trustManagerList.toArray(new TrustManager[0]), tlsConfig);
+                if (loadDefaultTrust != null && loadDefaultTrust && !trustManagerList.isEmpty()) {
+                    TrustManager[] compositeTrustManagers = {new CompositeX509TrustManager(convertTrustManagers(trustManagerList))};
+                    sslContext.init(keyManagers, compositeTrustManagers, null);
+                } else {
+                    if(trustManagers == null || trustManagers.length == 0) {
+                        logger.error("No trust store is loaded. Please check client.yml");
+                    } else {
+                        TrustManager[] extendedTrustManagers = {new ClientX509ExtendedTrustManager(trustManagerList)};
+                        sslContext.init(keyManagers, extendedTrustManagers, null);
+                    }
                 }
-                sslContext.init(keyManagers, trustManagers, null);
-
             } catch (NoSuchAlgorithmException | KeyManagementException e) {
                 throw new IOException("Unable to create and initialise the SSLContext", e);
             }
@@ -876,6 +869,15 @@ public class Http2Client {
         }
 
         return sslContext;
+    }
+    public static List<X509TrustManager> convertTrustManagers(List<TrustManager> trustManagerList) {
+        List<X509TrustManager> x509TrustManagers = new ArrayList<>();
+        for (TrustManager trustManager : trustManagerList) {
+            if (trustManager instanceof X509TrustManager) {
+                x509TrustManagers.add((X509TrustManager) trustManager);
+            }
+        }
+        return x509TrustManagers;
     }
 
     public  static  TrustManager[] loadDefaultTrustStore() throws Exception {
