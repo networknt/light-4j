@@ -19,7 +19,7 @@ tls:
   #   external: google.com,github.com
   trustedNames: ${client.trustedNames:}
   # indicate of system load default cert.
-  loadDefaultTrustStore: ${client.loadDefaultTrustStore:true}
+  loadDefaultTrustStore: ${client.loadDefaultTrustStore:false}
   # trust store contains certificates that server needs. Enable if tls is used.
   loadTrustStore: ${client.loadTrustStore:true}
   # trust store location can be specified here or system properties javax.net.ssl.trustStore and password javax.net.ssl.trustStorePassword
