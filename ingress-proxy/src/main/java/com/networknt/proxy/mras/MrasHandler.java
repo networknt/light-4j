@@ -4,11 +4,9 @@ import com.networknt.body.BodyHandler;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.client.oauth.TokenResponse;
-import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
 import com.networknt.client.ssl.TLSConfig;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
-import com.networknt.config.TlsUtil;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.config.UrlRewriteRule;
@@ -300,7 +298,7 @@ public class MrasHandler implements MiddlewareHandler {
                         .followRedirects(HttpClient.Redirect.NORMAL)
                         .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
                         // we cannot use the Http2Client SSL Context as we need two-way TLS here.
-                        .sslContext(createSSLContext());
+                        .sslContext(Http2Client.createSSLContext());
                 if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
                 if(config.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
                 // this a workaround to bypass the hostname verification in jdk11 http client.
@@ -341,7 +339,7 @@ public class MrasHandler implements MiddlewareHandler {
                         .followRedirects(HttpClient.Redirect.NORMAL)
                         .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
                         // we cannot use the Http2Client SSL Context as we need two-way TLS here.
-                        .sslContext(createSSLContext());
+                        .sslContext(Http2Client.createSSLContext());
                 if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
                 if(config.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
                 // this a workaround to bypass the hostname verification in jdk11 http client.
@@ -408,7 +406,7 @@ public class MrasHandler implements MiddlewareHandler {
                         .followRedirects(HttpClient.Redirect.NORMAL)
                         .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
                         // we cannot use the Http2Client SSL Context as we need two-way TLS here.
-                        .sslContext(createSSLContext());
+                        .sslContext(Http2Client.createSSLContext());
                 if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
                 if(config.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
                 // this a workaround to bypass the hostname verification in jdk11 http client.
@@ -486,56 +484,5 @@ public class MrasHandler implements MiddlewareHandler {
 
     private static String encodeCredentials(String username, String password) {
         return encodeCredentialsFullFormat(username, password, ":");
-    }
-
-    private SSLContext createSSLContext() throws IOException {
-        SSLContext sslContext = null;
-        KeyManager[] keyManagers = null;
-        try {
-            // load key store for client certificate as two-way ssl is used.
-            String keyStoreName = config.getKeyStoreName();
-            String keyStorePass = config.getKeyStorePass();
-            String keyPass = config.getKeyPass();
-            if(logger.isTraceEnabled()) logger.trace("keyStoreName = " + keyStoreName + " keyStorePass = " + (keyStorePass == null ? null : keyStorePass.substring(0, 4)) + " keyPass = " + (keyPass == null ? null : keyPass.substring(0, 4)));
-            if (keyStoreName != null && keyStorePass != null && keyPass != null) {
-                KeyStore keyStore = TlsUtil.loadKeyStore(keyStoreName, keyStorePass.toCharArray());
-                KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-                keyManagerFactory.init(keyStore, keyPass.toCharArray());
-                keyManagers = keyManagerFactory.getKeyManagers();
-            }
-        } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
-            logger.error("Exception:", e);
-            throw new IOException("Unable to initialise KeyManager[]", e);
-        }
-
-        TrustManager[] trustManagers = null;
-        try {
-            // temp loading the certificate from the keystore instead of truststore from the config.
-            String trustStoreName = config.getKeyStoreName();
-            String trustStorePass = config.getKeyStorePass();
-            if(logger.isTraceEnabled()) logger.trace("trustStoreName = " + trustStoreName + " trustStorePass = " + (trustStorePass == null ? null : trustStorePass.substring(0, 4)));
-            if (trustStoreName != null && trustStorePass != null) {
-                KeyStore trustStore = TlsUtil.loadTrustStore(trustStoreName, trustStorePass.toCharArray());
-                Map<String, Object> tlsMap = new HashMap<>();
-                tlsMap.put("verifyHostname", false);
-                TLSConfig tlsConfig = TLSConfig.create(tlsMap, null);
-                TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-                trustManagerFactory.init(trustStore);
-                trustManagers = ClientX509ExtendedTrustManager.decorate(trustManagerFactory.getTrustManagers(), tlsConfig);
-            }
-        } catch (NoSuchAlgorithmException | KeyStoreException e) {
-            logger.error("Exception:", e);
-            throw new IOException("Unable to initialise TrustManager[]", e);
-        }
-
-        try {
-            sslContext = SSLContext.getInstance("TLSv1.2");
-            sslContext.init(keyManagers, trustManagers, null);
-        } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            logger.error("Exception:", e);
-            throw new IOException("Unable to create and initialise the SSLContext", e);
-        }
-
-        return sslContext;
     }
 }
