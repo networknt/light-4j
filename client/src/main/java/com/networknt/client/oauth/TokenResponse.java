@@ -51,6 +51,9 @@ public class TokenResponse extends Status {
     @JsonProperty(value="example_parameter")
     private String exampleParameter;
 
+    @JsonProperty(value="ext_expires_in")
+    private String extExpiresIn;
+
     public String getAccessToken() {
         return accessToken;
     }
@@ -115,6 +118,10 @@ public class TokenResponse extends Status {
         this.exampleParameter = exampleParameter;
     }
 
+    public String getExtExpiresIn() { return extExpiresIn; }
+
+    public void setExtExpiresIn(String extExpiresIn) {  this.extExpiresIn = extExpiresIn;}
+
     @Override
     public String toString() {
         return "TokenResponse{" +
@@ -126,6 +133,7 @@ public class TokenResponse extends Status {
                 ", refreshToken='" + refreshToken + '\'' +
                 ", remember'" + remember + '\'' +
                 ", exampleParameter='" + exampleParameter + '\'' +
+                ", extExpiresIn='" + extExpiresIn + '\'' +
                 '}';
     }
 
