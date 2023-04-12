@@ -5,6 +5,8 @@ tls:
   # if the server is using self-signed certificate, this need to be false. If true, you have to use CA signed certificate
   # or load truststore that contains the self-signed cretificate.
   verifyHostname: ${client.verifyHostname:true}
+  # indicate of system load default cert.
+  loadDefaultTrustStore: ${client.loadDefaultTrustStore:false}
   # trust store contains certificates that server needs. Enable if tls is used.
   loadTrustStore: ${client.loadTrustStore:true}
   # trust store location can be specified here or system properties javax.net.ssl.trustStore and password javax.net.ssl.trustStorePassword
