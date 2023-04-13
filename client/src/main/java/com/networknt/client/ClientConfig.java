@@ -291,7 +291,7 @@ public final class ClientConfig {
         return maxReqPerConn;
     }
 
-    protected void setRequestEnableHttp2(boolean isRequestEnableHttp2) {
+    public void setRequestEnableHttp2(boolean isRequestEnableHttp2) {
         this.requestEnableHttp2 = isRequestEnableHttp2;
     }
 
