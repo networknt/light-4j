@@ -12,6 +12,8 @@
 - fixes \#1710 rollback loadDefaultTrustStore in client.yml [\#1711](https://github.com/networknt/light-4j/pull/1711) ([stevehu](https://github.com/stevehu))
 - added changes for azuread token api service response compatibility [\#1709](https://github.com/networknt/light-4j/pull/1709) ([SONALJAIN0904](https://github.com/SONALJAIN0904))
 - fixes \#1707 update client.yml to remove the defaultGroupKey and enabl… [\#1708](https://github.com/networknt/light-4j/pull/1708) ([stevehu](https://github.com/stevehu))
+
+
 ## [2.1.11](https://github.com/networknt/light-4j/tree/2.1.11) (2023-04-10)
 
 
