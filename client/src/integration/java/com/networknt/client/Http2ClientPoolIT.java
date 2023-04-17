@@ -784,9 +784,7 @@ public class Http2ClientPoolIT {
         // Set the signature algorithm on the JWT/JWS that will integrity protect the claims
         jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.RSA_USING_SHA256);
 
-        // Sign the JWS and produce the compact serialization, which will be the inner JWT/JWS
-        // representation, which is a string consisting of three dot ('.') separated
-        // base64url-encoded parts in the form Header.Payload.Signature
+        // Sign the JWS and produce the compact serialization
         jwt = jws.getCompactSerialization();
         return jwt;
     }
