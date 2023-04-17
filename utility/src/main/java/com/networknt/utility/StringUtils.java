@@ -183,7 +183,6 @@ public class StringUtils {
     }
 
     // Replacing
-    //-----------------------------------------------------------------------
     /**
      * <p>Replaces a String with another String inside a larger String, once.</p>
      *
