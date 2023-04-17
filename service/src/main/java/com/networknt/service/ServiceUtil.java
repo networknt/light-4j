@@ -105,7 +105,6 @@ public class ServiceUtil {
                     boolean matched = true;
                     Object[] params = new Object[pType.length];
                     for (int j = 0; j < pType.length; j++) {
-                        //System.out.println("pType = " + pType[j]);
                         Map<String, Object> parameter = (Map)parameters.get(j);
                         Iterator it = parameter.entrySet().iterator();
                         if (it.hasNext()) {  // there is only one object in each item.
