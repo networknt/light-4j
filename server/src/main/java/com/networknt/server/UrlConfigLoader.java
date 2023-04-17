@@ -279,7 +279,6 @@ public class UrlConfigLoader implements IConfigLoader {
 			}
 			clientRequest.getRequestHeaders().put(Headers.HOST, host);
 
-			// Send the request
 			AtomicReference<ClientResponse> responseReference = new AtomicReference<>();
 			CountDownLatch latch = new CountDownLatch(1);
 			connection.sendRequest(clientRequest, raw ? client.byteBufferClientCallback(responseReference, latch)
