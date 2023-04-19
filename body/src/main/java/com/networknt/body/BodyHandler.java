@@ -115,7 +115,12 @@ public class BodyHandler implements MiddlewareHandler {
                         exchange.putAttachment(REQUEST_BODY_STRING, unparsedRequestBody);
                     }
                     // attach the parsed request body into exchange if the body parser is enabled
-                    attachJsonBody(exchange, unparsedRequestBody);
+                    boolean res = attachJsonBody(exchange, unparsedRequestBody);
+                    // this will ensure that the next handler won't be called.
+                    if (!res) {
+                        if(logger.isDebugEnabled()) logger.debug("BodyHandler.handleRequest ends with an error.");
+                        return;
+                    }
                 } else if (contentType.startsWith("text/plain")) {
                     InputStream inputStream = exchange.getInputStream();
                     String unparsedRequestBody = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
@@ -163,9 +168,10 @@ public class BodyHandler implements MiddlewareHandler {
      *
      * @param exchange exchange to be attached
      * @param string   unparsed request body
-     * @throws IOException
+     * @throws IOException IO Exception
+     * @return boolean
      */
-    private void attachJsonBody(final HttpServerExchange exchange, String string) throws IOException {
+    private boolean attachJsonBody(final HttpServerExchange exchange, String string) throws IOException {
         Object body;
         if (string != null) {
             string = string.trim();
@@ -178,10 +184,14 @@ public class BodyHandler implements MiddlewareHandler {
             } else {
                 // error here. The content type in head doesn't match the body.
                 setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
-                return;
+                return false;
             }
             exchange.putAttachment(REQUEST_BODY, body);
+        } else {
+            if(logger.isTraceEnabled()) logger.trace("Input string is null and nothing is attached.");
+            return false;
         }
+        return true;
     }
 
     @Override
