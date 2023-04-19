@@ -407,8 +407,8 @@ public class MrasHandler implements MiddlewareHandler {
                 HttpClient.Builder clientBuilder = HttpClient.newBuilder()
                         .followRedirects(HttpClient.Redirect.NORMAL)
                         .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
-                        // we cannot use the Http2Client SSL Context as we need two-way TLS here.
-                        .sslContext(createSSLContext());
+                        // Token site only need one-way TLS with a public certificate.
+                        .sslContext(Http2Client.createSSLContext());
                 if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
                 if(config.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
                 // this a workaround to bypass the hostname verification in jdk11 http client.
