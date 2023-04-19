@@ -1,5 +1,20 @@
 # Change Log
 
+## [2.1.15](https://github.com/networknt/light-4j/tree/2.1.15) (2023-04-19)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1731 update BodyHandler to accept null body as get and delete … [\#1732](https://github.com/networknt/light-4j/pull/1732) ([stevehu](https://github.com/stevehu))
+- fixes \#1729 update BodyHandler to return if attach JSON fails [\#1730](https://github.com/networknt/light-4j/pull/1730) ([stevehu](https://github.com/stevehu))
+- fixes \#1727 switch the microsoft token to one-way TLS in MRAS handle [\#1728](https://github.com/networknt/light-4j/pull/1728) ([stevehu](https://github.com/stevehu))
+- shorten long comment [\#1722](https://github.com/networknt/light-4j/pull/1722) ([jelgun](https://github.com/jelgun))
+- remove beautification comment [\#1726](https://github.com/networknt/light-4j/pull/1726) ([jelgun](https://github.com/jelgun))
+- remove commented out code [\#1725](https://github.com/networknt/light-4j/pull/1725) ([jelgun](https://github.com/jelgun))
+- fix misleading comment [\#1724](https://github.com/networknt/light-4j/pull/1724) ([jelgun](https://github.com/jelgun))
+- remove obvious comment [\#1723](https://github.com/networknt/light-4j/pull/1723) ([jelgun](https://github.com/jelgun))
+- remove task comment [\#1719](https://github.com/networknt/light-4j/pull/1719) ([jelgun](https://github.com/jelgun))
 ## [2.1.14](https://github.com/networknt/light-4j/tree/2.1.14) (2023-04-19)
 
 
