@@ -375,7 +375,6 @@ public class URLImpl implements URL {
         return true;
     }
 
-    // TODO there is a trailing &, use string join instead StringBuilder.
     @Override
     public String toFullStr() {
         StringBuilder builder = new StringBuilder();
