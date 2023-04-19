@@ -187,10 +187,8 @@ public class BodyHandler implements MiddlewareHandler {
                 return false;
             }
             exchange.putAttachment(REQUEST_BODY, body);
-        } else {
-            if(logger.isTraceEnabled()) logger.trace("Input string is null and nothing is attached.");
-            return false;
         }
+        // if this is the get or delete request, the body wil be null, but we still need to go to the next handler.
         return true;
     }
 
