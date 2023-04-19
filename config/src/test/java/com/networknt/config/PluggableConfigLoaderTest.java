@@ -28,7 +28,7 @@ public class PluggableConfigLoaderTest extends TestCase {
     @Override
     public void tearDown() throws Exception {
         super.tearDown();
-        // Remove the test.json from home directory
+        // Remove the config.yml from home directory
         File test = new File(homeDir + "/config.yml");
         test.delete();
     }
