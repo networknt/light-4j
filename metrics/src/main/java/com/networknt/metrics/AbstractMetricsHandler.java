@@ -96,7 +96,7 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
         Map<String, Object> auditInfo = httpServerExchange.getAttachment(AttachmentConstants.AUDIT_INFO);
         if (auditInfo != null) {
             Map<String, String> tags = new HashMap<>();
-            tags.put("endpoint", (String) auditInfo.get(Constants.ENDPOINT_STRING));
+            tags.put(Constants.ENDPOINT_STRING, (String) auditInfo.get(Constants.ENDPOINT_STRING));
             String clientId = auditInfo.get(Constants.CLIENT_ID_STRING) != null ? (String) auditInfo.get(Constants.CLIENT_ID_STRING) : "unknown";
             if(logger.isTraceEnabled()) logger.trace("clientId = " + clientId);
             tags.put("clientId", clientId);
