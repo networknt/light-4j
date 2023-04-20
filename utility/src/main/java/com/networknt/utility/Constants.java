@@ -41,6 +41,7 @@ public class Constants {
     public static final String PRIMARY_SCOPES = "primary_scopes";
     public static final String SECONDARY_SCOPES = "secondary_scopes";
     public static final String ENDPOINT_STRING = "endpoint";
+    public static final String UNKOWN_STRING = "unknown";
     public static final String CSRF_STRING = "csrf";
     public static final String AUTHORIZATION_STRING = "authorization";
 
