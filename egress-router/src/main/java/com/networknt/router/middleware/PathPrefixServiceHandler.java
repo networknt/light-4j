@@ -87,11 +87,30 @@ public class PathPrefixServiceHandler implements MiddlewareHandler {
         }
 
         Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
-        if(auditInfo == null && serviceEntry != null) {
+        if(auditInfo == null) {
             // AUDIT_INFO is created for light-gateway to populate the endpoint as the OpenAPI handlers might not be available.
             auditInfo = new HashMap<>();
-            auditInfo.put(Constants.ENDPOINT_STRING, serviceEntry[0] + "@" + exchange.getRequestMethod().toString().toLowerCase());
+            if(serviceEntry != null) {
+                if(logger.isTraceEnabled()) logger.trace("auditInfo is null and serviceEntry found and endpoint is set to = " + serviceEntry[0] + "@" + exchange.getRequestMethod().toString().toLowerCase());
+                auditInfo.put(Constants.ENDPOINT_STRING, serviceEntry[0] + "@" + exchange.getRequestMethod().toString().toLowerCase());
+            } else {
+                if(logger.isTraceEnabled()) logger.trace("auditInfo is null and serviceEntry is null and endpoint is set to = " + Constants.UNKOWN_STRING + "@" + exchange.getRequestMethod().toString().toLowerCase());
+                // at this moment, we don't have a way to reliably determine the endpoint.
+                auditInfo.put(Constants.ENDPOINT_STRING, Constants.UNKOWN_STRING + "@" + exchange.getRequestMethod().toString().toLowerCase());
+            }
             exchange.putAttachment(AttachmentConstants.AUDIT_INFO, auditInfo);
+        } else {
+            // we have an auditInfo object, let's check if we have the endpoint entry there. If not, we will add it.
+            if(!auditInfo.containsKey(Constants.ENDPOINT_STRING)) {
+                if(serviceEntry != null) {
+                    if(logger.isTraceEnabled()) logger.trace("auditInfo is not null and does not contain endpoint, serviceEntry found set endpoint to = " + serviceEntry[0] + "@" + exchange.getRequestMethod().toString().toLowerCase());
+                    auditInfo.put(Constants.ENDPOINT_STRING, serviceEntry[0] + "@" + exchange.getRequestMethod().toString().toLowerCase());
+                } else {
+                    if(logger.isTraceEnabled()) logger.trace("auditInfo is not null and does not contain endpoint, serviceEntry is null and endpoint is set to = " + Constants.UNKOWN_STRING + "@" + exchange.getRequestMethod().toString().toLowerCase());
+                    // at this moment, we don't have a way to reliably determine the endpoint.
+                    auditInfo.put(Constants.ENDPOINT_STRING, Constants.UNKOWN_STRING + "@" + exchange.getRequestMethod().toString().toLowerCase());
+                }
+            }
         }
         if(logger.isDebugEnabled()) logger.debug("PathPrefixServiceHandler.handleRequest ends.");
         Handler.next(exchange, next);
