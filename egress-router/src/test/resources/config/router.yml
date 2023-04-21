@@ -55,8 +55,11 @@ urlRewriteRules: ${router.urlRewriteRules:}
 # Method rewrite rules for legacy clients that do not support DELETE, PUT, and PATCH HTTP methods to
 # send a request with GET and POST instead. The gateway will rewrite the method from GET to DELETE or
 # from POST to PUT or PATCH. This will be set up at the endpoint level to limit the application.
-# The format of the rule will be "path source-method target-method". Please refer to test values.yml for
-# examples.
+# The format of the rule will be "endpoint-pattern source-method target-method". Please refer to test
+# values.yml for examples. The endpoint-pattern is a pattern in OpenAPI specification. The following is
+# a list of examples:
+# /v1/pets/{petId} PATCH POST
+# /v1/pets PUT POST
 # Note: you cannot rewrite a method with a body to a method without a body or vice versa.
 methodRewriteRules: ${router.methodRewriteRules:}
 

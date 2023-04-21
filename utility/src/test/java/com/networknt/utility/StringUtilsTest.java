@@ -59,4 +59,16 @@ public class StringUtilsTest {
         s = "123456789";
         Assert.assertEquals("****56789", StringUtils.maskHalfString(s));
     }
+
+    @Test
+    public void testMatchPath() {
+        String pattern = "/v1/pets/{petId}";
+        String path = "/v1/pets/1";
+        Assert.assertTrue(StringUtils.matchPathToPattern(path, pattern));
+        pattern = "/v1/pets/{petId}/name";
+        path = "/v1/pets/1/name";
+        Assert.assertTrue(StringUtils.matchPathToPattern(path, pattern));
+        pattern = "/v1/pets/{petId}";
+        Assert.assertTrue(StringUtils.matchPathToPattern(path, pattern));
+    }
 }

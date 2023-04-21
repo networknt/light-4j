@@ -53,13 +53,13 @@ public class RouterConfigTest {
     @Test
     public void testQueryParamRewriteRules() {
         Assert.assertNotNull(routerConfig.getQueryParamRewriteRules());
-        Assert.assertEquals(routerConfig.getQueryParamRewriteRules().size(), 3);
+        Assert.assertEquals(routerConfig.getQueryParamRewriteRules().size(), 4);
     }
 
     @Test
     public void testHeaderRewriteRules() {
         Assert.assertNotNull(routerConfig.getHeaderRewriteRules());
-        Assert.assertEquals(routerConfig.getHeaderRewriteRules().size(), 3);
+        Assert.assertEquals(routerConfig.getHeaderRewriteRules().size(), 4);
     }
 
 
