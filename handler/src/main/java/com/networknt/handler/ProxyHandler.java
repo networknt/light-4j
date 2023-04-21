@@ -32,6 +32,8 @@ import com.networknt.handler.config.MethodRewriteRule;
 import com.networknt.handler.config.QueryHeaderRewriteRule;
 import com.networknt.handler.config.UrlRewriteRule;
 import com.networknt.httpstring.HttpStringConstants;
+import com.networknt.utility.CollectionUtils;
+import com.networknt.utility.StringUtils;
 import io.undertow.UndertowLogger;
 import io.undertow.UndertowMessages;
 import io.undertow.server.*;
@@ -155,7 +157,7 @@ public class ProxyHandler implements HttpHandler {
         if(pathPrefixMaxRequestTime != null) {
             for(Map.Entry<String, Integer> entry: pathPrefixMaxRequestTime.entrySet()) {
                 String key = entry.getKey();
-                if(reqPath.startsWith(key)) {
+                if(StringUtils.matchPathToPattern(reqPath, key)) {
                     maxRequestTime = entry.getValue();
                     timeout = System.currentTimeMillis() + maxRequestTime;
                     if(logger.isTraceEnabled()) logger.trace("Overwritten maxRequestTime {} and timeout {}.", maxRequestTime, timeout);
@@ -501,7 +503,7 @@ public class ProxyHandler implements HttpHandler {
             final HeaderMap inboundRequestHeaders = this.exchange.getRequestHeaders();
             final HeaderMap outboundRequestHeaders = r.getRequestHeaders();
 
-            copyHeaders(outboundRequestHeaders, inboundRequestHeaders, this.headerRewriteRules == null ? null : this.headerRewriteRules.get(target));
+            copyHeaders(outboundRequestHeaders, inboundRequestHeaders, (List)CollectionUtils.matchEndpointKey(target, (Map)this.headerRewriteRules));
 
             /* even if client is non-persistent, we don't close connection to backend. */
             if (!this.exchange.isPersistent()) {
@@ -579,11 +581,9 @@ public class ProxyHandler implements HttpHandler {
             HttpString m = this.exchange.getRequestMethod();
             if (this.methodRewriteRules != null && this.methodRewriteRules.size() > 0) {
                 for (MethodRewriteRule rule : this.methodRewriteRules) {
-                    if (target.equals(rule.getRequestPath()) && m.toString().equals(rule.getSourceMethod())) {
-
-                        if (logger.isDebugEnabled())
-                            logger.debug("Rewrite HTTP method from {} to {}", rule.getSourceMethod(), rule.getTargetMethod());
-
+                    if (StringUtils.matchPathToPattern(target, rule.getRequestPath()) && m.toString().equals(rule.getSourceMethod())) {
+                        if (logger.isTraceEnabled())
+                            logger.debug("Rewrite HTTP method from {} to {} with path {} and pathPattern {}", rule.getSourceMethod(), rule.getTargetMethod(), target, rule.getRequestPath());
                         m = new HttpString(rule.getTargetMethod());
                     }
                 }
@@ -626,8 +626,9 @@ public class ProxyHandler implements HttpHandler {
          */
         private void rewriteQueryParams(StringBuilder urlBuilder, String target) {
 
-            if (this.queryParamRewriteRules != null && this.queryParamRewriteRules.get(target) != null) {
-                List<QueryHeaderRewriteRule> rules = this.queryParamRewriteRules.get(target);
+            if (this.queryParamRewriteRules != null && this.queryParamRewriteRules.size() > 0) {
+
+                List<QueryHeaderRewriteRule> rules = (List<QueryHeaderRewriteRule>)CollectionUtils.matchEndpointKey(target, (Map)this.queryParamRewriteRules);
                 Map<String, Deque<String>> params = this.exchange.getQueryParameters();
 
                 for (var rule : rules) {
@@ -882,7 +883,7 @@ public class ProxyHandler implements HttpHandler {
             final HeaderMap outboundResponseHeaders = exchange.getResponseHeaders();
             exchange.setStatusCode(response.getResponseCode());
 
-            copyHeaders(outboundResponseHeaders, inboundResponseHeaders, headerRewriteRules == null ? null : headerRewriteRules.get(exchange.getRequestPath()));
+            copyHeaders(outboundResponseHeaders, inboundResponseHeaders, (List)CollectionUtils.matchEndpointKey(exchange.getRequestPath(), (Map)headerRewriteRules));
 
             if (exchange.isUpgrade()) {
                 exchange.upgradeChannel((streamConnection, exchange) -> {
