@@ -38,7 +38,6 @@ public class URLImpl implements URL {
 
     private int port;
 
-    // interfaceName
     private String path;
 
     private Map<String, String> parameters;
