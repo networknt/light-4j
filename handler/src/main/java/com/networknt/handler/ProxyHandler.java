@@ -627,41 +627,40 @@ public class ProxyHandler implements HttpHandler {
         private void rewriteQueryParams(StringBuilder urlBuilder, String target) {
 
             if (this.queryParamRewriteRules != null && this.queryParamRewriteRules.size() > 0) {
-
                 List<QueryHeaderRewriteRule> rules = (List<QueryHeaderRewriteRule>)CollectionUtils.matchEndpointKey(target, (Map)this.queryParamRewriteRules);
-                Map<String, Deque<String>> params = this.exchange.getQueryParameters();
-
-                for (var rule : rules) {
-                    if (params.get(rule.getOldK()) != null) {
-                        Deque<String> values = params.get(rule.getOldK());
-                        // we only iterate the values if oldV and newV are defined.
-                        if (rule.getOldV() != null && rule.getNewV() != null) {
-                            Iterator<String> it = values.iterator();
-                            boolean add = false;
-                            while (it.hasNext()) {
-                                if (it.next().equals(rule.getOldV())) {
-                                    it.remove();
-                                    add = true;
+                if(rules != null && rules.size() > 0) {
+                    Map<String, Deque<String>> params = this.exchange.getQueryParameters();
+                    for (var rule : rules) {
+                        if (params.get(rule.getOldK()) != null) {
+                            Deque<String> values = params.get(rule.getOldK());
+                            // we only iterate the values if oldV and newV are defined.
+                            if (rule.getOldV() != null && rule.getNewV() != null) {
+                                Iterator<String> it = values.iterator();
+                                boolean add = false;
+                                while (it.hasNext()) {
+                                    if (it.next().equals(rule.getOldV())) {
+                                        it.remove();
+                                        add = true;
+                                    }
                                 }
+                                if (add)
+                                    values.addFirst(rule.getNewV());
                             }
-                            if (add)
-                                values.addFirst(rule.getNewV());
-                        }
-                        if (rule.getNewK() != null) {
-                            params.remove(rule.getOldK());
-                            params.put(rule.getNewK(), values);
-                        } else {
-                            params.put(rule.getOldK(), values);
-                        }
+                            if (rule.getNewK() != null) {
+                                params.remove(rule.getOldK());
+                                params.put(rule.getNewK(), values);
+                            } else {
+                                params.put(rule.getOldK(), values);
+                            }
 
+                        }
+                    }
+                    String qs = QueryParameterUtils.buildQueryString(params);
+                    if (qs != null && !qs.isEmpty()) {
+                        urlBuilder.append('?');
+                        urlBuilder.append(qs);
                     }
                 }
-                String qs = QueryParameterUtils.buildQueryString(params);
-                if (qs != null && !qs.isEmpty()) {
-                    urlBuilder.append('?');
-                    urlBuilder.append(qs);
-                }
-
             } else {
 
                 String qs = exchange.getQueryString();
