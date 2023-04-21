@@ -1489,4 +1489,30 @@ public class StringUtils {
         }
     }
 
+    /**
+     * Match a URL against an OpenAPI endpoint pattern with curly brackets path parameters
+     * @param requestPath the incoming request path
+     * @param endpointPattern the OpenAPI endpoint pattern with curly brackets path parameters
+     * @return boolean true matched
+     */
+    public static boolean matchPathToPattern(String requestPath, String endpointPattern) {
+        String[] pathPatternParts = endpointPattern.split("/");
+        String[] pathParts = requestPath.split("/");
+
+        boolean isMatch = true;
+        for (int i = 0; i < pathPatternParts.length; i++) {
+            String patternPart = pathPatternParts[i];
+            String urlPart = pathParts[i];
+
+            if (patternPart.startsWith("{") && patternPart.endsWith("}")) {
+                continue; // Wildcard found, move to the next part
+            }
+
+            if (!patternPart.equals(urlPart)) {
+                isMatch = false; // Part does not match, URLs do not match
+                break;
+            }
+        }
+        return isMatch;
+    }
 }
