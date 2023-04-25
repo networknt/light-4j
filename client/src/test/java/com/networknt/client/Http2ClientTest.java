@@ -20,6 +20,7 @@ package com.networknt.client;
 
 import com.networknt.client.circuitbreaker.CircuitBreaker;
 import com.networknt.client.http.Http2ClientConnectionPool;
+import com.networknt.client.simplepool.SimpleConnectionHolder;
 import com.networknt.config.Config;
 import com.networknt.httpstring.HttpStringConstants;
 import io.undertow.Undertow;
@@ -781,5 +782,19 @@ public class Http2ClientTest extends Http2ClientBase {
         assertTrue(connection.isOpen());
 
         IoUtils.safeClose(connection);
+    }
+
+    @Test
+    public void simple_pool_return_null_token_if_api_is_not_available() {
+        final Http2Client client = Http2Client.getInstance();
+        SimpleConnectionHolder.ConnectionToken connectionToken = null;
+        try {
+            connectionToken = client.borrow(new URI("https://localhost:27778"), Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true));
+            assertNull(connectionToken);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            client.restore(connectionToken);
+        }
     }
 }
