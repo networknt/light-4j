@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.networknt.config.JsonMapper;
 import com.networknt.server.ServerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,6 +87,7 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
         long startTime = Clock.defaultClock().getTick();
         exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
             Map<String, Object> auditInfo = exchange1.getAttachment(AttachmentConstants.AUDIT_INFO);
+            if(logger.isTraceEnabled()) logger.trace("auditInfo = " + auditInfo);
             if (auditInfo != null) {
                 Map<String, String> tags = new HashMap<>();
                 tags.put("endpoint", (String) auditInfo.get(Constants.ENDPOINT_STRING));
@@ -123,6 +125,7 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
                 metricName = metricName.tagged(tags);
                 long time = Clock.defaultClock().getTick() - startTime;
                 registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.TIMERS).update(time, TimeUnit.NANOSECONDS);
+                if(logger.isTraceEnabled()) logger.trace("metricName = " + metricName  + " commonTags = " + JsonMapper.toJson(commonTags) + " tags = " + JsonMapper.toJson(tags));
                 incCounterForStatusCode(exchange1.getStatusCode(), commonTags, tags);
             }
             nextListener.proceed();
