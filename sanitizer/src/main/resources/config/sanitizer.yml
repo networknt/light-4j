@@ -27,7 +27,7 @@ headerEnabled: ${sanitizer.headerEnabled:true}
 # https://github.com/OWASP/owasp-java-encoder/blob/main/core/src/main/java/org/owasp/encoder/Encoders.java
 headerEncoder: ${sanitizer.headerEncoder:javascript-source}
 # pick up a list of keys to encode the values to limit the scope to only selected keys. You can
-# choose this option if you want to only encode certain fields in the body. When this option is
+# choose this option if you want to only encode certain values in the headers. When this option is
 # selected, you can not use the headerAttributesToIgnore list.
 headerAttributesToEncode: ${sanitizer.headerAttributesToEncode:}
 # pick up a list of keys to ignore the values encoding to skip some of the values so that these

@@ -26,6 +26,7 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderMap;
 import io.undertow.util.HeaderValues;
+import io.undertow.util.HttpString;
 import org.owasp.encoder.EncoderWrapper;
 import org.owasp.encoder.Encoders;
 
@@ -70,9 +71,27 @@ public class SanitizerHandler implements MiddlewareHandler {
             if (headerMap != null) {
                 for (HeaderValues values : headerMap) {
                     if (values != null) {
-                        ListIterator<String> itValues = values.listIterator();
-                        while (itValues.hasNext()) {
-                            itValues.set(headerEncoder.applyEncoding(itValues.next()));
+                        // if ignore list exists, it will take the precedence.
+                        if(config.getHeaderAttributesToIgnore() != null && config.getHeaderAttributesToIgnore().contains(values.getHeaderName().toString())) {
+                            if(logger.isTraceEnabled()) logger.trace("Ignore header " + values.getHeaderName().toString() + " as it is in the ignore list.");
+                            continue;
+                        }
+
+                        if(config.getHeaderAttributesToEncode() != null) {
+                            if(config.getHeaderAttributesToEncode().contains(values.getHeaderName().toString())) {
+                                if(logger.isTraceEnabled()) logger.trace("Encode header " + values.getHeaderName().toString() + " as is is not in the ignore list and it is in the encode list.");
+                                ListIterator<String> itValues = values.listIterator();
+                                while (itValues.hasNext()) {
+                                    itValues.set(headerEncoder.applyEncoding(itValues.next()));
+                                }
+                            }
+                        } else {
+                            // no attributes to encode, encode everything except the ignore list.
+                            if(logger.isTraceEnabled()) logger.trace("Encode header " + values.getHeaderName().toString() + " as it is not in the ignore list and the encode list is null.");
+                            ListIterator<String> itValues = values.listIterator();
+                            while (itValues.hasNext()) {
+                                itValues.set(headerEncoder.applyEncoding(itValues.next()));
+                            }
                         }
                     }
                 }
