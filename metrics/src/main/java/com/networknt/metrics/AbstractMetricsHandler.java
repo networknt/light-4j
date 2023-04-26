@@ -16,6 +16,7 @@
 
 package com.networknt.metrics;
 
+import com.networknt.config.JsonMapper;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.utility.Constants;
@@ -94,6 +95,7 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
      */
     public void injectMetrics(HttpServerExchange httpServerExchange, long startTime, String metricsName) {
         Map<String, Object> auditInfo = httpServerExchange.getAttachment(AttachmentConstants.AUDIT_INFO);
+        if(logger.isTraceEnabled()) logger.trace("auditInfo = " + auditInfo);
         if (auditInfo != null) {
             Map<String, String> tags = new HashMap<>();
             tags.put(Constants.ENDPOINT_STRING, (String) auditInfo.get(Constants.ENDPOINT_STRING));
@@ -130,6 +132,7 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
             metricName = metricName.tagged(tags);
             long time = System.nanoTime() - startTime;
             registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.TIMERS).update(time, TimeUnit.NANOSECONDS);
+            if(logger.isTraceEnabled()) logger.trace("metricName = " + metricName  + " commonTags = " + JsonMapper.toJson(commonTags) + " tags = " + JsonMapper.toJson(tags));
             incCounterForStatusCode(httpServerExchange.getStatusCode(), commonTags, tags);
         }
     }
