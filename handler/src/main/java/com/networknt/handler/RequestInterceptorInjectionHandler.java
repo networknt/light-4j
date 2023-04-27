@@ -84,6 +84,7 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
         // Make sure content is needed by request interceptors before grabbing the data. The process has a lot of overhead.
         String method = httpServerExchange.getRequestMethod().toString();
         this.next = Handler.getNext(httpServerExchange);
+        if(logger.isTraceEnabled()) logger.trace("injectionContentRequired = {} appliedBodyInjectionPathPrefix = {} method = {} requestComplete = {} requiresContinueResponse = {}", this.injectorContentRequired(), this.isAppliedBodyInjectionPathPrefix(httpServerExchange.getRequestPath()), method, httpServerExchange.isRequestComplete(), HttpContinue.requiresContinueResponse(httpServerExchange.getRequestHeaders()));
         if (this.injectorContentRequired()
                 && this.isAppliedBodyInjectionPathPrefix(httpServerExchange.getRequestPath())
                 && ((method.equalsIgnoreCase("post") ||
