@@ -14,6 +14,8 @@
 - fixes \#1737 fixed a NPE detected during the auto build in ProxyHandler [\#1738](https://github.com/networknt/light-4j/pull/1738) ([stevehu](https://github.com/stevehu))
 - Issue1735 [\#1736](https://github.com/networknt/light-4j/pull/1736) ([stevehu](https://github.com/stevehu))
 - fixes \#1733 endpoint is null in the metrics collection on gateway som… [\#1734](https://github.com/networknt/light-4j/pull/1734) ([stevehu](https://github.com/stevehu))
+
+
 ## [2.1.15](https://github.com/networknt/light-4j/tree/2.1.15) (2023-04-19)
 
 
