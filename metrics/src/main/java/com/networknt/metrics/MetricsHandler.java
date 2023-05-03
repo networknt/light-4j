@@ -50,7 +50,6 @@ public class MetricsHandler extends AbstractMetricsHandler {
         if(logger.isDebugEnabled()) logger.debug("MetricsHandler.handleRequest starts.");
         if(firstTime) {
             commonTags.put("api", Server.getServerConfig().getServiceId());
-            commonTags.put("env", Server.getServerConfig().getEnvironment());
             commonTags.put("addr", Server.currentAddress);
             commonTags.put("port", "" + (Server.getServerConfig().isEnableHttps() ? Server.currentHttpsPort : Server.currentHttpPort));
             InetAddress inetAddress = Util.getInetAddress();

@@ -36,38 +36,19 @@ public class GatewayPathPrefixServiceHandler extends PathPrefixServiceHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        if(logger.isDebugEnabled()) logger.debug("GatewayPathPrefixServiceHandler.handleRequest starts.");
         if (Constants.HEADER.equalsIgnoreCase(gatewayConfig.getEgressIngressIndicator())) {
+            if(logger.isTraceEnabled()) logger.trace("Outgoing request with header indicator");
             pathPrefixService(exchange);
         } else if (Constants.PROTOCOL.equalsIgnoreCase(gatewayConfig.getEgressIngressIndicator()) && HttpURL.PROTOCOL_HTTP.equalsIgnoreCase(exchange.getRequestScheme())){
+            if(logger.isTraceEnabled()) logger.trace("Outgoing request with protocol indicator and http protocol");
             pathPrefixService(exchange);
         } else {
             // incoming request, let the proxy handler to handle it.
-            Handler.next(exchange, next);
+            if(logger.isTraceEnabled()) logger.trace("Incoming request");
         }
+        if(logger.isDebugEnabled()) logger.debug("GatewayPathPrefixServiceHandler.handleRequest ends.");
+        Handler.next(exchange, next);
     }
 
-    protected void pathPrefixService(HttpServerExchange exchange) throws Exception {
-        String[] serviceEntry = null;
-        HeaderValues serviceUrlHeader = exchange.getRequestHeaders().get(HttpStringConstants.SERVICE_URL);
-        String serviceUrl = serviceUrlHeader != null ? serviceUrlHeader.peekFirst() : null;
-        if (serviceUrl == null) {
-            HeaderValues serviceIdHeader = exchange.getRequestHeaders().get(HttpStringConstants.SERVICE_ID);
-            String serviceId = serviceIdHeader != null ? serviceIdHeader.peekFirst() : null;
-            if (serviceId == null) {
-                String requestPath = exchange.getRequestURI();
-                serviceEntry = HandlerUtils.findServiceEntry(HandlerUtils.normalisePath(requestPath), config.getMapping());
-                if (serviceEntry != null) {
-                    exchange.getRequestHeaders().put(HttpStringConstants.SERVICE_ID, serviceEntry[1]);
-                }
-            }
-        }
-        Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
-        if(auditInfo == null && serviceEntry != null) {
-            // AUDIT_INFO is created for light-gateway to populate the endpoint as the OpenAPI handlers might not be available.
-            auditInfo = new HashMap<>();
-            auditInfo.put(Constants.ENDPOINT_STRING, serviceEntry[0] + "@" + exchange.getRequestMethod().toString().toLowerCase());
-            exchange.putAttachment(AttachmentConstants.AUDIT_INFO, auditInfo);
-        }
-        Handler.next(exchange, this.next);
-    }
 }

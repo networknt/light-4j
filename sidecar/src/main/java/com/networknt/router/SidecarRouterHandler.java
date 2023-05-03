@@ -53,7 +53,11 @@ public class GatewayRouterHandler extends RouterHandler implements MiddlewareHan
     public static GatewayConfig gatewayConfig = (GatewayConfig)Config.getInstance().getJsonObjectConfig(GatewayConfig.CONFIG_NAME, GatewayConfig.class);
     public static ServerConfig serverConfig = (ServerConfig)Config.getInstance().getJsonObjectConfig(ServerConfig.CONFIG_NAME, ServerConfig.class);
 
-    @Override
+    public GatewayRouterHandler() {
+        super();
+        if(logger.isDebugEnabled()) logger.debug("GatewayRouterHandler is constructed");
+    }
+
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("GatewayRouterHandler.handleRequest starts.");
         if (Constants.HEADER.equalsIgnoreCase(gatewayConfig.getEgressIngressIndicator())) {

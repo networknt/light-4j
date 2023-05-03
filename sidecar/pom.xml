@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>gateway</artifactId>
+    <artifactId>sidecar</artifactId>
 
     <description>This module will admin handler for re-load config values from config server runtime.</description>
     <dependencies>
