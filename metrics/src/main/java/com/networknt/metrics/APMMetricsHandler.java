@@ -55,6 +55,7 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
         if (firstTime) {
             commonTags.put("api", Server.getServerConfig().getServiceId());
+            commonTags.put("env", Server.getServerConfig().getEnvironment());
             commonTags.put("addr", Server.currentAddress);
             commonTags.put("port", "" + (Server.getServerConfig().isEnableHttps() ? Server.currentHttpsPort : Server.currentHttpPort));
             InetAddress inetAddress = Util.getInetAddress();

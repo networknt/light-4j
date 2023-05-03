@@ -22,7 +22,7 @@ package com.networknt.router;
  */
 public class SidecarConfig {
     String egressIngressIndicator;
-    public static final String CONFIG_NAME = "gateway";
+    public static final String CONFIG_NAME = "sidecar";
 
     public SidecarConfig() {
     }
