@@ -1,5 +1,21 @@
 # Change Log
 
+## [2.1.16](https://github.com/networknt/light-4j/tree/2.1.16) (2023-04-28)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1747 add test cases for header encode and ignore lists [\#1748](https://github.com/networknt/light-4j/pull/1748) ([stevehu](https://github.com/stevehu))
+- fixes \#1745 update request body injection to output more trace info [\#1746](https://github.com/networknt/light-4j/pull/1746) ([stevehu](https://github.com/stevehu))
+- fixes \#1739 Sanitizer handler is ignoring list of headers to apply [\#1742](https://github.com/networknt/light-4j/pull/1742) ([stevehu](https://github.com/stevehu))
+- fixes \#1743 Add trace info for the metrics common tags and tags [\#1744](https://github.com/networknt/light-4j/pull/1744) ([stevehu](https://github.com/stevehu))
+- fixes \#1740 add a new test case in Http2ClientTest to ensure an excep… [\#1741](https://github.com/networknt/light-4j/pull/1741) ([stevehu](https://github.com/stevehu))
+- fixes \#1737 fixed a NPE detected during the auto build in ProxyHandler [\#1738](https://github.com/networknt/light-4j/pull/1738) ([stevehu](https://github.com/stevehu))
+- Issue1735 [\#1736](https://github.com/networknt/light-4j/pull/1736) ([stevehu](https://github.com/stevehu))
+- fixes \#1733 endpoint is null in the metrics collection on gateway som… [\#1734](https://github.com/networknt/light-4j/pull/1734) ([stevehu](https://github.com/stevehu))
+
+
 ## [2.1.15](https://github.com/networknt/light-4j/tree/2.1.15) (2023-04-19)
 
 
