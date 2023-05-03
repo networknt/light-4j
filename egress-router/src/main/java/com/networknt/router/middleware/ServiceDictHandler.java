@@ -37,6 +37,12 @@ public class ServiceDictHandler implements MiddlewareHandler {
 	@Override
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("ServiceDictHandler.handleRequest starts.");
+        serviceDict(exchange);
+        if(logger.isDebugEnabled()) logger.debug("ServiceDictHandler.handleRequest ends.");
+        Handler.next(exchange, next);
+	}
+
+    protected void serviceDict(HttpServerExchange exchange) throws Exception {
         String[] serviceEntry = null;
         HeaderValues serviceIdHeader = exchange.getRequestHeaders().get(HttpStringConstants.SERVICE_ID);
         String serviceId = serviceIdHeader != null ? serviceIdHeader.peekFirst() : null;
@@ -75,9 +81,7 @@ public class ServiceDictHandler implements MiddlewareHandler {
             }
             if(logger.isTraceEnabled()) logger.trace("auditInfo is not null and endpoint value is  = " + auditInfo.get(Constants.ENDPOINT_STRING));
         }
-        if(logger.isDebugEnabled()) logger.debug("ServiceDictHandler.handleRequest ends.");
-        Handler.next(exchange, next);
-	}
+    }
 
 	@Override
     public HttpHandler getNext() {

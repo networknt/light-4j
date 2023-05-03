@@ -43,24 +43,24 @@ import static com.networknt.httpstring.HttpStringConstants.SERVICE_ID;
  *
  * @author Gavin Chen
  */
-public class GatewayRouterHandler extends RouterHandler implements MiddlewareHandler{
-    private static final Logger logger = LoggerFactory.getLogger(GatewayRouterHandler.class);
+public class SidecarRouterHandler extends RouterHandler implements MiddlewareHandler{
+    private static final Logger logger = LoggerFactory.getLogger(SidecarRouterHandler.class);
 
     private volatile HttpHandler next;
     public static final String ROUTER_CONFIG_NAME = "router";
 
     public static Map<String, Object> config = Config.getInstance().getJsonMapConfigNoCache(ROUTER_CONFIG_NAME);
-    public static GatewayConfig gatewayConfig = (GatewayConfig)Config.getInstance().getJsonObjectConfig(GatewayConfig.CONFIG_NAME, GatewayConfig.class);
+    public static SidecarConfig sidecarConfig = (SidecarConfig)Config.getInstance().getJsonObjectConfig(SidecarConfig.CONFIG_NAME, SidecarConfig.class);
     public static ServerConfig serverConfig = (ServerConfig)Config.getInstance().getJsonObjectConfig(ServerConfig.CONFIG_NAME, ServerConfig.class);
 
-    public GatewayRouterHandler() {
+    public SidecarRouterHandler() {
         super();
         if(logger.isDebugEnabled()) logger.debug("GatewayRouterHandler is constructed");
     }
 
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("GatewayRouterHandler.handleRequest starts.");
-        if (Constants.HEADER.equalsIgnoreCase(gatewayConfig.getEgressIngressIndicator())) {
+        if (Constants.HEADER.equalsIgnoreCase(sidecarConfig.getEgressIngressIndicator())) {
             HeaderValues serviceIdHeader = httpServerExchange.getRequestHeaders().get(SERVICE_ID);
             String serviceId = serviceIdHeader != null ? serviceIdHeader.peekFirst() : null;
             String serviceUrl = httpServerExchange.getRequestHeaders().getFirst(HttpStringConstants.SERVICE_URL);
@@ -74,7 +74,7 @@ public class GatewayRouterHandler extends RouterHandler implements MiddlewareHan
                 if(logger.isDebugEnabled()) logger.debug("GatewayRouterHandler.handleRequest ends.");
                 Handler.next(httpServerExchange, next);
             }
-        } else if (Constants.PROTOCOL.equalsIgnoreCase(gatewayConfig.getEgressIngressIndicator()) && HttpURL.PROTOCOL_HTTP.equalsIgnoreCase(httpServerExchange.getRequestScheme())){
+        } else if (Constants.PROTOCOL.equalsIgnoreCase(sidecarConfig.getEgressIngressIndicator()) && HttpURL.PROTOCOL_HTTP.equalsIgnoreCase(httpServerExchange.getRequestScheme())){
             if(logger.isDebugEnabled()) logger.debug("GatewayRouterHandler.handleRequest ends.");
             proxyHandler.handleRequest(httpServerExchange);
         } else {
@@ -102,7 +102,7 @@ public class GatewayRouterHandler extends RouterHandler implements MiddlewareHan
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(GatewayRouterHandler.class.getName(), config, null);
+        ModuleRegistry.registerModule(SidecarRouterHandler.class.getName(), config, null);
     }
 
 }
