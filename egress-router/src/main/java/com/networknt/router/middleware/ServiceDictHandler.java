@@ -37,18 +37,23 @@ public class ServiceDictHandler implements MiddlewareHandler {
 	@Override
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("ServiceDictHandler.handleRequest starts.");
-        String[] serviceEntry = null;
+        serviceDict(exchange);
+        if(logger.isDebugEnabled()) logger.debug("ServiceDictHandler.handleRequest ends.");
+        Handler.next(exchange, next);
+	}
+
+    protected void serviceDict(HttpServerExchange exchange) throws Exception {
+        String requestPath = exchange.getRequestURI();
+        String httpMethod = exchange.getRequestMethod().toString().toLowerCase();
+        String[] serviceEntry = HandlerUtils.findServiceEntry(HandlerUtils.toInternalKey(httpMethod, requestPath), config.getMapping());
+
         HeaderValues serviceIdHeader = exchange.getRequestHeaders().get(HttpStringConstants.SERVICE_ID);
         String serviceId = serviceIdHeader != null ? serviceIdHeader.peekFirst() : null;
-        if(serviceId == null) {
-            String requestPath = exchange.getRequestURI();
-            String httpMethod = exchange.getRequestMethod().toString().toLowerCase();
-            serviceEntry = HandlerUtils.findServiceEntry(HandlerUtils.toInternalKey(httpMethod, requestPath), config.getMapping());
-            if(serviceEntry != null) {
-                if(logger.isTraceEnabled()) logger.trace("serviceEntry found and header is set for service_id = " + serviceEntry[1]);
-                exchange.getRequestHeaders().put(HttpStringConstants.SERVICE_ID, serviceEntry[1]);
-            }
+        if(serviceId == null && serviceEntry != null) {
+            if(logger.isTraceEnabled()) logger.trace("serviceEntry found and header is set for service_id = " + serviceEntry[1]);
+            exchange.getRequestHeaders().put(HttpStringConstants.SERVICE_ID, serviceEntry[1]);
         }
+
         Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
         if(auditInfo == null) {
             // AUDIT_INFO is created for light-gateway to populate the endpoint as the OpenAPI handlers might not be available.
@@ -75,9 +80,7 @@ public class ServiceDictHandler implements MiddlewareHandler {
             }
             if(logger.isTraceEnabled()) logger.trace("auditInfo is not null and endpoint value is  = " + auditInfo.get(Constants.ENDPOINT_STRING));
         }
-        if(logger.isDebugEnabled()) logger.debug("ServiceDictHandler.handleRequest ends.");
-        Handler.next(exchange, next);
-	}
+    }
 
 	@Override
     public HttpHandler getNext() {
