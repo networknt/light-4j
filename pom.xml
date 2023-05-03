@@ -165,7 +165,7 @@
         <module>ingress-proxy</module>
         <module>rule-loader</module>
         <module>config-reload</module>
-        <module>gateway</module>
+        <module>sidecar</module>
         <module>request-transformer</module>
         <module>response-transformer</module>
         <module>api-key</module>

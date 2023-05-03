@@ -20,11 +20,11 @@ package com.networknt.router;
  * Config class for gateway.
  *
  */
-public class GatewayConfig {
+public class SidecarConfig {
     String egressIngressIndicator;
-    public static final String CONFIG_NAME = "gateway";
+    public static final String CONFIG_NAME = "sidecar";
 
-    public GatewayConfig() {
+    public SidecarConfig() {
     }
 
     public String getEgressIngressIndicator() {
