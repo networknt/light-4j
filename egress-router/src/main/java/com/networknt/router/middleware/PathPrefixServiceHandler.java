@@ -78,18 +78,15 @@ public class PathPrefixServiceHandler implements MiddlewareHandler {
     }
 
     protected void pathPrefixService(HttpServerExchange exchange) throws Exception {
-        String[] serviceEntry = null;
+        String requestPath = exchange.getRequestURI();
+        String[] serviceEntry = HandlerUtils.findServiceEntry(HandlerUtils.normalisePath(requestPath), config.getMapping());
+
         // if service URL is in the header, we don't need to do the service discovery with serviceId.
         HeaderValues serviceIdHeader = exchange.getRequestHeaders().get(HttpStringConstants.SERVICE_ID);
         String serviceId = serviceIdHeader != null ? serviceIdHeader.peekFirst() : null;
-        if(serviceId == null) {
-            String requestPath = exchange.getRequestURI();
-            if(logger.isTraceEnabled()) logger.trace("serviceId is null, looking up the serviceEntry...");
-            serviceEntry = HandlerUtils.findServiceEntry(HandlerUtils.normalisePath(requestPath), config.getMapping());
-            if(serviceEntry != null) {
-                if(logger.isTraceEnabled()) logger.trace("serviceEntry found and header is set for service_id = " + serviceEntry[1]);
-                exchange.getRequestHeaders().put(HttpStringConstants.SERVICE_ID, serviceEntry[1]);
-            }
+        if(serviceId == null && serviceEntry != null) {
+            if(logger.isTraceEnabled()) logger.trace("serviceEntry found and header is set for service_id = " + serviceEntry[1]);
+            exchange.getRequestHeaders().put(HttpStringConstants.SERVICE_ID, serviceEntry[1]);
         }
 
         Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
