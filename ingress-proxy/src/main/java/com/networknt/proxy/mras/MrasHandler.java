@@ -376,6 +376,7 @@ public class MrasHandler implements MiddlewareHandler {
                     .POST(HttpRequest.BodyPublishers.ofString(form))
                     .build();
 
+            if(logger.isTraceEnabled()) logger.trace("request url = " + serverUrl + "request body = " + form + " request headers = " + request.headers().toString());
             HttpResponse<?> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             if(logger.isTraceEnabled()) logger.trace(response.statusCode() + " " + response.body().toString());
             if(response.statusCode() == 200) {
