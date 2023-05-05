@@ -1,5 +1,15 @@
 # Change Log
 
+## [2.1.17](https://github.com/networknt/light-4j/tree/2.1.17) (2023-05-05)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1756 Sanitizer handler registers the config with the wrong key [\#1757](https://github.com/networknt/light-4j/pull/1757) ([stevehu](https://github.com/stevehu))
+- fixes \#1754 add two more test cases for StringUtilsTest [\#1755](https://github.com/networknt/light-4j/pull/1755) ([stevehu](https://github.com/stevehu))
+- fixes \#1752 Add a trace statement to the MRAS handler to log the request [\#1753](https://github.com/networknt/light-4j/pull/1753) ([stevehu](https://github.com/stevehu))
+- Issue1749 [\#1751](https://github.com/networknt/light-4j/pull/1751) ([stevehu](https://github.com/stevehu))
 ## [2.1.16](https://github.com/networknt/light-4j/tree/2.1.16) (2023-04-28)
 
 
