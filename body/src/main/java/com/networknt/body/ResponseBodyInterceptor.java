@@ -1,13 +1,10 @@
 package com.networknt.body;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.networknt.config.Config;
 import com.networknt.handler.BuffersUtils;
-import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.ResponseInterceptor;
 import com.networknt.httpstring.AttachmentConstants;
+import com.networknt.httpstring.ContentType;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -17,24 +14,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 
-import static com.networknt.body.BodyHandler.REQUEST_BODY;
 import static com.networknt.body.BodyHandler.REQUEST_BODY_STRING;
 
 public class ResponseBodyInterceptor implements ResponseInterceptor {
-    static final Logger logger = LoggerFactory.getLogger(ResponseBodyInterceptor.class);
-    static final String CONTENT_TYPE_MISMATCH = "ERR10015";
-
-    public static int MAX_BUFFERS = 1024;
-    private BodyConfig config;
+    private static final Logger LOG = LoggerFactory.getLogger(ResponseBodyInterceptor.class);
+    private final BodyConfig config;
     private volatile HttpHandler next;
 
     public ResponseBodyInterceptor() {
-        if(logger.isInfoEnabled()) logger.info("ResponseBodyInterceptor is loaded");
-        config = BodyConfig.load();
+        if (LOG.isInfoEnabled())
+            LOG.info("ResponseBodyInterceptor is loaded");
+
+        this.config = BodyConfig.load();
     }
 
     @Override
@@ -71,68 +63,86 @@ public class ResponseBodyInterceptor implements ResponseInterceptor {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
-        if(logger.isDebugEnabled()) logger.debug("ResponseBodyInterceptor.handleRequest starts.");
-        if(shouldParseBody(exchange) && getBuffer(exchange) != null) {
-            String s = BuffersUtils.toString(getBuffer(exchange), StandardCharsets.UTF_8);
-            if(logger.isTraceEnabled()) logger.trace("original response body = " + s);
-            // put the response body in the attachment for auditing and validation.
-            boolean attached = this.attachJsonBody(exchange, s);
-            if(!attached) {
-                if(logger.isInfoEnabled()) logger.info("Failed to attached the response body to the exchange");
+
+        if (LOG.isDebugEnabled())
+            LOG.debug("ResponseBodyInterceptor.handleRequest starts.");
+
+        if (this.shouldAttachBody(exchange.getResponseHeaders())) {
+
+            var existing = this.getBuffer(exchange);
+
+            if (existing != null) {
+
+                if (LOG.isTraceEnabled())
+                    LOG.trace("Attach response body requirement is met and the byte buffer pool exists.");
+
+                var completeBody = BuffersUtils.toString(existing, StandardCharsets.UTF_8);
+                var contentType = exchange.getResponseHeaders().getFirst(Headers.CONTENT_TYPE);
+
+                if (LOG.isTraceEnabled())
+                    LOG.trace("contentType = " + contentType + " response body = " + (completeBody.length() > 16384 ? completeBody.substring(0, 16384) : completeBody));
+
+                boolean attached = this.handleBody(exchange, completeBody, contentType);
+
+                if (!attached && LOG.isErrorEnabled())
+                    LOG.error("Failed to attach the request body to the exchange!");
             }
         }
-        if(logger.isDebugEnabled()) logger.debug("ResponseBodyInterceptor.handleRequest ends.");
+
+        if (LOG.isDebugEnabled())
+            LOG.debug("ResponseBodyInterceptor.handleRequest ends.");
     }
 
-    private boolean shouldParseBody(final HttpServerExchange exchange) {
-        return isAttachContentType(exchange);
-    }
-    private boolean isAttachContentType(final HttpServerExchange exchange) {
-        String contentType = exchange.getResponseHeaders().getFirst(Headers.CONTENT_TYPE);
-        // do not attach if content type is null
-        if(contentType == null) return false;
-        return contentType.startsWith("application/json") || contentType.startsWith("text") || contentType.startsWith("application/xml");
+    private boolean handleBody(final HttpServerExchange ex, String body, String contentType) {
+        if (this.isJsonData(contentType))
+            return this.attachJsonBody(ex, body);
+
+        else if (this.isXmlData(contentType))
+            return this.attachXmlBody(ex, body);
+
+        else if (this.isFormData(contentType))
+            return this.attachFormDataBody(ex, body);
+
+        else
+            return false;
     }
 
     /**
-     * Method used to parse the body into a Map or a List and attach it into exchange
+     * Method used to parse the body into a Map or a List and attach it into exchange.
      *
-     * @param exchange exchange to be attached
-     * @param string   raw response body
+     * @param ex - current exchange
+     * @param str - byte buffer body as a string
+     * @return - true if successful
      */
-    private boolean attachJsonBody(final HttpServerExchange exchange, String string) {
-        Object body;
-        string = string.trim();
-        // handle the json body on the best effort.
-        if (string.startsWith("{")) {
-            try {
-                body = Config.getInstance().getMapper().readValue(string, new TypeReference<Map<String, Object>>() {
-                });
-                exchange.putAttachment(AttachmentConstants.RESPONSE_BODY, body);
-            } catch (JsonProcessingException e) {
-                if(logger.isTraceEnabled())
-                    logger.error("Response body failed to attach with exception {}", e.getMessage(), e);
-                setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
-                return false;
-            }
-        } else if (string.startsWith("[")) {
-            try {
-                body = Config.getInstance().getMapper().readValue(string, new TypeReference<List<Object>>() {
-                });
-                exchange.putAttachment(AttachmentConstants.RESPONSE_BODY, body);
-            } catch (JsonProcessingException e) {
-                if(logger.isTraceEnabled())
-                    logger.error("Response body failed to attach with exception: {}", e.getMessage(), e);
-                setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
+    private boolean attachJsonBody(final HttpServerExchange ex, String str) {
+        str = str.trim();
 
-                return false;
-            }
+        if (str.charAt(0) == JSON_MAP_OBJECT_STARTING_CHAR) {
+            this.cacheResponseBody(ex, str);
+            return this.parseJsonMapObject(ex, AttachmentConstants.REQUEST_BODY, str);
+
+        } else if (str.charAt(0) == JSON_ARRAY_OBJECT_STARTING_CHAR) {
+            this.cacheResponseBody(ex, str);
+            return this.parseJsonArrayObject(ex, AttachmentConstants.REQUEST_BODY, str);
         }
-        // cache other content type of body if it is enabled for auditing purpose.
-        if (config.isCacheRequestBody()) {
-            exchange.putAttachment(AttachmentConstants.RESPONSE_BODY_STRING, string);
-        }
+
+        setExchangeStatus(ex, CONTENT_TYPE_MISMATCH, ContentType.APPLICATION_JSON.value());
+        return false;
+    }
+
+    public boolean attachXmlBody(HttpServerExchange ex, String str) {
+        this.cacheResponseBody(ex, str);
         return true;
+    }
+
+    public boolean attachFormDataBody(HttpServerExchange ex, String str) {
+        this.cacheResponseBody(ex, str);
+        return true;
+    }
+
+    private void cacheResponseBody(HttpServerExchange exchange, String s) {
+        if (this.config.isCacheRequestBody())
+            exchange.putAttachment(AttachmentConstants.RESPONSE_BODY_STRING, s);
     }
 
 }

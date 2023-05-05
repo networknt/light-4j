@@ -15,7 +15,7 @@ import java.nio.channels.FileChannel;
 
 public class ContentStreamSinkConduit extends AbstractStreamSinkConduit<StreamSinkConduit> {
 
-    static final Logger logger = LoggerFactory.getLogger(ContentStreamSinkConduit.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ContentStreamSinkConduit.class);
 
     private final StreamSinkConduit _next;
 
@@ -30,19 +30,26 @@ public class ContentStreamSinkConduit extends AbstractStreamSinkConduit<StreamSi
     public ContentStreamSinkConduit(StreamSinkConduit next, HttpServerExchange exchange) {
         super(next);
         this._next = next;
+
         // load the interceptors from the service.yml
         interceptors = SingletonServiceFactory.getBeans(ResponseInterceptor.class);
+
         try {
-            if(interceptors != null && interceptors.length > 0) {
-                // iterate all interceptor handlers.
-                for(ResponseInterceptor interceptor : interceptors) {
-                    if(logger.isDebugEnabled()) logger.debug("Executing interceptor " + interceptor.getClass());
+
+            if (interceptors != null && interceptors.length > 0)
+                for (ResponseInterceptor interceptor : interceptors) {
+
+                    if (LOG.isDebugEnabled())
+                        LOG.debug("Executing interceptor " + interceptor.getClass());
+
                     interceptor.handleRequest(exchange);
                 }
-            }
+
         } catch (Exception e) {
-            logger.error("Error executing interceptors", e);
-            // ByteArrayProxyRequest.of(exchange).setInError(true);
+
+            if (LOG.isErrorEnabled())
+                LOG.error("Error executing interceptors", e);
+
             throw new RuntimeException(e);
         }
     }

@@ -48,483 +48,497 @@ import static io.undertow.Handlers.websocket;
  */
 public class Handler {
 
-	private static final AttachmentKey<Integer> CHAIN_SEQ = AttachmentKey.create(Integer.class);
-	private static final AttachmentKey<String> CHAIN_ID = AttachmentKey.create(String.class);
-	private static final Logger logger = LoggerFactory.getLogger(Handler.class);
-	private static final String CONFIG_NAME = "handler";
-	private static String configName = CONFIG_NAME;
+    private static final AttachmentKey<Integer> CHAIN_SEQ = AttachmentKey.create(Integer.class);
+    private static final AttachmentKey<String> CHAIN_ID = AttachmentKey.create(String.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Handler.class);
+    private static final String CONFIG_NAME = "handler";
+    private static String configName = CONFIG_NAME;
 
-	// Accessed directly.
-	public static HandlerConfig config = (HandlerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME,
-			HandlerConfig.class);
+    // Accessed directly.
+    public static HandlerConfig config = (HandlerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME,
+            HandlerConfig.class);
 
-	// each handler keyed by a name.
-	static final Map<String, HttpHandler> handlers = new HashMap<>();
-	static final Map<String, List<HttpHandler>> handlerListById = new HashMap<>();
-	static final Map<HttpString, PathTemplateMatcher<String>> methodToMatcherMap = new HashMap<>();
-	static List<HttpHandler> defaultHandlers;
-	// this is the last handler that need to be called when OrchestratorHandler is injected into the beginning of the chain
-	static HttpHandler lastHandler;
+    // each handler keyed by a name.
+    static final Map<String, HttpHandler> handlers = new HashMap<>();
+    static final Map<String, List<HttpHandler>> handlerListById = new HashMap<>();
+    static final Map<HttpString, PathTemplateMatcher<String>> methodToMatcherMap = new HashMap<>();
+    static List<HttpHandler> defaultHandlers;
+    // this is the last handler that need to be called when OrchestratorHandler is injected into the beginning of the chain
+    static HttpHandler lastHandler;
 
-	public static void setLastHandler(HttpHandler handler) {
-		lastHandler = handler;
-	}
+    public static void setLastHandler(HttpHandler handler) {
+        lastHandler = handler;
+    }
 
-	public static void init() {
-		initHandlers();
-		initChains();
-		initPaths();
-		initDefaultHandlers();
-		ModuleRegistry.registerModule(Handler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
-	}
+    public static void init() {
+        initHandlers();
+        initChains();
+        initPaths();
+        initDefaultHandlers();
+        ModuleRegistry.registerModule(Handler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+    }
 
-	/**
-	 * Construct the named map of handlers. Note: All handlers in use for this
-	 * microservice should be listed in this handlers list
-	 * 
-	 * @throws Exception
-	 */
-	static void initHandlers() {
-		if (config != null && config.getHandlers() != null) {
-			// initialize handlers
-			for (Object handler : config.getHandlers()) {
-				// If the handler is configured as just a string, it's a fully qualified class
-				// name with a default constructor.
-				if (handler instanceof String) {
-					initStringDefinedHandler((String) handler);
-				} else if (handler instanceof Map) {
-					initMapDefinedHandler((Map<String, Object>) handler);
-				}
-			}
-		}
-	}
+    /**
+     * Construct the named map of handlers. Note: All handlers in use for this
+     * microservice should be listed in this handlers list
+     *
+     * @throws Exception
+     */
+    static void initHandlers() {
+        if (config != null && config.getHandlers() != null) {
 
-	/**
-	 * Construct chains of handlers, if any are configured NOTE: It is recommended
-	 * to define reusable chains of handlers
-	 */
-	static void initChains() {
-		if (config != null && config.getChains() != null) {
-			// add the chains to the handler list by id list.
-			for (String chainName : config.getChains().keySet()) {
-				List<String> chain = config.getChains().get(chainName);
-				List<HttpHandler> handlerChain = new ArrayList<>();
-				for (String chainItemName : chain) {
-					HttpHandler chainItem = handlers.get(chainItemName);
-					if (chainItem == null)
-						throw new RuntimeException("Chain " + chainName + " uses Unknown handler: " + chainItemName);
-					handlerChain.add(chainItem);
-				}
-				handlerListById.put(chainName, handlerChain);
-			}
-		}
-	}
+            // initialize handlers
+            for (var handler : config.getHandlers()) {
 
-	/**
-	 * Build "handlerListById" and "reqTypeMatcherMap" from the paths in the config.
-	 */
-	static void initPaths() {
-		if (config != null && config.getPaths() != null) {
-			for (PathChain pathChain : config.getPaths()) {
-				pathChain.validate(configName + " config"); // raises exception on misconfiguration
-				if(pathChain.getPath() == null) {
-					addSourceChain(pathChain);
-				} else {
-					addPathChain(pathChain);
-				}
-			}
-		}
-	}
+                // If the handler is configured as just a string, it's a fully qualified class
+                // name with a default constructor.
+                if (handler instanceof String)
+                    initStringDefinedHandler((String) handler);
 
-	/**
-	 * Build "defaultHandlers" from the defaultHandlers in the config.
-	 */
-	static void initDefaultHandlers() {
-		if (config != null && config.getDefaultHandlers() != null) {
-			defaultHandlers = getHandlersFromExecList(config.getDefaultHandlers());
-			handlerListById.put("defaultHandlers", defaultHandlers);
-		}
-	}
+                else if (handler instanceof Map)
+                    initMapDefinedHandler((Map<String, Object>) handler);
+            }
+        }
+    }
 
-	/**
-	 * Add PathChains crated from the EndpointSource given in sourceChain
-	 */
-	private static void addSourceChain(PathChain sourceChain) {
-		try {
-			Class sourceClass = Class.forName(sourceChain.getSource());
-			EndpointSource source = (EndpointSource)(sourceClass.getDeclaredConstructor().newInstance());
-			for (EndpointSource.Endpoint endpoint : source.listEndpoints()) {
-				PathChain sourcedPath = new PathChain();
-				sourcedPath.setPath(endpoint.getPath());
-				sourcedPath.setMethod(endpoint.getMethod());
-				sourcedPath.setExec(sourceChain.getExec());
-				sourcedPath.validate(sourceChain.getSource());
-				addPathChain(sourcedPath);
-			}
-		} catch (Exception e) {
-			logger.error("Failed to inject handler.yml paths from: " + sourceChain);
-			if(e instanceof RuntimeException) {
-				throw (RuntimeException)e;
-			} else {
-				throw new RuntimeException(e);
-			}
-		}
-	}
+    /**
+     * Construct chains of handlers, if any are configured NOTE: It is recommended
+     * to define reusable chains of handlers
+     */
+    static void initChains() {
+        if (config != null && config.getChains() != null) {
 
-	/**
-	 * Add a PathChain (having a non-null path) to the handler data structures.
-	 */
-	private static void addPathChain(PathChain pathChain) {
-		HttpString method = new HttpString(pathChain.getMethod());
+            // add the chains to the handler list by id list.
+            for (var chainName : config.getChains().keySet()) {
+                var chain = config.getChains().get(chainName);
+                var handlerChain = new ArrayList<HttpHandler>();
 
-		// Use a random integer as the id for a given path.
-		Integer randInt = new Random().nextInt();
-		while (handlerListById.containsKey(randInt.toString())) {
-			randInt = new Random().nextInt();
-		}
+                for (var chainItemName : chain) {
+                    var chainItem = handlers.get(chainItemName);
 
-		// Flatten out the execution list from a mix of middleware chains and handlers.
-		List<HttpHandler> handlers = getHandlersFromExecList(pathChain.getExec());
-		if(handlers.size() > 0) {
-			// If a matcher already exists for the given type, at to that instead of
-			// creating a new one.
-			PathTemplateMatcher<String> pathTemplateMatcher = methodToMatcherMap.containsKey(method)
-				? methodToMatcherMap.get(method)
-				: new PathTemplateMatcher<>();
+                    if (chainItem == null)
+                        throw new RuntimeException("Chain " + chainName + " uses Unknown handler: " + chainItemName);
 
-			if(pathTemplateMatcher.get(pathChain.getPath()) == null) { pathTemplateMatcher.add(pathChain.getPath(), randInt.toString()); }
-			methodToMatcherMap.put(method, pathTemplateMatcher);
-			handlerListById.put(randInt.toString(), handlers);
-		}
-	}
+                    handlerChain.add(chainItem);
+                }
+                handlerListById.put(chainName, handlerChain);
+            }
+        }
+    }
 
-	/**
-	 * Handle the next request in the chain.
-	 *
-	 * @param httpServerExchange
-	 *            The current requests server exchange.
-	 * @throws Exception
-	 *             Propagated exception in the handleRequest chain.
-	 */
-	public static void next(HttpServerExchange httpServerExchange) throws Exception {
-		HttpHandler httpHandler = getNext(httpServerExchange);
-		if (httpHandler != null) {
-			httpHandler.handleRequest(httpServerExchange);
-		} else if(lastHandler != null) {
-			lastHandler.handleRequest(httpServerExchange);
-		}
-	}
+    /**
+     * Build "handlerListById" and "reqTypeMatcherMap" from the paths in the config.
+     */
+    static void initPaths() {
 
-	/**
-	 * Go to the next handler if the given next is none null. Reason for this is for
-	 * middleware to provide their instance next if it exists. Since if it exists,
-	 * the server hasn't been able to find the handler.yml.
-	 *
-	 * @param httpServerExchange
-	 *            The current requests server exchange.
-	 * @param next
-	 *            The next HttpHandler to go to if it's not null.
-	 * @throws Exception exception
-	 */
-	public static void next(HttpServerExchange httpServerExchange, HttpHandler next) throws Exception {
-		if (next != null) {
-			next.handleRequest(httpServerExchange);
-		} else {
-			next(httpServerExchange);
-		}
-	}
+        if (config != null && config.getPaths() != null) {
 
-	/**
-	 * Allow nexting directly to a flow.
-	 *
-	 * @param httpServerExchange
-	 *            The current requests server exchange.
-	 * @param execName
-	 *            The name of the next executable to go to, ie chain or handler.
-	 *            Chain resolved first.
-	 * @param returnToOrigFlow
-	 *            True if you want to call the next handler defined in your original
-	 *            chain after the provided execName is completed. False otherwise.
-	 * @throws Exception exception
-	 *
-	 */
-	public static void next(HttpServerExchange httpServerExchange, String execName, Boolean returnToOrigFlow)
-			throws Exception {
-		String currentChainId = httpServerExchange.getAttachment(CHAIN_ID);
-		Integer currentNextIndex = httpServerExchange.getAttachment(CHAIN_SEQ);
+            for (var pathChain : config.getPaths()) {
+                pathChain.validate(configName + " config"); // raises exception on misconfiguration
 
-		httpServerExchange.putAttachment(CHAIN_ID, execName);
-		httpServerExchange.putAttachment(CHAIN_SEQ, 0);
+                if (pathChain.getPath() == null)
+                    addSourceChain(pathChain);
 
-		next(httpServerExchange);
+                else addPathChain(pathChain);
+            }
+        }
+    }
 
-		// return to current flow.
-		if (returnToOrigFlow) {
-			httpServerExchange.putAttachment(CHAIN_ID, currentChainId);
-			httpServerExchange.putAttachment(CHAIN_SEQ, currentNextIndex);
-			next(httpServerExchange);
-		}
-	}
+    /**
+     * Build "defaultHandlers" from the defaultHandlers in the config.
+     */
+    static void initDefaultHandlers() {
 
-	/**
-	 * Returns the instance of the next handler, rather then calling handleRequest
-	 * on it.
-	 *
-	 * @param httpServerExchange
-	 *            The current requests server exchange.
-	 * @return The HttpHandler that should be executed next.
-	 */
-	public static HttpHandler getNext(HttpServerExchange httpServerExchange) {
-		String chainId = httpServerExchange.getAttachment(CHAIN_ID);
-		List<HttpHandler> handlersForId = handlerListById.get(chainId);
-		Integer nextIndex = httpServerExchange.getAttachment(CHAIN_SEQ);
-		// Check if we've reached the end of the chain.
-		if (nextIndex < handlersForId.size()) {
-			httpServerExchange.putAttachment(CHAIN_SEQ, nextIndex + 1);
-			return handlersForId.get(nextIndex);
-		}
-		return null;
-	}
+        if (config != null && config.getDefaultHandlers() != null) {
+            defaultHandlers = getHandlersFromExecList(config.getDefaultHandlers());
+            handlerListById.put("defaultHandlers", defaultHandlers);
+        }
+    }
 
-	/**
-	 * Returns the instance of the next handler, or the given next param if it's not
-	 * null.
-	 *
-	 * @param httpServerExchange
-	 *            The current requests server exchange.
-	 * @param next
-	 *            If not null, return this.
-	 * @return The next handler in the chain, or next if it's not null.
-	 * @throws Exception exception
-	 */
-	public static HttpHandler getNext(HttpServerExchange httpServerExchange, HttpHandler next) throws Exception {
-		if (next != null) {
-			return next;
-		}
-		return getNext(httpServerExchange);
-	}
+    /**
+     * Add PathChains crated from the EndpointSource given in sourceChain
+     */
+    private static void addSourceChain(PathChain sourceChain) {
+        try {
+            var sourceClass = Class.forName(sourceChain.getSource());
+            var source = (EndpointSource) (sourceClass.getDeclaredConstructor().newInstance());
 
-	/**
-	 * On the first step of the request, match the request against the configured
-	 * paths. If the match is successful, store the chain id within the exchange.
-	 * Otherwise return false.
-	 *
-	 * @param httpServerExchange
-	 *            The current requests server exchange.
-	 * @return true if a handler has been defined for the given path.
-	 */
-	public static boolean start(HttpServerExchange httpServerExchange) {
-		// Get the matcher corresponding to the current request type.
-		PathTemplateMatcher<String> pathTemplateMatcher = methodToMatcherMap.get(httpServerExchange.getRequestMethod());
-		if (pathTemplateMatcher != null) {
-			// Match the current request path to the configured paths.
-			PathTemplateMatcher.PathMatchResult<String> result = pathTemplateMatcher
-					.match(httpServerExchange.getRequestPath());
-			if (result != null) {
-				// Found a match, configure and return true;
-				// Add path variables to query params.
-				httpServerExchange.putAttachment(ATTACHMENT_KEY,
-						new io.undertow.util.PathTemplateMatch(result.getMatchedTemplate(), result.getParameters()));
-				for (Map.Entry<String, String> entry : result.getParameters().entrySet()) {
-					// the values shouldn't be added to query param. but this is left as it was to keep backward compatability
-					httpServerExchange.addQueryParam(entry.getKey(), entry.getValue());
-					
-					// put values in path param map
-					httpServerExchange.addPathParam(entry.getKey(), entry.getValue());
-				}
-				String id = result.getValue();
-				httpServerExchange.putAttachment(CHAIN_ID, id);
-				httpServerExchange.putAttachment(CHAIN_SEQ, 0);
-				return true;
-			}
-		}
-		return false;
-	}
+            for (var endpoint : source.listEndpoints()) {
+                var sourcedPath = new PathChain();
+                sourcedPath.setPath(endpoint.getPath());
+                sourcedPath.setMethod(endpoint.getMethod());
+                sourcedPath.setExec(sourceChain.getExec());
+                sourcedPath.validate(sourceChain.getSource());
+                addPathChain(sourcedPath);
+            }
+        } catch (Exception e) {
+
+            LOG.error("Failed to inject handler.yml paths from: " + sourceChain);
+
+            if (e instanceof RuntimeException)
+                throw (RuntimeException) e;
+
+            else
+                throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Add a PathChain (having a non-null path) to the handler data structures.
+     */
+    private static void addPathChain(PathChain pathChain) {
+        var method = new HttpString(pathChain.getMethod());
+
+        // Use a random integer as the id for a given path.
+        int randInt = new Random().nextInt();
+
+        while (handlerListById.containsKey(Integer.toString(randInt)))
+            randInt = new Random().nextInt();
+
+        // Flatten out the execution list from a mix of middleware chains and handlers.
+        var handlers = getHandlersFromExecList(pathChain.getExec());
+
+        if (handlers.size() > 0) {
+
+            // If a matcher already exists for the given type, at to that instead of
+            // creating a new one.
+            PathTemplateMatcher<String> pathTemplateMatcher = methodToMatcherMap.containsKey(method)
+                    ? methodToMatcherMap.get(method)
+                    : new PathTemplateMatcher<>();
+
+            if (pathTemplateMatcher.get(pathChain.getPath()) == null)
+                pathTemplateMatcher.add(pathChain.getPath(), Integer.toString(randInt));
+
+            methodToMatcherMap.put(method, pathTemplateMatcher);
+            handlerListById.put(Integer.toString(randInt), handlers);
+        }
+    }
+
+    /**
+     * Handle the next request in the chain.
+     *
+     * @param httpServerExchange The current requests server exchange.
+     * @throws Exception Propagated exception in the handleRequest chain.
+     */
+    public static void next(HttpServerExchange httpServerExchange) throws Exception {
+        var httpHandler = getNext(httpServerExchange);
+
+        if (httpHandler != null)
+            httpHandler.handleRequest(httpServerExchange);
+
+        else if (lastHandler != null)
+            lastHandler.handleRequest(httpServerExchange);
+    }
+
+    /**
+     * Go to the next handler if the given next is none null. Reason for this is for
+     * middleware to provide their instance next if it exists. Since if it exists,
+     * the server hasn't been able to find the handler.yml.
+     *
+     * @param httpServerExchange The current requests server exchange.
+     * @param next               The next HttpHandler to go to if it's not null.
+     * @throws Exception exception
+     */
+    public static void next(HttpServerExchange httpServerExchange, HttpHandler next) throws Exception {
+
+        if (next != null)
+            next.handleRequest(httpServerExchange);
+
+        else next(httpServerExchange);
+    }
+
+    /**
+     * Allow nexting directly to a flow.
+     *
+     * @param ex The current requests server exchange.
+     * @param execName           The name of the next executable to go to, ie chain or handler.
+     *                           Chain resolved first.
+     * @param returnToOrigFlow   True if you want to call the next handler defined in your original
+     *                           chain after the provided execName is completed. False otherwise.
+     * @throws Exception exception
+     */
+    public static void next(HttpServerExchange ex, String execName, Boolean returnToOrigFlow) throws Exception {
+        var currentChainId = ex.getAttachment(CHAIN_ID);
+        var currentNextIndex = ex.getAttachment(CHAIN_SEQ);
+
+        ex.putAttachment(CHAIN_ID, execName);
+        ex.putAttachment(CHAIN_SEQ, 0);
+
+        next(ex);
+
+        // return to current flow.
+        if (returnToOrigFlow) {
+            ex.putAttachment(CHAIN_ID, currentChainId);
+            ex.putAttachment(CHAIN_SEQ, currentNextIndex);
+            next(ex);
+        }
+    }
+
+    /**
+     * Returns the instance of the next handler, rather then calling handleRequest
+     * on it.
+     *
+     * @param httpServerExchange The current requests server exchange.
+     * @return The HttpHandler that should be executed next.
+     */
+    public static HttpHandler getNext(HttpServerExchange httpServerExchange) {
+        var chainId = httpServerExchange.getAttachment(CHAIN_ID);
+        var handlersForId = handlerListById.get(chainId);
+        var nextIndex = httpServerExchange.getAttachment(CHAIN_SEQ);
+
+        // Check if we've reached the end of the chain.
+        if (nextIndex < handlersForId.size()) {
+            httpServerExchange.putAttachment(CHAIN_SEQ, nextIndex + 1);
+            return handlersForId.get(nextIndex);
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns the instance of the next handler, or the given next param if it's not
+     * null.
+     *
+     * @param httpServerExchange The current requests server exchange.
+     * @param next               If not null, return this.
+     * @return The next handler in the chain, or next if it's not null.
+     * @throws Exception exception
+     */
+    public static HttpHandler getNext(HttpServerExchange httpServerExchange, HttpHandler next) throws Exception {
+        if (next != null)
+            return next;
+
+        return getNext(httpServerExchange);
+    }
+
+    /**
+     * On the first step of the request, match the request against the configured
+     * paths. If the match is successful, store the chain id within the exchange.
+     * Otherwise return false.
+     *
+     * @param httpServerExchange The current requests server exchange.
+     * @return true if a handler has been defined for the given path.
+     */
+    public static boolean start(HttpServerExchange httpServerExchange) {
+
+        // Get the matcher corresponding to the current request type.
+        var pathTemplateMatcher = methodToMatcherMap.get(httpServerExchange.getRequestMethod());
+
+        if (pathTemplateMatcher != null) {
+
+            // Match the current request path to the configured paths.
+            var result = pathTemplateMatcher.match(httpServerExchange.getRequestPath());
+
+            if (result != null) {
+
+                // Found a match, configure and return true;
+                // Add path variables to query params.
+                httpServerExchange.putAttachment(ATTACHMENT_KEY,
+                        new io.undertow.util.PathTemplateMatch(result.getMatchedTemplate(), result.getParameters()));
+
+                for (var entry : result.getParameters().entrySet()) {
+
+                    // the values shouldn't be added to query param. but this is left as it was to keep backward compatability
+                    httpServerExchange.addQueryParam(entry.getKey(), entry.getValue());
+
+                    // put values in path param map
+                    httpServerExchange.addPathParam(entry.getKey(), entry.getValue());
+                }
+
+                var id = result.getValue();
+                httpServerExchange.putAttachment(CHAIN_ID, id);
+                httpServerExchange.putAttachment(CHAIN_SEQ, 0);
+                return true;
+            }
+        }
+        return false;
+    }
 
 
-	/**
-	 * If there is no matching path, the OrchestrationHandler is going to try to start the defaultHandlers.
-	 * If there are default handlers defined, store the chain id within the exchange.
-	 * Otherwise return false.
-	 *
-	 * @param httpServerExchange
-	 *            The current requests server exchange.
-	 * @return true if a handler has been defined for the given path.
-	 */
-	public static boolean startDefaultHandlers(HttpServerExchange httpServerExchange) {
-		// check if defaultHandlers is empty
-		if(defaultHandlers != null && defaultHandlers.size() > 0) {
-			httpServerExchange.putAttachment(CHAIN_ID, "defaultHandlers");
-			httpServerExchange.putAttachment(CHAIN_SEQ, 0);
-			return true;
-		}
-		return false;
-	}
+    /**
+     * If there is no matching path, the OrchestrationHandler is going to try to start the defaultHandlers.
+     * If there are default handlers defined, store the chain id within the exchange.
+     * Otherwise, return false.
+     *
+     * @param ex The current requests server exchange.
+     * @return true if a handler has been defined for the given path.
+     */
+    public static boolean startDefaultHandlers(HttpServerExchange ex) {
+        // check if defaultHandlers is empty
+        if (defaultHandlers != null && defaultHandlers.size() > 0) {
+            ex.putAttachment(CHAIN_ID, "defaultHandlers");
+            ex.putAttachment(CHAIN_SEQ, 0);
+            return true;
+        }
+        return false;
+    }
 
-	/**
-	 * Converts the list of chains and handlers to a flat list of handlers. If a
-	 * chain is named the same as a handler, the chain is resolved first.
-	 *
-	 * @param execs
-	 *            The list of names of chains and handlers.
-	 * @return A list containing references to the instantiated handlers
-	 */
-	private static List<HttpHandler> getHandlersFromExecList(List<String> execs) {
-		List<HttpHandler> handlersFromExecList = new ArrayList<>();
-		if (execs != null) {
-			for (String exec : execs) {
-				List<HttpHandler> handlerList = handlerListById.get(exec);
-				if (handlerList == null)
-					throw new RuntimeException("Unknown handler or chain: " + exec);
-				
-				for(HttpHandler handler : handlerList) {
-					if(handler instanceof MiddlewareHandler) {
-						// add the handler to the list of handlers to execute if it is enabled in the configuration
-						if(((MiddlewareHandler)handler).isEnabled()) {
-							handlersFromExecList.add(handler);
-						}
-					} else {
-						handlersFromExecList.add(handler);
-					}
-				}
-			}
-		}
-		return handlersFromExecList;
-	}
+    /**
+     * Converts the list of chains and handlers to a flat list of handlers. If a
+     * chain is named the same as a handler, the chain is resolved first.
+     *
+     * @param execs The list of names of chains and handlers.
+     * @return A list containing references to the instantiated handlers
+     */
+    private static List<HttpHandler> getHandlersFromExecList(List<String> execs) {
+        var handlersFromExecList = new ArrayList<HttpHandler>();
 
-	/**
-	 * Detect if the handler is a MiddlewareHandler instance. If yes, then register it.
-	 * @param handler
-	 */
-	private static void registerMiddlewareHandler(Object handler) {
-		if(handler instanceof MiddlewareHandler) {
-			// register the middleware handler if it is enabled.
-			if(((MiddlewareHandler) handler).isEnabled()) {
-				((MiddlewareHandler) handler).register();
-			}
-		}
-	}
+        if (execs != null) {
 
-	/**
-	 * Helper method for generating the instance of a handler from its string
-	 * definition in config. Ie. No mapped values for setters, or list of
-	 * constructor fields. To note: It could either implement HttpHandler, or
-	 * HandlerProvider.
-	 *
-	 * @param handler
-	 */
-	private static void initStringDefinedHandler(String handler) {
-		// split the class name and its label, if defined
-		Tuple<String, Class> namedClass = splitClassAndName(handler);
+            for (var exec : execs) {
+                var handlerList = handlerListById.get(exec);
 
-		// create an instance of the handler
-		Object handlerOrProviderObject = null;
-		try {
-			handlerOrProviderObject = namedClass.second.getDeclaredConstructor().newInstance();
-		} catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-			logger.error("Could not instantiate handler class " + namedClass.second, e);
-			throw new RuntimeException("Could not instantiate handler class: " + namedClass.second);
-		}
+                if (handlerList == null)
+                    throw new RuntimeException("Unknown handler or chain: " + exec);
 
-		HttpHandler resolvedHandler;
-		if (handlerOrProviderObject instanceof HttpHandler) {
-			resolvedHandler = (HttpHandler) handlerOrProviderObject;
-		} else if (handlerOrProviderObject instanceof HandlerProvider) {
-			resolvedHandler = ((HandlerProvider) handlerOrProviderObject).getHandler();
-		} else if (handlerOrProviderObject instanceof WebSocketConnectionCallback) {
-			resolvedHandler = websocket((WebSocketConnectionCallback)handlerOrProviderObject);
-		} else {
-			throw new RuntimeException("Unsupported type of handler provided: " + handlerOrProviderObject);
-		}
-		registerMiddlewareHandler(resolvedHandler);
-		handlers.put(namedClass.first, resolvedHandler);
-		handlerListById.put(namedClass.first, Collections.singletonList(resolvedHandler));
-	}
+                for (HttpHandler handler : handlerList) {
+                    if (handler instanceof MiddlewareHandler) {
 
-	/**
-	 * Helper method for generating the instance of a handler from its map
-	 * definition in config. Ie. No mapped values for setters, or list of
-	 * constructor fields.
-	 *
-	 * @param handler
-	 */
-	private static void initMapDefinedHandler(Map<String, Object> handler) {
-		// If the handler is a map, the keys are the class name, values are the
-		// parameters.
-		for (Map.Entry<String, Object> entry : handler.entrySet()) {
-			Tuple<String, Class> namedClass = splitClassAndName(entry.getKey());
+                        if (((MiddlewareHandler) handler).isEnabled())
+                            handlersFromExecList.add(handler);
 
-			// If the values in the config are a map, construct the object using named
-			// parameters.
-			if (entry.getValue() instanceof Map) {
-				HttpHandler httpHandler;
-				try {
-					httpHandler = (HttpHandler) ServiceUtil.constructByNamedParams(namedClass.second,
-							(Map) entry.getValue());
-				} catch (Exception e) {
-					throw new RuntimeException(
-							"Could not construct a handler with values provided as a map: " + namedClass.second);
-				}
-				registerMiddlewareHandler(httpHandler);
-				handlers.put(namedClass.first, httpHandler);
-				handlerListById.put(namedClass.first, Collections.singletonList(httpHandler));
-			} else if (entry.getValue() instanceof List) {
+                    } else
+                        handlersFromExecList.add(handler);
+                }
+            }
+        }
+        return handlersFromExecList;
+    }
 
-				// If the values in the config are a list, call the constructor of the handler
-				// with those fields.
-				HttpHandler httpHandler;
-				try {
-					httpHandler = (HttpHandler) ServiceUtil.constructByParameterizedConstructor(namedClass.second,
-							(List) entry.getValue());
-				} catch (Exception e) {
-					throw new RuntimeException(
-							"Could not construct a handler with values provided as a list: " + namedClass.second);
-				}
-				registerMiddlewareHandler(httpHandler);
-				handlers.put(namedClass.first, httpHandler);
-				handlerListById.put(namedClass.first, Collections.singletonList(httpHandler));
-			}
-		}
-	}
-	
-	/**
-	 * To support multiple instances of the same class, support a naming
-	 * 
-	 * @param classLabel
-	 *            The label as seen in the config file.
-	 * @return A tuple where the first value is the name, and the second is the
-	 *         class.
-	 * @throws Exception
-	 *             On invalid format of label.
-	 */
-	static Tuple<String, Class> splitClassAndName(String classLabel) {
-		String[] stringNameSplit = classLabel.split("@");
-		// If i don't have a @, then no name is provided, use the class as the name.
-		if (stringNameSplit.length == 1) {
-			try {
-				return new Tuple<>(classLabel, Class.forName(classLabel));
-			} catch (ClassNotFoundException e) {
-				throw new RuntimeException("Configured class: " + classLabel + " has not been found");
-			}
-		} else if (stringNameSplit.length > 1) { // Found a @, use that as the name, and
-			try {
-				return new Tuple<>(stringNameSplit[1], Class.forName(stringNameSplit[0]));
-			} catch (ClassNotFoundException e) {
-				throw new RuntimeException("Configured class: " + stringNameSplit[0]
-						+ " has not been found. Declared label was: " + stringNameSplit[1]);
-			}
-		}
-		throw new RuntimeException("Invalid format provided for class label: " + classLabel);
-	}
+    /**
+     * Detect if the handler is a MiddlewareHandler instance. If yes, then register it.
+     *
+     * @param handler
+     */
+    private static void registerMiddlewareHandler(Object handler) {
+        if (handler instanceof MiddlewareHandler) {
+            // register the middleware handler if it is enabled.
+            if (((MiddlewareHandler) handler).isEnabled()) {
+                ((MiddlewareHandler) handler).register();
+            }
+        }
+    }
 
-	// Exposed for testing only.
-	static void setConfig(String configName) throws Exception {
-		Handler.configName = configName;
-		config = (HandlerConfig) Config.getInstance().getJsonObjectConfig(configName, HandlerConfig.class);
-		initHandlers();
-		initPaths();
-	}
-	public static Map<String, HttpHandler> getHandlers() {
-		return handlers;
-	}
+    /**
+     * Helper method for generating the instance of a handler from its string
+     * definition in config. Ie. No mapped values for setters, or list of
+     * constructor fields. To note: It could either implement HttpHandler, or
+     * HandlerProvider.
+     *
+     * @param handler
+     */
+    private static void initStringDefinedHandler(String handler) {
+        // split the class name and its label, if defined
+        Tuple<String, Class> namedClass = splitClassAndName(handler);
+
+        // create an instance of the handler
+        Object handlerOrProviderObject = null;
+        try {
+            handlerOrProviderObject = namedClass.second.getDeclaredConstructor().newInstance();
+        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException |
+                 InvocationTargetException e) {
+            LOG.error("Could not instantiate handler class " + namedClass.second, e);
+            throw new RuntimeException("Could not instantiate handler class: " + namedClass.second);
+        }
+
+        HttpHandler resolvedHandler;
+        if (handlerOrProviderObject instanceof HttpHandler) {
+            resolvedHandler = (HttpHandler) handlerOrProviderObject;
+        } else if (handlerOrProviderObject instanceof HandlerProvider) {
+            resolvedHandler = ((HandlerProvider) handlerOrProviderObject).getHandler();
+        } else if (handlerOrProviderObject instanceof WebSocketConnectionCallback) {
+            resolvedHandler = websocket((WebSocketConnectionCallback) handlerOrProviderObject);
+        } else {
+            throw new RuntimeException("Unsupported type of handler provided: " + handlerOrProviderObject);
+        }
+        registerMiddlewareHandler(resolvedHandler);
+        handlers.put(namedClass.first, resolvedHandler);
+        handlerListById.put(namedClass.first, Collections.singletonList(resolvedHandler));
+    }
+
+    /**
+     * Helper method for generating the instance of a handler from its map
+     * definition in config. Ie. No mapped values for setters, or list of
+     * constructor fields.
+     *
+     * @param handler
+     */
+    private static void initMapDefinedHandler(Map<String, Object> handler) {
+        // If the handler is a map, the keys are the class name, values are the
+        // parameters.
+        for (Map.Entry<String, Object> entry : handler.entrySet()) {
+            Tuple<String, Class> namedClass = splitClassAndName(entry.getKey());
+
+            // If the values in the config are a map, construct the object using named
+            // parameters.
+            if (entry.getValue() instanceof Map) {
+                HttpHandler httpHandler;
+                try {
+                    httpHandler = (HttpHandler) ServiceUtil.constructByNamedParams(namedClass.second,
+                            (Map) entry.getValue());
+                } catch (Exception e) {
+                    throw new RuntimeException(
+                            "Could not construct a handler with values provided as a map: " + namedClass.second);
+                }
+                registerMiddlewareHandler(httpHandler);
+                handlers.put(namedClass.first, httpHandler);
+                handlerListById.put(namedClass.first, Collections.singletonList(httpHandler));
+            } else if (entry.getValue() instanceof List) {
+
+                // If the values in the config are a list, call the constructor of the handler
+                // with those fields.
+                HttpHandler httpHandler;
+                try {
+                    httpHandler = (HttpHandler) ServiceUtil.constructByParameterizedConstructor(namedClass.second,
+                            (List) entry.getValue());
+                } catch (Exception e) {
+                    throw new RuntimeException(
+                            "Could not construct a handler with values provided as a list: " + namedClass.second);
+                }
+                registerMiddlewareHandler(httpHandler);
+                handlers.put(namedClass.first, httpHandler);
+                handlerListById.put(namedClass.first, Collections.singletonList(httpHandler));
+            }
+        }
+    }
+
+    /**
+     * To support multiple instances of the same class, support a naming
+     *
+     * @param classLabel The label as seen in the config file.
+     * @return A tuple where the first value is the name, and the second is the
+     * class.
+     * @throws Exception On invalid format of label.
+     */
+    static Tuple<String, Class> splitClassAndName(String classLabel) {
+        String[] stringNameSplit = classLabel.split("@");
+        // If i don't have a @, then no name is provided, use the class as the name.
+        if (stringNameSplit.length == 1) {
+            try {
+                return new Tuple<>(classLabel, Class.forName(classLabel));
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException("Configured class: " + classLabel + " has not been found");
+            }
+        } else if (stringNameSplit.length > 1) { // Found a @, use that as the name, and
+            try {
+                return new Tuple<>(stringNameSplit[1], Class.forName(stringNameSplit[0]));
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException("Configured class: " + stringNameSplit[0]
+                        + " has not been found. Declared label was: " + stringNameSplit[1]);
+            }
+        }
+        throw new RuntimeException("Invalid format provided for class label: " + classLabel);
+    }
+
+    // Exposed for testing only.
+    static void setConfig(String configName) throws Exception {
+        Handler.configName = configName;
+        config = (HandlerConfig) Config.getInstance().getJsonObjectConfig(configName, HandlerConfig.class);
+        initHandlers();
+        initPaths();
+    }
+
+    public static Map<String, HttpHandler> getHandlers() {
+        return handlers;
+    }
 }

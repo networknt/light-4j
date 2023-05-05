@@ -19,23 +19,14 @@
  */
 package com.networknt.handler;
 
-import io.undertow.UndertowMessages;
-import io.undertow.connector.ByteBufferPool;
 import io.undertow.connector.PooledByteBuffer;
 import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.Buffers;
-import org.xnio.ChannelExceptionHandler;
-import org.xnio.ChannelListener;
-import org.xnio.ChannelListeners;
-import org.xnio.channels.Channels;
-import org.xnio.channels.StreamSinkChannel;
-import org.xnio.channels.StreamSourceChannel;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channel;
 import java.nio.charset.Charset;
 
 /**
@@ -45,7 +36,7 @@ import java.nio.charset.Charset;
 public class BuffersUtils {
     public static final int MAX_CONTENT_SIZE = 16 * 1024 * 1024; // 16Mbyte
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BuffersUtils.class);
+    private static final Logger LOG = LoggerFactory.getLogger(BuffersUtils.class);
 
     /**
      * @param srcs
@@ -53,27 +44,26 @@ public class BuffersUtils {
      * @throws IOException
      */
     public static ByteBuffer toByteBuffer(final PooledByteBuffer[] srcs) throws IOException {
-        if (srcs == null) {
+        if (srcs == null)
             return null;
-        }
 
-        ByteBuffer dst = ByteBuffer.allocate(MAX_CONTENT_SIZE);
+        var dst = ByteBuffer.allocate(MAX_CONTENT_SIZE);
 
         for (PooledByteBuffer src : srcs) {
+
             if (src != null) {
-                final ByteBuffer srcBuffer = src.getBuffer();
+                final var srcBuffer = src.getBuffer();
 
                 if (srcBuffer.remaining() > dst.remaining()) {
-                    LOGGER.error("Request content exceeeded {} bytes limit",
-                            MAX_CONTENT_SIZE);
-                    throw new IOException("Request content exceeeded "
-                            + MAX_CONTENT_SIZE + " bytes limit");
+
+                    if (LOG.isErrorEnabled())
+                        LOG.error("Request content exceeeded {} bytes limit", MAX_CONTENT_SIZE);
+
+                    throw new IOException("Request content exceeded " + MAX_CONTENT_SIZE + " bytes limit");
                 }
 
                 if (srcBuffer.hasRemaining()) {
                     Buffers.copy(dst, srcBuffer);
-
-                    // very important, I lost a day for this!
                     srcBuffer.flip();
                 }
             }
@@ -84,11 +74,8 @@ public class BuffersUtils {
 
     public static byte[] toByteArray(final PooledByteBuffer[] srcs) throws IOException {
         ByteBuffer content = toByteBuffer(srcs);
-
         byte[] ret = new byte[content.limit()];
-
         content.get(ret);
-
         return ret;
     }
 
@@ -143,16 +130,24 @@ public class BuffersUtils {
 
     public static void dump(String msg, PooledByteBuffer[] data) {
         int nbuf = 0;
+
         for (PooledByteBuffer dest : data) {
+
             if (dest != null) {
-                ByteBuffer src = dest.getBuffer();
-                StringBuilder sb = new StringBuilder();
+                var src = dest.getBuffer();
+                var sb = new StringBuilder();
 
                 try {
                     Buffers.dump(src, sb, 2, 2);
-                    LOGGER.debug("{} buffer #{}:\n{}", msg, nbuf, sb);
+
+                    if (LOG.isDebugEnabled())
+                        LOG.debug("{} buffer #{}:\n{}", msg, nbuf, sb);
+
                 } catch (IOException ie) {
-                    LOGGER.debug("failed to dump buffered content", ie);
+
+                    if (LOG.isErrorEnabled())
+                        LOG.error("failed to dump buffered content", ie);
+
                 }
             }
             nbuf++;
@@ -184,10 +179,7 @@ public class BuffersUtils {
             }
 
             copied += Buffers.copy(_dest, src);
-
-            // very important, I lost a day for this!
             _dest.flip();
-
             pidx++;
         }
 
@@ -205,17 +197,17 @@ public class BuffersUtils {
         int idx = 0;
 
         while (idx < src.length && idx < dest.length) {
-            if (src[idx] != null) {
-                if (dest[idx] == null) {
-                    dest[idx] = exchange.getConnection().getByteBufferPool().allocate();
-                }
 
-                ByteBuffer _dest = dest[idx].getBuffer();
-                ByteBuffer _src = src[idx].getBuffer();
+            if (src[idx] != null) {
+
+                if (dest[idx] == null)
+                    dest[idx] = exchange.getConnection().getByteBufferPool().allocate();
+
+                var _dest = dest[idx].getBuffer();
+                var _src = src[idx].getBuffer();
 
                 copied += Buffers.copy(_dest, _src);
 
-                // very important, I lost a day for this!
                 _dest.flip();
                 _src.flip();
             }

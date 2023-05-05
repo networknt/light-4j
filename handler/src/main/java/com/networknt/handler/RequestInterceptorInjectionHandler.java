@@ -1,10 +1,10 @@
 package com.networknt.handler;
 
 import com.networknt.httpstring.AttachmentConstants;
+import com.networknt.httpstring.ContentType;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
-import io.undertow.UndertowLogger;
 import io.undertow.connector.PooledByteBuffer;
 import io.undertow.server.Connectors;
 import io.undertow.server.HttpHandler;
@@ -17,7 +17,6 @@ import org.xnio.ChannelListener;
 import org.xnio.IoUtils;
 import org.xnio.channels.StreamSourceChannel;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -27,11 +26,10 @@ import java.util.Arrays;
  * implementation in request-transform module to transform the request based on the rule engine rules.
  *
  * @author Kalev Gonvick
- *
  */
 public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
 
-    static final Logger logger = LoggerFactory.getLogger(RequestInterceptorInjectionHandler.class);
+    private static final Logger LOG = LoggerFactory.getLogger(RequestInterceptorInjectionHandler.class);
     public static final int MAX_BUFFERS = 1024;
 
     private volatile HttpHandler next;
@@ -40,13 +38,13 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
 
     public RequestInterceptorInjectionHandler() {
         config = RequestInjectionConfig.load();
-        logger.info("RequestInterceptorInjectionHandler is loaded!");
+        LOG.info("RequestInterceptorInjectionHandler is loaded!");
         interceptors = SingletonServiceFactory.getBeans(RequestInterceptor.class);
     }
 
     public RequestInterceptorInjectionHandler(RequestInjectionConfig cfg) {
         config = cfg;
-        logger.info("RequestInterceptorInjectionHandler is loaded!");
+        LOG.info("RequestInterceptorInjectionHandler is loaded!");
         interceptors = SingletonServiceFactory.getBeans(RequestInterceptor.class);
     }
 
@@ -70,7 +68,10 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
     @Override
     public void reload() {
         config.reload();
-        if(logger.isTraceEnabled()) logger.trace("request-injection.yml is reloaded");
+
+        if (LOG.isTraceEnabled())
+            LOG.trace("request-injection.yml is reloaded");
+
         ModuleRegistry.registerModule(RequestInjectionConfig.class.getName(), config.getMappedConfig(), null);
     }
 
@@ -81,124 +82,135 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
-        // Make sure content is needed by request interceptors before grabbing the data. The process has a lot of overhead.
-        String method = httpServerExchange.getRequestMethod().toString();
-        this.next = Handler.getNext(httpServerExchange);
-        if (this.injectorContentRequired()
-                && this.isAppliedBodyInjectionPathPrefix(httpServerExchange.getRequestPath())
-                && ((method.equalsIgnoreCase("post") ||
-                method.equalsIgnoreCase("put") ||
-                method.equalsIgnoreCase("patch")) &&
-                !httpServerExchange.isRequestComplete())
-                && !HttpContinue.requiresContinueResponse(httpServerExchange.getRequestHeaders())) {
-            // need to calculate the next handler in the request/response chain, otherwise, it will be null in the following logic.
 
-            final StreamSourceChannel channel = httpServerExchange.getRequestChannel();
+        // Make sure content is needed by request interceptors before grabbing the data. The process has a lot of overhead.
+        this.next = Handler.getNext(httpServerExchange);
+
+        if (this.shouldReadBody(httpServerExchange)) {
+            final var channel = httpServerExchange.getRequestChannel();
+            final var bufferedData = new PooledByteBuffer[MAX_BUFFERS];
+
             int readBuffers = 0;
-            final PooledByteBuffer[] bufferedData = new PooledByteBuffer[MAX_BUFFERS];
-            PooledByteBuffer buffer = httpServerExchange
-                    .getConnection()
-                    .getByteBufferPool()
-                    .allocate();
+            var buffer = httpServerExchange.getConnection().getByteBufferPool().allocate();
+
             try {
                 for (; ; ) {
                     int r;
-                    ByteBuffer b = buffer.getBuffer();
+                    var b = buffer.getBuffer();
                     r = channel.read(b);
+
                     if (r == -1) {
-                        if (b.position() == 0) {
-                            buffer.close();
-                        } else {
-                            b.flip();
-                            bufferedData[readBuffers] = buffer;
-                        }
+                        handleEndOfStream(b, bufferedData, readBuffers, buffer);
                         break;
+
                     } else if (r == 0) {
                         this.setChannelRead(channel, buffer, readBuffers, bufferedData, httpServerExchange);
                         channel.resumeReads();
                         return;
+
                     } else if (!b.hasRemaining()) {
                         b.flip();
                         bufferedData[readBuffers++] = buffer;
-                        if (readBuffers == MAX_BUFFERS) {
+
+                        if (readBuffers == MAX_BUFFERS)
                             break;
-                        }
+
                         buffer = httpServerExchange.getConnection().getByteBufferPool().allocate();
                     }
                 }
 
-                saveBufferAndResetUndertowConnector(httpServerExchange, bufferedData);
+                this.saveBufferAndResetUndertowConnector(httpServerExchange, bufferedData);
+
             } catch (Exception | Error e) {
                 safeCloseBuffers(bufferedData, buffer);
-                throw e;
+                httpServerExchange.endExchange();
             }
 
-        } else {
-            // no need to inject the content for the body. just call the interceptors here.
-            this.invokeInterceptors(httpServerExchange);
-        }
+        } else this.invokeInterceptors(httpServerExchange);
+
+
         Handler.next(httpServerExchange, next);
+    }
+
+    private boolean shouldReadBody(final HttpServerExchange ex) {
+        var headers = ex.getRequestHeaders();
+        var contentType = ex.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
+        var requestPath = ex.getRequestPath();
+
+        return this.injectorContentRequired()
+                && this.isAppliedBodyInjectionPathPrefix(requestPath)
+                && this.hasContent(contentType)
+                && !ex.isRequestComplete()
+                && !HttpContinue.requiresContinueResponse(headers);
+    }
+
+    private boolean hasContent(String contentType) {
+        if (contentType == null)
+            return false;
+        return contentType.startsWith(ContentType.TEXT_PLAIN_VALUE.value())
+                || contentType.startsWith(ContentType.XML.value())
+                || contentType.startsWith(ContentType.APPLICATION_XML_VALUE.value())
+                || contentType.startsWith(ContentType.MULTIPART_FORM_DATA_VALUE.value())
+                || contentType.startsWith(ContentType.APPLICATION_FORM_URLENCODED_VALUE.value())
+                || contentType.startsWith(ContentType.APPLICATION_JSON.value());
     }
 
     /**
      * Check if any of the interceptors require content.
+     *
      * @return - true if required.
      */
     private boolean injectorContentRequired() {
-        return interceptors != null && interceptors.length > 0 &&
-                Arrays.stream(interceptors).anyMatch(RequestInterceptor::isRequiredContent);
+        return this.interceptors != null && this.interceptors.length > 0 &&
+                Arrays.stream(this.interceptors).anyMatch(RequestInterceptor::isRequiredContent);
     }
 
     /**
      * Create a new read channel listener for the request channel. This is needed for 'chunked' requests larger than our server buffer set.
      *
-     * @param channel - the request channel.
-     * @param channelPoolBuffer - pool buffer.
-     * @param channelReadBuffer - our read.
-     * @param bufferedData - total buffered data.
-     * @param httpServerExchange - current exchange.
+     * @param c            - the request channel.
+     * @param cPooledBuffer  - pool buffer.
+     * @param cRead  - our read.
+     * @param bufferedData       - total buffered data.
+     * @param ex - current exchange.
      */
-    private void setChannelRead(final StreamSourceChannel channel, final PooledByteBuffer channelPoolBuffer, final int channelReadBuffer, final PooledByteBuffer[] bufferedData, final HttpServerExchange httpServerExchange) {
-        channel.getReadSetter().set(new ChannelListener<StreamSourceChannel>() {
-            PooledByteBuffer buffer = channelPoolBuffer;
-            int readBuffers = channelReadBuffer;
+    private void setChannelRead(final StreamSourceChannel c, final PooledByteBuffer cPooledBuffer, final int cRead, final PooledByteBuffer[] bufferedData, final HttpServerExchange ex) {
+        c.getReadSetter().set(new ChannelListener<StreamSourceChannel>() {
+            PooledByteBuffer buffer = cPooledBuffer;
+            int readBuffers = cRead;
 
             @Override
             public void handleEvent(StreamSourceChannel channel) {
                 try {
-                    do {
+
+                    for (; ; ) {
                         int r;
-                        ByteBuffer b = buffer.getBuffer();
+                        var b = buffer.getBuffer();
                         r = channel.read(b);
+
                         if (r == -1) {
-                            if (b.position() == 0) {
-                                buffer.close();
-                            } else {
-                                b.flip();
-                                bufferedData[readBuffers] = buffer;
-                            }
-                            suspendReads(httpServerExchange, bufferedData, channel, next);
+                            handleEndOfStream(b, bufferedData, readBuffers, buffer);
+                            suspendReads(ex, bufferedData, channel, next);
                             return;
-                        } else if (r == 0) {
+
+                        } else if (r == 0)
                             return;
-                        } else if (!b.hasRemaining()) {
+
+                        else if (!b.hasRemaining()) {
                             b.flip();
                             bufferedData[readBuffers++] = buffer;
+
                             if (readBuffers == MAX_BUFFERS) {
-                                suspendReads(httpServerExchange, bufferedData, channel, next);
+                                suspendReads(ex, bufferedData, channel, next);
                                 return;
                             }
-                            buffer = httpServerExchange.getConnection().getByteBufferPool().allocate();
+
+                            buffer = ex.getConnection().getByteBufferPool().allocate();
                         }
-                    } while (true);
-                } catch (Throwable e) {
-                    if (e instanceof IOException) {
-                        UndertowLogger.REQUEST_IO_LOGGER.ioException((IOException) e);
-                    } else {
-                        UndertowLogger.REQUEST_IO_LOGGER.handleUnexpectedFailure(e);
                     }
+                } catch (Throwable e) {
                     safeCloseBuffers(bufferedData, buffer);
-                    httpServerExchange.endExchange();
+                    ex.endExchange();
                 }
             }
         });
@@ -207,59 +219,73 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
     /**
      * Close our buffers when issue occurs
      *
-     * @param allDataBuffer - the total buffer
-     * @param dataBuffer - the current data buffer
+     * @param buffers - the total buffer
+     * @param buf    - the current data buffer
      */
-    private static void safeCloseBuffers(final PooledByteBuffer[] allDataBuffer, PooledByteBuffer dataBuffer) {
-        for (PooledByteBuffer bufferedDatum : allDataBuffer) {
-            IoUtils.safeClose(bufferedDatum);
-        }
-        if (dataBuffer != null && dataBuffer.isOpen()) {
-            IoUtils.safeClose(dataBuffer);
-        }
+    private static void safeCloseBuffers(final PooledByteBuffer[] buffers, PooledByteBuffer buf) {
+        for (var b : buffers)
+            IoUtils.safeClose(b);
+
+        if (buf != null && buf.isOpen())
+            IoUtils.safeClose(buf);
     }
 
     /**
      * Suspend our reads and remove the channel listener we created.
      *
-     * @param httpServerExchange - current exchange
-     * @param bufferedData - total buffered data.
-     * @param channel - request channel
-     * @param next - next http handler
+     * @param ex - current exchange
+     * @param bufferedData       - total buffered data.
+     * @param c            - request channel
+     * @param next               - next http handler
      */
-    private void suspendReads(final HttpServerExchange httpServerExchange, final PooledByteBuffer[] bufferedData, StreamSourceChannel channel, HttpHandler next) {
-        saveBufferAndResetUndertowConnector(httpServerExchange, bufferedData);
-        channel.getReadSetter().set(null);
-        channel.suspendReads();
-        if(logger.isTraceEnabled())
-            logger.info("Next is: {}", next.getClass());
-        Connectors.executeRootHandler(next, httpServerExchange);
+    private void suspendReads(final HttpServerExchange ex, final PooledByteBuffer[] bufferedData, StreamSourceChannel c, HttpHandler next) {
+        saveBufferAndResetUndertowConnector(ex, bufferedData);
+
+        c.getReadSetter().set(null);
+        c.suspendReads();
+
+        if (LOG.isTraceEnabled())
+            LOG.info("Next is: {}", next.getClass());
+
+        Connectors.executeRootHandler(next, ex);
     }
 
 
     /**
      * Save the total buffer as an attachment. Update content length just in case
      *
-     * @param httpServerExchange - current exchange
-     * @param bufferedData - total buffered data
+     * @param ex - current exchange
+     * @param bufferedData       - total buffered data
      */
-    private void saveBufferAndResetUndertowConnector(final HttpServerExchange httpServerExchange, final PooledByteBuffer[] bufferedData) {
-        httpServerExchange.putAttachment(AttachmentConstants.BUFFERED_REQUEST_DATA_KEY, bufferedData);
+    private void saveBufferAndResetUndertowConnector(final HttpServerExchange ex, final PooledByteBuffer[] bufferedData) {
+        ex.putAttachment(AttachmentConstants.BUFFERED_REQUEST_DATA_KEY, bufferedData);
+        this.updateContentLength(ex, bufferedData);
+        Connectors.ungetRequestBytes(ex, bufferedData);
+        Connectors.resetRequestChannel(ex);
+        this.invokeInterceptors(ex);
+    }
 
-        if (httpServerExchange.getRequestHeaders().getFirst("content-length") != null) {
+    private void updateContentLength(final HttpServerExchange ex, final PooledByteBuffer[] bufferedData) {
+        if (ex.getRequestHeaders().getFirst(Headers.CONTENT_LENGTH) != null) {
             long length = 0;
-            for (PooledByteBuffer dest : bufferedData) {
-                if (dest != null) {
+
+            for (var dest : bufferedData)
+                if (dest != null)
                     length += dest.getBuffer().limit();
-                }
-            }
-            httpServerExchange.getRequestHeaders().put(Headers.CONTENT_LENGTH, length);
+
+            ex.getRequestHeaders().put(Headers.CONTENT_LENGTH, length);
         }
+    }
 
-        Connectors.ungetRequestBytes(httpServerExchange, bufferedData);
-        Connectors.resetRequestChannel(httpServerExchange);
+    private static void handleEndOfStream(ByteBuffer b, PooledByteBuffer[] bufferedData, int readBuffers, PooledByteBuffer buffer) {
 
-        this.invokeInterceptors(httpServerExchange);
+        if (b.position() == 0)
+            buffer.close();
+
+        else {
+            b.flip();
+            bufferedData[readBuffers] = buffer;
+        }
     }
 
     /**
@@ -268,15 +294,19 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
      * @param httpServerExchange - current server exchange.
      */
     private void invokeInterceptors(HttpServerExchange httpServerExchange) {
-        if(this.interceptors != null && this.interceptors.length > 0) {
-            for(RequestInterceptor ri: this.interceptors) {
+
+        if (this.interceptors != null && this.interceptors.length > 0) {
+
+            for (var ri : this.interceptors) {
+
                 try {
                     ri.handleRequest(httpServerExchange);
-                    // if any of the interceptor response with an error, then return this handler and stop the chain.
-                    if(httpServerExchange.isResponseStarted()) return;
+
+                    if (httpServerExchange.isResponseStarted())
+                        return;
+
                 } catch (Exception e) {
-                    logger.error(e.getMessage(), e);
-                    // do not try the next interceptor in the list and the rest of middleware handlers in the chain.
+                    LOG.error(e.getMessage(), e);
                     return;
                 }
             }
