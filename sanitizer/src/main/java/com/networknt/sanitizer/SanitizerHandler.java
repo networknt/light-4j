@@ -79,7 +79,7 @@ public class SanitizerHandler implements MiddlewareHandler {
 
                         if(config.getHeaderAttributesToEncode() != null) {
                             if(config.getHeaderAttributesToEncode().contains(values.getHeaderName().toString())) {
-                                if(logger.isTraceEnabled()) logger.trace("Encode header " + values.getHeaderName().toString() + " as is is not in the ignore list and it is in the encode list.");
+                                if(logger.isTraceEnabled()) logger.trace("Encode header " + values.getHeaderName().toString() + " as it is not in the ignore list and it is in the encode list.");
                                 ListIterator<String> itValues = values.listIterator();
                                 while (itValues.hasNext()) {
                                     itValues.set(headerEncoder.applyEncoding(itValues.next()));
@@ -136,7 +136,7 @@ public class SanitizerHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(SanitizerHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        ModuleRegistry.registerModule(SanitizerHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(SanitizerConfig.CONFIG_NAME), null);
     }
 
     @Override
