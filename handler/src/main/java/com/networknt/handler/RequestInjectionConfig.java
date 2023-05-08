@@ -99,7 +99,7 @@ public class RequestInjectionConfig {
                 } else this.appliedBodyInjectionPathPrefixes = Arrays.asList(s.split("\\s*,\\s*"));
 
             } else if (object instanceof List) {
-                List prefixes = (List) object;
+                var prefixes = (List) object;
                 prefixes.forEach(item -> {
                     this.appliedBodyInjectionPathPrefixes.add((String) item);
                 });

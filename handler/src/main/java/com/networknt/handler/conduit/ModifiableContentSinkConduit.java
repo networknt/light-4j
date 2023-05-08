@@ -1,7 +1,6 @@
 package com.networknt.handler.conduit;
 
 import com.networknt.handler.BuffersUtils;
-import com.networknt.handler.ProxyHandler;
 import com.networknt.handler.ResponseInterceptor;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.service.SingletonServiceFactory;
@@ -12,12 +11,9 @@ import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
+import org.xnio.XnioWorker;
 import org.xnio.channels.StreamSourceChannel;
-import org.xnio.conduits.StreamSinkChannelWrappingConduit;
-import org.xnio.conduits.AbstractStreamSinkConduit;
-import org.xnio.conduits.ConduitWritableByteChannel;
-import org.xnio.conduits.Conduits;
-import org.xnio.conduits.StreamSinkConduit;
+import org.xnio.conduits.*;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -32,6 +28,10 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
     private final HttpServerExchange exchange;
 
     private final ResponseInterceptor[] interceptors;
+
+    private volatile boolean writing = false;
+
+    private final Object lock = new Object();
 
     /**
      * Construct a new instance.
@@ -122,6 +122,7 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
 
                     interceptor.handleRequest(exchange);
                 }
+
             } catch (Exception e) {
 
                 if (LOG.isErrorEnabled())
@@ -161,137 +162,171 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
     }
 
     private void standardHttp11Write(final PooledByteBuffer[] buffers) throws IOException {
-        for (var buffer : buffers) {
 
-            if (buffer == null)
-                break;
+        synchronized (lock) {
 
-            if (LOG.isTraceEnabled())
-                LOG.trace("buffer position {} and buffer limit {}", buffer.getBuffer().position(), buffer.getBuffer().limit());
+            if (!this.isWriting()) {
+                this.writing = true;
 
-            while (buffer.getBuffer().position() < buffer.getBuffer().limit()) {
+                for (var buffer : buffers) {
 
-                if (LOG.isTraceEnabled())
-                    LOG.trace("Before write buffer position: {}", buffer.getBuffer().position());
+                    if (buffer == null)
+                        break;
 
-                next.write(buffer.getBuffer());
+                    if (LOG.isTraceEnabled())
+                        LOG.trace("buffer position {} and buffer limit {}", buffer.getBuffer().position(), buffer.getBuffer().limit());
 
-                if (LOG.isTraceEnabled())
-                    LOG.trace("After write buffer position: {}", buffer.getBuffer().position());
-
-            }
-
-        }
-
-        this.removeCachedResponseAttachments();
-        next.terminateWrites();
-    }
-
-    private void standardHttp2Write(final PooledByteBuffer[] buffers) throws IOException {
-
-        final var ioThread = next.getWriteThread();
-
-        final var workerThread = next.getWriteThread().getWorker();
-
-        if (ioThread == Thread.currentThread()) {
-            workerThread.execute(() -> {
-                try {
-                    int index = 0;
-                    long totalWritten = 0;
-
-                    for (var buffer : buffers) {
-
-                        if (buffer == null || buffer.getBuffer() == null)
-                            break;
-
-                        boolean lastWrite = false;
-                        long written = 0;
+                    while (buffer.getBuffer().position() < buffer.getBuffer().limit()) {
 
                         if (LOG.isTraceEnabled())
-                            LOG.trace("Before-Write: current pass: '{}' bytes, total: '{}' bytes, buffer size: '{}' bytes", written, totalWritten, buffer.getBuffer().limit());
+                            LOG.trace("Before write buffer position: {}", buffer.getBuffer().position());
 
-                        while (buffer.getBuffer().position() < buffer.getBuffer().limit()) {
-                            long res;
-
-                            if (this.isLastWrite(buffers, index)) {
-                                res = next.writeFinal(buffer.getBuffer());
-                                lastWrite = true;
-
-                            } else res = next.write(buffer.getBuffer());
-
-                            written += res;
-
-                            if (this.isBufferConsumed(buffer, res))
-                                break;
-
-                            next.awaitWritable();
-
-                        }
-                        totalWritten += written;
+                        next.write(buffer.getBuffer());
 
                         if (LOG.isTraceEnabled())
-                            LOG.trace("After-Write: current pass: '{}' bytes, total: '{}' bytes, buffer size: '{}' bytes", written, totalWritten, buffer.getBuffer().limit());
-
-                        index++;
-
-                        if (lastWrite) {
-
-                            if (LOG.isTraceEnabled())
-                                LOG.trace("Final write occurred. Terminating writes.");
-
-                            break;
-                        }
+                            LOG.trace("After write buffer position: {}", buffer.getBuffer().position());
 
                     }
-                    next.terminateWrites();
-                    this.removeCachedResponseAttachments();
 
-                    // TODO: test not closing proxy callback
-                    //this.cancelProxyConnectionCallback();
-
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
-            });
 
-        } else {
-            for (var buffer : buffers)
-                if (buffer != null && buffer.getBuffer() != null)
-                    while (next.write(buffer.getBuffer()) == 0L)
-                        next.awaitWritable();
+                this.removeCachedResponseAttachments();
+                next.terminateWrites();
 
-            next.terminateWrites();
-            this.removeCachedResponseAttachments();
-
-            // TODO: test not closing proxy callback
-            //this.cancelProxyConnectionCallback();
+                synchronized (lock) {
+                    this.writing = false;
+                }
+            }
         }
+
+
     }
 
-    private boolean isBufferConsumed(PooledByteBuffer buffer, long res) {
+    private void standardHttp2Write(final PooledByteBuffer[] buffers) {
+        final var ioThread = next.getWriteThread();
+        final var workerThread = next.getWorker();
+
+        if (ioThread == Thread.currentThread()) {
+
+            synchronized (lock) {
+
+                if (!this.isWriting()) {
+                    this.writing = true;
+                    this.executeHttp2WriteThread(workerThread, buffers);
+
+                } else this.executeHttp2ReadThread(workerThread, buffers);
+            }
+
+        } else throw new IllegalStateException("Conduit should not be called in a non IO-thread...");
+    }
+
+    private void executeHttp2WriteThread(XnioWorker workerThread, final PooledByteBuffer[] buffers) {
+        workerThread.execute(() -> {
+
+            try {
+                int index = 0;
+                long totalWritten = 0;
+
+                for (var buffer : buffers) {
+
+                    if (buffer == null || buffer.getBuffer() == null)
+                        break;
+
+                    var lastWrite = false;
+                    var written = 0;
+
+                    if (LOG.isTraceEnabled())
+                        LOG.trace("[{}] Before-Write: current pass: '{}' bytes, total: '{}' bytes, buffer size: '{}' bytes", index, written, totalWritten, buffer.getBuffer().limit());
+
+                    while (buffer.getBuffer().position() < buffer.getBuffer().limit()) {
+                        long res;
+
+                        if (this.isLastWrite(buffers, index)) {
+
+                            if (LOG.isTraceEnabled())
+                                LOG.trace("Final write occurred...");
+
+                            res = next.write(buffer.getBuffer());
+                            lastWrite = true;
+
+                        } else res = next.write(buffer.getBuffer());
+
+                        written += res;
+
+                        if (this.isBufferConsumed(buffer, res, index))
+                            break;
+
+                        next.awaitWritable();
+                    }
+
+                    totalWritten += written;
+
+                    if (LOG.isTraceEnabled())
+                        LOG.trace("[{}] After-Write: current pass: '{}' bytes, total: '{}' bytes, buffer size: '{}' bytes", index, written, totalWritten, buffer.getBuffer().limit());
+
+                    buffer.close();
+                    index++;
+
+                    if (lastWrite)
+                        break;
+
+                }
+
+                if (LOG.isTraceEnabled())
+                    LOG.trace("Terminating writes...");
+
+                next.terminateWrites();
+                this.removeCachedResponseAttachments();
+
+                synchronized (lock) {
+                    this.writing = false;
+                }
+
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to execute conduit writes on Worker Thread. " + e.getMessage(), e);
+            }
+        });
+    }
+
+    private void executeHttp2ReadThread(XnioWorker worker, final PooledByteBuffer[] buffers) {
+        worker.execute(() -> {
+
+            for (var buffer : buffers) {
+
+                if (buffer == null || !buffer.isOpen() || buffer.getBuffer() == null)
+                    continue;
+
+                while (buffer.isOpen()) {
+
+                    try {
+                        next.awaitWritable();
+
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        });
+    }
+
+    private boolean isBufferConsumed(PooledByteBuffer buffer, long res, int index) {
+
+        if (LOG.isTraceEnabled())
+            LOG.trace("[{}] Checking if the buffer was fully consumed...", index);
+
         return !(res == 0L) && (buffer.getBuffer().position() >= buffer.getBuffer().limit());
     }
 
     private boolean isLastWrite(PooledByteBuffer[] buffers, int index) {
+
+        if (LOG.isTraceEnabled())
+            LOG.trace("[{}] Checking if this is the last write....", index);
+
         return buffers[index + 1] == null || buffers[index + 1].getBuffer() == null;
     }
 
-    /**
-     * Cancels the callback attachments from the ProxyHandler.
-     */
-    private void cancelProxyConnectionCallback() {
-        final var connection = exchange.getAttachment(ProxyHandler.CONNECTION);
-
-        if (connection != null) {
-
-            if (LOG.isTraceEnabled())
-                LOG.trace("Proxy connection found. Removing cancel callback.");
-
-            var client = connection.getConnection();
-            IoUtils.safeClose(client);
-            var timeout = this.exchange.getAttachment(ProxyHandler.TIMEOUT_KEY);
-            timeout.remove();
-        }
+    private boolean isWriting() {
+        return writing;
     }
 
     /**

@@ -150,7 +150,8 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
     }
 
     private boolean isAppliedBodyInjectionPathPrefix(String requestPath) {
-        return config.getAppliedBodyInjectionPathPrefixes() != null && config.getAppliedBodyInjectionPathPrefixes().stream().anyMatch(requestPath::startsWith);
+        return config.getAppliedBodyInjectionPathPrefixes() != null
+                && config.getAppliedBodyInjectionPathPrefixes().stream().anyMatch(requestPath::startsWith);
     }
 
     private boolean hasCompressionFormat(String values) {

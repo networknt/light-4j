@@ -86,7 +86,7 @@ public class ProxyHandler implements HttpHandler {
 
     public static final AttachmentKey<ProxyConnection> CONNECTION = AttachmentKey.create(ProxyConnection.class);
     private static final AttachmentKey<HttpServerExchange> EXCHANGE = AttachmentKey.create(HttpServerExchange.class);
-    public static final AttachmentKey<XnioExecutor.Key> TIMEOUT_KEY = AttachmentKey.create(XnioExecutor.Key.class);
+    private static final AttachmentKey<XnioExecutor.Key> TIMEOUT_KEY = AttachmentKey.create(XnioExecutor.Key.class);
 
     private final ProxyClient proxyClient;
     private int maxRequestTime;
@@ -131,15 +131,20 @@ public class ProxyHandler implements HttpHandler {
         final ProxyClient.ProxyTarget target = proxyClient.findTarget(exchange);
 
         if (target == null) {
-            LOG.debug("No proxy target for request to {}", exchange.getRequestURL());
+
+            if (LOG.isDebugEnabled())
+                LOG.debug("No proxy target for request to {}", exchange.getRequestURL());
+
             next.handleRequest(exchange);
             return;
         }
 
         if (exchange.isResponseStarted()) {
 
+            if (LOG.isErrorEnabled())
+                LOG.error("Cannot proxy a request that has already started.");
+
             //we can't proxy a request that has already started, this is basically a server configuration error
-            LOG.error("Cannot proxy a request that has already started.");
             UndertowLogger.REQUEST_LOGGER.cannotProxyStartedRequest(exchange);
             exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
             exchange.endExchange();
@@ -207,7 +212,7 @@ public class ProxyHandler implements HttpHandler {
                         if (rule.getOldK().equals(values.getHeaderName().toString()))
                             parseHeader(values, rule, to);
 
-                            //don't over write existing headers, normally the map will be empty, if it is not we assume it is not for a reason
+                        //don't over write existing headers, normally the map will be empty, if it is not we assume it is not for a reason
                         else to.putAll(values.getHeaderName(), values);
 
             f = from.fiNextNonEmpty(f);
@@ -302,6 +307,7 @@ public class ProxyHandler implements HttpHandler {
             final long time = System.currentTimeMillis();
 
             if (this.tries++ < this.maxRetryAttempts) {
+
                 if (this.timeout > 0 && time > this.timeout) {
 
                     if (LOG.isTraceEnabled())
@@ -410,17 +416,17 @@ public class ProxyHandler implements HttpHandler {
 
         @Override
         public void run() {
-            final ClientRequest request = new ClientRequest();
+            final var request = new ClientRequest();
 
-            final String targetURI = this.createProxyRequestTargetURI();
+            final var targetURI = this.createProxyRequestTargetURI();
 
-            final String path = this.createProxyRequestURI(targetURI);
+            final var path = this.createProxyRequestURI(targetURI);
             request.setPath(path);
 
-            final HttpString method = this.createProxyRequestMethod(targetURI);
+            final var method = this.createProxyRequestMethod(targetURI);
             request.setMethod(method);
 
-            final String remoteHost = this.createProxyRequestRemoteHost(request);
+            final var remoteHost = this.createProxyRequestRemoteHost(request);
             request.putAttachment(ProxiedRequestAttachments.REMOTE_HOST, remoteHost);
 
             if (LOG.isTraceEnabled())
@@ -523,8 +529,8 @@ public class ProxyHandler implements HttpHandler {
          * @param remoteHost - remoteHost
          */
         private void rewriteHeaders(ClientRequest r, String target, String remoteHost) {
-            final HeaderMap inboundRequestHeaders = this.exchange.getRequestHeaders();
-            final HeaderMap outboundRequestHeaders = r.getRequestHeaders();
+            final var inboundRequestHeaders = this.exchange.getRequestHeaders();
+            final var outboundRequestHeaders = r.getRequestHeaders();
 
             copyHeaders(outboundRequestHeaders, inboundRequestHeaders, this.headerRewriteRules == null ? null : this.headerRewriteRules.get(target));
 
@@ -541,7 +547,7 @@ public class ProxyHandler implements HttpHandler {
             /* remove null/empty headers, otherwise push to outbound */
             for (var entry : this.requestHeaders.entrySet()) {
 
-                String headerValue = entry.getValue().readAttribute(this.exchange);
+                var headerValue = entry.getValue().readAttribute(this.exchange);
 
                 if (headerValue == null || headerValue.isEmpty())
                     outboundRequestHeaders.remove(entry.getKey());
@@ -679,10 +685,10 @@ public class ProxyHandler implements HttpHandler {
                     urlBuilder.append('?').append(qs);
 
             } else {
-                var qs = exchange.getQueryString();
+                var query = exchange.getQueryString();
 
-                if (qs != null && !qs.isEmpty())
-                    urlBuilder.append('?').append(qs);
+                if (query != null && !query.isEmpty())
+                    urlBuilder.append('?').append(query);
             }
         }
 
@@ -933,8 +939,8 @@ public class ProxyHandler implements HttpHandler {
 
                 try {
                     clientChannel = result.getConnection().performUpgrade();
-
                     final ClosingExceptionHandler handler = new ClosingExceptionHandler(streamConnection, clientChannel);
+
                     Transfer.initiateTransfer(clientChannel.getSourceChannel(), streamConnection.getSinkChannel(), ChannelListeners.closingChannelListener(), ChannelListeners.writeShutdownChannelListener(ChannelListeners.<StreamSinkChannel>flushingChannelListener(ChannelListeners.closingChannelListener(), ChannelListeners.closingChannelExceptionHandler()), ChannelListeners.closingChannelExceptionHandler()), handler, handler, result.getConnection().getBufferPool());
                     Transfer.initiateTransfer(streamConnection.getSourceChannel(), clientChannel.getSinkChannel(), ChannelListeners.closingChannelListener(), ChannelListeners.writeShutdownChannelListener(ChannelListeners.<StreamSinkChannel>flushingChannelListener(ChannelListeners.closingChannelListener(), ChannelListeners.closingChannelExceptionHandler()), ChannelListeners.closingChannelExceptionHandler()), handler, handler, result.getConnection().getBufferPool());
 
@@ -981,9 +987,13 @@ public class ProxyHandler implements HttpHandler {
                         flushedChannel.suspendWrites();
                         flushedChannel.getWriteSetter().set(null);
                     }, ChannelListeners.closingChannelExceptionHandler()));
+
                     channel.resumeWrites();
 
-                } else channel.getWriteSetter().set(null);
+                } else {
+                    channel.getWriteSetter().set(null);
+                    channel.shutdownWrites();
+                }
 
             } catch (IOException e) {
 
