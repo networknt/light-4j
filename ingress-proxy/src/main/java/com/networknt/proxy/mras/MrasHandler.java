@@ -79,6 +79,7 @@ public class MrasHandler implements MiddlewareHandler {
     private long microsoftExpiration = 0;
 
     private HttpClient client;
+    private HttpClient clientMicrosoft;
 
     public MrasHandler() {
         config = MrasConfig.load();
@@ -403,7 +404,8 @@ public class MrasHandler implements MiddlewareHandler {
 
     private Result<TokenResponse> getMicrosoftToken() throws Exception {
         TokenResponse tokenResponse = null;
-        if(client == null) {
+        if(clientMicrosoft == null) {
+        if(logger.isTraceEnabled()) logger.trace("clientMicrosoft is null. Creating new HTTP2Client with sslContext for MRAS Microsoft.");
             try {
                 HttpClient.Builder clientBuilder = HttpClient.newBuilder()
                         .followRedirects(HttpClient.Redirect.NORMAL)
@@ -418,7 +420,7 @@ public class MrasHandler implements MiddlewareHandler {
                     final Properties props = System.getProperties();
                     props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
                 }
-                client = clientBuilder.build();
+                clientMicrosoft = clientBuilder.build();
             } catch (IOException e) {
                 logger.error("Cannot create HttpClient:", e);
                 return Failure.of(new Status(TLS_TRUSTSTORE_ERROR));
@@ -447,7 +449,7 @@ public class MrasHandler implements MiddlewareHandler {
                     .POST(HttpRequest.BodyPublishers.ofString(form))
                     .build();
 
-            HttpResponse<?> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<?> response = clientMicrosoft.send(request, HttpResponse.BodyHandlers.ofString());
             if(logger.isTraceEnabled()) logger.trace(response.statusCode() + " " + response.body().toString());
             if(response.statusCode() == 200) {
                 // construct a token response and return it.
