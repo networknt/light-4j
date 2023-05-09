@@ -29,7 +29,7 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
 
     private final ResponseInterceptor[] interceptors;
 
-    private volatile boolean writing = false;
+    private volatile boolean writingResponse = false;
 
     private final Object lock = new Object();
 
@@ -106,15 +106,21 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
 
     @Override
     public void terminateWrites() throws IOException {
+
         if (this.interceptors == null || this.interceptors.length == 0)
             next.terminateWrites();
 
-        else {
+        else if (!isWritingResponse()) {
+
+            synchronized (lock) {
+                this.writingResponse = true;
+            }
 
             if (LOG.isTraceEnabled())
                 LOG.trace("terminating writes with interceptors length = " + (this.interceptors.length));
 
             try {
+
                 for (var interceptor : this.interceptors) {
 
                     if (LOG.isDebugEnabled())
@@ -156,68 +162,48 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
 
         /* http2 uses StreamSinkChannelWrappingConduit. */
         if (!(this.next instanceof StreamSinkChannelWrappingConduit))
-            this.standardHttp11Write(responseDataPooledBuffers);
+            this.http1Write(responseDataPooledBuffers);
 
-        else this.standardHttp2Write(responseDataPooledBuffers);
+        else this.http2Write(responseDataPooledBuffers);
     }
 
-    private void standardHttp11Write(final PooledByteBuffer[] buffers) throws IOException {
+    private void http1Write(final PooledByteBuffer[] buffers) throws IOException {
 
-        synchronized (lock) {
+        for (var buffer : buffers) {
 
-            if (!this.isWriting()) {
-                this.writing = true;
+            if (buffer == null)
+                break;
 
-                for (var buffer : buffers) {
+            if (LOG.isTraceEnabled())
+                LOG.trace("buffer position {} and buffer limit {}", buffer.getBuffer().position(), buffer.getBuffer().limit());
 
-                    if (buffer == null)
-                        break;
+            while (buffer.getBuffer().position() < buffer.getBuffer().limit()) {
 
-                    if (LOG.isTraceEnabled())
-                        LOG.trace("buffer position {} and buffer limit {}", buffer.getBuffer().position(), buffer.getBuffer().limit());
+                if (LOG.isTraceEnabled())
+                    LOG.trace("Before write buffer position: {}", buffer.getBuffer().position());
 
-                    while (buffer.getBuffer().position() < buffer.getBuffer().limit()) {
+                next.write(buffer.getBuffer());
 
-                        if (LOG.isTraceEnabled())
-                            LOG.trace("Before write buffer position: {}", buffer.getBuffer().position());
+                if (LOG.isTraceEnabled())
+                    LOG.trace("After write buffer position: {}", buffer.getBuffer().position());
 
-                        next.write(buffer.getBuffer());
-
-                        if (LOG.isTraceEnabled())
-                            LOG.trace("After write buffer position: {}", buffer.getBuffer().position());
-
-                    }
-
-                }
-
-                this.removeCachedResponseAttachments();
-                next.terminateWrites();
-
-                synchronized (lock) {
-                    this.writing = false;
-                }
             }
+
         }
 
+        next.terminateWrites();
+
 
     }
 
-    private void standardHttp2Write(final PooledByteBuffer[] buffers) {
+    private void http2Write(final PooledByteBuffer[] buffers) {
         final var ioThread = next.getWriteThread();
         final var workerThread = next.getWorker();
 
-        if (ioThread == Thread.currentThread()) {
+        if (ioThread == Thread.currentThread())
+            this.executeHttp2WriteThread(workerThread, buffers);
 
-            synchronized (lock) {
-
-                if (!this.isWriting()) {
-                    this.writing = true;
-                    this.executeHttp2WriteThread(workerThread, buffers);
-
-                } else this.executeHttp2ReadThread(workerThread, buffers);
-            }
-
-        } else throw new IllegalStateException("Conduit should not be called in a non IO-thread...");
+        else throw new IllegalStateException("Conduit should not be called in a non IO-thread...");
     }
 
     private void executeHttp2WriteThread(XnioWorker workerThread, final PooledByteBuffer[] buffers) {
@@ -232,32 +218,12 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
                     if (buffer == null || buffer.getBuffer() == null)
                         break;
 
-                    var lastWrite = false;
                     var written = 0;
 
                     if (LOG.isTraceEnabled())
                         LOG.trace("[{}] Before-Write: current pass: '{}' bytes, total: '{}' bytes, buffer size: '{}' bytes", index, written, totalWritten, buffer.getBuffer().limit());
 
-                    while (buffer.getBuffer().position() < buffer.getBuffer().limit()) {
-                        long res;
-
-                        if (this.isLastWrite(buffers, index)) {
-
-                            if (LOG.isTraceEnabled())
-                                LOG.trace("Final write occurred...");
-
-                            res = next.write(buffer.getBuffer());
-                            lastWrite = true;
-
-                        } else res = next.write(buffer.getBuffer());
-
-                        written += res;
-
-                        if (this.isBufferConsumed(buffer, res, index))
-                            break;
-
-                        next.awaitWritable();
-                    }
+                    var lastWrite = this.doWrite(buffers, buffer, written, index);
 
                     totalWritten += written;
 
@@ -269,44 +235,41 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
 
                     if (lastWrite)
                         break;
-
                 }
 
                 if (LOG.isTraceEnabled())
                     LOG.trace("Terminating writes...");
 
                 next.terminateWrites();
-                this.removeCachedResponseAttachments();
-
-                synchronized (lock) {
-                    this.writing = false;
-                }
-
             } catch (IOException e) {
                 throw new RuntimeException("Failed to execute conduit writes on Worker Thread. " + e.getMessage(), e);
             }
         });
     }
 
-    private void executeHttp2ReadThread(XnioWorker worker, final PooledByteBuffer[] buffers) {
-        worker.execute(() -> {
+    private boolean doWrite(PooledByteBuffer[] buffers, PooledByteBuffer buffer, int written, int index) throws IOException {
+        boolean lastWrite = false;
+        while (buffer.getBuffer().position() < buffer.getBuffer().limit()) {
+            long res;
 
-            for (var buffer : buffers) {
+            if (this.isLastWrite(buffers, index)) {
 
-                if (buffer == null || !buffer.isOpen() || buffer.getBuffer() == null)
-                    continue;
+                if (LOG.isTraceEnabled())
+                    LOG.trace("Final write occurred...");
 
-                while (buffer.isOpen()) {
+                res = next.write(buffer.getBuffer());
+                lastWrite = true;
 
-                    try {
-                        next.awaitWritable();
+            } else res = next.write(buffer.getBuffer());
 
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-        });
+            written += res;
+
+            if (this.isBufferConsumed(buffer, res, index))
+                break;
+
+            next.awaitWritable();
+        }
+        return lastWrite;
     }
 
     private boolean isBufferConsumed(PooledByteBuffer buffer, long res, int index) {
@@ -325,20 +288,8 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
         return buffers[index + 1] == null || buffers[index + 1].getBuffer() == null;
     }
 
-    private boolean isWriting() {
-        return writing;
-    }
-
-    /**
-     * Removes ResponseDataAttachments types:
-     * - PooledByteBuffer[]
-     * - String
-     * - Object (Jackson deserialized)
-     */
-    private void removeCachedResponseAttachments() {
-        exchange.removeAttachment(AttachmentConstants.BUFFERED_RESPONSE_DATA_KEY);
-        exchange.removeAttachment(AttachmentConstants.RESPONSE_BODY_STRING);
-        exchange.removeAttachment(AttachmentConstants.RESPONSE_BODY);
+    private boolean isWritingResponse() {
+        return writingResponse;
     }
 
     /**
@@ -351,7 +302,7 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
     private void updateContentLength(HttpServerExchange exchange, PooledByteBuffer[] dests) {
         long length = 0;
 
-        for (PooledByteBuffer dest : dests)
+        for (var dest : dests)
             if (dest != null)
                 length += dest.getBuffer().limit();
 

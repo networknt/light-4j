@@ -80,10 +80,9 @@ public class Handler {
 
     /**
      * Construct the named map of handlers. Note: All handlers in use for this
-     * microservice should be listed in this handlers list
-     *
-     * @throws Exception
+     * microservice should be listed in this handlers list.
      */
+    @SuppressWarnings("unchecked")
     static void initHandlers() {
         if (config != null && config.getHandlers() != null) {
 
@@ -106,6 +105,7 @@ public class Handler {
      * to define reusable chains of handlers
      */
     static void initChains() {
+
         if (config != null && config.getChains() != null) {
 
             // add the chains to the handler list by id list.
@@ -173,13 +173,13 @@ public class Handler {
             }
         } catch (Exception e) {
 
-            LOG.error("Failed to inject handler.yml paths from: " + sourceChain);
+            if (LOG.isErrorEnabled())
+                LOG.error("Failed to inject handler.yml paths from: " + sourceChain);
 
             if (e instanceof RuntimeException)
                 throw (RuntimeException) e;
 
-            else
-                throw new RuntimeException(e);
+            else throw new RuntimeException(e);
         }
     }
 
@@ -316,38 +316,37 @@ public class Handler {
      * paths. If the match is successful, store the chain id within the exchange.
      * Otherwise return false.
      *
-     * @param httpServerExchange The current requests server exchange.
+     * @param ex The current requests server exchange.
      * @return true if a handler has been defined for the given path.
      */
-    public static boolean start(HttpServerExchange httpServerExchange) {
+    public static boolean start(HttpServerExchange ex) {
 
         // Get the matcher corresponding to the current request type.
-        var pathTemplateMatcher = methodToMatcherMap.get(httpServerExchange.getRequestMethod());
+        var pathTemplateMatcher = methodToMatcherMap.get(ex.getRequestMethod());
 
         if (pathTemplateMatcher != null) {
 
             // Match the current request path to the configured paths.
-            var result = pathTemplateMatcher.match(httpServerExchange.getRequestPath());
+            var result = pathTemplateMatcher.match(ex.getRequestPath());
 
             if (result != null) {
 
                 // Found a match, configure and return true;
                 // Add path variables to query params.
-                httpServerExchange.putAttachment(ATTACHMENT_KEY,
-                        new io.undertow.util.PathTemplateMatch(result.getMatchedTemplate(), result.getParameters()));
+                ex.putAttachment(ATTACHMENT_KEY, new io.undertow.util.PathTemplateMatch(result.getMatchedTemplate(), result.getParameters()));
 
                 for (var entry : result.getParameters().entrySet()) {
 
                     // the values shouldn't be added to query param. but this is left as it was to keep backward compatability
-                    httpServerExchange.addQueryParam(entry.getKey(), entry.getValue());
+                    ex.addQueryParam(entry.getKey(), entry.getValue());
 
                     // put values in path param map
-                    httpServerExchange.addPathParam(entry.getKey(), entry.getValue());
+                    ex.addPathParam(entry.getKey(), entry.getValue());
                 }
 
                 var id = result.getValue();
-                httpServerExchange.putAttachment(CHAIN_ID, id);
-                httpServerExchange.putAttachment(CHAIN_SEQ, 0);
+                ex.putAttachment(CHAIN_ID, id);
+                ex.putAttachment(CHAIN_SEQ, 0);
                 return true;
             }
         }
@@ -364,6 +363,7 @@ public class Handler {
      * @return true if a handler has been defined for the given path.
      */
     public static boolean startDefaultHandlers(HttpServerExchange ex) {
+
         // check if defaultHandlers is empty
         if (defaultHandlers != null && defaultHandlers.size() > 0) {
             ex.putAttachment(CHAIN_ID, "defaultHandlers");
@@ -392,13 +392,13 @@ public class Handler {
                     throw new RuntimeException("Unknown handler or chain: " + exec);
 
                 for (HttpHandler handler : handlerList) {
+
                     if (handler instanceof MiddlewareHandler) {
 
                         if (((MiddlewareHandler) handler).isEnabled())
                             handlersFromExecList.add(handler);
 
-                    } else
-                        handlersFromExecList.add(handler);
+                    } else handlersFromExecList.add(handler);
                 }
             }
         }
@@ -411,11 +411,12 @@ public class Handler {
      * @param handler
      */
     private static void registerMiddlewareHandler(Object handler) {
+
         if (handler instanceof MiddlewareHandler) {
+
             // register the middleware handler if it is enabled.
-            if (((MiddlewareHandler) handler).isEnabled()) {
+            if (((MiddlewareHandler) handler).isEnabled())
                 ((MiddlewareHandler) handler).register();
-            }
         }
     }
 
@@ -428,6 +429,7 @@ public class Handler {
      * @param handler
      */
     private static void initStringDefinedHandler(String handler) {
+
         // split the class name and its label, if defined
         Tuple<String, Class> namedClass = splitClassAndName(handler);
 
@@ -442,15 +444,18 @@ public class Handler {
         }
 
         HttpHandler resolvedHandler;
-        if (handlerOrProviderObject instanceof HttpHandler) {
+
+        if (handlerOrProviderObject instanceof HttpHandler)
             resolvedHandler = (HttpHandler) handlerOrProviderObject;
-        } else if (handlerOrProviderObject instanceof HandlerProvider) {
+
+        else if (handlerOrProviderObject instanceof HandlerProvider)
             resolvedHandler = ((HandlerProvider) handlerOrProviderObject).getHandler();
-        } else if (handlerOrProviderObject instanceof WebSocketConnectionCallback) {
+
+        else if (handlerOrProviderObject instanceof WebSocketConnectionCallback)
             resolvedHandler = websocket((WebSocketConnectionCallback) handlerOrProviderObject);
-        } else {
-            throw new RuntimeException("Unsupported type of handler provided: " + handlerOrProviderObject);
-        }
+
+        else throw new RuntimeException("Unsupported type of handler provided: " + handlerOrProviderObject);
+
         registerMiddlewareHandler(resolvedHandler);
         handlers.put(namedClass.first, resolvedHandler);
         handlerListById.put(namedClass.first, Collections.singletonList(resolvedHandler));
