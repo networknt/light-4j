@@ -433,7 +433,10 @@ public class SalesforceHandler implements MiddlewareHandler {
         }
         if(logger.isTraceEnabled()) logger.trace("response body = " + responseBody);
         exchange.getResponseSender().send(ByteBuffer.wrap(responseBody));
-        if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName());
+        if(config.isMetricsInjection() && metricsHandler != null) {
+            if(logger.isTraceEnabled()) logger.trace("injecting metrics for " + config.getMetricsName());
+            metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName());
+        }
     }
 
 }
