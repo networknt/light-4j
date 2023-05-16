@@ -77,5 +77,9 @@ public class StringUtilsTest {
 
         pattern = "/gateway/dev/ph-l4j-files/file?version=1";
         Assert.assertFalse(StringUtils.matchPathToPattern("/dev-ph-l4j-files/file?version=1", pattern));
+
+        pattern = "/gateway/dev/ph-l4j-files/file?version=1";
+        Assert.assertTrue(StringUtils.matchPathToPattern("/gateway/dev/ph-l4j-files/file?version=1", pattern));
+
     }
 }
