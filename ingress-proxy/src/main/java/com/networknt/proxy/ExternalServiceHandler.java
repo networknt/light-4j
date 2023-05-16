@@ -205,7 +205,10 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                     }
                     exchange.getResponseSender().send(ByteBuffer.wrap(responseBody));
                     if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest ends.");
-                    if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName());
+                    if(config.isMetricsInjection() && metricsHandler != null) {
+                        if(logger.isTraceEnabled()) logger.trace("injecting metrics for " + config.getMetricsName());
+                        metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName());
+                    }
                     return;
                 }
             }
