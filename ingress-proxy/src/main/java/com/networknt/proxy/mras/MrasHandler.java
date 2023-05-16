@@ -331,7 +331,10 @@ public class MrasHandler implements MiddlewareHandler {
             }
         }
         exchange.getResponseSender().send(ByteBuffer.wrap(responseBody));
-        if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName());
+        if(config.isMetricsInjection() && metricsHandler != null) {
+            if(logger.isTraceEnabled()) logger.trace("inject metrics for " + config.getMetricsName());
+            metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName());
+        }
     }
 
     private Result<TokenResponse> getAccessToken() throws Exception {
