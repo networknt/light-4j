@@ -17,6 +17,7 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.server.protocol.http.HttpContinue;
 import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
+import io.undertow.util.QueryParameterUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.Buffers;
@@ -28,7 +29,8 @@ import java.util.Map;
 
 /**
  * Transforms the request body of an active request being processed.
- * This is executed by RequestInterceptorExecutionHandler.
+ * This is executed by RequestInterceptorExecutionHandler. Also, this class will be responsible for
+ * some special validations that the normal handlers cannot do or not easy to do.
  *
  * @author Kalev Gonvick
  *
@@ -155,11 +157,22 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
                                     case "requestURI":
                                         String requestURI = (String)result.get("requestURI");
                                         exchange.setRequestURI(requestURI);
+                                        if(logger.isTraceEnabled()) logger.trace("requestURI is changed to " + requestURI);
+                                        break;
+                                    case "queryString":
+                                        // we have pass the queryParameters to the rule engine, the plugin developer should use that
+                                        // to add or remove entries, and then calls QueryParameterUtils.buildQueryString(params) to
+                                        // generate the final queryString.
+                                        String queryString = (String)result.get("queryString");
+                                        if(logger.isTraceEnabled()) logger.trace("queryString = " + queryString);
+                                        if(queryString != null) {
+                                            exchange.setQueryString(queryString);
+                                        }
                                         break;
                                     case "requestHeaders":
                                         // if requestHeaders object is null, ignore it.
                                         Map<String, Object> requestHeaders = (Map)result.get("requestHeaders");
-                                        if(requestHeaders != null) {
+                                        if(requestHeaders != null && requestHeaders.size() > 0) {
                                             // manipulate the request headers.
                                             List<String> removeList = (List)requestHeaders.get("remove");
                                             if(removeList != null) {
@@ -203,6 +216,17 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
                                             }
                                         }
                                         exchange.getRequestHeaders().put(Headers.CONTENT_LENGTH, length);
+                                        break;
+                                    case "validationError":
+                                        // If the rule engine returns any validationError entry, stop the chain and send the res.
+                                        // this can be either XML or JSON or TEXT. Just make sure it matches the content type
+                                        String errorMessage = (String)result.get("errorMessage");
+                                        String contentType = (String)result.get("contentType");
+                                        int statusCode = (Integer)result.get("statusCode");
+                                        if(logger.isTraceEnabled()) logger.trace("Entry key validationError with errorMessage {} contentType {} statusCode {}");
+                                        exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, contentType);
+                                        exchange.setStatusCode(statusCode);
+                                        exchange.getResponseSender().send(errorMessage);
                                         break;
                                 }
                             }

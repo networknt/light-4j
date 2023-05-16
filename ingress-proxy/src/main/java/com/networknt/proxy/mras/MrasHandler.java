@@ -13,6 +13,8 @@ import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.config.UrlRewriteRule;
 import com.networknt.httpstring.ContentType;
+import com.networknt.metrics.MetricsConfig;
+import com.networknt.metrics.AbstractMetricsHandler;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;
@@ -65,8 +67,10 @@ public class MrasHandler implements MiddlewareHandler {
     private static final String GET_TOKEN_ERROR = "ERR10052";
     private static final String METHOD_NOT_ALLOWED  = "ERR10008";
 
+    private static AbstractMetricsHandler metricsHandler;
+
     private volatile HttpHandler next;
-    private MrasConfig config;
+    private static MrasConfig config;
     // the cached jwt token so that we can use the same token for different requests.
     private String accessToken;
     private String microsoft;
@@ -75,9 +79,19 @@ public class MrasHandler implements MiddlewareHandler {
     private long microsoftExpiration = 0;
 
     private HttpClient client;
+    private HttpClient clientMicrosoft;
 
     public MrasHandler() {
         config = MrasConfig.load();
+        if(config.isMetricsInjection()) {
+            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
+            // metrics handler, then an error message will be logged.
+            Map<String, HttpHandler> handlers = Handler.getHandlers();
+            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+            if(metricsHandler == null) {
+                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
+            }
+        }
         if(logger.isInfoEnabled()) logger.info("MrasHandler is loaded.");
     }
 
@@ -113,11 +127,28 @@ public class MrasHandler implements MiddlewareHandler {
     @Override
     public void reload() {
         config.reload();
+        if(config.isMetricsInjection()) {
+            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
+            // metrics handler, then an error message will be logged.
+            Map<String, HttpHandler> handlers = Handler.getHandlers();
+            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+            if(metricsHandler == null) {
+                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
+            }
+        }
+        List<String> masks = new ArrayList<>();
+        masks.add("keyStorePass");
+        masks.add("keyPass");
+        masks.add("trustStorePass");
+        masks.add("password");
+        // use a new no cache instance to avoid the default config to be overwritten.
+        ModuleRegistry.registerModule(MrasHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(MrasConfig.CONFIG_NAME), masks);
     }
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest starts.");
+        long startTime = System.nanoTime();
         String requestPath = exchange.getRequestPath();
         if(logger.isTraceEnabled()) logger.trace("original requestPath = " + requestPath);
 
@@ -156,17 +187,17 @@ public class MrasHandler implements MiddlewareHandler {
                             return;
                         }
                     }
-                    invokeApi(exchange, (String)config.getAccessToken().get(config.SERVICE_HOST), requestPath, "Bearer " + accessToken);
+                    invokeApi(exchange, (String)config.getAccessToken().get(config.SERVICE_HOST), requestPath, "Bearer " + accessToken, startTime);
                     if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
                     return;
                 } else if(config.getPathPrefixAuth().get(key).equals(config.BASIC_AUTH)) {
                     // only basic authentication is used for the access.
-                    invokeApi(exchange, (String)config.getBasicAuth().get(config.SERVICE_HOST), requestPath, "Basic " + encodeCredentials((String)config.getBasicAuth().get(config.USERNAME), (String)config.getBasicAuth().get(config.PASSWORD)));
+                    invokeApi(exchange, (String)config.getBasicAuth().get(config.SERVICE_HOST), requestPath, "Basic " + encodeCredentials((String)config.getBasicAuth().get(config.USERNAME), (String)config.getBasicAuth().get(config.PASSWORD)), startTime);
                     if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
                     return;
                 } else if(config.getPathPrefixAuth().get(key).equals(config.ANONYMOUS)) {
                     // no authorization header for this type of the request.
-                    invokeApi(exchange, (String)config.getAnonymous().get(config.SERVICE_HOST), requestPath, null);
+                    invokeApi(exchange, (String)config.getAnonymous().get(config.SERVICE_HOST), requestPath, null, startTime);
                     if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
                     return;
                 } else if(config.getPathPrefixAuth().get(key).equals(config.MICROSOFT)) {
@@ -183,18 +214,19 @@ public class MrasHandler implements MiddlewareHandler {
                             return;
                         }
                     }
-                    invokeApi(exchange, (String)config.getMicrosoft().get(config.SERVICE_HOST), requestPath, "Bearer " + microsoft);
+                    invokeApi(exchange, (String)config.getMicrosoft().get(config.SERVICE_HOST), requestPath, "Bearer " + microsoft, startTime);
                     if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
                     return;
                 }
             }
         }
         // not the MRAS path, go to the next middleware handlers.
+
         if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
         Handler.next(exchange, next);
     }
 
-    private void invokeApi(HttpServerExchange exchange, String serviceHost, String requestPath, String authorization) throws Exception {
+    private void invokeApi(HttpServerExchange exchange, String serviceHost, String requestPath, String authorization, long startTime) throws Exception {
         // call the MRAS API directly here with the token from the cache.
         String method = exchange.getRequestMethod().toString();
         String queryString = exchange.getQueryString();
@@ -299,6 +331,7 @@ public class MrasHandler implements MiddlewareHandler {
             }
         }
         exchange.getResponseSender().send(ByteBuffer.wrap(responseBody));
+        if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName());
     }
 
     private Result<TokenResponse> getAccessToken() throws Exception {
@@ -344,6 +377,7 @@ public class MrasHandler implements MiddlewareHandler {
                     .POST(HttpRequest.BodyPublishers.ofString(form))
                     .build();
 
+            if(logger.isTraceEnabled()) logger.trace("request url = " + serverUrl + "request body = " + form + " request headers = " + request.headers().toString());
             HttpResponse<?> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             if(logger.isTraceEnabled()) logger.trace(response.statusCode() + " " + response.body().toString());
             if(response.statusCode() == 200) {
@@ -370,13 +404,14 @@ public class MrasHandler implements MiddlewareHandler {
 
     private Result<TokenResponse> getMicrosoftToken() throws Exception {
         TokenResponse tokenResponse = null;
-        if(client == null) {
+        if(clientMicrosoft == null) {
+        if(logger.isTraceEnabled()) logger.trace("clientMicrosoft is null. Creating new HTTP2Client with sslContext for MRAS Microsoft.");
             try {
                 HttpClient.Builder clientBuilder = HttpClient.newBuilder()
                         .followRedirects(HttpClient.Redirect.NORMAL)
                         .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
-                        // we cannot use the Http2Client SSL Context as we need two-way TLS here.
-                        .sslContext(createSSLContext());
+                        // Token site only need one-way TLS with a public certificate.
+                        .sslContext(Http2Client.createSSLContext());
                 if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
                 if(config.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
                 // this a workaround to bypass the hostname verification in jdk11 http client.
@@ -385,7 +420,7 @@ public class MrasHandler implements MiddlewareHandler {
                     final Properties props = System.getProperties();
                     props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
                 }
-                client = clientBuilder.build();
+                clientMicrosoft = clientBuilder.build();
             } catch (IOException e) {
                 logger.error("Cannot create HttpClient:", e);
                 return Failure.of(new Status(TLS_TRUSTSTORE_ERROR));
@@ -414,7 +449,7 @@ public class MrasHandler implements MiddlewareHandler {
                     .POST(HttpRequest.BodyPublishers.ofString(form))
                     .build();
 
-            HttpResponse<?> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<?> response = clientMicrosoft.send(request, HttpResponse.BodyHandlers.ofString());
             if(logger.isTraceEnabled()) logger.trace(response.statusCode() + " " + response.body().toString());
             if(response.statusCode() == 200) {
                 // construct a token response and return it.
@@ -477,6 +512,7 @@ public class MrasHandler implements MiddlewareHandler {
         }
 
         TrustManager[] trustManagers = null;
+        List<TrustManager> trustManagerList = new ArrayList<>();
         try {
             // temp loading the certificate from the keystore instead of truststore from the config.
             String trustStoreName = config.getKeyStoreName();
@@ -484,12 +520,12 @@ public class MrasHandler implements MiddlewareHandler {
             if(logger.isTraceEnabled()) logger.trace("trustStoreName = " + trustStoreName + " trustStorePass = " + (trustStorePass == null ? null : trustStorePass.substring(0, 4)));
             if (trustStoreName != null && trustStorePass != null) {
                 KeyStore trustStore = TlsUtil.loadTrustStore(trustStoreName, trustStorePass.toCharArray());
-                Map<String, Object> tlsMap = new HashMap<>();
-                tlsMap.put("verifyHostname", false);
-                TLSConfig tlsConfig = TLSConfig.create(tlsMap, null);
                 TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                 trustManagerFactory.init(trustStore);
-                trustManagers = ClientX509ExtendedTrustManager.decorate(trustManagerFactory.getTrustManagers(), tlsConfig);
+                trustManagers = trustManagerFactory.getTrustManagers();
+            }
+            if (trustManagers!=null && trustManagers.length>0) {
+                trustManagerList.addAll(Arrays.asList(trustManagers));
             }
         } catch (NoSuchAlgorithmException | KeyStoreException e) {
             logger.error("Exception:", e);
@@ -498,7 +534,13 @@ public class MrasHandler implements MiddlewareHandler {
 
         try {
             sslContext = SSLContext.getInstance("TLSv1.2");
-            sslContext.init(keyManagers, trustManagers, null);
+            if(trustManagers == null || trustManagers.length == 0) {
+                logger.error("No trust store is loaded. Please check client.yml");
+            } else {
+                TrustManager[] extendedTrustManagers = {new ClientX509ExtendedTrustManager(trustManagerList)};
+                sslContext.init(keyManagers, extendedTrustManagers, null);
+
+            }
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
             logger.error("Exception:", e);
             throw new IOException("Unable to create and initialise the SSLContext", e);

@@ -24,5 +24,22 @@ reuseXForwarded: ${proxy.reuseXForwarded:false}
 # Max Connection Retries
 maxConnectionRetries: ${proxy.maxConnectionRetries:3}
 
+# The max queue size for the requests if there is no connection to the downstream API in the connection pool.
+# The default value is 0 that means there is queued requests. As we have maxConnectionRetries, there is no
+# need to use the request queue to increase the memory usage. It should only be used when you see 503 errors
+# in the log after maxConnectionRetries to accommodate slow backend API.
+maxQueueSize: ${proxy.maxQueueSize:0}
+
 # Decode the JWT token claims and forward to the backend api in the form of json string
 forwardJwtClaims: ${proxy.forwardJwtClaims:false}
+
+# When LightProxyHandler is used in the http-sidecar or light-gateway, it can collect the metrics info for the
+# total response time of the downstream API. With this value injected, users can quickly determine how much
+# time the http-sidecar or light-gateway handlers spend and how much time the downstream API spends, including
+# the network latency. By default, it is false, and metrics will not be collected and injected into the metrics
+# handler configured in the request/response chain.
+metricsInjection: ${proxy.metricsInjection:false}
+# When the metrics info is injected into the metrics handler, we need to pass a metric name to it so that the
+# metrics info can be categorized in a tree structure under the name. By default, it is proxy-response, and
+# users can change it.
+metricsName: ${proxy.metricsName:proxy-response}

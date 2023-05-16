@@ -31,6 +31,9 @@ import java.security.cert.CertificateEncodingException;
 import com.networknt.handler.config.MethodRewriteRule;
 import com.networknt.handler.config.QueryHeaderRewriteRule;
 import com.networknt.handler.config.UrlRewriteRule;
+import com.networknt.httpstring.HttpStringConstants;
+import com.networknt.utility.CollectionUtils;
+import com.networknt.utility.StringUtils;
 import io.undertow.UndertowLogger;
 import io.undertow.UndertowMessages;
 import io.undertow.server.*;
@@ -79,6 +82,7 @@ import java.util.stream.Collectors;
 public class ProxyHandler implements HttpHandler {
 
     private static final int DEFAULT_MAX_RETRY_ATTEMPTS = Integer.getInteger("maxRetries", 1);
+    private static final int DEFAULT_MAX_QUEUE_SIZE = Integer.getInteger("maxQueueSize", 0);
 
     private static final Logger LOG = LoggerFactory.getLogger(ProxyHandler.class);
 
@@ -102,6 +106,7 @@ public class ProxyHandler implements HttpHandler {
     private volatile boolean rewriteHostHeader;
     private volatile boolean reuseXForwarded;
     private volatile int maxConnectionRetries;
+    private volatile int maxQueueSize;
     private volatile List<UrlRewriteRule> urlRewriteRules;
     private volatile List<MethodRewriteRule> methodRewriteRules;
 
@@ -119,6 +124,7 @@ public class ProxyHandler implements HttpHandler {
         this.rewriteHostHeader = builder.rewriteHostHeader;
         this.reuseXForwarded = builder.reuseXForwarded;
         this.maxConnectionRetries = builder.maxConnectionRetries;
+        this.maxQueueSize = builder.maxQueueSize;
         this.urlRewriteRules = builder.urlRewriteRules;
         this.methodRewriteRules = builder.methodRewriteRules;
         this.queryParamRewriteRules = builder.queryParamRewriteRules;
@@ -160,7 +166,8 @@ public class ProxyHandler implements HttpHandler {
             for (Map.Entry<String, Integer> entry : pathPrefixMaxRequestTime.entrySet()) {
                 String key = entry.getKey();
 
-                if (reqPath.startsWith(key)) {
+                if (StringUtils.matchPathToPattern(reqPath, key)) {
+
                     maxRequestTime = entry.getValue();
                     timeout = System.currentTimeMillis() + maxRequestTime;
 
@@ -212,7 +219,7 @@ public class ProxyHandler implements HttpHandler {
                         if (rule.getOldK().equals(values.getHeaderName().toString()))
                             parseHeader(values, rule, to);
 
-                        //don't over write existing headers, normally the map will be empty, if it is not we assume it is not for a reason
+                            //don't over write existing headers, normally the map will be empty, if it is not we assume it is not for a reason
                         else to.putAll(values.getHeaderName(), values);
 
             f = from.fiNextNonEmpty(f);
@@ -532,7 +539,7 @@ public class ProxyHandler implements HttpHandler {
             final var inboundRequestHeaders = this.exchange.getRequestHeaders();
             final var outboundRequestHeaders = r.getRequestHeaders();
 
-            copyHeaders(outboundRequestHeaders, inboundRequestHeaders, this.headerRewriteRules == null ? null : this.headerRewriteRules.get(target));
+            copyHeaders(outboundRequestHeaders, inboundRequestHeaders, (List) CollectionUtils.matchEndpointKey(target, (Map) this.headerRewriteRules));
 
             /* even if client is non-persistent, we don't close connection to backend. */
             if (!this.exchange.isPersistent())
@@ -582,6 +589,11 @@ public class ProxyHandler implements HttpHandler {
             // that there is content.
             if (!r.getRequestHeaders().contains(Headers.TRANSFER_ENCODING) && !r.getRequestHeaders().contains(Headers.CONTENT_LENGTH) && !this.exchange.isRequestComplete())
                 r.getRequestHeaders().put(Headers.TRANSFER_ENCODING, Headers.CHUNKED.toString());
+
+            // remove the serviceId and serviceUrl so that they won't be sent to the downstream API as it might be a gateway or sidecar.
+            // the serviceId and serviceUrl might impact the pathPrefixServiceHandler to detect the serviceId.
+            r.getRequestHeaders().remove(HttpStringConstants.SERVICE_URL);
+            r.getRequestHeaders().remove(HttpStringConstants.SERVICE_ID);
         }
 
         /**
@@ -598,10 +610,10 @@ public class ProxyHandler implements HttpHandler {
 
             if (this.methodRewriteRules != null && this.methodRewriteRules.size() > 0)
                 for (var rule : this.methodRewriteRules)
-                    if (target.equals(rule.getRequestPath()) && m.toString().equals(rule.getSourceMethod())) {
+                    if (StringUtils.matchPathToPattern(target, rule.getRequestPath()) && m.toString().equals(rule.getSourceMethod())) {
 
                         if (LOG.isDebugEnabled())
-                            LOG.debug("Rewrite HTTP method from {} to {}", rule.getSourceMethod(), rule.getTargetMethod());
+                            LOG.debug("Rewrite HTTP method from {} to {} with path {} and pathPattern {}", rule.getSourceMethod(), rule.getTargetMethod(), target, rule.getRequestPath());
 
                         m = new HttpString(rule.getTargetMethod());
                     }
@@ -644,51 +656,58 @@ public class ProxyHandler implements HttpHandler {
          */
         private void rewriteQueryParams(StringBuilder urlBuilder, String target) {
 
-            if (this.queryParamRewriteRules != null && this.queryParamRewriteRules.get(target) != null) {
+            if (this.queryParamRewriteRules != null && this.queryParamRewriteRules.size() > 0) {
+                var rules = (List<QueryHeaderRewriteRule>) CollectionUtils.matchEndpointKey(target, (Map) this.queryParamRewriteRules);
 
-                var rules = this.queryParamRewriteRules.get(target);
-                var params = this.exchange.getQueryParameters();
+                if (rules != null && rules.size() > 0) {
 
-                for (var rule : rules) {
+                    var params = this.exchange.getQueryParameters();
 
-                    if (params.get(rule.getOldK()) != null) {
-                        var values = params.get(rule.getOldK());
+                    for (var rule : rules) {
 
-                        // we only iterate the values if oldV and newV are defined.
-                        if (rule.getOldV() != null && rule.getNewV() != null) {
-                            var it = values.iterator();
-                            var add = false;
+                        if (params.get(rule.getOldK()) != null) {
+                            var values = params.get(rule.getOldK());
 
-                            while (it.hasNext()) {
+                            // we only iterate the values if oldV and newV are defined.
+                            if (rule.getOldV() != null && rule.getNewV() != null) {
+                                var it = values.iterator();
+                                boolean add = false;
 
-                                if (it.next().equals(rule.getOldV())) {
-                                    it.remove();
-                                    add = true;
+                                while (it.hasNext()) {
+                                    if (it.next().equals(rule.getOldV())) {
+                                        it.remove();
+                                        add = true;
+                                    }
                                 }
+
+                                if (add)
+                                    values.addFirst(rule.getNewV());
                             }
 
-                            if (add)
-                                values.addFirst(rule.getNewV());
+                            if (rule.getNewK() != null) {
+                                params.remove(rule.getOldK());
+                                params.put(rule.getNewK(), values);
+
+                            } else {
+                                params.put(rule.getOldK(), values);
+                            }
                         }
+                    }
 
-                        if (rule.getNewK() != null) {
-                            params.remove(rule.getOldK());
-                            params.put(rule.getNewK(), values);
+                    var qs = QueryParameterUtils.buildQueryString(params);
 
-                        } else params.put(rule.getOldK(), values);
-
+                    if (!qs.isEmpty()) {
+                        urlBuilder.append('?');
+                        urlBuilder.append(qs);
                     }
                 }
-                var qs = QueryParameterUtils.buildQueryString(params);
-
-                if (!qs.isEmpty())
-                    urlBuilder.append('?').append(qs);
-
             } else {
-                var query = exchange.getQueryString();
+                var qs = exchange.getQueryString();
 
-                if (query != null && !query.isEmpty())
-                    urlBuilder.append('?').append(query);
+                if (qs != null && !qs.isEmpty()) {
+                    urlBuilder.append('?');
+                    urlBuilder.append(qs);
+                }
             }
         }
 
@@ -920,7 +939,7 @@ public class ProxyHandler implements HttpHandler {
             final HeaderMap outbound = exchange.getResponseHeaders();
             exchange.setStatusCode(response.getResponseCode());
 
-            copyHeaders(outbound, inbound, headerRewriteRules == null ? null : headerRewriteRules.get(exchange.getRequestPath()));
+            copyHeaders(outbound, inbound, (List) CollectionUtils.matchEndpointKey(exchange.getRequestPath(), (Map) headerRewriteRules));
 
             if (exchange.isUpgrade())
                 this.handleUpgradeChannelOnComplete(result);
@@ -1075,6 +1094,7 @@ public class ProxyHandler implements HttpHandler {
         private boolean rewriteHostHeader;
         private boolean reuseXForwarded;
         private int maxConnectionRetries = DEFAULT_MAX_RETRY_ATTEMPTS;
+        private int maxQueueSize = DEFAULT_MAX_QUEUE_SIZE;
         private Predicate idempotentRequestPredicate = IdempotentPredicate.INSTANCE;
         private List<UrlRewriteRule> urlRewriteRules;
         private List<MethodRewriteRule> methodRewriteRules;
@@ -1158,6 +1178,11 @@ public class ProxyHandler implements HttpHandler {
 
         public Builder setMaxConnectionRetries(int maxConnectionRetries) {
             this.maxConnectionRetries = maxConnectionRetries;
+            return this;
+        }
+
+        public Builder setMaxQueueSize(int maxQueueSize) {
+            this.maxQueueSize = maxQueueSize;
             return this;
         }
 

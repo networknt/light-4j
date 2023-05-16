@@ -163,6 +163,7 @@ public class LoadBalancingRouterProxyClient implements ProxyClient {
     }
 
     public synchronized void addHosts(final String serviceId, final String envTag) {
+        if(logger.isTraceEnabled()) logger.trace("addHosts serviceId {} envTag {} for cluster.services discovery.", serviceId, envTag);
         String key = envTag == null ? serviceId : serviceId + "|" + envTag;
         List<URI> uris = cluster.services(ssl == null ? "http" : "https", serviceId, envTag);
         // If there is only one entry, duplicated to ensure that retry will be enabled.
@@ -170,7 +171,7 @@ public class LoadBalancingRouterProxyClient implements ProxyClient {
             if(logger.isTraceEnabled()) logger.trace("Only one uri found in the service.yml, so duplicated it to enable retry.");
             uris.add(uris.get(0));
         }
-        hosts.remove(key);
+        // hosts.remove(key);
         Host[] newHosts = new Host[uris.size()];
         for (int i = 0; i < uris.size(); i++) {
             Host h = null;
@@ -181,6 +182,7 @@ public class LoadBalancingRouterProxyClient implements ProxyClient {
             }
             newHosts[i] = h;
         }
+        if(logger.isTraceEnabled()) logger.trace("put a new key {} into the hosts with size {}", key, newHosts.length);
         hosts.put(key, newHosts);
     }
 
@@ -193,15 +195,19 @@ public class LoadBalancingRouterProxyClient implements ProxyClient {
     public void getConnection(ProxyTarget target, HttpServerExchange exchange, final ProxyCallback<ProxyConnection> callback, long timeout, TimeUnit timeUnit) {
         try {
             Host host = selectHost(exchange);
+            if(logger.isTraceEnabled()) logger.trace("First time to selectHost and uri = {}", host == null ? null : host.getUri());
             if (host == null) {
                 // give it second chance for service discovery again when problem occurs.
                 host = selectHost(exchange);
+                if(logger.isTraceEnabled()) logger.trace("Second time to selectHost and uri = {}", host == null ? null : host.getUri());
             }
             if (host == null) {
                 callback.couldNotResolveBackend(exchange);
+                if(logger.isTraceEnabled()) logger.trace("callback could not resolve backend.");
             } else {
                 exchange.addToAttachmentList(ATTEMPTED_HOSTS, host);
                 host.connectionPool.connect(target, exchange, callback, timeout, timeUnit, false);
+                if(logger.isTraceEnabled()) logger.trace("got connection from the connection pool");
             }
         } catch (Exception ex) {
             logger.error("Failed to get connection", ex);
@@ -217,8 +223,8 @@ public class LoadBalancingRouterProxyClient implements ProxyClient {
         String serviceUrl = headers.getFirst(HttpStringConstants.SERVICE_URL);
         if(logger.isTraceEnabled()) logger.trace("From headers serviceId = " + serviceId + " serviceUrl = " + serviceUrl);
         // remove the header here in case the downstream service is another light-router instance.
-        if(serviceUrl != null) headers.remove(HttpStringConstants.SERVICE_URL);
-        if(serviceId != null) headers.remove(HttpStringConstants.SERVICE_ID);
+        // if(serviceUrl != null) headers.remove(HttpStringConstants.SERVICE_URL);
+        // if(serviceId != null) headers.remove(HttpStringConstants.SERVICE_ID);
         // if the serviceId doesn't exist in the header, check if there is one in the query parameter.
         // also remove it from the query parameters to ensure that the downstream call doesn't have it.
         // it is for legacy client that is easy to manipulate the query parameters than headers.
@@ -237,6 +243,7 @@ public class LoadBalancingRouterProxyClient implements ProxyClient {
         if(logger.isTraceEnabled()) logger.trace("attempted = " + attempted);
         Host[] hostArray = this.hosts.get(key);
         if (hostArray == null || hostArray.length == 0) {
+            if(logger.isTraceEnabled()) logger.trace("This must be the first time the service is called. Discovery here.");
             // this must be the first this service is called since the router is started. discover here.
             if (serviceUrl != null) {
                 if(logger.isTraceEnabled()) logger.trace("serviceUrl = " + serviceUrl);
@@ -256,6 +263,7 @@ public class LoadBalancingRouterProxyClient implements ProxyClient {
                                         HttpStringConstants.SERVICE_URL));
                     }
                 } catch (URISyntaxException e) {
+                    logger.error("URISyntaxException:", e);
                     throw new RuntimeException(e);
                 }
             } else {
@@ -266,6 +274,7 @@ public class LoadBalancingRouterProxyClient implements ProxyClient {
         }
         if(logger.isTraceEnabled()) logger.trace("hostArray size = " + hostArray.length + " hostArray = " + hostArray);
         if(hostArray.length == 0) {
+            if(logger.isTraceEnabled()) logger.trace("HostArray is empty. serviceUrl {} serviceId {} envTag {}", serviceUrl, serviceId, envTag);
             throw new ConfigException(String.format("HostArray is empty. serviceUrl = %s serviceId = %s envTag = %s", serviceUrl, serviceId, envTag));
         }
         int host = hostSelector.selectHost(hostArray);

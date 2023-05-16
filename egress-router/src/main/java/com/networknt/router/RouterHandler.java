@@ -17,8 +17,10 @@
 package com.networknt.router;
 
 import com.networknt.client.Http2Client;
-import com.networknt.config.Config;
+import com.networknt.handler.Handler;
 import com.networknt.handler.ProxyHandler;
+import com.networknt.metrics.MetricsConfig;
+import com.networknt.metrics.AbstractMetricsHandler;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.UndertowOptions;
 import io.undertow.server.HttpHandler;
@@ -28,6 +30,8 @@ import io.undertow.server.handlers.proxy.LoadBalancingRouterProxyClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.OptionMap;
+
+import java.util.Map;
 
 /**
  * This is a wrapper class for ProxyHandler as it is implemented as final. This class implements
@@ -41,6 +45,7 @@ public class RouterHandler implements HttpHandler {
     private static RouterConfig config;
 
     protected static ProxyHandler proxyHandler;
+    protected static AbstractMetricsHandler metricsHandler;
 
     public RouterHandler() {
         config = RouterConfig.load();
@@ -57,6 +62,7 @@ public class RouterHandler implements HttpHandler {
         proxyHandler = ProxyHandler.builder()
                 .setProxyClient(client)
                 .setMaxConnectionRetries(config.maxConnectionRetries)
+                .setMaxQueueSize(config.maxQueueSize)
                 .setMaxRequestTime(config.maxRequestTime)
                 .setPathPrefixMaxRequestTime(config.pathPrefixMaxRequestTime)
                 .setReuseXForwarded(config.reuseXForwarded)
@@ -67,12 +73,23 @@ public class RouterHandler implements HttpHandler {
                 .setHeaderRewriteRules(config.headerRewriteRules)
                 .setNext(ResponseCodeHandler.HANDLE_404)
                 .build();
+        if(config.isMetricsInjection()) {
+            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
+            // metrics handler, then an error message will be logged.
+            Map<String, HttpHandler> handlers = Handler.getHandlers();
+            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+            if(metricsHandler == null) {
+                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
+            }
+        }
     }
 
     @Override
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("RouterHandler.handleRequest starts.");
+        long startTime = System.nanoTime();
         proxyHandler.handleRequest(httpServerExchange);
+        if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(httpServerExchange, startTime, config.getMetricsName());
         if(logger.isDebugEnabled()) logger.debug("RouterHandler.handleRequest ends.");
     }
 
@@ -89,6 +106,7 @@ public class RouterHandler implements HttpHandler {
         proxyHandler = ProxyHandler.builder()
                 .setProxyClient(client)
                 .setMaxConnectionRetries(config.maxConnectionRetries)
+                .setMaxQueueSize(config.maxQueueSize)
                 .setMaxRequestTime(config.maxRequestTime)
                 .setPathPrefixMaxRequestTime(config.pathPrefixMaxRequestTime)
                 .setReuseXForwarded(config.reuseXForwarded)
@@ -99,5 +117,14 @@ public class RouterHandler implements HttpHandler {
                 .setHeaderRewriteRules(config.headerRewriteRules)
                 .setNext(ResponseCodeHandler.HANDLE_404)
                 .build();
+        if(config.isMetricsInjection()) {
+            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
+            // metrics handler, then an error message will be logged.
+            Map<String, HttpHandler> handlers = Handler.getHandlers();
+            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+            if(metricsHandler == null) {
+                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
+            }
+        }
     }
 }

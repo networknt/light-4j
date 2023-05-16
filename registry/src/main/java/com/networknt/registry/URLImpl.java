@@ -38,7 +38,6 @@ public class URLImpl implements URL {
 
     private int port;
 
-    // interfaceName
     private String path;
 
     private Map<String, String> parameters;
@@ -375,7 +374,6 @@ public class URLImpl implements URL {
         return true;
     }
 
-    // TODO there is a trailing &, use string join instead StringBuilder.
     @Override
     public String toFullStr() {
         StringBuilder builder = new StringBuilder();

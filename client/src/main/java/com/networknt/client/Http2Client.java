@@ -24,7 +24,12 @@ import com.networknt.client.listener.ByteBufferReadChannelListener;
 import com.networknt.client.listener.ByteBufferWriteChannelListener;
 import com.networknt.client.oauth.Jwt;
 import com.networknt.client.oauth.TokenManager;
+import com.networknt.client.simplepool.SimpleConnectionHolder;
+import com.networknt.client.simplepool.SimpleConnectionMaker;
+import com.networknt.client.simplepool.SimpleURIConnectionPool;
+import com.networknt.client.simplepool.undertow.SimpleClientConnectionMaker;
 import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
+import com.networknt.client.ssl.CompositeX509TrustManager;
 import com.networknt.client.ssl.TLSConfig;
 import com.networknt.cluster.Cluster;
 import com.networknt.config.Config;
@@ -38,6 +43,7 @@ import com.networknt.service.SingletonServiceFactory;
 import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.config.TlsUtil;
+import com.networknt.utility.StringUtils;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
@@ -60,6 +66,7 @@ import org.xnio.channels.StreamSinkChannel;
 import org.xnio.ssl.XnioSsl;
 
 import javax.net.ssl.*;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -67,13 +74,18 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import static io.undertow.client.http.HttpClientProvider.DISABLE_HTTPS_ENDPOINT_IDENTIFICATION_PROPERTY;
 
 /**
  * This is a new client module that replaces the old Client module. The old version
@@ -101,12 +113,14 @@ public class Http2Client {
     public static XnioSsl SSL;
     public static final AttachmentKey<String> RESPONSE_BODY = AttachmentKey.create(String.class);
     public static AttachmentKey<ByteBuffer> BUFFER_BODY = AttachmentKey.create(ByteBuffer.class);
-
+    public static final String HTTPS = "https";
     public static final String TLS = "tls";
     static final String LOAD_TRUST_STORE = "loadTrustStore";
     static final String LOAD_KEY_STORE = "loadKeyStore";
+    static final String LOAD_DEFAULT_TRUST = "loadDefaultTrustStore";
     static final String TRUST_STORE = "trustStore";
     static final String TRUST_STORE_PASS = "trustStorePass";
+    static final String DEFAULT_CERT_PASS = "defaultCertPassword";
     static final String KEY_STORE = "keyStore";
     static final String KEY_STORE_PASS = "keyStorePass";
     static final String KEY_PASS = "keyPass";
@@ -115,6 +129,7 @@ public class Http2Client {
     static final String KEY_STORE_PASSWORD_PROPERTY = "javax.net.ssl.keyStorePassword";
     static final String TRUST_STORE_PROPERTY = "javax.net.ssl.trustStore";
     static final String TRUST_STORE_PASSWORD_PROPERTY = "javax.net.ssl.trustStorePassword";
+    static final String TRUST_STORE_TYPE_PROPERTY = "javax.net.ssl.trustStoreType";
     static final String SERVICE_ID = "serviceId";
     static String callerId = "unknown";
     static String MASK_KEY_CLIENT_SECRET = "client_secret";
@@ -122,16 +137,24 @@ public class Http2Client {
     static String MASK_KEY_KEY_STORE_PASS = "keyStorePass";
     static String MASK_KEY_KEY_PASS = "keyPass";
 
+
     // TokenManager is to manage cached jwt tokens for this client.
     private TokenManager tokenManager = TokenManager.getInstance();
 
-    // Initialize connection pool
-    private Http2ClientConnectionPool http2ClientConnectionPool = Http2ClientConnectionPool.getInstance();
+    // This is the old connection pool that is kept for backward compatibility.
+    private final Http2ClientConnectionPool http2ClientConnectionPool = Http2ClientConnectionPool.getInstance();
+    // This is the new connection pool that is used by the new request method.
+    private final Map<URI, SimpleURIConnectionPool> pools = new ConcurrentHashMap<>();
 
     static {
         List<String> masks = List.of(MASK_KEY_CLIENT_SECRET, MASK_KEY_TRUST_STORE_PASS, MASK_KEY_KEY_STORE_PASS, MASK_KEY_KEY_PASS);
         Map<String, Object> config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
         ModuleRegistry.registerModule(Http2Client.class.getName(), JsonMapper.fromJson(JsonMapper.toJson(config), Map.class), masks);
+        // disable the hostname verification based on the config.
+        Map<String, Object> tlsMap = ClientConfig.get().getTlsConfig();
+        if(tlsMap != null && Boolean.FALSE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
+            System.setProperty(DISABLE_HTTPS_ENDPOINT_IDENTIFICATION_PROPERTY, "true");
+        }
         // take the best effort to get the serviceId from the server.yml file. It might not exist if this is a standalone client.
         boolean injectCallerId = ClientConfig.get().isInjectCallerId();
         if(injectCallerId) {
@@ -213,6 +236,7 @@ public class Http2Client {
      * @param future IoFuture object that contains the ClientConnection.
      * @return ClientConnection object.
      */
+    @Deprecated
     public ClientConnection getFutureConnection(long timeoutSeconds, IoFuture<ClientConnection> future) {
         if(future.await(timeoutSeconds, TimeUnit.SECONDS) != IoFuture.Status.DONE) {
             throw new RuntimeException("Connection establishment timed out");
@@ -230,11 +254,22 @@ public class Http2Client {
 
         return connection;
     }
-
+    @Deprecated
     public IoFuture<ClientConnection> connect(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         return connect(uri, worker, null, bufferPool, options);
     }
+    @Deprecated
+    public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, boolean isHttp2) {
+        if(logger.isDebugEnabled()) logger.debug("The connection is http2?:" + isHttp2);
+        return borrowConnection(uri, worker,  bufferPool, isHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
+    }
 
+    public SimpleConnectionHolder.ConnectionToken borrow(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, boolean isHttp2) {
+        if(logger.isDebugEnabled()) logger.debug("The connection is http2?:" + isHttp2);
+        return borrow(uri, worker,  bufferPool, isHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
+    }
+
+    @Deprecated
     public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         final FutureResult<ClientConnection> result = new FutureResult<>();
         ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
@@ -247,15 +282,27 @@ public class Http2Client {
         return connect(uri, worker, null, bufferPool, options);
     }
 
+    public SimpleConnectionHolder.ConnectionToken borrow(final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
+        SimpleURIConnectionPool pool = pools.get(uri);
+        if(pool == null) {
+            SimpleConnectionMaker undertowConnectionMaker = SimpleClientConnectionMaker.instance();
+            pool = new SimpleURIConnectionPool(uri, ClientConfig.get().getConnectionExpireTime(), ClientConfig.get().getConnectionPoolSize(), null, worker, bufferPool, null, options, undertowConnectionMaker);
+            pools.putIfAbsent(uri, pool);
+        }
+        return pool.borrow(ClientConfig.get().getTimeout());
+    }
+
+    @Deprecated
     public ClientConnection borrowConnection(long timeoutSeconds, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         IoFuture<ClientConnection> future = borrowConnection(uri, worker, bufferPool, options);
         return getFutureConnection(timeoutSeconds, future);
     }
 
+    @Deprecated
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         return connect(bindAddress, uri, worker, null, bufferPool, options);
     }
-
+    @Deprecated
     public IoFuture<ClientConnection> borrowConnection(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         final FutureResult<ClientConnection> result = new FutureResult<>();
         ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
@@ -267,7 +314,7 @@ public class Http2Client {
         if(logger.isDebugEnabled()) logger.debug("Got a null or non open connection: {} from http2ClientConnectionPool. Creating a new one ...", connection);
         return connect(bindAddress, uri, worker, null, bufferPool, options);
     }
-
+    @Deprecated
     public ClientConnection borrowConnection(long timeoutSeconds, InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         IoFuture<ClientConnection> future = borrowConnection(bindAddress, uri, worker, bufferPool, options);
         return getFutureConnection(timeoutSeconds, future);
@@ -284,16 +331,28 @@ public class Http2Client {
         }
         return SSL;
     }
-
+    @Deprecated
     public void returnConnection(ClientConnection connection) {
         http2ClientConnectionPool.resetConnectionStatus(connection);
     }
 
+    public void restore(SimpleConnectionHolder.ConnectionToken token) {
+        if(token == null) return;
+        pools.get(token.uri()).restore(token);
+    }
+
+    @Deprecated
     public IoFuture<ClientConnection> connect(final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         return connect((InetSocketAddress) null, uri, worker, ssl, bufferPool, options);
     }
+    @Deprecated
+    public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, boolean isHttp2) {
+        if(logger.isDebugEnabled()) logger.debug("The connection is http2?:" + isHttp2);
+        return borrowConnection(uri, worker, ssl, bufferPool, isHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
 
+    }
+    @Deprecated
     public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         final FutureResult<ClientConnection> result = new FutureResult<>();
         ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
@@ -307,11 +366,27 @@ public class Http2Client {
         return connect((InetSocketAddress) null, uri, worker, ssl, bufferPool, options);
     }
 
+    public SimpleConnectionHolder.ConnectionToken borrow(final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
+        if(HTTPS.equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
+        SimpleURIConnectionPool pool = pools.get(uri);
+        if(pool == null) {
+            SimpleConnectionMaker undertowConnectionMaker = SimpleClientConnectionMaker.instance();
+            pool = new SimpleURIConnectionPool(uri, ClientConfig.get().getConnectionExpireTime(), ClientConfig.get().getConnectionPoolSize(), null, worker, bufferPool, ssl, options, undertowConnectionMaker);
+            pools.putIfAbsent(uri, pool);
+        }
+        return pool.borrow(ClientConfig.get().getTimeout());
+    }
+
+    @Deprecated
+    public ClientConnection borrowConnection(long timeoutSeconds, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, boolean isHttp2) {
+        IoFuture<ClientConnection> future = borrowConnection(uri, worker, ssl, bufferPool, isHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
+        return getFutureConnection(timeoutSeconds, future);
+    }
+    @Deprecated
     public ClientConnection borrowConnection(long timeoutSeconds, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         IoFuture<ClientConnection> future = borrowConnection(uri, worker, ssl, bufferPool, options);
         return getFutureConnection(timeoutSeconds, future);
     }
-
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         ClientProvider provider = getClientProvider(uri);
@@ -332,11 +407,11 @@ public class Http2Client {
         }, bindAddress, uri, worker, ssl, bufferPool, options);
         return result.getIoFuture();
     }
-
+    @Deprecated
     public IoFuture<ClientConnection> connect(final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
         return connect((InetSocketAddress) null, uri, ioThread, null, bufferPool, options);
     }
-
+    @Deprecated
     public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
         final FutureResult<ClientConnection> result = new FutureResult<>();
         ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
@@ -348,16 +423,21 @@ public class Http2Client {
         if(logger.isDebugEnabled()) logger.debug("Got a null or non open connection: {} from http2ClientConnectionPool. Creating a new one ...", connection);
         return connect((InetSocketAddress) null, uri, ioThread, null, bufferPool, options);
     }
-
+    @Deprecated
     public ClientConnection borrowConnection(long timeoutSeconds, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
         IoFuture<ClientConnection> future = borrowConnection(uri, ioThread, bufferPool, options);
         return getFutureConnection(timeoutSeconds, future);
     }
-
+    @Deprecated
+    public ClientConnection borrowConnection(long timeoutSeconds, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, boolean isHttp2) {
+        IoFuture<ClientConnection> future = borrowConnection(uri, ioThread, bufferPool, isHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
+        return getFutureConnection(timeoutSeconds, future);
+    }
+    @Deprecated
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
         return connect(bindAddress, uri, ioThread, null, bufferPool, options);
     }
-
+    @Deprecated
     public IoFuture<ClientConnection> borrowConnection(InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
         final FutureResult<ClientConnection> result = new FutureResult<>();
         ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
@@ -369,17 +449,17 @@ public class Http2Client {
         if(logger.isDebugEnabled()) logger.debug("Got a null or non open connection: {} from http2ClientConnectionPool. Creating a new one ...", connection);
         return connect(bindAddress, uri, ioThread, null, bufferPool, options);
     }
-
+    @Deprecated
     public ClientConnection borrowConnection(long timeoutSeconds, InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
         IoFuture<ClientConnection> future = borrowConnection(bindAddress, uri, ioThread, bufferPool, options);
         return getFutureConnection(timeoutSeconds, future);
     }
-
+    @Deprecated
     public IoFuture<ClientConnection> connect(final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         return connect((InetSocketAddress) null, uri, ioThread, ssl, bufferPool, options);
     }
-
+    @Deprecated
     public IoFuture<ClientConnection> borrowConnection(final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         final FutureResult<ClientConnection> result = new FutureResult<>();
         ClientConnection connection = http2ClientConnectionPool.getConnection(uri);
@@ -392,12 +472,11 @@ public class Http2Client {
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         return connect((InetSocketAddress) null, uri, ioThread, ssl, bufferPool, options);
     }
-
+    @Deprecated
     public ClientConnection borrowConnection(long timeoutSeconds, final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         IoFuture<ClientConnection> future = borrowConnection(uri, ioThread, ssl, bufferPool, options);
         return getFutureConnection(timeoutSeconds, future);
     }
-
     public IoFuture<ClientConnection> connect(InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         ClientProvider provider = getClientProvider(uri);
@@ -418,15 +497,16 @@ public class Http2Client {
         }, bindAddress, uri, ioThread, ssl, bufferPool, options);
         return result.getIoFuture();
     }
-
+    @Deprecated
     public void connect(final ClientCallback<ClientConnection> listener, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         connect(listener, uri, worker, null, bufferPool, options);
     }
-
+    @Deprecated
     public void connect(final ClientCallback<ClientConnection> listener, InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, ByteBufferPool bufferPool, OptionMap options) {
         connect(listener, bindAddress, uri, worker, null, bufferPool, options);
     }
 
+    @Deprecated
     public void connect(final ClientCallback<ClientConnection> listener, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         ClientProvider provider = getClientProvider(uri);
@@ -438,16 +518,18 @@ public class Http2Client {
         ClientProvider provider = getClientProvider(uri);
         provider.connect(listener, bindAddress, uri, worker, ssl, bufferPool, options);
     }
-
+    @Deprecated
     public void connect(final ClientCallback<ClientConnection> listener, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
         connect(listener, uri, ioThread, null, bufferPool, options);
     }
 
 
+    @Deprecated
     public void connect(final ClientCallback<ClientConnection> listener, InetSocketAddress bindAddress, final URI uri, final XnioIoThread ioThread, ByteBufferPool bufferPool, OptionMap options) {
         connect(listener, bindAddress, uri, ioThread, null, bufferPool, options);
     }
 
+    @Deprecated
     public void connect(final ClientCallback<ClientConnection> listener, final URI uri, final XnioIoThread ioThread, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         if("https".equals(uri.getScheme()) && ssl == null) ssl = getDefaultXnioSsl();
         ClientProvider provider = getClientProvider(uri);
@@ -683,26 +765,13 @@ public class Http2Client {
     }
 
     /**
-     * default method for creating ssl context. trustedNames config is not used.
-     *
-     * @return SSLContext
-     * @throws IOException IOException
-     */
-    public static SSLContext createSSLContext() throws IOException {
-    	Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(TLS);
-
-    	return null==tlsMap?null:createSSLContext((String)tlsMap.get(TLSConfig.DEFAULT_GROUP_KEY));
-    }
-
-    /**
      * create ssl context using specified trustedName config
      *
-     * @param trustedNamesGroupKey - the trustedName config to be used
      * @return SSLContext
      * @throws IOException IOException
      */
     @SuppressWarnings("unchecked")
-	public static SSLContext createSSLContext(String trustedNamesGroupKey) throws IOException {
+	public static SSLContext createSSLContext() throws IOException {
         SSLContext sslContext = null;
         KeyManager[] keyManagers = null;
         Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(TLS);
@@ -739,34 +808,39 @@ public class Http2Client {
             }
 
             TrustManager[] trustManagers = null;
+            Boolean loadDefaultTrust = (Boolean) tlsMap.get(LOAD_DEFAULT_TRUST);
+            List<TrustManager> trustManagerList = new ArrayList<>();
             try {
                 // load trust store, this is the server public key certificate
                 // first check if javax.net.ssl.trustStore system properties is set. It is only necessary if the server
                 // certificate doesn't have the entire chain.
                 Boolean loadTrustStore = (Boolean) tlsMap.get(LOAD_TRUST_STORE);
                 if (loadTrustStore != null && loadTrustStore) {
-                    String trustStoreName = System.getProperty(TRUST_STORE_PROPERTY);
-                    String trustStorePass = System.getProperty(TRUST_STORE_PASSWORD_PROPERTY);
-                    if (trustStoreName != null && trustStorePass != null) {
-                        if(logger.isInfoEnabled()) logger.info("Loading trust store from system property at " + Encode.forJava(trustStoreName));
-                    } else {
-                        trustStoreName = (String) tlsMap.get(TRUST_STORE);
-                        trustStorePass = (String) tlsMap.get(TRUST_STORE_PASS);
-                        if(trustStorePass == null) {
-                            logger.error(new Status(CONFIG_PROPERTY_MISSING, TRUST_STORE_PASS, "client.yml").toString());
-                        }
-                        if(logger.isInfoEnabled()) logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
+
+                    String trustStoreName = (String) tlsMap.get(TRUST_STORE);
+                    String trustStorePass = (String) tlsMap.get(TRUST_STORE_PASS);
+                    if(trustStorePass == null) {
+                        logger.error(new Status(CONFIG_PROPERTY_MISSING, TRUST_STORE_PASS, "client.yml").toString());
                     }
+                    if(logger.isInfoEnabled()) logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
                     if (trustStoreName != null && trustStorePass != null) {
                         KeyStore trustStore = TlsUtil.loadTrustStore(trustStoreName, trustStorePass.toCharArray());
-                        TLSConfig tlsConfig = TLSConfig.create(tlsMap, trustedNamesGroupKey);
-
                         TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                         trustManagerFactory.init(trustStore);
-                        trustManagers = ClientX509ExtendedTrustManager.decorate(trustManagerFactory.getTrustManagers(), tlsConfig);
+                        trustManagers = trustManagerFactory.getTrustManagers();
+                        // the client.truststore is loaded.
+                    }
+                    if (loadDefaultTrust != null && loadDefaultTrust) {
+                        TrustManager[] defaultTrusts = loadDefaultTrustStore();
+                        if (defaultTrusts!=null && defaultTrusts.length>0) {
+                            trustManagerList.addAll(Arrays.asList(defaultTrusts));
+                        }
+                    }
+                    if (trustManagers!=null && trustManagers.length>0) {
+                        trustManagerList.addAll(Arrays.asList(trustManagers));
                     }
                 }
-            } catch (NoSuchAlgorithmException | KeyStoreException e) {
+            } catch (Exception e) {
                 throw new IOException("Unable to initialise TrustManager[]", e);
             }
 
@@ -774,7 +848,17 @@ public class Http2Client {
                 String tlsVersion = (String)tlsMap.get(TLS_VERSION);
                 if(tlsVersion == null) tlsVersion = "TLSv1.2";
                 sslContext = SSLContext.getInstance(tlsVersion);
-                sslContext.init(keyManagers, trustManagers, null);
+                if (loadDefaultTrust != null && loadDefaultTrust && !trustManagerList.isEmpty()) {
+                    TrustManager[] compositeTrustManagers = {new CompositeX509TrustManager(convertTrustManagers(trustManagerList))};
+                    sslContext.init(keyManagers, compositeTrustManagers, null);
+                } else {
+                    if(trustManagers == null || trustManagers.length == 0) {
+                        logger.error("No trust store is loaded. Please check client.yml");
+                    } else {
+                        TrustManager[] extendedTrustManagers = {new ClientX509ExtendedTrustManager(trustManagerList)};
+                        sslContext.init(keyManagers, extendedTrustManagers, null);
+                    }
+                }
             } catch (NoSuchAlgorithmException | KeyManagementException e) {
                 throw new IOException("Unable to create and initialise the SSLContext", e);
             }
@@ -783,6 +867,63 @@ public class Http2Client {
         }
 
         return sslContext;
+    }
+    public static List<X509TrustManager> convertTrustManagers(List<TrustManager> trustManagerList) {
+        List<X509TrustManager> x509TrustManagers = new ArrayList<>();
+        for (TrustManager trustManager : trustManagerList) {
+            if (trustManager instanceof X509TrustManager) {
+                x509TrustManagers.add((X509TrustManager) trustManager);
+            }
+        }
+        return x509TrustManagers;
+    }
+
+    public  static  TrustManager[] loadDefaultTrustStore() throws Exception {
+        Path location = null;
+        String password = "changeit"; //default value for cacerts, we can override it from config
+        Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(TLS);
+        if(tlsMap != null &&  tlsMap.get(DEFAULT_CERT_PASS)!=null) {
+            password = (String)tlsMap.get(DEFAULT_CERT_PASS);
+        }
+        String locationProperty = System.getProperty(TRUST_STORE_PROPERTY);
+        if (!StringUtils.isEmpty(locationProperty)) {
+            Path p = Paths.get(locationProperty);
+            File f = p.toFile();
+            if (f.exists() && f.isFile() && f.canRead()) {
+                location = p;
+            }
+        }  else {
+            String javaHome = System.getProperty("java.home");
+            location = Paths.get(javaHome, "lib", "security", "jssecacerts");
+            if (!location.toFile().exists()) {
+                location = Paths.get(javaHome, "lib", "security", "cacerts");
+            }
+        }
+        if (!location.toFile().exists()) {
+            logger.warn("Cannot find system default trust store");
+            return null;
+        }
+
+        String trustStorePass = System.getProperty(TRUST_STORE_PASSWORD_PROPERTY);
+        if (!StringUtils.isEmpty(trustStorePass)) {
+            password = trustStorePass;
+        }
+        String trustStoreType = System.getProperty(TRUST_STORE_TYPE_PROPERTY);
+        String type;
+        if (!StringUtils.isEmpty(trustStoreType)) {
+            type = trustStoreType;
+        } else {
+            type = KeyStore.getDefaultType();
+        }
+        KeyStore trustStore = KeyStore.getInstance(type, Security.getProvider("SUN"));
+        try (InputStream is = Files.newInputStream(location)) {
+            trustStore.load(is, password.toCharArray());
+            logger.info("JDK default trust store loaded from : {} .", location );
+        }
+        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("PKIX");
+        trustManagerFactory.init(trustStore);
+        return trustManagerFactory.getTrustManagers();
+
     }
 
     public static String getFormDataString(Map<String, String> params) throws UnsupportedEncodingException {
@@ -1096,6 +1237,10 @@ public class Http2Client {
         return new CircuitBreaker(() -> callService(uri, request, requestBody));
     }
 
+    public CircuitBreaker getRequestService(URI uri, ClientRequest request, Optional<String> requestBody, boolean isHttp2) {
+        return new CircuitBreaker(() -> callService(uri, request, requestBody, isHttp2));
+    }
+
     /**
      * This method is used to call the service corresponding to the uri and obtain a response, connection pool is embedded.
      * @param uri URI of target service
@@ -1112,6 +1257,32 @@ public class Http2Client {
             futureClientResponse = getFutureClientResponse(currentConnection.get(), uri, request, requestBody);
         } else {
             CompletableFuture<ClientConnection> futureConnection = this.connectAsync(uri);
+            futureClientResponse = futureConnection.thenComposeAsync(clientConnection -> {
+                currentConnection.set(clientConnection);
+                return getFutureClientResponse(clientConnection, uri, request, requestBody);
+            });
+        }
+        futureClientResponse.thenAcceptAsync(clientResponse -> http2ClientConnectionPool.resetConnectionStatus(currentConnection.get()));
+        return futureClientResponse;
+    }
+
+    /**
+     * This method is used to call the service corresponding to the uri and obtain a response, connection pool is embedded.
+     * @param uri URI of target service
+     * @param request request
+     * @param requestBody request body
+     * @param isHttp2 indicate if client request is http2
+     * @return client response
+     */
+    public CompletableFuture<ClientResponse> callService(URI uri, ClientRequest request, Optional<String> requestBody, boolean isHttp2) {
+        addHostHeader(request);
+        CompletableFuture<ClientResponse> futureClientResponse;
+        AtomicReference<ClientConnection> currentConnection = new AtomicReference<>(http2ClientConnectionPool.getConnection(uri));
+        if (currentConnection.get() != null && currentConnection.get().isOpen()) {
+            if(logger.isDebugEnabled()) logger.debug("Reusing the connection: {} to {}", currentConnection.toString(), uri.toString());
+            futureClientResponse = getFutureClientResponse(currentConnection.get(), uri, request, requestBody);
+        } else {
+            CompletableFuture<ClientConnection> futureConnection = this.connectAsync(uri, isHttp2);
             futureClientResponse = futureConnection.thenComposeAsync(clientConnection -> {
                 currentConnection.set(clientConnection);
                 return getFutureClientResponse(clientConnection, uri, request, requestBody);
@@ -1147,6 +1318,32 @@ public class Http2Client {
     }
 
     /**
+     * This method is used to call the service by using the serviceId and obtain a response
+     * service discovery, load balancing and connection pool are embedded.
+     * @param protocol target service protocol
+     * @param serviceId target service's service Id
+     * @param envTag environment tag
+     * @param request request
+     * @param requestBody request body
+     * @param isHttp2 indicate if client request is http2
+     * @return client response
+     */
+    public CompletableFuture<ClientResponse> callService(String protocol, String serviceId, String envTag, ClientRequest request, Optional<String> requestBody, boolean isHttp2) {
+        try {
+            Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
+            String url = cluster.serviceToUrl(protocol, serviceId, envTag, null);
+            if (url == null) {
+                logger.error("Failed to discover service with serviceID: {}, and tag: {}", serviceId, envTag);
+                throw new ClientException(String.format("Failed to discover service with serviceID: %s, and tag: %s", serviceId, envTag));
+            }
+            return callService(new URI(url), request, requestBody, isHttp2);
+        } catch (Exception e) {
+            logger.error("Failed to call service: {}", serviceId);
+            throw new RuntimeException("Failed to call service: " + serviceId, e);
+        }
+    }
+
+    /**
      * Create async connection with default config value
      * @param uri URI
      * @return CompletableFuture
@@ -1155,6 +1352,18 @@ public class Http2Client {
         if("https".equals(uri.getScheme()) && SSL == null) SSL = getDefaultXnioSsl();
         return this.connectAsync(null, uri, WORKER, SSL, com.networknt.client.Http2Client.BUFFER_POOL,
                 ClientConfig.get().getRequestEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
+    }
+
+    /**
+     * Create async connection with default config value
+     * @param uri URI
+     * @param isHttp2 indicate if it is https2 request
+     * @return CompletableFuture
+     */
+    public CompletableFuture<ClientConnection> connectAsync(URI uri, boolean isHttp2) {
+        if("https".equals(uri.getScheme()) && SSL == null) SSL = getDefaultXnioSsl();
+        return this.connectAsync(null, uri, WORKER, SSL, com.networknt.client.Http2Client.BUFFER_POOL,
+                isHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
     }
 
     public CompletableFuture<ClientConnection> connectAsync(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {

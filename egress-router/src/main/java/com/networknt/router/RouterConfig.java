@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.regex.Pattern;
 
 /**
  * Config class for reverse router.
@@ -45,8 +44,11 @@ public class RouterConfig {
     private static final String CONNECTION_PER_THREAD = "connectionsPerThread";
     private static final String SOFT_MAX_CONNECTIONS_PER_THREAD = "softMaxConnectionsPerThread";
     private static final String MAX_CONNECTION_RETRIES = "maxConnectionRetries";
+    private static final String MAX_QUEUE_SIZE = "maxQueueSize";
     private static final String SERVICE_ID_QUERY_PARAMETER = "serviceIdQueryParameter";
     private static final String PRE_RESOLVE_FQDN_2_IP = "preResolveFQDN2IP";
+    private static final String METRICS_INJECTION = "metricsInjection";
+    private static final String METRICS_NAME = "metricsName";
 
     boolean http2Enabled;
     boolean httpsEnabled;
@@ -57,8 +59,13 @@ public class RouterConfig {
     boolean rewriteHostHeader;
     boolean reuseXForwarded;
     int maxConnectionRetries;
+    int maxQueueSize;
+
 
     boolean preResolveFQDN2IP;
+    boolean metricsInjection;
+    String metricsName;
+
     List<String> hostWhitelist;
     List<UrlRewriteRule> urlRewriteRules;
     List<MethodRewriteRule> methodRewriteRules;
@@ -145,6 +152,10 @@ public class RouterConfig {
         if(object != null ) {
             maxConnectionRetries = (Integer)object;
         }
+        object = getMappedConfig().get(MAX_QUEUE_SIZE);
+        if(object != null ) {
+            maxQueueSize = (Integer)object;
+        }
         object = getMappedConfig().get(SERVICE_ID_QUERY_PARAMETER);
         if(object != null) {
             serviceIdQueryParameter = (Boolean)object;
@@ -153,7 +164,14 @@ public class RouterConfig {
         if(object != null && (Boolean) object) {
             preResolveFQDN2IP = true;
         }
-
+        object = getMappedConfig().get(METRICS_INJECTION);
+        if(object != null && (Boolean) object) {
+            metricsInjection = true;
+        }
+        object = getMappedConfig().get(METRICS_NAME);
+        if(object != null ) {
+            metricsName = (String)object;
+        }
     }
 
     public Map<String, Object> getMappedConfig() {
@@ -182,8 +200,11 @@ public class RouterConfig {
 
     public boolean isReuseXForwarded() { return reuseXForwarded; }
     public boolean isPreResolveFQDN2IP() { return preResolveFQDN2IP; }
-
+    public boolean isMetricsInjection() { return metricsInjection; }
+    public String getMetricsName() { return metricsName; }
     public int getMaxConnectionRetries() { return maxConnectionRetries; }
+
+    public int getMaxQueueSize() { return maxQueueSize; }
 
     public List<String> getHostWhitelist() {
         return hostWhitelist;

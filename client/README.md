@@ -146,6 +146,25 @@ Client module provides several different approaches for API service call. Here w
 
 ```
 
+### SSL Context for client side Keystore and truststore
+
+For the https request, client.yml config provide three options for client trust load:
+
+```
+  # indicate of system load default cert.
+  loadDefaultTrustStore: ${client.loadDefaultTrustStore:false}
+  # trust store contains certifictes that server needs. Enable if tls is used.
+  loadTrustStore: ${client.loadTrustStore:true}
+  # trust store location can be specified here or system properties javax.net.ssl.trustStore and password javax.net.ssl.trustStorePassword
+  trustStore: ${client.trustStore:client.truststore}
+```
+- if loadTrustStore = false, client module won't load and trust for TLS request.
+- if loadTrustStore = true and loadDefaultTrustStore = false, client module will load self-signed trust store only from the trust store specified from config value: "trustStore"
+- if loadTrustStore = true and loadDefaultTrustStore = true, client module will load self-signed trust store from the trust store specified from config value: "trustStore" 
+   And load default java public certs (jssecacerts/cacerts)
+   
+     
+
 
 ### To learn how to use client module, pleases refer to
 

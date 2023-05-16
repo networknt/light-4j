@@ -12,6 +12,12 @@
 # request path prefix in skipPathPrefixes.
 enableVerifyJwt: ${security.enableVerifyJwt:true}
 
+# Enable the SWT verification flag. The SwtVerifierHandler will skip the SWT token verification
+# if this flag is false. It should only be set to false on the dev environment for testing
+# purposes. If you have some endpoints that want to skip the SWT verification, you can put the
+# request path prefix in skipPathPrefixes.
+enableVerifySwt: ${openapi-security.enableVerifySwt:false}
+
 # Extract JWT scope token from the X-Scope-Token header and validate the JWT token
 enableExtractScopeToken: ${security.enableExtractScopeToken:true}
 
@@ -33,6 +39,10 @@ skipVerifyScopeWithoutSpec: ${security.skipVerifyScopeWithoutSpec:false}
 # Enable JWT scope verification. 
 # Only valid when (enableVerifyJwt is true) AND (enableVerifyScope is true)
 enableVerifyJwtScopeToken: ${security.enableVerifyJwtScopeToken:true}
+
+# Enable SWT scope verification.
+# Only valid when (enableVerifySwt is true) AND (enableVerifyScope is true)
+enableVerifySwtScopeToken: ${openapi-security.enableVerifySwtScopeToken:true}
 
 # If set true, the JWT verifier handler will pass if the JWT token is expired already. Unless
 # you have a strong reason, please use it only on the dev environment if your OAuth 2 provider
@@ -95,3 +105,18 @@ providerId: ${security.providerId:}
 # requirement. The format is a list of strings separated with commas or a JSON list in
 # values.yml definition from config server, or you can use yaml format in this file.
 skipPathPrefixes: ${security.skipPathPrefixes:}
+
+# When light-gateway or http-sidecar is used for security, sometimes, we need to pass some
+# claims from the JWT or SWT to the backend API for further verification or audit. You can
+# select some claims to pass to the backend API with HTTP headers. The format is a map of
+# claim in the token and a header name that the downstream API is expecting. You can use
+# both JSON or YAML format.
+# When SwtVerifyHandler is used, the claim names are in https://github.com/networknt/light-4j/blob/master/client/src/main/java/com/networknt/client/oauth/TokenInfo.java
+# When JwtVerifyHandler is used, the claim names is the JwtClaims claimName.
+# YAML
+# openapi-security.passThroughClaims:
+#   clientId: client_id
+#   tokenType: token_type
+# JSON
+# openapi-security.passThroughClaims: {"clientId":"client_id","tokenType":"token_type"}
+passThroughClaims: ${security.passThroughClaims:}

@@ -83,8 +83,12 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
     @Override
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
 
-        // Make sure content is needed by request interceptors before grabbing the data. The process has a lot of overhead.
+        var method = httpServerExchange.getRequestMethod().toString();
+
         this.next = Handler.getNext(httpServerExchange);
+
+            if(logger.isTraceEnabled())
+                logger.trace("injectionContentRequired = {} appliedBodyInjectionPathPrefix = {} method = {} requestComplete = {} requiresContinueResponse = {}", this.injectorContentRequired(), this.isAppliedBodyInjectionPathPrefix(httpServerExchange.getRequestPath()), method, httpServerExchange.isRequestComplete(), HttpContinue.requiresContinueResponse(httpServerExchange.getRequestHeaders()));
 
         if (this.shouldReadBody(httpServerExchange)) {
             final var channel = httpServerExchange.getRequestChannel();
@@ -126,10 +130,19 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
                 httpServerExchange.endExchange();
             }
 
-        } else this.invokeInterceptors(httpServerExchange);
+        } else {
 
+            // no need to inject the content for the body. just call the interceptors here.
+            this.invokeInterceptors(httpServerExchange);
+        }
 
-        Handler.next(httpServerExchange, next);
+        // If there are any error and one of the interceptor response the error to the caller, we don't need to call the next.
+        if(logger.isTraceEnabled())
+            logger.trace("Exchange response started status = {}", httpServerExchange.isResponseStarted());
+
+        if(!httpServerExchange.isResponseStarted())
+            Handler.next(httpServerExchange, next);
+
     }
 
     private boolean shouldReadBody(final HttpServerExchange ex) {

@@ -84,8 +84,9 @@ public class BasicAuthHandler implements MiddlewareHandler {
 
         /* no auth header */
         if (auth == null || auth.trim().length() == 0) {
-            this.handleAnonymousAuth(exchange, requestPath);
-
+            boolean b = this.handleAnonymousAuth(exchange, requestPath);
+            // if the return value is false, we need to stop the handler and return immediately.
+            if(!b) return;
         /* contains auth header */
         } else {
             // verify the header with the config file. assuming it is basic authentication first.
@@ -97,10 +98,13 @@ public class BasicAuthHandler implements MiddlewareHandler {
                     exchange.endExchange();
                     return;
                 } else {
-                    this.handleBasicAuth(exchange, requestPath, auth);
+                    boolean b = this.handleBasicAuth(exchange, requestPath, auth);
+                    // if the return value is false, we need to stop the handler and return immediately.
+                    if(!b) return;
                 }
             } else if (BEARER_PREFIX.equalsIgnoreCase(auth.substring(0, 6))) {
-                this.handleBearerToken(exchange, requestPath, auth);
+                boolean b = this.handleBearerToken(exchange, requestPath, auth);
+                if(!b) return;
             } else {
                 logger.error("Invalid/Unsupported authorization header {}", auth.substring(0, 10));
                 setExchangeStatus(exchange, INVALID_AUTHORIZATION_HEADER, auth.substring(0, 10));
@@ -119,8 +123,9 @@ public class BasicAuthHandler implements MiddlewareHandler {
      *
      * @param exchange - current exchange.
      * @param requestPath - path for current request.
+     * @return true if there is no error. Otherwise, there is an error and need to return the handler instead of calling the next.
      */
-    private void handleAnonymousAuth(HttpServerExchange exchange, String requestPath) {
+    private boolean handleAnonymousAuth(HttpServerExchange exchange, String requestPath) {
         if (config.isAllowAnonymous() && config.getUsers().containsKey(BasicAuthConfig.ANONYMOUS)) {
             List<String> paths = config.getUsers().get(BasicAuthConfig.ANONYMOUS).getPaths();
             boolean match = false;
@@ -132,18 +137,25 @@ public class BasicAuthHandler implements MiddlewareHandler {
             }
             if (!match) {
                 logger.error("Request path '{}' is not authorized for user '{}'", requestPath, BasicAuthConfig.ANONYMOUS);
+                // this is to handler the client with pre-emptive authentication with response code 401
+                exchange.getResponseHeaders().put(Headers.WWW_AUTHENTICATE, "Basic realm=\"Default Realm\"");
                 setExchangeStatus(exchange, NOT_AUTHORIZED_REQUEST_PATH, requestPath, BasicAuthConfig.ANONYMOUS);
                 if(logger.isDebugEnabled())
                     logger.debug("BasicAuthHandler.handleRequest ends with an error.");
                 exchange.endExchange();
+                return false;
             }
         } else {
             logger.error("Anonymous is not allowed and authorization header is missing.");
+            // this is to handler the client with pre-emptive authentication with response code 401
+            exchange.getResponseHeaders().put(Headers.WWW_AUTHENTICATE, "Basic realm=\"Basic Auth\"");
             setExchangeStatus(exchange, MISSING_AUTH_TOKEN);
             if(logger.isDebugEnabled())
                 logger.debug("BasicAuthHandler.handleRequest ends with an error.");
             exchange.endExchange();
+            return false;
         }
+        return true;
     }
 
     /**
@@ -167,13 +179,23 @@ public class BasicAuthHandler implements MiddlewareHandler {
         if (pos != -1) {
             String username = credentials.substring(0, pos);
             String password = credentials.substring(pos + 1);
+            if(logger.isTraceEnabled()) logger.trace("input username = {}, password = {}", username, StringUtils.maskHalfString(password));
             UserAuth user = config.getUsers().get(username);
-            // if user name matches config, no password entry in config and enableAD is true, use LDAP auth
-            if (user != null
-                    && username.equals(user.getUsername())
-                    && StringUtils.isEmpty(user.getPassword())
-                    && config.enableAD) {
-                // Call LdapUtil with LDAP authentication and authorization
+            // if user cannot be found in the config, return immediately.
+            if (user == null) {
+                logger.error("User '{}' is not found in the configuration file.", username);
+                setExchangeStatus(exchange, INVALID_USERNAME_OR_PASSWORD);
+                exchange.endExchange();
+                if(logger.isDebugEnabled())
+                    logger.debug("BasicAuthHandler.handleRequest ends with an error.");
+                return false;
+            }
+            // At this point, we know the user is found in the config file.
+            if (username.equals(user.getUsername())
+                && StringUtils.isEmpty(user.getPassword())
+                && config.enableAD) {
+                // Call LdapUtil with LDAP authentication and authorization given user is matched, password is empty, and AD is enabled.
+                if(logger.isTraceEnabled()) logger.trace("Call LdapUtil with LDAP authentication and authorization for user = {}", username);
                 if (!handleLdapAuth(user, password)) {
                     setExchangeStatus(exchange, INVALID_USERNAME_OR_PASSWORD);
                     exchange.endExchange();
@@ -182,10 +204,11 @@ public class BasicAuthHandler implements MiddlewareHandler {
                     return false;
                 }
             } else {
-                //
-                if (user == null || !(user.getUsername().equals(username)
-                        && password.equals(user.getPassword()))) {
-                    logger.error("Invalid username or password with authorization header starts = {}", auth.substring(0, 10));
+                if(logger.isTraceEnabled()) logger.trace("Validate basic auth based on config username {} and password {}", user.getUsername(), StringUtils.maskHalfString(user.getPassword()));
+                // if username matches config, password matches config, and path matches config, pass
+                if (!(user.getUsername().equals(username)
+                     && password.equals(user.getPassword()))) {
+                    logger.error("Invalid username or password with authorization header = {}", StringUtils.maskHalfString(auth));
                     setExchangeStatus(exchange, INVALID_USERNAME_OR_PASSWORD);
                     exchange.endExchange();
                     if (logger.isDebugEnabled())
@@ -194,6 +217,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
                 }
             }
             // Here we have passed the authentication. Let's do the authorization with the paths.
+            if(logger.isTraceEnabled()) logger.trace("Username and password validation is done for user = {}", username);
             boolean match = false;
             for (String path : user.getPaths()) {
                 if (requestPath.startsWith(path)) {
@@ -242,18 +266,20 @@ public class BasicAuthHandler implements MiddlewareHandler {
      * @param exchange - current exchange.
      * @param requestPath - path for request
      * @param auth - auth string
+     * @return boolean to indicate if an error or success.
      */
-    private void handleBearerToken(HttpServerExchange exchange, String requestPath, String auth) {
+    private boolean handleBearerToken(HttpServerExchange exchange, String requestPath, String auth) {
         // not basic token. check if the OAuth 2.0 bearer token is allowed.
-        if (!this.config.allowBearerToken) {
+        if (!config.allowBearerToken) {
             logger.error("Not a basic authentication header, and bearer token is not allowed.");
             setExchangeStatus(exchange, INVALID_BASIC_HEADER, auth.substring(0, 10));
             if(logger.isDebugEnabled())
                 logger.debug("BasicAuthHandler.handleRequest ends with an error.");
             exchange.endExchange();
+            return false;
         } else {
             // bearer token is allowed, we need to validate it and check the allowed paths.
-            UserAuth user = this.config.getUsers().get(BasicAuthConfig.BEARER);
+            UserAuth user = config.getUsers().get(BasicAuthConfig.BEARER);
             if (user != null) {
                 // check the path for authorization
                 List<String> paths = user.getPaths();
@@ -270,6 +296,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
                     if(logger.isDebugEnabled())
                         logger.debug("BasicAuthHandler.handleRequest ends with an error.");
                     exchange.endExchange();
+                    return false;
                 }
             } else {
                 logger.error("Bearer token is allowed but missing the bearer user path definitions for authorization");
@@ -277,8 +304,10 @@ public class BasicAuthHandler implements MiddlewareHandler {
                 if(logger.isDebugEnabled())
                     logger.debug("BasicAuthHandler.handleRequest ends with an error.");
                 exchange.endExchange();
+                return false;
             }
         }
+        return true;
     }
 
     @Override

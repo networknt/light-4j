@@ -3,4 +3,4 @@
 singletons:
 # HandlerProvider implementation
 - com.networknt.decrypt.Decryptor:
-  - com.networknt.decrypt.AES512Decryptor
+  - com.networknt.decrypt.AESSaltDecryptor

@@ -41,6 +41,7 @@ public class RouterConfigTest {
         Assert.assertTrue(routerConfig.isRewriteHostHeader());
         Assert.assertEquals(routerConfig.getMaxRequestTime(), 1000);
         Assert.assertEquals(routerConfig.getMaxConnectionRetries(), 3);
+        Assert.assertEquals(routerConfig.getMaxQueueSize(), 0);
     }
 
     @Test
@@ -52,13 +53,13 @@ public class RouterConfigTest {
     @Test
     public void testQueryParamRewriteRules() {
         Assert.assertNotNull(routerConfig.getQueryParamRewriteRules());
-        Assert.assertEquals(routerConfig.getQueryParamRewriteRules().size(), 3);
+        Assert.assertEquals(routerConfig.getQueryParamRewriteRules().size(), 4);
     }
 
     @Test
     public void testHeaderRewriteRules() {
         Assert.assertNotNull(routerConfig.getHeaderRewriteRules());
-        Assert.assertEquals(routerConfig.getHeaderRewriteRules().size(), 3);
+        Assert.assertEquals(routerConfig.getHeaderRewriteRules().size(), 4);
     }
 
 

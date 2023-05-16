@@ -7,7 +7,7 @@ import org.junit.Test;
 public class DecryptConstructorTest {
     @Test
     public void testConstructor() {
-        DecryptConstructor constructor = new DecryptConstructor();
+        DecryptConstructor constructor = DecryptConstructor.getInstance();
         Assert.assertNotNull(constructor);
     }
 }

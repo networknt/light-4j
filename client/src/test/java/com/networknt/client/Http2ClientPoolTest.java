@@ -18,11 +18,7 @@
 
 package com.networknt.client;
 
-import com.networknt.client.circuitbreaker.CircuitBreaker;
-import com.networknt.client.http.Http2ClientConnectionPool;
-import com.networknt.client.ssl.ClientX509ExtendedTrustManager;
-import com.networknt.client.ssl.TLSConfig;
-import com.networknt.common.SecretConstants;
+
 import com.networknt.config.Config;
 import com.networknt.httpstring.HttpStringConstants;
 import io.undertow.Undertow;
@@ -30,7 +26,6 @@ import io.undertow.UndertowOptions;
 import io.undertow.client.*;
 import io.undertow.io.Receiver;
 import io.undertow.io.Sender;
-import io.undertow.protocols.ssl.UndertowXnioSsl;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.util.*;
@@ -46,31 +41,24 @@ import org.jose4j.jwt.consumer.JwtContext;
 import org.jose4j.lang.JoseException;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
-import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.*;
-import org.xnio.ssl.XnioSsl;
 
 import javax.net.ssl.*;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
-import java.nio.channels.ClosedChannelException;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.interfaces.RSAPrivateKey;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class Http2ClientPoolTest {
     static final Logger logger = LoggerFactory.getLogger(Http2ClientTest.class);
@@ -290,8 +278,9 @@ public class Http2ClientPoolTest {
             final AsyncResult<AsyncResponse> ar = reference.get();
             if(ar.succeeded()) {
                 Assert.assertEquals(message, ar.result().getResponseBody());
-                Assert.assertTrue(ar.result().getResponseTime() > 0);
-                System.out.println("responseTime = " + ar.result().getResponseTime());
+                System.out.println("responseBody = " + ar.result().getResponseBody() + " responseTime = " + ar.result().getResponseTime());
+                // we used to check the response time greater than 0, but it is not always true on a faster machine.
+                Assert.assertNotNull(ar.result().getResponseBody());
             } else {
                 ar.cause().printStackTrace();
             }
@@ -553,72 +542,4 @@ public class Http2ClientPoolTest {
         return privateKey;
     }
 
-    private static SSLContext createTestSSLContext(boolean verifyHostName, String trustedNamesGroupKey) throws IOException {
-        SSLContext sslContext = null;
-        KeyManager[] keyManagers = null;
-        Map<String, Object> tlsMap = (Map<String, Object>)config.getMappedConfig().get(Http2Client.TLS);
-        if(tlsMap != null) {
-            try {
-                // load key store for client certificate if two way ssl is used.
-                Boolean loadKeyStore = (Boolean) tlsMap.get(Http2Client.LOAD_KEY_STORE);
-                if (loadKeyStore != null && loadKeyStore) {
-                    String keyStoreName = (String)tlsMap.get(Http2Client.KEY_STORE);
-                    String keyPass = (String) config.getTlsConfig().get(SecretConstants.CLIENT_KEY_PASS);
-                    KeyStore keyStore = loadKeyStore(keyStoreName);
-                    KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-                    keyManagerFactory.init(keyStore, keyPass.toCharArray());
-                    keyManagers = keyManagerFactory.getKeyManagers();
-                }
-            } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
-                throw new IOException("Unable to initialise KeyManager[]", e);
-            }
-
-            TrustManager[] trustManagers = null;
-            try {
-                // load trust store, this is the server public key certificate
-                // first check if javax.net.ssl.trustStore system properties is set. It is only necessary if the server
-                // certificate doesn't have the entire chain.
-                Boolean loadTrustStore = (Boolean) tlsMap.get(Http2Client.LOAD_TRUST_STORE);
-                if (loadTrustStore != null && loadTrustStore) {
-                    String trustStoreName = System.getProperty(Http2Client.TRUST_STORE_PROPERTY);
-                    String trustStorePass = System.getProperty(Http2Client.TRUST_STORE_PASSWORD_PROPERTY);
-                    if (trustStoreName != null && trustStorePass != null) {
-                        if(logger.isInfoEnabled()) logger.info("Loading trust store from system property at " + Encode.forJava(trustStoreName));
-                    } else {
-                        trustStoreName = (String) tlsMap.get(Http2Client.TRUST_STORE);
-                        trustStorePass = (String)config.getTlsConfig().get(SecretConstants.CLIENT_TRUSTSTORE_PASS);
-                        if(logger.isInfoEnabled()) logger.info("Loading trust store from config at " + Encode.forJava(trustStoreName));
-                    }
-                    if (trustStoreName != null && trustStorePass != null) {
-                        KeyStore trustStore = loadKeyStore(trustStoreName);
-
-                        Map<String, Object> tlsMapClone = new HashMap<>();
-                        tlsMapClone.putAll(tlsMap);
-
-
-                        tlsMapClone.put(TLSConfig.VERIFY_HOSTNAME, verifyHostName);
-                        TLSConfig tlsConfig = TLSConfig.create(tlsMapClone, trustedNamesGroupKey);
-
-                        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-                        trustManagerFactory.init(trustStore);
-                        trustManagers = ClientX509ExtendedTrustManager.decorate(trustManagerFactory.getTrustManagers(), tlsConfig);
-                    }
-                }
-            } catch (NoSuchAlgorithmException | KeyStoreException e) {
-                throw new IOException("Unable to initialise TrustManager[]", e);
-            }
-
-            try {
-                sslContext = SSLContext.getInstance("TLSv1.2");
-                sslContext.init(keyManagers, trustManagers, null);
-
-            } catch (NoSuchAlgorithmException | KeyManagementException e) {
-                throw new IOException("Unable to create and initialise the SSLContext", e);
-            }
-        } else {
-            logger.error("TLS configuration section is missing in client.yml");
-        }
-
-        return sslContext;
-    }
 }

@@ -183,7 +183,6 @@ public class StringUtils {
     }
 
     // Replacing
-    //-----------------------------------------------------------------------
     /**
      * <p>Replaces a String with another String inside a larger String, once.</p>
      *
@@ -1454,5 +1453,66 @@ public class StringUtils {
             }
         }
         return true;
+    }
+
+    /**
+     * Check if a string is a JWT token.
+     * @param str input
+     * @return boolean true is jwt
+     */
+    public static boolean isJwtToken(String str) {
+        if (str == null) {
+            return false;
+        } else {
+            // not null
+            if(str.indexOf("eyJ") >= 0 && str.indexOf(".") > 0) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    /**
+     * Mask the first half of a string with asterisks for sensitive data before logging.
+     * @param str input
+     * @return masked string
+     */
+    public static String maskHalfString(String str) {
+        if (str == null) {
+            return null;
+        } else {
+            // not null
+            int halfLength = str.length() / 2;
+            String masked = "*".repeat(halfLength) + str.substring(halfLength);
+            return masked;
+        }
+    }
+
+    /**
+     * Match a URL against an OpenAPI endpoint pattern with curly brackets path parameters
+     * @param requestPath the incoming request path
+     * @param endpointPattern the OpenAPI endpoint pattern with curly brackets path parameters
+     * @return boolean true matched
+     */
+    public static boolean matchPathToPattern(String requestPath, String endpointPattern) {
+        String[] pathPatternParts = endpointPattern.split("/");
+        String[] pathParts = requestPath.split("/");
+
+        boolean isMatch = true;
+        for (int i = 0; i < pathPatternParts.length; i++) {
+            String patternPart = pathPatternParts[i];
+            String urlPart = pathParts[i];
+
+            if (patternPart.startsWith("{") && patternPart.endsWith("}")) {
+                continue; // Wildcard found, move to the next part
+            }
+
+            if (!patternPart.equals(urlPart)) {
+                isMatch = false; // Part does not match, URLs do not match
+                break;
+            }
+        }
+        return isMatch;
     }
 }

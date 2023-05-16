@@ -148,6 +148,25 @@ public abstract class CollectionUtils {
         return null;
     }
 
+    /**
+     * Get the object from a map with the key as the endpoint patter with request path.
+     *
+     * @param path request path
+     * @param map  map of object with the key as the endpoint pattern
+     * @return the object that matches the endpoint pattern or null if no match.
+     */
+    public static Object matchEndpointKey(String path, Map<String, Object> map) {
+        if (isEmpty(map)) {
+            return null;
+        }
+        // iterate key set to find the endpoint pattern that matches the request path
+        for (String endpoint : map.keySet()) {
+            if (StringUtils.matchPathToPattern(path, endpoint)) {
+                return map.get(endpoint);
+            }
+        }
+        return null;
+    }
 
     /**
      * Iterator wrapping an Enumeration.

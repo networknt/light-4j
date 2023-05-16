@@ -32,6 +32,7 @@ public class Constants {
     public static final String ROLES_STRING = "roles";
     public static final String CLIENT_ID_STRING = "client_id";
     public static final String CID_STRING = "cid";
+    public static final String ISS_STRING = "iss";
     public static final String CALLER_ID_STRING = "caller_id";
     public static final String SCOPE_CLIENT_ID_STRING = "scope_client_id";
     public static final String SCOPE_STRING = "scope";
@@ -40,6 +41,7 @@ public class Constants {
     public static final String PRIMARY_SCOPES = "primary_scopes";
     public static final String SECONDARY_SCOPES = "secondary_scopes";
     public static final String ENDPOINT_STRING = "endpoint";
+    public static final String UNKOWN_STRING = "unknown";
     public static final String CSRF_STRING = "csrf";
     public static final String AUTHORIZATION_STRING = "authorization";
 
@@ -65,7 +67,8 @@ public class Constants {
     // The key for the access token claims in auditInfo after security handler
     // This token is passed in from X-Scope-Token and it is optional
     public static final String ACCESS_CLAIMS = "access_claims";
-
+    // The key for the issuer token claims in auditInfo
+    public static final String ISSUER_CLAIMS = "issuer_claims";
 
     // Framework
     public static final String FRAMEWORK_NAME = "light";

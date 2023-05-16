@@ -72,6 +72,9 @@ public class RequestBodyInterceptor implements RequestInterceptor {
 
             var existing = (PooledByteBuffer[]) exchange.getAttachment(AttachmentConstants.BUFFERED_REQUEST_DATA_KEY);
 
+            if(LOG.isTraceEnabled())
+                LOG.trace("if the request body exists = {}", existing == null);
+
             if (existing != null) {
 
                 if (LOG.isTraceEnabled())
@@ -88,16 +91,20 @@ public class RequestBodyInterceptor implements RequestInterceptor {
                 if (!attached && LOG.isErrorEnabled())
                     LOG.error("Failed to attach the request body to the exchange!");
 
-            } else if (LOG.isTraceEnabled()) {
+                else if (LOG.isTraceEnabled())
+                    LOG.trace("Request body was attached to exchange");
+
+            } else if (LOG.isTraceEnabled())
                 LOG.trace("Request body interceptor is skipped due to the request path is not in request-injection.appliedBodyInjectionPathPrefixes configuration");
-            }
         }
 
         if (LOG.isDebugEnabled())
             LOG.debug("RequestBodyInterceptor.handleRequest ends.");
+
     }
 
     private boolean handleBody(final HttpServerExchange ex, String body, String contentType) {
+
         if (this.isJsonData(contentType))
             return this.attachJsonBody(ex, body);
 

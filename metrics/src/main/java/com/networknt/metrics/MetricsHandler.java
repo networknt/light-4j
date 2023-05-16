@@ -1,19 +1,3 @@
-/*
- * Copyright (c) 2016 Network New Technologies Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.networknt.metrics;
 
 import com.networknt.config.Config;
@@ -30,7 +14,6 @@ import io.dropwizard.metrics.MetricName;
 import io.dropwizard.metrics.MetricRegistry;
 import io.dropwizard.metrics.influxdb.InfluxDbHttpSender;
 import io.dropwizard.metrics.influxdb.InfluxDbReporter;
-import io.dropwizard.metrics.influxdb.InfluxDbSender;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -42,45 +25,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
-/**
- * Metrics middleware handler can be plugged into the request/response chain to
- * capture metrics information for all services. It is based on the dropwizard
- * metric but customized to capture statistic info for a period of time and then
- * reset all the data in order to capture the next period. The capture period can
- * be configured in metrics.yml and normally should be 5 minutes, 10 minutes or
- * 20 minutes depending on the load of the service.
- *
- * @author Steve Hu
- */
-public class MetricsHandler implements MiddlewareHandler {
-    public static final String CONFIG_NAME = "metrics";
-    public static MetricsConfig config = (MetricsConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, MetricsConfig.class);
-    static final MetricRegistry registry = new MetricRegistry();
+public class MetricsHandler extends AbstractMetricsHandler {
     static final Logger logger = LoggerFactory.getLogger(MetricsHandler.class);
 
     // this is the indicator to start the reporter and construct the common tags. It cannot be static as
     // the currentPort and currentAddress are not available during the handler initialization.
     private boolean firstTime = true;
+    static String MASK_KEY_SERVER_PASS= "serverPass";
     private volatile HttpHandler next;
-    Map<String, String> commonTags = new HashMap<>();
-
-    static String MASK_KEY_INFLUX_DB_PASS= "influxdbPass";
 
     public MetricsHandler() {
-
-    }
-
-    @Override
-    public HttpHandler getNext() {
-        return this.next;
-    }
-
-    @Override
-    public MiddlewareHandler setNext(final HttpHandler next) {
-        Handlers.handlerNotNull(next);
-        this.next = next;
-        return this;
+        config = MetricsConfig.load();
+        if(config.getIssuerRegex() != null) {
+            pattern = Pattern.compile(config.getIssuerRegex());
+        }
+        ModuleRegistry.registerModule(MetricsHandler.class.getName(), config.getMappedConfig(), List.of(MASK_KEY_SERVER_PASS));
+        if(logger.isDebugEnabled()) logger.debug("MetricsHandler is constructed!");
     }
 
     @Override
@@ -97,9 +59,9 @@ public class MetricsHandler implements MiddlewareHandler {
                 logger.debug(commonTags.toString());
             }
             try {
-                InfluxDbSender influxDb =
-                        new InfluxDbHttpSender(config.influxdbProtocol, config.influxdbHost, config.influxdbPort,
-                                config.influxdbName, config.influxdbUser, config.influxdbPass);
+                TimeSeriesDbSender influxDb =
+                        new InfluxDbHttpSender(config.getServerProtocol(), config.getServerHost(), config.getServerPort(),
+                                config.getServerName(), config.getServerUser(), config.getServerPass());
                 InfluxDbReporter reporter = InfluxDbReporter
                         .forRegistry(registry)
                         .convertRatesTo(TimeUnit.SECONDS)
@@ -148,41 +110,27 @@ public class MetricsHandler implements MiddlewareHandler {
     }
 
     @Override
-    public boolean isEnabled() {
-        return config.isEnabled();
-    }
-
-    @Override
     public void register() {
-        ModuleRegistry.registerModule(MetricsHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), List.of(MASK_KEY_INFLUX_DB_PASS));
+        ModuleRegistry.registerModule(MetricsHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), List.of(MASK_KEY_SERVER_PASS));
     }
 
     @Override
     public void reload() {
-        config = (MetricsConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, MetricsConfig.class);
+        config.reload();
+        ModuleRegistry.registerModule(MetricsHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), List.of(MASK_KEY_SERVER_PASS));
+        if(logger.isTraceEnabled()) logger.trace("MetricsHandler is reloaded.");
     }
 
-    private void incCounterForStatusCode(int statusCode, Map<String, String> commonTags, Map<String, String> tags) {
-        MetricName metricName = new MetricName("request").tagged(commonTags).tagged(tags);
-        registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.COUNTERS).inc();
-        if(statusCode >= 200 && statusCode < 400) {
-            metricName = new MetricName("success").tagged(commonTags).tagged(tags);
-            registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.COUNTERS).inc();
-        } else if(statusCode == 401 || statusCode == 403) {
-            metricName = new MetricName("auth_error").tagged(commonTags).tagged(tags);
-            registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.COUNTERS).inc();
-        } else if(statusCode >= 400 && statusCode < 500) {
-            metricName = new MetricName("request_error").tagged(commonTags).tagged(tags);
-            registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.COUNTERS).inc();
-        } else if(statusCode >= 500) {
-            metricName = new MetricName("server_error").tagged(commonTags).tagged(tags);
-            registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.COUNTERS).inc();
-        }
+    @Override
+    public HttpHandler getNext() {
+        return this.next;
     }
 
-    private void createJVMMetricsReporter(final InfluxDbSender influxDb) {
-        JVMMetricsInfluxDbReporter jvmReporter = new JVMMetricsInfluxDbReporter(new MetricRegistry(), influxDb, "jvmInfluxDb-reporter",
-                MetricFilter.ALL, TimeUnit.SECONDS, TimeUnit.MILLISECONDS, commonTags);
-        jvmReporter.start(config.getReportInMinutes(), TimeUnit.MINUTES);
+    @Override
+    public MiddlewareHandler setNext(final HttpHandler next) {
+        Handlers.handlerNotNull(next);
+        this.next = next;
+        return this;
     }
+
 }

@@ -1,5 +1,176 @@
 # Change Log
 
+## [2.1.18](https://github.com/networknt/light-4j/tree/2.1.18) (2023-05-06)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1756 Sanitizer handler registers the config with the wrong key [\#1757](https://github.com/networknt/light-4j/pull/1757) ([stevehu](https://github.com/stevehu))
+- fixes \#1754 add two more test cases for StringUtilsTest [\#1755](https://github.com/networknt/light-4j/pull/1755) ([stevehu](https://github.com/stevehu))
+- fixes \#1752 Add a trace statement to the MRAS handler to log the request [\#1753](https://github.com/networknt/light-4j/pull/1753) ([stevehu](https://github.com/stevehu))
+- Issue1749 [\#1751](https://github.com/networknt/light-4j/pull/1751) ([stevehu](https://github.com/stevehu))
+
+
+## [2.1.17](https://github.com/networknt/light-4j/tree/2.1.17) (2023-05-05)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1756 Sanitizer handler registers the config with the wrong key [\#1757](https://github.com/networknt/light-4j/pull/1757) ([stevehu](https://github.com/stevehu))
+- fixes \#1754 add two more test cases for StringUtilsTest [\#1755](https://github.com/networknt/light-4j/pull/1755) ([stevehu](https://github.com/stevehu))
+- fixes \#1752 Add a trace statement to the MRAS handler to log the request [\#1753](https://github.com/networknt/light-4j/pull/1753) ([stevehu](https://github.com/stevehu))
+- Issue1749 [\#1751](https://github.com/networknt/light-4j/pull/1751) ([stevehu](https://github.com/stevehu))
+## [2.1.16](https://github.com/networknt/light-4j/tree/2.1.16) (2023-04-28)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1747 add test cases for header encode and ignore lists [\#1748](https://github.com/networknt/light-4j/pull/1748) ([stevehu](https://github.com/stevehu))
+- fixes \#1745 update request body injection to output more trace info [\#1746](https://github.com/networknt/light-4j/pull/1746) ([stevehu](https://github.com/stevehu))
+- fixes \#1739 Sanitizer handler is ignoring list of headers to apply [\#1742](https://github.com/networknt/light-4j/pull/1742) ([stevehu](https://github.com/stevehu))
+- fixes \#1743 Add trace info for the metrics common tags and tags [\#1744](https://github.com/networknt/light-4j/pull/1744) ([stevehu](https://github.com/stevehu))
+- fixes \#1740 add a new test case in Http2ClientTest to ensure an excep… [\#1741](https://github.com/networknt/light-4j/pull/1741) ([stevehu](https://github.com/stevehu))
+- fixes \#1737 fixed a NPE detected during the auto build in ProxyHandler [\#1738](https://github.com/networknt/light-4j/pull/1738) ([stevehu](https://github.com/stevehu))
+- Issue1735 [\#1736](https://github.com/networknt/light-4j/pull/1736) ([stevehu](https://github.com/stevehu))
+- fixes \#1733 endpoint is null in the metrics collection on gateway som… [\#1734](https://github.com/networknt/light-4j/pull/1734) ([stevehu](https://github.com/stevehu))
+
+
+## [2.1.15](https://github.com/networknt/light-4j/tree/2.1.15) (2023-04-19)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1731 update BodyHandler to accept null body as get and delete … [\#1732](https://github.com/networknt/light-4j/pull/1732) ([stevehu](https://github.com/stevehu))
+- fixes \#1729 update BodyHandler to return if attach JSON fails [\#1730](https://github.com/networknt/light-4j/pull/1730) ([stevehu](https://github.com/stevehu))
+- fixes \#1727 switch the microsoft token to one-way TLS in MRAS handle [\#1728](https://github.com/networknt/light-4j/pull/1728) ([stevehu](https://github.com/stevehu))
+- shorten long comment [\#1722](https://github.com/networknt/light-4j/pull/1722) ([jelgun](https://github.com/jelgun))
+- remove beautification comment [\#1726](https://github.com/networknt/light-4j/pull/1726) ([jelgun](https://github.com/jelgun))
+- remove commented out code [\#1725](https://github.com/networknt/light-4j/pull/1725) ([jelgun](https://github.com/jelgun))
+- fix misleading comment [\#1724](https://github.com/networknt/light-4j/pull/1724) ([jelgun](https://github.com/jelgun))
+- remove obvious comment [\#1723](https://github.com/networknt/light-4j/pull/1723) ([jelgun](https://github.com/jelgun))
+- remove task comment [\#1719](https://github.com/networknt/light-4j/pull/1719) ([jelgun](https://github.com/jelgun))
+## [2.1.14](https://github.com/networknt/light-4j/tree/2.1.14) (2023-04-19)
+
+
+**Merged pull requests:**
+
+
+
+
+## [2.1.13](https://github.com/networknt/light-4j/tree/2.1.13) (2023-04-19)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1729 update BodyHandler to return if attach JSON fails [\#1730](https://github.com/networknt/light-4j/pull/1730) ([stevehu](https://github.com/stevehu))
+- fixes \#1727 switch the microsoft token to one-way TLS in MRAS handle [\#1728](https://github.com/networknt/light-4j/pull/1728) ([stevehu](https://github.com/stevehu))
+- shorten long comment [\#1722](https://github.com/networknt/light-4j/pull/1722) ([jelgun](https://github.com/jelgun))
+- remove beautification comment [\#1726](https://github.com/networknt/light-4j/pull/1726) ([jelgun](https://github.com/jelgun))
+- remove commented out code [\#1725](https://github.com/networknt/light-4j/pull/1725) ([jelgun](https://github.com/jelgun))
+- fix misleading comment [\#1724](https://github.com/networknt/light-4j/pull/1724) ([jelgun](https://github.com/jelgun))
+- remove obvious comment [\#1723](https://github.com/networknt/light-4j/pull/1723) ([jelgun](https://github.com/jelgun))
+- remove task comment [\#1719](https://github.com/networknt/light-4j/pull/1719) ([jelgun](https://github.com/jelgun))
+## [2.1.12](https://github.com/networknt/light-4j/tree/2.1.12) (2023-04-14)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1717 reimplement MRAS two-way TLS createSSLContext method [\#1718](https://github.com/networknt/light-4j/pull/1718) ([stevehu](https://github.com/stevehu))
+- fixes \#1715 update basic handler to return immediately if there is an… [\#1716](https://github.com/networknt/light-4j/pull/1716) ([stevehu](https://github.com/stevehu))
+- fixes \#1712 Reimplement ClientX509ExtendedTrustManager and CompositeX… [\#1713](https://github.com/networknt/light-4j/pull/1713) ([stevehu](https://github.com/stevehu))
+- fixes \#1710 rollback loadDefaultTrustStore in client.yml [\#1711](https://github.com/networknt/light-4j/pull/1711) ([stevehu](https://github.com/stevehu))
+- added changes for azuread token api service response compatibility [\#1709](https://github.com/networknt/light-4j/pull/1709) ([SONALJAIN0904](https://github.com/SONALJAIN0904))
+- fixes \#1707 update client.yml to remove the defaultGroupKey and enabl… [\#1708](https://github.com/networknt/light-4j/pull/1708) ([stevehu](https://github.com/stevehu))
+
+
+## [2.1.11](https://github.com/networknt/light-4j/tree/2.1.11) (2023-04-10)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1705 update the client.restore to avoid passing in uri [\#1706](https://github.com/networknt/light-4j/pull/1706) ([stevehu](https://github.com/stevehu))
+- fixes \#1703 integrate Http2Client with Simple Pool [\#1704](https://github.com/networknt/light-4j/pull/1704) ([stevehu](https://github.com/stevehu))
+- fixes \#1701 simple connection pool ports from the 1.6.x [\#1702](https://github.com/networknt/light-4j/pull/1702) ([stevehu](https://github.com/stevehu))
+- fixes \#1699 verifyHostname stop working with 2.1.10 client [\#1700](https://github.com/networknt/light-4j/pull/1700) ([stevehu](https://github.com/stevehu))
+- fixes \#1697 check cache configuration first before creating CacheMana… [\#1698](https://github.com/networknt/light-4j/pull/1698) ([stevehu](https://github.com/stevehu))
+## [2.1.10](https://github.com/networknt/light-4j/tree/2.1.10) (2023-04-06)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1695 update db-provider to have the default implementation [\#1696](https://github.com/networknt/light-4j/pull/1696) ([stevehu](https://github.com/stevehu))
+- fixes \#1693 disable one client test case as it fails after upgrade to… [\#1694](https://github.com/networknt/light-4j/pull/1694) ([stevehu](https://github.com/stevehu))
+- fixes \#1690 add cache-manager module for centralized cache [\#1691](https://github.com/networknt/light-4j/pull/1691) ([stevehu](https://github.com/stevehu))
+- fixes \#1688 refactor YAML constructors to singleton to avoid create m… [\#1689](https://github.com/networknt/light-4j/pull/1689) ([stevehu](https://github.com/stevehu))
+- fixes \#1686 remove less secure decryptor to favor long key and salt ones [\#1687](https://github.com/networknt/light-4j/pull/1687) ([stevehu](https://github.com/stevehu))
+- fixes \#1684 update basic auth handler to return WWW-Authenticate head… [\#1685](https://github.com/networknt/light-4j/pull/1685) ([stevehu](https://github.com/stevehu))
+## [2.1.9](https://github.com/networknt/light-4j/tree/2.1.9) (2023-03-30)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1680 update basic auth handle to add more trace info [\#1683](https://github.com/networknt/light-4j/pull/1683) ([stevehu](https://github.com/stevehu))
+- fixes \#1681 add maskHalfString to StringUtils for logging sensitive info [\#1682](https://github.com/networknt/light-4j/pull/1682) ([stevehu](https://github.com/stevehu))
+- fixes \#1677 remove requestBody and responseBody from audit in audit.yml [\#1678](https://github.com/networknt/light-4j/pull/1678) ([stevehu](https://github.com/stevehu))
+- fixes \#1675 make the common tag in sync between parent metrics and ap… [\#1676](https://github.com/networknt/light-4j/pull/1676) ([stevehu](https://github.com/stevehu))
+- fixes \#1672 update the AutoAESSaltDecryptor to support upper case env… [\#1673](https://github.com/networknt/light-4j/pull/1673) ([stevehu](https://github.com/stevehu))
+- fixes \#1670 update the default decryptorClass in config.yml in config… [\#1671](https://github.com/networknt/light-4j/pull/1671) ([stevehu](https://github.com/stevehu))
+- fixes \#1668 control the common tags with metrics.yml and add the issuer [\#1669](https://github.com/networknt/light-4j/pull/1669) ([stevehu](https://github.com/stevehu))
+- fixes \#1666 add jwt token iss to the audit info and subseqently metri… [\#1667](https://github.com/networknt/light-4j/pull/1667) ([stevehu](https://github.com/stevehu))
+- fixes \#1664 support proxy, router and external handlers config reload… [\#1665](https://github.com/networknt/light-4j/pull/1665) ([stevehu](https://github.com/stevehu))
+- fixes \#1662 update status.yml to add showMessage, showDescription and… [\#1663](https://github.com/networknt/light-4j/pull/1663) ([stevehu](https://github.com/stevehu))
+- fixes \#1660 update the RequestTransformerInterceptor to add queryString [\#1661](https://github.com/networknt/light-4j/pull/1661) ([stevehu](https://github.com/stevehu))
+- fixes \#1658 Add a new test case for password with back slash in encry… [\#1659](https://github.com/networknt/light-4j/pull/1659) ([stevehu](https://github.com/stevehu))
+- fixes \#1654 add productName to the metrics.yml to define the top cate… [\#1655](https://github.com/networknt/light-4j/pull/1655) ([stevehu](https://github.com/stevehu))
+- fixes \#1652 pass the metric name and allow proxy, router and external… [\#1653](https://github.com/networknt/light-4j/pull/1653) ([stevehu](https://github.com/stevehu))
+- fixes \#1650 update JwtVerfier to skip SWT token introspection config … [\#1651](https://github.com/networknt/light-4j/pull/1651) ([stevehu](https://github.com/stevehu))
+- fixed test case issues [\#1649](https://github.com/networknt/light-4j/pull/1649) ([GavinChenYan](https://github.com/GavinChenYan))
+- fixes \#1647 add jwt vs swt identification and swtServiceIds to SwtVer… [\#1648](https://github.com/networknt/light-4j/pull/1648) ([stevehu](https://github.com/stevehu))
+- fixes \#1645 upgrade snakeyaml to 2.0 [\#1646](https://github.com/networknt/light-4j/pull/1646) ([stevehu](https://github.com/stevehu))
+- fixes \#1643 add APM metrics handler and capture metrics for router, p… [\#1644](https://github.com/networknt/light-4j/pull/1644) ([stevehu](https://github.com/stevehu))
+- fixes \#1640 [\#1642](https://github.com/networknt/light-4j/pull/1642) ([GavinChenYan](https://github.com/GavinChenYan))
+
+
+## [2.1.8](https://github.com/networknt/light-4j/tree/2.1.8) (2023-03-06)
+
+
+**Merged pull requests:**
+
+
+-  fix merge error/build error [\#1638](https://github.com/networknt/light-4j/pull/1638) ([GavinChenYan](https://github.com/GavinChenYan))
+- Issue 1663 2 [\#1637](https://github.com/networknt/light-4j/pull/1637) ([GavinChenYan](https://github.com/GavinChenYan))
+- fixes \#1633 [\#1636](https://github.com/networknt/light-4j/pull/1636) ([GavinChenYan](https://github.com/GavinChenYan))
+- fixes \#1634 do not call the next handler in the chain if any intercep… [\#1635](https://github.com/networknt/light-4j/pull/1635) ([stevehu](https://github.com/stevehu))
+- fixes \#1631 update request transformer to do some validation logic [\#1632](https://github.com/networknt/light-4j/pull/1632) ([stevehu](https://github.com/stevehu))
+- fixes \#1629 Make error message clear if serviceId is missing from the… [\#1630](https://github.com/networknt/light-4j/pull/1630) ([stevehu](https://github.com/stevehu))
+- fixes \#1627 null pointer check for security config pass through claims [\#1628](https://github.com/networknt/light-4j/pull/1628) ([stevehu](https://github.com/stevehu))
+- fixes \#1625 update the security.yml to add passThroughClaims [\#1626](https://github.com/networknt/light-4j/pull/1626) ([stevehu](https://github.com/stevehu))
+- fixes \#1623 add simple web token introspection to client and security [\#1624](https://github.com/networknt/light-4j/pull/1624) ([stevehu](https://github.com/stevehu))
+- fixes \#1621 move removal serviceId and serviceUrl from exchange heade… [\#1622](https://github.com/networknt/light-4j/pull/1622) ([stevehu](https://github.com/stevehu))
+- fixes \#1619 add maxQueueSize to egress-router and ingress-proxy [\#1620](https://github.com/networknt/light-4j/pull/1620) ([stevehu](https://github.com/stevehu))
+## [2.1.7](https://github.com/networknt/light-4j/tree/2.1.7) (2023-02-14)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1617 add trace info for PathPrefix and LB RouterProxyClient [\#1618](https://github.com/networknt/light-4j/pull/1618) ([stevehu](https://github.com/stevehu))
+- fixes \#1615 add back the getConfig static method in Status [\#1616](https://github.com/networknt/light-4j/pull/1616) ([stevehu](https://github.com/stevehu))
+- fixes \#1613 change the logging level to trace from info for the confi… [\#1614](https://github.com/networknt/light-4j/pull/1614) ([stevehu](https://github.com/stevehu))
+- removing JsonMapper changes [\#1612](https://github.com/networknt/light-4j/pull/1612) ([Debashisa](https://github.com/Debashisa))
+- I1804 [\#1609](https://github.com/networknt/light-4j/pull/1609) ([Debashisa](https://github.com/Debashisa))
+- fixes \#1610 Router handler to support request timeout based on the pa… [\#1611](https://github.com/networknt/light-4j/pull/1611) ([stevehu](https://github.com/stevehu))
+
+
 ## [2.1.6](https://github.com/networknt/light-4j/tree/2.1.6) (2023-02-06)
 
 

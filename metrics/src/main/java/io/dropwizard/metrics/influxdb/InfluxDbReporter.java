@@ -19,6 +19,7 @@ package io.dropwizard.metrics.influxdb;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import com.networknt.metrics.TimeSeriesDbSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,17 +109,17 @@ public final class InfluxDbReporter extends ScheduledReporter {
             return this;
         }
 
-        public InfluxDbReporter build(final InfluxDbSender influxDb) {
+        public InfluxDbReporter build(final TimeSeriesDbSender influxDb) {
             return new InfluxDbReporter(registry, influxDb, tags, rateUnit, durationUnit, filter, skipIdleMetrics);
         }
     }
 
     private static final Logger logger = LoggerFactory.getLogger(InfluxDbReporter.class);
-    private final InfluxDbSender influxDb;
+    private final TimeSeriesDbSender influxDb;
     private final boolean skipIdleMetrics;
     private final Map<MetricName, Long> previousValues;
 
-    private InfluxDbReporter(final MetricRegistry registry, final InfluxDbSender influxDb, final Map<String, String> tags,
+    private InfluxDbReporter(final MetricRegistry registry, final TimeSeriesDbSender influxDb, final Map<String, String> tags,
                              final TimeUnit rateUnit, final TimeUnit durationUnit, final MetricFilter filter, final boolean skipIdleMetrics) {
         super(registry, "influxDb-reporter", filter, rateUnit, durationUnit);
         this.influxDb = influxDb;

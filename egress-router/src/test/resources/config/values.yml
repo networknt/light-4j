@@ -18,6 +18,8 @@ router.methodRewriteRules:
   - /v1/address POST PATCH
   # rewrite GET to DELETE for path /v1/address
   - /v1/address GET DELETE
+  # rewrite GET to DELETE for path /v1/pets/{petId} with path parameters
+  - /v1/pets/{petId} GET DELETE
 
 router.queryParamRewriteRules:
   # rewrite query parameter key business-query to request-query and value value1 to value2 for /v1/address
@@ -42,6 +44,10 @@ router.queryParamRewriteRules:
       newV: new
   # rewrite query parameter key from path to route for /v3/address
   /v3/address:
+    - oldK: path
+      newK: route
+  # using path parameters
+  /v1/pets/{petId}:
     - oldK: path
       newK: route
 
@@ -70,12 +76,17 @@ router.headerRewriteRules:
   /v3/address:
     - oldK: path
       newK: route
+  # rewrite header key from path to route for /v1/pets/{petId}
+  /v1/pets/{petId}:
+    - oldK: path
+      newK: route
+
 # set the timeout per path for test cases
 #router.pathPrefixMaxRequestTime:
 #  /v1/address: 5000
 #  /v2/address: 10000
 #  /v3/address: 30000
-router.pathPrefixMaxRequestTime: {"/v1/address":5000,"/v2/address":10000,"/v3/address":30000}
+router.pathPrefixMaxRequestTime: {"/v1/address":5000,"/v2/address":10000,"/v3/address":30000,"/v1/pets/{petId}": 5000}
 
 # client.yml
 # test configuration for the TokenHandler with multiple OAuth 2.0 providers.

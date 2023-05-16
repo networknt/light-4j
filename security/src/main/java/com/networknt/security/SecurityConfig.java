@@ -6,6 +6,7 @@ import com.networknt.config.ConfigException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -21,10 +22,10 @@ public class SecurityConfig {
     private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
 
     private static final String ENABLE_VERIFY_JWT = "enableVerifyJwt";
+    private static final String ENABLE_VERIFY_SWT = "enableVerifySwt";
     private static final String ENABLE_EXTRACT_SCOPE_TOKEN = "enableExtractScopeToken";
     private static final String ENABLE_VERIFY_SCOPE = "enableVerifyScope";
     private static final String SKIP_VERIFY_SCOPE_WITHOUT_SPEC = "skipVerifyScopeWithoutSpec";
-    private static final String ENABLE_VERIFY_JWT_SCOPE_TOKEN = "enableVerifyJWTScopeToken";
     private static final String ENABLE_MOCK_JWT = "enableMockJwt";
     private static final String JWT = "jwt";
     private static final String CERTIFICATE = "certificate";
@@ -41,15 +42,16 @@ public class SecurityConfig {
 
     private static final String ENABLE_RELAXED_KEY_CONSTRAINTS = "enableRelaxedKeyValidation";
     private static final String SKIP_PATH_PREFIXES = "skipPathPrefixes";
+    private static final String PASS_THROUGH_CLAIMS = "passThroughClaims";
 
     private Map<String, Object> mappedConfig;
     private Map<String, Object> certificate;
     private Config config;
     private boolean enableVerifyJwt;
+    private boolean enableVerifySwt;
     private boolean enableExtractScopeToken;
     private boolean enableVerifyScope;
     private boolean skipVerifyScopeWithoutSpec;
-    private boolean enableVerifyJwtScopeToken;
     private boolean enableMockJwt;
     private int clockSkewInSeconds;
     private String keyResolver;
@@ -65,12 +67,16 @@ public class SecurityConfig {
     private boolean enableRelaxedKeyValidation;
     private List<String> skipPathPrefixes;
 
+    private Map<String, String> passThroughClaims;
+
+
     private SecurityConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(configName);
         setCertificate();
         setConfigData();
         setSkipPathPrefixes();
+        setPassThroughClaims();
     }
 
     public static SecurityConfig load(String configName) {
@@ -82,6 +88,7 @@ public class SecurityConfig {
         setCertificate();
         setConfigData();
         setSkipPathPrefixes();
+        setPassThroughClaims();
     }
 
     public Map<String, Object> getCertificate() {
@@ -90,6 +97,9 @@ public class SecurityConfig {
 
     public boolean isEnableVerifyJwt() {
         return enableVerifyJwt;
+    }
+    public boolean isEnableVerifySwt() {
+        return enableVerifySwt;
     }
 
     public boolean isEnableH2c() { return enableH2c; }
@@ -106,10 +116,6 @@ public class SecurityConfig {
 
     public boolean isSkipVerifyScopeWithoutSpec() {
         return skipVerifyScopeWithoutSpec;
-    }
-
-    public boolean isEnableVerifyJwtScopeToken() {
-        return enableVerifyJwtScopeToken;
     }
 
     public boolean isIgnoreJwtExpiry() {
@@ -149,7 +155,7 @@ public class SecurityConfig {
     public List<String> getSkipPathPrefixes() {
         return skipPathPrefixes;
     }
-
+    public Map<String, String> getPassThroughClaims() { return passThroughClaims; }
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
@@ -187,6 +193,10 @@ public class SecurityConfig {
             if(object != null && (Boolean) object) {
                 enableVerifyJwt = true;
             }
+            object = getMappedConfig().get(ENABLE_VERIFY_SWT);
+            if(object != null && (Boolean) object) {
+                enableVerifySwt = true;
+            }
             object = getMappedConfig().get(ENABLE_H2C);
             if(object != null && (Boolean) object) {
                 enableH2c = true;
@@ -206,10 +216,6 @@ public class SecurityConfig {
             object = getMappedConfig().get(SKIP_VERIFY_SCOPE_WITHOUT_SPEC);
             if(object != null && (Boolean) object) {
                 skipVerifyScopeWithoutSpec = true;
-            }
-            object = getMappedConfig().get(ENABLE_VERIFY_JWT_SCOPE_TOKEN);
-            if(object != null && (Boolean) object) {
-                enableVerifyJwtScopeToken = true;
             }
             object = getMappedConfig().get(ENABLE_MOCK_JWT);
             if(object != null && (Boolean) object) {
@@ -276,6 +282,34 @@ public class SecurityConfig {
                 });
             } else {
                 throw new ConfigException("skipPathPrefixes must be a string or a list of strings.");
+            }
+        }
+    }
+
+    private void setPassThroughClaims() {
+        if(mappedConfig != null && mappedConfig.get(PASS_THROUGH_CLAIMS) != null) {
+            Object obj = mappedConfig.get(PASS_THROUGH_CLAIMS);
+            if(obj instanceof String) {
+                String s = (String)obj;
+                if(logger.isTraceEnabled()) logger.trace("s = " + s);
+                if(s.startsWith("{")) {
+                    // json map
+                    try {
+                        passThroughClaims = Config.getInstance().getMapper().readValue(s, Map.class);
+                    } catch (IOException e) {
+                        logger.error("IOException:", e);
+                    }
+                } else {
+                    passThroughClaims = new HashMap<>();
+                    for(String keyValue : s.split(" *& *")) {
+                        String[] pairs = keyValue.split(" *= *", 2);
+                        passThroughClaims.put(pairs[0], pairs[1]);
+                    }
+                }
+            } else if (obj instanceof Map) {
+                passThroughClaims = (Map)obj;
+            } else {
+                logger.error("passThroughClaims is the wrong type. Only JSON map or YAML map is supported.");
             }
         }
     }

@@ -19,6 +19,9 @@ package com.networknt.proxy;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
 import com.networknt.config.JsonMapper;
+import com.networknt.handler.Handler;
+import com.networknt.metrics.MetricsConfig;
+import com.networknt.metrics.AbstractMetricsHandler;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.handler.ProxyHandler;
 import io.undertow.server.HttpHandler;
@@ -37,9 +40,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 
 /**
@@ -57,6 +58,7 @@ public class LightProxyHandler implements HttpHandler {
     static ProxyConfig config;
 
     static ProxyHandler proxyHandler;
+    static AbstractMetricsHandler metricsHandler;
 
     public LightProxyHandler() {
         config = ProxyConfig.load();
@@ -90,22 +92,35 @@ public class LightProxyHandler implements HttpHandler {
         proxyHandler = ProxyHandler.builder()
                 .setProxyClient(loadBalancer)
                 .setMaxConnectionRetries(config.getMaxConnectionRetries())
+                .setMaxQueueSize(config.getMaxQueueSize())
                 .setMaxRequestTime(config.getMaxRequestTime())
                 .setReuseXForwarded(config.isReuseXForwarded())
                 .setRewriteHostHeader(config.isRewriteHostHeader())
                 .setNext(ResponseCodeHandler.HANDLE_404)
                 .build();
+
+        if(config.isMetricsInjection()) {
+            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
+            // metrics handler, then an error message will be logged.
+            Map<String, HttpHandler> handlers = Handler.getHandlers();
+            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+            if(metricsHandler == null) {
+                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
+            }
+        }
     }
 
     @Override
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("LightProxyHandler.handleRequest starts.");
+        long startTime = System.nanoTime();
         if(config.isForwardJwtClaims()) {
             HeaderMap headerValues = httpServerExchange.getRequestHeaders();
             JwtClaims jwtClaims = extractClaimsFromJwt(headerValues);
             httpServerExchange.getRequestHeaders().put(HttpString.tryFromString(CLAIMS_KEY), new ObjectMapper().writeValueAsString(jwtClaims.getClaimsMap()));
         }
         proxyHandler.handleRequest(httpServerExchange);
+        if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(httpServerExchange, startTime, config.getMetricsName());
         if(logger.isDebugEnabled()) logger.debug("LightProxyHandler.handleRequest ends.");
     }
 
@@ -172,10 +187,20 @@ public class LightProxyHandler implements HttpHandler {
         proxyHandler = ProxyHandler.builder()
                 .setProxyClient(loadBalancer)
                 .setMaxConnectionRetries(config.getMaxConnectionRetries())
+                .setMaxQueueSize(config.getMaxQueueSize())
                 .setMaxRequestTime(config.getMaxRequestTime())
                 .setReuseXForwarded(config.isReuseXForwarded())
                 .setRewriteHostHeader(config.isRewriteHostHeader())
                 .setNext(ResponseCodeHandler.HANDLE_404)
                 .build();
+        if(config.isMetricsInjection()) {
+            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
+            // metrics handler, then an error message will be logged.
+            Map<String, HttpHandler> handlers = Handler.getHandlers();
+            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+            if(metricsHandler == null) {
+                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
+            }
+        }
     }
 }

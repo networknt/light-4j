@@ -14,11 +14,16 @@
 exclusionConfigFileList:
   - openapi
   - values
-  - status
 
-decryptorClass: com.networknt.decrypt.AESDecryptor
-#  com.networknt.decrypt.ManualAESDecryptor
-#  com.networknt.decrypt.AutoAESDecryptor
+# The AutoAESSaltDecryptor is the most secure one we have implemented, and it can be used by
+# everyone with a master key set up as an environment variable on the deployment environment.
+# To encrypt your sensitive secret with a command line tool, please visit the following URL.
+# https://github.com/networknt/light-encryptor
+# To learn how the decryptor works, please visit the document URL.
+# https://doc.networknt.com/concern/decryptor/
+decryptorClass: com.networknt.decrypt.AutoAESSaltDecryptor
+# decryptorClass: com.networknt.decrypt.AESSaltDecryptor
+# decryptorClass: com.networknt.decrypt.ManualAESSaltDecryptor
 
 # For some configuration files, we have left some properties without default values as there
 # would be negative impact on the application security. The following config will ensure that
