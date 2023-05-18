@@ -115,6 +115,25 @@ public class NioUtils {
         }
     }
 
+    public static void validateZipOutputFile(
+            String sourceFilename,
+            final File outFile,
+            final File outDir
+    ) throws IOException
+    {
+        // check for evil zip exploit that allows writing output to arbitrary directories
+        final File canonicalOutFile = outFile.getCanonicalFile();
+        final String canonicalOutDir = outDir.getCanonicalPath();
+        if (!canonicalOutFile.toPath().startsWith(canonicalOutDir)) {
+            String msg = String.format(
+                    "Unzipped output path %s of sourceFile %s does not start with destDir %s.",
+                    canonicalOutFile,
+                    sourceFilename,
+                    canonicalOutDir
+            );
+            throw new IOException(msg);
+        }
+    }
 
     /**
      * Creates/updates a zip file.

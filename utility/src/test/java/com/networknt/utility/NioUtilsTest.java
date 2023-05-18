@@ -17,12 +17,17 @@
 package com.networknt.utility;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Created by steve on 12/07/17.
@@ -63,4 +68,41 @@ public class NioUtilsTest {
         Assert.assertEquals(s, n);
     }
 
+    @Test
+    @Ignore
+    public void testUnsafeUnzip() throws IOException {
+        zip();
+        String zipFilename = "/tmp/poc.zip";
+        String destDirname = "/tmp/unzip";
+        NioUtils.unzip(zipFilename, destDirname);  // crash
+    }
+
+    public static void zip() {
+        ZipOutputStream zos = null;
+        try {
+            // the zipped file will be in /tmp as poc.zip
+            zos = new ZipOutputStream(new FileOutputStream("/tmp/poc.zip"));
+            String srcFile = "/home/steve/networknt/light-4j/utility/src/test/resources/poc.txt";
+            String destFile = "/tmp/poc.txt";
+            zos.putNextEntry(new ZipEntry(srcFile));
+            FileInputStream in = new FileInputStream(destFile);
+            int len;
+            byte[] buf = new byte[1024];
+            while ((len = in.read(buf)) != -1) {
+                zos.write(buf, 0, len);
+            }
+            zos.closeEntry();
+            in.close();
+        } catch (Exception e) {
+            throw new RuntimeException("zip error from ZipUtils", e);
+        } finally {
+            if (zos != null) {
+                try {
+                    zos.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
 }
