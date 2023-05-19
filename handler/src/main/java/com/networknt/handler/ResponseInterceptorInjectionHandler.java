@@ -20,22 +20,20 @@ import java.util.Arrays;
 /**
  * This is a middleware handle that is responsible for injecting the SinkConduit in order to update
  * the response content for interceptor handlers to update the response before returning to client.
- *
  */
 public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
-    static final Logger logger = LoggerFactory.getLogger(ResponseInterceptorInjectionHandler.class);
-
-    public static final AttachmentKey<ModifiableContentSinkConduit> MCSC_KEY = AttachmentKey.create(ModifiableContentSinkConduit.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ResponseInterceptorInjectionHandler.class);
 
     public static final AttachmentKey<HeaderMap> ORIGINAL_ACCEPT_ENCODINGS_KEY = AttachmentKey.create(HeaderMap.class);
 
     private ResponseInterceptor[] interceptors = null;
     private volatile HttpHandler next;
     private static ResponseInjectionConfig config;
-    public ResponseInterceptorInjectionHandler() throws Exception{
+
+    public ResponseInterceptorInjectionHandler() throws Exception {
         config = ResponseInjectionConfig.load();
         interceptors = SingletonServiceFactory.getBeans(ResponseInterceptor.class);
-        logger.info("SinkConduitInjectorHandler is loaded!");
+        LOG.info("SinkConduitInjectorHandler is loaded!");
     }
 
     /**
@@ -43,12 +41,11 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
      *
      * @param cfg limit config
      * @throws Exception thrown when config is wrong.
-     *
      */
     @Deprecated
     public ResponseInterceptorInjectionHandler(ResponseInjectionConfig cfg) throws Exception {
         config = cfg;
-        logger.info("SinkConduitInjectorHandler is loaded!");
+        LOG.info("SinkConduitInjectorHandler is loaded!");
     }
 
     @Override
@@ -72,10 +69,14 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
     public void register() {
         ModuleRegistry.registerModule(ResponseInjectionConfig.class.getName(), config.getMappedConfig(), null);
     }
+
     @Override
     public void reload() {
         config.reload();
-        if(logger.isTraceEnabled()) logger.trace("response-injection.yml is reloaded");
+
+        if (LOG.isTraceEnabled())
+            LOG.trace("response-injection.yml is reloaded");
+
         ModuleRegistry.registerModule(ResponseInjectionConfig.class.getName(), config.getMappedConfig(), null);
     }
 
@@ -87,78 +88,81 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
      * @param exchange
      */
     private void forceIdentityEncodingForInterceptors(HttpServerExchange exchange) {
-        if (interceptors != null && Arrays.stream(interceptors).anyMatch(ri -> ri.isRequiredContent())) {
+
+        if (this.interceptorsRequireContent()) {
             var before = new HeaderMap();
 
-            if (exchange.getRequestHeaders().contains(Headers.ACCEPT_ENCODING)) {
+            if (exchange.getRequestHeaders().contains(Headers.ACCEPT_ENCODING))
                 exchange.getRequestHeaders().get(Headers.ACCEPT_ENCODING).forEach((value) -> {
                     before.add(Headers.ACCEPT_ENCODING, value);
                 });
-            }
 
             exchange.putAttachment(ORIGINAL_ACCEPT_ENCODINGS_KEY, before);
 
-            logger.debug("{} setting encoding to identity because request involves response interceptors.", before);
+            if (LOG.isDebugEnabled())
+                LOG.debug("{} setting encoding to identity because request involves response interceptors.", before);
 
             exchange.getRequestHeaders().put(Headers.ACCEPT_ENCODING, "identity");
         }
     }
 
     /**
-     *
      * @param exchange
      * @throws Exception
      */
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+
         // of the response buffering it if any interceptor resolvers the request
         // and requires the content from the backend
-        exchange.addResponseWrapper((ConduitFactory<StreamSinkConduit> factory, HttpServerExchange cexchange) -> {
-            // restore MDC context
-            // MDC context is put in the thread context
-            // For proxied requests a thread switch in the request handling happens,
-            // loosing the MDC context. TracingInstrumentationHandler adds it to the
-            // exchange as an Attachment
-            // var mdcCtx = ByteArrayProxyResponse.of(exchange).getMDCContext();
-            // if (mdcCtx != null) {
-            //     MDC.setContextMap(mdcCtx);
-            // }
+        exchange.addResponseWrapper((ConduitFactory<StreamSinkConduit> factory, HttpServerExchange currentExchange) -> {
+            if (this.requiresContentSinkConduit(exchange)) {
+                var mcsc = new ModifiableContentSinkConduit(factory.create(), currentExchange);
 
-            if (interceptors != null && isAppliedBodyInjectionPathPrefix(exchange.getRequestPath()) && !isCompressed(exchange) && Arrays.stream(interceptors).anyMatch(ri -> ri.isRequiredContent())) {
-                var mcsc = new ModifiableContentSinkConduit(factory.create(), cexchange);
-                if(logger.isTraceEnabled()) logger.trace("created a ModifiableContentSinkConduit instance " + mcsc);
+                if (LOG.isTraceEnabled())
+                    LOG.trace("created a ModifiableContentSinkConduit instance " + mcsc);
+
                 return mcsc;
-            } else {
-                return new ContentStreamSinkConduit(factory.create(), cexchange);
-            }
+
+            } else return new ContentStreamSinkConduit(factory.create(), currentExchange);
         });
 
-        // forceIdentityEncodingForInterceptors(exchange);
-        // if any of the interceptors send response, don't call other middleware handlers in the chain.
-        if(!exchange.isResponseStarted()) {
-            if(logger.isTraceEnabled()) logger.trace("response is not started, calling next handler.");
-            Handler.next(exchange, next);
-        } else {
-            // It must be the ResponseBodyInterceptor returns an error message.
-            if(logger.isTraceEnabled()) logger.trace("response is started already, do not call next handler in the chain.");
-        }
+        Handler.next(exchange, next);
     }
 
     private boolean isCompressed(HttpServerExchange exchange) {
+
         // check if the request has a header accept encoding with gzip and deflate.
-        boolean compressed = false;
         var contentEncodings = exchange.getResponseHeaders().get(Headers.CONTENT_ENCODING_STRING);
-        if(contentEncodings != null) {
-            for(String values: contentEncodings) {
-                if(Arrays.stream(values.split(",")).anyMatch((v) -> Headers.GZIP.toString().equals(v) || Headers.COMPRESS.toString().equals(v) || Headers.DEFLATE.toString().equals(v))) {
-                    compressed = true;
-                }
-            }
-        }
-        return compressed;
+
+        if (contentEncodings != null)
+            for (var values : contentEncodings)
+                if (this.hasCompressionFormat(values))
+                    return true;
+
+        return false;
+    }
+
+    private boolean requiresContentSinkConduit(final HttpServerExchange exchange) {
+        return this.interceptorsRequireContent()
+                && isAppliedBodyInjectionPathPrefix(exchange.getRequestPath())
+                && !isCompressed(exchange);
     }
 
     private boolean isAppliedBodyInjectionPathPrefix(String requestPath) {
-        return config.getAppliedBodyInjectionPathPrefixes() != null && config.getAppliedBodyInjectionPathPrefixes().stream().anyMatch(requestPath::startsWith);
+        return config.getAppliedBodyInjectionPathPrefixes() != null
+                && config.getAppliedBodyInjectionPathPrefixes().stream().anyMatch(requestPath::startsWith);
+    }
+
+    private boolean hasCompressionFormat(String values) {
+        return Arrays.stream(values.split(",")).anyMatch(
+                (v) -> Headers.GZIP.toString().equals(v)
+                        || Headers.COMPRESS.toString().equals(v)
+                        || Headers.DEFLATE.toString().equals(v)
+        );
+    }
+
+    private boolean interceptorsRequireContent() {
+        return interceptors != null && Arrays.stream(interceptors).anyMatch(ri -> ri.isRequiredContent());
     }
 }

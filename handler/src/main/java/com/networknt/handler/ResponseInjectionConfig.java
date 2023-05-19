@@ -13,7 +13,6 @@ import java.util.Map;
 
 /**
  * The config class for the ResponseInterceptorInjectionHandler middleware handler.
- *
  */
 public class ResponseInjectionConfig {
     private static final Logger logger = LoggerFactory.getLogger(ResponseInjectionConfig.class);
@@ -37,6 +36,7 @@ public class ResponseInjectionConfig {
     /**
      * Please note that this constructor is only for testing to load different config files
      * to test different configurations.
+     *
      * @param configName String
      */
     public ResponseInjectionConfig(String configName) {
@@ -73,40 +73,43 @@ public class ResponseInjectionConfig {
     }
 
     private void setConfigData() {
-
         Object object = getMappedConfig().get(ENABLED);
-        if(object != null && (Boolean) object) {
+
+        if (object != null && (Boolean) object)
             enabled = true;
-        }
     }
 
     private void setConfigList() {
         if (mappedConfig != null && mappedConfig.get(APPLIED_BODY_INJECTION_PATH_PREFIXES) != null) {
-            Object object = mappedConfig.get(APPLIED_BODY_INJECTION_PATH_PREFIXES);
+            var object = mappedConfig.get(APPLIED_BODY_INJECTION_PATH_PREFIXES);
             appliedBodyInjectionPathPrefixes = new ArrayList<>();
-            if(object instanceof String) {
-                String s = (String)object;
+
+            if (object instanceof String) {
+                var s = (String) object;
                 s = s.trim();
-                if(logger.isTraceEnabled()) logger.trace("s = " + s);
-                if(s.startsWith("[")) {
-                    // json format
+
+                if (logger.isTraceEnabled())
+                    logger.trace("s = " + s);
+
+                if (s.startsWith("["))
                     try {
-                        appliedBodyInjectionPathPrefixes = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
+                        appliedBodyInjectionPathPrefixes = Config.getInstance().getMapper().readValue(s, new TypeReference<>() {
+                        });
                     } catch (Exception e) {
                         throw new ConfigException("could not parse the appliedBodyInjectionPathPrefixes json with a list of strings.");
                     }
-                } else {
+                else
                     // comma separated
                     appliedBodyInjectionPathPrefixes = Arrays.asList(s.split("\\s*,\\s*"));
-                }
+
             } else if (object instanceof List) {
-                List prefixes = (List)object;
+
+                var prefixes = (List) object;
                 prefixes.forEach(item -> {
-                    appliedBodyInjectionPathPrefixes.add((String)item);
+                    appliedBodyInjectionPathPrefixes.add((String) item);
                 });
-            } else {
-                throw new ConfigException("appliedBodyInjectionPathPrefixes must be a string or a list of strings.");
-            }
+
+            } else throw new ConfigException("appliedBodyInjectionPathPrefixes must be a string or a list of strings.");
         }
     }
 

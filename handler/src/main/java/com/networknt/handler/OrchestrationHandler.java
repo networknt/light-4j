@@ -36,15 +36,17 @@ public class OrchestrationHandler implements LightHttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
-        if (Handler.start(exchange)) {
+
+        if (Handler.start(exchange))
             Handler.next(exchange);
-        } else {
+
+        else {
+
             // There is no matching path/method combination. Check if there are defaultHandlers defined.
-            if(Handler.startDefaultHandlers(exchange)) {
+            if(Handler.startDefaultHandlers(exchange))
                 Handler.next(exchange);
-            } else {
-                setExchangeStatus(exchange, MISSING_HANDlER, exchange.getRequestPath(), exchange.getRequestMethod().toString());
-            }
+
+            else setExchangeStatus(exchange, MISSING_HANDlER, exchange.getRequestPath(), exchange.getRequestMethod().toString());
         }
     }
 }

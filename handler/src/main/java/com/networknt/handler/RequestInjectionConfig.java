@@ -12,12 +12,10 @@ import java.util.List;
 import java.util.Map;
 
 public class RequestInjectionConfig {
-    private static final Logger logger = LoggerFactory.getLogger(RequestInjectionConfig.class);
-
+    private static final Logger LOG = LoggerFactory.getLogger(RequestInjectionConfig.class);
     public static final String CONFIG_NAME = "request-injection";
     private static final String ENABLED = "enabled";
     private static final String APPLIED_BODY_INJECTION_PATH_PREFIXES = "appliedBodyInjectionPathPrefixes";
-
     private boolean enabled;
     private List<String> appliedBodyInjectionPathPrefixes;
 
@@ -34,6 +32,7 @@ public class RequestInjectionConfig {
     /**
      * Please note that this constructor is only for testing to load different config files
      * to test different configurations.
+     *
      * @param configName String
      */
     public RequestInjectionConfig(String configName) {
@@ -52,7 +51,7 @@ public class RequestInjectionConfig {
     }
 
     void reload() {
-        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
+        this.mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
         setConfigData();
         setConfigList();
     }
@@ -60,6 +59,7 @@ public class RequestInjectionConfig {
     public boolean isEnabled() {
         return enabled;
     }
+
     public List<String> getAppliedBodyInjectionPathPrefixes() {
         return appliedBodyInjectionPathPrefixes;
     }
@@ -69,38 +69,42 @@ public class RequestInjectionConfig {
     }
 
     private void setConfigData() {
-        Object object = getMappedConfig().get(ENABLED);
-        if(object != null && (Boolean) object) {
+        var object = getMappedConfig().get(ENABLED);
+
+        if (object != null && (Boolean) object)
             enabled = true;
-        }
     }
+
     private void setConfigList() {
-        if (mappedConfig != null && mappedConfig.get(APPLIED_BODY_INJECTION_PATH_PREFIXES) != null) {
-            Object object = mappedConfig.get(APPLIED_BODY_INJECTION_PATH_PREFIXES);
-            appliedBodyInjectionPathPrefixes = new ArrayList<>();
-            if(object instanceof String) {
-                String s = (String)object;
+        if (this.mappedConfig != null && this.mappedConfig.get(APPLIED_BODY_INJECTION_PATH_PREFIXES) != null) {
+            var object = this.mappedConfig.get(APPLIED_BODY_INJECTION_PATH_PREFIXES);
+            this.appliedBodyInjectionPathPrefixes = new ArrayList<>();
+
+            if (object instanceof String) {
+                var s = (String) object;
                 s = s.trim();
-                if(logger.isTraceEnabled()) logger.trace("s = " + s);
-                if(s.startsWith("[")) {
+
+                if (LOG.isTraceEnabled())
+                    LOG.trace("s = " + s);
+
+                if (s.startsWith("[")) {
                     // json format
                     try {
-                        appliedBodyInjectionPathPrefixes = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
+                        this.appliedBodyInjectionPathPrefixes = Config.getInstance().getMapper().readValue(s, new TypeReference<>() {});
                     } catch (Exception e) {
                         throw new ConfigException("could not parse the appliedBodyInjectionPathPrefixes json with a list of strings.");
                     }
-                } else {
-                    // comma separated
-                    appliedBodyInjectionPathPrefixes = Arrays.asList(s.split("\\s*,\\s*"));
-                }
+
+                // comma separated
+                } else this.appliedBodyInjectionPathPrefixes = Arrays.asList(s.split("\\s*,\\s*"));
+
             } else if (object instanceof List) {
-                List prefixes = (List)object;
+                var prefixes = (List) object;
                 prefixes.forEach(item -> {
-                    appliedBodyInjectionPathPrefixes.add((String)item);
+                    this.appliedBodyInjectionPathPrefixes.add((String) item);
                 });
-            } else {
-                throw new ConfigException("appliedBodyInjectionPathPrefixes must be a string or a list of strings.");
-            }
+
+            } else throw new ConfigException("appliedBodyInjectionPathPrefixes must be a string or a list of strings.");
         }
     }
 

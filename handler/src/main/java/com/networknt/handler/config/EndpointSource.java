@@ -33,9 +33,13 @@ public interface EndpointSource {
             this.method = method;
         }
 
-        public String getPath() { return path; }
+        public String getPath() {
+            return path;
+        }
 
-        public String getMethod() { return method; }
+        public String getMethod() {
+            return method;
+        }
 
         @Override
         public String toString() {
@@ -44,15 +48,23 @@ public interface EndpointSource {
 
         @Override
         public boolean equals(Object o) {
-            if(this == o) return true;
-            if(o == null || getClass() != o.getClass()) return false;
-            Endpoint endpoint = (Endpoint)o;
+
+            if (this == o)
+                return true;
+
+            if (o == null || getClass() != o.getClass())
+                return false;
+
+            var endpoint = (Endpoint) o;
+
             return Objects.equals(path, endpoint.path) &&
-                Objects.equals(method, endpoint.method);
+                    Objects.equals(method, endpoint.method);
         }
 
         @Override
-        public int hashCode() { return Objects.hash(path, method); }
+        public int hashCode() {
+            return Objects.hash(path, method);
+        }
     }
 
     Iterable<Endpoint> listEndpoints();
