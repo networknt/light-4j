@@ -19,6 +19,7 @@ package com.networknt.handler;
 import com.networknt.config.Config;
 import com.networknt.handler.config.HandlerConfig;
 import com.networknt.httpstring.AttachmentConstants;
+import com.networknt.httpstring.ContentType;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.status.Status;
 import com.networknt.status.StatusWrapper;
@@ -65,11 +66,12 @@ public interface LightHttpHandler extends HttpHandler {
      * @param args     arguments for error description
      */
     default void setExchangeStatus(HttpServerExchange exchange, String code, final Object... args) {
-        Status status = new Status(code, args);
-        if (status.getStatusCode() == 0) {
-            // There is no entry in status.yml for this particular error code.
+        var status = new Status(code, args);
+
+        // There is no entry in status.yml for this particular error code.
+        if (status.getStatusCode() == 0)
             status = new Status(ERROR_NOT_DEFINED, code);
-        }
+
         setExchangeStatus(exchange, status);
     }
 
@@ -82,11 +84,12 @@ public interface LightHttpHandler extends HttpHandler {
      * @param args     arguments for error description
      */
     default void setExchangeStatus(HttpServerExchange exchange, String code, Map<String, Object> metadata, final Object... args) {
-        Status status = new Status(code, args);
-        if (status.getStatusCode() == 0) {
-            // There is no entry in status.yml for this particular error code.
+        var status = new Status(code, args);
+
+        // There is no entry in status.yml for this particular error code.
+        if (status.getStatusCode() == 0)
             status = new Status(ERROR_NOT_DEFINED, code);
-        }
+
         status.setMetadata(metadata);
         setExchangeStatus(exchange, status);
     }
@@ -95,48 +98,50 @@ public interface LightHttpHandler extends HttpHandler {
      * There are situations that the downstream service returns an error status response and we just
      * want to bubble up to the caller and eventually to the original caller.
      *
-     * @param exchange HttpServerExchange
+     * @param ex HttpServerExchange
      * @param status   error status
      */
-    default void setExchangeStatus(HttpServerExchange exchange, Status status) {
+    default void setExchangeStatus(HttpServerExchange ex, Status status) {
         // Wrap default status into custom status if the implementation of StatusWrapper was provided
         StatusWrapper statusWrapper;
+
         try {
             statusWrapper = SingletonServiceFactory.getBean(StatusWrapper.class);
+
         } catch (NoClassDefFoundError e) {
             statusWrapper = null;
         }
-        status = statusWrapper == null ? status : statusWrapper.wrap(status, exchange);
 
-        exchange.setStatusCode(status.getStatusCode());
-        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+        status = statusWrapper == null ? status : statusWrapper.wrap(status, ex);
+        ex.setStatusCode(status.getStatusCode());
+        ex.getResponseHeaders().put(Headers.CONTENT_TYPE, ContentType.APPLICATION_JSON.value());
         status.setDescription(status.getDescription().replaceAll("\\\\", "\\\\\\\\"));
-        StackTraceElement[] elements = Thread.currentThread().getStackTrace();
 
-        logger.error(status.toString());
+        var elements = Thread.currentThread().getStackTrace();
+
+        if (logger.isErrorEnabled())
+            logger.error(status.toString());
+
         // in case to trace where the status is created, enable the trace level logging to diagnose.
-        if (logger.isTraceEnabled()) {
-            String stackTrace = Arrays.stream(elements)
-                    .map(StackTraceElement::toString)
-                    .collect(Collectors.joining("\n"));
-            logger.trace(stackTrace);
-        }
+        if (logger.isTraceEnabled())
+            logger.trace(Arrays.stream(elements).map(StackTraceElement::toString).collect(Collectors.joining("\n")));
+
         // In normal case, the auditInfo shouldn't be null as it is created by OpenApiHandler with
         // endpoint and openapiOperation available. This handler will enrich the auditInfo.
         @SuppressWarnings("unchecked")
-        Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
+        Map<String, Object> auditInfo = ex.getAttachment(AttachmentConstants.AUDIT_INFO);
         if (auditInfo == null) {
             auditInfo = new HashMap<>();
-            exchange.putAttachment(AttachmentConstants.AUDIT_INFO, auditInfo);
+            ex.putAttachment(AttachmentConstants.AUDIT_INFO, auditInfo);
         }
 
         // save info for auditing purposes in case of an error
         if (auditOnError)
             auditInfo.put(Constants.STATUS, status);
-        if (auditStackTrace) {
+
+        if (auditStackTrace)
             auditInfo.put(Constants.STACK_TRACE, Arrays.toString(elements));
-        }
-        exchange.getResponseSender().send(
-                status.toStringConditionally());
+
+        ex.getResponseSender().send(status.toStringConditionally());
     }
 }
