@@ -95,6 +95,10 @@ public class NioUtils {
                                                  BasicFileAttributes attrs) throws IOException {
                     final Path destFile = Paths.get(destDir.toString(),
                             file.toString());
+
+                    // validate unzip cross file
+                    validateZipOutputFile(zipFilename, new File(destDirname,file.toString()), new File(destDirname));
+
                     if(logger.isDebugEnabled()) logger.debug("Extracting file %s to %s", file, destFile);
                     Files.copy(file, destFile, StandardCopyOption.REPLACE_EXISTING);
                     return FileVisitResult.CONTINUE;

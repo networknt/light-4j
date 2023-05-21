@@ -17,9 +17,9 @@
 package com.networknt.utility;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -68,24 +68,26 @@ public class NioUtilsTest {
         Assert.assertEquals(s, n);
     }
 
-    @Test
-    @Ignore
+    @Test(expected = IOException.class)
     public void testUnsafeUnzip() throws IOException {
-        zip();
-        String zipFilename = "/tmp/poc.zip";
-        String destDirname = "/tmp/unzip";
-        NioUtils.unzip(zipFilename, destDirname);  // crash
+        String pocName = "poc.txt";
+        String pocZipName = "poc.zip";
+        URL url = Thread.currentThread().getContextClassLoader().getResource(pocName);
+        File rootPath = new File(url.getPath().toString().replace("/F:/", "F:\\")).getParentFile();
+        File pocPath = new File(rootPath, pocName);
+        File pocZipPath = new File(rootPath, pocZipName);
+        zip(pocPath.getPath(), pocZipPath.getPath());     // zip an poc
+        NioUtils.unzip(pocZipPath.getPath(), rootPath.getPath());  // unzip the poc and will throw the IoException
     }
 
-    public static void zip() {
+    // zip the poc
+    private static void zip(String filePath, String zipPath) {
         ZipOutputStream zos = null;
         try {
-            // the zipped file will be in /tmp as poc.zip
-            zos = new ZipOutputStream(new FileOutputStream("/tmp/poc.zip"));
-            String srcFile = "/home/steve/networknt/light-4j/utility/src/test/resources/poc.txt";
-            String destFile = "/tmp/poc.txt";
+            zos = new ZipOutputStream(new FileOutputStream(zipPath));
+            String srcFile = "..\\poc2.txt";
             zos.putNextEntry(new ZipEntry(srcFile));
-            FileInputStream in = new FileInputStream(destFile);
+            FileInputStream in = new FileInputStream(filePath);
             int len;
             byte[] buf = new byte[1024];
             while ((len = in.read(buf)) != -1) {
