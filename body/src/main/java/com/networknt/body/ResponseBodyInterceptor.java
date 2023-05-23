@@ -79,9 +79,12 @@ public class ResponseBodyInterceptor implements ResponseInterceptor {
                 var completeBody = BuffersUtils.toString(existing, StandardCharsets.UTF_8);
                 var contentType = exchange.getResponseHeaders().getFirst(Headers.CONTENT_TYPE);
 
-                if (LOG.isTraceEnabled())
-                    LOG.trace("contentType = " + contentType + " response body = " + (completeBody.length() > 16384 ? completeBody.substring(0, 16384) : completeBody));
-
+                if (LOG.isTraceEnabled()) {
+                    if(config.isLogFullResponseBody())
+                        LOG.trace("contentType = " + contentType + " response body = " + completeBody);
+                    else
+                        LOG.trace("contentType = " + contentType + " response body = " + (completeBody.length() > 16384 ? completeBody.substring(0, 16384) : completeBody));
+                }
                 boolean attached = this.handleBody(exchange, completeBody, contentType);
 
                 if (!attached && LOG.isErrorEnabled())
