@@ -21,23 +21,11 @@ import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.networknt.client.ClientConfig;
-import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
-import com.networknt.monad.Failure;
-import com.networknt.status.Status;
-import com.networknt.utility.StringUtils;
-import io.undertow.UndertowOptions;
-import io.undertow.client.ClientConnection;
-import io.undertow.client.ClientRequest;
-import io.undertow.client.ClientResponse;
 import io.undertow.util.Headers;
-import io.undertow.util.Methods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xnio.IoUtils;
-import org.xnio.OptionMap;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
@@ -45,13 +33,10 @@ import javax.net.ssl.*;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetSocketAddress;
-import java.net.ProxySelector;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -60,9 +45,6 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static com.networknt.server.Server.ENV_PROPERTY_KEY;
 import static com.networknt.server.Server.STARTUP_CONFIG_NAME;
@@ -94,10 +76,10 @@ public class DefaultConfigLoader implements IConfigLoader{
     public static final String CLIENT_TRUSTSTORE_LOC = "config_server_client_truststore_location";
     public static final String VERIFY_HOST_NAME = "config_server_client_verify_host_name";
 
-    public static final String PROJECT_NAME = "projectName";
-    public static final String PROJECT_VERSION = "projectVersion";
-    public static final String SERVICE_NAME = "serviceName";
-    public static final String SERVICE_VERSION = "serviceVersion";
+    public static final String PRODUCT_ID = "productId";
+    public static final String PRODUCT_VERSION = "productVersion";
+    public static final String API_ID = "apiId";
+    public static final String API_VERSION = "apiVersion";
 
     public static String lightEnv = null;
     public static String configServerUri = null;
@@ -146,14 +128,14 @@ public class DefaultConfigLoader implements IConfigLoader{
             configClient = createHttpClient();
 
             try {
-                String configPath = getConfigServerPath();
+                String queryParameters = getConfigServerQueryParameters();
 
                 // This is the method to load values.yml from the config server
-                loadConfigs(configPath);
+                loadConfigs(queryParameters);
 
-                loadFiles(configPath, CONFIG_SERVER_CERTS_CONTEXT_ROOT);
+                loadFiles(queryParameters, CONFIG_SERVER_CERTS_CONTEXT_ROOT);
 
-                loadFiles(configPath, CONFIG_SERVER_FILES_CONTEXT_ROOT);
+                loadFiles(queryParameters, CONFIG_SERVER_FILES_CONTEXT_ROOT);
             } catch (Exception e) {
                 logger.error("Failed to connect to config server", e);
             }
@@ -192,9 +174,9 @@ public class DefaultConfigLoader implements IConfigLoader{
             configClient = createHttpClient();
 
             try {
-                String configPath = getConfigServerPath();
+                String queryParameters = getConfigServerQueryParameters();
                 // This is the method to load values.yml from the config server
-                loadConfigs(configPath);
+                loadConfigs(queryParameters);
 
             } catch (Exception e) {
                 logger.error("Failed to connect to config server", e);
@@ -208,11 +190,11 @@ public class DefaultConfigLoader implements IConfigLoader{
     /**
      * load config properties from light config server. This method should only be accessed by one
      * thread only as it is synchronized due to the Yaml constructor is not thread safe.
-     * @param configPath
+     * @param queryParameters query parameters
      */
-    private synchronized void loadConfigs(String configPath) {
+    private synchronized void loadConfigs(String queryParameters) {
         //config Server Configs Path
-        String configServerConfigsPath = CONFIG_SERVER_CONFIGS_CONTEXT_ROOT + configPath;
+        String configServerConfigsPath = CONFIG_SERVER_CONFIGS_CONTEXT_ROOT + queryParameters;
         //get service configs and put them in config cache
         Map<String, Object> serviceConfigs = getServiceConfigs(configServerConfigsPath);
         if(logger.isDebugEnabled()) logger.debug("serviceConfigs received from Config Server: ", JsonMapper.toJson(serviceConfigs));
@@ -390,15 +372,15 @@ public class DefaultConfigLoader implements IConfigLoader{
         return res;
     }
 
-    private static String getConfigServerPath() {
-        StringBuilder configPath = new StringBuilder();
-        configPath.append("/").append(startupConfig.get(PROJECT_NAME));
-        configPath.append("/").append(startupConfig.get(PROJECT_VERSION));
-        configPath.append("/").append(startupConfig.get(SERVICE_NAME));
-        configPath.append("/").append(startupConfig.get(SERVICE_VERSION));
-        configPath.append("/").append(lightEnv);
-        if(logger.isDebugEnabled()) logger.debug("configPath: {}", configPath);
-        return configPath.toString();
+    private static String getConfigServerQueryParameters() {
+        StringBuilder qs = new StringBuilder();
+        qs.append("?").append(PRODUCT_ID).append("=").append(startupConfig.get(PRODUCT_ID));
+        if(startupConfig.get(PRODUCT_VERSION) != null) qs.append("&").append(PRODUCT_VERSION).append("=").append(startupConfig.get(PRODUCT_VERSION));
+        if(startupConfig.get(API_ID) != null) qs.append("&").append(API_ID).append("=").append(startupConfig.get(API_ID));
+        if(startupConfig.get(API_VERSION) != null) qs.append("&").append(API_VERSION).append("=").append(startupConfig.get(API_ID));
+        if(lightEnv != null) qs.append("&").append(LIGHT_ENV).append("=").append(lightEnv);
+        if(logger.isDebugEnabled()) logger.debug("configPath: {}", qs);
+        return qs.toString();
     }
 
     private static KeyStore loadBootstrapTrustStore(){
