@@ -3,4 +3,16 @@
 # The following dummy entry is just to prevent the warning message during startup.
 dummy: dummyEntry
 # For real config loader config, please follow the format below with your implementation.
-# configLoaderClass: com.networknt.server.ConfigServerLoader
+# light-4j provides a DefaultConfigLoader that loads config files from the light-portal
+# and fallback to local file systems for cached config files.
+# The following is the config for the DefaultConfigLoader.
+# configLoaderClass: com.networknt.server.DefaultConfigLoader
+# All variables below can be used to look up the config files for a particular service,
+# but only the productId is required. If other variables are not provided, the default
+# "current" value will be used from the config server.
+
+# productId: light-gateway
+# productVersion: 2.0.0
+# apiId: com.networknt.petstore-1.0.0
+# apiVersion: 1.0.0
+# environment: dev
