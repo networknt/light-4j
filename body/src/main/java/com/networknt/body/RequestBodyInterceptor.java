@@ -83,9 +83,13 @@ public class RequestBodyInterceptor implements RequestInterceptor {
                 var completeBody = BuffersUtils.toString(existing, StandardCharsets.UTF_8);
                 var contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
 
-                if (LOG.isTraceEnabled())
-                    LOG.trace("contentType = " + contentType + " request body = " + (completeBody.length() > 16384 ? completeBody.substring(0, 16384) : completeBody));
-
+                if (LOG.isTraceEnabled()) {
+                    // this config flag should only be enabled on non-production environment for troubleshooting purpose.
+                    if(config.isLogFullRequestBody())
+                        LOG.trace("contentType = " + contentType + " request body = " + completeBody);
+                    else
+                        LOG.trace("contentType = " + contentType + " request body = " + (completeBody.length() > 16384 ? completeBody.substring(0, 16384) : completeBody));
+                }
                 boolean attached = this.handleBody(exchange, completeBody, contentType);
 
                 if (!attached && LOG.isErrorEnabled())

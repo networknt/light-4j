@@ -36,13 +36,15 @@ public class BodyConfig {
     public static final String CONFIG_NAME = "body";
     private static final String ENABLED = "enabled";
     private static final String CACHE_REQUEST_BODY = "cacheRequestBody";
-
     private static final String CACHE_RESPONSE_BODY = "cacheResponseBody";
+    private static final String LOG_FULL_REQUEST_BODY = "logFullRequestBody";
+    private static final String LOG_FULL_RESPONSE_BODY = "logFullResponseBody";
 
     boolean enabled;
     boolean cacheRequestBody;
     boolean cacheResponseBody;
-
+    boolean logFullRequestBody;
+    boolean logFullResponseBody;
     private Config config;
     private Map<String, Object> mappedConfig;
 
@@ -89,6 +91,10 @@ public class BodyConfig {
         return cacheResponseBody;
     }
 
+    public boolean isLogFullRequestBody() { return logFullRequestBody; }
+
+    public boolean isLogFullResponseBody() { return logFullResponseBody; }
+
     private void setConfigData() {
         Object object = mappedConfig.get(ENABLED);
         if (object != null && (Boolean) object) {
@@ -101,6 +107,14 @@ public class BodyConfig {
         object = mappedConfig.get(CACHE_RESPONSE_BODY);
         if (object != null && (Boolean) object) {
             cacheResponseBody = (Boolean)object;
+        }
+        object = mappedConfig.get(LOG_FULL_REQUEST_BODY);
+        if (object != null && (Boolean) object) {
+            logFullRequestBody = (Boolean)object;
+        }
+        object = mappedConfig.get(LOG_FULL_RESPONSE_BODY);
+        if (object != null && (Boolean) object) {
+            logFullResponseBody = (Boolean)object;
         }
     }
 }
