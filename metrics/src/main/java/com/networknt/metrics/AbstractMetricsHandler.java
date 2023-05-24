@@ -130,7 +130,7 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
             }
         } else {
             // for MRAS and Salesforce handlers that do not have auditInfo in the exchange as they may be called anonymously.
-            tags.put(Constants.ENDPOINT_STRING, httpServerExchange.getRequestPath());
+            tags.put(Constants.ENDPOINT_STRING, endpoint == null ? "unknown" : endpoint);
             tags.put("clientId", "unknown");
             if (config.isSendScopeClientId()) {
                 tags.put("scopeClientId", "unknown");
