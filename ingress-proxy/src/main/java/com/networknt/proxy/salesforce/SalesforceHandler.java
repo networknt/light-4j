@@ -146,6 +146,7 @@ public class SalesforceHandler implements MiddlewareHandler {
         // make sure that the request path is in the key set. remember that key set only contains prefix not the full request path.
         for(PathPrefixAuth pathPrefixAuth: config.getPathPrefixAuths()) {
             if(requestPath.startsWith(pathPrefixAuth.getPathPrefix())) {
+                String endpoint = pathPrefixAuth.getPathPrefix() + "@" + exchange.getRequestMethod().toString();
                 // handle the url rewrite here.
                 if(config.getUrlRewriteRules() != null && config.getUrlRewriteRules().size() > 0) {
                     boolean matched = false;
@@ -185,7 +186,7 @@ public class SalesforceHandler implements MiddlewareHandler {
                         return;
                     }
                 }
-                invokeApi(exchange, "Bearer " + pathPrefixAuth.getAccessToken(), pathPrefixAuth.getServiceHost(), requestPath, startTime);
+                invokeApi(exchange, "Bearer " + pathPrefixAuth.getAccessToken(), pathPrefixAuth.getServiceHost(), requestPath, startTime, endpoint);
                 if(logger.isDebugEnabled()) logger.debug("SalesforceHandler.handleRequest ends.");
                 return;
             }
@@ -370,7 +371,7 @@ public class SalesforceHandler implements MiddlewareHandler {
         }
     }
 
-    private void invokeApi(HttpServerExchange exchange, String authorization, String requestHost, String requestPath, long startTime) throws Exception {
+    private void invokeApi(HttpServerExchange exchange, String authorization, String requestHost, String requestPath, long startTime, String endpoint) throws Exception {
         // call the Salesforce API directly here with the token from the cache.
         String method = exchange.getRequestMethod().toString();
         String queryString = exchange.getQueryString();
@@ -435,7 +436,7 @@ public class SalesforceHandler implements MiddlewareHandler {
         exchange.getResponseSender().send(ByteBuffer.wrap(responseBody));
         if(config.isMetricsInjection() && metricsHandler != null) {
             if(logger.isTraceEnabled()) logger.trace("injecting metrics for " + config.getMetricsName());
-            metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName());
+            metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
         }
     }
 

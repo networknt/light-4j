@@ -120,7 +120,7 @@ public class LightProxyHandler implements HttpHandler {
             httpServerExchange.getRequestHeaders().put(HttpString.tryFromString(CLAIMS_KEY), new ObjectMapper().writeValueAsString(jwtClaims.getClaimsMap()));
         }
         proxyHandler.handleRequest(httpServerExchange);
-        if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(httpServerExchange, startTime, config.getMetricsName());
+        if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(httpServerExchange, startTime, config.getMetricsName(), null);
         if(logger.isDebugEnabled()) logger.debug("LightProxyHandler.handleRequest ends.");
     }
 
