@@ -154,6 +154,7 @@ public class MrasHandler implements MiddlewareHandler {
 
         for(String key: config.getPathPrefixAuth().keySet()) {
             if(requestPath.startsWith(key)) {
+                String endpoint = key + "@" + exchange.getRequestMethod().toString();
                 // handle the url rewrite here.
                 if(config.getUrlRewriteRules() != null && config.getUrlRewriteRules().size() > 0) {
                     boolean matched = false;
@@ -187,17 +188,17 @@ public class MrasHandler implements MiddlewareHandler {
                             return;
                         }
                     }
-                    invokeApi(exchange, (String)config.getAccessToken().get(config.SERVICE_HOST), requestPath, "Bearer " + accessToken, startTime);
+                    invokeApi(exchange, (String)config.getAccessToken().get(config.SERVICE_HOST), requestPath, "Bearer " + accessToken, startTime, endpoint);
                     if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
                     return;
                 } else if(config.getPathPrefixAuth().get(key).equals(config.BASIC_AUTH)) {
                     // only basic authentication is used for the access.
-                    invokeApi(exchange, (String)config.getBasicAuth().get(config.SERVICE_HOST), requestPath, "Basic " + encodeCredentials((String)config.getBasicAuth().get(config.USERNAME), (String)config.getBasicAuth().get(config.PASSWORD)), startTime);
+                    invokeApi(exchange, (String)config.getBasicAuth().get(config.SERVICE_HOST), requestPath, "Basic " + encodeCredentials((String)config.getBasicAuth().get(config.USERNAME), (String)config.getBasicAuth().get(config.PASSWORD)), startTime, endpoint);
                     if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
                     return;
                 } else if(config.getPathPrefixAuth().get(key).equals(config.ANONYMOUS)) {
                     // no authorization header for this type of the request.
-                    invokeApi(exchange, (String)config.getAnonymous().get(config.SERVICE_HOST), requestPath, null, startTime);
+                    invokeApi(exchange, (String)config.getAnonymous().get(config.SERVICE_HOST), requestPath, null, startTime, endpoint);
                     if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
                     return;
                 } else if(config.getPathPrefixAuth().get(key).equals(config.MICROSOFT)) {
@@ -214,7 +215,7 @@ public class MrasHandler implements MiddlewareHandler {
                             return;
                         }
                     }
-                    invokeApi(exchange, (String)config.getMicrosoft().get(config.SERVICE_HOST), requestPath, "Bearer " + microsoft, startTime);
+                    invokeApi(exchange, (String)config.getMicrosoft().get(config.SERVICE_HOST), requestPath, "Bearer " + microsoft, startTime, endpoint);
                     if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
                     return;
                 }
@@ -226,7 +227,7 @@ public class MrasHandler implements MiddlewareHandler {
         Handler.next(exchange, next);
     }
 
-    private void invokeApi(HttpServerExchange exchange, String serviceHost, String requestPath, String authorization, long startTime) throws Exception {
+    private void invokeApi(HttpServerExchange exchange, String serviceHost, String requestPath, String authorization, long startTime, String endpoint) throws Exception {
         // call the MRAS API directly here with the token from the cache.
         String method = exchange.getRequestMethod().toString();
         String queryString = exchange.getQueryString();
@@ -333,7 +334,7 @@ public class MrasHandler implements MiddlewareHandler {
         exchange.getResponseSender().send(ByteBuffer.wrap(responseBody));
         if(config.isMetricsInjection() && metricsHandler != null) {
             if(logger.isTraceEnabled()) logger.trace("inject metrics for " + config.getMetricsName());
-            metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName());
+            metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
         }
     }
 

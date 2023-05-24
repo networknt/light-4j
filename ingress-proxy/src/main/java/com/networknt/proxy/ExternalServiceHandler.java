@@ -110,6 +110,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
         if (config.getPathHostMappings() != null) {
             for(String[] parts: config.getPathHostMappings()) {
                 if(requestPath.startsWith(parts[0])) {
+                    String endpoint = parts[1] + "@" + exchange.getRequestMethod().toString();
                     // handle the url rewrite here. It has to be the right path that applied for external service to do the url rewrite.
                     if(config.getUrlRewriteRules() != null && config.getUrlRewriteRules().size() > 0) {
                         boolean matched = false;
@@ -164,7 +165,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         logger.error("wrong http method " + method + " for request path " + requestPath);
                         setExchangeStatus(exchange, METHOD_NOT_ALLOWED, method, requestPath);
                         if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest ends with an error.");
-                        if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName());
+                        if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
                         return;
                     }
                     if(client == null) {
@@ -207,7 +208,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                     if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest ends.");
                     if(config.isMetricsInjection() && metricsHandler != null) {
                         if(logger.isTraceEnabled()) logger.trace("injecting metrics for " + config.getMetricsName());
-                        metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName());
+                        metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
                     }
                     return;
                 }

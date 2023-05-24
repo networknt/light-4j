@@ -92,12 +92,13 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
      * @param httpServerExchange the HttpServerExchange that is used to get the auditInfo to collect the metrics tag.
      * @param startTime          the start time passed in to calculate the response time.
      * @param metricsName        the name of the metrics that is collected.
+     * @param endpoint           the endpoint that is used to collect the metrics. It is optional and only provided by the external handlers.
      */
-    public void injectMetrics(HttpServerExchange httpServerExchange, long startTime, String metricsName) {
+    public void injectMetrics(HttpServerExchange httpServerExchange, long startTime, String metricsName, String endpoint) {
         Map<String, Object> auditInfo = httpServerExchange.getAttachment(AttachmentConstants.AUDIT_INFO);
         if(logger.isTraceEnabled()) logger.trace("auditInfo = " + auditInfo);
+        Map<String, String> tags = new HashMap<>();
         if (auditInfo != null) {
-            Map<String, String> tags = new HashMap<>();
             tags.put(Constants.ENDPOINT_STRING, (String) auditInfo.get(Constants.ENDPOINT_STRING));
             String clientId = auditInfo.get(Constants.CLIENT_ID_STRING) != null ? (String) auditInfo.get(Constants.CLIENT_ID_STRING) : "unknown";
             if(logger.isTraceEnabled()) logger.trace("clientId = " + clientId);
@@ -127,13 +128,26 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
                     }
                 }
             }
-            MetricName metricName = new MetricName(metricsName);
-            metricName = metricName.tagged(commonTags);
-            metricName = metricName.tagged(tags);
-            long time = System.nanoTime() - startTime;
-            registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.TIMERS).update(time, TimeUnit.NANOSECONDS);
-            if(logger.isTraceEnabled()) logger.trace("metricName = " + metricName  + " commonTags = " + JsonMapper.toJson(commonTags) + " tags = " + JsonMapper.toJson(tags));
-            incCounterForStatusCode(httpServerExchange.getStatusCode(), commonTags, tags);
+        } else {
+            // for MRAS and Salesforce handlers that do not have auditInfo in the exchange as they may be called anonymously.
+            tags.put(Constants.ENDPOINT_STRING, httpServerExchange.getRequestPath());
+            tags.put("clientId", "unknown");
+            if (config.isSendScopeClientId()) {
+                tags.put("scopeClientId", "unknown");
+            }
+            if (config.isSendCallerId()) {
+                tags.put("callerId", "unknown");
+            }
+            if (config.isSendIssuer()) {
+                tags.put("issuer", "unknown");
+            }
         }
+        MetricName metricName = new MetricName(metricsName);
+        metricName = metricName.tagged(commonTags);
+        metricName = metricName.tagged(tags);
+        long time = System.nanoTime() - startTime;
+        registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.TIMERS).update(time, TimeUnit.NANOSECONDS);
+        if(logger.isTraceEnabled()) logger.trace("metricName = " + metricName  + " commonTags = " + JsonMapper.toJson(commonTags) + " tags = " + JsonMapper.toJson(tags));
+        incCounterForStatusCode(httpServerExchange.getStatusCode(), commonTags, tags);
     }
 }
