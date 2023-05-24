@@ -89,7 +89,7 @@ public class RouterHandler implements HttpHandler {
         if(logger.isDebugEnabled()) logger.debug("RouterHandler.handleRequest starts.");
         long startTime = System.nanoTime();
         proxyHandler.handleRequest(httpServerExchange);
-        if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(httpServerExchange, startTime, config.getMetricsName());
+        if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(httpServerExchange, startTime, config.getMetricsName(), null);
         if(logger.isDebugEnabled()) logger.debug("RouterHandler.handleRequest ends.");
     }
 
