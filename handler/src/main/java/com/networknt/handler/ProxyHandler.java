@@ -65,6 +65,7 @@ import io.undertow.predicate.Predicate;
 import io.undertow.server.protocol.http.HttpAttachments;
 import io.undertow.server.protocol.http.HttpContinue;
 
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 /**
@@ -130,50 +131,40 @@ public class ProxyHandler implements HttpHandler {
         this.queryParamRewriteRules = builder.queryParamRewriteRules;
         this.headerRewriteRules = builder.headerRewriteRules;
         this.idempotentRequestPredicate = builder.idempotentRequestPredicate;
-        this.requestHeaders.putAll(builder.requestHeaders);
+        for (Map.Entry<HttpString, ExchangeAttribute> e : builder.requestHeaders.entrySet()) {
+            requestHeaders.put(e.getKey(), e.getValue());
+        }
     }
 
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         final ProxyClient.ProxyTarget target = proxyClient.findTarget(exchange);
-
         if (target == null) {
 
             if (LOG.isDebugEnabled())
                 LOG.debug("No proxy target for request to {}", exchange.getRequestURL());
-
             next.handleRequest(exchange);
             return;
         }
-
         if (exchange.isResponseStarted()) {
-
             if (LOG.isErrorEnabled())
                 LOG.error("Cannot proxy a request that has already started.");
-
             //we can't proxy a request that has already started, this is basically a server configuration error
             UndertowLogger.REQUEST_LOGGER.cannotProxyStartedRequest(exchange);
             exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
             exchange.endExchange();
             return;
         }
-
         // check the path prefix for the timeout and then fall back to maxRequestTime.
         String reqPath = exchange.getRequestPath();
         long timeout = maxRequestTime > 0 ? System.currentTimeMillis() + maxRequestTime : 0;
-
         if (pathPrefixMaxRequestTime != null) {
-
             for (Map.Entry<String, Integer> entry : pathPrefixMaxRequestTime.entrySet()) {
                 String key = entry.getKey();
-
                 if (StringUtils.matchPathToPattern(reqPath, key)) {
-
                     maxRequestTime = entry.getValue();
                     timeout = System.currentTimeMillis() + maxRequestTime;
-
                     if (LOG.isTraceEnabled())
                         LOG.trace("Overwritten maxRequestTime {} and timeout {}.", maxRequestTime, timeout);
-
                     break;
                 }
             }
@@ -208,50 +199,40 @@ public class ProxyHandler implements HttpHandler {
     static void copyHeaders(final HeaderMap to, final HeaderMap from, final List<QueryHeaderRewriteRule> rules) {
         long f = from.fastIterateNonEmpty();
         HeaderValues values;
-
         while (f != -1L) {
-
             values = from.fiCurrent(f);
-
-            if (!to.contains(values.getHeaderName()))
-                if (rules != null && rules.size() > 0)
-                    for (var rule : rules)
-                        if (rule.getOldK().equals(values.getHeaderName().toString()))
-                            parseHeader(values, rule, to);
-
-                            //don't over write existing headers, normally the map will be empty, if it is not we assume it is not for a reason
-                        else to.putAll(values.getHeaderName(), values);
-
-            f = from.fiNextNonEmpty(f);
-        }
-    }
-
-    private static void parseHeader(HeaderValues values, QueryHeaderRewriteRule rule, HeaderMap to) {
-        var key = values.getHeaderName();
-
-        // newK is not null, it means the key has to be changed. Create a new HeaderValues object.
-        if (rule.getNewK() != null)
-            key = new HttpString(rule.getNewK());
-
-        // check if we need to replace the value with the oldV and newV
-        if (rule.getOldV() != null && rule.getNewV() != null) {
-            boolean add = false;
-            var it = values.iterator();
-
-            while (it.hasNext()) {
-                var value = it.next();
-
-                if (rule.getOldV().equals(value)) {
-                    it.remove();
-                    add = true;
+            if (!to.contains(values.getHeaderName())) {
+                if (rules != null && rules.size() > 0) {
+                    for (QueryHeaderRewriteRule rule : rules) {
+                        if (rule.getOldK().equals(values.getHeaderName().toString())) {
+                            HttpString key = values.getHeaderName();
+                            if (rule.getNewK() != null) {
+                                // newK is not null, it means the key has to be changed. Create a new HeaderValues object.
+                                key = new HttpString(rule.getNewK());
+                            }
+                            // check if we need to replace the value with the oldV and newV
+                            if (rule.getOldV() != null && rule.getNewV() != null) {
+                                boolean add = false;
+                                Iterator<String> it = values.iterator();
+                                while (it.hasNext()) {
+                                    String value = it.next();
+                                    if (rule.getOldV().equals(value)) {
+                                        it.remove();
+                                        add = true;
+                                    }
+                                }
+                                if (add) values.addFirst(rule.getNewV());
+                            }
+                            to.putAll(key, values);
+                        }
+                    }
+                } else {
+                    //don't over write existing headers, normally the map will be empty, if it is not we assume it is not for a reason
+                    to.putAll(values.getHeaderName(), values);
                 }
             }
-
-            if (add)
-                values.addFirst(rule.getNewV());
+            f = from.fiNextNonEmpty(f);
         }
-
-        to.putAll(key, values);
     }
 
     public ProxyClient getProxyClient() {
