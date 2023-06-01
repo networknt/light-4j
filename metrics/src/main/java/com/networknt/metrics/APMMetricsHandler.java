@@ -88,7 +88,7 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
         exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
             Map<String, Object> auditInfo = exchange1.getAttachment(AttachmentConstants.AUDIT_INFO);
             if(logger.isTraceEnabled()) logger.trace("auditInfo = " + auditInfo);
-            if (auditInfo != null) {
+            if (auditInfo != null && !auditInfo.isEmpty()) {
                 Map<String, String> tags = new HashMap<>();
                 tags.put("endpoint", (String) auditInfo.get(Constants.ENDPOINT_STRING));
                 String clientId = auditInfo.get(Constants.CLIENT_ID_STRING) != null ? (String) auditInfo.get(Constants.CLIENT_ID_STRING) : "unknown";
@@ -119,7 +119,6 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
                         }
                     }
                 }
-
                 MetricName metricName = new MetricName("response_time");
                 metricName = metricName.tagged(commonTags);
                 metricName = metricName.tagged(tags);
@@ -127,6 +126,10 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
                 registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.TIMERS).update(time, TimeUnit.NANOSECONDS);
                 if(logger.isTraceEnabled()) logger.trace("metricName = " + metricName  + " commonTags = " + JsonMapper.toJson(commonTags) + " tags = " + JsonMapper.toJson(tags));
                 incCounterForStatusCode(exchange1.getStatusCode(), commonTags, tags);
+            } else {
+                // when we reach here, it will be in light-gateway so no specification is loaded on the server and also the security verification is failed.
+                // we need to come up with the endpoint at last to ensure we have some meaningful metrics info populated.
+                logger.error("auditInfo is null or empty. Please move the path prefix handler to the top of the handler chain after metrics.");
             }
             nextListener.proceed();
         });

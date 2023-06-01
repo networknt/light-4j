@@ -86,7 +86,7 @@ public class MetricsHandler extends AbstractMetricsHandler {
         exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
             try {
                 Map<String, Object> auditInfo = exchange1.getAttachment(AttachmentConstants.AUDIT_INFO);
-                if(auditInfo != null) {
+                if(auditInfo != null && !auditInfo.isEmpty()) {
                     Map<String, String> tags = new HashMap<>();
                     tags.put("endpoint", (String)auditInfo.get(Constants.ENDPOINT_STRING));
                     tags.put("clientId", auditInfo.get(Constants.CLIENT_ID_STRING) != null ? (String)auditInfo.get(Constants.CLIENT_ID_STRING) : "unknown");
@@ -98,6 +98,10 @@ public class MetricsHandler extends AbstractMetricsHandler {
                     metricName = metricName.tagged(tags);
                     registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.TIMERS).update(time, TimeUnit.NANOSECONDS);
                     incCounterForStatusCode(exchange1.getStatusCode(), commonTags, tags);
+                } else {
+                    // when we reach here, it will be in light-gateway so no specification is loaded on the server and also the security verification is failed.
+                    // we need to come up with the endpoint at last to ensure we have some meaningful metrics info populated.
+                    logger.error("auditInfo is null or empty. Please move the path prefix handler to the top of the handler chain after metrics.");
                 }
             } catch (Throwable e) {
                 logger.error("ExchangeListener throwable",  e);
