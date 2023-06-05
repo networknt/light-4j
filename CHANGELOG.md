@@ -18,6 +18,8 @@
 - fixes \#1764 add trace loggings from metrics for some external handlers [\#1765](https://github.com/networknt/light-4j/pull/1765) ([stevehu](https://github.com/stevehu))
 - Creating 2nd HTTP2Client object for MRAS Microsoft token [\#1763](https://github.com/networknt/light-4j/pull/1763) ([DiogoFKT](https://github.com/DiogoFKT))
 - fixes \#1758 add loopback configuration for gpg sign plugin [\#1759](https://github.com/networknt/light-4j/pull/1759) ([stevehu](https://github.com/stevehu))
+
+
 ## [2.1.18](https://github.com/networknt/light-4j/tree/2.1.18) (2023-05-06)
 
 
