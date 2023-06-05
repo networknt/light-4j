@@ -1,5 +1,23 @@
 # Change Log
 
+## [2.1.19](https://github.com/networknt/light-4j/tree/2.1.19) (2023-06-05)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1782 update metrics handlers to output an error message if aud… [\#1783](https://github.com/networknt/light-4j/pull/1783) ([stevehu](https://github.com/stevehu))
+- fixes \#1779 fix the endpoint for ExternalServiceHandler metrics [\#1780](https://github.com/networknt/light-4j/pull/1780) ([stevehu](https://github.com/stevehu))
+- fixes \#1777 rollback the ProxyHandler copy headers [\#1778](https://github.com/networknt/light-4j/pull/1778) ([stevehu](https://github.com/stevehu))
+- fixes \#1775 use the passed in endpoint if auditInfo is null if endpoi… [\#1776](https://github.com/networknt/light-4j/pull/1776) ([stevehu](https://github.com/stevehu))
+- fixes \#1773 update the abstract metrics handler to send metics even i… [\#1774](https://github.com/networknt/light-4j/pull/1774) ([stevehu](https://github.com/stevehu))
+- fixes \#1771 make request and response body interceptors to log the fu… [\#1772](https://github.com/networknt/light-4j/pull/1772) ([stevehu](https://github.com/stevehu))
+- Issue1769 [\#1770](https://github.com/networknt/light-4j/pull/1770) ([stevehu](https://github.com/stevehu))
+- Response Buffer Leak [\#1762](https://github.com/networknt/light-4j/pull/1762) ([KalevGonvick](https://github.com/KalevGonvick))
+- fixes \#1766 add one more test case for StringUtils matchPathToPattern [\#1767](https://github.com/networknt/light-4j/pull/1767) ([stevehu](https://github.com/stevehu))
+- fixes \#1764 add trace loggings from metrics for some external handlers [\#1765](https://github.com/networknt/light-4j/pull/1765) ([stevehu](https://github.com/stevehu))
+- Creating 2nd HTTP2Client object for MRAS Microsoft token [\#1763](https://github.com/networknt/light-4j/pull/1763) ([DiogoFKT](https://github.com/DiogoFKT))
+- fixes \#1758 add loopback configuration for gpg sign plugin [\#1759](https://github.com/networknt/light-4j/pull/1759) ([stevehu](https://github.com/stevehu))
 ## [2.1.18](https://github.com/networknt/light-4j/tree/2.1.18) (2023-05-06)
 
 
