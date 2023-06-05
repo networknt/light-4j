@@ -6,6 +6,7 @@
 **Merged pull requests:**
 
 
+- fixes \#1185 disable a nagative test case for client module [\#1786](https://github.com/networknt/light-4j/pull/1786) ([stevehu](https://github.com/stevehu))
 - fixes \#1782 update metrics handlers to output an error message if aud… [\#1783](https://github.com/networknt/light-4j/pull/1783) ([stevehu](https://github.com/stevehu))
 - fixes \#1779 fix the endpoint for ExternalServiceHandler metrics [\#1780](https://github.com/networknt/light-4j/pull/1780) ([stevehu](https://github.com/stevehu))
 - fixes \#1777 rollback the ProxyHandler copy headers [\#1778](https://github.com/networknt/light-4j/pull/1778) ([stevehu](https://github.com/stevehu))
