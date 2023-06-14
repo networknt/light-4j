@@ -355,8 +355,8 @@ public final class SimpleConnectionHolder {
             this.uri = SimpleConnectionHolder.this.uri;
         }
 
-        SimpleConnectionHolder holder() { return holder; }
-        SimpleConnection connection() { return connection; }
+        public SimpleConnectionHolder holder() { return holder; }
+        public SimpleConnection connection() { return connection; }
         public Object getRawConnection() { return connection.getRawConnection(); }
         public URI uri() { return uri; }
     }
