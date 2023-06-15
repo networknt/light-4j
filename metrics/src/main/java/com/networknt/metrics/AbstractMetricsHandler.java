@@ -148,6 +148,7 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
         long time = System.nanoTime() - startTime;
         registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.TIMERS).update(time, TimeUnit.NANOSECONDS);
         if(logger.isTraceEnabled()) logger.trace("metricName = " + metricName  + " commonTags = " + JsonMapper.toJson(commonTags) + " tags = " + JsonMapper.toJson(tags));
-        incCounterForStatusCode(httpServerExchange.getStatusCode(), commonTags, tags);
+        // the metrics handler will collect the status code metrics and increase the counter. Here we don't want to increase it again.
+        // incCounterForStatusCode(httpServerExchange.getStatusCode(), commonTags, tags);
     }
 }
