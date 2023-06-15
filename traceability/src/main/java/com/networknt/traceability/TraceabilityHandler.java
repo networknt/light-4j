@@ -65,6 +65,8 @@ public class TraceabilityHandler implements MiddlewareHandler {
         if(tid != null) {
             exchange.getResponseHeaders().put(HttpStringConstants.TRACEABILITY_ID, tid);
             MDC.put(TID, tid);
+        } else {
+            MDC.remove(TID);
         }
         if (logger.isDebugEnabled()) logger.trace("TraceabilityHandler.handleRequest ends.");
         Handler.next(exchange, next);
