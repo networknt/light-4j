@@ -1,5 +1,14 @@
 # Change Log
 
+## [2.1.20](https://github.com/networknt/light-4j/tree/2.1.20) (2023-06-17)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1792 APMMetrics handler is pushing counters twice for metrics … [\#1793](https://github.com/networknt/light-4j/pull/1793) ([stevehu](https://github.com/stevehu))
+- fixes \#1790 clear the traceabilityId if it is null to prevent propaga… [\#1791](https://github.com/networknt/light-4j/pull/1791) ([stevehu](https://github.com/stevehu))
+- fixes \#1788 make ConnectionToken holder method public to allow the cl… [\#1789](https://github.com/networknt/light-4j/pull/1789) ([stevehu](https://github.com/stevehu))
 ## [2.1.19](https://github.com/networknt/light-4j/tree/2.1.19) (2023-06-05)
 
 
