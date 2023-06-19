@@ -15,8 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 
-import static com.networknt.body.BodyHandler.REQUEST_BODY_STRING;
-
 public class ResponseBodyInterceptor implements ResponseInterceptor {
     private static final Logger LOG = LoggerFactory.getLogger(ResponseBodyInterceptor.class);
     private final BodyConfig config;

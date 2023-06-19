@@ -1,7 +1,7 @@
 package com.networknt.sanitizer.builder;
 
-import com.networknt.body.BodyHandler;
 import com.networknt.config.Config;
+import com.networknt.httpstring.AttachmentConstants;
 import io.undertow.Handlers;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.HeaderMap;
@@ -27,7 +27,7 @@ public class HandlerBuilder {
                     }
                 })
                 .add(Methods.POST, "/body", exchange -> {
-                    Object body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
+                    Object body = exchange.getAttachment(AttachmentConstants.REQUEST_BODY);
                     if(body != null) {
                         exchange.getResponseSender().send(Config.getInstance().getMapper().writeValueAsString(body));
                     }
