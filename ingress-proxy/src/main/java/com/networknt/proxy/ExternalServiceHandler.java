@@ -7,6 +7,7 @@ import com.networknt.client.ssl.TLSConfig;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.config.UrlRewriteRule;
+import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.metrics.MetricsConfig;
 import com.networknt.metrics.AbstractMetricsHandler;
 import com.networknt.utility.ModuleRegistry;
@@ -150,15 +151,15 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         request = builder.DELETE().build();
                     } else if(method.equalsIgnoreCase("POST")) {
                         // if body handler is in the chain before this handler, we should have it in the exchange attachment.
-                        String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
+                        String bodyString = exchange.getAttachment(AttachmentConstants.REQUEST_BODY_STRING);
                         if(bodyString == null && logger.isDebugEnabled()) logger.debug("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
                         request = builder.POST(bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString)).build();
                     } else if(method.equalsIgnoreCase("PUT")) {
-                        String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
+                        String bodyString = exchange.getAttachment(AttachmentConstants.REQUEST_BODY_STRING);
                         if(bodyString == null && logger.isDebugEnabled()) logger.debug("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
                         request = builder.PUT(bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString)).build();
                     } else if(method.equalsIgnoreCase("PATCH")) {
-                        String bodyString = exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
+                        String bodyString = exchange.getAttachment(AttachmentConstants.REQUEST_BODY_STRING);
                         if(bodyString == null && logger.isDebugEnabled()) logger.debug("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
                         request = builder.method("PATCH", bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString)).build();
                     } else {

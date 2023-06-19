@@ -22,6 +22,7 @@ import com.networknt.body.BodyHandler;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.handler.LightHttpHandler;
+import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.ContentType;
 import com.networknt.logging.model.LoggerConfig;
 import com.networknt.logging.model.LoggerInfo;
@@ -49,7 +50,7 @@ public class LoggerPostHandler implements LightHttpHandler {
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         LoggerConfig config = (LoggerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, LoggerConfig.class);
         if (config.isEnabled()) {
-            List loggers = (List) exchange.getAttachment(BodyHandler.REQUEST_BODY);
+            List loggers = (List) exchange.getAttachment(AttachmentConstants.REQUEST_BODY);
             if(loggers == null) {
                 logger.error("loggers is null from the attachment. Most likely, the body handler is not in the handler chain.");
                 setExchangeStatus(exchange, STATUS_REQUEST_BODY_MISSING);

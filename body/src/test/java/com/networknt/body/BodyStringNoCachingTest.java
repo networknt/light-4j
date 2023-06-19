@@ -2,6 +2,7 @@ package com.networknt.body;
 
 import com.networknt.client.Http2Client;
 import com.networknt.exception.ClientException;
+import com.networknt.httpstring.AttachmentConstants;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.client.ClientConnection;
@@ -62,7 +63,7 @@ public class BodyStringNoCachingTest {
     static RoutingHandler getTestHandler() {
         return Handlers.routing()
                 .add(Methods.POST, "/post", exchange -> {
-                    String bodyString = (String) exchange.getAttachment(BodyHandler.REQUEST_BODY_STRING);
+                    String bodyString = (String) exchange.getAttachment(AttachmentConstants.REQUEST_BODY_STRING);
                     if (bodyString == null) {
                         exchange.getResponseSender().send("nobody");
                     } else {

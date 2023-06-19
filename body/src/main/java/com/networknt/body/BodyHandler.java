@@ -61,9 +61,6 @@ public class BodyHandler implements MiddlewareHandler {
 
     // request body will be parsed during validation and it is attached to the exchange, in JSON,
     // it could be a map or list. So treat it as Object in the attachment.
-    public static final AttachmentKey<Object> REQUEST_BODY = AttachmentConstants.REQUEST_BODY;
-
-    public static final AttachmentKey<String> REQUEST_BODY_STRING = AttachmentConstants.REQUEST_BODY_STRING;
 
     public static final String CONFIG_NAME = "body";
 
@@ -112,7 +109,7 @@ public class BodyHandler implements MiddlewareHandler {
                     String unparsedRequestBody = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
                     // attach the unparsed request body into exchange if the cacheRequestBody is enabled in body.yml
                     if (config.isCacheRequestBody()) {
-                        exchange.putAttachment(REQUEST_BODY_STRING, unparsedRequestBody);
+                        exchange.putAttachment(AttachmentConstants.REQUEST_BODY_STRING, unparsedRequestBody);
                     }
                     // attach the parsed request body into exchange if the body parser is enabled
                     boolean res = attachJsonBody(exchange, unparsedRequestBody);
@@ -124,13 +121,13 @@ public class BodyHandler implements MiddlewareHandler {
                 } else if (contentType.startsWith("text/plain")) {
                     InputStream inputStream = exchange.getInputStream();
                     String unparsedRequestBody = StringUtils.inputStreamToString(inputStream, StandardCharsets.UTF_8);
-                    exchange.putAttachment(REQUEST_BODY, unparsedRequestBody);
+                    exchange.putAttachment(AttachmentConstants.REQUEST_BODY, unparsedRequestBody);
                 } else if (contentType.startsWith("multipart/form-data") || contentType.startsWith("application/x-www-form-urlencoded")) {
                     // attach the parsed request body into exchange if the body parser is enabled
                     attachFormDataBody(exchange);
                 } else {
                     InputStream inputStream = exchange.getInputStream();
-                    exchange.putAttachment(REQUEST_BODY, inputStream);
+                    exchange.putAttachment(AttachmentConstants.REQUEST_BODY, inputStream);
                 }
             } catch (IOException e) {
                 logger.error("IOException: ", e);
@@ -156,10 +153,10 @@ public class BodyHandler implements MiddlewareHandler {
         if (parser != null) {
             FormData formData = parser.parseBlocking();
             data = BodyConverter.convert(formData);
-            exchange.putAttachment(REQUEST_BODY, data);
+            exchange.putAttachment(AttachmentConstants.REQUEST_BODY, data);
         } else {
             InputStream inputStream = exchange.getInputStream();
-            exchange.putAttachment(REQUEST_BODY, inputStream);
+            exchange.putAttachment(AttachmentConstants.REQUEST_BODY, inputStream);
         }
     }
 
@@ -186,7 +183,7 @@ public class BodyHandler implements MiddlewareHandler {
                 setExchangeStatus(exchange, CONTENT_TYPE_MISMATCH, "application/json");
                 return false;
             }
-            exchange.putAttachment(REQUEST_BODY, body);
+            exchange.putAttachment(AttachmentConstants.REQUEST_BODY, body);
         }
         // if this is the get or delete request, the body wil be null, but we still need to go to the next handler.
         return true;
