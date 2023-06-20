@@ -147,25 +147,18 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
 
     private boolean shouldReadBody(final HttpServerExchange ex) {
         var headers = ex.getRequestHeaders();
-        var contentType = ex.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
+        var requestMethod = ex.getRequestMethod().toString();
         var requestPath = ex.getRequestPath();
 
         return this.injectorContentRequired()
                 && this.isAppliedBodyInjectionPathPrefix(requestPath)
-                && this.hasContent(contentType)
+                && this.hasContent(requestMethod)
                 && !ex.isRequestComplete()
                 && !HttpContinue.requiresContinueResponse(headers);
     }
 
-    private boolean hasContent(String contentType) {
-        if (contentType == null)
-            return false;
-        return contentType.startsWith(ContentType.TEXT_PLAIN_VALUE.value())
-                || contentType.startsWith(ContentType.XML.value())
-                || contentType.startsWith(ContentType.APPLICATION_XML_VALUE.value())
-                || contentType.startsWith(ContentType.MULTIPART_FORM_DATA_VALUE.value())
-                || contentType.startsWith(ContentType.APPLICATION_FORM_URLENCODED_VALUE.value())
-                || contentType.startsWith(ContentType.APPLICATION_JSON.value());
+    private boolean hasContent(String method) {
+        return method.equalsIgnoreCase("post") || method.equalsIgnoreCase("put") || method.equalsIgnoreCase("patch");
     }
 
     /**
