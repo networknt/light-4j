@@ -61,6 +61,8 @@ public class BodyHandler implements MiddlewareHandler {
 
     // request body will be parsed during validation and it is attached to the exchange, in JSON,
     // it could be a map or list. So treat it as Object in the attachment.
+    public static final AttachmentKey<Object> REQUEST_BODY = AttachmentConstants.REQUEST_BODY;
+    public static final AttachmentKey<String> REQUEST_BODY_STRING = AttachmentConstants.REQUEST_BODY_STRING;
 
     public static final String CONFIG_NAME = "body";
 
