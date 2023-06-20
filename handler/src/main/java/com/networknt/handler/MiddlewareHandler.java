@@ -17,6 +17,7 @@
 package com.networknt.handler;
 
 import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
 
 /**
  * A interface for middleware handlers. All middleware handlers must implement this interface
@@ -64,6 +65,10 @@ public interface MiddlewareHandler extends LightHttpHandler {
      * Reload config values in case the config values changed by config server.
      */
     default void reload() {
+
+    }
+
+    default void addHandlerMDCContext(final HttpServerExchange exchange, String field, String value) {
 
     }
 }

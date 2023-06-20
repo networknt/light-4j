@@ -19,6 +19,7 @@ package com.networknt.correlation;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.Util;
@@ -28,6 +29,8 @@ import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+
+import java.util.HashMap;
 
 /**
  * This is a handler that checks if X-Correlation-Id exists in request header and put it into
@@ -74,6 +77,19 @@ public class CorrelationHandler implements MiddlewareHandler {
         }
         // Add the cId into MDC so that all log statement will have cId as part of it.
         MDC.put(CID, cId);
+
+        if (cId != null) {
+            var mdcContext = exchange.getAttachment(AttachmentConstants.MDC_CONTEXT);
+            if (mdcContext != null) {
+                mdcContext.put(CID, cId);
+            } else {
+                var newContext = new HashMap<String, String>();
+                newContext.put(CID, cId);
+                exchange.putAttachment(AttachmentConstants.MDC_CONTEXT, newContext);
+            }
+        }
+
+
         //logger.debug("Init cId:" + cId);
         if(logger.isDebugEnabled()) logger.debug("CorrelationHandler.handleRequest ends.");
         Handler.next(exchange, next);
