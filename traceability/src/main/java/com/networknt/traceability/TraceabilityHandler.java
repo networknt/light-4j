@@ -67,14 +67,7 @@ public class TraceabilityHandler implements MiddlewareHandler {
         String tid = exchange.getRequestHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
         if(tid != null) {
             exchange.getResponseHeaders().put(HttpStringConstants.TRACEABILITY_ID, tid);
-            var mdcContext = exchange.getAttachment(AttachmentConstants.MDC_CONTEXT);
-            if (mdcContext != null) {
-                mdcContext.put(TID, tid);
-            } else {
-                var newContext = new HashMap<String, String>();
-                newContext.put(TID, tid);
-                exchange.putAttachment(AttachmentConstants.MDC_CONTEXT, newContext);
-            }
+            this.addHandlerMDCContext(exchange, TID, tid);
             MDC.put(TID, tid);
         } else {
             MDC.remove(TID);

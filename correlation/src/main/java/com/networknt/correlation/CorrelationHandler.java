@@ -79,14 +79,7 @@ public class CorrelationHandler implements MiddlewareHandler {
         MDC.put(CID, cId);
 
         if (cId != null) {
-            var mdcContext = exchange.getAttachment(AttachmentConstants.MDC_CONTEXT);
-            if (mdcContext != null) {
-                mdcContext.put(CID, cId);
-            } else {
-                var newContext = new HashMap<String, String>();
-                newContext.put(CID, cId);
-                exchange.putAttachment(AttachmentConstants.MDC_CONTEXT, newContext);
-            }
+            this.addHandlerMDCContext(exchange, CID, cId);
         }
 
 
