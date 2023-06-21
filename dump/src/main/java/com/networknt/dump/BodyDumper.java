@@ -17,6 +17,7 @@
 package com.networknt.dump;
 
 import com.networknt.body.BodyHandler;
+import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.mask.Mask;
 import com.networknt.utility.StringUtils;
 import io.undertow.server.HttpServerExchange;
@@ -65,7 +66,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
         //only dump json info
         if (contentType != null && contentType.startsWith("application/json")) {
             //if body info already grab by body handler, get it from attachment directly
-            Object requestBodyAttachment = exchange.getAttachment(BodyHandler.REQUEST_BODY);
+            Object requestBodyAttachment = exchange.getAttachment(AttachmentConstants.REQUEST_BODY);
             if(requestBodyAttachment != null) {
                 dumpBodyAttachment(requestBodyAttachment);
             } else {

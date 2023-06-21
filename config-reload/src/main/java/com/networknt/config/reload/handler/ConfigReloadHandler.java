@@ -5,6 +5,7 @@ import com.networknt.body.BodyHandler;
 import com.networknt.config.Config;
 import com.networknt.config.reload.model.ConfigReloadConfig;
 import com.networknt.handler.LightHttpHandler;
+import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.server.DefaultConfigLoader;
 import com.networknt.server.IConfigLoader;
 import com.networknt.status.HttpStatus;
@@ -45,7 +46,7 @@ public class ConfigReloadHandler implements LightHttpHandler {
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         ConfigReloadConfig config = (ConfigReloadConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ConfigReloadConfig.class);
       //  Map<String, Object> bodyMap = (Map<String, Object>)exchange.getAttachment(BodyHandler.REQUEST_BODY);
-        List<String> modules =  (List)exchange.getAttachment(BodyHandler.REQUEST_BODY);
+        List<String> modules =  (List)exchange.getAttachment(AttachmentConstants.REQUEST_BODY);
 
         List<String> reloads =  new ArrayList<>();
         if (config.isEnabled()) {

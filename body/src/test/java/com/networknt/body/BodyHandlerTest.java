@@ -19,6 +19,7 @@ package com.networknt.body;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
+import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.status.Status;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
@@ -89,7 +90,7 @@ public class BodyHandlerTest {
     static RoutingHandler getTestHandler() {
         return Handlers.routing()
                 .add(Methods.GET, "/get", exchange -> {
-                    Object body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
+                    Object body = exchange.getAttachment(AttachmentConstants.REQUEST_BODY);
                     if (body == null) {
                         exchange.getResponseSender().send("nobody");
                     } else {
@@ -97,7 +98,7 @@ public class BodyHandlerTest {
                     }
                 })
                 .add(Methods.POST, "/post", exchange -> {
-                    Object body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
+                    Object body = exchange.getAttachment(AttachmentConstants.REQUEST_BODY);
                     if (body == null) {
                         exchange.getResponseSender().send("nobody");
                     } else {

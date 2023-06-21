@@ -26,6 +26,7 @@ import com.networknt.client.simplepool.SimpleConnectionHolder;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.handler.LightHttpHandler;
+import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.ContentType;
 import com.networknt.logging.model.LoggerConfig;
 import com.networknt.logging.model.LoggerInfo;
@@ -79,7 +80,7 @@ public class LoggerPostHandler implements LightHttpHandler {
         // first, we need to check if the X-Adm-PassThrough header exists and if it is true.
         // If it is true, we will just pass the request to the downstream API.
         HeaderValues passThroughObject = exchange.getRequestHeaders().get(Constants.ADM_PASSTHROUGH_STRING);
-        List loggers = (List)exchange.getAttachment(BodyHandler.REQUEST_BODY);
+        List loggers = (List)exchange.getAttachment(AttachmentConstants.REQUEST_BODY);
         if(passThroughObject != null && passThroughObject.getFirst().equals("true")) {
             if(logger.isDebugEnabled()) logger.debug("pass through is true");
             if(config.isDownstreamEnabled()) {
@@ -94,7 +95,6 @@ public class LoggerPostHandler implements LightHttpHandler {
                 // need to return an error status to indicate that downstream API access is disabled.
                 setExchangeStatus(exchange, DOWNSTREAM_ADMIN_DISABLED);
             }
-
         } else {
             if(logger.isDebugEnabled()) logger.debug("pass through is false");
             if(loggers == null) {

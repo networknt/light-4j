@@ -20,6 +20,7 @@ import com.networknt.body.BodyHandler;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -101,7 +102,7 @@ public class SanitizerHandler implements MiddlewareHandler {
         if (config.isBodyEnabled() && ("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method) || "PATCH".equalsIgnoreCase(method))) {
             // assume that body parser is installed before this middleware and body is parsed as a map.
             // we are talking about JSON api now.
-            Object body = exchange.getAttachment(BodyHandler.REQUEST_BODY);
+            Object body = exchange.getAttachment(AttachmentConstants.REQUEST_BODY);
             if (body != null) {
                 if(body instanceof List) {
                     bodyEncoder.encodeList((List<Map<String, Object>>)body);
