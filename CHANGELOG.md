@@ -1,5 +1,14 @@
 # Change Log
 
+## [2.1.22](https://github.com/networknt/light-4j/tree/2.1.22) (2023-06-22)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1799 add back the request body attachment key to the BodyHandler [\#1800](https://github.com/networknt/light-4j/pull/1800) ([stevehu](https://github.com/stevehu))
+- fixes \#1796 check the body empty based on the mehtod instead of conen… [\#1797](https://github.com/networknt/light-4j/pull/1797) ([stevehu](https://github.com/stevehu))
+- Attachment Key Change [\#1795](https://github.com/networknt/light-4j/pull/1795) ([KalevGonvick](https://github.com/KalevGonvick))
 ## [2.1.21](https://github.com/networknt/light-4j/tree/2.1.21) (2023-06-22)
 
 
