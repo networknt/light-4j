@@ -22,6 +22,7 @@ public class PathPrefixAuth {
     String username;
     String password;
     String clientId;
+    String scope;
     String clientSecret;
     String responseType;
 
@@ -167,4 +168,11 @@ public class PathPrefixAuth {
         this.accessToken = accessToken;
     }
 
+    public String getScope() {
+        return scope;
+    }
+
+    public void setScope(String scope) {
+        this.scope = scope;
+    }
 }
