@@ -44,7 +44,7 @@ public class ProxyHealthGetHandler implements LightHttpHandler {
             result = backendHealth();
         }
         // for security reason, we don't output the details about the error. Users can check the log for the failure.
-        if(HEALTH_RESULT_ERROR == result) {
+        if(HEALTH_RESULT_ERROR.equals(result)) {
             exchange.setStatusCode(400);
             if(logger.isDebugEnabled()) logger.debug("ProxyHealthGetHandler.handleRequest ends with an error.");
             exchange.getResponseSender().send(HEALTH_RESULT_ERROR);
