@@ -26,6 +26,8 @@ public class Constants {
 
     public static final String CORRELATION_ID_STRING = "X-Correlation-Id";
     public static final String TRACEABILITY_ID_STRING = "X-Traceability-Id";
+    public static final String ADM_PASSTHROUGH_STRING = "X-Adm-PassThrough";
+
     public static final String USER_ID_STRING = "user_id";
     public static final String UID_STRING = "uid";
     public static final String USER_TYPE_STRING = "user_type";
@@ -122,4 +124,7 @@ public class Constants {
     // rule loader
     public static final String RULE_ID = "ruleId";
 
+    // framework
+    public static final String LIGHT_4J = "Light4j";
+    public static final String SPRING_BOOT = "SpringBoot";
 }

@@ -460,7 +460,7 @@ ERR10063:
   statusCode: 400
   code: ERR10063
   message: MISSING_ENDPOINT_FUNCTION
-  description: Missing funcation in the mapping for endpoint %s.
+  description: Missing function in the mapping for endpoint %s.
 ERR10064:
   statusCode: 400
   code: ERR10064
@@ -556,6 +556,16 @@ ERR10082:
   code: ERR10082
   message: CLIENT_EXCEPTION
   description: Client exception with message %s.
+ERR10083:
+  statusCode: 400
+  code: ERR10083
+  message: API_ERROR_RESPONSE
+  description: API access with error response code %s.
+ERR10084:
+  statusCode: 400
+  code: ERR10084
+  message: DOWNSTREAM_ADMIN_DISABLED
+  description: Downstream admin access is disabled.
 
 # 11000-11499 swagger-validator errors
 ERR11000:

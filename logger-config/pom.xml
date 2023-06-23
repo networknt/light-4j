@@ -41,6 +41,10 @@
             <groupId>com.networknt</groupId>
             <artifactId>http-string</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>client</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>io.undertow</groupId>
@@ -63,11 +67,6 @@
             <artifactId>commons-codec</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>client</artifactId>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
