@@ -16,7 +16,11 @@
 
 package com.networknt.handler;
 
+import com.networknt.httpstring.AttachmentConstants;
 import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
+
+import java.util.HashMap;
 
 /**
  * A interface for middleware handlers. All middleware handlers must implement this interface
@@ -65,5 +69,16 @@ public interface MiddlewareHandler extends LightHttpHandler {
      */
     default void reload() {
 
+    }
+
+    default void addHandlerMDCContext(final HttpServerExchange exchange, String field, String value) {
+        var context = exchange.getAttachment(AttachmentConstants.MDC_CONTEXT);
+        if (context != null) {
+            context.put(field, value);
+        } else {
+            var newContext = new HashMap<String, String>();
+            newContext.put(field, value);
+            exchange.putAttachment(AttachmentConstants.MDC_CONTEXT, newContext);
+        }
     }
 }
