@@ -1,6 +1,12 @@
+# The LDAP server uri
 uri: ${ldap.uri:}
+# The LDAP domain name
 domain: ${ldap.domain:}
+# The user principal
 principal: ${ldap.principal:}
+# The user credential
 credential: ${ldap.credential:}
+# The search filter
 searchFilter: ${ldap.searchFilter:}
+# The search base
 searchBase: ${ldap.searchBase:}
