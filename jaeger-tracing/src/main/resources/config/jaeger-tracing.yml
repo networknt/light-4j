@@ -5,5 +5,5 @@ enabled: ${jaeger.enabled:false}
 # Sampler configuration https://github.com/jaegertracing/jaeger-client-java
 # It can either be const, probabilistic, or ratelimiting
 type: ${jaeger.type:const}
-# can either be an integer, a double, or an integer
+# The sampler parameter that can either be an integer, a double, or an integer
 param: ${jaeger.param:1}
