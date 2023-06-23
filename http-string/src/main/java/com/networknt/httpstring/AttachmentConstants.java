@@ -22,6 +22,7 @@ public class AttachmentConstants {
     public static final AttachmentKey<Object> REQUEST_BODY = AttachmentKey.create(Object.class);
     public static final AttachmentKey<String> REQUEST_BODY_STRING = AttachmentKey.create(String.class);
     public static final AttachmentKey<Object> RESPONSE_BODY = AttachmentKey.create(Object.class);
+    public static final AttachmentKey<Map<String, String>> MDC_CONTEXT = AttachmentKey.create(Map.class);
     public static final AttachmentKey<String> RESPONSE_BODY_STRING = AttachmentKey.create(String.class);
 
     public static final AttachmentKey<PooledByteBuffer[]> BUFFERED_RESPONSE_DATA_KEY = AttachmentKey.create(PooledByteBuffer[].class);
