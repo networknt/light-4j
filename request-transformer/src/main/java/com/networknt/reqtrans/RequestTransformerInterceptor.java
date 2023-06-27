@@ -39,7 +39,7 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
     static final Logger logger = LoggerFactory.getLogger(RequestTransformerInterceptor.class);
     static final String REQUEST_TRANSFORM = "request-transform";
 
-    private RequestTransformerConfig config;
+    private final RequestTransformerConfig config;
     private volatile HttpHandler next;
     private RuleEngine engine;
 
@@ -176,11 +176,17 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
                                             // manipulate the request headers.
                                             List<String> removeList = (List)requestHeaders.get("remove");
                                             if(removeList != null) {
-                                                removeList.forEach(s -> exchange.getRequestHeaders().remove(s));
+                                                removeList.forEach(s -> {
+                                                    if(logger.isTraceEnabled()) logger.trace("removing request header: " + s);
+                                                    exchange.getRequestHeaders().remove(s);
+                                                });
                                             }
                                             Map<String, Object> updateMap = (Map)requestHeaders.get("update");
                                             if(updateMap != null) {
-                                                updateMap.forEach((k, v) -> exchange.getRequestHeaders().put(new HttpString(k), (String)v));
+                                                updateMap.forEach((k, v) -> {
+                                                    if(logger.isTraceEnabled()) logger.trace("updating request header: " + k + " value: " + v);
+                                                    exchange.getRequestHeaders().put(new HttpString(k), (String)v);
+                                                });
                                             }
                                         }
                                         break;
