@@ -378,7 +378,7 @@ public class DefaultConfigLoader implements IConfigLoader{
         qs.append("?").append(PRODUCT_ID).append("=").append(startupConfig.get(PRODUCT_ID));
         if(startupConfig.get(PRODUCT_VERSION) != null) qs.append("&").append(PRODUCT_VERSION).append("=").append(startupConfig.get(PRODUCT_VERSION));
         if(startupConfig.get(API_ID) != null) qs.append("&").append(API_ID).append("=").append(startupConfig.get(API_ID));
-        if(startupConfig.get(API_VERSION) != null) qs.append("&").append(API_VERSION).append("=").append(startupConfig.get(API_ID));
+        if(startupConfig.get(API_VERSION) != null) qs.append("&").append(API_VERSION).append("=").append(startupConfig.get(API_VERSION));
         if(lightEnv != null) qs.append("&").append(ENV_TAG).append("=").append(lightEnv);
         if(logger.isDebugEnabled()) logger.debug("configParameters: {}", qs);
         return qs.toString();
