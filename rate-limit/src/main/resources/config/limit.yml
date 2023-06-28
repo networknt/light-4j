@@ -16,8 +16,8 @@ queueSize: ${limit.queueSize:-1}
 # error code to trick the DDoS client/tool to stop the attacks as it considers the server
 # is down. However, if the rate limit is used internally to throttle the client requests to
 # protect a slow backend API, it will return 429 error code to indicate too many requests
-# for the client to wait a grace period to resent the request. By default, 503 is returned.
-errorCode: ${limit.errorCode:503}
+# for the client to wait a grace period to resent the request. By default, 429 is returned.
+errorCode: ${limit.errorCode:429}
 # Default request rate limit 10 requests per second and 10000 quota per day. This is the
 # default for the server shared by all the services. If the key is not server, then the
 # quota is not applicable.
