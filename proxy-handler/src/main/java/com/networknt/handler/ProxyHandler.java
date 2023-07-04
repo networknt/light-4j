@@ -32,7 +32,10 @@ import com.networknt.handler.config.MethodRewriteRule;
 import com.networknt.handler.config.QueryHeaderRewriteRule;
 import com.networknt.handler.config.UrlRewriteRule;
 import com.networknt.handler.thread.LightThreadExecutor;
+import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.HttpStringConstants;
+import com.networknt.metrics.AbstractMetricsHandler;
+import com.networknt.metrics.MetricsHandler;
 import com.networknt.utility.CollectionUtils;
 import com.networknt.utility.StringUtils;
 import io.undertow.UndertowLogger;
@@ -98,7 +101,6 @@ public class ProxyHandler implements HttpHandler {
     private final ProxyClient proxyClient;
     private int maxRequestTime;
     private final Map<String, Integer> pathPrefixMaxRequestTime;
-
     /**
      * Map of additional headers to add to the request.
      */
@@ -139,7 +141,6 @@ public class ProxyHandler implements HttpHandler {
     }
 
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-
         this.lightThreadExecutor = new LightThreadExecutor(exchange);
 
         final ProxyClient.ProxyTarget target = proxyClient.findTarget(exchange);
@@ -353,6 +354,14 @@ public class ProxyHandler implements HttpHandler {
 
             else {
                 ex.setStatusCode(StatusCodes.SERVICE_UNAVAILABLE);
+                AbstractMetricsHandler metricsHandler = (AbstractMetricsHandler) exchange.getAttachment(AttachmentConstants.METRICS_HANDLER);
+                if(metricsHandler != null) {
+                    String metricsName = exchange.getAttachment(AttachmentConstants.DOWNSTREAM_METRICS_NAME);
+                    if (metricsName != null) {
+                        long startTime = exchange.getAttachment(AttachmentConstants.DOWNSTREAM_METRICS_START);
+                        metricsHandler.injectMetrics(exchange, startTime, metricsName, null);
+                    }
+                }
                 ex.endExchange();
             }
         }
@@ -374,6 +383,14 @@ public class ProxyHandler implements HttpHandler {
 
             else {
                 exchange.setStatusCode(StatusCodes.GATEWAY_TIME_OUT);
+                AbstractMetricsHandler metricsHandler = (AbstractMetricsHandler) exchange.getAttachment(AttachmentConstants.METRICS_HANDLER);
+                if(metricsHandler != null) {
+                    String metricsName = exchange.getAttachment(AttachmentConstants.DOWNSTREAM_METRICS_NAME);
+                    if (metricsName != null) {
+                        long startTime = exchange.getAttachment(AttachmentConstants.DOWNSTREAM_METRICS_START);
+                        metricsHandler.injectMetrics(exchange, startTime, metricsName, null);
+                    }
+                }
                 exchange.endExchange();
             }
         }
@@ -936,9 +953,16 @@ public class ProxyHandler implements HttpHandler {
 
             final IoExceptionHandler handler = new IoExceptionHandler(exchange, result.getConnection());
 
-
-
             Transfer.initiateTransfer(result.getResponseChannel(), exchange.getResponseChannel(), ChannelListeners.closingChannelListener(), new HTTPTrailerChannelListener(result, exchange, exchange, proxyClientHandler, idempotentPredicate), handler, handler, exchange.getConnection().getByteBufferPool());
+
+            AbstractMetricsHandler metricsHandler = (AbstractMetricsHandler) exchange.getAttachment(AttachmentConstants.METRICS_HANDLER);
+            if(metricsHandler != null) {
+                String metricsName = exchange.getAttachment(AttachmentConstants.DOWNSTREAM_METRICS_NAME);
+                if (metricsName != null) {
+                    long startTime = exchange.getAttachment(AttachmentConstants.DOWNSTREAM_METRICS_START);
+                    metricsHandler.injectMetrics(exchange, startTime, metricsName, null);
+                }
+            }
         }
 
         private void handleUpgradeChannelOnComplete(ClientExchange result) {

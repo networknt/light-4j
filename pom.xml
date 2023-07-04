@@ -172,6 +172,7 @@
         <module>ldap-util</module>
         <module>cache-manager</module>
         <module>db-provider</module>
+        <module>proxy-handler</module>
     </modules>
 
     <dependencyManagement>
@@ -442,6 +443,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>db-provider</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>proxy-handler</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <!-- External dependencies -->

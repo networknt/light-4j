@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.Http2Client;
 import com.networknt.config.JsonMapper;
 import com.networknt.handler.Handler;
+import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.metrics.MetricsConfig;
 import com.networknt.metrics.AbstractMetricsHandler;
 import com.networknt.utility.ModuleRegistry;
@@ -98,7 +99,6 @@ public class LightProxyHandler implements HttpHandler {
                 .setRewriteHostHeader(config.isRewriteHostHeader())
                 .setNext(ResponseCodeHandler.HANDLE_404)
                 .build();
-
         if(config.isMetricsInjection()) {
             // get the metrics handler from the handler chain for metrics registration. If we cannot get the
             // metrics handler, then an error message will be logged.
@@ -111,16 +111,20 @@ public class LightProxyHandler implements HttpHandler {
     }
 
     @Override
-    public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("LightProxyHandler.handleRequest starts.");
         long startTime = System.nanoTime();
         if(config.isForwardJwtClaims()) {
-            HeaderMap headerValues = httpServerExchange.getRequestHeaders();
+            HeaderMap headerValues = exchange.getRequestHeaders();
             JwtClaims jwtClaims = extractClaimsFromJwt(headerValues);
-            httpServerExchange.getRequestHeaders().put(HttpString.tryFromString(CLAIMS_KEY), new ObjectMapper().writeValueAsString(jwtClaims.getClaimsMap()));
+            exchange.getRequestHeaders().put(HttpString.tryFromString(CLAIMS_KEY), new ObjectMapper().writeValueAsString(jwtClaims.getClaimsMap()));
         }
-        proxyHandler.handleRequest(httpServerExchange);
-        if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(httpServerExchange, startTime, config.getMetricsName(), null);
+        if(metricsHandler != null) {
+            exchange.putAttachment(AttachmentConstants.METRICS_HANDLER, metricsHandler);
+            exchange.putAttachment(AttachmentConstants.DOWNSTREAM_METRICS_NAME, config.getMetricsName());
+            exchange.putAttachment(AttachmentConstants.DOWNSTREAM_METRICS_START, System.nanoTime());
+        }
+        proxyHandler.handleRequest(exchange);
         if(logger.isDebugEnabled()) logger.debug("LightProxyHandler.handleRequest ends.");
     }
 
