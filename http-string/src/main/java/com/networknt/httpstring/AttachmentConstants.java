@@ -28,4 +28,7 @@ public class AttachmentConstants {
     public static final AttachmentKey<PooledByteBuffer[]> BUFFERED_RESPONSE_DATA_KEY = AttachmentKey.create(PooledByteBuffer[].class);
     public static final AttachmentKey<PooledByteBuffer[]> BUFFERED_REQUEST_DATA_KEY = AttachmentKey.create(PooledByteBuffer[].class);
 
+    public static final AttachmentKey<String> DOWNSTREAM_METRICS_NAME = AttachmentKey.create(String.class);
+    public static final AttachmentKey<Long> DOWNSTREAM_METRICS_START = AttachmentKey.create(Long.class);
+    public static final AttachmentKey<Object> METRICS_HANDLER = AttachmentKey.create(Object.class);
 }
