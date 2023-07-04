@@ -19,6 +19,7 @@ package com.networknt.router;
 import com.networknt.client.Http2Client;
 import com.networknt.handler.Handler;
 import com.networknt.handler.ProxyHandler;
+import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.metrics.MetricsConfig;
 import com.networknt.metrics.AbstractMetricsHandler;
 import com.networknt.utility.ModuleRegistry;
@@ -46,7 +47,6 @@ public class RouterHandler implements HttpHandler {
 
     protected static ProxyHandler proxyHandler;
     protected static AbstractMetricsHandler metricsHandler;
-
     public RouterHandler() {
         config = RouterConfig.load();
         ModuleRegistry.registerModule(RouterHandler.class.getName(), config.getMappedConfig(), null);
@@ -82,14 +82,18 @@ public class RouterHandler implements HttpHandler {
                 logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
             }
         }
+
     }
 
     @Override
-    public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("RouterHandler.handleRequest starts.");
-        long startTime = System.nanoTime();
-        proxyHandler.handleRequest(httpServerExchange);
-        if(config.isMetricsInjection() && metricsHandler != null) metricsHandler.injectMetrics(httpServerExchange, startTime, config.getMetricsName(), null);
+        if(metricsHandler != null) {
+            exchange.putAttachment(AttachmentConstants.METRICS_HANDLER, metricsHandler);
+            exchange.putAttachment(AttachmentConstants.DOWNSTREAM_METRICS_NAME, config.getMetricsName());
+            exchange.putAttachment(AttachmentConstants.DOWNSTREAM_METRICS_START, System.nanoTime());
+        }
+        proxyHandler.handleRequest(exchange);
         if(logger.isDebugEnabled()) logger.debug("RouterHandler.handleRequest ends.");
     }
 
@@ -126,5 +130,6 @@ public class RouterHandler implements HttpHandler {
                 logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
             }
         }
+
     }
 }
