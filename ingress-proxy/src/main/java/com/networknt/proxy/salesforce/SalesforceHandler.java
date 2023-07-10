@@ -148,6 +148,7 @@ public class SalesforceHandler implements MiddlewareHandler {
         for(PathPrefixAuth pathPrefixAuth: config.getPathPrefixAuths()) {
             if(requestPath.startsWith(pathPrefixAuth.getPathPrefix())) {
                 String endpoint = pathPrefixAuth.getPathPrefix() + "@" + exchange.getRequestMethod().toString();
+                if(logger.isTraceEnabled()) logger.trace("endpoint = " + endpoint);
                 // handle the url rewrite here.
                 if(config.getUrlRewriteRules() != null && config.getUrlRewriteRules().size() > 0) {
                     boolean matched = false;

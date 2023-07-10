@@ -359,6 +359,7 @@ public class ProxyHandler implements HttpHandler {
                     String metricsName = exchange.getAttachment(AttachmentConstants.DOWNSTREAM_METRICS_NAME);
                     if (metricsName != null) {
                         long startTime = exchange.getAttachment(AttachmentConstants.DOWNSTREAM_METRICS_START);
+                        // do not pass in the endpoint but use the endpoint from AuditInfo
                         metricsHandler.injectMetrics(exchange, startTime, metricsName, null);
                     }
                 }
@@ -388,6 +389,7 @@ public class ProxyHandler implements HttpHandler {
                     String metricsName = exchange.getAttachment(AttachmentConstants.DOWNSTREAM_METRICS_NAME);
                     if (metricsName != null) {
                         long startTime = exchange.getAttachment(AttachmentConstants.DOWNSTREAM_METRICS_START);
+                        // do not pass in the endpoint but use the endpoint from AuditInfo
                         metricsHandler.injectMetrics(exchange, startTime, metricsName, null);
                     }
                 }
@@ -960,6 +962,7 @@ public class ProxyHandler implements HttpHandler {
                 String metricsName = exchange.getAttachment(AttachmentConstants.DOWNSTREAM_METRICS_NAME);
                 if (metricsName != null) {
                     long startTime = exchange.getAttachment(AttachmentConstants.DOWNSTREAM_METRICS_START);
+                    // do not pass in the endpoint but use the endpoint from AuditInfo
                     metricsHandler.injectMetrics(exchange, startTime, metricsName, null);
                 }
             }
