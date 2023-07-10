@@ -99,7 +99,12 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
         if(logger.isTraceEnabled()) logger.trace("auditInfo = " + auditInfo);
         Map<String, String> tags = new HashMap<>();
         if (auditInfo != null) {
-            tags.put(Constants.ENDPOINT_STRING, (String) auditInfo.get(Constants.ENDPOINT_STRING));
+            // for external handlers, the endpoint must be unknown in the auditInfo. If that is the case, use the endpoint passed in.
+            if (endpoint != null) {
+                tags.put(Constants.ENDPOINT_STRING, endpoint);
+            } else {
+                tags.put(Constants.ENDPOINT_STRING, (String) auditInfo.get(Constants.ENDPOINT_STRING));
+            }
             String clientId = auditInfo.get(Constants.CLIENT_ID_STRING) != null ? (String) auditInfo.get(Constants.CLIENT_ID_STRING) : "unknown";
             if(logger.isTraceEnabled()) logger.trace("clientId = " + clientId);
             tags.put("clientId", clientId);
