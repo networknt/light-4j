@@ -112,6 +112,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
             for(String[] parts: config.getPathHostMappings()) {
                 if(requestPath.startsWith(parts[0])) {
                     String endpoint = parts[0] + "@" + exchange.getRequestMethod().toString();
+                    if(logger.isTraceEnabled()) logger.trace("endpoint = " + endpoint);
                     // handle the url rewrite here. It has to be the right path that applied for external service to do the url rewrite.
                     if(config.getUrlRewriteRules() != null && config.getUrlRewriteRules().size() > 0) {
                         boolean matched = false;
