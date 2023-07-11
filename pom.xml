@@ -407,7 +407,7 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
-                <artifactId>gateway</artifactId>
+                <artifactId>sidecar</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
