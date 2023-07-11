@@ -1,5 +1,22 @@
 # Change Log
 
+## [2.1.23](https://github.com/networknt/light-4j/tree/2.1.23) (2023-07-11)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1831 update the http method to lower case external services en… [\#1832](https://github.com/networknt/light-4j/pull/1832) ([stevehu](https://github.com/stevehu))
+- fixes \#1829 change the gateway to sidecar in the module list in pom.xml [\#1830](https://github.com/networknt/light-4j/pull/1830) ([stevehu](https://github.com/stevehu))
+- fixes \#1827 use the passed in endpoint for external handlers in the m… [\#1828](https://github.com/networknt/light-4j/pull/1828) ([stevehu](https://github.com/stevehu))
+- fixes \#1832 As ProxyHandler is working asynchronously, capture the me… [\#1824](https://github.com/networknt/light-4j/pull/1824) ([stevehu](https://github.com/stevehu))
+- fixes \#1818 fix a bug in getConfigServerQueryParameters for api version [\#1819](https://github.com/networknt/light-4j/pull/1819) ([stevehu](https://github.com/stevehu))
+- fixes \#1816 change rate-limit default response code to 429 [\#1817](https://github.com/networknt/light-4j/pull/1817) ([stevehu](https://github.com/stevehu))
+- fixes \#1814 add trace statements for requestHeaders in RequestTransfo… [\#1815](https://github.com/networknt/light-4j/pull/1815) ([stevehu](https://github.com/stevehu))
+- fixes \#1805 add scope to PathPrefixAuth for ePAM security yaml plugin [\#1806](https://github.com/networknt/light-4j/pull/1806) ([stevehu](https://github.com/stevehu))
+- fixes \#1803 add comments for db-provider, ldap and jaeger-tracing con… [\#1804](https://github.com/networknt/light-4j/pull/1804) ([stevehu](https://github.com/stevehu))
+- logger config requests pass through to spring boot actuator endpoints [\#1802](https://github.com/networknt/light-4j/pull/1802) ([stevehu](https://github.com/stevehu))
+- 193 mapped diagnostic context mdc is not working if request is cross multiple threads [\#1798](https://github.com/networknt/light-4j/pull/1798) ([KalevGonvick](https://github.com/KalevGonvick))
 ## [2.1.22](https://github.com/networknt/light-4j/tree/2.1.22) (2023-06-22)
 
 
