@@ -155,7 +155,7 @@ public class MrasHandler implements MiddlewareHandler {
 
         for(String key: config.getPathPrefixAuth().keySet()) {
             if(requestPath.startsWith(key)) {
-                String endpoint = key + "@" + exchange.getRequestMethod().toString();
+                String endpoint = key + "@" + exchange.getRequestMethod().toString().toLowerCase();
                 if(logger.isTraceEnabled()) logger.trace("endpoint = " + endpoint);
                 // handle the url rewrite here.
                 if(config.getUrlRewriteRules() != null && config.getUrlRewriteRules().size() > 0) {
