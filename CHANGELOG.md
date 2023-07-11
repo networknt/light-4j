@@ -17,6 +17,8 @@
 - fixes \#1803 add comments for db-provider, ldap and jaeger-tracing con… [\#1804](https://github.com/networknt/light-4j/pull/1804) ([stevehu](https://github.com/stevehu))
 - logger config requests pass through to spring boot actuator endpoints [\#1802](https://github.com/networknt/light-4j/pull/1802) ([stevehu](https://github.com/stevehu))
 - 193 mapped diagnostic context mdc is not working if request is cross multiple threads [\#1798](https://github.com/networknt/light-4j/pull/1798) ([KalevGonvick](https://github.com/KalevGonvick))
+
+
 ## [2.1.22](https://github.com/networknt/light-4j/tree/2.1.22) (2023-06-22)
 
 
