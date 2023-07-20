@@ -459,45 +459,47 @@ public class JwtVerifier extends TokenVerifier {
             Map<String, Object> tokenConfig = clientConfig.getTokenConfig();
             Map<String, Object> keyConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.KEY);
             Map<String, Object> serviceIdAuthServers = (Map<String, Object>) keyConfig.get(ClientConfig.SERVICE_ID_AUTH_SERVERS);
-            if (serviceIdAuthServers == null) {
-                throw new RuntimeException("serviceIdAuthServers property is missing in the token key configuration");
-            }
-            for (Map.Entry<String, Object> entry : serviceIdAuthServers.entrySet()) {
-                String serviceId = entry.getKey();
-                Map<String, Object> authServerConfig = (Map<String, Object>) entry.getValue();
-                // based on the configuration, we can identify if the entry is for jwk retrieval for jwt or swt introspection. For jwk,
-                // there is no clientId and clientSecret. For token introspection, clientId and clientSecret is in the config.
-                if(authServerConfig.get(ClientConfig.CLIENT_ID) != null && authServerConfig.get(ClientConfig.CLIENT_SECRET) != null) {
-                    // this is the entry for swt introspection, skip here.
-                    continue;
-                }
-                TokenKeyRequest keyRequest = new TokenKeyRequest(null, true, authServerConfig);
-                try {
-                    if (logger.isDebugEnabled())
-                        logger.debug("Getting Json Web Key list from {} for serviceId {}", keyRequest.getServerUrl(), entry.getKey());
-                    String key = OauthHelper.getKey(keyRequest);
-                    if (logger.isDebugEnabled())
-                        logger.debug("Got Json Web Key = " + key);
-                    List<JsonWebKey> jwkList = new JsonWebKeySet(key).getJsonWebKeys();
-                    if (jwkList == null || jwkList.isEmpty()) {
-                        if (logger.isErrorEnabled())
-                            logger.error("Cannot get JWK from OAuth server.");
-                    } else {
-                        for (JsonWebKey jwk : jwkList) {
-                            jwksMap.put(serviceId + ":" + jwk.getKeyId(), jwkList);
-                            if (logger.isDebugEnabled())
-                                logger.debug("Successfully cached JWK for serviceId {} kid {} with key {}", serviceId, jwk.getKeyId(), serviceId + ":" + jwk.getKeyId());
-                        }
+            if (serviceIdAuthServers != null && serviceIdAuthServers.size() > 0) {
+                for (Map.Entry<String, Object> entry : serviceIdAuthServers.entrySet()) {
+                    String serviceId = entry.getKey();
+                    Map<String, Object> authServerConfig = (Map<String, Object>) entry.getValue();
+                    // based on the configuration, we can identify if the entry is for jwk retrieval for jwt or swt introspection. For jwk,
+                    // there is no clientId and clientSecret. For token introspection, clientId and clientSecret is in the config.
+                    if(authServerConfig.get(ClientConfig.CLIENT_ID) != null && authServerConfig.get(ClientConfig.CLIENT_SECRET) != null) {
+                        // this is the entry for swt introspection, skip here.
+                        continue;
                     }
-                } catch (JoseException ce) {
-                    if (logger.isErrorEnabled())
-                        logger.error("Failed to get JWK set. - {} - {}", new Status(GET_KEY_ERROR), ce.getMessage(), ce);
+                    TokenKeyRequest keyRequest = new TokenKeyRequest(null, true, authServerConfig);
+                    try {
+                        if (logger.isDebugEnabled())
+                            logger.debug("Getting Json Web Key list from {} for serviceId {}", keyRequest.getServerUrl(), entry.getKey());
+                        String key = OauthHelper.getKey(keyRequest);
+                        if (logger.isDebugEnabled())
+                            logger.debug("Got Json Web Key = " + key);
+                        List<JsonWebKey> jwkList = new JsonWebKeySet(key).getJsonWebKeys();
+                        if (jwkList == null || jwkList.isEmpty()) {
+                            if (logger.isErrorEnabled())
+                                logger.error("Cannot get JWK from OAuth server.");
+                        } else {
+                            for (JsonWebKey jwk : jwkList) {
+                                jwksMap.put(serviceId + ":" + jwk.getKeyId(), jwkList);
+                                if (logger.isDebugEnabled())
+                                    logger.debug("Successfully cached JWK for serviceId {} kid {} with key {}", serviceId, jwk.getKeyId(), serviceId + ":" + jwk.getKeyId());
+                            }
+                        }
+                    } catch (JoseException ce) {
+                        if (logger.isErrorEnabled())
+                            logger.error("Failed to get JWK set. - {} - {}", new Status(GET_KEY_ERROR), ce.getMessage(), ce);
 
-                } catch (ClientException ce) {
+                    } catch (ClientException ce) {
 
-                    if (logger.isErrorEnabled())
-                        logger.error("Failed to get key. - {} - {} ", new Status(GET_KEY_ERROR), ce.getMessage(), ce);
+                        if (logger.isErrorEnabled())
+                            logger.error("Failed to get key. - {} - {} ", new Status(GET_KEY_ERROR), ce.getMessage(), ce);
+                    }
                 }
+            } else {
+                // log an error as there is no service entry for the jwk retrieval.
+                logger.error("serviceIdAuthServers property is missing or empty in the token key configuration");
             }
         } else {
             // there is only one jwk server.
