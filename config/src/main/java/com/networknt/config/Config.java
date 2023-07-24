@@ -86,6 +86,7 @@ public abstract class Config {
     public abstract Map<String, Object> getDefaultJsonMapConfigNoCache(String configName, String path);
 
     public abstract Object getJsonObjectConfig(String configName, Class clazz);
+    public abstract Object getJsonObjectConfigNoCache(String configName, Class clazz);
 
     public abstract Object getDefaultJsonObjectConfig(String configName, Class clazz);
 
@@ -284,6 +285,18 @@ public abstract class Config {
         public Object getJsonObjectConfig(String configName, Class clazz) {
             return getJsonObjectConfig(configName, clazz, "");
         }
+
+        /**
+         * Method used to load the configuration file as a given Object based on the config loader class configured in config.yml without cache.
+         * @param configName    The name of the config file, without an extension
+         * @param clazz         The class that the object will be deserialized into
+         * @return An instance of the object if possible, null otherwise. IOExceptions smothered.
+         */
+        @Override
+        public Object getJsonObjectConfigNoCache(String configName, Class clazz) {
+            return loadJsonObjectConfigWithSpecificConfigLoader(configName, clazz, "");
+        }
+
 
         /**
          * Method used to load the configuration file as a given Object by using default loading method and cache it.
