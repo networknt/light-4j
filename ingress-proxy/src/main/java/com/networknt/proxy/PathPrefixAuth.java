@@ -17,6 +17,8 @@ public class PathPrefixAuth {
     int tokenTtl;
     int waitLength;
     String tokenUrl;
+    String certFilename;
+    String certPassword;
     String serviceHost;
 
     String username;
@@ -142,6 +144,22 @@ public class PathPrefixAuth {
 
     public void setTokenUrl(String tokenUrl) {
         this.tokenUrl = tokenUrl;
+    }
+
+    public String getCertFilename() {
+        return certFilename;
+    }
+
+    public void setCertFilename(String certFilename) {
+        this.certFilename = certFilename;
+    }
+
+    public String getCertPassword() {
+        return certPassword;
+    }
+
+    public void setCertPassword(String certPassword) {
+        this.certPassword = certPassword;
     }
 
     public String getServiceHost() {
