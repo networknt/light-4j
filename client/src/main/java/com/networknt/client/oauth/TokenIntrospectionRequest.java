@@ -67,9 +67,9 @@ public class TokenIntrospectionRequest extends IntrospectionRequest {
             Object object = introspectionConfig.get(ClientConfig.ENABLE_HTTP2);
             setEnableHttp2(object != null && (Boolean) object);
         }
-        if(introspectionConfig.get(ClientConfig.URI).toString() != null) {
+        if(introspectionConfig.get(ClientConfig.URI) != null) {
             if(logger.isTraceEnabled()) logger.trace("overwrite old uri {} with new uri {}", getUri(), introspectionConfig.get(ClientConfig.URI));
-            setUri(introspectionConfig.get(ClientConfig.URI).toString());
+            setUri((String)introspectionConfig.get(ClientConfig.URI));
         }
 
         // clientId is optional
