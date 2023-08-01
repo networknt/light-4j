@@ -89,6 +89,10 @@ public class TokenKeyRequest extends KeyRequest {
         if(keyConfig.get(ClientConfig.CLIENT_SECRET) != null) {
             setClientSecret((String)keyConfig.get(ClientConfig.CLIENT_SECRET));
         }
+        // audience is optional
+        if(keyConfig.get(ClientConfig.AUDIENCE) != null) {
+            setAudience((String)keyConfig.get(ClientConfig.AUDIENCE));
+        }
         // proxyHost and proxyPort are optional to overwrite the token config inherited.
         if(keyConfig.get(ClientConfig.PROXY_HOST) != null) {
             String proxyHost = (String)keyConfig.get(ClientConfig.PROXY_HOST);

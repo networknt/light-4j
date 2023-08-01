@@ -123,6 +123,8 @@ oauth:
       # The serviceId to the service specific OAuth 2.0 configuration. Used only when multipleOAuthServer is
       # set as true. For detailed config options, please see the values.yml in the client module test.
       serviceIdAuthServers: ${client.tokenKeyServiceIdAuthServers:}
+      # audience for the token validation. It is optional and if it is not configured, no audience validation will be executed.
+      audience: ${client.tokenKeyAudience:}
   # sign endpoint configuration
   sign:
     # token server url. The default port number for token service is 6882. If this url exists, it will be used.
@@ -164,6 +166,8 @@ oauth:
       client_secret: ${client.signKeyClientSecret:f6h1FTI8Q3-7UScPZDzfXA}
       # set to true if the oauth2 provider supports HTTP/2
       enableHttp2: ${client.signKeyEnableHttp2:true}
+      # audience for the token validation. It is optional and if it is not configured, no audience validation will be executed.
+      audience: ${client.signKeyAudience:}
   # de-ref by reference token to JWT token. It is separate service as it might be the external OAuth 2.0 provider.
   deref:
     # Token service server url, this might be different than the above token server url. The static url will be used if it is configured.

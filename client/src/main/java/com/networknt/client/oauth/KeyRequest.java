@@ -35,6 +35,7 @@ public class KeyRequest {
     protected String clientSecret;
     protected boolean enableHttp2;
     protected String kid;
+    protected String audience;
 
     public KeyRequest(String kid) {
         this.kid = kid;
@@ -108,6 +109,14 @@ public class KeyRequest {
         this.proxyPort = proxyPort;
     }
 
+    public String getAudience() {
+        return audience;
+    }
+
+    public void setAudience(String audience) {
+        this.audience = audience;
+    }
+
     @Override
     public String toString() {
         return "KeyRequest{" +
@@ -119,6 +128,7 @@ public class KeyRequest {
                 ", clientId='" + clientId + '\'' +
                 ", clientSecret='" + clientSecret + '\'' +
                 ", enableHttp2=" + enableHttp2 +
+                ", audience='" + audience + '\'' +
                 ", kid='" + kid + '\'' +
                 '}';
     }
