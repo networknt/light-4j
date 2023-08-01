@@ -51,10 +51,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.regex.Pattern;
@@ -94,6 +91,8 @@ public class JwtVerifier extends TokenVerifier {
     static Cache<String, JwtClaims> cache;
     static Map<String, X509Certificate> certMap;
     static Map<String, List<JsonWebKey>> jwksMap;
+    static String audience;  // this is the audience from the client.yml with single oauth provider.
+    static Map<String, String> audienceMap; // this is the audience map from the client.yml with multiple oauth providers.
     static List<String> fingerPrints;
 
     public JwtVerifier(SecurityConfig config) {
@@ -274,6 +273,9 @@ public class JwtVerifier extends TokenVerifier {
         // if ignoreExpiry is false, verify expiration of the token
         checkExpiry(ignoreExpiry, claims, secondsOfAllowedClockSkew, jwtContext);
 
+        // validate the audience against the configured audience.
+        validateAudience(claims, requestPath, jwkServiceIds, jwtContext);
+
         JwtConsumerBuilder jwtBuilder = new JwtConsumerBuilder()
                 .setRequireExpirationTime()
                 .setAllowedClockSkewInSeconds(315360000) // use seconds of 10 years to skip expiration validation as we need skip it in some cases.
@@ -300,6 +302,67 @@ public class JwtVerifier extends TokenVerifier {
             }
         }
         return claims;
+    }
+
+    /**
+     * validate the audience against the configured audience in the jwk section of the client.yml
+     *
+     * @param claims            - jwt claims
+     * @param requestPath      - request path
+     * @param jwkServiceIds    - a list of jwk service ids
+     * @throws InvalidJwtException   - thrown when the token is malformed/invalid
+     */
+    private void validateAudience(JwtClaims claims, String requestPath, List<String> jwkServiceIds, JwtContext context) throws InvalidJwtException {
+        ClientConfig clientConfig = ClientConfig.get();
+        String configuredAudience = null;
+        try {
+            if (requestPath == null && jwkServiceIds == null) {
+                // if both requestPath and jwkServiceIds are null, it means the single oauth server is used.
+                configuredAudience = audience;
+                if (configuredAudience != null) {
+                   // validate the audience against the configured audience in the client.yml
+                   boolean r = isJwtAudienceValid(claims, configuredAudience);
+                   if(!r) {
+                       throw new InvalidJwtException("Invalid Audience", Collections.singletonList(new ErrorCodeValidator.Error(ErrorCodes.AUDIENCE_INVALID, "Invalid Audience")), context);
+                   }
+                }
+            } else if (requestPath != null) {
+                String serviceId = getServiceIdByRequestPath(clientConfig, requestPath);
+                if(serviceId == null && audienceMap != null && audienceMap.size() > 0) {
+                    configuredAudience = audienceMap.get(serviceId);
+                    boolean r = isJwtAudienceValid(claims, configuredAudience);
+                    if(!r) {
+                        throw new InvalidJwtException("Invalid Audience", Collections.singletonList(new ErrorCodeValidator.Error(ErrorCodes.AUDIENCE_INVALID, "Invalid Audience")), context);
+                    }
+                }
+            } else {
+                if(jwkServiceIds != null && jwkServiceIds.size() > 0) {
+                    // more than one serviceIds are passed in from the UnifiedSecurityHandler. Just use each serviceId to get the audience.
+                    for(String serviceId: jwkServiceIds) {
+                        if(audienceMap != null && audienceMap.size() > 0) {
+                            configuredAudience = audienceMap.get(serviceId);
+                            boolean r = isJwtAudienceValid(claims, configuredAudience);
+                            if(!r) {
+                                throw new InvalidJwtException("Invalid Audience", Collections.singletonList(new ErrorCodeValidator.Error(ErrorCodes.AUDIENCE_INVALID, "Invalid Audience")), context);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (MalformedClaimException e) {
+            logger.error("MalformedClaimException:", e);
+            throw new InvalidJwtException("MalformedClaimException", new ErrorCodeValidator.Error(ErrorCodes.MALFORMED_CLAIM, "Invalid Audience"), e, context);
+        }
+    }
+
+    private boolean isJwtAudienceValid(JwtClaims claims, String audience) throws MalformedClaimException {
+        if (claims.getAudience() == null) {
+            return false;
+        }
+        if (claims.getAudience().size() == 1) {
+            return claims.getAudience().get(0).equals(audience);
+        }
+        return claims.getAudience().contains(audience);
     }
 
     /**
@@ -454,10 +517,10 @@ public class JwtVerifier extends TokenVerifier {
         // the kid is not needed to get JWK. We need to figure out only one jwk server or multiple.
         jwksMap = new HashMap<>();
         ClientConfig clientConfig = ClientConfig.get();
+        Map<String, Object> tokenConfig = clientConfig.getTokenConfig();
+        Map<String, Object> keyConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.KEY);
         if (clientConfig.isMultipleAuthServers()) {
             // iterate all the configured auth server to get JWK.
-            Map<String, Object> tokenConfig = clientConfig.getTokenConfig();
-            Map<String, Object> keyConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.KEY);
             Map<String, Object> serviceIdAuthServers = (Map<String, Object>) keyConfig.get(ClientConfig.SERVICE_ID_AUTH_SERVERS);
             if (serviceIdAuthServers != null && serviceIdAuthServers.size() > 0) {
                 for (Map.Entry<String, Object> entry : serviceIdAuthServers.entrySet()) {
@@ -469,6 +532,13 @@ public class JwtVerifier extends TokenVerifier {
                         // this is the entry for swt introspection, skip here.
                         continue;
                     }
+                    // construct audience map for audience validation.
+                    String audience = (String) authServerConfig.get(ClientConfig.AUDIENCE);
+                    if (audience != null) {
+                        if (logger.isTraceEnabled()) logger.trace("audience {} is mapped to serviceId {}", audience, serviceId);
+                        audienceMap.put(serviceId, audience);
+                    }
+                    // get the jwk from the auth server.
                     TokenKeyRequest keyRequest = new TokenKeyRequest(null, true, authServerConfig);
                     try {
                         if (logger.isDebugEnabled())
@@ -502,6 +572,9 @@ public class JwtVerifier extends TokenVerifier {
                 logger.error("serviceIdAuthServers property is missing or empty in the token key configuration");
             }
         } else {
+            // get audience from the key config
+            audience = (String) keyConfig.get(ClientConfig.AUDIENCE);
+            if(logger.isTraceEnabled()) logger.trace("A single audience {} is configured in client.yml", audience);
             // there is only one jwk server.
             TokenKeyRequest keyRequest = new TokenKeyRequest(null, true, null);
             try {

@@ -55,6 +55,10 @@ public class SignKeyRequest extends KeyRequest {
                 setUri(keyConfig.get(ClientConfig.URI) + "/" + kid);
                 setClientId((String)keyConfig.get(ClientConfig.CLIENT_ID));
                 setClientSecret((String)keyConfig.get(ClientConfig.CLIENT_SECRET));
+                // audience is optional
+                if(keyConfig.get(ClientConfig.AUDIENCE) != null) {
+                    setAudience((String)keyConfig.get(ClientConfig.AUDIENCE));
+                }
             } else {
                 logger.error("Error: could not find key section in sign of oauth in client.yml");
             }

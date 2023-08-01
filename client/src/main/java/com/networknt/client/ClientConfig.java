@@ -19,6 +19,7 @@ public final class ClientConfig {
     public static final String TLS = "tls";
     public static final String CLIENT_ID = "client_id";
     public static final String SCOPE = "scope";
+    public static final String AUDIENCE = "audience";
     public static final String CSRF = "csrf";
     public static final String REDIRECT_URI = "redirect_uri";
     public static final String REFRESH_TOKEN = "refresh_token";
