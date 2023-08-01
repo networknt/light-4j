@@ -16,7 +16,7 @@ enableVerifyJwt: ${security.enableVerifyJwt:true}
 # if this flag is false. It should only be set to false on the dev environment for testing
 # purposes. If you have some endpoints that want to skip the SWT verification, you can put the
 # request path prefix in skipPathPrefixes.
-enableVerifySwt: ${openapi-security.enableVerifySwt:false}
+enableVerifySwt: ${security.enableVerifySwt:false}
 
 # Extract JWT scope token from the X-Scope-Token header and validate the JWT token
 enableExtractScopeToken: ${security.enableExtractScopeToken:true}
@@ -42,7 +42,7 @@ enableVerifyJwtScopeToken: ${security.enableVerifyJwtScopeToken:true}
 
 # Enable SWT scope verification.
 # Only valid when (enableVerifySwt is true) AND (enableVerifyScope is true)
-enableVerifySwtScopeToken: ${openapi-security.enableVerifySwtScopeToken:true}
+enableVerifySwtScopeToken: ${security.enableVerifySwtScopeToken:true}
 
 # If set true, the JWT verifier handler will pass if the JWT token is expired already. Unless
 # you have a strong reason, please use it only on the dev environment if your OAuth 2 provider
