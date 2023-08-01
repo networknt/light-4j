@@ -205,6 +205,7 @@ oauth:
           # scope:
           # - petstore.r
           # - petstore.w
+          audience: petstore
         com.networknt.market-1.0.0:
           # token server url. The default port number for token service is 6882. If this is set,
           # it will take high priority than serviceId for the direct connection
@@ -234,7 +235,7 @@ oauth:
             # scope:
             # - petstore.r
             # - petstore.w
-
+          audience: market
   # sign endpoint configuration
   sign:
     # token server url. The default port number for token service is 6882. If this url exists, it will be used.
