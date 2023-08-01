@@ -13,6 +13,7 @@ import com.networknt.status.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,11 +41,13 @@ public class SwtVerifier extends TokenVerifier {
      * @param swt          SWT Simple Web Token
      * @param requestPath  request path
      * @param swtServiceIds A list of serviceIds from the UnifiedSecurityHandler
+     * @param clientId     client id optional from the exchange headers
+     * @param clientSecret client secret optional from the exchange headers
      * @return {@link Result} of {@link TokenInfo}.
      */
-    public Result<TokenInfo> verifySwt(String swt, String requestPath, List<String> swtServiceIds) {
+    public Result<TokenInfo> verifySwt(String swt, String requestPath, List<String> swtServiceIds, String clientId, String clientSecret) {
         // based on the pathPrefix to find the serviceId, based on the serviceId to find the introspection configuration
-        return getTokenInfoForToken(swt, swtServiceIds != null ? swtServiceIds : requestPath);
+        return getTokenInfoForToken(swt, swtServiceIds != null ? swtServiceIds : requestPath, clientId, clientSecret);
     }
 
     /**
@@ -56,9 +59,9 @@ public class SwtVerifier extends TokenVerifier {
      * @return {@link Result} of {@link TokenInfo}.
      */
     @SuppressWarnings("unchecked")
-    private Result<TokenInfo> getTokenInfoForToken(String swt, Object requestPathOrSwtServiceIds) {
+    private Result<TokenInfo> getTokenInfoForToken(String swt, Object requestPathOrSwtServiceIds, String clientId, String clientSecret) {
         if (logger.isTraceEnabled()) {
-            logger.trace("swt = " + swt + requestPathOrSwtServiceIds instanceof String ? " requestPath = " + requestPathOrSwtServiceIds : " swtServiceIds = " + requestPathOrSwtServiceIds);
+            logger.trace("swt = " + swt + requestPathOrSwtServiceIds instanceof String ? " requestPath = " + requestPathOrSwtServiceIds : " swtServiceIds = " + requestPathOrSwtServiceIds + " clientId = " + clientId + " clientSecret = " + clientSecret);
         }
         ClientConfig clientConfig = ClientConfig.get();
         Result<TokenInfo> result = null;
@@ -82,6 +85,11 @@ public class SwtVerifier extends TokenVerifier {
                     throw new ConfigException("serviceId cannot be identified in client.yml with the requestPath = " + requestPath);
                 }
                 config = getJwkConfig(clientConfig, serviceId);
+                // overwrite the clientId and clientSecret from the exchange headers.
+                if(config != null && clientId != null && clientSecret != null) {
+                    config.put(ClientConfig.CLIENT_ID, clientId);
+                    config.put(ClientConfig.CLIENT_SECRET, clientSecret);
+                }
                 result = inspectToken(swt, config);
             } else if (requestPathOrSwtServiceIds instanceof List) {
                 // for this particular path prefix, there are two OAuth servers set up to inspect the token. Which one is success
@@ -89,6 +97,11 @@ public class SwtVerifier extends TokenVerifier {
                 List<String> swtServiceIds = (List<String>)requestPathOrSwtServiceIds;
                 for(String serviceId: swtServiceIds) {
                     config = getJwkConfig(clientConfig, serviceId);
+                    // overwrite the clientId and clientSecret from the exchange headers.
+                    if(config != null && clientId != null && clientSecret != null) {
+                        config.put(ClientConfig.CLIENT_ID, clientId);
+                        config.put(ClientConfig.CLIENT_SECRET, clientSecret);
+                    }
                     result  = inspectToken(swt, config);
                     if(result.isSuccess()) {
                         // find the first success, we need to break the loop.
@@ -100,8 +113,13 @@ public class SwtVerifier extends TokenVerifier {
                 throw new ConfigException("requestPathOrSwtServiceIds must be a string or a list of strings");
             }
         } else {
-            // get the token introspection config from the key section in the client.yml token key.
-            result = inspectToken(swt, null);
+            // get the token introspection config from the key section in the client.yml token key, but overwrite the clientId and clientSecret.
+            config = new HashMap<>();
+            if(clientId != null && clientSecret != null) {
+                config.put(ClientConfig.CLIENT_ID, clientId);
+                config.put(ClientConfig.CLIENT_SECRET, clientSecret);
+            }
+            result = inspectToken(swt, config);
         }
         return result;
     }
