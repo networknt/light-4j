@@ -2,6 +2,7 @@ package com.networknt.client.oauth;
 
 import com.networknt.client.ClientConfig;
 import com.networknt.status.Status;
+import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,22 +54,37 @@ public class TokenIntrospectionRequest extends IntrospectionRequest {
     }
 
     private void setIntrospectionOptions(Map<String, Object> introspectionConfig) {
-        setServerUrl((String)introspectionConfig.get(ClientConfig.SERVER_URL));
-        setServiceId((String)introspectionConfig.get(ClientConfig.SERVICE_ID));
-        Object object = introspectionConfig.get(ClientConfig.ENABLE_HTTP2);
-        setEnableHttp2(object != null && (Boolean) object);
-        setUri(introspectionConfig.get(ClientConfig.URI).toString());
+        if(introspectionConfig.get(ClientConfig.SERVER_URL) != null) {
+            if(logger.isTraceEnabled()) logger.trace("overwrite old serverUrl {} with new serverUrl {}", getServerUrl(), introspectionConfig.get(ClientConfig.SERVER_URL));
+            setServerUrl((String)introspectionConfig.get(ClientConfig.SERVER_URL));
+        }
+        if(introspectionConfig.get(ClientConfig.SERVICE_ID) != null) {
+            if(logger.isTraceEnabled()) logger.trace("overwrite old serviceId {} with new serviceId {}", getServiceId(), introspectionConfig.get(ClientConfig.SERVICE_ID));
+            setServiceId((String)introspectionConfig.get(ClientConfig.SERVICE_ID));
+        }
+        if(introspectionConfig.get(ClientConfig.ENABLE_HTTP2) != null) {
+            if(logger.isTraceEnabled()) logger.trace("overwrite old enableHttp2 {} with new enableHttp2 {}", isEnableHttp2(), introspectionConfig.get(ClientConfig.ENABLE_HTTP2));
+            Object object = introspectionConfig.get(ClientConfig.ENABLE_HTTP2);
+            setEnableHttp2(object != null && (Boolean) object);
+        }
+        if(introspectionConfig.get(ClientConfig.URI).toString() != null) {
+            if(logger.isTraceEnabled()) logger.trace("overwrite old uri {} with new uri {}", getUri(), introspectionConfig.get(ClientConfig.URI));
+            setUri(introspectionConfig.get(ClientConfig.URI).toString());
+        }
 
         // clientId is optional
         if(introspectionConfig.get(ClientConfig.CLIENT_ID) != null) {
+            if(logger.isTraceEnabled()) logger.trace("overwrite old clientId {} with new clientId {}", getClientId(), introspectionConfig.get(ClientConfig.CLIENT_ID));
             setClientId((String)introspectionConfig.get(ClientConfig.CLIENT_ID));
         }
         // clientSecret is optional
         if(introspectionConfig.get(ClientConfig.CLIENT_SECRET) != null) {
+            if(logger.isTraceEnabled()) logger.trace("overwrite old clientSecret {} with new clientSecret {}", StringUtils.maskHalfString(getClientSecret()), StringUtils.maskHalfString((String)introspectionConfig.get(ClientConfig.CLIENT_SECRET)));
             setClientSecret((String)introspectionConfig.get(ClientConfig.CLIENT_SECRET));
         }
         // proxyHost and proxyPort are optional to overwrite the token config inherited.
         if(introspectionConfig.get(ClientConfig.PROXY_HOST) != null) {
+            if(logger.isTraceEnabled()) logger.trace("overwrite old proxyHost {} with new proxyHost {}", getProxyHost(), introspectionConfig.get(ClientConfig.PROXY_HOST));
             String proxyHost = (String)introspectionConfig.get(ClientConfig.PROXY_HOST);
             if(proxyHost.length() > 1) {
                 // overwrite the tokenConfig proxyHost and proxyPort if this particular service has different proxy server
