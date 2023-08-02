@@ -36,8 +36,10 @@ public class TokenIntrospectionRequest extends IntrospectionRequest {
                     setProxyHost((String)tokenConfig.get(ClientConfig.PROXY_HOST));
                     int port = tokenConfig.get(ClientConfig.PROXY_PORT) == null ? 443 : (Integer)tokenConfig.get(ClientConfig.PROXY_PORT);
                     setProxyPort(port);
-                    if(introspectionConfig == null) introspectionConfig = (Map<String, Object>)tokenConfig.get(ClientConfig.KEY);
-                    if(introspectionConfig != null) {
+                    // set the default values from the key section of token for single auth server.
+                    setIntrospectionOptions((Map<String, Object>)tokenConfig.get(ClientConfig.KEY));
+                    if(introspectionConfig != null && introspectionConfig.size() > 0) {
+                        // overwrite the default values with the values from the passed in config.
                         setIntrospectionOptions(introspectionConfig);
                     } else {
                         logger.error(new Status(CONFIG_PROPERTY_MISSING, "token section", "client.yml").toString());
