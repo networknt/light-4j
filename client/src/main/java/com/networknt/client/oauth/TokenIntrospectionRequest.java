@@ -37,12 +37,15 @@ public class TokenIntrospectionRequest extends IntrospectionRequest {
                     int port = tokenConfig.get(ClientConfig.PROXY_PORT) == null ? 443 : (Integer)tokenConfig.get(ClientConfig.PROXY_PORT);
                     setProxyPort(port);
                     // set the default values from the key section of token for single auth server.
-                    setIntrospectionOptions((Map<String, Object>)tokenConfig.get(ClientConfig.KEY));
+                    Map<String, Object> keyConfig = (Map<String, Object>)tokenConfig.get(ClientConfig.KEY);
+                    if(keyConfig != null) {
+                        setIntrospectionOptions(keyConfig);
+                    } else {
+                        logger.error(new Status(CONFIG_PROPERTY_MISSING, "key section", "client.yml").toString());
+                    }
                     if(introspectionConfig != null && introspectionConfig.size() > 0) {
                         // overwrite the default values with the values from the passed in config.
                         setIntrospectionOptions(introspectionConfig);
-                    } else {
-                        logger.error(new Status(CONFIG_PROPERTY_MISSING, "token section", "client.yml").toString());
                     }
                 } else {
                     logger.error(new Status(CONFIG_PROPERTY_MISSING, "token section", "client.yml").toString());
@@ -51,7 +54,7 @@ public class TokenIntrospectionRequest extends IntrospectionRequest {
                 logger.error(new Status(CONFIG_PROPERTY_MISSING, "oauth section", "client.yml").toString());
             }
         } else {
-            logger.error(new Status(CONFIG_PROPERTY_MISSING, "oauth key section", "client.yml").toString());
+            logger.error(new Status(CONFIG_PROPERTY_MISSING, "client section", "client.yml").toString());
         }
     }
 
