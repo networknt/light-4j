@@ -328,7 +328,7 @@ public class JwtVerifier extends TokenVerifier {
                 }
             } else if (requestPath != null) {
                 String serviceId = getServiceIdByRequestPath(clientConfig, requestPath);
-                if(serviceId == null && audienceMap != null && audienceMap.size() > 0) {
+                if(serviceId != null && audienceMap != null && audienceMap.size() > 0) {
                     configuredAudience = audienceMap.get(serviceId);
                     boolean r = isJwtAudienceValid(claims, configuredAudience);
                     if(!r) {
