@@ -298,7 +298,7 @@ public class JwtVerifier extends TokenVerifier {
                 cache.put(jwt, claims);
             }
             if(cache.estimatedSize() > config.getJwtCacheFullSize()) {
-                logger.error("JWT cache exceeds the size limit " + config.getJwtCacheFullSize());
+                logger.warn("JWT cache exceeds the size limit " + config.getJwtCacheFullSize());
             }
         }
         return claims;
