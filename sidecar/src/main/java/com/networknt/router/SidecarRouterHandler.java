@@ -55,30 +55,32 @@ public class SidecarRouterHandler extends RouterHandler implements MiddlewareHan
 
     public SidecarRouterHandler() {
         super();
-        if(logger.isDebugEnabled()) logger.debug("GatewayRouterHandler is constructed");
+        if(logger.isDebugEnabled()) logger.debug("SidecarRouterHandler is constructed");
     }
 
     public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
-        if(logger.isDebugEnabled()) logger.debug("GatewayRouterHandler.handleRequest starts.");
+        if(logger.isDebugEnabled()) logger.debug("SidecarRouterHandler.handleRequest starts.");
         if (Constants.HEADER.equalsIgnoreCase(sidecarConfig.getEgressIngressIndicator())) {
             HeaderValues serviceIdHeader = httpServerExchange.getRequestHeaders().get(SERVICE_ID);
             String serviceId = serviceIdHeader != null ? serviceIdHeader.peekFirst() : null;
             String serviceUrl = httpServerExchange.getRequestHeaders().getFirst(HttpStringConstants.SERVICE_URL);
+            if(logger.isTraceEnabled()) logger.trace("SidecarRouterHandler.handleRequest serviceId {} and serviceUrl {}.", serviceId, serviceUrl);
             if (serviceId != null || serviceUrl != null) {
+                if(logger.isTraceEnabled()) logger.trace("SidecarRouterHandler.handleRequest ends with calling RouterHandler");
                 proxyHandler.handleRequest(httpServerExchange);
                 // get the serviceId and put it into the request as callerId for metrics
                 if(serverConfig != null) {
                     httpServerExchange.getRequestHeaders().put(HttpStringConstants.CALLER_ID, serverConfig.getServiceId());
                 }
             } else {
-                if(logger.isDebugEnabled()) logger.debug("GatewayRouterHandler.handleRequest ends.");
+                if(logger.isDebugEnabled()) logger.debug("SidecarRouterHandler.handleRequest ends with skipping RouterHandler.");
                 Handler.next(httpServerExchange, next);
             }
         } else if (Constants.PROTOCOL.equalsIgnoreCase(sidecarConfig.getEgressIngressIndicator()) && HttpURL.PROTOCOL_HTTP.equalsIgnoreCase(httpServerExchange.getRequestScheme())){
-            if(logger.isDebugEnabled()) logger.debug("GatewayRouterHandler.handleRequest ends.");
+            if(logger.isDebugEnabled()) logger.debug("SidecarRouterHandler.handleRequest ends with calling RouterHandler.");
             proxyHandler.handleRequest(httpServerExchange);
         } else {
-            if(logger.isDebugEnabled()) logger.debug("GatewayRouterHandler.handleRequest ends.");
+            if(logger.isDebugEnabled()) logger.debug("SidecarRouterHandler.handleRequest ends  with skipping RouterHandler.");
             Handler.next(httpServerExchange, next);
         }
     }
