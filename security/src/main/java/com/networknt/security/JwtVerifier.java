@@ -328,10 +328,19 @@ public class JwtVerifier extends TokenVerifier {
                 }
             } else if (requestPath != null) {
                 String serviceId = getServiceIdByRequestPath(clientConfig, requestPath);
-                if(serviceId != null && audienceMap != null && audienceMap.size() > 0) {
-                    configuredAudience = audienceMap.get(serviceId);
+                if(serviceId == null) {
+                    // cannot find serviceId, get the single audience.
+                    configuredAudience = audience;
+                } else {
+                    // get the audience by serviceId from the audienceMap.
+                    if(audienceMap != null && audienceMap.size() > 0) {
+                        configuredAudience = audienceMap.get(serviceId);
+                    }
+                }
+                if(configuredAudience != null) {
+                    // validate the audience against the configured audience in the client.yml only if configuredAudience is not null.
                     boolean r = isJwtAudienceValid(claims, configuredAudience);
-                    if(!r) {
+                    if (!r) {
                         throw new InvalidJwtException("Invalid Audience", Collections.singletonList(new ErrorCodeValidator.Error(ErrorCodes.AUDIENCE_INVALID, "Invalid Audience")), context);
                     }
                 }
@@ -680,7 +689,7 @@ public class JwtVerifier extends TokenVerifier {
             String key = OauthHelper.getKey(keyRequest);
 
             if (logger.isDebugEnabled())
-                logger.debug("Got Json Web Key list from {}", keyRequest.getServerUrl());
+                logger.debug("Got Json Web Key {} from {} with path {}", key, keyRequest.getServerUrl(), keyRequest.getUri());
 
             return new JsonWebKeySet(key).getJsonWebKeys();
         } catch (JoseException ce) {
