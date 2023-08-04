@@ -320,40 +320,41 @@ public class JwtVerifier extends TokenVerifier {
                 // if both requestPath and jwkServiceIds are null, it means the single oauth server is used.
                 configuredAudience = audience;
                 if (configuredAudience != null) {
-                   // validate the audience against the configured audience in the client.yml
-                   boolean r = isJwtAudienceValid(claims, configuredAudience);
-                   if(!r) {
-                       throw new InvalidJwtException("Invalid Audience", Collections.singletonList(new ErrorCodeValidator.Error(ErrorCodes.AUDIENCE_INVALID, "Invalid Audience")), context);
-                   }
-                }
-            } else if (requestPath != null) {
-                String serviceId = getServiceIdByRequestPath(clientConfig, requestPath);
-                if(serviceId == null) {
-                    // cannot find serviceId, get the single audience.
-                    configuredAudience = audience;
-                } else {
-                    // get the audience by serviceId from the audienceMap.
-                    if(audienceMap != null && audienceMap.size() > 0) {
-                        configuredAudience = audienceMap.get(serviceId);
-                    }
-                }
-                if(configuredAudience != null) {
-                    // validate the audience against the configured audience in the client.yml only if configuredAudience is not null.
+                    // validate the audience against the configured audience in the client.yml
                     boolean r = isJwtAudienceValid(claims, configuredAudience);
                     if (!r) {
                         throw new InvalidJwtException("Invalid Audience", Collections.singletonList(new ErrorCodeValidator.Error(ErrorCodes.AUDIENCE_INVALID, "Invalid Audience")), context);
                     }
                 }
+            } else if (jwkServiceIds != null && jwkServiceIds.size() > 0) {
+                // more than one serviceIds are passed in from the UnifiedSecurityHandler. Just use each serviceId to get the audience.
+                // this condition is in higher priority than the requestPath condition as requestPath will always be not null.
+                for(String serviceId: jwkServiceIds) {
+                    if(audienceMap != null && audienceMap.size() > 0) {
+                        configuredAudience = audienceMap.get(serviceId);
+                        boolean r = isJwtAudienceValid(claims, configuredAudience);
+                        if(!r) {
+                            throw new InvalidJwtException("Invalid Audience", Collections.singletonList(new ErrorCodeValidator.Error(ErrorCodes.AUDIENCE_INVALID, "Invalid Audience")), context);
+                        }
+                    }
+                }
             } else {
-                if(jwkServiceIds != null && jwkServiceIds.size() > 0) {
-                    // more than one serviceIds are passed in from the UnifiedSecurityHandler. Just use each serviceId to get the audience.
-                    for(String serviceId: jwkServiceIds) {
+                if (requestPath != null) {
+                    String serviceId = getServiceIdByRequestPath(clientConfig, requestPath);
+                    if(serviceId == null) {
+                        // cannot find serviceId, get the single audience.
+                        configuredAudience = audience;
+                    } else {
+                        // get the audience by serviceId from the audienceMap.
                         if(audienceMap != null && audienceMap.size() > 0) {
                             configuredAudience = audienceMap.get(serviceId);
-                            boolean r = isJwtAudienceValid(claims, configuredAudience);
-                            if(!r) {
-                                throw new InvalidJwtException("Invalid Audience", Collections.singletonList(new ErrorCodeValidator.Error(ErrorCodes.AUDIENCE_INVALID, "Invalid Audience")), context);
-                            }
+                        }
+                    }
+                    if(configuredAudience != null) {
+                        // validate the audience against the configured audience in the client.yml only if configuredAudience is not null.
+                        boolean r = isJwtAudienceValid(claims, configuredAudience);
+                        if (!r) {
+                            throw new InvalidJwtException("Invalid Audience", Collections.singletonList(new ErrorCodeValidator.Error(ErrorCodes.AUDIENCE_INVALID, "Invalid Audience")), context);
                         }
                     }
                 }
@@ -532,6 +533,7 @@ public class JwtVerifier extends TokenVerifier {
             // iterate all the configured auth server to get JWK.
             Map<String, Object> serviceIdAuthServers = (Map<String, Object>) keyConfig.get(ClientConfig.SERVICE_ID_AUTH_SERVERS);
             if (serviceIdAuthServers != null && serviceIdAuthServers.size() > 0) {
+                audienceMap = new HashMap<>();
                 for (Map.Entry<String, Object> entry : serviceIdAuthServers.entrySet()) {
                     String serviceId = entry.getKey();
                     Map<String, Object> authServerConfig = (Map<String, Object>) entry.getValue();
