@@ -1,5 +1,25 @@
 # Change Log
 
+## [2.1.24](https://github.com/networknt/light-4j/tree/2.1.24) (2023-08-06)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1857 add trace logging for Sidecar Handlers [\#1858](https://github.com/networknt/light-4j/pull/1858) ([stevehu](https://github.com/stevehu))
+- fixes \#1855 change jwt cache exceeds limit from error to warn [\#1856](https://github.com/networknt/light-4j/pull/1856) ([stevehu](https://github.com/stevehu))
+- fixes \#1853 put serviceIds higher priority than requestPath in audien… [\#1854](https://github.com/networknt/light-4j/pull/1854) ([stevehu](https://github.com/stevehu))
+- fixes \#1851 update logic to get audience in single OAuth 2.0 provider [\#1852](https://github.com/networknt/light-4j/pull/1852) ([stevehu](https://github.com/stevehu))
+- fixes \#1849 Only serviceId is found from requestPath, the audience va… [\#1850](https://github.com/networknt/light-4j/pull/1850) ([stevehu](https://github.com/stevehu))
+- fixes \#1847 update TokenIntrospectionRequest to output error only whe… [\#1848](https://github.com/networknt/light-4j/pull/1848) ([stevehu](https://github.com/stevehu))
+- fixes \#1845 update security config to add swtClientIdHeader and swtCl… [\#1846](https://github.com/networknt/light-4j/pull/1846) ([stevehu](https://github.com/stevehu))
+- fixes \#1843 update swt token introspection to allow the clientId and … [\#1844](https://github.com/networknt/light-4j/pull/1844) ([stevehu](https://github.com/stevehu))
+- fixes \#1841 impove security handler to include JWT audience validatio… [\#1842](https://github.com/networknt/light-4j/pull/1842) ([stevehu](https://github.com/stevehu))
+- fixes \#1825 Decryptor problem with AES-GCM [\#1840](https://github.com/networknt/light-4j/pull/1840) ([stevehu](https://github.com/stevehu))
+- fixes \#1838 add certFilename and certPassword to the PathPrefixAuth i… [\#1839](https://github.com/networknt/light-4j/pull/1839) ([stevehu](https://github.com/stevehu))
+- fixes \#1825 Decryptor problem with AES-GCM [\#1835](https://github.com/networknt/light-4j/pull/1835) ([stevehu](https://github.com/stevehu))
+- fixes \#1836 Add getJsonObjectConfigNoCache method to load object conf… [\#1837](https://github.com/networknt/light-4j/pull/1837) ([stevehu](https://github.com/stevehu))
+- fixes \#1833 Skip loading the jwk mapping in getJsonWebKeyMap if servi… [\#1834](https://github.com/networknt/light-4j/pull/1834) ([stevehu](https://github.com/stevehu))
 ## [2.1.23](https://github.com/networknt/light-4j/tree/2.1.23) (2023-07-11)
 
 
