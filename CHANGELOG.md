@@ -1,6 +1,6 @@
 # Change Log
 
-## [2.1.24](https://github.com/networknt/light-4j/tree/2.1.24) (2023-08-06)
+## [2.1.24](https://github.com/networknt/light-4j/tree/2.1.24) (2023-08-07)
 
 
 **Merged pull requests:**
@@ -20,6 +20,8 @@
 - fixes \#1825 Decryptor problem with AES-GCM [\#1835](https://github.com/networknt/light-4j/pull/1835) ([stevehu](https://github.com/stevehu))
 - fixes \#1836 Add getJsonObjectConfigNoCache method to load object conf… [\#1837](https://github.com/networknt/light-4j/pull/1837) ([stevehu](https://github.com/stevehu))
 - fixes \#1833 Skip loading the jwk mapping in getJsonWebKeyMap if servi… [\#1834](https://github.com/networknt/light-4j/pull/1834) ([stevehu](https://github.com/stevehu))
+
+
 ## [2.1.23](https://github.com/networknt/light-4j/tree/2.1.23) (2023-07-11)
 
 
