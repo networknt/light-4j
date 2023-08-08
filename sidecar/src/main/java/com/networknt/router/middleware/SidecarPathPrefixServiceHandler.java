@@ -40,7 +40,7 @@ public class SidecarPathPrefixServiceHandler extends PathPrefixServiceHandler {
         } else {
             // incoming request, let the proxy handler to handle it.
             if(logger.isDebugEnabled()) logger.debug("SidecarPathPrefixServiceHandler.handleRequest ends for incoming request.");
-            Handler.next(exchange, next);
         }
+        Handler.next(exchange, next);
     }
 }
