@@ -1,5 +1,13 @@
 # Change Log
 
+## [2.1.25](https://github.com/networknt/light-4j/tree/2.1.25) (2023-08-08)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1861 fix the sidecar path prefix handler to make it consitent … [\#1862](https://github.com/networknt/light-4j/pull/1862) ([stevehu](https://github.com/stevehu))
+- fixes \#1859 fix a bug that the sidecar path prefix handler is not cal… [\#1860](https://github.com/networknt/light-4j/pull/1860) ([stevehu](https://github.com/stevehu))
 ## [2.1.24](https://github.com/networknt/light-4j/tree/2.1.24) (2023-08-07)
 
 
