@@ -33,14 +33,14 @@ public class SidecarPathPrefixServiceHandler extends PathPrefixServiceHandler {
         if(logger.isDebugEnabled()) logger.debug("SidecarPathPrefixServiceHandler.handleRequest starts.");
         if (Constants.HEADER.equalsIgnoreCase(sidecarConfig.getEgressIngressIndicator())) {
             if(logger.isTraceEnabled()) logger.trace("Outgoing request calls PathPrefixServiceHandler with header indicator");
-            pathPrefixService(exchange);
+            super.handleRequest(exchange);
         } else if (Constants.PROTOCOL.equalsIgnoreCase(sidecarConfig.getEgressIngressIndicator()) && HttpURL.PROTOCOL_HTTP.equalsIgnoreCase(exchange.getRequestScheme())){
             if(logger.isTraceEnabled()) logger.trace("Outgoing request calls PathPrefixServiceHandler with protocol indicator and http protocol");
-            pathPrefixService(exchange);
+            super.handleRequest(exchange);
         } else {
             // incoming request, let the proxy handler to handle it.
             if(logger.isDebugEnabled()) logger.debug("SidecarPathPrefixServiceHandler.handleRequest ends for incoming request.");
+            Handler.next(exchange, next);
         }
-        Handler.next(exchange, next);
     }
 }
