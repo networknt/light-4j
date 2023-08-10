@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Transforms the request body of an active request being processed.
@@ -222,6 +223,17 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
                                             }
                                         }
                                         exchange.getRequestHeaders().put(Headers.CONTENT_LENGTH, length);
+                                        break;
+                                    case "responseBody":
+                                        // if the plugin send the request to the backend and get the response. It can be put here to return
+                                        // to the caller immediately. The e-PAM token plugin is using this feature. If we send the response
+                                        // body here, we are expecting the end of the exchange. So there is an option to have the contentType
+                                        // and statusCode in the result map.
+                                        String responseBody = (String)result.get("responseBody");
+                                        if(logger.isTraceEnabled()) logger.trace("responseBody = " + responseBody);
+                                        exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, Objects.requireNonNullElse((String)result.get("contentType"), "application/json"));
+                                        exchange.setStatusCode(Objects.requireNonNullElse((Integer)result.get("statusCode"), 200));
+                                        exchange.getResponseSender().send(responseBody);
                                         break;
                                     case "validationError":
                                         // If the rule engine returns any validationError entry, stop the chain and send the res.
