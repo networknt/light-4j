@@ -78,8 +78,9 @@ public class LimitHandler implements MiddlewareHandler {
             exchange.getResponseHeaders().add(new HttpString(Constants.RATELIMIT_RESET), rateLimitResponse.getHeaders().get(Constants.RATELIMIT_RESET));
 
             exchange.getResponseHeaders().add(new HttpString("Content-Type"), "application/json");
-            exchange.setStatusCode(config.getErrorCode()==0 ? HttpStatus.TOO_MANY_REQUESTS.value():config.getErrorCode());
-            if(logger.isDebugEnabled()) logger.debug("LimitHandler.handleRequest ends with an error.");
+            int statusCode = config.getErrorCode()==0 ? HttpStatus.TOO_MANY_REQUESTS.value():config.getErrorCode();
+            exchange.setStatusCode(statusCode);
+            if(logger.isDebugEnabled()) logger.warn("LimitHandler.handleRequest ends with an error code {}", statusCode);
             exchange.getResponseSender().send(mapper.writeValueAsString(rateLimitResponse));
         }
     }
