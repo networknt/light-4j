@@ -1428,6 +1428,45 @@ ERR13001:
   code: ERR13001
   message: UNABLE_PARSE_SCOPES_FROM_HEADER
   description: Cannot parse scopes from request headers.
+
+# light-lambda-native status 14000-14999
+SUC14200:
+  statusCode: 200
+  code: SUC14200
+  message: MIDDLEWARE_OK
+  severity: NA
+  description: Lambda native handler returned success execution.
+ERR14001:
+  statusCode: 500
+  code: ERR14001
+  message: LAMBDA_NATIVE_HANDLER_DISABLED
+  description: Lambda native handler disabled, but still instantiated in chain (config error).
+ERR14002:
+  statusCode: 500
+  code: ERR14002
+  message: LAMBDA_BODY_TRANSFORMATION_EXCEPTION
+  description: Lambda body transformation middleware failed with exception.
+ERR14003:
+  statusCode: 500
+  code: ERR14003
+  message: MIDDLEWARE_THREAD_INTERRUPT
+  description: Middleware thread was interrupted during execution.
+ERR14004:
+  statusCode: 500
+  code: ERR14004
+  message: MIDDLEWARE_UNHANDLED_EXCEPTION
+  description: Middleware thread unhandled runtime exception.
+ERR14005:
+  statusCode: 500
+  code: ERR14005
+  message: UNKNOWN_HEADER_OPERATION
+  description: Header operation is unknown (config issue).
+ERR14006:
+  statusCode: 500
+  code: ERR14005
+  message: HEADER_MISSING_FOR_OPERATION
+  description: Header value %s is missing. Header must be present for this operation.
+
 # 20000-29999 common error codes within your business domain.
 # It is highly recommended to have your error code shared within your organization or your line of business.
 # In that case, all your services can share the same status.yml which in org default config
