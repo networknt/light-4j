@@ -113,8 +113,8 @@ public class Server {
 
             loadConfigs();
 
-            // this will make sure that all log statement will have serviceId
-            MDC.put(SID, getServerConfig().getServiceId());
+            // comment out as we are using values.yml property file in logback.xml
+            // MDC.put(SID, getServerConfig().getServiceId());
 
             // merge status.yml and app-status.yml if app-status.yml is provided
             mergeStatusConfig();
