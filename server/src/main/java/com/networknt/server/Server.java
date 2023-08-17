@@ -40,7 +40,6 @@ import io.undertow.server.handlers.GracefulShutdownHandler;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import org.xnio.Options;
 import org.xnio.Sequence;
 import org.xnio.SslClientAuthMode;
