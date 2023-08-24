@@ -1,5 +1,15 @@
 # Change Log
 
+## [2.1.26](https://github.com/networknt/light-4j/tree/2.1.26) (2023-08-17)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1868 remove the serviceId from the MDC of logback [\#1869](https://github.com/networknt/light-4j/pull/1869) ([stevehu](https://github.com/stevehu))
+- Lambda Native Status Codes [\#1867](https://github.com/networknt/light-4j/pull/1867) ([KalevGonvick](https://github.com/KalevGonvick))
+- fixes \#1865 Rate limit above threshold hits cannot be easily reported [\#1866](https://github.com/networknt/light-4j/pull/1866) ([stevehu](https://github.com/stevehu))
+- fixes \#1863 add responseBody handling in RequestTransformerInterceptor [\#1864](https://github.com/networknt/light-4j/pull/1864) ([stevehu](https://github.com/stevehu))
 ## [2.1.25](https://github.com/networknt/light-4j/tree/2.1.25) (2023-08-08)
 
 
