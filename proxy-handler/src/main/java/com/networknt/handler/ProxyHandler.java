@@ -603,6 +603,11 @@ public class ProxyHandler implements HttpHandler {
             // the serviceId and serviceUrl might impact the pathPrefixServiceHandler to detect the serviceId.
             r.getRequestHeaders().remove(HttpStringConstants.SERVICE_URL);
             r.getRequestHeaders().remove(HttpStringConstants.SERVICE_ID);
+
+            //  for debugging purpose
+            if (LOG.isTraceEnabled()) {
+                LOG.trace("headers = " + r.getRequestHeaders().toString());
+            }
         }
 
         /**
