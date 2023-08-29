@@ -102,11 +102,17 @@ public class HeaderHandler implements MiddlewareHandler {
                     if(requestHeaderMap != null) {
                         List<String> requestHeaderRemoveList = (List<String>)requestHeaderMap.get(HeaderConfig.REMOVE);
                         if(requestHeaderRemoveList != null) {
-                            requestHeaderRemoveList.forEach(s -> exchange.getRequestHeaders().remove(s));
+                            requestHeaderRemoveList.forEach(s -> {
+                                exchange.getRequestHeaders().remove(s);
+                                if(logger.isTraceEnabled()) logger.trace("remove request header " + s);
+                            });
                         }
                         Map<String, Object> requestHeaderUpdateMap = (Map<String, Object>)requestHeaderMap.get(HeaderConfig.UPDATE);
                         if(requestHeaderUpdateMap != null) {
-                            requestHeaderUpdateMap.forEach((k, v) -> exchange.getRequestHeaders().put(new HttpString(k), (String)v));
+                            requestHeaderUpdateMap.forEach((k, v) -> {
+                                exchange.getRequestHeaders().put(new HttpString(k), (String)v);
+                                if(logger.isTraceEnabled()) logger.trace("update request header " + k + " with value " + v);
+                            });
                         }
                     }
                     // handle the response header for the request path
@@ -114,11 +120,17 @@ public class HeaderHandler implements MiddlewareHandler {
                     if(responseHeaderMap != null) {
                         List<String> responseHeaderRemoveList = (List<String>)responseHeaderMap.get(HeaderConfig.REMOVE);
                         if(responseHeaderRemoveList != null) {
-                            responseHeaderRemoveList.forEach(s -> exchange.getResponseHeaders().remove(s));
+                            responseHeaderRemoveList.forEach(s -> {
+                                exchange.getResponseHeaders().remove(s);
+                                if(logger.isTraceEnabled()) logger.trace("remove response header " + s);
+                            });
                         }
                         Map<String, Object> responseHeaderUpdateMap = (Map<String, Object>)responseHeaderMap.get(HeaderConfig.UPDATE);
                         if(responseHeaderUpdateMap != null) {
-                            responseHeaderUpdateMap.forEach((k, v) -> exchange.getResponseHeaders().put(new HttpString(k), (String)v));
+                            responseHeaderUpdateMap.forEach((k, v) -> {
+                                exchange.getResponseHeaders().put(new HttpString(k), (String)v);
+                                if(logger.isTraceEnabled()) logger.trace("update response header " + k + " with value " + v);
+                            });
                         }
                     }
                 }
