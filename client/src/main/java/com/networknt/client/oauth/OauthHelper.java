@@ -394,6 +394,7 @@ public class OauthHelper {
         if(serverUrl == null) {
             throw new ClientException(new Status(OAUTH_SERVER_URL_ERROR, "key"));
         }
+        if(logger.isTraceEnabled()) logger.trace("introspection service url = " + serverUrl);
         try {
             Map<String, String> parameters = new HashMap<>();
             parameters.put("token", token);
