@@ -566,6 +566,11 @@ ERR10084:
   code: ERR10084
   message: DOWNSTREAM_ADMIN_DISABLED
   description: Downstream admin access is disabled.
+ERR10085:
+  statusCode: 400
+  code: ERR10085
+  message: OPENAPI_OPERATION_MISSED
+  description: OpenAPI operation is missed from the auditInfo.
 
 # 11000-11499 swagger-validator errors
 ERR11000:
