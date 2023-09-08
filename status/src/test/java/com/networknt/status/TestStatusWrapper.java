@@ -1,17 +1,15 @@
 package com.networknt.status;
 
-import io.undertow.server.HttpServerExchange;
-
 public class TestStatusWrapper implements StatusWrapper {
     @Override
-    public Status wrap(Status status, HttpServerExchange exchange) {
+    public Status wrap(Status status, Object exchange) {
         return new TestStatus(status, exchange);
     }
 
     private class TestStatus extends Status {
         private String customInfo;
 
-        public TestStatus(Status status, HttpServerExchange exchange) {
+        public TestStatus(Status status, Object exchange) {
             this.setStatusCode(status.getStatusCode());
             this.setCode(status.getCode());
             this.setDescription(status.getDescription());
