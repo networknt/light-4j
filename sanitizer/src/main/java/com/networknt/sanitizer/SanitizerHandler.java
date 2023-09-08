@@ -73,13 +73,13 @@ public class SanitizerHandler implements MiddlewareHandler {
                 for (HeaderValues values : headerMap) {
                     if (values != null) {
                         // if ignore list exists, it will take the precedence.
-                        if(config.getHeaderAttributesToIgnore() != null && config.getHeaderAttributesToIgnore().contains(values.getHeaderName().toString())) {
+                        if(config.getHeaderAttributesToIgnore() != null && config.getHeaderAttributesToIgnore().stream().anyMatch(values.getHeaderName().toString()::equalsIgnoreCase)) {
                             if(logger.isTraceEnabled()) logger.trace("Ignore header " + values.getHeaderName().toString() + " as it is in the ignore list.");
                             continue;
                         }
 
                         if(config.getHeaderAttributesToEncode() != null) {
-                            if(config.getHeaderAttributesToEncode().contains(values.getHeaderName().toString())) {
+                            if(config.getHeaderAttributesToEncode().stream().anyMatch(values.getHeaderName().toString()::equalsIgnoreCase)) {
                                 if(logger.isTraceEnabled()) logger.trace("Encode header " + values.getHeaderName().toString() + " as it is not in the ignore list and it is in the encode list.");
                                 ListIterator<String> itValues = values.listIterator();
                                 while (itValues.hasNext()) {
