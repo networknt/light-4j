@@ -191,6 +191,7 @@ public class AuditHandler implements MiddlewareHandler {
     private void auditHeader(HttpServerExchange exchange, Map<String, Object> auditMap) {
         for (String name : config.getHeaderList()) {
             String value = exchange.getRequestHeaders().getFirst(name);
+            if(logger.isTraceEnabled()) logger.trace("header name = " + name + " header value = " + value);
             auditMap.put(name, config.isMask() ? Mask.maskRegex(value, "requestHeader", name) : value);
         }
     }
