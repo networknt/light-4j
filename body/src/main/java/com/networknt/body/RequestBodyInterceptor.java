@@ -73,7 +73,7 @@ public class RequestBodyInterceptor implements RequestInterceptor {
             var existing = (PooledByteBuffer[]) exchange.getAttachment(AttachmentConstants.BUFFERED_REQUEST_DATA_KEY);
 
             if(LOG.isTraceEnabled())
-                LOG.trace("if the request body exists = {}", existing == null);
+                LOG.trace("request body exists in exchange attachment = {}", existing != null);
 
             if (existing != null) {
 
