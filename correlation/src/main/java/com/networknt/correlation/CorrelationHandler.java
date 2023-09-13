@@ -26,6 +26,7 @@ import com.networknt.utility.Util;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.util.HeaderValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -82,8 +83,17 @@ public class CorrelationHandler implements MiddlewareHandler {
             this.addHandlerMDCContext(exchange, CID, cId);
         }
 
+        // This is usually the first handler in the request/response chain, log all the request headers here for diagnostic purpose.
+        if(logger.isTraceEnabled()) {
+            StringBuilder sb = new StringBuilder();
+            for (HeaderValues header : exchange.getRequestHeaders()) {
+                for (String value : header) {
+                    sb.append(header.getHeaderName()).append("=").append(value).append("\n");
+                }
+            }
+            logger.trace("Request Headers: " + sb);
+        }
 
-        //logger.debug("Init cId:" + cId);
         if(logger.isDebugEnabled()) logger.debug("CorrelationHandler.handleRequest ends.");
         Handler.next(exchange, next);
     }
