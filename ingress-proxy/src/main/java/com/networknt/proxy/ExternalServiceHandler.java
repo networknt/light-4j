@@ -153,15 +153,27 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                     } else if(method.equalsIgnoreCase("POST")) {
                         // if body handler is in the chain before this handler, we should have it in the exchange attachment.
                         String bodyString = exchange.getAttachment(AttachmentConstants.REQUEST_BODY_STRING);
-                        if(bodyString == null && logger.isDebugEnabled()) logger.debug("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
+                        if(bodyString == null) {
+                            if(logger.isTraceEnabled()) logger.trace("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
+                        } else {
+                            if(logger.isTraceEnabled()) logger.trace("request body = " + bodyString);
+                        }
                         request = builder.POST(bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString)).build();
                     } else if(method.equalsIgnoreCase("PUT")) {
                         String bodyString = exchange.getAttachment(AttachmentConstants.REQUEST_BODY_STRING);
-                        if(bodyString == null && logger.isDebugEnabled()) logger.debug("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
+                        if(bodyString == null) {
+                            if(logger.isTraceEnabled()) logger.trace("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
+                        } else {
+                            if(logger.isTraceEnabled()) logger.trace("request body = " + bodyString);
+                        }
                         request = builder.PUT(bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString)).build();
                     } else if(method.equalsIgnoreCase("PATCH")) {
                         String bodyString = exchange.getAttachment(AttachmentConstants.REQUEST_BODY_STRING);
-                        if(bodyString == null && logger.isDebugEnabled()) logger.debug("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
+                        if(bodyString == null) {
+                            if(logger.isTraceEnabled()) logger.trace("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
+                        } else {
+                            if(logger.isTraceEnabled()) logger.trace("request body = " + bodyString);
+                        }
                         request = builder.method("PATCH", bodyString == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(bodyString)).build();
                     } else {
                         logger.error("wrong http method " + method + " for request path " + requestPath);

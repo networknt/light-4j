@@ -87,10 +87,11 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
 
         this.next = Handler.getNext(httpServerExchange);
 
-            if(logger.isTraceEnabled())
-                logger.trace("injectionContentRequired = {} appliedBodyInjectionPathPrefix = {} method = {} requestComplete = {} requiresContinueResponse = {}", this.injectorContentRequired(), this.isAppliedBodyInjectionPathPrefix(httpServerExchange.getRequestPath()), method, httpServerExchange.isRequestComplete(), HttpContinue.requiresContinueResponse(httpServerExchange.getRequestHeaders()));
+        if(logger.isTraceEnabled())
+            logger.trace("injectionContentRequired = {} appliedBodyInjectionPathPrefix = {} method = {} requestComplete = {} requiresContinueResponse = {}", this.injectorContentRequired(), this.isAppliedBodyInjectionPathPrefix(httpServerExchange.getRequestPath()), method, httpServerExchange.isRequestComplete(), HttpContinue.requiresContinueResponse(httpServerExchange.getRequestHeaders()));
 
         if (this.shouldReadBody(httpServerExchange)) {
+            if(logger.isTraceEnabled()) logger.trace("Trying to read body");
             final var channel = httpServerExchange.getRequestChannel();
             final var bufferedData = new PooledByteBuffer[MAX_BUFFERS];
 
@@ -126,12 +127,13 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
                 this.saveBufferAndResetUndertowConnector(httpServerExchange, bufferedData);
 
             } catch (Exception | Error e) {
+                logger.error(e.getMessage(), e);
                 safeCloseBuffers(bufferedData, buffer);
                 httpServerExchange.endExchange();
             }
 
         } else {
-
+            if(logger.isTraceEnabled()) logger.trace("No need to read body");
             // no need to inject the content for the body. just call the interceptors here.
             this.invokeInterceptors(httpServerExchange);
         }
@@ -264,6 +266,7 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
      * @param bufferedData       - total buffered data
      */
     private void saveBufferAndResetUndertowConnector(final HttpServerExchange ex, final PooledByteBuffer[] bufferedData) {
+        if(logger.isTraceEnabled()) logger.trace("saveBufferAndResetUndertowConnector is called.");
         ex.putAttachment(AttachmentConstants.BUFFERED_REQUEST_DATA_KEY, bufferedData);
         this.updateContentLength(ex, bufferedData);
         Connectors.ungetRequestBytes(ex, bufferedData);
@@ -273,12 +276,13 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
 
     private void updateContentLength(final HttpServerExchange ex, final PooledByteBuffer[] bufferedData) {
         if (ex.getRequestHeaders().getFirst(Headers.CONTENT_LENGTH) != null) {
+            if(logger.isTraceEnabled()) logger.trace("original content length in request headers = {}", ex.getRequestHeaders().getFirst(Headers.CONTENT_LENGTH));
             long length = 0;
 
             for (var dest : bufferedData)
                 if (dest != null)
                     length += dest.getBuffer().limit();
-
+            if(logger.isTraceEnabled()) logger.trace("update content length in request headers = {}", length);
             ex.getRequestHeaders().put(Headers.CONTENT_LENGTH, length);
         }
     }
