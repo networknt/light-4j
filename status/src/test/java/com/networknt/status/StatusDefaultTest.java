@@ -22,9 +22,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.config.Config;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.HashMap;
 import java.util.Map;
