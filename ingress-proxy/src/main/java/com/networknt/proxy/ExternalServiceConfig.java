@@ -3,10 +3,8 @@ package com.networknt.proxy;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.handler.config.UrlRewriteRule;
-import com.networknt.proxy.mras.MrasConfig;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
