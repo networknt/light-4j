@@ -24,16 +24,16 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class SanitizerHandlerWithEncodeType {
+public class SanitizerHandlerWithEncodeTypeTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SanitizerHandlerWithEncodeTest.class);
+    private static final Logger logger = LoggerFactory.getLogger(SanitizerHandlerWithEncodeTest.class);
 
     private static Undertow server = null;
 
     @BeforeClass
     public static void setUp() {
         if(server == null) {
-            LOGGER.info("starting server");
+            logger.info("starting server");
             server = ServerBuilder.newServer().withConfigName("sanitizer_with_encode_type").build();
             server.start();
         }
@@ -48,7 +48,7 @@ public class SanitizerHandlerWithEncodeType {
 
             }
             server.stop();
-            LOGGER.info("The server is stopped.");
+            logger.info("The server is stopped.");
         }
     }
 

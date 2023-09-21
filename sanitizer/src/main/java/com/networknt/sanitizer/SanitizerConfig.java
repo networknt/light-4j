@@ -16,9 +16,14 @@
 
 package com.networknt.sanitizer;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
+import com.networknt.config.ConfigException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -29,10 +34,19 @@ import java.util.Map;
  * @author Steve Hu
  */
 public class SanitizerConfig {
+    public static Logger logger = LoggerFactory.getLogger(SanitizerConfig.class);
+
     public static final String CONFIG_NAME = "sanitizer";
 
     // the default encoder value for the old version of config file.
     public static final String DEFAULT_ENCODER = "javascript-source";
+    public static final String BODY_ENCODER = "bodyEncoder";
+    public static final String HEADER_ENCODER = "headerEncoder";
+    public static final String BODY_ATTRIBUTES_TO_ENCODE = "bodyAttributesToEncode";
+    public static final String BODY_ATTRIBUTES_TO_IGNORE = "bodyAttributesToIgnore";
+    public static final String HEADER_ATTRIBUTES_TO_ENCODE = "headerAttributesToEncode";
+    public static final String HEADER_ATTRIBUTES_TO_IGNORE = "headerAttributesToIgnore";
+
 
     private boolean enabled;
     private boolean bodyEnabled;
@@ -49,10 +63,7 @@ public class SanitizerConfig {
 
     private SanitizerConfig(String configName) {
         mappedConfig = Config.getInstance().getJsonMapConfig(configName);
-        setBodyAttributesToEncodeList();
-        setBodyAttributesToIgnoreList();
-        setHeaderAttributesToEncodeList();
-        setHeaderAttributesToIgnoreList();
+        setConfigList();
         setConfigData();
     }
 
@@ -162,56 +173,120 @@ public class SanitizerConfig {
                 headerEnabled = true;
             }
         }
-
-        object = mappedConfig.get("bodyEncoder");
+        object = mappedConfig.get(BODY_ENCODER);
         if(object != null ) {
             bodyEncoder = (String)object;
         } else {
             bodyEncoder = DEFAULT_ENCODER;
         }
 
-        object = mappedConfig.get("headerEncoder");
+        object = mappedConfig.get(HEADER_ENCODER);
         if(object != null ) {
             headerEncoder = (String)object;
         } else {
             headerEncoder = DEFAULT_ENCODER;
         }
+
     }
 
-    public void setBodyAttributesToEncodeList() {
-        this.bodyAttributesToEncode = new ArrayList<>();
-        if(mappedConfig.get("bodyAttributesToEncode") != null && mappedConfig.get("bodyAttributesToEncode") instanceof String) {
-            bodyAttributesToEncode.add((String)mappedConfig.get("bodyAttributesToEncode"));
-        } else {
-            bodyAttributesToEncode = (List)mappedConfig.get("bodyAttributesToEncode");
-        }
-    }
+    private void setConfigList() {
 
-    public void setBodyAttributesToIgnoreList() {
-        this.bodyAttributesToIgnore = new ArrayList<>();
-        if(mappedConfig.get("bodyAttributesToIgnore") != null && mappedConfig.get("bodyAttributesToIgnore") instanceof String) {
-            bodyAttributesToIgnore.add((String)mappedConfig.get("bodyAttributesToIgnore"));
-        } else {
-            bodyAttributesToIgnore = (List)mappedConfig.get("bodyAttributesToIgnore");
+        if(mappedConfig.get(BODY_ATTRIBUTES_TO_ENCODE) != null) {
+            Object object = mappedConfig.get(BODY_ATTRIBUTES_TO_ENCODE);
+            if(object instanceof String) {
+                String s = (String)object;
+                s = s.trim();
+                if(logger.isTraceEnabled()) logger.trace("bodyAttributesToEncode = " + s);
+                if(s.startsWith("[")) {
+                    // this is a JSON string, and we need to parse it.
+                    try {
+                        bodyAttributesToEncode = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
+                    } catch (Exception e) {
+                        throw new ConfigException("could not parse the bodyAttributesToEncode json with a list of strings.");
+                    }
+                } else {
+                    // this is a comma separated string.
+                    bodyAttributesToEncode = Arrays.asList(s.split("\\s*,\\s*"));
+                }
+            } else if (object instanceof List) {
+                bodyAttributesToEncode = (List<String>)object;
+            } else {
+                throw new ConfigException("bodyAttributesToEncode list is missing or wrong type.");
+            }
         }
-    }
 
-    public void setHeaderAttributesToEncodeList() {
-        this.headerAttributesToEncode = new ArrayList<>();
-        if(mappedConfig.get("headerAttributesToEncode") != null && mappedConfig.get("headerAttributesToEncode") instanceof String) {
-            headerAttributesToEncode.add((String)mappedConfig.get("headerAttributesToEncode"));
-        } else {
-            headerAttributesToEncode = (List)mappedConfig.get("headerAttributesToEncode");
+        if(mappedConfig.get(BODY_ATTRIBUTES_TO_IGNORE) != null) {
+            Object object = mappedConfig.get(BODY_ATTRIBUTES_TO_IGNORE);
+            if(object instanceof String) {
+                String s = (String)object;
+                s = s.trim();
+                if(logger.isTraceEnabled()) logger.trace("bodyAttributesToIgnore = " + s);
+                if(s.startsWith("[")) {
+                    // this is a JSON string, and we need to parse it.
+                    try {
+                        bodyAttributesToIgnore = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
+                    } catch (Exception e) {
+                        throw new ConfigException("could not parse the bodyAttributesToIgnore json with a list of strings.");
+                    }
+                } else {
+                    // this is a comma separated string.
+                    bodyAttributesToIgnore = Arrays.asList(s.split("\\s*,\\s*"));
+                }
+            } else if (object instanceof List) {
+                bodyAttributesToIgnore = (List<String>)object;
+            } else {
+                throw new ConfigException("bodyAttributesToIgnore list is missing or wrong type.");
+            }
         }
-    }
 
-    public void setHeaderAttributesToIgnoreList() {
-        this.headerAttributesToIgnore = new ArrayList<>();
-        if(mappedConfig.get("headerAttributesToIgnore") != null && mappedConfig.get("headerAttributesToIgnore") instanceof String) {
-            headerAttributesToIgnore.add((String)mappedConfig.get("headerAttributesToIgnore"));
-        } else {
-            headerAttributesToIgnore = (List)mappedConfig.get("headerAttributesToIgnore");
+        if(mappedConfig.get(HEADER_ATTRIBUTES_TO_ENCODE) != null) {
+            Object object = mappedConfig.get(HEADER_ATTRIBUTES_TO_ENCODE);
+            if(object instanceof String) {
+                String s = (String)object;
+                s = s.trim();
+                if(logger.isTraceEnabled()) logger.trace("headerAttributesToEncode = " + s);
+                if(s.startsWith("[")) {
+                    // this is a JSON string, and we need to parse it.
+                    try {
+                        headerAttributesToEncode = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
+                    } catch (Exception e) {
+                        throw new ConfigException("could not parse the headerAttributesToEncode json with a list of strings.");
+                    }
+                } else {
+                    // this is a comma separated string.
+                    headerAttributesToEncode = Arrays.asList(s.split("\\s*,\\s*"));
+                }
+            } else if (object instanceof List) {
+                headerAttributesToEncode = (List<String>)object;
+            } else {
+                throw new ConfigException("headerAttributesToEncode list is missing or wrong type.");
+            }
         }
+
+        if(mappedConfig.get(HEADER_ATTRIBUTES_TO_IGNORE) != null) {
+            Object object = mappedConfig.get(HEADER_ATTRIBUTES_TO_IGNORE);
+            if(object instanceof String) {
+                String s = (String)object;
+                s = s.trim();
+                if(logger.isTraceEnabled()) logger.trace("headerAttributesToIgnore = " + s);
+                if(s.startsWith("[")) {
+                    // this is a JSON string, and we need to parse it.
+                    try {
+                        headerAttributesToIgnore = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
+                    } catch (Exception e) {
+                        throw new ConfigException("could not parse the headerAttributesToIgnore json with a list of strings.");
+                    }
+                } else {
+                    // this is a comma separated string.
+                    headerAttributesToIgnore = Arrays.asList(s.split("\\s*,\\s*"));
+                }
+            } else if (object instanceof List) {
+                headerAttributesToIgnore = (List<String>)object;
+            } else {
+                throw new ConfigException("headerAttributesToIgnore list is missing or wrong type.");
+            }
+        }
+
     }
 
 }
