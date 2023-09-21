@@ -403,7 +403,7 @@ public class OauthHelper {
                     .stream()
                     .map(e -> e.getKey() + "=" + URLEncoder.encode(e.getValue(), StandardCharsets.UTF_8))
                     .collect(Collectors.joining("&"));
-
+            if(logger.isTraceEnabled()) logger.trace("form = " + form + " url = " + serverUrl + introspectionRequest.getUri() + " clientId = " + introspectionRequest.getClientId() + " clientSecret = " + introspectionRequest.getClientSecret());
             HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                     .POST(HttpRequest.BodyPublishers.ofString(form))
                     .uri(URI.create(serverUrl + introspectionRequest.getUri()));
@@ -417,6 +417,7 @@ public class OauthHelper {
             CompletableFuture<HttpResponse<String>> response =
                     introspectionClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
             String body = response.thenApply(HttpResponse::body).get();
+            if(logger.isTraceEnabled()) logger.trace("body = " + body);
             return Success.of(body);
         } catch (Exception e) {
             logger.error("Exception:", e);
