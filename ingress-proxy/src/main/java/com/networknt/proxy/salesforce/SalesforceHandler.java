@@ -170,8 +170,10 @@ public class SalesforceHandler implements MiddlewareHandler {
 
                 if(logger.isTraceEnabled()) logger.trace("found with requestPath = " + requestPath + " prefix = " + pathPrefixAuth.getPathPrefix());
                 // matched the prefix found. handler it with the config for this prefix.
+                if(logger.isTraceEnabled()) logger.trace("current time = " + System.currentTimeMillis() + " expiration = " + pathPrefixAuth.getExpiration() + " waitLength = " + pathPrefixAuth.getWaitLength());
                 if(System.currentTimeMillis() >= (pathPrefixAuth.getExpiration() - pathPrefixAuth.getWaitLength())) { // leave 5 seconds room by default
                     Result<TokenResponse> result;
+                    if(logger.isTraceEnabled()) logger.trace("grant type = " + pathPrefixAuth.getGrantType());
                     if("password".equals(pathPrefixAuth.getGrantType())) {
                         result = getPasswordToken(pathPrefixAuth);
                     } else {
@@ -342,7 +344,7 @@ public class SalesforceHandler implements MiddlewareHandler {
                     .stream()
                     .map(e -> e.getKey() + "=" + URLEncoder.encode(e.getValue(), StandardCharsets.UTF_8))
                     .collect(Collectors.joining("&"));
-
+            if(logger.isTraceEnabled()) logger.trace("request body = " + form);
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(serverUrl))
                     .headers("Content-Type", "application/x-www-form-urlencoded")
@@ -350,7 +352,7 @@ public class SalesforceHandler implements MiddlewareHandler {
                     .build();
 
             HttpResponse<?> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            System.out.println(response.statusCode() + " " + response.body().toString());
+            if(logger.isTraceEnabled()) logger.trace("response status = " + response.statusCode() + " response body = " + response.body().toString());
             if(response.statusCode() == 200) {
                 // construct a token response and return it.
                 Map<String, Object> map = JsonMapper.string2Map(response.body().toString());
@@ -395,7 +397,11 @@ public class SalesforceHandler implements MiddlewareHandler {
 
         } else if(method.equalsIgnoreCase("POST")) {
             String bodyString = exchange.getAttachment(AttachmentConstants.REQUEST_BODY_STRING);
-            if(bodyString == null && logger.isDebugEnabled()) logger.debug("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
+            if(bodyString == null) {
+                if(logger.isTraceEnabled()) logger.trace("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
+            } else {
+                if(logger.isTraceEnabled()) logger.trace("request body = " + bodyString);
+            }
             request = HttpRequest.newBuilder()
                     .uri(new URI(requestHost + requestPath))
                     .headers("Authorization", authorization, "Content-Type", contentType)
@@ -403,7 +409,11 @@ public class SalesforceHandler implements MiddlewareHandler {
                     .build();
         } else if(method.equalsIgnoreCase("PUT")) {
             String bodyString = exchange.getAttachment(AttachmentConstants.REQUEST_BODY_STRING);
-            if(bodyString == null && logger.isDebugEnabled()) logger.debug("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
+            if(bodyString == null) {
+                if(logger.isTraceEnabled()) logger.trace("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
+            } else {
+                if(logger.isTraceEnabled()) logger.trace("request body = " + bodyString);
+            }
             request = HttpRequest.newBuilder()
                     .uri(new URI(requestHost + requestPath))
                     .headers("Authorization", authorization, "Content-Type", contentType)
@@ -411,7 +421,11 @@ public class SalesforceHandler implements MiddlewareHandler {
                     .build();
         } else if(method.equalsIgnoreCase("PATCH")) {
             String bodyString = exchange.getAttachment(AttachmentConstants.REQUEST_BODY_STRING);
-            if(bodyString == null && logger.isDebugEnabled()) logger.debug("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
+            if(bodyString == null) {
+                if(logger.isTraceEnabled()) logger.trace("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
+            } else {
+                if(logger.isTraceEnabled()) logger.trace("request body = " + bodyString);
+            }
             request = HttpRequest.newBuilder()
                     .uri(new URI(requestHost + requestPath))
                     .headers("Authorization", authorization, "Content-Type", contentType)
@@ -434,7 +448,7 @@ public class SalesforceHandler implements MiddlewareHandler {
                 }
             }
         }
-        if(logger.isTraceEnabled()) logger.trace("response body = " + responseBody);
+        if(logger.isTraceEnabled()) logger.trace("response body = " + (responseBody == null ? null : new String(responseBody, StandardCharsets.UTF_8)));
         exchange.getResponseSender().send(ByteBuffer.wrap(responseBody));
         if(config.isMetricsInjection() && metricsHandler != null) {
             if(logger.isTraceEnabled()) logger.trace("injecting metrics for " + config.getMetricsName());
