@@ -56,6 +56,7 @@ import org.xnio.OptionMap;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -168,8 +169,8 @@ public class AuditHandlerTest {
         verify(mockAppender, times(1)).doAppend(captorLoggingEvent.capture());
         ILoggingEvent event = captorLoggingEvent.getValue();
         Map<String, Object> mapValue = JsonMapper.string2Map(event.getFormattedMessage());
-
-        Assert.assertEquals("{statusCode=401, code=ERR10001, severity=ERROR, message=AUTH_TOKEN_EXPIRED, description=Jwt token in authorization header expired}", mapValue.get("Status").toString());
+        TreeMap<String, Object> treeMap = new TreeMap<>((Map<String, Object>) mapValue.get("Status"));
+        Assert.assertEquals("{code=ERR10001, description=Jwt token in authorization header expired, message=AUTH_TOKEN_EXPIRED, severity=ERROR, statusCode=401}", treeMap.toString());
     }
 
     private void verifyAuditInfo(String key, String value) {
