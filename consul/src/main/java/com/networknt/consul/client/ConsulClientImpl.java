@@ -110,7 +110,7 @@ public class ConsulClientImpl implements ConsulClient {
 			connection = client.safeBorrowConnection(
 					config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
 
-			int waitInSeconds = ConsulUtils.getWaitInSecond(nonBlockingWait);
+			int waitInSeconds = ConsulUtils.getNonBlockingTimeoutInSecond(nonBlockingWait);
 			AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, null, waitInSeconds);
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= UNUSUAL_STATUS_CODE){
@@ -133,7 +133,7 @@ public class ConsulClientImpl implements ConsulClient {
 			connection = client.safeBorrowConnection(
 					config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
 
-			int waitInSeconds = ConsulUtils.getWaitInSecond(nonBlockingWait);
+			int waitInSeconds = ConsulUtils.getNonBlockingTimeoutInSecond(nonBlockingWait);
 			AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, null, waitInSeconds);
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= UNUSUAL_STATUS_CODE){
@@ -155,7 +155,7 @@ public class ConsulClientImpl implements ConsulClient {
 			connection = client.safeBorrowConnection(
 					config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
 
-			int waitInSeconds = ConsulUtils.getWaitInSecond(nonBlockingWait);
+			int waitInSeconds = ConsulUtils.getNonBlockingTimeoutInSecond(nonBlockingWait);
 			AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, json, waitInSeconds);
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= UNUSUAL_STATUS_CODE){
@@ -177,7 +177,7 @@ public class ConsulClientImpl implements ConsulClient {
 			connection = client.safeBorrowConnection(
 					config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
 
-			int waitInSeconds = ConsulUtils.getWaitInSecond(nonBlockingWait);
+			int waitInSeconds = ConsulUtils.getNonBlockingTimeoutInSecond(nonBlockingWait);
 	        final AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, null, waitInSeconds);
             int statusCode = reference.get().getResponseCode();
             if(statusCode >= UNUSUAL_STATUS_CODE){
