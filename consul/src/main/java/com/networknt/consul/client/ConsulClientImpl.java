@@ -67,7 +67,6 @@ public class ConsulClientImpl implements ConsulClient {
 	private URI uri;
 	private String wait = "600s";
 	private String timeoutBuffer = "5s";
-	private String nonBlockingWait = "5s";
 
 	// connection pool
 	private SimpleURIConnectionPool pool = null;
@@ -84,10 +83,7 @@ public class ConsulClientImpl implements ConsulClient {
 		logger.debug("wait = {}", wait);
 		if(config.getTimeoutBuffer() != null) timeoutBuffer = config.getTimeoutBuffer();
 		logger.debug("timeoutBuffer = {}", timeoutBuffer);
-		if(config.getNonBlockingWait() != null) {
-			nonBlockingWait = config.getNonBlockingWait();
-		}
-		logger.debug("nonBlockingWait = {}", nonBlockingWait);
+		logger.debug("requestTimeout = {}", config.getRequestTimeout());
 		try {
 			uri = new URI(consulUrl);
 		} catch (URISyntaxException e) {
@@ -109,9 +105,7 @@ public class ConsulClientImpl implements ConsulClient {
 		try {
 			connection = client.safeBorrowConnection(
 					config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
-
-			int waitInSeconds = ConsulUtils.getNonBlockingTimeoutInSecond(nonBlockingWait);
-			AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, null, waitInSeconds);
+			AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, null, config.getRequestTimeout());
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= UNUSUAL_STATUS_CODE){
 				logger.error("Failed to checkPass on Consul: {} : {}", statusCode, reference.get().getAttachment(Http2Client.RESPONSE_BODY));
@@ -132,9 +126,7 @@ public class ConsulClientImpl implements ConsulClient {
 		try {
 			connection = client.safeBorrowConnection(
 					config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
-
-			int waitInSeconds = ConsulUtils.getNonBlockingTimeoutInSecond(nonBlockingWait);
-			AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, null, waitInSeconds);
+			AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, null, config.getRequestTimeout());
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= UNUSUAL_STATUS_CODE){
 				logger.error("Failed to checkFail on Consul: {} : {}", statusCode, reference.get().getAttachment(Http2Client.RESPONSE_BODY));
@@ -154,9 +146,7 @@ public class ConsulClientImpl implements ConsulClient {
 		try {
 			connection = client.safeBorrowConnection(
 					config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
-
-			int waitInSeconds = ConsulUtils.getNonBlockingTimeoutInSecond(nonBlockingWait);
-			AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, json, waitInSeconds);
+			AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, json, config.getRequestTimeout());
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= UNUSUAL_STATUS_CODE){
 				throw new Exception("Failed to register on Consul: " + statusCode);
@@ -176,9 +166,7 @@ public class ConsulClientImpl implements ConsulClient {
 		try {
 			connection = client.safeBorrowConnection(
 					config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
-
-			int waitInSeconds = ConsulUtils.getNonBlockingTimeoutInSecond(nonBlockingWait);
-	        final AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, null, waitInSeconds);
+	        final AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, null, config.getRequestTimeout());
             int statusCode = reference.get().getResponseCode();
             if(statusCode >= UNUSUAL_STATUS_CODE){
                 logger.error("Failed to unregister on Consul, body = {}", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
@@ -232,7 +220,7 @@ public class ConsulClientImpl implements ConsulClient {
 			connection = (ClientConnection) connectionToken.getRawConnection();
 
 			logger.debug("CONSUL CONNECTION ESTABLISHED: {} from pool and send request to {}", connection, path);
-			int waitInSecond = ConsulUtils.getWaitInSecond(wait);
+			long waitInSecond = ConsulUtils.getWaitInSecond(wait);
 			// Secret sauce
 			waitInSecond += (waitInSecond/16);
 
@@ -335,7 +323,7 @@ public class ConsulClientImpl implements ConsulClient {
 	 * @param waitInSecond response timeout (it will be  adjusted for the timeoutBuffer value)
 	 * @return AtomicReference<ClientResponse> response
 	 */
-	AtomicReference<ClientResponse> send(ClientConnection connection, HttpString method, String path, String token, String json, int waitInSecond)
+	AtomicReference<ClientResponse> send(ClientConnection connection, HttpString method, String path, String token, String json, long waitInSecond)
 			throws InterruptedException
 	{
 		// construct request

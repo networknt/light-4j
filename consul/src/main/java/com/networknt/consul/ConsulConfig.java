@@ -28,7 +28,6 @@ public class ConsulConfig {
     boolean enableHttp2;
     String wait = "600s";                   // length of blocking query with Consul
     String timeoutBuffer = "5s";            // An additional amount of time to wait for Consul to respond (to account for network latency)
-    String nonBlockingWait = "5s";          // length of non blocking query with Consul
     long connectionTimeout = 5;             // Consul connection timeout in seconds
     long requestTimeout = 5;                // Consul request timeout in seconds (excluding /v1/health/service)
     long reconnectInterval = 2;             // Time to wait in seconds between reconnect attempts when Consul connection fails
@@ -124,11 +123,4 @@ public class ConsulConfig {
 
     public boolean isShutdownIfThreadFrozen() { return shutdownIfThreadFrozen; }
 
-    public String getNonBlockingWait() {
-        return nonBlockingWait;
-    }
-
-    public void setNonBlockingWait(String nonBlockingWait) {
-        this.nonBlockingWait = nonBlockingWait;
-    }
 }
