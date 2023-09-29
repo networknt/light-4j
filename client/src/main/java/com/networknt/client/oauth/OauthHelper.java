@@ -108,7 +108,12 @@ public class OauthHelper {
                         .sslContext(Http2Client.createSSLContext());
                 if(logger.isTraceEnabled()) logger.trace("proxyHost = " + tokenRequest.getProxyHost() + " proxyPort = " + tokenRequest.getProxyPort());
                 if(!StringUtils.isBlank(tokenRequest.getProxyHost())) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(tokenRequest.getProxyHost(), tokenRequest.getProxyPort() == 0 ? 443 : tokenRequest.getProxyPort())));
-                if(tokenRequest.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
+                if (tokenRequest.isEnableHttp2()) {
+                    clientBuilder.version(HttpClient.Version.HTTP_2);
+                } else {
+                    clientBuilder.version(HttpClient.Version.HTTP_1_1);
+                }
+
                 // this a workaround to bypass the hostname verification in jdk11 http client.
                 Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
                 if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
@@ -174,7 +179,12 @@ public class OauthHelper {
                         .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
                         .sslContext(Http2Client.createSSLContext());
                 if(signRequest.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(signRequest.getProxyHost(), signRequest.getProxyPort() == 0 ? 443 : signRequest.getProxyPort())));
-                if(signRequest.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
+                if (signRequest.isEnableHttp2()) {
+                    clientBuilder.version(HttpClient.Version.HTTP_2);
+                } else {
+                    clientBuilder.version(HttpClient.Version.HTTP_1_1);
+                }
+
                 // this a workaround to bypass the hostname verification in jdk11 http client.
                 Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
                 if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
@@ -247,7 +257,12 @@ public class OauthHelper {
                         .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
                         .sslContext(Http2Client.createSSLContext());
                 if(tokenRequest.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(tokenRequest.getProxyHost(), tokenRequest.getProxyPort() == 0 ? 443 : tokenRequest.getProxyPort())));
-                if(tokenRequest.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
+                if (tokenRequest.isEnableHttp2()) {
+                    clientBuilder.version(HttpClient.Version.HTTP_2);
+                } else {
+                    clientBuilder.version(HttpClient.Version.HTTP_1_1);
+                }
+
                 // this a workaround to bypass the hostname verification in jdk11 http client.
                 Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
                 if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
@@ -329,7 +344,12 @@ public class OauthHelper {
                     .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
                     .sslContext(Http2Client.createSSLContext());
             if(!StringUtils.isBlank(keyRequest.getProxyHost())) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(keyRequest.getProxyHost(), keyRequest.getProxyPort() == 0 ? 443 : keyRequest.getProxyPort())));
-            if(keyRequest.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
+            if (keyRequest.isEnableHttp2()) {
+                clientBuilder.version(HttpClient.Version.HTTP_2);
+            } else {
+                clientBuilder.version(HttpClient.Version.HTTP_1_1);
+            }
+
             // this a workaround to bypass the hostname verification in jdk11 http client.
             Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
             if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
@@ -372,7 +392,11 @@ public class OauthHelper {
                         .sslContext(Http2Client.createSSLContext());
                 if(logger.isTraceEnabled()) logger.trace("proxyHost = " + introspectionRequest.getProxyHost() + " proxyPort = " + introspectionRequest.getProxyPort());
                 if(!StringUtils.isBlank(introspectionRequest.getProxyHost())) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(introspectionRequest.getProxyHost(), introspectionRequest.getProxyPort() == 0 ? 443 : introspectionRequest.getProxyPort())));
-                if(introspectionRequest.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
+                if (introspectionRequest.isEnableHttp2()) {
+                    clientBuilder.version(HttpClient.Version.HTTP_2);
+                } else {
+                    clientBuilder.version(HttpClient.Version.HTTP_1_1);
+                }
                 // this a workaround to bypass the hostname verification in jdk11 http client.
                 Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
                 if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
@@ -452,7 +476,11 @@ public class OauthHelper {
                         .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
                         .sslContext(Http2Client.createSSLContext());
                 if(derefRequest.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(derefRequest.getProxyHost(), derefRequest.getProxyPort() == 0 ? 443 : derefRequest.getProxyPort())));
-                if(derefRequest.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
+                if (derefRequest.isEnableHttp2()) {
+                    clientBuilder.version(HttpClient.Version.HTTP_2);
+                } else {
+                    clientBuilder.version(HttpClient.Version.HTTP_1_1);
+                }
                 // this a workaround to bypass the hostname verification in jdk11 http client.
                 Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
                 if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
