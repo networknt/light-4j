@@ -67,6 +67,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import static io.undertow.client.http.HttpClientProvider.DISABLE_HTTPS_ENDPOINT_IDENTIFICATION_PROPERTY;
 
 /**
  * This is a new client module that replaces the old Client module. The old version
@@ -114,6 +115,11 @@ public class Http2Client {
     static {
         List<String> masks = new ArrayList<>();
         ModuleRegistry.registerModule(Http2Client.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), masks);
+        // disable the hostname verification based on the config.
+        Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(TLS);
+        if(tlsMap != null && Boolean.FALSE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
+            System.setProperty(DISABLE_HTTPS_ENDPOINT_IDENTIFICATION_PROPERTY, "true");
+        }
     }
 
     public static final ByteBufferPool BUFFER_POOL = new DefaultByteBufferPool(true, ClientConfig.get().getBufferSize() * 1024);
@@ -141,7 +147,7 @@ public class Http2Client {
         final Map<String, ClientProvider> map = new HashMap<>();
         for (ClientProvider provider : providers) {
             for (String scheme : provider.handlesSchemes()) {
-            	addProvider(map, scheme, provider);
+                addProvider(map, scheme, provider);
             }
         }
         this.clientProviders = Collections.unmodifiableMap(map);
@@ -154,17 +160,17 @@ public class Http2Client {
     }
 
     private void addProvider(Map<String, ClientProvider> map, String scheme, ClientProvider provider) {
-    	if (System.getProperty("java.version").startsWith("1.8.")) {// Java 8
-        	if (Light4jHttpClientProvider.HTTPS.equalsIgnoreCase(scheme)) {
-        		map.putIfAbsent(scheme, new Light4jHttpClientProvider());
-        	}else if (Light4jHttp2ClientProvider.HTTP2.equalsIgnoreCase(scheme)){
-        		map.putIfAbsent(scheme, new Light4jHttp2ClientProvider());
-        	}else {
-        		map.put(scheme, provider);
-        	}
-    	}else {
-    		map.put(scheme, provider);
-    	}
+        if (System.getProperty("java.version").startsWith("1.8.")) {// Java 8
+            if (Light4jHttpClientProvider.HTTPS.equalsIgnoreCase(scheme)) {
+                map.putIfAbsent(scheme, new Light4jHttpClientProvider());
+            }else if (Light4jHttp2ClientProvider.HTTP2.equalsIgnoreCase(scheme)){
+                map.putIfAbsent(scheme, new Light4jHttp2ClientProvider());
+            }else {
+                map.put(scheme, provider);
+            }
+        }else {
+            map.put(scheme, provider);
+        }
     }
 
     /**
@@ -556,9 +562,9 @@ public class Http2Client {
      * @throws IOException IOException
      */
     public static SSLContext createSSLContext() throws IOException {
-    	Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(TLS);
+        Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(TLS);
 
-    	return null==tlsMap?null:createSSLContext((String)tlsMap.get(TLSConfig.DEFAULT_GROUP_KEY));
+        return null==tlsMap?null:createSSLContext((String)tlsMap.get(TLSConfig.DEFAULT_GROUP_KEY));
     }
 
     /**
@@ -569,7 +575,7 @@ public class Http2Client {
      * @throws IOException IOException
      */
     @SuppressWarnings("unchecked")
-	public static SSLContext createSSLContext(String trustedNamesGroupKey) throws IOException {
+    public static SSLContext createSSLContext(String trustedNamesGroupKey) throws IOException {
         SSLContext sslContext = null;
         KeyManager[] keyManagers = null;
         Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(TLS);
@@ -1080,23 +1086,23 @@ public class Http2Client {
     public CompletableFuture<ClientConnection> connectAsync(InetSocketAddress bindAddress, final URI uri, final XnioWorker worker, XnioSsl ssl, ByteBufferPool bufferPool, OptionMap options) {
         if("https".equals(uri.getScheme()) && SSL == null) SSL = getDefaultXnioSsl();
         CompletableFuture<ClientConnection> completableFuture = new CompletableFuture<>();
-            ClientProvider provider = clientProviders.get(uri.getScheme());
-            try {
-                provider.connect(new ClientCallback<ClientConnection>() {
-                    @Override
-                    public void completed(ClientConnection r) {
-                        completableFuture.complete(r);
-                        http2ClientConnectionPool.cacheConnection(uri, r);
-                    }
+        ClientProvider provider = clientProviders.get(uri.getScheme());
+        try {
+            provider.connect(new ClientCallback<ClientConnection>() {
+                @Override
+                public void completed(ClientConnection r) {
+                    completableFuture.complete(r);
+                    http2ClientConnectionPool.cacheConnection(uri, r);
+                }
 
-                    @Override
-                    public void failed(IOException e) {
-                        completableFuture.completeExceptionally(e);
-                    }
-                }, bindAddress, uri, worker, ssl, bufferPool, options);
-            } catch (Throwable t) {
-                completableFuture.completeExceptionally(t);
-            }
+                @Override
+                public void failed(IOException e) {
+                    completableFuture.completeExceptionally(e);
+                }
+            }, bindAddress, uri, worker, ssl, bufferPool, options);
+        } catch (Throwable t) {
+            completableFuture.completeExceptionally(t);
+        }
         return completableFuture;
     }
 
