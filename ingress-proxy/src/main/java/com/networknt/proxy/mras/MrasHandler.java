@@ -306,7 +306,11 @@ public class MrasHandler implements MiddlewareHandler {
                         // we cannot use the Http2Client SSL Context as we need two-way TLS here.
                         .sslContext(createSSLContext());
                 if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
-                if(config.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
+                if (config.isEnableHttp2()) {
+                    clientBuilder.version(HttpClient.Version.HTTP_2);
+                } else {
+                    clientBuilder.version(HttpClient.Version.HTTP_1_1);
+                }
                 // this a workaround to bypass the hostname verification in jdk11 http client.
                 Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
                 if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
@@ -350,7 +354,11 @@ public class MrasHandler implements MiddlewareHandler {
                         // we cannot use the Http2Client SSL Context as we need two-way TLS here.
                         .sslContext(createSSLContext());
                 if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
-                if(config.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
+                if (config.isEnableHttp2()) {
+                    clientBuilder.version(HttpClient.Version.HTTP_2);
+                } else {
+                    clientBuilder.version(HttpClient.Version.HTTP_1_1);
+                }
                 // this a workaround to bypass the hostname verification in jdk11 http client.
                 Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
                 if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
@@ -419,7 +427,11 @@ public class MrasHandler implements MiddlewareHandler {
                         // Token site only need one-way TLS with a public certificate.
                         .sslContext(Http2Client.createSSLContext());
                 if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
-                if(config.isEnableHttp2()) clientBuilder.version(HttpClient.Version.HTTP_2);
+                if (config.isEnableHttp2()) {
+                    clientBuilder.version(HttpClient.Version.HTTP_2);
+                } else {
+                    clientBuilder.version(HttpClient.Version.HTTP_1_1);
+                }
                 // this a workaround to bypass the hostname verification in jdk11 http client.
                 Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
                 if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
