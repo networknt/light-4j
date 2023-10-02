@@ -373,10 +373,15 @@ public class JwtVerifier extends TokenVerifier {
     }
 
     private boolean isJwtAudienceValid(JwtClaims claims, List<String> jwkServiceIds) throws MalformedClaimException {
+        // iterate all the serviceIds and find the right audience. If anyone is matched, it will return true.
         boolean r = false; // the initial value is false.
         for(String serviceId: jwkServiceIds) {
-            if(audienceMap != null && audienceMap.size() > 0) {
+            if(audienceMap != null && !audienceMap.isEmpty()) {
                 String configuredAudience = audienceMap.get(serviceId);
+                if(configuredAudience == null || configuredAudience.isEmpty()) {
+                    // no audience configured for this serviceId, skip to the next one.
+                    continue;
+                }
                 r = isJwtAudienceValid(claims, configuredAudience);
                 if(r) {
                     break;
