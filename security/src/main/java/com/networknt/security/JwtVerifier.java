@@ -373,25 +373,25 @@ public class JwtVerifier extends TokenVerifier {
     }
 
     private boolean isJwtAudienceValid(JwtClaims claims, List<String> jwkServiceIds) throws MalformedClaimException {
+        // If audienceMap is null or empty, the audience validation is bypassed with true returned.
+        if(audienceMap == null || audienceMap.isEmpty()) {
+            return true;
+        }
         // Iterate all the serviceIds and find the configured audience. If at least one of the serviceId has an audience configured, return the validation result.
-        // If none of the serviceIds has an audience configured, the audienceMap should be empty and true will be returned as the audience validation is bypassed.
         boolean validationResult = false; // the initial validation result is false.
         for(String serviceId: jwkServiceIds) {
-            if(audienceMap != null && !audienceMap.isEmpty()) {
-                String configuredAudience = audienceMap.get(serviceId);
-                if(configuredAudience == null || configuredAudience.isEmpty()) {
-                    // no audience configured for this serviceId, skip to the next one.
-                    continue;
-                }
-                validationResult = isJwtAudienceValid(claims, configuredAudience);
-                if(validationResult) {
-                    break;
-                }
+            String configuredAudience = audienceMap.get(serviceId);
+            if(configuredAudience == null || configuredAudience.isEmpty()) {
+                // no audience configured for this serviceId, skip to the next one.
+                continue;
+            }
+            validationResult = isJwtAudienceValid(claims, configuredAudience);
+            if(validationResult) {
+                break;
             }
         }
-        return validationResult || audienceMap == null || audienceMap.isEmpty();
+        return validationResult;
     }
-
 
     /**
      * Checks expiry of a jwt token from the claim.
