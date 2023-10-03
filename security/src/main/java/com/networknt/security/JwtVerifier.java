@@ -326,17 +326,14 @@ public class JwtVerifier extends TokenVerifier {
                         throw new InvalidJwtException("Invalid Audience", Collections.singletonList(new ErrorCodeValidator.Error(ErrorCodes.AUDIENCE_INVALID, "Invalid Audience")), context);
                     }
                 }
-            } else if (jwkServiceIds != null && jwkServiceIds.size() > 0) {
+            } else if (jwkServiceIds != null && !jwkServiceIds.isEmpty()) {
                 // more than one serviceIds are passed in from the UnifiedSecurityHandler. Just use each serviceId to get the audience.
-                // this condition is in higher priority than the requestPath condition as requestPath will always be not null.
-                for(String serviceId: jwkServiceIds) {
-                    if(audienceMap != null && audienceMap.size() > 0) {
-                        configuredAudience = audienceMap.get(serviceId);
-                        boolean r = isJwtAudienceValid(claims, configuredAudience);
-                        if(!r) {
-                            throw new InvalidJwtException("Invalid Audience", Collections.singletonList(new ErrorCodeValidator.Error(ErrorCodes.AUDIENCE_INVALID, "Invalid Audience")), context);
-                        }
-                    }
+                // this condition is in higher priority than the requestPath condition as requestPath will always be not null. The check
+                // will iterate all the serviceIds and find the right audience. If anyone is matched, it will return true. None of them
+                // is matched, it will return false.
+                boolean r = isJwtAudienceValid(claims, jwkServiceIds);
+                if(!r) {
+                    throw new InvalidJwtException("Invalid Audience", Collections.singletonList(new ErrorCodeValidator.Error(ErrorCodes.AUDIENCE_INVALID, "Invalid Audience")), context);
                 }
             } else {
                 if (requestPath != null) {
@@ -346,7 +343,7 @@ public class JwtVerifier extends TokenVerifier {
                         configuredAudience = audience;
                     } else {
                         // get the audience by serviceId from the audienceMap.
-                        if(audienceMap != null && audienceMap.size() > 0) {
+                        if(audienceMap != null && !audienceMap.isEmpty()) {
                             configuredAudience = audienceMap.get(serviceId);
                         }
                     }
@@ -373,6 +370,27 @@ public class JwtVerifier extends TokenVerifier {
             return claims.getAudience().get(0).equals(audience);
         }
         return claims.getAudience().contains(audience);
+    }
+
+    private boolean isJwtAudienceValid(JwtClaims claims, List<String> jwkServiceIds) throws MalformedClaimException {
+        // If audienceMap is null or empty, the audience validation is bypassed with true returned.
+        if(audienceMap == null || audienceMap.isEmpty()) {
+            return true;
+        }
+        // Iterate all the serviceIds and find the configured audience. If at least one of the serviceId has an audience configured, return the validation result.
+        boolean validationResult = false; // the initial validation result is false.
+        for(String serviceId: jwkServiceIds) {
+            String configuredAudience = audienceMap.get(serviceId);
+            if(configuredAudience == null || configuredAudience.isEmpty()) {
+                // no audience configured for this serviceId, skip to the next one.
+                continue;
+            }
+            validationResult = isJwtAudienceValid(claims, configuredAudience);
+            if(validationResult) {
+                break;
+            }
+        }
+        return validationResult;
     }
 
     /**
