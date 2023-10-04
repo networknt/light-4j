@@ -1,5 +1,26 @@
 # Change Log
 
+## [2.1.27](https://github.com/networknt/light-4j/tree/2.1.27) (2023-10-04)
+
+
+**Merged pull requests:**
+
+
+- fixes \#1902 A defect in JWT audience validation with multiple oauth s… [\#1903](https://github.com/networknt/light-4j/pull/1903) ([stevehu](https://github.com/stevehu))
+- Issue19000 [\#1901](https://github.com/networknt/light-4j/pull/1901) ([stevehu](https://github.com/stevehu))
+- fixes \#1895 Update SalesforceHandler to add more trace statements for… [\#1896](https://github.com/networknt/light-4j/pull/1896) ([stevehu](https://github.com/stevehu))
+- fixes \#1891 Update the pom.xml and audit test cases to build with JDK 17 [\#1892](https://github.com/networknt/light-4j/pull/1892) ([stevehu](https://github.com/stevehu))
+- fixes \#1889 fix a bug in sanitizer config to load multiple toEncode a… [\#1890](https://github.com/networknt/light-4j/pull/1890) ([stevehu](https://github.com/stevehu))
+- fixes \#1887 remove powermock dependency from status module for JDK 17 [\#1888](https://github.com/networknt/light-4j/pull/1888) ([stevehu](https://github.com/stevehu))
+- Added condition for http1.1 [\#1885](https://github.com/networknt/light-4j/pull/1885) ([fortunadoralph](https://github.com/fortunadoralph))
+- fixes \#1882 add a trace statement for CorrelationHandler to output al… [\#1883](https://github.com/networknt/light-4j/pull/1883) ([stevehu](https://github.com/stevehu))
+- fixes \#1880 add trace statements to body interceptor, injection handl… [\#1881](https://github.com/networknt/light-4j/pull/1881) ([stevehu](https://github.com/stevehu))
+- fixes \#1875 remove dependency to Undertow in status module [\#1876](https://github.com/networknt/light-4j/pull/1876) ([stevehu](https://github.com/stevehu))
+- fixes \#1878 sanitizer handler use contains for header comparison whic… [\#1879](https://github.com/networknt/light-4j/pull/1879) ([stevehu](https://github.com/stevehu))
+- fixes \#1873 Add trace log for swt introspection call to output server… [\#1874](https://github.com/networknt/light-4j/pull/1874) ([stevehu](https://github.com/stevehu))
+- fixes \#1871 add trace log for HeaderHandler and ProxyHandler to outpu… [\#1872](https://github.com/networknt/light-4j/pull/1872) ([stevehu](https://github.com/stevehu))
+
+
 ## [2.1.26](https://github.com/networknt/light-4j/tree/2.1.26) (2023-08-17)
 
 
