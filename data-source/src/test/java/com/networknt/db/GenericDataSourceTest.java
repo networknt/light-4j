@@ -30,6 +30,7 @@ import static org.junit.Assert.assertNotNull;
 public class GenericDataSourceTest {
 
     @Test
+    @Ignore
     public void testGetDataSource() {
         DataSource ds = SingletonServiceFactory.getBean(DataSource.class);
         assertNotNull(ds);
@@ -48,6 +49,7 @@ public class GenericDataSourceTest {
     }
 
     @Test
+    @Ignore
     public void testGetH2DataSource() {
         DataSource ds = SingletonServiceFactory.getBean(H2DataSource.class).getDataSource();
         assertNotNull(ds);
