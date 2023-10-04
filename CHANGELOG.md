@@ -19,6 +19,8 @@
 - fixes \#1878 sanitizer handler use contains for header comparison whic… [\#1879](https://github.com/networknt/light-4j/pull/1879) ([stevehu](https://github.com/stevehu))
 - fixes \#1873 Add trace log for swt introspection call to output server… [\#1874](https://github.com/networknt/light-4j/pull/1874) ([stevehu](https://github.com/stevehu))
 - fixes \#1871 add trace log for HeaderHandler and ProxyHandler to outpu… [\#1872](https://github.com/networknt/light-4j/pull/1872) ([stevehu](https://github.com/stevehu))
+
+
 ## [2.1.26](https://github.com/networknt/light-4j/tree/2.1.26) (2023-08-17)
 
 
