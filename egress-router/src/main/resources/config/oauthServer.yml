@@ -1,6 +1,9 @@
 # oauthServer.yml
 # indicate if the handler is enabled or not in the handler chain.
 enabled: ${oauthServer.enabled:true}
+# If the handler supports get request. This is a feature that is only used for consumers migrated from the SAG gateway as
+# a temporary solution. It shouldn't be used in the new development as all credentials are revealed in the URL.
+getMethodEnabled: ${oauthServer.getMethodEnabled:false}
 # A list of client_id and client_secret concat with a colon.
 client_credentials: ${oauthServer.client_credentials:}
 # An indicator to for path through to an OAuth 2.0 server to get a real token.
