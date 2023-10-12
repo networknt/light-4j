@@ -4,6 +4,7 @@ import com.networknt.body.BodyHandler;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.client.ssl.TLSConfig;
+import com.networknt.handler.BuffersUtils;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.config.UrlRewriteRule;
@@ -12,6 +13,7 @@ import com.networknt.metrics.MetricsConfig;
 import com.networknt.metrics.AbstractMetricsHandler;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
+import io.undertow.connector.PooledByteBuffer;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderMap;
@@ -28,6 +30,7 @@ import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -155,6 +158,12 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         String bodyString = exchange.getAttachment(AttachmentConstants.REQUEST_BODY_STRING);
                         if(bodyString == null) {
                             if(logger.isTraceEnabled()) logger.trace("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
+                            // check if there is a stream body in the exchange.
+                            PooledByteBuffer[] buffer = exchange.getAttachment(AttachmentConstants.BUFFERED_REQUEST_DATA_KEY);
+                            if(buffer != null) {
+                                bodyString = BuffersUtils.toString(buffer, StandardCharsets.UTF_8);
+                                if(logger.isTraceEnabled()) logger.trace("converted from buffer for request body = " + bodyString);
+                            }
                         } else {
                             if(logger.isTraceEnabled()) logger.trace("request body = " + bodyString);
                         }
@@ -163,6 +172,11 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         String bodyString = exchange.getAttachment(AttachmentConstants.REQUEST_BODY_STRING);
                         if(bodyString == null) {
                             if(logger.isTraceEnabled()) logger.trace("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
+                            PooledByteBuffer[] buffer = exchange.getAttachment(AttachmentConstants.BUFFERED_REQUEST_DATA_KEY);
+                            if(buffer != null) {
+                                bodyString = BuffersUtils.toString(buffer, StandardCharsets.UTF_8);
+                                if(logger.isTraceEnabled()) logger.trace("converted from buffer for request body = " + bodyString);
+                            }
                         } else {
                             if(logger.isTraceEnabled()) logger.trace("request body = " + bodyString);
                         }
@@ -171,6 +185,11 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         String bodyString = exchange.getAttachment(AttachmentConstants.REQUEST_BODY_STRING);
                         if(bodyString == null) {
                             if(logger.isTraceEnabled()) logger.trace("The request body is null and the request path might be missing in request-injection.appliedBodyInjectionPathPrefixes.");
+                            PooledByteBuffer[] buffer = exchange.getAttachment(AttachmentConstants.BUFFERED_REQUEST_DATA_KEY);
+                            if(buffer != null) {
+                                bodyString = BuffersUtils.toString(buffer, StandardCharsets.UTF_8);
+                                if(logger.isTraceEnabled()) logger.trace("converted from buffer for request body = " + bodyString);
+                            }
                         } else {
                             if(logger.isTraceEnabled()) logger.trace("request body = " + bodyString);
                         }
