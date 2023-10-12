@@ -16,13 +16,52 @@
 
 package com.networknt.config.reload.model;
 
+import com.networknt.config.Config;
+import com.networknt.config.ConfigException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Map;
+
 /**
  * Config class for Config reload related handlers
  */
 public class ConfigReloadConfig {
+    private static final Logger logger = LoggerFactory.getLogger(ConfigReloadConfig.class);
+    public static final String CONFIG_NAME = "configReload";
+
+    private static final String ENABLED = "enabled";
+    private Map<String, Object> mappedConfig;
+    private final Config config;
+
     boolean enabled;
 
-    public ConfigReloadConfig() {
+    private ConfigReloadConfig(String configName) {
+        config = Config.getInstance();
+        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        setConfigData();
+    }
+
+    private ConfigReloadConfig() {
+        this(CONFIG_NAME);
+    }
+
+    public static ConfigReloadConfig load(String configName) {
+        return new ConfigReloadConfig(configName);
+    }
+
+    public static ConfigReloadConfig load() {
+        return new ConfigReloadConfig();
+    }
+
+    public void reload() {
+        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
+        setConfigData();
+    }
+
+    public void reload(String configName) {
+        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        setConfigData();
     }
 
     public boolean isEnabled() {
@@ -31,6 +70,29 @@ public class ConfigReloadConfig {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
+
+    Config getConfig() {
+        return config;
+    }
+
+    private void setConfigData() {
+        if(getMappedConfig() != null) {
+            Object object = getMappedConfig().get(ENABLED);
+            if(object != null) {
+                if(object instanceof String) {
+                    setEnabled(Boolean.parseBoolean((String)object));
+                } else if(object instanceof Boolean) {
+                    setEnabled((Boolean)object);
+                } else {
+                    throw new ConfigException("enabled must be a boolean value.");
+                }
+            }
+        }
     }
 
 }

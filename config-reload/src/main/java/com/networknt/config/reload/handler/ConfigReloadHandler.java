@@ -28,8 +28,6 @@ import java.util.Map;
  *
  */
 public class ConfigReloadHandler implements LightHttpHandler {
-
-    public static final String CONFIG_NAME = "configreload";
     public static final String STARTUP_CONFIG_NAME = "startup";
     public static final String CONFIG_LOADER_CLASS = "configLoaderClass";
     private static final ObjectMapper mapper = Config.getInstance().getMapper();
@@ -44,7 +42,7 @@ public class ConfigReloadHandler implements LightHttpHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        ConfigReloadConfig config = (ConfigReloadConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ConfigReloadConfig.class);
+        ConfigReloadConfig config = (ConfigReloadConfig) Config.getInstance().getJsonObjectConfig(ConfigReloadConfig.CONFIG_NAME, ConfigReloadConfig.class);
       //  Map<String, Object> bodyMap = (Map<String, Object>)exchange.getAttachment(BodyHandler.REQUEST_BODY);
         List<String> modules =  (List)exchange.getAttachment(AttachmentConstants.REQUEST_BODY);
 

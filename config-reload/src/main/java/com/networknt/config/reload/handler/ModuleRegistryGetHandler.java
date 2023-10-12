@@ -22,7 +22,6 @@ import java.util.Map;
  */
 public class ModuleRegistryGetHandler implements LightHttpHandler {
 
-    public static final String CONFIG_NAME = "configreload";
     private static final ObjectMapper mapper = Config.getInstance().getMapper();
     private  static final String STATUS_CONFIG_RELOAD_DISABLED = "ERR12217";
 
@@ -34,7 +33,7 @@ public class ModuleRegistryGetHandler implements LightHttpHandler {
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
 
 
-        ConfigReloadConfig config = (ConfigReloadConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ConfigReloadConfig.class);
+        ConfigReloadConfig config = (ConfigReloadConfig) Config.getInstance().getJsonObjectConfig(ConfigReloadConfig.CONFIG_NAME, ConfigReloadConfig.class);
 
         if (config.isEnabled()) {
             List<String> modules = new ArrayList<>();
