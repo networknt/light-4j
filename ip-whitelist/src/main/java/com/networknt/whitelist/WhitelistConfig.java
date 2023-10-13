@@ -130,12 +130,24 @@ public class WhitelistConfig {
 
     private void setConfigData() {
         Object object = mappedConfig.get(ENABLED);
-        if(object != null && (Boolean) object) {
-            setEnabled(true);
-        }
+        if(object != null) {
+            if(object instanceof String) {
+                enabled = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                enabled = (Boolean) object;
+            } else {
+                throw new ConfigException("enabled must be a boolean value.");
+            }
+       }
         object = mappedConfig.get(DEFAULT_ALLOW);
-        if(object != null && (Boolean) object) {
-            setDefaultAllow(true);
+        if(object != null) {
+            if(object instanceof String) {
+                defaultAllow = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                defaultAllow = (Boolean) object;
+            } else {
+                throw new ConfigException("defaultAllow must be a boolean value.");
+            }
         }
     }
 

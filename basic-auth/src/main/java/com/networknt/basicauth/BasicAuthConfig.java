@@ -114,20 +114,44 @@ public class BasicAuthConfig {
 
     private void setConfigData() {
         Object object = mappedConfig.get(ENABLED);
-        if(object != null && (Boolean) object) {
-            setEnabled(true);
+        if(object != null) {
+            if(object instanceof String) {
+                enabled = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                enabled = (Boolean) object;
+            } else {
+                throw new ConfigException("enabled must be a boolean value.");
+            }
         }
         object = mappedConfig.get(ENABLE_AD);
-        if(object != null && (Boolean) object) {
-            setEnableAD(true);
+        if(object != null) {
+            if(object instanceof String) {
+                enableAD = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                enableAD = (Boolean) object;
+            } else {
+                throw new ConfigException("enableAD must be a boolean value.");
+            }
         }
         object = mappedConfig.get(ALLOW_ANONYMOUS);
-        if(object != null && (Boolean) object) {
-            setAllowAnonymous(true);
+        if(object != null) {
+            if(object instanceof String) {
+                allowAnonymous = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                allowAnonymous = (Boolean) object;
+            } else {
+                throw new ConfigException("allowAnonymous must be a boolean value.");
+            }
         }
         object = mappedConfig.get(ALLOW_BEARER_TOKEN);
-        if(object != null && (Boolean) object) {
-            setAllowBearerToken(true);
+        if(object != null) {
+            if(object instanceof String) {
+                allowBearerToken = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                allowBearerToken = (Boolean) object;
+            } else {
+                throw new ConfigException("allowBearerToken must be a boolean value.");
+            }
         }
     }
 

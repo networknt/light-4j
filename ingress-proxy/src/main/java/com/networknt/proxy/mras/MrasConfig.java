@@ -154,8 +154,14 @@ public class MrasConfig {
 
     private void setConfigData() {
         Object object = mappedConfig.get(ENABLED);
-        if (object != null && (Boolean) object) {
-            enabled = (Boolean)object;
+        if (object != null) {
+            if(object instanceof String) {
+                enabled = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                enabled = (Boolean) object;
+            } else {
+                throw new ConfigException("enabled must be a boolean value.");
+            }
         }
         object = mappedConfig.get(KEY_STORE_NAME);
         if (object != null) {
@@ -183,19 +189,37 @@ public class MrasConfig {
         }
         object = mappedConfig.get(PROXY_PORT);
         if (object != null) {
-            proxyPort = (Integer) object;
+            if(object instanceof String) {
+                proxyPort = Integer.parseInt((String)object);
+            } else if (object instanceof Integer) {
+                proxyPort = (Integer) object;
+            } else {
+                throw new ConfigException("proxyPort must be an integer value.");
+            }
         }
         object = mappedConfig.get(ENABLE_HTTP2);
-        if (object != null && (Boolean) object) {
-            enableHttp2 = (Boolean)object;
+        if (object != null) {
+            if(object instanceof String) {
+                enableHttp2 = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                enableHttp2 = (Boolean) object;
+            } else {
+                throw new ConfigException("enableHttp2 must be a boolean value.");
+            }
         }
         object = mappedConfig.get(SERVICE_HOST);
         if (object != null) {
             serviceHost = (String) object;
         }
         object = mappedConfig.get(METRICS_INJECTION);
-        if(object != null && (Boolean) object) {
-            metricsInjection = true;
+        if(object != null) {
+            if(object instanceof String) {
+                metricsInjection = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                metricsInjection = (Boolean) object;
+            } else {
+                throw new ConfigException("metricsInjection must be a boolean value.");
+            }
         }
         object = mappedConfig.get(METRICS_NAME);
         if(object != null ) {

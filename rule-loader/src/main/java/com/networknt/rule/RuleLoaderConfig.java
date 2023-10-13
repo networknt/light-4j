@@ -77,9 +77,15 @@ public class RuleLoaderConfig {
 
     private void setConfigData() {
         Object object = mappedConfig.get(ENABLED);
-        if(object != null && (Boolean) object) {
-            enabled = true;
-        }
+        if(object != null) {
+            if(object instanceof String) {
+                enabled = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                enabled = (Boolean) object;
+            } else {
+                throw new RuntimeException("enabled must be a boolean value.");
+            }
+       }
         ruleSource = (String)mappedConfig.get(RULE_SOURCE);
         portalHost = (String)mappedConfig.get(PORTAL_HOST);
         portalToken = (String)mappedConfig.get(PORTAL_TOKEN);

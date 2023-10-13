@@ -42,17 +42,17 @@ import org.slf4j.LoggerFactory;
  * @author Steve Hu
  */
 public class HealthGetHandler implements LightHttpHandler {
-
-    public static final String CONFIG_NAME = "health";
-
     public static final String HEALTH_RESULT_OK = "OK";
     public static final String HEALTH_RESULT_OK_JSON = JsonMapper.toJson(new HealthResult("OK"));
 
     static final Logger logger = LoggerFactory.getLogger(HealthGetHandler.class);
 
-    static final HealthConfig config = (HealthConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, HealthConfig.class);
+    static HealthConfig config;
 
-    public HealthGetHandler(){}
+    public HealthGetHandler(){
+        config = HealthConfig.load();
+        if(logger.isTraceEnabled()) logger.trace("HealthGetHandler is constructed.");
+    }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {

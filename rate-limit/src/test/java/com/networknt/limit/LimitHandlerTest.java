@@ -165,6 +165,7 @@ public class LimitHandlerTest {
         long last = (System.currentTimeMillis() - start);
         // make sure that there are at least one element in resultList is :503 or :429
         List<String> errorList = resultList.stream().filter(r->r.contains(":" + config.getErrorCode())).collect(Collectors.toList());
+        logger.info("errorList size = " + errorList.size());
         Assert.assertTrue(errorList.size()>0);
     }
 }

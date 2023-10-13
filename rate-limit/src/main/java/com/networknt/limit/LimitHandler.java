@@ -41,7 +41,7 @@ public class LimitHandler implements MiddlewareHandler {
 
     private volatile HttpHandler next;
     private static RateLimiter rateLimiter;
-    private LimitConfig config;
+    private final LimitConfig config;
     private static final ObjectMapper mapper = Config.getInstance().getMapper();
 
 

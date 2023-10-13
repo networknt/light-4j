@@ -17,6 +17,7 @@
 package com.networknt.logging.model;
 
 import com.networknt.config.Config;
+import com.networknt.config.ConfigException;
 
 import java.util.Map;
 
@@ -65,16 +66,34 @@ public class LoggerConfig {
     public void setConfigData() {
 
         Object object = getMappedConfig().get(ENABLED);
-        if(object != null && (Boolean) object) {
-            enabled = true;
+        if(object != null) {
+            if(object instanceof String) {
+                enabled = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                enabled = (Boolean) object;
+            } else {
+                throw new ConfigException("enabled must be a boolean value.");
+            }
         }
         object = getMappedConfig().get(DOWNSTREAM_ENABLED);
-        if(object != null && (Boolean) object) {
-            downstreamEnabled = true;
+        if(object != null) {
+            if(object instanceof String) {
+                downstreamEnabled = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                downstreamEnabled = (Boolean) object;
+            } else {
+                throw new ConfigException("downstreamEnabled must be a boolean value.");
+            }
         }
         object = getMappedConfig().get(LOG_START);
-        if(object != null ) {
-            logStart = (Integer)object;
+        if(object != null) {
+            if(object instanceof String) {
+                logStart = Long.parseLong((String)object);
+            } else if (object instanceof Number) {
+                logStart = ((Number)object).longValue();
+            } else {
+                throw new ConfigException("logStart must be a long value.");
+            }
         }
         object = getMappedConfig().get(DOWNSTREAM_HOST);
         if(object != null ) {

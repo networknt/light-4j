@@ -65,12 +65,24 @@ public class ResponseTransformerConfig {
 
     private void setConfigData() {
         Object object = mappedConfig.get(ENABLED);
-        if(object != null && (Boolean) object) {
-            enabled = true;
+        if(object != null) {
+            if(object instanceof String) {
+                enabled = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                enabled = (Boolean) object;
+            } else {
+                throw new ConfigException("enabled must be a boolean value.");
+            }
         }
         object = mappedConfig.get(REQUIRED_CONTENT);
-        if(object != null && (Boolean) object) {
-            requiredContent = true;
+        if(object != null) {
+            if(object instanceof String) {
+                requiredContent = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                requiredContent = (Boolean) object;
+            } else {
+                throw new ConfigException("requiredContent must be a boolean value.");
+            }
         }
     }
 

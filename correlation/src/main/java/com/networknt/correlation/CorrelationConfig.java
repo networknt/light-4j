@@ -15,14 +15,50 @@
  */
 package com.networknt.correlation;
 
+import com.networknt.config.Config;
+import com.networknt.config.ConfigException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Map;
+
 /**
  * Created by steve on 29/09/16.
  */
 public class CorrelationConfig {
+    public static final String CONFIG_NAME = "correlation";
+    private static final String ENABLED = "enabled";
+    private static final String AUTOGEN_CORRELATION_ID = "autogenCorrelationID";
+    private Map<String, Object> mappedConfig;
+    private final Config config;
     boolean enabled;
     boolean autogenCorrelationID;
 
-    public CorrelationConfig() {
+    private CorrelationConfig(String configName) {
+        config = Config.getInstance();
+        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        setConfigData();
+    }
+    private CorrelationConfig() {
+        this(CONFIG_NAME);
+    }
+
+    public static CorrelationConfig load(String configName) {
+        return new CorrelationConfig(configName);
+    }
+
+    public static CorrelationConfig load() {
+        return new CorrelationConfig();
+    }
+
+    public void reload() {
+        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
+        setConfigData();
+    }
+
+    public void reload(String configName) {
+        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        setConfigData();
     }
 
     public boolean isEnabled() {
@@ -39,5 +75,37 @@ public class CorrelationConfig {
     
     public void setAutogenCorrelationID(boolean autogenCorrelationID) {
     	this.autogenCorrelationID = autogenCorrelationID;
+    }
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
+
+    Config getConfig() {
+        return config;
+    }
+
+    private void setConfigData() {
+        if(getMappedConfig() != null) {
+            Object object = getMappedConfig().get(ENABLED);
+            if(object != null) {
+                if(object instanceof String) {
+                    setEnabled(Boolean.parseBoolean((String)object));
+                } else if(object instanceof Boolean) {
+                    setEnabled((Boolean)object);
+                } else {
+                    throw new ConfigException("enabled must be a boolean value.");
+                }
+            }
+            object = getMappedConfig().get(AUTOGEN_CORRELATION_ID);
+            if(object != null) {
+              	if(object instanceof String) {
+               		setAutogenCorrelationID(Boolean.parseBoolean((String)object));
+               	} else if(object instanceof Boolean) {
+               		setAutogenCorrelationID((Boolean)object);
+               	} else {
+               		throw new ConfigException("autogenCorrelationId must be a boolean value.");
+               	}
+            }
+        }
     }
 }

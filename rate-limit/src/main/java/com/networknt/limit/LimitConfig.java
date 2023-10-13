@@ -17,6 +17,7 @@
 package com.networknt.limit;
 
 import com.networknt.config.Config;
+import com.networknt.config.ConfigException;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -204,23 +205,47 @@ public class LimitConfig {
     private void setConfigData() {
         Object object = mappedConfig.get(CONCURRENT_REQUEST);
         if (object != null) {
-            concurrentRequest = (int) object;
+            if(object instanceof String) {
+                concurrentRequest = Integer.parseInt((String)object);
+            } else if (object instanceof Integer) {
+                concurrentRequest = (Integer)object;
+            } else {
+                throw new ConfigException("concurrentRequest must be an integer value.");
+            }
         }
         object = mappedConfig.get(QUEUE_SIZE);
         if (object != null) {
-            queueSize = (int) object;
+            if(object instanceof String) {
+                queueSize = Integer.parseInt((String)object);
+            } else if (object instanceof Integer) {
+                queueSize = (Integer)object;
+            } else {
+                throw new ConfigException("queueSize must be an integer value.");
+            }
         }
         object = mappedConfig.get(ERROR_CODE);
         if (object != null) {
-            errorCode = (int) object;
+            if(object instanceof String) {
+                errorCode = Integer.parseInt((String)object);
+            } else if (object instanceof Integer) {
+                errorCode = (Integer)object;
+            } else {
+                throw new ConfigException("errorCode must be an integer value.");
+            }
         } else {
             // set default value to 503.
             errorCode = 503;
         }
 
         object = getMappedConfig().get(IS_ENABLED);
-        if(object != null && (Boolean) object) {
-            setEnabled(true);
+        if(object != null) {
+            if(object instanceof String) {
+                enabled = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                enabled = (Boolean) object;
+            } else {
+                throw new ConfigException("enabled must be a boolean value.");
+            }
         }
         object = getMappedConfig().get(CLIENT_ID_KEY);
         if(object != null) {

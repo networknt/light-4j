@@ -102,8 +102,14 @@ public class ExternalServiceConfig {
 
     private void setConfigData() {
         Object object = mappedConfig.get(ENABLED);
-        if (object != null && (Boolean) object) {
-            setEnabled((Boolean)object);
+        if (object != null) {
+            if(object instanceof String) {
+                enabled = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                enabled = (Boolean) object;
+            } else {
+                throw new ConfigException("enabled must be a boolean value.");
+            }
         }
         object = mappedConfig.get(PROXY_HOST);
         if (object != null) {
@@ -114,12 +120,24 @@ public class ExternalServiceConfig {
             setProxyPort((int) object);
         }
         object = mappedConfig.get(ENABLE_HTTP2);
-        if (object != null && (Boolean) object) {
-            setEnableHttp2((Boolean)object);
+        if (object != null) {
+            if(object instanceof String) {
+                enableHttp2 = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                enableHttp2 = (Boolean) object;
+            } else {
+                throw new ConfigException("enableHttp2 must be a boolean value.");
+            }
         }
         object = getMappedConfig().get(METRICS_INJECTION);
-        if(object != null && (Boolean) object) {
-            metricsInjection = true;
+        if(object != null) {
+            if(object instanceof String) {
+                metricsInjection = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                metricsInjection = (Boolean) object;
+            } else {
+                throw new ConfigException("metricsInjection must be a boolean value.");
+            }
         }
         object = getMappedConfig().get(METRICS_NAME);
         if(object != null ) {

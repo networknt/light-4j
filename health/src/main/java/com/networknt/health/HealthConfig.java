@@ -16,6 +16,11 @@
 
 package com.networknt.health;
 
+import com.networknt.config.Config;
+import com.networknt.config.ConfigException;
+
+import java.util.Map;
+
 /**
  * Config class for Health Handler
  *
@@ -23,6 +28,15 @@ package com.networknt.health;
  */
 public class HealthConfig {
     public static final String CONFIG_NAME = "health";
+    private static final String ENABLED = "enabled";
+    private static final String USE_JSON = "useJson";
+    private static final String TIMEOUT = "timeout";
+    private static final String DOWNSTREAM_ENABLED = "downstreamEnabled";
+    private static final String DOWNSTREAM_HOST = "downstreamHost";
+    private static final String DOWNSTREAM_PATH = "downstreamPath";
+
+    private Map<String, Object> mappedConfig;
+    private final Config config;
 
     boolean enabled;
     boolean useJson;
@@ -31,7 +45,31 @@ public class HealthConfig {
     String downstreamHost;
     String downstreamPath;
 
-    public HealthConfig() {
+    private HealthConfig(String configName) {
+        config = Config.getInstance();
+        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        setConfigData();
+    }
+    private HealthConfig() {
+        this(CONFIG_NAME);
+    }
+
+    public static HealthConfig load(String configName) {
+        return new HealthConfig(configName);
+    }
+
+    public static HealthConfig load() {
+        return new HealthConfig();
+    }
+
+    public void reload() {
+        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
+        setConfigData();
+    }
+
+    public void reload(String configName) {
+        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        setConfigData();
     }
 
     public boolean isEnabled() {
@@ -81,4 +119,67 @@ public class HealthConfig {
     public void setDownstreamPath(String downstreamPath) {
         this.downstreamPath = downstreamPath;
     }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
+
+    Config getConfig() {
+        return config;
+    }
+
+    private void setConfigData() {
+        if(getMappedConfig() != null) {
+            Object object = getMappedConfig().get(ENABLED);
+            if(object != null) {
+                if(object instanceof String) {
+                    enabled = Boolean.parseBoolean((String)object);
+                } else if (object instanceof Boolean) {
+                    enabled = (Boolean) object;
+                } else {
+                    throw new ConfigException("enabled must be a boolean value.");
+                }
+            }
+            object = getMappedConfig().get(USE_JSON);
+            if(object != null) {
+                if(object instanceof String) {
+                    useJson = Boolean.parseBoolean((String)object);
+                } else if (object instanceof Boolean) {
+                    useJson = (Boolean) object;
+                } else {
+                    throw new ConfigException("useJson must be a boolean value.");
+                }
+            }
+            object = getMappedConfig().get(TIMEOUT);
+            if(object != null) {
+                if(object instanceof String) {
+                    timeout = Integer.parseInt((String)object);
+                } else if (object instanceof Integer) {
+                    timeout = (Integer) object;
+                } else {
+                    throw new ConfigException("timeout must be an integer value.");
+                }
+            }
+            object = getMappedConfig().get(DOWNSTREAM_ENABLED);
+            if(object != null) {
+                if(object instanceof String) {
+                    downstreamEnabled = Boolean.parseBoolean((String)object);
+                } else if (object instanceof Boolean) {
+                    downstreamEnabled = (Boolean) object;
+                } else {
+                    throw new ConfigException("downstreamEnabled must be a boolean value.");
+                }
+            }
+            object = getMappedConfig().get(DOWNSTREAM_HOST);
+            if(object != null) {
+                downstreamHost = (String)object;
+            }
+            object = getMappedConfig().get(DOWNSTREAM_PATH);
+            if(object != null) {
+                downstreamPath = (String)object;
+            }
+
+        }
+    }
+
 }

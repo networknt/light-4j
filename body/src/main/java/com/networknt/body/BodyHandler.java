@@ -64,8 +64,6 @@ public class BodyHandler implements MiddlewareHandler {
     public static final AttachmentKey<Object> REQUEST_BODY = AttachmentConstants.REQUEST_BODY;
     public static final AttachmentKey<String> REQUEST_BODY_STRING = AttachmentConstants.REQUEST_BODY_STRING;
 
-    public static final String CONFIG_NAME = "body";
-
     public static  BodyConfig config;
 
     private volatile HttpHandler next;
@@ -210,11 +208,11 @@ public class BodyHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(BodyHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        ModuleRegistry.registerModule(BodyHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(BodyConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
-        config = (BodyConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, BodyConfig.class);
+        config = (BodyConfig) Config.getInstance().getJsonObjectConfig(BodyConfig.CONFIG_NAME, BodyConfig.class);
     }
 }

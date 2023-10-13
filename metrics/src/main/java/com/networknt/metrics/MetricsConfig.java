@@ -17,6 +17,7 @@
 package com.networknt.metrics;
 
 import com.networknt.config.Config;
+import com.networknt.config.ConfigException;
 
 import java.util.Map;
 
@@ -61,7 +62,7 @@ public class MetricsConfig {
     String issuerRegex;
 
     private Map<String, Object> mappedConfig;
-    private Config config;
+    private final Config config;
 
 
     private MetricsConfig() {
@@ -216,12 +217,24 @@ public class MetricsConfig {
 
     private void setConfigData() {
         Object object = getMappedConfig().get(ENABLED);
-        if(object != null && (Boolean) object) {
-            setEnabled(true);
+        if(object != null) {
+            if(object instanceof String) {
+                enabled = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                enabled = (Boolean) object;
+            } else {
+                throw new RuntimeException("enabled must be a boolean value.");
+            }
         }
         object = getMappedConfig().get(ENABLED_JVM_MONITOR);
-        if(object != null && (Boolean) object) {
-            setEnabled(true);
+        if(object != null) {
+            if(object instanceof String) {
+                enableJVMMonitor = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                enableJVMMonitor = (Boolean) object;
+            } else {
+                throw new RuntimeException("enableJVMMonitor must be a boolean value.");
+            }
         }
         object = mappedConfig.get(SERVER_PROTOCOL);
         if (object != null) {
@@ -233,7 +246,13 @@ public class MetricsConfig {
         }
         object = mappedConfig.get(SERVER_PORT);
         if (object != null) {
-            serverPort = (int) object;
+            if(object instanceof String) {
+                serverPort = Integer.parseInt((String)object);
+            } else if (object instanceof Integer) {
+                serverPort = (Integer)object;
+            } else {
+                throw new ConfigException("serverPort must be an integer value.");
+            }
         }
         object = getMappedConfig().get(SERVER_PATH);
         if(object != null) {
@@ -253,23 +272,47 @@ public class MetricsConfig {
         }
         object = getMappedConfig().get(REPORT_IN_MINUTES);
         if(object != null) {
-            reportInMinutes = (int) object;
+            if(object instanceof String) {
+                reportInMinutes = Integer.parseInt((String)object);
+            } else if (object instanceof Integer) {
+                reportInMinutes = (Integer)object;
+            } else {
+                throw new ConfigException("reportInMinutes must be an integer value.");
+            }
         }
         object = getMappedConfig().get(PRODUCT_NAME);
         if(object != null) {
             productName = (String) object;
         }
         object = getMappedConfig().get(SEND_SCOPE_CLIENT_ID);
-        if(object != null && (Boolean) object) {
-            sendScopeClientId = true;
+        if(object != null) {
+            if(object instanceof String) {
+                sendScopeClientId = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                sendScopeClientId = (Boolean) object;
+            } else {
+                throw new RuntimeException("sendScopeClientId must be a boolean value.");
+            }
         }
         object = getMappedConfig().get(SEND_CALLER_ID);
-        if(object != null && (Boolean) object) {
-            sendCallerId = true;
-        }
+        if(object != null) {
+            if(object instanceof String) {
+                sendCallerId = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                sendCallerId = (Boolean) object;
+            } else {
+                throw new RuntimeException("sendCallerId must be a boolean value.");
+            }
+       }
         object = getMappedConfig().get(SEND_ISSUER);
-        if(object != null && (Boolean) object) {
-            sendIssuer = true;
+        if(object != null) {
+            if(object instanceof String) {
+                sendIssuer = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                sendIssuer = (Boolean) object;
+            } else {
+                throw new RuntimeException("sendIssuer must be a boolean value.");
+            }
         }
         object = getMappedConfig().get(ISSUER_REGEX);
         if(object != null) {

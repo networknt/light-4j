@@ -45,20 +45,19 @@ import static io.undertow.server.handlers.ResponseCodeHandler.HANDLE_200;
  */
 public class CorsHttpHandler implements MiddlewareHandler {
 
-    public static final String CONFIG_NAME = "cors";
-
-    public static CorsConfig config =
-            (CorsConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, CorsConfig.class);
-
-    private static final Collection<String> allowedOrigins = config.getAllowedOrigins();
-    private static final Collection<String> allowedMethods = config.getAllowedMethods();
+    public static CorsConfig config;
+    private static Collection<String> allowedOrigins;
+    private static Collection<String> allowedMethods;
 
     private volatile HttpHandler next;
     /** Default max age **/
     private static final long ONE_HOUR_IN_SECONDS = 60 * 60;
 
     public CorsHttpHandler() {
-
+        config = CorsConfig.load();
+        allowedOrigins = config.getAllowedOrigins();
+        allowedMethods = config.getAllowedMethods();
+        if(logger.isInfoEnabled()) logger.info("CorsHttpHandler is loaded.");
     }
 
     @Override
@@ -121,11 +120,11 @@ public class CorsHttpHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(CorsHttpHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        ModuleRegistry.registerModule(CorsHttpHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CorsConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
-        config = (CorsConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, CorsConfig.class);
+        config.reload();
     }
 }

@@ -17,6 +17,7 @@
 package com.networknt.proxy;
 
 import com.networknt.config.Config;
+import com.networknt.config.ConfigException;
 
 import java.util.Map;
 
@@ -119,34 +120,102 @@ public class ProxyConfig {
 
     private void setConfigData() {
         Object object = getMappedConfig().get(HTTP2_ENABLED);
-        if(object != null && (Boolean) object) {
-            http2Enabled = true;
+        if(object != null) {
+            if(object instanceof String) {
+                http2Enabled = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                http2Enabled = (Boolean) object;
+            } else {
+                throw new ConfigException("http2Enabled must be a boolean value.");
+            }
         }
         object = getMappedConfig().get(REWRITE_HOST_HEADER);
-        if(object != null && (Boolean) object) {
-            rewriteHostHeader = true;
+        if(object != null) {
+            if(object instanceof String) {
+                rewriteHostHeader = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                rewriteHostHeader = (Boolean) object;
+            } else {
+                throw new ConfigException("rewriteHostHeader must be a boolean value.");
+            }
         }
         object = getMappedConfig().get(REUSE_X_FORWARDED);
-        if(object != null && (Boolean) object) {
-            reuseXForwarded = true;
+        if(object != null) {
+            if(object instanceof String) {
+                reuseXForwarded = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                reuseXForwarded = (Boolean) object;
+            } else {
+                throw new ConfigException("reuseXForwarded must be a boolean value.");
+            }
         }
         object = getMappedConfig().get(FORWARD_JWT_CLAIMS);
-        if(object != null && (Boolean) object) {
-            forwardJwtClaims = true;
+        if(object != null) {
+            if(object instanceof String) {
+                forwardJwtClaims = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                forwardJwtClaims = (Boolean) object;
+            } else {
+                throw new ConfigException("forwardJwtClaims must be a boolean value.");
+            }
         }
-        hosts = (String)getMappedConfig().get(HOSTS);
-        connectionsPerThread = (Integer)getMappedConfig().get(CONNECTIONS_PER_THREAD);
-        maxRequestTime = (Integer)getMappedConfig().get(MAX_REQUEST_TIME);
-        maxConnectionRetries = (Integer)getMappedConfig().get(MAX_CONNECTION_RETRIES);
-        maxQueueSize = (Integer)getMappedConfig().get(MAX_QUEUE_SIZE);
+        object = getMappedConfig().get(HOSTS);
+        if(object != null) {
+            hosts = (String)object;
+        }
+        object = getMappedConfig().get(CONNECTIONS_PER_THREAD);
+        if(object != null) {
+            if(object instanceof String) {
+                connectionsPerThread = Integer.parseInt((String)object);
+            } else if (object instanceof Integer) {
+                connectionsPerThread = (Integer) object;
+            } else {
+                throw new ConfigException("connectionsPerThread must be an integer value.");
+            }
+        }
+        object = getMappedConfig().get(MAX_REQUEST_TIME);
+        if(object != null) {
+            if(object instanceof String) {
+                maxRequestTime = Integer.parseInt((String)object);
+            } else if (object instanceof Integer) {
+                maxRequestTime = (Integer) object;
+            } else {
+                throw new ConfigException("maxRequestTime must be an integer value.");
+            }
+        }
+        object = getMappedConfig().get(MAX_CONNECTION_RETRIES);
+        if(object != null) {
+            if(object instanceof String) {
+                maxConnectionRetries = Integer.parseInt((String)object);
+            } else if (object instanceof Integer) {
+                maxConnectionRetries = (Integer) object;
+            } else {
+                throw new ConfigException("maxConnectionRetries must be an integer value.");
+            }
+        }
+        object = getMappedConfig().get(MAX_QUEUE_SIZE);
+        if(object != null) {
+            if(object instanceof String) {
+                maxQueueSize = Integer.parseInt((String)object);
+            } else if (object instanceof Integer) {
+                maxQueueSize = (Integer) object;
+            } else {
+                throw new ConfigException("maxQueueSize must be an integer value.");
+            }
+        }
         object = getMappedConfig().get(METRICS_INJECTION);
-        if(object != null && (Boolean) object) {
-            metricsInjection = true;
+        if(object != null) {
+            if(object instanceof String) {
+                metricsInjection = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                metricsInjection = (Boolean) object;
+            } else {
+                throw new ConfigException("metricsInjection must be a boolean value.");
+            }
         }
         object = getMappedConfig().get(METRICS_NAME);
         if(object != null ) {
             metricsName = (String)object;
         }
-
     }
 }
