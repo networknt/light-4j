@@ -1,6 +1,7 @@
 ---
 # request decode handler for gzip and deflate
 enabled: ${decode.enabled:false}
-decoders:
-  - gzip
-  - deflate
+decoders: ${decode.decoders:gzip,deflate}
+#   - gzip
+#   - deflate
+# ["gzip","deflate"]

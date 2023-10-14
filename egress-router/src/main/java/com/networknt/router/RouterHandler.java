@@ -130,6 +130,6 @@ public class RouterHandler implements HttpHandler {
                 logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
             }
         }
-
+        if(logger.isInfoEnabled()) logger.info("RouterHandler is reloaded.");
     }
 }

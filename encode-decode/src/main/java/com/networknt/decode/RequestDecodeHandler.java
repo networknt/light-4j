@@ -98,4 +98,11 @@ public class RequestDecodeHandler implements MiddlewareHandler {
         }
         Handler.next(exchange, next);
     }
+
+    @Override
+    public void reload() {
+        config.reload();
+        ModuleRegistry.registerModule(RequestDecodeHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(RequestDecodeConfig.CONFIG_NAME), null);
+        if(logger.isInfoEnabled()) logger.info("RequestDecodeHandler is reloaded.");
+    }
 }

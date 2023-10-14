@@ -99,6 +99,7 @@ public class WhitelistHandler implements MiddlewareHandler {
     public void reload() {
         config.reload();
         ModuleRegistry.registerModule(WhitelistHandler.class.getName(), config.getMappedConfig(), null);
+        if(logger.isInfoEnabled()) logger.info("WhitelistHandler is reloaded.");
     }
 
     IpAcl findIpAcl(String reqPath) {

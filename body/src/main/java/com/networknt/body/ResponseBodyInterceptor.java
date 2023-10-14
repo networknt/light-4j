@@ -52,6 +52,9 @@ public class ResponseBodyInterceptor implements ResponseInterceptor {
     @Override
     public void reload() {
         config.reload();
+        ModuleRegistry.registerModule(ResponseBodyInterceptor.class.getName(), config.getMappedConfig(), null);
+        if (LOG.isInfoEnabled())
+            LOG.info("ResponseBodyInterceptor is reloaded.");
     }
 
     @Override

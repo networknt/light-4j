@@ -126,5 +126,9 @@ public class CorsHttpHandler implements MiddlewareHandler {
     @Override
     public void reload() {
         config.reload();
+        ModuleRegistry.registerModule(CorsHttpHandler.class.getName(), config.getMappedConfig(), null);
+        if(logger.isInfoEnabled()) {
+            logger.info("CorsHttpHandler is enabled.");
+        }
     }
 }

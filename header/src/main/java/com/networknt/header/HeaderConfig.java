@@ -80,15 +80,7 @@ public class HeaderConfig {
 
     private void setConfigData() {
         Object object = mappedConfig.get(ENABLED);
-        if(object != null) {
-            if(object instanceof String) {
-                enabled = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                enabled = (Boolean) object;
-            } else {
-                throw new ConfigException("enabled must be a boolean value.");
-            }
-        }
+        if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
     }
 
     public List<String> getRequestRemoveList() {

@@ -194,6 +194,9 @@ public class RequestBodyInterceptor implements RequestInterceptor {
     @Override
     public void reload() {
         config.reload();
+        ModuleRegistry.registerModule(RequestBodyInterceptor.class.getName(), config.getMappedConfig(), null);
+        if (LOG.isInfoEnabled())
+            LOG.info("RequestBodyInterceptor is reloaded.");
     }
 
     @Override

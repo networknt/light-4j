@@ -25,7 +25,7 @@ public class SidecarServiceDictHandler extends ServiceDictHandler {
     public SidecarServiceDictHandler() {
         logger.info("SidecarServiceDictHandler is constructed");
         config = ServiceDictConfig.load();
-        sidecarConfig = (SidecarConfig)Config.getInstance().getJsonObjectConfig(SidecarConfig.CONFIG_NAME, SidecarConfig.class);
+        sidecarConfig = SidecarConfig.load();
     }
 
     @Override

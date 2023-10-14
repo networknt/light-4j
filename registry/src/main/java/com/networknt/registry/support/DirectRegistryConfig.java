@@ -16,7 +16,7 @@ public class DirectRegistryConfig {
     public static final String CONFIG_NAME = "direct-registry";
     private static final String DIRECT_URLS = "directUrls";
     Map<String, List<URL>> directUrls;
-    private Config config;
+    private final Config config;
     private Map<String, Object> mappedConfig;
 
     public DirectRegistryConfig() {

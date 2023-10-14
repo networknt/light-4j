@@ -22,6 +22,7 @@ package com.networknt.deref;
  * @author Steve Hu
  */
 public class DerefConfig {
+    public static final String CONFIG_NAME = "deref";
     boolean enabled;
 
     public boolean isEnabled() {

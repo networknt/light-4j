@@ -109,4 +109,10 @@ public class DerefMiddlewareHandler implements MiddlewareHandler {
         ModuleRegistry.registerModule(DerefMiddlewareHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
+    @Override
+    public void reload() {
+        config = (DerefConfig)Config.getInstance().getJsonObjectConfigNoCache(DerefConfig.CONFIG_NAME, DerefConfig.class);
+        ModuleRegistry.registerModule(DerefMiddlewareHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        if(logger.isInfoEnabled()) logger.info("DerefMiddlewareHandler is reloaded.");
+    }
 }

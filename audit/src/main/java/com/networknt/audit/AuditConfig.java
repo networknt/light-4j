@@ -200,76 +200,19 @@ class AuditConfig {
 
     private void setConfigData() {
         Object object = getMappedConfig().get(STATUS_CODE);
-        if(object != null) {
-            if(object instanceof String) {
-                statusCode = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                statusCode = (Boolean) object;
-            } else {
-                throw new ConfigException("statusCode must be a boolean value.");
-            }
-        }
+        if(object != null) statusCode = Config.loadBooleanValue(STATUS_CODE, object);
         object = getMappedConfig().get(RESPONSE_TIME);
-        if(object != null) {
-            if(object instanceof String) {
-                responseTime = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                responseTime = (Boolean) object;
-            } else {
-                throw new ConfigException("responseTime must be a boolean value.");
-            }
-        }
-        // audit on error response flag
+        if(object != null) responseTime = Config.loadBooleanValue(RESPONSE_TIME, object);
         object = getMappedConfig().get(AUDIT_ON_ERROR);
-        if(object != null) {
-            if(object instanceof String) {
-                auditOnError = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                auditOnError = (Boolean) object;
-            } else {
-                throw new ConfigException("auditOnError must be a boolean value.");
-            }
-        }
+        if(object != null) auditOnError = Config.loadBooleanValue(AUDIT_ON_ERROR, object);
         object = getMappedConfig().get(MASK);
-        if(object != null) {
-            if(object instanceof String) {
-                mask = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                mask = (Boolean) object;
-            } else {
-                throw new ConfigException("mask must be a boolean value.");
-            }
-        }
+        if(object != null) mask = Config.loadBooleanValue(MASK, object);
         object = mappedConfig.get(REQUEST_BODY_MAX_SIZE);
-        if (object != null) {
-            if(object instanceof String) {
-                requestBodyMaxSize = Integer.parseInt((String)object);
-            } else if (object instanceof Integer) {
-                requestBodyMaxSize = (Integer) object;
-            } else {
-                throw new ConfigException("requestBodyMaxSize must be an integer value.");
-            }
-        }
+        if(object != null) requestBodyMaxSize = Config.loadIntegerValue(REQUEST_BODY_MAX_SIZE, object);
         object = mappedConfig.get(RESPONSE_BODY_MAX_SIZE);
-        if (object != null) {
-            if(object instanceof String) {
-                responseBodyMaxSize = Integer.parseInt((String)object);
-            } else if (object instanceof Integer) {
-                responseBodyMaxSize = (Integer) object;
-            } else {
-                throw new ConfigException("responseBodyMaxSize must be an integer value.");
-            }
-        }
+        if(object != null) responseBodyMaxSize = Config.loadIntegerValue(RESPONSE_BODY_MAX_SIZE, object);
         object = getMappedConfig().get(ENABLED);
-        if(object != null) {
-            if(object instanceof String) {
-                enabled = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                enabled = (Boolean) object;
-            } else {
-                throw new ConfigException("enabled must be a boolean value.");
-            }
-        }
+        if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
         timestampFormat = (String)getMappedConfig().get(TIMESTAMP_FORMAT);
     }
 }

@@ -98,4 +98,11 @@ public class ResponseEncodeHandler implements MiddlewareHandler {
             Handler.next(exchange, next);
         }
     }
+
+    @Override
+    public void reload() {
+        config.reload();
+        ModuleRegistry.registerModule(ResponseEncodeHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(ResponseEncodeConfig.CONFIG_NAME), null);
+        if(logger.isInfoEnabled()) logger.info("ResponseEncodeHandler is reloaded.");
+    }
 }

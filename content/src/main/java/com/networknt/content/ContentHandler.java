@@ -36,13 +36,13 @@ import io.undertow.util.Headers;
  * Created by Ricardo Pina Arellano on 13/06/18.
  */
 public class ContentHandler implements MiddlewareHandler {
-    public static ContentConfig config = ContentConfig.load();
+    public static ContentConfig config;
     private static final String contentType = config.getContentType();
 
     private volatile HttpHandler next;
 
     public ContentHandler() {
-
+        config = ContentConfig.load();
     }
 
     @Override
@@ -66,7 +66,7 @@ public class ContentHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ContentConfig.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        ModuleRegistry.registerModule(ContentConfig.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
@@ -85,6 +85,10 @@ public class ContentHandler implements MiddlewareHandler {
 
     @Override
     public void reload() {
-        config = (ContentConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ContentConfig.class);
+        config.reload();
+        ModuleRegistry.registerModule(ContentConfig.class.getName(), config.getMappedConfig(), null);
+        if(logger.isInfoEnabled()) {
+            logger.info("ContentHandler is enabled.");
+        }
     }
 }

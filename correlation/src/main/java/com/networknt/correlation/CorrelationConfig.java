@@ -87,25 +87,9 @@ public class CorrelationConfig {
     private void setConfigData() {
         if(getMappedConfig() != null) {
             Object object = getMappedConfig().get(ENABLED);
-            if(object != null) {
-                if(object instanceof String) {
-                    setEnabled(Boolean.parseBoolean((String)object));
-                } else if(object instanceof Boolean) {
-                    setEnabled((Boolean)object);
-                } else {
-                    throw new ConfigException("enabled must be a boolean value.");
-                }
-            }
+            if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
             object = getMappedConfig().get(AUTOGEN_CORRELATION_ID);
-            if(object != null) {
-              	if(object instanceof String) {
-               		setAutogenCorrelationID(Boolean.parseBoolean((String)object));
-               	} else if(object instanceof Boolean) {
-               		setAutogenCorrelationID((Boolean)object);
-               	} else {
-               		throw new ConfigException("autogenCorrelationId must be a boolean value.");
-               	}
-            }
+            if(object != null) autogenCorrelationID = Config.loadBooleanValue(AUTOGEN_CORRELATION_ID, object);
         }
     }
 }

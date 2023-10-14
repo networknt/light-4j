@@ -131,54 +131,17 @@ public class HealthConfig {
     private void setConfigData() {
         if(getMappedConfig() != null) {
             Object object = getMappedConfig().get(ENABLED);
-            if(object != null) {
-                if(object instanceof String) {
-                    enabled = Boolean.parseBoolean((String)object);
-                } else if (object instanceof Boolean) {
-                    enabled = (Boolean) object;
-                } else {
-                    throw new ConfigException("enabled must be a boolean value.");
-                }
-            }
+            if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
             object = getMappedConfig().get(USE_JSON);
-            if(object != null) {
-                if(object instanceof String) {
-                    useJson = Boolean.parseBoolean((String)object);
-                } else if (object instanceof Boolean) {
-                    useJson = (Boolean) object;
-                } else {
-                    throw new ConfigException("useJson must be a boolean value.");
-                }
-            }
+            if(object != null) useJson = Config.loadBooleanValue(USE_JSON, object);
             object = getMappedConfig().get(TIMEOUT);
-            if(object != null) {
-                if(object instanceof String) {
-                    timeout = Integer.parseInt((String)object);
-                } else if (object instanceof Integer) {
-                    timeout = (Integer) object;
-                } else {
-                    throw new ConfigException("timeout must be an integer value.");
-                }
-            }
+            if(object != null) timeout = Config.loadIntegerValue(TIMEOUT, object);
             object = getMappedConfig().get(DOWNSTREAM_ENABLED);
-            if(object != null) {
-                if(object instanceof String) {
-                    downstreamEnabled = Boolean.parseBoolean((String)object);
-                } else if (object instanceof Boolean) {
-                    downstreamEnabled = (Boolean) object;
-                } else {
-                    throw new ConfigException("downstreamEnabled must be a boolean value.");
-                }
-            }
+            if(object != null) downstreamEnabled = Config.loadBooleanValue(DOWNSTREAM_ENABLED, object);
             object = getMappedConfig().get(DOWNSTREAM_HOST);
-            if(object != null) {
-                downstreamHost = (String)object;
-            }
+            if(object != null) downstreamHost = (String)object;
             object = getMappedConfig().get(DOWNSTREAM_PATH);
-            if(object != null) {
-                downstreamPath = (String)object;
-            }
-
+            if(object != null) downstreamPath = (String)object;
         }
     }
 

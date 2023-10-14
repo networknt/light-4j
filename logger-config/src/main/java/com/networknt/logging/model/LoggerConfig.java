@@ -66,43 +66,15 @@ public class LoggerConfig {
     public void setConfigData() {
 
         Object object = getMappedConfig().get(ENABLED);
-        if(object != null) {
-            if(object instanceof String) {
-                enabled = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                enabled = (Boolean) object;
-            } else {
-                throw new ConfigException("enabled must be a boolean value.");
-            }
-        }
+        if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
         object = getMappedConfig().get(DOWNSTREAM_ENABLED);
-        if(object != null) {
-            if(object instanceof String) {
-                downstreamEnabled = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                downstreamEnabled = (Boolean) object;
-            } else {
-                throw new ConfigException("downstreamEnabled must be a boolean value.");
-            }
-        }
+        if(object != null) downstreamEnabled = Config.loadBooleanValue(DOWNSTREAM_ENABLED, object);
         object = getMappedConfig().get(LOG_START);
-        if(object != null) {
-            if(object instanceof String) {
-                logStart = Long.parseLong((String)object);
-            } else if (object instanceof Number) {
-                logStart = ((Number)object).longValue();
-            } else {
-                throw new ConfigException("logStart must be a long value.");
-            }
-        }
+        if(object != null)  logStart = Config.loadLongValue(LOG_START, object);
         object = getMappedConfig().get(DOWNSTREAM_HOST);
-        if(object != null ) {
-            downstreamHost = (String)object;
-        }
+        if(object != null ) downstreamHost = (String)object;
         object = getMappedConfig().get(DOWNSTREAM_FRAMEWORK);
-        if(object != null ) {
-            downstreamFramework = (String)object;
-        }
+        if(object != null ) downstreamFramework = (String)object;
     }
 
     public Map<String, Object> getMappedConfig() {

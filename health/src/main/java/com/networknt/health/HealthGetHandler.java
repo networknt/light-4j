@@ -19,6 +19,7 @@ package com.networknt.health;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.handler.LightHttpHandler;
+import com.networknt.utility.ModuleRegistry;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
@@ -51,6 +52,7 @@ public class HealthGetHandler implements LightHttpHandler {
 
     public HealthGetHandler(){
         config = HealthConfig.load();
+        ModuleRegistry.registerModule(HealthGetHandler.class.getName(), config.getMappedConfig(), null);
         if(logger.isTraceEnabled()) logger.trace("HealthGetHandler is constructed.");
     }
 
@@ -81,4 +83,9 @@ public class HealthGetHandler implements LightHttpHandler {
         }
     }
 
+    public static void reload() {
+        config = HealthConfig.load();
+        ModuleRegistry.registerModule(HealthGetHandler.class.getName(), config.getMappedConfig(), null);
+        if(logger.isInfoEnabled()) logger.info("HealthGetHandler is reloaded.");
+    }
 }

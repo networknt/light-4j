@@ -121,57 +121,31 @@ public class RouterConfig {
     }
     public void setConfigData() {
         Object object = getMappedConfig().get(HTTP2_ENABLED);
-        if(object != null && (Boolean) object) {
-            http2Enabled = true;
-        }
+        if(object != null) http2Enabled = Config.loadBooleanValue(HTTP2_ENABLED, object);
         object = getMappedConfig().get(HTTPS_ENABLED);
-        if(object != null && (Boolean) object) {
-            httpsEnabled = true;
-        }
+        if(object != null) httpsEnabled = Config.loadBooleanValue(HTTPS_ENABLED, object);
         object = getMappedConfig().get(REWRITE_HOST_HEADER);
-        if(object != null && (Boolean) object) {
-            rewriteHostHeader = true;
-        }
+        if(object != null) rewriteHostHeader = Config.loadBooleanValue(REWRITE_HOST_HEADER, object);
         object = getMappedConfig().get(REUSE_X_FORWARDED);
-        if(object != null && (Boolean) object) {
-            reuseXForwarded = true;
-        }
+        if(object != null) reuseXForwarded = Config.loadBooleanValue(REUSE_X_FORWARDED, object);
         object = getMappedConfig().get(MAX_REQUEST_TIME);
-        if(object != null ) {
-            maxRequestTime = (Integer)object;
-        }
+        if(object != null ) maxRequestTime = Config.loadIntegerValue(MAX_REQUEST_TIME, object);
         object = getMappedConfig().get(CONNECTION_PER_THREAD);
-        if(object != null ) {
-            connectionsPerThread = (Integer)object;
-        }
+        if(object != null ) connectionsPerThread = Config.loadIntegerValue(CONNECTION_PER_THREAD, object);
         object = getMappedConfig().get(SOFT_MAX_CONNECTIONS_PER_THREAD);
-        if(object != null ) {
-            softMaxConnectionsPerThread = (Integer)object;
-        }
+        if(object != null ) softMaxConnectionsPerThread = Config.loadIntegerValue(SOFT_MAX_CONNECTIONS_PER_THREAD, object);
         object = getMappedConfig().get(MAX_CONNECTION_RETRIES);
-        if(object != null ) {
-            maxConnectionRetries = (Integer)object;
-        }
+        if(object != null ) maxConnectionRetries = Config.loadIntegerValue(MAX_CONNECTION_RETRIES, object);
         object = getMappedConfig().get(MAX_QUEUE_SIZE);
-        if(object != null ) {
-            maxQueueSize = (Integer)object;
-        }
+        if(object != null ) maxQueueSize = Config.loadIntegerValue(MAX_QUEUE_SIZE, object);
         object = getMappedConfig().get(SERVICE_ID_QUERY_PARAMETER);
-        if(object != null) {
-            serviceIdQueryParameter = (Boolean)object;
-        }
+        if(object != null) serviceIdQueryParameter = Config.loadBooleanValue(SERVICE_ID_QUERY_PARAMETER, object);
         object = getMappedConfig().get(PRE_RESOLVE_FQDN_2_IP);
-        if(object != null && (Boolean) object) {
-            preResolveFQDN2IP = true;
-        }
+        if(object != null) preResolveFQDN2IP = Config.loadBooleanValue(PRE_RESOLVE_FQDN_2_IP, object);
         object = getMappedConfig().get(METRICS_INJECTION);
-        if(object != null && (Boolean) object) {
-            metricsInjection = true;
-        }
+        if(object != null) metricsInjection = Config.loadBooleanValue(METRICS_INJECTION, object);
         object = getMappedConfig().get(METRICS_NAME);
-        if(object != null ) {
-            metricsName = (String)object;
-        }
+        if(object != null ) metricsName = (String)object;
     }
 
     public Map<String, Object> getMappedConfig() {

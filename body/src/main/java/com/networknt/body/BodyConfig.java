@@ -93,54 +93,14 @@ public class BodyConfig {
 
     private void setConfigData() {
         Object object = mappedConfig.get(ENABLED);
-        if(object != null) {
-            if(object instanceof String) {
-                enabled = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                enabled = (Boolean) object;
-            } else {
-                throw new ConfigException("enabled must be a boolean value.");
-            }
-        }
+        if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
         object = mappedConfig.get(CACHE_REQUEST_BODY);
-        if(object != null) {
-            if(object instanceof String) {
-                cacheRequestBody = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                cacheRequestBody = (Boolean) object;
-            } else {
-                throw new ConfigException("cacheRequestBody must be a boolean value.");
-            }
-        }
+        if(object != null) cacheRequestBody = Config.loadBooleanValue(CACHE_REQUEST_BODY, object);
         object = mappedConfig.get(CACHE_RESPONSE_BODY);
-        if(object != null) {
-            if(object instanceof String) {
-                cacheResponseBody = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                cacheResponseBody = (Boolean) object;
-            } else {
-                throw new ConfigException("cacheResponseBody must be a boolean value.");
-            }
-        }
+        if(object != null) cacheResponseBody = Config.loadBooleanValue(CACHE_RESPONSE_BODY, object);
         object = mappedConfig.get(LOG_FULL_REQUEST_BODY);
-        if(object != null) {
-            if(object instanceof String) {
-                logFullRequestBody = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                logFullRequestBody = (Boolean) object;
-            } else {
-                throw new ConfigException("logFullRequestBody must be a boolean value.");
-            }
-        }
+        if(object != null) logFullRequestBody = Config.loadBooleanValue(LOG_FULL_REQUEST_BODY, object);
         object = mappedConfig.get(LOG_FULL_RESPONSE_BODY);
-        if(object != null) {
-            if(object instanceof String) {
-                logFullResponseBody = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                logFullResponseBody = (Boolean) object;
-            } else {
-                throw new ConfigException("logFullResponseBody must be a boolean value.");
-            }
-        }
+        if(object != null) logFullResponseBody = Config.loadBooleanValue(LOG_FULL_RESPONSE_BODY, object);
     }
 }

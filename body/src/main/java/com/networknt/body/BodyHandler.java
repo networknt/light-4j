@@ -213,6 +213,8 @@ public class BodyHandler implements MiddlewareHandler {
 
     @Override
     public void reload() {
-        config = (BodyConfig) Config.getInstance().getJsonObjectConfig(BodyConfig.CONFIG_NAME, BodyConfig.class);
+        config.reload();
+        ModuleRegistry.registerModule(BodyHandler.class.getName(), config.getMappedConfig(), null);
+        if(logger.isInfoEnabled()) logger.info("BodyHandler is reloaded.");
     }
 }

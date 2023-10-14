@@ -199,49 +199,17 @@ public class ConsulConfig {
             consulToken = (String)object;
         }
         object = mappedConfig.get(MAX_REQ_PER_CONN);
-        if(object != null) {
-            if(object instanceof String) {
-                maxReqPerConn = Integer.parseInt((String)object);
-            } else if (object instanceof Integer) {
-                maxReqPerConn = (Integer) object;
-            } else {
-                throw new ConfigException("maxReqPerConn must be an integer value.");
-            }
-        }
+        if(object != null) maxReqPerConn = Config.loadIntegerValue(MAX_REQ_PER_CONN, object);
         object = mappedConfig.get(CHECK_INTERVAL);
         if(object != null) {
             checkInterval = (String)object;
         }
         object = mappedConfig.get(TCP_CHECK);
-        if(object != null) {
-            if(object instanceof String) {
-                tcpCheck = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                tcpCheck = (Boolean) object;
-            } else {
-                throw new ConfigException("tcpCheck must be a boolean value.");
-            }
-        }
+        if(object != null) tcpCheck = Config.loadBooleanValue(TCP_CHECK, object);
         object = mappedConfig.get(HTTP_CHECK);
-        if(object != null) {
-            if(object instanceof String) {
-                httpCheck = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                httpCheck = (Boolean) object;
-            } else {
-                throw new ConfigException("httpCheck must be a boolean value.");
-            }
-        }
+        if(object != null) httpCheck = Config.loadBooleanValue(HTTP_CHECK, object);
         object = mappedConfig.get(TTL_CHECK);
-        if(object != null) {
-            if(object instanceof String) {
-                ttlCheck = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                ttlCheck = (Boolean) object;
-            } else {
-                throw new ConfigException("ttlCheck must be a boolean value.");
-            }
-        }
+        if(object != null) ttlCheck = Config.loadBooleanValue(TTL_CHECK, object);
         object = mappedConfig.get(WAIT);
         if(object != null) {
             wait = (String)object;
@@ -251,86 +219,21 @@ public class ConsulConfig {
             timeoutBuffer = (String)object;
         }
         object = mappedConfig.get(ENABLE_HTTP2);
-        if(object != null) {
-            if(object instanceof String) {
-                enableHttp2 = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                enableHttp2 = (Boolean) object;
-            } else {
-                throw new ConfigException("enableHttp2 must be a boolean value.");
-            }
-        }
+        if(object != null) enableHttp2 = Config.loadBooleanValue(ENABLE_HTTP2, object);
         object = mappedConfig.get(CONNECTION_TIMEOUT);
-        if(object != null) {
-            if(object instanceof String) {
-                connectionTimeout = Integer.parseInt((String)object);
-            } else if (object instanceof Integer) {
-                connectionTimeout = (Integer)object;
-            } else {
-                throw new ConfigException("connectionTimeout must be an integer value.");
-            }
-        }
+        if(object != null) connectionTimeout = Config.loadIntegerValue(CONNECTION_TIMEOUT, object);
         object = mappedConfig.get(REQUEST_TIMEOUT);
-        if(object != null) {
-            if(object instanceof String) {
-                requestTimeout = Integer.parseInt((String)object);
-            } else if (object instanceof Integer) {
-                requestTimeout = (Integer)object;
-            } else {
-                throw new ConfigException("requestTimeout must be an integer value.");
-            }
-        }
+        if(object != null) requestTimeout = Config.loadIntegerValue(REQUEST_TIMEOUT, object);
         object = mappedConfig.get(RECONNECT_INTERVAL);
-        if(object != null) {
-            if(object instanceof String) {
-                reconnectInterval = Integer.parseInt((String)object);
-            } else if (object instanceof Integer) {
-                reconnectInterval = (Integer)object;
-            } else {
-                throw new ConfigException("reconnectInterval must be an integer value.");
-            }
-        }
+        if(object != null) reconnectInterval = Config.loadIntegerValue(RECONNECT_INTERVAL, object);
         object = mappedConfig.get(RECONNECT_JITTER);
-        if(object != null) {
-            if(object instanceof String) {
-                reconnectJitter = Integer.parseInt((String)object);
-            } else if (object instanceof Integer) {
-                reconnectJitter = (Integer)object;
-            } else {
-                throw new ConfigException("reconnectJitter must be an integer value.");
-            }
-        }
+        if(object != null) reconnectJitter = Config.loadIntegerValue(RECONNECT_JITTER, object);
         object = mappedConfig.get(LOOKUP_INTERVAL);
-        if(object != null) {
-            if(object instanceof String) {
-                lookupInterval = Integer.parseInt((String)object);
-            } else if (object instanceof Integer) {
-                lookupInterval = (Integer)object;
-            } else {
-                throw new ConfigException("lookupInterval must be an integer value.");
-            }
-        }
+        if(object != null) lookupInterval = Config.loadIntegerValue(LOOKUP_INTERVAL, object);
         object = mappedConfig.get(MAX_ATTEMPTS_BEFORE_SHUTDOWN);
-        if(object != null) {
-            if(object instanceof String) {
-                maxAttemptsBeforeShutdown = Integer.parseInt((String)object);
-            } else if (object instanceof Integer) {
-                maxAttemptsBeforeShutdown = (Integer)object;
-            } else {
-                throw new ConfigException("maxAttemptsBeforeShutdown must be an integer value.");
-            }
-        }
+        if(object != null) maxAttemptsBeforeShutdown = Config.loadIntegerValue(MAX_ATTEMPTS_BEFORE_SHUTDOWN, object);
         object = mappedConfig.get(SHUTDOWN_IF_THREAD_FROZEN);
-        if(object != null) {
-            if(object instanceof String) {
-                shutdownIfThreadFrozen = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                shutdownIfThreadFrozen = (Boolean) object;
-            } else {
-                throw new ConfigException("shutdownIfThreadFrozen must be a boolean value.");
-            }
-        }
-
+        if(object != null) shutdownIfThreadFrozen = Config.loadBooleanValue(SHUTDOWN_IF_THREAD_FROZEN, object);
     }
 
 }

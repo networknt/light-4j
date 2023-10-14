@@ -122,5 +122,9 @@ public class CorrelationHandler implements MiddlewareHandler {
     @Override
     public void reload() {
         config.reload();
+        ModuleRegistry.registerModule(CorrelationHandler.class.getName(), config.getMappedConfig(), null);
+        if(logger.isInfoEnabled()) {
+            logger.info("CorrelationHandler is enabled.");
+        }
     }
 }

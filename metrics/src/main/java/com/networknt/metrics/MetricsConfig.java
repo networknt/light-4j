@@ -217,106 +217,34 @@ public class MetricsConfig {
 
     private void setConfigData() {
         Object object = getMappedConfig().get(ENABLED);
-        if(object != null) {
-            if(object instanceof String) {
-                enabled = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                enabled = (Boolean) object;
-            } else {
-                throw new RuntimeException("enabled must be a boolean value.");
-            }
-        }
+        if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
         object = getMappedConfig().get(ENABLED_JVM_MONITOR);
-        if(object != null) {
-            if(object instanceof String) {
-                enableJVMMonitor = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                enableJVMMonitor = (Boolean) object;
-            } else {
-                throw new RuntimeException("enableJVMMonitor must be a boolean value.");
-            }
-        }
+        if(object != null) enableJVMMonitor = Config.loadBooleanValue(ENABLED_JVM_MONITOR, object);
         object = mappedConfig.get(SERVER_PROTOCOL);
-        if (object != null) {
-            setServerProtocol((String) object);;
-        }
+        if (object != null) setServerProtocol((String) object);;
         object = mappedConfig.get(SERVER_HOST);
-        if (object != null) {
-            serverHost = (String) object;
-        }
+        if (object != null) serverHost = (String) object;
         object = mappedConfig.get(SERVER_PORT);
-        if (object != null) {
-            if(object instanceof String) {
-                serverPort = Integer.parseInt((String)object);
-            } else if (object instanceof Integer) {
-                serverPort = (Integer)object;
-            } else {
-                throw new ConfigException("serverPort must be an integer value.");
-            }
-        }
+        if (object != null) serverPort = Config.loadIntegerValue(SERVER_PORT, object);
         object = getMappedConfig().get(SERVER_PATH);
-        if(object != null) {
-            serverPath = (String) object;
-        }
+        if(object != null) serverPath = (String) object;
         object = getMappedConfig().get(SERVER_NAME);
-        if(object != null) {
-            serverName = (String) object;
-        }
+        if(object != null) serverName = (String) object;
         object = getMappedConfig().get(SERVER_USER);
-        if(object != null) {
-            serverUser = (String) object;
-        }
+        if(object != null) serverUser = (String) object;
         object = getMappedConfig().get(SERVER_PASS);
-        if(object != null) {
-            serverPass = (String) object;
-        }
+        if(object != null) serverPass = (String) object;
         object = getMappedConfig().get(REPORT_IN_MINUTES);
-        if(object != null) {
-            if(object instanceof String) {
-                reportInMinutes = Integer.parseInt((String)object);
-            } else if (object instanceof Integer) {
-                reportInMinutes = (Integer)object;
-            } else {
-                throw new ConfigException("reportInMinutes must be an integer value.");
-            }
-        }
+        if(object != null) reportInMinutes = Config.loadIntegerValue(REPORT_IN_MINUTES, object);
         object = getMappedConfig().get(PRODUCT_NAME);
-        if(object != null) {
-            productName = (String) object;
-        }
+        if(object != null) productName = (String) object;
         object = getMappedConfig().get(SEND_SCOPE_CLIENT_ID);
-        if(object != null) {
-            if(object instanceof String) {
-                sendScopeClientId = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                sendScopeClientId = (Boolean) object;
-            } else {
-                throw new RuntimeException("sendScopeClientId must be a boolean value.");
-            }
-        }
+        if(object != null) sendScopeClientId = Config.loadBooleanValue(SEND_SCOPE_CLIENT_ID, object);
         object = getMappedConfig().get(SEND_CALLER_ID);
-        if(object != null) {
-            if(object instanceof String) {
-                sendCallerId = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                sendCallerId = (Boolean) object;
-            } else {
-                throw new RuntimeException("sendCallerId must be a boolean value.");
-            }
-       }
+        if(object != null) sendCallerId = Config.loadBooleanValue(SEND_CALLER_ID, object);
         object = getMappedConfig().get(SEND_ISSUER);
-        if(object != null) {
-            if(object instanceof String) {
-                sendIssuer = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                sendIssuer = (Boolean) object;
-            } else {
-                throw new RuntimeException("sendIssuer must be a boolean value.");
-            }
-        }
+        if(object != null) sendIssuer = Config.loadBooleanValue(SEND_ISSUER, object);
         object = getMappedConfig().get(ISSUER_REGEX);
-        if(object != null) {
-            issuerRegex = (String) object;
-        }
+        if(object != null) issuerRegex = (String) object;
     }
 }

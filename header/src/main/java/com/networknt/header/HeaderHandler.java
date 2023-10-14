@@ -166,5 +166,6 @@ public class HeaderHandler implements MiddlewareHandler {
     public void reload() {
         config.reload();
         ModuleRegistry.registerModule(HeaderHandler.class.getName(), config.getMappedConfig(), null);
+        if(logger.isInfoEnabled()) logger.info("HeaderHandler is reloaded.");
     }
 }

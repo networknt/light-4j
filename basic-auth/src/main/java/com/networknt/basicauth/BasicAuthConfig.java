@@ -114,45 +114,13 @@ public class BasicAuthConfig {
 
     private void setConfigData() {
         Object object = mappedConfig.get(ENABLED);
-        if(object != null) {
-            if(object instanceof String) {
-                enabled = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                enabled = (Boolean) object;
-            } else {
-                throw new ConfigException("enabled must be a boolean value.");
-            }
-        }
+        if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
         object = mappedConfig.get(ENABLE_AD);
-        if(object != null) {
-            if(object instanceof String) {
-                enableAD = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                enableAD = (Boolean) object;
-            } else {
-                throw new ConfigException("enableAD must be a boolean value.");
-            }
-        }
+        if(object != null) enableAD = Config.loadBooleanValue(ENABLE_AD, object);
         object = mappedConfig.get(ALLOW_ANONYMOUS);
-        if(object != null) {
-            if(object instanceof String) {
-                allowAnonymous = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                allowAnonymous = (Boolean) object;
-            } else {
-                throw new ConfigException("allowAnonymous must be a boolean value.");
-            }
-        }
+        if(object != null) allowAnonymous = Config.loadBooleanValue(ALLOW_ANONYMOUS, object);
         object = mappedConfig.get(ALLOW_BEARER_TOKEN);
-        if(object != null) {
-            if(object instanceof String) {
-                allowBearerToken = Boolean.parseBoolean((String)object);
-            } else if (object instanceof Boolean) {
-                allowBearerToken = (Boolean) object;
-            } else {
-                throw new ConfigException("allowBearerToken must be a boolean value.");
-            }
-        }
+        if(object != null) allowBearerToken = Config.loadBooleanValue(ALLOW_BEARER_TOKEN, object);
     }
 
     private void setConfigUser() {

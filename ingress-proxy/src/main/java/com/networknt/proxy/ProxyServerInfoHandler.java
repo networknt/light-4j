@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ProxyServerInfoHandler implements LightHttpHandler {
-    private static Http2Client client = Http2Client.getInstance();
+    private static final Http2Client client = Http2Client.getInstance();
     private static final int UNUSUAL_STATUS_CODE = 300;
     private static OptionMap optionMap = OptionMap.create(UndertowOptions.ENABLE_HTTP2, true);
     private static final String PROXY_INFO_KEY = "proxy_info";
