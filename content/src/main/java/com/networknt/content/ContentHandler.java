@@ -37,8 +37,6 @@ import io.undertow.util.Headers;
  */
 public class ContentHandler implements MiddlewareHandler {
     public static ContentConfig config;
-    private static final String contentType = config.getContentType();
-
     private volatile HttpHandler next;
 
     public ContentHandler() {
@@ -78,7 +76,7 @@ public class ContentHandler implements MiddlewareHandler {
         } else {
             exchange
                     .getResponseHeaders()
-                    .put(Headers.CONTENT_TYPE, contentType);
+                    .put(Headers.CONTENT_TYPE, config.getContentType());
         }
         Handler.next(exchange, next);
     }
