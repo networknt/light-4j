@@ -720,7 +720,9 @@ public abstract class Config {
     }
 
     public static Long loadLongValue(String name, Object object) {
-        if (object instanceof Long) {
+        if (object instanceof Integer) {
+            return Long.valueOf((Integer) object);
+        } else if(object instanceof Long) {
             return (Long) object;
         } else if (object instanceof String) {
             return Long.valueOf((String) object);
