@@ -11,7 +11,13 @@ import io.undertow.util.HeaderValues;
 
 public class SidecarSAMLTokenHandler extends SAMLTokenHandler {
 
-    public static SidecarConfig sidecarConfig = (SidecarConfig)Config.getInstance().getJsonObjectConfig(SidecarConfig.CONFIG_NAME, SidecarConfig.class);
+    public static SidecarConfig sidecarConfig;
+
+    public SidecarSAMLTokenHandler() {
+        super();
+        sidecarConfig = SidecarConfig.load();
+        if(logger.isDebugEnabled()) logger.debug("SidecarSAMLTokenHandler is constructed");
+    }
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {

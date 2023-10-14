@@ -20,7 +20,7 @@ public class RequestInjectionConfig {
     private List<String> appliedBodyInjectionPathPrefixes;
 
     private Map<String, Object> mappedConfig;
-    private Config config;
+    private final Config config;
 
     public RequestInjectionConfig() {
         config = Config.getInstance();

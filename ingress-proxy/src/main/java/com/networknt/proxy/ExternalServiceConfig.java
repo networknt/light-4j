@@ -102,29 +102,17 @@ public class ExternalServiceConfig {
 
     private void setConfigData() {
         Object object = mappedConfig.get(ENABLED);
-        if (object != null && (Boolean) object) {
-            setEnabled((Boolean)object);
-        }
+        if (object != null) enabled = Config.loadBooleanValue(ENABLED, object);
         object = mappedConfig.get(PROXY_HOST);
-        if (object != null) {
-            setProxyHost((String) object);
-        }
+        if (object != null) setProxyHost((String) object);
         object = mappedConfig.get(PROXY_PORT);
-        if (object != null) {
-            setProxyPort((int) object);
-        }
+        if (object != null) proxyPort = Config.loadIntegerValue(PROXY_PORT, object);
         object = mappedConfig.get(ENABLE_HTTP2);
-        if (object != null && (Boolean) object) {
-            setEnableHttp2((Boolean)object);
-        }
+        if (object != null) enableHttp2 = Config.loadBooleanValue(ENABLE_HTTP2, object);
         object = getMappedConfig().get(METRICS_INJECTION);
-        if(object != null && (Boolean) object) {
-            metricsInjection = true;
-        }
+        if(object != null) metricsInjection = Config.loadBooleanValue(METRICS_INJECTION, object);
         object = getMappedConfig().get(METRICS_NAME);
-        if(object != null ) {
-            metricsName = (String)object;
-        }
+        if(object != null ) metricsName = (String)object;
     }
 
     public List<String[]> getPathHostMappings() {

@@ -154,53 +154,29 @@ public class MrasConfig {
 
     private void setConfigData() {
         Object object = mappedConfig.get(ENABLED);
-        if (object != null && (Boolean) object) {
-            enabled = (Boolean)object;
-        }
+        if (object != null) enabled = Config.loadBooleanValue(ENABLED, object);
         object = mappedConfig.get(KEY_STORE_NAME);
-        if (object != null) {
-            keyStoreName = (String)object;
-        }
+        if (object != null) keyStoreName = (String)object;
         object = mappedConfig.get(KEY_STORE_PASS);
-        if (object != null) {
-            keyStorePass = (String)object;
-        }
+        if (object != null) keyStorePass = (String)object;
         object = mappedConfig.get(KEY_PASS);
-        if (object != null) {
-            keyPass = (String)object;
-        }
+        if (object != null) keyPass = (String)object;
         object = mappedConfig.get(TRUST_STORE_NAME);
-        if (object != null) {
-            trustStoreName = (String)object;
-        }
+        if (object != null) trustStoreName = (String)object;
         object = mappedConfig.get(TRUST_STORE_PASS);
-        if (object != null) {
-            trustStorePass = (String)object;
-        }
+        if (object != null) trustStorePass = (String)object;
         object = mappedConfig.get(PROXY_HOST);
-        if (object != null) {
-            proxyHost = (String) object;
-        }
+        if (object != null) proxyHost = (String) object;
         object = mappedConfig.get(PROXY_PORT);
-        if (object != null) {
-            proxyPort = (Integer) object;
-        }
+        if (object != null) proxyPort = Config.loadIntegerValue(PROXY_PORT, object);
         object = mappedConfig.get(ENABLE_HTTP2);
-        if (object != null && (Boolean) object) {
-            enableHttp2 = (Boolean)object;
-        }
+        if (object != null) enableHttp2 = Config.loadBooleanValue(ENABLE_HTTP2, object);
         object = mappedConfig.get(SERVICE_HOST);
-        if (object != null) {
-            serviceHost = (String) object;
-        }
+        if (object != null) serviceHost = (String) object;
         object = mappedConfig.get(METRICS_INJECTION);
-        if(object != null && (Boolean) object) {
-            metricsInjection = true;
-        }
+        if(object != null) metricsInjection = Config.loadBooleanValue(METRICS_INJECTION, object);
         object = mappedConfig.get(METRICS_NAME);
-        if(object != null ) {
-            metricsName = (String)object;
-        }
+        if(object != null ) metricsName = (String)object;
     }
 
     public Map<String, Object> getPathPrefixAuth() {

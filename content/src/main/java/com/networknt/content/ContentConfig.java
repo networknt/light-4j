@@ -16,17 +16,50 @@
 
 package com.networknt.content;
 
+import com.networknt.config.Config;
+import com.networknt.config.ConfigException;
+
+import java.util.Map;
+
 /**
  * Created by Ricardo Pina Arellano on 13/06/18.
  */
 public class ContentConfig {
-  boolean enabled;
+  public static final String CONFIG_NAME = "content";
+  private static final String ENABLED = "enabled";
+  private static final String CONTENT_TYPE = "contentType";
+  private Map<String, Object> mappedConfig;
+  private final Config config;
 
+  boolean enabled;
   String contentType;
 
-  String description;
+  private ContentConfig(String configName) {
+    config = Config.getInstance();
+    mappedConfig = config.getJsonMapConfigNoCache(configName);
+    setConfigData();
+  }
+  private ContentConfig() {
+    this(CONFIG_NAME);
+  }
 
-  public ContentConfig() { }
+  public static ContentConfig load(String configName) {
+    return new ContentConfig(configName);
+  }
+
+  public static ContentConfig load() {
+    return new ContentConfig();
+  }
+
+  public void reload() {
+    mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
+    setConfigData();
+  }
+
+  public void reload(String configName) {
+    mappedConfig = config.getJsonMapConfigNoCache(configName);
+    setConfigData();
+  }
 
   public boolean isEnabled() {
     return enabled;
@@ -44,11 +77,20 @@ public class ContentConfig {
     this.contentType = contentType;
   }
 
-  public String getDescription() {
-    return description;
+  public Map<String, Object> getMappedConfig() {
+    return mappedConfig;
   }
 
-  public void setDescription(String description) {
-    this.description = description;
+  Config getConfig() {
+    return config;
+  }
+
+  private void setConfigData() {
+    if(getMappedConfig() != null) {
+      Object object = getMappedConfig().get(ENABLED);
+      if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
+      object = getMappedConfig().get(CONTENT_TYPE);
+      if(object != null) contentType = (String)object;
+    }
   }
 }

@@ -130,13 +130,9 @@ public class WhitelistConfig {
 
     private void setConfigData() {
         Object object = mappedConfig.get(ENABLED);
-        if(object != null && (Boolean) object) {
-            setEnabled(true);
-        }
+        if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
         object = mappedConfig.get(DEFAULT_ALLOW);
-        if(object != null && (Boolean) object) {
-            setDefaultAllow(true);
-        }
+        if(object != null) defaultAllow = Config.loadBooleanValue(DEFAULT_ALLOW, object);
     }
 
     private void setConfigMap() {

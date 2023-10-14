@@ -196,12 +196,24 @@ public class SecurityConfig {
     private void setConfigData() {
         if(getMappedConfig() != null) {
             Object object = getMappedConfig().get(ENABLE_VERIFY_JWT);
-            if(object != null && (Boolean) object) {
-                enableVerifyJwt = true;
+            if(object != null) {
+                if(object instanceof String) {
+                    enableVerifyJwt = Boolean.parseBoolean((String)object);
+                } else if (object instanceof Boolean) {
+                    enableVerifyJwt = (Boolean) object;
+                } else {
+                    throw new ConfigException("enableVerifyJwt must be a boolean value.");
+                }
             }
             object = getMappedConfig().get(ENABLE_VERIFY_SWT);
-            if(object != null && (Boolean) object) {
-                enableVerifySwt = true;
+            if(object != null) {
+                if(object instanceof String) {
+                    enableVerifySwt = Boolean.parseBoolean((String)object);
+                } else if (object instanceof Boolean) {
+                    enableVerifySwt = (Boolean) object;
+                } else {
+                    throw new ConfigException("enableVerifySwt must be a boolean value.");
+                }
             }
             object = getMappedConfig().get(SWT_CLIENT_ID_HEADER);
             if(object != null) swtClientIdHeader = (String)object;
@@ -210,59 +222,140 @@ public class SecurityConfig {
             if(object != null) swtClientSecretHeader = (String)object;
 
             object = getMappedConfig().get(ENABLE_H2C);
-            if(object != null && (Boolean) object) {
-                enableH2c = true;
+            if(object != null) {
+                if(object instanceof String) {
+                    enableH2c = Boolean.parseBoolean((String)object);
+                } else if (object instanceof Boolean) {
+                    enableH2c = (Boolean) object;
+                } else {
+                    throw new ConfigException("enableH2c must be a boolean value.");
+                }
             }
             object = getMappedConfig().get(ENABLE_RELAXED_KEY_CONSTRAINTS);
-            if (object != null && (Boolean) object) {
-               enableRelaxedKeyValidation = true;
+            if(object != null) {
+                if(object instanceof String) {
+                    enableRelaxedKeyValidation = Boolean.parseBoolean((String)object);
+                } else if (object instanceof Boolean) {
+                    enableRelaxedKeyValidation = (Boolean) object;
+                } else {
+                    throw new ConfigException("enableRelaxedKeyValidation must be a boolean value.");
+                }
             }
             object = getMappedConfig().get(ENABLE_EXTRACT_SCOPE_TOKEN);
-            if(object != null && (Boolean) object) {
-                enableExtractScopeToken = true;
+            if(object != null) {
+                if(object instanceof String) {
+                    enableExtractScopeToken = Boolean.parseBoolean((String)object);
+                } else if (object instanceof Boolean) {
+                    enableExtractScopeToken = (Boolean) object;
+                } else {
+                    throw new ConfigException("enableExtractScopeToken must be a boolean value.");
+                }
             }
             object = getMappedConfig().get(ENABLE_VERIFY_SCOPE);
-            if(object != null && (Boolean) object) {
-                enableVerifyScope = true;
+            if(object != null) {
+                if(object instanceof String) {
+                    enableVerifyScope = Boolean.parseBoolean((String)object);
+                } else if (object instanceof Boolean) {
+                    enableVerifyScope = (Boolean) object;
+                } else {
+                    throw new ConfigException("enableVerifyScope must be a boolean value.");
+                }
             }
             object = getMappedConfig().get(SKIP_VERIFY_SCOPE_WITHOUT_SPEC);
-            if(object != null && (Boolean) object) {
-                skipVerifyScopeWithoutSpec = true;
+            if(object != null) {
+                if(object instanceof String) {
+                    skipVerifyScopeWithoutSpec = Boolean.parseBoolean((String)object);
+                } else if (object instanceof Boolean) {
+                    skipVerifyScopeWithoutSpec = (Boolean) object;
+                } else {
+                    throw new ConfigException("skipVerifyScopeWithoutSpec must be a boolean value.");
+                }
             }
             object = getMappedConfig().get(ENABLE_MOCK_JWT);
-            if(object != null && (Boolean) object) {
-                enableMockJwt = true;
+            if(object != null) {
+                if(object instanceof String) {
+                    enableMockJwt = Boolean.parseBoolean((String)object);
+                } else if (object instanceof Boolean) {
+                    enableMockJwt = (Boolean) object;
+                } else {
+                    throw new ConfigException("enableMockJwt must be a boolean value.");
+                }
             }
             object = getMappedConfig().get(LOG_JWT_TOKEN);
-            if(object != null && (Boolean) object) {
-                logJwtToken = true;
+            if(object != null) {
+                if(object instanceof String) {
+                    logJwtToken = Boolean.parseBoolean((String)object);
+                } else if (object instanceof Boolean) {
+                    logJwtToken = (Boolean) object;
+                } else {
+                    throw new ConfigException("logJwtToken must be a boolean value.");
+                }
             }
             object = getMappedConfig().get(LOG_CLIENT_USER_SCOPE);
-            if(object != null && (Boolean) object) {
-                logClientUserScope = true;
+            if(object != null) {
+                if(object instanceof String) {
+                    logClientUserScope = Boolean.parseBoolean((String)object);
+                } else if (object instanceof Boolean) {
+                    logClientUserScope = (Boolean) object;
+                } else {
+                    throw new ConfigException("logClientUserScope must be a boolean value.");
+                }
             }
             object = getMappedConfig().get(ENABLE_JWT_CACHE);
-            if(object != null && (Boolean) object) {
-                enableJwtCache = true;
+            if(object != null) {
+                if(object instanceof String) {
+                    enableJwtCache = Boolean.parseBoolean((String)object);
+                } else if (object instanceof Boolean) {
+                    enableJwtCache = (Boolean) object;
+                } else {
+                    throw new ConfigException("enableJwtCache must be a boolean value.");
+                }
             }
             object = getMappedConfig().get(JWT_CACHE_FULL_SIZE);
             if(object != null ) {
-                jwtCacheFullSize = (Integer)object;
+                if(object instanceof String) {
+                    jwtCacheFullSize = Integer.parseInt((String)object);
+                } else if (object instanceof Integer) {
+                    jwtCacheFullSize = (Integer) object;
+                } else {
+                    throw new ConfigException("jwtCacheFullSize must be an integer value.");
+                }
             }
             object = getMappedConfig().get(BOOTSTRAP_FROM_KEY_SERVICE);
-            if(object != null && (Boolean) object) {
-                bootstrapFromKeyService = true;
+            if(object != null) {
+                if(object instanceof String) {
+                    bootstrapFromKeyService = Boolean.parseBoolean((String)object);
+                } else if (object instanceof Boolean) {
+                    bootstrapFromKeyService = (Boolean) object;
+                } else {
+                    throw new ConfigException("bootstrapFromKeyService must be a boolean value.");
+                }
             }
             object = getMappedConfig().get(IGNORE_JWT_EXPIRY);
-            if(object != null && (Boolean) object) {
-                ignoreJwtExpiry = true;
+            if(object != null) {
+                if(object instanceof String) {
+                    ignoreJwtExpiry = Boolean.parseBoolean((String)object);
+                } else if (object instanceof Boolean) {
+                    ignoreJwtExpiry = (Boolean) object;
+                } else {
+                    throw new ConfigException("ignoreJwtExpiry must be a boolean value.");
+                }
             }
             object = getMappedConfig().get(PROVIDER_ID);
             if(object != null) providerId = (String)object;
 
             Map<String, Object> jwtMap = (Map)getMappedConfig().get(JWT);
             if(jwtMap != null) {
-                clockSkewInSeconds = (Integer) jwtMap.get(CLOCK_SKEW_IN_SECONDS);
+                object = jwtMap.get(CLOCK_SKEW_IN_SECONDS);
+                if(object != null) {
+                    if(object instanceof String) {
+                        clockSkewInSeconds = Integer.parseInt((String)object);
+                    } else if (object instanceof Integer) {
+                        clockSkewInSeconds = (Integer) object;
+                    } else {
+                        throw new ConfigException("clockSkewInSeconds must be an integer value.");
+                    }
+                }
                 keyResolver = (String) jwtMap.get(KEY_RESOLVER);
             }
         }

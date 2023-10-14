@@ -19,6 +19,7 @@ package com.networknt.health;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.handler.LightHttpHandler;
+import com.networknt.utility.ModuleRegistry;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
@@ -42,17 +43,18 @@ import org.slf4j.LoggerFactory;
  * @author Steve Hu
  */
 public class HealthGetHandler implements LightHttpHandler {
-
-    public static final String CONFIG_NAME = "health";
-
     public static final String HEALTH_RESULT_OK = "OK";
     public static final String HEALTH_RESULT_OK_JSON = JsonMapper.toJson(new HealthResult("OK"));
 
     static final Logger logger = LoggerFactory.getLogger(HealthGetHandler.class);
 
-    static final HealthConfig config = (HealthConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, HealthConfig.class);
+    static HealthConfig config;
 
-    public HealthGetHandler(){}
+    public HealthGetHandler(){
+        config = HealthConfig.load();
+        ModuleRegistry.registerModule(HealthGetHandler.class.getName(), config.getMappedConfig(), null);
+        if(logger.isTraceEnabled()) logger.trace("HealthGetHandler is constructed.");
+    }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
@@ -81,4 +83,9 @@ public class HealthGetHandler implements LightHttpHandler {
         }
     }
 
+    public static void reload() {
+        config = HealthConfig.load();
+        ModuleRegistry.registerModule(HealthGetHandler.class.getName(), config.getMappedConfig(), null);
+        if(logger.isInfoEnabled()) logger.info("HealthGetHandler is reloaded.");
+    }
 }

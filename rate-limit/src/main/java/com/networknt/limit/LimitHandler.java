@@ -41,7 +41,7 @@ public class LimitHandler implements MiddlewareHandler {
 
     private volatile HttpHandler next;
     private static RateLimiter rateLimiter;
-    private LimitConfig config;
+    private final LimitConfig config;
     private static final ObjectMapper mapper = Config.getInstance().getMapper();
 
 
@@ -117,5 +117,6 @@ public class LimitHandler implements MiddlewareHandler {
         }
         // after reload, we need to update the config in the module registry to ensure that server info returns the latest configuration.
         ModuleRegistry.registerModule(LimitHandler.class.getName(), config.getMappedConfig(), null);
+        if(logger.isInfoEnabled()) logger.info("LimitHandler is reloaded.");
     }
 }

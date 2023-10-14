@@ -16,15 +16,46 @@
 
 package com.networknt.router;
 
+import com.networknt.config.Config;
+import com.networknt.config.ConfigException;
+
+import java.util.Map;
+
 /**
  * Config class for gateway.
  *
  */
 public class SidecarConfig {
-    String egressIngressIndicator;
     public static final String CONFIG_NAME = "sidecar";
+    private static final String EGRESS_INGRESS_INDICATOR = "egressIngressIndicator";
+    private Map<String, Object> mappedConfig;
+    private final Config config;
+    String egressIngressIndicator;
+    private SidecarConfig(String configName) {
+        config = Config.getInstance();
+        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        setConfigData();
+    }
+    private SidecarConfig() {
+        this(CONFIG_NAME);
+    }
 
-    public SidecarConfig() {
+    public static SidecarConfig load(String configName) {
+        return new SidecarConfig(configName);
+    }
+
+    public static SidecarConfig load() {
+        return new SidecarConfig();
+    }
+
+    public void reload() {
+        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
+        setConfigData();
+    }
+
+    public void reload(String configName) {
+        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        setConfigData();
     }
 
     public String getEgressIngressIndicator() {
@@ -33,6 +64,21 @@ public class SidecarConfig {
 
     public void setEgressIngressIndicator(String egressIngressIndicator) {
         this.egressIngressIndicator = egressIngressIndicator;
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
+
+    Config getConfig() {
+        return config;
+    }
+
+    private void setConfigData() {
+        if(getMappedConfig() != null) {
+            Object object = getMappedConfig().get(EGRESS_INGRESS_INDICATOR);
+            if(object != null) egressIngressIndicator = (String)object;
+        }
     }
 
 }

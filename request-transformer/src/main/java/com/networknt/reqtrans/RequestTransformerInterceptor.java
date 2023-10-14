@@ -74,6 +74,9 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
     @Override
     public void reload() {
         config.reload();
+        ModuleRegistry.registerModule(RequestTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
+        if(logger.isTraceEnabled()) logger.trace("RequestTransformerInterceptor is reloaded.");
+
     }
 
     @Override

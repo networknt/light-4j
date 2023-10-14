@@ -699,6 +699,38 @@ public abstract class Config {
         return s.hasNext() ? s.next() : "";
     }
 
+    public static Boolean loadBooleanValue(String name, Object object) {
+        if (object instanceof Boolean) {
+            return (Boolean) object;
+        } else if (object instanceof String) {
+            return Boolean.valueOf((String) object);
+        } else {
+            throw new ConfigException(name + " must be a boolean or a string value.");
+        }
+    }
+
+    public static Integer loadIntegerValue(String name, Object object) {
+        if (object instanceof Integer) {
+            return (Integer) object;
+        } else if (object instanceof String) {
+            return Integer.valueOf((String) object);
+        } else {
+            throw new ConfigException(name + " must be an integer or a string value.");
+        }
+    }
+
+    public static Long loadLongValue(String name, Object object) {
+        if (object instanceof Integer) {
+            return Long.valueOf((Integer) object);
+        } else if(object instanceof Long) {
+            return (Long) object;
+        } else if (object instanceof String) {
+            return Long.valueOf((String) object);
+        } else {
+            throw new ConfigException(name + " must be a long or a string value.");
+        }
+    }
+
     static InputStream convertStringToStream(String string) {
         return new ByteArrayInputStream(string.getBytes(UTF_8));
     }

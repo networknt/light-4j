@@ -114,21 +114,13 @@ public class BasicAuthConfig {
 
     private void setConfigData() {
         Object object = mappedConfig.get(ENABLED);
-        if(object != null && (Boolean) object) {
-            setEnabled(true);
-        }
+        if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
         object = mappedConfig.get(ENABLE_AD);
-        if(object != null && (Boolean) object) {
-            setEnableAD(true);
-        }
+        if(object != null) enableAD = Config.loadBooleanValue(ENABLE_AD, object);
         object = mappedConfig.get(ALLOW_ANONYMOUS);
-        if(object != null && (Boolean) object) {
-            setAllowAnonymous(true);
-        }
+        if(object != null) allowAnonymous = Config.loadBooleanValue(ALLOW_ANONYMOUS, object);
         object = mappedConfig.get(ALLOW_BEARER_TOKEN);
-        if(object != null && (Boolean) object) {
-            setAllowBearerToken(true);
-        }
+        if(object != null) allowBearerToken = Config.loadBooleanValue(ALLOW_BEARER_TOKEN, object);
     }
 
     private void setConfigUser() {

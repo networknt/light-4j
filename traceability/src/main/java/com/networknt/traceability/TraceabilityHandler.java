@@ -48,17 +48,13 @@ import java.util.HashMap;
 public class TraceabilityHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(TraceabilityHandler.class);
     private static final String TID = "tId";
-    private static final String CONFIG_NAME = "traceability";
 
-    public static TraceabilityConfig config = null;
-    static {
-        config = (TraceabilityConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, TraceabilityConfig.class);
-    }
+    public static TraceabilityConfig config;
 
     private volatile HttpHandler next;
 
     public TraceabilityHandler() {
-
+        config = TraceabilityConfig.load();
     }
 
     @Override
@@ -100,6 +96,8 @@ public class TraceabilityHandler implements MiddlewareHandler {
 
     @Override
     public void reload() {
-        config = (TraceabilityConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, TraceabilityConfig.class);
+        config.reload();
+        ModuleRegistry.registerModule(TraceabilityHandler.class.getName(), config.getMappedConfig(), null);
+        if(logger.isInfoEnabled()) logger.info("TraceabilityHandler is reloaded.");
     }
 }

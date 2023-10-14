@@ -16,15 +16,47 @@
 
 package com.networknt.traceability;
 
+import com.networknt.config.Config;
+
+import java.util.Map;
+
 /**
  * Configuration class for traceability
  *
  * @author Steve Hu
  */
 public class TraceabilityConfig {
+    public static final String CONFIG_NAME = "traceability";
+    private static final String ENABLED = "enabled";
+    private Map<String, Object> mappedConfig;
+    private final Config config;
     boolean enabled;
 
-    public TraceabilityConfig() {
+    private TraceabilityConfig(String configName) {
+        config = Config.getInstance();
+        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        setConfigData();
+    }
+    private TraceabilityConfig() {
+        this(CONFIG_NAME);
+    }
+
+    public static TraceabilityConfig load(String configName) {
+        return new TraceabilityConfig(configName);
+    }
+
+    public static TraceabilityConfig load() {
+        return new TraceabilityConfig();
+    }
+
+    public void reload() {
+        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
+        setConfigData();
+    }
+
+    public void reload(String configName) {
+        mappedConfig = config.getJsonMapConfigNoCache(configName);
+        setConfigData();
     }
 
     public boolean isEnabled() {
@@ -33,6 +65,21 @@ public class TraceabilityConfig {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
+
+    Config getConfig() {
+        return config;
+    }
+
+    private void setConfigData() {
+        if(getMappedConfig() != null) {
+            Object object = getMappedConfig().get(ENABLED);
+            if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
+        }
     }
 
 }

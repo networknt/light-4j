@@ -121,5 +121,6 @@ public class PathServiceHandler implements MiddlewareHandler {
     public void reload() {
         config.reload();
         ModuleRegistry.registerModule(PathServiceHandler.class.getName(), config.getMappedConfig(), null);
+        if(logger.isInfoEnabled()) logger.info("PathServiceHandler is reloaded.");
     }
 }

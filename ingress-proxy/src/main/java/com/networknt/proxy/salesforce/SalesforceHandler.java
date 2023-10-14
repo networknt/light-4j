@@ -136,6 +136,7 @@ public class SalesforceHandler implements MiddlewareHandler {
         List<String> masks = new ArrayList<>();
         masks.add("certPassword");
         ModuleRegistry.registerModule(SalesforceHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(SalesforceConfig.CONFIG_NAME), masks);
+        if(logger.isInfoEnabled()) logger.info("SalesforceHandler is reloaded.");
     }
 
     @Override

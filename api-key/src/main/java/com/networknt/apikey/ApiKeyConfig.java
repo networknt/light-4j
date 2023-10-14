@@ -22,7 +22,7 @@ public class ApiKeyConfig {
 
     boolean enabled;
     List<ApiKey> pathPrefixAuths;
-    private Config config;
+    private final Config config;
     private Map<String, Object> mappedConfig;
 
     private ApiKeyConfig() {
@@ -72,9 +72,7 @@ public class ApiKeyConfig {
 
     private void setConfigData() {
         Object object = mappedConfig.get(ENABLED);
-        if(object != null && (Boolean) object) {
-            setEnabled(true);
-        }
+        if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
     }
 
     private void setConfigList() {

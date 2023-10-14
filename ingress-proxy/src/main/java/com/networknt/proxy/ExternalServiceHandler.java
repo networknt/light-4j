@@ -103,6 +103,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
             }
         }
         ModuleRegistry.registerModule(ExternalServiceHandler.class.getName(), config.getMappedConfig(), null);
+        if(logger.isInfoEnabled()) logger.info("ExternalServiceHandler is reloaded.");
     }
 
     @Override

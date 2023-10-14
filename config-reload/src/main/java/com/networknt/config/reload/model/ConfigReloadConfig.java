@@ -83,15 +83,7 @@ public class ConfigReloadConfig {
     private void setConfigData() {
         if(getMappedConfig() != null) {
             Object object = getMappedConfig().get(ENABLED);
-            if(object != null) {
-                if(object instanceof String) {
-                    setEnabled(Boolean.parseBoolean((String)object));
-                } else if(object instanceof Boolean) {
-                    setEnabled((Boolean)object);
-                } else {
-                    throw new ConfigException("enabled must be a boolean value.");
-                }
-            }
+            if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
         }
     }
 
