@@ -89,6 +89,8 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
     @Override
     public void reload() {
         config.reload();
+        ModuleRegistry.registerModule(ResponseTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
+        if(logger.isTraceEnabled()) logger.trace("ResponseTransformerInterceptor is reloaded.");
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

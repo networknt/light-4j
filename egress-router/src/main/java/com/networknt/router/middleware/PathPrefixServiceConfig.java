@@ -106,8 +106,6 @@ public class PathPrefixServiceConfig {
 
     private void setConfigData() {
         Object object = getMappedConfig().get(ENABLED);
-        if(object != null && (Boolean) object) {
-            enabled = true;
-        }
+        if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
     }
 }

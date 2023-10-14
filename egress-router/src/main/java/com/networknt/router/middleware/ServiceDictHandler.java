@@ -108,5 +108,6 @@ public class ServiceDictHandler implements MiddlewareHandler {
     public void reload() {
         config.reload();
         ModuleRegistry.registerModule(ServiceDictHandler.class.getName(), config.getMappedConfig(), null);
+        if(logger.isInfoEnabled()) logger.info("ServiceDictHandler is reloaded.");
     }
 }

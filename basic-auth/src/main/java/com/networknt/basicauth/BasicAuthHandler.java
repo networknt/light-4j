@@ -337,6 +337,10 @@ public class BasicAuthHandler implements MiddlewareHandler {
 
     @Override
     public void reload() {
-        config = BasicAuthConfig.load();
+        config.reload();
+        List<String> masks = new ArrayList<>();
+        masks.add("password");
+        ModuleRegistry.registerModule(BasicAuthHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(BasicAuthConfig.CONFIG_NAME), masks);
+        if(logger.isInfoEnabled()) logger.info("BasicAuthHandler is reloaded.");
     }
 }

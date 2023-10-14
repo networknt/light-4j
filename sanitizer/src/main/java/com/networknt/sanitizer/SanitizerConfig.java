@@ -150,27 +150,52 @@ public class SanitizerConfig {
 
     public void setConfigData() {
         Object object = mappedConfig.get("enabled");
-        if(object != null && (Boolean) object) {
-            enabled = true;
-        }
-
-        object = mappedConfig.get("bodyEnabled");
-        if(object != null && (Boolean) object) {
-            bodyEnabled = true;
-        } else {
-            object = mappedConfig.get("sanitizeBody");
-            if(object != null && (Boolean) object) {
-                bodyEnabled = true;
+        if(object != null) {
+            if(object instanceof String) {
+                enabled = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                enabled = (Boolean) object;
+            } else {
+                throw new ConfigException("enabled must be a boolean value.");
             }
         }
 
+        object = mappedConfig.get("bodyEnabled");
+        if(object != null) {
+            if(object instanceof String) {
+                bodyEnabled = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                bodyEnabled = (Boolean) object;
+            } else {
+                object = mappedConfig.get("sanitizeBody");
+                if(object != null) {
+                    if(object instanceof String) {
+                        bodyEnabled = Boolean.parseBoolean((String)object);
+                    } else if (object instanceof Boolean) {
+                        bodyEnabled = (Boolean) object;
+                    } else {
+                        throw new ConfigException("sanitizeBody must be a boolean value.");
+                    }
+                }
+            }
+        }
         object = mappedConfig.get("headerEnabled");
-        if(object != null && (Boolean) object) {
-            headerEnabled = true;
-        } else {
-            object = mappedConfig.get("sanitizeHeader");
-            if(object != null && (Boolean) object) {
-                headerEnabled = true;
+        if(object != null) {
+            if(object instanceof String) {
+                headerEnabled = Boolean.parseBoolean((String)object);
+            } else if (object instanceof Boolean) {
+                headerEnabled = (Boolean) object;
+            } else {
+                object = mappedConfig.get("sanitizeHeader");
+                if(object != null) {
+                    if(object instanceof String) {
+                        headerEnabled = Boolean.parseBoolean((String)object);
+                    } else if (object instanceof Boolean) {
+                        headerEnabled = (Boolean) object;
+                    } else {
+                        throw new ConfigException("sanitizeHeader must be a boolean value.");
+                    }
+                }
             }
         }
         object = mappedConfig.get(BODY_ENCODER);

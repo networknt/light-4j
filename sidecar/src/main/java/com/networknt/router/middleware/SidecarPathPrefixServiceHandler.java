@@ -25,7 +25,7 @@ public class SidecarPathPrefixServiceHandler extends PathPrefixServiceHandler {
     public SidecarPathPrefixServiceHandler() {
         logger.info("SidecarPathPrefixServiceHandler is constructed");
         config = PathPrefixServiceConfig.load();
-        sidecarConfig = (SidecarConfig) Config.getInstance().getJsonObjectConfig(SidecarConfig.CONFIG_NAME, SidecarConfig.class);
+        sidecarConfig = SidecarConfig.load();
     }
 
     @Override

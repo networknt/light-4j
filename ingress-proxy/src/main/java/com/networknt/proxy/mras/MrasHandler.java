@@ -144,6 +144,7 @@ public class MrasHandler implements MiddlewareHandler {
         masks.add("password");
         // use a new no cache instance to avoid the default config to be overwritten.
         ModuleRegistry.registerModule(MrasHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(MrasConfig.CONFIG_NAME), masks);
+        if(logger.isInfoEnabled()) logger.info("MrasHandler is reloaded.");
     }
 
     @Override

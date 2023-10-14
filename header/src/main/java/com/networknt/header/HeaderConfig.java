@@ -80,9 +80,7 @@ public class HeaderConfig {
 
     private void setConfigData() {
         Object object = mappedConfig.get(ENABLED);
-        if (object != null && (Boolean) object) {
-            setEnabled((Boolean)object);
-        }
+        if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
     }
 
     public List<String> getRequestRemoveList() {

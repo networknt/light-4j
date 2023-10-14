@@ -14,8 +14,13 @@ import org.slf4j.LoggerFactory;
 public class SidecarTokenHandler extends TokenHandler{
     private static final Logger logger = LoggerFactory.getLogger(SidecarTokenHandler.class);
 
-    public static SidecarConfig sidecarConfig = (SidecarConfig)Config.getInstance().getJsonObjectConfig(SidecarConfig.CONFIG_NAME, SidecarConfig.class);
+    public static SidecarConfig sidecarConfig;
 
+    public SidecarTokenHandler() {
+        super();
+        sidecarConfig = SidecarConfig.load();
+        if(logger.isDebugEnabled()) logger.debug("SidecarTokenHandler is constructed");
+    }
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isTraceEnabled()) logger.trace("SidecarTokenHandler.handleRequest starts with indicator {}.", sidecarConfig.getEgressIngressIndicator());

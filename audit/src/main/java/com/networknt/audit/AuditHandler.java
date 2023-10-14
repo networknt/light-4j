@@ -368,5 +368,7 @@ public class AuditHandler implements MiddlewareHandler {
     @Override
     public void reload() {
         config.reload();
+        ModuleRegistry.registerModule(AuditHandler.class.getName(), config.getMappedConfig(), null);
+        if(logger.isInfoEnabled()) logger.info("AuditHandler is reloaded.");
     }
 }

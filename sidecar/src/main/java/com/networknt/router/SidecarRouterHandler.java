@@ -50,11 +50,12 @@ public class SidecarRouterHandler extends RouterHandler implements MiddlewareHan
     public static final String ROUTER_CONFIG_NAME = "router";
 
     public static Map<String, Object> config = Config.getInstance().getJsonMapConfigNoCache(ROUTER_CONFIG_NAME);
-    public static SidecarConfig sidecarConfig = (SidecarConfig)Config.getInstance().getJsonObjectConfig(SidecarConfig.CONFIG_NAME, SidecarConfig.class);
+    public static SidecarConfig sidecarConfig;
     public static ServerConfig serverConfig = (ServerConfig)Config.getInstance().getJsonObjectConfig(ServerConfig.CONFIG_NAME, ServerConfig.class);
 
     public SidecarRouterHandler() {
         super();
+        sidecarConfig = SidecarConfig.load();
         if(logger.isDebugEnabled()) logger.debug("SidecarRouterHandler is constructed");
     }
 
@@ -107,4 +108,10 @@ public class SidecarRouterHandler extends RouterHandler implements MiddlewareHan
         ModuleRegistry.registerModule(SidecarRouterHandler.class.getName(), config, null);
     }
 
+    @Override
+    public void reload() {
+        sidecarConfig.reload();
+        ModuleRegistry.registerModule(SidecarRouterHandler.class.getName(), sidecarConfig.getMappedConfig(), null);
+        if(logger.isInfoEnabled()) logger.info("SidecarRouterHandler is reloaded.");
+    }
 }

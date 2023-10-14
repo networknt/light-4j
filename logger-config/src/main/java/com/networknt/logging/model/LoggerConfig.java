@@ -17,6 +17,7 @@
 package com.networknt.logging.model;
 
 import com.networknt.config.Config;
+import com.networknt.config.ConfigException;
 
 import java.util.Map;
 
@@ -65,25 +66,15 @@ public class LoggerConfig {
     public void setConfigData() {
 
         Object object = getMappedConfig().get(ENABLED);
-        if(object != null && (Boolean) object) {
-            enabled = true;
-        }
+        if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
         object = getMappedConfig().get(DOWNSTREAM_ENABLED);
-        if(object != null && (Boolean) object) {
-            downstreamEnabled = true;
-        }
+        if(object != null) downstreamEnabled = Config.loadBooleanValue(DOWNSTREAM_ENABLED, object);
         object = getMappedConfig().get(LOG_START);
-        if(object != null ) {
-            logStart = (Integer)object;
-        }
+        if(object != null)  logStart = Config.loadLongValue(LOG_START, object);
         object = getMappedConfig().get(DOWNSTREAM_HOST);
-        if(object != null ) {
-            downstreamHost = (String)object;
-        }
+        if(object != null ) downstreamHost = (String)object;
         object = getMappedConfig().get(DOWNSTREAM_FRAMEWORK);
-        if(object != null ) {
-            downstreamFramework = (String)object;
-        }
+        if(object != null ) downstreamFramework = (String)object;
     }
 
     public Map<String, Object> getMappedConfig() {

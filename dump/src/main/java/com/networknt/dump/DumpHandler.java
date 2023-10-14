@@ -35,9 +35,8 @@ import java.util.Map;
  * To handle options in request, should name method dumpRequest[OPTION_NAME]
  */
 public class DumpHandler implements MiddlewareHandler {
-    private static final String CONFIG_NAME = "dump";
 
-    private static DumpConfig config = (DumpConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, DumpConfig.class);
+    private static DumpConfig config = (DumpConfig) Config.getInstance().getJsonObjectConfig(DumpConfig.CONFIG_NAME, DumpConfig.class);
 
     private volatile HttpHandler next;
 
@@ -62,7 +61,7 @@ public class DumpHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(DumpHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        ModuleRegistry.registerModule(DumpHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(DumpConfig.CONFIG_NAME), null);
     }
 
     @Override
@@ -96,5 +95,12 @@ public class DumpHandler implements MiddlewareHandler {
             });
         }
         Handler.next(exchange, next);
+    }
+
+    @Override
+    public void reload() {
+        config = (DumpConfig)Config.getInstance().getJsonObjectConfigNoCache(DumpConfig.CONFIG_NAME, DumpConfig.class);
+        ModuleRegistry.registerModule(DumpHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(DumpConfig.CONFIG_NAME), null);
+        if(logger.isInfoEnabled()) logger.info("DumpHandler is reloaded.");
     }
 }

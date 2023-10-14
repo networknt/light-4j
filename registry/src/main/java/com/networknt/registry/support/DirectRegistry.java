@@ -157,5 +157,6 @@ public class DirectRegistry extends AbstractRegistry {
         config.reload();
         directUrls = config.getDirectUrls();
         if(directUrls != null) ModuleRegistry.registerModule(DirectRegistry.class.getName(), Config.getInstance().getJsonMapConfigNoCache(DirectRegistryConfig.CONFIG_NAME), null);
+        if(logger.isTraceEnabled()) logger.trace("DirectRegistry is reloaded");
     }
 }

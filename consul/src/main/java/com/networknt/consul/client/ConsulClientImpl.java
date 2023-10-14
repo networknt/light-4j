@@ -62,7 +62,7 @@ import com.networknt.client.simplepool.undertow.SimpleClientConnectionMaker;
  */
 public class ConsulClientImpl implements ConsulClient {
 	private static final Logger logger = LoggerFactory.getLogger(ConsulClientImpl.class);
-	private static final ConsulConfig config = (ConsulConfig)Config.getInstance().getJsonObjectConfig(ConsulConstants.CONFIG_NAME, ConsulConfig.class);
+	private static ConsulConfig config;
 	private static final int UNUSUAL_STATUS_CODE = 300;
 	private final Http2Client client = Http2Client.getInstance();
 
@@ -76,6 +76,7 @@ public class ConsulClientImpl implements ConsulClient {
 	 * just for backward compatibility.
 	 */
 	public ConsulClientImpl() {
+		config = ConsulConfig.load();
 		String consulUrl = config.getConsulUrl().toLowerCase();
 		optionMap =  isHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY;
 		if(logger.isDebugEnabled()) logger.debug("consulUrl = {}", consulUrl);

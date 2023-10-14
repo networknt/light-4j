@@ -16,15 +16,11 @@
 
 package com.networknt.body;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -45,7 +41,7 @@ public class BodyConfig {
     boolean cacheResponseBody;
     boolean logFullRequestBody;
     boolean logFullResponseBody;
-    private Config config;
+    private final Config config;
     private Map<String, Object> mappedConfig;
 
     public BodyConfig() {
@@ -97,24 +93,14 @@ public class BodyConfig {
 
     private void setConfigData() {
         Object object = mappedConfig.get(ENABLED);
-        if (object != null && (Boolean) object) {
-            enabled = (Boolean)object;
-        }
+        if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
         object = mappedConfig.get(CACHE_REQUEST_BODY);
-        if (object != null && (Boolean) object) {
-            cacheRequestBody = (Boolean)object;
-        }
+        if(object != null) cacheRequestBody = Config.loadBooleanValue(CACHE_REQUEST_BODY, object);
         object = mappedConfig.get(CACHE_RESPONSE_BODY);
-        if (object != null && (Boolean) object) {
-            cacheResponseBody = (Boolean)object;
-        }
+        if(object != null) cacheResponseBody = Config.loadBooleanValue(CACHE_RESPONSE_BODY, object);
         object = mappedConfig.get(LOG_FULL_REQUEST_BODY);
-        if (object != null && (Boolean) object) {
-            logFullRequestBody = (Boolean)object;
-        }
+        if(object != null) logFullRequestBody = Config.loadBooleanValue(LOG_FULL_REQUEST_BODY, object);
         object = mappedConfig.get(LOG_FULL_RESPONSE_BODY);
-        if (object != null && (Boolean) object) {
-            logFullResponseBody = (Boolean)object;
-        }
+        if(object != null) logFullResponseBody = Config.loadBooleanValue(LOG_FULL_RESPONSE_BODY, object);
     }
 }

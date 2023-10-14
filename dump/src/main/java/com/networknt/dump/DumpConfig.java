@@ -25,6 +25,7 @@ import java.util.Map;
  * this class is to load dump.yml config file, and map settings to properties of this class.
  */
 public class DumpConfig {
+    public static final String CONFIG_NAME = "dump";
     private boolean enabled = false;
     private boolean mask = false;
     private String logLevel = "INFO";

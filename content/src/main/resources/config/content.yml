@@ -1,5 +1,3 @@
 ---
-description: Default Content Type
-enabled: true
-
-contentType: application/json
+enabled: ${content.enabled:true}
+contentType: ${content.contentType:application/json}

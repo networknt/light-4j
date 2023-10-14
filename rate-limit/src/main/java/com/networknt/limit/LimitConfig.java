@@ -17,6 +17,7 @@
 package com.networknt.limit;
 
 import com.networknt.config.Config;
+import com.networknt.config.ConfigException;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -203,37 +204,25 @@ public class LimitConfig {
 
     private void setConfigData() {
         Object object = mappedConfig.get(CONCURRENT_REQUEST);
-        if (object != null) {
-            concurrentRequest = (int) object;
-        }
+        if (object != null) concurrentRequest = Config.loadIntegerValue(CONCURRENT_REQUEST, object);
         object = mappedConfig.get(QUEUE_SIZE);
-        if (object != null) {
-            queueSize = (int) object;
-        }
+        if (object != null) queueSize = Config.loadIntegerValue(QUEUE_SIZE, object);
         object = mappedConfig.get(ERROR_CODE);
         if (object != null) {
-            errorCode = (int) object;
+            errorCode = Config.loadIntegerValue(ERROR_CODE, object);
         } else {
             // set default value to 503.
             errorCode = 503;
         }
 
         object = getMappedConfig().get(IS_ENABLED);
-        if(object != null && (Boolean) object) {
-            setEnabled(true);
-        }
+        if(object != null) enabled = Config.loadBooleanValue(IS_ENABLED, object);
         object = getMappedConfig().get(CLIENT_ID_KEY);
-        if(object != null) {
-            setClientIdKeyResolver((String) object);
-        }
+        if(object != null) setClientIdKeyResolver((String) object);
         object = getMappedConfig().get(ADDRESS_KEY);
-        if(object != null) {
-            setAddressKeyResolver((String) object);
-        }
+        if(object != null) setAddressKeyResolver((String) object);
         object = getMappedConfig().get(USER_ID_KEY);
-        if(object != null) {
-            setUserIdKeyResolver((String) object);
-        }
+        if(object != null) setUserIdKeyResolver((String) object);
     }
 
     private void setRateLimitConfig() {

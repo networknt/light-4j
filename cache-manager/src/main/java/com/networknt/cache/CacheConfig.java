@@ -23,7 +23,7 @@ public class CacheConfig {
 
     List<CacheItem> caches;
 
-    private Config config;
+    private final Config config;
     private Map<String, Object> mappedConfig;
 
     private CacheConfig() {

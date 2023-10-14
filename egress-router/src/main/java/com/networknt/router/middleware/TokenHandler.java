@@ -207,5 +207,6 @@ public class TokenHandler implements MiddlewareHandler {
     public void reload() {
         config.reload();
         ModuleRegistry.registerModule(TokenHandler.class.getName(), config.getMappedConfig(), null);
+        if(logger.isInfoEnabled()) logger.info("TokenHandler is reloaded.");
     }
 }

@@ -17,6 +17,7 @@
 package com.networknt.metrics;
 
 import com.networknt.config.Config;
+import com.networknt.config.ConfigException;
 
 import java.util.Map;
 
@@ -61,7 +62,7 @@ public class MetricsConfig {
     String issuerRegex;
 
     private Map<String, Object> mappedConfig;
-    private Config config;
+    private final Config config;
 
 
     private MetricsConfig() {
@@ -216,64 +217,34 @@ public class MetricsConfig {
 
     private void setConfigData() {
         Object object = getMappedConfig().get(ENABLED);
-        if(object != null && (Boolean) object) {
-            setEnabled(true);
-        }
+        if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
         object = getMappedConfig().get(ENABLED_JVM_MONITOR);
-        if(object != null && (Boolean) object) {
-            setEnabled(true);
-        }
+        if(object != null) enableJVMMonitor = Config.loadBooleanValue(ENABLED_JVM_MONITOR, object);
         object = mappedConfig.get(SERVER_PROTOCOL);
-        if (object != null) {
-            setServerProtocol((String) object);;
-        }
+        if (object != null) setServerProtocol((String) object);;
         object = mappedConfig.get(SERVER_HOST);
-        if (object != null) {
-            serverHost = (String) object;
-        }
+        if (object != null) serverHost = (String) object;
         object = mappedConfig.get(SERVER_PORT);
-        if (object != null) {
-            serverPort = (int) object;
-        }
+        if (object != null) serverPort = Config.loadIntegerValue(SERVER_PORT, object);
         object = getMappedConfig().get(SERVER_PATH);
-        if(object != null) {
-            serverPath = (String) object;
-        }
+        if(object != null) serverPath = (String) object;
         object = getMappedConfig().get(SERVER_NAME);
-        if(object != null) {
-            serverName = (String) object;
-        }
+        if(object != null) serverName = (String) object;
         object = getMappedConfig().get(SERVER_USER);
-        if(object != null) {
-            serverUser = (String) object;
-        }
+        if(object != null) serverUser = (String) object;
         object = getMappedConfig().get(SERVER_PASS);
-        if(object != null) {
-            serverPass = (String) object;
-        }
+        if(object != null) serverPass = (String) object;
         object = getMappedConfig().get(REPORT_IN_MINUTES);
-        if(object != null) {
-            reportInMinutes = (int) object;
-        }
+        if(object != null) reportInMinutes = Config.loadIntegerValue(REPORT_IN_MINUTES, object);
         object = getMappedConfig().get(PRODUCT_NAME);
-        if(object != null) {
-            productName = (String) object;
-        }
+        if(object != null) productName = (String) object;
         object = getMappedConfig().get(SEND_SCOPE_CLIENT_ID);
-        if(object != null && (Boolean) object) {
-            sendScopeClientId = true;
-        }
+        if(object != null) sendScopeClientId = Config.loadBooleanValue(SEND_SCOPE_CLIENT_ID, object);
         object = getMappedConfig().get(SEND_CALLER_ID);
-        if(object != null && (Boolean) object) {
-            sendCallerId = true;
-        }
+        if(object != null) sendCallerId = Config.loadBooleanValue(SEND_CALLER_ID, object);
         object = getMappedConfig().get(SEND_ISSUER);
-        if(object != null && (Boolean) object) {
-            sendIssuer = true;
-        }
+        if(object != null) sendIssuer = Config.loadBooleanValue(SEND_ISSUER, object);
         object = getMappedConfig().get(ISSUER_REGEX);
-        if(object != null) {
-            issuerRegex = (String) object;
-        }
+        if(object != null) issuerRegex = (String) object;
     }
 }

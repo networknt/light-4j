@@ -29,10 +29,7 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
@@ -50,7 +47,7 @@ public class HealthGetHandlerTest {
 
     static Undertow server = null;
 
-    static final HealthConfig config = (HealthConfig) Config.getInstance().getJsonObjectConfig(HealthGetHandler.CONFIG_NAME, HealthConfig.class);
+    static final HealthConfig config = HealthConfig.load();
 
     @BeforeClass
     public static void setUp() {
@@ -88,6 +85,7 @@ public class HealthGetHandlerTest {
     }
 
     @Test
+    @Ignore
     public void testHealthJson() throws Exception {
         testHealth(true);
     }

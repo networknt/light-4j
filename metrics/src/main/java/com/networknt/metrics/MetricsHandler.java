@@ -122,7 +122,7 @@ public class MetricsHandler extends AbstractMetricsHandler {
     public void reload() {
         config.reload();
         ModuleRegistry.registerModule(MetricsHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), List.of(MASK_KEY_SERVER_PASS));
-        if(logger.isTraceEnabled()) logger.trace("MetricsHandler is reloaded.");
+        if(logger.isInfoEnabled()) logger.info("MetricsHandler is reloaded.");
     }
 
     @Override

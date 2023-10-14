@@ -200,34 +200,19 @@ class AuditConfig {
 
     private void setConfigData() {
         Object object = getMappedConfig().get(STATUS_CODE);
-        if(object != null && (Boolean) object) {
-            statusCode = true;
-        }
+        if(object != null) statusCode = Config.loadBooleanValue(STATUS_CODE, object);
         object = getMappedConfig().get(RESPONSE_TIME);
-        if(object != null && (Boolean) object) {
-            responseTime = true;
-        }
-        // audit on error response flag
+        if(object != null) responseTime = Config.loadBooleanValue(RESPONSE_TIME, object);
         object = getMappedConfig().get(AUDIT_ON_ERROR);
-        if(object != null && (Boolean) object) {
-            auditOnError = true;
-        }
+        if(object != null) auditOnError = Config.loadBooleanValue(AUDIT_ON_ERROR, object);
         object = getMappedConfig().get(MASK);
-        if(object != null && (Boolean) object) {
-            mask = true;
-        }
+        if(object != null) mask = Config.loadBooleanValue(MASK, object);
         object = mappedConfig.get(REQUEST_BODY_MAX_SIZE);
-        if (object != null) {
-            requestBodyMaxSize = (Integer) object;
-        }
+        if(object != null) requestBodyMaxSize = Config.loadIntegerValue(REQUEST_BODY_MAX_SIZE, object);
         object = mappedConfig.get(RESPONSE_BODY_MAX_SIZE);
-        if (object != null) {
-            responseBodyMaxSize = (Integer) object;
-        }
+        if(object != null) responseBodyMaxSize = Config.loadIntegerValue(RESPONSE_BODY_MAX_SIZE, object);
         object = getMappedConfig().get(ENABLED);
-        if(object != null && (Boolean) object) {
-            enabled = true;
-        }
+        if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
         timestampFormat = (String)getMappedConfig().get(TIMESTAMP_FORMAT);
     }
 }

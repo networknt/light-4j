@@ -48,14 +48,13 @@ import java.util.HashMap;
 public class CorrelationHandler implements MiddlewareHandler {
     private static final Logger logger = LoggerFactory.getLogger(CorrelationHandler.class);
     private static final String CID = "cId";
-    private static final String CONFIG_NAME = "correlation";
 
-    public static CorrelationConfig config =
-            (CorrelationConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, CorrelationConfig.class);
+    public static CorrelationConfig config;
 
     private volatile HttpHandler next;
 
     public CorrelationHandler() {
+        config = CorrelationConfig.load();
         if(logger.isInfoEnabled()) logger.info("CorrelationHandler is loaded.");
     }
 
@@ -65,7 +64,7 @@ public class CorrelationHandler implements MiddlewareHandler {
         // check if the cid is in the request header
         String cId = exchange.getRequestHeaders().getFirst(HttpStringConstants.CORRELATION_ID);
         if(cId == null) {
-        	// if not set, check the autgen flag and generate if set to true
+        	// if not set, check the autogen flag and generate if set to true
         	if(config.isAutogenCorrelationID()) {
 	            // generate a UUID and put it into the request header
 	            cId = Util.getUUID();
@@ -117,11 +116,15 @@ public class CorrelationHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(CorrelationHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        ModuleRegistry.registerModule(CorrelationHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CorrelationConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
-        config =  (CorrelationConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, CorrelationConfig.class);
+        config.reload();
+        ModuleRegistry.registerModule(CorrelationHandler.class.getName(), config.getMappedConfig(), null);
+        if(logger.isInfoEnabled()) {
+            logger.info("CorrelationHandler is enabled.");
+        }
     }
 }

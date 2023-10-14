@@ -145,5 +145,7 @@ public class ExceptionHandler implements MiddlewareHandler {
     @Override
     public void reload() {
         config =  (ExceptionConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ExceptionConfig.class);
+        ModuleRegistry.registerModule(ExceptionHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        if(logger.isInfoEnabled()) logger.info("ExceptionHandler is reloaded.");
     }
 }

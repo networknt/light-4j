@@ -17,6 +17,7 @@
 package com.networknt.proxy;
 
 import com.networknt.config.Config;
+import com.networknt.config.ConfigException;
 
 import java.util.Map;
 
@@ -119,34 +120,26 @@ public class ProxyConfig {
 
     private void setConfigData() {
         Object object = getMappedConfig().get(HTTP2_ENABLED);
-        if(object != null && (Boolean) object) {
-            http2Enabled = true;
-        }
+        if(object != null) http2Enabled = Config.loadBooleanValue(HTTP2_ENABLED, object);
         object = getMappedConfig().get(REWRITE_HOST_HEADER);
-        if(object != null && (Boolean) object) {
-            rewriteHostHeader = true;
-        }
+        if(object != null) rewriteHostHeader = Config.loadBooleanValue(REWRITE_HOST_HEADER, object);
         object = getMappedConfig().get(REUSE_X_FORWARDED);
-        if(object != null && (Boolean) object) {
-            reuseXForwarded = true;
-        }
+        if(object != null) reuseXForwarded = Config.loadBooleanValue(REUSE_X_FORWARDED, object);
         object = getMappedConfig().get(FORWARD_JWT_CLAIMS);
-        if(object != null && (Boolean) object) {
-            forwardJwtClaims = true;
-        }
-        hosts = (String)getMappedConfig().get(HOSTS);
-        connectionsPerThread = (Integer)getMappedConfig().get(CONNECTIONS_PER_THREAD);
-        maxRequestTime = (Integer)getMappedConfig().get(MAX_REQUEST_TIME);
-        maxConnectionRetries = (Integer)getMappedConfig().get(MAX_CONNECTION_RETRIES);
-        maxQueueSize = (Integer)getMappedConfig().get(MAX_QUEUE_SIZE);
+        if(object != null) forwardJwtClaims = Config.loadBooleanValue(FORWARD_JWT_CLAIMS, object);
+        object = getMappedConfig().get(HOSTS);
+        if(object != null) hosts = (String)object;
+        object = getMappedConfig().get(CONNECTIONS_PER_THREAD);
+        if(object != null) connectionsPerThread = Config.loadIntegerValue(CONNECTIONS_PER_THREAD, object);
+        object = getMappedConfig().get(MAX_REQUEST_TIME);
+        if(object != null) maxRequestTime = Config.loadIntegerValue(MAX_REQUEST_TIME, object);
+        object = getMappedConfig().get(MAX_CONNECTION_RETRIES);
+        if(object != null) maxConnectionRetries = Config.loadIntegerValue(MAX_CONNECTION_RETRIES, object);
+        object = getMappedConfig().get(MAX_QUEUE_SIZE);
+        if(object != null) maxQueueSize = Config.loadIntegerValue(MAX_QUEUE_SIZE, object);
         object = getMappedConfig().get(METRICS_INJECTION);
-        if(object != null && (Boolean) object) {
-            metricsInjection = true;
-        }
+        if(object != null) metricsInjection = Config.loadBooleanValue(METRICS_INJECTION, object);
         object = getMappedConfig().get(METRICS_NAME);
-        if(object != null ) {
-            metricsName = (String)object;
-        }
-
+        if(object != null ) metricsName = (String)object;
     }
 }
