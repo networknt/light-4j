@@ -1468,9 +1468,24 @@ ERR14005:
   description: Header operation is unknown (config issue).
 ERR14006:
   statusCode: 500
-  code: ERR14005
+  code: ERR14006
   message: HEADER_MISSING_FOR_OPERATION
   description: Header value %s is missing. Header must be present for this operation.
+ERR14007:
+  statusCode: 500
+  code: ERR14007
+  message: MISSING_EVENT_BODY
+  description: Event body is missing for validation.
+ERR14008:
+  statusCode: 500
+  code: ERR14008
+  message: EVENT_BODY_FAILED_VALIDATION
+  description: Event body failed validation step.
+ERR14009:
+  statusCode: 500
+  code: ERR14009
+  message: VALIDATOR_FAILED_TO_LOAD_OPENAPI
+  description: Validator could not load openapi.yaml for validation.
 
 # 20000-29999 common error codes within your business domain.
 # It is highly recommended to have your error code shared within your organization or your line of business.
