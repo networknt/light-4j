@@ -38,9 +38,12 @@ public class CircuitBreaker {
     private static AtomicInteger timeoutCount;
     private long lastErrorTime;
 
+    private final ClientConfig config;
+
     public CircuitBreaker(Supplier<CompletableFuture<ClientResponse>> supplier) {
         this.supplier = supplier;
         this.timeoutCount = new AtomicInteger(0);
+        this.config = ClientConfig.get();
     }
 
     public ClientResponse call() throws TimeoutException, ExecutionException, InterruptedException {
@@ -51,7 +54,7 @@ public class CircuitBreaker {
                 throw new IllegalStateException("circuit is opened.");
             }
 
-            ClientResponse clientResponse = supplier.get().get(ClientConfig.get().getTimeout(), TimeUnit.MILLISECONDS);
+            ClientResponse clientResponse = supplier.get().get(config.getTimeout(), TimeUnit.MILLISECONDS);
             timeoutCount = new AtomicInteger(0);
 
             return clientResponse;
@@ -64,14 +67,13 @@ public class CircuitBreaker {
     }
 
     private State checkState() {
-        ClientConfig clientConfig = ClientConfig.get();
 
-        boolean isExtrapolatedResetTimeout = Instant.now().toEpochMilli() - lastErrorTime > clientConfig.getResetTimeout();
-        boolean isExtrapolatedErrorThreshold = timeoutCount.get() >= clientConfig.getErrorThreshold();
+        boolean isExtrapolatedResetTimeout = Instant.now().toEpochMilli() - lastErrorTime > config.getResetTimeout();
+        boolean isExtrapolatedErrorThreshold = timeoutCount.get() >= config.getErrorThreshold();
         if (isExtrapolatedErrorThreshold && isExtrapolatedResetTimeout) {
             return State.HALF_OPEN;
         }
-        if (timeoutCount.get() >= clientConfig.getErrorThreshold()) {
+        if (timeoutCount.get() >= config.getErrorThreshold()) {
             return State.OPEN;
         }
         return State.CLOSE;

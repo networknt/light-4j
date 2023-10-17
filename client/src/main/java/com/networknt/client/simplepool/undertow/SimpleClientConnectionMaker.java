@@ -19,7 +19,6 @@
  */
 package com.networknt.client.simplepool.undertow;
 
-import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnection;
 import com.networknt.client.simplepool.SimpleConnectionMaker;
@@ -45,7 +44,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class SimpleClientConnectionMaker implements SimpleConnectionMaker
 {
     private static final Logger logger = LoggerFactory.getLogger(SimpleClientConnectionMaker.class);
-    private static final ByteBufferPool BUFFER_POOL = new DefaultByteBufferPool(true, ClientConfig.get().getBufferSize() * 1024);
     private static SimpleClientConnectionMaker simpleClientConnectionMaker = null;
 
     public static SimpleConnectionMaker instance() {
@@ -87,7 +85,7 @@ public class SimpleClientConnectionMaker implements SimpleConnectionMaker
         };
 
         UndertowClient undertowClient = UndertowClient.getInstance();
-        undertowClient.connect(connectionCallback, bindAddress, uri, worker, ssl, BUFFER_POOL, connectionOptions);
+        undertowClient.connect(connectionCallback, bindAddress, uri, worker, ssl, Http2Client.BUFFER_POOL, connectionOptions);
 
         IoFuture<SimpleConnection> future = result.getIoFuture();
         return safeConnect(createConnectionTimeout, future);
@@ -183,7 +181,7 @@ public class SimpleClientConnectionMaker implements SimpleConnectionMaker
             // if SSL is null, then set new SSL otherwise leave existing SSL
             SSL.compareAndSet(
                 null,
-                new UndertowXnioSsl(getWorker(isHttp2).getXnio(), OptionMap.EMPTY, BUFFER_POOL, Http2Client.createSSLContext()));
+                new UndertowXnioSsl(getWorker(isHttp2).getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, Http2Client.createSSLContext()));
         } catch (Exception e) {
             logger.error("Exception while creating new shared UndertowXnioSsl used to create connections", e);
             throw new RuntimeException(e);

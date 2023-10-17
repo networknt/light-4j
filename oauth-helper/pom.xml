@@ -25,23 +25,15 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>client</artifactId>
+    <artifactId>oauth-helper</artifactId>
     <packaging>jar</packaging>
-    <description>A client module that is used by API consumer to call an API or from an API calling another API.
+    <description>A OAuth 2.0 helper utility module for interaction with OAuth 2.0 providers with JDK 11 client.
     </description>
 
     <dependencies>
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>common</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>http-string</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>http-entity</artifactId>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
@@ -53,11 +45,7 @@
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>oauth-helper</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>service</artifactId>
+            <artifactId>monad-result</artifactId>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
@@ -65,11 +53,7 @@
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>monad-result</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
-            <artifactId>cluster</artifactId>
+            <artifactId>http-client</artifactId>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -78,24 +62,6 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.undertow</groupId>
-            <artifactId>undertow-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.jaegertracing</groupId>
-            <artifactId>jaeger-client</artifactId>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.bitbucket.b_c</groupId>
-            <artifactId>jose4j</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
@@ -112,15 +78,5 @@
 			<artifactId>mockito-core</artifactId>
 			<scope>test</scope>
 		</dependency>
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-api-mockito2</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-module-junit4</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 </project>

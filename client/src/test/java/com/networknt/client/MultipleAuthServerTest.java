@@ -48,10 +48,9 @@ public class MultipleAuthServerTest {
 
     @Test
     public void testKeyConfig() {
-        ClientConfig clientConfig = ClientConfig.get();
-        if (clientConfig.isMultipleAuthServers()) {
-            // iterate all the configured auth server to get JWK.
-            Map<String, Object> tokenConfig = clientConfig.getTokenConfig();
+        if (config.isMultipleAuthServers()) {
+            // iterate all the configured auth ccnfigserver to get JWK.
+            Map<String, Object> tokenConfig = config.getTokenConfig();
             Map<String, Object> keyConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.KEY);
             Map<String, Object> serviceIdAuthServers = (Map<String, Object>) keyConfig.get(ClientConfig.SERVICE_ID_AUTH_SERVERS);
             if (serviceIdAuthServers == null) {

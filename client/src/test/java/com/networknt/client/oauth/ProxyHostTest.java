@@ -3,7 +3,6 @@ package com.networknt.client.oauth;
 import com.networknt.client.ClientConfig;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -18,11 +17,10 @@ import java.io.IOException;
 
 public class ProxyHostTest {
     public static final String CONFIG_NAME = "client-proxy";
-    static ClientConfig config;
 
     @BeforeClass
     public static void beforeClass() throws IOException {
-        config = ClientConfig.get(CONFIG_NAME);
+        ClientConfig config = ClientConfig.get(CONFIG_NAME);
     }
 
     @Test
