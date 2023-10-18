@@ -20,6 +20,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
+import com.networknt.client.simplepool.SimpleConnectionHolder;
+import com.networknt.client.simplepool.SimpleConnectionPool;
+import com.networknt.client.simplepool.undertow.SimpleClientConnectionMaker;
 import com.networknt.cluster.Cluster;
 import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
@@ -81,6 +84,9 @@ public class OauthHelper {
     public static final String STATUS_CLIENT_CREDENTIALS_TOKEN_NOT_AVAILABLE = "ERR10009";
 
     private static final Logger logger = LoggerFactory.getLogger(OauthHelper.class);
+
+    private static final SimpleConnectionPool pool = new SimpleConnectionPool(
+            ClientConfig.get().getConnectionExpireTime(), ClientConfig.get().getConnectionPoolSize(), SimpleClientConnectionMaker.instance());
 
     /**
      * @deprecated As of release 1.5.29, replaced with @link #getTokenResult(TokenRequest tokenRequest)
@@ -405,13 +411,23 @@ public class OauthHelper {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
+        SimpleConnectionHolder.ConnectionToken borrowToken = null;
+
+        long connectionTimeout = Math.max(2, keyRequest.getConnectionTokenTimeout() / 1000);
+        logger.debug("12");
+
         try {
             if(keyRequest.getServerUrl() != null) {
-                connection = client.connect(new URI(keyRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, keyRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+                URI keyURL = new URI(keyRequest.getServerUrl());
+                borrowToken = pool.borrow(connectionTimeout, keyRequest.isEnableHttp2(), keyURL);
+                connection = (ClientConnection) borrowToken.getRawConnection();
+//                connection = client.connect(new URI(keyRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, keyRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
             } else if(keyRequest.getServiceId() != null) {
                 Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
                 String url = cluster.serviceToUrl("https", keyRequest.getServiceId(), envTag, null);
-                connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, keyRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+//                connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, keyRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+                borrowToken = pool.borrow(connectionTimeout, keyRequest.isEnableHttp2(), new URI(url));
+                connection = (ClientConnection) borrowToken.getRawConnection();
             } else {
                 // both server_url and serviceId are empty in the config.
                 logger.error("Error: both server_url and serviceId are not configured in client.yml for " + keyRequest.getClass());
@@ -435,7 +451,9 @@ public class OauthHelper {
             logger.error("Exception: ", e);
             throw new ClientException(e);
         } finally {
-            IoUtils.safeClose(connection);
+//            IoUtils.safeClose(connection);
+            // restore token
+            pool.restore(borrowToken);
         }
         return reference.get().getAttachment(Http2Client.RESPONSE_BODY);
     }
