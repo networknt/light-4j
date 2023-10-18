@@ -112,9 +112,20 @@ public class BodyHandlerTest {
                             String resp = "";
                             if (map.size() > 0 && map.values().iterator().next() instanceof List) {
                                 resp = "{" + ((Map<String, FormData.FormValue>) body).entrySet().stream()
-                                        .map(entry -> entry.getKey() + ":" + "[" + ((List) entry.getValue()).stream()
+                                        .map(entry -> {
+                                            Object value = entry.getValue();
+                                            if (value instanceof List) {
+                                                // Handle List case
+                                                String listValue = ((List<?>) value).stream()
                                                 .map(n -> n instanceof FormData.FormValue ? ((FormData.FormValue) n).getValue() : n.toString())
-                                                .collect(Collectors.joining(",")) + "]")
+                                                        .collect(Collectors.joining(","));
+                                                return entry.getKey() + ":" + "[" + listValue + "]";
+                                            } else {
+                                                // Handle non-List case
+                                                return entry.getKey() + ":" + "[" + value.toString() + "]";
+
+                                            }
+                                        })
                                         .collect(Collectors.joining(",")) + "}";
                             } else {
                                 resp = "{" + ((Map<String, Object>) body).entrySet().stream()
