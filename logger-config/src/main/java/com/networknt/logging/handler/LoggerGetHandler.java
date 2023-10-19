@@ -22,7 +22,7 @@ import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionHolder;
 import com.networknt.config.Config;
 import com.networknt.handler.LightHttpHandler;
-import com.networknt.httpstring.ContentType;
+import com.networknt.common.ContentType;
 import com.networknt.logging.model.LoggerConfig;
 import com.networknt.logging.model.LoggerInfo;
 import com.networknt.monad.Failure;

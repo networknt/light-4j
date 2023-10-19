@@ -1,7 +1,6 @@
 package com.networknt.handler;
 
 import com.networknt.httpstring.AttachmentConstants;
-import com.networknt.httpstring.ContentType;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;

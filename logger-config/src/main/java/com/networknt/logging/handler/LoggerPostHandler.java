@@ -17,17 +17,14 @@
 package com.networknt.logging.handler;
 
 import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.LoggerContext;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.networknt.body.BodyHandler;
 import com.networknt.client.Http2Client;
 import com.networknt.client.simplepool.SimpleConnectionHolder;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.httpstring.AttachmentConstants;
-import com.networknt.httpstring.ContentType;
+import com.networknt.common.ContentType;
 import com.networknt.logging.model.LoggerConfig;
 import com.networknt.logging.model.LoggerInfo;
 import com.networknt.monad.Failure;

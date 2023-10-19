@@ -145,38 +145,9 @@ public class Http2Client {
     private final Http2ClientConnectionPool http2ClientConnectionPool = Http2ClientConnectionPool.getInstance();
     // This is the new connection pool that is used by the new request method.
     private final Map<URI, SimpleURIConnectionPool> pools = new ConcurrentHashMap<>();
+    public static ClientConfig config = ClientConfig.get();
 
-    static {
-        List<String> masks = List.of(MASK_KEY_CLIENT_SECRET, MASK_KEY_TRUST_STORE_PASS, MASK_KEY_KEY_STORE_PASS, MASK_KEY_KEY_PASS);
-        Map<String, Object> config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
-        ModuleRegistry.registerModule(Http2Client.class.getName(), JsonMapper.fromJson(JsonMapper.toJson(config), Map.class), masks);
-        // disable the hostname verification based on the config.
-        Map<String, Object> tlsMap = ClientConfig.get().getTlsConfig();
-        if(tlsMap != null && Boolean.FALSE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
-            System.setProperty(DISABLE_HTTPS_ENDPOINT_IDENTIFICATION_PROPERTY, "true");
-        }
-        // take the best effort to get the serviceId from the server.yml file. It might not exist if this is a standalone client.
-        boolean injectCallerId = ClientConfig.get().isInjectCallerId();
-        if(injectCallerId) {
-            Map<String, Object> serverConfig = Config.getInstance().getJsonMapConfigNoCache(CONFIG_SERVER);
-            if(serverConfig != null) {
-                callerId = (String)serverConfig.get(SERVICE_ID);
-            }
-        }
-    }
-
-    public static final ByteBufferPool BUFFER_POOL = new DefaultByteBufferPool(true, ClientConfig.get().getBufferSize() * 1024);
-    /**
-     * @deprecated Use BUFFER_POOL instead!
-     */
-    @Deprecated
-    public static final ByteBufferPool POOL = BUFFER_POOL;
-    /**
-     * @deprecated Use BUFFER_POOL instead!
-     */
-    @Deprecated
-    public static final ByteBufferPool SSL_BUFFER_POOL = BUFFER_POOL;
-
+    public static ByteBufferPool BUFFER_POOL = new DefaultByteBufferPool(true, config.getBufferSize() * 1024);
     protected final Map<String, ClientProvider> clientProviders;
 
     private static final Http2Client INSTANCE = new Http2Client();
@@ -186,6 +157,19 @@ public class Http2Client {
     }
 
     private Http2Client(final ClassLoader classLoader) {
+        Map<String, Object> tlsMap = config.getTlsConfig();
+        // disable the hostname verification based on the config.
+        if(tlsMap != null && Boolean.FALSE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
+            System.setProperty(DISABLE_HTTPS_ENDPOINT_IDENTIFICATION_PROPERTY, "true");
+        }
+        boolean injectCallerId = config.isInjectCallerId();
+        if(injectCallerId) {
+            Map<String, Object> serverConfig = Config.getInstance().getJsonMapConfigNoCache(CONFIG_SERVER);
+            if(serverConfig != null) {
+                callerId = (String)serverConfig.get(SERVICE_ID);
+            }
+        }
+
         ServiceLoader<ClientProvider> providers = ServiceLoader.load(ClientProvider.class, classLoader);
         final Map<String, ClientProvider> map = new HashMap<>();
         for (ClientProvider provider : providers) {
@@ -200,6 +184,10 @@ public class Http2Client {
         } catch (Exception e) {
             logger.error("Exception: ", e);
         }
+
+        // register module.
+        List<String> masks = List.of(MASK_KEY_CLIENT_SECRET, MASK_KEY_TRUST_STORE_PASS, MASK_KEY_KEY_STORE_PASS, MASK_KEY_KEY_PASS);
+        ModuleRegistry.registerModule(Http2Client.class.getName(), Config.getInstance().getJsonMapConfigNoCache(ClientConfig.CONFIG_NAME), masks);
     }
 
     private void addProvider(Map<String, ClientProvider> map, String scheme, ClientProvider provider) {
@@ -286,10 +274,10 @@ public class Http2Client {
         SimpleURIConnectionPool pool = pools.get(uri);
         if(pool == null) {
             SimpleConnectionMaker undertowConnectionMaker = SimpleClientConnectionMaker.instance();
-            pool = new SimpleURIConnectionPool(uri, ClientConfig.get().getConnectionExpireTime(), ClientConfig.get().getConnectionPoolSize(), null, worker, bufferPool, null, options, undertowConnectionMaker);
+            pool = new SimpleURIConnectionPool(uri, config.getConnectionExpireTime(), config.getConnectionPoolSize(), null, worker, bufferPool, null, options, undertowConnectionMaker);
             pools.putIfAbsent(uri, pool);
         }
-        return pool.borrow(ClientConfig.get().getTimeout());
+        return pool.borrow(config.getTimeout());
     }
 
     @Deprecated
@@ -371,10 +359,10 @@ public class Http2Client {
         SimpleURIConnectionPool pool = pools.get(uri);
         if(pool == null) {
             SimpleConnectionMaker undertowConnectionMaker = SimpleClientConnectionMaker.instance();
-            pool = new SimpleURIConnectionPool(uri, ClientConfig.get().getConnectionExpireTime(), ClientConfig.get().getConnectionPoolSize(), null, worker, bufferPool, ssl, options, undertowConnectionMaker);
+            pool = new SimpleURIConnectionPool(uri, config.getConnectionExpireTime(), config.getConnectionPoolSize(), null, worker, bufferPool, ssl, options, undertowConnectionMaker);
             pools.putIfAbsent(uri, pool);
         }
-        return pool.borrow(ClientConfig.get().getTimeout());
+        return pool.borrow(config.getTimeout());
     }
 
     @Deprecated
@@ -634,7 +622,7 @@ public class Http2Client {
      * @return Result when fail to get jwt, it will return a Status.
      */
     public Result addCcToken(ClientRequest request) {
-        Result<Jwt> result = tokenManager.getJwt(request);
+        Result<Jwt> result = tokenManager.getJwt(request.getPath(), request.getRequestHeaders().getFirst(ClientConfig.SCOPE), request.getRequestHeaders().getFirst(ClientConfig.SERVICE_ID));
         if(result.isFailure()) { return Failure.of(result.getError()); }
         request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + result.getResult().getJwt());
         return result;
@@ -651,7 +639,7 @@ public class Http2Client {
      * @return Result when fail to get jwt, it will return a Status.
      */
     public Result addCcTokenTrace(ClientRequest request, String traceabilityId) {
-        Result<Jwt> result = tokenManager.getJwt(request);
+        Result<Jwt> result = tokenManager.getJwt(request.getPath(), request.getRequestHeaders().getFirst(ClientConfig.SCOPE), request.getRequestHeaders().getFirst(ClientConfig.SERVICE_ID));
         if(result.isFailure()) { return Failure.of(result.getError()); }
         request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + result.getResult().getJwt());
         request.getRequestHeaders().put(HttpStringConstants.TRACEABILITY_ID, traceabilityId);
@@ -670,7 +658,7 @@ public class Http2Client {
      */
     public Result propagateHeaders(ClientRequest request, final HttpServerExchange exchange) {
         String token = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
-        boolean injectOpenTracing = ClientConfig.get().isInjectOpenTracing();
+        boolean injectOpenTracing = config.isInjectOpenTracing();
         if(injectOpenTracing) {
             Tracer tracer = exchange.getAttachment(AttachmentConstants.EXCHANGE_TRACER);
             return populateHeader(request, token, tracer);
@@ -695,7 +683,7 @@ public class Http2Client {
      * @return Result when fail to get jwt, it will return a Status.
      */
     public Result populateHeader(ClientRequest request, String authToken, String correlationId, String traceabilityId) {
-        Result<Jwt> result = tokenManager.getJwt(request);
+        Result<Jwt> result = tokenManager.getJwt(request.getPath(), request.getRequestHeaders().getFirst(ClientConfig.SCOPE), request.getRequestHeaders().getFirst(ClientConfig.SERVICE_ID));
         if(result.isFailure()) { return Failure.of(result.getError()); }
         // we cannot assume that the authToken is passed from the original caller. If it is null, then promote.
         if(authToken == null) {
@@ -709,7 +697,7 @@ public class Http2Client {
         } else {
             addAuthToken(request, authToken);
         }
-        if(ClientConfig.get().isInjectCallerId()) {
+        if(config.isInjectCallerId()) {
             request.getRequestHeaders().put(HttpStringConstants.CALLER_ID, callerId);
         }
         return result;
@@ -729,7 +717,7 @@ public class Http2Client {
      * @return Result when fail to get jwt, it will return a Status.
      */
     public Result populateHeader(ClientRequest request, String authToken, Tracer tracer) {
-        Result<Jwt> result = tokenManager.getJwt(request);
+        Result<Jwt> result = tokenManager.getJwt(request.getPath(), request.getRequestHeaders().getFirst(ClientConfig.SCOPE), request.getRequestHeaders().getFirst(ClientConfig.SERVICE_ID));
         if(result.isFailure()) { return Failure.of(result.getError()); }
         // we cannot assume the original caller always has an authorization token. If authToken is null, then promote...
         if(authToken == null) {
@@ -774,7 +762,7 @@ public class Http2Client {
 	public static SSLContext createSSLContext() throws IOException {
         SSLContext sslContext = null;
         KeyManager[] keyManagers = null;
-        Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(TLS);
+        Map<String, Object> tlsMap = (Map<String, Object>)config.getMappedConfig().get(TLS);
         if(tlsMap != null) {
             try {
                 // load key store for client certificate if two way ssl is used.
@@ -881,7 +869,7 @@ public class Http2Client {
     public  static  TrustManager[] loadDefaultTrustStore() throws Exception {
         Path location = null;
         String password = "changeit"; //default value for cacerts, we can override it from config
-        Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(TLS);
+        Map<String, Object> tlsMap = config.getTlsConfig();
         if(tlsMap != null &&  tlsMap.get(DEFAULT_CERT_PASS)!=null) {
             password = (String)tlsMap.get(DEFAULT_CERT_PASS);
         }
@@ -1351,7 +1339,7 @@ public class Http2Client {
     public CompletableFuture<ClientConnection> connectAsync(URI uri) {
         if("https".equals(uri.getScheme()) && SSL == null) SSL = getDefaultXnioSsl();
         return this.connectAsync(null, uri, WORKER, SSL, com.networknt.client.Http2Client.BUFFER_POOL,
-                ClientConfig.get().getRequestEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
+                config.getRequestEnableHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY);
     }
 
     /**

@@ -17,9 +17,6 @@
 package com.networknt.client.oauth;
 
 import com.networknt.client.ClientConfig;
-import com.networknt.client.Http2Client;
-import com.networknt.common.SecretConstants;
-import com.networknt.config.Config;
 import com.networknt.status.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
