@@ -535,7 +535,7 @@ public abstract class Config {
             }
             if (inStream != null) {
                 if (logger.isInfoEnabled()) {
-                    logger.info("Config loaded from externalized folder for " + Encode.forJava(configFilename + " in " + configFileDir));
+                    logger.info("Config loaded from externalized folder for " + Encode.forJava(configFilename + " in " + (configFileDir != null?configFileDir:"/")));
                 }
                 return inStream;
             }
