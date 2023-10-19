@@ -126,12 +126,25 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
                         objMap.put("requestURI", exchange.getRequestURI());
                         objMap.put("requestPath", exchange.getRequestPath());
                         if ((method.equalsIgnoreCase("post") || method.equalsIgnoreCase("put") || method.equalsIgnoreCase("patch")) && !exchange.isRequestComplete()) {
-                            // This object contains the reference to the request data buffer. Any modification done to this will be reflected in the request.
-                            PooledByteBuffer[] requestData = this.getBuffer(exchange);
-                            String s = BuffersUtils.toString(requestData, StandardCharsets.UTF_8);
-                            // Transform the request body with the rule engine.
-                            if(logger.isDebugEnabled()) logger.debug("original request body = " + s);
-                            objMap.put("requestBody", s);
+                            // This object contains the reference to the request data buffer. Any modification done to this will be reflected in the request. We only want to transform the request body if
+                            // the body is json or xml which is text based. If it is binary, we will not touch it. We first try to get the injected attachment from the RequestBodyInterceptor. However, if
+                            // the RequestBodyInterceptor is not configured run first, we need to get the buffer from the exchange directly.
+                            String bodyString = exchange.getAttachment(AttachmentConstants.REQUEST_BODY_STRING);
+                            if(bodyString != null) {
+                                objMap.put("requestBody", bodyString);
+                            } else {
+                                // there is a chance that the RequestBodyInterceptor is not configured to run first. In this case, we need to get the buffer from the exchange directly.
+                                if (shouldAttachBody(exchange.getRequestHeaders())) {
+                                    if(logger.isTraceEnabled()) logger.trace("shouldAttachBody is true");
+                                    PooledByteBuffer[] requestData = this.getBuffer(exchange);
+                                    String s = BuffersUtils.toString(requestData, StandardCharsets.UTF_8);
+                                    // Transform the request body with the rule engine.
+                                    if(logger.isDebugEnabled()) logger.debug("original request body = " + s);
+                                    objMap.put("requestBody", s);
+                                } else {
+                                    if(logger.isTraceEnabled()) logger.trace("shouldAttachBody is false");
+                                }
+                            }
                         }
                         Map<String, Object> result = null;
                         String ruleId = null;
