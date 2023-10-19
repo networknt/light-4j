@@ -6,7 +6,7 @@ import com.networknt.client.model.HttpVerb;
 import com.networknt.client.model.ServiceDef;
 import com.networknt.cluster.Cluster;
 import com.networknt.config.Config;
-import com.networknt.httpstring.ContentType;
+import com.networknt.common.ContentType;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;

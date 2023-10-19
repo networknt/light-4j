@@ -31,7 +31,7 @@ import java.util.Map;
  * @author Steve Hu
  */
 public class TokenKeyRequest extends KeyRequest {
-    private static Logger logger = LoggerFactory.getLogger(TokenKeyRequest.class);
+    private static final Logger logger = LoggerFactory.getLogger(TokenKeyRequest.class);
     private static final String CONFIG_PROPERTY_MISSING = "ERR10057";
 
     private boolean jwk;
@@ -41,14 +41,13 @@ public class TokenKeyRequest extends KeyRequest {
     }
     public TokenKeyRequest(String kid, boolean jwk, Map<String, Object> keyConfig) {
         super(kid);
-        ClientConfig config = ClientConfig.get();
         this.jwk = jwk;
-        Map<String, Object> clientConfig = config.getMappedConfig();
+        Map<String, Object> clientConfig = ClientConfig.get().getMappedConfig();
         if(clientConfig != null) {
             Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(ClientConfig.OAUTH);
             if(oauthConfig != null) {
                 // there is no key section under oauth. look up in the oauth/token section for key
-                Map<String, Object> tokenConfig = config.getTokenConfig();
+                Map<String, Object> tokenConfig = ClientConfig.get().getTokenConfig();
                 if(tokenConfig != null) {
                     // first inherit the proxy config from the token config.
                     setProxyHost((String)tokenConfig.get(ClientConfig.PROXY_HOST));

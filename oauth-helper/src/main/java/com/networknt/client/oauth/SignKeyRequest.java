@@ -40,8 +40,8 @@ public class SignKeyRequest extends KeyRequest {
 
     public SignKeyRequest(String kid) {
         super(kid);
-        ClientConfig config = ClientConfig.get();
-        Map<String, Object> signConfig = config.getSignConfig();
+
+        Map<String, Object> signConfig = ClientConfig.get().getSignConfig();
         if(signConfig != null) {
             Map<String, Object> keyConfig = (Map<String, Object>)signConfig.get(ClientConfig.KEY);
             if(keyConfig != null) {

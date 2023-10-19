@@ -84,7 +84,7 @@ public final class ClientConfig {
     private Map<String, Object> derefConfig;
     private Map<String, Object> signConfig;
     private Map<String, String> pathPrefixServices;
-    private static ClientConfig instance;
+    private static volatile ClientConfig instance;
 
     private ClientConfig() {
         config = Config.getInstance();
@@ -129,7 +129,11 @@ public final class ClientConfig {
 
     public static ClientConfig get() {
         if (instance == null) {
-            instance = new ClientConfig();
+            synchronized (ClientConfig.class) {
+                if (instance == null) {
+                    instance = new ClientConfig();
+                }
+            }
         }
         return instance;
     }

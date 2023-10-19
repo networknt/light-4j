@@ -126,10 +126,11 @@ public class JwtVerifierSingleJwkTest extends JwtVerifierJwkBase {
                             .addExactPath(API_MARKET, (exchange) -> {
                                 boolean hasScopeToken = exchange.getRequestHeaders().contains(HttpStringConstants.SCOPE_TOKEN);
                                 Assert.assertTrue(hasScopeToken);
+                                String requestPath = exchange.getRequestPath();
                                 String scopeToken = exchange.getRequestHeaders().get(HttpStringConstants.SCOPE_TOKEN, 0).substring(7);
                                 // verify the jwt token with JWK.
                                 JwtVerifier jwtVerifier = new JwtVerifier(securityConfig);
-                                JwtClaims claims = jwtVerifier.verifyJwt(scopeToken, true, true);
+                                JwtClaims claims = jwtVerifier.verifyJwt(scopeToken, true, true, null, requestPath, null);
                                 exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
                                 exchange.getResponseSender().send(ByteBuffer.wrap(
                                         Config.getInstance().getMapper().writeValueAsBytes(
@@ -317,6 +318,7 @@ public class JwtVerifierSingleJwkTest extends JwtVerifierJwkBase {
     }
 
     private String callMarketApiAsync() throws Exception {
+        logger.trace("callMarketApiAsync is called");
         final Http2Client client = createClient();
         // get a connection from the connection pool.
         final ClientConnection connection = client.borrowConnection(new URI("https://localhost:7772"), worker, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();

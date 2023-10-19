@@ -187,8 +187,7 @@ public class Http2Client {
 
         // register module.
         List<String> masks = List.of(MASK_KEY_CLIENT_SECRET, MASK_KEY_TRUST_STORE_PASS, MASK_KEY_KEY_STORE_PASS, MASK_KEY_KEY_PASS);
-        ModuleRegistry.registerModule(Http2Client.class.getName(), Config.getInstance().getJsonMapConfig(ClientConfig.CONFIG_NAME), masks);
-
+        ModuleRegistry.registerModule(Http2Client.class.getName(), Config.getInstance().getJsonMapConfigNoCache(ClientConfig.CONFIG_NAME), masks);
     }
 
     private void addProvider(Map<String, ClientProvider> map, String scheme, ClientProvider provider) {
@@ -623,7 +622,7 @@ public class Http2Client {
      * @return Result when fail to get jwt, it will return a Status.
      */
     public Result addCcToken(ClientRequest request) {
-        Result<Jwt> result = tokenManager.getJwt(request);
+        Result<Jwt> result = tokenManager.getJwt(request.getPath(), request.getRequestHeaders().getFirst(ClientConfig.SCOPE), request.getRequestHeaders().getFirst(ClientConfig.SERVICE_ID));
         if(result.isFailure()) { return Failure.of(result.getError()); }
         request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + result.getResult().getJwt());
         return result;
@@ -640,7 +639,7 @@ public class Http2Client {
      * @return Result when fail to get jwt, it will return a Status.
      */
     public Result addCcTokenTrace(ClientRequest request, String traceabilityId) {
-        Result<Jwt> result = tokenManager.getJwt(request);
+        Result<Jwt> result = tokenManager.getJwt(request.getPath(), request.getRequestHeaders().getFirst(ClientConfig.SCOPE), request.getRequestHeaders().getFirst(ClientConfig.SERVICE_ID));
         if(result.isFailure()) { return Failure.of(result.getError()); }
         request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + result.getResult().getJwt());
         request.getRequestHeaders().put(HttpStringConstants.TRACEABILITY_ID, traceabilityId);
@@ -684,7 +683,7 @@ public class Http2Client {
      * @return Result when fail to get jwt, it will return a Status.
      */
     public Result populateHeader(ClientRequest request, String authToken, String correlationId, String traceabilityId) {
-        Result<Jwt> result = tokenManager.getJwt(request);
+        Result<Jwt> result = tokenManager.getJwt(request.getPath(), request.getRequestHeaders().getFirst(ClientConfig.SCOPE), request.getRequestHeaders().getFirst(ClientConfig.SERVICE_ID));
         if(result.isFailure()) { return Failure.of(result.getError()); }
         // we cannot assume that the authToken is passed from the original caller. If it is null, then promote.
         if(authToken == null) {
@@ -718,7 +717,7 @@ public class Http2Client {
      * @return Result when fail to get jwt, it will return a Status.
      */
     public Result populateHeader(ClientRequest request, String authToken, Tracer tracer) {
-        Result<Jwt> result = tokenManager.getJwt(request);
+        Result<Jwt> result = tokenManager.getJwt(request.getPath(), request.getRequestHeaders().getFirst(ClientConfig.SCOPE), request.getRequestHeaders().getFirst(ClientConfig.SERVICE_ID));
         if(result.isFailure()) { return Failure.of(result.getError()); }
         // we cannot assume the original caller always has an authorization token. If authToken is null, then promote...
         if(authToken == null) {

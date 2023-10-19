@@ -24,12 +24,10 @@ public class TokenManager {
     private static int CAPACITY = 200;
 
     private ICacheStrategy cacheStrategy;
-    private ClientConfig config;
 
     private TokenManager() {
         //set CAPACITY based on config
-        config = ClientConfig.get();
-        Map<String, Object> tokenConfig = config.getTokenConfig();
+        Map<String, Object> tokenConfig = ClientConfig.get().getTokenConfig();
         if(tokenConfig != null) {
             Map<String, Object> cacheConfig = (Map<String, Object>)tokenConfig.get(ClientConfig.CACHE);
             if(cacheConfig != null) {
@@ -94,26 +92,26 @@ public class TokenManager {
      * multiple auth server is configured in the client.yml file.
      * it will get token based on Jwt.Key (either scope or service_id) first from the cache.
      * if the user declared both scope and service_id in header, it will get jwt based on scope
-     * @param clientRequest client request
+     * @param requestPath String
+     * @param scopes String
+     * @param serviceId String
      * @return Result
      */
-    public Result<Jwt> getJwt(ClientRequest clientRequest) {
+    public Result<Jwt> getJwt(String requestPath, String scopes, String serviceId) {
         // check the client.yml to see if multiple auth server is enabled.
-        if(config.isMultipleAuthServers()) {
-            String path = clientRequest.getPath();
-            if(logger.isTraceEnabled()) logger.trace("clientRequest path = " + path);
-            // get the target serviceId based on the request path.
-            Map<String, String> pathPrefixServices = config.getPathPrefixServices();
+        if(ClientConfig.get().isMultipleAuthServers()) {
+            if(logger.isTraceEnabled()) logger.trace("requestPath = " + requestPath + " scopes = " + scopes + " serviceId = " + serviceId);
+            // Get the target serviceId based on the request path.
+            Map<String, String> pathPrefixServices = ClientConfig.get().getPathPrefixServices();
             // lookup the serviceId based on the full path and the prefix mapping by iteration here.
-            String serviceId = null;
             for(Map.Entry<String, String> entry: pathPrefixServices.entrySet()) {
-                if(path.startsWith(entry.getKey())) {
+                if(requestPath.startsWith(entry.getKey())) {
                     serviceId = entry.getValue();
                 }
             }
             if(logger.isTraceEnabled()) logger.trace("serviceId = " + serviceId);
             // based on the serviceId, we can find the configuration of the auth server from the client credentials
-            Map<String, Object> clientCredentials = (Map<String, Object>)config.getTokenConfig().get(ClientConfig.CLIENT_CREDENTIALS);
+            Map<String, Object> clientCredentials = (Map<String, Object>)ClientConfig.get().getTokenConfig().get(ClientConfig.CLIENT_CREDENTIALS);
             Map<String, Object> serviceIdAuthServers = (Map<String, Object>)clientCredentials.get(ClientConfig.SERVICE_ID_AUTH_SERVERS);
             if(serviceIdAuthServers == null) {
                 Status status = new Status(CONFIG_PROPERTY_MISSING, "serviceIdAuthServers", "client.yml");
@@ -125,16 +123,13 @@ public class TokenManager {
             return getJwt(new Jwt.Key(serviceId), ccConfig);
         } else {
             // single auth server, keep the existing logic.
-            HeaderValues scope = clientRequest.getRequestHeaders().get(ClientConfig.SCOPE);
-            if(scope != null) {
-                String scopeStr = scope.getFirst();
+            if(scopes != null) {
                 Set<String> scopeSet = new HashSet<>();
-                scopeSet.addAll(Arrays.asList(scopeStr.split(" ")));
+                scopeSet.addAll(Arrays.asList(scopes.split(" ")));
                 return getJwt(new Jwt.Key(scopeSet), null);
             }
-            HeaderValues serviceId = clientRequest.getRequestHeaders().get(ClientConfig.SERVICE_ID);
             if(serviceId != null) {
-                return getJwt(new Jwt.Key(serviceId.getFirst()), null);
+                return getJwt(new Jwt.Key(serviceId), null);
             }
             return getJwt(new Jwt.Key(), null);
         }

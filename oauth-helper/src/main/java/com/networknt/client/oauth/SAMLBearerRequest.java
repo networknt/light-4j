@@ -44,13 +44,13 @@ public class SAMLBearerRequest extends TokenRequest {
     private static final Logger logger = LoggerFactory.getLogger(SAMLBearerRequest.class);
 
     public SAMLBearerRequest(String samlAssertion, String jwtClientAssertion) {
-        ClientConfig config = ClientConfig.get();
+
         setGrantType(ClientConfig.SAML_BEARER);
         this.samlAssertion = samlAssertion;
         this.jwtClientAssertion = jwtClientAssertion;
 
         try {
-            Map<String, Object> tokenConfig = config.getTokenConfig();
+            Map<String, Object> tokenConfig = ClientConfig.get().getTokenConfig();
 
             setServerUrl((String)tokenConfig.get(ClientConfig.SERVER_URL));
             setProxyHost((String)tokenConfig.get(ClientConfig.PROXY_HOST));

@@ -43,8 +43,7 @@ public class SignRequest {
     private Map<String, Object> payload;
 
     public SignRequest() {
-        ClientConfig config = ClientConfig.get();
-        Map<String, Object> signConfig = config.getSignConfig();
+        Map<String, Object> signConfig = ClientConfig.get().getSignConfig();
         if(signConfig != null) {
             setServerUrl((String)signConfig.get(ClientConfig.SERVER_URL));
             setProxyHost((String)signConfig.get(ClientConfig.PROXY_HOST));

@@ -25,13 +25,12 @@ public class TokenIntrospectionRequest extends IntrospectionRequest {
     }
     public TokenIntrospectionRequest(String swt, Map<String, Object> introspectionConfig) {
         super(swt);
-        ClientConfig config = ClientConfig.get();
-        Map<String, Object> clientConfig = config.getMappedConfig();
+        Map<String, Object> clientConfig = ClientConfig.get().getMappedConfig();
         if(clientConfig != null) {
             Map<String, Object> oauthConfig = (Map<String, Object>)clientConfig.get(ClientConfig.OAUTH);
             if(oauthConfig != null) {
                 // there is no key section under oauth. look up in the oauth/token section for introspection
-                Map<String, Object> tokenConfig = config.getTokenConfig();
+                Map<String, Object> tokenConfig = ClientConfig.get().getTokenConfig();
                 if(tokenConfig != null) {
                     // first inherit the proxy config from the token config.
                     setProxyHost((String)tokenConfig.get(ClientConfig.PROXY_HOST));

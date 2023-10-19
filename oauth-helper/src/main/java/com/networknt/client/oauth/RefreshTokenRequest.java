@@ -31,9 +31,8 @@ public class RefreshTokenRequest extends TokenRequest {
     String refreshToken;
 
     public RefreshTokenRequest() {
-        ClientConfig config = ClientConfig.get();
         setGrantType(ClientConfig.REFRESH_TOKEN);
-        Map<String, Object> tokenConfig = config.getTokenConfig();
+        Map<String, Object> tokenConfig = ClientConfig.get().getTokenConfig();
         if(tokenConfig != null) {
             setServerUrl((String)tokenConfig.get(ClientConfig.SERVER_URL));
             setProxyHost((String)tokenConfig.get(ClientConfig.PROXY_HOST));

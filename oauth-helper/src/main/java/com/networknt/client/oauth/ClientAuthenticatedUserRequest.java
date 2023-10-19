@@ -24,12 +24,11 @@ public class ClientAuthenticatedUserRequest extends TokenRequest {
      * @param roles user roles
      */
     public ClientAuthenticatedUserRequest(String userType, String userId, String roles) {
-        ClientConfig config = ClientConfig.get();
         setGrantType(ClientConfig.CLIENT_AUTHENTICATED_USER);
         setUserType(userType);
         setUserId(userId);
         setRoles(roles);
-        Map<String, Object> tokenConfig = config.getTokenConfig();
+        Map<String, Object> tokenConfig = ClientConfig.get().getTokenConfig();
         if(tokenConfig != null) {
             setServerUrl((String)tokenConfig.get(ClientConfig.SERVER_URL));
             setProxyHost((String)tokenConfig.get(ClientConfig.PROXY_HOST));

@@ -19,7 +19,7 @@ package com.networknt.handler;
 import com.networknt.config.Config;
 import com.networknt.handler.config.HandlerConfig;
 import com.networknt.httpstring.AttachmentConstants;
-import com.networknt.httpstring.ContentType;
+import com.networknt.common.ContentType;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.status.Status;
 import com.networknt.status.StatusWrapper;

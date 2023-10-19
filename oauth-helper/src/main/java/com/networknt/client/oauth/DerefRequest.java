@@ -37,8 +37,7 @@ public class DerefRequest {
     private boolean enableHttp2;
 
     public DerefRequest(String token) {
-        ClientConfig config = ClientConfig.get();
-        Map<String, Object> derefConfig = config.getDerefConfig();
+        Map<String, Object> derefConfig = ClientConfig.get().getDerefConfig();
         if(derefConfig != null) {
             setServerUrl((String)derefConfig.get(ClientConfig.SERVER_URL));
             setProxyHost((String)derefConfig.get(ClientConfig.PROXY_HOST));

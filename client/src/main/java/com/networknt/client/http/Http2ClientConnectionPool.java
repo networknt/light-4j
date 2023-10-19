@@ -31,10 +31,8 @@ public class Http2ClientConnectionPool {
 
     private AtomicInteger connectionCount;
 
-    private static ClientConfig config;
     private Http2ClientConnectionPool() {
-        config = ClientConfig.get();
-        int poolSize = config.getConnectionPoolSize();
+        int poolSize = ClientConfig.get().getConnectionPoolSize();
         connectionCount = new AtomicInteger(0);
         // Initialize a LRU to cache the ClientConnection based on peer address
         connectionPool = Collections.synchronizedMap(new LinkedHashMap<String, List<CachedConnection>>((int) Math.ceil(poolSize / 0.75f) + 1, 0.75f, true) {
@@ -143,8 +141,8 @@ public class Http2ClientConnectionPool {
     private synchronized CachedConnection selectConnection(URI uri, List<CachedConnection> connections, boolean isRemoveClosedConnection) {
         if (connections != null) {
             if(logger.isDebugEnabled()) logger.debug("Before removing max connections per host from list of {} connections for uri: {} ...", connections.size(), uri);
-            if (connections.size() > config.getMaxConnectionNumPerHost() * 0.75) {
-                while (connections.size() > config.getMinConnectionNumPerHost() && connections.size() > 0) {
+            if (connections.size() > ClientConfig.get().getMaxConnectionNumPerHost() * 0.75) {
+                while (connections.size() > ClientConfig.get().getMinConnectionNumPerHost() && connections.size() > 0) {
                     connections.remove(0);
                 }
             }
@@ -246,8 +244,8 @@ public class Http2ClientConnectionPool {
         private long lifeStartTime;
         private long ttlParked = 100*1000; // default to 1 minutes to closed the parked connection.
         private long lifeStartTimeParked;
-        private int maxReqCount = config.getMaxRequestPerConnection();
-        private long expireTime = config.getConnectionExpireTime();
+        private int maxReqCount = ClientConfig.get().getMaxRequestPerConnection();
+        private long expireTime = ClientConfig.get().getConnectionExpireTime();
 
         protected CachedConnection(ClientConnection connection) {
             requestCount = new AtomicInteger(0);

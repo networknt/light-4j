@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.networknt.httpstring;
+package com.networknt.common;
 
 /**
  * an enum for http Content-Type header

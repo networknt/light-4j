@@ -1,6 +1,6 @@
 package com.networknt.client.http;
 
-import com.networknt.httpstring.ContentType;
+import com.networknt.common.ContentType;
 import org.junit.Before;
 import org.junit.Test;
 

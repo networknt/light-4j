@@ -38,9 +38,8 @@ public class ClientCredentialsRequest extends TokenRequest {
     }
 
     public ClientCredentialsRequest(Map<String, Object> ccConfig) {
-        ClientConfig config = ClientConfig.get();
         setGrantType(ClientConfig.CLIENT_CREDENTIALS);
-        Map<String, Object> tokenConfig = config.getTokenConfig();
+        Map<String, Object> tokenConfig = ClientConfig.get().getTokenConfig();
         if(tokenConfig != null) {
             setServerUrl((String)tokenConfig.get(ClientConfig.SERVER_URL));
             setProxyHost((String)tokenConfig.get(ClientConfig.PROXY_HOST));
