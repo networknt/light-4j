@@ -18,21 +18,20 @@ package com.networknt.client.oauth;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.networknt.client.ClientConfig;
-import com.networknt.client.Http2Client;
-import com.networknt.client.ssl.TLSConfig;
 import com.networknt.cluster.Cluster;
+import com.networknt.common.ContentType;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.exception.ClientException;
-import com.networknt.httpstring.ContentType;
+import com.networknt.http.client.Headers;
+import com.networknt.http.client.HttpClientRequest;
+import com.networknt.http.client.ssl.TLSConfig;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.status.Status;
 import com.networknt.utility.StringUtils;
-import io.undertow.server.HttpServerExchange;
-import io.undertow.util.*;
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +52,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-import static com.networknt.http.MediaType.APPLICATION_FORM_URLENCODED_VALUE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class OauthHelper {
@@ -63,6 +61,8 @@ public class OauthHelper {
     private static final String USER_ID = "userId";
     private static final String USER_TYPE = "userType";
     private static final String ROLES = "roles";
+    private static final String APPLICATION_FORM_URLENCODED_VALUE = "application/x-www-form-urlencoded";
+
     private static final String FAIL_TO_SEND_REQUEST = "ERR10051";
     private static final String GET_TOKEN_ERROR = "ERR10052";
     private static final String ESTABLISH_CONNECTION_ERROR = "ERR10053";
@@ -105,7 +105,7 @@ public class OauthHelper {
                 HttpClient.Builder clientBuilder = HttpClient.newBuilder()
                         .followRedirects(HttpClient.Redirect.NORMAL)
                         .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
-                        .sslContext(Http2Client.createSSLContext());
+                        .sslContext(HttpClientRequest.createSSLContext());
                 if(logger.isTraceEnabled()) logger.trace("proxyHost = " + tokenRequest.getProxyHost() + " proxyPort = " + tokenRequest.getProxyPort());
                 if(!StringUtils.isBlank(tokenRequest.getProxyHost())) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(tokenRequest.getProxyHost(), tokenRequest.getProxyPort() == 0 ? 443 : tokenRequest.getProxyPort())));
                 if (tokenRequest.isEnableHttp2()) {
@@ -115,7 +115,7 @@ public class OauthHelper {
                 }
 
                 // this a workaround to bypass the hostname verification in jdk11 http client.
-                Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+                Map<String, Object> tlsMap = ClientConfig.get().getTlsConfig();
                 if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
                     final Properties props = System.getProperties();
                     props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
@@ -177,7 +177,7 @@ public class OauthHelper {
                 HttpClient.Builder clientBuilder = HttpClient.newBuilder()
                         .followRedirects(HttpClient.Redirect.NORMAL)
                         .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
-                        .sslContext(Http2Client.createSSLContext());
+                        .sslContext(HttpClientRequest.createSSLContext());
                 if(signRequest.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(signRequest.getProxyHost(), signRequest.getProxyPort() == 0 ? 443 : signRequest.getProxyPort())));
                 if (signRequest.isEnableHttp2()) {
                     clientBuilder.version(HttpClient.Version.HTTP_2);
@@ -186,7 +186,7 @@ public class OauthHelper {
                 }
 
                 // this a workaround to bypass the hostname verification in jdk11 http client.
-                Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+                Map<String, Object> tlsMap = ClientConfig.get().getTlsConfig();
                 if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
                     final Properties props = System.getProperties();
                     props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
@@ -255,7 +255,7 @@ public class OauthHelper {
                 HttpClient.Builder clientBuilder = HttpClient.newBuilder()
                         .followRedirects(HttpClient.Redirect.NORMAL)
                         .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
-                        .sslContext(Http2Client.createSSLContext());
+                        .sslContext(HttpClientRequest.createSSLContext());
                 if(tokenRequest.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(tokenRequest.getProxyHost(), tokenRequest.getProxyPort() == 0 ? 443 : tokenRequest.getProxyPort())));
                 if (tokenRequest.isEnableHttp2()) {
                     clientBuilder.version(HttpClient.Version.HTTP_2);
@@ -264,7 +264,7 @@ public class OauthHelper {
                 }
 
                 // this a workaround to bypass the hostname verification in jdk11 http client.
-                Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+                Map<String, Object> tlsMap = ClientConfig.get().getTlsConfig();
                 if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
                     final Properties props = System.getProperties();
                     props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
@@ -342,7 +342,7 @@ public class OauthHelper {
             HttpClient.Builder clientBuilder = HttpClient.newBuilder()
                     .followRedirects(HttpClient.Redirect.NORMAL)
                     .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
-                    .sslContext(Http2Client.createSSLContext());
+                    .sslContext(HttpClientRequest.createSSLContext());
             if(!StringUtils.isBlank(keyRequest.getProxyHost())) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(keyRequest.getProxyHost(), keyRequest.getProxyPort() == 0 ? 443 : keyRequest.getProxyPort())));
             if (keyRequest.isEnableHttp2()) {
                 clientBuilder.version(HttpClient.Version.HTTP_2);
@@ -351,7 +351,7 @@ public class OauthHelper {
             }
 
             // this a workaround to bypass the hostname verification in jdk11 http client.
-            Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+            Map<String, Object> tlsMap = ClientConfig.get().getTlsConfig();
             if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
                 final Properties props = System.getProperties();
                 props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
@@ -389,7 +389,7 @@ public class OauthHelper {
                 HttpClient.Builder clientBuilder = HttpClient.newBuilder()
                         .followRedirects(HttpClient.Redirect.NORMAL)
                         .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
-                        .sslContext(Http2Client.createSSLContext());
+                        .sslContext(HttpClientRequest.createSSLContext());
                 if(logger.isTraceEnabled()) logger.trace("proxyHost = " + introspectionRequest.getProxyHost() + " proxyPort = " + introspectionRequest.getProxyPort());
                 if(!StringUtils.isBlank(introspectionRequest.getProxyHost())) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(introspectionRequest.getProxyHost(), introspectionRequest.getProxyPort() == 0 ? 443 : introspectionRequest.getProxyPort())));
                 if (introspectionRequest.isEnableHttp2()) {
@@ -398,7 +398,7 @@ public class OauthHelper {
                     clientBuilder.version(HttpClient.Version.HTTP_1_1);
                 }
                 // this a workaround to bypass the hostname verification in jdk11 http client.
-                Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+                Map<String, Object> tlsMap = ClientConfig.get().getTlsConfig();
                 if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
                     final Properties props = System.getProperties();
                     props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
@@ -474,7 +474,7 @@ public class OauthHelper {
                 HttpClient.Builder clientBuilder = HttpClient.newBuilder()
                         .followRedirects(HttpClient.Redirect.NORMAL)
                         .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
-                        .sslContext(Http2Client.createSSLContext());
+                        .sslContext(HttpClientRequest.createSSLContext());
                 if(derefRequest.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(derefRequest.getProxyHost(), derefRequest.getProxyPort() == 0 ? 443 : derefRequest.getProxyPort())));
                 if (derefRequest.isEnableHttp2()) {
                     clientBuilder.version(HttpClient.Version.HTTP_2);
@@ -482,7 +482,7 @@ public class OauthHelper {
                     clientBuilder.version(HttpClient.Version.HTTP_1_1);
                 }
                 // this a workaround to bypass the hostname verification in jdk11 http client.
-                Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+                Map<String, Object> tlsMap = ClientConfig.get().getTlsConfig();
                 if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
                     final Properties props = System.getProperties();
                     props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
@@ -573,7 +573,7 @@ public class OauthHelper {
             params.put(ClientConfig.SCOPE, String.join(" ", request.getScope()));
         }
         if(logger.isTraceEnabled()) logger.trace("token request form data = " + JsonMapper.toJson(params));
-        return Http2Client.getFormDataString(params);
+        return ClientRequestComposerProvider.getFormDataString(params);
     }
 
     private static Result<TokenResponse> handleResponse(ContentType contentType, String responseBody) {
@@ -606,27 +606,6 @@ public class OauthHelper {
             logger.error("Error in token retrieval", e);
         }
         return result;
-    }
-
-    /**
-     * @deprecated
-     * @param exchange each handler should use LightHttpHandler#setExchangeStatus
-     * @param status Status
-     */
-    @Deprecated
-    public static void sendStatusToResponse(HttpServerExchange exchange, Status status) {
-        exchange.setStatusCode(status.getStatusCode());
-        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-        exchange.getResponseSender().send(status.toString());
-        logger.error(status.toString());
-        // in case to trace where the status is created, enable the trace level logging to diagnose.
-        if (logger.isTraceEnabled()) {
-            StackTraceElement[] elements = Thread.currentThread().getStackTrace();
-            String stackTrace = Arrays.stream(elements)
-                    .map(StackTraceElement::toString)
-                    .collect(Collectors.joining("\n"));
-            logger.trace(stackTrace);
-        }
     }
 
     /**

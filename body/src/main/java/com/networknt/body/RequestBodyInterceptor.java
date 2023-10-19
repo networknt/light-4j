@@ -4,7 +4,7 @@ import com.networknt.handler.BuffersUtils;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.RequestInterceptor;
 import com.networknt.httpstring.AttachmentConstants;
-import com.networknt.httpstring.ContentType;
+import com.networknt.common.ContentType;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.connector.PooledByteBuffer;

@@ -31,7 +31,7 @@ import java.util.Map;
  * @author Steve Hu
  */
 public class TokenKeyRequest extends KeyRequest {
-    private static Logger logger = LoggerFactory.getLogger(TokenKeyRequest.class);
+    private static final Logger logger = LoggerFactory.getLogger(TokenKeyRequest.class);
     private static final String CONFIG_PROPERTY_MISSING = "ERR10057";
 
     private boolean jwk;

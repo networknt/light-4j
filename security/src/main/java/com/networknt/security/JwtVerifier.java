@@ -115,6 +115,7 @@ public class JwtVerifier extends TokenVerifier {
         this.cacheCertificates();
 
         // if KeyResolver is jwk and bootstrap from jwk is true, load jwk during server startup.
+        if(logger.isTraceEnabled()) logger.trace("keyResolver = " + keyResolver + " bootstrapFromKeyService = " + bootstrapFromKeyService);
         if (JWT_KEY_RESOLVER_JWKS.equals(keyResolver) && bootstrapFromKeyService) {
             jwksMap = getJsonWebKeyMap();
         } else {
@@ -194,6 +195,7 @@ public class JwtVerifier extends TokenVerifier {
      * @throws ExpiredTokenException throw when the token is expired
      */
     public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken, String pathPrefix, String requestPath, List<String> jwkServiceIds) throws InvalidJwtException, ExpiredTokenException {
+        if(logger.isTraceEnabled()) logger.trace("verifyJwt is called with ignoreExpiry = " + ignoreExpiry + " isToken = " + isToken + " pathPrefix = " + pathPrefix + " requestPath = " + requestPath + " jwkServiceIds = " + jwkServiceIds);
         return verifyJwt(jwt, ignoreExpiry, isToken, pathPrefix, requestPath, jwkServiceIds, this::getKeyResolver);
     }
 
@@ -209,6 +211,7 @@ public class JwtVerifier extends TokenVerifier {
      * @throws ExpiredTokenException throw when the token is expired
      */
     public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken) throws InvalidJwtException, ExpiredTokenException {
+        if(logger.isTraceEnabled()) logger.trace("verifyJwt is called with ignoreExpiry = " + ignoreExpiry + " isToken = " + isToken);
         return verifyJwt(jwt, ignoreExpiry, isToken, null, null, null, this::getKeyResolver);
     }
 
@@ -432,6 +435,7 @@ public class JwtVerifier extends TokenVerifier {
     private VerificationKeyResolver getKeyResolver(String kid, Object requestPathOrJwkServiceIds) {
         // try the X509 certificate first
         String keyResolver = config.getKeyResolver();
+        if(logger.isTraceEnabled()) logger.trace("kid = " + kid + " requestPathOrJwkServiceIds = " + requestPathOrJwkServiceIds + " keyResolver = " + keyResolver);
         // get the public key certificate from the cache that is loaded from security.yml. If it is not there,
         // go to the next step to access JWK if it is enabled. We need to update the light-oauth2 and oauth-kafka
         // to support JWK instead of X509Certificate endpoint. 
@@ -652,7 +656,10 @@ public class JwtVerifier extends TokenVerifier {
         // the jwk indicator will ensure that the kid is not concat to the uri for path parameter.
         // the kid is not needed to get JWK, but if requestPath is not null, it will be used to get the keyConfig
         if (logger.isTraceEnabled()) {
-            logger.trace("kid = " + kid + requestPathOrJwkServiceIds instanceof String ? " requestPath = " + requestPathOrJwkServiceIds : " jwkServiceIds = " + requestPathOrJwkServiceIds);
+            logger.trace("kid = " + kid + " requestPathOrJwkServiceIds = " + requestPathOrJwkServiceIds);
+            if(requestPathOrJwkServiceIds instanceof List) {
+                ((List<String>)requestPathOrJwkServiceIds).forEach(logger::trace);
+            }
         }
         ClientConfig clientConfig = ClientConfig.get();
         List<JsonWebKey> jwks = null;

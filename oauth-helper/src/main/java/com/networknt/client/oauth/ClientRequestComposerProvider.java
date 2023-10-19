@@ -1,12 +1,12 @@
 package com.networknt.client.oauth;
 
-import com.networknt.client.Http2Client;
-import io.undertow.util.Headers;
+import com.networknt.http.client.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpRequest;
 import java.util.HashMap;
 import java.util.Map;
@@ -94,12 +94,27 @@ public class ClientRequestComposerProvider {
             postBody.put(SAMLBearerRequest.CLIENT_ASSERTION_TYPE_KEY, SAMLBearerRequest.CLIENT_ASSERTION_TYPE_VALUE);
             postBody.put(SAMLBearerRequest.CLIENT_ASSERTION_KEY, SamlTokenRequest.getJwtClientAssertion());
             try {
-                return Http2Client.getFormDataString(postBody);
+                return getFormDataString(postBody);
             } catch (UnsupportedEncodingException e) {
                 logger.error("get encoded string from tokenRequest fails: \n {}", e.toString());
             }
             return "";
         }
+    }
+
+    public static String getFormDataString(Map<String, String> params) throws UnsupportedEncodingException {
+        StringBuilder result = new StringBuilder();
+        boolean first = true;
+        for(Map.Entry<String, String> entry : params.entrySet()){
+            if (first)
+                first = false;
+            else
+                result.append("&");
+            result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
+            result.append("=");
+            result.append(URLEncoder.encode(entry.getValue(), "UTF-8").replaceAll("\\+", "%20"));
+        }
+        return result.toString();
     }
 
     /**

@@ -1,15 +1,11 @@
 package com.networknt.client.oauth;
 
 import com.networknt.client.ClientConfig;
-import com.networknt.client.Http2Client;
 import com.networknt.client.oauth.cache.ICacheStrategy;
 import com.networknt.client.oauth.cache.LongestExpireCacheStrategy;
-import com.networknt.config.Config;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.status.Status;
-import io.undertow.client.ClientRequest;
-import io.undertow.util.HeaderValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,20 +92,20 @@ public class TokenManager {
      * multiple auth server is configured in the client.yml file.
      * it will get token based on Jwt.Key (either scope or service_id) first from the cache.
      * if the user declared both scope and service_id in header, it will get jwt based on scope
-     * @param clientRequest client request
+     * @param requestPath String
+     * @param scopes String
+     * @param serviceId String
      * @return Result
      */
-    public Result<Jwt> getJwt(ClientRequest clientRequest) {
+    public Result<Jwt> getJwt(String requestPath, String scopes, String serviceId) {
         // check the client.yml to see if multiple auth server is enabled.
         if(ClientConfig.get().isMultipleAuthServers()) {
-            String path = clientRequest.getPath();
-            if(logger.isTraceEnabled()) logger.trace("clientRequest path = " + path);
-            // get the target serviceId based on the request path.
+            if(logger.isTraceEnabled()) logger.trace("requestPath = " + requestPath + " scopes = " + scopes + " serviceId = " + serviceId);
+            // Get the target serviceId based on the request path.
             Map<String, String> pathPrefixServices = ClientConfig.get().getPathPrefixServices();
             // lookup the serviceId based on the full path and the prefix mapping by iteration here.
-            String serviceId = null;
             for(Map.Entry<String, String> entry: pathPrefixServices.entrySet()) {
-                if(path.startsWith(entry.getKey())) {
+                if(requestPath.startsWith(entry.getKey())) {
                     serviceId = entry.getValue();
                 }
             }
@@ -127,16 +123,13 @@ public class TokenManager {
             return getJwt(new Jwt.Key(serviceId), ccConfig);
         } else {
             // single auth server, keep the existing logic.
-            HeaderValues scope = clientRequest.getRequestHeaders().get(ClientConfig.SCOPE);
-            if(scope != null) {
-                String scopeStr = scope.getFirst();
+            if(scopes != null) {
                 Set<String> scopeSet = new HashSet<>();
-                scopeSet.addAll(Arrays.asList(scopeStr.split(" ")));
+                scopeSet.addAll(Arrays.asList(scopes.split(" ")));
                 return getJwt(new Jwt.Key(scopeSet), null);
             }
-            HeaderValues serviceId = clientRequest.getRequestHeaders().get(ClientConfig.SERVICE_ID);
             if(serviceId != null) {
-                return getJwt(new Jwt.Key(serviceId.getFirst()), null);
+                return getJwt(new Jwt.Key(serviceId), null);
             }
             return getJwt(new Jwt.Key(), null);
         }

@@ -9,16 +9,15 @@ import static junit.framework.TestCase.assertEquals;
 
 
 public class ClientConfigValueTest {
-    public static final String CONFIG_NAME = "client";
     @Test
     public void testLoadConfig() {
-        ClientConfig config = ClientConfig.get(CONFIG_NAME);
+        ClientConfig config = ClientConfig.get();
         assertEquals(config.getConnectionExpireTime(), 1800000);
     }
 
     @Test
     public void testTokenConfig() {
-        ClientConfig config = ClientConfig.get(CONFIG_NAME);
+        ClientConfig config = ClientConfig.get();
         Map<String, Object> tokenConfig = config.getTokenConfig();
         System.out.println("tokenConfig = " + JsonMapper.toJson(tokenConfig));
     }

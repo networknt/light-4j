@@ -25,6 +25,7 @@ import com.networknt.handler.MiddlewareHandler;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;
+import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -33,7 +34,9 @@ import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * This is a middleware handler that is responsible for getting a JWT access token from
@@ -100,7 +103,7 @@ public class SAMLTokenHandler implements MiddlewareHandler {
         logger.debug(exchange.toString());
         Result<String> result = getSAMLBearerToken(exchange.getRequestHeaders().getFirst(SAMLAssertionHeader), exchange.getRequestHeaders().getFirst(JWTAssertionHeader));
         if(result.isFailure()) {
-            OauthHelper.sendStatusToResponse(exchange, result.getError());
+            sendStatusToResponse(exchange, result.getError());
             return;
         }
         exchange.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + result.getResult());
@@ -109,6 +112,20 @@ public class SAMLTokenHandler implements MiddlewareHandler {
         Handler.next(exchange, next);
     }
 
+    public static void sendStatusToResponse(HttpServerExchange exchange, Status status) {
+        exchange.setStatusCode(status.getStatusCode());
+        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+        exchange.getResponseSender().send(status.toString());
+        logger.error(status.toString());
+        // in case to trace where the status is created, enable the trace level logging to diagnose.
+        if (logger.isTraceEnabled()) {
+            StackTraceElement[] elements = Thread.currentThread().getStackTrace();
+            String stackTrace = Arrays.stream(elements)
+                    .map(StackTraceElement::toString)
+                    .collect(Collectors.joining("\n"));
+            logger.trace(stackTrace);
+        }
+    }
     @Override
     public HttpHandler getNext() {
         return next;

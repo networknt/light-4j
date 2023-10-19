@@ -1,6 +1,5 @@
 package com.networknt.proxy.mras;
 
-import com.networknt.body.BodyHandler;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.client.oauth.TokenResponse;
@@ -13,7 +12,7 @@ import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.config.UrlRewriteRule;
 import com.networknt.httpstring.AttachmentConstants;
-import com.networknt.httpstring.ContentType;
+import com.networknt.common.ContentType;
 import com.networknt.metrics.MetricsConfig;
 import com.networknt.metrics.AbstractMetricsHandler;
 import com.networknt.monad.Failure;
