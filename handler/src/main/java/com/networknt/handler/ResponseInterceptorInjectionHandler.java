@@ -85,7 +85,7 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
      * header to identity this is required to avoid response interceptors
      * dealing with compressed data
      *
-     * @param exchange
+     * @param exchange the exchange
      */
     private void forceIdentityEncodingForInterceptors(HttpServerExchange exchange) {
 
