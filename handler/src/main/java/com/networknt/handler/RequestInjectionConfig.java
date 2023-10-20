@@ -16,9 +16,10 @@ public class RequestInjectionConfig {
     public static final String CONFIG_NAME = "request-injection";
     private static final String ENABLED = "enabled";
     private static final String APPLIED_BODY_INJECTION_PATH_PREFIXES = "appliedBodyInjectionPathPrefixes";
+    private static final String MAX_BUFFERS = "maxBuffers";
     private boolean enabled;
     private List<String> appliedBodyInjectionPathPrefixes;
-
+    private int maxBuffers;
     private Map<String, Object> mappedConfig;
     private final Config config;
 
@@ -59,7 +60,9 @@ public class RequestInjectionConfig {
     public boolean isEnabled() {
         return enabled;
     }
-
+    public int getMaxBuffers() {
+        return maxBuffers;
+    }
     public List<String> getAppliedBodyInjectionPathPrefixes() {
         return appliedBodyInjectionPathPrefixes;
     }
@@ -70,9 +73,9 @@ public class RequestInjectionConfig {
 
     private void setConfigData() {
         var object = getMappedConfig().get(ENABLED);
-
-        if (object != null && (Boolean) object)
-            enabled = true;
+        if (object != null) enabled = Config.loadBooleanValue(ENABLED, object);
+        object = getMappedConfig().get(MAX_BUFFERS);
+        if (object != null) maxBuffers = Config.loadIntegerValue(MAX_BUFFERS, object);
     }
 
     private void setConfigList() {

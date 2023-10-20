@@ -29,8 +29,6 @@ import java.util.Arrays;
 public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(RequestInterceptorInjectionHandler.class);
-    public static final int MAX_BUFFERS = 1024;
-
     private volatile HttpHandler next;
     private static RequestInjectionConfig config;
     private RequestInterceptor[] interceptors = null;
@@ -92,7 +90,7 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
         if (this.shouldReadBody(httpServerExchange)) {
             if(logger.isTraceEnabled()) logger.trace("Trying to read body");
             final var channel = httpServerExchange.getRequestChannel();
-            final var bufferedData = new PooledByteBuffer[MAX_BUFFERS];
+            final var bufferedData = new PooledByteBuffer[config.getMaxBuffers()];
 
             int readBuffers = 0;
             var buffer = httpServerExchange.getConnection().getByteBufferPool().allocate();
@@ -116,7 +114,7 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
                         b.flip();
                         bufferedData[readBuffers++] = buffer;
 
-                        if (readBuffers == MAX_BUFFERS)
+                        if (readBuffers == config.getMaxBuffers())
                             break;
 
                         buffer = httpServerExchange.getConnection().getByteBufferPool().allocate();
@@ -207,7 +205,7 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
                             b.flip();
                             bufferedData[readBuffers++] = buffer;
 
-                            if (readBuffers == MAX_BUFFERS) {
+                            if (readBuffers == config.getMaxBuffers()) {
                                 suspendReads(ex, bufferedData, channel, next);
                                 return;
                             }
