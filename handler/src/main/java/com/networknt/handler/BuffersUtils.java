@@ -34,7 +34,8 @@ import java.nio.charset.Charset;
  * @author Andrea Di Cesare {@literal <andrea@softinstigate.com>}
  */
 public class BuffersUtils {
-    public static final int MAX_CONTENT_SIZE = 16 * 1024 * 1024; // 16Mbyte
+    public static final RequestInjectionConfig config = RequestInjectionConfig.load();
+    public static final int MAX_CONTENT_SIZE = 16 * 1024 * config.getMaxBuffers(); // 16KB * maxBuffers
 
     private static final Logger LOG = LoggerFactory.getLogger(BuffersUtils.class);
 
