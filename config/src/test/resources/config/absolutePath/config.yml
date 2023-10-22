@@ -1,0 +1,7 @@
+exclusionConfigFileList:
+  - openapi
+  - values
+  - status
+  - test_exclusion
+
+decryptorClass: com.networknt.config.AESMockDecryptor
