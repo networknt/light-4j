@@ -22,6 +22,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
@@ -498,22 +500,42 @@ public abstract class Config {
 
             InputStream inStream = null;
             String configFileDir = null;
-            for (int i = 0; i < EXTERNALIZED_PROPERTY_DIR.length; i ++) {
-                String absolutePath = getAbsolutePath(path, i);
+
+            // Check if configFile is an absolute path  and try to load it directly
+            Path configFilePath = Paths.get(configFilename);
+            if (configFilePath.isAbsolute()) {
+                String configFilenameNormalized = configFilePath.normalize().toString();
+                // Use it as full path, no config dir
                 try {
-                    inStream = new FileInputStream(absolutePath + "/" + configFilename);
-                    configFileDir = absolutePath;
+                    inStream = new FileInputStream(configFilenameNormalized);
                 } catch (FileNotFoundException ex) {
                     if (logger.isInfoEnabled()) {
-                        logger.info("Unable to load config from externalized folder for " + Encode.forJava(configFilename + " in " + absolutePath));
+                        logger.info("Unable to load config from externalized folder for " + Encode.forJava(configFilenameNormalized));
                     }
                 }
-                // absolute path do not need to continue
-                if (path.startsWith("/")) break;
+            }
+
+            // configFile is not absolute or was not found using the absolute path
+            // This is for backward compatibility only.
+            // If path is absolute and file not found this should be an error
+            if (inStream == null) {
+                for (int i = 0; i < EXTERNALIZED_PROPERTY_DIR.length; i++) {
+                    String absolutePath = getAbsolutePath(path, i);
+                    try {
+                        inStream = new FileInputStream(absolutePath + "/" + configFilename);
+                        configFileDir = absolutePath;
+                    } catch (FileNotFoundException ex) {
+                        if (logger.isInfoEnabled()) {
+                            logger.info("Unable to load config from externalized folder for " + Encode.forJava(configFilename + " in " + absolutePath));
+                        }
+                    }
+                    // absolute path do not need to continue
+                    if (path.startsWith("/")) break;
+                }
             }
             if (inStream != null) {
                 if (logger.isInfoEnabled()) {
-                    logger.info("Config loaded from externalized folder for " + Encode.forJava(configFilename + " in " + configFileDir));
+                    logger.info("Config loaded from externalized folder for " + Encode.forJava(configFilename + " in " + (configFileDir != null?configFileDir:"/")));
                 }
                 return inStream;
             }
