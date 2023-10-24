@@ -1,5 +1,23 @@
 # Change Log
 
+## [2.1.28](https://github.com/networknt/light-4j/tree/2.1.28) (2023-10-24)
+
+
+**Merged pull requests:**
+
+
+- [SWE637 FA23]: Fix body handler flaky test caused by invalid cast of string to java list [\#1920](https://github.com/networknt/light-4j/pull/1920) ([sunkarnamritishh](https://github.com/sunkarnamritishh))
+- Fixes \#1908 - CRYPT regex too strict, only allows AES crypto alike strings [\#1930](https://github.com/networknt/light-4j/pull/1930) ([ForwardKeys](https://github.com/ForwardKeys))
+- fixes \#1928 make the BuffersUtils MAX_CONTENT_SIZE configurable [\#1929](https://github.com/networknt/light-4j/pull/1929) ([stevehu](https://github.com/stevehu))
+- fixes \#1926 make the maxBuffers confiigurable in the RequestIntercept… [\#1927](https://github.com/networknt/light-4j/pull/1927) ([stevehu](https://github.com/stevehu))
+- fixes \#1924 adding special characters for the CRYPT matching [\#1925](https://github.com/networknt/light-4j/pull/1925) ([stevehu](https://github.com/stevehu))
+- Issue1918 [\#1923](https://github.com/networknt/light-4j/pull/1923) ([stevehu](https://github.com/stevehu))
+- fixes \#1921 pass the request body to the transformer only if it is a … [\#1922](https://github.com/networknt/light-4j/pull/1922) ([stevehu](https://github.com/stevehu))
+- fixes \#1914 change external handler to send byte[] for raw stream [\#1915](https://github.com/networknt/light-4j/pull/1915) ([stevehu](https://github.com/stevehu))
+- Lambda Validator Status Codes [\#1870](https://github.com/networknt/light-4j/pull/1870) ([KalevGonvick](https://github.com/KalevGonvick))
+- fixes \#1912 Add a DummyDecryptor for testing [\#1913](https://github.com/networknt/light-4j/pull/1913) ([stevehu](https://github.com/stevehu))
+- fixes \#1909 environment variables cannot overwrite config values if i… [\#1911](https://github.com/networknt/light-4j/pull/1911) ([stevehu](https://github.com/stevehu))
+- fixes \#1906 add OAuthServerGetHandler to allow get method to retrieve… [\#1907](https://github.com/networknt/light-4j/pull/1907) ([stevehu](https://github.com/stevehu))
 ## [2.1.27](https://github.com/networknt/light-4j/tree/2.1.27) (2023-10-04)
 
 
