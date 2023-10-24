@@ -18,6 +18,8 @@
 - fixes \#1912 Add a DummyDecryptor for testing [\#1913](https://github.com/networknt/light-4j/pull/1913) ([stevehu](https://github.com/stevehu))
 - fixes \#1909 environment variables cannot overwrite config values if i… [\#1911](https://github.com/networknt/light-4j/pull/1911) ([stevehu](https://github.com/stevehu))
 - fixes \#1906 add OAuthServerGetHandler to allow get method to retrieve… [\#1907](https://github.com/networknt/light-4j/pull/1907) ([stevehu](https://github.com/stevehu))
+
+
 ## [2.1.27](https://github.com/networknt/light-4j/tree/2.1.27) (2023-10-04)
 
 
