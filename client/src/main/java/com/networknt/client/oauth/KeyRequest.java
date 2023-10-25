@@ -17,11 +17,6 @@
 package com.networknt.client.oauth;
 
 import com.networknt.client.ClientConfig;
-import com.networknt.config.Config;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Map;
 
 /**
  * This is the generic key request with an id as parameter. The static serverUrl will be used if
@@ -90,15 +85,6 @@ public class KeyRequest {
     protected boolean enableHttp2;
     protected String kid;
 
-    protected Long connectionTimeout;
-    public static String CONNECTION_TIMEOUT = "connectionTimeout";
-    public static long defaultConnectionTimeout = 2000l;
-
-    private static final Logger logger = LoggerFactory.getLogger(TokenRequest.class);
-
-    private static final Map<String, Object> clientConfig = Config.getInstance().getJsonMapConfig(ClientConfig.CONFIG_NAME);
-
-
     public KeyRequest(String kid) {
         this.kid = kid;
     }
@@ -153,29 +139,5 @@ public class KeyRequest {
 
     public void setKid(String kid) {
         this.kid = kid;
-    }
-
-
-    public Long getConnectionTokenTimeout() {
-        if (this.connectionTimeout == null) {
-            this.connectionTimeout = getTimeout(CONNECTION_TIMEOUT, defaultConnectionTimeout);
-        }
-        return this.connectionTimeout;
-    }
-
-    public void setConnectionTokenTimeout(Long connectionTokenTimeout) {
-        this.connectionTimeout = connectionTokenTimeout;
-    }
-
-    private long getTimeout(String timeoutKey, long defaultValue) {
-        try {
-            Map<String, Object> oauthConfig = (Map<String, Object>) clientConfig.get(ClientConfig.OAUTH);
-            Map<String, Object> keyConfig = (Map<String, Object>) oauthConfig.get(ClientConfig.KEY);
-            Integer timeout = (Integer) keyConfig.get(timeoutKey);
-            return timeout == null ? defaultValue : timeout;
-        } catch (NullPointerException e) {
-            logger.error("Nullpointer in config object: " + e);
-        }
-        return defaultValue;
     }
 }
