@@ -459,7 +459,7 @@ public class OauthHelper {
         try {
             ClientRequest request = new ClientRequest().setPath(keyRequest.getUri()).setMethod(Methods.GET);
             final AtomicReference<ClientResponse> reference = new AtomicReference<>();
-            if (keyRequest.getClientId() != null) {
+            if (keyRequest.getClientId()!=null) {
                 request.getRequestHeaders().put(Headers.AUTHORIZATION, getBasicAuthHeader(keyRequest.getClientId(), keyRequest.getClientSecret()));
             }
             String host = getHost(keyRequest, envTag);

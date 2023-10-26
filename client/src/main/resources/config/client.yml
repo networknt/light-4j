@@ -77,8 +77,6 @@ oauth:
       client_secret: f6h1FTI8Q3-7UScPZDzfXA
       # set to true if the oauth2 provider supports HTTP/2
       enableHttp2: true
-      # connection timeout to key service in milliseconds
-      connectionTimeout: true
   # sign endpoint configuration
   sign:
     # token server url. The default port number for token service is 6882.
