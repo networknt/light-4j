@@ -36,6 +36,11 @@ public final class ClientConfig {
     public static final String TOKEN_RENEW_BEFORE_EXPIRED = "tokenRenewBeforeExpired";
     public static final String EXPIRED_REFRESH_RETRY_DELAY = "expiredRefreshRetryDelay";
     public static final String EARLY_REFRESH_RETRY_DELAY = "earlyRefreshRetryDelay";
+    public static final String TOKEN_CONNECTION_TIMEOUT = "connectionTimeout";
+    public static final String POPULATE_TOKEN_TIMEOUT = "populateTokenTimeout";
+    public static final String KEY_CONNECTION_TIMEOUT = "connectionTimeout";
+    public static final String POPULATE_KEY_TIMEOUT = "populateKeyTimeout";
+    public static final String USE_REAL_HOSTNAME_KEY_SERVICE = "useRealHostName";
     public static final int DEFAULT_BUFFER_SIZE = 24; // 24*1024 buffer size will be good for most of the app.
     public static final int DEFAULT_ERROR_THRESHOLD = 5;
     public static final int DEFAULT_TIMEOUT = 3000;
@@ -46,11 +51,6 @@ public final class ClientConfig {
     public static final long DEFAULT_CONNECTION_EXPIRE_TIME = 1000000;
     public static final int DEFAULT_MAX_CONNECTION_PER_HOST = 1000;
     public static final int DEFAULT_MIN_CONNECTION_PER_HOST = 250;
-    public static final long DEFAULT_TOKEN_CONNECTION_TIMEOUT= 2000;
-    public static final long DEFAULT_POPULATE_TOKEN_TIMEOUT = 4000;
-    public static final long DEFAULT_KEY_CONNECTION_TIMEOUT= 2000;
-    public static final long DEFAULT_POPULATE_KEY_TIMEOUT = 4000;
-    public static final boolean DEFAULT_USE_REAL_HOSTNAME_KEY_SERVICE = false;
 
     private static final String BUFFER_SIZE = "bufferSize";
     private static final String ERROR_THRESHOLD = "errorThreshold";
@@ -60,11 +60,6 @@ public final class ClientConfig {
     private static final String CONNECTION_EXPIRE_TIME = "connectionExpireTime";
     private static final String MAX_CONNECTION_NUM_PER_HOST = "maxConnectionNumPerHost";
     private static final String MIN_CONNECTION_NUM_PER_HOST = "minConnectionNumPerHost";
-    private static final String TOKEN_CONNECTION_TIMEOUT = "connectionTimeout";
-    private static final String POPULATE_TOKEN_TIMEOUT = "populateTokenTimeout";
-    private static final String KEY_CONNECTION_TIMEOUT = "connectionTimeout";
-    private static final String POPULATE_KEY_TIMEOUT = "populateKeyTimeout";
-    private static final String USE_REAL_HOSTNAME_KEY_SERVICE = "useRealHostName";
 
     private final Config config;
     private final Map<String, Object> mappedConfig;
@@ -85,12 +80,6 @@ public final class ClientConfig {
     private long connectionExpireTime = DEFAULT_CONNECTION_EXPIRE_TIME;
     private int maxConnectionNumPerHost = DEFAULT_MAX_CONNECTION_PER_HOST;
     private int minConnectionNumPerHost = DEFAULT_MIN_CONNECTION_PER_HOST;
-    private long tokenConnectionTimeout = DEFAULT_TOKEN_CONNECTION_TIMEOUT;
-    private long populateTokenTimeout = DEFAULT_POPULATE_TOKEN_TIMEOUT;
-    private long keyConnectionTimeout = DEFAULT_KEY_CONNECTION_TIMEOUT;
-    private long populateKeyTimeout = DEFAULT_POPULATE_KEY_TIMEOUT;
-    private boolean useRealHostNameKeyService = DEFAULT_USE_REAL_HOSTNAME_KEY_SERVICE;
-
 
 
     private static ClientConfig instance;
@@ -106,7 +95,6 @@ public final class ClientConfig {
             setRequestConfig();
             setDerefConfig();
             setSignConfig();
-            setKeyConfig();
         }
     }
 
@@ -174,13 +162,6 @@ public final class ClientConfig {
         Map<String, Object> oauthConfig = (Map<String, Object>)mappedConfig.get(OAUTH);
         if (oauthConfig != null) {
             tokenConfig = (Map<String, Object>)oauthConfig.get(TOKEN);
-
-            if (tokenConfig.containsKey(TOKEN_CONNECTION_TIMEOUT)) {
-                tokenConnectionTimeout = (long) tokenConfig.get(TOKEN_CONNECTION_TIMEOUT);
-            }
-            if (tokenConfig.containsKey(POPULATE_TOKEN_TIMEOUT)) {
-                populateTokenTimeout = (long) tokenConfig.get(POPULATE_TOKEN_TIMEOUT);
-            }
         }
     }
 
@@ -197,25 +178,6 @@ public final class ClientConfig {
         if (oauthConfig != null) {
             signConfig = (Map<String, Object>)oauthConfig.get(SIGN);
         }
-    }
-
-    private void setKeyConfig() {
-        Map<String, Object> oauthConfig = (Map<String, Object>)mappedConfig.get(OAUTH);
-        if (oauthConfig != null) {
-            keyConfig = (Map<String, Object>)oauthConfig.get(KEY);
-
-            if (keyConfig.containsKey(KEY_CONNECTION_TIMEOUT)) {
-               keyConnectionTimeout = Long.parseLong(keyConfig.get(KEY_CONNECTION_TIMEOUT).toString());
-            }
-            if (keyConfig.containsKey(POPULATE_KEY_TIMEOUT)) {
-                populateKeyTimeout = Long.parseLong(keyConfig.get(POPULATE_KEY_TIMEOUT).toString());;
-            }
-            if (keyConfig.containsKey(USE_REAL_HOSTNAME_KEY_SERVICE)) {
-                useRealHostNameKeyService = (boolean) keyConfig.get(USE_REAL_HOSTNAME_KEY_SERVICE);
-            }
-        }
-
-
     }
 
     public int getBufferSize() {
@@ -244,10 +206,6 @@ public final class ClientConfig {
 
     public Map<String, Object> getSignConfig() {
         return signConfig;
-    }
-
-    public Map<String, Object> getKeyConfig() {
-        return keyConfig;
     }
 
     public int getTimeout() {
@@ -288,26 +246,6 @@ public final class ClientConfig {
 
     public int getMinConnectionNumPerHost() {
         return minConnectionNumPerHost;
-    }
-
-    public long getTokenConnectionTimeout() {
-        return tokenConnectionTimeout;
-    }
-
-    public long getPopulateTokenTimeout() {
-        return populateTokenTimeout;
-    }
-
-    public long getKeyConnectionTimeout() {
-        return keyConnectionTimeout;
-    }
-
-    public long getPopulateKeyTimeout() {
-        return populateKeyTimeout;
-    }
-
-    public boolean useRealHostNameKeyService() {
-        return useRealHostNameKeyService;
     }
 
 }

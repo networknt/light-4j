@@ -415,8 +415,8 @@ public class OauthHelper {
         ClientConnection connection = null;
         SimpleConnectionHolder.ConnectionToken borrowToken = null;
 
-        long connectionTimeout = Math.max(2, ClientConfig.get().getKeyConnectionTimeout() / 1000);
-        long keyRequestTimeout = Math.max(2, ClientConfig.get().getPopulateKeyTimeout() / 1000);
+        long connectionTimeout = Math.max(2, keyRequest.getKeyConnectionTimeout() / 1000);
+        long populateKeyTimeout = Math.max(2, keyRequest.getPopulateKeyTimeout() / 1000);
 
         final AtomicReference<ClientResponse> reference;
         try {
@@ -434,7 +434,7 @@ public class OauthHelper {
                 logger.error("Error: both server_url and serviceId are not configured in client.yml for " + keyRequest.getClass());
                 throw new ClientException("both server_url and serviceId are not configured in client.yml for " + keyRequest.getClass());
             }
-            reference = getKeyServiceResponse(keyRequest, connection, client, latch, keyRequestTimeout, envTag);
+            reference = getKeyServiceResponse(keyRequest, connection, client, latch, populateKeyTimeout, envTag);
 
         } catch (Exception e) {
             logger.error("Failed to establish connection to " + keyRequest.getServerUrl(), e);
@@ -453,7 +453,7 @@ public class OauthHelper {
             ClientConnection connection,
             Http2Client client,
             CountDownLatch latch,
-            long keyRequestTimeout,
+            long populateKeyTimeout,
             String envTag)
             throws ClientException {
         try {
@@ -468,14 +468,14 @@ public class OauthHelper {
 
             connection.sendRequest(request, client.createClientCallback(reference, latch));
 
-            boolean success = latch.await(keyRequestTimeout, TimeUnit.SECONDS);
+            boolean success = latch.await(populateKeyTimeout, TimeUnit.SECONDS);
             if (success) {
                 logger.debug("Successfully got response from the key service: {}", keyRequest.getServerUrl());
                 return reference;
             } else {
                 if (connection.isOpen()) IoUtils.safeClose(connection);
                 throw new RuntimeException(
-                        String.format("The request to key service timed out after %d seconds to: %s", keyRequestTimeout, keyRequest.getServerUrl()));
+                        String.format("The request to key service timed out after %d seconds to: %s", populateKeyTimeout, keyRequest.getServerUrl()));
             }
         } catch (Exception e) {
             logger.error("Exception: ", e);
@@ -839,7 +839,7 @@ public class OauthHelper {
     }
 
     private static String getHost(KeyRequest keyRequest, String envTag) {
-        boolean useRealHostName = ClientConfig.get().useRealHostNameKeyService();
+        boolean useRealHostName = keyRequest.isUseRealHostNameKeyService();
         String host = "localhost";
         if (useRealHostName) {
             try {

@@ -56,6 +56,12 @@ oauth:
       client_secret: f6h1FTI8Q3-7UScPZDzfXA
       # set to true if the oauth2 provider supports HTTP/2
       enableHttp2: true
+      # connection timeout to key service in milliseconds
+      connectionTimeout: 2000
+      # request timeout for the key service in milliseconds
+      populateKeyTimeout: 6000
+      # real hostname is sent to the key service in the HOST http header, when set to true. Default value sent is "localhost"
+      useRealHostName: true
   # sign endpoint configuration
   sign:
     # token server url. The default port number for token service is 6882. If this url exists, it will be used.
@@ -86,6 +92,12 @@ oauth:
       client_secret: f6h1FTI8Q3-7UScPZDzfXA
       # set to true if the oauth2 provider supports HTTP/2
       enableHttp2: true
+      # connection timeout to key service in milliseconds
+      connectionTimeout: 2000
+      # request timeout for the key service in milliseconds
+      populateKeyTimeout: 6000
+      # real hostname is sent to the key service in the HOST http header, when set to true. Default value sent is "localhost"
+      useRealHostName: true
   # de-ref by reference token to JWT token. It is separate service as it might be the external OAuth 2.0 provider.
   deref:
     # Token service server url, this might be different than the above token server url. The static url will be used if it is configured.

@@ -85,6 +85,14 @@ public class KeyRequest {
     protected boolean enableHttp2;
     protected String kid;
 
+    protected static final Long DEFAULT_KEY_CONNECTION_TIMEOUT = 2000L;
+    protected static final Long DEFAULT_POPULATE_KEY_TIMEOUT = 4000L;
+    protected static final Boolean DEFAULT_USE_REAL_HOSTNAME_KEY_SERVICE = false;
+
+    protected Long keyConnectionTimeout = DEFAULT_KEY_CONNECTION_TIMEOUT;
+    protected Long populateKeyTimeout = DEFAULT_POPULATE_KEY_TIMEOUT;
+    protected Boolean useRealHostNameKeyService = DEFAULT_USE_REAL_HOSTNAME_KEY_SERVICE;
+
     public KeyRequest(String kid) {
         this.kid = kid;
     }
@@ -139,5 +147,35 @@ public class KeyRequest {
 
     public void setKid(String kid) {
         this.kid = kid;
+    }
+
+    public Long getKeyConnectionTimeout() { return this.keyConnectionTimeout; }
+
+    public void setKeyConnectionTimeout(Long keyConnectionTimeout) {
+        if (keyConnectionTimeout == null) {
+            this.keyConnectionTimeout = DEFAULT_KEY_CONNECTION_TIMEOUT;
+        } else {
+            this.keyConnectionTimeout = keyConnectionTimeout;
+        }
+    }
+
+    public Long getPopulateKeyTimeout() { return populateKeyTimeout; }
+
+    public void setPopulateKeyTimeout(Long populateKeyTimeout) {
+        if (populateKeyTimeout == null) {
+            this.populateKeyTimeout = DEFAULT_POPULATE_KEY_TIMEOUT;
+        } else {
+            this.populateKeyTimeout = populateKeyTimeout;
+        }
+    }
+
+    public Boolean isUseRealHostNameKeyService() { return useRealHostNameKeyService; }
+
+    public void setUseRealHostNameKeyService(Boolean useRealHostNameKeyService) {
+        if (useRealHostNameKeyService == null) {
+            this.useRealHostNameKeyService = DEFAULT_USE_REAL_HOSTNAME_KEY_SERVICE;
+        } else {
+            this.useRealHostNameKeyService = useRealHostNameKeyService;
+        }
     }
 }

@@ -122,6 +122,11 @@ public class TokenRequest {
      */
     private String csrf;
 
+    private static final Long DEFAULT_TOKEN_CONNECTION_TIMEOUT = 2000L;
+    private long tokenConnectionTimeout = DEFAULT_TOKEN_CONNECTION_TIMEOUT;
+    protected static final Long DEFAULT_POPULATE_TOKEN_TIMEOUT = 4000L;
+    private Long populateTokenTimeout = DEFAULT_POPULATE_TOKEN_TIMEOUT;
+
     public TokenRequest() {
     }
 
@@ -188,6 +193,26 @@ public class TokenRequest {
     public String getCsrf() { return csrf; }
 
     public void setCsrf(String csrf) { this.csrf = csrf; }
+
+    public long getTokenConnectionTimeout() { return tokenConnectionTimeout; }
+
+    public void setTokenConnectionTimeout(Long tokenConnectionTimeout) {
+        if (tokenConnectionTimeout == null) {
+            this.tokenConnectionTimeout = DEFAULT_TOKEN_CONNECTION_TIMEOUT;
+        } else {
+            this.tokenConnectionTimeout = tokenConnectionTimeout;
+        }
+    }
+
+    public Long getPopulateTokenTimeout() { return populateTokenTimeout; }
+
+    public void setPopulateTokenTimeout(Long populateTokenTimeout) {
+        if (populateTokenTimeout == null) {
+            this.populateTokenTimeout = DEFAULT_POPULATE_TOKEN_TIMEOUT;
+        } else {
+            this.populateTokenTimeout = populateTokenTimeout;
+        }
+    }
 
 
 }
