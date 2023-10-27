@@ -68,7 +68,6 @@ public final class ClientConfig {
     private Map<String, Object> secretConfig;
     private Map<String, Object> derefConfig;
     private Map<String, Object> signConfig;
-    private Map<String, Object> keyConfig;
 
     private int bufferSize = DEFAULT_BUFFER_SIZE;
     private int resetTimeout = DEFAULT_RESET_TIMEOUT;
@@ -80,7 +79,6 @@ public final class ClientConfig {
     private long connectionExpireTime = DEFAULT_CONNECTION_EXPIRE_TIME;
     private int maxConnectionNumPerHost = DEFAULT_MAX_CONNECTION_PER_HOST;
     private int minConnectionNumPerHost = DEFAULT_MIN_CONNECTION_PER_HOST;
-
 
     private static ClientConfig instance;
 
@@ -165,7 +163,6 @@ public final class ClientConfig {
         }
     }
 
-
     private void setDerefConfig() {
         Map<String, Object> oauthConfig = (Map<String, Object>)mappedConfig.get(OAUTH);
         if (oauthConfig != null) {
@@ -247,5 +244,4 @@ public final class ClientConfig {
     public int getMinConnectionNumPerHost() {
         return minConnectionNumPerHost;
     }
-
 }
