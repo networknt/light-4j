@@ -25,18 +25,18 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>cache-manager</artifactId>
+    <artifactId>cache-explorer</artifactId>
     <packaging>jar</packaging>
-    <description>A centralized cache manager for all in-memory caches across the entire application.</description>
+    <description>A handler that expose the caches from adm endpoints.</description>
 
     <dependencies>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>config</artifactId>
+            <artifactId>cache-manager</artifactId>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>service</artifactId>
+            <artifactId>handler</artifactId>
         </dependency>
 
         <dependency>
