@@ -1,12 +1,14 @@
 package com.networknt.config;
 
 import org.junit.Before;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -16,10 +18,12 @@ import java.net.URL;
 public class ConfigAbsolutePathTest {
 
     Config config;
+    String pathTest;
 
     @Before
     public void setup() throws Exception {
 
+        pathTest = System.getProperty("light-4j-config-dir");
         System.setProperty("light-4j-config-dir", ClassLoader.getSystemResource("config/absolutePath").getPath());
         config = Config.getInstance();
 
@@ -27,6 +31,16 @@ public class ConfigAbsolutePathTest {
         PowerMockito.whenNew(FileInputStream.class)
                 .withAnyArguments()
                 .thenReturn(mockInputStream);
+
+    }
+
+    @After
+    public void tearDown() {
+        if(pathTest!=null) {
+            System.setProperty("light-4j-config-dir", pathTest);
+        } else {
+            System.clearProperty("light-4j-config-dir");
+        }
     }
 
     @Test
@@ -36,9 +50,15 @@ public class ConfigAbsolutePathTest {
                 "getConfigStream", String.class, String.class);
         getConfigStreamMethod.setAccessible(true);
 
-        getConfigStreamMethod.invoke(config,"/an/absolute/path/file.yaml", "");
+        String pathString;
+        if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+            pathString = "C:\\an\\absolute\\path\\file.yaml";
+        } else {
+            pathString = "/an/absolute/path/file.yaml";
+        }
+        getConfigStreamMethod.invoke(config, pathString, "");
 
-        PowerMockito.verifyNew(FileInputStream.class).withArguments("/an/absolute/path/file.yaml");
+        PowerMockito.verifyNew(FileInputStream.class).withArguments(pathString);
     }
 
     @Test
