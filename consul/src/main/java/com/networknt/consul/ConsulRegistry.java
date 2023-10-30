@@ -478,7 +478,8 @@ public class ConsulRegistry extends CommandFailbackRegistry {
 
                             long randomJitter = ThreadLocalRandom.current().nextLong(0, reconnectJitter);
                             Thread.sleep(reconnectInterval + randomJitter);
-                            serviceUrls = lookupServiceUpdate(protocol, serviceName);
+                            // Issue a non-blocking call so that the cache is refreshed without waiting for a timeout
+                            serviceUrls = lookupServiceUpdate(protocol, serviceName, false);
                         }
                         consulRecovery.exitRecoveryMode();
                     }
