@@ -261,6 +261,9 @@ public class OauthHelperTest {
         request.setServerUrl("http://localhost:8887");
         request.setUri("/oauth2/key");
         request.setEnableHttp2(true);
+        request.setKeyConnectionTimeout(2000L);
+        request.setPopulateKeyTimeout(4000L);
+        request.setUseRealHostNameKeyService(true);
 
         String key = OauthHelper.getKey(request);
         System.out.println("key = " + key);
@@ -274,6 +277,9 @@ public class OauthHelperTest {
         request.setServerUrl("http://localhost:8887");
         request.setUri("/oauth2/key");
         request.setEnableHttp2(true);
+        request.setKeyConnectionTimeout(2000L);
+        request.setPopulateKeyTimeout(4000L);
+        request.setUseRealHostNameKeyService(true);
 
         String key = OauthHelper.getKey(request);
         System.out.println("key = " + key);
@@ -292,4 +298,28 @@ public class OauthHelperTest {
         System.out.println("jwt = " + jwt);
     }
 
+    // Positive - To test the output of getHost() method for a valid token URL.
+    // This test assumes that useRealHostName parameter is set to true in oauth/key section in client.yml
+    @Test
+    public void testValidHost() {
+        KeyRequest request = new KeyRequest("100");
+        request.setServerUrl("https://some-oauth-server.com:8887");
+        request.setUri("/oauth2/key");
+        request.setUseRealHostNameKeyService(true);
+
+        String host = OauthHelper.getHost(request, null);
+        Assert.assertEquals("some-oauth-server.com", host);
+    }
+
+    // Negative  To test the output of getHost() method, incase the token URL configured is a malformed URL
+    @Test
+    public void testMalformedHost() {
+        KeyRequest request = new KeyRequest("100");
+        request.setServerUrl("some-oauth-server.com:8887");
+        request.setUri("/oauth2/key");
+        request.setUseRealHostNameKeyService(true);
+
+        String host = OauthHelper.getHost(request, null);
+        Assert.assertEquals("localhost", host);
+    }
 }

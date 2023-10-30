@@ -32,6 +32,10 @@ oauth:
     serviceId: com.networknt.oauth2-token-1.0.0
     # set to true if the oauth2 provider supports HTTP/2
     enableHttp2: true
+    # connection timeout to token service in milliseconds
+    connectionTimeout: 2000
+    # request timeout for the token service in milliseconds
+    populateTokenTimeout: 6000
     # the following section defines uri and parameters for authorization code grant type
     authorization_code:
       # token endpoint for authorization code grant

@@ -838,7 +838,7 @@ public class OauthHelper {
 
     }
 
-    private static String getHost(KeyRequest keyRequest, String envTag) {
+    public static String getHost(KeyRequest keyRequest, String envTag) {
         boolean useRealHostName = keyRequest.isUseRealHostNameKeyService();
         String host = "localhost";
         if (useRealHostName) {

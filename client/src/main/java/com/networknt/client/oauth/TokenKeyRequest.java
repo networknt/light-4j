@@ -84,13 +84,14 @@ public class TokenKeyRequest extends KeyRequest {
         setEnableHttp2(object != null && (Boolean) object);
         setUri(keyConfig.get(ClientConfig.URI) + "/" + kid);
         setClientId((String)keyConfig.get(ClientConfig.CLIENT_ID));
+
         if (keyConfig.containsKey(ClientConfig.KEY_CONNECTION_TIMEOUT)) {
-            setKeyConnectionTimeout(Long.valueOf((Integer)keyConfig.get(ClientConfig.KEY_CONNECTION_TIMEOUT)));
+            setKeyConnectionTimeout(Long.valueOf((Integer) keyConfig.get(ClientConfig.KEY_CONNECTION_TIMEOUT)));
         }
         if (keyConfig.containsKey(ClientConfig.POPULATE_KEY_TIMEOUT)) {
-            setPopulateKeyTimeout(Long.valueOf((Integer)keyConfig.get(ClientConfig.POPULATE_KEY_TIMEOUT)));
+            setPopulateKeyTimeout(Long.valueOf((Integer) keyConfig.get(ClientConfig.POPULATE_KEY_TIMEOUT)));
         }
-        setUseRealHostNameKeyService((Boolean)keyConfig.get(ClientConfig.USE_REAL_HOSTNAME_KEY_SERVICE));
+        setUseRealHostNameKeyService((Boolean) keyConfig.get(ClientConfig.USE_REAL_HOSTNAME_KEY_SERVICE));
     }
 
 }
