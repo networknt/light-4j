@@ -342,6 +342,7 @@ public class Server {
             if (logger.isInfoEnabled())
                 logger.info("Https port disabled.");
         }
+        logger.info("ProductName = " + getLight4jProduct() + " ProductVersion = " + getLight4jVersion() + " ServiceId = " + serverConfig.getServiceId() + " Environment = " + serverConfig.getEnvironment());
         return true;
     }
 
@@ -552,5 +553,13 @@ public class Server {
             logger.info("Could not find IP from STATUS_HOST_IP, use the InetAddress " + address);
         }
         return address;
+    }
+
+    public static String getLight4jVersion() {
+        return Server.class.getPackage().getImplementationVersion();
+    }
+
+    public static String getLight4jProduct() {
+        return Server.class.getPackage().getImplementationTitle();
     }
 }

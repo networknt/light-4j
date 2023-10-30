@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
+import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
@@ -46,7 +47,6 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.*;
 
-import static com.networknt.server.Server.ENV_PROPERTY_KEY;
 import static com.networknt.server.Server.STARTUP_CONFIG_NAME;
 
 
@@ -198,7 +198,7 @@ public class DefaultConfigLoader implements IConfigLoader{
         String configServerConfigsPath = CONFIG_SERVER_CONFIGS_CONTEXT_ROOT + queryParameters;
         //get service configs and put them in config cache
         Map<String, Object> serviceConfigs = getServiceConfigs(configServerConfigsPath);
-        if(logger.isDebugEnabled()) logger.debug("serviceConfigs received from Config Server: ", JsonMapper.toJson(serviceConfigs));
+        if(logger.isDebugEnabled()) logger.debug("serviceConfigs received from Config Server: " + JsonMapper.toJson(serviceConfigs));
 
         // pass serviceConfigs through Config.yaml's load method so that it can decrypt any encrypted values
         DumperOptions options = new DumperOptions();
@@ -213,20 +213,20 @@ public class DefaultConfigLoader implements IConfigLoader{
 
     /**
      * load config/cert files from light config server
-     * @param configPath
-     * @param contextRoot
+     * @param configPath config path
+     * @param contextRoot context root
      */
     private void loadFiles(String configPath, String contextRoot) {
         //config Server Files Path
         String configServerFilesPath = contextRoot + configPath;
         //get service files and put them in config dir
         Map<String, Object> serviceFiles = getServiceConfigs(configServerFilesPath);
-        if(logger.isDebugEnabled()) logger.debug("loadFiles:", JsonMapper.toJson(serviceFiles));
+        if(logger.isDebugEnabled()) logger.debug("loadFiles: " + JsonMapper.toJson(serviceFiles));
         try {
             Path filePath = Paths.get(targetConfigsDirectory);
             if (!Files.exists(filePath)) {
                 Files.createDirectories(filePath);
-                logger.info("target configs directory created :", targetConfigsDirectory);
+                logger.info("target configs directory created : " + targetConfigsDirectory);
             }
             Base64.Decoder decoder = Base64.getMimeDecoder();
             for (String fileName : serviceFiles.keySet()) {
@@ -281,6 +281,11 @@ public class DefaultConfigLoader implements IConfigLoader{
                 logger.error("Failed to load configs from config server" + statusCode + ":" + body);
                 throw new Exception("Failed to load configs from config server: " + statusCode);
             } else {
+                // validate the headers against the product id and version. If they are not matched, throw an exception.
+                if(!isHeadersMatchedJar(response.headers())) {
+                    logger.error("The headers in the config server response are not matched with the jar file.");
+                    throw new Exception("The headers in the config server response are not matched with the jar file.");
+                }
                 configs = mapper.readValue(body, new TypeReference<Map<String, Object>>() {});
                 processNestedMap(configs);
             }
@@ -450,5 +455,25 @@ public class DefaultConfigLoader implements IConfigLoader{
             s = System.getenv(key.toUpperCase().replaceAll("-", "_"));
         }
         return s;
+    }
+
+    private static boolean isHeadersMatchedJar(HttpHeaders headers) {
+        String productId = headers.firstValue(PRODUCT_ID).orElse(null);
+        String productVersion = headers.firstValue(PRODUCT_VERSION).orElse(null);
+        String apiId = headers.firstValue(API_ID).orElse(null);
+        String apiVersion = headers.firstValue(API_VERSION).orElse(null);
+        String envTag = headers.firstValue(ENV_TAG).orElse(null);
+        if(logger.isTraceEnabled()) logger.trace("headers productId = " + productId + " productVersion = " + productVersion + " apiId = " + apiId + " apiVersion = " + apiVersion + " envTag = " + envTag);
+        // the above headers are sent to the config server except productVersion that might be current/default version.
+        // as the productId and productVersion are embedded in the jar file, we need to retrieve them from the jar.
+        if(productId != null && productVersion != null && apiId != null && apiVersion != null && envTag != null) {
+            if(logger.isInfoEnabled()) logger.trace("jar productId = " + Server.getLight4jProduct() + " productVersion = " + Server.getLight4jVersion() + " startup apiId = " + startupConfig.get(API_ID) + " apiVersion = " + startupConfig.get(API_VERSION) + " envTag = " + lightEnv);
+            return productId.equals(Server.getLight4jProduct()) &&
+                     productVersion.equals(Server.getLight4jVersion()) &&
+                     apiId.equals(startupConfig.get(API_ID)) &&
+                     apiVersion.equals(startupConfig.get(API_VERSION)) &&
+                     envTag.equals(lightEnv);
+        }
+        return false;
     }
 }
