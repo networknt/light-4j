@@ -63,7 +63,6 @@ public class ConsulClientImpl implements ConsulClient {
 	private static final int UNUSUAL_STATUS_CODE = 300;
 	private Http2Client client = Http2Client.getInstance();
 
-	private OptionMap optionMap;
 	private URI uri;
 	private String wait = "600s";
 	private String timeoutBuffer = "5s";
@@ -77,7 +76,6 @@ public class ConsulClientImpl implements ConsulClient {
 	 */
 	public ConsulClientImpl() {
 		String consulUrl = config.getConsulUrl().toLowerCase();
-		optionMap =  isHttp2() ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY;
 		logger.debug("Consul URL = {}", consulUrl);
 		if(config.getWait() != null && config.getWait().length() > 2) wait = config.getWait();
 		logger.debug("wait = {}", wait);
