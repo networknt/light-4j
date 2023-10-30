@@ -122,4 +122,5 @@ public class ConsulConfig {
     public long getMaxAttemptsBeforeShutdown() { return maxAttemptsBeforeShutdown; }
 
     public boolean isShutdownIfThreadFrozen() { return shutdownIfThreadFrozen; }
+
 }
