@@ -102,9 +102,13 @@ public class ConsulClientImpl implements ConsulClient {
 		logger.trace("checkPass serviceId = {}", serviceId);
 		String path = "/v1/agent/check/pass/" + "check-" + serviceId;
 		ClientConnection connection = null;
+		SimpleConnectionHolder.ConnectionToken connectionToken = null;
+
 		try {
-			connection = client.safeBorrowConnection(
-					config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+			logger.debug("Getting connection from pool with {}", uri);
+			connectionToken = pool.borrow(config.getConnectionTimeout(), isHttp2());
+			connection = (ClientConnection) connectionToken.getRawConnection();
+
 			AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, null, config.getRequestTimeout());
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= UNUSUAL_STATUS_CODE){
@@ -114,7 +118,7 @@ public class ConsulClientImpl implements ConsulClient {
 		} catch (Exception e) {
 			logger.error("CheckPass request exception", e);
 		} finally {
-			client.returnConnection(connection);
+			pool.restore(connectionToken);
 		}
 	}
 
@@ -123,9 +127,13 @@ public class ConsulClientImpl implements ConsulClient {
 		logger.trace("checkFail serviceId = {}", serviceId);
 		String path = "/v1/agent/check/fail/" + "check-" + serviceId;
 		ClientConnection connection = null;
+		SimpleConnectionHolder.ConnectionToken connectionToken = null;
+
 		try {
-			connection = client.safeBorrowConnection(
-					config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+			logger.debug("Getting connection from pool with {}", uri);
+			connectionToken = pool.borrow(config.getConnectionTimeout(), isHttp2());
+			connection = (ClientConnection) connectionToken.getRawConnection();
+
 			AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, null, config.getRequestTimeout());
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= UNUSUAL_STATUS_CODE){
@@ -134,7 +142,7 @@ public class ConsulClientImpl implements ConsulClient {
 		} catch (Exception e) {
 			logger.error("CheckFail request exception", e);
 		} finally {
-			client.returnConnection(connection);
+			pool.restore(connectionToken);
 		}
 	}
 
@@ -143,9 +151,13 @@ public class ConsulClientImpl implements ConsulClient {
 		String json = service.toString();
 		String path = "/v1/agent/service/register";
 		ClientConnection connection = null;
+		SimpleConnectionHolder.ConnectionToken connectionToken = null;
+
 		try {
-			connection = client.safeBorrowConnection(
-					config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
+			logger.debug("Getting connection from pool with {}", uri);
+			connectionToken = pool.borrow(config.getConnectionTimeout(), isHttp2());
+			connection = (ClientConnection) connectionToken.getRawConnection();
+
 			AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, json, config.getRequestTimeout());
 			int statusCode = reference.get().getResponseCode();
 			if(statusCode >= UNUSUAL_STATUS_CODE){
@@ -155,7 +167,7 @@ public class ConsulClientImpl implements ConsulClient {
 			logger.error("Failed to register on Consul, Exception:", e);
 			throw new RuntimeException(e.getMessage());
 		} finally {
-			client.returnConnection(connection);
+			pool.restore(connectionToken);
 		}
 	}
 
@@ -163,18 +175,22 @@ public class ConsulClientImpl implements ConsulClient {
 	public void unregisterService(String serviceId, String token) {
 		String path = "/v1/agent/service/deregister/" + serviceId;
 		ClientConnection connection = null;
+		SimpleConnectionHolder.ConnectionToken connectionToken = null;
+
 		try {
-			connection = client.safeBorrowConnection(
-					config.getConnectionTimeout(), uri, Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, optionMap);
-	        final AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, null, config.getRequestTimeout());
-            int statusCode = reference.get().getResponseCode();
-            if(statusCode >= UNUSUAL_STATUS_CODE){
-                logger.error("Failed to unregister on Consul, body = {}", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
-            }
+			logger.debug("Getting connection from pool with {}", uri);
+			connectionToken = pool.borrow(config.getConnectionTimeout(), isHttp2());
+			connection = (ClientConnection) connectionToken.getRawConnection();
+
+			final AtomicReference<ClientResponse> reference = send(connection, Methods.PUT, path, token, null, config.getRequestTimeout());
+			int statusCode = reference.get().getResponseCode();
+			if(statusCode >= UNUSUAL_STATUS_CODE){
+				logger.error("Failed to unregister on Consul, body = {}", reference.get().getAttachment(Http2Client.RESPONSE_BODY));
+			}
 		} catch (Exception e) {
 			logger.error("Failed to unregister on Consul, Exception:", e);
 		} finally {
-			client.returnConnection(connection);
+			pool.restore(connectionToken);
 		}
 	}
 
@@ -351,7 +367,7 @@ public class ConsulClientImpl implements ConsulClient {
 		if (isNotTimeout) {
 			logger.debug("The response from Consul: {} = {}", uri, reference != null ? reference.get() : null);
 		} else {
-            // - If a timeout occurs, it is not known whether Consul is still alive.
+			// - If a timeout occurs, it is not known whether Consul is still alive.
 			// - Close the connection to force reconnect: The next time this connection is borrowed from the pool, a new
 			//   connection will be created as the one returned is not open.
 			if(connection != null && connection.isOpen()) IoUtils.safeClose(connection);
@@ -366,7 +382,7 @@ public class ConsulClientImpl implements ConsulClient {
 	 * the multiplexing of HTTP/2 whenever possible. In the scenario that the user miss the enableHttp2 flag in the
 	 * consul.yml config file, we will force the Consul client to use HTTP/2 if the consulUrl is starting with "https".
 	 *
- 	 * @return true if we want to use HTTP/2 to connect to the Consul.
+	 * @return true if we want to use HTTP/2 to connect to the Consul.
 	 */
 	private boolean isHttp2() {
 		return config.isEnableHttp2() || config.getConsulUrl().toLowerCase().startsWith("https");
