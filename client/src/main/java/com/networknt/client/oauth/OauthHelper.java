@@ -20,6 +20,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
+import com.networknt.client.simplepool.SimpleConnectionHolder;
+import com.networknt.client.simplepool.SimpleConnectionPool;
+import com.networknt.client.simplepool.undertow.SimpleClientConnectionMaker;
 import com.networknt.cluster.Cluster;
 import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
@@ -42,7 +45,9 @@ import org.xnio.OptionMap;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -81,6 +86,9 @@ public class OauthHelper {
     public static final String STATUS_CLIENT_CREDENTIALS_TOKEN_NOT_AVAILABLE = "ERR10009";
 
     private static final Logger logger = LoggerFactory.getLogger(OauthHelper.class);
+
+    private static final SimpleConnectionPool pool = new SimpleConnectionPool(
+            ClientConfig.get().getConnectionExpireTime(), ClientConfig.get().getConnectionPoolSize(), SimpleClientConnectionMaker.instance());
 
     /**
      * @deprecated As of release 1.5.29, replaced with @link #getTokenResult(TokenRequest tokenRequest)
@@ -404,40 +412,75 @@ public class OauthHelper {
     public static String getKey(KeyRequest keyRequest, String envTag) throws ClientException {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
-        final ClientConnection connection;
+        ClientConnection connection = null;
+        SimpleConnectionHolder.ConnectionToken borrowToken = null;
+
+        long connectionTimeout = Math.max(2, keyRequest.getKeyConnectionTimeout() / 1000);
+        long populateKeyTimeout = Math.max(2, keyRequest.getPopulateKeyTimeout() / 1000);
+
+        final AtomicReference<ClientResponse> reference;
         try {
             if(keyRequest.getServerUrl() != null) {
-                connection = client.connect(new URI(keyRequest.getServerUrl()), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, keyRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+                URI keyURL = new URI(keyRequest.getServerUrl());
+                borrowToken = pool.borrow(connectionTimeout, keyRequest.isEnableHttp2(), keyURL);
+                connection = (ClientConnection) borrowToken.getRawConnection();
             } else if(keyRequest.getServiceId() != null) {
                 Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
                 String url = cluster.serviceToUrl("https", keyRequest.getServiceId(), envTag, null);
-                connection = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, keyRequest.enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY).get();
+                borrowToken = pool.borrow(connectionTimeout, keyRequest.isEnableHttp2(), new URI(url));
+                connection = (ClientConnection) borrowToken.getRawConnection();
             } else {
                 // both server_url and serviceId are empty in the config.
                 logger.error("Error: both server_url and serviceId are not configured in client.yml for " + keyRequest.getClass());
                 throw new ClientException("both server_url and serviceId are not configured in client.yml for " + keyRequest.getClass());
             }
+            reference = getKeyServiceResponse(keyRequest, connection, client, latch, populateKeyTimeout, envTag);
+
         } catch (Exception e) {
+            logger.error("Failed to establish connection to " + keyRequest.getServerUrl(), e);
             throw new ClientException(e);
+        } finally {
+            if (connection != null && connection.isOpen())
+                IoUtils.safeClose(connection);
+            // restore token
+            pool.restore(borrowToken);
         }
-        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        return reference.get().getAttachment(Http2Client.RESPONSE_BODY);
+    }
+
+    private static AtomicReference<ClientResponse> getKeyServiceResponse(
+            KeyRequest keyRequest,
+            ClientConnection connection,
+            Http2Client client,
+            CountDownLatch latch,
+            long populateKeyTimeout,
+            String envTag)
+            throws ClientException {
         try {
             ClientRequest request = new ClientRequest().setPath(keyRequest.getUri()).setMethod(Methods.GET);
-
+            final AtomicReference<ClientResponse> reference = new AtomicReference<>();
             if (keyRequest.getClientId()!=null) {
                 request.getRequestHeaders().put(Headers.AUTHORIZATION, getBasicAuthHeader(keyRequest.getClientId(), keyRequest.getClientSecret()));
             }
-            request.getRequestHeaders().put(Headers.HOST, "localhost");
+            String host = getHost(keyRequest, envTag);
+            request.getRequestHeaders().put(Headers.HOST, host);
             adjustNoChunkedEncoding(request, "");
+
             connection.sendRequest(request, client.createClientCallback(reference, latch));
-            latch.await();
+
+            boolean success = latch.await(populateKeyTimeout, TimeUnit.SECONDS);
+            if (success) {
+                logger.debug("Successfully got response from the key service: {}", keyRequest.getServerUrl());
+                return reference;
+            } else {
+                if (connection.isOpen()) IoUtils.safeClose(connection);
+                throw new RuntimeException(
+                        String.format("The request to key service timed out after %d seconds to: %s", populateKeyTimeout, keyRequest.getServerUrl()));
+            }
         } catch (Exception e) {
             logger.error("Exception: ", e);
             throw new ClientException(e);
-        } finally {
-            IoUtils.safeClose(connection);
         }
-        return reference.get().getAttachment(Http2Client.RESPONSE_BODY);
     }
 
     /**
@@ -793,5 +836,25 @@ public class OauthHelper {
             request.getRequestHeaders().put(Headers.CONTENT_LENGTH, contentLength);
         }
 
+    }
+
+    public static String getHost(KeyRequest keyRequest, String envTag) {
+        boolean useRealHostName = keyRequest.isUseRealHostNameKeyService();
+        String host = "localhost";
+        if (useRealHostName) {
+            try {
+                if (keyRequest.getServerUrl() != null) {
+                    URL keyURL = new URL(keyRequest.getServerUrl());
+                    host = keyURL.getHost();
+                } else if (keyRequest.getServiceId() != null) {
+                    Cluster cluster = SingletonServiceFactory.getBean(Cluster.class);
+                    URL keyURL = new URL(cluster.serviceToUrl("https", keyRequest.getServiceId(), envTag, null));
+                    host = keyURL.getHost();
+                }
+            } catch (MalformedURLException e) {
+                logger.error("Invalid host url {}, using 'localhost' for the HOST header", host, e);
+            }
+        }
+        return host;
     }
 }
