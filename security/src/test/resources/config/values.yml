@@ -1,0 +1,13 @@
+# service.yml
+service.singletons:
+  - com.networknt.cache.CacheManager:
+      - com.networknt.cache.CaffeineCacheManager
+
+# cache.yml
+cache.caches:
+  - cacheName: jwt
+    expiryInMinutes: 15
+    maxSize: 100
+  - cacheName: jwk
+    expiryInMinutes: 129600
+    maxSize: 100
