@@ -41,16 +41,16 @@ public final class SimpleConnectionPool {
     public SimpleConnectionHolder.ConnectionToken borrow(long createConnectionTimeout, boolean isHttp2, URI uri)
         throws RuntimeException
     {
-        if(!pools.containsKey(uri)) {
-            synchronized (pools) {
-                if (!pools.containsKey(uri))
-                    pools.put(uri, new SimpleURIConnectionPool(uri, expireTime, poolSize, connectionMaker));
-            }
-        }
+        if(!pools.containsKey(uri))
+            pools.computeIfAbsent(uri, pool -> new SimpleURIConnectionPool(uri, expireTime, poolSize, connectionMaker));
+
         return pools.get(uri).borrow(createConnectionTimeout, isHttp2);
     }
 
     public void restore(SimpleConnectionHolder.ConnectionToken connectionToken) {
+        if(connectionToken == null)
+            return;
+
         if(pools.containsKey(connectionToken.uri()))
             pools.get(connectionToken.uri()).restore(connectionToken);
     }
