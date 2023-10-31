@@ -36,6 +36,11 @@ public final class ClientConfig {
     public static final String TOKEN_RENEW_BEFORE_EXPIRED = "tokenRenewBeforeExpired";
     public static final String EXPIRED_REFRESH_RETRY_DELAY = "expiredRefreshRetryDelay";
     public static final String EARLY_REFRESH_RETRY_DELAY = "earlyRefreshRetryDelay";
+    public static final String TOKEN_CONNECTION_TIMEOUT = "connectionTimeout";
+    public static final String POPULATE_TOKEN_TIMEOUT = "populateTokenTimeout";
+    public static final String KEY_CONNECTION_TIMEOUT = "connectionTimeout";
+    public static final String POPULATE_KEY_TIMEOUT = "populateKeyTimeout";
+    public static final String USE_REAL_HOSTNAME_KEY_SERVICE = "useRealHostName";
     public static final int DEFAULT_BUFFER_SIZE = 24; // 24*1024 buffer size will be good for most of the app.
     public static final int DEFAULT_ERROR_THRESHOLD = 5;
     public static final int DEFAULT_TIMEOUT = 3000;
@@ -63,6 +68,7 @@ public final class ClientConfig {
     private Map<String, Object> secretConfig;
     private Map<String, Object> derefConfig;
     private Map<String, Object> signConfig;
+
     private int bufferSize = DEFAULT_BUFFER_SIZE;
     private int resetTimeout = DEFAULT_RESET_TIMEOUT;
     private int timeout = DEFAULT_TIMEOUT;
