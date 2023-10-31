@@ -48,4 +48,16 @@ public class CaffeineCacheManager implements CacheManager {
             caches.remove(cacheName);
         }
     }
+
+    @Override
+    public int getSize(String cacheName) {
+        Cache<Object, Object> cache = caches.get(cacheName);
+        if (cache != null) {
+            return (int) cache.estimatedSize();
+        } else {
+            return 0;
+        }
+    }
+
+
 }

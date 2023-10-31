@@ -37,4 +37,5 @@ public interface CacheManager {
     void put(String cacheName, String key, Object value);
     Object get(String cacheName, String key);
     void removeCache(String cacheName);
+    int getSize(String cacheName);
 }
