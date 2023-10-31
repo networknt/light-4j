@@ -175,6 +175,7 @@
         <module>ldap-util</module>
         <module>cache-manager</module>
         <module>cache-explorer</module>
+        <module>caffeine-cache</module>
         <module>db-provider</module>
         <module>proxy-handler</module>
     </modules>
@@ -457,6 +458,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>cache-explorer</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>caffeine-cache</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
