@@ -10,6 +10,10 @@ import java.util.concurrent.TimeUnit;
 public class CaffeineCacheManager implements CacheManager {
     private final Map<String, Cache<Object, Object>> caches = new ConcurrentHashMap<>();
 
+    public CaffeineCacheManager() {
+        if(logger.isInfoEnabled()) logger.info("CaffeineCacheManager is constructed.");
+    }
+
     @Override
     public void addCache(String cacheName, long maximumSize, long expiryInMinutes) {
         Cache<Object, Object> cache = Caffeine.newBuilder()
@@ -20,8 +24,20 @@ public class CaffeineCacheManager implements CacheManager {
     }
 
     @Override
-    public Cache<Object, Object> getCache(String cacheName) {
-        return caches.get(cacheName);
+    public void put(String cacheName, String key, Object value) {
+        Cache<Object, Object> cache = caches.get(cacheName);
+        if (cache != null) {
+            cache.put(key, value);
+        }
+    }
+
+    @Override
+    public Object get(String cacheName, String key) {
+        Cache<Object, Object> cache = caches.get(cacheName);
+        if (cache != null) {
+            return cache.getIfPresent(key);
+        }
+        return null;
     }
 
     @Override
