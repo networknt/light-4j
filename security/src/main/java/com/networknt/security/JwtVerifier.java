@@ -18,6 +18,7 @@ package com.networknt.security;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.networknt.cache.CacheManager;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.oauth.OauthHelper;
 import com.networknt.client.oauth.SignKeyRequest;
@@ -62,7 +63,7 @@ import java.util.stream.Stream;
  * is to pass the framework specific security configuration so that we can eliminate the security.yml for token
  * verification.
  * <p>
- * The JwtHelper will be stay for a while for backward compatibility reason as it is a public class and users might
+ * The JwtHelper will be stayed for a while for backward compatibility reason as it is a public class and users might
  * use it in their application. The only thing that need to remember is to have both security.yml and openapi-security.yml
  * for the security configuration and there are overlap between these two files.
  * <p>
@@ -75,6 +76,8 @@ public class JwtVerifier extends TokenVerifier {
     static final Logger logger = LoggerFactory.getLogger(JwtVerifier.class);
     static final String GET_KEY_ERROR = "ERR10066";
 
+    public static final String JWT = "jwt";
+    public static final String JWK = "jwk";
     public static final String KID = "kid";
     public static final String SECURITY_CONFIG = "security";
     private static final int CACHE_EXPIRED_IN_MINUTES = 15;
@@ -87,10 +90,8 @@ public class JwtVerifier extends TokenVerifier {
     Boolean enableJwtCache;
     Boolean enableRelaxedKeyValidation;
     Boolean bootstrapFromKeyService;
-
-    static Cache<String, String> cache;
+    CacheManager cacheManager = CacheManager.getInstance();
     static Map<String, X509Certificate> certMap;
-    static Map<String, List<JsonWebKey>> jwksMap;
     static String audience;  // this is the audience from the client.yml with single oauth provider.
     static Map<String, String> audienceMap; // this is the audience map from the client.yml with multiple oauth providers.
     static List<String> fingerPrints;
@@ -101,13 +102,6 @@ public class JwtVerifier extends TokenVerifier {
         this.bootstrapFromKeyService = config.isBootstrapFromKeyService();
         this.enableRelaxedKeyValidation = config.isEnableRelaxedKeyValidation();
         this.enableJwtCache = config.isEnableJwtCache();
-        if (Boolean.TRUE.equals(enableJwtCache)) {
-            cache = Caffeine.newBuilder()
-                    .maximumSize(config.getJwtCacheFullSize())
-                    // assuming that the clock screw time is less than 5 minutes
-                    .expireAfterWrite(CACHE_EXPIRED_IN_MINUTES, TimeUnit.MINUTES)
-                    .build();
-        }
         // init getting JWK during the initialization. The other part is in the resolver for OAuth 2.0 provider to
         // rotate keys when the first token is received with the new kid.
         String keyResolver = config.getKeyResolver();
@@ -117,9 +111,7 @@ public class JwtVerifier extends TokenVerifier {
         // if KeyResolver is jwk and bootstrap from jwk is true, load jwk during server startup.
         if(logger.isTraceEnabled()) logger.trace("keyResolver = " + keyResolver + " bootstrapFromKeyService = " + bootstrapFromKeyService);
         if (JWT_KEY_RESOLVER_JWKS.equals(keyResolver) && bootstrapFromKeyService) {
-            jwksMap = getJsonWebKeyMap();
-        } else {
-            jwksMap = new HashMap<>();
+            getJsonWebKeyMap();
         }
     }
 
@@ -240,9 +232,9 @@ public class JwtVerifier extends TokenVerifier {
         String jwtJson = null;
         if (Boolean.TRUE.equals(enableJwtCache)) {
             if(pathPrefix != null) {
-                jwtJson = cache.getIfPresent(pathPrefix + ":" + jwt);
+                jwtJson = (String)cacheManager.get(JWT, pathPrefix + ":" + jwt);
             } else {
-                jwtJson = cache.getIfPresent(jwt);
+                jwtJson = (String)cacheManager.get(JWT, jwt);
             }
             if (jwtJson != null) {
                 try {
@@ -300,11 +292,11 @@ public class JwtVerifier extends TokenVerifier {
         claims = jwtContext.getJwtClaims();
         if (Boolean.TRUE.equals(enableJwtCache)) {
             if(pathPrefix != null) {
-                cache.put(pathPrefix + ":" + jwt, claims.toJson());
+                cacheManager.put(JWT, pathPrefix + ":" + jwt, claims.toJson());
             } else {
-                cache.put(jwt, claims.toJson());
+                cacheManager.put(JWT, jwt, claims.toJson());
             }
-            if(cache.estimatedSize() > config.getJwtCacheFullSize()) {
+            if(cacheManager.getSize(JWT) > config.getJwtCacheFullSize()) {
                 logger.warn("JWT cache exceeds the size limit " + config.getJwtCacheFullSize());
             }
         }
@@ -455,15 +447,15 @@ public class JwtVerifier extends TokenVerifier {
                 List<JsonWebKey> jwkList = null;
                 if(requestPathOrJwkServiceIds == null) {
                     // single oauth server, kid is the key for the jwk cache
-                    jwkList = jwksMap.get(kid);
+                    jwkList = (List<JsonWebKey>)cacheManager.get(JWK, kid);
                 } else if(requestPathOrJwkServiceIds instanceof String) {
                     String requestPath = (String)requestPathOrJwkServiceIds;
                     // a single request path is passed in.
                     String serviceId = getServiceIdByRequestPath(clientConfig, requestPath);
                     if(serviceId == null) {
-                        jwkList = jwksMap.get(kid);
+                        jwkList = (List<JsonWebKey>)cacheManager.get(JWK, kid);
                     } else {
-                        jwkList = jwksMap.get(serviceId + ":" + kid);
+                        jwkList = (List<JsonWebKey>)cacheManager.get(JWK, serviceId + ":" + kid);
                     }
                 } else if(requestPathOrJwkServiceIds instanceof List) {
                     List<String> serviceIds = (List)requestPathOrJwkServiceIds;
@@ -471,7 +463,7 @@ public class JwtVerifier extends TokenVerifier {
                         // more than one serviceIds are passed in from the UnifiedSecurityHandler. Just use the serviceId and kid
                         // combination to look up the jwkList. Once found, break the loop.
                         for(String serviceId: serviceIds) {
-                            jwkList = jwksMap.get(serviceId + ":" + kid);
+                            jwkList = (List<JsonWebKey>)cacheManager.get(JWK, serviceId + ":" + kid);
                             if(jwkList != null && jwkList.size() > 0) {
                                 break;
                             }
@@ -511,10 +503,10 @@ public class JwtVerifier extends TokenVerifier {
         for (JsonWebKey jwk : jwkList) {
             if(serviceId != null) {
                 if(logger.isTraceEnabled()) logger.trace("cache the jwkList with serviceId {} kid {} and key {}", serviceId, jwk.getKeyId(), serviceId + ":" + jwk.getKeyId());
-                jwksMap.put(serviceId + ":" + jwk.getKeyId(), jwkList);
+                cacheManager.put(JWK, serviceId + ":" + jwk.getKeyId(), jwkList);
             } else {
                 if(logger.isTraceEnabled()) logger.trace("cache the jwkList with kid and only kid as key", jwk.getKeyId());
-                jwksMap.put(jwk.getKeyId(), jwkList);
+                cacheManager.put(JWK, jwk.getKeyId(), jwkList);
             }
         }
     }
@@ -545,13 +537,11 @@ public class JwtVerifier extends TokenVerifier {
      * the jwk by iterate all of them. In case we have multiple jwks, the cache will have a prefix so that verify
      * action won't cross fired.
      *
-     * @return {@link Map} of {@link List}
      */
     @SuppressWarnings("unchecked")
-    private Map<String, List<JsonWebKey>> getJsonWebKeyMap() {
+    private void getJsonWebKeyMap() {
         // the jwk indicator will ensure that the kid is not concat to the uri for path parameter.
         // the kid is not needed to get JWK. We need to figure out only one jwk server or multiple.
-        jwksMap = new HashMap<>();
         ClientConfig clientConfig = ClientConfig.get();
         Map<String, Object> tokenConfig = clientConfig.getTokenConfig();
         Map<String, Object> keyConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.KEY);
@@ -589,7 +579,7 @@ public class JwtVerifier extends TokenVerifier {
                                 logger.error("Cannot get JWK from OAuth server.");
                         } else {
                             for (JsonWebKey jwk : jwkList) {
-                                jwksMap.put(serviceId + ":" + jwk.getKeyId(), jwkList);
+                                cacheManager.put(JWK, serviceId + ":" + jwk.getKeyId(), jwkList);
                                 if (logger.isDebugEnabled())
                                     logger.debug("Successfully cached JWK for serviceId {} kid {} with key {}", serviceId, jwk.getKeyId(), serviceId + ":" + jwk.getKeyId());
                             }
@@ -628,7 +618,7 @@ public class JwtVerifier extends TokenVerifier {
                     throw new RuntimeException("cannot get JWK from OAuth server");
                 }
                 for (JsonWebKey jwk : jwkList) {
-                    jwksMap.put(jwk.getKeyId(), jwkList);
+                    cacheManager.put(JWK, jwk.getKeyId(), jwkList);
 
                     if (logger.isDebugEnabled())
                         logger.debug("Successfully cached JWK for kid {}", jwk.getKeyId());
@@ -644,7 +634,6 @@ public class JwtVerifier extends TokenVerifier {
                     logger.error("Failed to get Key. - {} - {}", new Status(GET_KEY_ERROR), ce.getMessage(), ce);
             }
         }
-        return jwksMap;
     }
 
     /**
