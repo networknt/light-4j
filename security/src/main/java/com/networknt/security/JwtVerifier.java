@@ -88,7 +88,7 @@ public class JwtVerifier extends TokenVerifier {
     Boolean enableRelaxedKeyValidation;
     Boolean bootstrapFromKeyService;
 
-    static Cache<String, JwtClaims> cache;
+    static Cache<String, String> cache;
     static Map<String, X509Certificate> certMap;
     static Map<String, List<JsonWebKey>> jwksMap;
     static String audience;  // this is the audience from the client.yml with single oauth provider.
@@ -237,17 +237,21 @@ public class JwtVerifier extends TokenVerifier {
     public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken, String pathPrefix, String requestPath, List<String> jwkServiceIds, BiFunction<String, Object, VerificationKeyResolver> getKeyResolver)
             throws InvalidJwtException, ExpiredTokenException {
         JwtClaims claims;
-
+        String jwtJson = null;
         if (Boolean.TRUE.equals(enableJwtCache)) {
             if(pathPrefix != null) {
-                claims = cache.getIfPresent(pathPrefix + ":" + jwt);
+                jwtJson = cache.getIfPresent(pathPrefix + ":" + jwt);
             } else {
-                claims = cache.getIfPresent(jwt);
+                jwtJson = cache.getIfPresent(jwt);
             }
-            if (claims != null) {
-
+            if (jwtJson != null) {
+                try {
+                    claims = JwtClaims.parse(jwtJson);
+                } catch (InvalidJwtException e) {
+                    logger.error("MalformedClaimException:", e);
+                    throw new InvalidJwtException("MalformedClaimException", new ErrorCodeValidator.Error(ErrorCodes.MALFORMED_CLAIM, "Invalid JWT"), e, null);
+                }
                 checkExpiry(ignoreExpiry, claims, secondsOfAllowedClockSkew, null);
-
                 // this claims object is signature verified already
                 return claims;
             }
@@ -296,9 +300,9 @@ public class JwtVerifier extends TokenVerifier {
         claims = jwtContext.getJwtClaims();
         if (Boolean.TRUE.equals(enableJwtCache)) {
             if(pathPrefix != null) {
-                cache.put(pathPrefix + ":" + jwt, claims);
+                cache.put(pathPrefix + ":" + jwt, claims.toJson());
             } else {
-                cache.put(jwt, claims);
+                cache.put(jwt, claims.toJson());
             }
             if(cache.estimatedSize() > config.getJwtCacheFullSize()) {
                 logger.warn("JWT cache exceeds the size limit " + config.getJwtCacheFullSize());
