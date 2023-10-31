@@ -32,7 +32,7 @@ public class ConsulConfig {
     long requestTimeout = 5;                // Consul request timeout in seconds (excluding /v1/health/service)
     long reconnectInterval = 2;             // Time to wait in seconds between reconnect attempts when Consul connection fails
     long reconnectJitter = 2;               // Random seconds in [0..reconnectJitter) added to reconnectInterval
-    long lookupInterval = 15;               // Time in seconds between blocking queries with Consul
+    long lookupInterval = -1;               // Time in seconds between blocking queries with Consul
     long maxAttemptsBeforeShutdown = -1;    // Max number of failed Consul reconnection attempts before self-termination
                                             // -1 means an infinite # of attempts
     boolean shutdownIfThreadFrozen = false; // Shuts down host application if any Consul lookup thread stops reporting a

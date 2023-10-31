@@ -22,6 +22,7 @@ import com.networknt.config.Config;
 import com.networknt.consul.client.ConsulClient;
 import com.networknt.registry.NotifyListener;
 import com.networknt.registry.URL;
+import com.networknt.registry.URLParamType;
 import com.networknt.registry.support.command.CommandFailbackRegistry;
 import com.networknt.registry.support.command.CommandServiceManager;
 import com.networknt.registry.support.command.ServiceListener;
@@ -67,7 +68,14 @@ public class ConsulRegistry extends CommandFailbackRegistry {
             heartbeatManager.start();
         }
 
-        lookupInterval = getConsulConfig().getLookupInterval() * 1000;
+        // Backwards compatibility is restored for Consul blocking queries time. The value of 'lookupInterval' parameter (if defined) in consul.yml will be used.
+        // Otherwise, the value of 'registrySessionTimeout'(or its default value) parameter in service.yml will be used.
+        if (getConsulConfig().getLookupInterval() >= 0) {
+            lookupInterval = getConsulConfig().getLookupInterval() * 1000;
+        } else {
+            lookupInterval = getUrl().getIntParameter(URLParamType.registrySessionTimeout.getName(), ConsulConstants.DEFAULT_LOOKUP_INTERVAL);
+        }
+
         reconnectInterval = getConsulConfig().getReconnectInterval() * 1000;
         reconnectJitter = getConsulConfig().getReconnectJitter() * 1000;
 

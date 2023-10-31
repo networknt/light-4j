@@ -41,6 +41,7 @@ reconnectInterval: 2
 # requests at one time)
 reconnectJitter: 2
 # Time in seconds between blocking queries with Consul
+# Consul blocking queries time should be set via the 'lookupInterval' parameter in consul.yml, instead of 'registrySessionTimeout' in service.yml
 lookupInterval: 30
 # Max number of failed Consul connection or request attempts before self-termination
 # -1 means an infinite # of attempts are allowed
