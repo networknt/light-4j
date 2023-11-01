@@ -41,6 +41,7 @@
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>status</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
@@ -70,7 +71,6 @@
             <groupId>io.undertow</groupId>
             <artifactId>undertow-core</artifactId>
         </dependency>
-
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
