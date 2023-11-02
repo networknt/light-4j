@@ -36,6 +36,7 @@ public interface CacheManager {
     void addCache(String cacheName, long maxSize, long expiryInMinutes);
     void put(String cacheName, String key, Object value);
     Object get(String cacheName, String key);
+    void delete(String cacheName, String key);
     void removeCache(String cacheName);
     int getSize(String cacheName);
 }
