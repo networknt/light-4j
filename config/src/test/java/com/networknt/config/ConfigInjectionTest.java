@@ -2,6 +2,7 @@ package com.networknt.config;
 
 import com.networknt.decrypt.Decryptor;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -17,7 +18,12 @@ public class ConfigInjectionTest {
     private static final String valueMapKey = "values";
     private static final Map<String, Object> valueMap = Config.getInstance().getDefaultJsonMapConfig(valueMapKey);
 
+    /**
+     * This test depends on the cached values.yml file. However, we have changed to loading for values.yml to the no cache
+     * method to support config-reload locally. Hence, this test is retired.
+     */
     @Test
+    @Ignore
     public void testGetInjectValueIssue744() {
 
         Object oldConfigValue = null;
