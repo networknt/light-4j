@@ -213,7 +213,7 @@ public class TokenRequest {
             return this.populateTokenTimeout;
         }
     }
-    
+
     public void setPopulateTokenTimeout(long populateTokenTimeout) {
             this.populateTokenTimeout = populateTokenTimeout;
         }
