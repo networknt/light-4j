@@ -151,15 +151,17 @@ public abstract class Config {
         
         FileConfigImpl(){
         	super();
-        	String decryptorClass = getDecryptorClass();
-        	configLoaderClass = getConfigLoaderClass();
-        	if (null==decryptorClass || decryptorClass.trim().isEmpty()) {
-        		yaml = new Yaml();
-        	}else {
-	            final Resolver resolver = new Resolver();
-	            resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
-	        	yaml = new Yaml(new DecryptConstructor(decryptorClass), new Representer(), new DumperOptions(), resolver);
-        	}
+      	    String decryptorClass = getDecryptorClass();
+       	    configLoaderClass = getConfigLoaderClass();
+            synchronized (FileConfigImpl.class) {
+                if (null == decryptorClass || decryptorClass.trim().isEmpty()) {
+                    yaml = new Yaml();
+                } else {
+                    final Resolver resolver = new Resolver();
+                    resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
+                    yaml = new Yaml(DecryptConstructor.getInstance(decryptorClass), new Representer(new DumperOptions()), new DumperOptions(), resolver);
+                }
+            }
         }
 
         private static Config initialize() {
@@ -480,7 +482,7 @@ public abstract class Config {
                     }
                 }
             } catch (Exception e) {
-                logger.error("Exception", e);
+                logger.error("Exception on loading " + ymlFilename, e);
                 throw new RuntimeException("Unable to load " + ymlFilename + " as map.", e);
             }
             return config;
@@ -658,7 +660,7 @@ public abstract class Config {
             Map<String, Object> config = null;
             // Initialize config loader
             if (configLoaderClass != null && this.configLoader == null) {
-                this.configLoader = new ConfigLoaderConstructor(configLoaderClass).getConfigLoader();
+                this.configLoader = ConfigLoaderConstructor.getInstance(configLoaderClass).getConfigLoader();
             }
             if (configLoader != null) {
                 logger.info("Trying to load {} with extension yaml, yml or json by using ConfigLoader: {}.", configName, configLoader.getClass().getName());
@@ -680,7 +682,7 @@ public abstract class Config {
             Object config = null;
             // Initialize config loader
             if (configLoaderClass != null && this.configLoader == null) {
-                this.configLoader = new ConfigLoaderConstructor(configLoaderClass).getConfigLoader();
+                this.configLoader = ConfigLoaderConstructor.getInstance(configLoaderClass).getConfigLoader();
             }
             if (this.configLoader != null) {
                 logger.info("Trying to load {} with extension yaml, yml or json by using ConfigLoader: {}.", configName, configLoader.getClass().getName());
