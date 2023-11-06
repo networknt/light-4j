@@ -122,9 +122,9 @@ public class TokenRequest {
      */
     private String csrf;
 
-    private static final Long DEFAULT_TOKEN_CONNECTION_TIMEOUT = 2000L;
-    private long tokenConnectionTimeout = DEFAULT_TOKEN_CONNECTION_TIMEOUT;
-    protected static final Long DEFAULT_POPULATE_TOKEN_TIMEOUT = 4000L;
+    private static final long DEFAULT_TOKEN_CONNECTION_TIMEOUT = 2000L;
+    private Long connectionTokenTimeout = DEFAULT_TOKEN_CONNECTION_TIMEOUT;
+    protected static final long DEFAULT_POPULATE_TOKEN_TIMEOUT = 4000L;
     private Long populateTokenTimeout = DEFAULT_POPULATE_TOKEN_TIMEOUT;
 
     public TokenRequest() {
@@ -194,25 +194,27 @@ public class TokenRequest {
 
     public void setCsrf(String csrf) { this.csrf = csrf; }
 
-    public long getTokenConnectionTimeout() { return tokenConnectionTimeout; }
-
-    public void setTokenConnectionTimeout(Long tokenConnectionTimeout) {
-        if (tokenConnectionTimeout == null) {
-            this.tokenConnectionTimeout = DEFAULT_TOKEN_CONNECTION_TIMEOUT;
+    public Long getConnectionTokenTimeout() {
+        if (this.connectionTokenTimeout == null) {
+            return DEFAULT_TOKEN_CONNECTION_TIMEOUT;
         } else {
-            this.tokenConnectionTimeout = tokenConnectionTimeout;
+            return this.connectionTokenTimeout;
         }
     }
 
-    public Long getPopulateTokenTimeout() { return populateTokenTimeout; }
+    public void setConnectionTokenTimeout(Long connectionTokenTimeout) {
+        this.connectionTokenTimeout = connectionTokenTimeout;
+    }
 
-    public void setPopulateTokenTimeout(Long populateTokenTimeout) {
-        if (populateTokenTimeout == null) {
-            this.populateTokenTimeout = DEFAULT_POPULATE_TOKEN_TIMEOUT;
+    public long getPopulateTokenTimeout() {
+        if (this.populateTokenTimeout == null) {
+            return DEFAULT_POPULATE_TOKEN_TIMEOUT;
         } else {
+            return this.populateTokenTimeout;
+        }
+    }
+
+    public void setPopulateTokenTimeout(long populateTokenTimeout) {
             this.populateTokenTimeout = populateTokenTimeout;
         }
     }
-
-
-}
