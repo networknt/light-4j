@@ -38,18 +38,9 @@ public class TestConnectionMaker implements SimpleConnectionMaker {
 
     @Override
     public SimpleConnection makeConnection(long createConnectionTimeout, boolean isHttp2, URI uri, Set<SimpleConnection> allConnections)
-        throws RuntimeException
+            throws RuntimeException
     {
         SimpleConnection connection = instantiateConnection(createConnectionTimeout, isHttp2, allConnections);
-        return connection;
-    }
-
-    @Override
-    public SimpleConnection reuseConnection(long createConnectionTimeout, SimpleConnection connection) throws RuntimeException {
-        if(connection == null)
-            return null;
-        if(!connection.isOpen())
-            throw new RuntimeException("Reused-connection has been unexpectedly closed");
         return connection;
     }
 

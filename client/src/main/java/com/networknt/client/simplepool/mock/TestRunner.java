@@ -49,38 +49,89 @@ public class TestRunner
     private long createConnectionTimeout = 5; // in seconds
     private long borrowTime = 3;              // in seconds
     private long borrowJitter = 4;            // in seconds
-    private long reborrowTime = 2;           // in seconds
-    private long reborrowTimeJitter = 2;     // in seconds
+    private long reconnectTime = 2;           // in seconds
+    private long reconnectTimeJitter = 2;     // in seconds
     private int threadStartJitter = 3;        // in seconds
     private boolean isHttp2 = true;
 
     /** Test length in seconds. Default 120s */
-    public TestRunner setTestLength(long testLength) { this.testLength = testLength; return this; }
+    public TestRunner setTestLength(long testLength) {
+        this.testLength = testLength;
+        return this;
+    }
+
     /** Number of borrowing threads. Default 2 */
-    public TestRunner setNumBorrowerThreads(int numCallers) { this.numCallers = numCallers; return this; }
+    public TestRunner setNumBorrowerThreads(int numCallers) {
+        this.numCallers = numCallers;
+        return this;
+    }
+
     /** Mock URI. Default https://mock-uri.com */
-    public TestRunner setUri(URI uri) { this.uri = uri; return this; }
+    public TestRunner setUri(URI uri) {
+        this.uri = uri;
+        return this;
+    }
+
     /** Maximum number of connections allowed in the connection pool. Default 100 */
-    public TestRunner setConnectionPoolSize(int poolSize) { this.poolSize = poolSize; return this; }
+    public TestRunner setConnectionPoolSize(int poolSize) {
+        this.poolSize = poolSize;
+        return this;
+    }
+
     /** Connection expiry time in seconds. Default 10s */
-    public TestRunner setConnectionExpireTime(long expireTime) { this.expireTime = expireTime; return this; }
+    public TestRunner setConnectionExpireTime(long expireTime) {
+        this.expireTime = expireTime;
+        return this;
+    }
+
     /** The SimpleConnection class used for connections -- must have a parameterless constructor.
      *  Note: executeTest() will throw an exception if this is not set. */
-    public TestRunner setSimpleConnectionClass(Class simpleConnectionClass) { this.simpleConnectionClass = simpleConnectionClass; return this; }
+    public TestRunner setSimpleConnectionClass(Class simpleConnectionClass) {
+        this.simpleConnectionClass = simpleConnectionClass;
+        return this;
+    }
+
     /** Connection creation timeout in seconds. Default is 5s */
-    public TestRunner setCreateConnectionTimeout(long createConnectionTimeout) { this.createConnectionTimeout = createConnectionTimeout; return this; }
+    public TestRunner setCreateConnectionTimeout(long createConnectionTimeout) {
+        this.createConnectionTimeout = createConnectionTimeout;
+        return this;
+    }
+
     /** Amount of time in seconds that borrower threads hold connections before restoring them. Default 3s */
-    public TestRunner setBorrowTimeLength(long borrowTime) { this.borrowTime = borrowTime; return this; }
+    public TestRunner setBorrowTimeLength(long borrowTime) {
+        this.borrowTime = borrowTime;
+        return this;
+    }
+
     /** Max random additional time in seconds that borrower threads hold connections before restoring them. Default 4s */
-    public TestRunner setBorrowTimeLengthJitter(long borrowJitter) { this.borrowJitter = borrowJitter; return this; }
+    public TestRunner setBorrowTimeLengthJitter(long borrowJitter) {
+        this.borrowJitter = borrowJitter;
+        return this;
+    }
+
     /** Amount of time in seconds that borrower threads waits after returning a connection to borrow again. Default 2s */
-    public TestRunner setWaitTimeBeforeReborrow(long reborrowTime) { this.reborrowTime = reborrowTime; return this; }
+    public TestRunner setWaitTimeBeforeReborrow(long reconnectTime) {
+        this.reconnectTime = reconnectTime;
+        return this;
+    }
+
     /** Max random additional time in seconds that borrower threads waits after returning a connection to borrow again. Default 2s */
-    public TestRunner setWaitTimeBeforeReborrowJitter(long reborrowTimeJitter) { this.reborrowTimeJitter = reborrowTimeJitter; return this; }
+    public TestRunner setWaitTimeBeforeReborrowJitter(long reconnectTimeJitter) {
+        this.reconnectTimeJitter = reconnectTimeJitter;
+        return this;
+    }
+
     /** Max random startup delay in seconds for borrower threads. Default 3s */
-    public TestRunner setBorrowerThreadStartJitter(int threadStartJitter) { this.threadStartJitter = threadStartJitter; return this; }
+    public TestRunner setBorrowerThreadStartJitter(int threadStartJitter) {
+        this.threadStartJitter = threadStartJitter;
+        return this;
+    }
+
     /** Determines whether caller threads request HTTP/2 connections. HTTP/2 means multiple borrows per connection are allowed. Default true */
-    public TestRunner setHttp2(boolean http2) { isHttp2 = http2; return this; }
+    public TestRunner setHttp2(boolean http2) {
+        isHttp2 = http2;
+        return this;
+    }
 
     public void executeTest() throws RuntimeException {
         if(simpleConnectionClass == null)
@@ -98,7 +149,7 @@ public class TestRunner
 
             logger.debug("> Creating and starting threads...");
             createAndStartCallers(
-                    numCallers, threadStartJitter, pool, stopped, createConnectionTimeout, isHttp2, borrowTime, borrowJitter, reborrowTime, reborrowTimeJitter, latch);
+                    numCallers, threadStartJitter, pool, stopped, createConnectionTimeout, isHttp2, borrowTime, borrowJitter, reconnectTime, reconnectTimeJitter, latch);
             logger.debug("> All threads created and started");
 
             logger.debug("> SLEEP for {} seconds", testLength);
@@ -126,13 +177,13 @@ public class TestRunner
             boolean isHttp2,
             long borrowTime,
             long borrowJitter,
-            long reborrowTime,
-            long reborrowTimeJitter,
+            long reconnectTime,
+            long reconnectTimeJitter,
             CountDownLatch latch) throws InterruptedException
     {
         while(numCallers-- > 0) {
             new CallerThread(
-                    pool, stopped, createConnectionTimeout, isHttp2, borrowTime, borrowJitter, reborrowTime, reborrowTimeJitter, latch).start();
+                pool, stopped, createConnectionTimeout, isHttp2, borrowTime, borrowJitter, reconnectTime, reconnectTimeJitter, latch).start();
             if(threadStartJitter > 0)
                 Thread.sleep(ThreadLocalRandom.current().nextLong(threadStartJitter+1) * 1000);
         }
@@ -147,19 +198,19 @@ public class TestRunner
         private final boolean isHttp2;
         private final long borrowTime;
         private final long borrowJitter;
-        private final long reborrowTime;
-        private final long reborrowTimeJitter;
+        private final long reconnectTime;
+        private final long reconnectTimeJitter;
 
         public CallerThread(
-                SimpleURIConnectionPool pool,
-                AtomicBoolean stopped,
-                long createConnectionTimeout,
-                boolean isHttp2,
-                long borrowTime,
-                long borrowJitter,
-                long reborrowTime,
-                long reborrowTimeJitter,
-                CountDownLatch latch)
+            SimpleURIConnectionPool pool,
+            AtomicBoolean stopped,
+            long createConnectionTimeout,
+            boolean isHttp2,
+            long borrowTime,
+            long borrowJitter,
+            long reconnectTime,
+            long reconnectTimeJitter,
+            CountDownLatch latch)
         {
             this.latch = latch;
             this.stopped = stopped;
@@ -168,8 +219,8 @@ public class TestRunner
             this.isHttp2 = isHttp2;
             this.borrowTime = borrowTime;
             this.borrowJitter = borrowJitter;
-            this.reborrowTime = reborrowTime;
-            this.reborrowTimeJitter = reborrowTimeJitter;
+            this.reconnectTime = reconnectTime;
+            this.reconnectTimeJitter = reconnectTimeJitter;
         }
 
         @Override
@@ -191,7 +242,7 @@ public class TestRunner
                     logger.debug("{} Returning connection", Thread.currentThread().getName());
                     pool.restore(connectionToken);
 
-                    reborrowWaitTime(reborrowTime, reborrowTimeJitter);
+                    reborrowWaitTime(reconnectTime, reconnectTimeJitter);
                 }
             }
             latch.countDown();
@@ -202,8 +253,8 @@ public class TestRunner
             wait("{} Borrowing connection for {} seconds...", borrowTime, borrowJitter);
         }
 
-        private void reborrowWaitTime(long reborrowTime, long reborrowTimeJitter) {
-            wait("{} Waiting for {} seconds to borrow connection again...", reborrowTime, reborrowTimeJitter);
+        private void reborrowWaitTime(long reconnectTime, long reconnectTimeJitter) {
+            wait("{} Waiting for {} seconds to borrow connection again...", borrowTime, borrowJitter);
         }
 
         private void wait(String logMessage, long waitTime, long waitTimeJitter) {
