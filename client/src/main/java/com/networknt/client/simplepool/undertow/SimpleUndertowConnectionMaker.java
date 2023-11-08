@@ -70,7 +70,7 @@ public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
         ClientCallback<ClientConnection> connectionCallback = new ClientCallback<ClientConnection>() {
             @Override
             public void completed(ClientConnection connection) {
-                logger.debug("New connection {} established with {}", port(connection), uri);
+                if(logger.isDebugEnabled()) logger.debug("New connection {} established with {}", port(connection), uri);
                 SimpleConnection simpleConnection = new SimpleUndertowConnection(connection);
 
                 // note: its vital that allCreatedConnections and result contain the same SimpleConnection reference
@@ -80,7 +80,7 @@ public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
 
             @Override
             public void failed(IOException e) {
-                logger.debug("Failed to establish new connection for uri: {}", uri);
+                if(logger.isDebugEnabled()) logger.debug("Failed to establish new connection for uri: {}", uri);
                 result.setException(e);
             }
         };

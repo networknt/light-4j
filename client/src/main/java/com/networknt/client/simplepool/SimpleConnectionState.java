@@ -157,7 +157,7 @@ public final class SimpleConnectionState {
 
         // throw exception if connection creation failed
         if(!connection.isOpen()) {
-            logger.debug("{} closed connection", logLabel(connection, now));
+            if(logger.isDebugEnabled()) logger.debug("{} closed connection", logLabel(connection, now));
             throw new RuntimeException("[" + port(connection) + "] Error creating connection to " + uri.toString());
 
             // start life-timer and determine connection type
@@ -167,7 +167,8 @@ public final class SimpleConnectionState {
             // HTTP/1.1 connections have a MAX_BORROW of 1, while HTTP/2 connections can have > 1 MAX_BORROWS
             MAX_BORROWS = connection().isMultiplexingSupported() ? Integer.MAX_VALUE : 1;
 
-            logger.debug("{} New connection : {}", logLabel(connection, now), MAX_BORROWS > 1 ? "HTTP/2" : "HTTP/1.1");
+            if(logger.isDebugEnabled())
+                logger.debug("{} New connection : {}", logLabel(connection, now), MAX_BORROWS > 1 ? "HTTP/2" : "HTTP/1.1");
         }
     }
 
@@ -210,7 +211,8 @@ public final class SimpleConnectionState {
             // add connectionToken to the Set of borrowed tokens
             borrowedTokens.add( (connectionToken = new ConnectionToken(connection)) );
 
-            logger.debug("{} borrow - connection now has {} borrows", logLabel(connection, now), borrowedTokens.size());
+            if(logger.isDebugEnabled())
+                logger.debug("{} borrow - connection now has {} borrows", logLabel(connection, now), borrowedTokens.size());
 
             return connectionToken;
         }
@@ -234,7 +236,8 @@ public final class SimpleConnectionState {
         borrowedTokens.remove(connectionToken);
 
         long now = System.currentTimeMillis();
-        logger.debug("{} restore - connection now has {} borrows", logLabel(connection, now), borrowedTokens.size());
+        if(logger.isDebugEnabled())
+            logger.debug("{} restore - connection now has {} borrows", logLabel(connection, now), borrowedTokens.size());
     }
 
     /**
@@ -244,7 +247,8 @@ public final class SimpleConnectionState {
      * @return true if the connection was closed and false otherwise
      */
     public synchronized boolean safeClose(long now) {
-        logger.debug("{} close - closing connection with {} borrows...", logLabel(connection, now), borrowedTokens.size());
+        if(logger.isDebugEnabled())
+            logger.debug("{} close - closing connection with {} borrows...", logLabel(connection, now), borrowedTokens.size());
 
         /**
          Connection may still be open even if closed == true

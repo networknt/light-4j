@@ -114,7 +114,7 @@ public final class SimpleURIConnectionPool {
         SimpleConnectionState.ConnectionToken connectionToken = connectionState.borrow(createConnectionTimeout, now);
         applyConnectionState(connectionState, now, () -> trackedConnections.remove(connectionState));
 
-        logger.debug(showConnections("borrow"));
+        if(logger.isDebugEnabled()) logger.debug(showConnections("borrow"));
 
         findAndCloseLeakedConnections();
         return connectionToken;
@@ -142,7 +142,7 @@ public final class SimpleURIConnectionPool {
         // update the connection pool's state
         applyAllConnectionStates(now);
 
-        logger.debug(showConnections("restore"));
+        if(logger.isDebugEnabled()) logger.debug(showConnections("restore"));
     }
 
     /**
@@ -195,7 +195,8 @@ public final class SimpleURIConnectionPool {
          * (and will therefore be garbage collected)
          */
         if(connection.closed()) {
-            logger.debug("[{}: CLOSED]: Connection unexpectedly closed - Stopping connection tracking", port(connection.connection()));
+            if(logger.isDebugEnabled())
+                logger.debug("[{}: CLOSED]: Connection unexpectedly closed - Stopping connection tracking", port(connection.connection()));
 
             removeFromConnectionTracking(connection, trackedConnectionRemover);
             return;
@@ -217,7 +218,8 @@ public final class SimpleURIConnectionPool {
             connection.safeClose(now);
             removeFromConnectionTracking(connection, trackedConnectionRemover);
 
-            logger.debug("[{}: CLOSED]: Expired connection was closed - Connection tracking stopped", port(connection.connection()));
+            if(logger.isDebugEnabled())
+                logger.debug("[{}: CLOSED]: Expired connection was closed - Connection tracking stopped", port(connection.connection()));
         }
     }
 
@@ -280,7 +282,7 @@ public final class SimpleURIConnectionPool {
 
         // any remaining connections are leaks, and can now be safely closed
         if(allCreatedConnections.size() > 0) {
-            logger.debug("{} untracked connection(s) found", allCreatedConnections.size());
+            if(logger.isDebugEnabled()) logger.debug("{} untracked connection(s) found", allCreatedConnections.size());
 
             Iterator<SimpleConnection> leakedConnections = allCreatedConnections.iterator();
             while(leakedConnections.hasNext()) {
@@ -288,9 +290,10 @@ public final class SimpleURIConnectionPool {
 
                 if(leakedConnection.isOpen()) {
                     leakedConnection.safeClose();
-                    logger.debug("Connection closed {} -> {}", port(leakedConnection), uri.toString());
-                } else
-                    logger.debug("Connection was already closed {} -> {}", port(leakedConnection), uri.toString());
+                    if(logger.isDebugEnabled()) logger.debug("Connection closed {} -> {}", port(leakedConnection), uri.toString());
+                } else {
+                    if (logger.isDebugEnabled()) logger.debug("Connection was already closed {} -> {}", port(leakedConnection), uri.toString());
+                }
 
                 leakedConnections.remove();
             }
