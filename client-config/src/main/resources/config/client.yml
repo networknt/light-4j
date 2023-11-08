@@ -171,16 +171,16 @@ oauth:
   # de-ref by reference token to JWT token. It is separate service as it might be the external OAuth 2.0 provider.
   deref:
     # Token service server url, this might be different than the above token server url. The static url will be used if it is configured.
-    # server_url: ${client.derefServerUrl:https://localhost:6882}
+    server_url: ${client.derefServerUrl:https://localhost:6882}
     # For users who leverage SaaS OAuth 2.0 provider in the public cloud and has an internal
     # proxy server to access code, token and key services of OAuth 2.0, set up the proxyHost
     # here for the HTTPS traffic. This option is only working with server_url and serviceId
     # below should be commented out. OAuth 2.0 services cannot be discovered if a proxy is used.
-    # proxyHost: ${client.derefProxyHost:proxy.lightapi.net}
+    proxyHost: ${client.derefProxyHost:}
     # We only support HTTPS traffic for the proxy and the default port is 443. If your proxy server has
     # a different port, please specify it here. If proxyHost is available and proxyPort is missing, then
     # the default value 443 is going to be used for the HTTP connection.
-    # proxyPort: ${client.derefProxyPort:3128}
+    proxyPort: ${client.derefProxyPort:}
     # token service unique id for OAuth 2.0 provider. Need for service lookup/discovery. It will be used if above server_url is not configured.
     serviceId: ${client.derefServiceId:com.networknt.oauth2-token-1.0.0}
     # set to true if the oauth2 provider supports HTTP/2
