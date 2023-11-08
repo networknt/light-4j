@@ -38,7 +38,7 @@ public final class SimpleConnectionPool {
         this.connectionMaker = connectionMaker;
     }
 
-    public SimpleConnectionHolder.ConnectionToken borrow(long createConnectionTimeout, boolean isHttp2, URI uri)
+    public SimpleConnectionState.ConnectionToken borrow(long createConnectionTimeout, boolean isHttp2, URI uri)
         throws RuntimeException
     {
         if(!pools.containsKey(uri))
@@ -47,7 +47,7 @@ public final class SimpleConnectionPool {
         return pools.get(uri).borrow(createConnectionTimeout, isHttp2);
     }
 
-    public void restore(SimpleConnectionHolder.ConnectionToken connectionToken) {
+    public void restore(SimpleConnectionState.ConnectionToken connectionToken) {
         if(connectionToken == null)
             return;
 

@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 /***
- * A SimpleConnectionHolder is a simplified interface for a connection, that also keeps track of the connection's state.
+ * A SimpleConnectionState is a simplified interface for a connection, that also keeps track of the connection's state.
  * (In fact--in this document--the state of a connection and the state of its holder are used interchangeably)
  *
  * Connection States
@@ -84,8 +84,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  *   Not doing so (i.e.: not freezing the time) may allow inconsistent states to be reached.
  */
-public final class SimpleConnectionHolder {
-    private static final Logger logger = LoggerFactory.getLogger(SimpleConnectionHolder.class);
+public final class SimpleConnectionState {
+    private static final Logger logger = LoggerFactory.getLogger(SimpleConnectionState.class);
 
     // how long a connection can be eligible to be borrowed
     private final long EXPIRE_TIME;
@@ -120,7 +120,7 @@ public final class SimpleConnectionHolder {
      * Connections and ConnectionHolders are paired 1-1. For every connection there is a single ConnectionHolder and
      * vice versa.
      *
-     * This is why connections are created at the same time a ConnectionHolder is created (see SimpleConnectionHolder
+     * This is why connections are created at the same time a ConnectionHolder is created (see SimpleConnectionState
      * constructor).
      *
      * The connection holder acts as a simplified interface to the connection, and keeps track of how many
@@ -134,9 +134,9 @@ public final class SimpleConnectionHolder {
      * @param allCreatedConnections this Set will be passed to the callback thread that creates the connection.
      *                              The connectionMaker will always add every successfully created connection
      *                              to this Set.
-     * @param connectionMaker a class that SimpleConnectionHolder uses to create new SimpleConnection objects
+     * @param connectionMaker a class that SimpleConnectionState uses to create new SimpleConnection objects
      */
-    public SimpleConnectionHolder(
+    public SimpleConnectionState(
         long expireTime,
         long connectionCreateTimeout,
         boolean isHttp2,
@@ -325,24 +325,24 @@ public final class SimpleConnectionHolder {
     }
 
     /**
-     * Returns the SimpleConnection that SimpleConnectionHolder holds
+     * Returns the SimpleConnection that SimpleConnectionState holds
      *
-     * @return the SimpleConnection that SimpleConnectionHolder holds
+     * @return the SimpleConnection that SimpleConnectionState holds
      */
     public SimpleConnection connection() { return connection; }
 
     public class ConnectionToken {
         private final SimpleConnection connection;
-        private final SimpleConnectionHolder holder;
+        private final SimpleConnectionState holder;
         private final URI uri;
 
         ConnectionToken(SimpleConnection connection) {
             this.connection = connection;
-            this.holder = SimpleConnectionHolder.this;
-            this.uri = SimpleConnectionHolder.this.uri;
+            this.holder = SimpleConnectionState.this;
+            this.uri = SimpleConnectionState.this.uri;
         }
 
-        SimpleConnectionHolder holder() { return holder; }
+        SimpleConnectionState holder() { return holder; }
         SimpleConnection connection() { return connection; }
         public Object getRawConnection() { return connection.getRawConnection(); }
         public URI uri() { return uri; }

@@ -41,16 +41,16 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class SimpleClientConnectionMaker implements SimpleConnectionMaker
+public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
 {
-    private static final Logger logger = LoggerFactory.getLogger(SimpleClientConnectionMaker.class);
+    private static final Logger logger = LoggerFactory.getLogger(SimpleUndertowConnectionMaker.class);
     private static final ByteBufferPool BUFFER_POOL = new DefaultByteBufferPool(true, ClientConfig.get().getBufferSize() * 1024);
-    private static SimpleClientConnectionMaker simpleClientConnectionMaker = null;
+    private static SimpleUndertowConnectionMaker simpleUndertowConnectionMaker = null;
 
     public static SimpleConnectionMaker instance() {
-        if(simpleClientConnectionMaker == null)
-            simpleClientConnectionMaker = new SimpleClientConnectionMaker();
-        return simpleClientConnectionMaker;
+        if(simpleUndertowConnectionMaker == null)
+            simpleUndertowConnectionMaker = new SimpleUndertowConnectionMaker();
+        return simpleUndertowConnectionMaker;
     }
 
     @Override
@@ -71,7 +71,7 @@ public class SimpleClientConnectionMaker implements SimpleConnectionMaker
             @Override
             public void completed(ClientConnection connection) {
                 logger.debug("New connection {} established with {}", port(connection), uri);
-                SimpleConnection simpleConnection = new SimpleClientConnection(connection);
+                SimpleConnection simpleConnection = new SimpleUndertowConnection(connection);
 
                 // note: its vital that allCreatedConnections and result contain the same SimpleConnection reference
                 allCreatedConnections.add(simpleConnection);

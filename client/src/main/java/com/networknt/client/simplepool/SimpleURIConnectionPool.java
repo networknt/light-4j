@@ -50,14 +50,14 @@ public final class SimpleURIConnectionPool {
     /** The set of all connections created by the SimpleConnectionMaker for this uri */
     private final Set<SimpleConnection> allCreatedConnections = ConcurrentHashMap.newKeySet();
     /** The set containing all connections known to this connection pool (It is not considered a state set) */
-    private final Set<SimpleConnectionHolder> allKnownConnections = new HashSet<>();
+    private final Set<SimpleConnectionState> allKnownConnections = new HashSet<>();
     /**
      * State Sets
      * The existence or non-existence of a connection in one of these sets means that the connection is or is not in
      * one of these states. A connection can be in multiple state sets at a time (e.g.: a connection can be both borrowed and borrowable) */
-    private final Set<SimpleConnectionHolder> borrowable = new HashSet<>();
-    private final Set<SimpleConnectionHolder> borrowed = new HashSet<>();
-    private final Set<SimpleConnectionHolder> notBorrowedExpired = new HashSet<>();
+    private final Set<SimpleConnectionState> borrowable = new HashSet<>();
+    private final Set<SimpleConnectionState> borrowed = new HashSet<>();
+    private final Set<SimpleConnectionState> notBorrowedExpired = new HashSet<>();
 
     public SimpleURIConnectionPool(URI uri, long expireTime, int poolSize, SimpleConnectionMaker connectionMaker) {
         EXPIRY_TIME = expireTime;
@@ -73,23 +73,23 @@ public final class SimpleURIConnectionPool {
      * @return
      * @throws RuntimeException
      */
-    public synchronized SimpleConnectionHolder.ConnectionToken borrow(long createConnectionTimeout, boolean isHttp2) throws RuntimeException {
+    public synchronized SimpleConnectionState.ConnectionToken borrow(long createConnectionTimeout, boolean isHttp2) throws RuntimeException {
         long now = System.currentTimeMillis();
-        final SimpleConnectionHolder holder;
+        final SimpleConnectionState holder;
 
         readAllConnectionHolders(now);
 
         if(borrowable.size() > 0) {
-            holder = borrowable.toArray(new SimpleConnectionHolder[0])[ThreadLocalRandom.current().nextInt(borrowable.size())];
+            holder = borrowable.toArray(new SimpleConnectionState[0])[ThreadLocalRandom.current().nextInt(borrowable.size())];
         } else {
             if (allKnownConnections.size() < poolSize) {
-                holder = new SimpleConnectionHolder(EXPIRY_TIME, createConnectionTimeout, isHttp2, uri, allCreatedConnections, connectionMaker);
+                holder = new SimpleConnectionState(EXPIRY_TIME, createConnectionTimeout, isHttp2, uri, allCreatedConnections, connectionMaker);
                 allKnownConnections.add(holder);
             } else
                 throw new RuntimeException("An attempt was made to exceed the maximum size was of the " + uri.toString() + " connection pool");
         }
 
-        SimpleConnectionHolder.ConnectionToken connectionToken = holder.borrow(createConnectionTimeout, now);
+        SimpleConnectionState.ConnectionToken connectionToken = holder.borrow(createConnectionTimeout, now);
         readConnectionHolder(holder, now, () -> allKnownConnections.remove(holder));
 
         logger.debug(showConnections("borrow"));
@@ -106,11 +106,11 @@ public final class SimpleURIConnectionPool {
      *
      * @param connectionToken the connection token that represents the borrowing of a connection by a thread
      */
-    public synchronized void restore(SimpleConnectionHolder.ConnectionToken connectionToken) {
+    public synchronized void restore(SimpleConnectionState.ConnectionToken connectionToken) {
         if(connectionToken == null)
             return;
 
-        SimpleConnectionHolder holder = connectionToken.holder();
+        SimpleConnectionState holder = connectionToken.holder();
         long now = System.currentTimeMillis();
 
         holder.restore(connectionToken);
@@ -140,9 +140,9 @@ public final class SimpleURIConnectionPool {
          * Remove any connections that have unexpectedly closed
          * Move all remaining connections to appropriate sets based on their properties
          */
-        final Iterator<SimpleConnectionHolder> knownConnectionHolders = allKnownConnections.iterator();
+        final Iterator<SimpleConnectionState> knownConnectionHolders = allKnownConnections.iterator();
         while (knownConnectionHolders.hasNext()) {
-            SimpleConnectionHolder connection = knownConnectionHolders.next();
+            SimpleConnectionState connection = knownConnectionHolders.next();
 
             // remove connections that have unexpectedly closed
             if (connection.closed()) {
@@ -184,7 +184,7 @@ public final class SimpleURIConnectionPool {
      * @param knownConnections a lambda expression to remove a closed-connection from allKnownConnections, either using
      *                         an Iterator of allKnownConnections, or directly using allKnownConnections.remove()
      */
-    private void readConnectionHolder(SimpleConnectionHolder connection, long now, RemoveFromAllKnownConnections knownConnections) {
+    private void readConnectionHolder(SimpleConnectionState connection, long now, RemoveFromAllKnownConnections knownConnections) {
 
         /**
          * Remove all references to closed connections
@@ -227,7 +227,7 @@ public final class SimpleURIConnectionPool {
      * @param isMember if true, it will add connectionHolder to set, otherwise, it will remove connectionHolder from set
      * @param connectionHolder the connectionHolder to add or remove from the set
      */
-    private void updateSet(Set<SimpleConnectionHolder> set, boolean isMember, SimpleConnectionHolder connectionHolder) {
+    private void updateSet(Set<SimpleConnectionState> set, boolean isMember, SimpleConnectionState connectionHolder) {
         if(isMember)
             set.add(connectionHolder);
         else
@@ -237,12 +237,12 @@ public final class SimpleURIConnectionPool {
     /**
      * Remove leaked connections
      * A leaked connection is any connection that was created by a SimpleConnectionMaker, but was not returned by the
-     * SimpleConnectionHolder.borrow() method. This can happen if an error occurs (specifically, if an exception is
-     * thrown) during the creation of a SimpleConnectionHolder. A SimpleConnectionHolder can fail to instantiate
+     * SimpleConnectionState.borrow() method. This can happen if an error occurs (specifically, if an exception is
+     * thrown) during the creation of a SimpleConnectionState. A SimpleConnectionState can fail to instantiate
      * (after it has created a new connection) if, for example:
      *
      *     1) the connection-creation callback thread finishes creating the connection after a timeout has occurred
-     *     2) the raw connection unexpectedly closes during the creation of its SimpleConnectionHolder
+     *     2) the raw connection unexpectedly closes during the creation of its SimpleConnectionState
      *
      * NOTE: Closing connection and modifying sets
      *     readConnectionHolder() and findAndCloseLeakedConnections() are the only two methods that close connections
@@ -252,7 +252,7 @@ public final class SimpleURIConnectionPool {
     private void findAndCloseLeakedConnections()
     {
         // remove all connections that the connection pool is tracking, from the set of all created connections
-        for(SimpleConnectionHolder knownConnection: allKnownConnections)
+        for(SimpleConnectionState knownConnection: allKnownConnections)
             allCreatedConnections.remove(knownConnection.connection());
 
         // any remaining connections are leaks, and can now be safely closed
@@ -301,14 +301,14 @@ public final class SimpleURIConnectionPool {
      *     This method is private, and is only called either directly or transitively by synchronized
      *     methods in this class.
      */
-    private static String showConnections(String name, Set<SimpleConnectionHolder> set) {
+    private static String showConnections(String name, Set<SimpleConnectionState> set) {
         StringBuilder sb = new StringBuilder();
         sb.append("[").append(name).append(": ");
         if(set.size() == 0)
             sb.append("0");
         else {
             int numCons = set.size();
-            for (SimpleConnectionHolder holder : set) {
+            for (SimpleConnectionState holder : set) {
                 sb.append(port(holder.connection()));
                 if (--numCons > 0) sb.append(" ");
             }

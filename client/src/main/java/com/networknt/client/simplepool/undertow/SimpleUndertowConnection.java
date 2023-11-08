@@ -23,10 +23,10 @@ import com.networknt.client.simplepool.SimpleConnection;
 import io.undertow.client.ClientConnection;
 import org.xnio.IoUtils;
 
-public class SimpleClientConnection implements SimpleConnection {
+public class SimpleUndertowConnection implements SimpleConnection {
     private ClientConnection connection;
 
-    public SimpleClientConnection(ClientConnection connection) {
+    public SimpleUndertowConnection(ClientConnection connection) {
         this.connection = connection;
     }
 

@@ -19,7 +19,7 @@
  */
 package com.networknt.client.simplepool.mock;
 
-import com.networknt.client.simplepool.SimpleConnectionHolder;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.client.simplepool.SimpleConnectionMaker;
 import com.networknt.client.simplepool.SimpleURIConnectionPool;
 import org.slf4j.Logger;
@@ -176,7 +176,7 @@ public class TestRunner
         public void run() {
             logger.debug("{} Starting", Thread.currentThread().getName());
             while(!stopped.get()) {
-                SimpleConnectionHolder.ConnectionToken connectionToken = null;
+                SimpleConnectionState.ConnectionToken connectionToken = null;
                 try {
                     logger.debug("{} Borrowing connection", Thread.currentThread().getName());
                     connectionToken = pool.borrow(createConnectionTimeout, isHttp2);
