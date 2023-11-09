@@ -1,11 +1,13 @@
 package com.networknt.router;
 
 import com.networknt.client.oauth.Jwt;
+import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.monad.Result;
 import com.networknt.router.middleware.TokenHandler;
 import com.networknt.utility.HashUtil;
+import com.networknt.utility.ModuleRegistry;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
@@ -38,10 +40,13 @@ public class OAuthServerHandler implements LightHttpHandler {
     private static final String MISSING_AUTHORIZATION_HEADER = "ERR12002";
     private static final String INVALID_AUTHORIZATION_HEADER = "ERR12003";
     OAuthServerConfig config;
+
     public OAuthServerHandler() {
         config = OAuthServerConfig.load();
-        if(logger.isInfoEnabled()) logger.info("OAuthServerHandler is loaded.");
+        if(logger.isInfoEnabled()) logger.info("OAuthServerHandler is constructed.");
+        ModuleRegistry.registerModule(OAuthServerHandler.class.getName(), config.getMappedConfig(),null);
     }
+
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         // response is always application/json.
