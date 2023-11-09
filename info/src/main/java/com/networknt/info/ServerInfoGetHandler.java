@@ -44,17 +44,19 @@ import java.util.*;
  * @author Steve Hu
  */
 public class ServerInfoGetHandler implements LightHttpHandler {
-    public static final String CONFIG_NAME = "info";
 
     static final String STATUS_SERVER_INFO_DISABLED = "ERR10013";
 
     static final Logger logger = LoggerFactory.getLogger(ServerInfoGetHandler.class);
-
-    public ServerInfoGetHandler(){}
+    static ServerInfoConfig config;
+    public ServerInfoGetHandler() {
+        if(logger.isDebugEnabled()) logger.debug("ServerInfoGetHandler is constructed");
+        config = (ServerInfoConfig)Config.getInstance().getJsonObjectConfig(ServerInfoConfig.CONFIG_NAME, ServerInfoConfig.class);
+        ModuleRegistry.registerModule(ServerInfoConfig.class.getName(), Config.getInstance().getJsonMapConfigNoCache(ServerInfoConfig.CONFIG_NAME),null);
+    }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        ServerInfoConfig config = (ServerInfoConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServerInfoConfig.class);
         if(config.isEnableServerInfo()) {
             Map<String,Object> infoMap = getServerInfo(exchange);
             exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
