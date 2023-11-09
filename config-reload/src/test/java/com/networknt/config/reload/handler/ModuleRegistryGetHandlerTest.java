@@ -76,7 +76,7 @@ public class ModuleRegistryGetHandlerTest extends  BaseTest{
         ObjectMapper mapper = new ObjectMapper();
         List<String> modules = mapper.readValue(body, new TypeReference<List<String>>(){});
         Assert.assertEquals(200, statusCode);
-        Assert.assertEquals(2, modules.size());
+        Assert.assertEquals(3, modules.size());
     }
 
 }

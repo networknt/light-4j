@@ -20,7 +20,7 @@ public class RuleLoaderConfig {
     private static final String ENDPOINT_RULES = "endpointRules";
 
     private Map<String, Object> mappedConfig;
-    private Config config;
+    private final Config config;
 
     boolean enabled;
     String ruleSource;

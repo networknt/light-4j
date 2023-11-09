@@ -1,5 +1,6 @@
 package com.networknt.rule;
 
+import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
@@ -9,6 +10,7 @@ import com.networknt.monad.Success;
 import com.networknt.server.ServerConfig;
 import com.networknt.server.StartupHookProvider;
 import com.networknt.status.Status;
+import com.networknt.utility.ModuleRegistry;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
@@ -34,6 +36,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class RuleLoaderStartupHook implements StartupHookProvider {
     static final Logger logger = LoggerFactory.getLogger(RuleLoaderStartupHook.class);
+    public static final String MASK_PORTAL_TOKEN = "portalToken";
+
     // shared rule map with ruleId as the key and Rule object as the value.
     public static Map<String, Object> endpointRules;
     public static Map<String, Rule> rules;
@@ -44,6 +48,9 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
 
     @Override
     public void onStartup() {
+        config = RuleLoaderConfig.load();
+        List<String> masks = List.of(MASK_PORTAL_TOKEN);
+        ModuleRegistry.registerModule(RuleLoaderStartupHook.class.getName(), Config.getInstance().getJsonMapConfigNoCache(RuleLoaderConfig.CONFIG_NAME), masks);
         if(config.isEnabled()) {
             // by default the rules for the service is loaded from the light-portal; however, it can be configured to loaded from config folder.
             if(RuleLoaderConfig.RULE_SOURCE_CONFIG_FOLDER.equals(config.getRuleSource())) {
