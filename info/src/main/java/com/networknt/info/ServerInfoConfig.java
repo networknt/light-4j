@@ -20,6 +20,7 @@ package com.networknt.info;
  * Created by steve on 18/09/16.
  */
 public class ServerInfoConfig {
+    public static final String CONFIG_NAME = "info";
     boolean enableServerInfo;
 
     public ServerInfoConfig() {
