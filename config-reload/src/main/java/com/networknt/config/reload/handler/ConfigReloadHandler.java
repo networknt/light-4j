@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.body.BodyHandler;
 import com.networknt.config.Config;
 import com.networknt.config.reload.model.ConfigReloadConfig;
+import com.networknt.consul.ConsulConfig;
+import com.networknt.consul.ConsulRegistry;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.server.DefaultConfigLoader;
@@ -35,17 +37,17 @@ public class ConfigReloadHandler implements LightHttpHandler {
     private  static final String MODULE_DEFAULT = "ALL";
     private  static final String RELOAD_METHOD = "reload";
 
+    private static ConfigReloadConfig config;
 
     public ConfigReloadHandler() {
-
+        if(logger.isDebugEnabled()) logger.debug("ConfigReloadHandler is constructed");
+        config = (ConfigReloadConfig) Config.getInstance().getJsonObjectConfig(ConfigReloadConfig.CONFIG_NAME, ConfigReloadConfig.class);
+        ModuleRegistry.registerModule(ConfigReloadHandler.class.getName(), config.getMappedConfig(),null);
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        ConfigReloadConfig config = (ConfigReloadConfig) Config.getInstance().getJsonObjectConfig(ConfigReloadConfig.CONFIG_NAME, ConfigReloadConfig.class);
-      //  Map<String, Object> bodyMap = (Map<String, Object>)exchange.getAttachment(BodyHandler.REQUEST_BODY);
         List<String> modules =  (List)exchange.getAttachment(AttachmentConstants.REQUEST_BODY);
-
         List<String> reloads =  new ArrayList<>();
         if (config.isEnabled()) {
             reLoadConfigs();
