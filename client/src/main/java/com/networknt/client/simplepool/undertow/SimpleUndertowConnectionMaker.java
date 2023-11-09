@@ -45,11 +45,19 @@ public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
 {
     private static final Logger logger = LoggerFactory.getLogger(SimpleUndertowConnectionMaker.class);
     private static final ByteBufferPool BUFFER_POOL = new DefaultByteBufferPool(true, ClientConfig.get().getBufferSize() * 1024);
-    private static SimpleUndertowConnectionMaker simpleUndertowConnectionMaker = null;
+    private static final AtomicReference<XnioWorker> WORKER = new AtomicReference<>(null);
+    private static final AtomicReference<UndertowXnioSsl> SSL = new AtomicReference<>(null);
+    private static volatile SimpleUndertowConnectionMaker simpleUndertowConnectionMaker = null;
+
+    private SimpleUndertowConnectionMaker() {}
 
     public static SimpleConnectionMaker instance() {
-        if(simpleUndertowConnectionMaker == null)
-            simpleUndertowConnectionMaker = new SimpleUndertowConnectionMaker();
+        if(simpleUndertowConnectionMaker == null) {
+            synchronized (SimpleUndertowConnectionMaker.class) {
+                if (simpleUndertowConnectionMaker == null)
+                    simpleUndertowConnectionMaker = new SimpleUndertowConnectionMaker();
+            }
+        }
         return simpleUndertowConnectionMaker;
     }
 
@@ -112,8 +120,6 @@ public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
         return isHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY;
     }
 
-    // TODO: Should worker be re-used? Note: Light-4J Http2Client re-uses it
-    private static AtomicReference<XnioWorker> WORKER = new AtomicReference<>(null);
     private static XnioWorker getWorker(boolean isHttp2)
     {
         if(WORKER.get() != null) return WORKER.get();
@@ -139,8 +145,6 @@ public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
         return  optionBuild.getMap();
     }
 
-    // TODO: Should SSL be re-used? Note: Light-4J Http2Client re-uses it
-    private static AtomicReference<UndertowXnioSsl> SSL = new AtomicReference<>(null);
     private static XnioSsl getSSL(boolean isHttps, boolean isHttp2)
     {
         if(!isHttps)
