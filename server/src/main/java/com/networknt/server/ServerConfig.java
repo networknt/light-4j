@@ -56,6 +56,7 @@ public class ServerConfig {
     String bootstrapStorePass;
     long maxTransferFileSize;
     boolean startOnRegistryFailure;
+    boolean maskConfigProperties;
 
 	public ServerConfig() {
     }
@@ -342,5 +343,13 @@ public class ServerConfig {
 
     public void setStartOnRegistryFailure(boolean startOnRegistryFailure) {
         this.startOnRegistryFailure = startOnRegistryFailure;
+    }
+
+    public boolean isMaskConfigProperties() {
+        return maskConfigProperties;
+    }
+
+    public void setMaskConfigProperties(boolean maskConfigProperties) {
+        this.maskConfigProperties = maskConfigProperties;
     }
 }

@@ -31,7 +31,7 @@ import java.util.List;
 public class ApiKeyHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(ApiKeyHandler.class);
     static final String API_KEY_MISMATCH = "ERR10075";
-    ApiKeyConfig config;
+    static ApiKeyConfig config;
 
     private volatile HttpHandler next;
 
