@@ -120,3 +120,10 @@ allowUnescapedCharactersInUrl: ${server.allowUnescapedCharactersInUrl:false}
 
 # Set the max transfer file size for uploading files. Default to 1000000 which is 1 MB.
 maxTransferFileSize: ${server.maxTransferFileSize:1000000}
+
+# Indicate if the mask for the module registry should be applied or not. Default to true. If all the sensitive
+# properties are encrypted, then this flag can be set to false. This allows the encrypted sensitive properties
+# to show up in the server info response. When config server is used, this flag should be set to false so that
+# the server info response can be automatically compared with the config server generated server info based on
+# the config properties.
+maskConfigProperties: ${server.maskConfigProperties:true}

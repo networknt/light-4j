@@ -27,7 +27,7 @@ import java.util.*;
  */
 public class ModuleRegistry {
 
-    private static Map<String, Object> registry = new HashMap<>();
+    private static final Map<String, Object> registry = new HashMap<>();
 
     public static void registerModule(String moduleName, Map<String, Object> config, List<String> masks) {
         // use module name as key for the config map will make api-certification parses this object easily.
