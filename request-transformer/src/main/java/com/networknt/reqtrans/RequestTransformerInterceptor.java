@@ -47,6 +47,7 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
     public RequestTransformerInterceptor() {
         if(logger.isInfoEnabled()) logger.info("RequestTransformerHandler is loaded");
         config = RequestTransformerConfig.load();
+        ModuleRegistry.registerModule(RequestTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
