@@ -62,6 +62,7 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
     public ResponseTransformerInterceptor() {
         if (logger.isInfoEnabled()) logger.info("ResponseManipulatorHandler is loaded");
         config = ResponseTransformerConfig.load();
+        ModuleRegistry.registerModule(ResponseTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
