@@ -2,8 +2,6 @@ package com.networknt.server;
 
 import java.util.Map;
 
-import static com.networknt.server.Server.logger;
-
 /**
  * This enum class is used to set and validate server options.
  * The following server options are supported:
@@ -46,7 +44,7 @@ public enum ServerOption {
         for (ServerOption serverOption : ServerOption.values()) {
             if (mapConfig.containsKey(serverOption.value())) {
                 if (!setServerOption(serverOption, mapConfig.get(serverOption.value), serverConfig)) {
-                    logger.warn("Server option: " + serverOption.value() + " set in server.yml is invalid, has been reset to default value.");
+                    ServerConfig.logger.warn("Server option: " + serverOption.value() + " set in server.yml is invalid, has been reset to default value.");
                 }
             } else {
                 setToDefaultServerOption(serverOption, serverConfig);

@@ -54,10 +54,10 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
 	@Override
 	public void handleRequest(HttpServerExchange exchange) throws Exception {
         if (firstTime) {
-            commonTags.put("api", Server.getServerConfig().getServiceId());
-            commonTags.put("env", Server.getServerConfig().getEnvironment());
+            commonTags.put("api", ServerConfig.getInstance().getServiceId());
+            commonTags.put("env", ServerConfig.getInstance().getEnvironment());
             commonTags.put("addr", Server.currentAddress);
-            commonTags.put("port", "" + (Server.getServerConfig().isEnableHttps() ? Server.currentHttpsPort : Server.currentHttpPort));
+            commonTags.put("port", "" + (ServerConfig.getInstance().isEnableHttps() ? Server.currentHttpsPort : Server.currentHttpPort));
             InetAddress inetAddress = Util.getInetAddress();
             commonTags.put("host", inetAddress == null ? "unknown" : inetAddress.getHostName()); // will be container id if in docker.
             if (logger.isDebugEnabled()) {

@@ -13,7 +13,7 @@ public class ServerConfigEnvTest {
     public void testStringEnv() {
         config.clear();
         // ensure that env is "0001" instead of "1"
-        ServerConfig serverConfig = (ServerConfig)Config.getInstance().getJsonObjectConfig(CONFIG_NAME, ServerConfig.class);
+        ServerConfig serverConfig = ServerConfig.getInstance(CONFIG_NAME);
         Assert.assertEquals("0001", serverConfig.getEnvironment());
     }
 }
