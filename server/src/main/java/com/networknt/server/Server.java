@@ -181,7 +181,7 @@ public class Server {
             gracefulShutdownHandler = new GracefulShutdownHandler(new OrchestrationHandler());
         }
 
-        ServerConfig serverConfig = getServerConfig();
+        ServerConfig serverConfig = ServerConfig.getInstance();
         if (serverConfig.dynamicPort) {
             if (serverConfig.minPort > serverConfig.maxPort) {
                 String errMessage = "No ports available to bind to - the minPort is larger than the maxPort in server.yml";
@@ -241,12 +241,11 @@ public class Server {
      * load it into the server configuration, otherwise use the default value
      */
     private static void serverOptionInit() {
-        Map<String, Object> mapConfig = Config.getInstance().getJsonMapConfigNoCache(SERVER_CONFIG_NAME);
-        ServerOption.serverOptionInit(mapConfig, getServerConfig());
+        ServerOption.serverOptionInit(ServerConfig.getInstance().getMappedConfig(), ServerConfig.getInstance());
     }
 
     static private boolean bind(HttpHandler handler, int port) {
-        ServerConfig serverConfig = getServerConfig();
+        ServerConfig serverConfig = ServerConfig.getInstance();
         try {
             Undertow.Builder builder = Undertow.builder();
             if (serverConfig.enableHttps) {
@@ -359,7 +358,7 @@ public class Server {
     static public void shutdown() {
 
         // need to unregister the service
-        if (getServerConfig().enableRegistry && registry != null && serviceUrls != null) {
+        if (ServerConfig.getInstance().enableRegistry && registry != null && serviceUrls != null) {
             for(URL serviceUrl: serviceUrls) {
                 registry.unregister(serviceUrl);
                 // Please don't remove the following line. When server is killed, the logback won't work anymore.
@@ -374,7 +373,7 @@ public class Server {
             logger.info("Starting graceful shutdown.");
             gracefulShutdownHandler.shutdown();
             try {
-                gracefulShutdownHandler.awaitShutdown(getServerConfig().getShutdownGracefulPeriod());
+                gracefulShutdownHandler.awaitShutdown(ServerConfig.getInstance().getShutdownGracefulPeriod());
             } catch (InterruptedException e) {
                 logger.error("Error occurred while waiting for pending requests to complete.", e);
             }
@@ -399,8 +398,8 @@ public class Server {
     }
 
     protected static KeyStore loadKeyStore() {
-        String name = getServerConfig().getKeystoreName();
-        String pass = getServerConfig().getKeystorePass();
+        String name = ServerConfig.getInstance().getKeystoreName();
+        String pass = ServerConfig.getInstance().getKeystorePass();
         if(pass == null) {
             Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
             pass = (String) secretConfig.get(SecretConstants.SERVER_KEYSTORE_PASS);
@@ -409,8 +408,8 @@ public class Server {
     }
 
     protected static KeyStore loadTrustStore() {
-        String name = getServerConfig().getTruststoreName();
-        String pass = getServerConfig().getTruststorePass();
+        String name = ServerConfig.getInstance().getTruststoreName();
+        String pass = ServerConfig.getInstance().getTruststorePass();
         if(pass == null) {
             Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
             pass = (String) secretConfig.get(SecretConstants.SERVER_TRUSTSTORE_PASS);
@@ -454,14 +453,14 @@ public class Server {
     private static SSLContext createSSLContext() throws RuntimeException {
 
         try {
-            String keyPass = getServerConfig().getKeyPass();
+            String keyPass = ServerConfig.getInstance().getKeyPass();
             if(keyPass == null) {
                 Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
                 keyPass = (String) secretConfig.get(SecretConstants.SERVER_KEY_PASS);
             }
             KeyManager[] keyManagers = buildKeyManagers(loadKeyStore(), keyPass.toCharArray());
             TrustManager[] trustManagers;
-            if (getServerConfig().isEnableTwoWayTls()) {
+            if (ServerConfig.getInstance().isEnableTwoWayTls()) {
                 trustManagers = buildTrustManagers(loadTrustStore());
             } else {
                 trustManagers = buildTrustManagers(null);
@@ -496,11 +495,6 @@ public class Server {
         statusConfig.putAll(appStatusConfig);
     }
 
-    public static ServerConfig getServerConfig(){
-        return (ServerConfig) Config.getInstance().getJsonObjectConfig(SERVER_CONFIG_NAME,
-                ServerConfig.class);
-    }
-
     /**
      * Register the service to the Consul or other service registry. Make it as a separate static method so that it
      * can be called from light-hybrid-4j to register individual service.
@@ -514,7 +508,7 @@ public class Server {
             registry = SingletonServiceFactory.getBean(Registry.class);
             if (registry == null)
                 throw new RuntimeException("Could not find registry instance in service map");
-            ServerConfig serverConfig = getServerConfig();
+            ServerConfig serverConfig = ServerConfig.getInstance();
             Map parameters = new HashMap<>();
             if (serverConfig.getEnvironment() != null)
                 parameters.put(ENV_PROPERTY_KEY, serverConfig.getEnvironment());
@@ -525,7 +519,7 @@ public class Server {
             // handle the registration exception separately to eliminate confusion
         } catch (Exception e) {
             Status status = new Status(ERROR_CONNECT_REGISTRY, serviceUrl);
-            if(getServerConfig().startOnRegistryFailure) {
+            if(ServerConfig.getInstance().startOnRegistryFailure) {
                 System.out.println("Failed to register service, start the server without registry. ");
                 System.out.println(status.toString());
                 e.printStackTrace();

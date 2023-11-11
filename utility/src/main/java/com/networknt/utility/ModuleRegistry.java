@@ -16,6 +16,8 @@
 
 package com.networknt.utility;
 
+import com.networknt.server.ServerConfig;
+
 import java.util.*;
 
 /**
@@ -32,7 +34,7 @@ public class ModuleRegistry {
     public static void registerModule(String moduleName, Map<String, Object> config, List<String> masks) {
         // use module name as key for the config map will make api-certification parses this object easily.
         if(config != null) {
-            if(masks != null && masks.size() > 0) {
+            if(ServerConfig.getInstance().isMaskConfigProperties() && masks != null && masks.size() > 0) {
                 for (String mask : masks) {
                     maskNode(config, mask);
                 }

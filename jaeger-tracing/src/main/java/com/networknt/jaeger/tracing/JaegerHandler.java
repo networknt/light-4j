@@ -21,6 +21,7 @@ import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.server.Server;
+import com.networknt.server.ServerConfig;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.NetUtils;
@@ -102,7 +103,7 @@ public class JaegerHandler implements MiddlewareHandler {
         Span rootSpan = spanBuilder
                 .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
                 .withTag(Tags.PEER_HOSTNAME.getKey(), NetUtils.getLocalAddressByDatagram())
-                .withTag(Tags.PEER_PORT.getKey(), Server.getServerConfig().getHttpsPort())
+                .withTag(Tags.PEER_PORT.getKey(), ServerConfig.getInstance().getHttpsPort())
                 .start();
         tracer.activateSpan(rootSpan);
         // This can be retrieved in the business handler to add tags and logs for tracing.
