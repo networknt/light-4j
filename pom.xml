@@ -152,6 +152,7 @@
         <module>decryptor</module>
         <module>common</module>
         <module>email-sender</module>
+        <module>server-config</module>
         <module>server</module>
         <module>resource</module>
         <module>content</module>
@@ -392,6 +393,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>monad-result</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>server-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

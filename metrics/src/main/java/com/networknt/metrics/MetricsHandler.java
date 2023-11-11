@@ -5,6 +5,7 @@ import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.server.Server;
+import com.networknt.server.ServerConfig;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.Util;
@@ -49,10 +50,10 @@ public class MetricsHandler extends AbstractMetricsHandler {
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("MetricsHandler.handleRequest starts.");
         if(firstTime) {
-            commonTags.put("api", Server.getServerConfig().getServiceId());
-            commonTags.put("env", Server.getServerConfig().getEnvironment());
+            commonTags.put("api", ServerConfig.getInstance().getServiceId());
+            commonTags.put("env", ServerConfig.getInstance().getEnvironment());
             commonTags.put("addr", Server.currentAddress);
-            commonTags.put("port", "" + (Server.getServerConfig().isEnableHttps() ? Server.currentHttpsPort : Server.currentHttpPort));
+            commonTags.put("port", "" + (ServerConfig.getInstance().isEnableHttps() ? Server.currentHttpsPort : Server.currentHttpPort));
             InetAddress inetAddress = Util.getInetAddress();
             commonTags.put("host", inetAddress == null ? "unknown" : inetAddress.getHostName()); // will be container id if in docker.
             if(logger.isDebugEnabled()) {
