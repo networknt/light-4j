@@ -24,6 +24,7 @@ import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
 import io.undertow.util.PathTemplateMatcher;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -31,6 +32,11 @@ import java.util.List;
 import java.util.Map;
 
 public class HandlerTest {
+
+    @Before()
+    public void setUp() throws Exception {
+        Handler.setConfig("handler");
+    }
 
     @Test
     public void validClassNameWithoutAt_split_returnsCorrect() throws Exception {
