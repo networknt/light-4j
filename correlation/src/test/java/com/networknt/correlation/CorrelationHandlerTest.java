@@ -178,6 +178,10 @@ public class CorrelationHandlerTest {
         } finally {
             IoUtils.safeClose(connection);
         }
+
+        // set the autogen of the correlation ID to default value
+        CorrelationHandler.config.setAutogenCorrelationID(true);
+
         int statusCode = reference.get().getResponseCode();
         String body = reference.get().getAttachment(Http2Client.RESPONSE_BODY);
         Assert.assertEquals(200, statusCode);
