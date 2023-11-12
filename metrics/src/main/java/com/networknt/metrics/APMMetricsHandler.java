@@ -47,7 +47,7 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
             pattern = Pattern.compile(config.getIssuerRegex());
         }
         serverConfig = (ServerConfig) Config.getInstance().getJsonObjectConfig(ServerConfig.CONFIG_NAME, ServerConfig.class);
-        ModuleRegistry.registerModule(MetricsConfig.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, APMMetricsHandler.class.getName(), config.getMappedConfig(), null);
         if(logger.isDebugEnabled()) logger.debug("APMMetricsHandler is constructed!");
     }
 
@@ -157,13 +157,13 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(APMMetricsHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, APMMetricsHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(APMMetricsHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, APMMetricsHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
         if(logger.isInfoEnabled()) logger.info("APMMetricsHandler is reloaded.");
     }
 }

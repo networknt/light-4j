@@ -61,7 +61,7 @@ public class DumpHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(DumpHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(DumpConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(DumpConfig.CONFIG_NAME, DumpHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(DumpConfig.CONFIG_NAME), null);
     }
 
     @Override
@@ -100,7 +100,7 @@ public class DumpHandler implements MiddlewareHandler {
     @Override
     public void reload() {
         config = (DumpConfig)Config.getInstance().getJsonObjectConfigNoCache(DumpConfig.CONFIG_NAME, DumpConfig.class);
-        ModuleRegistry.registerModule(DumpHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(DumpConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(DumpConfig.CONFIG_NAME, DumpHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(DumpConfig.CONFIG_NAME), null);
         if(logger.isInfoEnabled()) logger.info("DumpHandler is reloaded.");
     }
 }

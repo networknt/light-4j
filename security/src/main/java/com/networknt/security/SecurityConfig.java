@@ -19,6 +19,7 @@ import java.util.*;
  * @author Steve Hu
  */
 public class SecurityConfig {
+    public static final String CONFIG_NAME = "security";
     private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
 
     private static final String ENABLE_VERIFY_JWT = "enableVerifyJwt";

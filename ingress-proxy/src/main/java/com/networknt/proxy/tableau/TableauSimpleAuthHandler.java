@@ -68,8 +68,7 @@ public class TableauSimpleAuthHandler implements MiddlewareHandler {
     private static final HttpString TABLEAU_TOKEN = new HttpString("X-Tableau-Auth");
     private static final HttpString TABLEAU_CONTENT_URL = new HttpString("tableauContentUrl");
 
-    private static final TableauConfig config =
-            (TableauConfig) Config.getInstance().getJsonObjectConfig(TABLEAU_CONFIG_NAME, TableauConfig.class);
+    private static final TableauConfig config = TableauConfig.load();
     private static final Map<String, Object> secretConfig;
 
     private volatile HttpHandler next;
@@ -181,7 +180,7 @@ public class TableauSimpleAuthHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(TableauSimpleAuthHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(TABLEAU_CONFIG_NAME), null);
+        ModuleRegistry.registerModule(TableauConfig.CONFIG_NAME, TableauSimpleAuthHandler.class.getName(), config.getMappedConfig(), null);
     }
 
 }

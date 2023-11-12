@@ -49,7 +49,7 @@ public class HeaderHandler implements MiddlewareHandler {
     private volatile HttpHandler next;
 
     public HeaderHandler() {
-        this.config = HeaderConfig.load();
+        config = HeaderConfig.load();
     }
 
     /**
@@ -58,7 +58,7 @@ public class HeaderHandler implements MiddlewareHandler {
      * @deprecated
      */
     public HeaderHandler(HeaderConfig cfg) {
-        this.config = cfg;
+        config = cfg;
     }
     /**
      * Check iterate the configuration on both request and response section and update
@@ -159,13 +159,13 @@ public class HeaderHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(HeaderHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(HeaderConfig.CONFIG_NAME, HeaderHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(HeaderHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(HeaderConfig.CONFIG_NAME, HeaderHandler.class.getName(), config.getMappedConfig(), null);
         if(logger.isInfoEnabled()) logger.info("HeaderHandler is reloaded.");
     }
 }

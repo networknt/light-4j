@@ -42,7 +42,7 @@ public class ConfigReloadHandler implements LightHttpHandler {
     public ConfigReloadHandler() {
         if(logger.isDebugEnabled()) logger.debug("ConfigReloadHandler is constructed");
         config = ConfigReloadConfig.load();
-        ModuleRegistry.registerModule(ConfigReloadHandler.class.getName(), config.getMappedConfig(),null);
+        ModuleRegistry.registerModule(ConfigReloadConfig.CONFIG_NAME, ConfigReloadHandler.class.getName(), config.getMappedConfig(),null);
     }
 
     @Override
@@ -57,7 +57,11 @@ public class ConfigReloadHandler implements LightHttpHandler {
 
                 Map<String, Object> modulesRegistry =  ModuleRegistry.getRegistry();
                 for (Map.Entry<String, Object> entry: modulesRegistry.entrySet()) {
-                    modules.add(entry.getKey());
+                    String key = entry.getKey();
+                    if (key.contains(":")) {
+                        key = key.substring(key.indexOf(":") + 1);
+                    }
+                    modules.add(key);
                 }
             }
 

@@ -50,7 +50,7 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
     public void onStartup() {
         config = RuleLoaderConfig.load();
         List<String> masks = List.of(MASK_PORTAL_TOKEN);
-        ModuleRegistry.registerModule(RuleLoaderStartupHook.class.getName(), Config.getInstance().getJsonMapConfigNoCache(RuleLoaderConfig.CONFIG_NAME), masks);
+        ModuleRegistry.registerModule(RuleLoaderConfig.CONFIG_NAME, RuleLoaderStartupHook.class.getName(), Config.getInstance().getJsonMapConfigNoCache(RuleLoaderConfig.CONFIG_NAME), masks);
         if(config.isEnabled()) {
             // by default the rules for the service is loaded from the light-portal; however, it can be configured to loaded from config folder.
             if(RuleLoaderConfig.RULE_SOURCE_CONFIG_FOLDER.equals(config.getRuleSource())) {

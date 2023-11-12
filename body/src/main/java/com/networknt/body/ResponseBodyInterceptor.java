@@ -46,13 +46,13 @@ public class ResponseBodyInterceptor implements ResponseInterceptor {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ResponseBodyInterceptor.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(BodyConfig.CONFIG_NAME, ResponseBodyInterceptor.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(ResponseBodyInterceptor.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(BodyConfig.CONFIG_NAME, ResponseBodyInterceptor.class.getName(), config.getMappedConfig(), null);
         if (LOG.isInfoEnabled())
             LOG.info("ResponseBodyInterceptor is reloaded.");
     }

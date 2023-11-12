@@ -188,13 +188,13 @@ public class RequestBodyInterceptor implements RequestInterceptor {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(RequestBodyInterceptor.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(BodyConfig.CONFIG_NAME, RequestBodyInterceptor.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(RequestBodyInterceptor.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(BodyConfig.CONFIG_NAME, RequestBodyInterceptor.class.getName(), config.getMappedConfig(), null);
         if (LOG.isInfoEnabled())
             LOG.info("RequestBodyInterceptor is reloaded.");
     }

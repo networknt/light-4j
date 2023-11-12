@@ -55,13 +55,14 @@ import static com.networknt.jaeger.tracing.JaegerStartupHookProvider.tracer;
 public class JaegerHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(JaegerHandler.class);
 
-    static JaegerConfig jaegerConfig = (JaegerConfig) Config.getInstance().getJsonObjectConfig(JaegerConfig.CONFIG_NAME, JaegerConfig.class);
+    static JaegerConfig jaegerConfig;
 
 
     private volatile HttpHandler next;
 
     public JaegerHandler() {
-
+        if(logger.isInfoEnabled()) logger.info("JaegerHandler is constructed.");
+        jaegerConfig = JaegerConfig.load();
     }
 
     /**
@@ -142,11 +143,12 @@ public class JaegerHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(JaegerHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(JaegerConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(JaegerConfig.CONFIG_NAME, JaegerHandler.class.getName(), jaegerConfig.getMappedConfig(), null);
     }
 
     @Override
     public void reload() {
-        jaegerConfig = (JaegerConfig) Config.getInstance().getJsonObjectConfig(JaegerConfig.CONFIG_NAME, JaegerConfig.class);
+        jaegerConfig.reload();
+        ModuleRegistry.registerModule(JaegerConfig.CONFIG_NAME, JaegerHandler.class.getName(), jaegerConfig.getMappedConfig(), null);
     }
 }

@@ -4,6 +4,8 @@ import com.networknt.client.Http2Client;
 import com.networknt.config.Config;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.health.HealthConfig;
+import com.networknt.proxy.mras.MrasConfig;
+import com.networknt.utility.ModuleRegistry;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
@@ -30,11 +32,15 @@ public class ProxyHealthGetHandler implements LightHttpHandler {
     public static final String HEALTH_RESULT_OK = "OK";
     public static final String HEALTH_RESULT_ERROR = "ERROR";
     static final Logger logger = LoggerFactory.getLogger(ProxyHealthGetHandler.class);
-    static final HealthConfig config = (HealthConfig) Config.getInstance().getJsonObjectConfig(HealthConfig.CONFIG_NAME, HealthConfig.class);
+    static final HealthConfig config = HealthConfig.load();
     static final Http2Client client = Http2Client.getInstance();
     // cached connection to the backend API to speed up the downstream check.
     static ClientConnection connection = null;
 
+    public ProxyHealthGetHandler() {
+        if(logger.isTraceEnabled()) logger.trace("ProxyHealthGetHandler is constructed.");
+        ModuleRegistry.registerModule(HealthConfig.CONFIG_NAME, ProxyHealthGetHandler.class.getName(), config.getMappedConfig(), null);
+    }
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("ProxyHealthGetHandler.handleRequest starts.");

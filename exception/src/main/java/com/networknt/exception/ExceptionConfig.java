@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * @author  Steve Hu
  */
 public class ExceptionConfig {
+    public static final String CONFIG_NAME = "exception";
     boolean enabled;
 
     @JsonIgnore
