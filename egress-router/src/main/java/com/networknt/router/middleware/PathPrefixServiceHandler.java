@@ -136,13 +136,13 @@ public class PathPrefixServiceHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(PathPrefixServiceHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(PathPrefixServiceConfig.CONFIG_NAME, PathPrefixServiceHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(PathPrefixServiceHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(PathPrefixServiceConfig.CONFIG_NAME, PathPrefixServiceHandler.class.getName(), config.getMappedConfig(), null);
         if(logger.isInfoEnabled()) logger.info("PathPrefixServiceHandler is reloaded.");
     }
 }

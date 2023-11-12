@@ -22,7 +22,7 @@ public class TokenConfig {
     boolean enabled;
     List<String> appliedPathPrefixes;
 
-    private Config config;
+    private final Config config;
     private Map<String, Object> mappedConfig;
 
     private TokenConfig() {

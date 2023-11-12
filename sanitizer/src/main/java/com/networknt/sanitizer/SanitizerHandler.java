@@ -137,12 +137,13 @@ public class SanitizerHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(SanitizerHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(SanitizerConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(SanitizerConfig.CONFIG_NAME, SanitizerHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void reload() {
         config = SanitizerConfig.load();
+        ModuleRegistry.registerModule(SanitizerConfig.CONFIG_NAME, SanitizerHandler.class.getName(), config.getMappedConfig(), null);
     }
 
 }

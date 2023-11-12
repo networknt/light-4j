@@ -47,11 +47,11 @@ public class Mask {
     public static final String MASK_TYPE_JSON = "json";
 
     static final Logger logger = LoggerFactory.getLogger(Mask.class);
-    private static Map<String, Object> config;
+    private static final Map<String, Object> config;
 
     static {
         config = Config.getInstance().getJsonMapConfigNoCache(MASK_CONFIG);
-        ModuleRegistry.registerModule(Mask.class.getName(), config, null);
+        ModuleRegistry.registerModule(MASK_CONFIG, Mask.class.getName(), config, null);
     }
 
     /**

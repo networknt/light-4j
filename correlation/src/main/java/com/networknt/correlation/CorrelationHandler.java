@@ -116,13 +116,13 @@ public class CorrelationHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(CorrelationHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CorrelationConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(CorrelationConfig.CONFIG_NAME, CorrelationHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CorrelationConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(CorrelationHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(CorrelationConfig.CONFIG_NAME, CorrelationHandler.class.getName(), config.getMappedConfig(), null);
         if(logger.isInfoEnabled()) {
             logger.info("CorrelationHandler is enabled.");
         }

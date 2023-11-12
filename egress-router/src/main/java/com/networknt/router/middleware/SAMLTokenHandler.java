@@ -53,13 +53,9 @@ import java.util.stream.Collectors;
  *
  */
 public class SAMLTokenHandler implements MiddlewareHandler {
-    public static final String CONFIG_NAME = "token";
     public static final String CLIENT_CONFIG_NAME = "client";
-    public static final String ENABLED = "enabled";
     public static final String CONFIG_SECURITY = "security";
-
-
-    public static Map<String, Object> config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
+    static final TokenConfig config = TokenConfig.load();
     static Logger logger = LoggerFactory.getLogger(SAMLTokenHandler.class);
     protected volatile HttpHandler next;
 
@@ -69,8 +65,6 @@ public class SAMLTokenHandler implements MiddlewareHandler {
 
     static final String SAMLAssertionHeader = "assertion";
     static final String JWTAssertionHeader = "client_assertion";
-
-    static final String STATUS_SAMLBEARER_CREDENTIALS_TOKEN_NOT_AVAILABLE = "ERR10009";
 
     static Map<String, Object> clientConfig;
     static Map<String, Object> tokenConfig;
@@ -140,18 +134,18 @@ public class SAMLTokenHandler implements MiddlewareHandler {
 
     @Override
     public boolean isEnabled() {
-        Object object = config.get(ENABLED);
-        return object != null && (Boolean) object;
+        return config.isEnabled();
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(SAMLTokenHandler.class.getName(), config, null);
+        ModuleRegistry.registerModule(TokenConfig.CONFIG_NAME, SAMLTokenHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void reload() {
-        config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
+        config.reload();
+        ModuleRegistry.registerModule(TokenConfig.CONFIG_NAME, SAMLTokenHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     private Result<String> getSAMLBearerToken(String samlAssertion , String jwtAssertion) {

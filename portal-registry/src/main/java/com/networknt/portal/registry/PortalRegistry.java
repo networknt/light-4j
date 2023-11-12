@@ -59,7 +59,7 @@ public class PortalRegistry extends AbstractRegistry {
         }
         lookupInterval = getUrl().getIntParameter(URLParamType.registrySessionTimeout.getName(), PortalRegistryConstants.DEFAULT_LOOKUP_INTERVAL);
         logger.info("PortalRegistry init finish.");
-        ModuleRegistry.registerModule(PortalRegistry.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        ModuleRegistry.registerModule(CONFIG_NAME, PortalRegistry.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
     @Override

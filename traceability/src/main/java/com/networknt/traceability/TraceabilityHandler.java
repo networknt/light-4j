@@ -91,13 +91,13 @@ public class TraceabilityHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(TraceabilityHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        ModuleRegistry.registerModule(TraceabilityConfig.CONFIG_NAME, TraceabilityHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(TraceabilityHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(TraceabilityConfig.CONFIG_NAME, TraceabilityHandler.class.getName(), config.getMappedConfig(), null);
         if(logger.isInfoEnabled()) logger.info("TraceabilityHandler is reloaded.");
     }
 }

@@ -63,7 +63,7 @@ public class LightProxyHandler implements HttpHandler {
 
     public LightProxyHandler() {
         config = ProxyConfig.load();
-        ModuleRegistry.registerModule(LightProxyHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ProxyConfig.CONFIG_NAME, LightProxyHandler.class.getName(), config.getMappedConfig(), null);
         List<String> hosts = new ArrayList<>(Arrays.asList(config.getHosts().split(",")));
         if(logger.isTraceEnabled()) logger.trace("hosts = " + JsonMapper.toJson(hosts));
         LoadBalancingProxyClient loadBalancer = new LoadBalancingProxyClient()
@@ -161,7 +161,7 @@ public class LightProxyHandler implements HttpHandler {
 
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(LightProxyHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ProxyConfig.CONFIG_NAME, LightProxyHandler.class.getName(), config.getMappedConfig(), null);
         List<String> hosts = new ArrayList<>(Arrays.asList(config.getHosts().split(",")));
         if(logger.isTraceEnabled()) logger.trace("hosts = " + JsonMapper.toJson(hosts));
         LoadBalancingProxyClient loadBalancer = new LoadBalancingProxyClient()

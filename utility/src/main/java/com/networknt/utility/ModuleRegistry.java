@@ -31,7 +31,7 @@ public class ModuleRegistry {
 
     private static final Map<String, Object> registry = new HashMap<>();
 
-    public static void registerModule(String moduleName, Map<String, Object> config, List<String> masks) {
+    public static void registerModule(String configName, String moduleClass, Map<String, Object> config, List<String> masks) {
         // use module name as key for the config map will make api-certification parses this object easily.
         if(config != null) {
             if(ServerConfig.getInstance().isMaskConfigProperties() && masks != null && masks.size() > 0) {
@@ -39,10 +39,10 @@ public class ModuleRegistry {
                     maskNode(config, mask);
                 }
             }
-            registry.put(moduleName, config);
+            registry.put(configName + ":" + moduleClass, config);
         } else {
             // we don't have any module without config, but we cannot guarantee user created modules
-            registry.put(moduleName, new HashMap<String, Object>());
+            registry.put(configName + ":" + moduleClass, new HashMap<String, Object>());
         }
     }
 

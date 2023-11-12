@@ -65,7 +65,7 @@ public class LoggerGetHandler implements LightHttpHandler {
     public LoggerGetHandler() {
         if(logger.isInfoEnabled()) logger.info("LoggerGetHandler is constructed.");
         config = LoggerConfig.load();
-        ModuleRegistry.registerModule(LoggerConfig.class.getName(), config.getMappedConfig(),null);
+        ModuleRegistry.registerModule(LoggerConfig.CONFIG_NAME, LoggerConfig.class.getName(), config.getMappedConfig(),null);
     }
 
     @Override

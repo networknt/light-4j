@@ -362,13 +362,13 @@ public class AuditHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(AuditHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(AuditConfig.CONFIG_NAME, AuditHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(AuditHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(AuditConfig.CONFIG_NAME, AuditHandler.class.getName(), config.getMappedConfig(), null);
         if(logger.isInfoEnabled()) logger.info("AuditHandler is reloaded.");
     }
 }
