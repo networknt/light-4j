@@ -67,17 +67,15 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ResponseInjectionConfig.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ResponseInjectionConfig.CONFIG_NAME, ResponseInterceptorInjectionHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-
         if (LOG.isTraceEnabled())
             LOG.trace("response-injection.yml is reloaded");
-
-        ModuleRegistry.registerModule(ResponseInjectionConfig.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ResponseInjectionConfig.CONFIG_NAME, ResponseInterceptorInjectionHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     /**

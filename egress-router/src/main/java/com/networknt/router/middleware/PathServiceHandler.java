@@ -114,13 +114,13 @@ public class PathServiceHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(PathServiceHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(PathServiceConfig.CONFIG_NAME, PathServiceHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(PathServiceHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(PathServiceConfig.CONFIG_NAME, PathServiceHandler.class.getName(), config.getMappedConfig(), null);
         if(logger.isInfoEnabled()) logger.info("PathServiceHandler is reloaded.");
     }
 }

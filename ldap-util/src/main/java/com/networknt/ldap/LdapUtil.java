@@ -1,6 +1,7 @@
 package com.networknt.ldap;
 
 import com.networknt.config.Config;
+import com.networknt.utility.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,8 +22,15 @@ public class LdapUtil {
     private final static String contextFactory = "com.sun.jndi.ldap.LdapCtxFactory";
     private final static String CONFIG_LDAP = "ldap";
 
-    private final static LdapConfig config = (LdapConfig)Config.getInstance().getJsonObjectConfig(CONFIG_LDAP, LdapConfig.class);
+    private final static LdapConfig config;
+
+    static {
+        config = LdapConfig.load();
+        ModuleRegistry.registerModule(CONFIG_LDAP, LdapUtil.class.getName(), config.getMappedConfig(), null);
+    }
+
     /**
+     *
      * Bind the username and password with LDAP context to verify the password. Return true
      * if there is no NamingException. No further activity to retrieve group or memberOf
      * from LDAP server.

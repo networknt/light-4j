@@ -55,14 +55,14 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
     private static final String STARTUP_HOOK_NOT_LOADED = "ERR11019";
     private static final String RESPONSE_TRANSFORM = "response-transform";
 
-    private ResponseTransformerConfig config;
+    private final ResponseTransformerConfig config;
     private volatile HttpHandler next;
     private RuleEngine engine;
 
     public ResponseTransformerInterceptor() {
         if (logger.isInfoEnabled()) logger.info("ResponseManipulatorHandler is loaded");
         config = ResponseTransformerConfig.load();
-        ModuleRegistry.registerModule(ResponseTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ResponseTransformerConfig.CONFIG_NAME, ResponseTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
@@ -84,13 +84,13 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ResponseTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ResponseTransformerConfig.CONFIG_NAME, ResponseTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(ResponseTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ResponseTransformerConfig.CONFIG_NAME, ResponseTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
         if(logger.isTraceEnabled()) logger.trace("ResponseTransformerInterceptor is reloaded.");
     }
 

@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * @author Gavin Chen
  */
 public class PrometheusConfig {
+    public static final String CONFIG_NAME = "prometheus";
     boolean enabled;
     boolean enableHotspot;
 

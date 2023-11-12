@@ -49,7 +49,7 @@ public class RouterHandler implements HttpHandler {
     protected static AbstractMetricsHandler metricsHandler;
     public RouterHandler() {
         config = RouterConfig.load();
-        ModuleRegistry.registerModule(RouterHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(RouterConfig.CONFIG_NAME, RouterHandler.class.getName(), config.getMappedConfig(), null);
         // As we are building a client side router for the light platform, the assumption is the server will
         // be on HTTP 2.0 TSL always. No need to handle HTTP 1.1 case here.
         LoadBalancingRouterProxyClient client = new LoadBalancingRouterProxyClient();
@@ -99,7 +99,7 @@ public class RouterHandler implements HttpHandler {
 
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(RouterHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(RouterConfig.CONFIG_NAME, RouterHandler.class.getName(), config.getMappedConfig(), null);
         LoadBalancingRouterProxyClient client = new LoadBalancingRouterProxyClient();
         if(config.httpsEnabled) client.setSsl(Http2Client.getInstance().getDefaultXnioSsl());
         if(config.http2Enabled) {

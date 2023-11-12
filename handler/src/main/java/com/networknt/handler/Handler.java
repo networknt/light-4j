@@ -75,7 +75,7 @@ public class Handler {
         initChains();
         initPaths();
         initDefaultHandlers();
-        ModuleRegistry.registerModule(Handler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        ModuleRegistry.registerModule(HandlerConfig.CONFIG_NAME, Handler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
     /**

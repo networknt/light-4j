@@ -87,7 +87,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ExternalServiceHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ExternalServiceConfig.CONFIG_NAME, ExternalServiceHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
@@ -102,7 +102,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                 logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
             }
         }
-        ModuleRegistry.registerModule(ExternalServiceHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ExternalServiceConfig.CONFIG_NAME, ExternalServiceHandler.class.getName(), config.getMappedConfig(), null);
         if(logger.isInfoEnabled()) logger.info("ExternalServiceHandler is reloaded.");
     }
 

@@ -69,12 +69,12 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
         if (LOG.isTraceEnabled())
             LOG.trace("request-injection.yml is reloaded");
 
-        ModuleRegistry.registerModule(RequestInjectionConfig.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(RequestInjectionConfig.CONFIG_NAME, RequestInterceptorInjectionHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(RequestInjectionConfig.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(RequestInjectionConfig.CONFIG_NAME, RequestInterceptorInjectionHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override

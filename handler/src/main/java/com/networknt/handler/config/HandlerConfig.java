@@ -24,6 +24,8 @@ import java.util.Map;
  * @author Dan Dobrin
  */
 public class HandlerConfig {
+    public static final String CONFIG_NAME = "handler";
+
     private boolean enabled;
     private List<Object> handlers;
     private Map<String, List<String>> chains;

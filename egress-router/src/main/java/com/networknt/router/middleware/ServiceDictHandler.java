@@ -101,13 +101,13 @@ public class ServiceDictHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ServiceDictHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ServiceDictConfig.CONFIG_NAME, ServiceDictHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(ServiceDictHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ServiceDictConfig.CONFIG_NAME, ServiceDictHandler.class.getName(), config.getMappedConfig(), null);
         if(logger.isInfoEnabled()) logger.info("ServiceDictHandler is reloaded.");
     }
 }

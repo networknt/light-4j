@@ -47,7 +47,7 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
     public RequestTransformerInterceptor() {
         if(logger.isInfoEnabled()) logger.info("RequestTransformerHandler is loaded");
         config = RequestTransformerConfig.load();
-        ModuleRegistry.registerModule(RequestTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(RequestTransformerConfig.CONFIG_NAME, RequestTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
@@ -69,13 +69,13 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(RequestTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(RequestTransformerConfig.CONFIG_NAME, RequestTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(RequestTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(RequestTransformerConfig.CONFIG_NAME, RequestTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
         if(logger.isTraceEnabled()) logger.trace("RequestTransformerInterceptor is reloaded.");
 
     }

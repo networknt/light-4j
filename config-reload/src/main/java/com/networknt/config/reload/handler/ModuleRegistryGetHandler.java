@@ -23,7 +23,7 @@ import java.util.Map;
 public class ModuleRegistryGetHandler implements LightHttpHandler {
 
     private static final ObjectMapper mapper = Config.getInstance().getMapper();
-    private  static final String STATUS_CONFIG_RELOAD_DISABLED = "ERR12217";
+    private static final String STATUS_CONFIG_RELOAD_DISABLED = "ERR12217";
 
     public ModuleRegistryGetHandler() {
 
@@ -37,9 +37,13 @@ public class ModuleRegistryGetHandler implements LightHttpHandler {
 
         if (config.isEnabled()) {
             List<String> modules = new ArrayList<>();
-            Map<String, Object> modulesRegistry =  ModuleRegistry.getRegistry();
-            for (Map.Entry<String, Object> entry: modulesRegistry.entrySet()) {
-                modules.add(entry.getKey());
+            Map<String, Object> modulesRegistry = ModuleRegistry.getRegistry();
+            for (Map.Entry<String, Object> entry : modulesRegistry.entrySet()) {
+                String key = entry.getKey();
+                if (key.contains(":")) {
+                    key = key.substring(key.indexOf(":") + 1);
+                }
+                modules.add(key);
             }
             exchange.getResponseHeaders().add(new HttpString("Content-Type"), "application/json");
             exchange.setStatusCode(HttpStatus.OK.value());
@@ -51,6 +55,4 @@ public class ModuleRegistryGetHandler implements LightHttpHandler {
         }
 
     }
-
-
 }

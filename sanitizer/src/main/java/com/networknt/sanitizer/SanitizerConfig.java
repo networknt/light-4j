@@ -148,6 +148,10 @@ public class SanitizerConfig {
         this.headerAttributesToEncode = headerAttributesToEncode;
     }
 
+    public Map<String, Object> getMappedConfig() {
+        return mappedConfig;
+    }
+
     public void setConfigData() {
         Object object = mappedConfig.get("enabled");
         if(object != null) {

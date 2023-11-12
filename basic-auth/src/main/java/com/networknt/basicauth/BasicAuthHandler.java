@@ -332,7 +332,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
         // As passwords are in the config file, we need to mask them.
         List<String> masks = new ArrayList<>();
         masks.add("password");
-        ModuleRegistry.registerModule(BasicAuthHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(BasicAuthConfig.CONFIG_NAME), masks);
+        ModuleRegistry.registerModule(BasicAuthConfig.CONFIG_NAME, BasicAuthHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(BasicAuthConfig.CONFIG_NAME), masks);
     }
 
     @Override
@@ -340,7 +340,7 @@ public class BasicAuthHandler implements MiddlewareHandler {
         config.reload();
         List<String> masks = new ArrayList<>();
         masks.add("password");
-        ModuleRegistry.registerModule(BasicAuthHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(BasicAuthConfig.CONFIG_NAME), masks);
+        ModuleRegistry.registerModule(BasicAuthConfig.CONFIG_NAME, BasicAuthHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(BasicAuthConfig.CONFIG_NAME), masks);
         if(logger.isInfoEnabled()) logger.info("BasicAuthHandler is reloaded.");
     }
 }
