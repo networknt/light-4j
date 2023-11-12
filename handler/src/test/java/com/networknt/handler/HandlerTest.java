@@ -35,6 +35,7 @@ public class HandlerTest {
 
     @Before()
     public void setUp() throws Exception {
+        // Resetting HandlerConfig to default Config before each test run
         Handler.setConfig("handler");
     }
 
