@@ -496,6 +496,15 @@ public class Server {
     }
 
     /**
+     * Get the server configuration from server.yml
+     * @return ServerConfig object
+     */
+    @Deprecated
+    public static ServerConfig getServerConfig(){
+        return ServerConfig.getInstance();
+    }
+
+    /**
      * Register the service to the Consul or other service registry. Make it as a separate static method so that it
      * can be called from light-hybrid-4j to register individual service.
      *
