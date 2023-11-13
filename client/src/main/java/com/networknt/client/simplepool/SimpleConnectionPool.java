@@ -67,6 +67,7 @@ public final class SimpleConnectionPool {
     {
         if(!pools.containsKey(uri))
             pools.computeIfAbsent(uri, pool -> new SimpleURIConnectionPool(uri, expireTime, poolSize, connectionMaker));
+
         return pools.get(uri).borrow(createConnectionTimeout, isHttp2);
     }
 
