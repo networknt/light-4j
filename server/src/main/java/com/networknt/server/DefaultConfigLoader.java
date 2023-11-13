@@ -282,10 +282,15 @@ public class DefaultConfigLoader implements IConfigLoader{
                 throw new Exception("Failed to load configs from config server: " + statusCode);
             } else {
                 // validate the headers against the product id and version. If they are not matched, throw an exception.
+                // this validation call is commented out for now as it is not ready on the config server side.
+
+                /*
                 if(!isHeadersMatchedJar(response.headers())) {
                     logger.error("The headers in the config server response are not matched with the jar file.");
                     throw new Exception("The headers in the config server response are not matched with the jar file.");
                 }
+                */
+
                 configs = mapper.readValue(body, new TypeReference<Map<String, Object>>() {});
                 processNestedMap(configs);
             }
