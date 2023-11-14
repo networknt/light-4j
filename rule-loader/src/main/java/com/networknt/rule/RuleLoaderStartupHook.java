@@ -62,7 +62,7 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
                 endpointRules = config.getEndpointRules();
             } else {
                 // by default, load from light-portal
-                ServerConfig serverConfig = (ServerConfig)Config.getInstance().getJsonObjectConfig(ServerConfig.CONFIG_NAME, ServerConfig.class);
+                ServerConfig serverConfig = ServerConfig.getInstance();
                 Result<String> result = getServiceById(config.getPortalHost(), serverConfig.getServiceId());
                 if(result.isSuccess()) {
                     String serviceString = result.getResult();
