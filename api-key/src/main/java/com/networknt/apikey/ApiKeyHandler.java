@@ -3,6 +3,7 @@ package com.networknt.apikey;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.utility.HashUtil;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -71,7 +72,10 @@ public class ApiKeyHandler implements MiddlewareHandler {
     public void register() {
         // As apiKeys are in the config file, we need to mask them.
         List<String> masks = new ArrayList<>();
-        masks.add("apiKey");
+        // if hashEnabled, there is no need to mask in the first place.
+        if(!config.hashEnabled) {
+            masks.add("apiKey");
+        }
         ModuleRegistry.registerModule(ApiKeyConfig.CONFIG_NAME, ApiKeyHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(ApiKeyConfig.CONFIG_NAME), masks);
     }
 
@@ -79,7 +83,9 @@ public class ApiKeyHandler implements MiddlewareHandler {
     public void reload() {
         config.reload();
         List<String> masks = new ArrayList<>();
-        masks.add("apiKey");
+        if(!config.hashEnabled) {
+            masks.add("apiKey");
+        }
         ModuleRegistry.registerModule(ApiKeyConfig.CONFIG_NAME, ApiKeyHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(ApiKeyConfig.CONFIG_NAME), masks);
         if(logger.isInfoEnabled()) logger.info("ApiKeyHandler is reloaded.");
     }
@@ -106,10 +112,25 @@ public class ApiKeyHandler implements MiddlewareHandler {
                     found = true;
                     // found the matched prefix, validate the apiKey by getting the header and compare.
                     String k = exchange.getRequestHeaders().getFirst(apiKey.getHeaderName());
-                    if(apiKey.getApiKey().equals(k)) {
-                        if (logger.isTraceEnabled()) logger.trace("Found matched apiKey with prefix = " + apiKey.getPathPrefix() + " headerName = " + apiKey.getHeaderName());
-                        matched = true;
-                        break;
+                    if(config.hashEnabled) {
+                        // hash the apiKey and compare with the one in the config.
+                        try {
+                            matched = HashUtil.validatePassword(k.toCharArray(), apiKey.getApiKey());
+                            if(matched) {
+                                if (logger.isTraceEnabled()) logger.trace("Found valid apiKey with prefix = " + apiKey.getPathPrefix() + " headerName = " + apiKey.getHeaderName());
+                                break;
+                            }
+                        } catch (Exception e) {
+                            // there is no way to get here as the validatePassword will not throw any exception.
+                            logger.error("Exception:", e);
+                        }
+                    } else {
+                        // if not hash enabled, then compare the apiKey directly.
+                        if(apiKey.getApiKey().equals(k)) {
+                            if (logger.isTraceEnabled()) logger.trace("Found matched apiKey with prefix = " + apiKey.getPathPrefix() + " headerName = " + apiKey.getHeaderName());
+                            matched = true;
+                            break;
+                        }
                     }
                 }
             }
