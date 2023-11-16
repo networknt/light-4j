@@ -15,12 +15,14 @@ public class ApiKeyConfig {
 
     public static final String CONFIG_NAME = "apikey";
     public static final String ENABLED = "enabled";
+    public static final String HASH_ENABLED = "hashEnabled";
     public static final String PATH_PREFIX = "pathPrefix";
     public static final String HEADER_NAME = "headerName";
     public static final String API_KEY = "apiKey";
     public static final String PATH_PREFIX_AUTHS = "pathPrefixAuths";
 
     boolean enabled;
+    boolean hashEnabled;
     List<ApiKey> pathPrefixAuths;
     private final Config config;
     private Map<String, Object> mappedConfig;
@@ -62,6 +64,14 @@ public class ApiKeyConfig {
         this.enabled = enabled;
     }
 
+    public boolean isHashEnabled() {
+        return hashEnabled;
+    }
+
+    public void setHashEnabled(boolean hashEnabled) {
+        this.hashEnabled = hashEnabled;
+    }
+
     public List<ApiKey> getPathPrefixAuths() {
         return pathPrefixAuths;
     }
@@ -73,6 +83,8 @@ public class ApiKeyConfig {
     private void setConfigData() {
         Object object = mappedConfig.get(ENABLED);
         if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
+        object = mappedConfig.get(HASH_ENABLED);
+        if(object != null) hashEnabled = Config.loadBooleanValue(HASH_ENABLED, object);
     }
 
     private void setConfigList() {
