@@ -326,9 +326,9 @@ public class ConsulRegistry extends CommandFailbackRegistry {
             {
                 logger.info("Got updated urls from Consul: {} instances of service {} found", services.size(), serviceName);
 
-                // - Update has occurred: Ensure that the serviceUrls Map has at least one (possibly empty List)
-                //   entry for the serviceName key.
-                //   This will ensure that updateServiceCache() will do an update.
+                // Update has occurred - Ensure that the serviceUrls Map has at least one (possibly empty) List
+                // entry for the serviceName key. This will indicate to updateServiceCache() to do an update:
+                // - serviceUrls.size() > 0
                 if(services.size() == 0)
                     serviceUrls.put(serviceName, new ArrayList<>());
 
@@ -365,12 +365,12 @@ public class ConsulRegistry extends CommandFailbackRegistry {
                 lookupServices.put(serviceName, 0L);
 
                 // Indicate to updateServiceCache() to leave cache unchanged for now:
-                // - serviceUrls.isEmpty() == true && serviceUrls.get(serviceName) != null && serviceUrls.get(serviceName).size() == 0
+                // - serviceUrls.size() == 0
             } else {
                 logger.info("Consul returned no service updates: No need to update local Consul discovery cache for service {}, lastIndex={}", serviceName, lastConsulIndexId);
 
                 // Indicate to updateServiceCache() to leave cache unchanged for now:
-                // - serviceUrls.isEmpty() == true && serviceUrls.get(serviceName) != null && serviceUrls.get(serviceName).size() == 0
+                // - serviceUrls.size() == 0
             }
         } else {
             logger.error("Local service cache may be out of date for {} - Consul connection failed", serviceName);
