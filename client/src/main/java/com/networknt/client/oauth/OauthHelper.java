@@ -20,9 +20,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
-import com.networknt.client.simplepool.SimpleConnectionHolder;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.client.simplepool.SimpleConnectionPool;
-import com.networknt.client.simplepool.undertow.SimpleClientConnectionMaker;
+import com.networknt.client.simplepool.undertow.SimpleUndertowConnectionMaker;
 import com.networknt.cluster.Cluster;
 import com.networknt.config.Config;
 import com.networknt.exception.ClientException;
@@ -88,7 +88,7 @@ public class OauthHelper {
     private static final Logger logger = LoggerFactory.getLogger(OauthHelper.class);
 
     private static final SimpleConnectionPool pool = new SimpleConnectionPool(
-            ClientConfig.get().getConnectionExpireTime(), ClientConfig.get().getConnectionPoolSize(), SimpleClientConnectionMaker.instance());
+            ClientConfig.get().getConnectionExpireTime(), ClientConfig.get().getConnectionPoolSize(), SimpleUndertowConnectionMaker.instance());
 
     /**
      * @deprecated As of release 1.5.29, replaced with @link #getTokenResult(TokenRequest tokenRequest)
@@ -413,7 +413,7 @@ public class OauthHelper {
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
         ClientConnection connection = null;
-        SimpleConnectionHolder.ConnectionToken borrowToken = null;
+        SimpleConnectionState.ConnectionToken borrowToken = null;
 
         long connectionTimeout = Math.max(2, keyRequest.getKeyConnectionTimeout() / 1000);
         long populateKeyTimeout = Math.max(2, keyRequest.getPopulateKeyTimeout() / 1000);

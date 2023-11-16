@@ -28,8 +28,8 @@ import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 /***
- * A SimpleConnectionHolder is a simplified interface for a connection, that also keeps track of the connection's state.
- * (In fact--in this document--the state of a connection and the state of its holder are used interchangeably)
+ * A SimpleConnectionState is a simplified interface for a connection, that also keeps track of the connection's state.
+ * (In fact--in this document--a connection and its state are used interchangeably)
  *
  * Connection States
  *
@@ -84,68 +84,68 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  *   Not doing so (i.e.: not freezing the time) may allow inconsistent states to be reached.
  */
-public final class SimpleConnectionHolder {
-    private static final Logger logger = LoggerFactory.getLogger(SimpleConnectionHolder.class);
+public final class SimpleConnectionState {
+    private static final Logger logger = LoggerFactory.getLogger(SimpleConnectionState.class);
 
-    // how long a connection can be eligible to be borrowed
+    // how long in milliseconds a connection can be eligible to be borrowed
     private final long EXPIRE_TIME;
 
     // the maximum number of borrowed tokens a connection can have at a time
     private final int MAX_BORROWS;
 
-    // the time this connection was created
+    // the time this connection was created represented as Unix Epoch time in milliseconds
     private final long startTime;
 
     // the URI this connection is connected to
     private final URI uri;
 
     /**
-      if true, this connection should be treated as CLOSED
-      note: CLOSED may be true before a connection is actually closed since there may be a delay
-            between setting close = false, and the network connection actually being fully closed
-    */
+     if true, this connection should be treated as CLOSED
+     note: CLOSED may be true before a connection is actually closed since there may be a delay
+     between setting close = false, and the network connection actually being fully closed
+     */
     private volatile boolean closed = false;
 
     /**
-      If the connection is HTTP/1.1, it can only be borrowed by 1 process at a time
-      If the connection is HTTP/2, it can be borrowed by an unlimited number of processes at a time
-    */
-    private final SimpleConnectionMaker connectionMaker;
+     If the connection is HTTP/1.1, it can only be borrowed by 1 thread at a time
+     If the connection is HTTP/2, it can be borrowed by an unlimited number of threads at a time
+     */
     private final SimpleConnection connection;
 
     /** a Set containing all borrowed connection tokens */
     private final Set<ConnectionToken> borrowedTokens = ConcurrentHashMap.newKeySet();
 
     /***
-     * Connections and ConnectionHolders are paired 1-1. For every connection there is a single ConnectionHolder and
+     * Connections and ConnectionStates are paired 1-1. For every connection there is a single ConnectionState and
      * vice versa.
      *
-     * This is why connections are created at the same time a ConnectionHolder is created (see SimpleConnectionHolder
+     * This is why connections are created at the same time a ConnectionState is created (see SimpleConnectionState
      * constructor).
      *
-     * The connection holder acts as a simplified interface to the connection, and keeps track of how many
-     * processes are using it at any given time. The maximum number of processes using it at the same time
-     * is determined by the connections type: HTTP/1.1 (1 process at a time) or HTTP/2 (multiple processes at a time).
+     * The SimpleConnectionState acts as a simplified interface to the connection, and keeps track of how many
+     * threads are using it at any given time. The maximum number of threads that can use it at the same time
+     * is determined by the connection's type: HTTP/1.1 (1 thread at a time) or HTTP/2 (multiple threads at a time).
      *
-     * @param expireTime how long a connection is eligible to be borrowed
-     * @param connectionCreateTimeout how long it can take a connection be created before an exception thrown
+     * @param expireTime the length of time in milliseconds a connection is eligible to be borrowed
+     * @param connectionCreateTimeout The maximum time in seconds to wait for a new connection to be established before
+     *          throwing an exception
      * @param isHttp2 if true, tries to upgrade to HTTP/2. if false, will try to open an HTTP/1.1 connection
      * @param uri the URI the connection will try to connect to
      * @param allCreatedConnections this Set will be passed to the callback thread that creates the connection.
-     *                              The connectionMaker will always add every successfully created connection
-     *                              to this Set.
-     * @param connectionMaker a class that SimpleConnectionHolder uses to create new SimpleConnection objects
+     *          The connectionMaker will always add every successfully created connection to this Set. This Set must be
+     *          threadsafe (such as <code>ConcurrentHashMap.newKeySet()</code>)
+     * @param connectionMaker a class that SimpleConnectionState uses to create new SimpleConnection objects
+     * @throws RuntimeException thrown if connection cannot be established within <code>connectionCreateTimeout</code>
+     *          seconds or prematurely closes
      */
-    public SimpleConnectionHolder(
-        long expireTime,
-        long connectionCreateTimeout,
-        boolean isHttp2,
-        URI uri,
-        Set<SimpleConnection> allCreatedConnections,
-        SimpleConnectionMaker connectionMaker)
+    public SimpleConnectionState(
+            long expireTime,
+            long connectionCreateTimeout,
+            boolean isHttp2,
+            URI uri,
+            Set<SimpleConnection> allCreatedConnections,
+            SimpleConnectionMaker connectionMaker) throws RuntimeException
     {
-        this.connectionMaker = connectionMaker;
-
         this.uri = uri;
         EXPIRE_TIME = expireTime;
 
@@ -157,63 +157,62 @@ public final class SimpleConnectionHolder {
 
         // throw exception if connection creation failed
         if(!connection.isOpen()) {
-            logger.debug("{} closed connection", logLabel(connection, now));
+            if(logger.isDebugEnabled()) logger.debug("{} closed connection", logLabel(connection, now));
             throw new RuntimeException("[" + port(connection) + "] Error creating connection to " + uri.toString());
 
-        // start life-timer and determine connection type
+            // start life-timer and determine connection type
         } else {
             startTime = System.currentTimeMillis();
 
             // HTTP/1.1 connections have a MAX_BORROW of 1, while HTTP/2 connections can have > 1 MAX_BORROWS
             MAX_BORROWS = connection().isMultiplexingSupported() ? Integer.MAX_VALUE : 1;
 
-            logger.debug("{} New connection : {}", logLabel(connection, now), MAX_BORROWS > 1 ? "HTTP/2" : "HTTP/1.1");
+            if(logger.isDebugEnabled())
+                logger.debug("{} New connection : {}", logLabel(connection, now), MAX_BORROWS > 1 ? "HTTP/2" : "HTTP/1.1");
         }
     }
 
-    private volatile boolean firstUse = true;
     /**
      * State Transition - Borrow
      *
-     * @param connectionCreateTimeout the amount of time to wait for a connection to be created before throwing an exception
-     * @param now the time at which to evaluate whether there are borrowable connections or not
-     * @return returns a ConnectionToken representing this borrow of the connection
-     * @throws RuntimeException if connection closed or attempt to borrow after pool is full
+     * @param connectionCreateTimeout the amount of time in seconds to wait for a connection to be created before
+     *          throwing an exception
+     * @param now the Unix Epoch time in milliseconds at which to evaluate whether there are borrowable connections or not
+     * @return returns a ConnectionToken representing the borrowing of the connection
+     * @throws RuntimeException if the connection is closed
+     * @throws IllegalStateException if the connection is not borrowable
      */
     public synchronized ConnectionToken borrow(long connectionCreateTimeout, long now) throws RuntimeException {
         /***
          * Connections can only be borrowed when the connection is in a BORROWABLE state.
          *
          * This will throw an IllegalStateException if borrow is called when the connection is not borrowable.
-         * This means that users need to check the state of the connection (i.e.: the state of the ConnectionHolder)
+         * This means that users need to check the state of the connection (i.e.: the state of the ConnectionState)
          * before using it, e.g.:
          *
          *     ConnectionToken connectionToken = null;
          *     long now = System.currentTimeMillis();
          *
-         *     if(connectionHolder.borrowable(now))
-         *         connectionToken = connectionHolder.borrow(connectionCreateTimeout, now);
+         *     if(connectionState.borrowable(now))
+         *         connectionToken = connectionState.borrow(connectionCreateTimeout, now);
          *
          * Also note the use of a single consistent value for the current time ('now'). This ensures
          * that the state returned in the 'if' statement will still be true in the 'borrow' statement
          * (as long as the connection does not close between the 'if' and 'borrow').
          *
          */
+
         ConnectionToken connectionToken;
 
         if(borrowable(now)) {
-            if (firstUse) {
-                firstUse = false;
-                connectionToken = new ConnectionToken(connection);
-            } else {
-                SimpleConnection reusedConnection = connectionMaker.reuseConnection(connectionCreateTimeout, connection);
-                connectionToken = new ConnectionToken(reusedConnection);
-            }
+            if(closed())
+                throw new RuntimeException("Connection was unexpectedly closed");
 
             // add connectionToken to the Set of borrowed tokens
-            borrowedTokens.add(connectionToken);
+            borrowedTokens.add( (connectionToken = new ConnectionToken(connection)) );
 
-            logger.debug("{} borrow - connection now has {} borrows", logLabel(connection, now), borrowedTokens.size());
+            if(logger.isDebugEnabled())
+                logger.debug("{} borrow - connection now has {} borrows", logLabel(connection, now), borrowedTokens.size());
 
             return connectionToken;
         }
@@ -237,31 +236,33 @@ public final class SimpleConnectionHolder {
         borrowedTokens.remove(connectionToken);
 
         long now = System.currentTimeMillis();
-        logger.debug("{} restore - connection now has {} borrows", logLabel(connection, now), borrowedTokens.size());
+        if(logger.isDebugEnabled())
+            logger.debug("{} restore - connection now has {} borrows", logLabel(connection, now), borrowedTokens.size());
     }
 
     /**
      * State Transition - Close
      *
-     * @param now the time at which to evaluate whether this connection is closable or not
+     * @param now the Unix Epoch time in milliseconds at which to evaluate whether this connection is closable or not
      * @return true if the connection was closed and false otherwise
      */
     public synchronized boolean safeClose(long now) {
-        logger.debug("{} close - closing connection with {} borrows...", logLabel(connection, now), borrowedTokens.size());
+        if(logger.isDebugEnabled())
+            logger.debug("{} close - closing connection with {} borrows...", logLabel(connection, now), borrowedTokens.size());
 
         /**
-        Connection may still be open even if closed == true
-        However, for consistency, we treat the connection as closed as soon as closed == true,
-        even if IoUtils.safeClose(connection) has not completed closing the connection yet
-        */
+         Connection may still be open even if closed == true
+         However, for consistency, we treat the connection as closed as soon as closed == true,
+         even if IoUtils.safeClose(connection) has not completed closing the connection yet
+         */
         if(closed())
             return true;
 
         /**
-        Ensures that a connection is never closed unless the connection is in the NOT_BORROWED_EXPIRED state
-        This is vital to ensure that connections are never closed until after all processes that
-        borrowed them are no longer using them
-        */
+         Ensures that a connection is never closed unless the connection is in the NOT_BORROWED_EXPIRED state
+         This is vital to ensure that connections are never closed until after all threads that
+         borrowed them are no longer using them
+         */
         boolean notBorrowedExpired = !borrowed() && expired(now);
         if(notBorrowedExpired != true)
             throw new IllegalStateException();
@@ -289,7 +290,7 @@ public final class SimpleConnectionHolder {
     /**
      * State Property - isExpired
      *
-     * @param now the time at which to evaluate whether this connection has expired or not
+     * @param now the Unix Epoch time in milliseconds at which to evaluate whether this connection has expired or not
      * @return true if the connection has expired and false otherwise
      */
     public synchronized boolean expired(long now) {
@@ -307,7 +308,7 @@ public final class SimpleConnectionHolder {
 
     /**
      * State Property - isAtMaxBorrows
-     * 
+     *
      * @return true if the connection is at its maximum number of borrows, and false otherwise
      */
     public synchronized boolean maxBorrowed() {
@@ -317,7 +318,7 @@ public final class SimpleConnectionHolder {
     /**
      * State Property - isBorrowable
      *
-     * @param now the time at which to evaluate the borrowability of this connection
+     * @param now the Unix Epoch time in milliseconds at which to evaluate the borrowability of this connection
      * @return true if the connection is borrowable and false otherwise
      */
     public synchronized boolean borrowable(long now) {
@@ -325,24 +326,24 @@ public final class SimpleConnectionHolder {
     }
 
     /**
-     * Returns the SimpleConnection that SimpleConnectionHolder holds
+     * Returns the SimpleConnection that SimpleConnectionState holds
      *
-     * @return the SimpleConnection that SimpleConnectionHolder holds
+     * @return the SimpleConnection that SimpleConnectionState holds
      */
     public SimpleConnection connection() { return connection; }
 
     public class ConnectionToken {
         private final SimpleConnection connection;
-        private final SimpleConnectionHolder holder;
+        private final SimpleConnectionState connectionState;
         private final URI uri;
 
         ConnectionToken(SimpleConnection connection) {
             this.connection = connection;
-            this.holder = SimpleConnectionHolder.this;
-            this.uri = SimpleConnectionHolder.this.uri;
+            this.connectionState = SimpleConnectionState.this;
+            this.uri = SimpleConnectionState.this.uri;
         }
 
-        SimpleConnectionHolder holder() { return holder; }
+        SimpleConnectionState state() { return connectionState; }
         SimpleConnection connection() { return connection; }
         public Object getRawConnection() { return connection.getRawConnection(); }
         public URI uri() { return uri; }

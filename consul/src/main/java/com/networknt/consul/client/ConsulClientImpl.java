@@ -19,11 +19,11 @@ package com.networknt.consul.client;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
+import com.networknt.client.simplepool.SimpleConnectionState;
 import com.networknt.config.Config;
 import com.networknt.consul.*;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.StringUtils;
-import io.undertow.UndertowOptions;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
@@ -33,7 +33,6 @@ import io.undertow.util.Methods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
-import org.xnio.OptionMap;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -46,10 +45,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 // use SimpleURIConnectionPool as the connection pool
 import com.networknt.client.simplepool.SimpleURIConnectionPool;
-import com.networknt.client.simplepool.SimpleConnectionHolder;
 // Use Undertow ClientConnection as raw connection
 import com.networknt.client.simplepool.SimpleConnectionMaker;
-import com.networknt.client.simplepool.undertow.SimpleClientConnectionMaker;
+import com.networknt.client.simplepool.undertow.SimpleUndertowConnectionMaker;
 
 /**
  * A client that talks to Consul agent with REST API.
@@ -90,7 +88,7 @@ public class ConsulClientImpl implements ConsulClient {
 		}
 
 		// create SimpleURIConnection pool
-		SimpleConnectionMaker undertowConnectionMaker = SimpleClientConnectionMaker.instance();
+		SimpleConnectionMaker undertowConnectionMaker = SimpleUndertowConnectionMaker.instance();
 		pool = new SimpleURIConnectionPool(
 				uri, ClientConfig.get().getConnectionExpireTime(), ClientConfig.get().getConnectionPoolSize(), undertowConnectionMaker);
 	}
@@ -100,7 +98,7 @@ public class ConsulClientImpl implements ConsulClient {
 		logger.trace("checkPass serviceId = {}", serviceId);
 		String path = "/v1/agent/check/pass/" + "check-" + serviceId;
 		ClientConnection connection = null;
-		SimpleConnectionHolder.ConnectionToken connectionToken = null;
+		SimpleConnectionState.ConnectionToken connectionToken = null;
 
 		try {
 			logger.debug("Getting connection from pool with {}", uri);
@@ -125,7 +123,7 @@ public class ConsulClientImpl implements ConsulClient {
 		logger.trace("checkFail serviceId = {}", serviceId);
 		String path = "/v1/agent/check/fail/" + "check-" + serviceId;
 		ClientConnection connection = null;
-		SimpleConnectionHolder.ConnectionToken connectionToken = null;
+		SimpleConnectionState.ConnectionToken connectionToken = null;
 
 		try {
 			logger.debug("Getting connection from pool with {}", uri);
@@ -149,7 +147,7 @@ public class ConsulClientImpl implements ConsulClient {
 		String json = service.toString();
 		String path = "/v1/agent/service/register";
 		ClientConnection connection = null;
-		SimpleConnectionHolder.ConnectionToken connectionToken = null;
+		SimpleConnectionState.ConnectionToken connectionToken = null;
 
 		try {
 			logger.debug("Getting connection from pool with {}", uri);
@@ -173,7 +171,7 @@ public class ConsulClientImpl implements ConsulClient {
 	public void unregisterService(String serviceId, String token) {
 		String path = "/v1/agent/service/deregister/" + serviceId;
 		ClientConnection connection = null;
-		SimpleConnectionHolder.ConnectionToken connectionToken = null;
+		SimpleConnectionState.ConnectionToken connectionToken = null;
 
 		try {
 			logger.debug("Getting connection from pool with {}", uri);
@@ -226,7 +224,7 @@ public class ConsulClientImpl implements ConsulClient {
 		}
 		logger.trace("Consul health service path = {}", path);
 
-		SimpleConnectionHolder.ConnectionToken connectionToken = null;
+		SimpleConnectionState.ConnectionToken connectionToken = null;
 		try {
 			logger.debug("Getting connection from pool with {}", uri);
 			// this will throw a Runtime Exception if creation of Consul connection fails
