@@ -73,10 +73,21 @@ public class ServerInfoGetHandler implements LightHttpHandler {
         infoMap.put("security", getSecurity());
         // remove this as it is a rest specific. The specification is loaded in the specific handler.
         // infoMap.put("specification", Config.getInstance().getJsonMapConfigNoCache("openapi"));
-        infoMap.put("component", ModuleRegistry.getRegistry());
+        infoMap.put("component", updateKey(ModuleRegistry.getRegistry()));
         return infoMap;
     }
 
+    public static Map<String, Object> updateKey (Map<String, Object> moduleRegistry) {
+        Map<String, Object> newModuleRegistry = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> entry : moduleRegistry.entrySet()) {
+            String key = entry.getKey();
+            if (key.contains(":")) {
+                key = key.substring(0, key.indexOf(":"));
+            }
+            newModuleRegistry.put(key, entry.getValue());
+        }
+        return newModuleRegistry;
+    }
     public static Map<String, Object> getDeployment() {
         Map<String, Object> deploymentMap = new LinkedHashMap<>();
         deploymentMap.put("apiVersion", Util.getJarVersion());
