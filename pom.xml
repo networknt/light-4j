@@ -98,6 +98,7 @@
         <version.jaeger>1.8.1</version.jaeger>
         <version.thrift>0.18.1</version.thrift>
         <version.opentracing>0.33.0</version.opentracing>
+        <version.xnioapi>3.8.8.Final</version.xnioapi>
         <version.org.apache.directory.server>2.0.0-M15</version.org.apache.directory.server>
         <version.maven-version>2.7</version.maven-version>
         <version.nexus-staging-maven>1.6.8</version.nexus-staging-maven>
@@ -577,6 +578,11 @@
                 <groupId>org.jboss.threads</groupId>
                 <artifactId>jboss-threads</artifactId>
                 <version>2.3.2.Final</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.xnio</groupId>
+                <artifactId>xnio-api</artifactId>
+                <version>${version.xnioapi}</version>
             </dependency>
             <dependency>
                 <groupId>org.hdrhistogram</groupId>
