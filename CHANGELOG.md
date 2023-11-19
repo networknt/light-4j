@@ -6,6 +6,7 @@
 **Merged pull requests:**
 
 
+- fixes \#2006 move the oauth-helper to http-client [\#2007](https://github.com/networknt/light-4j/pull/2007) ([stevehu](https://github.com/stevehu))
 - Fix order dependent test in handler test [\#1996](https://github.com/networknt/light-4j/pull/1996) ([SaaiVenkat](https://github.com/SaaiVenkat))
 - fixes \#2003 update the module registry key to use only the CONFIG_NAM… [\#2004](https://github.com/networknt/light-4j/pull/2004) ([stevehu](https://github.com/stevehu))
 - fixes \#1999 support apikey hashing option with light-hash command lin… [\#2000](https://github.com/networknt/light-4j/pull/2000) ([stevehu](https://github.com/stevehu))
@@ -33,6 +34,8 @@
 - fixes \#1936 verify the light-config-server response headers with jar … [\#1937](https://github.com/networknt/light-4j/pull/1937) ([stevehu](https://github.com/stevehu))
 - fixes \#1939 split the CacheExplorerHandler into cache-explorer [\#1940](https://github.com/networknt/light-4j/pull/1940) ([stevehu](https://github.com/stevehu))
 - fixes \#150 upgrade the http-client to 1.0.3 [\#1931](https://github.com/networknt/light-4j/pull/1931) ([stevehu](https://github.com/stevehu))
+
+
 ## [2.1.28](https://github.com/networknt/light-4j/tree/2.1.28) (2023-10-24)
 
 
