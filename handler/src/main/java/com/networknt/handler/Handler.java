@@ -540,6 +540,7 @@ public class Handler {
         Handler.configName = configName;
         config = (HandlerConfig) Config.getInstance().getJsonObjectConfig(configName, HandlerConfig.class);
         initHandlers();
+        initChains();
         initPaths();
     }
 
