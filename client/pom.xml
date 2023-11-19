@@ -53,10 +53,6 @@
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>oauth-helper</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
             <artifactId>service</artifactId>
         </dependency>
         <dependency>
@@ -70,6 +66,10 @@
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>cluster</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>http-client</artifactId>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

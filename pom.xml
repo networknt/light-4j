@@ -82,7 +82,7 @@
         <version.jsr305>3.0.2</version.jsr305>
         <version.json-schema-validator>1.0.65</version.json-schema-validator>
         <version.yaml-rule>1.0.2</version.yaml-rule>
-        <version.http-client>1.0.3</version.http-client>
+        <version.http-client>1.0.4</version.http-client>
         <version.snakeyaml>2.2</version.snakeyaml>
         <version.caffeine>3.1.5</version.caffeine>
         <version.prometheus>0.16.0</version.prometheus>
@@ -124,7 +124,6 @@
         <module>security</module>
         <module>client-config</module>
         <module>client</module>
-        <module>oauth-helper</module>
         <module>audit</module>
         <module>dump</module>
         <module>info</module>
@@ -212,11 +211,6 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>client-config</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.networknt</groupId>
-                <artifactId>oauth-helper</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
