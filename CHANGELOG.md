@@ -1,5 +1,38 @@
 # Change Log
 
+## [2.1.29](https://github.com/networknt/light-4j/tree/2.1.29) (2023-11-19)
+
+
+**Merged pull requests:**
+
+
+- Fix order dependent test in handler test [\#1996](https://github.com/networknt/light-4j/pull/1996) ([SaaiVenkat](https://github.com/SaaiVenkat))
+- fixes \#2003 update the module registry key to use only the CONFIG_NAM… [\#2004](https://github.com/networknt/light-4j/pull/2004) ([stevehu](https://github.com/stevehu))
+- fixes \#1999 support apikey hashing option with light-hash command lin… [\#2000](https://github.com/networknt/light-4j/pull/2000) ([stevehu](https://github.com/stevehu))
+- fixes \#1997 Use ServerConfig.getInstance() instead of getJsonObjectCo… [\#1998](https://github.com/networknt/light-4j/pull/1998) ([stevehu](https://github.com/stevehu))
+- fixes \#1994 disble the config server response header valildation in t… [\#1995](https://github.com/networknt/light-4j/pull/1995) ([stevehu](https://github.com/stevehu))
+- fixes \#1992 add back the getServerConfig to ensure backward compatibi… [\#1993](https://github.com/networknt/light-4j/pull/1993) ([stevehu](https://github.com/stevehu))
+- fixes \#1990 refactor module registry to add config name [\#1991](https://github.com/networknt/light-4j/pull/1991) ([stevehu](https://github.com/stevehu))
+- fixes \#1988 Add maskConfigProperties to server.yml to control the mod… [\#1989](https://github.com/networknt/light-4j/pull/1989) ([stevehu](https://github.com/stevehu))
+- fixes \#1986 add maskConfigProperties to the server config [\#1987](https://github.com/networknt/light-4j/pull/1987) ([stevehu](https://github.com/stevehu))
+- fixes \#1981 RequestTransformerInterceptor and ResponseTransformerInte… [\#1984](https://github.com/networknt/light-4j/pull/1984) ([stevehu](https://github.com/stevehu))
+- fixes \#1982 Update the security.yml to sync with openapi-security.yml [\#1983](https://github.com/networknt/light-4j/pull/1983) ([stevehu](https://github.com/stevehu))
+- fixes \#1978 register the logging.yml to the server info [\#1979](https://github.com/networknt/light-4j/pull/1979) ([stevehu](https://github.com/stevehu))
+- fixes \#1976 register info.yml config to the server info [\#1977](https://github.com/networknt/light-4j/pull/1977) ([stevehu](https://github.com/stevehu))
+- fixes \#1974 uncomment sign serverUrl, proxyHost and proxyPort in clie… [\#1975](https://github.com/networknt/light-4j/pull/1975) ([stevehu](https://github.com/stevehu))
+- fixes \#1968 rule-load config is not registered to the server info [\#1973](https://github.com/networknt/light-4j/pull/1973) ([stevehu](https://github.com/stevehu))
+- fixes \#1966 OAuthServer config is not register to the server info [\#1972](https://github.com/networknt/light-4j/pull/1972) ([stevehu](https://github.com/stevehu))
+- fixes \#1964 ConfigReloadHandler is not register the module to the ser… [\#1971](https://github.com/networknt/light-4j/pull/1971) ([stevehu](https://github.com/stevehu))
+- fixes \#1969 add back deref serverUrl, proxyHost and proxyPort in clie… [\#1970](https://github.com/networknt/light-4j/pull/1970) ([stevehu](https://github.com/stevehu))
+- fixes \#1961 check the cacheManager before using jwt and jwk caches [\#1962](https://github.com/networknt/light-4j/pull/1962) ([stevehu](https://github.com/stevehu))
+- fixes \#1952 Add delete method for CacheManager interface [\#1953](https://github.com/networknt/light-4j/pull/1953) ([stevehu](https://github.com/stevehu))
+-     Change the scope of dependency com.networknt:status to test. [\#1949](https://github.com/networknt/light-4j/pull/1949) ([HappyHacker123](https://github.com/HappyHacker123))
+- fixes \#1946 Implement JWT and JWK caches with cache-manager [\#1947](https://github.com/networknt/light-4j/pull/1947) ([stevehu](https://github.com/stevehu))
+- fixes \#1944 Change the JWT cache from JwtClaims to JSON string [\#1945](https://github.com/networknt/light-4j/pull/1945) ([stevehu](https://github.com/stevehu))
+- fixes \#1942 split the cache-manager to move caffeine cache to a separ… [\#1943](https://github.com/networknt/light-4j/pull/1943) ([stevehu](https://github.com/stevehu))
+- fixes \#1936 verify the light-config-server response headers with jar … [\#1937](https://github.com/networknt/light-4j/pull/1937) ([stevehu](https://github.com/stevehu))
+- fixes \#1939 split the CacheExplorerHandler into cache-explorer [\#1940](https://github.com/networknt/light-4j/pull/1940) ([stevehu](https://github.com/stevehu))
+- fixes \#150 upgrade the http-client to 1.0.3 [\#1931](https://github.com/networknt/light-4j/pull/1931) ([stevehu](https://github.com/stevehu))
 ## [2.1.28](https://github.com/networknt/light-4j/tree/2.1.28) (2023-10-24)
 
 
