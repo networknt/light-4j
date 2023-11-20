@@ -63,7 +63,6 @@ import java.util.concurrent.ThreadLocalRandom;
 public class Server {
 
     static final Logger logger = LoggerFactory.getLogger(Server.class);
-    public static final String SERVER_CONFIG_NAME = "server";
     public static final String SECRET_CONFIG_NAME = "secret";
     public static final String STARTUP_CONFIG_NAME = "startup";
     public static final String CONFIG_LOADER_CLASS = "configLoaderClass";
@@ -124,7 +123,7 @@ public class Server {
             masks.add("keyPass");
             masks.add("truststorePass");
             masks.add("bootstrapStorePass");
-            ModuleRegistry.registerModule(ServerConfig.CONFIG_NAME, Server.class.getName(), Config.getInstance().getJsonMapConfigNoCache(SERVER_CONFIG_NAME), masks);
+            ModuleRegistry.registerModule(ServerConfig.CONFIG_NAME, Server.class.getName(), Config.getInstance().getJsonMapConfigNoCache(ServerConfig.CONFIG_NAME), masks);
 
             // start the server
             start();

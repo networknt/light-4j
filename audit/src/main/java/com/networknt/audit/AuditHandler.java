@@ -22,6 +22,7 @@ import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.mask.Mask;
+import com.networknt.server.ServerConfig;
 import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.StringUtils;
@@ -83,7 +84,6 @@ public class AuditHandler implements MiddlewareHandler {
     static final String QUERY_PARAMETERS_KEY = "queryParameters";
     static final String PATH_PARAMETERS_KEY = "pathParameters";
     static final String REQUEST_COOKIES_KEY = "requestCookies";
-    static final String SERVER_CONFIG = "server";
     static final String SERVICE_ID_KEY = "serviceId";
     static final String INVALID_CONFIG_VALUE_CODE = "ERR10060";
 
@@ -98,9 +98,9 @@ public class AuditHandler implements MiddlewareHandler {
     public AuditHandler() {
         if (logger.isInfoEnabled()) logger.info("AuditHandler is loaded.");
         config = AuditConfig.load();
-        Map<String, Object> serverConfig = Config.getInstance().getJsonMapConfigNoCache(SERVER_CONFIG);
+        ServerConfig serverConfig = ServerConfig.getInstance();
         if (serverConfig != null) {
-            serviceId = (String) serverConfig.get(SERVICE_ID_KEY);
+            serviceId = serverConfig.getServiceId();
         }
         String timestampFormat = config.getTimestampFormat();
         if (!StringUtils.isBlank(timestampFormat)) {

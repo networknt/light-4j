@@ -20,6 +20,7 @@ import com.networknt.config.Config;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.security.IJwtVerifyHandler;
 import com.networknt.security.JwtVerifier;
+import com.networknt.server.ServerConfig;
 import com.networknt.utility.FingerPrintUtil;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.Util;
@@ -183,15 +184,15 @@ public class ServerInfoGetHandler implements LightHttpHandler {
      */
     private static String getServerTlsFingerPrint() {
         String fingerPrint = null;
-        Map<String, Object> serverConfig = Config.getInstance().getJsonMapConfigNoCache("server");
+        ServerConfig serverConfig = ServerConfig.getInstance();
         // load keystore here based on server config and secret config
-        String keystoreName = (String)serverConfig.get("keystoreName");
-        String keystorePass = (String)serverConfig.get("keystorePass");
+        String keystoreName = serverConfig.getKeystoreName();
+        String keystorePass = serverConfig.getKeystorePass();
         if(keystoreName != null) {
             try (InputStream stream = Config.getInstance().getInputStreamFromFile(keystoreName)) {
                 KeyStore loadedKeystore = KeyStore.getInstance("JKS");
                 loadedKeystore.load(stream, keystorePass.toCharArray());
-                X509Certificate cert = (X509Certificate)loadedKeystore.getCertificate("server");
+                X509Certificate cert = (X509Certificate)loadedKeystore.getCertificate(ServerConfig.CONFIG_NAME);
                 if(cert != null) {
                     fingerPrint = FingerPrintUtil.getCertFingerPrint(cert);
                 } else {
