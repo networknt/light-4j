@@ -28,10 +28,7 @@ public class ServerShutdownHandler implements LightHttpHandler {
 	@Override
 	public void handleRequest(final HttpServerExchange exchange) throws Exception {
 		try {
-
-			ServerConfig serverConfig = (ServerConfig) Config.getInstance()
-					.getJsonObjectConfig(ServerConfig.CONFIG_NAME, ServerConfig.class);
-
+			ServerConfig serverConfig = ServerConfig.getInstance();
 			ServerShutdownResponse response = new ServerShutdownResponse();
 			response.setTime(System.currentTimeMillis());
 			response.setServiceId(serverConfig.getServiceId());

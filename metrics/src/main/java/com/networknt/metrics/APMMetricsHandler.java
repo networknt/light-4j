@@ -46,7 +46,7 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
         if(config.getIssuerRegex() != null) {
             pattern = Pattern.compile(config.getIssuerRegex());
         }
-        serverConfig = (ServerConfig) Config.getInstance().getJsonObjectConfig(ServerConfig.CONFIG_NAME, ServerConfig.class);
+        serverConfig = ServerConfig.getInstance();
         ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, APMMetricsHandler.class.getName(), config.getMappedConfig(), null);
         if(logger.isDebugEnabled()) logger.debug("APMMetricsHandler is constructed!");
     }
