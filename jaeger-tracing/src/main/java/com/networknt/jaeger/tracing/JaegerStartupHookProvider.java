@@ -26,7 +26,7 @@ public class JaegerStartupHookProvider implements StartupHookProvider {
 
     public static JaegerTracer tracer;
     static JaegerConfig jaegerConfig = (JaegerConfig) Config.getInstance().getJsonObjectConfig(JaegerConfig.CONFIG_NAME, JaegerConfig.class);
-    static ServerConfig serverConfig = (ServerConfig) Config.getInstance().getJsonObjectConfig(ServerConfig.CONFIG_NAME, ServerConfig.class);
+    static ServerConfig serverConfig = ServerConfig.getInstance();
 
     @Override
     public void onStartup() {
