@@ -39,6 +39,7 @@ import com.networknt.exception.ClientException;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
+import com.networknt.server.ServerConfig;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
@@ -98,7 +99,6 @@ public class Http2Client {
     private static final Logger logger = LoggerFactory.getLogger(Http2Client.class);
     private static final String CONFIG_PROPERTY_MISSING = "ERR10057";
     public static final String CONFIG_NAME = "client";
-    public static final String CONFIG_SERVER = "server";
     public static final OptionMap DEFAULT_OPTIONS = OptionMap.builder()
             .set(Options.WORKER_IO_THREADS, 8)
             .set(Options.TCP_NODELAY, true)
@@ -164,9 +164,9 @@ public class Http2Client {
         }
         boolean injectCallerId = config.isInjectCallerId();
         if(injectCallerId) {
-            Map<String, Object> serverConfig = Config.getInstance().getJsonMapConfigNoCache(CONFIG_SERVER);
+            ServerConfig serverConfig = ServerConfig.getInstance();
             if(serverConfig != null) {
-                callerId = (String)serverConfig.get(SERVICE_ID);
+                callerId = serverConfig.getServiceId();
             }
         }
 
