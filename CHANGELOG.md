@@ -1,5 +1,13 @@
 # Change Log
 
+## [2.1.30](https://github.com/networknt/light-4j/tree/2.1.30) (2023-11-20)
+
+
+**Merged pull requests:**
+
+
+- fixes \#2010 switch to ServerConfig.getInstance and ServerConfig.CONFI… [\#2011](https://github.com/networknt/light-4j/pull/2011) ([stevehu](https://github.com/stevehu))
+- fixes \#2008 update ServerConfig.getInstance for some handlers [\#2009](https://github.com/networknt/light-4j/pull/2009) ([stevehu](https://github.com/stevehu))
 ## [2.1.29](https://github.com/networknt/light-4j/tree/2.1.29) (2023-11-19)
 
 
