@@ -205,6 +205,20 @@ public class DefaultConfigLoader implements IConfigLoader{
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);//to get yaml string without curly brackets and commas
         serviceConfigs = Config.getInstance().getYaml().load(new Yaml(options).dump(serviceConfigs));
 
+        // save the values.yml to the target folder. This is for the case of reload to overwrite and start without config server.
+        try {
+            Path filePath = Paths.get(targetConfigsDirectory);
+            if (!Files.exists(filePath)) {
+                Files.createDirectories(filePath);
+                logger.info("target configs directory created :", targetConfigsDirectory);
+            }
+
+            filePath = Paths.get(targetConfigsDirectory + "/values.yml");
+            Files.write(filePath, new Yaml(options).dump(serviceConfigs).getBytes());
+        } catch (IOException e) {
+            logger.error("Exception while creating {} dir or creating files there:{}",targetConfigsDirectory, e);
+        }
+
         //clear config cache: this is required just in case other classes have already loaded something in cache
         Config.getInstance().clear();
         Config.getInstance().putInConfigCache(CENTRALIZED_MANAGEMENT, serviceConfigs);
