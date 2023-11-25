@@ -54,7 +54,7 @@ class AuditConfig {
     private List<String> headerList;
     private List<String> auditList;
 
-    private Config config;
+    private final Config config;
     // A customized logger appender defined in default logback.xml
     private Consumer<String> auditFunc;
     private boolean statusCode;
@@ -151,8 +151,10 @@ class AuditConfig {
 
     private void setLogLevel() {
         Object object = getMappedConfig().get(LOG_LEVEL_IS_ERROR);
-        auditFunc = (object != null && (Boolean) object) ?
-                LoggerFactory.getLogger(Constants.AUDIT_LOGGER)::error : LoggerFactory.getLogger(Constants.AUDIT_LOGGER)::info;
+        if(object != null) {
+            auditOnError = Config.loadBooleanValue(LOG_LEVEL_IS_ERROR, object);
+            auditFunc = auditOnError ? LoggerFactory.getLogger(Constants.AUDIT_LOGGER)::error : LoggerFactory.getLogger(Constants.AUDIT_LOGGER)::info;
+        }
     }
 
     private void setLists() {

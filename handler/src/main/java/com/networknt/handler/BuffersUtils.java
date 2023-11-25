@@ -40,9 +40,9 @@ public class BuffersUtils {
     private static final Logger LOG = LoggerFactory.getLogger(BuffersUtils.class);
 
     /**
-     * @param srcs
-     * @return
-     * @throws IOException
+     * @param srcs PooledByteBuffer[]
+     * @return a ByteBuffer containing the content of the srcs
+     * @throws IOException If the content exceeds the MAX_CONTENT_SIZE
      */
     public static ByteBuffer toByteBuffer(final PooledByteBuffer[] srcs) throws IOException {
         if (srcs == null)
@@ -91,10 +91,10 @@ public class BuffersUtils {
     /**
      * transfer the src data to the pooled buffers overwriting the exising data
      *
-     * @param src
-     * @param dest
-     * @param exchange
-     * @return
+     * @param src ByteBuffer
+     * @param dest PooledByteBuffer[]
+     * @param exchange HttpServerExchange
+     * @return int
      */
     public static int transfer(final ByteBuffer src, final PooledByteBuffer[] dest, HttpServerExchange exchange) {
         int copied = 0;
@@ -158,10 +158,10 @@ public class BuffersUtils {
     /**
      * append the src data to the pooled buffers
      *
-     * @param src
-     * @param dest
-     * @param exchange
-     * @return
+     * @param src ByteBuffer
+     * @param dest PooledByteBuffer[]
+     * @param exchange HttpServerExchange
+     * @return int
      */
     public static int append(final ByteBuffer src, final PooledByteBuffer[] dest, HttpServerExchange exchange) {
         int copied = 0;

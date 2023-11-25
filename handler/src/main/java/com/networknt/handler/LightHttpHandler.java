@@ -52,11 +52,11 @@ public interface LightHttpHandler extends HttpHandler {
     String AUDIT_ON_ERROR = "auditOnError";
     String AUDIT_STACK_TRACE = "auditStackTrace";
 
-    HandlerConfig config = (HandlerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME, HandlerConfig.class);
+    HandlerConfig config = HandlerConfig.load();
+    // the reason we are not using the AuditConfig is to avoid the dependency on audit module.
     Map<String, Object> auditConfig = Config.getInstance().getDefaultJsonMapConfigNoCache(AUDIT_CONFIG_NAME);
-
-    boolean auditOnError = auditConfig == null ? false : auditConfig.get(AUDIT_ON_ERROR) != null ? (boolean)auditConfig.get(AUDIT_ON_ERROR) : false;
-    boolean auditStackTrace = auditConfig == null ? false : auditConfig.get(AUDIT_STACK_TRACE) != null ? (boolean)auditConfig.get(AUDIT_ON_ERROR) : false;
+    boolean auditOnError = auditConfig != null && auditConfig.get(AUDIT_ON_ERROR) != null ? Config.loadBooleanValue(AUDIT_ON_ERROR, auditConfig.get(AUDIT_ON_ERROR)) : false;
+    boolean auditStackTrace = auditConfig != null && auditConfig.get(AUDIT_STACK_TRACE) != null ? Config.loadBooleanValue(AUDIT_STACK_TRACE, auditConfig.get(AUDIT_STACK_TRACE)) : false;
 
     /**
      * This method is used to construct a standard error status in JSON format from an error code.

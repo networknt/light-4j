@@ -20,7 +20,7 @@ responseTime: ${audit.responseTime:true}
 # log level is controlled by logLevel
 auditOnError: ${audit.auditOnError:false}
 
-# log level; by default it is set to info. If you want to change it to error, set to true.
+# log level is error; by default the logging level is set to info. If you want to change it to error, set to true.
 logLevelIsError: ${audit.logLevelIsError:false}
 
 # the format for outputting the timestamp, if the format is not specified or invalid, will use a long value.

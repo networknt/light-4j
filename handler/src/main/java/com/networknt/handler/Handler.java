@@ -51,12 +51,8 @@ public class Handler {
     private static final AttachmentKey<Integer> CHAIN_SEQ = AttachmentKey.create(Integer.class);
     private static final AttachmentKey<String> CHAIN_ID = AttachmentKey.create(String.class);
     private static final Logger LOG = LoggerFactory.getLogger(Handler.class);
-    private static final String CONFIG_NAME = "handler";
-    private static String configName = CONFIG_NAME;
-
     // Accessed directly.
-    public static HandlerConfig config = (HandlerConfig) Config.getInstance().getJsonObjectConfig(CONFIG_NAME,
-            HandlerConfig.class);
+    public static HandlerConfig config = HandlerConfig.load();
 
     // each handler keyed by a name.
     static final Map<String, HttpHandler> handlers = new HashMap<>();
@@ -75,7 +71,7 @@ public class Handler {
         initChains();
         initPaths();
         initDefaultHandlers();
-        ModuleRegistry.registerModule(HandlerConfig.CONFIG_NAME, Handler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        ModuleRegistry.registerModule(HandlerConfig.CONFIG_NAME, Handler.class.getName(), config.getMappedConfig(), null);
     }
 
     /**
@@ -88,14 +84,8 @@ public class Handler {
 
             // initialize handlers
             for (var handler : config.getHandlers()) {
-
-                // If the handler is configured as just a string, it's a fully qualified class
-                // name with a default constructor.
-                if (handler instanceof String)
-                    initStringDefinedHandler((String) handler);
-
-                else if (handler instanceof Map)
-                    initMapDefinedHandler((Map<String, Object>) handler);
+                // handler is a fully qualified class name with a default constructor.
+                initStringDefinedHandler((String) handler);
             }
         }
     }
@@ -134,7 +124,7 @@ public class Handler {
         if (config != null && config.getPaths() != null) {
 
             for (var pathChain : config.getPaths()) {
-                pathChain.validate(configName + " config"); // raises exception on misconfiguration
+                pathChain.validate(HandlerConfig.CONFIG_NAME + " config"); // raises exception on misconfiguration
 
                 if (pathChain.getPath() == null)
                     addSourceChain(pathChain);
@@ -461,13 +451,13 @@ public class Handler {
         handlerListById.put(namedClass.first, Collections.singletonList(resolvedHandler));
     }
 
-    /**
+    /*
      * Helper method for generating the instance of a handler from its map
      * definition in config. Ie. No mapped values for setters, or list of
      * constructor fields.
      *
-     * @param handler
-     */
+     * @param handler handler map
+     * As all handlers have a default constructor with a configuration file, there is no need to pass any parameters.
     private static void initMapDefinedHandler(Map<String, Object> handler) {
         // If the handler is a map, the keys are the class name, values are the
         // parameters.
@@ -506,6 +496,7 @@ public class Handler {
             }
         }
     }
+    */
 
     /**
      * To support multiple instances of the same class, support a naming
@@ -537,8 +528,7 @@ public class Handler {
 
     // Exposed for testing only.
     static void setConfig(String configName) throws Exception {
-        Handler.configName = configName;
-        config = (HandlerConfig) Config.getInstance().getJsonObjectConfig(configName, HandlerConfig.class);
+        config = HandlerConfig.load(configName);
         initHandlers();
         initChains();
         initPaths();
