@@ -198,6 +198,10 @@ public class DefaultConfigLoader implements IConfigLoader{
         String configServerConfigsPath = CONFIG_SERVER_CONFIGS_CONTEXT_ROOT + queryParameters;
         //get service configs and put them in config cache
         Map<String, Object> serviceConfigs = getServiceConfigs(configServerConfigsPath);
+        if(serviceConfigs == null) {
+            logger.error("Failed to load configs from config server. Please check the logs for more details.");
+            return;
+        }
         if(logger.isDebugEnabled()) logger.debug("serviceConfigs received from Config Server: " + JsonMapper.toJson(serviceConfigs));
 
         // pass serviceConfigs through Config.yaml's load method so that it can decrypt any encrypted values
@@ -235,6 +239,10 @@ public class DefaultConfigLoader implements IConfigLoader{
         String configServerFilesPath = contextRoot + configPath;
         //get service files and put them in config dir
         Map<String, Object> serviceFiles = getServiceConfigs(configServerFilesPath);
+        if(serviceFiles == null) {
+            logger.error("Failed to load files from config server. Please check the logs for more details.");
+            return;
+        }
         if(logger.isDebugEnabled()) logger.debug("loadFiles: " + JsonMapper.toJson(serviceFiles));
         try {
             Path filePath = Paths.get(targetConfigsDirectory);
@@ -249,7 +257,7 @@ public class DefaultConfigLoader implements IConfigLoader{
                 Files.write(filePath, ba);
             }
         }  catch (IOException e) {
-            logger.error("Exception while creating {} dir or creating files there:{}",targetConfigsDirectory, e);
+            logger.error("Exception while creating {} dir or creating files there", targetConfigsDirectory, e);
         }
     }
 
@@ -293,7 +301,8 @@ public class DefaultConfigLoader implements IConfigLoader{
             String body = response.body();
             if(statusCode >= 300) {
                 logger.error("Failed to load configs from config server" + statusCode + ":" + body);
-                throw new Exception("Failed to load configs from config server: " + statusCode);
+                // return null, so that the values.yml won't be overwritten and the server can still be started with it.
+                return null;
             } else {
                 // validate the headers against the product id and version. If they are not matched, throw an exception.
                 // this validation call is commented out for now as it is not ready on the config server side.
