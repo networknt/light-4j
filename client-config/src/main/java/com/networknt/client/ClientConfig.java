@@ -165,42 +165,28 @@ public final class ClientConfig {
             return;
         }
         Map<String, Object> requestConfig = (Map<String, Object>) mappedConfig.get(REQUEST);
-
-        if (requestConfig.containsKey(ERROR_THRESHOLD)) {
-            errorThreshold = (int) requestConfig.get(ERROR_THRESHOLD);
-        }
-        if (requestConfig.containsKey(TIMEOUT)) {
-            timeout = (int) requestConfig.get(TIMEOUT);
-        }
-        if (requestConfig.containsKey(RESET_TIMEOUT)) {
-            resetTimeout = (int) requestConfig.get(RESET_TIMEOUT);
-        }
-        if(requestConfig.containsKey(INJECT_OPEN_TRACING)) {
-            injectOpenTracing = (Boolean) requestConfig.get(INJECT_OPEN_TRACING);
-        }
-        if(requestConfig.containsKey(INJECT_CALLER_ID)) {
-            injectCallerId = (Boolean) requestConfig.get(INJECT_CALLER_ID);
-        }
-        if (requestConfig.containsKey(ENABLE_HTTP2)) {
-            requestEnableHttp2 = Config.loadBooleanValue(ENABLE_HTTP2, requestConfig.get(ENABLE_HTTP2));;
-        } else {
-            requestEnableHttp2 = false;
-        }
-        if (requestConfig.containsKey(CONNECTION_POOL_SIZE)) {
-            connectionPoolSize = (int) requestConfig.get(CONNECTION_POOL_SIZE);
-        }
-        if (requestConfig.containsKey(CONNECTION_EXPIRE_TIME)) {
-            connectionExpireTime = Long.parseLong(requestConfig.get(CONNECTION_EXPIRE_TIME).toString());
-        }
-        if (requestConfig.containsKey(MAX_REQUEST_PER_CONNECTION)) {
-            maxReqPerConn = (int) requestConfig.get(MAX_REQUEST_PER_CONNECTION);
-        }
-        if (requestConfig.containsKey(MAX_CONNECTION_NUM_PER_HOST)) {
-            maxConnectionNumPerHost = (int) requestConfig.get(MAX_CONNECTION_NUM_PER_HOST);
-        }
-        if (requestConfig.containsKey(MIN_CONNECTION_NUM_PER_HOST)) {
-            minConnectionNumPerHost = (int) requestConfig.get(MIN_CONNECTION_NUM_PER_HOST);
-        }
+        Object object = requestConfig.get(ERROR_THRESHOLD);
+        if(object != null) errorThreshold = Config.loadIntegerValue(ERROR_THRESHOLD, object);
+        object = requestConfig.get(TIMEOUT);
+        if(object != null) timeout = Config.loadIntegerValue(TIMEOUT, object);
+        object = requestConfig.get(RESET_TIMEOUT);
+        if(object != null) resetTimeout = Config.loadIntegerValue(RESET_TIMEOUT, object);
+        object = requestConfig.get(INJECT_OPEN_TRACING);
+        if(object != null) injectOpenTracing = Config.loadBooleanValue(INJECT_OPEN_TRACING, object);
+        object = requestConfig.get(INJECT_CALLER_ID);
+        if(object != null) injectCallerId = Config.loadBooleanValue(INJECT_CALLER_ID, object);
+        object = requestConfig.get(ENABLE_HTTP2);
+        if(object != null) requestEnableHttp2 = Config.loadBooleanValue(ENABLE_HTTP2, object);
+        object = requestConfig.get(CONNECTION_POOL_SIZE);
+        if(object != null) connectionPoolSize = Config.loadIntegerValue(CONNECTION_POOL_SIZE, object);
+        object = requestConfig.get(CONNECTION_EXPIRE_TIME);
+        if(object != null) connectionExpireTime = Config.loadLongValue(CONNECTION_EXPIRE_TIME, object);
+        object = requestConfig.get(MAX_REQUEST_PER_CONNECTION);
+        if(object != null) maxReqPerConn = Config.loadIntegerValue(MAX_REQUEST_PER_CONNECTION, object);
+        object = requestConfig.get(MAX_CONNECTION_NUM_PER_HOST);
+        if(object != null) maxConnectionNumPerHost = Config.loadIntegerValue(MAX_CONNECTION_NUM_PER_HOST, object);
+        object = requestConfig.get(MIN_CONNECTION_NUM_PER_HOST);
+        if(object != null) minConnectionNumPerHost = Config.loadIntegerValue(MIN_CONNECTION_NUM_PER_HOST, object);
     }
 
     private void setPathPrefixServices() {
@@ -217,7 +203,7 @@ public final class ClientConfig {
             derefConfig = (Map<String, Object>)oauthConfig.get(DEREF);
             signConfig = (Map<String, Object>)oauthConfig.get(SIGN);
             if(oauthConfig.get(MULTIPLE_AUTH_SERVERS) != null) {
-                multipleAuthServers = (Boolean)oauthConfig.get(MULTIPLE_AUTH_SERVERS);
+                multipleAuthServers = Config.loadBooleanValue(MULTIPLE_AUTH_SERVERS, oauthConfig.get(MULTIPLE_AUTH_SERVERS));
             } else {
                 multipleAuthServers = false;
             }

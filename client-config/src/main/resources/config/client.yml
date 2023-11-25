@@ -34,7 +34,7 @@ oauth:
   multipleAuthServers: ${client.multipleAuthServers:false}
   token:
     cache:
-      #capacity of caching TOKENs
+      #capacity of caching tokens in the client for downstream API calls. The default value is 200.
       capacity: ${client.tokenCacheCapacity:200}
     # The scope token will be renewed automatically 1 minute before expiry
     tokenRenewBeforeExpired: ${client.tokenRenewBeforeExpired:60000}

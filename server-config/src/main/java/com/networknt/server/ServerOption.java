@@ -1,5 +1,7 @@
 package com.networknt.server;
 
+import com.networknt.config.Config;
+
 import java.util.Map;
 
 /**
@@ -63,25 +65,25 @@ public enum ServerOption {
     private static boolean setServerOption(ServerOption serverOption, Object value, ServerConfig serverConfig) {
         switch (serverOption) {
             case BACKLOG:
-                if (value == null || (int) value <= 0) {
+                if (value == null || Config.loadIntegerValue(ServerConfig.BACKLOG, value) <= 0) {
                     serverConfig.setBacklog(10000);
                     return false;
                 }
                 return true;
             case IO_THREADS:
-                if (value == null || (int) value <= 0) {
+                if (value == null || Config.loadIntegerValue(ServerConfig.IO_THREADS, value) <= 0) {
                     serverConfig.setIoThreads(Runtime.getRuntime().availableProcessors() * 2);
                     return false;
                 }
                 return true;
             case WORKER_THREADS:
-                if (value == null || (int) value <= 0) {
+                if (value == null || Config.loadIntegerValue(ServerConfig.WORKER_THREADS, value) <= 0) {
                     serverConfig.setWorkerThreads(200);
                     return false;
                 }
                 return true;
             case BUFFER_SIZE:
-                if (value == null || (int) value <= 0) {
+                if (value == null || Config.loadIntegerValue(ServerConfig.BUFFER_SIZE, value) <= 0) {
                     serverConfig.setBufferSize(1024 * 16);
                     return false;
                 }
@@ -98,7 +100,7 @@ public enum ServerOption {
                 }
                 return true;
             case MAX_TRANSFER_FILE_SIZE:
-                if (value == null || Long.parseLong(value.toString()) <= 0) {
+                if (value == null || Config.loadLongValue(ServerConfig.MAX_TRANSFER_FILE_SIZE, value) <= 0) {
                     serverConfig.setMaxTransferFileSize(1000000);
                     return false;
                 }
@@ -109,7 +111,7 @@ public enum ServerOption {
                 }
                 return true;
             case SHUTDOWN_TIMEOUT:
-                if (value == null || (int) value <= 0) {
+                if (value == null || Config.loadIntegerValue(ServerConfig.SHUTDOWN_TIMEOUT, value) <= 0) {
                     serverConfig.setShutdownTimeout(10);
                     return false;
                 }
