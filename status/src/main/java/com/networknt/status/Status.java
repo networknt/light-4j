@@ -232,15 +232,15 @@ public class Status {
     }
 
     public static boolean shouldShowMetadata() {
-        return config.get(SHOW_METADATA) == null ? false : (boolean)config.get(SHOW_METADATA);
+        return config.get(SHOW_METADATA) == null ? false : Config.loadBooleanValue(SHOW_METADATA, config.get(SHOW_METADATA));
     }
 
     public static boolean shouldShowMessage() {
-        return config.get(SHOW_MESSAGE) == null ? true : (boolean)config.get(SHOW_MESSAGE);
+        return config.get(SHOW_MESSAGE) == null ? true : Config.loadBooleanValue(SHOW_MESSAGE, config.get(SHOW_MESSAGE));
     }
 
     public static boolean shouldShowDescription() {
-        return config.get(SHOW_DESCRIPTION) == null ? true : (boolean)config.get(SHOW_DESCRIPTION);
+        return config.get(SHOW_DESCRIPTION) == null ? true : Config.loadBooleanValue(SHOW_DESCRIPTION, config.get(SHOW_DESCRIPTION));
     }
 
     /**
