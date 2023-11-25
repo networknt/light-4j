@@ -87,17 +87,11 @@ public class OAuthServerConfig {
 
     private void setConfigData() {
         Object object = mappedConfig.get(ENABLED);
-        if(object != null && (Boolean) object) {
-            enabled = true;
-        }
+        if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
         object = mappedConfig.get(GET_METHOD_ENABLED);
-        if(object != null && (Boolean) object) {
-            getMethodEnabled = true;
-        }
+        if(object != null) getMethodEnabled = Config.loadBooleanValue(GET_METHOD_ENABLED, object);
         object = mappedConfig.get(PASS_THROUGH);
-        if(object != null && (Boolean) object) {
-            passThrough = true;
-        }
+        if(object != null) passThrough = Config.loadBooleanValue(PASS_THROUGH, object);
         tokenServiceId = (String)getMappedConfig().get(TOKEN_SERVICE_ID);
     }
 

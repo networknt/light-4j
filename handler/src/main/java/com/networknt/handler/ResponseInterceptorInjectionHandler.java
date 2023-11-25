@@ -105,8 +105,8 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
     }
 
     /**
-     * @param exchange
-     * @throws Exception
+     * @param exchange HttpServerExchange
+     * @throws Exception if any exception happens
      */
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {

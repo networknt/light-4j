@@ -37,7 +37,7 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
      * Construct a new instance.
      *
      * @param next     the delegate conduit to set
-     * @param exchange
+     * @param exchange HttpServerExchange
      */
     public ModifiableContentSinkConduit(StreamSinkConduit next, HttpServerExchange exchange) {
         super(next);

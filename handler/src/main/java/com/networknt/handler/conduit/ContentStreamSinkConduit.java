@@ -24,8 +24,8 @@ public class ContentStreamSinkConduit extends AbstractStreamSinkConduit<StreamSi
     /**
      * Construct a new instance.
      *
-     * @param next
-     * @param exchange
+     * @param next     the delegate conduit to set
+     * @param exchange HttpServerExchange
      */
     public ContentStreamSinkConduit(StreamSinkConduit next, HttpServerExchange exchange) {
         super(next);
