@@ -122,23 +122,30 @@
         <module>http-string</module>
         <module>http-url</module>
         <module>security</module>
+        <module>security-config</module>
         <module>client-config</module>
         <module>client</module>
         <module>audit</module>
+        <module>audit-config</module>
         <module>dump</module>
         <module>info</module>
         <module>health</module>
         <module>status</module>
         <module>exception</module>
+        <module>exception-config</module>
         <module>body</module>
+        <module>body-config</module>
         <module>header</module>
+        <module>header-config</module>
         <module>mask</module>
         <module>handler</module>
         <module>metrics</module>
         <module>prometheus</module>
         <module>sanitizer</module>
         <module>traceability</module>
+        <module>traceability-config</module>
         <module>correlation</module>
+        <module>correlation-config</module>
         <module>service</module>
         <module>switcher</module>
         <module>registry</module>
@@ -148,6 +155,7 @@
         <module>cors</module>
         <module>cluster</module>
         <module>rate-limit</module>
+        <module>limit-config</module>
         <module>decryptor</module>
         <module>common</module>
         <module>email-sender</module>
@@ -210,6 +218,11 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
+                <artifactId>security-config</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
                 <artifactId>client-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -221,6 +234,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>audit</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>audit-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -255,12 +273,27 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
+                <artifactId>exception-config</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
                 <artifactId>body</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
+                <artifactId>body-config</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
                 <artifactId>header</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>header-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -290,7 +323,17 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
+                <artifactId>traceability-config</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
                 <artifactId>correlation</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>correlation-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -337,6 +380,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>rate-limit</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>limit-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

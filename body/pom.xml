@@ -40,16 +40,15 @@
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>status</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.networknt</groupId>
             <artifactId>http-string</artifactId>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>exception</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>body-config</artifactId>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -84,6 +83,11 @@
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>client</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>status</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

@@ -87,7 +87,7 @@ public class AuditHandler implements MiddlewareHandler {
     static final String SERVICE_ID_KEY = "serviceId";
     static final String INVALID_CONFIG_VALUE_CODE = "ERR10060";
 
-    private AuditConfig config;
+    private static AuditConfig config;
 
     private volatile HttpHandler next;
 
