@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 /**
  * Represents a limit on a number of running requests.
  * <p>
- * This is basically a counter with a configured set of limits, that is used by {@link LimitHandler}.
+ * This is basically a counter with a configured set of limits, that is used by LimitHandler.
  * <p>
  * When the number of active requests goes over the configured max requests then requests will be suspended and queued.
  * <p>
@@ -43,7 +43,6 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
  * allows for fine grained control of resources.
  *
  * @author Stuart Douglas
- * @see LimitHandler
  */
 public class RequestLimit {
     @SuppressWarnings("unused")
