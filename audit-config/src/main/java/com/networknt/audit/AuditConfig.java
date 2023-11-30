@@ -18,20 +18,19 @@ package com.networknt.audit;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
-import com.networknt.config.JsonMapper;
 import com.networknt.utility.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.Yaml;
-
-import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-class AuditConfig {
+/**
+ * AuditConfig is singleton, and it is loaded from audit.yml in the config folder.
+ * @author Steve Hu
+ */
+public class AuditConfig {
     private static final Logger logger = LoggerFactory.getLogger(AuditConfig.class);
 
     public static final String REQUEST_BODY = "requestBody";

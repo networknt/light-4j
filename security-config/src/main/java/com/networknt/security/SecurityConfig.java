@@ -49,7 +49,7 @@ public class SecurityConfig {
 
     private Map<String, Object> mappedConfig;
     private Map<String, Object> certificate;
-    private Config config;
+    private final Config config;
     private boolean enableVerifyJwt;
     private boolean enableVerifySwt;
     private String swtClientIdHeader;

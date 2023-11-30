@@ -17,7 +17,6 @@
 package com.networknt.limit;
 
 import com.networknt.config.Config;
-import com.networknt.config.ConfigException;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -61,7 +60,7 @@ public class LimitConfig {
     RateLimitSet client;
     RateLimitSet user;
     private  Map<String, Object> mappedConfig;
-    private Config config;
+    private final Config config;
 
 
     private LimitConfig() {
@@ -80,15 +79,15 @@ public class LimitConfig {
         setRateLimitConfig();
     }
 
-    static LimitConfig load() {
+    public static LimitConfig load() {
         return new LimitConfig();
     }
 
-    static LimitConfig load(String configName) {
+    public static LimitConfig load(String configName) {
         return new LimitConfig(configName);
     }
 
-    void reload() {
+    public void reload() {
         mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
         setConfigData();
         setRateLimitConfig();
