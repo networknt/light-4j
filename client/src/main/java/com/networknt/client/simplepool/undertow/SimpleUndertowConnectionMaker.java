@@ -100,20 +100,6 @@ public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
         return safeConnect(createConnectionTimeout, future);
     }
 
-    public SimpleConnection reuseConnection(long createConnectionTimeout, SimpleConnection connection) throws RuntimeException
-    {
-        if(connection == null)
-            return null;
-
-        if(!(connection.getRawConnection() instanceof ClientConnection))
-            throw new IllegalArgumentException("Attempt to reuse wrong connection type. Must be of type ClientConnection");
-
-        if(!connection.isOpen())
-            throw new RuntimeException("Reused-connection has been unexpectedly closed");
-
-        return connection;
-    }
-
     // PRIVATE METHODS
 
     private static OptionMap getConnectionOptions(boolean isHttp2) {
