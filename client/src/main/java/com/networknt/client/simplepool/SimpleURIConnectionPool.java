@@ -177,10 +177,10 @@ public final class SimpleURIConnectionPool {
     /***
      * This method reads a connection and moves it to the correct sets based on its properties.
      * It will remove a connection from all sets (i.e.: stop tracking the connection) if it is closed.
-     * It will close unborrowed expired connections.
+     * It will also close unborrowed expired connections.
      *
      * NOTE: Closing connections and modifying sets
-     *     readConnectionState() and findAndCloseLeakedConnections() are the only two methods that close connections
+     *     applyConnectionState() and findAndCloseLeakedConnections() are the only two methods that close connections
      *     and modify sets. This can be helpful to know for debugging since the sets comprise the entirety of the
      *     mutable state of this SimpleURIConnectionPool objects
      *
