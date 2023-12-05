@@ -165,7 +165,7 @@ public final class SimpleURIConnectionPool {
     private void applyAllConnectionStates(long now)
     {
         /**
-         * Sweep all known connections and apply their state changes to the connection pool's state. Also, close
+         * Sweep all known (tracked) connections and apply their state changes to the connection pool's state. Also, close
          * any unborrowed expired connections
          */
         final Iterator<SimpleConnectionState> trackedConnectionStates = trackedConnections.iterator();
