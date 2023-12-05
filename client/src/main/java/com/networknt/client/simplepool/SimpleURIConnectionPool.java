@@ -87,7 +87,7 @@ public final class SimpleURIConnectionPool {
      * @param isHttp2 if true, SimpleURIConnectionPool will attempt to establish an HTTP/2 connection, otherwise it will
      *          attempt to create an HTTP/1.1 connection
      * @return a ConnectionToken object that contains the borrowed connection. The thread using the connection must
-     *          return this connection to the pool when it is done with it by calling the borrow() method with the
+     *          return this connection to the pool when it is done with it by calling the restore() method with the
      *          ConnectionToken as the argument
      * @throws RuntimeException if connection creation takes longer than <code>createConnectionTimeout</code> seconds,
      *          or other issues that prevent connection creation
