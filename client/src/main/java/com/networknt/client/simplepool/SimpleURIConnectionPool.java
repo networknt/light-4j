@@ -195,12 +195,7 @@ public final class SimpleURIConnectionPool {
      */
     private void applyConnectionState(SimpleConnectionState connectionState, long now, RemoveFromTrackedConnections trackedConnectionRemover) {
 
-        /**
-         * Remove all references to closed connections
-         * After the connection is removed, the only reference to it will be in any unrestored ConnectionTokens,
-         * however, ConnectionTokens restored after the connection is closed will not be re-added to any sets
-         * (and will therefore be garbage collected)
-         */
+        // Remove all references to closed connections
         if(connectionState.closed()) {
             if(logger.isDebugEnabled())
                 logger.debug("[{}: CLOSED]: Connection unexpectedly closed - Stopping connection tracking", port(connectionState.connection()));
@@ -231,7 +226,13 @@ public final class SimpleURIConnectionPool {
     }
 
     /***
-     * Removes a connection (and its connection state) from being tracked by the pool
+     * Removes all references to a connection (and its connection state) from being tracked by the pool
+     *
+     * NOTE: Only call this method on closed connections
+     *
+     * After the connection is removed, the only reference to it will be in any unrestored ConnectionTokens.
+     * However, ConnectionTokens restored after the connection is closed will not be re-added to any sets
+     * (and will therefore be garbage collected)
      *
      * @param connectionState the connection state (and connection) to remove from connection tracking
      * @param trackedConnectionRemover a lamda expression to remove the state that depends on whether it is removed in
