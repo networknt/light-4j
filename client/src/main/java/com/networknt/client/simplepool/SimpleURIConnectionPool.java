@@ -277,8 +277,8 @@ public final class SimpleURIConnectionPool {
      *     1) the connection-creation callback thread finishes creating the connection after a timeout has occurred
      *     2) the raw connection unexpectedly closes during the creation of its SimpleConnectionState
      *
-     * NOTE: Closing connection and modifying sets
-     *     readConnectionState() and findAndCloseLeakedConnections() are the only two methods that close connections
+     * NOTE: Closing connections and modifying sets
+     *     applyConnectionState() and findAndCloseLeakedConnections() are the only two methods that close connections
      *     and modify sets. This can be helpful to know for debugging since the sets comprise the entirety of the
      *     mutable state of this SimpleURIConnectionPool objects
      */
