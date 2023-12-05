@@ -130,20 +130,27 @@ public final class SimpleURIConnectionPool {
      * @param connectionToken the connection token that represents the borrowing of a connection by a thread
      */
     public synchronized void restore(SimpleConnectionState.ConnectionToken connectionToken) {
-        if(connectionToken == null)
-            return;
-
-        SimpleConnectionState connectionState = connectionToken.state();
         long now = System.currentTimeMillis();
 
+        if(connectionToken == null) {
+            // update the connection pool's state
+            applyAllConnectionStates(now);
+
+            findAndCloseLeakedConnections();
+            return;
+        }
+
         // update this connection's state
+        SimpleConnectionState connectionState = connectionToken.state();
         connectionState.restore(connectionToken);
 
         // update the connection pool's state
         applyAllConnectionStates(now);
 
         if(logger.isDebugEnabled()) logger.debug(showConnections("restore"));
+        findAndCloseLeakedConnections();
     }
+
 
     /**
      * A key method that orchestrates the update of the connection pool's state
