@@ -37,11 +37,11 @@ import java.util.concurrent.ThreadLocalRandom;
 
  Internally, SimpleURIConnectionPool organizes connections into 4 (possibly overlapping) sets:
 
- 1. allCreatedConnections    all connections created by connection makers are added to this set
- 2. trackedConnections:      the set of all connections tracked by the connection pool
- 3. Borrowable:              connection that can be borrowed from
- 4. Borrowed:                connections that have borrowed tokens
- 5. notBorrowedExpired:      connections that have no borrowed tokens -- only these can be closed by the pool
+ 1. allCreatedConnections    all connections created for the pool by the pool's SimpleConnectionMaker
+ 2. trackedConnections:      all connections tracked by the connection pool
+ 3. Borrowable:              all tracked connections that can be borrowed from
+ 4. Borrowed:                all tracked connections that have borrowed tokens
+ 5. notBorrowedExpired:      all tracked connections that have both expired and not borrowed -- only these can be closed by the pool
  */
 public final class SimpleURIConnectionPool {
     private static final Logger logger = LoggerFactory.getLogger(SimpleURIConnectionPool.class);
