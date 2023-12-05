@@ -53,7 +53,7 @@ public final class SimpleURIConnectionPool {
     /** Connection Pool Sets
      *  These sets determine the mutable state of the connection pool
      */
-    /** The set of all connections created by the SimpleConnectionMaker for this uri */
+    /** The set of all connections created for the pool by the pool's SimpleConnectionMaker */
     private final Set<SimpleConnection> allCreatedConnections = ConcurrentHashMap.newKeySet();
     /** The set containing all connections known to this connection pool (It is not considered a state set) */
     private final Set<SimpleConnectionState> trackedConnections = new HashSet<>();
