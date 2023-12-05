@@ -181,12 +181,12 @@ public final class SimpleURIConnectionPool {
      *     This method is private, and is only called either directly or transitively by synchronized
      *     methods in this class.
      *
-     * @param connection the connection to read and move to the appropriate sets
+     * @param connectionState the connection to read and move to the appropriate sets
      * @param now the Unix Epoch time in milliseconds at which to evaluate the connection's state
      * @param trackedConnectionRemover a lambda expression to remove a closed-connection from trackedConnections, either using
      *                                 an Iterator of trackedConnections, or directly using trackedConnections.remove()
      */
-    private void applyConnectionState(SimpleConnectionState connection, long now, RemoveFromTrackedConnections trackedConnectionRemover) {
+    private void applyConnectionState(SimpleConnectionState connectionState, long now, RemoveFromTrackedConnections trackedConnectionRemover) {
 
         /**
          * Remove all references to closed connections
@@ -194,50 +194,50 @@ public final class SimpleURIConnectionPool {
          * however, ConnectionTokens restored after the connection is closed will not be re-added to any sets
          * (and will therefore be garbage collected)
          */
-        if(connection.closed()) {
+        if(connectionState.closed()) {
             if(logger.isDebugEnabled())
-                logger.debug("[{}: CLOSED]: Connection unexpectedly closed - Stopping connection tracking", port(connection.connection()));
+                logger.debug("[{}: CLOSED]: Connection unexpectedly closed - Stopping connection tracking", port(connectionState.connection()));
 
-            removeFromConnectionTracking(connection, trackedConnectionRemover);
+            removeFromConnectionTracking(connectionState, trackedConnectionRemover);
             return;
         }
 
         // if connection is open, move it to the correct state-sets based on its properties
-        boolean isExpired =             connection.expired(now);
-        boolean isBorrowed =            connection.borrowed();
-        boolean isBorrowable =          connection.borrowable(now);
+        boolean isExpired =             connectionState.expired(now);
+        boolean isBorrowed =            connectionState.borrowed();
+        boolean isBorrowable =          connectionState.borrowable(now);
         boolean isNotBorrowedExpired =  !isBorrowed && isExpired;
 
-        updateSet(borrowable, isBorrowable, connection);
-        updateSet(borrowed, isBorrowed, connection);
-        updateSet(notBorrowedExpired, isNotBorrowedExpired, connection);
+        updateSet(borrowable, isBorrowable, connectionState);
+        updateSet(borrowed, isBorrowed, connectionState);
+        updateSet(notBorrowedExpired, isNotBorrowedExpired, connectionState);
 
         // close and remove connection if it is in a closeable set
-        if (notBorrowedExpired.contains(connection))
+        if (notBorrowedExpired.contains(connectionState))
         {
-            connection.safeClose(now);
-            removeFromConnectionTracking(connection, trackedConnectionRemover);
+            connectionState.safeClose(now);
+            removeFromConnectionTracking(connectionState, trackedConnectionRemover);
 
             if(logger.isDebugEnabled())
-                logger.debug("[{}: CLOSED]: Expired connection was closed - Connection tracking stopped", port(connection.connection()));
+                logger.debug("[{}: CLOSED]: Expired connection was closed - Connection tracking stopped", port(connectionState.connection()));
         }
     }
 
     /***
      * Removes a connection (and its connection state) from being tracked by the pool
      *
-     * @param connection the connection state (and connection) to remove from connection tracking
+     * @param connectionState the connection state (and connection) to remove from connection tracking
      * @param trackedConnectionRemover a lamda expression to remove the state that depends on whether it is removed in
      *          an <code>Iterator</code> loop or directly from the trackedConnections <code>Set</code>
      */
-    private void removeFromConnectionTracking(SimpleConnectionState connection, RemoveFromTrackedConnections trackedConnectionRemover)
+    private void removeFromConnectionTracking(SimpleConnectionState connectionState, RemoveFromTrackedConnections trackedConnectionRemover)
     {
-        allCreatedConnections.remove(connection.connection());  // connection.connection() returns a SimpleConnection
+        allCreatedConnections.remove(connectionState.connection());
         trackedConnectionRemover.remove();  // this will remove the connection from trackedConnections directly, or via Iterator
 
-        borrowable.remove(connection);
-        borrowed.remove(connection);
-        notBorrowedExpired.remove(connection);
+        borrowable.remove(connectionState);
+        borrowed.remove(connectionState);
+        notBorrowedExpired.remove(connectionState);
     }
 
     /***
