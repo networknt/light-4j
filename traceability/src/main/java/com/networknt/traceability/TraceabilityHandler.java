@@ -91,7 +91,7 @@ public class TraceabilityHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(TraceabilityConfig.CONFIG_NAME, TraceabilityHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        ModuleRegistry.registerModule(TraceabilityConfig.CONFIG_NAME, TraceabilityHandler.class.getName(), config.getMappedConfig(), null);
     }
 
     @Override
