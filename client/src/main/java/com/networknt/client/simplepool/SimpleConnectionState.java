@@ -182,7 +182,7 @@ public final class SimpleConnectionState {
      * @throws RuntimeException if the connection is closed
      * @throws IllegalStateException if the connection is not borrowable
      */
-    public synchronized ConnectionToken borrow(long connectionCreateTimeout, long now) throws RuntimeException {
+    public synchronized ConnectionToken borrow(long connectionCreateTimeout, long now) throws RuntimeException, IllegalStateException {
         /***
          * Connections can only be borrowed when the connection is in a BORROWABLE state.
          *
