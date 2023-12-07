@@ -413,7 +413,7 @@ public class Server {
             Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(SECRET_CONFIG_NAME);
             pass = (String) secretConfig.get(SecretConstants.SERVER_TRUSTSTORE_PASS);
         }
-        return TlsUtil.loadTrustStore(name, pass.toCharArray());
+        return TlsUtil.loadKeyStore(name, pass.toCharArray());
     }
 
     private static TrustManager[] buildTrustManagers(final KeyStore trustStore) {

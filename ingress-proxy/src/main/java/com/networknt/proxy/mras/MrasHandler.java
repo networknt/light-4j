@@ -537,7 +537,7 @@ public class MrasHandler implements MiddlewareHandler {
             String trustStorePass = config.getKeyStorePass();
             if(logger.isTraceEnabled()) logger.trace("trustStoreName = " + trustStoreName + " trustStorePass = " + (trustStorePass == null ? null : trustStorePass.substring(0, 4)));
             if (trustStoreName != null && trustStorePass != null) {
-                KeyStore trustStore = TlsUtil.loadTrustStore(trustStoreName, trustStorePass.toCharArray());
+                KeyStore trustStore = TlsUtil.loadKeyStore(trustStoreName, trustStorePass.toCharArray());
                 TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                 trustManagerFactory.init(trustStore);
                 trustManagers = trustManagerFactory.getTrustManagers();
