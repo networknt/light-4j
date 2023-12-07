@@ -73,11 +73,34 @@ public class BuffersUtils {
         return dst.flip();
     }
 
-    public static byte[] toByteArray(final PooledByteBuffer[] srcs) throws IOException {
-        ByteBuffer content = toByteBuffer(srcs);
-        byte[] ret = new byte[content.limit()];
+    public static byte[] toByteArray(final PooledByteBuffer[] src) throws IOException {
+        ByteBuffer content = toByteBuffer(src);
+
+        if (content == null)
+            return new byte[]{};
+
+        byte[] ret = new byte[content.remaining()];
+        content.rewind();
+
+        /* 'get' actually copies the bytes from the ByteBuffer to our destination 'ret' byte array. */
         content.get(ret);
         return ret;
+    }
+
+    /**
+     * Returns the actual byte array of the PooledByteBuffer
+     *
+     * @param src
+     * @return
+     * @throws IOException
+     */
+    public static byte[] getByteArray(final PooledByteBuffer[] src) throws IOException {
+        ByteBuffer content = toByteBuffer(src);
+
+        if (content != null && content.hasArray())
+            return content.array();
+
+        return new byte[]{};
     }
 
     public static String toString(final PooledByteBuffer[] srcs, Charset cs) throws IOException {
