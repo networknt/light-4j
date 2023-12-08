@@ -120,7 +120,11 @@ public class ResponseBodyInterceptor implements ResponseInterceptor {
      */
     private boolean attachJsonBody(final HttpServerExchange ex, String str) {
         str = str.trim();
-
+        if(str.isEmpty()) {
+            // if an empty string is passed in, we should not try to parse it. Just cache it.
+            this.cacheResponseBody(ex, str);
+            return true;
+        }
         if (str.charAt(0) == JSON_MAP_OBJECT_STARTING_CHAR) {
             this.cacheResponseBody(ex, str);
             return this.parseJsonMapObject(ex, AttachmentConstants.REQUEST_BODY, str);
