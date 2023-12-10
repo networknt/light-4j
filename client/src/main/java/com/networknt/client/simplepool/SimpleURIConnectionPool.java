@@ -132,17 +132,8 @@ public final class SimpleURIConnectionPool {
     public synchronized void restore(SimpleConnectionState.ConnectionToken connectionToken) {
         long now = System.currentTimeMillis();
 
-        if(connectionToken == null) {
-            // update the connection pool's state
-            applyAllConnectionStates(now);
-
-            findAndCloseLeakedConnections();
-            return;
-        }
-
-        // update this connection's state
-        SimpleConnectionState connectionState = connectionToken.state();
-        connectionState.restore(connectionToken);
+        if(connectionToken != null)
+            connectionToken.state().restore(connectionToken);   // restore connection token
 
         // update the connection pool's state
         applyAllConnectionStates(now);
