@@ -102,6 +102,32 @@ public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
 
     // PRIVATE METHODS
 
+    /***
+     * Never returns null
+     *
+     * @param timeoutSeconds
+     * @param future
+     * @return
+     */
+    private static SimpleConnection safeConnect(long timeoutSeconds, IoFuture<SimpleConnection> future)
+    {
+        SimpleConnection connection = null;
+
+        if(future.await(timeoutSeconds, TimeUnit.SECONDS) != org.xnio.IoFuture.Status.DONE)
+            throw new RuntimeException("Connection establishment timed out");
+
+        try {
+            connection = future.get();
+        } catch (IOException e) {
+            throw new RuntimeException("Connection establishment generated I/O exception", e);
+        }
+
+        if(connection == null)
+            throw new RuntimeException("Connection establishment failed (null) - Full connection terminated");
+
+        return connection;
+    }
+
     private static OptionMap getConnectionOptions(boolean isHttp2) {
         return isHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY;
     }
@@ -149,32 +175,6 @@ public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
             throw new RuntimeException(e);
         }
         return SSL.get();
-    }
-
-    /***
-     * Never returns null
-     *
-     * @param timeoutSeconds
-     * @param future
-     * @return
-     */
-    private static SimpleConnection safeConnect(long timeoutSeconds, IoFuture<SimpleConnection> future)
-    {
-        SimpleConnection connection = null;
-
-        if(future.await(timeoutSeconds, TimeUnit.SECONDS) != org.xnio.IoFuture.Status.DONE)
-            throw new RuntimeException("Connection establishment timed out");
-
-        try {
-            connection = future.get();
-        } catch (IOException e) {
-            throw new RuntimeException("Connection establishment generated I/O exception", e);
-        }
-
-        if(connection == null)
-            throw new RuntimeException("Connection establishment failed (null) - Full connection terminated");
-
-        return connection;
     }
 
     public static String port(ClientConnection connection) {
