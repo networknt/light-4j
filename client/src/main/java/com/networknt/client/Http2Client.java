@@ -762,7 +762,7 @@ public class Http2Client {
 	public static SSLContext createSSLContext() throws IOException {
         SSLContext sslContext = null;
         KeyManager[] keyManagers = null;
-        Map<String, Object> tlsMap = (Map<String, Object>)config.getMappedConfig().get(TLS);
+        Map<String, Object> tlsMap = config.getTlsConfig();
         if(tlsMap != null) {
             try {
                 // load key store for client certificate if two way ssl is used.
@@ -799,7 +799,7 @@ public class Http2Client {
             Boolean loadDefaultTrust = tlsMap.get(LOAD_DEFAULT_TRUST) == null ? false : Config.loadBooleanValue(LOAD_DEFAULT_TRUST, tlsMap.get(LOAD_DEFAULT_TRUST));
             List<TrustManager> trustManagerList = new ArrayList<>();
             try {
-                // load trust store, this is the server public key certificate
+                // load trust store, this is the server's public key certificate
                 // first check if javax.net.ssl.trustStore system properties is set. It is only necessary if the server
                 // certificate doesn't have the entire chain.
                 Boolean loadTrustStore = tlsMap.get(LOAD_TRUST_STORE) == null ? false : Config.loadBooleanValue(LOAD_TRUST_STORE, tlsMap.get(LOAD_TRUST_STORE));
