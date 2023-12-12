@@ -157,6 +157,11 @@ public class Http2Client {
     }
 
     private Http2Client(final ClassLoader classLoader) {
+        Map<String, Object> tlsMap = config.getTlsConfig();
+        // disable the hostname verification based on the config.
+        if(tlsMap == null || tlsMap.get(TLSConfig.VERIFY_HOSTNAME) == null || Boolean.FALSE.equals(Config.loadBooleanValue(TLSConfig.VERIFY_HOSTNAME, tlsMap.get(TLSConfig.VERIFY_HOSTNAME)))) {
+            System.setProperty(DISABLE_HTTPS_ENDPOINT_IDENTIFICATION_PROPERTY, "true");
+        }
         boolean injectCallerId = config.isInjectCallerId();
         if(injectCallerId) {
             ServerConfig serverConfig = ServerConfig.getInstance();
@@ -758,10 +763,6 @@ public class Http2Client {
         SSLContext sslContext = null;
         KeyManager[] keyManagers = null;
         Map<String, Object> tlsMap = config.getTlsConfig();
-        // disable the hostname verification based on the config.
-        if(tlsMap == null || tlsMap.get(TLSConfig.VERIFY_HOSTNAME) == null || Boolean.FALSE.equals(Config.loadBooleanValue(TLSConfig.VERIFY_HOSTNAME, tlsMap.get(TLSConfig.VERIFY_HOSTNAME)))) {
-            System.setProperty(DISABLE_HTTPS_ENDPOINT_IDENTIFICATION_PROPERTY, "true");
-        }
         if(tlsMap != null) {
             try {
                 // load key store for client certificate if two way ssl is used.
@@ -798,7 +799,7 @@ public class Http2Client {
             Boolean loadDefaultTrust = tlsMap.get(LOAD_DEFAULT_TRUST) == null ? false : Config.loadBooleanValue(LOAD_DEFAULT_TRUST, tlsMap.get(LOAD_DEFAULT_TRUST));
             List<TrustManager> trustManagerList = new ArrayList<>();
             try {
-                // load trust store, this is the server public key certificate
+                // load trust store, this is the server's public key certificate
                 // first check if javax.net.ssl.trustStore system properties is set. It is only necessary if the server
                 // certificate doesn't have the entire chain.
                 Boolean loadTrustStore = tlsMap.get(LOAD_TRUST_STORE) == null ? false : Config.loadBooleanValue(LOAD_TRUST_STORE, tlsMap.get(LOAD_TRUST_STORE));
