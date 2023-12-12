@@ -17,7 +17,10 @@
 package com.networknt.proxy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
+import com.networknt.client.ssl.TLSConfig;
+import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.handler.Handler;
 import com.networknt.httpstring.AttachmentConstants;
@@ -43,6 +46,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
+import static io.undertow.client.http.HttpClientProvider.DISABLE_HTTPS_ENDPOINT_IDENTIFICATION_PROPERTY;
+
 
 /**
  * This is a wrapper class for LightProxyHandler as it is implemented as final. This class implements
@@ -64,6 +69,13 @@ public class LightProxyHandler implements HttpHandler {
     public LightProxyHandler() {
         config = ProxyConfig.load();
         ModuleRegistry.registerModule(ProxyConfig.CONFIG_NAME, LightProxyHandler.class.getName(), config.getMappedConfig(), null);
+        ClientConfig clientConfig = ClientConfig.get();
+        Map<String, Object> tlsMap = clientConfig.getTlsConfig();
+        // disable the hostname verification based on the config. We need to do it here as the LoadBalancingProxyClient uses the Undertow HttpClient.
+        if(tlsMap == null || tlsMap.get(TLSConfig.VERIFY_HOSTNAME) == null || Boolean.FALSE.equals(Config.loadBooleanValue(TLSConfig.VERIFY_HOSTNAME, tlsMap.get(TLSConfig.VERIFY_HOSTNAME)))) {
+            System.setProperty(DISABLE_HTTPS_ENDPOINT_IDENTIFICATION_PROPERTY, "true");
+        }
+
         List<String> hosts = new ArrayList<>(Arrays.asList(config.getHosts().split(",")));
         if(logger.isTraceEnabled()) logger.trace("hosts = " + JsonMapper.toJson(hosts));
         LoadBalancingProxyClient loadBalancer = new LoadBalancingProxyClient()
