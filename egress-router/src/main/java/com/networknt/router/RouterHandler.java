@@ -16,7 +16,10 @@
 
 package com.networknt.router;
 
+import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
+import com.networknt.client.ssl.TLSConfig;
+import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.ProxyHandler;
 import com.networknt.httpstring.AttachmentConstants;
@@ -34,6 +37,8 @@ import org.xnio.OptionMap;
 
 import java.util.Map;
 
+import static io.undertow.client.http.HttpClientProvider.DISABLE_HTTPS_ENDPOINT_IDENTIFICATION_PROPERTY;
+
 /**
  * This is a wrapper class for ProxyHandler as it is implemented as final. This class implements
  * the HttpHandler which can be injected into the handler.yml configuration file as another option
@@ -50,6 +55,12 @@ public class RouterHandler implements HttpHandler {
     public RouterHandler() {
         config = RouterConfig.load();
         ModuleRegistry.registerModule(RouterConfig.CONFIG_NAME, RouterHandler.class.getName(), config.getMappedConfig(), null);
+        ClientConfig clientConfig = ClientConfig.get();
+        Map<String, Object> tlsMap = clientConfig.getTlsConfig();
+        // disable the hostname verification based on the config. We need to do it here as the LoadBalancingRouterProxyClient uses the Undertow HttpClient.
+        if(tlsMap == null || tlsMap.get(TLSConfig.VERIFY_HOSTNAME) == null || Boolean.FALSE.equals(Config.loadBooleanValue(TLSConfig.VERIFY_HOSTNAME, tlsMap.get(TLSConfig.VERIFY_HOSTNAME)))) {
+            System.setProperty(DISABLE_HTTPS_ENDPOINT_IDENTIFICATION_PROPERTY, "true");
+        }
         // As we are building a client side router for the light platform, the assumption is the server will
         // be on HTTP 2.0 TSL always. No need to handle HTTP 1.1 case here.
         LoadBalancingRouterProxyClient client = new LoadBalancingRouterProxyClient();
