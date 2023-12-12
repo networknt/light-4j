@@ -157,6 +157,11 @@ public class Http2Client {
     }
 
     private Http2Client(final ClassLoader classLoader) {
+        Map<String, Object> tlsMap = config.getTlsConfig();
+        // disable the hostname verification based on the config.
+        if(tlsMap == null || tlsMap.get(TLSConfig.VERIFY_HOSTNAME) == null || Boolean.FALSE.equals(Config.loadBooleanValue(TLSConfig.VERIFY_HOSTNAME, tlsMap.get(TLSConfig.VERIFY_HOSTNAME)))) {
+            System.setProperty(DISABLE_HTTPS_ENDPOINT_IDENTIFICATION_PROPERTY, "true");
+        }
         boolean injectCallerId = config.isInjectCallerId();
         if(injectCallerId) {
             ServerConfig serverConfig = ServerConfig.getInstance();
@@ -757,11 +762,7 @@ public class Http2Client {
 	public static SSLContext createSSLContext() throws IOException {
         SSLContext sslContext = null;
         KeyManager[] keyManagers = null;
-        Map<String, Object> tlsMap = config.getTlsConfig();
-        // disable the hostname verification based on the config.
-        if(tlsMap == null || tlsMap.get(TLSConfig.VERIFY_HOSTNAME) == null || Boolean.FALSE.equals(Config.loadBooleanValue(TLSConfig.VERIFY_HOSTNAME, tlsMap.get(TLSConfig.VERIFY_HOSTNAME)))) {
-            System.setProperty(DISABLE_HTTPS_ENDPOINT_IDENTIFICATION_PROPERTY, "true");
-        }
+        Map<String, Object> tlsMap = (Map<String, Object>)config.getMappedConfig().get(TLS);
         if(tlsMap != null) {
             try {
                 // load key store for client certificate if two way ssl is used.
