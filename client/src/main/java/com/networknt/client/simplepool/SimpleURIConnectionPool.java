@@ -93,6 +93,8 @@ public final class SimpleURIConnectionPool {
      *          or other issues that prevent connection creation
      */
     public synchronized SimpleConnectionState.ConnectionToken borrow(long createConnectionTimeout, boolean isHttp2) throws RuntimeException {
+        findAndCloseLeakedConnections();
+
         long now = System.currentTimeMillis();
         final SimpleConnectionState connectionState;
 
@@ -115,8 +117,6 @@ public final class SimpleURIConnectionPool {
         applyConnectionState(connectionState, now, () -> trackedConnections.remove(connectionState));
 
         if(logger.isDebugEnabled()) logger.debug(showConnections("borrow"));
-
-        findAndCloseLeakedConnections();
         return connectionToken;
     }
 
@@ -130,6 +130,8 @@ public final class SimpleURIConnectionPool {
      * @param connectionToken the connection token that represents the borrowing of a connection by a thread
      */
     public synchronized void restore(SimpleConnectionState.ConnectionToken connectionToken) {
+        findAndCloseLeakedConnections();
+
         long now = System.currentTimeMillis();
 
         if(connectionToken != null) {
@@ -142,7 +144,6 @@ public final class SimpleURIConnectionPool {
         applyAllConnectionStates(now);
 
         if(logger.isDebugEnabled()) logger.debug(showConnections("restore"));
-        findAndCloseLeakedConnections();
     }
 
 
@@ -275,6 +276,8 @@ public final class SimpleURIConnectionPool {
      *     applyConnectionState() and findAndCloseLeakedConnections() are the only two methods that close connections
      *     and modify sets. This can be helpful to know for debugging since the sets comprise the entirety of the
      *     mutable state of this SimpleURIConnectionPool objects
+     *
+     * NOTE: This method must not throw any exceptions
      */
     private void findAndCloseLeakedConnections()
     {
