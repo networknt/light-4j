@@ -41,7 +41,7 @@ import java.util.concurrent.ThreadLocalRandom;
  2. trackedConnections:      all connections tracked by the connection pool
  3. Borrowable:              all tracked connections that can be borrowed from
  4. Borrowed:                all tracked connections that have borrowed tokens
- 5. notBorrowedExpired:      all tracked connections that have both expired and not borrowed -- only these can be closed by the pool
+ 5. notBorrowedExpired:      all tracked connections that are both expired and not borrowed -- only these can be closed by the pool
  */
 public final class SimpleURIConnectionPool {
     private static final Logger logger = LoggerFactory.getLogger(SimpleURIConnectionPool.class);
@@ -95,7 +95,7 @@ public final class SimpleURIConnectionPool {
     public synchronized SimpleConnectionState.ConnectionToken borrow(long createConnectionTimeout, boolean isHttp2) throws RuntimeException {
         findAndCloseLeakedConnections();
         long now = System.currentTimeMillis();
-        
+
         final SimpleConnectionState connectionState;
 
         // update the connection pool's state
