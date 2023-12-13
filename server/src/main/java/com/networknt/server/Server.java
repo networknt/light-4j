@@ -98,6 +98,9 @@ public class Server {
     // When dynamic port is used, this HashSet contains used port so that we just need to check here instead of trying bind.
     private static Set usedPorts;
 
+    // indicate if the server is ready to accept requests. Used by Kafka sidecar to consume messages in reactive consumer.
+    public static boolean ready = false;
+
     public static void main(final String[] args) {
         init();
     }
@@ -134,6 +137,7 @@ public class Server {
             // send a graceful system shutdown
             System.exit(1);
         }
+        ready = true;
     }
 
     /**
