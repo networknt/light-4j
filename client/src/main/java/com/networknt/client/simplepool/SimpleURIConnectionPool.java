@@ -94,8 +94,8 @@ public final class SimpleURIConnectionPool {
      */
     public synchronized SimpleConnectionState.ConnectionToken borrow(long createConnectionTimeout, boolean isHttp2) throws RuntimeException {
         findAndCloseLeakedConnections();
-
         long now = System.currentTimeMillis();
+        
         final SimpleConnectionState connectionState;
 
         // update the connection pool's state
@@ -131,7 +131,6 @@ public final class SimpleURIConnectionPool {
      */
     public synchronized void restore(SimpleConnectionState.ConnectionToken connectionToken) {
         findAndCloseLeakedConnections();
-
         long now = System.currentTimeMillis();
 
         if(connectionToken != null) {
