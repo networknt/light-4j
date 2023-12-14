@@ -177,6 +177,7 @@ public final class SimpleConnectionState {
     /**
      * State Transition - Borrow
      *
+     * @param now the Unix Epoch time in milliseconds at which to evaluate whether there are borrowable connections or not
      * @return returns a ConnectionToken representing the borrowing of the connection
      * @throws RuntimeException      if the connection is closed
      * @throws IllegalStateException if the connection is not borrowable
