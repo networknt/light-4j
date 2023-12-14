@@ -107,10 +107,8 @@ public final class SimpleURIConnectionPool {
             if (trackedConnections.size() < poolSize) {
                 connectionState = new SimpleConnectionState(EXPIRY_TIME, createConnectionTimeout, isHttp2, uri, allCreatedConnections, connectionMaker);
                 trackedConnections.add(connectionState);
-            } else {
-                findAndCloseLeakedConnections();
+            } else
                 throw new RuntimeException("An attempt was made to exceed the maximum size was of the " + uri.toString() + " connection pool");
-            }
         }
 
         SimpleConnectionState.ConnectionToken connectionToken = connectionState.borrow(createConnectionTimeout, now);
