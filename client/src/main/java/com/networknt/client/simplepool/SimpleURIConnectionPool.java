@@ -111,7 +111,7 @@ public final class SimpleURIConnectionPool {
                 throw new RuntimeException("An attempt was made to exceed the maximum size of the " + uri.toString() + " connection pool");
         }
 
-        SimpleConnectionState.ConnectionToken connectionToken = connectionState.borrow(createConnectionTimeout, now);
+        SimpleConnectionState.ConnectionToken connectionToken = connectionState.borrow(now);
         applyConnectionState(connectionState, now, () -> trackedConnections.remove(connectionState));
 
         if(logger.isDebugEnabled()) logger.debug(showConnections("borrow"));
