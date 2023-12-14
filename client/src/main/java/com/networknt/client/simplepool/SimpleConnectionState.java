@@ -177,14 +177,11 @@ public final class SimpleConnectionState {
     /**
      * State Transition - Borrow
      *
-     * @param connectionCreateTimeout the amount of time in seconds to wait for a connection to be created before
-     *          throwing an exception
-     * @param now the Unix Epoch time in milliseconds at which to evaluate whether there are borrowable connections or not
      * @return returns a ConnectionToken representing the borrowing of the connection
-     * @throws RuntimeException if the connection is closed
+     * @throws RuntimeException      if the connection is closed
      * @throws IllegalStateException if the connection is not borrowable
      */
-    public synchronized ConnectionToken borrow(long connectionCreateTimeout, long now) throws RuntimeException, IllegalStateException {
+    public synchronized ConnectionToken borrow(long now) throws RuntimeException, IllegalStateException {
         /***
          * Connections can only be borrowed when the connection is in a BORROWABLE state.
          *
@@ -196,7 +193,7 @@ public final class SimpleConnectionState {
          *     long now = System.currentTimeMillis();
          *
          *     if(connectionState.borrowable(now))
-         *         connectionToken = connectionState.borrow(connectionCreateTimeout, now);
+         *         connectionToken = connectionState.borrow(now);
          *
          * Also note the use of a single consistent value for the current time ('now'). This ensures
          * that the state returned in the 'if' statement will still be true in the 'borrow' statement
