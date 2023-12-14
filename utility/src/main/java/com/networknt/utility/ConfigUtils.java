@@ -61,4 +61,50 @@ public class ConfigUtils {
         return String.format(INTERNAL_KEY_FORMAT, method, ConfigUtils.normalisePath(path));
     }
 
+    public static Map<String, Object> normalizeMap(Map<String, Object> map) {
+        Map<String, Object> normalizedData = new TreeMap<>();
+
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+
+            // Normalize arrays by sorting them
+            if (value instanceof List) {
+                List<?> listValue = (List<?>) value;
+                normalizedData.put(key, normalizeList(listValue));
+            } else if (value instanceof Map) {
+                // Recursively normalize nested maps
+                Map<String, Object> nestedMap = (Map<String, Object>) value;
+                normalizedData.put(key, normalizeMap(nestedMap));
+            } else {
+                normalizedData.put(key, value);
+            }
+        }
+
+        return normalizedData;
+    }
+
+    public static List<?> normalizeList(List<?> list) {
+        if(list.isEmpty()) {
+            return list;
+        }
+        if(list.get(0) instanceof String) {
+            // Case 1: List of Strings
+            List<String> stringList = (List<String>) list;
+            Collections.sort(stringList);
+            return stringList;
+        } else if(list.get(0) instanceof Map) {
+            // Case 2: List of Maps
+            List<Map<String, Object>> mapList = (List<Map<String, Object>>) list;
+            //mapList.sort(Comparator.comparing(m -> m.entrySet().iterator().next().getKey())); // need to sort by the key only
+            // for each map in the list, we need to normalize the map.
+            for(int i = 0; i < mapList.size(); i++) {
+                Map<String, Object> map = mapList.get(i);
+                mapList.set(i, normalizeMap(map));
+            }
+            return mapList;
+        } else {
+            throw new IllegalArgumentException("Unsupported element type in the list");
+        }
+    }
 }

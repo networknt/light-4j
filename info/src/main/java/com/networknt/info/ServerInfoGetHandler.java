@@ -19,8 +19,8 @@ package com.networknt.info;
 import com.networknt.config.Config;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.security.IJwtVerifyHandler;
-import com.networknt.security.JwtVerifier;
 import com.networknt.server.ServerConfig;
+import com.networknt.utility.ConfigUtils;
 import com.networknt.utility.FingerPrintUtil;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.Util;
@@ -74,11 +74,11 @@ public class ServerInfoGetHandler implements LightHttpHandler {
         infoMap.put("security", getSecurity());
         // remove this as it is a rest specific. The specification is loaded in the specific handler.
         // infoMap.put("specification", Config.getInstance().getJsonMapConfigNoCache("openapi"));
-        infoMap.put("component", updateKey(ModuleRegistry.getRegistry()));
+        infoMap.put("component", updateNormalizeKey(ModuleRegistry.getRegistry()));
         return infoMap;
     }
 
-    public static Map<String, Object> updateKey (Map<String, Object> moduleRegistry) {
+    public static Map<String, Object> updateNormalizeKey (Map<String, Object> moduleRegistry) {
         Map<String, Object> newModuleRegistry = new LinkedHashMap<>();
         for (Map.Entry<String, Object> entry : moduleRegistry.entrySet()) {
             String key = entry.getKey();
@@ -87,6 +87,8 @@ public class ServerInfoGetHandler implements LightHttpHandler {
             }
             newModuleRegistry.put(key, entry.getValue());
         }
+        // normalized the key and value for comparison.
+        newModuleRegistry = ConfigUtils.normalizeMap(newModuleRegistry);
         return newModuleRegistry;
     }
     public static Map<String, Object> getDeployment() {
@@ -118,7 +120,7 @@ public class ServerInfoGetHandler implements LightHttpHandler {
             }
         }
 
-        if(fingerprints.size() > 0) {
+        if(!fingerprints.isEmpty()) {
             secMap.put("oauth2FingerPrints", new ArrayList<String>(fingerprints));
         }
         secMap.put("serverFingerPrint", getServerTlsFingerPrint());
