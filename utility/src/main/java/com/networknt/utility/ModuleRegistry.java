@@ -60,7 +60,7 @@ public class ModuleRegistry {
      * @param config The map of the configuration of the plugin.
      * @param masks The list of the properties that need to be masked.
      */
-    public static void registerPlugin(String configName, String pluginClass, String pluginName, String pluginVersion,  Map<String, Object> config, List<String> masks) {
+    public static void registerPlugin(String pluginName, String pluginVersion, String configName, String pluginClass, Map<String, Object> config, List<String> masks) {
         // use plugin name as key for the config map will make api-certification parses this object easily.
         if(config != null) {
             if(ServerConfig.getInstance().isMaskConfigProperties() && masks != null && !masks.isEmpty()) {
