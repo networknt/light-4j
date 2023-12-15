@@ -37,7 +37,7 @@ public class ModuleRegistryGetHandler implements LightHttpHandler {
 
         if (config.isEnabled()) {
             List<String> modules = new ArrayList<>();
-            Map<String, Object> modulesRegistry = ModuleRegistry.getRegistry();
+            Map<String, Object> modulesRegistry = ModuleRegistry.getModuleRegistry();
             for (Map.Entry<String, Object> entry : modulesRegistry.entrySet()) {
                 String key = entry.getKey();
                 if (key.contains(":")) {
