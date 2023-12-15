@@ -29,26 +29,56 @@ import java.util.*;
  */
 public class ModuleRegistry {
 
-    private static final Map<String, Object> registry = new HashMap<>();
+    private static final Map<String, Object> moduleRegistry = new HashMap<>();
+    private static final Map<String, Object> pluginRegistry = new HashMap<>();
+    private static final List<Map<String, Object>> plugins = new ArrayList<>();
 
     public static void registerModule(String configName, String moduleClass, Map<String, Object> config, List<String> masks) {
         // use module name as key for the config map will make api-certification parses this object easily.
         if(config != null) {
-            if(ServerConfig.getInstance().isMaskConfigProperties() && masks != null && masks.size() > 0) {
+            if(ServerConfig.getInstance().isMaskConfigProperties() && masks != null && !masks.isEmpty()) {
                 for (String mask : masks) {
                     maskNode(config, mask);
                 }
             }
-            registry.put(configName + ":" + moduleClass, config);
+            moduleRegistry.put(configName + ":" + moduleClass, config);
         } else {
             // we don't have any module without config, but we cannot guarantee user created modules
-            registry.put(configName + ":" + moduleClass, new HashMap<String, Object>());
+            moduleRegistry.put(configName + ":" + moduleClass, new HashMap<String, Object>());
         }
     }
-
-    public static Map<String, Object> getRegistry() {
-        return registry;
+    public static Map<String, Object> getModuleRegistry() {
+        return moduleRegistry;
     }
+
+    /**
+     * Register a plugin with config and masks
+     * @param configName The config name which is the file name of the configuration file.
+     * @param pluginClass The Java class name of the plugin.
+     * @param pluginName The name of the plugin in the pom.xml file. It can be different from the configName.
+     * @param pluginVersion The version of the plugin in the pom.xml file.
+     * @param config The map of the configuration of the plugin.
+     * @param masks The list of the properties that need to be masked.
+     */
+    public static void registerPlugin(String configName, String pluginClass, String pluginName, String pluginVersion,  Map<String, Object> config, List<String> masks) {
+        // use plugin name as key for the config map will make api-certification parses this object easily.
+        if(config != null) {
+            if(ServerConfig.getInstance().isMaskConfigProperties() && masks != null && !masks.isEmpty()) {
+                for (String mask : masks) {
+                    maskNode(config, mask);
+                }
+            }
+            pluginRegistry.put(configName + ":" + pluginClass, config);
+        }
+        Map<String, Object> plugin = new HashMap<>();
+        plugin.put("pluginName", pluginName);
+        plugin.put("pluginClass", pluginClass);
+        plugin.put("pluginVersion", pluginVersion);
+        plugins.add(plugin);
+    }
+
+    public static Map<String, Object> getPluginRegistry() { return pluginRegistry; }
+    public static List<Map<String, Object>> getPlugins() { return plugins; }
 
     @SuppressWarnings("unchecked")
     private static void maskNode(Map<String, Object> map, String mask) {

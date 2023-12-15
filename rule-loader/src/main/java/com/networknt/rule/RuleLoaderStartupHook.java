@@ -98,6 +98,9 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
                     logger.error("Could not load rule for serviceId = " + serverConfig.getServiceId() + " error = " + result.getError());
                 }
             }
+            // iterate all action classes to initialize them to ensure that the jar file are deployed and configuration is registered.
+            // This is to prevent runtime exception and also ensure that the configuration is part of the server info response.
+
         } else {
             if(logger.isInfoEnabled()) logger.info("Rule Loader is not enabled and skipped loading rules from the portal.");
         }

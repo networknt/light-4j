@@ -95,9 +95,8 @@ public class ConfigUtils {
             return stringList;
         } else if(list.get(0) instanceof Map) {
             // Case 2: List of Maps
+            // Do not sort the map in the list. The order is important.
             List<Map<String, Object>> mapList = (List<Map<String, Object>>) list;
-            //mapList.sort(Comparator.comparing(m -> m.entrySet().iterator().next().getKey())); // need to sort by the key only
-            // for each map in the list, we need to normalize the map.
             for(int i = 0; i < mapList.size(); i++) {
                 Map<String, Object> map = mapList.get(i);
                 mapList.set(i, normalizeMap(map));

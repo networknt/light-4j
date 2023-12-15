@@ -74,7 +74,9 @@ public class ServerInfoGetHandler implements LightHttpHandler {
         infoMap.put("security", getSecurity());
         // remove this as it is a rest specific. The specification is loaded in the specific handler.
         // infoMap.put("specification", Config.getInstance().getJsonMapConfigNoCache("openapi"));
-        infoMap.put("component", updateNormalizeKey(ModuleRegistry.getRegistry()));
+        infoMap.put("component", updateNormalizeKey(ModuleRegistry.getModuleRegistry()));
+        infoMap.put("plugin", updateNormalizeKey(ModuleRegistry.getPluginRegistry()));
+        infoMap.put("plugins", ModuleRegistry.getPlugins());
         return infoMap;
     }
 
@@ -110,7 +112,7 @@ public class ServerInfoGetHandler implements LightHttpHandler {
         Map<String, Object> secMap = new LinkedHashMap<>();
         // as we have replaced the static JwtHelper to JwtVerifier, we cannot use the static method to
         // get the fingerprints anymore, need to iterate the registered security module to do so.
-        Map<String, Object> moduleMap = ModuleRegistry.getRegistry();
+        Map<String, Object> moduleMap = ModuleRegistry.getModuleRegistry();
         // use set to eliminate duplications and will convert to ArrayList later
         Set<String> fingerprints = new HashSet<>();
         for(Object module: moduleMap.entrySet()) {
