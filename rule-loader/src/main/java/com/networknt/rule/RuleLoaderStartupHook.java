@@ -100,12 +100,31 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
             }
             // iterate all action classes to initialize them to ensure that the jar file are deployed and configuration is registered.
             // This is to prevent runtime exception and also ensure that the configuration is part of the server info response.
-
+            loadPluginClass();
         } else {
             if(logger.isInfoEnabled()) logger.info("Rule Loader is not enabled and skipped loading rules from the portal.");
         }
     }
 
+    public static void loadPluginClass() {
+        // iterate the rules map to find the action classes.
+        for(Rule rule: rules.values()) {
+            for(RuleAction action: rule.getActions()) {
+                String actionClass = action.getActionClassName();
+                loadActionClass(actionClass);
+            }
+        }
+    }
+    public static void loadActionClass(String actionClass) {
+        if(logger.isDebugEnabled()) logger.debug("load action class " + actionClass);
+        try {
+            Class clazz = Class.forName(actionClass);
+            clazz.getDeclaredConstructor().newInstance();
+        } catch (Exception e) {
+            logger.error("Exception:", e);
+            throw new RuntimeException("Could not find rule action class " + actionClass, e);
+        }
+    }
     public static Result<String> getServiceById(String url, String serviceId) {
         final String s = String.format("{\"host\":\"lightapi.net\",\"service\":\"market\",\"action\":\"getServiceById\",\"version\":\"0.1.0\",\"data\":{\"serviceId\":\"%s\"}}", serviceId);
         Result<String> result = null;
