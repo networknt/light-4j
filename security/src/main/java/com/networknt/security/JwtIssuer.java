@@ -37,7 +37,7 @@ import java.util.Map;
 public class JwtIssuer {
     private static final Logger logger = LoggerFactory.getLogger(JwtIssuer.class);
     public static final String JWT_CONFIG = "jwt";
-    private static JwtConfig jwtConfig = (JwtConfig) Config.getInstance().getJsonObjectConfig(JWT_CONFIG, JwtConfig.class);
+    private static final JwtConfig jwtConfig = (JwtConfig) Config.getInstance().getJsonObjectConfig(JWT_CONFIG, JwtConfig.class);
 
     /**
      * A static method that generate JWT token from JWT claims object
