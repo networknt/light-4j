@@ -5,7 +5,6 @@ import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.RequestInterceptor;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.rule.RuleConstants;
-import com.networknt.rule.RuleEngine;
 import com.networknt.rule.RuleLoaderStartupHook;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
@@ -17,7 +16,6 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.server.protocol.http.HttpContinue;
 import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
-import io.undertow.util.QueryParameterUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.Buffers;
@@ -42,7 +40,6 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
 
     private final RequestTransformerConfig config;
     private volatile HttpHandler next;
-    private RuleEngine engine;
 
     public RequestTransformerInterceptor() {
         if(logger.isInfoEnabled()) logger.info("RequestTransformerHandler is loaded");
@@ -85,9 +82,6 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
         if(logger.isDebugEnabled()) logger.trace("RequestTransformerInterceptor.handleRequest starts.");
         String requestPath = exchange.getRequestPath();
         if (config.getAppliedPathPrefixes() != null && config.getAppliedPathPrefixes().stream().anyMatch(s -> requestPath.startsWith(s))) {
-            if(engine == null) {
-                engine = new RuleEngine(RuleLoaderStartupHook.rules, null);
-            }
             String method = exchange.getRequestMethod().toString();
             if (!HttpContinue.requiresContinueResponse(exchange.getRequestHeaders())) {
                 if(logger.isDebugEnabled()) logger.debug("request can be transformed since no Expect headers found");
@@ -154,7 +148,7 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
                         for(Map<String, Object> ruleMap: requestTransformRules) {
                             ruleId = (String)ruleMap.get(Constants.RULE_ID);
                             if(logger.isDebugEnabled()) logger.debug("ruleID found: " + ruleId);
-                            result = engine.executeRule(ruleId, objMap);
+                            result = RuleLoaderStartupHook.ruleEngine.executeRule(ruleId, objMap);
                             boolean res = (Boolean)result.get(RuleConstants.RESULT);
                             if(logger.isDebugEnabled() && res) logger.debug("ruleID result is true");
                             if(!res) {
