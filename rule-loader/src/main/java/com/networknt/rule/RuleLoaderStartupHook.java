@@ -45,6 +45,8 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
     static Http2Client client = Http2Client.getInstance();
     static final String GENERIC_EXCEPTION = "ERR10014";
     static final String DEFAULT_HOST = "lightapi.net";
+    // As this startup hook is a singleton, we can use a static variable to hold the rule engine.
+    public static RuleEngine ruleEngine;
 
     @Override
     public void onStartup() {
@@ -98,9 +100,13 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
                     logger.error("Could not load rule for serviceId = " + serverConfig.getServiceId() + " error = " + result.getError());
                 }
             }
-            // iterate all action classes to initialize them to ensure that the jar file are deployed and configuration is registered.
-            // This is to prevent runtime exception and also ensure that the configuration is part of the server info response.
-            loadPluginClass();
+            if(rules != null) {
+                // create the rule engine with the rule map.
+                ruleEngine = new RuleEngine(rules, null);
+                // iterate all action classes to initialize them to ensure that the jar file are deployed and configuration is registered.
+                // This is to prevent runtime exception and also ensure that the configuration is part of the server info response.
+                loadPluginClass();
+            }
         } else {
             if(logger.isInfoEnabled()) logger.info("Rule Loader is not enabled and skipped loading rules from the portal.");
         }
@@ -118,8 +124,9 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
     public static void loadActionClass(String actionClass) {
         if(logger.isDebugEnabled()) logger.debug("load action class " + actionClass);
         try {
-            Class clazz = Class.forName(actionClass);
-            clazz.getDeclaredConstructor().newInstance();
+            IAction ia = (IAction)Class.forName(actionClass).getDeclaredConstructor().newInstance();
+            // this happens during the server startup, so the cache must be empty. No need to check.
+            ruleEngine.actionClassCache.put(actionClass, ia);
         } catch (Exception e) {
             logger.error("Exception:", e);
             throw new RuntimeException("Could not find rule action class " + actionClass, e);

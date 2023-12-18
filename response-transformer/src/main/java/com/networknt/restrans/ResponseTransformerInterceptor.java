@@ -5,7 +5,6 @@ import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.ResponseInterceptor;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.rule.RuleConstants;
-import com.networknt.rule.RuleEngine;
 import com.networknt.rule.RuleLoaderStartupHook;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
@@ -13,14 +12,12 @@ import com.networknt.utility.ConfigUtils;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +54,6 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
 
     private final ResponseTransformerConfig config;
     private volatile HttpHandler next;
-    private RuleEngine engine;
 
     public ResponseTransformerInterceptor() {
         if (logger.isInfoEnabled()) logger.info("ResponseManipulatorHandler is loaded");
@@ -100,9 +96,6 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
         if (logger.isDebugEnabled()) logger.trace("ResponseTransformerInterceptor.handleRequest starts.");
         String requestPath = exchange.getRequestPath();
         if (config.getAppliedPathPrefixes() != null && config.getAppliedPathPrefixes().stream().anyMatch(requestPath::startsWith)) {
-            if (engine == null) {
-                engine = new RuleEngine(RuleLoaderStartupHook.rules, null);
-            }
             String responseBody = BuffersUtils.toString(getBuffer(exchange), StandardCharsets.UTF_8);
             if (logger.isTraceEnabled())
                 logger.trace("original response body = " + responseBody);
@@ -152,7 +145,7 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
             // iterate the rules and execute them in sequence. Break only if one rule is successful.
             for(Map<String, Object> ruleMap: responseTransformRules) {
                 ruleId = (String)ruleMap.get(Constants.RULE_ID);
-                result = engine.executeRule(ruleId, objMap);
+                result = RuleLoaderStartupHook.ruleEngine.executeRule(ruleId, objMap);
                 boolean res = (Boolean)result.get(RuleConstants.RESULT);
                 if(!res) {
                     finalResult = false;
@@ -206,7 +199,7 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
         // iterate the rules and execute them in sequence. Break only if one rule is successful.
         for (Map<String, Object> ruleMap : responseTransformRules) {
             ruleId = (String) ruleMap.get(Constants.RULE_ID);
-            result = engine.executeRule(ruleId, objMap);
+            result = RuleLoaderStartupHook.ruleEngine.executeRule(ruleId, objMap);
             boolean res = (Boolean) result.get(RuleConstants.RESULT);
             if (!res) {
                 return null;
