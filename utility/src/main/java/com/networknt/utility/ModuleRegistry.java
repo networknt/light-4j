@@ -33,6 +33,11 @@ public class ModuleRegistry {
     private static final Map<String, Object> pluginRegistry = new HashMap<>();
     private static final List<Map<String, Object>> plugins = new ArrayList<>();
 
+    // cache for the module classes
+    private static final List<String> moduleClasses = new ArrayList<>();
+    // cache for the plugin classes
+    private static final List<String> pluginClasses = new ArrayList<>();
+
     public static void registerModule(String configName, String moduleClass, Map<String, Object> config, List<String> masks) {
         // use module name as key for the config map will make api-certification parses this object easily.
         if(config != null) {
@@ -45,6 +50,9 @@ public class ModuleRegistry {
         } else {
             // we don't have any module without config, but we cannot guarantee user created modules
             moduleRegistry.put(configName + ":" + moduleClass, new HashMap<String, Object>());
+        }
+        if(!moduleClasses.contains(moduleClass)) {
+            moduleClasses.add(moduleClass);
         }
     }
     public static Map<String, Object> getModuleRegistry() {
@@ -75,10 +83,21 @@ public class ModuleRegistry {
         plugin.put("pluginClass", pluginClass);
         plugin.put("pluginVersion", pluginVersion);
         plugins.add(plugin);
+        if(!pluginClasses.contains(pluginClass)) {
+            pluginClasses.add(pluginClass);
+        }
     }
 
     public static Map<String, Object> getPluginRegistry() { return pluginRegistry; }
     public static List<Map<String, Object>> getPlugins() { return plugins; }
+
+    public static List<String> getModuleClasses() {
+        return moduleClasses;
+    }
+
+    public static List<String> getPluginClasses() {
+        return pluginClasses;
+    }
 
     @SuppressWarnings("unchecked")
     private static void maskNode(Map<String, Object> map, String mask) {
