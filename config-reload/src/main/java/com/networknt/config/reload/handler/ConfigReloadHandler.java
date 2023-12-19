@@ -8,6 +8,8 @@ import com.networknt.consul.ConsulConfig;
 import com.networknt.consul.ConsulRegistry;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.httpstring.AttachmentConstants;
+import com.networknt.rule.IAction;
+import com.networknt.rule.RuleLoaderStartupHook;
 import com.networknt.server.DefaultConfigLoader;
 import com.networknt.server.IConfigLoader;
 import com.networknt.status.HttpStatus;
@@ -47,37 +49,37 @@ public class ConfigReloadHandler implements LightHttpHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        List<String> modules =  (List)exchange.getAttachment(AttachmentConstants.REQUEST_BODY);
-        List<String> reloads =  new ArrayList<>();
         if (config.isEnabled()) {
+            // this modulePlugins list contains both modules and plugins.
+            List<String> modulePlugins =  (List)exchange.getAttachment(AttachmentConstants.REQUEST_BODY);
+            // the list that contains all the reloaded modules.
+            List<String> reloaded =  new ArrayList<>();
+            // reload the config values.yml from the config server or local filesystem.
             reLoadConfigs();
-            if (modules==null || modules.isEmpty() || modules.contains(MODULE_DEFAULT)) {
-                if (modules==null) modules = new ArrayList<>();
-                if (!modules.isEmpty()) modules.clear();
 
-                Map<String, Object> modulesRegistry =  ModuleRegistry.getModuleRegistry();
-                for (Map.Entry<String, Object> entry: modulesRegistry.entrySet()) {
-                    String key = entry.getKey();
-                    if (key.contains(":")) {
-                        key = key.substring(key.indexOf(":") + 1);
-                    }
-                    modules.add(key);
-                }
+            if (modulePlugins==null || modulePlugins.isEmpty() || modulePlugins.contains(MODULE_DEFAULT)) {
+                if (modulePlugins == null) modulePlugins = new ArrayList<>();
+                if (!modulePlugins.isEmpty()) modulePlugins.clear();
+                modulePlugins.addAll(ModuleRegistry.getModuleClasses());
+                modulePlugins.addAll(ModuleRegistry.getPluginClasses());
             }
 
-            for (String module: modules) {
-                try {
-                    Class handler = Class.forName(module);
-                    if (processReloadMethod(handler)) reloads.add(handler.getName());
-                } catch (ClassNotFoundException e) {
-                    throw new RuntimeException("Handler class: " + module + " has not been found");
+            for (String module: modulePlugins) {
+                if (ModuleRegistry.getModuleClasses().contains(module)) {
+                    String s = reloadModule(module);
+                    if(s != null) reloaded.add(s);
+                } else if (ModuleRegistry.getPluginClasses().contains(module)) {
+                    String s = reloadPlugin(module);
+                    if(s != null) reloaded.add(s);
+                } else {
+                    logger.error("Module or plugin " + module + " is not found in the registry");
                 }
             }
             exchange.getResponseHeaders().add(new HttpString("Content-Type"), "application/json");
             exchange.setStatusCode(HttpStatus.OK.value());
-            exchange.getResponseSender().send(mapper.writeValueAsString(reloads));
+            exchange.getResponseSender().send(mapper.writeValueAsString(reloaded));
         } else {
-            logger.error("Config reload is disabled in configreload.yml");
+            logger.error("Config reload is disabled in configReload.yml");
             setExchangeStatus(exchange, STATUS_CONFIG_RELOAD_DISABLED);
         }
     }
@@ -100,6 +102,35 @@ public class ConfigReloadHandler implements LightHttpHandler {
         return false;
     }
 
+    private String reloadModule(String module) {
+        try {
+            Class handler = Class.forName(module);
+            if (processReloadMethod(handler)) {
+                logger.info("Reload module " + module);
+                return module;
+            }
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("Handler class: " + module + " has not been found");
+        }
+        return null;
+    }
+
+    private String reloadPlugin(String plugin) {
+        // remove from the RuleLoaderStartupHook.ruleEngine.actionClassCache
+        Object object = RuleLoaderStartupHook.ruleEngine.actionClassCache.remove(plugin);
+        if (object != null) {
+            // recreate the module and put it into the cache.
+            try {
+                IAction ia = (IAction)Class.forName(plugin).getDeclaredConstructor().newInstance();
+                RuleLoaderStartupHook.ruleEngine.actionClassCache.put(plugin, ia);
+            } catch (Exception e) {
+                throw new RuntimeException("Handler class: " + plugin + " has not been found");
+            }
+            logger.info("Reload plugin " + plugin);
+            return plugin;
+        }
+        return null;
+    }
 
     private void reLoadConfigs(){
         IConfigLoader configLoader;
