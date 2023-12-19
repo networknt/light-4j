@@ -11,7 +11,6 @@ import io.undertow.util.HttpString;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * This is an admin endpoint used to load the list of Registry moduels
@@ -31,28 +30,19 @@ public class ModuleRegistryGetHandler implements LightHttpHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-
-
         ConfigReloadConfig config = (ConfigReloadConfig) Config.getInstance().getJsonObjectConfig(ConfigReloadConfig.CONFIG_NAME, ConfigReloadConfig.class);
 
         if (config.isEnabled()) {
-            List<String> modules = new ArrayList<>();
-            Map<String, Object> modulesRegistry = ModuleRegistry.getModuleRegistry();
-            for (Map.Entry<String, Object> entry : modulesRegistry.entrySet()) {
-                String key = entry.getKey();
-                if (key.contains(":")) {
-                    key = key.substring(key.indexOf(":") + 1);
-                }
-                modules.add(key);
-            }
+            List<String> modulePlugins = new ArrayList<>();
+            modulePlugins.addAll(ModuleRegistry.getModuleClasses());
+            modulePlugins.addAll(ModuleRegistry.getPluginClasses());
+
             exchange.getResponseHeaders().add(new HttpString("Content-Type"), "application/json");
             exchange.setStatusCode(HttpStatus.OK.value());
-            exchange.getResponseSender().send(mapper.writeValueAsString(modules));
-
+            exchange.getResponseSender().send(mapper.writeValueAsString(modulePlugins));
         } else {
-            logger.error("Config reload is disabled in configreload.yml");
+            logger.error("Config reload is disabled in configReload.yml");
             setExchangeStatus(exchange, STATUS_CONFIG_RELOAD_DISABLED);
         }
-
     }
 }
