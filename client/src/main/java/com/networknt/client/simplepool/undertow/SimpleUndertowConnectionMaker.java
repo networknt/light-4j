@@ -133,8 +133,10 @@ public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
     }
 
     /**
-     * WARNING: This is called by getSSL() which is synchronized. Therefore, this method must never call getSSL(),
-     *          or any method that transitively calls getSSL()
+     * Creates XnioWorker to make Undertow connections
+     *
+     * WARNING: This is called by getSSL(). Therefore, this method must never
+     *          call getSSL(), or any method that transitively calls getSSL()
      *
      * @param isHttp2 if true, sets worker thread names to show HTTP2     *
      * @return new XnioWorker
@@ -169,7 +171,9 @@ public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
     }
 
     /**
-     * WARNING: This calls getWorker() which is synchronized
+     * Creates SSLContext and XnioSsl
+     *
+     * WARNING: This calls getWorker()
      *
      * @param isHttps true if this is an HTTPS connection
      * @param isHttp2 if true, sets worker thread names to show HTTP2
