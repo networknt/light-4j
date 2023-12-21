@@ -157,13 +157,13 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, APMMetricsHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, APMMetricsHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(MetricsConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, APMMetricsHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, APMMetricsHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(MetricsConfig.CONFIG_NAME), null);
         if(logger.isInfoEnabled()) logger.info("APMMetricsHandler is reloaded.");
     }
 }
