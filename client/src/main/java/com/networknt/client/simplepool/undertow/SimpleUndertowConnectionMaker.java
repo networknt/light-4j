@@ -69,8 +69,8 @@ public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
         final Set<SimpleConnection> allCreatedConnections) throws RuntimeException
     {
         boolean isHttps = uri.getScheme().equalsIgnoreCase("https");
-        XnioSsl ssl = getSSL(isHttps, isHttp2);
         XnioWorker worker = getWorker(isHttp2);
+        XnioSsl ssl = getSSL(isHttps, isHttp2);
         OptionMap connectionOptions = getConnectionOptions(isHttp2);
         InetSocketAddress bindAddress = null;
 
@@ -132,17 +132,30 @@ public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
         return isHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true) : OptionMap.EMPTY;
     }
 
+    /**
+     * Creates XnioWorker to make Undertow connections
+     *
+     * WARNING: This is called by getSSL(). Therefore, this method must never
+     *          call getSSL(), or any method that transitively calls getSSL()
+     *
+     * @param isHttp2 if true, sets worker thread names to show HTTP2
+     * @return new XnioWorker
+     */
     private static XnioWorker getWorker(boolean isHttp2)
     {
         if(WORKER.get() != null) return WORKER.get();
 
-        Xnio xnio = Xnio.getInstance(Undertow.class.getClassLoader());
-        try {
-            // if WORKER is null, then set new WORKER otherwise leave existing WORKER
-            WORKER.compareAndSet(null, xnio.createWorker(null, getWorkerOptionMap(isHttp2)));
+        synchronized (SimpleUndertowConnectionMaker.class) {
+            // if WORKER is set then leave existing WORKER, otherwise set new WORKER
+            if(WORKER.get() != null) return WORKER.get();
 
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            Xnio xnio = Xnio.getInstance(Undertow.class.getClassLoader());
+            try {
+                WORKER.set(xnio.createWorker(null, getWorkerOptionMap(isHttp2)));
+            } catch (IOException e) {
+                logger.error("Exception while creating new XnioWorker", e);
+                throw new RuntimeException(e);
+            }
         }
         return WORKER.get();
     }
@@ -157,22 +170,30 @@ public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
         return  optionBuild.getMap();
     }
 
+    /**
+     * Creates SSLContext and XnioSsl
+     *
+     * WARNING: This calls getWorker()
+     *
+     * @param isHttps true if this is an HTTPS connection
+     * @param isHttp2 if true, sets worker thread names to show HTTP2
+     * @return new XnioSSL
+     */
     private static XnioSsl getSSL(boolean isHttps, boolean isHttp2)
     {
-        if(!isHttps)
-            return null;
-        if(SSL.get() != null)
-            return SSL.get();
+        if(!isHttps) return null;
+        if(SSL.get() != null) return SSL.get();
 
-        try {
-            // TODO: Should this be OptionMap.EMPTY ??
-            // if SSL is null, then set new SSL otherwise leave existing SSL
-            SSL.compareAndSet(
-                null,
-                new UndertowXnioSsl(getWorker(isHttp2).getXnio(), OptionMap.EMPTY, BUFFER_POOL, SimpleSSLContextMaker.createSSLContext()));
-        } catch (Exception e) {
-            logger.error("Exception while creating new shared UndertowXnioSsl used to create connections", e);
-            throw new RuntimeException(e);
+        synchronized (SimpleUndertowConnectionMaker.class) {
+            // if SSL is set then leave existing SSL, otherwise set new SSL
+            if(SSL.get() != null) return SSL.get();
+
+            try {
+                SSL.set(new UndertowXnioSsl(getWorker(isHttp2).getXnio(), OptionMap.EMPTY, BUFFER_POOL, SimpleSSLContextMaker.createSSLContext()));
+            } catch (Exception e) {
+                logger.error("Exception while creating new shared UndertowXnioSsl used to create connections", e);
+                throw new RuntimeException(e);
+            }
         }
         return SSL.get();
     }
