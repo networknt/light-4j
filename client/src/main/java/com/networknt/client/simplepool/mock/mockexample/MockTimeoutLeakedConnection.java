@@ -20,13 +20,18 @@
 package com.networknt.client.simplepool.mock.mockexample;
 
 import com.networknt.client.simplepool.SimpleConnection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.ThreadLocalRandom;
 
 public class MockTimeoutLeakedConnection implements SimpleConnection {
 
     private volatile boolean closed = false;
     private boolean isHttp2 = true;
-    private String MOCK_ADDRESS = "MOCK_HOST_IP:" + ThreadLocalRandom.current().nextInt((int) (Math.pow(2, 15) - 1.0), (int) (Math.pow(2, 16) - 1.0));
+    private String MOCK_PORT = Integer.toString(ThreadLocalRandom.current().nextInt((int) (Math.pow(2, 15) - 1.0), (int) (Math.pow(2, 16) - 1.0)));
+    private String MOCK_ADDRESS = "MOCK_HOST_IP:" + MOCK_PORT;
+    private static final Logger logger = LoggerFactory.getLogger(MockTimeoutLeakedConnection.class);
 
     /***
      * This mock connection simulates a multiplexable connection that has a 20% chance of taking longer than 5s
@@ -35,17 +40,22 @@ public class MockTimeoutLeakedConnection implements SimpleConnection {
 
     public MockTimeoutLeakedConnection(boolean isHttp2) {
         this.isHttp2 = isHttp2;
-        randomCreationDelay();
+        int time = randomCreationDelay();
+        if(time > 0)
+            logger.debug("OVERTIMEOUT DELAY: Connection {} created after a delay of {}s", MOCK_PORT, time/1000);
     }
 
-    private void randomCreationDelay() throws RuntimeException {
+    private int randomCreationDelay() throws RuntimeException {
+        int time = 0;
         if(ThreadLocalRandom.current().nextInt(5) == 0) {
             try {
-                Thread.sleep(10*1000);
+                time = 10*1000 + ThreadLocalRandom.current().nextInt(5) * 5000;
+                Thread.sleep(time);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
         }
+        return time;
     }
 
     @Override

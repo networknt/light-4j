@@ -80,7 +80,9 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  *   Users must provide a fixed 'now' value for the current time.
  *   This freezes a single time value for all time-dependent properties.
- *   This is important when calculating an aggregate state based on the values of 2 or more time-dependent states.
+ *   This is important in methods that calculate a state based on the results of multiple reads from one or more
+ *   time-dependent variables over the course of executing the method. For consistency of the calculation, its important
+ *   that the values of time dependent variables do not change over the course of the execution of the method.
  *
  *   Not doing so (i.e.: not freezing the time) may allow inconsistent states to be reached.
  */
@@ -175,14 +177,12 @@ public final class SimpleConnectionState {
     /**
      * State Transition - Borrow
      *
-     * @param connectionCreateTimeout the amount of time in seconds to wait for a connection to be created before
-     *          throwing an exception
      * @param now the Unix Epoch time in milliseconds at which to evaluate whether there are borrowable connections or not
      * @return returns a ConnectionToken representing the borrowing of the connection
-     * @throws RuntimeException if the connection is closed
+     * @throws RuntimeException      if the connection is closed
      * @throws IllegalStateException if the connection is not borrowable
      */
-    public synchronized ConnectionToken borrow(long connectionCreateTimeout, long now) throws RuntimeException {
+    public synchronized ConnectionToken borrow(long now) throws RuntimeException, IllegalStateException {
         /***
          * Connections can only be borrowed when the connection is in a BORROWABLE state.
          *
@@ -194,7 +194,7 @@ public final class SimpleConnectionState {
          *     long now = System.currentTimeMillis();
          *
          *     if(connectionState.borrowable(now))
-         *         connectionToken = connectionState.borrow(connectionCreateTimeout, now);
+         *         connectionToken = connectionState.borrow(now);
          *
          * Also note the use of a single consistent value for the current time ('now'). This ensures
          * that the state returned in the 'if' statement will still be true in the 'borrow' statement
