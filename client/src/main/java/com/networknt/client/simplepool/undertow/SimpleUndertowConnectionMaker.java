@@ -138,7 +138,7 @@ public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
      * WARNING: This is called by getSSL(). Therefore, this method must never
      *          call getSSL(), or any method that transitively calls getSSL()
      *
-     * @param isHttp2 if true, sets worker thread names to show HTTP2     *
+     * @param isHttp2 if true, sets worker thread names to show HTTP2
      * @return new XnioWorker
      */
     private static XnioWorker getWorker(boolean isHttp2)
