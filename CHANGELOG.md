@@ -1,5 +1,26 @@
 # Change Log
 
+## [1.6.46](https://github.com/networknt/light-4j/tree/1.6.46) (2023-12-30)
+
+
+**Merged pull requests:**
+
+
+- Ensure leaked connections are closed in SimpleURIConnectionPool.restore() (SimplePool v2) (1.6.x) [\#2042](https://github.com/networknt/light-4j/pull/2042) ([miklish](https://github.com/miklish))
+- Ensure XnioSSL and XnioWorker resources are created only once in multithreaded environment (SimplePool v2) (1.6.x) [\#2054](https://github.com/networknt/light-4j/pull/2054) ([miklish](https://github.com/miklish))
+- remove unused code in SimpleUndertowConnectionMaker [\#2024](https://github.com/networknt/light-4j/pull/2024) ([miklish](https://github.com/miklish))
+- Issue1897 [\#1980](https://github.com/networknt/light-4j/pull/1980) ([miklish](https://github.com/miklish))
+- SimplePool v2 [\#1963](https://github.com/networknt/light-4j/pull/1963) ([miklish](https://github.com/miklish))
+- Update variable names for Token Connection and Request Timeout [\#1957](https://github.com/networknt/light-4j/pull/1957) ([jaydeepparekh1311](https://github.com/jaydeepparekh1311))
+- revert upgrades of snakeyaml and jackson until compatibility updates made (1.6.x) [\#1959](https://github.com/networknt/light-4j/pull/1959) ([miklish](https://github.com/miklish))
+- fixes \#1954 Upgrade snakeyaml to 2.2 from 1.33 to resolve security vu… [\#1955](https://github.com/networknt/light-4j/pull/1955) ([stevehu](https://github.com/stevehu))
+- Update client module unit tests to allows sub-1ms response times (Issue 1950) [\#1951](https://github.com/networknt/light-4j/pull/1951) ([miklish](https://github.com/miklish))
+- fix NPE in SimpleConnectionPool.restore() and optimize borrow() with computeIfAbsent() [\#1938](https://github.com/networknt/light-4j/pull/1938) ([miklish](https://github.com/miklish))
+- Use Simple Pool for Token verification call [\#1933](https://github.com/networknt/light-4j/pull/1933) ([jaydeepparekh1311](https://github.com/jaydeepparekh1311))
+- Backwards compatibility for Consul blocking queries time [\#1932](https://github.com/networknt/light-4j/pull/1932) ([jaydeepparekh1311](https://github.com/jaydeepparekh1311))
+- Fix test for windows environment. Reset light config property at the end of test [\#1941](https://github.com/networknt/light-4j/pull/1941) ([zabooma](https://github.com/zabooma))
+- Fix flaky test: com.networknt.audit.AuditHandlerTest.testAuditWithErrorStatus [\#1919](https://github.com/networknt/light-4j/pull/1919) ([KiruthikaJanakiraman](https://github.com/KiruthikaJanakiraman))
+- fixes \#1893 verifyHostname stop working with 1.6.x client after upgra… [\#1894](https://github.com/networknt/light-4j/pull/1894) ([stevehu](https://github.com/stevehu))
 ## [1.6.45](https://github.com/networknt/light-4j/tree/1.6.45) (2023-03-18)
 
 
