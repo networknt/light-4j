@@ -21,6 +21,8 @@
 - Fix test for windows environment. Reset light config property at the end of test [\#1941](https://github.com/networknt/light-4j/pull/1941) ([zabooma](https://github.com/zabooma))
 - Fix flaky test: com.networknt.audit.AuditHandlerTest.testAuditWithErrorStatus [\#1919](https://github.com/networknt/light-4j/pull/1919) ([KiruthikaJanakiraman](https://github.com/KiruthikaJanakiraman))
 - fixes \#1893 verifyHostname stop working with 1.6.x client after upgra… [\#1894](https://github.com/networknt/light-4j/pull/1894) ([stevehu](https://github.com/stevehu))
+
+
 ## [1.6.45](https://github.com/networknt/light-4j/tree/1.6.45) (2023-03-18)
 
 
