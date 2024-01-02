@@ -88,7 +88,8 @@ public class DirectRegistryConfig {
             } else if (getMappedConfig().get(DIRECT_URLS) instanceof Map) {
                 map = (Map<String, String>) getMappedConfig().get(DIRECT_URLS);
             } else {
-                logger.error("mapping is missing or wrong type.");
+                // change this to warning as the service.yml configuration is still supported.
+                logger.warn("mapping is missing or wrong type.");
             }
             // now convert the value of the map to a list of URLs.
             directUrls = new HashMap<>();
