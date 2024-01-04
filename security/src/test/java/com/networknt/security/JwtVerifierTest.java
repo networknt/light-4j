@@ -35,59 +35,11 @@ import java.security.KeyStoreException;
 import java.security.cert.X509Certificate;
 import java.util.*;
 
-public class JwtVerifierTest {
-    static final String CONFIG_NAME = "security-509";
-    static final String CONFIG_NAME_OPENAPI = "openapi-security-no-default-jwtcertificate";
-
-    static final String CONFIG_RELAXED_VERIFICATION = "security-relaxedVerification";
-    @Test
-    public void testReadCertificate() {
-        SecurityConfig config = SecurityConfig.load(CONFIG_NAME);
-        Map<String, Object> keyMap = config.getCertificate();
-        Map<String, X509Certificate> certMap = new HashMap<>();
-        JwtVerifier jwtVerifier = new JwtVerifier(config);
-        for(String kid: keyMap.keySet()) {
-            X509Certificate cert = null;
-            try {
-                cert = jwtVerifier.readCertificate((String)keyMap.get(kid));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            certMap.put(kid, cert);
-        }
-        Assert.assertEquals(2, certMap.size());
-    }
-
-    @Test
-    public void testReadCertificate2() {
-        SecurityConfig config = SecurityConfig.load(CONFIG_NAME_OPENAPI);
-        Map<String, X509Certificate> certMap = new HashMap<>();
-        if (config.getCertificate()!=null) {
-            Map<String, Object> keyMap = config.getCertificate();
-            JwtVerifier jwtVerifier = new JwtVerifier(config);
-            for(String kid: keyMap.keySet()) {
-                X509Certificate cert = null;
-                try {
-                    cert = jwtVerifier.readCertificate((String)keyMap.get(kid));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                certMap.put(kid, cert);
-            }
-        }
-
-        Assert.assertEquals(0, certMap.size());
-    }
-
+public class JwtVerifierTest extends JwtVerifierJwkBase {
+    static final String CONFIG_NAME = "security";
     @Test
     public void testVerifyJwtByJsonWebKeys() throws Exception {
-        JwtConfig jwtConfig = (JwtConfig) Config.getInstance().getJsonObjectConfig(JwtIssuer.JWT_CONFIG, JwtConfig.class);
-
-        String fileName = jwtConfig.getKey().getFilename();
-        String alias = jwtConfig.getKey().getKeyName();
-
-        KeyStore ks = loadKeystore(fileName, jwtConfig.getKey().getPassword());
-        Key privateKey = ks.getKey(alias, jwtConfig.getKey().getPassword().toCharArray());
+        Key privateKey = KeyUtil.deserializePrivateKey(curr_key, KeyUtil.RSA);
 
         JsonWebSignature jws = new JsonWebSignature();
 
@@ -113,6 +65,7 @@ public class JwtVerifierTest {
         jws.setKey(privateKey);
 
         jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.RSA_USING_SHA256);
+        jws.setKeyIdHeaderValue(curr_kid);
 
         String jwt = jws.getCompactSerialization();
 
@@ -123,14 +76,18 @@ public class JwtVerifierTest {
         JwtVerifier jwtVerifier = new JwtVerifier(SecurityConfig.load(CONFIG_NAME));
         JwtClaims claims = jwtVerifier.verifyJwt(jwt, true, true, null, null, null, (kId, requestPath) -> {
             try {
-                // use public key to create the the JsonWebKey
-                Key publicKey = ks.getCertificate(alias).getPublicKey();
+                // use public key to create the JsonWebKey
+                Key publicKey = KeyUtil.deserializePublicKey(curr_pub, KeyUtil.RSA);
                 PublicJsonWebKey jwk = PublicJsonWebKey.Factory.newPublicJwk(publicKey);
+                jwk.setKeyId(curr_kid);
                 List<JsonWebKey> jwkList = Arrays.asList(jwk);
                 return new JwksVerificationKeyResolver(jwkList);
             } catch (JoseException | KeyStoreException e) {
                 throw new RuntimeException(e);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
+            return null;
         });
 
         Assert.assertNotNull(claims);
@@ -139,127 +96,13 @@ public class JwtVerifierTest {
 
     @Test
     public void testGenerateJsonWebKeys() throws Exception {
-        JwtConfig jwtConfig = (JwtConfig) Config.getInstance().getJsonObjectConfig(JwtIssuer.JWT_CONFIG, JwtConfig.class);
-
-        String fileName = jwtConfig.getKey().getFilename();
-        String alias = jwtConfig.getKey().getKeyName();
-
-        KeyStore ks = loadKeystore(fileName, jwtConfig.getKey().getPassword());
-        Key privateKey = ks.getKey(alias, jwtConfig.getKey().getPassword().toCharArray());
-        Key publicKey = ks.getCertificate(alias).getPublicKey();
+        Key publicKey = KeyUtil.deserializePublicKey(curr_pub, KeyUtil.RSA);
         PublicJsonWebKey jwk = PublicJsonWebKey.Factory.newPublicJwk(publicKey);
         jwk.setKeyId("111");
         List<JsonWebKey> jwkList = Arrays.asList(jwk);
         JsonWebKeySet jwks = new JsonWebKeySet(jwkList);
         String jwksJson = jwks.toJson(JsonWebKey.OutputControlLevel.PUBLIC_ONLY);
         System.out.println(jwksJson);
-    }
-
-    private static KeyStore loadKeystore(String fileName, String keyStorePass) throws Exception {
-        KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
-        char[] passwd = keyStorePass.toCharArray();
-        keystore.load(Config.getInstance().getInputStreamFromFile(fileName), passwd);
-        return keystore;
-    }
-
-    @Test
-    public void testVerifyJwt() throws Exception {
-        JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"), "user");
-        String jwt = JwtIssuer.getJwt(claims);
-        claims = null;
-        Assert.assertNotNull(jwt);
-        JwtVerifier jwtVerifier = new JwtVerifier(SecurityConfig.load(CONFIG_NAME));
-        try {
-            claims = jwtVerifier.verifyJwt(jwt, false, true);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        Assert.assertNotNull(claims);
-        Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
-
-        try {
-            claims = jwtVerifier.verifyJwt(jwt, false, true);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        System.out.println("jwtClaims = " + claims);
-    }
-
-    @Test
-    public void testVerifySign() throws Exception {
-        JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"), "user");
-        String jwt = JwtIssuer.getJwt(claims);
-        claims = null;
-        Assert.assertNotNull(jwt);
-        JwtVerifier jwtVerifier = new JwtVerifier(SecurityConfig.load(CONFIG_NAME));
-        try {
-            claims = jwtVerifier.verifyJwt(jwt, false, false);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        Assert.assertNotNull(claims);
-        Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
-
-        try {
-            claims = jwtVerifier.verifyJwt(jwt, false, false);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        System.out.println("jwtClaims = " + claims);
-    }
-
-    @Test
-    public void testVerifyToken() throws Exception {
-        JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"), "user");
-        String jwt = JwtIssuer.getJwt(claims);
-        claims = null;
-        Assert.assertNotNull(jwt);
-        JwtVerifier jwtVerifier = new JwtVerifier(SecurityConfig.load(CONFIG_NAME));
-        try {
-            claims = jwtVerifier.verifyJwt(jwt, false, true);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        Assert.assertNotNull(claims);
-        Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
-
-        try {
-            claims = jwtVerifier.verifyJwt(jwt, false, true);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        System.out.println("jwtClaims = " + claims);
-    }
-    
-    @Test
-    public void testRelaxedKeyValidation() throws Exception {
-        String jwt = "eyJraWQiOiJ7XCJwcm92aWRlcl90eXBlXCI6XCJkYlwiLFwiYWxpYXNcIjpcImtleXRlc3RcIixcInR5cGVcIjpcImxvY2FsXCIsXCJ2ZXJzaW9uXCI6XCIxXCJ9IiwiYWxnIjoiUlMyNTYifQ" +
-                "." +
-                "eyJzdWIiOiJDT05TVU1FUlxcMTYwMTIzMDIxNjUzIiwicGFydHlJZCI6IjMxNzMyNDk3IiwiZXhwIjoxNjA2NDk5NjgzLCJpYXQiOjE2MDY0OTg3ODMsImp0aSI6IjAzYjA5YmY3LTFlMzktNDNlOC05NDAwLWQzYTcxMDkwYjMxNCJ9" +
-                "." +
-                "ob9aglgNHcdr2wYXnhwL_P-m76MCd2tZyRJWl9GIhRaZkR_FYoQTXQKz3WINGwn4aynzmkqZx28HlhKttA-A4WQNwEgETFOoq1tCrZ9ZQOrxaexccYdhLCuqzNllDD8OfXm-vFLp52-UpLvVIr3ySPvv9d034IhSw38EkZmV0Vc";
-
-        JwtClaims claims = null;
-
-        /* config points to our test pub cert for this JWT */
-        JwtVerifier jwtVerifier = new JwtVerifier(SecurityConfig.load(CONFIG_RELAXED_VERIFICATION));
-
-        Assert.assertTrue(jwtVerifier.enableRelaxedKeyValidation);
-
-        try {
-            claims = jwtVerifier.verifyJwt(jwt, true, true);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        /* assert that our claims are not null, and that we can find the claim 'sub' */
-        Assert.assertNotNull(claims);
-        Assert.assertEquals("CONSUMER\\160123021653", claims.getStringClaimValue("sub"));
-        System.out.println("jwt = " + jwt);
-        System.out.println("jwtClaims = " + claims);
     }
 
     @Test

@@ -20,7 +20,8 @@ import java.util.List;
  * @author Steve Hu
  */
 public class KeyUtil {
-    public  static final Logger logger = LoggerFactory.getLogger(KeyUtil.class);
+    public static final Logger logger = LoggerFactory.getLogger(KeyUtil.class);
+    public static final String RSA = "RSA";
     public static KeyPair generateKeyPair(String algorithm, int keySize) throws Exception {
         // Generate a key pair
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(algorithm);
