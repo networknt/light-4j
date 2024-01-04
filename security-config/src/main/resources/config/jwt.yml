@@ -1,0 +1,13 @@
+# This is the default JWT configuration and some of the properties need to be overwritten when used to issue JWT tokens.
+# It is a component that used to issue JWT token. Normally, it should be used by light-oauth2 or oauth-kafka only.
+# issuer of the JWT token
+issuer: ${jwt.issuer:urn:com:networknt:oauth2:v1}
+# audience of the JWT token
+audience: ${jwt.audience:urn:com.networknt}
+# expired in 10 minutes by default for issued JWT tokens
+expiredInMinutes: ${jwt.expiredInMinutes:10}
+# JWT token version
+version: ${jwt.version:'1.0'}
+# If federated OAuth 2.0 providers are used, you need to set providerId for each OAuth instance. In most cases, this
+# value should be null so that the OAuth 2.0 provider is run as one instance
+providerId: ${jwt.providerId:}

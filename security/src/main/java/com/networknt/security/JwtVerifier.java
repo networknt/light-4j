@@ -105,71 +105,11 @@ public class JwtVerifier extends TokenVerifier {
         // init getting JWK during the initialization. The other part is in the resolver for OAuth 2.0 provider to
         // rotate keys when the first token is received with the new kid.
         String keyResolver = config.getKeyResolver();
-
-        this.cacheCertificates();
-
         // if KeyResolver is jwk and bootstrap from jwk is true, load jwk during server startup.
         if(logger.isTraceEnabled()) logger.trace("keyResolver = " + keyResolver + " bootstrapFromKeyService = " + bootstrapFromKeyService);
         if (JWT_KEY_RESOLVER_JWKS.equals(keyResolver) && bootstrapFromKeyService) {
             getJsonWebKeyMap();
         }
-    }
-
-
-    /**
-     * Caches cert.
-     */
-    private void cacheCertificates() {
-        // cache the certificates
-        certMap = new HashMap<>();
-        fingerPrints = new ArrayList<>();
-        if (config.getCertificate() != null) {
-            Map<String, Object> keyMap = config.getCertificate();
-            for (String kid : keyMap.keySet()) {
-                X509Certificate cert = null;
-                try {
-                    cert = readCertificate((String) keyMap.get(kid));
-                } catch (Exception e) {
-                    logger.error("Exception:", e);
-                }
-                certMap.put(kid, cert);
-                fingerPrints.add(FingerPrintUtil.getCertFingerPrint(cert));
-            }
-        }
-        logger.debug("Successfully cached Certificate");
-    }
-
-    /**
-     * Read certificate from a file and convert it into X509Certificate object
-     *
-     * @param filename certificate file name
-     * @return X509Certificate object
-     * @throws Exception Exception while reading certificate
-     */
-    public X509Certificate readCertificate(String filename)
-            throws Exception {
-        InputStream inStream = null;
-        X509Certificate cert = null;
-        try {
-            inStream = Config.getInstance().getInputStreamFromFile(filename);
-            if (inStream != null) {
-                CertificateFactory cf = CertificateFactory.getInstance("X.509");
-                cert = (X509Certificate) cf.generateCertificate(inStream);
-            } else {
-                logger.info("Certificate " + Encode.forJava(filename) + " not found.");
-            }
-        } catch (Exception e) {
-            logger.error("Exception: ", e);
-        } finally {
-            if (inStream != null) {
-                try {
-                    inStream.close();
-                } catch (IOException ioe) {
-                    logger.error("Exception: ", ioe);
-                }
-            }
-        }
-        return cert;
     }
 
     /**
