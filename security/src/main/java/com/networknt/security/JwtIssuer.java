@@ -36,21 +36,21 @@ import java.util.Map;
  */
 public class JwtIssuer {
     private static final Logger logger = LoggerFactory.getLogger(JwtIssuer.class);
-    public static final String JWT_CONFIG = "jwt";
-    private static final JwtConfig jwtConfig = (JwtConfig) Config.getInstance().getJsonObjectConfig(JWT_CONFIG, JwtConfig.class);
+    private static final JwtConfig jwtConfig = JwtConfig.load();
+
 
     /**
-     * A static method that generate JWT token from JWT claims object
+     * A static method that generate JWT token from JWT claims object and a given private key. This private key
+     * should be from the host_key_t database table.
      *
      * @param claims JwtClaims object
+     * @param kid Key id
+     * @param privateKey PrivateKey object
      * @return A string represents jwt token
      * @throws JoseException JoseException
      */
-    public static String getJwt(JwtClaims claims) throws JoseException {
+    public static String getJwt(JwtClaims claims, String kid, PrivateKey privateKey) throws JoseException {
         String jwt;
-        RSAPrivateKey privateKey = (RSAPrivateKey) getPrivateKey(
-                jwtConfig.getKey().getFilename(),jwtConfig.getKey().getPassword(), jwtConfig.getKey().getKeyName());
-
         // A JWT is a JWS and/or a JWE with JSON claims as the payload.
         // In this example it is a JWS nested inside a JWE
         // So we first create a JsonWebSignature object.
@@ -61,21 +61,7 @@ public class JwtIssuer {
 
         // The JWT is signed using the sender's private key
         jws.setKey(privateKey);
-
-        // Get provider from security config file, it should be two digit
-        // And the provider id will set as prefix for keyid in the token header, for example: 05100
-        // if there is no provider id, we use "00" for the default value
-        String provider_id = "";
-        if (jwtConfig.getProviderId() != null) {
-            provider_id = jwtConfig.getProviderId();
-            if (provider_id.length() == 1) {
-                provider_id = "0" + provider_id;
-            } else if (provider_id.length() > 2) {
-                logger.error("provider_id defined in the security.yml file is invalid; the length should be 2");
-                provider_id = provider_id.substring(0, 2);
-            }
-        }
-        jws.setKeyIdHeaderValue(provider_id + jwtConfig.getKey().getKid());
+        jws.setKeyIdHeaderValue(kid);
 
         // Set the signature algorithm on the JWT/JWS that will integrity protect the claims
         jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.RSA_USING_SHA256);

@@ -165,7 +165,7 @@ oauth:
     key:
       # key distribution server url for token verification. It will be used if it is configured.
       # If it is not set, a service lookup will be taken with serviceId to find an instance.
-      # server_url: ${client.tokenKeyServerUrl:https://localhost:6886}
+      server_url: ${client.tokenKeyServerUrl:https://localhost:7773}
       # key serviceId for key distribution service, it will be used if above server_url is not configured.
       serviceId: ${client.tokenKeyServiceId:com.networknt.oauth2-key-1.0.0}
       # the path for the key distribution endpoint
