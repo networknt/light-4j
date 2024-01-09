@@ -7,7 +7,7 @@ audience: ${jwt.audience:urn:com.networknt}
 # expired in 10 minutes by default for issued JWT tokens
 expiredInMinutes: ${jwt.expiredInMinutes:10}
 # JWT token version
-version: ${jwt.version:'1.0'}
+version: ${jwt.version:1.0}
 # If federated OAuth 2.0 providers are used, you need to set providerId for each OAuth instance. In most cases, this
 # value should be null so that the OAuth 2.0 provider is run as one instance
 providerId: ${jwt.providerId:}

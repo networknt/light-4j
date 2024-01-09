@@ -108,7 +108,14 @@ public class JwtConfig {
             object = getMappedConfig().get(AUDIENCE);
             if(object != null) audience = (String)object;
             object = getMappedConfig().get(VERSION);
-            if(object != null) version = (String)object;
+            if(object != null) {
+                if(object instanceof Number) {
+                    version = object.toString();
+                } else {
+                    version = (String)object;
+                }
+            }
+
             object = getMappedConfig().get(EXPIRED_IN_MINUTES);
             if(object != null) expiredInMinutes = Config.loadIntegerValue(EXPIRED_IN_MINUTES, object);
             object = getMappedConfig().get(PROVIDER_ID);
