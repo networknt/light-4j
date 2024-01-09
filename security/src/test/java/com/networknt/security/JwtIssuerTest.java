@@ -211,12 +211,48 @@ public class JwtIssuerTest {
     }
 
     /**
+     * The returned token contains scp as the key for the scope. Some OAuth 2.0 provider like Okta use this claim. All scopes are separated by comma.
+     * @throws Exception
+     */
+    @Test
+    public void longlivedCcPetstoreWithScp() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestCcClaimsWithScp("f7d42348-c647-4efb-a52d-4c5787421e73", Arrays.asList("write:pets", "read:pets"));
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims, long_kid, KeyUtil.deserializePrivateKey(long_key, KeyUtil.RSA));
+        System.out.println("***Long lived token for portal lightapi***: " + jwt);
+    }
+
+    /**
      * The returned token contains scope as the key for the scope. All scopes are separated by space.
      * @throws Exception
      */
     @Test
     public void longlivedCcLocalPortalScope() throws Exception {
         JwtClaims claims = ClaimsUtil.getTestCcClaimsScope("f7d42348-c647-4efb-a52d-4c5787421e73", "portal.r portal.w");
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims, long_kid, KeyUtil.deserializePrivateKey(long_key, KeyUtil.RSA));
+        System.out.println("***Long lived token for portal lightapi***: " + jwt);
+    }
+
+    /**
+     * The returned token contains scope as the key for the scope. All scopes are separated by space.
+     * @throws Exception
+     */
+    @Test
+    public void longlivedCcPetstoreScope() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestCcClaimsScope("f7d42348-c647-4efb-a52d-4c5787421e73", "write:pets read:pets");
+        claims.setExpirationTimeMinutesInTheFuture(5256000);
+        String jwt = JwtIssuer.getJwt(claims, long_kid, KeyUtil.deserializePrivateKey(long_key, KeyUtil.RSA));
+        System.out.println("***Long lived token for portal lightapi***: " + jwt);
+    }
+
+    /**
+     * The returned token contains scope as the key for the scope. All scopes are separated by space.
+     * @throws Exception
+     */
+    @Test
+    public void longlivedCcPetstoreScpString() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestCcClaimsScopeScp("f7d42348-c647-4efb-a52d-4c5787421e73", "write:pets read:pets");
         claims.setExpirationTimeMinutesInTheFuture(5256000);
         String jwt = JwtIssuer.getJwt(claims, long_kid, KeyUtil.deserializePrivateKey(long_key, KeyUtil.RSA));
         System.out.println("***Long lived token for portal lightapi***: " + jwt);

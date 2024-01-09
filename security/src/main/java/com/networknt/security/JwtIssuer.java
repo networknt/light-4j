@@ -79,7 +79,6 @@ public class JwtIssuer {
      * @return JwtClaims
      */
     public static JwtClaims getDefaultJwtClaims() {
-
         JwtClaims claims = new JwtClaims();
 
         claims.setIssuer(jwtConfig.getIssuer());
@@ -88,7 +87,7 @@ public class JwtIssuer {
         claims.setGeneratedJwtId(); // a unique identifier for the token
         claims.setIssuedAtToNow();  // when the token was issued/created (now)
         claims.setNotBeforeMinutesInThePast(2); // time before which the token is not yet valid (2 minutes ago)
-        claims.setClaim("version", jwtConfig.getVersion());
+        claims.setClaim("ver", jwtConfig.getVersion());
         return claims;
 
     }
@@ -99,7 +98,6 @@ public class JwtIssuer {
      * @return JwtClaims
      */
     public static JwtClaims getJwtClaimsWithExpiresIn(int expiresIn) {
-
         JwtClaims claims = new JwtClaims();
 
         claims.setIssuer(jwtConfig.getIssuer());
@@ -108,7 +106,7 @@ public class JwtIssuer {
         claims.setGeneratedJwtId(); // a unique identifier for the token
         claims.setIssuedAtToNow();  // when the token was issued/created (now)
         claims.setNotBeforeMinutesInThePast(2); // time before which the token is not yet valid (2 minutes ago)
-        claims.setClaim("version", jwtConfig.getVersion());
+        claims.setClaim("ver", jwtConfig.getVersion());
         return claims;
     }
 
