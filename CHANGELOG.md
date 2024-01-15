@@ -1,6 +1,40 @@
 # Change Log
 
-## [2.1.30](https://github.com/networknt/light-4j/tree/2.1.30) (2023-11-20)
+## [2.1.31](https://github.com/networknt/light-4j/tree/2.1.31) (2024-01-15)
+
+
+**Merged pull requests:**
+
+
+- fixes \#2077 update the ModifiableContentSinkConduit to log the error … [\#2078](https://github.com/networknt/light-4j/pull/2078) ([stevehu](https://github.com/stevehu))
+- fixes \#2074 Update ModuleRegistry to remove isMaskConfigProperties [\#2075](https://github.com/networknt/light-4j/pull/2075) ([stevehu](https://github.com/stevehu))
+- fixes \#2072 update the rule-loader.yml to fix a typo [\#2073](https://github.com/networknt/light-4j/pull/2073) ([stevehu](https://github.com/stevehu))
+- fixes \#2070 update claim version to ver [\#2071](https://github.com/networknt/light-4j/pull/2071) ([stevehu](https://github.com/stevehu))
+- fixes \#2067 refactor security module for jwt issuer [\#2068](https://github.com/networknt/light-4j/pull/2068) ([stevehu](https://github.com/stevehu))
+- fixes \#2065 change the mapping missing to warn in DirectRegistryConfig [\#2066](https://github.com/networknt/light-4j/pull/2066) ([stevehu](https://github.com/stevehu))
+- fixes \#2063 update the module registry config for metrics handler [\#2064](https://github.com/networknt/light-4j/pull/2064) ([stevehu](https://github.com/stevehu))
+- fixes \#2055 add plugin configuration as part of the module reload [\#2060](https://github.com/networknt/light-4j/pull/2060) ([stevehu](https://github.com/stevehu))
+- fixes \#2058 make the RuleEngine singleton in the RuleLoaderStartupHoo… [\#2059](https://github.com/networknt/light-4j/pull/2059) ([stevehu](https://github.com/stevehu))
+- fixes \#2056 add KeyUtil and test cases for JWT and JWK [\#2057](https://github.com/networknt/light-4j/pull/2057) ([stevehu](https://github.com/stevehu))
+- fixes \#2051 Update RuleLoaderStartupHook to load plugin classes [\#2052](https://github.com/networknt/light-4j/pull/2052) ([stevehu](https://github.com/stevehu))
+- fixes \#2049 change the registerPlugin parameter sequence as some of t… [\#2050](https://github.com/networknt/light-4j/pull/2050) ([stevehu](https://github.com/stevehu))
+- fixes \#2047 update ModuleRegistry to add plugin config and a list of … [\#2048](https://github.com/networknt/light-4j/pull/2048) ([stevehu](https://github.com/stevehu))
+- fixes \#2045 normalize the server info response for comparison with th… [\#2046](https://github.com/networknt/light-4j/pull/2046) ([stevehu](https://github.com/stevehu))
+- fixes \#2043 Add an indicator ready for the server [\#2044](https://github.com/networknt/light-4j/pull/2044) ([stevehu](https://github.com/stevehu))
+- fixes \#2040 Allow router and proxy to bypass the TLS hostname verific… [\#2041](https://github.com/networknt/light-4j/pull/2041) ([stevehu](https://github.com/stevehu))
+- Revert "fixes \#2037 Move verifyHostname check into createSSLContext f… [\#2039](https://github.com/networknt/light-4j/pull/2039) ([stevehu](https://github.com/stevehu))
+- fixes \#2037 Move verifyHostname check into createSSLContext from the … [\#2038](https://github.com/networknt/light-4j/pull/2038) ([stevehu](https://github.com/stevehu))
+- fixes \#2035 handle the empty response body in the ResponseBodyInterce… [\#2036](https://github.com/networknt/light-4j/pull/2036) ([stevehu](https://github.com/stevehu))
+- Added logic to end exchange on errors for all scenarios + Changed toB… [\#2032](https://github.com/networknt/light-4j/pull/2032) ([stevehu](https://github.com/stevehu))
+- fixes \#2033 update keystore loader to support both jks and pkcs12 [\#2034](https://github.com/networknt/light-4j/pull/2034) ([stevehu](https://github.com/stevehu))
+- fixes \#2029 update TraceabilityHandler registry with the correct config [\#2030](https://github.com/networknt/light-4j/pull/2030) ([stevehu](https://github.com/stevehu))
+- fixes \#2026 separate config into modules from some of the middleware … [\#2027](https://github.com/networknt/light-4j/pull/2027) ([stevehu](https://github.com/stevehu))
+- Add maven wrapper. [\#2022](https://github.com/networknt/light-4j/pull/2022) ([HappyHacker123](https://github.com/HappyHacker123))
+- Fixes \#2012 order dependent tests in `CorrelationTest` [\#2013](https://github.com/networknt/light-4j/pull/2013) ([SaaiVenkat](https://github.com/SaaiVenkat))
+- fixes \#2019 do not overwrite the values.yml if config server is not a… [\#2020](https://github.com/networknt/light-4j/pull/2020) ([stevehu](https://github.com/stevehu))
+- fixes \#2017 Update module config class to support the conversion of s… [\#2018](https://github.com/networknt/light-4j/pull/2018) ([stevehu](https://github.com/stevehu))
+- fixes \#2014 save the values.yml for getConfigs in the default config … [\#2015](https://github.com/networknt/light-4j/pull/2015) ([stevehu](https://github.com/stevehu))
+## [2.1.30](https://github.com/networknt/light-4j/tree/2.1.30) (2023-11-21)
 
 
 **Merged pull requests:**
@@ -8,6 +42,8 @@
 
 - fixes \#2010 switch to ServerConfig.getInstance and ServerConfig.CONFI… [\#2011](https://github.com/networknt/light-4j/pull/2011) ([stevehu](https://github.com/stevehu))
 - fixes \#2008 update ServerConfig.getInstance for some handlers [\#2009](https://github.com/networknt/light-4j/pull/2009) ([stevehu](https://github.com/stevehu))
+
+
 ## [2.1.29](https://github.com/networknt/light-4j/tree/2.1.29) (2023-11-19)
 
 
