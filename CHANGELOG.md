@@ -34,6 +34,8 @@
 - fixes \#2019 do not overwrite the values.yml if config server is not a… [\#2020](https://github.com/networknt/light-4j/pull/2020) ([stevehu](https://github.com/stevehu))
 - fixes \#2017 Update module config class to support the conversion of s… [\#2018](https://github.com/networknt/light-4j/pull/2018) ([stevehu](https://github.com/stevehu))
 - fixes \#2014 save the values.yml for getConfigs in the default config … [\#2015](https://github.com/networknt/light-4j/pull/2015) ([stevehu](https://github.com/stevehu))
+
+
 ## [2.1.30](https://github.com/networknt/light-4j/tree/2.1.30) (2023-11-21)
 
 
