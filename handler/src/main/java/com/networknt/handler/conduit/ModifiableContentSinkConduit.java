@@ -242,6 +242,7 @@ public class ModifiableContentSinkConduit extends AbstractStreamSinkConduit<Stre
 
                 next.terminateWrites();
             } catch (IOException e) {
+                LOG.error("Failed to execute conduit writes on Worker Thread.", e);
                 throw new RuntimeException("Failed to execute conduit writes on Worker Thread. " + e.getMessage(), e);
             }
         });
