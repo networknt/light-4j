@@ -32,6 +32,8 @@ public class CorrelationConfig {
     private Map<String, Object> mappedConfig;
     private final Config config;
     boolean enabled;
+    String traceabilityMdcField;
+    String correlationMdcField;
     boolean autogenCorrelationID;
 
     private CorrelationConfig(String configName) {
@@ -68,7 +70,23 @@ public class CorrelationConfig {
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
-    
+
+    public String getTraceabilityMdcField() {
+        return traceabilityMdcField;
+    }
+
+    public void setTraceabilityMdcField(String traceabilityMdcField) {
+        this.traceabilityMdcField = traceabilityMdcField;
+    }
+
+    public String getCorrelationMdcField() {
+        return correlationMdcField;
+    }
+
+    public void setCorrelationMdcField(String correlationMdcField) {
+        this.correlationMdcField = correlationMdcField;
+    }
+
     public boolean isAutogenCorrelationID() {
     	return autogenCorrelationID;
     }
