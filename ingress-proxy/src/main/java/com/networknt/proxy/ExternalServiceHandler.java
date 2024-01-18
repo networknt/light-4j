@@ -5,11 +5,13 @@ import com.networknt.client.Http2Client;
 import com.networknt.client.ssl.TLSConfig;
 import com.networknt.handler.BuffersUtils;
 import com.networknt.handler.Handler;
+import com.networknt.handler.HandlerUtils;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.config.UrlRewriteRule;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.metrics.MetricsConfig;
 import com.networknt.metrics.AbstractMetricsHandler;
+import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.connector.PooledByteBuffer;
@@ -133,6 +135,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         requestPath = exchange.getRequestPath();
                     }
 
+                    HandlerUtils.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, requestPath);
                     String method = exchange.getRequestMethod().toString();
                     String requestHost = parts[1];
                     String queryString = exchange.getQueryString();
