@@ -214,13 +214,13 @@ public class DefaultConfigLoader implements IConfigLoader{
             Path filePath = Paths.get(targetConfigsDirectory);
             if (!Files.exists(filePath)) {
                 Files.createDirectories(filePath);
-                logger.info("target configs directory created :", targetConfigsDirectory);
+                logger.info("target configs directory {} created", targetConfigsDirectory);
             }
 
             filePath = Paths.get(targetConfigsDirectory + "/values.yml");
             Files.write(filePath, new Yaml(options).dump(serviceConfigs).getBytes());
         } catch (IOException e) {
-            logger.error("Exception while creating {} dir or creating files there:{}",targetConfigsDirectory, e);
+            logger.error("Exception while creating " + targetConfigsDirectory, e);
         }
 
         //clear config cache: this is required just in case other classes have already loaded something in cache

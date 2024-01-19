@@ -55,31 +55,15 @@ public class ServiceDictHandler implements MiddlewareHandler {
             exchange.getRequestHeaders().put(HttpStringConstants.SERVICE_ID, serviceEntry[1]);
         }
 
-        Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
-        if(auditInfo == null) {
-            // AUDIT_INFO is created for light-gateway to populate the endpoint as the OpenAPI handlers might not be available.
-            auditInfo = new HashMap<>();
-            if(serviceEntry != null) {
-                if(logger.isTraceEnabled())  logger.trace("auditInfo is null and serviceEntry found and endpoint is set for = " + serviceEntry[0]);
-                auditInfo.put(Constants.ENDPOINT_STRING, serviceEntry[0]);
-            } else {
-                if(logger.isTraceEnabled())  logger.trace("auditInfo is null and serviceEntry not found and endpoint is set for = " + Constants.UNKOWN_STRING + "@" + exchange.getRequestMethod().toString().toLowerCase());
-                // at this moment, we don't have a way to reliably determine the endpoint.
-                auditInfo.put(Constants.ENDPOINT_STRING, Constants.UNKOWN_STRING + "@" + exchange.getRequestMethod().toString().toLowerCase());
-            }
-            exchange.putAttachment(AttachmentConstants.AUDIT_INFO, auditInfo);
+        if (serviceEntry != null) {
+            if (logger.isTraceEnabled())
+                logger.trace("serviceEntry found and endpoint is set to = '{}'", serviceEntry[0]);
+            HandlerUtils.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, serviceEntry[0]);
         } else {
-            if(!auditInfo.containsKey(Constants.ENDPOINT_STRING)) {
-                if(serviceEntry != null) {
-                    if(logger.isTraceEnabled())  logger.trace("auditInfo is not null and serviceEntry found and endpoint is set for = " + serviceEntry[0]);
-                    auditInfo.put(Constants.ENDPOINT_STRING, serviceEntry[0]);
-                } else {
-                    if(logger.isTraceEnabled())  logger.trace("auditInfo is not null and serviceEntry not found and endpoint is set for = " + Constants.UNKOWN_STRING + "@" + exchange.getRequestMethod().toString().toLowerCase());
-                    // at this moment, we don't have a way to reliably determine the endpoint.
-                    auditInfo.put(Constants.ENDPOINT_STRING, Constants.UNKOWN_STRING + "@" + exchange.getRequestMethod().toString().toLowerCase());
-                }
-            }
-            if(logger.isTraceEnabled()) logger.trace("auditInfo is not null and endpoint value is  = " + auditInfo.get(Constants.ENDPOINT_STRING));
+            if (logger.isTraceEnabled())
+                logger.trace("serviceEntry is null and endpoint is set to = '{}@{}'", Constants.UNKOWN_STRING, exchange.getRequestMethod().toString().toLowerCase());
+            // at this moment, we don't have a way to reliably determine the endpoint.
+            HandlerUtils.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, Constants.UNKOWN_STRING + "@" + exchange.getRequestMethod().toString().toLowerCase());
         }
     }
 
