@@ -77,7 +77,7 @@ public class HandlerUtils {
         if(auditInfo == null) {
             auditInfo = new HashMap<>();
             auditInfo.put(fieldName, fieldValue);
-        } else if (!auditInfo.containsKey(Constants.ENDPOINT_STRING)) {
+        } else if (!auditInfo.containsKey(fieldName)) {
             auditInfo.put(fieldName, fieldValue);
         }
         exchange.putAttachment(AttachmentConstants.AUDIT_INFO, auditInfo);
