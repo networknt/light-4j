@@ -1,6 +1,7 @@
 package com.networknt.router.middleware;
 
 import com.networknt.handler.Handler;
+import com.networknt.handler.HandlerUtils;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.HttpStringConstants;

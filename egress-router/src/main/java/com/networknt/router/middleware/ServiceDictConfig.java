@@ -1,7 +1,7 @@
 package com.networknt.router.middleware;
 
 import com.networknt.config.Config;
-import com.networknt.config.ConfigException;
+import com.networknt.handler.HandlerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
