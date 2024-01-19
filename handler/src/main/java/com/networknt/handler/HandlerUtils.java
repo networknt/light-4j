@@ -1,9 +1,13 @@
-package com.networknt.router.middleware;
+package com.networknt.handler;
 
+import com.networknt.httpstring.AttachmentConstants;
+import com.networknt.utility.Constants;
 import com.networknt.utility.StringUtils;
+import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class HandlerUtils {
@@ -66,6 +70,17 @@ public class HandlerUtils {
 
     public static String toInternalKey(String method, String path) {
         return String.format(INTERNAL_KEY_FORMAT, method, HandlerUtils.normalisePath(path));
+    }
+
+    public static void populateAuditAttachmentField(final HttpServerExchange exchange, String fieldName, String fieldValue) {
+        Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
+        if(auditInfo == null) {
+            auditInfo = new HashMap<>();
+            auditInfo.put(fieldName, fieldValue);
+        } else if (!auditInfo.containsKey(Constants.ENDPOINT_STRING)) {
+            auditInfo.put(fieldName, fieldValue);
+        }
+        exchange.putAttachment(AttachmentConstants.AUDIT_INFO, auditInfo);
     }
 
 }

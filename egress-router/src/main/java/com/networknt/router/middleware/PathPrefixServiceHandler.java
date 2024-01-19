@@ -17,8 +17,8 @@
 package com.networknt.router.middleware;
 
 import com.networknt.handler.Handler;
+import com.networknt.handler.HandlerUtils;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
@@ -28,9 +28,6 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * When using router, each request must have serviceId in the header in order to allow router
@@ -46,18 +43,17 @@ import java.util.Map;
  * <p>
  * Unlike {@link PathServiceHandler}, this handler does not require OpenAPIHandler or SwaggerHandler
  * but is also unable to do any validation beyond the path prefix.
- *
+ * <p>
  * Previously, this handler will skip the logic when server_url is in the header. However, since we
  * have updated the TokenHandler to support multiple downstream hosts with different OAuth 2.0 servers,
  * we need to put the service_id into the header regardless if the server_url is in the header. Also,
  * this handler work on the best effort basis, so it only works if the prefix is in the config.
- *
+ * <p>
  * This is the simplest mapping with the prefix and all APIs behind the http-sidecar or light-router
  * should have a unique prefix. All the services of light-router is following this convention.
  *
  * @author <a href="mailto:logi@logi.org">Logi Ragnarsson</a>
  * @author Steve Hu
- *
  */
 public class PathPrefixServiceHandler implements MiddlewareHandler {
     static Logger logger = LoggerFactory.getLogger(PathPrefixServiceHandler.class);
@@ -71,9 +67,9 @@ public class PathPrefixServiceHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        if(logger.isDebugEnabled()) logger.debug("PathPrefixServiceHandler.handleRequest starts.");
+        logger.debug("PathPrefixServiceHandler.handleRequest starts.");
         pathPrefixService(exchange);
-        if(logger.isDebugEnabled()) logger.debug("PathPrefixServiceHandler.handleRequest ends.");
+        logger.debug("PathPrefixServiceHandler.handleRequest ends.");
         Handler.next(exchange, next);
     }
 
@@ -84,36 +80,28 @@ public class PathPrefixServiceHandler implements MiddlewareHandler {
         // if service URL is in the header, we don't need to do the service discovery with serviceId.
         HeaderValues serviceIdHeader = exchange.getRequestHeaders().get(HttpStringConstants.SERVICE_ID);
         String serviceId = serviceIdHeader != null ? serviceIdHeader.peekFirst() : null;
-        if(serviceId == null && serviceEntry != null) {
-            if(logger.isTraceEnabled()) logger.trace("serviceEntry found and header is set for service_id = " + serviceEntry[1]);
+
+        if (serviceId == null && serviceEntry != null) {
+
+            if (logger.isTraceEnabled())
+                logger.trace("serviceEntry found and header is set for service_id = '{}'", serviceEntry[1]);
+
             exchange.getRequestHeaders().put(HttpStringConstants.SERVICE_ID, serviceEntry[1]);
         }
 
-        Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
-        if(auditInfo == null) {
-            // AUDIT_INFO is created for light-gateway to populate the endpoint as the OpenAPI handlers might not be available.
-            auditInfo = new HashMap<>();
-            if(serviceEntry != null) {
-                if(logger.isTraceEnabled()) logger.trace("auditInfo is null and serviceEntry found and endpoint is set to = " + serviceEntry[0] + "@" + exchange.getRequestMethod().toString().toLowerCase());
-                auditInfo.put(Constants.ENDPOINT_STRING, serviceEntry[0] + "@" + exchange.getRequestMethod().toString().toLowerCase());
-            } else {
-                if(logger.isTraceEnabled()) logger.trace("auditInfo is null and serviceEntry is null and endpoint is set to = " + Constants.UNKOWN_STRING + "@" + exchange.getRequestMethod().toString().toLowerCase());
-                // at this moment, we don't have a way to reliably determine the endpoint.
-                auditInfo.put(Constants.ENDPOINT_STRING, Constants.UNKOWN_STRING + "@" + exchange.getRequestMethod().toString().toLowerCase());
-            }
-            exchange.putAttachment(AttachmentConstants.AUDIT_INFO, auditInfo);
+        if (serviceEntry != null) {
+
+            if (logger.isTraceEnabled())
+                logger.trace("auditInfo is null and serviceEntry found and endpoint is set to = '{}@{}'", serviceEntry[0], exchange.getRequestMethod().toString().toLowerCase());
+
+            HandlerUtils.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, serviceEntry[0] + "@" + exchange.getRequestMethod().toString().toLowerCase());
         } else {
-            // we have an auditInfo object, let's check if we have the endpoint entry there. If not, we will add it.
-            if(!auditInfo.containsKey(Constants.ENDPOINT_STRING)) {
-                if(serviceEntry != null) {
-                    if(logger.isTraceEnabled()) logger.trace("auditInfo is not null and does not contain endpoint, serviceEntry found set endpoint to = " + serviceEntry[0] + "@" + exchange.getRequestMethod().toString().toLowerCase());
-                    auditInfo.put(Constants.ENDPOINT_STRING, serviceEntry[0] + "@" + exchange.getRequestMethod().toString().toLowerCase());
-                } else {
-                    if(logger.isTraceEnabled()) logger.trace("auditInfo is not null and does not contain endpoint, serviceEntry is null and endpoint is set to = " + Constants.UNKOWN_STRING + "@" + exchange.getRequestMethod().toString().toLowerCase());
-                    // at this moment, we don't have a way to reliably determine the endpoint.
-                    auditInfo.put(Constants.ENDPOINT_STRING, Constants.UNKOWN_STRING + "@" + exchange.getRequestMethod().toString().toLowerCase());
-                }
-            }
+
+            if (logger.isTraceEnabled())
+                logger.trace("auditInfo is null and serviceEntry is null and endpoint is set to = '{}@{}'", Constants.UNKOWN_STRING, exchange.getRequestMethod().toString().toLowerCase());
+
+            // at this moment, we don't have a way to reliably determine the endpoint.
+            HandlerUtils.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, Constants.UNKOWN_STRING + "@" + exchange.getRequestMethod().toString().toLowerCase());
         }
     }
 
@@ -143,6 +131,6 @@ public class PathPrefixServiceHandler implements MiddlewareHandler {
     public void reload() {
         config.reload();
         ModuleRegistry.registerModule(PathPrefixServiceConfig.CONFIG_NAME, PathPrefixServiceHandler.class.getName(), config.getMappedConfig(), null);
-        if(logger.isInfoEnabled()) logger.info("PathPrefixServiceHandler is reloaded.");
+        if (logger.isInfoEnabled()) logger.info("PathPrefixServiceHandler is reloaded.");
     }
 }
