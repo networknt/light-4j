@@ -74,10 +74,18 @@ public class HandlerUtils {
 
     public static void populateAuditAttachmentField(final HttpServerExchange exchange, String fieldName, String fieldValue) {
         Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
+
         if(auditInfo == null) {
+            logger.trace("AuditInfo is null, creating a new one and inserting the key-value pair '{}:{}'", fieldName, fieldValue);
             auditInfo = new HashMap<>();
             auditInfo.put(fieldName, fieldValue);
-        } else if (!auditInfo.containsKey(fieldName)) {
+
+        } else {
+            logger.trace("AuditInfo is not null, inserting the key-value pair '{}:{}'", fieldName, fieldValue);
+
+            if (auditInfo.containsKey(fieldName))
+                logger.debug("AuditInfo already contains the field '{}'! Replacing the value '{}' with '{}'.", fieldName, auditInfo.get(fieldName), fieldValue);
+
             auditInfo.put(fieldName, fieldValue);
         }
         exchange.putAttachment(AttachmentConstants.AUDIT_INFO, auditInfo);
