@@ -9,6 +9,7 @@ import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.config.TlsUtil;
 import com.networknt.handler.Handler;
+import com.networknt.handler.HandlerUtils;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.config.UrlRewriteRule;
 import com.networknt.httpstring.AttachmentConstants;
@@ -20,6 +21,7 @@ import com.networknt.monad.Success;
 import com.networknt.proxy.MultiPartBodyPublisher;
 import com.networknt.proxy.PathPrefixAuth;
 import com.networknt.status.Status;
+import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -390,6 +392,10 @@ public class SalesforceHandler implements MiddlewareHandler {
         String queryString = exchange.getQueryString();
         String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
         HttpRequest request = null;
+
+        // Audit log the endpoint info
+        HandlerUtils.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, requestPath);
+
         if(method.equalsIgnoreCase("GET")) {
             request = HttpRequest.newBuilder()
                     .uri(new URI(requestHost + requestPath + "?" + queryString))
