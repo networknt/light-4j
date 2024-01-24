@@ -194,7 +194,7 @@ public class MrasHandler implements MiddlewareHandler {
                     }
 
                     // Audit log the endpoint info
-                    HandlerUtils.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, requestPath);
+                    HandlerUtils.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, endpoint);
 
                     invokeApi(exchange, (String)config.getAccessToken().get(config.SERVICE_HOST), requestPath, "Bearer " + accessToken, startTime, endpoint);
                     if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
