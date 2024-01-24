@@ -394,7 +394,7 @@ public class SalesforceHandler implements MiddlewareHandler {
         HttpRequest request = null;
 
         // Audit log the endpoint info
-        HandlerUtils.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, requestPath);
+        HandlerUtils.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, endpoint);
 
         if(method.equalsIgnoreCase("GET")) {
             request = HttpRequest.newBuilder()
