@@ -71,7 +71,7 @@ public class ConfigUtils {
             if (value instanceof List) {
                 List<?> listValue = (List<?>) value;
                 // for a list of prefixes, skip the sorting.
-                if (startsWithAny(key, keysToNotSort)) {
+                if (matchesAny(key, keysToNotSort)) {
                     normalizedData.put(key, listValue);
                 } else {
                     normalizedData.put(key, normalizeList(listValue, keysToNotSort));
@@ -88,14 +88,10 @@ public class ConfigUtils {
         return normalizedData;
     }
 
-    public static boolean startsWithAny(String input, List<String> prefixes) {
-        for (String prefix : prefixes) {
-            if (input.startsWith(prefix)) {
-                return true;
-            }
-        }
-        return false;
+    public static boolean matchesAny(String input, List<String> stringsToMatch) {
+        return stringsToMatch.contains(input);
     }
+
     public static List<?> normalizeList(List<?> list, List<String> keysToNotSort) {
         if(list.isEmpty()) {
             return list;

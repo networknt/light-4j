@@ -106,7 +106,7 @@ public class ServerInfoConfig {
         } else if (getMappedConfig().get(KEYS_TO_NOT_SORT) instanceof List) {
             keysToNotSort = (List<String>) mappedConfig.get(KEYS_TO_NOT_SORT);
         } else {
-            keysToNotSort = Arrays.asList("handler.chains", "handler.defaultHandlers");
+            keysToNotSort = Arrays.asList("admin","default","defaultHandlers");
         }
     }
 }
