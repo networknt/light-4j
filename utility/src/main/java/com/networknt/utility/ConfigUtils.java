@@ -61,21 +61,25 @@ public class ConfigUtils {
         return String.format(INTERNAL_KEY_FORMAT, method, ConfigUtils.normalisePath(path));
     }
 
-    public static Map<String, Object> normalizeMap(Map<String, Object> map) {
+    public static Map<String, Object> normalizeMap(Map<String, Object> map, List<String> keysToNotSort) {
         Map<String, Object> normalizedData = new TreeMap<>();
 
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
-
             // Normalize arrays by sorting them
             if (value instanceof List) {
                 List<?> listValue = (List<?>) value;
-                normalizedData.put(key, normalizeList(listValue));
+                // for a list of prefixes, skip the sorting.
+                if (startsWithAny(key, keysToNotSort)) {
+                    normalizedData.put(key, listValue);
+                } else {
+                    normalizedData.put(key, normalizeList(listValue, keysToNotSort));
+                }
             } else if (value instanceof Map) {
                 // Recursively normalize nested maps
                 Map<String, Object> nestedMap = (Map<String, Object>) value;
-                normalizedData.put(key, normalizeMap(nestedMap));
+                normalizedData.put(key, normalizeMap(nestedMap, keysToNotSort));
             } else {
                 normalizedData.put(key, value);
             }
@@ -84,7 +88,15 @@ public class ConfigUtils {
         return normalizedData;
     }
 
-    public static List<?> normalizeList(List<?> list) {
+    public static boolean startsWithAny(String input, List<String> prefixes) {
+        for (String prefix : prefixes) {
+            if (input.startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    public static List<?> normalizeList(List<?> list, List<String> keysToNotSort) {
         if(list.isEmpty()) {
             return list;
         }
@@ -99,7 +111,7 @@ public class ConfigUtils {
             List<Map<String, Object>> mapList = (List<Map<String, Object>>) list;
             for(int i = 0; i < mapList.size(); i++) {
                 Map<String, Object> map = mapList.get(i);
-                mapList.set(i, normalizeMap(map));
+                mapList.set(i, normalizeMap(map, keysToNotSort));
             }
             return mapList;
         } else {
