@@ -135,7 +135,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         requestPath = exchange.getRequestPath();
                     }
 
-                    HandlerUtils.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, requestPath);
+                    HandlerUtils.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, endpoint);
                     String method = exchange.getRequestMethod().toString();
                     String requestHost = parts[1];
                     String queryString = exchange.getQueryString();

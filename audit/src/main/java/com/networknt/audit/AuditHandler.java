@@ -155,7 +155,7 @@ public class AuditHandler implements MiddlewareHandler {
                         for (String name : config.getAuditList()) {
                             Object object = auditInfo1.get(name);
                             if(object != null) {
-                                auditMap.putIfAbsent(name, object);
+                                auditMap.put(name, object);
                             }
                         }
                     }
