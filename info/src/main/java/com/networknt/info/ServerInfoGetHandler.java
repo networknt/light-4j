@@ -52,8 +52,8 @@ public class ServerInfoGetHandler implements LightHttpHandler {
     static ServerInfoConfig config;
     public ServerInfoGetHandler() {
         if(logger.isDebugEnabled()) logger.debug("ServerInfoGetHandler is constructed");
-        config = (ServerInfoConfig)Config.getInstance().getJsonObjectConfig(ServerInfoConfig.CONFIG_NAME, ServerInfoConfig.class);
-        ModuleRegistry.registerModule(ServerInfoConfig.CONFIG_NAME, ServerInfoConfig.class.getName(), Config.getInstance().getJsonMapConfigNoCache(ServerInfoConfig.CONFIG_NAME),null);
+        config = ServerInfoConfig.load();
+        ModuleRegistry.registerModule(ServerInfoConfig.CONFIG_NAME, ServerInfoConfig.class.getName(), config.getMappedConfig(),null);
     }
 
     @Override
@@ -90,7 +90,7 @@ public class ServerInfoGetHandler implements LightHttpHandler {
             newModuleRegistry.put(key, entry.getValue());
         }
         // normalized the key and value for comparison.
-        newModuleRegistry = ConfigUtils.normalizeMap(newModuleRegistry);
+        newModuleRegistry = ConfigUtils.normalizeMap(newModuleRegistry, config.getKeysToNotSort());
         return newModuleRegistry;
     }
     public static Map<String, Object> getDeployment() {
