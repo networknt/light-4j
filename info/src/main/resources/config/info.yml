@@ -4,6 +4,5 @@
 enableServerInfo: ${info.enableServerInfo:true}
 # String list keys that should not be sorted in the normalized info output. If you have a list of string values
 # define in one of your config files and the sequence of the values is important, you can add the key to this list.
-# You don't need to add the entire key name to the list. Only the prefix of the key will work. i.e. handler.chains
-# If you want to add your own keys, please make sure that you include the following two keys in your values.yml
-keysToNotSort: ${info.keysToNotSort:handler.chains,handler.defaultHandlers}
+# If you want to add your own keys, please make sure that you include the following default keys in your values.yml
+keysToNotSort: ${info.keysToNotSort:admin,default,defaultHandlers}
