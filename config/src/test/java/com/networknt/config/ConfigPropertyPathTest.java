@@ -31,7 +31,7 @@ public class ConfigPropertyPathTest extends TestCase {
     private static Config config = null;
 
     private static final String homeDir = System.getProperty("user.home");
-    
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -59,7 +59,7 @@ public class ConfigPropertyPathTest extends TestCase {
         test3.delete();
         testFolder1.delete();
         testFolder2.delete();
-        
+
         setExternalizedConfigDir("");
     }
 

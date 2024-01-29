@@ -36,7 +36,7 @@ public class APMEPAgentSender implements TimeSeriesDbSender {
     private final String path;
     private final String serviceId;
     private final String productName;
-    
+
     private final URL url;
     private final InfluxDbWriteObject influxDbWriteObject;
 
@@ -72,7 +72,7 @@ public class APMEPAgentSender implements TimeSeriesDbSender {
 
     @Override
     public int writeData() throws Exception {
-    	
+
         final String body = convertInfluxDBWriteObjectToJSON(influxDbWriteObject);
         if(logger.isTraceEnabled()) logger.trace("APMEPAgentSender is sending data to host = {} with body = {}", url, body);
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
@@ -117,27 +117,27 @@ public class APMEPAgentSender implements TimeSeriesDbSender {
                     + reference.get().getAttachment(Http2Client.RESPONSE_BODY) + "'");
         }
     }
-    
+
     private String convertInfluxDBWriteObjectToJSON(InfluxDbWriteObject influxDbWriteObject) throws ClientException {
-    	
+
     	EPAgentMetricRequest epAgentMetricRequest = new EPAgentMetricRequest();
     	List<EPAgentMetric> epAgentMetricList = new ArrayList<EPAgentMetric>();
-    	
+
         for (InfluxDbPoint point : influxDbWriteObject.getPoints()) {
         	EPAgentMetric epAgentMetric = new EPAgentMetric();
 			epAgentMetric.setName(convertName(point));
-			
+
 			// Need to convert the value from milliseconds with a decimal to milliseconds as a whole number
 			double milliseconds = Double.parseDouble(point.getValue());
 			int roundedMilliseconds = (int) Math.round(milliseconds);
-			
+
 			epAgentMetric.setValue(Integer.toString(roundedMilliseconds));
 			epAgentMetric.setType("PerIntervalCounter");
 			epAgentMetricList.add(epAgentMetric);
 		}
-    				
+
     	epAgentMetricRequest.setMetrics(epAgentMetricList);
-    	
+
     	String json = "";
     	try {
 			json = Config.getInstance().getMapper().writeValueAsString(epAgentMetricRequest);
@@ -145,9 +145,9 @@ public class APMEPAgentSender implements TimeSeriesDbSender {
             throw new ClientException(e);
 		}
 
-    	
+
     	return json;
-    	
+
     }
 
 	private String convertName(InfluxDbPoint point) {
@@ -164,9 +164,9 @@ public class APMEPAgentSender implements TimeSeriesDbSender {
             } else {
                 metricNameJoiner.add("null");
             }
-        }		
+        }
 
-		return metricNameJoiner.toString() + ":" + point.getMeasurement();		
+		return metricNameJoiner.toString() + ":" + point.getMeasurement();
 	}
 
     @Override
@@ -176,4 +176,3 @@ public class APMEPAgentSender implements TimeSeriesDbSender {
         }
     }
 }
-

@@ -16,7 +16,7 @@ public class SecretConfig {
 	private String emailPassword;
 	private Map<String, String> testMap;
 	private List<String> testArray;
-	
+
 	public String getServerKeystorePass() {
 		return serverKeystorePass;
 	}

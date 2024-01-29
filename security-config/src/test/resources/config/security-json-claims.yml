@@ -118,4 +118,3 @@ skipPathPrefixes: ${security.skipPathPrefixes:}
 # JSON
 # openapi-security.passThroughClaims: {"cid":"client_id","uid":"user_id"}
 passThroughClaims: {"cid":"client_id","uid":"user_id"}
-

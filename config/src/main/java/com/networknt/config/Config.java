@@ -148,7 +148,7 @@ public abstract class Config {
             mapper.registerModule(new Jdk8Module());
             mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         }
-        
+
         final Yaml yaml;
 
         FileConfigImpl(){
@@ -501,8 +501,8 @@ public abstract class Config {
             }
             return config;
         }
-        
-        
+
+
         private Map<String, Object> loadMapConfig(String configName, String path) {
             Map<String, Object> config;
             for (String extension : configExtensionsOrdered) {
@@ -735,4 +735,3 @@ public abstract class Config {
         return new ByteArrayInputStream(string.getBytes(UTF_8));
     }
 }
-

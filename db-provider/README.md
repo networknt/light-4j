@@ -1,6 +1,6 @@
 ## data-source module
 
-The module provides one database configuration and wraps it up with an interface so that application can extend it and implement all the db access along with caches. Unlike the data-source module that supports multiple data sources, it only support one database. Also, it provides an interface with default provider implementation to allow the developer to quickly start a simple database related API. 
+The module provides one database configuration and wraps it up with an interface so that application can extend it and implement all the db access along with caches. Unlike the data-source module that supports multiple data sources, it only support one database. Also, it provides an interface with default provider implementation to allow the developer to quickly start a simple database related API.
 
 
 
@@ -26,7 +26,7 @@ You also need to add a database driver as part of your application dependency. F
         </dependency>
 ```
 
-In most cases, you need to cache some of the rows from the database in order to speed up the response from your API. You should include Caffeine as the cache layer. 
+In most cases, you need to cache some of the rows from the database in order to speed up the response from your API. You should include Caffeine as the cache layer.
 
 ```
         <dependency>
@@ -39,7 +39,7 @@ In most cases, you need to cache some of the rows from the database in order to 
 
 There is a config file db-provider.yml that contains all the information that you can create a HiKariCP datasource.
 
-Here is an example. 
+Here is an example.
 
 ```
 # For postgres database running in a docker container, you have to use the driverClassName. By
@@ -53,7 +53,7 @@ maximumPoolSize: ${db.maximumPoolSize:3}
 ```
 
 ### Module usage detail:
- 
+
 There are two config files involve withe the setting (datasource.yml & service.yml) and both two be extend to use values.yml"
 
 For example:
@@ -63,7 +63,7 @@ datasource.yml
 ```
 MysqlDataSource: ${datasource.MysqlDataSource:}
 
-```  
+```
 
 service.yml
 
@@ -82,7 +82,7 @@ service.singletons:
 
   - com.networknt.db.GenericDataSource:
       - com.networknt.db.MysqlDataSource:
-          - java.lang.String: 
+          - java.lang.String:
 
   - com.networknt.accountservic.dao.AccountDao:
       - com.networknt.accountservic.dao.AccountDaoImpl
@@ -118,9 +118,9 @@ The Database config value include three parts:
 - settings section, which used to invoke HikariDataSource set methods for the specified parameters.
   for example, if there is a parameter:  idleTimeout: 50000
   it will call HikariDataSource setIdleTimeout() method for specified value
-    
-- parameters section which used to specify the datasource config properties for HikariDataSource(addDataSourceProperty())                                            
- 
+
+- parameters section which used to specify the datasource config properties for HikariDataSource(addDataSourceProperty())
+
 DAO java class:
 
 ```
@@ -132,7 +132,7 @@ DAO java class:
 
 ```
 
-- By using datasource factory 
+- By using datasource factory
 
 service.yml
 ```

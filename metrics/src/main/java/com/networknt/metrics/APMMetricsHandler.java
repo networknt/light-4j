@@ -63,7 +63,7 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
             if (logger.isDebugEnabled()) {
                 logger.debug(commonTags.toString());
             }
-            
+
             try {
                 TimeSeriesDbSender sender =
                         new APMEPAgentSender(config.getServerProtocol(), config.getServerHost(), config.getServerPort(), config.getServerPath(), serverConfig.getServiceId(),  config.getProductName());
@@ -78,12 +78,12 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
                 logger.info("apmmetrics is enabled and reporter is started");
             } catch (MalformedURLException e) {
                 logger.error("apmmetrics has failed to initialize APMEPAgentSender", e);
-            }            
+            }
 
             // reset the flag so that this block will only be called once.
             firstTime = false;
         }
-        
+
         long startTime = Clock.defaultClock().getTick();
         exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
             Map<String, Object> auditInfo = exchange1.getAttachment(AttachmentConstants.AUDIT_INFO);
@@ -133,7 +133,7 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
             }
             nextListener.proceed();
         });
-        
+
         Handler.next(exchange, next);
 
 	}

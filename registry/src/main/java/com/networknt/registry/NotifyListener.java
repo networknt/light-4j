@@ -18,7 +18,7 @@ package com.networknt.registry;
 import java.util.List;
 
 /**
- * 
+ *
  * Notify when service changed.
  *
  * @author fishermen

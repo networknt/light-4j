@@ -127,7 +127,7 @@ public class MaskTest {
         Assert.assertEquals(JsonPath.parse(output).read("$.list1[2]"), "*****");
         Assert.assertEquals(JsonPath.parse(output).read("$.password"), "******");
     }
-    
+
     @Test
     public void testMaskIssue942()
     {

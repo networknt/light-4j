@@ -191,7 +191,7 @@ public class Server {
                 System.out.println(errMessage);
                 logger.error(errMessage);
                 throw new RuntimeException(errMessage);
-            }          
+            }
             // init usedPort here before starting the loop.
             int capacity = serverConfig.maxPort - serverConfig.minPort + 1;
             usedPorts = new HashSet(capacity);

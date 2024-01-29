@@ -21,7 +21,7 @@ public class LdapUtilTest {
     public void testAuthentication() throws Exception {
         String user = "jduke";
         String password = "theduke";
-        
+
         Assert.assertEquals(true, LdapUtil.authenticate(user, password));
     }
 
@@ -29,17 +29,17 @@ public class LdapUtilTest {
     public void testAuthorization() throws Exception {
         String user = "jduke";
         String expectedGroups = "cn=just-users,ou=users,dc=undertow,dc=io,cn=best-users,ou=users,dc=undertow,dc=io";
-        
+
         Assert.assertEquals(expectedGroups, String.join(",", LdapUtil.authorize(user)));
     }
-	
+
 	@Test
     public void testAuth() throws Exception {
 		String user = "jduke";
         String password = "theduke";
-        
+
         // function returns null always
         Assert.assertEquals(null, LdapUtil.auth(user, password));
     }
-	
+
 }

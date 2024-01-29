@@ -121,7 +121,7 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
             if (RuleLoaderStartupHook.endpointRules == null) {
                 logger.error("RuleLoaderStartupHook endpointRules is null");
             }
-            
+
             // Grab ServiceEntry from config
             endpoint = ConfigUtils.toInternalKey(exchange.getRequestMethod().toString().toLowerCase(), exchange.getRequestURI());
             if(logger.isDebugEnabled()) logger.debug("request endpoint: " + endpoint);

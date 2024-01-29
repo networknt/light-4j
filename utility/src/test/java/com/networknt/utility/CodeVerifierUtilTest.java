@@ -36,5 +36,5 @@ public class CodeVerifierUtilTest {
         Assert.assertTrue(c1.equals(c2));
     }
 
-    
+
 }

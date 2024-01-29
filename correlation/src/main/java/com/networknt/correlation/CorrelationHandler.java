@@ -73,7 +73,7 @@ public class CorrelationHandler implements MiddlewareHandler {
 	            if(tId != null && logger.isInfoEnabled()) {
 	                logger.info("Associate traceability Id " + tId + " with correlation Id " + cId);
                 }
-        	} 
+        	}
         }
         // Add the cId into MDC so that all log statement will have cId as part of it.
         MDC.put(CID, cId);

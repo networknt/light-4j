@@ -32,20 +32,20 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 public class WeightedSnapshotTest {
-    
+
     static public ArrayList<WeightedSample> WeightedArray(long[] values, double[] weights) {
         if (values.length != weights.length) {
             throw new IllegalArgumentException("Mismatched lengths: " + values.length + " vs " + weights.length);
         }
-        
+
         final ArrayList<WeightedSample> samples = new ArrayList<>();
         for (int i = 0; i < values.length; i++) {
             samples.add(new WeightedSnapshot.WeightedSample(values[i], weights[i]));
         }
-        
+
         return samples;
     }
-    
+
     private final Snapshot snapshot = new WeightedSnapshot(
             WeightedArray(new long[]{5, 1, 2, 3, 4}, new double[]{1, 2, 3, 2, 2}) );
 
@@ -223,9 +223,9 @@ public class WeightedSnapshotTest {
     public void expectNoOverflowForLowWeights() throws Exception {
         final Snapshot scatteredSnapshot = new WeightedSnapshot(
             WeightedArray(
-                    new long[]{ 1, 2, 3 }, 
+                    new long[]{ 1, 2, 3 },
                     new double[]{ Double.MIN_VALUE, Double.MIN_VALUE, Double.MIN_VALUE }
-            ) 
+            )
         );
 
         assertThat(scatteredSnapshot.getMean())

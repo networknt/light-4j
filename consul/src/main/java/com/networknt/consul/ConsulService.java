@@ -37,7 +37,7 @@ public class ConsulService {
 	private Integer port;
 
 	private String checkString;
-	
+
 	public String getId() {
 		return id;
 	}
