@@ -15,4 +15,4 @@ dummy: dummyEntry
 # productVersion: 2.0.0
 # apiId: com.networknt.petstore-1.0.0
 # apiVersion: 1.0.0
-# environment: dev
+# envTag: dev

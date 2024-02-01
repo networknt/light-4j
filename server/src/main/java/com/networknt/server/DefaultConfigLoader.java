@@ -412,7 +412,16 @@ public class DefaultConfigLoader implements IConfigLoader{
         if(startupConfig.get(PRODUCT_VERSION) != null) qs.append("&").append(PRODUCT_VERSION).append("=").append(startupConfig.get(PRODUCT_VERSION));
         if(startupConfig.get(API_ID) != null) qs.append("&").append(API_ID).append("=").append(startupConfig.get(API_ID));
         if(startupConfig.get(API_VERSION) != null) qs.append("&").append(API_VERSION).append("=").append(startupConfig.get(API_VERSION));
-        if(lightEnv != null) qs.append("&").append(ENV_TAG).append("=").append(lightEnv);
+        if(lightEnv != null) {
+            qs.append("&").append(ENV_TAG).append("=").append(lightEnv);
+        } else if(startupConfig.get(ENV_TAG) != null) {
+            // light-env is not set in the environment. Use the envTag from the startup config
+            qs.append("&").append(ENV_TAG).append("=").append(startupConfig.get(ENV_TAG));
+        } else {
+            // light-env is not set in the environment and the startup config. Use the default value.
+            logger.warn("light-env is not set in the environment and envTag is not set in the startup config. Use the default value: " + DEFAULT_ENV);
+            qs.append("&").append(ENV_TAG).append("=").append(DEFAULT_ENV);
+        }
         if(logger.isDebugEnabled()) logger.debug("configParameters: {}", qs);
         return qs.toString();
     }
@@ -495,12 +504,12 @@ public class DefaultConfigLoader implements IConfigLoader{
         // the above headers are sent to the config server except productVersion that might be current/default version.
         // as the productId and productVersion are embedded in the jar file, we need to retrieve them from the jar.
         if(productId != null && productVersion != null && apiId != null && apiVersion != null && envTag != null) {
-            if(logger.isInfoEnabled()) logger.trace("jar productId = " + Server.getLight4jProduct() + " productVersion = " + Server.getLight4jVersion() + " startup apiId = " + startupConfig.get(API_ID) + " apiVersion = " + startupConfig.get(API_VERSION) + " envTag = " + lightEnv);
+            if(logger.isInfoEnabled()) logger.trace("jar productId = " + Server.getLight4jProduct() + " productVersion = " + Server.getLight4jVersion() + " startup apiId = " + startupConfig.get(API_ID) + " apiVersion = " + startupConfig.get(API_VERSION) + " envTag = " + (lightEnv == null ? startupConfig.get(ENV_TAG) : lightEnv)) ;
             return productId.equals(Server.getLight4jProduct()) &&
                      productVersion.equals(Server.getLight4jVersion()) &&
                      apiId.equals(startupConfig.get(API_ID)) &&
                      apiVersion.equals(startupConfig.get(API_VERSION)) &&
-                     envTag.equals(lightEnv);
+                    (lightEnv != null ? envTag.equals(lightEnv) : envTag.equals(startupConfig.get(ENV_TAG)));
         }
         return false;
     }
