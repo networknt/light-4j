@@ -28,7 +28,7 @@ public class ConfigInjectionTest {
 
         Object oldConfigValue = null;
         try {
-            oldConfigValue = ConfigInjection.getInjectValue(value);
+            oldConfigValue = ConfigInjection.getInjectValue(value, true);
         } catch (Exception ce) {
             // expected exception since no valuemap defined yet.
             assertTrue(ce instanceof ConfigException);
@@ -39,7 +39,7 @@ public class ConfigInjectionTest {
         newValueMap.put(configKey, configValue);
         Config.getInstance().putInConfigCache(valueMapKey, newValueMap);
 
-        Object newConfigValue = ConfigInjection.getInjectValue(value);
+        Object newConfigValue = ConfigInjection.getInjectValue(value, true);
 
         assertNotNull(newConfigValue);
         assertEquals(configValue, newConfigValue);

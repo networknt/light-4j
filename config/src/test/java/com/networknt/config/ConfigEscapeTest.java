@@ -11,7 +11,7 @@ public class ConfigEscapeTest {
     @Test
     public void testGetInjectValueWithDollar() {
         String s1 = "${password:abc$defg}";
-        Object obj = getInjectValue(s1);
+        Object obj = getInjectValue(s1, true);
         System.out.println(obj);
 
     }
@@ -19,7 +19,7 @@ public class ConfigEscapeTest {
     @Test
     public void testGetInjectValueWithBackSlash() {
         String s2 = "${password:abc\\$defg}";
-        Object obj = getInjectValue(s2);
+        Object obj = getInjectValue(s2, true);
         System.out.println(obj);
     }
 
