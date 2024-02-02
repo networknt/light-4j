@@ -37,7 +37,7 @@ public class Switcher {
 
     /**
      * isOn: true，service available; isOn: false, service un-available
-     * 
+     *
      * @return boolean
      */
     public boolean isOn() {

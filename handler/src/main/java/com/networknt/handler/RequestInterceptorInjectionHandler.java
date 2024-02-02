@@ -1,5 +1,6 @@
 package com.networknt.handler;
 
+import com.networknt.config.Config;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.ModuleRegistry;
@@ -69,12 +70,12 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
         if (LOG.isTraceEnabled())
             LOG.trace("request-injection.yml is reloaded");
 
-        ModuleRegistry.registerModule(RequestInjectionConfig.CONFIG_NAME, RequestInterceptorInjectionHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(RequestInjectionConfig.CONFIG_NAME, RequestInterceptorInjectionHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RequestInjectionConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(RequestInjectionConfig.CONFIG_NAME, RequestInterceptorInjectionHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(RequestInjectionConfig.CONFIG_NAME, RequestInterceptorInjectionHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RequestInjectionConfig.CONFIG_NAME), null);
     }
 
     @Override

@@ -30,7 +30,7 @@ import com.networknt.utility.StringUtils;
 
 /**
  * This class holds configuration values related to server identify check.
- * 
+ *
  * @author Daniel Zhao
  *
  */
@@ -46,5 +46,5 @@ public class TLSConfig {
     public boolean getCheckServerIdentity() {
     	return checkServerIdentify;
     }
-    
+
 }

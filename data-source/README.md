@@ -22,12 +22,12 @@ data-source module defined a generic datasource(GenericDataSource)  pre-defined 
  - SqlServerDataSource
  - H2DataSource
 
-If user need define new datasources for other databases, simply create a new datasource class which extend GenericDataSource. 
+If user need define new datasources for other databases, simply create a new datasource class which extend GenericDataSource.
 And if user want to customize the pre-defined datasource with other config values, we can extend the pre-defined datasource and add customized config for the datasource.
 Please refer to CustomMysqlDataSource in test package
 
 ### Module usage detail:
- 
+
 There are two config files involve withe the setting (datasource.yml & service.yml) and both two be extend to use values.yml"
 
 For example:
@@ -37,7 +37,7 @@ datasource.yml
 ```
 MysqlDataSource: ${datasource.MysqlDataSource:}
 
-```  
+```
 
 service.yml
 
@@ -56,7 +56,7 @@ service.singletons:
 
   - com.networknt.db.GenericDataSource:
       - com.networknt.db.MysqlDataSource:
-          - java.lang.String: 
+          - java.lang.String:
 
   - com.networknt.accountservic.dao.AccountDao:
       - com.networknt.accountservic.dao.AccountDaoImpl
@@ -92,9 +92,9 @@ The Database config value include three parts:
 - settings section, which used to invoke HikariDataSource set methods for the specified parameters.
   for example, if there is a parameter:  idleTimeout: 50000
   it will call HikariDataSource setIdleTimeout() method for specified value
-    
-- parameters section which used to specify the datasource config properties for HikariDataSource(addDataSourceProperty())                                            
- 
+
+- parameters section which used to specify the datasource config properties for HikariDataSource(addDataSourceProperty())
+
 DAO java class:
 
 ```
@@ -106,7 +106,7 @@ DAO java class:
 
 ```
 
-- By using datasource factory 
+- By using datasource factory
 
 service.yml
 ```

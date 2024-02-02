@@ -143,12 +143,12 @@ public class JaegerHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(JaegerConfig.CONFIG_NAME, JaegerHandler.class.getName(), jaegerConfig.getMappedConfig(), null);
+        ModuleRegistry.registerModule(JaegerConfig.CONFIG_NAME, JaegerHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(JaegerConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
         jaegerConfig.reload();
-        ModuleRegistry.registerModule(JaegerConfig.CONFIG_NAME, JaegerHandler.class.getName(), jaegerConfig.getMappedConfig(), null);
+        ModuleRegistry.registerModule(JaegerConfig.CONFIG_NAME, JaegerHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(JaegerConfig.CONFIG_NAME), null);
     }
 }

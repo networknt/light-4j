@@ -1,5 +1,6 @@
 package com.networknt.cache;
 
+import com.networknt.config.Config;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.ModuleRegistry;
 import org.slf4j.Logger;
@@ -18,7 +19,7 @@ public interface CacheManager {
     Logger logger = LoggerFactory.getLogger(CacheManager.class);
     static CacheManager getInstance() {
         CacheConfig config = CacheConfig.load();
-        ModuleRegistry.registerModule(CacheConfig.CONFIG_NAME, CacheManager.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(CacheConfig.CONFIG_NAME, CacheManager.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CacheConfig.CONFIG_NAME), null);
         List<CacheItem> caches = config.getCaches();
         if(caches != null && !caches.isEmpty()) {
             CacheManager cacheManager = SingletonServiceFactory.getBean(CacheManager.class);

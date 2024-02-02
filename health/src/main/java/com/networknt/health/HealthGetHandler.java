@@ -52,7 +52,7 @@ public class HealthGetHandler implements LightHttpHandler {
 
     public HealthGetHandler(){
         config = HealthConfig.load();
-        ModuleRegistry.registerModule(HealthConfig.CONFIG_NAME, HealthGetHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(HealthConfig.CONFIG_NAME, HealthGetHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(HealthConfig.CONFIG_NAME), null);
         if(logger.isTraceEnabled()) logger.trace("HealthGetHandler is constructed.");
     }
 
@@ -85,7 +85,7 @@ public class HealthGetHandler implements LightHttpHandler {
 
     public static void reload() {
         config = HealthConfig.load();
-        ModuleRegistry.registerModule(HealthConfig.CONFIG_NAME, HealthGetHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(HealthConfig.CONFIG_NAME, HealthGetHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(HealthConfig.CONFIG_NAME), null);
         if(logger.isInfoEnabled()) logger.info("HealthGetHandler is reloaded.");
     }
 }

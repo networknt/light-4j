@@ -1,5 +1,6 @@
 package com.networknt.reqtrans;
 
+import com.networknt.config.Config;
 import com.networknt.handler.BuffersUtils;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.RequestInterceptor;
@@ -44,7 +45,7 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
     public RequestTransformerInterceptor() {
         if(logger.isInfoEnabled()) logger.info("RequestTransformerHandler is loaded");
         config = RequestTransformerConfig.load();
-        ModuleRegistry.registerModule(RequestTransformerConfig.CONFIG_NAME, RequestTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(RequestTransformerConfig.CONFIG_NAME, RequestTransformerInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RequestTransformerConfig.CONFIG_NAME), null);
     }
 
     @Override
@@ -66,13 +67,13 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(RequestTransformerConfig.CONFIG_NAME, RequestTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(RequestTransformerConfig.CONFIG_NAME, RequestTransformerInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RequestTransformerConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(RequestTransformerConfig.CONFIG_NAME, RequestTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(RequestTransformerConfig.CONFIG_NAME, RequestTransformerInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RequestTransformerConfig.CONFIG_NAME), null);
         if(logger.isTraceEnabled()) logger.trace("RequestTransformerInterceptor is reloaded.");
 
     }

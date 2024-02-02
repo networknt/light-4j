@@ -81,7 +81,7 @@ public class ResponseEncodeHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ResponseEncodeConfig.CONFIG_NAME, ResponseEncodeHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(ResponseEncodeConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(ResponseEncodeConfig.CONFIG_NAME, ResponseEncodeHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ResponseEncodeConfig.CONFIG_NAME), null);
     }
 
     @Override
@@ -102,7 +102,7 @@ public class ResponseEncodeHandler implements MiddlewareHandler {
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(ResponseEncodeConfig.CONFIG_NAME, ResponseEncodeHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(ResponseEncodeConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(ResponseEncodeConfig.CONFIG_NAME, ResponseEncodeHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ResponseEncodeConfig.CONFIG_NAME), null);
         if(logger.isInfoEnabled()) logger.info("ResponseEncodeHandler is reloaded.");
     }
 }

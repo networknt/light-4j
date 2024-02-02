@@ -120,4 +120,3 @@ skipPathPrefixes: ${security.skipPathPrefixes:}
 passThroughClaims:
   cid: client_id
   uid: user_id
-

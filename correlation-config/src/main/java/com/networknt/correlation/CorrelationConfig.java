@@ -68,11 +68,11 @@ public class CorrelationConfig {
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
-    
+
     public boolean isAutogenCorrelationID() {
     	return autogenCorrelationID;
     }
-    
+
     public void setAutogenCorrelationID(boolean autogenCorrelationID) {
     	this.autogenCorrelationID = autogenCorrelationID;
     }

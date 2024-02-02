@@ -1,5 +1,6 @@
 package com.networknt.router.middleware;
 
+import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.HandlerUtils;
 import com.networknt.handler.MiddlewareHandler;
@@ -19,7 +20,7 @@ import java.util.Map;
 
 /**
  * Find service Ids using a combination of path prefix and request method.
- * 
+ *
  * @author Daniel Zhao
  *
  */
@@ -86,13 +87,13 @@ public class ServiceDictHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ServiceDictConfig.CONFIG_NAME, ServiceDictHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ServiceDictConfig.CONFIG_NAME, ServiceDictHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ServiceDictConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(ServiceDictConfig.CONFIG_NAME, ServiceDictHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ServiceDictConfig.CONFIG_NAME, ServiceDictHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ServiceDictConfig.CONFIG_NAME), null);
         if(logger.isInfoEnabled()) logger.info("ServiceDictHandler is reloaded.");
     }
 }
