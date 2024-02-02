@@ -57,12 +57,12 @@ public class ConsulConstants {
 	 * Heart beat circle，2/3 of ttl
 	 */
 	public static int HEARTBEAT_CIRCLE = (TTL * 1000 * 2) / 3;
-	
+
 	/**
 	 * Maximum continuous switch checks, send heart beat is this number is exceeded.
 	 */
 	public static int MAX_SWITCHER_CHECK_TIMES = 10;
-	
+
 	/**
 	 * Switcher change rate
 	 */
@@ -83,7 +83,7 @@ public class ConsulConstants {
 	 * consul block, max block time in minute
 	 */
 	public static int CONSUL_BLOCK_TIME_MINUTES = 10;
-	
+
 	/**
 	 * consul block max block time in second
 	 */

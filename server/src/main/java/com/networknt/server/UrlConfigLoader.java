@@ -50,7 +50,7 @@ import io.undertow.util.Methods;
 /**
  * UrlConfigLoader fetch and load configs from Nginx. The config files share the
  * same structure as FileSystemProviderImpl.
- * 
+ *
  * @author xlongwei
  *
  */

@@ -728,9 +728,9 @@ public class Http2ClientTest extends Http2ClientBase {
         XnioSsl ssl = new UndertowXnioSsl(worker.getXnio(), OptionMap.EMPTY, Http2Client.BUFFER_POOL, context);
 
         final ClientConnection connection = client.connect(new URI("https://localhost:7778"), worker, ssl, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
-        
+
         assertTrue(connection.isOpen());
-        
+
         IoUtils.safeClose(connection);
     }
 

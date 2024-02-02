@@ -320,7 +320,7 @@ public final class SimpleConnectionHolder {
 
     /**
      * State Property - isAtMaxBorrows
-     * 
+     *
      * @return true if the connection is at its maximum number of borrows, and false otherwise
      */
     public synchronized boolean maxBorrowed() {

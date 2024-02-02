@@ -195,7 +195,7 @@ public class ConfigDefaultTest extends TestCase {
         Assert.assertEquals("", configMap.get("value"));
     }
 
-    
+
     public void testInjectionExclusionConfig() {
         config.clear();
         Map<String, Object> configMap = config.getJsonMapConfig("test_exclusion");
@@ -233,7 +233,7 @@ public class ConfigDefaultTest extends TestCase {
         Assert.assertTrue(zonedDateTime2.equals(dm.getTime()));
     }
     */
-    
+
     public void testObjectMapperLocalDateTime() throws Exception {
         ObjectMapper mapper = Config.getInstance().getMapper();
         LocalDateTimeModel dm = mapper.readValue("{\"time\" : \"1999-01-02T04:05:06.700000Z\"}", LocalDateTimeModel.class);
@@ -242,7 +242,7 @@ public class ConfigDefaultTest extends TestCase {
         System.out.println(dm2);
         Assert.assertTrue(dm2.equals(dm.getTime()));
     }
-    
+
     public void testObjectMapperLocalDate() throws Exception {
         ObjectMapper mapper = Config.getInstance().getMapper();
         LocalDateModel dm = mapper.readValue("{\"date\" : \"1999-02-03T04:05:06.700000Z\"}", LocalDateModel.class);

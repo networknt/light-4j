@@ -12,7 +12,7 @@ Light-4j client supports both HTTP 1.1 and HTTP 2.0 transparently depending on i
 
 It provides methods to get authorization tokens and automatically receives the client credentials token for scopes in API to API calls. It also helps to pass correlationId and traceabilityId and other configurable headers to the next service.
 
-HTTP 2.0 is multiplex that one connection can send multiple requests at the same time. There is no need to build a connection pool if only HTTP 2.0 is used. However, some users have services that only support HTTP 1.1 without an immediate path to upgrade. To support those users, we have added a connection pool in the Http2Clien 
+HTTP 2.0 is multiplex that one connection can send multiple requests at the same time. There is no need to build a connection pool if only HTTP 2.0 is used. However, some users have services that only support HTTP 1.1 without an immediate path to upgrade. To support those users, we have added a connection pool in the Http2Clien
 
 
 ### Configuration
@@ -54,9 +54,9 @@ light-4j client module support various http request/response content types. By d
     - XML("text/xml")
 
     - APPLICATION_XML_VALUE("application/xml")
-    
+
     - APPLICATION_FORM_URLENCODED_VALUE("application/x-www-form-urlencoded")
-    
+
     - TEXT_PLAIN_VALUE("text/plain")
 
 For binary data base content types:
@@ -64,9 +64,9 @@ For binary data base content types:
     - APPLICATION_PDF_VALUE("application/pdf")
 
     - IMAGE_PNG_VALUE ("image/png")
-    
+
     - IMAGE_JPEG_VALUE ("image/jpeg")
-    
+
     - IMAGE_GIF_VALUE ("image/gif")
 
 Please refer to the sample in light-example-4j:
@@ -119,7 +119,7 @@ Client module provides several different approaches for API service call. Here w
        Map resultMap = restClientTemplate.post("https://localhost:8467", "/networknt/select/",  Map.class, headerMap, requestStr);
 
 ```
-  
+
 3. Parallel Client call
 
  Use java 8 + CompletableFuture to handle two or more threads asynchronous computation; We can send requests parallel and process result asynchronously.
@@ -160,10 +160,10 @@ For the https request, client.yml config provide three options for client trust 
 ```
 - if loadTrustStore = false, client module won't load and trust for TLS request.
 - if loadTrustStore = true and loadDefaultTrustStore = false, client module will load self-signed trust store only from the trust store specified from config value: "trustStore"
-- if loadTrustStore = true and loadDefaultTrustStore = true, client module will load self-signed trust store from the trust store specified from config value: "trustStore" 
+- if loadTrustStore = true and loadDefaultTrustStore = true, client module will load self-signed trust store from the trust store specified from config value: "trustStore"
    And load default java public certs (jssecacerts/cacerts)
-   
-     
+
+
 
 
 ### To learn how to use client module, pleases refer to

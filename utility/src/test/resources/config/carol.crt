@@ -49,13 +49,13 @@ Certificate:
                     90:81:f1
                 Exponent: 65537 (0x10001)
         X509v3 extensions:
-            X509v3 Basic Constraints: 
+            X509v3 Basic Constraints:
                 CA:FALSE
-            Netscape Comment: 
+            Netscape Comment:
                 OpenSSL Generated Certificate
-            X509v3 Subject Key Identifier: 
+            X509v3 Subject Key Identifier:
                 B5:5D:0D:4F:55:F6:75:1A:23:B3:F5:8C:BC:6B:5A:B6:96:6C:AE:E0
-            X509v3 Authority Key Identifier: 
+            X509v3 Authority Key Identifier:
                 keyid:23:6C:2D:3D:3E:29:5D:78:B8:6C:3E:AA:E2:BB:2E:1E:6C:87:F2:53
 
     Signature Algorithm: sha1WithRSAEncryption

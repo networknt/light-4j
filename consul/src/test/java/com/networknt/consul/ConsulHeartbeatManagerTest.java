@@ -27,7 +27,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * 
+ *
  * @Description ConsulHeartbeatManagerTest
  * @author zhanglei28
  *

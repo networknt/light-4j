@@ -23,12 +23,12 @@ import java.util.List;
  *
  * @author maijunsheng
  * @author zhanglei
- * 
+ *
  */
 public interface SwitcherService {
     /**
      * Get switcher by name
-     * 
+     *
      * @param name name of the switcher
      * @return Switcher
      */
@@ -36,7 +36,7 @@ public interface SwitcherService {
 
     /**
      * Get all switchers as a List
-     * 
+     *
      * @return  List
      */
     List<Switcher> getAllSwitchers();
@@ -51,7 +51,7 @@ public interface SwitcherService {
 
     /**
      * Check if a switcher is on or off
-     * 
+     *
      * @param switcherName switcher name
      * @return boolean true ： switcher is on, false：switcher is off
      */
@@ -59,7 +59,7 @@ public interface SwitcherService {
 
     /**
      * Check if a switcher is on or off, it doesn't exist, set default value
-     * 
+     *
      * @param switcherName switcher name
      * @param defaultValue default value
      * @return boolean If switcher exists, return the state, otherwise, set default value and return that value.
@@ -68,7 +68,7 @@ public interface SwitcherService {
 
     /**
      * Set switcher state
-     * 
+     *
      * @param switcherName switcher name
      * @param value value to be set
      */
@@ -76,7 +76,7 @@ public interface SwitcherService {
 
     /**
      * register a listener for switcher value change, register a listener twice will only fire once
-     * 
+     *
      * @param switcherName switcher name
      * @param listener listener
      */
@@ -84,7 +84,7 @@ public interface SwitcherService {
 
     /**
      * unregister a listener
-     * 
+     *
      * @param switcherName switcher name
      * @param listener the listener to be unregistered, null for all listeners for this switcherName
      */

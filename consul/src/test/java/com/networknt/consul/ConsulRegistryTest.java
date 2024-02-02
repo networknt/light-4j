@@ -113,7 +113,7 @@ public class ConsulRegistryTest {
         registry.doRegister(serviceUrl2);
         registry.doAvailable(null);
         Thread.sleep(sleepTime);
-        
+
         // unregister
         registry.doUnavailable(null);
         Thread.sleep(sleepTime);
@@ -140,7 +140,7 @@ public class ConsulRegistryTest {
         Thread.sleep(sleepTime);
         urls = registry.discover(serviceUrl);
         Assert.assertTrue(urls.contains(serviceUrl));
-        
+
         // unavailable & unregister
         registry.doUnavailable(null);
         Thread.sleep(sleepTime);
