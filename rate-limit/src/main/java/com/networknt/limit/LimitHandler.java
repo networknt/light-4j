@@ -104,7 +104,7 @@ public class LimitHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(LimitConfig.CONFIG_NAME, LimitHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(LimitConfig.CONFIG_NAME, LimitHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(LimitConfig.CONFIG_NAME), null);
     }
 
     @Override
@@ -116,7 +116,7 @@ public class LimitHandler implements MiddlewareHandler {
             logger.error("Failed to recreate RateLimiter with reloaded config.", e);
         }
         // after reload, we need to update the config in the module registry to ensure that server info returns the latest configuration.
-        ModuleRegistry.registerModule(LimitConfig.CONFIG_NAME, LimitHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(LimitConfig.CONFIG_NAME, LimitHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(LimitConfig.CONFIG_NAME), null);
         if(logger.isInfoEnabled()) logger.info("LimitHandler is reloaded.");
     }
 }

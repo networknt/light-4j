@@ -67,7 +67,7 @@ public class SingletonServiceFactory {
             e.printStackTrace();
             logger.error("Exception:", e);
         }
-        ModuleRegistry.registerModule(ServiceConfig.CONFIG_NAME, SingletonServiceFactory.class.getName(), serviceConfig.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ServiceConfig.CONFIG_NAME, SingletonServiceFactory.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ServiceConfig.CONFIG_NAME), null);
     }
 
     private static Object handleSingleImpl(List<String> interfaceClasses, List<Object> value) throws Exception {

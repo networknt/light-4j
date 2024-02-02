@@ -51,7 +51,7 @@ public class Mask {
 
     static {
         config = Config.getInstance().getJsonMapConfigNoCache(MASK_CONFIG);
-        ModuleRegistry.registerModule(MASK_CONFIG, Mask.class.getName(), config, null);
+        ModuleRegistry.registerModule(MASK_CONFIG, Mask.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(MASK_CONFIG), null);
     }
 
     /**

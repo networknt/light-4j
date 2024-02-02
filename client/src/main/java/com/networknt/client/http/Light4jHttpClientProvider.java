@@ -54,8 +54,8 @@ import io.undertow.connector.ByteBufferPool;
 /**
  * Customized HttpClientProvider for handling TLS handshake for HTTPS.
  * Created by modifying {@link io.undertow.client.http.HttpClientProvider}
- * 
- * 
+ *
+ *
  *
  */
 public class Light4jHttpClientProvider implements ClientProvider {
@@ -167,20 +167,20 @@ public class Light4jHttpClientProvider implements ClientProvider {
            listener.completed(createHttpClientConnection(connection, options, bufferPool));
        }
    }
-   
+
    /*
     * Create instances of "io.undertow.client.http.HttpClientConnection" using reflections
     */
-   
+
 	private ClientConnection createHttpClientConnection(final StreamConnection connection, final OptionMap options, final ByteBufferPool bufferPool) {
 		try {
 			Class<?> cls = Class.forName("io.undertow.client.http.HttpClientConnection");
-			
+
 			Constructor<?> o = cls.getDeclaredConstructor(StreamConnection.class, OptionMap.class, ByteBufferPool.class);
-			
+
 			o.setAccessible(true);
-			
-			return (ClientConnection) o.newInstance(connection, options, bufferPool);			
+
+			return (ClientConnection) o.newInstance(connection, options, bufferPool);
 		}catch(Exception e) {
 			logger.error(e.getMessage(), e);
 		}
@@ -188,4 +188,3 @@ public class Light4jHttpClientProvider implements ClientProvider {
 		return null;
 	}
 }
-

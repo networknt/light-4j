@@ -52,7 +52,7 @@ public class DirectRegistry extends AbstractRegistry {
         super(url);
         config = DirectRegistryConfig.load();
         if(config.directUrls != null) {
-            ModuleRegistry.registerModule(DirectRegistryConfig.CONFIG_NAME, DirectRegistry.class.getName(), config.getMappedConfig(), null);
+            ModuleRegistry.registerModule(DirectRegistryConfig.CONFIG_NAME, DirectRegistry.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(DirectRegistryConfig.CONFIG_NAME), null);
         }
         if(url.getParameters() != null && url.getParameters().size() > 0) {
             // The parameters come from the service.yml injection. If it is empty, then load it from the direct-registry.yml
@@ -156,7 +156,7 @@ public class DirectRegistry extends AbstractRegistry {
     public static void reload() {
         config.reload();
         directUrls = config.getDirectUrls();
-        if(directUrls != null) ModuleRegistry.registerModule(DirectRegistryConfig.CONFIG_NAME, DirectRegistry.class.getName(), config.getMappedConfig(), null);
+        if(directUrls != null) ModuleRegistry.registerModule(DirectRegistryConfig.CONFIG_NAME, DirectRegistry.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(DirectRegistryConfig.CONFIG_NAME), null);
         if(logger.isTraceEnabled()) logger.trace("DirectRegistry is reloaded");
     }
 }

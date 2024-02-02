@@ -17,7 +17,7 @@
 package com.networknt.registry;
 
 /**
- * 
+ *
  * Used to register and discover.
  *
  * @author fishermen

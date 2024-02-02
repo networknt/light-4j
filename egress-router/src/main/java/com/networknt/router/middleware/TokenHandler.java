@@ -200,13 +200,13 @@ public class TokenHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(TokenConfig.CONFIG_NAME, TokenHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(TokenConfig.CONFIG_NAME, TokenHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(TokenConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(TokenConfig.CONFIG_NAME, TokenHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(TokenConfig.CONFIG_NAME, TokenHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(TokenConfig.CONFIG_NAME), null);
         if(logger.isInfoEnabled()) logger.info("TokenHandler is reloaded.");
     }
 }

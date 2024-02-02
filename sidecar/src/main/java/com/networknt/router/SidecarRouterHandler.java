@@ -105,13 +105,13 @@ public class SidecarRouterHandler extends RouterHandler implements MiddlewareHan
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(SidecarConfig.CONFIG_NAME, SidecarRouterHandler.class.getName(), config, null);
+        ModuleRegistry.registerModule(SidecarConfig.CONFIG_NAME, SidecarRouterHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(SidecarConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
         sidecarConfig.reload();
-        ModuleRegistry.registerModule(SidecarConfig.CONFIG_NAME, SidecarRouterHandler.class.getName(), sidecarConfig.getMappedConfig(), null);
+        ModuleRegistry.registerModule(SidecarConfig.CONFIG_NAME, SidecarRouterHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(SidecarConfig.CONFIG_NAME), null);
         if(logger.isInfoEnabled()) logger.info("SidecarRouterHandler is reloaded.");
     }
 }

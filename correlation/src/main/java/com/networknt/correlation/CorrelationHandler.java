@@ -73,7 +73,7 @@ public class CorrelationHandler implements MiddlewareHandler {
 	            if(tId != null && logger.isInfoEnabled()) {
 	                logger.info("Associate traceability Id " + tId + " with correlation Id " + cId);
                 }
-        	} 
+        	}
         }
         // Add the cId into MDC so that all log statement will have cId as part of it.
         MDC.put(CID, cId);
@@ -116,13 +116,13 @@ public class CorrelationHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(CorrelationConfig.CONFIG_NAME, CorrelationHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CorrelationConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(CorrelationConfig.CONFIG_NAME, CorrelationHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CorrelationConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(CorrelationConfig.CONFIG_NAME, CorrelationHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(CorrelationConfig.CONFIG_NAME, CorrelationHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CorrelationConfig.CONFIG_NAME), null);
         if(logger.isInfoEnabled()) {
             logger.info("CorrelationHandler is enabled.");
         }

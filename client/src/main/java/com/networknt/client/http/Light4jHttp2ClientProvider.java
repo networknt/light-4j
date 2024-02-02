@@ -42,7 +42,7 @@ import java.util.Set;
 /**
  * Customized HttpClientProvider for handling TLS handshake for HTTP2.
  * Created by modifying {@link io.undertow.client.http2.Http2ClientProvider}
- * 
+ *
  *
  */
 public class Light4jHttp2ClientProvider implements ClientProvider {
@@ -193,5 +193,5 @@ public class Light4jHttp2ClientProvider implements ClientProvider {
             written = 0;
             requestCount = 0;
         }
-    } 
+    }
 }

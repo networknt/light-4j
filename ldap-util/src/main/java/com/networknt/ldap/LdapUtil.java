@@ -26,7 +26,7 @@ public class LdapUtil {
 
     static {
         config = LdapConfig.load();
-        ModuleRegistry.registerModule(CONFIG_LDAP, LdapUtil.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(CONFIG_LDAP, LdapUtil.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_LDAP), null);
     }
 
     /**

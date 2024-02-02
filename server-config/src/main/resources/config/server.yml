@@ -78,7 +78,7 @@ maxPort: ${server.maxPort:2500}
 # This tag should only be set for testing env, not production. The production certification process will enforce it.
 environment: ${server.environment:}
 
-# Build Number, to be set by teams for auditing or tracing purposes. 
+# Build Number, to be set by teams for auditing or tracing purposes.
 # Allows teams to audit the value and set it according to their release management process
 buildNumber: ${server.buildNumber:latest}
 

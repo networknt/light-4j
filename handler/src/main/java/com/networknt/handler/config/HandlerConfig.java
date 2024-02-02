@@ -123,19 +123,19 @@ public class HandlerConfig {
     public void setDefaultHandlers(List<String> defaultHandlers) {
         this.defaultHandlers = defaultHandlers;
     }
-    
+
     public boolean getAuditOnError() {
     	return auditOnError;
     }
-    
+
     public void setAuditOnError(boolean auditOnError) {
     	this.auditOnError = auditOnError;
     }
-    
+
     public boolean getAuditStackTrace() {
     	return auditStackTrace;
     }
-    
+
     public void setAuditStackTrace(boolean auditStackTrace) {
     	this.auditStackTrace = auditStackTrace;
     }

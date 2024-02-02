@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
  * then the heart beat process is done.
  *
  * Switcher is used to enable heart beat or disable heart beat.
- * 
+ *
  * @author zhanglei
  *
  */
@@ -98,7 +98,7 @@ public class PortalRegistryHeartbeatManager {
 	/**
 	 * check heart beat switcher status, if switcher is changed, then change lastHeartBeatSwitcherStatus
 	 * to the latest status.
-	 * 
+	 *
 	 * @param switcherStatus
 	 * @return
 	 */
@@ -131,7 +131,7 @@ public class PortalRegistryHeartbeatManager {
 
 	/**
 	 * Add consul serviceId，added serviceId will set passing status to keep sending heart beat.
-	 * 
+	 *
 	 * @param service PortalRegistryService
 	 */
 	public void addHeartbeatService(PortalRegistryService service) {
@@ -140,7 +140,7 @@ public class PortalRegistryHeartbeatManager {
 
 	/**
 	 * remove service，corresponding service won't send heart beat
-	 * 
+	 *
 	 * @param service PortalRegistryService
 	 */
 	public void removeHeartbeatService(PortalRegistryService service) {

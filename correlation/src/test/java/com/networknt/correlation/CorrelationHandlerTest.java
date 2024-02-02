@@ -152,12 +152,12 @@ public class CorrelationHandlerTest {
         Assert.assertNotNull(body);
         System.out.println("correlationId = " + body);
     }
-    
+
     @Test
     public void testGetWithoutTidNoAutogen() throws Exception {
     	// reset the autogen of the correlation ID
     	CorrelationHandler.config.setAutogenCorrelationID(false);
-    
+
         final Http2Client client = Http2Client.getInstance();
         final CountDownLatch latch = new CountDownLatch(1);
         final ClientConnection connection;
@@ -188,5 +188,5 @@ public class CorrelationHandlerTest {
         Assert.assertNotNull(body);
         Assert.assertEquals("noCID", body);
         System.out.println("correlationId = " + body);
-    }    
+    }
 }

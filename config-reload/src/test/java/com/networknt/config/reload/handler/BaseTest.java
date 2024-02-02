@@ -34,7 +34,7 @@ public class BaseTest {
                     .build();
             server.start();
         }
-        ModuleRegistry.registerModule(CONFIG_NAME, BodyHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        ModuleRegistry.registerModule(CONFIG_NAME, BodyHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
     @AfterClass

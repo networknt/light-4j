@@ -1,5 +1,6 @@
 package com.networknt.restrans;
 
+import com.networknt.config.Config;
 import com.networknt.handler.BuffersUtils;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.ResponseInterceptor;
@@ -58,7 +59,7 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
     public ResponseTransformerInterceptor() {
         if (logger.isInfoEnabled()) logger.info("ResponseManipulatorHandler is loaded");
         config = ResponseTransformerConfig.load();
-        ModuleRegistry.registerModule(ResponseTransformerConfig.CONFIG_NAME, ResponseTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ResponseTransformerConfig.CONFIG_NAME, ResponseTransformerInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ResponseTransformerConfig.CONFIG_NAME), null);
     }
 
     @Override
@@ -80,13 +81,13 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ResponseTransformerConfig.CONFIG_NAME, ResponseTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ResponseTransformerConfig.CONFIG_NAME, ResponseTransformerInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ResponseTransformerConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(ResponseTransformerConfig.CONFIG_NAME, ResponseTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ResponseTransformerConfig.CONFIG_NAME, ResponseTransformerInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ResponseTransformerConfig.CONFIG_NAME), null);
         if(logger.isTraceEnabled()) logger.trace("ResponseTransformerInterceptor is reloaded.");
     }
 
@@ -121,7 +122,7 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
             if (RuleLoaderStartupHook.endpointRules == null) {
                 logger.error("RuleLoaderStartupHook endpointRules is null");
             }
-            
+
             // Grab ServiceEntry from config
             endpoint = ConfigUtils.toInternalKey(exchange.getRequestMethod().toString().toLowerCase(), exchange.getRequestURI());
             if(logger.isDebugEnabled()) logger.debug("request endpoint: " + endpoint);

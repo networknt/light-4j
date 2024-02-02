@@ -68,7 +68,7 @@ public class LightProxyHandler implements HttpHandler {
 
     public LightProxyHandler() {
         config = ProxyConfig.load();
-        ModuleRegistry.registerModule(ProxyConfig.CONFIG_NAME, LightProxyHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ProxyConfig.CONFIG_NAME, LightProxyHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ProxyConfig.CONFIG_NAME), null);
         ClientConfig clientConfig = ClientConfig.get();
         Map<String, Object> tlsMap = clientConfig.getTlsConfig();
         // disable the hostname verification based on the config. We need to do it here as the LoadBalancingProxyClient uses the Undertow HttpClient.
@@ -173,7 +173,7 @@ public class LightProxyHandler implements HttpHandler {
 
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(ProxyConfig.CONFIG_NAME, LightProxyHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ProxyConfig.CONFIG_NAME, LightProxyHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ProxyConfig.CONFIG_NAME), null);
         List<String> hosts = new ArrayList<>(Arrays.asList(config.getHosts().split(",")));
         if(logger.isTraceEnabled()) logger.trace("hosts = " + JsonMapper.toJson(hosts));
         LoadBalancingProxyClient loadBalancer = new LoadBalancingProxyClient()

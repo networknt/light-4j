@@ -64,7 +64,7 @@ public class ContentHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ContentConfig.CONFIG_NAME, ContentConfig.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ContentConfig.CONFIG_NAME, ContentConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ContentConfig.CONFIG_NAME), null);
     }
 
     @Override
@@ -84,7 +84,7 @@ public class ContentHandler implements MiddlewareHandler {
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(ContentConfig.CONFIG_NAME, ContentConfig.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ContentConfig.CONFIG_NAME, ContentConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ContentConfig.CONFIG_NAME), null);
         if(logger.isInfoEnabled()) {
             logger.info("ContentHandler is enabled.");
         }

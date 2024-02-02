@@ -126,7 +126,7 @@ public class Server {
             masks.add("keyPass");
             masks.add("truststorePass");
             masks.add("bootstrapStorePass");
-            ModuleRegistry.registerModule(ServerConfig.CONFIG_NAME, Server.class.getName(), Config.getInstance().getJsonMapConfigNoCache(ServerConfig.CONFIG_NAME), masks);
+            ModuleRegistry.registerModule(ServerConfig.CONFIG_NAME, Server.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ServerConfig.CONFIG_NAME), masks);
 
             // start the server
             start();
@@ -191,7 +191,7 @@ public class Server {
                 System.out.println(errMessage);
                 logger.error(errMessage);
                 throw new RuntimeException(errMessage);
-            }          
+            }
             // init usedPort here before starting the loop.
             int capacity = serverConfig.maxPort - serverConfig.minPort + 1;
             usedPorts = new HashSet(capacity);

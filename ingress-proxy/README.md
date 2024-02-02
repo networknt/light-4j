@@ -3,11 +3,11 @@
 The module provides proxy (ingress traffic) related handlers and util classes.
 
 The proxy handlers delegate light API server feature and provide server side cross-cutting concerns. For example, schema validation, JWT verification, etc.
- 
 
 
 
-### To learn how to use this proxy, pleases refer to 
+
+### To learn how to use this proxy, pleases refer to
 
 * [light-proxy](https://github.com/networknt/light-proxy) github repo
 

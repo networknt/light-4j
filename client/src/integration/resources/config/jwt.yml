@@ -2,7 +2,6 @@
 key:
   kid: '100'
   filename: "primary.jks"
-  password: password
   keyName: selfsigned
   password: password                       # private key store password and private key password is the same
 issuer: urn:com:networknt:oauth2:v1

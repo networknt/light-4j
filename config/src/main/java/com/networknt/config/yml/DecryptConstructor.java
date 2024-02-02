@@ -13,27 +13,27 @@ import com.networknt.decrypt.Decryptor;
 
 /**
  * Decrypts values in configuration yml files.
- * 
+ *
  * @author Daniel Zhao
  *
  */
 public class DecryptConstructor extends Constructor {
 	private static final Logger logger = LoggerFactory.getLogger(DecryptConstructor.class);
-	
+
 	private final Decryptor decryptor;
-	
+
 	public static final String CONFIG_ITEM_DECRYPTOR_CLASS = "decryptorClass";
 	public static final String DEFAULT_DECRYPTOR_CLASS = AutoAESSaltDecryptor.class.getCanonicalName();
 
 	private DecryptConstructor() {
 		this(DEFAULT_DECRYPTOR_CLASS);
 	}
-	
+
 	private DecryptConstructor(String decryptorClass) {
 		super(new LoaderOptions());
-		
+
 		decryptor= createDecryptor(decryptorClass);
-		
+
 		this.yamlConstructors.put(YmlConstants.CRYPT_TAG, new ConstructYamlDecryptedStr());
 	}
 
@@ -54,10 +54,10 @@ public class DecryptConstructor extends Constructor {
 		if (logger.isTraceEnabled()) {
 			logger.trace("creating decryptor {}", decryptorClass);
 		}
-		
+
 		try {
 			Class<?> typeClass = Class.forName(decryptorClass);
-			
+
 			if (!typeClass.isInterface()) {
 				return (Decryptor) typeClass.getConstructor().newInstance();
 			}else {
@@ -67,7 +67,7 @@ public class DecryptConstructor extends Constructor {
 			logger.error(e.getMessage());
 			throw new RuntimeException("Unable to construct the decryptor due to lack of decryption password.", e);
 		}
-		
+
 		return null;
 	}
 

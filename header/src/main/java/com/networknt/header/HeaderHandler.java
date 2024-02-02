@@ -16,6 +16,7 @@
 
 package com.networknt.header;
 
+import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.ModuleRegistry;
@@ -159,13 +160,13 @@ public class HeaderHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(HeaderConfig.CONFIG_NAME, HeaderHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(HeaderConfig.CONFIG_NAME, HeaderHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(HeaderConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(HeaderConfig.CONFIG_NAME, HeaderHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(HeaderConfig.CONFIG_NAME, HeaderHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(HeaderConfig.CONFIG_NAME), null);
         if(logger.isInfoEnabled()) logger.info("HeaderHandler is reloaded.");
     }
 }
