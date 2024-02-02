@@ -42,7 +42,7 @@ public class MetricsHandler extends AbstractMetricsHandler {
         if(config.getIssuerRegex() != null) {
             pattern = Pattern.compile(config.getIssuerRegex());
         }
-        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, MetricsHandler.class.getName(), config.getMappedConfig(), List.of(MASK_KEY_SERVER_PASS));
+        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, MetricsHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(MetricsConfig.CONFIG_NAME), List.of(MASK_KEY_SERVER_PASS));
         if(logger.isDebugEnabled()) logger.debug("MetricsHandler is constructed!");
     }
 
@@ -116,13 +116,13 @@ public class MetricsHandler extends AbstractMetricsHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, MetricsHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(MetricsConfig.CONFIG_NAME), List.of(MASK_KEY_SERVER_PASS));
+        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, MetricsHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(MetricsConfig.CONFIG_NAME), List.of(MASK_KEY_SERVER_PASS));
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, MetricsHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(MetricsConfig.CONFIG_NAME), List.of(MASK_KEY_SERVER_PASS));
+        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, MetricsHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(MetricsConfig.CONFIG_NAME), List.of(MASK_KEY_SERVER_PASS));
         if(logger.isInfoEnabled()) logger.info("MetricsHandler is reloaded.");
     }
 

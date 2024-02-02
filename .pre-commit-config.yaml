@@ -10,5 +10,5 @@ repos:
     rev: 356f23a9acfcc8ac12697412e886483d2125cccd
     hooks:
     -   id: keywordscan
-        args: ["--keywords=sunlife,cibc,eadp"]
+        args: ["--keywords=sunlife,cibc"]
         types: ["text"]

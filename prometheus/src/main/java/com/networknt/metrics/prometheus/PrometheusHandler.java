@@ -131,7 +131,7 @@ public class PrometheusHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(PrometheusConfig.CONFIG_NAME, PrometheusHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
+        ModuleRegistry.registerModule(PrometheusConfig.CONFIG_NAME, PrometheusHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
     @Override

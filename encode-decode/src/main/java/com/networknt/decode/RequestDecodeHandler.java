@@ -84,7 +84,7 @@ public class RequestDecodeHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(RequestDecodeConfig.CONFIG_NAME, RequestDecodeHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(RequestDecodeConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(RequestDecodeConfig.CONFIG_NAME, RequestDecodeHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RequestDecodeConfig.CONFIG_NAME), null);
     }
 
     @Override
@@ -102,7 +102,7 @@ public class RequestDecodeHandler implements MiddlewareHandler {
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(RequestDecodeConfig.CONFIG_NAME, RequestDecodeHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(RequestDecodeConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(RequestDecodeConfig.CONFIG_NAME, RequestDecodeHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RequestDecodeConfig.CONFIG_NAME), null);
         if(logger.isInfoEnabled()) logger.info("RequestDecodeHandler is reloaded.");
     }
 }

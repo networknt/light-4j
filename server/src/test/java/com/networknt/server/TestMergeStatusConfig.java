@@ -111,7 +111,7 @@ public class TestMergeStatusConfig extends TestCase {
     }
 
     private void setExternalizedConfigDir(String externalizedDir) throws Exception {
-        Field f1 = config.getClass().getDeclaredField("EXTERNALIZED_PROPERTY_DIR");
+        Field f1 = config.getClass().getSuperclass().getDeclaredField("EXTERNALIZED_PROPERTY_DIR");
         f1.setAccessible(true);
         f1.set(config, externalizedDir.split(":"));
     }

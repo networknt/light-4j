@@ -208,13 +208,13 @@ public class BodyHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(BodyConfig.CONFIG_NAME, BodyHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(BodyConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(BodyConfig.CONFIG_NAME, BodyHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(BodyConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(BodyConfig.CONFIG_NAME, BodyHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(BodyConfig.CONFIG_NAME, BodyHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(BodyConfig.CONFIG_NAME), null);
         if(logger.isInfoEnabled()) logger.info("BodyHandler is reloaded.");
     }
 }

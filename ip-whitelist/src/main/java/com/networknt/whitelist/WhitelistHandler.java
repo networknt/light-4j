@@ -92,13 +92,13 @@ public class WhitelistHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(WhitelistConfig.CONFIG_NAME, WhitelistHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(WhitelistConfig.CONFIG_NAME, WhitelistHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(WhitelistConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(WhitelistConfig.CONFIG_NAME, WhitelistHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(WhitelistConfig.CONFIG_NAME, WhitelistHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(WhitelistConfig.CONFIG_NAME), null);
         if(logger.isInfoEnabled()) logger.info("WhitelistHandler is reloaded.");
     }
 

@@ -54,7 +54,7 @@ public class RouterHandler implements HttpHandler {
     protected static AbstractMetricsHandler metricsHandler;
     public RouterHandler() {
         config = RouterConfig.load();
-        ModuleRegistry.registerModule(RouterConfig.CONFIG_NAME, RouterHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(RouterConfig.CONFIG_NAME, RouterHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RouterConfig.CONFIG_NAME), null);
         ClientConfig clientConfig = ClientConfig.get();
         Map<String, Object> tlsMap = clientConfig.getTlsConfig();
         // disable the hostname verification based on the config. We need to do it here as the LoadBalancingRouterProxyClient uses the Undertow HttpClient.
@@ -110,7 +110,7 @@ public class RouterHandler implements HttpHandler {
 
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(RouterConfig.CONFIG_NAME, RouterHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(RouterConfig.CONFIG_NAME, RouterHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RouterConfig.CONFIG_NAME), null);
         LoadBalancingRouterProxyClient client = new LoadBalancingRouterProxyClient();
         if(config.httpsEnabled) client.setSsl(Http2Client.getInstance().getDefaultXnioSsl());
         if(config.http2Enabled) {

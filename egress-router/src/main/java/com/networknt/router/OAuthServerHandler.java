@@ -44,7 +44,7 @@ public class OAuthServerHandler implements LightHttpHandler {
     public OAuthServerHandler() {
         config = OAuthServerConfig.load();
         if(logger.isInfoEnabled()) logger.info("OAuthServerHandler is constructed.");
-        ModuleRegistry.registerModule(OAuthServerConfig.CONFIG_NAME, OAuthServerHandler.class.getName(), config.getMappedConfig(),null);
+        ModuleRegistry.registerModule(OAuthServerConfig.CONFIG_NAME, OAuthServerHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(OAuthServerConfig.CONFIG_NAME),null);
     }
 
     @Override

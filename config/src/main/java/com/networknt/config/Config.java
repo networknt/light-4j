@@ -113,29 +113,23 @@ public abstract class Config {
     public static Config getInstance() {
         return FileConfigImpl.DEFAULT;
     }
+    public static Config getNoneDecryptedInstance() {
+        return NoneDecryptedConfigImpl.NONE_DECRYPTED;
+    }
 
     public abstract String getDecryptorClassPublic();
 
-    private static final class FileConfigImpl extends Config {
-    	static final String CONFIG_NAME = "config";
+    private static abstract class AbstractConfigImpl extends Config {
+        static final String CONFIG_NAME = "config";
         static final String CONFIG_EXT_JSON = ".json";
         static final String CONFIG_EXT_YAML = ".yaml";
         static final String CONFIG_EXT_YML = ".yml";
         static final String[] configExtensionsOrdered = {CONFIG_EXT_YML, CONFIG_EXT_YAML, CONFIG_EXT_JSON};
-
-        static final Logger logger = LoggerFactory.getLogger(Config.class);
-
+        static final Logger logger = LoggerFactory.getLogger(NoneDecryptedConfigImpl.class);
         public final String[] EXTERNALIZED_PROPERTY_DIR = System.getProperty(LIGHT_4J_CONFIG_DIR, "").split(File.pathSeparator);
-
-        private long cacheExpirationTime = 0L;
-
-        private String configLoaderClass;
-
         private ConfigLoader configLoader;
-
         private ClassLoader classLoader;
-
-        private static final Config DEFAULT = initialize();
+        private String configLoaderClass;
 
         // Memory cache of all the configuration object. Each config will be loaded on the first time it is accessed.
         final Map<String, Object> configCache = new ConcurrentHashMap<>(10, 0.9f, 1);
@@ -148,41 +142,15 @@ public abstract class Config {
             mapper.registerModule(new Jdk8Module());
             mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         }
-        
-        final Yaml yaml;
 
-        FileConfigImpl(){
-        	super();
-      	    String decryptorClass = getDecryptorClass();
-       	    configLoaderClass = getConfigLoaderClass();
-            synchronized (FileConfigImpl.class) {
-                if (null == decryptorClass || decryptorClass.trim().isEmpty()) {
-                    yaml = new Yaml();
-                } else {
-                    final Resolver resolver = new Resolver();
-                    resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
-                    yaml = new Yaml(DecryptConstructor.getInstance(decryptorClass), new Representer(new DumperOptions()), new DumperOptions(), resolver);
-                }
-            }
+        public AbstractConfigImpl() {
+            configLoaderClass = getConfigLoaderClass();
         }
 
-        private static Config initialize() {
-            Iterator<Config> it;
-            it = ServiceLoader.load(Config.class).iterator();
-            return it.hasNext() ? it.next() : new FileConfigImpl();
-        }
-
-        // Return instance of Jackson Object Mapper
         @Override
         public ObjectMapper getMapper() {
             return mapper;
         }
-
-        @Override
-        public Yaml getYaml() {
-            return yaml;
-        }
-
         @Override
         public void clear() {
             configCache.clear();
@@ -455,10 +423,10 @@ public abstract class Config {
                 if (inStream != null) {
                     // The config file specified in the config.yml shouldn't be injected
                     if (ConfigInjection.isExclusionConfigFile(configName)) {
-                        config = yaml.loadAs(inStream, clazz);
+                        config = getYaml().loadAs(inStream, clazz);
                     } else {
                         // Parse into map first, since map is easier to be manipulated in merging process
-                        Map<String, Object> configMap = yaml.load(inStream);
+                        Map<String, Object> configMap = getYaml().load(inStream);
                         config = CentralizedManagement.mergeObject(configMap, clazz);
                     }
                 }
@@ -490,7 +458,7 @@ public abstract class Config {
             String ymlFilename = configName + fileExtension;
             try (InputStream inStream = getConfigStream(ymlFilename, path)) {
                 if (inStream != null) {
-                    config = yaml.load(inStream);
+                    config = getYaml().load(inStream);
                     if (!ConfigInjection.isExclusionConfigFile(configName)) {
                         CentralizedManagement.mergeMap(config); // mutates the config map in place.
                     }
@@ -501,8 +469,8 @@ public abstract class Config {
             }
             return config;
         }
-        
-        
+
+
         private Map<String, Object> loadMapConfig(String configName, String path) {
             Map<String, Object> config;
             for (String extension : configExtensionsOrdered) {
@@ -581,7 +549,7 @@ public abstract class Config {
             }
         }
 
-        private String getDecryptorClass() {
+        protected String getDecryptorClass() {
             Map<String, Object> config = loadModuleConfig();
             if (null != config) {
                 String decryptorClass = (String) config.get(DecryptConstructor.CONFIG_ITEM_DECRYPTOR_CLASS);
@@ -692,6 +660,65 @@ public abstract class Config {
             }
             return config;
         }
+
+    }
+    /**
+     * This is the implementation that is not decrypt the CRYPT value from the config file. So that it
+     * can be used to load the configuration for module registry and output with the server info endpoint.
+     * @author Steve Hu
+     */
+    private static final class NoneDecryptedConfigImpl extends AbstractConfigImpl {
+        private static final Config NONE_DECRYPTED = initialize();
+        final Yaml yaml;
+        NoneDecryptedConfigImpl() {
+            super();
+            synchronized (NoneDecryptedConfigImpl.class) {
+                yaml = new Yaml();
+            }
+        }
+
+        private static Config initialize() {
+            Iterator<Config> it;
+            it = ServiceLoader.load(Config.class).iterator();
+            return it.hasNext() ? it.next() : new NoneDecryptedConfigImpl();
+        }
+
+        @Override
+        public Yaml getYaml() {
+            return yaml;
+        }
+    }
+
+    private static final class FileConfigImpl extends AbstractConfigImpl {
+        private static final Config DEFAULT = initialize();
+
+
+        final Yaml yaml;
+
+        FileConfigImpl(){
+        	super();
+      	    String decryptorClass = getDecryptorClass();
+            synchronized (FileConfigImpl.class) {
+                if (null == decryptorClass || decryptorClass.trim().isEmpty()) {
+                    yaml = new Yaml();
+                } else {
+                    final Resolver resolver = new Resolver();
+                    resolver.addImplicitResolver(YmlConstants.CRYPT_TAG, YmlConstants.CRYPT_PATTERN, YmlConstants.CRYPT_FIRST);
+                    yaml = new Yaml(DecryptConstructor.getInstance(decryptorClass), new Representer(new DumperOptions()), new DumperOptions(), resolver);
+                }
+            }
+        }
+
+        private static Config initialize() {
+            Iterator<Config> it;
+            it = ServiceLoader.load(Config.class).iterator();
+            return it.hasNext() ? it.next() : new FileConfigImpl();
+        }
+
+        @Override
+        public Yaml getYaml() {
+            return yaml;
+        }
     }
 
     static String convertStreamToString(java.io.InputStream is) {
@@ -735,4 +762,3 @@ public abstract class Config {
         return new ByteArrayInputStream(string.getBytes(UTF_8));
     }
 }
-

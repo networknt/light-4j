@@ -3,6 +3,7 @@ package com.networknt.proxy;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.client.ssl.TLSConfig;
+import com.networknt.config.Config;
 import com.networknt.handler.BuffersUtils;
 import com.networknt.handler.Handler;
 import com.networknt.handler.HandlerUtils;
@@ -86,7 +87,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ExternalServiceConfig.CONFIG_NAME, ExternalServiceHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ExternalServiceConfig.CONFIG_NAME, ExternalServiceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ExternalServiceConfig.CONFIG_NAME), null);
     }
 
     @Override
@@ -101,7 +102,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                 logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
             }
         }
-        ModuleRegistry.registerModule(ExternalServiceConfig.CONFIG_NAME, ExternalServiceHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ExternalServiceConfig.CONFIG_NAME, ExternalServiceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ExternalServiceConfig.CONFIG_NAME), null);
         if(logger.isInfoEnabled()) logger.info("ExternalServiceHandler is reloaded.");
     }
 

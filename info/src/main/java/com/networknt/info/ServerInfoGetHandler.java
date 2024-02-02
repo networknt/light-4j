@@ -53,7 +53,7 @@ public class ServerInfoGetHandler implements LightHttpHandler {
     public ServerInfoGetHandler() {
         if(logger.isDebugEnabled()) logger.debug("ServerInfoGetHandler is constructed");
         config = ServerInfoConfig.load();
-        ModuleRegistry.registerModule(ServerInfoConfig.CONFIG_NAME, ServerInfoConfig.class.getName(), config.getMappedConfig(),null);
+        ModuleRegistry.registerModule(ServerInfoConfig.CONFIG_NAME, ServerInfoConfig.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ServerInfoConfig.CONFIG_NAME),null);
     }
 
     @Override

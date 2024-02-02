@@ -187,7 +187,7 @@ public class Http2Client {
 
         // register module.
         List<String> masks = List.of(MASK_KEY_CLIENT_SECRET, MASK_KEY_TRUST_STORE_PASS, MASK_KEY_KEY_STORE_PASS, MASK_KEY_KEY_PASS);
-        ModuleRegistry.registerModule(ClientConfig.CONFIG_NAME, Http2Client.class.getName(), Config.getInstance().getJsonMapConfigNoCache(ClientConfig.CONFIG_NAME), masks);
+        ModuleRegistry.registerModule(ClientConfig.CONFIG_NAME, Http2Client.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ClientConfig.CONFIG_NAME), masks);
     }
 
     private void addProvider(Map<String, ClientProvider> map, String scheme, ClientProvider provider) {

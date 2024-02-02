@@ -1,5 +1,6 @@
 package com.networknt.body;
 
+import com.networknt.config.Config;
 import com.networknt.handler.BuffersUtils;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.RequestInterceptor;
@@ -188,13 +189,13 @@ public class RequestBodyInterceptor implements RequestInterceptor {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(BodyConfig.CONFIG_NAME, RequestBodyInterceptor.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(BodyConfig.CONFIG_NAME, RequestBodyInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(BodyConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(BodyConfig.CONFIG_NAME, RequestBodyInterceptor.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(BodyConfig.CONFIG_NAME, RequestBodyInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(BodyConfig.CONFIG_NAME), null);
         if (LOG.isInfoEnabled())
             LOG.info("RequestBodyInterceptor is reloaded.");
     }
