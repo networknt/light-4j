@@ -17,7 +17,7 @@ public class JVMMetricsDbReporter extends ScheduledReporter {
 	private final TimeSeriesDbSender influxDb;
 	private final MetricRegistry registry;
 	private final Map<String, String> tags;
-	
+
 	public JVMMetricsDbReporter(final MetricRegistry registry, final TimeSeriesDbSender influxDb, String name, MetricFilter filter, TimeUnit rateUnit,
                                 TimeUnit durationUnit, Map<String, String> tags) {
 		super(registry, name, filter, rateUnit, durationUnit);
@@ -30,18 +30,18 @@ public class JVMMetricsDbReporter extends ScheduledReporter {
     public void report(final SortedMap<MetricName, Gauge> gauges, final SortedMap<MetricName, Counter> counters,
                        final SortedMap<MetricName, Histogram> histograms, final SortedMap<MetricName, Meter> meters, final SortedMap<MetricName, Timer> timers) {
         final long now = System.currentTimeMillis();
-        
+
         JVMMetricsUtil.trackAllJVMMetrics(registry, tags);
-        
+
         if(logger.isDebugEnabled()) logger.debug("JVMMetricsDbReporter report is called with counter size " + counters.size());
         try {
             influxDb.flush();
-            
+
             //Get gauges again from registry, since the gauges provided in the argument is OUTDATED (Previous collection)
             for (Map.Entry<MetricName, Gauge> entry : registry.getGauges().entrySet()) {
                 reportGauge(entry.getKey(), entry.getValue(), now);
             }
-            
+
             if (influxDb.hasSeriesData()) {
                 influxDb.writeData();
             }
@@ -64,7 +64,7 @@ public class JVMMetricsDbReporter extends ScheduledReporter {
             }
         }
     }
-	
+
 	private String format(Object o) {
         if (o instanceof Float) {
             return format(((Float) o).doubleValue());

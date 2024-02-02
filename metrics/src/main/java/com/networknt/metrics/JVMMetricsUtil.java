@@ -13,13 +13,13 @@ import java.lang.management.MemoryUsage;
 import java.util.Map;
 
 public class JVMMetricsUtil {
-	
+
 	public static void trackAllJVMMetrics(final MetricRegistry registry, final Map<String, String> commonTags) {
 		 //JVM Metrics
 		MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
 		track("mem.heap_mem", memBean.getHeapMemoryUsage(), registry, commonTags);
 		track("mem.nonheap_mem", memBean.getNonHeapMemoryUsage(), registry, commonTags);
-		
+
 		double hmu = ((Long)memBean.getHeapMemoryUsage().getUsed()).doubleValue();
 		double hmc = ((Long)memBean.getHeapMemoryUsage().getMax()).doubleValue();
 		if (hmc == -1) {
@@ -28,22 +28,22 @@ public class JVMMetricsUtil {
 		double nhmu = ((Long)memBean.getNonHeapMemoryUsage().getUsed()).doubleValue();
 		double nhmc = ((Long)memBean.getNonHeapMemoryUsage().getMax()).doubleValue();
 		if (nhmc == -1) {
-			nhmc = ((Long)memBean.getNonHeapMemoryUsage().getCommitted()).doubleValue();	
+			nhmc = ((Long)memBean.getNonHeapMemoryUsage().getCommitted()).doubleValue();
 		}
-		
+
 		track("mem.heap_usage", hmu / hmc, registry, commonTags);
 		track("mem.nonheap_usage", nhmu / nhmc, registry, commonTags);
-		
-		
+
+
 		MBeanServer beans = ManagementFactory.getPlatformMBeanServer();
 		try {
 			ObjectName os = new ObjectName("java.lang:type=OperatingSystem");
 			Double sysCpuLoad = (Double)beans.getAttribute(os, "SystemCpuLoad");
 			Double processCpuLoad = (Double)beans.getAttribute(os, "ProcessCpuLoad");
-			
+
 			double totalPMemory = ((Long)beans.getAttribute(os, "TotalPhysicalMemorySize")).doubleValue();
 			double freePMemory = ((Long)beans.getAttribute(os, "FreePhysicalMemorySize")).doubleValue();
-			
+
 			track("os.sys_cpu_load", sysCpuLoad, registry, commonTags);
 			track("os.process_cpu_load", processCpuLoad, registry, commonTags);
 			track("os.mem_usage", (totalPMemory-freePMemory)/totalPMemory, registry, commonTags);
@@ -51,10 +51,10 @@ public class JVMMetricsUtil {
 				| ReflectionException | MBeanException e) {
 			e.printStackTrace();
 		}
-		
+
 		track("thread.count", ManagementFactory.getThreadMXBean().getThreadCount(), registry, commonTags);
 	}
-	
+
 	private static void track(String name, MemoryUsage m, final MetricRegistry registry, final Map<String, String> commonTags) {
 		MetricName mName = MetricRegistry.name("jvm", name).tagged(commonTags);
 		registry.remove(mName.resolve("used"));
@@ -76,13 +76,13 @@ public class JVMMetricsUtil {
 		registry.remove(mName);
 		registry.getOrAdd(mName, createGaugeMetricBuilder(value));
 	}
-	
+
 	private static void track(String name, int value, final MetricRegistry registry, final Map<String, String> commonTags) {
 		MetricName mName = MetricRegistry.name("jvm", name).tagged(commonTags);
 		registry.remove(mName);
 		registry.getOrAdd(mName, createGaugeMetricBuilder(value));
 	}
-	
+
 	private static MetricBuilder<Gauge<Long>> createGaugeMetricBuilder(long value){
 		return new MetricBuilder<Gauge<Long>>() {
 	        @Override
@@ -96,7 +96,7 @@ public class JVMMetricsUtil {
 	        }
 	    };
 	}
-	
+
 	private static MetricBuilder<Gauge<Double>> createGaugeMetricBuilder(Double value){
 		return new MetricBuilder<Gauge<Double>>() {
 	        @Override
@@ -110,7 +110,7 @@ public class JVMMetricsUtil {
 	        }
 	    };
 	}
-	
+
 	private static MetricBuilder<Gauge<Integer>> createGaugeMetricBuilder(int value){
 		return new MetricBuilder<Gauge<Integer>>() {
 	        @Override
@@ -124,5 +124,5 @@ public class JVMMetricsUtil {
 	        }
 	    };
 	}
-	
+
 }

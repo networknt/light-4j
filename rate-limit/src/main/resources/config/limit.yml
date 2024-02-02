@@ -51,4 +51,3 @@ clientIdKeyResolver: ${limit.clientIdKeyResolver:com.networknt.limit.key.JwtClie
 addressKeyResolver: ${limit.addressKeyResolver:com.networknt.limit.key.RemoteAddressKeyResolver}
 # User Id Key Resolver.
 userIdKeyResolver: ${limit.userIdKeyResolver:com.networknt.limit.key.JwtUserIdKeyResolver}
-

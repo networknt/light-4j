@@ -31,7 +31,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class MetricRegistryListenerTest {
     private static final MetricName BLAH = MetricName.build("blah");
-    
+
     private final Gauge gauge = mock(Gauge.class);
     private final Counter counter = mock(Counter.class);
     private final Histogram histogram = mock(Histogram.class);

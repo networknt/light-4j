@@ -18,7 +18,7 @@ package com.networknt.registry;
 import java.util.List;
 
 /**
- * 
+ *
  * Discovery service.
  *
  * @author fishermen

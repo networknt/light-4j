@@ -374,7 +374,7 @@ public class JwtVerifier extends TokenVerifier {
         if(logger.isTraceEnabled()) logger.trace("kid = " + kid + " requestPathOrJwkServiceIds = " + requestPathOrJwkServiceIds + " keyResolver = " + keyResolver);
         // get the public key certificate from the cache that is loaded from security.yml. If it is not there,
         // go to the next step to access JWK if it is enabled. We need to update the light-oauth2 and oauth-kafka
-        // to support JWK instead of X509Certificate endpoint. 
+        // to support JWK instead of X509Certificate endpoint.
         X509Certificate certificate = certMap == null ? null : certMap.get(kid);
         if (certificate != null) {
             X509VerificationKeyResolver x509VerificationKeyResolver = new X509VerificationKeyResolver(certificate);

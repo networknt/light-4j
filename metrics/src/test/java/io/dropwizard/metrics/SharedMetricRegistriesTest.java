@@ -29,7 +29,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
 public class SharedMetricRegistriesTest {
-    
+
     @Before
     public void setUp() {
         SharedMetricRegistries.clear();
@@ -37,7 +37,7 @@ public class SharedMetricRegistriesTest {
         assertThat(SharedMetricRegistries.names())
                 .isEmpty();
     }
-	
+
     @After
     public void tearDown() {
         SharedMetricRegistries.clear();

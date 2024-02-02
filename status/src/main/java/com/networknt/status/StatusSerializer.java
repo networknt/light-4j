@@ -17,15 +17,15 @@ package com.networknt.status;
 
 /**
  * Interface to allow custom serialization for a Status.
- * 
+ *
  * Framework users can define their own format to return an error message to a consumer
- * 
+ *
  * @author Dan Dobrin
  */
 public interface StatusSerializer {
 	/**
 	 * Serialize the status and provide a custom format in the iomplementing class
-	 * 
+	 *
 	 * @param status The status to be serialized
 	 * @return the format Status object, to be serialized and returned to the consumer
 	 */

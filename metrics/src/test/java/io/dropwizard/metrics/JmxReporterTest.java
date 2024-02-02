@@ -151,7 +151,7 @@ public class JmxReporterTest {
     		}
     	}
     }
-    
+
     @Test
     public void registersMBeansForGauges() throws Exception {
         final AttributeList attributes = getAttributes("gauge", "Value");
@@ -268,30 +268,30 @@ public class JmxReporterTest {
 
         }
     }
-    
+
     @Test
     public void objectNameModifyingMBeanServer() throws Exception {
     	MBeanServer mockedMBeanServer = mock(MBeanServer.class);
-    	
+
     	// overwrite the objectName
     	when(mockedMBeanServer.registerMBean(any(Object.class), any(ObjectName.class))).thenReturn(new ObjectInstance("DOMAIN:key=value","className"));
-    	
+
     	MetricRegistry testRegistry = new MetricRegistry();
     	JmxReporter testJmxReporter = JmxReporter.forRegistry(testRegistry)
                 .registerWith(mockedMBeanServer)
                 .inDomain(name)
                 .build();
-    	
+
     	testJmxReporter.start();
-    
+
     	// should trigger a registerMBean
     	testRegistry.timer("test");
-    	
+
     	// should trigger an unregisterMBean with the overwritten objectName = "DOMAIN:key=value"
     	testJmxReporter.stop();
-    	
+
     	verify(mockedMBeanServer).unregisterMBean(new ObjectName("DOMAIN:key=value"));
-    	
+
     }
 
     @Test
