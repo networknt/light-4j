@@ -22,6 +22,7 @@ import ch.qos.logback.core.joran.spi.JoranException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.config.Config;
+import com.networknt.config.ConfigInjection;
 import com.networknt.config.JsonMapper;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
@@ -223,9 +224,15 @@ public class DefaultConfigLoader implements IConfigLoader{
             logger.error("Exception while creating " + targetConfigsDirectory, e);
         }
 
-        //clear config cache: this is required just in case other classes have already loaded something in cache
+        // clear config cache: this is required just in case other classes have already loaded something in cache
+        // only the config file templates are in the cache, so it is safe to clear the cache.
         Config.getInstance().clear();
-        Config.getInstance().putInConfigCache(CENTRALIZED_MANAGEMENT, serviceConfigs);
+        Config.getNoneDecryptedInstance().clear();
+        // Reload the values.yml for both decrypted and un-decrypted values so that they can be merged to the templates.
+        // The cached values.yml can avoid reload the values.yml file for each property merge.
+        ConfigInjection.decryptedValueMap = Config.getInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
+        ConfigInjection.undecryptedValueMap = Config.getNoneDecryptedInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
+
         //You can call Server.getServerConfig() now.
     }
 

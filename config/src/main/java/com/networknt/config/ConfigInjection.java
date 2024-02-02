@@ -62,6 +62,10 @@ public class ConfigInjection {
     private static final String[] falseArray = {"n", "N", "no", "No", "NO", "false", "False", "FALSE", "off", "Off", "OFF"};
     private static final Decryptor decryptor = DecryptConstructor.getInstance().getDecryptor();
 
+    public static Map<String, Object> decryptedValueMap = Config.getInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
+    public static Map<String, Object> undecryptedValueMap = Config.getNoneDecryptedInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
+
+
     // Method used to generate the values from environment variables or "values.yaml"
     public static Object getInjectValue(String string, boolean decrypt) {
         Matcher m = pattern.matcher(string);
@@ -129,23 +133,19 @@ public class ConfigInjection {
 
             Object envValue;
             Object fileValue;
-            // the reason we don't cache the valueMap is to support the config reload. This needs to be revisited.
-            // TODO We should cache it and reload it when the file is changed.
             if(decrypt) {
                 envValue = decryptEnvValue(decryptor, envValString);
-                Map<String, Object> valueMap = Config.getInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
-                fileValue = (valueMap != null) ? valueMap.get(injectionPattern.getKey()) : null;
+                fileValue = (decryptedValueMap != null) ? decryptedValueMap.get(injectionPattern.getKey()) : null;
                 // Skip none validation to inject null or empty string directly when the corresponding field is presented in value.yml or environment
-                if ((valueMap != null && valueMap.containsKey(injectionPattern.getKey())) ||
+                if ((decryptedValueMap != null && decryptedValueMap.containsKey(injectionPattern.getKey())) ||
                         (System.getenv() != null && System.getenv().containsKey(injectionPattern.getKey()))) {
                     containsField = true;
                 }
             } else {
                 envValue = envValString;
-                Map<String, Object> valueMap = Config.getNoneDecryptedInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
-                fileValue = (valueMap != null) ? valueMap.get(injectionPattern.getKey()) : null;
+                fileValue = (undecryptedValueMap != null) ? undecryptedValueMap.get(injectionPattern.getKey()) : null;
                 // Skip none validation to inject null or empty string directly when the corresponding field is presented in value.yml or environment
-                if ((valueMap != null && valueMap.containsKey(injectionPattern.getKey())) ||
+                if ((undecryptedValueMap != null && undecryptedValueMap.containsKey(injectionPattern.getKey())) ||
                         (System.getenv() != null && System.getenv().containsKey(injectionPattern.getKey()))) {
                     containsField = true;
                 }
