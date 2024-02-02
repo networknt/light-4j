@@ -41,10 +41,8 @@ public class ModuleRegistry {
     public static void registerModule(String configName, String moduleClass, Map<String, Object> config, List<String> masks) {
         // use module name as key for the config map will make api-certification parses this object easily.
         if(config != null) {
-            // TODO remove the mask config properties as the config contains sensitive information. We need to build another config
             // loader to load the config without decryption for the registry.
-            //if(ServerConfig.getInstance().isMaskConfigProperties() && masks != null && !masks.isEmpty()) {
-            if(masks != null && !masks.isEmpty()) {
+            if(ServerConfig.getInstance().isMaskConfigProperties() && masks != null && !masks.isEmpty()) {
                 for (String mask : masks) {
                     maskNode(config, mask);
                 }
@@ -74,9 +72,7 @@ public class ModuleRegistry {
     public static void registerPlugin(String pluginName, String pluginVersion, String configName, String pluginClass, Map<String, Object> config, List<String> masks) {
         // use plugin name as key for the config map will make api-certification parses this object easily.
         if(config != null) {
-            // TODO update along with the registerModule.
-            // if(ServerConfig.getInstance().isMaskConfigProperties() && masks != null && !masks.isEmpty()) {
-            if(masks != null && !masks.isEmpty()) {
+            if(ServerConfig.getInstance().isMaskConfigProperties() && masks != null && !masks.isEmpty()) {
                 for (String mask : masks) {
                     maskNode(config, mask);
                 }
