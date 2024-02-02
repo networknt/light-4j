@@ -49,7 +49,7 @@ import static com.networknt.config.ConfigInjection.CENTRALIZED_MANAGEMENT;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- * A injectable singleton config that has default implementation
+ * An injectable singleton config that has default implementation
  * based on FileSystem json files. It can be extended to
  * other sources (database, distributed cache etc.) by providing
  * another jar in the classpath to replace the default implementation.
@@ -104,6 +104,8 @@ public abstract class Config {
 
     public abstract Yaml getYaml();
 
+    public abstract boolean isDecrypt();
+
     public abstract void clear();
 
     public abstract void setClassLoader(ClassLoader urlClassLoader);
@@ -117,7 +119,7 @@ public abstract class Config {
         return NoneDecryptedConfigImpl.NONE_DECRYPTED;
     }
 
-    public abstract String getDecryptorClassPublic();
+    // public abstract String getDecryptorClassPublic();
 
     private static abstract class AbstractConfigImpl extends Config {
         static final String CONFIG_NAME = "config";
@@ -129,7 +131,7 @@ public abstract class Config {
         public final String[] EXTERNALIZED_PROPERTY_DIR = System.getProperty(LIGHT_4J_CONFIG_DIR, "").split(File.pathSeparator);
         private ConfigLoader configLoader;
         private ClassLoader classLoader;
-        private String configLoaderClass;
+        private final String configLoaderClass;
 
         // Memory cache of all the configuration object. Each config will be loaded on the first time it is accessed.
         final Map<String, Object> configCache = new ConcurrentHashMap<>(10, 0.9f, 1);
@@ -427,7 +429,7 @@ public abstract class Config {
                     } else {
                         // Parse into map first, since map is easier to be manipulated in merging process
                         Map<String, Object> configMap = getYaml().load(inStream);
-                        config = CentralizedManagement.mergeObject(configMap, clazz);
+                        config = CentralizedManagement.mergeObject(isDecrypt(), configMap, clazz);
                     }
                 }
             } catch (Exception e) {
@@ -460,7 +462,7 @@ public abstract class Config {
                 if (inStream != null) {
                     config = getYaml().load(inStream);
                     if (!ConfigInjection.isExclusionConfigFile(configName)) {
-                        CentralizedManagement.mergeMap(config); // mutates the config map in place.
+                        CentralizedManagement.mergeMap(isDecrypt(), config); // mutates the config map in place.
                     }
                 }
             } catch (Exception e) {
@@ -545,7 +547,7 @@ public abstract class Config {
             if (path.startsWith("/")) {
                 return path;
             } else {
-                return path.equals("") ? EXTERNALIZED_PROPERTY_DIR[index].trim() : EXTERNALIZED_PROPERTY_DIR[index].trim() + "/" + path;
+                return path.isEmpty() ? EXTERNALIZED_PROPERTY_DIR[index].trim() : EXTERNALIZED_PROPERTY_DIR[index].trim() + "/" + path;
             }
         }
 
@@ -563,7 +565,7 @@ public abstract class Config {
             return DecryptConstructor.DEFAULT_DECRYPTOR_CLASS;
         }
 
-        public String getDecryptorClassPublic() { return getDecryptorClass(); }
+        // public String getDecryptorClassPublic() { return getDecryptorClass(); }
 
         private String getConfigLoaderClass() {
             Map<String, Object> config = loadModuleConfig();
@@ -647,7 +649,7 @@ public abstract class Config {
             }
             if (this.configLoader != null) {
                 logger.trace("Trying to load {} with extension yaml, yml or json by using ConfigLoader: {}.", configName, configLoader.getClass().getName());
-                if (path == null || path.equals("")) {
+                if (path == null || path.isEmpty()) {
                     config = configLoader.loadObjectConfig(configName, clazz);
                 } else {
                     config = configLoader.loadObjectConfig(configName, clazz, path);
@@ -687,6 +689,11 @@ public abstract class Config {
         public Yaml getYaml() {
             return yaml;
         }
+
+        @Override
+        public boolean isDecrypt() {
+            return false;
+        }
     }
 
     private static final class FileConfigImpl extends AbstractConfigImpl {
@@ -718,6 +725,11 @@ public abstract class Config {
         @Override
         public Yaml getYaml() {
             return yaml;
+        }
+
+        @Override
+        public boolean isDecrypt() {
+            return true;
         }
     }
 
