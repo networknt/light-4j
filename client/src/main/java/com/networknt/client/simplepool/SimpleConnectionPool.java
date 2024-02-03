@@ -91,7 +91,8 @@ public final class SimpleConnectionPool {
 
     /***
      * Restores a borrowed connection and schedules it for closure as soon as all threads using it
-     * have restored it to the pool
+     * have restored it to the pool. Note: After this method is called, the connection will be expired and can no longer
+     *      * be borrowed from the pool.
      *
      * WARNING: Closing connections defeats the entire purpose of using a connection pool. Be certain that this method
      *          is only used in cases where there is a need to ensure the connection is not reused

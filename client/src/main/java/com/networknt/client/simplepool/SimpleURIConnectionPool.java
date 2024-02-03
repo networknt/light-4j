@@ -146,7 +146,8 @@ public final class SimpleURIConnectionPool {
 
     /***
      * Restores a borrowed connection and schedules it for closure as soon as all threads using it
-     * have restored it to the pool
+     * have restored it to the pool. Note: After this method is called, the connection will be expired and can no longer
+     * be borrowed from the pool.
      *
      * This closes and frees the connection resource from the pool while preventing threads that are currently using it
      * from seeing unexpected connection closures.
