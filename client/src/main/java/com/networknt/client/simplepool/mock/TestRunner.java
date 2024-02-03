@@ -253,7 +253,7 @@ public class TestRunner
 
                 } finally {
                     if(connectionToken != null)
-                        borrowTime(borrowTime, borrowJitter);
+                        borrowTime();
 
                     // SCHEDULE closure and restore
                     if(restoreAndScheduleCloseFrequency > 0.0 && ThreadLocalRandom.current().nextDouble() <= restoreAndScheduleCloseFrequency) {
@@ -271,18 +271,18 @@ public class TestRunner
                         pool.restore(connectionToken);
                     }
 
-                    reborrowWaitTime(reborrowTime, reborrowTimeJitter);
+                    reborrowWaitTime();
                 }
             }
             latch.countDown();
             logger.debug("{} Thread exiting", Thread.currentThread().getName());
         }
 
-        private void borrowTime(long borrowTime, long borrowJitter) {
+        private void borrowTime() {
             wait("{} Borrowing connection for {} seconds...", borrowTime, borrowJitter);
         }
 
-        private void reborrowWaitTime(long reborrowTime, long reborrowTimeJitter) {
+        private void reborrowWaitTime() {
             wait("{} Waiting for {} seconds to borrow connection again...", reborrowTime, reborrowTimeJitter);
         }
 
