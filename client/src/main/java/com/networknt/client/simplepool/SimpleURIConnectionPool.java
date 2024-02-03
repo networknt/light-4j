@@ -144,6 +144,53 @@ public final class SimpleURIConnectionPool {
         if(logger.isDebugEnabled()) logger.debug(showConnections("restore"));
     }
 
+    /***
+     * Restores a borrowed connection and schedules it for closure as soon as all threads using it
+     * have restored it to the pool
+     *
+     * This closes and frees the connection resource from the pool while preventing threads that are currently using it
+     * from seeing unexpected connection closures.
+     *
+     * WARNING: Closing connections defeats the entire purpose of using a connection pool. Be certain that this method
+     *          is only used in cases where there is a need to ensure the connection is not reused
+     *
+     * @param connectionToken the connection token for the connection to close
+     * @return true if the connection has been closed;
+     *         false if (1) the connection is still open due to there being threads that are still actively using it,
+     *         or (2) if the connectionToken was null
+     */
+    public synchronized boolean restoreAndScheduleClose(SimpleConnectionState.ConnectionToken connectionToken) {
+        if(connectionToken == null)
+            return false;
+
+        SimpleConnectionState connectionState = connectionToken.state();
+        connectionState.forceExpire();
+        restore(connectionToken);
+        return connectionState.closed();
+    }
+
+    /***
+     * This method immediately closes the connection even if there are still threads actively using it (i.e: it
+     * will be closed even if it is still borrowed).
+     *
+     * WARNING: This will cause any threads that are actively using this connection to experience unexpected connection
+     *          failures
+     *
+     * WARNING: Closing connections defeats the entire purpose of using a connection pool. Be certain that this method
+     *          is only used in cases where there is a need to ensure the connection is not reused
+     *
+     * @param connectionToken the connection token of the connection to close
+     */
+    public synchronized void restoreAndImmediatelyClose(SimpleConnectionState.ConnectionToken connectionToken) {
+        if(connectionToken == null)
+            return;
+
+        // bypass the SimpleConnectionState, and close the connection directly via its SimpleConnection.
+        // this will cause the connection to close even if it is currently borrowed and valid (not expired)
+        connectionToken.connection().safeClose();
+
+        restore(connectionToken);
+    }
 
     /**
      * A key method that orchestrates the update of the connection pool's state

@@ -53,6 +53,8 @@ public class TestRunner
     private long reborrowTimeJitter = 2;     // in seconds
     private int threadStartJitter = 3;        // in seconds
     private boolean isHttp2 = true;
+    private double restoreAndScheduleCloseFrequency = 0.0;
+    private double restoreAndImmediatelyCloseFrequency = 0.0;
 
     /** Test length in seconds. Default 120s */
     public TestRunner setTestLength(long testLength) {
@@ -127,6 +129,34 @@ public class TestRunner
         return this;
     }
 
+    /***
+     * Probability between 0.0 and 1.0 that the connection will be scheduled for closure when restored. Default is 0.0.
+     *
+     * Note: If both 'restore and SCHEDULE close frequency' and 'restore and IMMEDIATELY close frequency' have
+     *       values above 0, then 'restore and SCHEDULE close frequency' takes precedence.
+     */
+    public TestRunner setRestoreAndScheduleCloseFrequency(double restoreAndScheduleCloseFrequency) {
+        if(restoreAndScheduleCloseFrequency >= 0.0 && restoreAndScheduleCloseFrequency <= 1.0)
+            this.restoreAndScheduleCloseFrequency = restoreAndScheduleCloseFrequency;
+        else
+            logger.error("restoreAndScheduleCloseFrequency must be between 0.0 and 1.0 (inclusive). Using default value of 0.0");
+        return this;
+    }
+
+    /***
+     * Probability between 0.0 and 1.0 that the connection will be immediately closed when restored. Default is 0.0.
+     *
+     * Note: If both 'restore and SCHEDULE close frequency' and 'restore and IMMEDIATELY close frequency' have
+     *       values above 0, then 'restore and SCHEDULE close frequency' takes precedence.
+     */
+    public TestRunner setRestoreAndImmediatelyCloseFrequency(double restoreAndImmediatelyCloseFrequency) {
+        if(restoreAndScheduleCloseFrequency >= 0.0 && restoreAndScheduleCloseFrequency <= 1.0)
+            this.restoreAndScheduleCloseFrequency = restoreAndImmediatelyCloseFrequency;
+        else
+            logger.error("restoreAndImmediatelyCloseFrequency must be between 0.0 and 1.0 (inclusive). Using default value of 0.0");
+        return this;
+    }
+
     /** Determines whether caller threads request HTTP/2 connections. HTTP/2 means multiple borrows per connection are allowed. Default true */
     public TestRunner setHttp2(boolean http2) {
         isHttp2 = http2;
@@ -149,7 +179,19 @@ public class TestRunner
 
             logger.debug("> Creating and starting threads...");
             createAndStartCallers(
-                    numCallers, threadStartJitter, pool, stopped, createConnectionTimeout, isHttp2, borrowTime, borrowJitter, reborrowTime, reborrowTimeJitter, latch);
+                    numCallers,
+                    threadStartJitter,
+                    pool,
+                    stopped,
+                    createConnectionTimeout,
+                    isHttp2,
+                    borrowTime,
+                    borrowJitter,
+                    reborrowTime,
+                    reborrowTimeJitter,
+                    restoreAndScheduleCloseFrequency,
+                    restoreAndImmediatelyCloseFrequency,
+                    latch);
             logger.debug("> All threads created and started");
 
             logger.debug("> SLEEP for {} seconds", testLength);
@@ -179,11 +221,23 @@ public class TestRunner
             long borrowJitter,
             long reborrowTime,
             long reborrowTimeJitter,
+            double restoreAndScheduleCloseFrequency,
+            double restoreAndImmediatelyCloseFrequency,
             CountDownLatch latch) throws InterruptedException
     {
         while(numCallers-- > 0) {
             new CallerThread(
-                pool, stopped, createConnectionTimeout, isHttp2, borrowTime, borrowJitter, reborrowTime, reborrowTimeJitter, latch).start();
+                    pool,
+                    stopped,
+                    createConnectionTimeout,
+                    isHttp2,
+                    borrowTime,
+                    borrowJitter,
+                    reborrowTime,
+                    reborrowTimeJitter,
+                    restoreAndScheduleCloseFrequency,
+                    restoreAndImmediatelyCloseFrequency,
+                    latch).start();
             if(threadStartJitter > 0)
                 Thread.sleep(ThreadLocalRandom.current().nextLong(threadStartJitter+1) * 1000);
         }
@@ -200,6 +254,8 @@ public class TestRunner
         private final long borrowJitter;
         private final long reborrowTime;
         private final long reborrowTimeJitter;
+        private final double restoreAndScheduleCloseFrequency;
+        private final double restoreAndImmediatelyCloseFrequency;
 
         public CallerThread(
             SimpleURIConnectionPool pool,
@@ -210,6 +266,8 @@ public class TestRunner
             long borrowJitter,
             long reborrowTime,
             long reborrowTimeJitter,
+            double restoreAndScheduleCloseFrequency,
+            double restoreAndImmediatelyCloseFrequency,
             CountDownLatch latch)
         {
             this.latch = latch;
@@ -221,6 +279,8 @@ public class TestRunner
             this.borrowJitter = borrowJitter;
             this.reborrowTime = reborrowTime;
             this.reborrowTimeJitter = reborrowTimeJitter;
+            this.restoreAndScheduleCloseFrequency = restoreAndScheduleCloseFrequency;
+            this.restoreAndImmediatelyCloseFrequency = restoreAndImmediatelyCloseFrequency;
         }
 
         @Override
@@ -239,8 +299,21 @@ public class TestRunner
                     if(connectionToken != null)
                         borrowTime(borrowTime, borrowJitter);
 
-                    logger.debug("{} Returning connection", Thread.currentThread().getName());
-                    pool.restore(connectionToken);
+                    // SCHEDULE closure and restore
+                    if(restoreAndScheduleCloseFrequency > 0.0 && ThreadLocalRandom.current().nextDouble() <= restoreAndScheduleCloseFrequency) {
+                        logger.debug("{} Returning and SCHEDULING CLOSURE of connection", Thread.currentThread().getName());
+                        pool.restoreAndScheduleClose(connectionToken);
+                    }
+                    // IMMEDIATELY close and restore
+                    else if (restoreAndImmediatelyCloseFrequency > 0.0 && ThreadLocalRandom.current().nextDouble() <= restoreAndImmediatelyCloseFrequency) {
+                        logger.debug("{} Returning and IMMEDIATELY CLOSING connection", Thread.currentThread().getName());
+                        pool.restoreAndImmediatelyClose(connectionToken);
+                    }
+                    // NORMAL restore without closing
+                    else {
+                        logger.debug("{} Returning connection", Thread.currentThread().getName());
+                        pool.restore(connectionToken);
+                    }
 
                     reborrowWaitTime(reborrowTime, reborrowTimeJitter);
                 }

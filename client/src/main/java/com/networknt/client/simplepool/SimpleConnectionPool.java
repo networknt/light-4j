@@ -87,4 +87,44 @@ public final class SimpleConnectionPool {
         if(pools.containsKey(connectionToken.uri()))
             pools.get(connectionToken.uri()).restore(connectionToken);
     }
+
+
+    /***
+     * Restores a borrowed connection and schedules it for closure as soon as all threads using it
+     * have restored it to the pool
+     *
+     * WARNING: Closing connections defeats the entire purpose of using a connection pool. Be certain that this method
+     *          is only used in cases where there is a need to ensure the connection is not reused
+     *
+     * @param connectionToken the connection token for the connection to restore and schedule for closure
+     * @return true if the connection has been closed;
+     *         false if (1) the connection is still open due to there being threads that are still actively using it,
+     *         or if (2) the connection token is null, or if 3) the connection token does not belong to this
+     *         connection pool
+     */
+    public boolean restoreAndScheduleClose(SimpleConnectionState.ConnectionToken connectionToken) {
+        if(connectionToken == null || !pools.containsKey(connectionToken.uri()))
+            return false;
+
+        return pools.get(connectionToken.uri()).restoreAndScheduleClose(connectionToken);
+    }
+
+    /***
+     * This method immediately closes the connection even if there are still threads actively using it (i.e: it
+     * will be closed even if it is still borrowed).
+     *
+     * WARNING: This will cause any threads that are actively using this connection to experience unexpected connection
+     *          failures
+     *
+     * WARNING: Closing connections defeats the entire purpose of using a connection pool. Be certain that this method
+     *          is only used in cases where there is a need to ensure the connection is not reused
+     *
+     * @param connectionToken the connection token of the connection to close
+     */
+    public void restoreAndImmediatelyClose(SimpleConnectionState.ConnectionToken connectionToken) {
+        if (connectionToken == null || !pools.containsKey(connectionToken.uri()))
+            return;
+
+        pools.get(connectionToken.uri()).restoreAndImmediatelyClose(connectionToken);
+    }
 }
