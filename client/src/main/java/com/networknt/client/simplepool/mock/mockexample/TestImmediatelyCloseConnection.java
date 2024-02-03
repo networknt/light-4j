@@ -33,7 +33,7 @@ public class TestImmediatelyCloseConnection
             .setHttp2(true)
 
             // configure borrower-thread properties
-            .setRestoreAndImmediatelyCloseFrequency(0.5)
+            .setRestoreAndImmediatelyCloseFrequency(0.1)
             .setNumBorrowerThreads(4)
             .setBorrowerThreadStartJitter(0)
             .setBorrowTimeLength(5)
