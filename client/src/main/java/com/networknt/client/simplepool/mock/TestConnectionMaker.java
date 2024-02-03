@@ -27,13 +27,18 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class TestConnectionMaker implements SimpleConnectionMaker {
     private static final Logger logger = LoggerFactory.getLogger(TestConnectionMaker.class);
     private Class connectionClass;
-    public TestConnectionMaker(Class clas) {
+    private final ThreadPoolExecutor executor;
+
+    public TestConnectionMaker(Class clas, ThreadPoolExecutor executor) {
         this.connectionClass = clas;
+        this.executor = executor;
     }
 
     @Override
@@ -47,9 +52,7 @@ public class TestConnectionMaker implements SimpleConnectionMaker {
     private SimpleConnection instantiateConnection(long createConnectionTimeout, final boolean isHttp2, final Set<SimpleConnection> allConnections)
             throws RuntimeException
     {
-        final ExecutorService executor = Executors.newSingleThreadExecutor();
         Future<SimpleConnection> future = executor.submit(() -> {
-            executor.shutdown();
 
             Constructor<SimpleConnection> constructor = connectionClass.getConstructor(boolean.class);
             SimpleConnection simpleConnection = constructor.newInstance(isHttp2);

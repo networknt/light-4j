@@ -28,6 +28,9 @@ import java.net.URI;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class TestRunner
 {
@@ -172,8 +175,12 @@ public class TestRunner
             throw new RuntimeException("A SimpleConnection class must be set using setSimpleConnectionClass()");
 
         try {
+            final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
+            executor.setKeepAliveTime(Long.MAX_VALUE, TimeUnit.SECONDS);
+            executor.setCorePoolSize(0);
+
             // create connection maker
-            connectionMaker = new TestConnectionMaker(simpleConnectionClass);
+            connectionMaker = new TestConnectionMaker(simpleConnectionClass, executor);
             // create pool
             pool = new SimpleURIConnectionPool(uri, expireTime * 1000, poolSize, connectionMaker);
 
@@ -194,6 +201,7 @@ public class TestRunner
 
             logger.debug("> Thread-shutdown flag set. Waiting for threads to exit...");
             latch.await();
+            executor.shutdown();
 
             logger.debug("> Threads exited. Test completed");
         } catch (Exception e) {
