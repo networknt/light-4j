@@ -150,8 +150,8 @@ public class TestRunner
      *       values above 0, then 'restore and SCHEDULE close frequency' takes precedence.
      */
     public TestRunner setRestoreAndImmediatelyCloseFrequency(double restoreAndImmediatelyCloseFrequency) {
-        if(restoreAndScheduleCloseFrequency >= 0.0 && restoreAndScheduleCloseFrequency <= 1.0)
-            this.restoreAndScheduleCloseFrequency = restoreAndImmediatelyCloseFrequency;
+        if(restoreAndImmediatelyCloseFrequency >= 0.0 && restoreAndImmediatelyCloseFrequency <= 1.0)
+            this.restoreAndImmediatelyCloseFrequency = restoreAndImmediatelyCloseFrequency;
         else
             logger.error("restoreAndImmediatelyCloseFrequency must be between 0.0 and 1.0 (inclusive). Using default value of 0.0");
         return this;
