@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class TestRunner
 {
     private static final Logger logger = LoggerFactory.getLogger(TestRunner.class);
+    private static final Logger testThreadLogger = LoggerFactory.getLogger(CallerThread.class);
 
     // Default Test Runner Settings
     private long testLength = 120;      // in seconds
@@ -55,6 +56,9 @@ public class TestRunner
     private boolean isHttp2 = true;
     private double restoreAndScheduleCloseFrequency = 0.0;
     private double restoreAndImmediatelyCloseFrequency = 0.0;
+
+    private AtomicBoolean stopped = new AtomicBoolean();
+    private CountDownLatch latch;
 
     /** Test length in seconds. Default 120s */
     public TestRunner setTestLength(long testLength) {
@@ -174,24 +178,11 @@ public class TestRunner
             pool = new SimpleURIConnectionPool(uri, expireTime * 1000, poolSize, connectionMaker);
 
             // flag used to stop threads
-            AtomicBoolean stopped = new AtomicBoolean(false);
-            CountDownLatch latch = new CountDownLatch(numCallers);
+            stopped.set(false);
+            latch = new CountDownLatch(numCallers);
 
             logger.debug("> Creating and starting threads...");
-            createAndStartCallers(
-                    numCallers,
-                    threadStartJitter,
-                    pool,
-                    stopped,
-                    createConnectionTimeout,
-                    isHttp2,
-                    borrowTime,
-                    borrowJitter,
-                    reborrowTime,
-                    reborrowTimeJitter,
-                    restoreAndScheduleCloseFrequency,
-                    restoreAndImmediatelyCloseFrequency,
-                    latch);
+            createAndStartCallers();
             logger.debug("> All threads created and started");
 
             logger.debug("> SLEEP for {} seconds", testLength);
@@ -210,41 +201,17 @@ public class TestRunner
         }
     }
 
-    private void createAndStartCallers(
-            int numCallers,
-            int threadStartJitter,
-            SimpleURIConnectionPool pool,
-            AtomicBoolean stopped,
-            long createConnectionTimeout,
-            boolean isHttp2,
-            long borrowTime,
-            long borrowJitter,
-            long reborrowTime,
-            long reborrowTimeJitter,
-            double restoreAndScheduleCloseFrequency,
-            double restoreAndImmediatelyCloseFrequency,
-            CountDownLatch latch) throws InterruptedException
+    private void createAndStartCallers() throws InterruptedException
     {
         while(numCallers-- > 0) {
-            new CallerThread(
-                    pool,
-                    stopped,
-                    createConnectionTimeout,
-                    isHttp2,
-                    borrowTime,
-                    borrowJitter,
-                    reborrowTime,
-                    reborrowTimeJitter,
-                    restoreAndScheduleCloseFrequency,
-                    restoreAndImmediatelyCloseFrequency,
-                    latch).start();
+            new CallerThread().start();
             if(threadStartJitter > 0)
                 Thread.sleep(ThreadLocalRandom.current().nextLong(threadStartJitter+1) * 1000);
         }
     }
 
-    private static class CallerThread extends Thread {
-        private static final Logger logger = LoggerFactory.getLogger(CallerThread.class);
+    private class CallerThread extends Thread {
+        private final Logger logger;
         private final CountDownLatch latch;
         private final AtomicBoolean stopped;
         private final SimpleURIConnectionPool pool;
@@ -257,30 +224,19 @@ public class TestRunner
         private final double restoreAndScheduleCloseFrequency;
         private final double restoreAndImmediatelyCloseFrequency;
 
-        public CallerThread(
-            SimpleURIConnectionPool pool,
-            AtomicBoolean stopped,
-            long createConnectionTimeout,
-            boolean isHttp2,
-            long borrowTime,
-            long borrowJitter,
-            long reborrowTime,
-            long reborrowTimeJitter,
-            double restoreAndScheduleCloseFrequency,
-            double restoreAndImmediatelyCloseFrequency,
-            CountDownLatch latch)
-        {
-            this.latch = latch;
-            this.stopped = stopped;
-            this.pool = pool;
-            this.createConnectionTimeout = createConnectionTimeout; // this must be kept in seconds (not ms)
-            this.isHttp2 = isHttp2;
-            this.borrowTime = borrowTime;
-            this.borrowJitter = borrowJitter;
-            this.reborrowTime = reborrowTime;
-            this.reborrowTimeJitter = reborrowTimeJitter;
-            this.restoreAndScheduleCloseFrequency = restoreAndScheduleCloseFrequency;
-            this.restoreAndImmediatelyCloseFrequency = restoreAndImmediatelyCloseFrequency;
+        public CallerThread() {
+            this.logger = TestRunner.testThreadLogger;
+            this.latch = TestRunner.this.latch;
+            this.stopped = TestRunner.this.stopped;
+            this.pool = TestRunner.this.pool;
+            this.createConnectionTimeout = TestRunner.this.createConnectionTimeout; // this must be kept in seconds (not ms)
+            this.isHttp2 = TestRunner.this.isHttp2;
+            this.borrowTime = TestRunner.this.borrowTime;
+            this.borrowJitter = TestRunner.this.borrowJitter;
+            this.reborrowTime = TestRunner.this.reborrowTime;
+            this.reborrowTimeJitter = TestRunner.this.reborrowTimeJitter;
+            this.restoreAndScheduleCloseFrequency = TestRunner.this.restoreAndScheduleCloseFrequency;
+            this.restoreAndImmediatelyCloseFrequency = TestRunner.this.restoreAndImmediatelyCloseFrequency;
         }
 
         @Override
