@@ -27,7 +27,7 @@ public class TestScheduledToCloseConnection
         new TestRunner()
             // set connection properties
             .setConnectionPoolSize(100)
-            .setSimpleConnectionClass(MockScheduledToCloseConnection.class)
+            .setSimpleConnectionClass(MockKeepAliveConnection.class)
             .setCreateConnectionTimeout(5)
             .setConnectionExpireTime(5)
             .setHttp2(true)
