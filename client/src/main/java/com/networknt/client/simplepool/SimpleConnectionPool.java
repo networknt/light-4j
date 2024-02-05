@@ -106,11 +106,11 @@ public final class SimpleConnectionPool {
      *         false if (1) the connection is still open due to there being threads that are still actively using it,
      *         or (2) if the connectionToken was null
      */
-    public boolean scheduledSafeClose(SimpleConnectionState.ConnectionToken connectionToken) {
+    public boolean scheduleSafeClose(SimpleConnectionState.ConnectionToken connectionToken) {
         if(connectionToken == null || !pools.containsKey(connectionToken.uri()))
             return false;
 
-        return pools.get(connectionToken.uri()).scheduledSafeClose(connectionToken);
+        return pools.get(connectionToken.uri()).scheduleSafeClose(connectionToken);
     }
 
     /***

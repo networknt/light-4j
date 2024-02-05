@@ -57,7 +57,7 @@ public class TestRunner
     private long reborrowTimeJitter = 2;     // in seconds
     private int threadStartJitter = 3;        // in seconds
     private boolean isHttp2 = true;
-    private double scheduleSafeCloseFrequency = 0.0;
+    private double scheduledSafeCloseFrequency = 0.0;
     private double safeCloseFrequency = 0.0;
 
     private AtomicBoolean stopped = new AtomicBoolean();
@@ -139,22 +139,22 @@ public class TestRunner
     /***
      * Probability between 0.0 and 1.0 that the connection will be scheduled for closure when restored. Default is 0.0.
      *
-     * Note: If both 'SCHEDULE safe close frequency' and 'safe close frequency' have
-     *       values above 0, then 'SCHEDULE safe close frequency' takes precedence.
+     * Note: If both 'SCHEDULED safe close frequency' and 'safe close frequency' have
+     *       values above 0, then 'SCHEDULED safe close frequency' takes precedence.
      */
-    public TestRunner setScheduleSafeCloseFrequency(double scheduleSafeCloseFrequency) {
-        if(scheduleSafeCloseFrequency >= 0.0 && scheduleSafeCloseFrequency <= 1.0)
-            this.scheduleSafeCloseFrequency = scheduleSafeCloseFrequency;
+    public TestRunner setScheduledSafeCloseFrequency(double scheduledSafeCloseFrequency) {
+        if(scheduledSafeCloseFrequency >= 0.0 && scheduledSafeCloseFrequency <= 1.0)
+            this.scheduledSafeCloseFrequency = scheduledSafeCloseFrequency;
         else
-            logger.error("scheduleSafeCloseFrequency must be between 0.0 and 1.0 (inclusive). Using default value of 0.0");
+            logger.error("scheduledSafeCloseFrequency must be between 0.0 and 1.0 (inclusive). Using default value of 0.0");
         return this;
     }
 
     /***
      * Probability between 0.0 and 1.0 that the connection will be immediately closed when restored. Default is 0.0.
      *
-     * Note: If both 'SCHEDULE safe close frequency' and 'safe close frequency' have
-     *       values above 0, then 'SCHEDULE safe close frequency' takes precedence.
+     * Note: If both 'SCHEDULED safe close frequency' and 'safe close frequency' have
+     *       values above 0, then 'SCHEDULED safe close frequency' takes precedence.
      */
     public TestRunner setSafeCloseFrequency(double safeCloseFrequency) {
         if(safeCloseFrequency >= 0.0 && safeCloseFrequency <= 1.0)
@@ -229,7 +229,7 @@ public class TestRunner
         private final long borrowJitter;
         private final long reborrowTime;
         private final long reborrowTimeJitter;
-        private final double scheduleSafeCloseFrequency;
+        private final double scheduledSafeCloseFrequency;
         private final double safeCloseFrequency;
 
         public CallerThread() {
@@ -243,7 +243,7 @@ public class TestRunner
             this.borrowJitter = TestRunner.this.borrowJitter;
             this.reborrowTime = TestRunner.this.reborrowTime;
             this.reborrowTimeJitter = TestRunner.this.reborrowTimeJitter;
-            this.scheduleSafeCloseFrequency = TestRunner.this.scheduleSafeCloseFrequency;
+            this.scheduledSafeCloseFrequency = TestRunner.this.scheduledSafeCloseFrequency;
             this.safeCloseFrequency = TestRunner.this.safeCloseFrequency;
         }
 
@@ -264,9 +264,9 @@ public class TestRunner
                         borrowTime();
 
                     // SCHEDULE closure
-                    if(scheduleSafeCloseFrequency > 0.0 && ThreadLocalRandom.current().nextDouble() <= scheduleSafeCloseFrequency) {
+                    if(scheduledSafeCloseFrequency > 0.0 && ThreadLocalRandom.current().nextDouble() <= scheduledSafeCloseFrequency) {
                         logger.debug("{} SCHEDULING CLOSURE of connection", Thread.currentThread().getName());
-                        pool.scheduledSafeClose(connectionToken);
+                        pool.scheduleSafeClose(connectionToken);
                     }
                     // IMMEDIATELY close
                     else if (safeCloseFrequency > 0.0 && ThreadLocalRandom.current().nextDouble() <= safeCloseFrequency) {

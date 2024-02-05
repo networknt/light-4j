@@ -162,7 +162,7 @@ public final class SimpleURIConnectionPool {
      *         false if (1) the connection is still open due to there being threads that are still actively using it,
      *         or (2) if the connectionToken was null
      */
-    public synchronized boolean scheduledSafeClose(SimpleConnectionState.ConnectionToken connectionToken) {
+    public synchronized boolean scheduleSafeClose(SimpleConnectionState.ConnectionToken connectionToken) {
         findAndCloseLeakedConnections();
         long now = System.currentTimeMillis();
 
