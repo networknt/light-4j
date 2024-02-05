@@ -266,7 +266,7 @@ public class TestRunner
                     // SCHEDULE closure
                     if(scheduleSafeCloseFrequency > 0.0 && ThreadLocalRandom.current().nextDouble() <= scheduleSafeCloseFrequency) {
                         logger.debug("{} SCHEDULING CLOSURE of connection", Thread.currentThread().getName());
-                        pool.scheduleSafeClose(connectionToken);
+                        pool.scheduledSafeClose(connectionToken);
                     }
                     // IMMEDIATELY close
                     else if (safeCloseFrequency > 0.0 && ThreadLocalRandom.current().nextDouble() <= safeCloseFrequency) {
