@@ -93,7 +93,7 @@ public final class SimpleConnectionPool {
      * that are currently using it from experiencing unexpected connection closures.
      *
      * This method expires a connection which results in:
-     *     (a) the connection no longer be borrowable, and
+     *     (a) the connection no longer being borrowable, and
      *     (b) the connection being closed as soon as all threads currently using it have restored it to the pool.
      *
      * WARNING: YOU MUST STILL RESTORE THE CONNECTION TOKEN AFTER CALLING THIS METHOD
