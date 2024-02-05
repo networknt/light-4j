@@ -202,12 +202,11 @@ public final class SimpleURIConnectionPool {
             return;
 
         // bypass connection state and close connection directly
+        if(logger.isDebugEnabled()) logger.debug("immediately closing connection [{}]", port(connectionToken.connection()));
         connectionToken.connection().safeClose();
 
         // update pool about state change to this connection
         applyConnectionState(connectionToken.state(), now, () -> trackedConnections.remove(connectionToken.state()));
-
-        if(logger.isDebugEnabled()) logger.debug("immediately closing connection [{}]", port(connectionToken.connection()));
     }
 
     /**
