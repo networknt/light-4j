@@ -88,26 +88,27 @@ public final class SimpleConnectionPool {
             pools.get(connectionToken.uri()).restore(connectionToken);
     }
 
-
     /***
-     * Restores a borrowed connection and schedules it for closure as soon as all threads using it
-     * have restored it to the pool. Note: After this method is called, the connection will be expired and can no longer
-     *      * be borrowed from the pool.
+     * Causes the connection to be closed and its resources being freed from the pool, while preventing threads
+     * that are currently using it from experiencing unexpected connection closures.
+     *
+     * This method expires a connection which results in:
+     *     (a) the connection no longer be borrowable, and
+     *     (b) the connection being closed as soon as all threads currently using it have restored it to the pool.
      *
      * WARNING: Closing connections defeats the entire purpose of using a connection pool. Be certain that this method
      *          is only used in cases where there is a need to ensure the connection is not reused
      *
-     * @param connectionToken the connection token for the connection to restore and schedule for closure
+     * @param connectionToken the connection token for the connection to close
      * @return true if the connection has been closed;
      *         false if (1) the connection is still open due to there being threads that are still actively using it,
-     *         or if (2) the connection token is null, or if 3) the connection token does not belong to this
-     *         connection pool
+     *         or (2) if the connectionToken was null
      */
-    public boolean restoreAndScheduleClose(SimpleConnectionState.ConnectionToken connectionToken) {
+    public boolean scheduleSafeClose(SimpleConnectionState.ConnectionToken connectionToken) {
         if(connectionToken == null || !pools.containsKey(connectionToken.uri()))
             return false;
 
-        return pools.get(connectionToken.uri()).restoreAndScheduleClose(connectionToken);
+        return pools.get(connectionToken.uri()).scheduleSafeClose(connectionToken);
     }
 
     /***
@@ -122,10 +123,10 @@ public final class SimpleConnectionPool {
      *
      * @param connectionToken the connection token of the connection to close
      */
-    public void restoreAndImmediatelyClose(SimpleConnectionState.ConnectionToken connectionToken) {
+    public void safeClose(SimpleConnectionState.ConnectionToken connectionToken) {
         if (connectionToken == null || !pools.containsKey(connectionToken.uri()))
             return;
 
-        pools.get(connectionToken.uri()).restoreAndImmediatelyClose(connectionToken);
+        pools.get(connectionToken.uri()).safeClose(connectionToken);
     }
 }

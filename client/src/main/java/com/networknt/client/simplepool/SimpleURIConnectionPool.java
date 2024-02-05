@@ -145,12 +145,12 @@ public final class SimpleURIConnectionPool {
     }
 
     /***
-     * Restores a borrowed connection and schedules it for closure as soon as all threads using it
-     * have restored it to the pool. Note: After this method is called, the connection will be expired and can no longer
-     * be borrowed from the pool.
+     * Causes the connection to be closed and its resources being freed from the pool, while preventing threads
+     * that are currently using it from experiencing unexpected connection closures.
      *
-     * This closes and frees the connection resource from the pool while preventing threads that are currently using it
-     * from seeing unexpected connection closures.
+     * This method expires a connection which results in:
+     *     (a) the connection no longer be borrowable, and
+     *     (b) the connection being closed as soon as all threads currently using it have restored it to the pool.
      *
      * WARNING: Closing connections defeats the entire purpose of using a connection pool. Be certain that this method
      *          is only used in cases where there is a need to ensure the connection is not reused
@@ -160,13 +160,21 @@ public final class SimpleURIConnectionPool {
      *         false if (1) the connection is still open due to there being threads that are still actively using it,
      *         or (2) if the connectionToken was null
      */
-    public synchronized boolean restoreAndScheduleClose(SimpleConnectionState.ConnectionToken connectionToken) {
+    public synchronized boolean scheduleSafeClose(SimpleConnectionState.ConnectionToken connectionToken) {
+        findAndCloseLeakedConnections();
+        long now = System.currentTimeMillis();
+
         if(connectionToken == null)
             return false;
 
+        // expire connection state
         SimpleConnectionState connectionState = connectionToken.state();
         connectionState.forceExpire();
-        restore(connectionToken);
+
+        // update pool about state change to this connection
+        applyConnectionState(connectionState, now, () -> trackedConnections.remove(connectionState));
+
+        if(logger.isDebugEnabled()) logger.debug("closure scheduled for connection [{}]", port(connectionState.connection()));
         return connectionState.closed();
     }
 
@@ -182,15 +190,20 @@ public final class SimpleURIConnectionPool {
      *
      * @param connectionToken the connection token of the connection to close
      */
-    public synchronized void restoreAndImmediatelyClose(SimpleConnectionState.ConnectionToken connectionToken) {
+    public synchronized void safeClose(SimpleConnectionState.ConnectionToken connectionToken) {
+        findAndCloseLeakedConnections();
+        long now = System.currentTimeMillis();
+
         if(connectionToken == null)
             return;
 
-        // bypass the SimpleConnectionState, and close the connection directly via its SimpleConnection.
-        // this will cause the connection to close even if it is currently borrowed and valid (not expired)
+        // bypass connection state and close connection directly
         connectionToken.connection().safeClose();
 
-        restore(connectionToken);
+        // update pool about state change to this connection
+        applyConnectionState(connectionToken.state(), now, () -> trackedConnections.remove(connectionToken.state()));
+
+        if(logger.isDebugEnabled()) logger.debug("immediately closing connection [{}]", connectionToken.connection());
     }
 
     /**

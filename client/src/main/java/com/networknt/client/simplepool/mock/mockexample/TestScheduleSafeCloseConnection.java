@@ -33,7 +33,7 @@ public class TestScheduledToCloseConnection
             .setHttp2(true)
 
             // configure borrower-thread properties
-            .setRestoreAndScheduleCloseFrequency(0.1)
+            .setScheduleSafeCloseFrequency(0.1)
             .setNumBorrowerThreads(4)
             .setBorrowerThreadStartJitter(0)
             .setBorrowTimeLength(5)
