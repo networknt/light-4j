@@ -33,7 +33,7 @@ public class TestKeepAliveConnection
             .setHttp2(false)
 
             // configure borrower-thread properties
-            .setNumBorrowerThreads(4)
+            .setNumBorrowerThreads(8)
             .setBorrowerThreadStartJitter(0)
             .setBorrowTimeLength(5)
             .setBorrowTimeLengthJitter(5)

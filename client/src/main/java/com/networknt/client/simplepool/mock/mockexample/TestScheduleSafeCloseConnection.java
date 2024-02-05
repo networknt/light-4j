@@ -34,7 +34,7 @@ public class TestScheduleSafeCloseConnection
 
             // configure borrower-thread properties
             .setScheduleSafeCloseFrequency(0.1)
-            .setNumBorrowerThreads(4)
+            .setNumBorrowerThreads(8)
             .setBorrowerThreadStartJitter(0)
             .setBorrowTimeLength(5)
             .setBorrowTimeLengthJitter(5)
