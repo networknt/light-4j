@@ -207,7 +207,7 @@ public final class SimpleURIConnectionPool {
         // update pool about state change to this connection
         applyConnectionState(connectionToken.state(), now, () -> trackedConnections.remove(connectionToken.state()));
 
-        if(logger.isDebugEnabled()) logger.debug("immediately closing connection [{}]", connectionToken.connection());
+        if(logger.isDebugEnabled()) logger.debug("immediately closing connection [{}]", port(connectionToken.connection()));
     }
 
     /**
