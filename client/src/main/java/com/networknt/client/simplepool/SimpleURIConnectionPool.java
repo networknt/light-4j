@@ -297,6 +297,11 @@ public final class SimpleURIConnectionPool {
      */
     private void removeFromConnectionTracking(SimpleConnectionState connectionState, RemoveFromTrackedConnections trackedConnectionRemover)
     {
+        if(logger.isDebugEnabled()) {
+            if(!trackedConnections.contains(connectionState))
+                logger.debug("connection [{}] was already removed from connection tracking", port(connectionState.connection()));
+        }
+
         allCreatedConnections.remove(connectionState.connection());
         trackedConnectionRemover.remove();  // this will remove the connection from trackedConnections directly, or via Iterator
 
