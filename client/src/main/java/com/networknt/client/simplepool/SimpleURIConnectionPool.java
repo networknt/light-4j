@@ -152,6 +152,8 @@ public final class SimpleURIConnectionPool {
      *     (a) the connection no longer be borrowable, and
      *     (b) the connection being closed as soon as all threads currently using it have restored it to the pool.
      *
+     * WARNING: YOU MUST STILL RESTORE THE CONNECTION TOKEN AFTER CALLING THIS METHOD
+     *
      * WARNING: Closing connections defeats the entire purpose of using a connection pool. Be certain that this method
      *          is only used in cases where there is a need to ensure the connection is not reused
      *
@@ -181,6 +183,8 @@ public final class SimpleURIConnectionPool {
     /***
      * This method immediately closes the connection even if there are still threads actively using it (i.e: it
      * will be closed even if it is still borrowed).
+     *
+     * WARNING: YOU MUST STILL RESTORE THE CONNECTION TOKEN AFTER CALLING THIS METHOD
      *
      * WARNING: This will cause any threads that are actively using this connection to experience unexpected connection
      *          failures
