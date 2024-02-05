@@ -172,7 +172,7 @@ public final class SimpleURIConnectionPool {
         // expire connection state
         SimpleConnectionState connectionState = connectionToken.state();
         connectionState.forceExpire();
-        
+
         if(logger.isDebugEnabled()) logger.debug("closure scheduled for connection [{}]", port(connectionState.connection()));
 
         // update pool about state change to this connection
