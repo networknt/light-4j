@@ -21,7 +21,7 @@ package com.networknt.client.simplepool.mock.mockexample;
 
 import com.networknt.client.simplepool.mock.TestRunner;
 
-public class TestScheduledToCloseConnection
+public class TestScheduleSafeCloseConnection
 {
     public static void main(String[] args) {
         new TestRunner()

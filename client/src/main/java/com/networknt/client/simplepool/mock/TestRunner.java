@@ -57,8 +57,8 @@ public class TestRunner
     private long reborrowTimeJitter = 2;     // in seconds
     private int threadStartJitter = 3;        // in seconds
     private boolean isHttp2 = true;
-    private double restoreAndScheduleCloseFrequency = 0.0;
-    private double restoreAndImmediatelyCloseFrequency = 0.0;
+    private double scheduleSafeCloseFrequency = 0.0;
+    private double safeCloseFrequency = 0.0;
 
     private AtomicBoolean stopped = new AtomicBoolean();
     private CountDownLatch latch;
@@ -139,28 +139,28 @@ public class TestRunner
     /***
      * Probability between 0.0 and 1.0 that the connection will be scheduled for closure when restored. Default is 0.0.
      *
-     * Note: If both 'restore and SCHEDULE close frequency' and 'restore and IMMEDIATELY close frequency' have
-     *       values above 0, then 'restore and SCHEDULE close frequency' takes precedence.
+     * Note: If both 'SCHEDULE safe close frequency' and 'safe close frequency' have
+     *       values above 0, then 'SCHEDULE safe close frequency' takes precedence.
      */
-    public TestRunner setRestoreAndScheduleCloseFrequency(double restoreAndScheduleCloseFrequency) {
-        if(restoreAndScheduleCloseFrequency >= 0.0 && restoreAndScheduleCloseFrequency <= 1.0)
-            this.restoreAndScheduleCloseFrequency = restoreAndScheduleCloseFrequency;
+    public TestRunner setScheduleSafeCloseFrequency(double scheduleSafeCloseFrequency) {
+        if(scheduleSafeCloseFrequency >= 0.0 && scheduleSafeCloseFrequency <= 1.0)
+            this.scheduleSafeCloseFrequency = scheduleSafeCloseFrequency;
         else
-            logger.error("restoreAndScheduleCloseFrequency must be between 0.0 and 1.0 (inclusive). Using default value of 0.0");
+            logger.error("scheduleSafeCloseFrequency must be between 0.0 and 1.0 (inclusive). Using default value of 0.0");
         return this;
     }
 
     /***
      * Probability between 0.0 and 1.0 that the connection will be immediately closed when restored. Default is 0.0.
      *
-     * Note: If both 'restore and SCHEDULE close frequency' and 'restore and IMMEDIATELY close frequency' have
-     *       values above 0, then 'restore and SCHEDULE close frequency' takes precedence.
+     * Note: If both 'SCHEDULE safe close frequency' and 'safe close frequency' have
+     *       values above 0, then 'SCHEDULE safe close frequency' takes precedence.
      */
-    public TestRunner setRestoreAndImmediatelyCloseFrequency(double restoreAndImmediatelyCloseFrequency) {
-        if(restoreAndImmediatelyCloseFrequency >= 0.0 && restoreAndImmediatelyCloseFrequency <= 1.0)
-            this.restoreAndImmediatelyCloseFrequency = restoreAndImmediatelyCloseFrequency;
+    public TestRunner setSafeCloseFrequency(double safeCloseFrequency) {
+        if(safeCloseFrequency >= 0.0 && safeCloseFrequency <= 1.0)
+            this.safeCloseFrequency = safeCloseFrequency;
         else
-            logger.error("restoreAndImmediatelyCloseFrequency must be between 0.0 and 1.0 (inclusive). Using default value of 0.0");
+            logger.error("safeCloseFrequency must be between 0.0 and 1.0 (inclusive). Using default value of 0.0");
         return this;
     }
 
@@ -229,8 +229,8 @@ public class TestRunner
         private final long borrowJitter;
         private final long reborrowTime;
         private final long reborrowTimeJitter;
-        private final double restoreAndScheduleCloseFrequency;
-        private final double restoreAndImmediatelyCloseFrequency;
+        private final double scheduleSafeCloseFrequency;
+        private final double safeCloseFrequency;
 
         public CallerThread() {
             this.logger = TestRunner.testThreadLogger;
@@ -243,8 +243,8 @@ public class TestRunner
             this.borrowJitter = TestRunner.this.borrowJitter;
             this.reborrowTime = TestRunner.this.reborrowTime;
             this.reborrowTimeJitter = TestRunner.this.reborrowTimeJitter;
-            this.restoreAndScheduleCloseFrequency = TestRunner.this.restoreAndScheduleCloseFrequency;
-            this.restoreAndImmediatelyCloseFrequency = TestRunner.this.restoreAndImmediatelyCloseFrequency;
+            this.scheduleSafeCloseFrequency = TestRunner.this.scheduleSafeCloseFrequency;
+            this.safeCloseFrequency = TestRunner.this.safeCloseFrequency;
         }
 
         @Override
@@ -263,21 +263,19 @@ public class TestRunner
                     if(connectionToken != null)
                         borrowTime();
 
-                    // SCHEDULE closure and restore
-                    if(restoreAndScheduleCloseFrequency > 0.0 && ThreadLocalRandom.current().nextDouble() <= restoreAndScheduleCloseFrequency) {
-                        logger.debug("{} Returning and SCHEDULING CLOSURE of connection", Thread.currentThread().getName());
-                        pool.restoreAndScheduleClose(connectionToken);
+                    // SCHEDULE closure
+                    if(scheduleSafeCloseFrequency > 0.0 && ThreadLocalRandom.current().nextDouble() <= scheduleSafeCloseFrequency) {
+                        logger.debug("{} SCHEDULING CLOSURE of connection", Thread.currentThread().getName());
+                        pool.scheduleSafeClose(connectionToken);
                     }
-                    // IMMEDIATELY close and restore
-                    else if (restoreAndImmediatelyCloseFrequency > 0.0 && ThreadLocalRandom.current().nextDouble() <= restoreAndImmediatelyCloseFrequency) {
-                        logger.debug("{} Returning and IMMEDIATELY CLOSING connection", Thread.currentThread().getName());
-                        pool.restoreAndImmediatelyClose(connectionToken);
+                    // IMMEDIATELY close
+                    else if (safeCloseFrequency > 0.0 && ThreadLocalRandom.current().nextDouble() <= safeCloseFrequency) {
+                        logger.debug("{} IMMEDIATELY CLOSING connection", Thread.currentThread().getName());
+                        pool.safeClose(connectionToken);
                     }
-                    // NORMAL restore without closing
-                    else {
-                        logger.debug("{} Returning connection", Thread.currentThread().getName());
-                        pool.restore(connectionToken);
-                    }
+
+                    logger.debug("{} Returning connection", Thread.currentThread().getName());
+                    pool.restore(connectionToken);
 
                     reborrowWaitTime();
                 }
