@@ -117,9 +117,10 @@ public final class SimpleConnectionPool {
      * This method immediately closes the connection even if there are still threads actively using it (i.e: it
      * will be closed even if it is still borrowed).
      *
-     * NOTE: It is NOT necessary to use this method to close connections. SimpleConnectionPool and
-     * SimpleURIConnectionPool are specifically designed to handle unexpected connections closures. So feel free to
-     * directly close raw connections if that simplifies your code.
+     * NOTE:    It is NOT necessary to use this method to close connections. SimpleConnectionPool and
+     *          SimpleURIConnectionPool are specifically designed to gracefully handle unexpected connections closures.
+     *
+     *          So feel free to directly close raw connections if that simplifies your code.
      *
      * WARNING: YOU MUST STILL RESTORE THE CONNECTION TOKEN AFTER CALLING THIS METHOD
      *
