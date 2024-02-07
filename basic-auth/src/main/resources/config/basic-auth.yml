@@ -1,7 +1,7 @@
 # Basic Authentication Security Configuration for light-4j
 ---
 # Enable Basic Authentication Handler, default is false.
-enabled: ${basic.enabled:false}
+enabled: ${basic.enabled:true}
 # Enable Ldap Authentication, default is true.
 enableAD: ${basic.enableAD:true}
 # Do we allow the anonymous to pass the authentication and limit it with some paths

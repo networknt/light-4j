@@ -16,7 +16,7 @@ enableVerifyJwt: ${security.enableVerifyJwt:true}
 # if this flag is false. It should only be set to false on the dev environment for testing
 # purposes. If you have some endpoints that want to skip the SWT verification, you can put the
 # request path prefix in skipPathPrefixes.
-enableVerifySwt: ${security.enableVerifySwt:false}
+enableVerifySwt: ${security.enableVerifySwt:true}
 
 # swt clientId header name. When light-gateway is used and the consumer app does not want to save
 # the client secret in the configuration file, it can be passed in the header.
