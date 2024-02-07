@@ -117,6 +117,11 @@ public final class SimpleConnectionPool {
      * This method immediately closes the connection even if there are still threads actively using it (i.e: it
      * will be closed even if it is still borrowed).
      *
+     * WARNING: Closing connections defeats the entire purpose of using a connection pool. Be certain that this method
+     *          is only used in cases where there is a need to ensure the connection is not reused. Needing to close
+     *          connections after every use prevents a connection pool from being able to provide any of the connection
+     *          time performance benefits that are the entire purpose of connection pools.
+     *
      * NOTE:    It is NOT necessary to use this method to close connections. SimpleConnectionPool and
      *          SimpleURIConnectionPool are specifically designed to gracefully handle unexpected connections closures.
      *
@@ -126,9 +131,6 @@ public final class SimpleConnectionPool {
      *
      * WARNING: This will cause any threads that are actively using this connection to experience unexpected connection
      *          failures
-     *
-     * WARNING: Closing connections defeats the entire purpose of using a connection pool. Be certain that this method
-     *          is only used in cases where there is a need to ensure the connection is not reused
      *
      * @param connectionToken the connection token of the connection to close
      */
