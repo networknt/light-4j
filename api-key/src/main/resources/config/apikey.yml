@@ -1,6 +1,6 @@
 # ApiKey Authentication Security Configuration for light-4j
 # Enable ApiKey Authentication Handler, default is false.
-enabled: ${apikey.enabled:false}
+enabled: ${apikey.enabled:true}
 # If API key hash is enabled. The API key will be hashed with PBKDF2WithHmacSHA1 before it is
 # stored in the config file. It is more secure than put the encrypted key into the config file.
 # The default value is false. If you want to enable it, you need to use the following repo
