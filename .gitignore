@@ -22,5 +22,3 @@ hs_err_pid*
 
 .DS_Store
 build.out
-IssuerRegexTest.java
-MetricsConfigTest.java
