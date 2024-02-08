@@ -144,80 +144,6 @@ public final class SimpleURIConnectionPool {
         if(logger.isDebugEnabled()) logger.debug(showConnections("restore"));
     }
 
-    /***
-     * Causes the connection to be closed and its resources being freed from the pool, while preventing threads
-     * that are currently using it from experiencing unexpected connection closures.
-     *
-     * WARNING: Closing connections defeats the entire purpose of using a connection pool. Be certain that this method
-     *          is only used in cases where there is a need to ensure the connection is not reused. Needing to close
-     *          connections after every use prevents a connection pool from being able to provide any of the connection
-     *          time performance benefits that are the entire purpose of connection pools.
-     *
-     * This method expires a connection which results in:
-     *     (a) the connection no longer being borrowable, and
-     *     (b) the connection being closed as soon as all threads currently using it have restored it to the pool.
-     *
-     * WARNING: YOU MUST STILL RESTORE THE CONNECTION TOKEN AFTER CALLING THIS METHOD
-     *
-     * @param connectionToken the connection token for the connection to close
-     * @return true if the connection has been closed;
-     *         false if (1) the connection is still open due to there being threads that are still actively using it,
-     *         or (2) if the connectionToken was null
-     */
-    public synchronized boolean scheduleSafeClose(SimpleConnectionState.ConnectionToken connectionToken) {
-        findAndCloseLeakedConnections();
-        long now = System.currentTimeMillis();
-
-        if(connectionToken == null)
-            return false;
-
-        // expire connection state
-        SimpleConnectionState connectionState = connectionToken.state();
-        connectionState.forceExpire();
-
-        if(logger.isDebugEnabled()) logger.debug("closure scheduled for connection [{}]", port(connectionState.connection()));
-
-        // update pool about state change to this connection
-        applyConnectionState(connectionState, now, () -> trackedConnections.remove(connectionState));
-        return connectionState.closed();
-    }
-
-    /***
-     * This method immediately closes the connection even if there are still threads actively using it (i.e: it
-     * will be closed even if it is still borrowed).
-     *
-     * WARNING: Closing connections defeats the entire purpose of using a connection pool. Be certain that this method
-     *          is only used in cases where there is a need to ensure the connection is not reused. Needing to close
-     *          connections after every use prevents a connection pool from being able to provide any of the connection
-     *          time performance benefits that are the entire purpose of connection pools.
-     *
-     * NOTE:    It is NOT necessary to use this method to close connections. SimpleConnectionPool and
-     *          SimpleURIConnectionPool are specifically designed to gracefully handle unexpected connections closures.
-     *
-     *          So feel free to directly close raw connections if that simplifies your code.
-     *
-     * WARNING: YOU MUST STILL RESTORE THE CONNECTION TOKEN AFTER CALLING THIS METHOD
-     *
-     * WARNING: This will cause any threads that are actively using this connection to experience unexpected connection
-     *          failures
-     *
-     * @param connectionToken the connection token of the connection to close
-     */
-    public synchronized void safeClose(SimpleConnectionState.ConnectionToken connectionToken) {
-        findAndCloseLeakedConnections();
-        long now = System.currentTimeMillis();
-
-        if(connectionToken == null)
-            return;
-
-        // bypass connection state and close connection directly
-        if(logger.isDebugEnabled()) logger.debug("immediately closing connection [{}]", port(connectionToken.connection()));
-        connectionToken.connection().safeClose();
-
-        // update pool about state change to this connection
-        applyConnectionState(connectionToken.state(), now, () -> trackedConnections.remove(connectionToken.state()));
-    }
-
     /**
      * A key method that orchestrates the update of the connection pool's state
      * It is guaranteed to run every time a transition method is called on SimpleURIConnectionPool
@@ -381,6 +307,79 @@ public final class SimpleURIConnectionPool {
         }
     }
 
+    /***
+     * This method immediately closes the connection even if there are still threads actively using it (i.e: it
+     * will be closed even if it is still borrowed).
+     *
+     * WARNING: Closing connections defeats the entire purpose of using a connection pool. Be certain that this method
+     *          is only used in cases where there is a need to ensure the connection is not reused. Needing to close
+     *          connections after every use prevents a connection pool from being able to provide any of the connection
+     *          time performance benefits that are the entire purpose of connection pools.
+     *
+     * NOTE:    It is NOT necessary to use this method to close connections. SimpleConnectionPool and
+     *          SimpleURIConnectionPool are specifically designed to gracefully handle unexpected connections closures.
+     *
+     *          So feel free to directly close raw connections if that simplifies your code.
+     *
+     * WARNING: YOU MUST STILL RESTORE THE CONNECTION TOKEN AFTER CALLING THIS METHOD
+     *
+     * WARNING: This will cause any threads that are actively using this connection to experience unexpected connection
+     *          failures
+     *
+     * @param connectionToken the connection token of the connection to close
+     */
+    public synchronized void safeClose(SimpleConnectionState.ConnectionToken connectionToken) {
+        findAndCloseLeakedConnections();
+        long now = System.currentTimeMillis();
+
+        if(connectionToken == null)
+            return;
+
+        // bypass connection state and close connection directly
+        if(logger.isDebugEnabled()) logger.debug("immediately closing connection [{}]", port(connectionToken.connection()));
+        connectionToken.connection().safeClose();
+
+        // update pool about state change to this connection
+        applyConnectionState(connectionToken.state(), now, () -> trackedConnections.remove(connectionToken.state()));
+    }
+
+    /***
+     * Causes the connection to be closed and its resources being freed from the pool, while preventing threads
+     * that are currently using it from experiencing unexpected connection closures.
+     *
+     * WARNING: Closing connections defeats the entire purpose of using a connection pool. Be certain that this method
+     *          is only used in cases where there is a need to ensure the connection is not reused. Needing to close
+     *          connections after every use prevents a connection pool from being able to provide any of the connection
+     *          time performance benefits that are the entire purpose of connection pools.
+     *
+     * This method expires a connection which results in:
+     *     (a) the connection no longer being borrowable, and
+     *     (b) the connection being closed as soon as all threads currently using it have restored it to the pool.
+     *
+     * WARNING: YOU MUST STILL RESTORE THE CONNECTION TOKEN AFTER CALLING THIS METHOD
+     *
+     * @param connectionToken the connection token for the connection to close
+     * @return true if the connection has been closed;
+     *         false if (1) the connection is still open due to there being threads that are still actively using it,
+     *         or (2) if the connectionToken was null
+     */
+    public synchronized boolean scheduleSafeClose(SimpleConnectionState.ConnectionToken connectionToken) {
+        findAndCloseLeakedConnections();
+        long now = System.currentTimeMillis();
+
+        if(connectionToken == null)
+            return false;
+
+        // expire connection state
+        SimpleConnectionState connectionState = connectionToken.state();
+        connectionState.forceExpire();
+
+        if(logger.isDebugEnabled()) logger.debug("closure scheduled for connection [{}]", port(connectionState.connection()));
+
+        // update pool about state change to this connection
+        applyConnectionState(connectionState, now, () -> trackedConnections.remove(connectionState));
+        return connectionState.closed();
+    }
 
     /***
      * For logging

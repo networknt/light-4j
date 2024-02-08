@@ -89,33 +89,6 @@ public final class SimpleConnectionPool {
     }
 
     /***
-     * Causes the connection to be closed and its resources being freed from the pool, while preventing threads
-     * that are currently using it from experiencing unexpected connection closures.
-     *
-     * WARNING: Closing connections defeats the entire purpose of using a connection pool. Be certain that this method
-     *          is only used in cases where there is a need to ensure the connection is not reused. Needing to close
-     *          connections after every use prevents a connection pool from being able to provide any of the connection
-     *          time performance benefits that are the entire purpose of connection pools.
-     *
-     * This method expires a connection which results in:
-     *     (a) the connection no longer being borrowable, and
-     *     (b) the connection being closed as soon as all threads currently using it have restored it to the pool.
-     *
-     * WARNING: YOU MUST STILL RESTORE THE CONNECTION TOKEN AFTER CALLING THIS METHOD
-     *
-     * @param connectionToken the connection token for the connection to close
-     * @return true if the connection has been closed;
-     *         false if (1) the connection is still open due to there being threads that are still actively using it,
-     *         or (2) if the connectionToken was null
-     */
-    public boolean scheduleSafeClose(SimpleConnectionState.ConnectionToken connectionToken) {
-        if(connectionToken == null || !pools.containsKey(connectionToken.uri()))
-            return false;
-
-        return pools.get(connectionToken.uri()).scheduleSafeClose(connectionToken);
-    }
-
-    /***
      * This method immediately closes the connection even if there are still threads actively using it (i.e: it
      * will be closed even if it is still borrowed).
      *
@@ -141,5 +114,32 @@ public final class SimpleConnectionPool {
             return;
 
         pools.get(connectionToken.uri()).safeClose(connectionToken);
+    }
+
+    /***
+     * Causes the connection to be closed and its resources being freed from the pool, while preventing threads
+     * that are currently using it from experiencing unexpected connection closures.
+     *
+     * WARNING: Closing connections defeats the entire purpose of using a connection pool. Be certain that this method
+     *          is only used in cases where there is a need to ensure the connection is not reused. Needing to close
+     *          connections after every use prevents a connection pool from being able to provide any of the connection
+     *          time performance benefits that are the entire purpose of connection pools.
+     *
+     * This method expires a connection which results in:
+     *     (a) the connection no longer being borrowable, and
+     *     (b) the connection being closed as soon as all threads currently using it have restored it to the pool.
+     *
+     * WARNING: YOU MUST STILL RESTORE THE CONNECTION TOKEN AFTER CALLING THIS METHOD
+     *
+     * @param connectionToken the connection token for the connection to close
+     * @return true if the connection has been closed;
+     *         false if (1) the connection is still open due to there being threads that are still actively using it,
+     *         or (2) if the connectionToken was null
+     */
+    public boolean scheduleSafeClose(SimpleConnectionState.ConnectionToken connectionToken) {
+        if(connectionToken == null || !pools.containsKey(connectionToken.uri()))
+            return false;
+
+        return pools.get(connectionToken.uri()).scheduleSafeClose(connectionToken);
     }
 }
