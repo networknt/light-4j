@@ -25,9 +25,9 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>header-config</artifactId>
+    <artifactId>health-config</artifactId>
     <packaging>jar</packaging>
-    <description>A header config module that is used by light-4j and light-aws-lambda</description>
+    <description>A module that contains HealthConfig to be shared with light-aws-lambda</description>
 
     <dependencies>
         <dependency>
