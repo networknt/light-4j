@@ -32,10 +32,16 @@ public class ServerInfoConfig {
     public static final String CONFIG_NAME = "info";
     public static final String ENABLE_SERVER_INFO = "enableServerInfo";
     public static final String KEYS_TO_NOT_SORT = "keysToNotSort";
+    private static final String DOWNSTREAM_ENABLED = "downstreamEnabled";
+    private static final String DOWNSTREAM_HOST = "downstreamHost";
+    private static final String DOWNSTREAM_PATH = "downstreamPath";
     private Map<String, Object> mappedConfig;
     private final Config config;
     boolean enableServerInfo;
     List<String> keysToNotSort;
+    boolean downstreamEnabled;
+    String downstreamHost;
+    String downstreamPath;
 
     private ServerInfoConfig() {
         this(CONFIG_NAME);
@@ -82,9 +88,39 @@ public class ServerInfoConfig {
         this.enableServerInfo = enableServerInfo;
     }
 
+    public boolean isDownstreamEnabled() {
+        return downstreamEnabled;
+    }
+
+    public void setDownstreamEnabled(boolean downstreamEnabled) {
+        this.downstreamEnabled = downstreamEnabled;
+    }
+
+    public String getDownstreamHost() {
+        return downstreamHost;
+    }
+
+    public void setDownstreamHost(String downstreamHost) {
+        this.downstreamHost = downstreamHost;
+    }
+
+    public String getDownstreamPath() {
+        return downstreamPath;
+    }
+
+    public void setDownstreamPath(String downstreamPath) {
+        this.downstreamPath = downstreamPath;
+    }
+
     private void setData() {
         Object object = mappedConfig.get(ENABLE_SERVER_INFO);
         if(object != null) enableServerInfo = Config.loadBooleanValue(ENABLE_SERVER_INFO, object);
+        object = getMappedConfig().get(DOWNSTREAM_ENABLED);
+        if(object != null) downstreamEnabled = Config.loadBooleanValue(DOWNSTREAM_ENABLED, object);
+        object = getMappedConfig().get(DOWNSTREAM_HOST);
+        if(object != null) downstreamHost = (String)object;
+        object = getMappedConfig().get(DOWNSTREAM_PATH);
+        if(object != null) downstreamPath = (String)object;
     }
 
     private void setList() {
