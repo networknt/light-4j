@@ -25,7 +25,11 @@
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>health</artifactId>
+            <artifactId>health-config</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>info-config</artifactId>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>

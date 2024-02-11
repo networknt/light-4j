@@ -94,7 +94,6 @@ public class JwtVerifier extends TokenVerifier {
     static Map<String, X509Certificate> certMap;
     static String audience;  // this is the audience from the client.yml with single oauth provider.
     static Map<String, String> audienceMap; // this is the audience map from the client.yml with multiple oauth providers.
-    static List<String> fingerPrints;
 
     public JwtVerifier(SecurityConfig config) {
         this.config = config;
@@ -724,18 +723,4 @@ public class JwtVerifier extends TokenVerifier {
         }
         return certificate;
     }
-
-    /**
-     * Get a list of certificate fingerprints for server info endpoint so that certification process in light-portal
-     * can detect if your service still use the default public key certificates provided by the light-4j framework.
-     * <p>
-     * The default public key certificates are for dev only and should be replaced on any other environment or
-     * set bootstrapFromKeyService: true if you are using light-oauth2 so that key can be dynamically loaded.
-     *
-     * @return List of certificate fingerprints
-     */
-    public List<String> getFingerPrints() {
-        return fingerPrints;
-    }
-
 }
