@@ -12,7 +12,7 @@ useJson: ${health.useJson:false}
 timeout: ${health.timeout:2000}
 
 # For some of the services like light-proxy, http-sidecar and kafka-sidecar, we might need to check the down
-# stream API before return the health status to the invoker. By default it is not enabled.
+# stream API before return the health status to the invoker. By default, it is not enabled.
 
 # if the health check needs to invoke down streams API. It is false by default.
 downstreamEnabled: ${health.downstreamEnabled:false}

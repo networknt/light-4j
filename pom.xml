@@ -128,6 +128,7 @@
         <module>audit</module>
         <module>audit-config</module>
         <module>dump</module>
+        <module>info-config</module>
         <module>info</module>
         <module>health-config</module>
         <module>health</module>
@@ -245,6 +246,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>dump</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>info-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
