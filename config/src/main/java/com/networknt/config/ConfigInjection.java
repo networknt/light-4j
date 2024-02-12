@@ -79,7 +79,7 @@ public class ConfigInjection {
                 return value;
             }
             String valueStr = (String)value;
-            if(valueStr.contains("\\")) {
+            if(valueStr.contains("\\$")) {
                 m.appendReplacement(sb, (String)value);
             } else {
                 m.appendReplacement(sb, Matcher.quoteReplacement((String)value));

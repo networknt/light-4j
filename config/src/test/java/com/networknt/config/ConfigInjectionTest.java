@@ -108,4 +108,17 @@ public class ConfigInjectionTest {
         Assert.assertEquals(null, envValue);
     }
 
+    /**
+     * This test depends on the values.json in the test config folder, which cannot be loaded when values.yml in the same
+     * folder and values.yml in the src config folder. You need to rename both values.yml files in order to load the values.json
+     * to perform the following test. This test is to ensure that normal backslash in the stringify json is not escaped.
+     */
+    @Test
+    @Ignore
+    public void testStringifiesJson() {
+        String value = "users: [{\"username\":\"ML\\PAYOUT\"}]";
+        String template = "users: ${basic.users:}";
+        Object actual = ConfigInjection.getInjectValue(template, false);
+        assertEquals(value, actual);
+    }
 }
