@@ -82,7 +82,7 @@ public class DefaultConfigLoader implements IConfigLoader{
     public static final String API_ID = "apiId";
     public static final String API_VERSION = "apiVersion";
     public static final String ENV_TAG = "envTag";
-
+    public static final String ACCEPT_HEADER = "acceptHeader";
     public static String lightEnv = null;
     public static String configServerUri = null;
     public static String targetConfigsDirectory = null;
@@ -297,9 +297,12 @@ public class DefaultConfigLoader implements IConfigLoader{
         Map<String, Object> configs = new HashMap<>();
 
         if(logger.isDebugEnabled()) logger.debug("Calling Config Server endpoint:host{}:path{}", configServerUri, configServerPath);
+        String acceptHeader = "application/json";
+        if(startupConfig.get(ACCEPT_HEADER) != null) acceptHeader = (String)startupConfig.get(ACCEPT_HEADER);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(configServerUri.trim() + configServerPath.trim()))
                 .header(Headers.AUTHORIZATION_STRING, authorization)
+                .header(Headers.ACCEPT_STRING, acceptHeader)
                 .build();
 
         try {
