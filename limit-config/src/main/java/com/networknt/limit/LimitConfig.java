@@ -17,6 +17,9 @@
 package com.networknt.limit;
 
 import com.networknt.config.Config;
+import com.networknt.config.JsonMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -27,6 +30,7 @@ import java.util.concurrent.TimeUnit;
  * @author Steve Hu
  */
 public class LimitConfig {
+    private static final Logger logger = LoggerFactory.getLogger(LimitConfig.class);
     public static final String CONFIG_NAME = "limit";
     ;
     private static final String CONCURRENT_REQUEST = "concurrentRequest";
@@ -246,84 +250,97 @@ public class LimitConfig {
             rateLimit = limitQuota;
         }
 
-        if (getMappedConfig().get(SERVER)!=null)  {
-            Map<String, String> server_config = (Map<String, String>)getMappedConfig().get(SERVER);
-            this.server = new HashMap<>();
-            server_config.forEach((k, v)->this.server.put(k, new LimitQuota(v)));
-        }
-
-        if (getMappedConfig().get(ADDRESS)!=null)  {
-            Map<String, Object> address_config = (Map<String, Object>)getMappedConfig().get(ADDRESS);
-            address = new RateLimitSet();
-
-            address_config.forEach((k, o)->{
-                if (o instanceof String) {
-                    List<String> limits = Arrays.asList(((String)o).split(" "));
-                    List<LimitQuota> limitQuotas = new ArrayList<>();
-                    limits.stream().forEach(l->limitQuotas.add(new LimitQuota(l)));
-                    address.addDirectMap(k, limitQuotas);
-                } else if (o instanceof Map) {
-                    Map<String, String> path = (Map<String, String>)o;
-                    path.forEach((p, v)->{
-                        List<String> limits = Arrays.asList(v.split(" "));
-                        String key = k + SEPARATE_KEY + p;
-                        List<LimitQuota> limitQuotas = new ArrayList<>();
-                        limits.stream().forEach(l->limitQuotas.add(new LimitQuota(l)));
-                        address.addDirectMap(key, limitQuotas);
-                    });
+        if (mappedConfig.get(SERVER)!=null)  {
+            Object serverObject = mappedConfig.get(SERVER);
+            if(serverObject != null) {
+                this.server = new HashMap<>();
+                if(serverObject instanceof String) {
+                    String s = (String) serverObject;
+                    s = s.trim();
+                    if(logger.isTraceEnabled()) logger.trace("server s = " + s);
+                    if(s.startsWith("{")) {
+                        Map<String, Object> serverConfig = JsonMapper.string2Map(s);
+                        serverConfig.forEach((k, v)->this.server.put(k, new LimitQuota((String)v)));
+                    } else {
+                        logger.error("server is the wrong type. Only JSON map or YAML map is supported.");
+                    }
+                } else if(serverObject instanceof Map) {
+                    Map<String, String> serverConfig = (Map<String, String>) serverObject;
+                    serverConfig.forEach((k, v)->this.server.put(k, new LimitQuota(v)));
+                } else {
+                    logger.error("server is the wrong type. Only JSON map or YAML map is supported.");
                 }
-            });
-
+            }
         }
 
-        if (getMappedConfig().get(CLIENT)!=null)  {
-            Map<String, Object> client_config = (Map<String, Object>)getMappedConfig().get(CLIENT);
-            client = new RateLimitSet();
-
-            client_config.forEach((k, o)->{
-                if (o instanceof String) {
-                    List<String> limits = Arrays.asList(((String)o).split(" "));
-                    List<LimitQuota> limitQuota = new ArrayList<>();
-                    limits.stream().forEach(l->limitQuota.add(new LimitQuota(l)));
-                    client.addDirectMap(k, limitQuota);
-                } else if (o instanceof Map) {
-                    Map<String, String> path = (Map<String, String>)o;
-                    path.forEach((p, v)->{
-                        List<String> limits = Arrays.asList(v.split(" "));
-                        String key = k + SEPARATE_KEY + v;
-                        List<LimitQuota> limitQuotas = new ArrayList<>();
-                        limits.stream().forEach(l->limitQuotas.add(new LimitQuota(l)));
-                        client.addDirectMap(key, limitQuotas);
-                    });
+        if (mappedConfig.get(ADDRESS)!=null)  {
+            Object addressObject = mappedConfig.get(ADDRESS);
+            if(addressObject != null) {
+                address = new RateLimitSet();
+                if (addressObject instanceof String) {
+                    String s = (String) addressObject;
+                    s = s.trim();
+                    if(logger.isTraceEnabled()) logger.trace("address s = " + s);
+                    if(s.startsWith("{")) {
+                        Map<String, Object> addressConfig = JsonMapper.string2Map(s);
+                        address = populateFromMap(addressConfig);
+                    } else {
+                        logger.error("address is the wrong type. Only JSON map or YAML map is supported.");
+                    }
+                } else if(addressObject instanceof Map) {
+                    Map<String, Object> addressConfig = (Map<String, Object>) addressObject;
+                    address = populateFromMap(addressConfig);
+                } else {
+                    logger.error("address is the wrong type. Only JSON map or YAML map is supported.");
                 }
-            });
-
+            }
         }
 
-        if (getMappedConfig().get(USER)!=null)  {
-            Map<String, Object> user_config = (Map<String, Object>)getMappedConfig().get(USER);
-            user = new RateLimitSet();
-
-            user_config.forEach((k, o)->{
-                if (o instanceof String) {
-                    List<String> limits = Arrays.asList(((String)o).split(" "));
-                    List<LimitQuota> limitQuota = new ArrayList<>();
-                    limits.stream().forEach(l->limitQuota.add(new LimitQuota(l)));
-                    user.addDirectMap(k, limitQuota);
-                } else if (o instanceof Map) {
-                    Map<String, String> path = (Map<String, String>)o;
-                    path.forEach((p, v)->{
-                        List<String> limits = Arrays.asList(v.split(" "));
-                        String key = k + SEPARATE_KEY + v;
-                        List<LimitQuota> limitQuotas = new ArrayList<>();
-                        limits.stream().forEach(l->limitQuotas.add(new LimitQuota(l)));
-                        user.addDirectMap(key, limitQuotas);
-                    });
+        if (mappedConfig.get(CLIENT)!=null)  {
+            Object clientObject = mappedConfig.get(CLIENT);
+            if (clientObject != null) {
+                client = new RateLimitSet();
+                if (clientObject instanceof String) {
+                    String s = (String) clientObject;
+                    s = s.trim();
+                    if(logger.isTraceEnabled()) logger.trace("client s = " + s);
+                    if(s.startsWith("{")) {
+                        Map<String, Object> clientConfig = JsonMapper.string2Map(s);
+                        client = populateFromMap(clientConfig);
+                    } else {
+                        logger.error("client is the wrong type. Only JSON map or YAML map is supported.");
+                    }
+                } else if(clientObject instanceof Map) {
+                    Map<String, Object> clientConfig = (Map<String, Object>) clientObject;
+                    client = populateFromMap(clientConfig);
+                } else {
+                    logger.error("client is the wrong type. Only JSON map or YAML map is supported.");
                 }
-            });
-
+            }
         }
 
+        if (mappedConfig.get(USER)!=null)  {
+            Object userObject = mappedConfig.get(USER);
+            if(userObject != null) {
+                user = new RateLimitSet();
+                if (userObject instanceof String) {
+                    String s = (String) userObject;
+                    s = s.trim();
+                    if(logger.isTraceEnabled()) logger.trace("user s = " + s);
+                    if(s.startsWith("{")) {
+                        Map<String, Object> userConfig = JsonMapper.string2Map(s);
+                        user = populateFromMap(userConfig);
+                    } else {
+                        logger.error("user is the wrong type. Only JSON map or YAML map is supported.");
+                    }
+                } else if(userObject instanceof Map) {
+                    Map<String, Object> userConfig = (Map<String, Object>) userObject;
+                    user = populateFromMap(userConfig);
+                } else {
+                    logger.error("user is the wrong type. Only JSON map or YAML map is supported.");
+                }
+            }
+        }
     }
 
     public List<String> getAddressList() {
@@ -365,7 +382,29 @@ public class LimitConfig {
         return userList;
     }
 
-    class RateLimitSet{
+    public static RateLimitSet populateFromMap(Map<String, Object> map) {
+        RateLimitSet rateLimitSet = new RateLimitSet();
+        map.forEach((k, o)->{
+            if (o instanceof String) {
+                List<String> limits = Arrays.asList(((String)o).split(" "));
+                List<LimitQuota> limitQuota = new ArrayList<>();
+                limits.stream().forEach(l->limitQuota.add(new LimitQuota(l)));
+                rateLimitSet.addDirectMap(k, limitQuota);
+            } else if (o instanceof Map) {
+                Map<String, String> path = (Map<String, String>)o;
+                path.forEach((p, v)->{
+                    List<String> limits = Arrays.asList(v.split(" "));
+                    String key = k + SEPARATE_KEY + p;
+                    List<LimitQuota> limitQuotas = new ArrayList<>();
+                    limits.stream().forEach(l->limitQuotas.add(new LimitQuota(l)));
+                    rateLimitSet.addDirectMap(key, limitQuotas);
+                });
+            }
+        });
+        return rateLimitSet;
+    }
+
+    public static class RateLimitSet {
         Map<String, List<LimitQuota>>  directMaps;
 
         public RateLimitSet() {
