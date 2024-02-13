@@ -21,6 +21,7 @@ import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.client.ClientConfig;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigInjection;
 import com.networknt.config.JsonMapper;
@@ -100,7 +101,7 @@ public class DefaultConfigLoader implements IConfigLoader{
         }
         HttpClient.Builder clientBuilder = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NORMAL)
-                .connectTimeout(Duration.ofMillis(1000)) // default to 1 second timeout.
+                .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout())) // client.timeout from the client.yml
                 .version(HttpClient.Version.HTTP_2)
                 .sslContext(createBootstrapContext());
         return clientBuilder.build();
