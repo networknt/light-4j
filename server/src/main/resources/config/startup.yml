@@ -16,4 +16,7 @@ dummy: dummyEntry
 # apiId: com.networknt.petstore-1.0.0
 # apiVersion: 1.0.0
 # envTag: dev
+# Indicate to the config server we prefer yaml format over json format. default is json.
 # acceptHeader: application/yaml
+# The connect timeout for bootstrap from the config server. Default is 3 seconds.
+# timeout: 3000
