@@ -17,6 +17,7 @@ package com.networknt.router;
 
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import com.networknt.config.JsonMapper;
 import com.networknt.handler.config.MethodRewriteRule;
 import com.networknt.handler.config.QueryHeaderRewriteRule;
 import com.networknt.handler.config.UrlRewriteRule;
@@ -186,10 +187,22 @@ public class RouterConfig {
 
     public void setHostWhitelist() {
         this.hostWhitelist = new ArrayList<>();
-        if (mappedConfig.get("hostWhitelist") !=null && mappedConfig.get("hostWhitelist") instanceof String) {
-            hostWhitelist.add((String)mappedConfig.get("hostWhitelist"));
-        } else {
-            hostWhitelist = (List)mappedConfig.get("hostWhitelist");
+        if (mappedConfig.get("hostWhitelist") != null) {
+            if (mappedConfig.get("hostWhitelist") instanceof String) {
+                // multiple host as an JSON list.
+                String s = (String)mappedConfig.get("hostWhitelist");
+                s = s.trim();
+                if(logger.isTraceEnabled()) logger.trace("s = " + s);
+                if(s.startsWith("[")) {
+                    // json list
+                    hostWhitelist = (List)JsonMapper.fromJson(s, List.class);
+                } else {
+                    // single host as a string
+                    hostWhitelist.add((String) mappedConfig.get("hostWhitelist"));
+                }
+            } else {
+                hostWhitelist = (List)mappedConfig.get("hostWhitelist");
+            }
         }
     }
 
@@ -203,11 +216,25 @@ public class RouterConfig {
 
     public void setUrlRewriteRules() {
         this.urlRewriteRules = new ArrayList<>();
-        if (mappedConfig.get("urlRewriteRules") !=null && mappedConfig.get("urlRewriteRules") instanceof String) {
-            urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule((String)mappedConfig.get("urlRewriteRules")));
-        } else {
-            List<String> rules = (List)mappedConfig.get("urlRewriteRules");
-            if(rules != null) {
+        if (mappedConfig.get("urlRewriteRules") != null) {
+            if (mappedConfig.get("urlRewriteRules") instanceof String) {
+                String s = (String)mappedConfig.get("urlRewriteRules");
+                s = s.trim();
+                if(logger.isTraceEnabled()) logger.trace("s = " + s);
+                // There are two formats for the urlRewriteRules. One is a string separated by a space
+                // and the other is a list of strings separated by a space in JSON list format.
+                if(s.startsWith("[")) {
+                    // multiple rules
+                    List<String> rules = (List<String>)JsonMapper.fromJson(s, List.class);
+                    for (String rule : rules) {
+                        urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule(rule));
+                    }
+                } else {
+                    // single rule
+                    urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule(s));
+                }
+            } else if (mappedConfig.get("urlRewriteRules") instanceof List) {
+                List<String> rules = (List)mappedConfig.get("urlRewriteRules");
                 for (String s : rules) {
                     urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule(s));
                 }
@@ -225,11 +252,23 @@ public class RouterConfig {
 
     public void setMethodRewriteRules() {
         this.methodRewriteRules = new ArrayList<>();
-        if (mappedConfig.get("methodRewriteRules") !=null && mappedConfig.get("methodRewriteRules") instanceof String) {
-            methodRewriteRules.add(convertToMethodRewriteRule((String)mappedConfig.get("methodRewriteRules")));
-        } else {
-            List<String> rules = (List)mappedConfig.get("methodRewriteRules");
-            if(rules != null) {
+        if(mappedConfig.get("methodRewriteRules") != null) {
+            if (mappedConfig.get("methodRewriteRules") instanceof String) {
+                String s = (String)mappedConfig.get("methodRewriteRules");
+                s = s.trim();
+                if(logger.isTraceEnabled()) logger.trace("s = " + s);
+                if(s.startsWith("[")) {
+                    // multiple rules
+                    List<String> rules = (List<String>)JsonMapper.fromJson(s, List.class);
+                    for (String rule : rules) {
+                        methodRewriteRules.add(convertToMethodRewriteRule(rule));
+                    }
+                } else {
+                    // single rule
+                    methodRewriteRules.add(convertToMethodRewriteRule(s));
+                }
+            } else if (mappedConfig.get("methodRewriteRules") instanceof List) {
+                List<String> rules = (List)mappedConfig.get("methodRewriteRules");
                 for (String s : rules) {
                     methodRewriteRules.add(convertToMethodRewriteRule(s));
                 }
@@ -282,26 +321,47 @@ public class RouterConfig {
 
     public void setQueryParamRewriteRules() {
         queryParamRewriteRules = new HashMap<>();
-        if (mappedConfig.get("queryParamRewriteRules") != null && mappedConfig.get("queryParamRewriteRules") instanceof Map) {
-            Map<String, Object> map = (Map<String, Object>)mappedConfig.get("queryParamRewriteRules");
-            for (Map.Entry<String, Object> r: map.entrySet()) {
-                String key =  r.getKey();
-                Object object = r.getValue();
-                if(object instanceof List) {
-                    List<QueryHeaderRewriteRule> rules = new ArrayList<>();
-                    List<Map<String, String>> values = (List<Map<String, String>>)object;
-                    for(Map<String, String> value: values) {
-                        QueryHeaderRewriteRule rule = new QueryHeaderRewriteRule();
-                        rule.setOldK(value.get("oldK"));
-                        rule.setNewK(value.get("newK"));
-                        rule.setOldV(value.get("oldV"));
-                        rule.setNewV(value.get("newV"));
-                        rules.add(rule);
-                    }
-                    queryParamRewriteRules.put(key, rules);
+        if(mappedConfig.get("queryParamRewriteRules") != null) {
+            if(mappedConfig.get("queryParamRewriteRules") instanceof String) {
+                String s = (String)mappedConfig.get("queryParamRewriteRules");
+                s = s.trim();
+                if(logger.isTraceEnabled()) logger.trace("s = " + s);
+                if(s.startsWith("{")) {
+                    // json map
+                    Map<String, Object> map = JsonMapper.fromJson(s, Map.class);
+                    queryParamRewriteRules = populateQueryParameterRules(map);
+                } else {
+                    logger.error("queryParamRewriteRules is the wrong type. Only JSON map or YAML map is supported.");
                 }
+            } else if(mappedConfig.get("queryParamRewriteRules") instanceof Map) {
+                Map<String, Object> map = (Map<String, Object>)mappedConfig.get("queryParamRewriteRules");
+                queryParamRewriteRules = populateQueryParameterRules(map);
+            } else {
+                logger.error("queryParamRewriteRules is the wrong type. Only JSON map or YAML map is supported.");
             }
         }
+    }
+
+    private Map<String, List<QueryHeaderRewriteRule>> populateQueryParameterRules(Map<String, Object> map) {
+        queryParamRewriteRules = new HashMap<>();
+        for (Map.Entry<String, Object> r: map.entrySet()) {
+            String key =  r.getKey();
+            Object object = r.getValue();
+            if(object instanceof List) {
+                List<QueryHeaderRewriteRule> rules = new ArrayList<>();
+                List<Map<String, String>> values = (List<Map<String, String>>)object;
+                for(Map<String, String> value: values) {
+                    QueryHeaderRewriteRule rule = new QueryHeaderRewriteRule();
+                    rule.setOldK(value.get("oldK"));
+                    rule.setNewK(value.get("newK"));
+                    rule.setOldV(value.get("oldV"));
+                    rule.setNewV(value.get("newV"));
+                    rules.add(rule);
+                }
+                queryParamRewriteRules.put(key, rules);
+            }
+        }
+        return queryParamRewriteRules;
     }
 
     public Map<String, List<QueryHeaderRewriteRule>> getHeaderRewriteRules() {
@@ -314,26 +374,47 @@ public class RouterConfig {
 
     public void setHeaderRewriteRules() {
         headerRewriteRules = new HashMap<>();
-        if (mappedConfig.get("headerRewriteRules") != null && mappedConfig.get("headerRewriteRules") instanceof Map) {
-            Map<String, Object> map = (Map<String, Object>)mappedConfig.get("headerRewriteRules");
-            for (Map.Entry<String, Object> r: map.entrySet()) {
-                String key =  r.getKey();
-                Object object = r.getValue();
-                if(object instanceof List) {
-                    List<QueryHeaderRewriteRule> rules = new ArrayList<>();
-                    List<Map<String, String>> values = (List<Map<String, String>>)object;
-                    for(Map<String, String> value: values) {
-                        QueryHeaderRewriteRule rule = new QueryHeaderRewriteRule();
-                        rule.setOldK(value.get("oldK"));
-                        rule.setNewK(value.get("newK"));
-                        rule.setOldV(value.get("oldV"));
-                        rule.setNewV(value.get("newV"));
-                        rules.add(rule);
-                    }
-                    headerRewriteRules.put(key, rules);
+        if(mappedConfig.get("headerRewriteRules") != null) {
+            if(mappedConfig.get("headerRewriteRules") instanceof String) {
+                String s = (String)mappedConfig.get("headerRewriteRules");
+                s = s.trim();
+                if(logger.isTraceEnabled()) logger.trace("s = " + s);
+                if(s.startsWith("{")) {
+                    // json map
+                    Map<String, Object> map = JsonMapper.fromJson(s, Map.class);
+                    headerRewriteRules = populateHeaderRewriteRules(map);
+                } else {
+                    logger.error("headerRewriteRules is the wrong type. Only JSON map or YAML map is supported.");
                 }
+            } else if(mappedConfig.get("headerRewriteRules") instanceof Map) {
+                Map<String, Object> map = (Map<String, Object>)mappedConfig.get("headerRewriteRules");
+                headerRewriteRules = populateHeaderRewriteRules(map);
+            } else {
+                logger.error("headerRewriteRules is the wrong type. Only JSON map or YAML map is supported.");
             }
         }
+    }
+
+    private Map<String, List<QueryHeaderRewriteRule>> populateHeaderRewriteRules(Map<String, Object> map) {
+        headerRewriteRules = new HashMap<>();
+        for (Map.Entry<String, Object> r: map.entrySet()) {
+            String key =  r.getKey();
+            Object object = r.getValue();
+            if(object instanceof List) {
+                List<QueryHeaderRewriteRule> rules = new ArrayList<>();
+                List<Map<String, String>> values = (List<Map<String, String>>)object;
+                for(Map<String, String> value: values) {
+                    QueryHeaderRewriteRule rule = new QueryHeaderRewriteRule();
+                    rule.setOldK(value.get("oldK"));
+                    rule.setNewK(value.get("newK"));
+                    rule.setOldV(value.get("oldV"));
+                    rule.setNewV(value.get("newV"));
+                    rules.add(rule);
+                }
+                headerRewriteRules.put(key, rules);
+            }
+        }
+        return headerRewriteRules;
     }
 
     public void setPathPrefixMaxRequestTime() {
