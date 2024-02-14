@@ -1,7 +1,9 @@
+# router.hostWhitelist: "[\"192.168.0.*\",\"10.1.2.*\"]"
 router.hostWhitelist:
   - 192.168.0.*
   - 10.1.2.*
 
+# router.urlRewriteRules: "[\"/listings/(.*)$ /listing.html?listing=$1\",\"/ph/uat/de-asia-ekyc-service/v1 /uat-de-asia-ekyc-service/v1\",\"(/tutorial/.*)/wordpress/(\\\\w+)\\\\.?.*$ $1/cms/$2.php\"]"
 router.urlRewriteRules:
   # test your regex rule at https://www.freeformatter.com/java-regex-tester.html#ad-output
   # /listings/123 to /listing.html?listing=123
@@ -11,6 +13,7 @@ router.urlRewriteRules:
   # /tutorial/linux/wordpress/file1 to /tutorial/linux/cms/file1.php
   - (/tutorial/.*)/wordpress/(\w+)\.?.*$ $1/cms/$2.php
 
+# router.methodRewriteRules: "[\"/v2/address POST PUT\",\"/v1/address POST PATCH\",\"/v1/address GET DELETE\",\"/v1/pets/{petId} GET DELETE\"]"
 router.methodRewriteRules:
   # rewrite POST to PUT for path /v2/address
   - /v2/address POST PUT
@@ -21,6 +24,7 @@ router.methodRewriteRules:
   # rewrite GET to DELETE for path /v1/pets/{petId} with path parameters
   - /v1/pets/{petId} GET DELETE
 
+# router.queryParamRewriteRules: "{\"/v1/address\":[{\"oldK\":\"business-query\",\"newK\":\"request-query\",\"oldV\":\"value1\",\"newV\":\"value2\"},{\"oldK\":\"module\",\"newK\":\"mod\"},{\"oldK\":\"app-id\",\"oldV\":\"esb\",\"newV\":\"emb\"}],\"/v2/address\":[{\"oldK\":\"key1\",\"oldV\":\"old\",\"newV\":\"new\"}],\"/v3/address\":[{\"oldK\":\"path\",\"newK\":\"route\"}],\"/v1/pets/{petId}\":[{\"oldK\":\"path\",\"newK\":\"route\"}]}"
 router.queryParamRewriteRules:
   # rewrite query parameter key business-query to request-query and value value1 to value2 for /v1/address
   /v1/address:
@@ -51,6 +55,7 @@ router.queryParamRewriteRules:
     - oldK: path
       newK: route
 
+# router.headerRewriteRules: "{\"/v1/address\":[{\"oldK\":\"business-query\",\"newK\":\"request-query\",\"oldV\":\"value1\",\"newV\":\"value2\"},{\"oldK\":\"module\",\"newK\":\"mod\"},{\"oldK\":\"app-id\",\"oldV\":\"esb\",\"newV\":\"emb\"}],\"/v2/address\":[{\"oldK\":\"key1\",\"oldV\":\"old\",\"newV\":\"new\"}],\"/v3/address\":[{\"oldK\":\"path\",\"newK\":\"route\"}],\"/v1/pets/{petId}\":[{\"oldK\":\"path\",\"newK\":\"route\"}]}"
 router.headerRewriteRules:
   # rewrite header key business-query to request-query and value value1 to value2 for /v1/address
   /v1/address:
@@ -86,7 +91,8 @@ router.headerRewriteRules:
 #  /v1/address: 5000
 #  /v2/address: 10000
 #  /v3/address: 30000
-router.pathPrefixMaxRequestTime: {"/v1/address":5000,"/v2/address":10000,"/v3/address":30000,"/v1/pets/{petId}": 5000}
+router.pathPrefixMaxRequestTime: "{\"/v1/address\":5000,\"/v2/address\":10000,\"/v3/address\":30000,\"/v1/pets/{petId}\": 5000}"
+# router.pathPrefixMaxRequestTime: {"/v1/address":5000,"/v2/address":10000,"/v3/address":30000,"/v1/pets/{petId}": 5000}
 
 # client.yml
 # test configuration for the TokenHandler with multiple OAuth 2.0 providers.
