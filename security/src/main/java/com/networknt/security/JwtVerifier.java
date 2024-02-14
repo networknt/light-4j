@@ -489,7 +489,7 @@ public class JwtVerifier extends TokenVerifier {
         Map<String, Object> keyConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.KEY);
         if (clientConfig.isMultipleAuthServers()) {
             // iterate all the configured auth server to get JWK.
-            Map<String, Object> serviceIdAuthServers = (Map<String, Object>) keyConfig.get(ClientConfig.SERVICE_ID_AUTH_SERVERS);
+            Map<String, Object> serviceIdAuthServers = ClientConfig.getServiceIdAuthServers(keyConfig.get(ClientConfig.SERVICE_ID_AUTH_SERVERS));
             if (serviceIdAuthServers != null && serviceIdAuthServers.size() > 0) {
                 audienceMap = new HashMap<>();
                 for (Map.Entry<String, Object> entry : serviceIdAuthServers.entrySet()) {
