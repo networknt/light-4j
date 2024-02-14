@@ -17,4 +17,9 @@ public class ExternalServiceConfigTest {
             }
         }
     }
+    @Test
+    public void testUrlRewriteRules() {
+        ExternalServiceConfig config = new ExternalServiceConfig();
+        assert config.getUrlRewriteRules().size() == 2;
+    }
 }

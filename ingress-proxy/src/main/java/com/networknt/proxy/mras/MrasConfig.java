@@ -69,7 +69,7 @@ public class MrasConfig {
     Map<String, Object> basicAuth;
 
     String serviceHost;
-    private Config config;
+    private final Config config;
     private Map<String, Object> mappedConfig;
 
     private MrasConfig() {
@@ -137,15 +137,26 @@ public class MrasConfig {
 
     public void setUrlRewriteRules() {
         this.urlRewriteRules = new ArrayList<>();
-        if (mappedConfig.get("urlRewriteRules") !=null && mappedConfig.get("urlRewriteRules") instanceof String) {
-            urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule((String)mappedConfig.get("urlRewriteRules")));
-        } else {
-            List<String> rules = (List)mappedConfig.get("urlRewriteRules");
-            if(rules != null) {
-                for (String s : rules) {
-                    urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule(s));
-                }
-            }
+        if (mappedConfig.get("urlRewriteRules") != null) {
+           if(mappedConfig.get("urlRewriteRules") instanceof String) {
+               String s = (String)mappedConfig.get("urlRewriteRules");
+               s = s.trim();
+               if(s.startsWith("[")) {
+                   // multiple rules
+                   List<String> rules = (List<String>) JsonMapper.fromJson(s, List.class);
+                   for (String rule : rules) {
+                       urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule(rule));
+                   }
+               } else {
+                   // single rule
+                   urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule(s));
+               }
+           } else if (mappedConfig.get("urlRewriteRules") instanceof List) {
+               List<String> rules = (List)mappedConfig.get("urlRewriteRules");
+               for (String s : rules) {
+                   urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule(s));
+               }
+           }
         }
     }
     public void setUrlRewriteRules(List<UrlRewriteRule> urlRewriteRules) {
