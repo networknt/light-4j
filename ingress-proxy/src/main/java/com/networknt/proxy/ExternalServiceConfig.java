@@ -2,6 +2,7 @@ package com.networknt.proxy;
 
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import com.networknt.config.JsonMapper;
 import com.networknt.handler.config.UrlRewriteRule;
 
 import java.util.ArrayList;
@@ -129,15 +130,29 @@ public class ExternalServiceConfig {
 
     public void setUrlRewriteRules() {
         this.urlRewriteRules = new ArrayList<>();
-        if (mappedConfig.get("urlRewriteRules") !=null && mappedConfig.get("urlRewriteRules") instanceof String) {
-            urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule((String)mappedConfig.get("urlRewriteRules")));
-        } else {
-            List<String> rules = (List)mappedConfig.get("urlRewriteRules");
-            if(rules != null) {
+        if(mappedConfig.get("urlRewriteRules") != null) {
+            if (mappedConfig.get("urlRewriteRules") instanceof String) {
+                String s = (String)mappedConfig.get("urlRewriteRules");
+                s = s.trim();
+                // There are two formats for the urlRewriteRules. One is a string separated by a space
+                // and the other is a list of strings separated by a space in JSON list format.
+                if(s.startsWith("[")) {
+                    // multiple rules
+                    List<String> rules = (List<String>) JsonMapper.fromJson(s, List.class);
+                    for (String rule : rules) {
+                        urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule(rule));
+                    }
+                } else {
+                    // single rule
+                    urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule(s));
+                }
+            } else if (mappedConfig.get("urlRewriteRules") instanceof List) {
+                List<String> rules = (List)mappedConfig.get("urlRewriteRules");
                 for (String s : rules) {
                     urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule(s));
                 }
             }
+
         }
     }
 
@@ -150,12 +165,26 @@ public class ExternalServiceConfig {
             Object object = mappedConfig.get(PATH_HOST_MAPPINGS);
             pathHostMappings = new ArrayList<>();
             if(object instanceof String) {
-                // there is only one path to host available, split the string for path and host.
-                String[] parts = ((String)object).split(" ");
-                if(parts.length != 2) {
-                    throw new ConfigException("path host entry must have two elements separated by a space.");
+                String s = (String)object;
+                s = s.trim();
+                if(s.startsWith("[")) {
+                    // multiple path to host mappings
+                    List<String> mappings = (List<String>) JsonMapper.fromJson(s, List.class);
+                    for (String mapping : mappings) {
+                        String[] parts = mapping.split(" ");
+                        if(parts.length != 2) {
+                            throw new ConfigException("path host entry must have two elements separated by a space.");
+                        }
+                        pathHostMappings.add(parts);
+                    }
+                } else {
+                    // there is only one path to host available, split the string for path and host.
+                    String[] parts = s.split(" ");
+                    if(parts.length != 2) {
+                        throw new ConfigException("path host entry must have two elements separated by a space.");
+                    }
+                    pathHostMappings.add(parts);
                 }
-                pathHostMappings.add(parts);
             } else if (object instanceof List) {
                 List<String> maps = (List<String>)object;
                 for(String s: maps) {
