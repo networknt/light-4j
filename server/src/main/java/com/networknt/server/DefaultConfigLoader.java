@@ -84,6 +84,8 @@ public class DefaultConfigLoader implements IConfigLoader{
     public static final String API_VERSION = "apiVersion";
     public static final String ENV_TAG = "envTag";
     public static final String ACCEPT_HEADER = "acceptHeader";
+    public static final String TIMEOUT = "timeout";
+
     public static String lightEnv = null;
     public static String configServerUri = null;
     public static String targetConfigsDirectory = null;
@@ -99,9 +101,11 @@ public class DefaultConfigLoader implements IConfigLoader{
             final Properties props = System.getProperties();
             props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
         }
+        int timeout = 3000;
+        if(startupConfig.get(TIMEOUT) != null) timeout = Config.loadIntegerValue(TIMEOUT, startupConfig.get(TIMEOUT));
         HttpClient.Builder clientBuilder = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NORMAL)
-                .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout())) // client.timeout from the client.yml
+                .connectTimeout(Duration.ofMillis(timeout)) // timeout from the startup.yml
                 .version(HttpClient.Version.HTTP_2)
                 .sslContext(createBootstrapContext());
         return clientBuilder.build();

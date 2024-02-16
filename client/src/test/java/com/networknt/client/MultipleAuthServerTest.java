@@ -53,7 +53,7 @@ public class MultipleAuthServerTest {
             // iterate all the configured auth server to get JWK.
             Map<String, Object> tokenConfig = clientConfig.getTokenConfig();
             Map<String, Object> keyConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.KEY);
-            Map<String, Object> serviceIdAuthServers = (Map<String, Object>) keyConfig.get(ClientConfig.SERVICE_ID_AUTH_SERVERS);
+            Map<String, Object> serviceIdAuthServers = ClientConfig.getServiceIdAuthServers(keyConfig.get(ClientConfig.SERVICE_ID_AUTH_SERVERS));
             if (serviceIdAuthServers == null) {
                 throw new RuntimeException("serviceIdAuthServers property is missing in the token key configuration");
             }

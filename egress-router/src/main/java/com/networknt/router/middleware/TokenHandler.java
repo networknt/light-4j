@@ -148,7 +148,7 @@ public class TokenHandler implements MiddlewareHandler {
 
             if(clientConfig.isMultipleAuthServers()) {
                 // get the right client credentials configuration based on the serviceId
-                Map<String, Object> serviceIdAuthServers = (Map<String, Object>)ccConfig.get(ClientConfig.SERVICE_ID_AUTH_SERVERS);
+                Map<String, Object> serviceIdAuthServers = ClientConfig.getServiceIdAuthServers(ccConfig.get(ClientConfig.SERVICE_ID_AUTH_SERVERS));
                 if(serviceIdAuthServers == null) {
                     throw new RuntimeException("serviceIdAuthServers property is missing in the token client credentials configuration");
                 }

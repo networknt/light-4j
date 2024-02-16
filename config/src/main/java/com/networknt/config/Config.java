@@ -742,7 +742,10 @@ public abstract class Config {
         if (object instanceof Boolean) {
             return (Boolean) object;
         } else if (object instanceof String) {
-            return Boolean.valueOf((String) object);
+            String s = (String)object;
+            s = s.trim();
+            if(s.isEmpty()) return false;
+            return Boolean.valueOf(s);
         } else {
             throw new ConfigException(name + " must be a boolean or a string value.");
         }
@@ -752,7 +755,10 @@ public abstract class Config {
         if (object instanceof Integer) {
             return (Integer) object;
         } else if (object instanceof String) {
-            return Integer.valueOf((String) object);
+            String s = (String)object;
+            s = s.trim();
+            if(s.isEmpty()) return 0;
+            return Integer.valueOf(s);
         } else {
             throw new ConfigException(name + " must be an integer or a string value.");
         }
@@ -764,7 +770,10 @@ public abstract class Config {
         } else if(object instanceof Long) {
             return (Long) object;
         } else if (object instanceof String) {
-            return Long.valueOf((String) object);
+            String s = (String)object;
+            s = s.trim();
+            if(s.isEmpty()) return 0L;
+            return Long.valueOf(s);
         } else {
             throw new ConfigException(name + " must be a long or a string value.");
         }

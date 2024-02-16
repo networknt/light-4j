@@ -99,8 +99,10 @@ public class ApiKeyConfig {
                 if(s.startsWith("[")) {
                     // json format
                     try {
-                        pathPrefixAuths = Config.getInstance().getMapper().readValue(s, new TypeReference<List<ApiKey>>() {});
+                        List<Map<String, Object>> values = Config.getInstance().getMapper().readValue(s, new TypeReference<>() {});
+                        pathPrefixAuths = populatePathPrefixAuths(values);
                     } catch (Exception e) {
+                        logger.error("Exception:", e);
                         throw new ConfigException("could not parse the pathPrefixAuth json with a list of string and object.");
                     }
                 } else {
@@ -108,17 +110,22 @@ public class ApiKeyConfig {
                 }
             } else if (object instanceof List) {
                 // the object is a list of map, we need convert it to PathPrefixAuth object.
-                List<Map<String, Object>> values = (List<Map<String, Object>>)object;
-                for(Map<String, Object> value: values) {
-                    ApiKey apiKey = new ApiKey();
-                    apiKey.setPathPrefix((String)value.get(PATH_PREFIX));
-                    apiKey.setHeaderName((String)value.get(HEADER_NAME));
-                    apiKey.setApiKey((String)value.get(API_KEY));
-                    pathPrefixAuths.add(apiKey);
-                }
+                pathPrefixAuths = populatePathPrefixAuths((List<Map<String, Object>>)object);
             } else {
                 throw new ConfigException("pathPrefixAuth must be a list of string object map.");
             }
         }
+    }
+
+    public static List<ApiKey> populatePathPrefixAuths(List<Map<String, Object>> values) {
+        List<ApiKey> pathPrefixAuths = new ArrayList<>();
+        for(Map<String, Object> value: values) {
+            ApiKey apiKey = new ApiKey();
+            apiKey.setPathPrefix((String)value.get(PATH_PREFIX));
+            apiKey.setHeaderName((String)value.get(HEADER_NAME));
+            apiKey.setApiKey((String)value.get(API_KEY));
+            pathPrefixAuths.add(apiKey);
+        }
+        return pathPrefixAuths;
     }
 }

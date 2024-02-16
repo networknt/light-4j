@@ -9,6 +9,7 @@ import org.mockito.Mockito;
 
 
 import java.util.HashMap;
+import java.util.Map;
 
 import static com.networknt.client.ClientConfig.CONFIG_NAME;
 import static junit.framework.TestCase.assertEquals;
@@ -72,4 +73,18 @@ public class ClientConfigTest {
         map.put("request", configMap);
         return map;
     }
+
+    @Test
+    public void testServiceIdAuthServers() {
+        ClientConfig clientConfig = ClientConfig.get();
+        Map<String, Object> tokenConfig = clientConfig.getTokenConfig();
+        Map<String, Object> ccConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.CLIENT_CREDENTIALS);
+        if (clientConfig.isMultipleAuthServers()) {
+            // iterate all the configured auth server to get JWK.
+            Object object = ccConfig.get(ClientConfig.SERVICE_ID_AUTH_SERVERS);
+            Map<String, Object> serviceIdAuthServers = ClientConfig.getServiceIdAuthServers(object);
+            assertEquals(2, serviceIdAuthServers.size());
+        }
+    }
+
 }
