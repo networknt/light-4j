@@ -21,6 +21,7 @@ import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.client.ClientConfig;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigInjection;
 import com.networknt.config.JsonMapper;
