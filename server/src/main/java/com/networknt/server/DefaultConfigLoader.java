@@ -22,6 +22,7 @@ import ch.qos.logback.core.joran.spi.JoranException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.client.ClientConfig;
+import com.networknt.common.ContentType;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigInjection;
 import com.networknt.config.JsonMapper;
@@ -90,8 +91,6 @@ public class DefaultConfigLoader implements IConfigLoader{
     public static String configServerUri = null;
     public static String targetConfigsDirectory = null;
 
-    // An instance of Jackson ObjectMapper that can be used anywhere else for Json.
-    final static ObjectMapper mapper = new ObjectMapper();
     // Using JDK 11 HTTP client to connect to the config server with bootstrap.truststore
     private HttpClient configClient;
 
@@ -328,9 +327,20 @@ public class DefaultConfigLoader implements IConfigLoader{
                     throw new Exception("The headers in the config server response are not matched with the jar file.");
                 }
                 */
-
-                configs = mapper.readValue(body, new TypeReference<Map<String, Object>>() {});
-                processNestedMap(configs);
+                // two cases: 1. the response is a json object. 2. the response is a yaml string. based on the response header.
+                Optional<String> contentType = response.headers().firstValue((Headers.CONTENT_TYPE_STRING));
+                if(contentType.isPresent()) {
+                    if(contentType.get().startsWith(ContentType.APPLICATION_JSON.value())) {
+                        configs = JsonMapper.string2Map(body);
+                        processNestedMap(configs);
+                    } else if(contentType.get().startsWith(ContentType.APPLICATION_YAML.value())) {
+                        configs = Config.getInstance().getYaml().load(body);
+                    }
+                } else {
+                    // there is no content type header in the response, throw an exception.
+                    logger.error("The content type header is not set in the response from the config server.");
+                    throw new RuntimeException("The content type header is not set in the response from the config server.");
+                }
             }
         } catch (Exception e) {
             logger.error("Exception while calling config server:", e);
