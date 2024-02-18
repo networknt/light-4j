@@ -25,15 +25,16 @@ public enum ContentType {
     ANY_TYPE("*/*"),
     APPLICATION_JSON("application/json"),
     XML("text/xml"),
-    APPLICATION_XML_VALUE("application/xml"),
-    APPLICATION_FORM_URLENCODED_VALUE("application/x-www-form-urlencoded"),
-    APPLICATION_PDF_VALUE("application/pdf"),
-    MULTIPART_MIXED_VALUE("multipart/mixed"),
-    MULTIPART_FORM_DATA_VALUE("multipart/form-data"),
-    TEXT_PLAIN_VALUE("text/plain"),
-    IMAGE_PNG_VALUE ("image/png"),
-    IMAGE_JPEG_VALUE ("image/jpeg"),
-    IMAGE_GIF_VALUE ("image/gif");
+    APPLICATION_XML("application/xml"),
+    APPLICATION_YAML("application/yaml"),
+    APPLICATION_FORM_URLENCODED("application/x-www-form-urlencoded"),
+    APPLICATION_PDF("application/pdf"),
+    MULTIPART_MIXED("multipart/mixed"),
+    MULTIPART_FORM_DATA("multipart/form-data"),
+    TEXT_PLAIN("text/plain"),
+    IMAGE_PNG("image/png"),
+    IMAGE_JPEG("image/jpeg"),
+    IMAGE_GIF("image/gif");
 
     private final String value;
 

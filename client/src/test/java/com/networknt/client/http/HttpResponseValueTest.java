@@ -31,7 +31,7 @@ public class HttpResponseValueTest {
     public void testBuildResponse() {
 
         HttpResponseValue responseValue = HttpResponseValue.builder().with("file-info", ContentType.APPLICATION_JSON, fileName)
-        .with("file-body", ContentType.APPLICATION_PDF_VALUE, fileBody).build();
+        .with("file-body", ContentType.APPLICATION_PDF, fileBody).build();
         assertTrue(responseValue.hasBody("file-body"));
         assertTrue(responseValue.hasBody("file-info"));
         assertNotNull(responseValue.getBody("file-info"));
@@ -40,7 +40,7 @@ public class HttpResponseValueTest {
     @Test
     public void testResponseValue() throws Exception {
         HttpResponseValue responseValue = HttpResponseValue.builder().with("file-info", ContentType.APPLICATION_JSON, fileName)
-                .with("file-body", ContentType.APPLICATION_PDF_VALUE, fileBody).build();
+                .with("file-body", ContentType.APPLICATION_PDF, fileBody).build();
 
         //Serialize the response value by sending response as buffer bytes
         //createClientCallback(final AtomicReference<ClientResponse> reference, final CountDownLatch latch, final ByteBuffer requestBody)
