@@ -26,7 +26,7 @@ public enum ContentType {
     APPLICATION_JSON("application/json"),
     XML("text/xml"),
     APPLICATION_XML("application/xml"),
-    APPLICATION_YAML("application/yaml"),
+    APPLICATION_YAML("application/x-yaml"),
     APPLICATION_FORM_URLENCODED("application/x-www-form-urlencoded"),
     APPLICATION_PDF("application/pdf"),
     MULTIPART_MIXED("multipart/mixed"),
