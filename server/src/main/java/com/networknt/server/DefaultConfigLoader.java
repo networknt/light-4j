@@ -212,7 +212,7 @@ public class DefaultConfigLoader implements IConfigLoader{
         // pass serviceConfigs through Config.yaml's load method so that it can decrypt any encrypted values
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);//to get yaml string without curly brackets and commas
-        serviceConfigs = Config.getInstance().getYaml().load(new Yaml(options).dump(serviceConfigs));
+        // serviceConfigs = Config.getInstance().getYaml().load(new Yaml(options).dump(serviceConfigs));
 
         // save the values.yml to the target folder. This is for the case of reload to overwrite and start without config server.
         try {
@@ -334,7 +334,7 @@ public class DefaultConfigLoader implements IConfigLoader{
                         configs = JsonMapper.string2Map(body);
                         processNestedMap(configs);
                     } else if(contentType.get().startsWith(ContentType.APPLICATION_YAML.value())) {
-                        configs = Config.getInstance().getYaml().load(body);
+                        configs = Config.getNoneDecryptedInstance().getYaml().load(body);
                     } else {
                         // the content type is not supported, throw an exception.
                         logger.error("The content type {} in the response from the config server is not supported.", contentType.get());
