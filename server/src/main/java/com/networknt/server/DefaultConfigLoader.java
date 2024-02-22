@@ -335,6 +335,10 @@ public class DefaultConfigLoader implements IConfigLoader{
                         processNestedMap(configs);
                     } else if(contentType.get().startsWith(ContentType.APPLICATION_YAML.value())) {
                         configs = Config.getInstance().getYaml().load(body);
+                    } else {
+                        // the content type is not supported, throw an exception.
+                        logger.error("The content type {} in the response from the config server is not supported.", contentType.get());
+                        throw new RuntimeException(String.format("The content type %s in the response from the config server is not supported.", contentType.get()));
                     }
                 } else {
                     // there is no content type header in the response, throw an exception.
