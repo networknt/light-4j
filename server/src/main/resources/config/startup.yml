@@ -11,12 +11,17 @@ dummy: dummyEntry
 # but only the productId is required. If other variables are not provided, the default
 # "current" value will be used from the config server.
 
+# For multi-tenant only. If the service is not multi-tenant, the following variables are not required.
+# host: lightapi.net
+# productId is required for all services.
 # productId: light-gateway
 # productVersion: 2.0.0
 # apiId: com.networknt.petstore-1.0.0
 # apiVersion: 1.0.0
 # envTag: dev
+
 # Indicate to the config server we prefer yaml format over json format. default is json.
 # acceptHeader: application/yaml
+
 # The connect timeout for bootstrap from the config server. Default is 3 seconds.
 # timeout: 3000
