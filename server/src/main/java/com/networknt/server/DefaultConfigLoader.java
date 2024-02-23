@@ -19,9 +19,6 @@ package com.networknt.server;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.networknt.client.ClientConfig;
 import com.networknt.common.ContentType;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigInjection;
@@ -33,6 +30,7 @@ import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
 import javax.net.ssl.*;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -79,6 +77,7 @@ public class DefaultConfigLoader implements IConfigLoader{
     public static final String CLIENT_TRUSTSTORE_LOC = "config_server_client_truststore_location";
     public static final String VERIFY_HOST_NAME = "config_server_client_verify_host_name";
 
+    public static final String HOST = "host";
     public static final String PRODUCT_ID = "productId";
     public static final String PRODUCT_VERSION = "productVersion";
     public static final String API_ID = "apiId";
@@ -133,18 +132,14 @@ public class DefaultConfigLoader implements IConfigLoader{
             // lazy create client for config server access.
             configClient = createHttpClient();
 
-            try {
-                String queryParameters = getConfigServerQueryParameters();
+            String queryParameters = getConfigServerQueryParameters();
 
-                // This is the method to load values.yml from the config server
-                loadConfigs(queryParameters);
+            // This is the method to load values.yml from the config server
+            loadConfigs(queryParameters);
 
-                loadFiles(queryParameters, CONFIG_SERVER_CERTS_CONTEXT_ROOT);
+            loadFiles(queryParameters, CONFIG_SERVER_CERTS_CONTEXT_ROOT);
 
-                loadFiles(queryParameters, CONFIG_SERVER_FILES_CONTEXT_ROOT);
-            } catch (Exception e) {
-                logger.error("Failed to connect to config server", e);
-            }
+            loadFiles(queryParameters, CONFIG_SERVER_FILES_CONTEXT_ROOT);
 
             try {
                 String filename = System.getProperty("logback.configurationFile");
@@ -179,15 +174,9 @@ public class DefaultConfigLoader implements IConfigLoader{
             // lazy create client for config server access.
             configClient = createHttpClient();
 
-            try {
-                String queryParameters = getConfigServerQueryParameters();
-                // This is the method to load values.yml from the config server
-                loadConfigs(queryParameters);
-
-            } catch (Exception e) {
-                logger.error("Failed to connect to config server", e);
-            }
-
+            String queryParameters = getConfigServerQueryParameters();
+            // This is the method to load values.yml from the config server
+            loadConfigs(queryParameters);
         } else {
             logger.warn("Warning! {} is not provided; using local configs", CONFIG_SERVER_URI);
         }
@@ -203,16 +192,15 @@ public class DefaultConfigLoader implements IConfigLoader{
         String configServerConfigsPath = CONFIG_SERVER_CONFIGS_CONTEXT_ROOT + queryParameters;
         //get service configs and put them in config cache
         Map<String, Object> serviceConfigs = getServiceConfigs(configServerConfigsPath);
-        if(serviceConfigs == null) {
+        if(serviceConfigs == null || serviceConfigs.isEmpty()) {
             logger.error("Failed to load configs from config server. Please check the logs for more details.");
             return;
         }
-        if(logger.isDebugEnabled()) logger.debug("serviceConfigs received from Config Server: " + JsonMapper.toJson(serviceConfigs));
+        if(logger.isTraceEnabled()) logger.trace("serviceConfigs received from Config Server: " + JsonMapper.toJson(serviceConfigs));
 
         // pass serviceConfigs through Config.yaml's load method so that it can decrypt any encrypted values
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);//to get yaml string without curly brackets and commas
-        // serviceConfigs = Config.getInstance().getYaml().load(new Yaml(options).dump(serviceConfigs));
 
         // save the values.yml to the target folder. This is for the case of reload to overwrite and start without config server.
         try {
@@ -314,9 +302,19 @@ public class DefaultConfigLoader implements IConfigLoader{
             int statusCode = response.statusCode();
             String body = response.body();
             if(statusCode >= 300) {
-                logger.error("Failed to load configs from config server" + statusCode + ":" + body);
-                // return null, so that the values.yml won't be overwritten and the server can still be started with it.
-                return null;
+                logger.error("Failed to load configs from config server with status {} and body {}.", statusCode, body);
+                // throw an exception to stop the server from starting if there is no values.yml in the externalized config folder.
+                Path filePath = Paths.get(targetConfigsDirectory);
+                if (Files.exists(filePath)) {
+                    File file = new File(targetConfigsDirectory, "values.yml");
+                    if (!file.exists()) {
+                        // there is no values.yml generated from the previous call to the config server. throw an exception.
+                        throw new RuntimeException(String.format("Failed to load configs from config server with status %s and body %s.", statusCode, body));
+                    } else {
+                        // there is a values.yml in the externalized config folder. continue to start the server.
+                        logger.warn("Failed to load configs from config server with status {} and body {}. Use the local backup file.", statusCode, body);
+                    }
+                }
             } else {
                 // validate the headers against the product id and version. If they are not matched, throw an exception.
                 // this validation call is commented out for now as it is not ready on the config server side.
@@ -346,8 +344,9 @@ public class DefaultConfigLoader implements IConfigLoader{
                     throw new RuntimeException("The content type header is not set in the response from the config server.");
                 }
             }
-        } catch (Exception e) {
+        } catch (IOException | InterruptedException e) {
             logger.error("Exception while calling config server:", e);
+            throw new RuntimeException("Exception while calling config server:", e);
         }
         return configs;
     }
@@ -437,7 +436,9 @@ public class DefaultConfigLoader implements IConfigLoader{
 
     private static String getConfigServerQueryParameters() {
         StringBuilder qs = new StringBuilder();
-        qs.append("?").append(PRODUCT_ID).append("=").append(startupConfig.get(PRODUCT_ID));
+        String host = startupConfig.get(HOST) != null ? (String)startupConfig.get(HOST) : "lightapi.net";
+        qs.append("?").append(HOST).append("=").append(host);
+        if(startupConfig.get(PRODUCT_ID) != null) qs.append("&").append(PRODUCT_ID).append("=").append(startupConfig.get(PRODUCT_ID));
         if(startupConfig.get(PRODUCT_VERSION) != null) qs.append("&").append(PRODUCT_VERSION).append("=").append(startupConfig.get(PRODUCT_VERSION));
         if(startupConfig.get(API_ID) != null) qs.append("&").append(API_ID).append("=").append(startupConfig.get(API_ID));
         if(startupConfig.get(API_VERSION) != null) qs.append("&").append(API_VERSION).append("=").append(startupConfig.get(API_VERSION));
