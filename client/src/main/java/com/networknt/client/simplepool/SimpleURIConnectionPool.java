@@ -334,7 +334,7 @@ public final class SimpleURIConnectionPool {
         if(connectionToken == null)
             return;
 
-        // bypass connection state and close connection directly
+        // must bypass ConnectionState protections and close connection directly
         if(logger.isDebugEnabled()) logger.debug("immediately closing connection [{}]", port(connectionToken.connection()));
         connectionToken.connection().safeClose();
 
