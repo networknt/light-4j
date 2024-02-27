@@ -1,5 +1,49 @@
 # Change Log
 
+## [2.1.32](https://github.com/networknt/light-4j/tree/2.1.32) (2024-02-27)
+
+
+**Merged pull requests:**
+
+
+- fixes \#2159 HandlerConfig supports additionalHandlers, additionalChai… [\#2160](https://github.com/networknt/light-4j/pull/2160) ([stevehu](https://github.com/stevehu))
+- fixes \#2157 stop server or use the backup to start the server on conf… [\#2158](https://github.com/networknt/light-4j/pull/2158) ([stevehu](https://github.com/stevehu))
+- fixes \#2154 we need to load both decryped yaml and undecryped yaml fr… [\#2156](https://github.com/networknt/light-4j/pull/2156) ([stevehu](https://github.com/stevehu))
+- fixes \#2153 return 415 error if config server not return yaml and jso… [\#2155](https://github.com/networknt/light-4j/pull/2155) ([stevehu](https://github.com/stevehu))
+- rollback to application/yaml [\#2152](https://github.com/networknt/light-4j/pull/2152) ([stevehu](https://github.com/stevehu))
+- fixes \#2149 change the content type to application/x-yaml for yaml [\#2150](https://github.com/networknt/light-4j/pull/2150) ([stevehu](https://github.com/stevehu))
+- fixes \#2147 update DefaultConfigLoader to support YAML response from … [\#2148](https://github.com/networknt/light-4j/pull/2148) ([stevehu](https://github.com/stevehu))
+- fixes \#2145 update ContentType to add application/yaml [\#2146](https://github.com/networknt/light-4j/pull/2146) ([stevehu](https://github.com/stevehu))
+- fixes \#2142 Update GenericDataSource to handle integer environment va… [\#2144](https://github.com/networknt/light-4j/pull/2144) ([stevehu](https://github.com/stevehu))
+- fixes \#2124 use the client.timeout for the config server timeout [\#2143](https://github.com/networknt/light-4j/pull/2143) ([stevehu](https://github.com/stevehu))
+- fixes \#2140 update mras, salesforce and external service config to su… [\#2141](https://github.com/networknt/light-4j/pull/2141) ([stevehu](https://github.com/stevehu))
+- fixes \#2138 Handle empty string when loading typed value in Config [\#2139](https://github.com/networknt/light-4j/pull/2139) ([stevehu](https://github.com/stevehu))
+- fixes \#2136 update pathPrefixAuth to support JSON string in ApiKeyConfig [\#2137](https://github.com/networknt/light-4j/pull/2137) ([stevehu](https://github.com/stevehu))
+- fixes \#2134 change the config server timeout to startup.yml and defau… [\#2135](https://github.com/networknt/light-4j/pull/2135) ([stevehu](https://github.com/stevehu))
+- fixes \#2132 support JSON string for serviceIdAuthServers for ClientCo… [\#2133](https://github.com/networknt/light-4j/pull/2133) ([stevehu](https://github.com/stevehu))
+- fixes \#2130 update ExternalServiceConfig to support JSON string for u… [\#2131](https://github.com/networknt/light-4j/pull/2131) ([stevehu](https://github.com/stevehu))
+- fixes \#2128 update RouterConfig to support stringified JSON values [\#2129](https://github.com/networknt/light-4j/pull/2129) ([stevehu](https://github.com/stevehu))
+- fixes \#2126 remove the values.yml from config module [\#2127](https://github.com/networknt/light-4j/pull/2127) ([stevehu](https://github.com/stevehu))
+- fixes \#2124 use the client.timeout for the config server timeout [\#2125](https://github.com/networknt/light-4j/pull/2125) ([stevehu](https://github.com/stevehu))
+- fixes \#2122 limit.yml does not support JSON string for address, clien… [\#2123](https://github.com/networknt/light-4j/pull/2123) ([stevehu](https://github.com/stevehu))
+- [pre-commit.ci] pre-commit autoupdate [\#2119](https://github.com/networknt/light-4j/pull/2119) ([pre-commit-ci](https://github.com/apps/pre-commit-ci))
+- fixes \#2120 add acceptHeader to support YAML properties from config s… [\#2121](https://github.com/networknt/light-4j/pull/2121) ([stevehu](https://github.com/stevehu))
+- fixes \#2117 skip quoteReplacement only for backslash and dollar compb… [\#2118](https://github.com/networknt/light-4j/pull/2118) ([stevehu](https://github.com/stevehu))
+- fixes \#2115 Add ServerInfoUtil to be shared with light-aws-lambda [\#2116](https://github.com/networknt/light-4j/pull/2116) ([stevehu](https://github.com/stevehu))
+- fixes \#2113 split the ServerInfoConfig to a info-config module [\#2114](https://github.com/networknt/light-4j/pull/2114) ([stevehu](https://github.com/stevehu))
+- fixes \#2111 split the HealthConfig to a health-config module [\#2112](https://github.com/networknt/light-4j/pull/2112) ([stevehu](https://github.com/stevehu))
+- fixes \#2109 update basic, apikey and simple web token security handle… [\#2110](https://github.com/networknt/light-4j/pull/2110) ([stevehu](https://github.com/stevehu))
+- fixes \#2107 update a cient test case that fails on a slow computer [\#2108](https://github.com/networknt/light-4j/pull/2108) ([stevehu](https://github.com/stevehu))
+- fixes \#2104 cache the undecryped and decrypted values.yml maps in Con… [\#2105](https://github.com/networknt/light-4j/pull/2105) ([stevehu](https://github.com/stevehu))
+- fixes \#2102 support decrypt or not for values.yml and env injection [\#2103](https://github.com/networknt/light-4j/pull/2103) ([stevehu](https://github.com/stevehu))
+- fixes \#2099 Update ModuleRegistry to add back isMaskConfigProperties [\#2100](https://github.com/networknt/light-4j/pull/2100) ([stevehu](https://github.com/stevehu))
+- fixes \#2097 need a new way to load config file without decryption for… [\#2098](https://github.com/networknt/light-4j/pull/2098) ([stevehu](https://github.com/stevehu))
+- fixes \#2095 use the environment from the startup.yml if light-env env… [\#2096](https://github.com/networknt/light-4j/pull/2096) ([stevehu](https://github.com/stevehu))
+- fixes \#2087 AuditHandler Not Writing Entries at the End of the Exchan… [\#2088](https://github.com/networknt/light-4j/pull/2088) ([stevehu](https://github.com/stevehu))
+- fixes \#2085 Add keysToNotSort in info.yml to skip the string array so… [\#2086](https://github.com/networknt/light-4j/pull/2086) ([stevehu](https://github.com/stevehu))
+- Audit Logging - Replace over putIfAbsent [\#2084](https://github.com/networknt/light-4j/pull/2084) ([KalevGonvick](https://github.com/KalevGonvick))
+- fixes \#2082 update HandleUtils and refactor ServiceDictHandler [\#2083](https://github.com/networknt/light-4j/pull/2083) ([stevehu](https://github.com/stevehu))
+- ExternalServiceHandler logging fix [\#2080](https://github.com/networknt/light-4j/pull/2080) ([KalevGonvick](https://github.com/KalevGonvick))
 ## [2.1.31](https://github.com/networknt/light-4j/tree/2.1.31) (2024-01-16)
 
 
