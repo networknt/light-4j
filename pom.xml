@@ -95,9 +95,6 @@
         <version.sqlserver>7.0.0.jre10</version.sqlserver>
         <version.httpclient>4.5.14</version.httpclient>
         <version.jsonpath>2.9.0</version.jsonpath>
-        <version.jaeger>1.8.1</version.jaeger>
-        <version.thrift>0.18.1</version.thrift>
-        <version.opentracing>0.33.0</version.opentracing>
         <version.org.apache.directory.server>2.0.0-M15</version.org.apache.directory.server>
         <version.maven-version>2.7</version.maven-version>
         <version.nexus-staging-maven>1.6.8</version.nexus-staging-maven>
@@ -172,7 +169,6 @@
         <module>encode-decode</module>
         <module>monad-result</module>
         <module>logger-config</module>
-        <module>jaeger-tracing</module>
         <module>http-entity</module>
         <module>egress-router</module>
         <module>ingress-proxy</module>
@@ -461,12 +457,6 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
-                <artifactId>jaeger-tracing</artifactId>
-                <version>${project.version}</version>
-                <optional>true</optional>
-            </dependency>
-            <dependency>
-                <groupId>com.networknt</groupId>
                 <artifactId>http-entity</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -681,27 +671,6 @@
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
                 <version>${version.logback}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.jaegertracing</groupId>
-                <artifactId>jaeger-client</artifactId>
-                <version>${version.jaeger}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.thrift</groupId>
-                <artifactId>libthrift</artifactId>
-                <version>${version.thrift}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>javax.annotation</groupId>
-                        <artifactId>javax.annotation-api</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>io.opentracing</groupId>
-                <artifactId>opentracing-api</artifactId>
-                <version>${version.opentracing}</version>
             </dependency>
 
             <!-- Test dependencies -->
