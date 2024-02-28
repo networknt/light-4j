@@ -19,7 +19,6 @@
 package io.undertow.server.handlers.proxy;
 
 import com.networknt.client.ClientConfig;
-import com.networknt.client.ServerExchangeCarrier;
 import com.networknt.cluster.Cluster;
 import com.networknt.config.ConfigException;
 import com.networknt.httpstring.AttachmentConstants;
@@ -29,10 +28,6 @@ import com.networknt.router.RouterConfig;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.Constants;
 import com.networknt.utility.NetUtils;
-import io.opentracing.Span;
-import io.opentracing.Tracer;
-import io.opentracing.propagation.Format;
-import io.opentracing.tag.Tags;
 import io.undertow.client.UndertowClient;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
@@ -288,7 +283,7 @@ public class LoadBalancingRouterProxyClient implements ProxyClient {
                 ProxyConnectionPool.AvailabilityType available = selected.connectionPool.available();
                 if (available == AVAILABLE) {
                     // inject the jaeger tracer.
-                    injectTracer(exchange, selected);
+                    // injectTracer(exchange, selected);
                     return selected;
                 } else if (available == FULL && full == null) {
                     full = selected;
@@ -300,7 +295,7 @@ public class LoadBalancingRouterProxyClient implements ProxyClient {
         } while (host != startHost);
         if (full != null) {
             // inject the jaeger tracer.
-            injectTracer(exchange, full);
+            // injectTracer(exchange, full);
             return full;
         }
         if (problem != null) {
@@ -310,6 +305,7 @@ public class LoadBalancingRouterProxyClient implements ProxyClient {
         return null;
     }
 
+    /*
     private void injectTracer(HttpServerExchange exchange, Host host) {
         if(ClientConfig.get().isInjectOpenTracing()) {
             Tracer tracer = exchange.getAttachment(AttachmentConstants.EXCHANGE_TRACER);
@@ -325,6 +321,7 @@ public class LoadBalancingRouterProxyClient implements ProxyClient {
             }
         }
     }
+    */
 
     /**
      * Should only be used for tests
