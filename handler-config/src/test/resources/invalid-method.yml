@@ -1,0 +1,19 @@
+---
+enabled: true
+
+handlers:
+  - com.networknt.handler.sample.SampleHttpHandler1
+  - com.networknt.handler.sample.SampleHttpHandler2
+  - com.networknt.handler.sample.SampleHttpHandler3@third
+
+chains:
+  secondBeforeFirst:
+    - com.networknt.handler.sample.SampleHttpHandler2
+    - com.networknt.handler.sample.SampleHttpHandler1
+
+paths:
+  - path: '/test'
+    method: 'hello'
+    exec:
+      - secondBeforeFirst
+      - third
