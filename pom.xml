@@ -137,6 +137,7 @@
         <module>header</module>
         <module>header-config</module>
         <module>mask</module>
+        <module>handler-config</module>
         <module>handler</module>
         <module>metrics</module>
         <module>prometheus</module>
@@ -307,6 +308,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>mask</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>handler-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

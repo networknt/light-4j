@@ -1,0 +1,24 @@
+---
+enabled: false
+
+handlers:
+  - com.networknt.server.TestHandler
+  - com.networknt.server.Test1MiddlewareHandler@test1
+  - com.networknt.server.Test2MiddlewareHandler@test2
+
+chains:
+  bothMiddleware:
+    - test1
+    - test2
+
+paths:
+  - path: '/test'
+    requestType: 'get'
+    exec:
+      - bothMiddleware
+      - com.networknt.server.TestHandler
+  - path: '/v2/health'
+    requestType: 'post'
+    exec:
+      - bothMiddleware
+      - com.networknt.server.TestHandler
