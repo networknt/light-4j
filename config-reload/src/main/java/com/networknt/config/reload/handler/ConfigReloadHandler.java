@@ -44,7 +44,7 @@ public class ConfigReloadHandler implements LightHttpHandler {
     public ConfigReloadHandler() {
         if(logger.isDebugEnabled()) logger.debug("ConfigReloadHandler is constructed");
         config = ConfigReloadConfig.load();
-        ModuleRegistry.registerModule(ConfigReloadConfig.CONFIG_NAME, ConfigReloadHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ConfigReloadHandler.CONFIG_NAME),null);
+        ModuleRegistry.registerModule(ConfigReloadConfig.CONFIG_NAME, ConfigReloadHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ConfigReloadConfig.CONFIG_NAME),null);
     }
 
     @Override
