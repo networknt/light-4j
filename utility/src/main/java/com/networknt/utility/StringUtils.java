@@ -1498,6 +1498,9 @@ public class StringUtils {
     public static boolean matchPathToPattern(String requestPath, String endpointPattern) {
         String[] pathPatternParts = endpointPattern.split("/");
         String[] pathParts = requestPath.split("/");
+        if (pathPatternParts.length != pathParts.length) {
+            return false;
+        }
 
         boolean isMatch = true;
         for (int i = 0; i < pathPatternParts.length; i++) {
