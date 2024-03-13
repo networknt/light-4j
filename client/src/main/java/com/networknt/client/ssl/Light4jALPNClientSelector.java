@@ -18,20 +18,6 @@
 
 package com.networknt.client.ssl;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.ClosedChannelException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
-
-import javax.net.ssl.SSLEngine;
-
-import org.xnio.ChannelListener;
-import org.xnio.channels.StreamSourceChannel;
-import org.xnio.conduits.PushBackStreamSourceConduit;
-import org.xnio.ssl.SslConnection;
-
 import io.undertow.client.ALPNClientSelector;
 import io.undertow.client.ALPNClientSelector.ALPNProtocol;
 import io.undertow.client.ClientCallback;
@@ -41,6 +27,18 @@ import io.undertow.protocols.alpn.ALPNProvider;
 import io.undertow.protocols.ssl.SslConduit;
 import io.undertow.protocols.ssl.UndertowXnioSsl;
 import io.undertow.util.ImmediatePooled;
+import org.xnio.ChannelListener;
+import org.xnio.channels.StreamSourceChannel;
+import org.xnio.conduits.PushBackStreamSourceConduit;
+import org.xnio.ssl.SslConnection;
+
+import javax.net.ssl.SSLEngine;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Customized ALPNClientSelector for handling TLS handshake for HTTP2.

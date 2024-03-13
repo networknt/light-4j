@@ -25,8 +25,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Paths;
 
-import static java.lang.ClassLoader.getSystemClassLoader;
-
 public class SeparateClassloaderTestRunner  extends BlockJUnit4ClassRunner {
 
     public SeparateClassloaderTestRunner(Class<?> clazz) throws InitializationError {

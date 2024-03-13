@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 import org.xnio.*;
 import org.xnio.ssl.XnioSsl;
 
-import javax.net.ssl.*;
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -50,6 +50,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+
 import static org.junit.Assert.*;
 
 public class Http2ClientTest extends Http2ClientBase {

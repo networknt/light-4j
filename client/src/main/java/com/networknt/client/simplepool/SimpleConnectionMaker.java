@@ -24,8 +24,8 @@ import org.xnio.OptionMap;
 import org.xnio.XnioWorker;
 import org.xnio.ssl.XnioSsl;
 
-import java.net.URI;
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.util.Set;
 
 /***

@@ -18,7 +18,6 @@ package com.networknt.balance;
 
 import com.networknt.registry.URL;
 import com.networknt.registry.URLImpl;
-import com.networknt.service.SingletonServiceFactory;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;

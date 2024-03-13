@@ -4,7 +4,6 @@ import com.networknt.common.ContentType;
 import org.junit.Before;
 import org.junit.Test;
 
-
 import static junit.framework.TestCase.assertNotNull;
 import static junit.framework.TestCase.assertTrue;
 

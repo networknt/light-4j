@@ -1,14 +1,11 @@
 package com.networknt.client;
 
 import com.networknt.client.oauth.TokenKeyRequest;
-import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 import static com.networknt.client.ClientConfig.CLIENT_CREDENTIALS;

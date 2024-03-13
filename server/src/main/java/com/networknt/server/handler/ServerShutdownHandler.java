@@ -1,16 +1,13 @@
 package com.networknt.server.handler;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.handler.LightHttpHandler;
 import com.networknt.server.Server;
 import com.networknt.server.ServerConfig;
 import com.networknt.server.model.ServerShutdownResponse;
-
 import io.undertow.server.HttpServerExchange;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Light-4j handler to shut down and force restart the service deployed to the Kubernetes cluster

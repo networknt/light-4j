@@ -16,18 +16,6 @@
 
 package com.networknt.client.ssl;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.networknt.utility.StringUtils;
-
 /**
  * This class holds configuration values related to server identify check.
  *

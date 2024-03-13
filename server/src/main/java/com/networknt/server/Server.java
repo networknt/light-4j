@@ -18,6 +18,7 @@ package com.networknt.server;
 
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
+import com.networknt.config.TlsUtil;
 import com.networknt.handler.Handler;
 import com.networknt.handler.HandlerProvider;
 import com.networknt.handler.MiddlewareHandler;
@@ -31,7 +32,6 @@ import com.networknt.switcher.SwitcherUtil;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.NetUtils;
-import com.networknt.config.TlsUtil;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;

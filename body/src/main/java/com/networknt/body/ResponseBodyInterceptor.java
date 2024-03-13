@@ -1,11 +1,11 @@
 package com.networknt.body;
 
+import com.networknt.common.ContentType;
 import com.networknt.config.Config;
 import com.networknt.handler.BuffersUtils;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.ResponseInterceptor;
 import com.networknt.httpstring.AttachmentConstants;
-import com.networknt.common.ContentType;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;

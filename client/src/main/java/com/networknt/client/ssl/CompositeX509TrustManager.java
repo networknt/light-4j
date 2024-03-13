@@ -1,12 +1,11 @@
 package com.networknt.client.ssl;
 
+import javax.net.ssl.X509TrustManager;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import javax.net.ssl.X509TrustManager;
 
 /**
  * Represents an ordered list of {@link X509TrustManager}s with additive trust. If any one of the

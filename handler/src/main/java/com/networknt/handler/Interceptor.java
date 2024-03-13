@@ -2,8 +2,8 @@ package com.networknt.handler;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.networknt.config.Config;
 import com.networknt.common.ContentType;
+import com.networknt.config.Config;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
 import io.undertow.util.HeaderMap;

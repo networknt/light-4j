@@ -8,14 +8,15 @@ import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
 import io.undertow.io.Receiver;
-import io.undertow.io.Sender;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.util.Headers;
 import io.undertow.util.Methods;
-import io.undertow.util.StatusCodes;
 import org.junit.*;
-import org.xnio.*;
+import org.xnio.OptionMap;
+import org.xnio.Options;
+import org.xnio.Xnio;
+import org.xnio.XnioWorker;
 
 import javax.net.ssl.SSLContext;
 import java.io.IOException;

@@ -17,10 +17,9 @@
 package com.networknt.balance;
 
 import com.networknt.registry.URL;
+import com.networknt.utility.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.networknt.utility.Util;
 
 import java.net.InetAddress;
 import java.util.ArrayList;

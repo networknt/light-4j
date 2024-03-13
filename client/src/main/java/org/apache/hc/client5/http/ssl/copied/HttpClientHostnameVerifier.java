@@ -27,13 +27,12 @@
 
 package org.apache.hc.client5.http.ssl.copied;
 
-import java.security.cert.X509Certificate;
+import org.apache.hc.core5.annotation.copied.Contract;
+import org.apache.hc.core5.annotation.copied.ThreadingBehavior;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLException;
-
-import org.apache.hc.core5.annotation.copied.Contract;
-import org.apache.hc.core5.annotation.copied.ThreadingBehavior;
+import java.security.cert.X509Certificate;
 
 /**
  * Extended {@link HostnameVerifier} interface.

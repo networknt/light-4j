@@ -26,16 +26,16 @@
  */
 package org.apache.hc.client5.http.psl.copied;
 
+import org.apache.hc.core5.annotation.copied.Contract;
+import org.apache.hc.core5.annotation.copied.ThreadingBehavior;
+import org.apache.hc.core5.util.copied.Args;
+
 import java.net.IDN;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import org.apache.hc.core5.annotation.copied.Contract;
-import org.apache.hc.core5.annotation.copied.ThreadingBehavior;
-import org.apache.hc.core5.util.copied.Args;
 
 /**
  * Utility class that can test if DNS names match the content of the Public Suffix List.

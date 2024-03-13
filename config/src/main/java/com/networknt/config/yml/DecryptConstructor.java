@@ -1,6 +1,7 @@
 package com.networknt.config.yml;
 
 import com.networknt.decrypt.AutoAESSaltDecryptor;
+import com.networknt.decrypt.Decryptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.LoaderOptions;
@@ -8,8 +9,6 @@ import org.yaml.snakeyaml.constructor.AbstractConstruct;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.nodes.Node;
 import org.yaml.snakeyaml.nodes.ScalarNode;
-
-import com.networknt.decrypt.Decryptor;
 
 /**
  * Decrypts values in configuration yml files.

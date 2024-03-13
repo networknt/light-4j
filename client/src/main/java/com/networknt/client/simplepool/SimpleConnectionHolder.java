@@ -28,9 +28,9 @@ import org.xnio.ssl.XnioSsl;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.util.Set;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /***

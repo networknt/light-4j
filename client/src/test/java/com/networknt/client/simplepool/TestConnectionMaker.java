@@ -30,7 +30,10 @@ import java.lang.reflect.Constructor;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class TestConnectionMaker implements SimpleConnectionMaker {
     private static final Logger logger = LoggerFactory.getLogger(TestConnectionMaker.class);

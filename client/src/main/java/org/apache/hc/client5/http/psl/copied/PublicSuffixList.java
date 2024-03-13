@@ -26,12 +26,12 @@
  */
 package org.apache.hc.client5.http.psl.copied;
 
-import java.util.Collections;
-import java.util.List;
-
 import org.apache.hc.core5.annotation.copied.Contract;
 import org.apache.hc.core5.annotation.copied.ThreadingBehavior;
 import org.apache.hc.core5.util.copied.Args;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Public suffix is a set of DNS names or wildcards concatenated with dots. It represents

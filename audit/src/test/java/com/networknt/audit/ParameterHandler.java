@@ -1,13 +1,7 @@
 package com.networknt.audit;
 
-import static io.undertow.util.PathTemplateMatch.ATTACHMENT_KEY;
-
-import java.util.Map;
-
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.utility.ModuleRegistry;
-
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -15,6 +9,10 @@ import io.undertow.server.handlers.Cookie;
 import io.undertow.server.handlers.CookieImpl;
 import io.undertow.util.Headers;
 import io.undertow.util.PathTemplateMatcher;
+
+import java.util.Map;
+
+import static io.undertow.util.PathTemplateMatch.ATTACHMENT_KEY;
 
 /**
  * Simulate com.networknt.handler.Handler.start()

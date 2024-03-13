@@ -17,10 +17,13 @@
 package com.networknt.consul.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
+import com.networknt.client.simplepool.SimpleConnectionHolder;
 import com.networknt.config.Config;
-import com.networknt.consul.*;
+import com.networknt.consul.ConsulConfig;
+import com.networknt.consul.ConsulResponse;
+import com.networknt.consul.ConsulService;
+import com.networknt.consul.ConsulUtils;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.StringUtils;
 import io.undertow.UndertowOptions;
@@ -35,24 +38,14 @@ import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-
-// use SimpleURIConnectionPool as the connection pool
-import com.networknt.client.simplepool.SimpleURIConnectionPool;
-import com.networknt.client.simplepool.SimpleConnectionHolder;
-// Use Undertow ClientConnection as raw connection
-import com.networknt.client.simplepool.SimpleConnectionMaker;
-import com.networknt.client.simplepool.undertow.SimpleClientConnectionMaker;
 
 /**
  * A client that talks to Consul agent with REST API.

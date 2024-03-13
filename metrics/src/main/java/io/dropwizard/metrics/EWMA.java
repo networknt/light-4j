@@ -17,9 +17,9 @@
 package io.dropwizard.metrics;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
 
 import static java.lang.Math.exp;
-import java.util.concurrent.atomic.LongAdder;
 /**
  * An exponentially-weighted moving average.
  *
