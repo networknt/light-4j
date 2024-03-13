@@ -16,10 +16,10 @@
 
 package com.networknt.consul.client;
 
-import java.util.List;
-
 import com.networknt.consul.ConsulResponse;
 import com.networknt.consul.ConsulService;
+
+import java.util.List;
 
 public interface ConsulClient {
 

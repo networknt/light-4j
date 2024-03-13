@@ -18,13 +18,13 @@ package com.networknt.info;
 
 import com.networknt.config.Config;
 import com.networknt.handler.LightHttpHandler;
-import com.networknt.security.IJwtVerifyHandler;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.*;
+
+import java.util.Map;
 
 /**
  * This is a server info handler that output the runtime info about the server. For example, how many

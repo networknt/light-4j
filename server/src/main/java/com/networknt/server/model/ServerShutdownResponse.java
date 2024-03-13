@@ -1,8 +1,8 @@
 package com.networknt.server.model;
 
-import java.util.Objects;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Objects;
 
 /**
  *

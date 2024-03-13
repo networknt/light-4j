@@ -27,10 +27,10 @@
 
 package org.apache.hc.core5.util.copied;
 
+import org.apache.hc.core5.http.copied.Chars;
+
 import java.io.Serializable;
 import java.nio.CharBuffer;
-
-import org.apache.hc.core5.http.copied.Chars;
 
 /**
  * A resizable char array.

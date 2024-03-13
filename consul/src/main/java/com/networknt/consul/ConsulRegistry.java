@@ -21,7 +21,6 @@ import com.networknt.config.Config;
 import com.networknt.consul.client.ConsulClient;
 import com.networknt.registry.NotifyListener;
 import com.networknt.registry.URL;
-import com.networknt.registry.URLParamType;
 import com.networknt.registry.support.AbstractRegistry;
 import com.networknt.status.Status;
 import com.networknt.utility.ConcurrentHashSet;

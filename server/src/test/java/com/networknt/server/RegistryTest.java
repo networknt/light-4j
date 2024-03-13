@@ -17,7 +17,9 @@
 package com.networknt.server;
 
 import com.networknt.config.Config;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

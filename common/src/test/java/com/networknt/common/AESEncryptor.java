@@ -16,9 +16,12 @@
 
 package com.networknt.common;
 
-import static com.networknt.decrypt.Decryptor.CRYPT_PREFIX;
-import static java.lang.System.exit;
+import com.networknt.utility.Constants;
 
+import javax.crypto.*;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
 import java.security.AlgorithmParameters;
 import java.security.InvalidKeyException;
@@ -26,16 +29,8 @@ import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
 import java.util.Base64;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.SecretKeySpec;
-
-import com.networknt.utility.Constants;
+import static com.networknt.decrypt.Decryptor.CRYPT_PREFIX;
+import static java.lang.System.exit;
 
 /**
  * Please use AESSaltEncryptor instead.

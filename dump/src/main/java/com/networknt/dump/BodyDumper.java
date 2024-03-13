@@ -16,7 +16,6 @@
 
 package com.networknt.dump;
 
-import com.networknt.body.BodyHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.mask.Mask;
 import com.networknt.utility.StringUtils;
@@ -28,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static java.nio.charset.StandardCharsets.UTF_8;

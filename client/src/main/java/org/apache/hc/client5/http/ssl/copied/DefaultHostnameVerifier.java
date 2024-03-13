@@ -27,22 +27,6 @@
 
 package org.apache.hc.client5.http.ssl.copied;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateParsingException;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSession;
-import javax.security.auth.x500.X500Principal;
-
 import org.apache.hc.client5.http.psl.copied.DomainType;
 import org.apache.hc.client5.http.psl.copied.PublicSuffixMatcher;
 import org.apache.hc.core5.annotation.copied.Contract;
@@ -52,6 +36,17 @@ import org.apache.hc.core5.net.copied.InetAddressUtils;
 import org.apache.hc.core5.util.copied.TextUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSession;
+import javax.security.auth.x500.X500Principal;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateParsingException;
+import java.security.cert.X509Certificate;
+import java.util.*;
 
 /**
  * Default {@link javax.net.ssl.HostnameVerifier} implementation.

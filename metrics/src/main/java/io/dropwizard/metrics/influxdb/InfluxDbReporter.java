@@ -16,26 +16,15 @@
 
 package io.dropwizard.metrics.influxdb;
 
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-
 import com.networknt.metrics.TimeSeriesDbSender;
+import io.dropwizard.metrics.Timer;
+import io.dropwizard.metrics.*;
+import io.dropwizard.metrics.influxdb.data.InfluxDbPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.dropwizard.metrics.Counter;
-import io.dropwizard.metrics.Counting;
-import io.dropwizard.metrics.Gauge;
-import io.dropwizard.metrics.Histogram;
-import io.dropwizard.metrics.Meter;
-import io.dropwizard.metrics.Metered;
-import io.dropwizard.metrics.MetricFilter;
-import io.dropwizard.metrics.MetricName;
-import io.dropwizard.metrics.MetricRegistry;
-import io.dropwizard.metrics.ScheduledReporter;
-import io.dropwizard.metrics.Snapshot;
-import io.dropwizard.metrics.Timer;
-import io.dropwizard.metrics.influxdb.data.InfluxDbPoint;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public final class InfluxDbReporter extends ScheduledReporter {
     public static final class Builder {

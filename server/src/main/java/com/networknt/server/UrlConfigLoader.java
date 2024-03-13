@@ -1,8 +1,28 @@
 package com.networknt.server;
 
-import static com.networknt.server.Server.ENV_PROPERTY_KEY;
-import static com.networknt.server.Server.STARTUP_CONFIG_NAME;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.client.Http2Client;
+import com.networknt.config.Config;
+import com.networknt.utility.StringUtils;
+import io.undertow.UndertowOptions;
+import io.undertow.client.ClientConnection;
+import io.undertow.client.ClientRequest;
+import io.undertow.client.ClientResponse;
+import io.undertow.util.Headers;
+import io.undertow.util.Methods;
+import org.jose4j.json.internal.json_simple.JSONValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xnio.IoUtils;
+import org.xnio.OptionMap;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
 
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,31 +41,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
-
-import org.jose4j.json.internal.json_simple.JSONValue;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xnio.IoUtils;
-import org.xnio.OptionMap;
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.Yaml;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.networknt.client.Http2Client;
-import com.networknt.config.Config;
-import com.networknt.utility.StringUtils;
-
-import io.undertow.UndertowOptions;
-import io.undertow.client.ClientConnection;
-import io.undertow.client.ClientRequest;
-import io.undertow.client.ClientResponse;
-import io.undertow.util.Headers;
-import io.undertow.util.Methods;
+import static com.networknt.server.Server.ENV_PROPERTY_KEY;
+import static com.networknt.server.Server.STARTUP_CONFIG_NAME;
 
 /**
  * UrlConfigLoader fetch and load configs from Nginx. The config files share the

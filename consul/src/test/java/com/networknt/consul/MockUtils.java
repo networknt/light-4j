@@ -16,9 +16,8 @@
 
 package com.networknt.consul;
 
-import com.networknt.registry.URLImpl;
-import com.networknt.registry.URLParamType;
 import com.networknt.registry.URL;
+import com.networknt.registry.URLImpl;
 
 import java.util.ArrayList;
 import java.util.HashMap;

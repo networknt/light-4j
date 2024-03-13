@@ -16,10 +16,8 @@
 
 package com.networknt.config;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-
+import com.networknt.config.yml.DecryptConstructor;
+import com.networknt.config.yml.YmlConstants;
 import org.junit.Assert;
 import org.junit.Test;
 import org.yaml.snakeyaml.DumperOptions;
@@ -27,8 +25,9 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.representer.Representer;
 import org.yaml.snakeyaml.resolver.Resolver;
 
-import com.networknt.config.yml.DecryptConstructor;
-import com.networknt.config.yml.YmlConstants;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 
 public class ConfigDecryptTest {

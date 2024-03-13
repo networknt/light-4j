@@ -17,11 +17,7 @@
 package io.dropwizard.metrics;
 
 import javax.annotation.Nonnull;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * A metric name with the ability to include semantic tags.

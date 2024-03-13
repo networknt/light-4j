@@ -17,9 +17,10 @@
 package com.networknt.cluster;
 
 import com.networknt.balance.LoadBalance;
-import com.networknt.registry.*;
+import com.networknt.registry.Registry;
+import com.networknt.registry.URL;
+import com.networknt.registry.URLImpl;
 import com.networknt.service.SingletonServiceFactory;
-import com.networknt.utility.ConcurrentHashSet;
 import com.networknt.utility.Constants;
 import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
@@ -27,7 +28,8 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**

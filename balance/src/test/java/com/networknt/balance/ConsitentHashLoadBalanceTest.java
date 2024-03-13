@@ -17,13 +17,9 @@
 package com.networknt.balance;
 
 import com.networknt.registry.URL;
-import com.networknt.registry.URLImpl;
-import com.networknt.service.SingletonServiceFactory;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**

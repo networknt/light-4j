@@ -17,7 +17,6 @@
 package com.networknt.consul;
 
 import com.networknt.config.Config;
-import com.networknt.config.ConfigException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

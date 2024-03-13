@@ -18,30 +18,7 @@
 
 package com.networknt.client.http;
 
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.net.InetSocketAddress;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xnio.ChannelListener;
-import org.xnio.IoFuture;
-import org.xnio.OptionMap;
-import org.xnio.Options;
-import org.xnio.StreamConnection;
-import org.xnio.XnioIoThread;
-import org.xnio.XnioWorker;
-import org.xnio.ssl.SslConnection;
-import org.xnio.ssl.XnioSsl;
-
 import com.networknt.client.ssl.Light4jALPNClientSelector;
-
 import io.undertow.UndertowMessages;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ALPNClientSelector;
@@ -50,6 +27,17 @@ import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientProvider;
 import io.undertow.client.http2.Http2ClientProvider;
 import io.undertow.connector.ByteBufferPool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xnio.*;
+import org.xnio.ssl.SslConnection;
+import org.xnio.ssl.XnioSsl;
+
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.util.*;
 
 /**
  * Customized HttpClientProvider for handling TLS handshake for HTTPS.

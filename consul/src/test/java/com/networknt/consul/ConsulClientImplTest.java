@@ -17,7 +17,6 @@
 package com.networknt.consul;
 
 import com.networknt.config.Config;
-import com.networknt.consul.client.ConsulClientImpl;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

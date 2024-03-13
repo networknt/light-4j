@@ -27,11 +27,11 @@
 
 package org.apache.hc.core5.http.message.copied;
 
-import java.util.BitSet;
-
 import org.apache.hc.core5.annotation.copied.Contract;
 import org.apache.hc.core5.annotation.copied.ThreadingBehavior;
 import org.apache.hc.core5.util.copied.Args;
+
+import java.util.BitSet;
 
 /**
  * Low level parser for header field elements. The parsing routines of this class are designed

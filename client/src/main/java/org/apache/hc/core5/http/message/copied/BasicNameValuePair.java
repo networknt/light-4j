@@ -27,14 +27,14 @@
 
 package org.apache.hc.core5.http.message.copied;
 
-import java.io.Serializable;
-import java.util.Locale;
-
 import org.apache.hc.core5.annotation.copied.Contract;
 import org.apache.hc.core5.annotation.copied.ThreadingBehavior;
 import org.apache.hc.core5.http.copied.NameValuePair;
 import org.apache.hc.core5.util.copied.Args;
 import org.apache.hc.core5.util.copied.LangUtils;
+
+import java.io.Serializable;
+import java.util.Locale;
 
 /**
  * Basic implementation of {@link NameValuePair}.

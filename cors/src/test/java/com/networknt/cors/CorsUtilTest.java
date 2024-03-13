@@ -20,22 +20,20 @@
  */
 package com.networknt.cors;
 
-import static io.undertow.util.Headers.HOST;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static com.networknt.cors.CorsHeaders.ACCESS_CONTROL_REQUEST_HEADERS;
-import static com.networknt.cors.CorsHeaders.ACCESS_CONTROL_REQUEST_METHOD;
-import static com.networknt.cors.CorsHeaders.ORIGIN;
-import static org.junit.Assert.assertThat;
-
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderMap;
+import io.undertow.util.HttpString;
+import org.junit.Test;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
-import io.undertow.util.HttpString;
-import org.junit.Test;
+import static com.networknt.cors.CorsHeaders.*;
+import static io.undertow.util.Headers.HOST;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.junit.Assert.assertThat;
 
 /**
  * Testing CORS utility class.

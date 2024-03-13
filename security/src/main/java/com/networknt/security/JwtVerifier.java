@@ -16,20 +16,16 @@
 
 package com.networknt.security;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.networknt.cache.CacheManager;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.oauth.OauthHelper;
 import com.networknt.client.oauth.SignKeyRequest;
 import com.networknt.client.oauth.TokenKeyRequest;
-import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.JsonMapper;
 import com.networknt.exception.ClientException;
 import com.networknt.exception.ExpiredTokenException;
 import com.networknt.status.Status;
-import com.networknt.utility.FingerPrintUtil;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.JsonWebKeySet;
 import org.jose4j.jwt.JwtClaims;
@@ -41,22 +37,16 @@ import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
 import org.jose4j.keys.resolvers.VerificationKeyResolver;
 import org.jose4j.keys.resolvers.X509VerificationKeyResolver;
 import org.jose4j.lang.JoseException;
-import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 /**
  * This is a new class that is designed as non-static to replace the JwtHelper which is a static class. The reason

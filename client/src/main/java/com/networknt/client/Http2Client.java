@@ -33,7 +33,7 @@ import com.networknt.client.ssl.CompositeX509TrustManager;
 import com.networknt.client.ssl.TLSConfig;
 import com.networknt.cluster.Cluster;
 import com.networknt.config.Config;
-import com.networknt.httpstring.AttachmentConstants;
+import com.networknt.config.TlsUtil;
 import com.networknt.exception.ClientException;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.monad.Failure;
@@ -42,7 +42,6 @@ import com.networknt.server.ServerConfig;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
-import com.networknt.config.TlsUtil;
 import com.networknt.utility.StringUtils;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
@@ -82,6 +81,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
 import static io.undertow.client.http.HttpClientProvider.DISABLE_HTTPS_ENDPOINT_IDENTIFICATION_PROPERTY;
 
 /**

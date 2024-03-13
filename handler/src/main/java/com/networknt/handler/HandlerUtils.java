@@ -1,7 +1,6 @@
 package com.networknt.handler;
 
 import com.networknt.httpstring.AttachmentConstants;
-import com.networknt.utility.Constants;
 import com.networknt.utility.StringUtils;
 import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;

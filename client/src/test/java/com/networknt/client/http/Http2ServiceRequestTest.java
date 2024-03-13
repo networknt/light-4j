@@ -10,7 +10,8 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-import static junit.framework.TestCase.*;
+import static junit.framework.TestCase.assertFalse;
+import static junit.framework.TestCase.assertTrue;
 
 
 public class Http2ServiceRequestTest {

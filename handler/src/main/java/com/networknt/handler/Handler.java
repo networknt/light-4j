@@ -16,13 +16,12 @@
 
 package com.networknt.handler;
 
-import com.networknt.utility.ModuleRegistry;
-import com.networknt.utility.Tuple;
 import com.networknt.config.Config;
 import com.networknt.handler.config.EndpointSource;
 import com.networknt.handler.config.HandlerConfig;
 import com.networknt.handler.config.PathChain;
-import com.networknt.service.ServiceUtil;
+import com.networknt.utility.ModuleRegistry;
+import com.networknt.utility.Tuple;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
@@ -33,15 +32,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
-import static io.undertow.util.PathTemplateMatch.ATTACHMENT_KEY;
 import static io.undertow.Handlers.websocket;
+import static io.undertow.util.PathTemplateMatch.ATTACHMENT_KEY;
 
 /**
  * @author Nicholas Azar

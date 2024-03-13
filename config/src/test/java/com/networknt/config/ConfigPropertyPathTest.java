@@ -16,15 +16,14 @@
 
 package com.networknt.config;
 
+import junit.framework.TestCase;
+import org.junit.Assert;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
-
-import junit.framework.TestCase;
-
-import org.junit.Assert;
 
 public class ConfigPropertyPathTest extends TestCase {
 
