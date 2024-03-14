@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
+import com.networknt.client.simplepool.exceptions.*;
 
 /***
  * A SimpleConnectionState is a simplified interface for a connection, that also keeps track of the connection's state.
@@ -160,7 +161,7 @@ public final class SimpleConnectionState {
         // throw exception if connection creation failed
         if(!connection.isOpen()) {
             if(logger.isDebugEnabled()) logger.debug("{} closed connection", logLabel(connection, now));
-            throw new RuntimeException("[" + port(connection) + "] Error creating connection to " + uri.toString());
+            throw new SimplePoolConnectionFailureException("[" + port(connection) + "] Error creating connection to " + uri.toString());
 
             // start life-timer and determine connection type
         } else {
@@ -206,7 +207,7 @@ public final class SimpleConnectionState {
 
         if(borrowable(now)) {
             if(closed())
-                throw new RuntimeException("Connection was unexpectedly closed");
+                throw new SimplePoolConnectionClosureException("Connection was unexpectedly closed");
 
             // add connectionToken to the Set of borrowed tokens
             borrowedTokens.add( (connectionToken = new ConnectionToken(connection)) );
@@ -218,7 +219,7 @@ public final class SimpleConnectionState {
         }
         else {
             if(closed())
-                throw new RuntimeException("Connection was unexpectedly closed");
+                throw new SimplePoolConnectionClosureException("Connection was unexpectedly closed");
             else
                 throw new IllegalStateException("Attempt made to borrow connection outside of BORROWABLE state");
         }
