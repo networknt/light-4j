@@ -130,13 +130,14 @@ public final class SimpleURIConnectionPool {
      */
     public synchronized void restore(SimpleConnectionState.ConnectionToken connectionToken) {
         findAndCloseLeakedConnections();
-        long now = System.currentTimeMillis();
 
         if(connectionToken != null) {
             // restore connection token
             SimpleConnectionState connectionState = connectionToken.state();
             connectionState.restore(connectionToken);
         }
+
+        long now = System.currentTimeMillis();
 
         // update the connection pool's state
         applyAllConnectionStates(now);
@@ -330,17 +331,20 @@ public final class SimpleURIConnectionPool {
      */
     public synchronized void safeClose(SimpleConnectionState.ConnectionToken connectionToken) {
         findAndCloseLeakedConnections();
-        long now = System.currentTimeMillis();
 
         if(connectionToken == null)
             return;
 
+        long now = System.currentTimeMillis();
+        SimpleConnection connection = connectionToken.connection();
+        final SimpleConnectionState connectionState = connectionToken.state();
+
         // must bypass ConnectionState protections and close connection directly
-        if(logger.isDebugEnabled()) logger.debug("immediately closing connection [{}]", port(connectionToken.connection()));
-        connectionToken.connection().safeClose();
+        if(logger.isDebugEnabled()) logger.debug("immediately closing connection [{}]", port(connection));
+        connection.safeClose();
 
         // update pool about state change to this connection
-        applyConnectionState(connectionToken.state(), now, () -> trackedConnections.remove(connectionToken.state()));
+        applyConnectionState(connectionState, now, () -> trackedConnections.remove(connectionState));
     }
 
     /***
