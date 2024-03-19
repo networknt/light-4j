@@ -37,11 +37,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.ConnectException;
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpHeaders;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.net.http.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -310,7 +308,7 @@ public class DefaultConfigLoader implements IConfigLoader{
             HttpResponse<String> response = configClient.send(request, HttpResponse.BodyHandlers.ofString());
             int statusCode = response.statusCode();
             String body = response.body();
-            if(statusCode >= 300) {
+            if (statusCode >= 300) {
                 logger.error("Failed to load configs from config server with status {} and body {}.", statusCode, body);
                 // throw an exception to stop the server from starting if there is no values.yml in the externalized config folder.
                 Path filePath = Paths.get(targetConfigsDirectory);
@@ -321,7 +319,7 @@ public class DefaultConfigLoader implements IConfigLoader{
                         throw new RuntimeException(String.format("Failed to load configs from config server with status %s and body %s.", statusCode, body));
                     } else {
                         // there is a values.yml in the externalized config folder. continue to start the server.
-                        logger.warn("Failed to load configs from config server with status {} and body {}. Use the local backup file.", statusCode, body);
+                        logger.error("Failed to load configs from config server with status {} and body {}. Use the local fallback config.", statusCode, body);
                     }
                 }
             } else {
@@ -336,11 +334,11 @@ public class DefaultConfigLoader implements IConfigLoader{
                 */
                 // two cases: 1. the response is a json object. 2. the response is a yaml string. based on the response header.
                 Optional<String> contentType = response.headers().firstValue((Headers.CONTENT_TYPE_STRING));
-                if(contentType.isPresent()) {
-                    if(contentType.get().startsWith(ContentType.APPLICATION_JSON.value())) {
+                if (contentType.isPresent()) {
+                    if (contentType.get().startsWith(ContentType.APPLICATION_JSON.value())) {
                         configs = JsonMapper.string2Map(body);
                         processNestedMap(configs);
-                    } else if(contentType.get().startsWith(ContentType.APPLICATION_YAML.value())) {
+                    } else if (contentType.get().startsWith(ContentType.APPLICATION_YAML.value())) {
                         configs = Config.getNoneDecryptedInstance().getYaml().load(body);
                     } else {
                         // the content type is not supported, throw an exception.
@@ -351,6 +349,20 @@ public class DefaultConfigLoader implements IConfigLoader{
                     // there is no content type header in the response, throw an exception.
                     logger.error("The content type header is not set in the response from the config server.");
                     throw new RuntimeException("The content type header is not set in the response from the config server.");
+                }
+            }
+        } catch (ConnectException | HttpConnectTimeoutException e) {
+            // if the config server is not available or timeout, the server will start with the fallback values.yml.
+            logger.error("Failed to connect to config server:", e);
+            Path filePath = Paths.get(targetConfigsDirectory);
+            if (Files.exists(filePath)) {
+                File file = new File(targetConfigsDirectory, "values.yml");
+                if (!file.exists()) {
+                    // there is no values.yml generated from the previous call to the config server. throw an exception.
+                    throw new RuntimeException("Failed to connect to config server and no fallback config cache found.");
+                } else {
+                    // there is a values.yml in the externalized config folder. continue to start the server.
+                    logger.error("Failed to connect to config server. Use the local fallback config.");
                 }
             }
         } catch (IOException | InterruptedException e) {
