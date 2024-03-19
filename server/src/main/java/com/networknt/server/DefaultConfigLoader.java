@@ -116,8 +116,14 @@ public class DefaultConfigLoader implements IConfigLoader{
     public void init() {
         lightEnv = getPropertyOrEnv(LIGHT_ENV);
         if (lightEnv == null) {
-            logger.warn("Warning! {} is not provided; defaulting to {}", LIGHT_ENV, DEFAULT_ENV);
-            lightEnv = DEFAULT_ENV;
+            lightEnv = (String)startupConfig.get(ENV_TAG);
+            if(lightEnv == null) {
+                // light-env is not set in the environment and the startup config. Use the default value.
+                logger.warn("light-env is not set in the environment and envTag is not set in the startup config. Use the default value: " + DEFAULT_ENV);
+                lightEnv = DEFAULT_ENV;
+            } else {
+                logger.debug("light-env is not set in the environment; defaulting to the value in the startup config: " + lightEnv);
+            }
         }
         targetConfigsDirectory = getPropertyOrEnv(Config.LIGHT_4J_CONFIG_DIR);
         if (targetConfigsDirectory == null) {
@@ -445,16 +451,8 @@ public class DefaultConfigLoader implements IConfigLoader{
         if(startupConfig.get(PRODUCT_VERSION) != null) qs.append("&").append(PRODUCT_VERSION).append("=").append(startupConfig.get(PRODUCT_VERSION));
         if(startupConfig.get(API_ID) != null) qs.append("&").append(API_ID).append("=").append(startupConfig.get(API_ID));
         if(startupConfig.get(API_VERSION) != null) qs.append("&").append(API_VERSION).append("=").append(startupConfig.get(API_VERSION));
-        if(lightEnv != null) {
-            qs.append("&").append(ENV_TAG).append("=").append(lightEnv);
-        } else if(startupConfig.get(ENV_TAG) != null) {
-            // light-env is not set in the environment. Use the envTag from the startup config
-            qs.append("&").append(ENV_TAG).append("=").append(startupConfig.get(ENV_TAG));
-        } else {
-            // light-env is not set in the environment and the startup config. Use the default value.
-            logger.warn("light-env is not set in the environment and envTag is not set in the startup config. Use the default value: " + DEFAULT_ENV);
-            qs.append("&").append(ENV_TAG).append("=").append(DEFAULT_ENV);
-        }
+        // lightEnv won't be null here.
+        qs.append("&").append(ENV_TAG).append("=").append(lightEnv);
         if(logger.isDebugEnabled()) logger.debug("configParameters: {}", qs);
         return qs.toString();
     }
