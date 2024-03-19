@@ -22,6 +22,7 @@ package com.networknt.client.simplepool.undertow;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.simplepool.SimpleConnection;
 import com.networknt.client.simplepool.SimpleConnectionMaker;
+import com.networknt.client.simplepool.exceptions.*;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientCallback;
@@ -69,8 +70,8 @@ public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
         final Set<SimpleConnection> allCreatedConnections) throws RuntimeException
     {
         boolean isHttps = uri.getScheme().equalsIgnoreCase("https");
-        XnioWorker worker = getWorker(isHttp2);
-        XnioSsl ssl = getSSL(isHttps, isHttp2);
+        XnioWorker worker = getWorker();
+        XnioSsl ssl = getSSL(isHttps);
         OptionMap connectionOptions = getConnectionOptions(isHttp2);
         InetSocketAddress bindAddress = null;
 
@@ -88,7 +89,7 @@ public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
 
             @Override
             public void failed(IOException e) {
-                if(logger.isDebugEnabled()) logger.debug("Failed to establish new connection for uri: {}", uri);
+                logger.error("Failed to establish new connection for uri {}: {}", uri, exceptionDetails(e));
                 result.setException(e);
             }
         };
@@ -105,25 +106,34 @@ public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
     /***
      * Never returns null
      *
-     * @param timeoutSeconds
-     * @param future
-     * @return
+     * @param timeoutSeconds connection timeout in seconds
+     * @param future contains future response containing new connection
+     * @return the new Undertow connection wrapped in a SimpleConnection
+     * @throws RuntimeException if connection fails
      */
-    private static SimpleConnection safeConnect(long timeoutSeconds, IoFuture<SimpleConnection> future)
+    private static SimpleConnection safeConnect(long timeoutSeconds, IoFuture<SimpleConnection> future) throws RuntimeException
     {
+        switch(future.await(timeoutSeconds, TimeUnit.SECONDS)) {
+            case DONE:
+                break;
+            case WAITING:
+                throw new SimplePoolConnectionFailureException("Connection establishment timed out after " + timeoutSeconds + " second(s)");
+            case FAILED:
+                Exception e = future.getException();
+                throw new SimplePoolConnectionFailureException("Connection establishment failed: " + exceptionDetails(e), e);
+            default:
+                throw new SimplePoolConnectionFailureException("Connection establishment failed");
+        }
+
         SimpleConnection connection = null;
-
-        if(future.await(timeoutSeconds, TimeUnit.SECONDS) != org.xnio.IoFuture.Status.DONE)
-            throw new RuntimeException("Connection establishment timed out");
-
         try {
             connection = future.get();
         } catch (IOException e) {
-            throw new RuntimeException("Connection establishment generated I/O exception", e);
+            throw new SimplePoolConnectionFailureException("Connection establishment generated I/O exception: " + exceptionDetails(e), e);
         }
 
         if(connection == null)
-            throw new RuntimeException("Connection establishment failed (null) - Full connection terminated");
+            throw new SimplePoolConnectionFailureException("Connection establishment failed (null) - Full connection terminated");
 
         return connection;
     }
@@ -138,10 +148,9 @@ public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
      * WARNING: This is called by getSSL(). Therefore, this method must never
      *          call getSSL(), or any method that transitively calls getSSL()
      *
-     * @param isHttp2 if true, sets worker thread names to show HTTP2
      * @return new XnioWorker
      */
-    private static XnioWorker getWorker(boolean isHttp2)
+    private static XnioWorker getWorker()
     {
         if(WORKER.get() != null) return WORKER.get();
 
@@ -151,7 +160,7 @@ public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
 
             Xnio xnio = Xnio.getInstance(Undertow.class.getClassLoader());
             try {
-                WORKER.set(xnio.createWorker(null, getWorkerOptionMap(isHttp2)));
+                WORKER.set(xnio.createWorker(null, getWorkerOptionMap()));
             } catch (IOException e) {
                 logger.error("Exception while creating new XnioWorker", e);
                 throw new RuntimeException(e);
@@ -160,13 +169,13 @@ public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
         return WORKER.get();
     }
 
-    private static OptionMap getWorkerOptionMap(boolean isHttp2)
+    private static OptionMap getWorkerOptionMap()
     {
         OptionMap.Builder optionBuild = OptionMap.builder()
                 .set(Options.WORKER_IO_THREADS, 8)
                 .set(Options.TCP_NODELAY, true)
                 .set(Options.KEEP_ALIVE, true)
-                .set(Options.WORKER_NAME, isHttp2 ? "Callback-HTTP2" : "Callback-HTTP11");
+                .set(Options.WORKER_NAME, "simplepool");
         return  optionBuild.getMap();
     }
 
@@ -176,10 +185,9 @@ public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
      * WARNING: This calls getWorker()
      *
      * @param isHttps true if this is an HTTPS connection
-     * @param isHttp2 if true, sets worker thread names to show HTTP2
      * @return new XnioSSL
      */
-    private static XnioSsl getSSL(boolean isHttps, boolean isHttp2)
+    private static XnioSsl getSSL(boolean isHttps)
     {
         if(!isHttps) return null;
         if(SSL.get() != null) return SSL.get();
@@ -189,13 +197,26 @@ public class SimpleUndertowConnectionMaker implements SimpleConnectionMaker
             if(SSL.get() != null) return SSL.get();
 
             try {
-                SSL.set(new UndertowXnioSsl(getWorker(isHttp2).getXnio(), OptionMap.EMPTY, BUFFER_POOL, SimpleSSLContextMaker.createSSLContext()));
+                SSL.set(new UndertowXnioSsl(getWorker().getXnio(), OptionMap.EMPTY, BUFFER_POOL, SimpleSSLContextMaker.createSSLContext()));
             } catch (Exception e) {
                 logger.error("Exception while creating new shared UndertowXnioSsl used to create connections", e);
                 throw new RuntimeException(e);
             }
         }
         return SSL.get();
+    }
+
+    /***
+     * Handles empty Exception messages for printing in logs (to avoid having "null" in logs for empty Exception messages)
+     *
+     * @param e Exception to look for a detail message in
+     * @return the Exception message, or "" if the Exception does not contain a message
+     */
+    public static String exceptionDetails(Exception e) {
+        if(e == null || e.getMessage() == null)
+            return "";
+        else
+            return e.getMessage();
     }
 
     public static String port(ClientConnection connection) {
