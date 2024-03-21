@@ -80,7 +80,7 @@ public class TokenHandler implements MiddlewareHandler {
     static Logger logger = LoggerFactory.getLogger(TokenHandler.class);
     protected volatile HttpHandler next;
     // Cached jwt token for this handler on behalf of a client by serviceId as the key
-    public final static Map<String, Jwt> cache = new ConcurrentHashMap();
+    public final static Map<String, Jwt> cache = new ConcurrentHashMap<String, Jwt>();
     public TokenHandler() {
         if(logger.isInfoEnabled()) logger.info("TokenHandler is loaded.");
         config = TokenConfig.load();
