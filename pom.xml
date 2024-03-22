@@ -141,6 +141,7 @@
         <module>handler</module>
         <module>metrics</module>
         <module>prometheus</module>
+        <module>sanitizer-config</module>
         <module>sanitizer</module>
         <module>traceability</module>
         <module>traceability-config</module>
@@ -329,6 +330,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>metrics</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>sanitizer-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
