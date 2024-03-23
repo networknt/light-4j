@@ -1,5 +1,6 @@
 package com.networknt.sanitizer;
 
+import org.owasp.encoder.EncoderWrapper;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.owasp.encoder.*;
