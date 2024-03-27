@@ -405,7 +405,7 @@ public class LimitConfig {
     }
 
     public static class RateLimitSet {
-        Map<String, List<LimitQuota>>  directMaps;
+        public Map<String, List<LimitQuota>>  directMaps;
 
         public RateLimitSet() {
 
