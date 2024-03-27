@@ -28,7 +28,7 @@ public class JwtHeaderClientIdKeyResolver implements KeyResolver {
         }
         if(key == null) {
             // try to get the key from the header
-            HeaderMap headerMap = exchange.getResponseHeaders();
+            HeaderMap headerMap = exchange.getRequestHeaders();
             HeaderValues values = headerMap.get("Client-Id");
             if(values != null) key = values.getFirst();
         }
