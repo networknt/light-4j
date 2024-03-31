@@ -1,5 +1,29 @@
 # Change Log
 
+## [2.1.33](https://github.com/networknt/light-4j/tree/2.1.33) (2024-03-31)
+
+
+**Merged pull requests:**
+
+
+- fixes \#2194 remove the jboss-threads dependency from parent pom.xml [\#2195](https://github.com/networknt/light-4j/pull/2195) ([stevehu](https://github.com/stevehu))
+- fixes \#2192 Add a status code for the rate limit in status.yml [\#2193](https://github.com/networknt/light-4j/pull/2193) ([stevehu](https://github.com/stevehu))
+- fixes \#2190 fix the JwtHeaderClientIdKeyResolver to use request header [\#2191](https://github.com/networknt/light-4j/pull/2191) ([stevehu](https://github.com/stevehu))
+- fixes \#2187 move EncoderWrapper to sanitizer-config module [\#2188](https://github.com/networknt/light-4j/pull/2188) ([stevehu](https://github.com/stevehu))
+- fixes \#2185 split sanitizer-config module to share with light-aws-lambda [\#2186](https://github.com/networknt/light-4j/pull/2186) ([stevehu](https://github.com/stevehu))
+- fixes \#2183 split logger-config and logger-handler to share with ligh… [\#2184](https://github.com/networknt/light-4j/pull/2184) ([stevehu](https://github.com/stevehu))
+- fixes \#2181 fallback to cached config to start server for ConnectExec… [\#2182](https://github.com/networknt/light-4j/pull/2182) ([stevehu](https://github.com/stevehu))
+- fixes \#2179 DefaultConfigLoader handles lightEnv in one place in the … [\#2180](https://github.com/networknt/light-4j/pull/2180) ([stevehu](https://github.com/stevehu))
+- fixes \#2176 Add aws lambda error codes [\#2177](https://github.com/networknt/light-4j/pull/2177) ([stevehu](https://github.com/stevehu))
+- fixes \#2173 remove unused imports [\#2174](https://github.com/networknt/light-4j/pull/2174) ([stevehu](https://github.com/stevehu))
+- Add validation to matchPathToPattern method [\#2171](https://github.com/networknt/light-4j/pull/2171) ([syntheshad](https://github.com/syntheshad))
+- fixes \#2169 resolve the config reload registry issue [\#2170](https://github.com/networknt/light-4j/pull/2170) ([stevehu](https://github.com/stevehu))
+- fixes \#2167 remove the token from portal-registry.yml [\#2168](https://github.com/networknt/light-4j/pull/2168) ([stevehu](https://github.com/stevehu))
+- fixes \#2165 refactor limit-config to remove dependency for undertow [\#2166](https://github.com/networknt/light-4j/pull/2166) ([stevehu](https://github.com/stevehu))
+- fixes \#2163 split handler-config from handler module [\#2164](https://github.com/networknt/light-4j/pull/2164) ([stevehu](https://github.com/stevehu))
+- fixes \#2161 remove jaeger-tracer module as it is replaced by OpenTele… [\#2162](https://github.com/networknt/light-4j/pull/2162) ([stevehu](https://github.com/stevehu))
+
+
 ## [2.1.32](https://github.com/networknt/light-4j/tree/2.1.32) (2024-02-27)
 
 
