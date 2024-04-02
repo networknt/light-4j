@@ -89,23 +89,50 @@ public final class SimpleConnectionPool {
     }
 
     /***
-     * This method immediately closes the connection even if there are still threads actively using it (i.e: it
-     * will be closed even if it is still borrowed).
+     * This is a convenience method that immediately closes a connection even if there are still threads actively
+     * using it (i.e: it will be closed even if it is currently borrowed by other threads).
      *
-     * WARNING: Closing connections defeats the entire purpose of using a connection pool. Be certain that this method
-     *          is only used in cases where there is a need to ensure the connection is not reused. Needing to close
-     *          connections after every use prevents a connection pool from being able to provide any of the connection
-     *          time performance benefits that are the entire purpose of connection pools.
+     * 1. WARNING: Connection Token must still be returned
+     *     After closing a connection, _users must still return the connection token to the pool_.
      *
-     * NOTE:    It is NOT necessary to use this method to close connections. SimpleConnectionPool and
-     *          SimpleURIConnectionPool are specifically designed to gracefully handle unexpected connections closures.
+     * 2. WARNING: Overuse of this method will negate all benefits of the connection pool
+     *     It is important to understand that, under normal circumstances, users should never close connections
+     *     themselves (either via this method or directly via the raw connection) but always let the connection pool
+     *     handle all connection closures, since manually closing connections negates all benefits of using a connection
+     *     pool.
      *
-     *          So feel free to directly close raw connections if that simplifies your code.
+     *     Be certain that this method is only used in cases where there is a need to ensure the connection is not
+     *     reused.
      *
-     * WARNING: YOU MUST STILL RESTORE THE CONNECTION TOKEN AFTER CALLING THIS METHOD
+     * 3. All threads sharing this connection will be affected
+     *     Closing connections yourself (using this method or directly via the raw connection) will cause any threads
+     *     that are actively using this connection to experience unexpected connection failures.
      *
-     * WARNING: This will cause any threads that are actively using this connection to experience unexpected connection
-     *          failures
+     * 4. This method is purely for convenience
+     *     As mentioned, this method is purely a convenience method to allow users to close connections via the
+     *     SimplePool API rather than closing the raw connection directly. However, if there is a concrete need to do so
+     *     (see point 3 above) users can also feel completely free to close raw connections directly at any time without
+     *     calling this method. SimpleConnectionPool is built from the ground up to safely and gracefully handle
+     *     unexpected closures of raw connections.
+     *
+     *   For example:
+     *
+     *     // create new pool
+     *     SimpleConnectionPool pool =
+     *         new SimpleConnectionPool(expireTime, poolSize, SimpleUndertowConnectionMaker.getInstance());
+     *
+     *     // borrow a new connection
+     *     SimpleConnectionState.ConnectionToken connectionToken = pool.borrow(connectionTimeout, isHttp2, uri);
+     *
+     *     // get raw Undertow connection
+     *     connection = (ClientConnection) connectionToken.getRawConnection();
+     *
+     *     // directly close the raw connection - this is completely safe
+     *     IoUtils.safeClose(connection);
+     *
+     *   This means that users can leverage this method to close connections if it is convenient, but should also feel
+     *   free to close the raw connection directly at any time if that is more convenient (as long as they have a good
+     *   reason to directly close the connection).
      *
      * @param connectionToken the connection token of the connection to close
      */
@@ -120,16 +147,21 @@ public final class SimpleConnectionPool {
      * Causes the connection to be closed and its resources being freed from the pool, while preventing threads
      * that are currently using it from experiencing unexpected connection closures.
      *
-     * WARNING: Closing connections defeats the entire purpose of using a connection pool. Be certain that this method
-     *          is only used in cases where there is a need to ensure the connection is not reused. Needing to close
-     *          connections after every use prevents a connection pool from being able to provide any of the connection
-     *          time performance benefits that are the entire purpose of connection pools.
-     *
-     * This method expires a connection which results in:
+     * This method 'expires' a connection which results in:
      *     (a) the connection no longer being borrowable, and
      *     (b) the connection being closed as soon as all threads currently using it have restored it to the pool.
      *
-     * WARNING: YOU MUST STILL RESTORE THE CONNECTION TOKEN AFTER CALLING THIS METHOD
+     * 1. WARNING: Connection Token must still be returned
+     *     After closing a connection, _users must still return the connection token to the pool_.
+     *
+     * 2. WARNING: Overuse of this method will negate all benefits of the connection pool
+     *     It is important to understand that, under normal circumstances, users should never close connections
+     *     themselves (either via this method or directly via the raw connection) but always let the connection pool
+     *     handle all connection closures, since manually closing connections negates all benefits of using a connection
+     *     pool.
+     *
+     *     Be certain that this method is only used in cases where there is a need to ensure the connection is not
+     *     reused.
      *
      * @param connectionToken the connection token for the connection to close
      * @return true if the connection has been closed;
