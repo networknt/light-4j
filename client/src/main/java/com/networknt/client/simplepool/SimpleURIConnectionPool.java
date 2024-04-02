@@ -339,7 +339,7 @@ public final class SimpleURIConnectionPool {
      *
      *     // create new pool
      *     SimpleURIConnectionPool pool =
-     *         new SimpleURIConnectionPool(uri, expireTime, poolSize, SimpleUndertowConnectionMaker.getInstance());
+     *         new SimpleURIConnectionPool(uri, expireTime, poolSize, SimpleUndertowConnectionMaker.instance());
      *
      *     // borrow a new connection
      *     SimpleConnectionState.ConnectionToken connectionToken = pool.borrow(connectionTimeout, isHttp2);
