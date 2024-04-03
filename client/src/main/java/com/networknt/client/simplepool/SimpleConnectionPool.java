@@ -131,8 +131,9 @@ public final class SimpleConnectionPool {
     }
 
     /***
-     * Causes the connection to be closed and its resources being freed from the pool, while preventing threads
-     * that are currently using it from experiencing unexpected connection closures.
+     * Causes the connection to be closed as soon as all threads currently using it have restored it to the pool. This
+     * prevents the connection from ever being reused, while also preventing threads that are currently using it from
+     * experiencing unexpected connection closures.
      *
      * This method 'expires' a connection which results in:
      *     (a) the connection no longer being borrowable, and
@@ -145,7 +146,7 @@ public final class SimpleConnectionPool {
      *     users should never close connections themselves (either via this method or directly via the raw connection)
      *     but instead, always let the connection pool handle all connection closures. Manually closing connections
      *     negates all benefits of using a connection pool. Be certain that this method is only used in cases where
-     *     there is a need to ensure the connection is immediately closed in all threads using it.
+     *     there is a need to ensure the connection is not reused.
      *
      * @param connectionToken the connection token for the connection to close
      * @return true if the connection has been closed;
