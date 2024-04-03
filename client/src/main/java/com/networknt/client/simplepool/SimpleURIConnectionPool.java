@@ -328,8 +328,7 @@ public final class SimpleURIConnectionPool {
      * 4. This method is a convenience method: This method is a convenience method to allow users to close connections
      *      via the SimplePool API rather than closing the raw connection directly. However, if there is a concrete need
      *      to do so (see point 2 above) users can also close raw connections directly at any time without calling this
-     *      method since SimpleURIConnectionPool will safely and gracefully handle unexpected closures of raw
-     *      connections. For example:
+     *      method since SimpleURIConnectionPool will safely handle unexpected closures of raw connections. For example:
      *
      *          // get raw Undertow connection
      *          ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
