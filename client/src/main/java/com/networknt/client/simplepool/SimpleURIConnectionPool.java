@@ -345,7 +345,7 @@ public final class SimpleURIConnectionPool {
      *     SimpleConnectionState.ConnectionToken connectionToken = pool.borrow(connectionTimeout, isHttp2);
      *
      *     // get raw Undertow connection
-     *     connection = (ClientConnection) connectionToken.getRawConnection();
+     *     ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
      *
      *     // directly close the raw connection - this is completely safe
      *     IoUtils.safeClose(connection);
