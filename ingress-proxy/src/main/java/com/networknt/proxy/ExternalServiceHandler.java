@@ -192,7 +192,8 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                     byte[] responseBody = response.body();
                     if(response.statusCode() >= 400) {
                         // want to log the response body for 4xx and 5xx errors.
-                        if(logger.isDebugEnabled()) logger.debug("External Service Response Error: status = '{}', body = '{}'", response.statusCode(), new String(responseBody));
+                        if(logger.isDebugEnabled() && responseBody != null && responseBody.length > 0)
+                            logger.debug("External Service Response Error: status = '{}', body = '{}'", response.statusCode(), new String(responseBody));
                     }
                     exchange.setStatusCode(response.statusCode());
                     for (Map.Entry<String, List<String>> header : responseHeaders.map().entrySet()) {
