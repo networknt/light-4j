@@ -281,8 +281,6 @@ public class ExternalServiceHandler implements MiddlewareHandler {
         return true;
     }
 
-
-
     /**
      * Builds the request URL for an HttpRequest.
      *

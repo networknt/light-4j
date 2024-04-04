@@ -139,6 +139,7 @@
         <module>mask</module>
         <module>handler-config</module>
         <module>handler</module>
+        <module>metrics-config</module>
         <module>metrics</module>
         <module>prometheus</module>
         <module>sanitizer-config</module>
@@ -325,6 +326,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>handler</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>metrics-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
