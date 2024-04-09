@@ -166,6 +166,7 @@
         <module>resource</module>
         <module>content</module>
         <module>data-source</module>
+        <module>basic-config</module>
         <module>basic-auth</module>
         <module>deref-token</module>
         <module>ip-whitelist</module>
@@ -448,6 +449,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>data-source</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>basic-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
