@@ -181,6 +181,7 @@
         <module>sidecar</module>
         <module>request-transformer</module>
         <module>response-transformer</module>
+        <module>apikey-config</module>
         <module>api-key</module>
         <module>ldap-util</module>
         <module>cache-manager</module>
@@ -512,6 +513,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>response-transformer</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>apikey-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
