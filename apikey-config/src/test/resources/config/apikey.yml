@@ -1,0 +1,24 @@
+# ApiKey Authentication Security Configuration for light-4j
+# Enable ApiKey Authentication Handler, default is false.
+enabled: ${apikey.enabled:true}
+# If API key hash is enabled. The API key will be hashed with PBKDF2WithHmacSHA1 before it is
+# stored in the config file. It is more secure than put the encrypted key into the config file.
+# The default value is false. If you want to enable it, you need to use the following repo
+# https://github.com/networknt/light-hash command line tool to hash the clear text key.
+hashEnabled: ${apikey.hashEnabled:false}
+# path prefix to the api key mapping. It is a list of map between the path prefix and the api key
+# for apikey authentication. In the handler, it loops through the list and find the matching path
+# prefix. Once found, it will check if the apikey is equal to allow the access or return an error.
+# The map object has three properties: pathPrefix, headerName and apiKey. Take a look at the test
+# resources/config folder for configuration examples.
+pathPrefixAuths:
+  - pathPrefix: /test1
+    headerName: x-gateway-apikey
+    apiKey: abcdefg
+  # The same prefix has another apikey header and value.
+  - pathPrefix: /test1
+    headerName: authorization
+    apiKey: xyz
+  - pathPrefix: /test2
+    headerName: x-apikey
+    apiKey: CRYPT:3ddd6c8b9bf2afc24d1c94af1dffd518:1bf0cafb19c53e61ddeae626f8906d43
