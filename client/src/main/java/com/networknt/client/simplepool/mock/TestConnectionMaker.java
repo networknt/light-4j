@@ -21,9 +21,9 @@ package com.networknt.client.simplepool.mock;
 
 import com.networknt.client.simplepool.SimpleConnection;
 import com.networknt.client.simplepool.SimpleConnectionMaker;
+import com.networknt.client.simplepool.exceptions.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.util.Set;
@@ -63,7 +63,7 @@ public class TestConnectionMaker implements SimpleConnectionMaker {
         try {
             connection = future.get(createConnectionTimeout, TimeUnit.SECONDS);
         } catch(Exception e) {
-            throw new RuntimeException("Connection creation timed-out");
+            throw new SimplePoolConnectionFailureException("Connection creation timed-out");
         }
         return connection;
     }
