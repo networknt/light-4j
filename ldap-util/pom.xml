@@ -36,7 +36,7 @@
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>client</artifactId>
+            <artifactId>http-client</artifactId>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
