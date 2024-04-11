@@ -16,7 +16,6 @@
 
 package com.networknt.basicauth;
 
-import com.networknt.common.DecryptUtil;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.JsonMapper;
@@ -43,7 +42,7 @@ public class BasicAuthConfig {
     boolean allowAnonymous;
     boolean allowBearerToken;
     Map<String, UserAuth> users;  // the key is the username to locate the object
-    private Config config;
+    private final Config config;
     private Map<String, Object> mappedConfig;
 
     public BasicAuthConfig() {
@@ -64,11 +63,11 @@ public class BasicAuthConfig {
         setConfigUser();
     }
 
-    static BasicAuthConfig load() {
+    public static BasicAuthConfig load() {
         return new BasicAuthConfig();
     }
 
-    static BasicAuthConfig load(String configName) {
+    public static BasicAuthConfig load(String configName) {
         return new BasicAuthConfig(configName);
     }
 
