@@ -319,10 +319,13 @@ public class MrasHandler implements MiddlewareHandler {
                 }
                 // this a workaround to bypass the hostname verification in jdk11 http client.
                 Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+                final Properties props = System.getProperties();
                 if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
-                    final Properties props = System.getProperties();
                     props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
                 }
+                props.setProperty("jdk.httpclient.keepalive.timeout", "10");
+                props.setProperty("jdk.httpclient.connectionPoolSize", "10");
+
                 client = clientBuilder.build();
             } catch (IOException e) {
                 logger.error("Cannot create HttpClient:", e);
@@ -367,10 +370,12 @@ public class MrasHandler implements MiddlewareHandler {
                 }
                 // this a workaround to bypass the hostname verification in jdk11 http client.
                 Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+                final Properties props = System.getProperties();
                 if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
-                    final Properties props = System.getProperties();
                     props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
                 }
+                props.setProperty("jdk.httpclient.keepalive.timeout", "10");
+                props.setProperty("jdk.httpclient.connectionPoolSize", "10");
                 client = clientBuilder.build();
             } catch (IOException e) {
                 logger.error("Cannot create HttpClient:", e);
@@ -440,10 +445,13 @@ public class MrasHandler implements MiddlewareHandler {
                 }
                 // this a workaround to bypass the hostname verification in jdk11 http client.
                 Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+                final Properties props = System.getProperties();
                 if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
-                    final Properties props = System.getProperties();
                     props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
                 }
+                props.setProperty("jdk.httpclient.keepalive.timeout", "10");
+                props.setProperty("jdk.httpclient.connectionPoolSize", "10");
+
                 clientMicrosoft = clientBuilder.build();
             } catch (IOException e) {
                 logger.error("Cannot create HttpClient:", e);
