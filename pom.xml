@@ -180,7 +180,9 @@
         <module>rule-loader</module>
         <module>config-reload</module>
         <module>sidecar</module>
+        <module>reqtrans-config</module>
         <module>request-transformer</module>
+        <module>restrans-config</module>
         <module>response-transformer</module>
         <module>apikey-config</module>
         <module>api-key</module>
@@ -513,7 +515,17 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
+                <artifactId>reqtrans-config</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
                 <artifactId>request-transformer</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>restrans-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
