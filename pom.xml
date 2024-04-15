@@ -177,6 +177,7 @@
         <module>http-entity</module>
         <module>egress-router</module>
         <module>ingress-proxy</module>
+        <module>ruleloader-config</module>
         <module>rule-loader</module>
         <module>config-reload</module>
         <module>sidecar</module>
@@ -506,6 +507,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>sidecar</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>ruleloader-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
