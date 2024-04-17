@@ -175,11 +175,13 @@
         <module>logger-config</module>
         <module>logger-handler</module>
         <module>http-entity</module>
+        <module>token-config</module>
         <module>egress-router</module>
         <module>ingress-proxy</module>
         <module>ruleloader-config</module>
         <module>rule-loader</module>
         <module>config-reload</module>
+        <module>sidecar-config</module>
         <module>sidecar</module>
         <module>reqtrans-config</module>
         <module>request-transformer</module>
@@ -496,12 +498,22 @@
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
+                <artifactId>token-config</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
                 <artifactId>egress-router</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>ingress-proxy</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>sidecar-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

@@ -3,11 +3,6 @@ package com.networknt.router.middleware;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
-import com.networknt.handler.config.MethodRewriteRule;
-import com.networknt.handler.config.QueryHeaderRewriteRule;
-import com.networknt.handler.config.UrlRewriteRule;
-import com.networknt.router.RouterConfig;
-import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
