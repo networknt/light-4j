@@ -114,7 +114,7 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
                         Map<String, Object> objMap = new HashMap<>();
                         objMap.put("auditInfo", auditInfo);
                         objMap.put("requestHeaders", exchange.getRequestHeaders());
-                        objMap.put("responseHeaders", exchange.getRequestHeaders());
+                        objMap.put("responseHeaders", exchange.getResponseHeaders());
                         objMap.put("queryParameters", exchange.getQueryParameters());
                         objMap.put("pathParameters", exchange.getPathParameters());
                         objMap.put("method", method);
