@@ -10,7 +10,7 @@ import java.util.*;
 
 public class TokenConfig {
     private static final Logger logger = LoggerFactory.getLogger(TokenConfig.class);
-    static final String CONFIG_NAME = "token";
+    public static final String CONFIG_NAME = "token";
     private static final String ENABLED = "enabled";
     private static final String APPLIED_PATH_PREFIXES = "appliedPathPrefixes";
 

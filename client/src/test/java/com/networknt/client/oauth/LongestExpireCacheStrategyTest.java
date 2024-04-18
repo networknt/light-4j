@@ -50,20 +50,20 @@ public class LongestExpireCacheStrategyTest {
         ArrayList<Jwt> jwts = new ArrayList<>();
         for(int i = 0; i < num; i++) {
             Jwt jwt = new Jwt();
-            jwt.setScopes(new HashSet<>(Arrays.asList(getScopes(i+1))));
+            jwt.setScopes(getScopes(i+1));
             jwt.setExpire(expiryTime + i);
             jwts.add(jwt);
         }
         return jwts;
     }
 
-    private static String[] getScopes(int numsOfScopes){
+    private static String getScopes(int numsOfScopes){
         String[] scopes = {"eat", "drink", "sleep", "study"};
         int length = numsOfScopes > scopes.length ? numsOfScopes%scopes.length : numsOfScopes;
         String[] result = new String[length];
         for(int i = 1; i <= length; i++) {
             result[i - 1] = scopes[i - 1];
         }
-        return result;
+        return String.join(" ", result);
     }
 }
