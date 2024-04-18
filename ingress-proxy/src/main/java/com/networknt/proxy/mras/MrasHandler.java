@@ -80,7 +80,6 @@ public class MrasHandler implements MiddlewareHandler {
     private long accessTokenExpiration = 0;
     private long microsoftExpiration = 0;
 
-    private HttpClient client;
     private HttpClient clientMicrosoft;
 
     public MrasHandler() {
@@ -304,34 +303,33 @@ public class MrasHandler implements MiddlewareHandler {
             setExchangeStatus(exchange, METHOD_NOT_ALLOWED, method, requestPath);
             return;
         }
-        if(client == null) {
-            try {
-                HttpClient.Builder clientBuilder = HttpClient.newBuilder()
-                        .followRedirects(HttpClient.Redirect.NORMAL)
-                        .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
-                        // we cannot use the Http2Client SSL Context as we need two-way TLS here.
-                        .sslContext(createSSLContext());
-                if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
-                if (config.isEnableHttp2()) {
-                    clientBuilder.version(HttpClient.Version.HTTP_2);
-                } else {
-                    clientBuilder.version(HttpClient.Version.HTTP_1_1);
-                }
-                // this a workaround to bypass the hostname verification in jdk11 http client.
-                Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
-                final Properties props = System.getProperties();
-                if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
-                    props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
-                }
-                props.setProperty("jdk.httpclient.keepalive.timeout", "10");
-                props.setProperty("jdk.httpclient.connectionPoolSize", "10");
-
-                client = clientBuilder.build();
-            } catch (IOException e) {
-                logger.error("Cannot create HttpClient:", e);
-                setExchangeStatus(exchange, TLS_TRUSTSTORE_ERROR);
-                return;
+        HttpClient client;;
+        try {
+            HttpClient.Builder clientBuilder = HttpClient.newBuilder()
+                    .followRedirects(HttpClient.Redirect.NORMAL)
+                    .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
+                    // we cannot use the Http2Client SSL Context as we need two-way TLS here.
+                    .sslContext(createSSLContext());
+            if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
+            if (config.isEnableHttp2()) {
+                clientBuilder.version(HttpClient.Version.HTTP_2);
+            } else {
+                clientBuilder.version(HttpClient.Version.HTTP_1_1);
             }
+            // this a workaround to bypass the hostname verification in jdk11 http client.
+            Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+            final Properties props = System.getProperties();
+            if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
+                props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
+            }
+            props.setProperty("jdk.httpclient.keepalive.timeout", "10");
+            props.setProperty("jdk.httpclient.connectionPoolSize", "10");
+
+            client = clientBuilder.build();
+        } catch (IOException e) {
+            logger.error("Cannot create HttpClient:", e);
+            setExchangeStatus(exchange, TLS_TRUSTSTORE_ERROR);
+            return;
         }
         HttpResponse<byte[]> response  = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
         HttpHeaders responseHeaders = response.headers();
@@ -355,33 +353,33 @@ public class MrasHandler implements MiddlewareHandler {
 
     private Result<TokenResponse> getAccessToken() throws Exception {
         TokenResponse tokenResponse = null;
-        if(client == null) {
-            try {
-                HttpClient.Builder clientBuilder = HttpClient.newBuilder()
-                        .followRedirects(HttpClient.Redirect.NORMAL)
-                        .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
-                        // we cannot use the Http2Client SSL Context as we need two-way TLS here.
-                        .sslContext(createSSLContext());
-                if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
-                if (config.isEnableHttp2()) {
-                    clientBuilder.version(HttpClient.Version.HTTP_2);
-                } else {
-                    clientBuilder.version(HttpClient.Version.HTTP_1_1);
-                }
-                // this a workaround to bypass the hostname verification in jdk11 http client.
-                Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
-                final Properties props = System.getProperties();
-                if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
-                    props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
-                }
-                props.setProperty("jdk.httpclient.keepalive.timeout", "10");
-                props.setProperty("jdk.httpclient.connectionPoolSize", "10");
-                client = clientBuilder.build();
-            } catch (IOException e) {
-                logger.error("Cannot create HttpClient:", e);
-                return Failure.of(new Status(TLS_TRUSTSTORE_ERROR));
+        HttpClient client;
+        try {
+            HttpClient.Builder clientBuilder = HttpClient.newBuilder()
+                    .followRedirects(HttpClient.Redirect.NORMAL)
+                    .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
+                    // we cannot use the Http2Client SSL Context as we need two-way TLS here.
+                    .sslContext(createSSLContext());
+            if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
+            if (config.isEnableHttp2()) {
+                clientBuilder.version(HttpClient.Version.HTTP_2);
+            } else {
+                clientBuilder.version(HttpClient.Version.HTTP_1_1);
             }
+            // this a workaround to bypass the hostname verification in jdk11 http client.
+            Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+            final Properties props = System.getProperties();
+            if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
+                props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
+            }
+            props.setProperty("jdk.httpclient.keepalive.timeout", "10");
+            props.setProperty("jdk.httpclient.connectionPoolSize", "10");
+            client = clientBuilder.build();
+        } catch (IOException e) {
+            logger.error("Cannot create HttpClient:", e);
+            return Failure.of(new Status(TLS_TRUSTSTORE_ERROR));
         }
+
         try {
             String serverUrl = (String)config.getAccessToken().get(config.TOKEN_URL);
             if(serverUrl == null) {
