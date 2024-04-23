@@ -5,7 +5,7 @@ import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.JsonMapper;
 import com.networknt.handler.config.UrlRewriteRule;
-import com.networknt.proxy.PathPrefixAuth;
+import com.networknt.config.PathPrefixAuth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

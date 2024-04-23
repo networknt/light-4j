@@ -1,7 +1,7 @@
 package com.networknt.proxy.salesforce;
 
 import com.networknt.handler.config.UrlRewriteRule;
-import com.networknt.proxy.PathPrefixAuth;
+import com.networknt.config.PathPrefixAuth;
 import org.junit.Assert;
 import org.junit.Test;
 
