@@ -4,6 +4,7 @@ import com.networknt.config.Config;
 import com.networknt.handler.BuffersUtils;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.ResponseInterceptor;
+import com.networknt.http.UndertowConverter;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.rule.RuleConstants;
 import com.networknt.rule.RuleLoaderStartupHook;
@@ -211,10 +212,10 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
 
     private Map<String, Object> createExchangeInfoMap(HttpServerExchange exchange, HttpString method, String responseBody, Map<String, Object> auditInfo) {
         Map<String, Object> objMap = new HashMap<>();
-        objMap.put(REQUEST_HEADERS,  exchange.getRequestHeaders());
-        objMap.put(RESPONSE_HEADERS, exchange.getResponseHeaders());
-        objMap.put(QUERY_PARAMETERS, exchange.getQueryParameters());
-        objMap.put(PATH_PARAMETERS,  exchange.getPathParameters());
+        objMap.put(REQUEST_HEADERS, UndertowConverter.convertHeadersToMap(exchange.getRequestHeaders()));
+        objMap.put(RESPONSE_HEADERS, UndertowConverter.convertHeadersToMap(exchange.getResponseHeaders()));
+        objMap.put(QUERY_PARAMETERS, UndertowConverter.convertParametersToMap(exchange.getQueryParameters()));
+        objMap.put(PATH_PARAMETERS,  UndertowConverter.convertParametersToMap(exchange.getPathParameters()));
         objMap.put(METHOD, method.toString());
         objMap.put(REQUEST_URL, exchange.getRequestURL());
         objMap.put(REQUEST_URI, exchange.getRequestURI());
