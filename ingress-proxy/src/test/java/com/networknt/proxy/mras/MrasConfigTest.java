@@ -2,8 +2,6 @@ package com.networknt.proxy.mras;
 
 import com.networknt.common.ContentType;
 import com.networknt.handler.config.UrlRewriteRule;
-import com.networknt.proxy.PathPrefixAuth;
-import com.networknt.proxy.salesforce.SalesforceConfig;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;

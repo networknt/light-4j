@@ -1,6 +1,5 @@
 package com.networknt.proxy.salesforce;
 
-import com.networknt.body.BodyHandler;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.client.oauth.TokenResponse;
@@ -19,7 +18,7 @@ import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;
 import com.networknt.proxy.MultiPartBodyPublisher;
-import com.networknt.proxy.PathPrefixAuth;
+import com.networknt.config.PathPrefixAuth;
 import com.networknt.status.Status;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;

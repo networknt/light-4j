@@ -1,6 +1,4 @@
-package com.networknt.proxy;
-
-import com.networknt.config.ConfigInjection;
+package com.networknt.config;
 
 /**
  * This is an object that contains all the authentication info for each path prefix in the pathPrefixAuth config
