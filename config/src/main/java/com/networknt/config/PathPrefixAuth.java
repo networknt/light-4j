@@ -1,5 +1,7 @@
 package com.networknt.config;
 
+import java.net.http.HttpClient;
+
 /**
  * This is an object that contains all the authentication info for each path prefix in the pathPrefixAuth config
  * section. By making it a list of objects, we can support unlimited number of APIs with different authentication
@@ -28,6 +30,7 @@ public class PathPrefixAuth {
 
     long expiration;
     String accessToken;
+    HttpClient httpClient;
 
     public PathPrefixAuth() {
     }
@@ -190,5 +193,13 @@ public class PathPrefixAuth {
 
     public void setScope(String scope) {
         this.scope = scope;
+    }
+
+    public HttpClient getHttpClient() {
+        return httpClient;
+    }
+
+    public void setHttpClient(HttpClient httpClient) {
+        this.httpClient = httpClient;
     }
 }
