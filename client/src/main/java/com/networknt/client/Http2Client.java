@@ -135,7 +135,7 @@ public class Http2Client {
 
 
     // TokenManager is to manage cached jwt tokens for this client.
-    private TokenManager tokenManager = TokenManager.getInstance();
+    private final TokenManager tokenManager = TokenManager.getInstance();
 
     // This is the old connection pool that is kept for backward compatibility.
     private final Http2ClientConnectionPool http2ClientConnectionPool = Http2ClientConnectionPool.getInstance();
