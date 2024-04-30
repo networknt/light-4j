@@ -627,9 +627,9 @@ public class ProxyHandler implements HttpHandler {
                 if (LOG.isTraceEnabled()) LOG.trace("method rewrite rules size {}", this.methodRewriteRules.size());
                 for (var rule : this.methodRewriteRules) {
                     if(LOG.isTraceEnabled()) LOG.trace("rule sourceMethod {} targetMethod {} requestPath {}", rule.getSourceMethod(), rule.getTargetMethod(), rule.getRequestPath());
-                    if (target.startsWith(rule.getRequestPath()) && m.toString().equals(rule.getSourceMethod())) {
+                    if (StringUtils.matchPathToPattern(target, rule.getRequestPath()) && m.toString().equals(rule.getSourceMethod())) {
                         if (LOG.isDebugEnabled())
-                            LOG.debug("Rewrite HTTP method from {} to {} with path {} and pathPrefix {}", rule.getSourceMethod(), rule.getTargetMethod(), target, rule.getRequestPath());
+                            LOG.debug("Rewrite HTTP method from {} to {} with path {} and pathPattern {}", rule.getSourceMethod(), rule.getTargetMethod(), target, rule.getRequestPath());
                         m = new HttpString(rule.getTargetMethod());
                     }
                 }
