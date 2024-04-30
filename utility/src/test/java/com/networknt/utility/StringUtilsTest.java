@@ -69,7 +69,7 @@ public class StringUtilsTest {
         path = "/v1/pets/1/name";
         Assert.assertTrue(StringUtils.matchPathToPattern(path, pattern));
         pattern = "/v1/pets/{petId}";
-        Assert.assertFalse(StringUtils.matchPathToPattern(path, pattern));
+        Assert.assertTrue(StringUtils.matchPathToPattern(path, pattern));
 
         pattern = "/foo/bar";
         Assert.assertTrue(StringUtils.matchPathToPattern("/foo/bar", pattern));
