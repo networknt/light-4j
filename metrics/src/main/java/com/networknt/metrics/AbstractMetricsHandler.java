@@ -106,7 +106,7 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
                 tags.put(Constants.ENDPOINT_STRING, (String) auditInfo.get(Constants.ENDPOINT_STRING));
             }
             String clientId = auditInfo.get(Constants.CLIENT_ID_STRING) != null ? (String) auditInfo.get(Constants.CLIENT_ID_STRING) : "unknown";
-            if(logger.isTraceEnabled()) logger.trace("clientId = " + clientId);
+            if(logger.isTraceEnabled()) logger.trace("clientId = {}", clientId);
             tags.put("clientId", clientId);
             // scope client id will only be available if two token is used. For example, authorization code flow.
             if (config.isSendScopeClientId()) {
@@ -152,7 +152,8 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
         metricName = metricName.tagged(tags);
         long time = System.nanoTime() - startTime;
         registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.TIMERS).update(time, TimeUnit.NANOSECONDS);
-        if(logger.isTraceEnabled()) logger.trace("metricName = " + metricName  + " commonTags = " + JsonMapper.toJson(commonTags) + " tags = " + JsonMapper.toJson(tags));
+        if(logger.isTraceEnabled())
+            logger.trace("metricName = {} commonTags = {} tags = {}", metricName, JsonMapper.toJson(commonTags), JsonMapper.toJson(tags));
         // the metrics handler will collect the status code metrics and increase the counter. Here we don't want to increase it again.
         // incCounterForStatusCode(httpServerExchange.getStatusCode(), commonTags, tags);
     }

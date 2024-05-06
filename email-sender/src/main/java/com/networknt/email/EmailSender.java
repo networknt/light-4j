@@ -13,12 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.networknt.email;
 
-import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
-import com.sun.mail.util.MailSSLSocketFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +27,6 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
-import java.security.GeneralSecurityException;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -44,9 +40,8 @@ import java.util.regex.Pattern;
 public class EmailSender {
     private static final Logger logger = LoggerFactory.getLogger(EmailSender.class);
     public static final String CONFIG_EMAIL = "email";
-    public static final String CONFIG_SECRET = "secret";
 
-    static final EmailConfig emailConfg = (EmailConfig)Config.getInstance().getJsonObjectConfig(CONFIG_EMAIL, EmailConfig.class);
+    static final EmailConfig emailConfig = (EmailConfig)Config.getInstance().getJsonObjectConfig(CONFIG_EMAIL, EmailConfig.class);
 
     public EmailSender() {
     }
@@ -61,26 +56,22 @@ public class EmailSender {
      */
     public void sendMail (String to, String subject, String content) throws MessagingException {
         Properties props = new Properties();
-        props.put("mail.smtp.user", emailConfg.getUser());
-        props.put("mail.smtp.host", emailConfg.getHost());
-        props.put("mail.smtp.port", emailConfg.getPort());
+        props.put("mail.smtp.user", emailConfig.getUser());
+        props.put("mail.smtp.host", emailConfig.getHost());
+        props.put("mail.smtp.port", emailConfig.getPort());
         props.put("mail.smtp.starttls.enable","true");
-        props.put("mail.smtp.debug", emailConfg.getDebug());
-        props.put("mail.smtp.auth", emailConfg.getAuth());
-        props.put("mail.smtp.ssl.trust", emailConfg.host);
+        props.put("mail.smtp.debug", emailConfig.getDebug());
+        props.put("mail.smtp.auth", emailConfig.getAuth());
+        props.put("mail.smtp.ssl.trust", emailConfig.host);
 
-        String pass = emailConfg.getPass();
-        if(pass == null) {
-            Map<String, Object> secret = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
-            pass = (String)secret.get(SecretConstants.EMAIL_PASSWORD);
-        }
+        String pass = emailConfig.getPass();
 
-        SMTPAuthenticator auth = new SMTPAuthenticator(emailConfg.getUser(), pass);
+        SMTPAuthenticator auth = new SMTPAuthenticator(emailConfig.getUser(), pass);
         Session session = Session.getInstance(props, auth);
 
         MimeMessage message = new MimeMessage(session);
 
-        message.setFrom(new InternetAddress(emailConfg.getUser()));
+        message.setFrom(new InternetAddress(emailConfig.getUser()));
         message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
 
         message.setSubject(subject);
@@ -103,26 +94,22 @@ public class EmailSender {
      */
     public void sendMailWithAttachment (String to, String subject, String content, String filename) throws MessagingException{
         Properties props = new Properties();
-        props.put("mail.smtp.user", emailConfg.getUser());
-        props.put("mail.smtp.host", emailConfg.getHost());
-        props.put("mail.smtp.port", emailConfg.getPort());
+        props.put("mail.smtp.user", emailConfig.getUser());
+        props.put("mail.smtp.host", emailConfig.getHost());
+        props.put("mail.smtp.port", emailConfig.getPort());
         props.put("mail.smtp.starttls.enable","true");
-        props.put("mail.smtp.debug", emailConfg.getDebug());
-        props.put("mail.smtp.auth", emailConfg.getAuth());
-        props.put("mail.smtp.ssl.trust", emailConfg.host);
+        props.put("mail.smtp.debug", emailConfig.getDebug());
+        props.put("mail.smtp.auth", emailConfig.getAuth());
+        props.put("mail.smtp.ssl.trust", emailConfig.host);
 
-        String pass = emailConfg.getPass();
-        if(pass == null) {
-            Map<String, Object> secret = Config.getInstance().getJsonMapConfig(CONFIG_SECRET);
-            pass = (String)secret.get(SecretConstants.EMAIL_PASSWORD);
-        }
+        String pass = emailConfig.getPass();
 
-        SMTPAuthenticator auth = new SMTPAuthenticator(emailConfg.getUser(), pass);
+        SMTPAuthenticator auth = new SMTPAuthenticator(emailConfig.getUser(), pass);
         Session session = Session.getInstance(props, auth);
 
         MimeMessage message = new MimeMessage(session);
 
-        message.setFrom(new InternetAddress(emailConfg.getUser()));
+        message.setFrom(new InternetAddress(emailConfig.getUser()));
         message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
         message.setSubject(subject);
 
@@ -150,7 +137,7 @@ public class EmailSender {
 
         // Send message
         Transport.send(message);
-        if(logger.isInfoEnabled()) logger.info("An email has been sent to " + to + " with subject " + subject);
+        if(logger.isInfoEnabled()) logger.info("An email has been sent to {} with subject {}", to, subject);
     }
 
     private static class SMTPAuthenticator extends Authenticator {
@@ -179,9 +166,9 @@ public class EmailSender {
      */
     public static String replaceTokens(String text,
                                        Map<String, String> replacements) {
-        Pattern pattern = Pattern.compile("\\[(.+?)\\]");
+        Pattern pattern = Pattern.compile("\\[(.+?)]");
         Matcher matcher = pattern.matcher(text);
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
 
         while (matcher.find()) {
             String replacement = replacements.get(matcher.group(1));
