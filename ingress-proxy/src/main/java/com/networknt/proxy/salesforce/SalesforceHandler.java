@@ -85,15 +85,7 @@ public class SalesforceHandler implements MiddlewareHandler {
 
     public SalesforceHandler() {
         config = SalesforceConfig.load();
-        if(config.isMetricsInjection()) {
-            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
-            // metrics handler, then an error message will be logged.
-            Map<String, HttpHandler> handlers = Handler.getHandlers();
-            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
-            if(metricsHandler == null) {
-                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
-            }
-        }
+        if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
         if(logger.isInfoEnabled()) logger.info("SalesforceAuthHandler is loaded.");
     }
 
@@ -125,15 +117,7 @@ public class SalesforceHandler implements MiddlewareHandler {
     @Override
     public void reload() {
         config.reload();
-        if(config.isMetricsInjection()) {
-            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
-            // metrics handler, then an error message will be logged.
-            Map<String, HttpHandler> handlers = Handler.getHandlers();
-            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
-            if(metricsHandler == null) {
-                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
-            }
-        }
+        if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
         List<String> masks = new ArrayList<>();
         masks.add("certPassword");
         ModuleRegistry.registerModule(SalesforceConfig.CONFIG_NAME, SalesforceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(SalesforceConfig.CONFIG_NAME), masks);
@@ -464,10 +448,12 @@ public class SalesforceHandler implements MiddlewareHandler {
         }
         if(logger.isTraceEnabled()) logger.trace("response body = " + (responseBody == null ? null : new String(responseBody, StandardCharsets.UTF_8)));
         exchange.getResponseSender().send(ByteBuffer.wrap(responseBody));
-        if(config.isMetricsInjection() && metricsHandler != null) {
-            if(logger.isTraceEnabled()) logger.trace("injecting metrics for " + config.getMetricsName());
-            metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
+        if(config.isMetricsInjection()) {
+            if(metricsHandler == null) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
+            if(metricsHandler != null) {
+                if (logger.isTraceEnabled()) logger.trace("Inject metrics for {}", config.getMetricsName());
+                metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
+            }
         }
     }
-
 }

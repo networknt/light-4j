@@ -84,21 +84,13 @@ public class RouterHandler implements HttpHandler {
                 .setHeaderRewriteRules(config.headerRewriteRules)
                 .setNext(ResponseCodeHandler.HANDLE_404)
                 .build();
-        if(config.isMetricsInjection()) {
-            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
-            // metrics handler, then an error message will be logged.
-            Map<String, HttpHandler> handlers = Handler.getHandlers();
-            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
-            if(metricsHandler == null) {
-                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
-            }
-        }
-
+        if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
     }
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("RouterHandler.handleRequest starts.");
+        if(metricsHandler == null) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
         if(metricsHandler != null) {
             exchange.putAttachment(AttachmentConstants.METRICS_HANDLER, metricsHandler);
             exchange.putAttachment(AttachmentConstants.DOWNSTREAM_METRICS_NAME, config.getMetricsName());
@@ -132,15 +124,7 @@ public class RouterHandler implements HttpHandler {
                 .setHeaderRewriteRules(config.headerRewriteRules)
                 .setNext(ResponseCodeHandler.HANDLE_404)
                 .build();
-        if(config.isMetricsInjection()) {
-            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
-            // metrics handler, then an error message will be logged.
-            Map<String, HttpHandler> handlers = Handler.getHandlers();
-            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
-            if(metricsHandler == null) {
-                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
-            }
-        }
+        if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
         if(logger.isInfoEnabled()) logger.info("RouterHandler is reloaded.");
     }
 }

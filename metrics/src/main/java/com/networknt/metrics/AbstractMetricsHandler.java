@@ -17,12 +17,14 @@
 package com.networknt.metrics;
 
 import com.networknt.config.JsonMapper;
+import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.utility.Constants;
 import io.dropwizard.metrics.MetricFilter;
 import io.dropwizard.metrics.MetricName;
 import io.dropwizard.metrics.MetricRegistry;
+import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -156,5 +158,17 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
             logger.trace("metricName = {} commonTags = {} tags = {}", metricName, JsonMapper.toJson(commonTags), JsonMapper.toJson(tags));
         // the metrics handler will collect the status code metrics and increase the counter. Here we don't want to increase it again.
         // incCounterForStatusCode(httpServerExchange.getStatusCode(), commonTags, tags);
+    }
+
+    public static AbstractMetricsHandler lookupMetricsHandler() {
+        // get the metrics handler from the handler chain for metrics registration. If we cannot get the
+        // metrics handler, then an error message will be logged.
+        Map<String, HttpHandler> handlers = Handler.getHandlers();
+        AbstractMetricsHandler metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+        if(metricsHandler == null) {
+            logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
+            return null;
+        }
+        return metricsHandler;
     }
 }

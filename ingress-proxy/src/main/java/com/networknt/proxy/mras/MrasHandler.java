@@ -84,15 +84,7 @@ public class MrasHandler implements MiddlewareHandler {
 
     public MrasHandler() {
         config = MrasConfig.load();
-        if(config.isMetricsInjection()) {
-            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
-            // metrics handler, then an error message will be logged.
-            Map<String, HttpHandler> handlers = Handler.getHandlers();
-            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
-            if(metricsHandler == null) {
-                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
-            }
-        }
+        if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
         if(logger.isInfoEnabled()) logger.info("MrasHandler is loaded.");
     }
 
@@ -128,15 +120,7 @@ public class MrasHandler implements MiddlewareHandler {
     @Override
     public void reload() {
         config.reload();
-        if(config.isMetricsInjection()) {
-            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
-            // metrics handler, then an error message will be logged.
-            Map<String, HttpHandler> handlers = Handler.getHandlers();
-            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
-            if(metricsHandler == null) {
-                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
-            }
-        }
+        if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
         List<String> masks = new ArrayList<>();
         masks.add("keyStorePass");
         masks.add("keyPass");
@@ -345,9 +329,12 @@ public class MrasHandler implements MiddlewareHandler {
             }
         }
         exchange.getResponseSender().send(ByteBuffer.wrap(responseBody));
-        if(config.isMetricsInjection() && metricsHandler != null) {
-            if(logger.isTraceEnabled()) logger.trace("inject metrics for " + config.getMetricsName());
-            metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
+        if(config.isMetricsInjection()) {
+            if(metricsHandler == null) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
+            if(metricsHandler != null) {
+                if (logger.isTraceEnabled()) logger.trace("Inject metrics for {}", config.getMetricsName());
+                metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
+            }
         }
     }
 
@@ -578,5 +565,4 @@ public class MrasHandler implements MiddlewareHandler {
 
         return sslContext;
     }
-
 }
