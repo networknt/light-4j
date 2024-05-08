@@ -166,7 +166,7 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
         Map<String, HttpHandler> handlers = Handler.getHandlers();
         AbstractMetricsHandler metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
         if(metricsHandler == null) {
-            logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
+            logger.error("An instance of MetricsHandler is not configured in the handler.yml or needs to be moved up in order.");
             return null;
         }
         return metricsHandler;
