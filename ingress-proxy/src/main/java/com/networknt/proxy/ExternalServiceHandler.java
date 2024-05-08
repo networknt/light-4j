@@ -10,7 +10,6 @@ import com.networknt.handler.HandlerUtils;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.config.UrlRewriteRule;
 import com.networknt.httpstring.AttachmentConstants;
-import com.networknt.metrics.MetricsConfig;
 import com.networknt.metrics.AbstractMetricsHandler;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
@@ -55,15 +54,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
 
     public ExternalServiceHandler() {
         config = ExternalServiceConfig.load();
-        if(config.isMetricsInjection()) {
-            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
-            // metrics handler, then an error message will be logged.
-            Map<String, HttpHandler> handlers = Handler.getHandlers();
-            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
-            if(metricsHandler == null) {
-                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
-            }
-        }
+        if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
         if(logger.isInfoEnabled()) logger.info("ExternalServiceConfig is loaded.");
     }
 
@@ -93,15 +84,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     @Override
     public void reload() {
         config.reload();
-        if(config.isMetricsInjection()) {
-            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
-            // metrics handler, then an error message will be logged.
-            Map<String, HttpHandler> handlers = Handler.getHandlers();
-            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
-            if(metricsHandler == null) {
-                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
-            }
-        }
+        if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
         ModuleRegistry.registerModule(ExternalServiceConfig.CONFIG_NAME, ExternalServiceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ExternalServiceConfig.CONFIG_NAME), null);
         if(logger.isInfoEnabled()) logger.info("ExternalServiceHandler is reloaded.");
     }
@@ -175,8 +158,13 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         logger.error("wrong http method {} for request path {}", method, requestPath);
                         setExchangeStatus(exchange, METHOD_NOT_ALLOWED, method, requestPath);
                         logger.debug("ExternalServiceHandler.handleRequest ends with an error.");
-                        if(config.isMetricsInjection() && metricsHandler != null)
-                            metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
+                        if(config.isMetricsInjection()) {
+                            if(metricsHandler == null) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
+                            if(metricsHandler != null) {
+                                if (logger.isTraceEnabled()) logger.trace("Inject metrics for {}", config.getMetricsName());
+                                metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
+                            }
+                        }
                         exchange.endExchange();
                         return;
                     }
@@ -209,9 +197,12 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                     /* send response and close exchange */
                     exchange.getResponseSender().send(ByteBuffer.wrap(responseBody));
                     if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest ends.");
-                    if(config.isMetricsInjection() && metricsHandler != null) {
-                        if(logger.isTraceEnabled()) logger.trace("injecting metrics for " + config.getMetricsName());
-                        metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
+                    if(config.isMetricsInjection()) {
+                        if(metricsHandler == null) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
+                        if(metricsHandler != null) {
+                            if (logger.isTraceEnabled()) logger.trace("Inject metrics for {}", config.getMetricsName());
+                            metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
+                        }
                     }
                     return;
                 }
@@ -364,6 +355,4 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                 return builder.method(method, bodyPublisher).build();
         }
     }
-
-
 }
