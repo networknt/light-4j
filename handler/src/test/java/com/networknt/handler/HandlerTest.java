@@ -18,11 +18,11 @@ package com.networknt.handler;
 
 import com.networknt.handler.config.EndpointSource;
 import com.networknt.handler.config.PathChain;
+import com.networknt.utility.PathTemplateMatcher;
 import com.networknt.utility.Tuple;
 import io.undertow.server.HttpHandler;
 import io.undertow.util.HttpString;
 import io.undertow.util.Methods;
-import io.undertow.util.PathTemplateMatcher;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
