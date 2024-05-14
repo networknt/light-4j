@@ -79,7 +79,7 @@ public class Handler {
             // initialize handlers
             for (var handler : config.getHandlers()) {
                 // handler is a fully qualified class name with a default constructor.
-                initStringDefinedHandler((String) handler);
+                initStringDefinedHandler(handler);
             }
         }
     }
