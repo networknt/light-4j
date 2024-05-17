@@ -82,7 +82,7 @@
         <version.jsr305>3.0.2</version.jsr305>
         <version.json-schema-validator>1.0.65</version.json-schema-validator>
         <version.yaml-rule>1.0.3</version.yaml-rule>
-        <version.http-client>1.0.10</version.http-client>
+        <version.http-client>1.0.11</version.http-client>
         <version.snakeyaml>2.2</version.snakeyaml>
         <version.caffeine>3.1.5</version.caffeine>
         <version.prometheus>0.16.0</version.prometheus>
@@ -175,7 +175,6 @@
         <module>logger-config</module>
         <module>logger-handler</module>
         <module>http-entity</module>
-        <module>token-config</module>
         <module>router-config</module>
         <module>egress-router</module>
         <module>ingress-proxy</module>
@@ -495,11 +494,6 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>http-entity</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.networknt</groupId>
-                <artifactId>token-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
