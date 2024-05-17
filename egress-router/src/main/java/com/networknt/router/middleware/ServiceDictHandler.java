@@ -1,10 +1,10 @@
 package com.networknt.router.middleware;
 
 import com.networknt.config.Config;
+import com.networknt.handler.AuditAttachmentUtil;
 import com.networknt.handler.Handler;
-import com.networknt.handler.HandlerUtils;
+import com.networknt.handler.config.HandlerUtils;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
@@ -14,9 +14,6 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Find service Ids using a combination of path prefix and request method.
@@ -59,12 +56,12 @@ public class ServiceDictHandler implements MiddlewareHandler {
         if (serviceEntry != null) {
             if (logger.isTraceEnabled())
                 logger.trace("serviceEntry found and endpoint is set to = '{}'", serviceEntry[0]);
-            HandlerUtils.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, serviceEntry[0]);
+            AuditAttachmentUtil.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, serviceEntry[0]);
         } else {
             if (logger.isTraceEnabled())
                 logger.trace("serviceEntry is null and endpoint is set to = '{}@{}'", Constants.UNKOWN_STRING, exchange.getRequestMethod().toString().toLowerCase());
             // at this moment, we don't have a way to reliably determine the endpoint.
-            HandlerUtils.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, Constants.UNKOWN_STRING + "@" + exchange.getRequestMethod().toString().toLowerCase());
+            AuditAttachmentUtil.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, Constants.UNKOWN_STRING + "@" + exchange.getRequestMethod().toString().toLowerCase());
         }
     }
 

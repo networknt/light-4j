@@ -176,6 +176,7 @@
         <module>logger-handler</module>
         <module>http-entity</module>
         <module>token-config</module>
+        <module>router-config</module>
         <module>egress-router</module>
         <module>ingress-proxy</module>
         <module>ruleloader-config</module>
@@ -499,6 +500,11 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>token-config</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>router-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

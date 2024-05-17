@@ -7,12 +7,11 @@ import com.networknt.client.ssl.TLSConfig;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.config.TlsUtil;
+import com.networknt.handler.AuditAttachmentUtil;
 import com.networknt.handler.Handler;
-import com.networknt.handler.HandlerUtils;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.config.UrlRewriteRule;
 import com.networknt.httpstring.AttachmentConstants;
-import com.networknt.metrics.MetricsConfig;
 import com.networknt.metrics.AbstractMetricsHandler;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
@@ -377,7 +376,7 @@ public class SalesforceHandler implements MiddlewareHandler {
         HttpRequest request = null;
 
         // Audit log the endpoint info
-        HandlerUtils.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, endpoint);
+        AuditAttachmentUtil.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, endpoint);
 
         if(method.equalsIgnoreCase("GET")) {
             request = HttpRequest.newBuilder()
