@@ -17,8 +17,9 @@
 package com.networknt.router.middleware;
 
 import com.networknt.config.Config;
+import com.networknt.handler.AuditAttachmentUtil;
 import com.networknt.handler.Handler;
-import com.networknt.handler.HandlerUtils;
+import com.networknt.handler.config.HandlerUtils;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.Constants;
@@ -93,12 +94,12 @@ public class PathPrefixServiceHandler implements MiddlewareHandler {
         if (serviceEntry != null) {
             if (logger.isTraceEnabled())
                 logger.trace("serviceEntry found and endpoint is set to = '{}@{}'", serviceEntry[0], exchange.getRequestMethod().toString().toLowerCase());
-            HandlerUtils.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, serviceEntry[0] + "@" + exchange.getRequestMethod().toString().toLowerCase());
+            AuditAttachmentUtil.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, serviceEntry[0] + "@" + exchange.getRequestMethod().toString().toLowerCase());
         } else {
             if (logger.isTraceEnabled())
                 logger.trace("serviceEntry is null and endpoint is set to = '{}@{}'", Constants.UNKOWN_STRING, exchange.getRequestMethod().toString().toLowerCase());
             // at this moment, we don't have a way to reliably determine the endpoint.
-            HandlerUtils.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, Constants.UNKOWN_STRING + "@" + exchange.getRequestMethod().toString().toLowerCase());
+            AuditAttachmentUtil.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, Constants.UNKOWN_STRING + "@" + exchange.getRequestMethod().toString().toLowerCase());
         }
     }
 

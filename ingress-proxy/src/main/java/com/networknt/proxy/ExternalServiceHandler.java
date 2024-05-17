@@ -4,10 +4,7 @@ import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.client.ssl.TLSConfig;
 import com.networknt.config.Config;
-import com.networknt.handler.BuffersUtils;
-import com.networknt.handler.Handler;
-import com.networknt.handler.HandlerUtils;
-import com.networknt.handler.MiddlewareHandler;
+import com.networknt.handler.*;
 import com.networknt.handler.config.UrlRewriteRule;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.metrics.AbstractMetricsHandler;
@@ -119,7 +116,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         requestPath = exchange.getRequestPath();
                     }
 
-                    HandlerUtils.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, endpoint);
+                    AuditAttachmentUtil.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, endpoint);
                     String method = exchange.getRequestMethod().toString();
                     String requestHost = parts[1];
                     String queryString = exchange.getQueryString();

@@ -1,17 +1,13 @@
-package com.networknt.handler;
+package com.networknt.handler.config;
 
-import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.utility.StringUtils;
-import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
 import java.util.Map;
 
 public class HandlerUtils {
 	private static final Logger logger = LoggerFactory.getLogger(HandlerUtils.class);
-    public static final String DELIMITOR = "@";
+    public static final String DELIMITER = "@";
     protected static final String INTERNAL_KEY_FORMAT = "%s %s";
 
     /**
@@ -57,7 +53,7 @@ public class HandlerUtils {
     }
 
     public static String toInternalKey(String key) {
-        String[] tokens = StringUtils.trimToEmpty(key).split(DELIMITOR);
+        String[] tokens = StringUtils.trimToEmpty(key).split(DELIMITER);
 
         if (tokens.length ==2) {
             return toInternalKey(tokens[1], tokens[0]);
@@ -70,24 +66,4 @@ public class HandlerUtils {
     public static String toInternalKey(String method, String path) {
         return String.format(INTERNAL_KEY_FORMAT, method, HandlerUtils.normalisePath(path));
     }
-
-    public static void populateAuditAttachmentField(final HttpServerExchange exchange, String fieldName, String fieldValue) {
-        Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
-
-        if(auditInfo == null) {
-            logger.trace("AuditInfo is null, creating a new one and inserting the key-value pair '{}:{}'", fieldName, fieldValue);
-            auditInfo = new HashMap<>();
-            auditInfo.put(fieldName, fieldValue);
-
-        } else {
-            logger.trace("AuditInfo is not null, inserting the key-value pair '{}:{}'", fieldName, fieldValue);
-
-            if (auditInfo.containsKey(fieldName))
-                logger.debug("AuditInfo already contains the field '{}'! Replacing the value '{}' with '{}'.", fieldName, auditInfo.get(fieldName), fieldValue);
-
-            auditInfo.put(fieldName, fieldValue);
-        }
-        exchange.putAttachment(AttachmentConstants.AUDIT_INFO, auditInfo);
-    }
-
 }

@@ -8,13 +8,12 @@ import com.networknt.client.ssl.TLSConfig;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.config.TlsUtil;
+import com.networknt.handler.AuditAttachmentUtil;
 import com.networknt.handler.Handler;
-import com.networknt.handler.HandlerUtils;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.config.UrlRewriteRule;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.common.ContentType;
-import com.networknt.metrics.MetricsConfig;
 import com.networknt.metrics.AbstractMetricsHandler;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
@@ -177,7 +176,7 @@ public class MrasHandler implements MiddlewareHandler {
                     }
 
                     // Audit log the endpoint info
-                    HandlerUtils.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, endpoint);
+                    AuditAttachmentUtil.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, endpoint);
 
                     invokeApi(exchange, (String)config.getAccessToken().get(config.SERVICE_HOST), requestPath, "Bearer " + accessToken, startTime, endpoint);
                     if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
