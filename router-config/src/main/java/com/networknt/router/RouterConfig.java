@@ -35,7 +35,7 @@ import java.util.*;
  */
 public class RouterConfig {
     private static final Logger logger = LoggerFactory.getLogger(RouterConfig.class);
-    static final String CONFIG_NAME = "router";
+    public static final String CONFIG_NAME = "router";
     private static final String HTTP2_ENABLED = "http2Enabled";
     private static final String HTTPS_ENABLED = "httpsEnabled";
     private static final String REWRITE_HOST_HEADER = "rewriteHostHeader";
