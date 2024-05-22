@@ -586,6 +586,11 @@ ERR10088:
   code: ERR10088
   message: RATE_LIMIT_EXCEEDED
   description: Rate limit exceeded.
+ERR10089:
+  statusCode: 400
+  code: ERR10089
+  message: FAILED_TO_INVOKE_SERVICE
+  description: Failed to invoke HTTP service with serviceId %.
 
 # 11000-11499 swagger-validator errors
 ERR11000:
