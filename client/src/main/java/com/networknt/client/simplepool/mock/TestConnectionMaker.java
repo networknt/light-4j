@@ -63,11 +63,7 @@ public class TestConnectionMaker implements SimpleConnectionMaker {
         try {
             connection = future.get(createConnectionTimeout, TimeUnit.SECONDS);
         } catch(Exception e) {
-<<<<<<< HEAD
-            throw new RuntimeException("Connection creation timed-out");
-=======
             throw new SimplePoolConnectionFailureException("Connection creation timed-out");
->>>>>>> f320032c6f2520051950fe754198b806c4c078df
         }
         return connection;
     }
