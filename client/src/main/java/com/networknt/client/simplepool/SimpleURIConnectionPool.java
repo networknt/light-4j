@@ -21,18 +21,11 @@ package com.networknt.client.simplepool;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-<<<<<<< HEAD
-
-=======
->>>>>>> f320032c6f2520051950fe754198b806c4c078df
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
-<<<<<<< HEAD
-=======
 import com.networknt.client.simplepool.exceptions.*;
->>>>>>> f320032c6f2520051950fe754198b806c4c078df
 
 /***
  SimpleURIConnectionPool is a connection pool for a single URI, which means that it manages a pool of reusable
@@ -115,12 +108,8 @@ public final class SimpleURIConnectionPool {
                 connectionState = new SimpleConnectionState(EXPIRY_TIME, createConnectionTimeout, isHttp2, uri, allCreatedConnections, connectionMaker);
                 trackedConnections.add(connectionState);
             } else
-<<<<<<< HEAD
-                throw new RuntimeException("An attempt was made to exceed the maximum size of the " + uri.toString() + " connection pool");
-=======
                 throw new SimplePoolConnectionLimitReachedException(
                     "An attempt was made to exceed the maximum size of the " + uri.toString() + " connection pool");
->>>>>>> f320032c6f2520051950fe754198b806c4c078df
         }
 
         SimpleConnectionState.ConnectionToken connectionToken = connectionState.borrow(now);
