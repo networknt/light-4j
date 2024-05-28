@@ -26,10 +26,7 @@ import java.util.Set;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
-<<<<<<< HEAD
-=======
 import com.networknt.client.simplepool.exceptions.*;
->>>>>>> f320032c6f2520051950fe754198b806c4c078df
 
 /***
  * A SimpleConnectionState is a simplified interface for a connection, that also keeps track of the connection's state.
@@ -164,11 +161,7 @@ public final class SimpleConnectionState {
         // throw exception if connection creation failed
         if(!connection.isOpen()) {
             if(logger.isDebugEnabled()) logger.debug("{} closed connection", logLabel(connection, now));
-<<<<<<< HEAD
-            throw new RuntimeException("[" + port(connection) + "] Error creating connection to " + uri.toString());
-=======
             throw new SimplePoolConnectionFailureException("[" + port(connection) + "] Error creating connection to " + uri.toString());
->>>>>>> f320032c6f2520051950fe754198b806c4c078df
 
             // start life-timer and determine connection type
         } else {
@@ -214,11 +207,7 @@ public final class SimpleConnectionState {
 
         if(borrowable(now)) {
             if(closed())
-<<<<<<< HEAD
-                throw new RuntimeException("Connection was unexpectedly closed");
-=======
                 throw new SimplePoolConnectionClosureException("Connection was unexpectedly closed");
->>>>>>> f320032c6f2520051950fe754198b806c4c078df
 
             // add connectionToken to the Set of borrowed tokens
             borrowedTokens.add( (connectionToken = new ConnectionToken(connection)) );
@@ -230,11 +219,7 @@ public final class SimpleConnectionState {
         }
         else {
             if(closed())
-<<<<<<< HEAD
-                throw new RuntimeException("Connection was unexpectedly closed");
-=======
                 throw new SimplePoolConnectionClosureException("Connection was unexpectedly closed");
->>>>>>> f320032c6f2520051950fe754198b806c4c078df
             else
                 throw new IllegalStateException("Attempt made to borrow connection outside of BORROWABLE state");
         }
