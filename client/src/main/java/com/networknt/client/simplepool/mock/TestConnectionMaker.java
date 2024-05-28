@@ -21,15 +21,9 @@ package com.networknt.client.simplepool.mock;
 
 import com.networknt.client.simplepool.SimpleConnection;
 import com.networknt.client.simplepool.SimpleConnectionMaker;
-<<<<<<< HEAD
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-=======
 import com.networknt.client.simplepool.exceptions.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
->>>>>>> f320032c6f2520051950fe754198b806c4c078df
 import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.util.Set;

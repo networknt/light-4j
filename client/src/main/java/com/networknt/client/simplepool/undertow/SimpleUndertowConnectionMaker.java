@@ -22,10 +22,7 @@ package com.networknt.client.simplepool.undertow;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.simplepool.SimpleConnection;
 import com.networknt.client.simplepool.SimpleConnectionMaker;
-<<<<<<< HEAD
-=======
 import com.networknt.client.simplepool.exceptions.*;
->>>>>>> f320032c6f2520051950fe754198b806c4c078df
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.client.ClientCallback;
