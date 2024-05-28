@@ -1,5 +1,16 @@
 # Change Log
 
+<<<<<<< HEAD
+=======
+## [1.6.47](https://github.com/networknt/light-4j/tree/1.6.47) (2024-01-18)
+
+
+**Merged pull requests:**
+
+
+
+
+>>>>>>> f320032c6f2520051950fe754198b806c4c078df
 ## [1.6.46](https://github.com/networknt/light-4j/tree/1.6.46) (2023-12-30)
 
 

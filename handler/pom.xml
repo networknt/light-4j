@@ -21,7 +21,11 @@
     <parent>
         <groupId>com.networknt</groupId>
         <artifactId>light-4j</artifactId>
+<<<<<<< HEAD
         <version>1.6.47-SNAPSHOT</version>
+=======
+        <version>1.6.48-SNAPSHOT</version>
+>>>>>>> f320032c6f2520051950fe754198b806c4c078df
         <relativePath>..</relativePath>
     </parent>
 
