@@ -235,7 +235,7 @@ public final class SimpleURIConnectionPool {
     {
         if(logger.isDebugEnabled()) {
             if(!trackedConnections.contains(connectionState))
-                logger.debug("connection [{}] was already removed from connection tracking", port(connectionState.connection()));
+                logger.debug("Connection [{}] was already removed from connection tracking", port(connectionState.connection()));
         }
 
         allCreatedConnections.remove(connectionState.connection());
@@ -354,7 +354,7 @@ public final class SimpleURIConnectionPool {
         final SimpleConnectionState connectionState = connectionToken.state();
 
         // must bypass ConnectionState protections and close connection directly
-        if(logger.isDebugEnabled()) logger.debug("immediately closing connection [{}]", port(connectionState.connection()));
+        if(logger.isDebugEnabled()) logger.debug("Immediately closing connection [{}]", port(connectionState.connection()));
         connectionState.connection().safeClose();
 
         // update pool about state change to this connection
@@ -395,7 +395,7 @@ public final class SimpleURIConnectionPool {
         final SimpleConnectionState connectionState = connectionToken.state();
         connectionState.forceExpire();
 
-        if(logger.isDebugEnabled()) logger.debug("closure scheduled for connection [{}]", port(connectionState.connection()));
+        if(logger.isDebugEnabled()) logger.debug("Closure scheduled for connection [{}]", port(connectionState.connection()));
 
         // update pool about state change to this connection
         applyConnectionState(connectionState, now, () -> trackedConnections.remove(connectionState));
