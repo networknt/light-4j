@@ -39,3 +39,6 @@ enableJwtCache: true
 # the first token is arrived. Default to false for dev environment without oauth2 server
 # or official environment that use other OAuth 2.0 providers.
 bootstrapFromKeyService: false
+
+#To skip JWT token Signature and Expiration Validation if true
+skipSignatureAndExpirationCheck: false
