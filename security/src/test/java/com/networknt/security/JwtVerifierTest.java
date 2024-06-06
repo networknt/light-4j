@@ -107,13 +107,13 @@ public class JwtVerifierTest {
     }
 
     @Test
-    public void testVerifyJwt_skipSignatureAndExpirationCheck_True() throws Exception {
+    public void testVerifyJwt_skipSignature_True() throws Exception {
         JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"), "user");
         String jwt = JwtIssuer.getJwt(claims);
         claims = null;
         Assert.assertNotNull(jwt);
         JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
-        jwtVerifier.skipSignatureAndExpirationCheck = true;
+        jwtVerifier.skipSignatureCheck = true;
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, true);
         } catch (Exception e) {
@@ -176,6 +176,7 @@ public class JwtVerifierTest {
         System.out.print("JWT = " + jwt);
 
         JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
+        jwtVerifier.ignoreExpiry = true;
         JwtClaims claims = jwtVerifier.verifyJwt(jwt, true, true, (kId, isToken) -> {
             try {
                 // use public key to create the the JsonWebKey
@@ -193,7 +194,7 @@ public class JwtVerifierTest {
     }
 
     @Test
-    public void testVerifyJwtByJsonWebKeys_skipSignatureAndExpirationCheck_True() throws Exception {
+    public void testVerifyJwtByJsonWebKeys_skipSignature_True() throws Exception {
         Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(JwtIssuer.SECRET_CONFIG);
         JwtConfig jwtConfig = (JwtConfig) Config.getInstance().getJsonObjectConfig(JwtIssuer.JWT_CONFIG, JwtConfig.class);
 
@@ -235,7 +236,8 @@ public class JwtVerifierTest {
         System.out.print("JWT = " + jwt);
 
         JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
-        jwtVerifier.skipSignatureAndExpirationCheck = true;
+        jwtVerifier.ignoreExpiry = true;
+        jwtVerifier.skipSignatureCheck = true;
         JwtClaims claims = jwtVerifier.verifyJwt(jwt, true, true, (kId, isToken) -> {
             try {
                 // use public key to create the the JsonWebKey
@@ -284,13 +286,13 @@ public class JwtVerifierTest {
     }
 
     @Test
-    public void testVerifyToken_skipSignatureAndExpirationCheck_True() throws Exception {
+    public void testVerifyToken_skipSignature_True() throws Exception {
         JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"), "user");
         String jwt = JwtIssuer.getJwt(claims);
         claims = null;
         Assert.assertNotNull(jwt);
         JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
-        jwtVerifier.skipSignatureAndExpirationCheck = true;
+        jwtVerifier.skipSignatureCheck = true;
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, true);
         } catch (Exception e) {
@@ -341,7 +343,7 @@ public class JwtVerifierTest {
         claims = null;
         Assert.assertNotNull(jwt);
         JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
-        jwtVerifier.skipSignatureAndExpirationCheck = true;
+        jwtVerifier.skipSignatureCheck = true;
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, false);
         } catch (Exception e) {

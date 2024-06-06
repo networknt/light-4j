@@ -40,5 +40,8 @@ enableJwtCache: true
 # or official environment that use other OAuth 2.0 providers.
 bootstrapFromKeyService: false
 
-#To skip JWT token Signature and Expiration Validation if it is true
-skipSignatureAndExpirationCheck: false
+#To skip JWT token Signature Validation if it is true
+skipSignatureCheck: false
+
+#If ignoreExpiry is false, verify expiration of the token
+ignoreExpiry: false
