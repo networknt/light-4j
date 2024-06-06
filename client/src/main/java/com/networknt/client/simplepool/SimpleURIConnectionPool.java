@@ -386,10 +386,11 @@ public final class SimpleURIConnectionPool {
      */
     public synchronized boolean scheduleSafeClose(SimpleConnectionState.ConnectionToken connectionToken) {
         findAndCloseLeakedConnections();
-        long now = System.currentTimeMillis();
 
         if(connectionToken == null)
             return false;
+
+        long now = System.currentTimeMillis();
 
         // expire connection state
         final SimpleConnectionState connectionState = connectionToken.state();
