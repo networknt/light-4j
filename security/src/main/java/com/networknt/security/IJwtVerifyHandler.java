@@ -23,7 +23,6 @@ package com.networknt.security;
  *
  * @author Steve Hu
  */
-
 public interface IJwtVerifyHandler {
     JwtVerifier getJwtVerifier();
 }
