@@ -85,8 +85,8 @@ public class JwtVerifier extends TokenVerifier {
     static String audience;  // this is the audience from the client.yml with single oauth provider.
     static Map<String, String> audienceMap; // this is the audience map from the client.yml with multiple oauth providers.
 
-    public JwtVerifier(SecurityConfig config) {
-        this.config = config;
+    public JwtVerifier(SecurityConfig cfg) {
+        config = cfg;
         this.secondsOfAllowedClockSkew = config.getClockSkewInSeconds();
         this.bootstrapFromKeyService = config.isBootstrapFromKeyService();
         this.enableRelaxedKeyValidation = config.isEnableRelaxedKeyValidation();
@@ -95,7 +95,8 @@ public class JwtVerifier extends TokenVerifier {
         // rotate keys when the first token is received with the new kid.
         String keyResolver = config.getKeyResolver();
         // if KeyResolver is jwk and bootstrap from jwk is true, load jwk during server startup.
-        if(logger.isTraceEnabled()) logger.trace("keyResolver = " + keyResolver + " bootstrapFromKeyService = " + bootstrapFromKeyService);
+        if(logger.isTraceEnabled())
+            logger.trace("keyResolver = {} bootstrapFromKeyService = {}", keyResolver, bootstrapFromKeyService);
         if (JWT_KEY_RESOLVER_JWKS.equals(keyResolver) && bootstrapFromKeyService) {
             getJsonWebKeyMap();
         }
@@ -116,7 +117,8 @@ public class JwtVerifier extends TokenVerifier {
      * @throws ExpiredTokenException throw when the token is expired
      */
     public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken, String pathPrefix, String requestPath, List<String> jwkServiceIds) throws InvalidJwtException, ExpiredTokenException {
-        if(logger.isTraceEnabled()) logger.trace("verifyJwt is called with ignoreExpiry = " + ignoreExpiry + " isToken = " + isToken + " pathPrefix = " + pathPrefix + " requestPath = " + requestPath + " jwkServiceIds = " + jwkServiceIds);
+        if(logger.isTraceEnabled())
+            logger.trace("verifyJwt is called with ignoreExpiry = {} isToken = {} pathPrefix = {} requestPath = {} jwkServiceIds = {}", ignoreExpiry, isToken, pathPrefix, requestPath, jwkServiceIds);
         return verifyJwt(jwt, ignoreExpiry, isToken, pathPrefix, requestPath, jwkServiceIds, this::getKeyResolver);
     }
 
@@ -132,7 +134,8 @@ public class JwtVerifier extends TokenVerifier {
      * @throws ExpiredTokenException throw when the token is expired
      */
     public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken) throws InvalidJwtException, ExpiredTokenException {
-        if(logger.isTraceEnabled()) logger.trace("verifyJwt is called with ignoreExpiry = " + ignoreExpiry + " isToken = " + isToken);
+        if(logger.isTraceEnabled())
+            logger.trace("verifyJwt is called with ignoreExpiry = {} isToken = {}", ignoreExpiry, isToken);
         return verifyJwt(jwt, ignoreExpiry, isToken, null, null, null, this::getKeyResolver);
     }
 
