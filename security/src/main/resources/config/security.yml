@@ -43,5 +43,5 @@ bootstrapFromKeyService: false
 #To skip JWT token Signature Validation if it is true
 skipSignatureCheck: false
 
-#If ignoreExpiry is false, verify expiration of the token
+#If ignoreExpiry is false, verify expiration date of the token
 ignoreExpiry: false
