@@ -211,7 +211,7 @@ public class JwtVerifier {
      * @throws ExpiredTokenException throw when the token is expired
      */
     public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken) throws InvalidJwtException, ExpiredTokenException {
-        return verifyJwt(jwt, ignoreExpiry, isToken, this::getKeyResolver);
+        return verifyJwt(jwt, isToken, this::getKeyResolver);
     }
 
     /**
@@ -223,14 +223,14 @@ public class JwtVerifier {
      * token in the request header to renew the expired token.
      *
      * @param jwt String of Json web token
-     * @param ignoreExpiry If true, don't verify if the token is expired.
+     * //@param ignoreExpiry If true, don't verify if the token is expired.
      * @param isToken True if the jwt is an OAuth 2.0 access token
      * @param getKeyResolver How to get VerificationKeyResolver
      * @return JwtClaims object
      * @throws InvalidJwtException InvalidJwtException
      * @throws ExpiredTokenException ExpiredTokenException
      */
-    public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken, BiFunction<String, Boolean, VerificationKeyResolver> getKeyResolver)
+    public JwtClaims verifyJwt(String jwt, boolean isToken, BiFunction<String, Boolean, VerificationKeyResolver> getKeyResolver)
             throws InvalidJwtException, ExpiredTokenException {
         JwtClaims claims;
 
@@ -271,7 +271,7 @@ public class JwtVerifier {
         String kid = structure.getKeyIdHeaderValue();
 
         // so we do expiration check here manually as we have the claim already for kid
-        // if ignoreExpiry is true, verify expiration of the token
+        // if ignoreExpiry is false, verify expiration of the tokens
         if(!ignoreExpiry) {
             try {
                 if ((NumericDate.now().getValue() - secondsOfAllowedClockSkew) >= claims.getExpirationTime().getValue())

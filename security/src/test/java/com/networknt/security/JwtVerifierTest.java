@@ -177,7 +177,7 @@ public class JwtVerifierTest {
 
         JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
         jwtVerifier.ignoreExpiry = true;
-        JwtClaims claims = jwtVerifier.verifyJwt(jwt, true, true, (kId, isToken) -> {
+        JwtClaims claims = jwtVerifier.verifyJwt(jwt, true, (kId, isToken) -> {
             try {
                 // use public key to create the the JsonWebKey
                 Key publicKey = ks.getCertificate(alias).getPublicKey();
@@ -238,7 +238,7 @@ public class JwtVerifierTest {
         JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
         jwtVerifier.ignoreExpiry = true;
         jwtVerifier.skipSignatureCheck = true;
-        JwtClaims claims = jwtVerifier.verifyJwt(jwt, true, true, (kId, isToken) -> {
+        JwtClaims claims = jwtVerifier.verifyJwt(jwt, true, (kId, isToken) -> {
             try {
                 // use public key to create the the JsonWebKey
                 Key publicKey = ks.getCertificate(alias).getPublicKey();
