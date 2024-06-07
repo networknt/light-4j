@@ -234,8 +234,6 @@ public class JwtVerifier {
             throws InvalidJwtException, ExpiredTokenException {
         JwtClaims claims;
 
-        ignoreExpiry = this.ignoreExpiry; //getting the value from the security.yml
-
         if(Boolean.TRUE.equals(enableJwtCache)) {
             claims = cache.getIfPresent(jwt);
             if(claims != null) {
