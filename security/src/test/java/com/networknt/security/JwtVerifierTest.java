@@ -96,7 +96,6 @@ public class JwtVerifierTest {
         }
         Assert.assertNotNull(claims);
         Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
-
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, true);
             Assert.assertNotNull(claims);
