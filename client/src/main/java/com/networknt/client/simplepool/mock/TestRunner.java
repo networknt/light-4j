@@ -260,18 +260,19 @@ public class TestRunner
                     logger.debug("{} Connection issue occurred!", Thread.currentThread().getName(), e);
 
                 } finally {
-                    if(connectionToken != null)
+                    if(connectionToken != null) {
                         borrowTime();
 
-                    // SCHEDULE closure
-                    if(scheduledSafeCloseFrequency > 0.0 && ThreadLocalRandom.current().nextDouble() <= scheduledSafeCloseFrequency) {
-                        logger.debug("{} SCHEDULING CLOSURE of connection", Thread.currentThread().getName());
-                        pool.scheduleSafeClose(connectionToken);
-                    }
-                    // IMMEDIATELY close
-                    else if (safeCloseFrequency > 0.0 && ThreadLocalRandom.current().nextDouble() <= safeCloseFrequency) {
-                        logger.debug("{} IMMEDIATELY CLOSING connection", Thread.currentThread().getName());
-                        pool.safeClose(connectionToken);
+                        // SCHEDULE closure
+                        if (scheduledSafeCloseFrequency > 0.0 && ThreadLocalRandom.current().nextDouble() <= scheduledSafeCloseFrequency) {
+                            logger.debug("{} SCHEDULING CLOSURE of connection", Thread.currentThread().getName());
+                            pool.scheduleSafeClose(connectionToken);
+                        }
+                        // IMMEDIATELY close
+                        else if (safeCloseFrequency > 0.0 && ThreadLocalRandom.current().nextDouble() <= safeCloseFrequency) {
+                            logger.debug("{} IMMEDIATELY CLOSING connection", Thread.currentThread().getName());
+                            pool.safeClose(connectionToken);
+                        }
                     }
 
                     logger.debug("{} Returning connection", Thread.currentThread().getName());
@@ -296,13 +297,13 @@ public class TestRunner
             long waitTimeMs = waitTime * 1000;
             long waitTimeJitterMs = waitTimeJitter * 1000;
             try {
-                final long randomReconnectJitterMs;
+                final long randomWaitTimeJitterMs;
                 if (waitTimeJitterMs > 0)
-                    randomReconnectJitterMs = ThreadLocalRandom.current().nextLong(waitTimeJitterMs + 1);
+                    randomWaitTimeJitterMs = ThreadLocalRandom.current().nextLong(waitTimeJitterMs + 1);
                 else
-                    randomReconnectJitterMs = 0;
-                logger.debug(logMessage, Thread.currentThread().getName(), (waitTimeMs + randomReconnectJitterMs)/1000);
-                Thread.sleep(waitTimeMs + randomReconnectJitterMs);
+                    randomWaitTimeJitterMs = 0;
+                logger.debug(logMessage, Thread.currentThread().getName(), (waitTimeMs + randomWaitTimeJitterMs)/1000);
+                Thread.sleep(waitTimeMs + randomWaitTimeJitterMs);
             } catch(InterruptedException e) {
                 logger.debug("Thread interrupted", e);
             }
