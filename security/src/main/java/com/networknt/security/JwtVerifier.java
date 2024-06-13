@@ -235,7 +235,7 @@ public class JwtVerifier {
         JwtClaims claims;
 
         if(Boolean.TRUE.equals(enableJwtCache)) {
-            claims = cache.getIfPresent(jwt);
+             claims = cache.getIfPresent(jwt);
             if(claims != null) {
                 if(!ignoreExpiry) {
                     try {
