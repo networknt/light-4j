@@ -21,7 +21,7 @@ package com.networknt.client.simplepool.mock.mockexample;
 
 import com.networknt.client.simplepool.mock.TestRunner;
 
-public class TestKeepAliveConnection
+public class TestSafeCloseConnection
 {
     public static void main(String[] args) {
         new TestRunner()
@@ -30,9 +30,10 @@ public class TestKeepAliveConnection
             .setSimpleConnectionClass(MockKeepAliveConnection.class)
             .setCreateConnectionTimeout(5)
             .setConnectionExpireTime(5)
-            .setHttp2(false)
+            .setHttp2(true)
 
             // configure borrower-thread properties
+            .setSafeCloseFrequency(0.1)
             .setNumBorrowerThreads(8)
             .setBorrowerThreadStartJitter(0)
             .setBorrowTimeLength(5)

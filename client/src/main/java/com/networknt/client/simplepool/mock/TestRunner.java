@@ -28,10 +28,14 @@ import java.net.URI;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class TestRunner
 {
     private static final Logger logger = LoggerFactory.getLogger(TestRunner.class);
+    private static final Logger testThreadLogger = LoggerFactory.getLogger(CallerThread.class);
 
     // Default Test Runner Settings
     private long testLength = 120;      // in seconds
@@ -53,6 +57,11 @@ public class TestRunner
     private long reborrowTimeJitter = 2;     // in seconds
     private int threadStartJitter = 3;        // in seconds
     private boolean isHttp2 = true;
+    private double scheduledSafeCloseFrequency = 0.0;
+    private double safeCloseFrequency = 0.0;
+
+    private AtomicBoolean stopped = new AtomicBoolean();
+    private CountDownLatch latch;
 
     /** Test length in seconds. Default 120s */
     public TestRunner setTestLength(long testLength) {
@@ -127,6 +136,34 @@ public class TestRunner
         return this;
     }
 
+    /***
+     * Probability between 0.0 and 1.0 that the connection will be scheduled for closure when restored. Default is 0.0.
+     *
+     * Note: If both 'SCHEDULED safe close frequency' and 'safe close frequency' have
+     *       values above 0, then 'SCHEDULED safe close frequency' takes precedence.
+     */
+    public TestRunner setScheduledSafeCloseFrequency(double scheduledSafeCloseFrequency) {
+        if(scheduledSafeCloseFrequency >= 0.0 && scheduledSafeCloseFrequency <= 1.0)
+            this.scheduledSafeCloseFrequency = scheduledSafeCloseFrequency;
+        else
+            logger.error("scheduledSafeCloseFrequency must be between 0.0 and 1.0 (inclusive). Using default value of 0.0");
+        return this;
+    }
+
+    /***
+     * Probability between 0.0 and 1.0 that the connection will be immediately closed when restored. Default is 0.0.
+     *
+     * Note: If both 'SCHEDULED safe close frequency' and 'safe close frequency' have
+     *       values above 0, then 'SCHEDULED safe close frequency' takes precedence.
+     */
+    public TestRunner setSafeCloseFrequency(double safeCloseFrequency) {
+        if(safeCloseFrequency >= 0.0 && safeCloseFrequency <= 1.0)
+            this.safeCloseFrequency = safeCloseFrequency;
+        else
+            logger.error("safeCloseFrequency must be between 0.0 and 1.0 (inclusive). Using default value of 0.0");
+        return this;
+    }
+
     /** Determines whether caller threads request HTTP/2 connections. HTTP/2 means multiple borrows per connection are allowed. Default true */
     public TestRunner setHttp2(boolean http2) {
         isHttp2 = http2;
@@ -138,18 +175,21 @@ public class TestRunner
             throw new RuntimeException("A SimpleConnection class must be set using setSimpleConnectionClass()");
 
         try {
+            final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
+            executor.setKeepAliveTime(Long.MAX_VALUE, TimeUnit.SECONDS);
+            executor.setCorePoolSize(0);
+
             // create connection maker
-            connectionMaker = new TestConnectionMaker(simpleConnectionClass);
+            connectionMaker = new TestConnectionMaker(simpleConnectionClass, executor);
             // create pool
             pool = new SimpleURIConnectionPool(uri, expireTime * 1000, poolSize, connectionMaker);
 
             // flag used to stop threads
-            AtomicBoolean stopped = new AtomicBoolean(false);
-            CountDownLatch latch = new CountDownLatch(numCallers);
+            stopped.set(false);
+            latch = new CountDownLatch(numCallers);
 
             logger.debug("> Creating and starting threads...");
-            createAndStartCallers(
-                    numCallers, threadStartJitter, pool, stopped, createConnectionTimeout, isHttp2, borrowTime, borrowJitter, reborrowTime, reborrowTimeJitter, latch);
+            createAndStartCallers();
             logger.debug("> All threads created and started");
 
             logger.debug("> SLEEP for {} seconds", testLength);
@@ -161,6 +201,7 @@ public class TestRunner
 
             logger.debug("> Thread-shutdown flag set. Waiting for threads to exit...");
             latch.await();
+            executor.shutdown();
 
             logger.debug("> Threads exited. Test completed");
         } catch (Exception e) {
@@ -168,29 +209,17 @@ public class TestRunner
         }
     }
 
-    private void createAndStartCallers(
-            int numCallers,
-            int threadStartJitter,
-            SimpleURIConnectionPool pool,
-            AtomicBoolean stopped,
-            long createConnectionTimeout,
-            boolean isHttp2,
-            long borrowTime,
-            long borrowJitter,
-            long reborrowTime,
-            long reborrowTimeJitter,
-            CountDownLatch latch) throws InterruptedException
+    private void createAndStartCallers() throws InterruptedException
     {
         while(numCallers-- > 0) {
-            new CallerThread(
-                pool, stopped, createConnectionTimeout, isHttp2, borrowTime, borrowJitter, reborrowTime, reborrowTimeJitter, latch).start();
+            new CallerThread().start();
             if(threadStartJitter > 0)
                 Thread.sleep(ThreadLocalRandom.current().nextLong(threadStartJitter+1) * 1000);
         }
     }
 
-    private static class CallerThread extends Thread {
-        private static final Logger logger = LoggerFactory.getLogger(CallerThread.class);
+    private class CallerThread extends Thread {
+        private final Logger logger;
         private final CountDownLatch latch;
         private final AtomicBoolean stopped;
         private final SimpleURIConnectionPool pool;
@@ -200,27 +229,22 @@ public class TestRunner
         private final long borrowJitter;
         private final long reborrowTime;
         private final long reborrowTimeJitter;
+        private final double scheduledSafeCloseFrequency;
+        private final double safeCloseFrequency;
 
-        public CallerThread(
-            SimpleURIConnectionPool pool,
-            AtomicBoolean stopped,
-            long createConnectionTimeout,
-            boolean isHttp2,
-            long borrowTime,
-            long borrowJitter,
-            long reborrowTime,
-            long reborrowTimeJitter,
-            CountDownLatch latch)
-        {
-            this.latch = latch;
-            this.stopped = stopped;
-            this.pool = pool;
-            this.createConnectionTimeout = createConnectionTimeout; // this must be kept in seconds (not ms)
-            this.isHttp2 = isHttp2;
-            this.borrowTime = borrowTime;
-            this.borrowJitter = borrowJitter;
-            this.reborrowTime = reborrowTime;
-            this.reborrowTimeJitter = reborrowTimeJitter;
+        public CallerThread() {
+            this.logger = TestRunner.testThreadLogger;
+            this.latch = TestRunner.this.latch;
+            this.stopped = TestRunner.this.stopped;
+            this.pool = TestRunner.this.pool;
+            this.createConnectionTimeout = TestRunner.this.createConnectionTimeout; // this must be kept in seconds (not ms)
+            this.isHttp2 = TestRunner.this.isHttp2;
+            this.borrowTime = TestRunner.this.borrowTime;
+            this.borrowJitter = TestRunner.this.borrowJitter;
+            this.reborrowTime = TestRunner.this.reborrowTime;
+            this.reborrowTimeJitter = TestRunner.this.reborrowTimeJitter;
+            this.scheduledSafeCloseFrequency = TestRunner.this.scheduledSafeCloseFrequency;
+            this.safeCloseFrequency = TestRunner.this.safeCloseFrequency;
         }
 
         @Override
@@ -236,24 +260,36 @@ public class TestRunner
                     logger.debug("{} Connection issue occurred!", Thread.currentThread().getName(), e);
 
                 } finally {
-                    if(connectionToken != null)
-                        borrowTime(borrowTime, borrowJitter);
+                    if(connectionToken != null) {
+                        borrowTime();
+
+                        // SCHEDULE closure
+                        if (scheduledSafeCloseFrequency > 0.0 && ThreadLocalRandom.current().nextDouble() <= scheduledSafeCloseFrequency) {
+                            logger.debug("{} SCHEDULING CLOSURE of connection", Thread.currentThread().getName());
+                            pool.scheduleSafeClose(connectionToken);
+                        }
+                        // IMMEDIATELY close
+                        else if (safeCloseFrequency > 0.0 && ThreadLocalRandom.current().nextDouble() <= safeCloseFrequency) {
+                            logger.debug("{} IMMEDIATELY CLOSING connection", Thread.currentThread().getName());
+                            pool.safeClose(connectionToken);
+                        }
+                    }
 
                     logger.debug("{} Returning connection", Thread.currentThread().getName());
                     pool.restore(connectionToken);
 
-                    reborrowWaitTime(reborrowTime, reborrowTimeJitter);
+                    reborrowWaitTime();
                 }
             }
             latch.countDown();
             logger.debug("{} Thread exiting", Thread.currentThread().getName());
         }
 
-        private void borrowTime(long borrowTime, long borrowJitter) {
+        private void borrowTime() {
             wait("{} Borrowing connection for {} seconds...", borrowTime, borrowJitter);
         }
 
-        private void reborrowWaitTime(long reborrowTime, long reborrowTimeJitter) {
+        private void reborrowWaitTime() {
             wait("{} Waiting for {} seconds to borrow connection again...", reborrowTime, reborrowTimeJitter);
         }
 
@@ -261,13 +297,13 @@ public class TestRunner
             long waitTimeMs = waitTime * 1000;
             long waitTimeJitterMs = waitTimeJitter * 1000;
             try {
-                final long randomReconnectJitterMs;
+                final long randomWaitTimeJitterMs;
                 if (waitTimeJitterMs > 0)
-                    randomReconnectJitterMs = ThreadLocalRandom.current().nextLong(waitTimeJitterMs + 1);
+                    randomWaitTimeJitterMs = ThreadLocalRandom.current().nextLong(waitTimeJitterMs + 1);
                 else
-                    randomReconnectJitterMs = 0;
-                logger.debug(logMessage, Thread.currentThread().getName(), (waitTimeMs + randomReconnectJitterMs)/1000);
-                Thread.sleep(waitTimeMs + randomReconnectJitterMs);
+                    randomWaitTimeJitterMs = 0;
+                logger.debug(logMessage, Thread.currentThread().getName(), (waitTimeMs + randomWaitTimeJitterMs)/1000);
+                Thread.sleep(waitTimeMs + randomWaitTimeJitterMs);
             } catch(InterruptedException e) {
                 logger.debug("Thread interrupted", e);
             }

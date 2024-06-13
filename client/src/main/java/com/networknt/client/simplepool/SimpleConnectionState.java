@@ -91,7 +91,7 @@ public final class SimpleConnectionState {
     private static final Logger logger = LoggerFactory.getLogger(SimpleConnectionState.class);
 
     // how long in milliseconds a connection can be eligible to be borrowed
-    private final long EXPIRE_TIME;
+    private volatile long EXPIRE_TIME;
 
     // the maximum number of borrowed tokens a connection can have at a time
     private final int MAX_BORROWS;
@@ -271,6 +271,13 @@ public final class SimpleConnectionState {
         closed = true;
         connection.safeClose();
         return closed;
+    }
+
+    /***
+     * This method immediately expires the connection
+     */
+    public synchronized void forceExpire() {
+        EXPIRE_TIME = -1L;
     }
 
     /**

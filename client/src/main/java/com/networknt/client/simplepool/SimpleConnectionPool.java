@@ -87,4 +87,77 @@ public final class SimpleConnectionPool {
         if(pools.containsKey(connectionToken.uri()))
             pools.get(connectionToken.uri()).restore(connectionToken);
     }
+
+    /***
+     * This is a convenience method that immediately closes a connection even if there are still threads actively
+     * using it (i.e: it will be closed even if it is currently borrowed by other threads).
+     *
+     * 1. WARNING: Connection Token must still be returned
+     *     After closing a connection, users must still return the connection token to the pool.
+     *
+     * 2. WARNING: Overuse of this method will negate all benefits of the connection pool
+     *     Under normal circumstances, users should never close connections themselves (either via this method or
+     *     directly via the raw connection) but instead, always let the connection pool handle all connection closures.
+     *     Manually closing connections negates all benefits of using a connection pool. Be certain that this method is
+     *     only used in cases where there is a need to ensure the connection is immediately closed in all threads using it.
+     *
+     * 3. All threads sharing this connection will be affected
+     *     Closing connections yourself (using this method or directly via the raw connection) will cause all threads
+     *     that are currently using this connection to experience unexpected connection failures.
+     *
+     * 4. This method is a convenience method
+     *      This method is a convenience method to allow users to close connections via the SimplePool API rather than
+     *      closing the raw connection directly. However, if there is a concrete need to do so (see point 2 above) users
+     *      can also close raw connections directly at any time without calling this method since SimpleConnectionPool
+     *      will safely handle unexpected closures of raw connections. For example:
+     *
+     *          // get raw Undertow connection
+     *          ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
+     *
+     *          ...
+     *
+     *          if(isMajorConnectionIssueDetected)
+     *              IoUtils.safeClose(connection);     // safely close the raw connection directly
+     *
+     *   This means that users can leverage this method to close connections if it is convenient, but can also close
+     *   the raw connection directly at any time if that is more convenient (and after considering item 2 above).
+     *
+     * @param connectionToken the connection token of the connection to close
+     */
+    public void safeClose(SimpleConnectionState.ConnectionToken connectionToken) {
+        if (connectionToken == null || !pools.containsKey(connectionToken.uri()))
+            return;
+
+        pools.get(connectionToken.uri()).safeClose(connectionToken);
+    }
+
+    /***
+     * This method causes the connection to be closed as soon as all threads currently using it have restored it to the
+     * pool. This prevents the connection from ever being reused, while also preventing threads that are currently using
+     * it from experiencing unexpected connection closures.
+     *
+     * This method 'expires' a connection which results in:
+     *     (a) the connection no longer being borrowable, and
+     *     (b) the connection being closed as soon as all threads currently using it have restored it to the pool.
+     *
+     * 1. WARNING: Connection Token must still be returned
+     *     After closing a connection, users must still return the connection token to the pool.
+     *
+     * 2. WARNING: Overuse of this method will negate all benefits of the connection pool
+     *     Under normal circumstances, users should never close connections themselves (either via this method or
+     *     directly via the raw connection) but instead, always let the connection pool handle all connection closures.
+     *     Manually closing connections negates all benefits of using a connection pool. Be certain that this method is
+     *     only used in cases where there is a need to ensure the connection is not reused.
+     *
+     * @param connectionToken the connection token for the connection to close
+     * @return true if the connection has been closed;
+     *         false if (1) the connection is still open due to there being threads that are still actively using it,
+     *         or (2) if the connectionToken was null
+     */
+    public boolean scheduleSafeClose(SimpleConnectionState.ConnectionToken connectionToken) {
+        if(connectionToken == null || !pools.containsKey(connectionToken.uri()))
+            return false;
+
+        return pools.get(connectionToken.uri()).scheduleSafeClose(connectionToken);
+    }
 }
