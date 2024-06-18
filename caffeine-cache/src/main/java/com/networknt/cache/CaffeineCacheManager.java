@@ -22,6 +22,14 @@ public class CaffeineCacheManager implements CacheManager {
                 .build();
         caches.put(cacheName, cache);
     }
+    @Override
+    public Map<Object, Object> getCache(String cacheName) {
+        Cache<Object, Object> cache = caches.get(cacheName);
+        if (cache != null) {
+            return cache.asMap();
+        }
+        return null;
+    }
 
     @Override
     public void put(String cacheName, String key, Object value) {

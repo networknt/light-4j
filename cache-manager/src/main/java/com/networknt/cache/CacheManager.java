@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * CacheManager is a singleton class that is used to manage all the caches in the system. The underline implementation
@@ -38,6 +39,7 @@ public interface CacheManager {
     }
 
     void addCache(String cacheName, long maxSize, long expiryInMinutes);
+    Map<Object, Object> getCache(String cacheName);
     void put(String cacheName, String key, Object value);
     Object get(String cacheName, String key);
     void delete(String cacheName, String key);
