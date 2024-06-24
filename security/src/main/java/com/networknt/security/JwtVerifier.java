@@ -283,7 +283,7 @@ public class JwtVerifier {
         String kid = structure.getKeyIdHeaderValue();
 
         // so we do expiration check here manually as we have the claim already for kid
-        // if ignoreExpiry is false, verify expiration of the tokens
+        // if ignoreExpiry is false, verify expiration of the token
         if(!ignoreExpiry) {
             try {
                 if ((NumericDate.now().getValue() - secondsOfAllowedClockSkew) >= claims.getExpirationTime().getValue())
