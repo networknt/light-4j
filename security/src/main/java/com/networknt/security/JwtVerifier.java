@@ -237,7 +237,6 @@ public class JwtVerifier {
      * token in the request header to renew the expired token.
      *
      * @param jwt String of Json web token
-     * //@param ignoreExpiry If true, don't verify if the token is expired.
      * @param isToken True if the jwt is an OAuth 2.0 access token
      * @param getKeyResolver How to get VerificationKeyResolver
      * @return JwtClaims object
