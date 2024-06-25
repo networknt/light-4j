@@ -9,6 +9,7 @@ import io.undertow.connector.PooledByteBuffer;
 import io.undertow.server.Connectors;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.server.RequestTooBigException;
 import io.undertow.server.protocol.http.HttpContinue;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
@@ -28,7 +29,8 @@ import java.util.Arrays;
  * @author Kalev Gonvick
  */
 public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
-
+    public static final String GENERIC_EXCEPTION = "ERR10014";
+    public static final String PAYLOAD_TOO_LARGE = "ERR10068";
     private static final Logger LOG = LoggerFactory.getLogger(RequestInterceptorInjectionHandler.class);
     private volatile HttpHandler next;
     private static RequestInjectionConfig config;
@@ -123,13 +125,15 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
                 }
 
                 this.saveBufferAndResetUndertowConnector(httpServerExchange, bufferedData);
-
+            } catch (RequestTooBigException e) {
+                logger.error(e.getMessage(), e);
+                safeCloseBuffers(bufferedData, buffer);
+                setExchangeStatus(httpServerExchange, PAYLOAD_TOO_LARGE);
             } catch (Exception | Error e) {
                 logger.error(e.getMessage(), e);
                 safeCloseBuffers(bufferedData, buffer);
-                httpServerExchange.endExchange();
+                setExchangeStatus(httpServerExchange, GENERIC_EXCEPTION, e.getMessage());
             }
-
         } else {
             if(logger.isTraceEnabled()) logger.trace("No need to read body");
             // no need to inject the content for the body. just call the interceptors here.
