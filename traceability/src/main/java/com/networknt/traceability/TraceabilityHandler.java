@@ -16,6 +16,7 @@
 
 package com.networknt.traceability;
 
+import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.utility.ModuleRegistry;
@@ -36,10 +37,12 @@ import org.slf4j.LoggerFactory;
  * Dependencies: AuditHandler, Client
  *
  * @author Steve Hu
+ *
+ * @deprecated (Merged traceability handler into correlation handler)
  */
+@Deprecated
 public class TraceabilityHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(TraceabilityHandler.class);
-    private static final String TID = "tId";
 
     public static TraceabilityConfig config;
 
@@ -52,7 +55,7 @@ public class TraceabilityHandler implements MiddlewareHandler {
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         logger.trace("TraceabilityHandler.handleRequest starts.");
-        logger.warn("Traceability handler is now deprecated, and you can safely remove the handler from your configured handler chain. See changes done to the correlation handler for more details.");
+        logger.warn("Traceability handler is now deprecated, and you can safely remove the handler from your configured handler chain. See correlation handler for more details.");
         logger.trace("TraceabilityHandler.handleRequest ends.");
         Handler.next(exchange, next);
     }

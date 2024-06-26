@@ -48,7 +48,7 @@ import java.util.HashMap;
 public class CorrelationHandler implements MiddlewareHandler {
     private static final Logger logger = LoggerFactory.getLogger(CorrelationHandler.class);
 
-    private static CorrelationConfig config;
+    public static CorrelationConfig config;
 
     private volatile HttpHandler next;
 
@@ -68,7 +68,9 @@ public class CorrelationHandler implements MiddlewareHandler {
             this.addHandlerMDCContext(exchange, config.getTraceabilityMdcField(), tid);
             MDC.put(config.getTraceabilityMdcField(), tid);
 
-        } else MDC.remove(config.getTraceabilityMdcField());
+        } else if (MDC.get(config.traceabilityMdcField) != null) {
+            MDC.remove(config.getTraceabilityMdcField());
+        }
 
         // check if the cid is in the request header
         var cId = exchange.getRequestHeaders().getFirst(HttpStringConstants.CORRELATION_ID);
