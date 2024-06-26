@@ -33,8 +33,7 @@ import com.networknt.client.ssl.CompositeX509TrustManager;
 import com.networknt.client.ssl.TLSConfig;
 import com.networknt.cluster.Cluster;
 import com.networknt.config.Config;
-import com.networknt.config.JsonMapper;
-import com.networknt.httpstring.AttachmentConstants;
+import com.networknt.config.TlsUtil;
 import com.networknt.exception.ClientException;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.monad.Failure;
@@ -43,11 +42,7 @@ import com.networknt.server.ServerConfig;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.status.Status;
 import com.networknt.utility.ModuleRegistry;
-import com.networknt.config.TlsUtil;
 import com.networknt.utility.StringUtils;
-import io.opentracing.Tracer;
-import io.opentracing.propagation.Format;
-import io.opentracing.tag.Tags;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.client.*;
@@ -86,6 +81,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
 import static io.undertow.client.http.HttpClientProvider.DISABLE_HTTPS_ENDPOINT_IDENTIFICATION_PROPERTY;
 
 /**
@@ -139,7 +135,7 @@ public class Http2Client {
 
 
     // TokenManager is to manage cached jwt tokens for this client.
-    private TokenManager tokenManager = TokenManager.getInstance();
+    private final TokenManager tokenManager = TokenManager.getInstance();
 
     // This is the old connection pool that is kept for backward compatibility.
     private final Http2ClientConnectionPool http2ClientConnectionPool = Http2ClientConnectionPool.getInstance();
@@ -187,7 +183,7 @@ public class Http2Client {
 
         // register module.
         List<String> masks = List.of(MASK_KEY_CLIENT_SECRET, MASK_KEY_TRUST_STORE_PASS, MASK_KEY_KEY_STORE_PASS, MASK_KEY_KEY_PASS);
-        ModuleRegistry.registerModule(ClientConfig.CONFIG_NAME, Http2Client.class.getName(), Config.getInstance().getJsonMapConfigNoCache(ClientConfig.CONFIG_NAME), masks);
+        ModuleRegistry.registerModule(ClientConfig.CONFIG_NAME, Http2Client.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ClientConfig.CONFIG_NAME), masks);
     }
 
     private void addProvider(Map<String, ClientProvider> map, String scheme, ClientProvider provider) {
@@ -594,6 +590,7 @@ public class Http2Client {
      * @param token the bearer token
      * @param tracer the OpenTracing tracer
      */
+    /*
     public void addAuthTokenTrace(ClientRequest request, String token, Tracer tracer) {
         if(token != null && !token.startsWith("Bearer ")) {
             if(token.toUpperCase().startsWith("BEARER ")) {
@@ -611,6 +608,7 @@ public class Http2Client {
             tracer.inject(tracer.activeSpan().context(), Format.Builtin.HTTP_HEADERS, new ClientRequestCarrier(request));
         }
     }
+    */
 
     /**
      * Add Client Credentials token cached in the client for standalone application
@@ -658,6 +656,11 @@ public class Http2Client {
      */
     public Result propagateHeaders(ClientRequest request, final HttpServerExchange exchange) {
         String token = exchange.getRequestHeaders().getFirst(Headers.AUTHORIZATION);
+        String tid = exchange.getRequestHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
+        String cid = exchange.getRequestHeaders().getFirst(HttpStringConstants.CORRELATION_ID);
+        return populateHeader(request, token, cid, tid);
+
+        /*
         boolean injectOpenTracing = config.isInjectOpenTracing();
         if(injectOpenTracing) {
             Tracer tracer = exchange.getAttachment(AttachmentConstants.EXCHANGE_TRACER);
@@ -667,6 +670,7 @@ public class Http2Client {
             String cid = exchange.getRequestHeaders().getFirst(HttpStringConstants.CORRELATION_ID);
             return populateHeader(request, token, cid, tid);
         }
+        */
     }
 
     /**
@@ -703,19 +707,20 @@ public class Http2Client {
         return result;
     }
 
-    /**
-     * Support API to API calls with scope token. The token is the original token from consumer and
-     * the client credentials token of caller API is added from cache. This method doesn't have correlationId
-     * and traceabilityId but has a Tracer for OpenTracing context passing. For standalone client, you create
-     * the Tracer instance and in the service to service call, the Tracer can be found in the JaegerStartupHookProvider
-     *
-     * This method is used in API to API call
-     *
-     * @param request the http request
-     * @param authToken the authorization token
-     * @param tracer the OpenTracing Tracer
-     * @return Result when fail to get jwt, it will return a Status.
-     */
+//    /**
+//     * Support API to API calls with scope token. The token is the original token from consumer and
+//     * the client credentials token of caller API is added from cache. This method doesn't have correlationId
+//     * and traceabilityId but has a Tracer for OpenTracing context passing. For standalone client, you create
+//     * the Tracer instance and in the service to service call, the Tracer can be found in the JaegerStartupHookProvider
+//     *
+//     * This method is used in API to API call
+//     *
+//     * @param request the http request
+//     * @param authToken the authorization token
+//     * @param tracer the OpenTracing Tracer
+//     * @return Result when fail to get jwt, it will return a Status.
+//     */
+    /*
     public Result populateHeader(ClientRequest request, String authToken, Tracer tracer) {
         Result<Jwt> result = tokenManager.getJwt(request.getPath(), request.getRequestHeaders().getFirst(ClientConfig.SCOPE), request.getRequestHeaders().getFirst(ClientConfig.SERVICE_ID));
         if(result.isFailure()) { return Failure.of(result.getError()); }
@@ -732,7 +737,7 @@ public class Http2Client {
         }
         return result;
     }
-
+    */
 
 
     private static KeyStore loadKeyStore(final String name, final char[] password) throws IOException {

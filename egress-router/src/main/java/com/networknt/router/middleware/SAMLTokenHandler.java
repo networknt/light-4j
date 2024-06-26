@@ -139,13 +139,13 @@ public class SAMLTokenHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(TokenConfig.CONFIG_NAME, SAMLTokenHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(TokenConfig.CONFIG_NAME, SAMLTokenHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(TokenConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(TokenConfig.CONFIG_NAME, SAMLTokenHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(TokenConfig.CONFIG_NAME, SAMLTokenHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(TokenConfig.CONFIG_NAME), null);
     }
 
     private Result<String> getSAMLBearerToken(String samlAssertion , String jwtAssertion) {

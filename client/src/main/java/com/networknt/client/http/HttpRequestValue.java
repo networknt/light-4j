@@ -2,7 +2,6 @@ package com.networknt.client.http;
 
 import com.networknt.common.ContentType;
 
-
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;

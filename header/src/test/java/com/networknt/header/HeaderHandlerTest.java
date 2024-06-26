@@ -39,10 +39,10 @@ import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -264,7 +264,7 @@ public class HeaderHandlerTest {
 	List<String> possibleJson = getPossibleJson("keyE", "valueE", "keyF", "valueF", "keyG", "valueG", "keyH", "valueH");
         Assert.assertTrue(possibleJson.contains(body));
     }
-	
+
     List<String> getPossibleJson(String key1, String value1, String key2, String value2, String key3, String value3, String key4, String value4){
         List<String> possibleJson = new ArrayList<>();
         possibleJson.add("{\"requestHeaders\":{\""+key1+"\":\""+value1+"\",\""+key2+"\":\""+value2+"\"},\"responseHeaders\":{\""+key3+"\":\""+value3+"\",\""+key4+"\":\""+value4+"\"}}");

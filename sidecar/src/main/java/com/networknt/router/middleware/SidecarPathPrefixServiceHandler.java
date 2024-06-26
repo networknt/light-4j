@@ -1,7 +1,9 @@
 package com.networknt.router.middleware;
 
 import com.networknt.config.Config;
+import com.networknt.handler.AuditAttachmentUtil;
 import com.networknt.handler.Handler;
+import com.networknt.handler.config.HandlerUtils;
 import com.networknt.router.SidecarConfig;
 import com.networknt.url.HttpURL;
 import com.networknt.utility.Constants;
@@ -40,6 +42,10 @@ public class SidecarPathPrefixServiceHandler extends PathPrefixServiceHandler {
         } else {
             // incoming request, let the proxy handler to handle it.
             if(logger.isDebugEnabled()) logger.debug("SidecarPathPrefixServiceHandler.handleRequest ends for incoming request.");
+            String requestPath = exchange.getRequestURI();
+            String[] serviceEntry = HandlerUtils.findServiceEntry(HandlerUtils.normalisePath(requestPath), config.getMapping());
+            if(serviceEntry != null)
+                AuditAttachmentUtil.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, serviceEntry[0] + "@" + exchange.getRequestMethod().toString().toLowerCase());
             Handler.next(exchange, next);
         }
     }

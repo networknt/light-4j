@@ -18,7 +18,6 @@ package com.networknt.balance;
 
 import com.networknt.registry.URL;
 import com.networknt.registry.URLImpl;
-import com.networknt.service.SingletonServiceFactory;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -66,7 +65,7 @@ public class RoundRobinLoadBalanceTest {
 
     /**
      * There is a chance that both values are the same but it should be very rare. Given this possibility,
-     * ignore this test unless we need it. 
+     * ignore this test unless we need it.
      */
     @Ignore
     @Test

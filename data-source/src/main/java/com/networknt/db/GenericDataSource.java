@@ -34,9 +34,16 @@ import java.util.Map;
  * @author Steve Hu
  */
 public class GenericDataSource {
-    protected static final String DATASOURCE = "datasource";
-    private static final String DB_PASSWORD = "password";
-    private static final String DS_NAME = "H2DataSource";
+    public static final String DATASOURCE = "datasource";
+    public static final String DB_PASSWORD = "password";
+    public static final String DS_NAME = "H2DataSource";
+    public static final String PARAMETERS = "parameters";
+    public static final String SETTINGS = "settings";
+    public static final String JDBC_URL = "jdbcUrl";
+    public static final String USERNAME = "username";
+    public static final String MAXIMUM_POOL_SIZE = "maximumPoolSize";
+    public static final String CONNECTION_TIMEOUT = "connectionTimeout";
+
     private static final Logger logger = LoggerFactory.getLogger(GenericDataSource.class);
 
     // the HikariDataSource
@@ -68,21 +75,21 @@ public class GenericDataSource {
         dataSourceMap = Config.getInstance().getJsonMapConfig(DATASOURCE);
         // get the requested datasource
         Map<String, Object> mainParams = (Map<String, Object>) dataSourceMap.get(getDsName());
-        Map<String, String> configParams = (Map<String, String>)mainParams.get("parameters");
-        Map<String, Object> settings = (Map<String, Object>)mainParams.get("settings");
+        Map<String, String> configParams = (Map<String, String>)mainParams.get(PARAMETERS);
+        Map<String, Object> settings = (Map<String, Object>)mainParams.get(SETTINGS);
 
         // create the DataSource
         ds = new HikariDataSource();
-        ds.setJdbcUrl((String)mainParams.get("jdbcUrl"));
-        ds.setUsername((String)mainParams.get("username"));
+        ds.setJdbcUrl((String)mainParams.get(JDBC_URL));
+        ds.setUsername((String)mainParams.get(USERNAME));
 
         // use encrypted password
         String password = (String)mainParams.get(DB_PASSWORD);
         ds.setPassword(password);
 
         // set datasource paramters
-        ds.setMaximumPoolSize((Integer)mainParams.get("maximumPoolSize"));
-        ds.setConnectionTimeout((Integer)mainParams.get("connectionTimeout"));
+        ds.setMaximumPoolSize(Config.loadIntegerValue(MAXIMUM_POOL_SIZE, mainParams.get(MAXIMUM_POOL_SIZE)));
+        ds.setConnectionTimeout(Config.loadIntegerValue(CONNECTION_TIMEOUT, mainParams.get(CONNECTION_TIMEOUT)));
 
         if (settings != null && settings.size()>0) {
             for (Map.Entry<String, Object> entry: settings.entrySet()) {

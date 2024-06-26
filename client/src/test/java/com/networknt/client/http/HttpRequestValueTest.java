@@ -4,7 +4,6 @@ import com.networknt.common.ContentType;
 import org.junit.Before;
 import org.junit.Test;
 
-
 import static junit.framework.TestCase.assertNotNull;
 import static junit.framework.TestCase.assertTrue;
 
@@ -25,8 +24,8 @@ public class HttpRequestValueTest {
     @Test
     public void testBuildRequest(){
 
-        HttpRequestValue requestValue = HttpRequestValue.builder(ContentType.MULTIPART_MIXED_VALUE).with("file-info", ContentType.APPLICATION_JSON, fileName)
-        .with("file-body", ContentType.APPLICATION_PDF_VALUE, fileBody).build();
+        HttpRequestValue requestValue = HttpRequestValue.builder(ContentType.MULTIPART_MIXED).with("file-info", ContentType.APPLICATION_JSON, fileName)
+        .with("file-body", ContentType.APPLICATION_PDF, fileBody).build();
         assertTrue(requestValue.hasBody("file-body"));
         assertTrue(requestValue.hasBody("file-info"));
         assertNotNull(requestValue.getBody("file-info"));

@@ -19,9 +19,9 @@ package com.networknt.server;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.common.ContentType;
 import com.networknt.config.Config;
+import com.networknt.config.ConfigInjection;
 import com.networknt.config.JsonMapper;
 import io.undertow.util.Headers;
 import org.slf4j.Logger;
@@ -29,15 +29,17 @@ import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
-import javax.net.ssl.*;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.ConnectException;
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpHeaders;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.net.http.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -76,18 +78,19 @@ public class DefaultConfigLoader implements IConfigLoader{
     public static final String CLIENT_TRUSTSTORE_LOC = "config_server_client_truststore_location";
     public static final String VERIFY_HOST_NAME = "config_server_client_verify_host_name";
 
+    public static final String HOST = "host";
     public static final String PRODUCT_ID = "productId";
     public static final String PRODUCT_VERSION = "productVersion";
     public static final String API_ID = "apiId";
     public static final String API_VERSION = "apiVersion";
     public static final String ENV_TAG = "envTag";
+    public static final String ACCEPT_HEADER = "acceptHeader";
+    public static final String TIMEOUT = "timeout";
 
     public static String lightEnv = null;
     public static String configServerUri = null;
     public static String targetConfigsDirectory = null;
 
-    // An instance of Jackson ObjectMapper that can be used anywhere else for Json.
-    final static ObjectMapper mapper = new ObjectMapper();
     // Using JDK 11 HTTP client to connect to the config server with bootstrap.truststore
     private HttpClient configClient;
 
@@ -97,9 +100,11 @@ public class DefaultConfigLoader implements IConfigLoader{
             final Properties props = System.getProperties();
             props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
         }
+        int timeout = 3000;
+        if(startupConfig.get(TIMEOUT) != null) timeout = Config.loadIntegerValue(TIMEOUT, startupConfig.get(TIMEOUT));
         HttpClient.Builder clientBuilder = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NORMAL)
-                .connectTimeout(Duration.ofMillis(1000)) // default to 1 second timeout.
+                .connectTimeout(Duration.ofMillis(timeout)) // timeout from the startup.yml
                 .version(HttpClient.Version.HTTP_2)
                 .sslContext(createBootstrapContext());
         return clientBuilder.build();
@@ -109,8 +114,14 @@ public class DefaultConfigLoader implements IConfigLoader{
     public void init() {
         lightEnv = getPropertyOrEnv(LIGHT_ENV);
         if (lightEnv == null) {
-            logger.warn("Warning! {} is not provided; defaulting to {}", LIGHT_ENV, DEFAULT_ENV);
-            lightEnv = DEFAULT_ENV;
+            lightEnv = (String)startupConfig.get(ENV_TAG);
+            if(lightEnv == null) {
+                // light-env is not set in the environment and the startup config. Use the default value.
+                logger.warn("light-env is not set in the environment and envTag is not set in the startup config. Use the default value: " + DEFAULT_ENV);
+                lightEnv = DEFAULT_ENV;
+            } else {
+                logger.debug("light-env is not set in the environment; defaulting to the value in the startup config: " + lightEnv);
+            }
         }
         targetConfigsDirectory = getPropertyOrEnv(Config.LIGHT_4J_CONFIG_DIR);
         if (targetConfigsDirectory == null) {
@@ -128,18 +139,14 @@ public class DefaultConfigLoader implements IConfigLoader{
             // lazy create client for config server access.
             configClient = createHttpClient();
 
-            try {
-                String queryParameters = getConfigServerQueryParameters();
+            String queryParameters = getConfigServerQueryParameters();
 
-                // This is the method to load values.yml from the config server
-                loadConfigs(queryParameters);
+            // This is the method to load values.yml from the config server
+            loadConfigs(queryParameters);
 
-                loadFiles(queryParameters, CONFIG_SERVER_CERTS_CONTEXT_ROOT);
+            loadFiles(queryParameters, CONFIG_SERVER_CERTS_CONTEXT_ROOT);
 
-                loadFiles(queryParameters, CONFIG_SERVER_FILES_CONTEXT_ROOT);
-            } catch (Exception e) {
-                logger.error("Failed to connect to config server", e);
-            }
+            loadFiles(queryParameters, CONFIG_SERVER_FILES_CONTEXT_ROOT);
 
             try {
                 String filename = System.getProperty("logback.configurationFile");
@@ -174,15 +181,9 @@ public class DefaultConfigLoader implements IConfigLoader{
             // lazy create client for config server access.
             configClient = createHttpClient();
 
-            try {
-                String queryParameters = getConfigServerQueryParameters();
-                // This is the method to load values.yml from the config server
-                loadConfigs(queryParameters);
-
-            } catch (Exception e) {
-                logger.error("Failed to connect to config server", e);
-            }
-
+            String queryParameters = getConfigServerQueryParameters();
+            // This is the method to load values.yml from the config server
+            loadConfigs(queryParameters);
         } else {
             logger.warn("Warning! {} is not provided; using local configs", CONFIG_SERVER_URI);
         }
@@ -198,34 +199,39 @@ public class DefaultConfigLoader implements IConfigLoader{
         String configServerConfigsPath = CONFIG_SERVER_CONFIGS_CONTEXT_ROOT + queryParameters;
         //get service configs and put them in config cache
         Map<String, Object> serviceConfigs = getServiceConfigs(configServerConfigsPath);
-        if(serviceConfigs == null) {
+        if(serviceConfigs == null || serviceConfigs.isEmpty()) {
             logger.error("Failed to load configs from config server. Please check the logs for more details.");
             return;
         }
-        if(logger.isDebugEnabled()) logger.debug("serviceConfigs received from Config Server: " + JsonMapper.toJson(serviceConfigs));
+        if(logger.isTraceEnabled()) logger.trace("serviceConfigs received from Config Server: " + JsonMapper.toJson(serviceConfigs));
 
         // pass serviceConfigs through Config.yaml's load method so that it can decrypt any encrypted values
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);//to get yaml string without curly brackets and commas
-        serviceConfigs = Config.getInstance().getYaml().load(new Yaml(options).dump(serviceConfigs));
 
         // save the values.yml to the target folder. This is for the case of reload to overwrite and start without config server.
         try {
             Path filePath = Paths.get(targetConfigsDirectory);
             if (!Files.exists(filePath)) {
                 Files.createDirectories(filePath);
-                logger.info("target configs directory created :", targetConfigsDirectory);
+                logger.info("target configs directory {} created", targetConfigsDirectory);
             }
 
             filePath = Paths.get(targetConfigsDirectory + "/values.yml");
             Files.write(filePath, new Yaml(options).dump(serviceConfigs).getBytes());
         } catch (IOException e) {
-            logger.error("Exception while creating {} dir or creating files there:{}",targetConfigsDirectory, e);
+            logger.error("Exception while creating " + targetConfigsDirectory, e);
         }
 
-        //clear config cache: this is required just in case other classes have already loaded something in cache
+        // clear config cache: this is required just in case other classes have already loaded something in cache
+        // only the config file templates are in the cache, so it is safe to clear the cache.
         Config.getInstance().clear();
-        Config.getInstance().putInConfigCache(CENTRALIZED_MANAGEMENT, serviceConfigs);
+        Config.getNoneDecryptedInstance().clear();
+        // Reload the values.yml for both decrypted and un-decrypted values so that they can be merged to the templates.
+        // The cached values.yml can avoid reload the values.yml file for each property merge.
+        ConfigInjection.decryptedValueMap = Config.getInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
+        ConfigInjection.undecryptedValueMap = Config.getNoneDecryptedInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
+
         //You can call Server.getServerConfig() now.
     }
 
@@ -290,19 +296,32 @@ public class DefaultConfigLoader implements IConfigLoader{
         Map<String, Object> configs = new HashMap<>();
 
         if(logger.isDebugEnabled()) logger.debug("Calling Config Server endpoint:host{}:path{}", configServerUri, configServerPath);
+        String acceptHeader = "application/json";
+        if(startupConfig.get(ACCEPT_HEADER) != null) acceptHeader = (String)startupConfig.get(ACCEPT_HEADER);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(configServerUri.trim() + configServerPath.trim()))
                 .header(Headers.AUTHORIZATION_STRING, authorization)
+                .header(Headers.ACCEPT_STRING, acceptHeader)
                 .build();
 
         try {
             HttpResponse<String> response = configClient.send(request, HttpResponse.BodyHandlers.ofString());
             int statusCode = response.statusCode();
             String body = response.body();
-            if(statusCode >= 300) {
-                logger.error("Failed to load configs from config server" + statusCode + ":" + body);
-                // return null, so that the values.yml won't be overwritten and the server can still be started with it.
-                return null;
+            if (statusCode >= 300) {
+                logger.error("Failed to load configs from config server with status {} and body {}.", statusCode, body);
+                // throw an exception to stop the server from starting if there is no values.yml in the externalized config folder.
+                Path filePath = Paths.get(targetConfigsDirectory);
+                if (Files.exists(filePath)) {
+                    File file = new File(targetConfigsDirectory, "values.yml");
+                    if (!file.exists()) {
+                        // there is no values.yml generated from the previous call to the config server. throw an exception.
+                        throw new RuntimeException(String.format("Failed to load configs from config server with status %s and body %s.", statusCode, body));
+                    } else {
+                        // there is a values.yml in the externalized config folder. continue to start the server.
+                        logger.error("Failed to load configs from config server with status {} and body {}. Use the local fallback config.", statusCode, body);
+                    }
+                }
             } else {
                 // validate the headers against the product id and version. If they are not matched, throw an exception.
                 // this validation call is commented out for now as it is not ready on the config server side.
@@ -313,12 +332,42 @@ public class DefaultConfigLoader implements IConfigLoader{
                     throw new Exception("The headers in the config server response are not matched with the jar file.");
                 }
                 */
-
-                configs = mapper.readValue(body, new TypeReference<Map<String, Object>>() {});
-                processNestedMap(configs);
+                // two cases: 1. the response is a json object. 2. the response is a yaml string. based on the response header.
+                Optional<String> contentType = response.headers().firstValue((Headers.CONTENT_TYPE_STRING));
+                if (contentType.isPresent()) {
+                    if (contentType.get().startsWith(ContentType.APPLICATION_JSON.value())) {
+                        configs = JsonMapper.string2Map(body);
+                        processNestedMap(configs);
+                    } else if (contentType.get().startsWith(ContentType.APPLICATION_YAML.value())) {
+                        configs = Config.getNoneDecryptedInstance().getYaml().load(body);
+                    } else {
+                        // the content type is not supported, throw an exception.
+                        logger.error("The content type {} in the response from the config server is not supported.", contentType.get());
+                        throw new RuntimeException(String.format("The content type %s in the response from the config server is not supported.", contentType.get()));
+                    }
+                } else {
+                    // there is no content type header in the response, throw an exception.
+                    logger.error("The content type header is not set in the response from the config server.");
+                    throw new RuntimeException("The content type header is not set in the response from the config server.");
+                }
             }
-        } catch (Exception e) {
+        } catch (ConnectException | HttpConnectTimeoutException e) {
+            // if the config server is not available or timeout, the server will start with the fallback values.yml.
+            logger.error("Failed to connect to config server:", e);
+            Path filePath = Paths.get(targetConfigsDirectory);
+            if (Files.exists(filePath)) {
+                File file = new File(targetConfigsDirectory, "values.yml");
+                if (!file.exists()) {
+                    // there is no values.yml generated from the previous call to the config server. throw an exception.
+                    throw new RuntimeException("Failed to connect to config server and no fallback config cache found.");
+                } else {
+                    // there is a values.yml in the externalized config folder. continue to start the server.
+                    logger.error("Failed to connect to config server. Use the local fallback config.");
+                }
+            }
+        } catch (IOException | InterruptedException e) {
             logger.error("Exception while calling config server:", e);
+            throw new RuntimeException("Exception while calling config server:", e);
         }
         return configs;
     }
@@ -408,11 +457,14 @@ public class DefaultConfigLoader implements IConfigLoader{
 
     private static String getConfigServerQueryParameters() {
         StringBuilder qs = new StringBuilder();
-        qs.append("?").append(PRODUCT_ID).append("=").append(startupConfig.get(PRODUCT_ID));
+        String host = startupConfig.get(HOST) != null ? (String)startupConfig.get(HOST) : "lightapi.net";
+        qs.append("?").append(HOST).append("=").append(host);
+        if(startupConfig.get(PRODUCT_ID) != null) qs.append("&").append(PRODUCT_ID).append("=").append(startupConfig.get(PRODUCT_ID));
         if(startupConfig.get(PRODUCT_VERSION) != null) qs.append("&").append(PRODUCT_VERSION).append("=").append(startupConfig.get(PRODUCT_VERSION));
         if(startupConfig.get(API_ID) != null) qs.append("&").append(API_ID).append("=").append(startupConfig.get(API_ID));
         if(startupConfig.get(API_VERSION) != null) qs.append("&").append(API_VERSION).append("=").append(startupConfig.get(API_VERSION));
-        if(lightEnv != null) qs.append("&").append(ENV_TAG).append("=").append(lightEnv);
+        // lightEnv won't be null here.
+        qs.append("&").append(ENV_TAG).append("=").append(lightEnv);
         if(logger.isDebugEnabled()) logger.debug("configParameters: {}", qs);
         return qs.toString();
     }
@@ -495,12 +547,12 @@ public class DefaultConfigLoader implements IConfigLoader{
         // the above headers are sent to the config server except productVersion that might be current/default version.
         // as the productId and productVersion are embedded in the jar file, we need to retrieve them from the jar.
         if(productId != null && productVersion != null && apiId != null && apiVersion != null && envTag != null) {
-            if(logger.isInfoEnabled()) logger.trace("jar productId = " + Server.getLight4jProduct() + " productVersion = " + Server.getLight4jVersion() + " startup apiId = " + startupConfig.get(API_ID) + " apiVersion = " + startupConfig.get(API_VERSION) + " envTag = " + lightEnv);
+            if(logger.isInfoEnabled()) logger.trace("jar productId = " + Server.getLight4jProduct() + " productVersion = " + Server.getLight4jVersion() + " startup apiId = " + startupConfig.get(API_ID) + " apiVersion = " + startupConfig.get(API_VERSION) + " envTag = " + (lightEnv == null ? startupConfig.get(ENV_TAG) : lightEnv)) ;
             return productId.equals(Server.getLight4jProduct()) &&
                      productVersion.equals(Server.getLight4jVersion()) &&
                      apiId.equals(startupConfig.get(API_ID)) &&
                      apiVersion.equals(startupConfig.get(API_VERSION)) &&
-                     envTag.equals(lightEnv);
+                    (lightEnv != null ? envTag.equals(lightEnv) : envTag.equals(startupConfig.get(ENV_TAG)));
         }
         return false;
     }

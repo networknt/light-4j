@@ -45,7 +45,7 @@ bootstrapStorePass: password
 # Unique service identifier. Used in service registration and discovery etc.
 serviceId: com.networknt.petstore-1.0.0
 
-# Unique service name. Used in microservices to associate a given name to a service with configuration 
+# Unique service name. Used in microservices to associate a given name to a service with configuration
 # or as a key within the configuration of a particular domain
 serviceName: petstore
 
@@ -57,6 +57,6 @@ enableRegistry: false
 # This tag should only be set for testing env, not production. The production certification process will enforce it.
 # environment: test1
 
-# Build number, to be set by teams for auditing purposes. 
+# Build number, to be set by teams for auditing purposes.
 # This build number is independent of the API version, and it set by teams according to their release management process
 buildNumber: latest

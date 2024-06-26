@@ -1,14 +1,11 @@
 package com.networknt.client;
 
 import com.networknt.client.oauth.TokenKeyRequest;
-import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 import static com.networknt.client.ClientConfig.CLIENT_CREDENTIALS;
@@ -53,7 +50,7 @@ public class MultipleAuthServerTest {
             // iterate all the configured auth server to get JWK.
             Map<String, Object> tokenConfig = clientConfig.getTokenConfig();
             Map<String, Object> keyConfig = (Map<String, Object>) tokenConfig.get(ClientConfig.KEY);
-            Map<String, Object> serviceIdAuthServers = (Map<String, Object>) keyConfig.get(ClientConfig.SERVICE_ID_AUTH_SERVERS);
+            Map<String, Object> serviceIdAuthServers = ClientConfig.getServiceIdAuthServers(keyConfig.get(ClientConfig.SERVICE_ID_AUTH_SERVERS));
             if (serviceIdAuthServers == null) {
                 throw new RuntimeException("serviceIdAuthServers property is missing in the token key configuration");
             }

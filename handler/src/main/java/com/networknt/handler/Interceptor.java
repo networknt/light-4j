@@ -2,8 +2,8 @@ package com.networknt.handler;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.networknt.config.Config;
 import com.networknt.common.ContentType;
+import com.networknt.config.Config;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
 import io.undertow.util.HeaderMap;
@@ -26,9 +26,9 @@ public interface Interceptor extends MiddlewareHandler {
      * @return - true/false
      */
     default boolean isXmlData(String contentType) {
-        return contentType.startsWith(ContentType.TEXT_PLAIN_VALUE.value())
+        return contentType.startsWith(ContentType.TEXT_PLAIN.value())
                 || contentType.startsWith(ContentType.XML.value())
-                || contentType.startsWith(ContentType.APPLICATION_XML_VALUE.value());
+                || contentType.startsWith(ContentType.APPLICATION_XML.value());
     }
 
     /**
@@ -38,8 +38,8 @@ public interface Interceptor extends MiddlewareHandler {
      * @return - true/false
      */
     default boolean isFormData(String contentType) {
-        return contentType.startsWith(ContentType.MULTIPART_FORM_DATA_VALUE.value())
-                || contentType.startsWith(ContentType.APPLICATION_FORM_URLENCODED_VALUE.value());
+        return contentType.startsWith(ContentType.MULTIPART_FORM_DATA.value())
+                || contentType.startsWith(ContentType.APPLICATION_FORM_URLENCODED.value());
     }
 
     /**

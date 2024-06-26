@@ -63,7 +63,7 @@ public class Status {
     private static Map<String, Object> config = Config.getInstance().getJsonMapConfig(CONFIG_NAME);
 
     static {
-        ModuleRegistry.registerModule(CONFIG_NAME, Status.class.getName(), config, null);
+        ModuleRegistry.registerModule(CONFIG_NAME, Status.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
         try {
             statusSerializer = SingletonServiceFactory.getBean(StatusSerializer.class);
         } catch (ExceptionInInitializerError e) {
@@ -303,7 +303,7 @@ public class Status {
 
     public static void reload() {
         config = Config.getInstance().getJsonMapConfigNoCache(CONFIG_NAME);
-        ModuleRegistry.registerModule(CONFIG_NAME, Status.class.getName(), config, null);
+        ModuleRegistry.registerModule(CONFIG_NAME, Status.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CONFIG_NAME), null);
     }
 
     /**

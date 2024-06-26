@@ -20,10 +20,6 @@
  */
 package com.networknt.cors;
 
-import static com.networknt.cors.CorsHeaders.ACCESS_CONTROL_REQUEST_HEADERS;
-import static com.networknt.cors.CorsHeaders.ACCESS_CONTROL_REQUEST_METHOD;
-import static com.networknt.cors.CorsHeaders.ORIGIN;
-
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.ResponseCodeHandler;
 import io.undertow.util.HeaderMap;
@@ -35,6 +31,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Collection;
+
+import static com.networknt.cors.CorsHeaders.*;
 
 /**
  * Utility class for CORS handling.

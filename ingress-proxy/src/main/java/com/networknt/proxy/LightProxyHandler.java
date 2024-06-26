@@ -68,7 +68,7 @@ public class LightProxyHandler implements HttpHandler {
 
     public LightProxyHandler() {
         config = ProxyConfig.load();
-        ModuleRegistry.registerModule(ProxyConfig.CONFIG_NAME, LightProxyHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ProxyConfig.CONFIG_NAME, LightProxyHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ProxyConfig.CONFIG_NAME), null);
         ClientConfig clientConfig = ClientConfig.get();
         Map<String, Object> tlsMap = clientConfig.getTlsConfig();
         // disable the hostname verification based on the config. We need to do it here as the LoadBalancingProxyClient uses the Undertow HttpClient.
@@ -111,15 +111,7 @@ public class LightProxyHandler implements HttpHandler {
                 .setRewriteHostHeader(config.isRewriteHostHeader())
                 .setNext(ResponseCodeHandler.HANDLE_404)
                 .build();
-        if(config.isMetricsInjection()) {
-            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
-            // metrics handler, then an error message will be logged.
-            Map<String, HttpHandler> handlers = Handler.getHandlers();
-            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
-            if(metricsHandler == null) {
-                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
-            }
-        }
+        if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
     }
 
     @Override
@@ -131,6 +123,7 @@ public class LightProxyHandler implements HttpHandler {
             JwtClaims jwtClaims = extractClaimsFromJwt(headerValues);
             exchange.getRequestHeaders().put(HttpString.tryFromString(CLAIMS_KEY), new ObjectMapper().writeValueAsString(jwtClaims.getClaimsMap()));
         }
+        if(metricsHandler == null) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
         if(metricsHandler != null) {
             exchange.putAttachment(AttachmentConstants.METRICS_HANDLER, metricsHandler);
             exchange.putAttachment(AttachmentConstants.DOWNSTREAM_METRICS_NAME, config.getMetricsName());
@@ -173,7 +166,7 @@ public class LightProxyHandler implements HttpHandler {
 
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(ProxyConfig.CONFIG_NAME, LightProxyHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ProxyConfig.CONFIG_NAME, LightProxyHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ProxyConfig.CONFIG_NAME), null);
         List<String> hosts = new ArrayList<>(Arrays.asList(config.getHosts().split(",")));
         if(logger.isTraceEnabled()) logger.trace("hosts = " + JsonMapper.toJson(hosts));
         LoadBalancingProxyClient loadBalancer = new LoadBalancingProxyClient()
@@ -209,15 +202,7 @@ public class LightProxyHandler implements HttpHandler {
                 .setRewriteHostHeader(config.isRewriteHostHeader())
                 .setNext(ResponseCodeHandler.HANDLE_404)
                 .build();
-        if(config.isMetricsInjection()) {
-            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
-            // metrics handler, then an error message will be logged.
-            Map<String, HttpHandler> handlers = Handler.getHandlers();
-            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
-            if(metricsHandler == null) {
-                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
-            }
-        }
+        if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
         if(logger.isInfoEnabled()) logger.info("LightProxyHandler is reloaded.");
     }
 }

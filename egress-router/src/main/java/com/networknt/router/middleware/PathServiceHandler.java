@@ -16,6 +16,7 @@
 
 package com.networknt.router.middleware;
 
+import com.networknt.config.Config;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
@@ -114,13 +115,13 @@ public class PathServiceHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(PathServiceConfig.CONFIG_NAME, PathServiceHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(PathServiceConfig.CONFIG_NAME, PathServiceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(PathServiceConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(PathServiceConfig.CONFIG_NAME, PathServiceHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(PathServiceConfig.CONFIG_NAME, PathServiceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(PathServiceConfig.CONFIG_NAME), null);
         if(logger.isInfoEnabled()) logger.info("PathServiceHandler is reloaded.");
     }
 }

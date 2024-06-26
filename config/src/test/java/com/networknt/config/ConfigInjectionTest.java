@@ -28,7 +28,7 @@ public class ConfigInjectionTest {
 
         Object oldConfigValue = null;
         try {
-            oldConfigValue = ConfigInjection.getInjectValue(value);
+            oldConfigValue = ConfigInjection.getInjectValue(value, true);
         } catch (Exception ce) {
             // expected exception since no valuemap defined yet.
             assertTrue(ce instanceof ConfigException);
@@ -39,7 +39,7 @@ public class ConfigInjectionTest {
         newValueMap.put(configKey, configValue);
         Config.getInstance().putInConfigCache(valueMapKey, newValueMap);
 
-        Object newConfigValue = ConfigInjection.getInjectValue(value);
+        Object newConfigValue = ConfigInjection.getInjectValue(value, true);
 
         assertNotNull(newConfigValue);
         assertEquals(configValue, newConfigValue);
@@ -108,4 +108,17 @@ public class ConfigInjectionTest {
         Assert.assertEquals(null, envValue);
     }
 
+    /**
+     * This test depends on the values.json in the test config folder, which cannot be loaded when values.yml in the same
+     * folder and values.yml in the src config folder. You need to rename both values.yml files in order to load the values.json
+     * to perform the following test. This test is to ensure that normal backslash in the stringify json is not escaped.
+     */
+    @Test
+    @Ignore
+    public void testStringifiesJson() {
+        String value = "users: [{\"username\":\"ML\\PAYOUT\"}]";
+        String template = "users: ${basic.users:}";
+        Object actual = ConfigInjection.getInjectValue(template, false);
+        assertEquals(value, actual);
+    }
 }

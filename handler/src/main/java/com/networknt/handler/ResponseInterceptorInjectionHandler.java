@@ -1,5 +1,6 @@
 package com.networknt.handler;
 
+import com.networknt.config.Config;
 import com.networknt.handler.conduit.ContentStreamSinkConduit;
 import com.networknt.handler.conduit.ModifiableContentSinkConduit;
 import com.networknt.service.SingletonServiceFactory;
@@ -67,7 +68,7 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ResponseInjectionConfig.CONFIG_NAME, ResponseInterceptorInjectionHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ResponseInjectionConfig.CONFIG_NAME, ResponseInterceptorInjectionHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ResponseInjectionConfig.CONFIG_NAME), null);
     }
 
     @Override
@@ -75,7 +76,7 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
         config.reload();
         if (LOG.isTraceEnabled())
             LOG.trace("response-injection.yml is reloaded");
-        ModuleRegistry.registerModule(ResponseInjectionConfig.CONFIG_NAME, ResponseInterceptorInjectionHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ResponseInjectionConfig.CONFIG_NAME, ResponseInterceptorInjectionHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ResponseInjectionConfig.CONFIG_NAME), null);
     }
 
     /**

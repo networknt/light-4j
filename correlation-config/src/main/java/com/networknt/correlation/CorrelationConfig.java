@@ -90,7 +90,7 @@ public class CorrelationConfig {
     public boolean isAutogenCorrelationID() {
     	return autogenCorrelationID;
     }
-    
+
     public void setAutogenCorrelationID(boolean autogenCorrelationID) {
     	this.autogenCorrelationID = autogenCorrelationID;
     }

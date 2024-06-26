@@ -17,7 +17,6 @@
 package com.networknt.content;
 
 import com.networknt.config.Config;
-import com.networknt.config.ConfigException;
 
 import java.util.Map;
 

@@ -1,8 +1,11 @@
 package com.networknt.client;
 
 import com.networknt.config.Config;
+import com.networknt.config.JsonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
 import java.util.Map;
 
 
@@ -195,6 +198,23 @@ public final class ClientConfig {
         }
     }
     public Map<String, String> getPathPrefixServices() { return pathPrefixServices; }
+    public static Map<String, Object> getServiceIdAuthServers(Object object) {
+        Map<String, Object> serviceIdAuthServers = new HashMap<>();
+        if (object instanceof Map) {
+            serviceIdAuthServers = (Map) object;
+        } else if (object instanceof String) {
+            String s = (String) object;
+            s = s.trim();
+            if (s.startsWith("{")) {
+                serviceIdAuthServers = JsonMapper.string2Map(s);
+            } else {
+                logger.error("The serviceIdAuthServers in client.yml is not a map or a JSON string.");
+            }
+        } else {
+            logger.error("The serviceIdAuthServers in client.yml is not a map or a JSON string.");
+        }
+        return serviceIdAuthServers;
+    }
 
     private void setOAuthConfig() {
         oauthConfig = (Map<String, Object>)mappedConfig.get(OAUTH);

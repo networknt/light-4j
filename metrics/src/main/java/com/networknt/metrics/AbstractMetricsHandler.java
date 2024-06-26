@@ -17,12 +17,14 @@
 package com.networknt.metrics;
 
 import com.networknt.config.JsonMapper;
+import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.utility.Constants;
 import io.dropwizard.metrics.MetricFilter;
 import io.dropwizard.metrics.MetricName;
 import io.dropwizard.metrics.MetricRegistry;
+import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -106,7 +108,7 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
                 tags.put(Constants.ENDPOINT_STRING, (String) auditInfo.get(Constants.ENDPOINT_STRING));
             }
             String clientId = auditInfo.get(Constants.CLIENT_ID_STRING) != null ? (String) auditInfo.get(Constants.CLIENT_ID_STRING) : "unknown";
-            if(logger.isTraceEnabled()) logger.trace("clientId = " + clientId);
+            if(logger.isTraceEnabled()) logger.trace("clientId = {}", clientId);
             tags.put("clientId", clientId);
             // scope client id will only be available if two token is used. For example, authorization code flow.
             if (config.isSendScopeClientId()) {
@@ -152,8 +154,21 @@ public abstract class AbstractMetricsHandler implements MiddlewareHandler {
         metricName = metricName.tagged(tags);
         long time = System.nanoTime() - startTime;
         registry.getOrAdd(metricName, MetricRegistry.MetricBuilder.TIMERS).update(time, TimeUnit.NANOSECONDS);
-        if(logger.isTraceEnabled()) logger.trace("metricName = " + metricName  + " commonTags = " + JsonMapper.toJson(commonTags) + " tags = " + JsonMapper.toJson(tags));
+        if(logger.isTraceEnabled())
+            logger.trace("metricName = {} commonTags = {} tags = {}", metricName, JsonMapper.toJson(commonTags), JsonMapper.toJson(tags));
         // the metrics handler will collect the status code metrics and increase the counter. Here we don't want to increase it again.
         // incCounterForStatusCode(httpServerExchange.getStatusCode(), commonTags, tags);
+    }
+
+    public static AbstractMetricsHandler lookupMetricsHandler() {
+        // get the metrics handler from the handler chain for metrics registration. If we cannot get the
+        // metrics handler, then an error message will be logged.
+        Map<String, HttpHandler> handlers = Handler.getHandlers();
+        AbstractMetricsHandler metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
+        if(metricsHandler == null) {
+            logger.error("An instance of MetricsHandler is not configured in the handler.yml or needs to be moved up in order.");
+            return null;
+        }
+        return metricsHandler;
     }
 }

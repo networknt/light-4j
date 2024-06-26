@@ -1,6 +1,7 @@
 package com.networknt.proxy.salesforce;
 
-import com.networknt.proxy.PathPrefixAuth;
+import com.networknt.handler.config.UrlRewriteRule;
+import com.networknt.config.PathPrefixAuth;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -17,5 +18,19 @@ public class SalesforceConfigTest {
         Assert.assertTrue(pathPrefixAuthList.get(0).getAuthSubject() != null);
         Assert.assertTrue(pathPrefixAuthList.get(0).getIv() != null);
         Assert.assertTrue(pathPrefixAuthList.get(0).getServiceHost() != null);
+    }
+
+    @Test
+    public void testPathPrefixAuths() {
+        SalesforceConfig config = SalesforceConfig.load();
+        List<PathPrefixAuth> pathPrefixAuthList = config.getPathPrefixAuths();
+        Assert.assertEquals(3, pathPrefixAuthList.size());
+    }
+
+    @Test
+    public void testUrlRewriteRules() {
+        SalesforceConfig config = SalesforceConfig.load();
+        List<UrlRewriteRule> urlRewriteRules = config.getUrlRewriteRules();
+        Assert.assertEquals(2, urlRewriteRules.size());
     }
 }

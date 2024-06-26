@@ -28,13 +28,14 @@ import io.undertow.UndertowOptions;
 import io.undertow.client.ClientCallback;
 import io.undertow.client.ClientConnection;
 import io.undertow.client.UndertowClient;
-import io.undertow.protocols.ssl.UndertowXnioSsl;
 import io.undertow.connector.ByteBufferPool;
+import io.undertow.protocols.ssl.UndertowXnioSsl;
 import io.undertow.server.DefaultByteBufferPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.*;
 import org.xnio.ssl.XnioSsl;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;

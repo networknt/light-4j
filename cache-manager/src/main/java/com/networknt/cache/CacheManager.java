@@ -1,11 +1,13 @@
 package com.networknt.cache;
 
+import com.networknt.config.Config;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.utility.ModuleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * CacheManager is a singleton class that is used to manage all the caches in the system. The underline implementation
@@ -18,7 +20,7 @@ public interface CacheManager {
     Logger logger = LoggerFactory.getLogger(CacheManager.class);
     static CacheManager getInstance() {
         CacheConfig config = CacheConfig.load();
-        ModuleRegistry.registerModule(CacheConfig.CONFIG_NAME, CacheManager.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(CacheConfig.CONFIG_NAME, CacheManager.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CacheConfig.CONFIG_NAME), null);
         List<CacheItem> caches = config.getCaches();
         if(caches != null && !caches.isEmpty()) {
             CacheManager cacheManager = SingletonServiceFactory.getBean(CacheManager.class);
@@ -37,6 +39,7 @@ public interface CacheManager {
     }
 
     void addCache(String cacheName, long maxSize, long expiryInMinutes);
+    Map<Object, Object> getCache(String cacheName);
     void put(String cacheName, String key, Object value);
     Object get(String cacheName, String key);
     void delete(String cacheName, String key);

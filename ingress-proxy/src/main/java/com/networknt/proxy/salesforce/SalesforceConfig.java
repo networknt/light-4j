@@ -3,8 +3,9 @@ package com.networknt.proxy.salesforce;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import com.networknt.config.JsonMapper;
 import com.networknt.handler.config.UrlRewriteRule;
-import com.networknt.proxy.PathPrefixAuth;
+import com.networknt.config.PathPrefixAuth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -151,17 +152,31 @@ public class SalesforceConfig {
 
     public void setUrlRewriteRules() {
         this.urlRewriteRules = new ArrayList<>();
-        if (mappedConfig.get("urlRewriteRules") !=null && mappedConfig.get("urlRewriteRules") instanceof String) {
-            urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule((String)mappedConfig.get("urlRewriteRules")));
-        } else {
-            List<String> rules = (List)mappedConfig.get("urlRewriteRules");
-            if(rules != null) {
+        if(mappedConfig.get("urlRewriteRules") != null) {
+            if (mappedConfig.get("urlRewriteRules") instanceof String) {
+                String s = (String)mappedConfig.get("urlRewriteRules");
+                s = s.trim();
+                // There are two formats for the urlRewriteRules. One is a string separated by a space
+                // and the other is a list of strings separated by a space in JSON list format.
+                if(s.startsWith("[")) {
+                    // multiple rules
+                    List<String> rules = (List<String>) JsonMapper.fromJson(s, List.class);
+                    for (String rule : rules) {
+                        urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule(rule));
+                    }
+                } else {
+                    // single rule
+                    urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule(s));
+                }
+            } else if (mappedConfig.get("urlRewriteRules") instanceof List) {
+                List<String> rules = (List)mappedConfig.get("urlRewriteRules");
                 for (String s : rules) {
                     urlRewriteRules.add(UrlRewriteRule.convertToUrlRewriteRule(s));
                 }
             }
         }
     }
+
     public void setUrlRewriteRules(List<UrlRewriteRule> urlRewriteRules) {
         this.urlRewriteRules = urlRewriteRules;
     }

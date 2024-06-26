@@ -81,7 +81,7 @@ public class ServerConfig {
     String truststorePass;
     boolean enableRegistry;
     String serviceId;
-    String serviceName;    
+    String serviceName;
     String environment;
     String buildNumber;
     boolean dynamicPort;
@@ -357,8 +357,8 @@ public class ServerConfig {
 
 	public void setServiceName(String serviceName) {
 		this.serviceName = serviceName;
-	}   
-	
+	}
+
     public boolean isEnableHttp2() {
         return enableHttp2;
     }

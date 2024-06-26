@@ -1,8 +1,10 @@
 package com.networknt.reqtrans;
 
+import com.networknt.config.Config;
 import com.networknt.handler.BuffersUtils;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.RequestInterceptor;
+import com.networknt.http.UndertowConverter;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.rule.RuleConstants;
 import com.networknt.rule.RuleLoaderStartupHook;
@@ -14,6 +16,7 @@ import io.undertow.connector.PooledByteBuffer;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.protocol.http.HttpContinue;
+import io.undertow.util.HeaderMap;
 import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import org.slf4j.Logger;
@@ -21,10 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.xnio.Buffers;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Transforms the request body of an active request being processed.
@@ -44,7 +44,7 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
     public RequestTransformerInterceptor() {
         if(logger.isInfoEnabled()) logger.info("RequestTransformerHandler is loaded");
         config = RequestTransformerConfig.load();
-        ModuleRegistry.registerModule(RequestTransformerConfig.CONFIG_NAME, RequestTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(RequestTransformerConfig.CONFIG_NAME, RequestTransformerInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RequestTransformerConfig.CONFIG_NAME), null);
     }
 
     @Override
@@ -66,13 +66,13 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(RequestTransformerConfig.CONFIG_NAME, RequestTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(RequestTransformerConfig.CONFIG_NAME, RequestTransformerInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RequestTransformerConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(RequestTransformerConfig.CONFIG_NAME, RequestTransformerInterceptor.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(RequestTransformerConfig.CONFIG_NAME, RequestTransformerInterceptor.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(RequestTransformerConfig.CONFIG_NAME), null);
         if(logger.isTraceEnabled()) logger.trace("RequestTransformerInterceptor is reloaded.");
 
     }
@@ -112,10 +112,10 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
                         // call the rule engine to transform the request metadata or body. The input contains all the request elements
                         Map<String, Object> objMap = new HashMap<>();
                         objMap.put("auditInfo", auditInfo);
-                        objMap.put("requestHeaders", exchange.getRequestHeaders());
-                        objMap.put("responseHeaders", exchange.getRequestHeaders());
-                        objMap.put("queryParameters", exchange.getQueryParameters());
-                        objMap.put("pathParameters", exchange.getPathParameters());
+                        objMap.put("requestHeaders", UndertowConverter.convertHeadersToMap(exchange.getRequestHeaders()));
+                        objMap.put("responseHeaders", UndertowConverter.convertHeadersToMap(exchange.getResponseHeaders()));
+                        objMap.put("queryParameters", UndertowConverter.convertParametersToMap(exchange.getQueryParameters()));
+                        objMap.put("pathParameters", UndertowConverter.convertParametersToMap(exchange.getPathParameters()));
                         objMap.put("method", method);
                         objMap.put("requestURL", exchange.getRequestURL());
                         objMap.put("requestURI", exchange.getRequestURI());

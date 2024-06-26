@@ -17,8 +17,6 @@
 package com.networknt.health;
 
 import com.networknt.client.Http2Client;
-import com.networknt.config.Config;
-import com.networknt.config.JsonMapper;
 import com.networknt.exception.ClientException;
 import io.undertow.Handlers;
 import io.undertow.Undertow;

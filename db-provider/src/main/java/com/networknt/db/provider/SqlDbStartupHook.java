@@ -40,7 +40,7 @@ public class SqlDbStartupHook implements StartupHookProvider {
         cacheManager = CacheManager.getInstance();
         List<String> masks = new ArrayList<>();
         masks.add("password");
-        ModuleRegistry.registerModule(DbProviderConfig.CONFIG_NAME, SqlDbStartupHook.class.getName(), config.getMappedConfig(), masks);
+        ModuleRegistry.registerModule(DbProviderConfig.CONFIG_NAME, SqlDbStartupHook.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(DbProviderConfig.CONFIG_NAME), masks);
         logger.info("SqlDbStartupHook ends");
     }
 }

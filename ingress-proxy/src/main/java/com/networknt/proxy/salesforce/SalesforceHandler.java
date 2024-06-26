@@ -1,6 +1,5 @@
 package com.networknt.proxy.salesforce;
 
-import com.networknt.body.BodyHandler;
 import com.networknt.client.ClientConfig;
 import com.networknt.client.Http2Client;
 import com.networknt.client.oauth.TokenResponse;
@@ -8,18 +7,19 @@ import com.networknt.client.ssl.TLSConfig;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.config.TlsUtil;
+import com.networknt.handler.AuditAttachmentUtil;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.config.UrlRewriteRule;
 import com.networknt.httpstring.AttachmentConstants;
-import com.networknt.metrics.MetricsConfig;
 import com.networknt.metrics.AbstractMetricsHandler;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;
 import com.networknt.proxy.MultiPartBodyPublisher;
-import com.networknt.proxy.PathPrefixAuth;
+import com.networknt.config.PathPrefixAuth;
 import com.networknt.status.Status;
+import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -84,15 +84,7 @@ public class SalesforceHandler implements MiddlewareHandler {
 
     public SalesforceHandler() {
         config = SalesforceConfig.load();
-        if(config.isMetricsInjection()) {
-            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
-            // metrics handler, then an error message will be logged.
-            Map<String, HttpHandler> handlers = Handler.getHandlers();
-            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
-            if(metricsHandler == null) {
-                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
-            }
-        }
+        if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
         if(logger.isInfoEnabled()) logger.info("SalesforceAuthHandler is loaded.");
     }
 
@@ -118,24 +110,16 @@ public class SalesforceHandler implements MiddlewareHandler {
         // As certPassword is in the config file, we need to mask them.
         List<String> masks = new ArrayList<>();
         masks.add("certPassword");
-        ModuleRegistry.registerModule(SalesforceConfig.CONFIG_NAME, SalesforceHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(SalesforceConfig.CONFIG_NAME), masks);
+        ModuleRegistry.registerModule(SalesforceConfig.CONFIG_NAME, SalesforceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(SalesforceConfig.CONFIG_NAME), masks);
     }
 
     @Override
     public void reload() {
         config.reload();
-        if(config.isMetricsInjection()) {
-            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
-            // metrics handler, then an error message will be logged.
-            Map<String, HttpHandler> handlers = Handler.getHandlers();
-            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
-            if(metricsHandler == null) {
-                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
-            }
-        }
+        if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
         List<String> masks = new ArrayList<>();
         masks.add("certPassword");
-        ModuleRegistry.registerModule(SalesforceConfig.CONFIG_NAME, SalesforceHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(SalesforceConfig.CONFIG_NAME), masks);
+        ModuleRegistry.registerModule(SalesforceConfig.CONFIG_NAME, SalesforceHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(SalesforceConfig.CONFIG_NAME), masks);
         if(logger.isInfoEnabled()) logger.info("SalesforceHandler is reloaded.");
     }
 
@@ -390,6 +374,10 @@ public class SalesforceHandler implements MiddlewareHandler {
         String queryString = exchange.getQueryString();
         String contentType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
         HttpRequest request = null;
+
+        // Audit log the endpoint info
+        AuditAttachmentUtil.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, endpoint);
+
         if(method.equalsIgnoreCase("GET")) {
             request = HttpRequest.newBuilder()
                     .uri(new URI(requestHost + requestPath + "?" + queryString))
@@ -459,10 +447,12 @@ public class SalesforceHandler implements MiddlewareHandler {
         }
         if(logger.isTraceEnabled()) logger.trace("response body = " + (responseBody == null ? null : new String(responseBody, StandardCharsets.UTF_8)));
         exchange.getResponseSender().send(ByteBuffer.wrap(responseBody));
-        if(config.isMetricsInjection() && metricsHandler != null) {
-            if(logger.isTraceEnabled()) logger.trace("injecting metrics for " + config.getMetricsName());
-            metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
+        if(config.isMetricsInjection()) {
+            if(metricsHandler == null) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
+            if(metricsHandler != null) {
+                if (logger.isTraceEnabled()) logger.trace("Inject metrics for {}", config.getMetricsName());
+                metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
+            }
         }
     }
-
 }

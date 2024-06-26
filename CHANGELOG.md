@@ -1,5 +1,115 @@
 # Change Log
 
+## [2.1.34](https://github.com/networknt/light-4j/tree/2.1.34) (2024-06-22)
+
+
+**Merged pull requests:**
+
+
+- fixes \#2262 implement an admin endpoint to explore the cache manager [\#2263](https://github.com/networknt/light-4j/pull/2263) ([stevehu](https://github.com/stevehu))
+- fixes \#2260 Update tlsVersion to TLSv1.3 by default in client.yml fro… [\#2261](https://github.com/networknt/light-4j/pull/2261) ([stevehu](https://github.com/stevehu))
+- fixes \#2256 Move JwtVerifier and SwtVerifier to security-config [\#2257](https://github.com/networknt/light-4j/pull/2257) ([stevehu](https://github.com/stevehu))
+- fixes \#2253 add a new error code to status.yml to indicate Lambda to … [\#2254](https://github.com/networknt/light-4j/pull/2254) ([stevehu](https://github.com/stevehu))
+- fixes \#2251 make CONFIG_NAME public in RouterConfig and move the toke… [\#2252](https://github.com/networknt/light-4j/pull/2252) ([stevehu](https://github.com/stevehu))
+- fixes \#2249 merge token-config to router-config [\#2250](https://github.com/networknt/light-4j/pull/2250) ([stevehu](https://github.com/stevehu))
+- fixes \#2247 create router-config module to share with light-lambda-na… [\#2248](https://github.com/networknt/light-4j/pull/2248) ([stevehu](https://github.com/stevehu))
+- fixes \#2244 add request and response to the keysToNotSort in info.yml [\#2245](https://github.com/networknt/light-4j/pull/2245) ([stevehu](https://github.com/stevehu))
+- fixes \#2242 Move the PathTemplateMatcher to utility [\#2243](https://github.com/networknt/light-4j/pull/2243) ([stevehu](https://github.com/stevehu))
+- fixes \#2240 double check the metrics handler instance in the injectio… [\#2241](https://github.com/networknt/light-4j/pull/2241) ([stevehu](https://github.com/stevehu))
+- Issue2236 [\#2239](https://github.com/networknt/light-4j/pull/2239) ([stevehu](https://github.com/stevehu))
+- fixes \#2236 update basic-auth.yml to disable the handler by default [\#2237](https://github.com/networknt/light-4j/pull/2237) ([stevehu](https://github.com/stevehu))
+- fixes \#2233 rollback the method overwritten rule to pattern matching … [\#2234](https://github.com/networknt/light-4j/pull/2234) ([stevehu](https://github.com/stevehu))
+- fixes \#2231 Router rewriteMethod property does not work with path prefix [\#2232](https://github.com/networknt/light-4j/pull/2232) ([stevehu](https://github.com/stevehu))
+- fixes \#2229 Add httpClient to PathPrefixAuth to cache the client inst… [\#2230](https://github.com/networknt/light-4j/pull/2230) ([stevehu](https://github.com/stevehu))
+- fixes \#2227 move PathPrefixAuth to config module to share with Lambda [\#2228](https://github.com/networknt/light-4j/pull/2228) ([stevehu](https://github.com/stevehu))
+- fixes \#2225 update request and response transformer to remove underto… [\#2226](https://github.com/networknt/light-4j/pull/2226) ([stevehu](https://github.com/stevehu))
+- fixes \#2223 remove the cache.yml from the src resource of caffeine-cache [\#2224](https://github.com/networknt/light-4j/pull/2224) ([stevehu](https://github.com/stevehu))
+- fixes \#2221 update MrasHandler to create a new client instance per re… [\#2222](https://github.com/networknt/light-4j/pull/2222) ([stevehu](https://github.com/stevehu))
+- fixes \#2219 upgrade to http-client 1.0.10 with Jwt class change [\#2220](https://github.com/networknt/light-4j/pull/2220) ([stevehu](https://github.com/stevehu))
+- fixes \#2217 split to token-config and sidecar-config modules to share… [\#2218](https://github.com/networknt/light-4j/pull/2218) ([stevehu](https://github.com/stevehu))
+- fixes \#2215 Fix a bug in the request transformer interceptor [\#2216](https://github.com/networknt/light-4j/pull/2216) ([stevehu](https://github.com/stevehu))
+- fixes \#2213 split rule-loader config from rule-loader module [\#2214](https://github.com/networknt/light-4j/pull/2214) ([stevehu](https://github.com/stevehu))
+- fixes \#2211 split request response transformer config to separate mod… [\#2212](https://github.com/networknt/light-4j/pull/2212) ([stevehu](https://github.com/stevehu))
+- fixes \#2209 update MrasHandler to set keepalive timeout to 10 seconds [\#2210](https://github.com/networknt/light-4j/pull/2210) ([stevehu](https://github.com/stevehu))
+- fixes \#2207 replace light-4j client to http-client for ldap-util [\#2208](https://github.com/networknt/light-4j/pull/2208) ([stevehu](https://github.com/stevehu))
+- fixes \#2205 remove ldap dependency from basic-config [\#2206](https://github.com/networknt/light-4j/pull/2206) ([stevehu](https://github.com/stevehu))
+- fixes \#2203 Split basic-config module for basic-auth to share with la… [\#2204](https://github.com/networknt/light-4j/pull/2204) ([stevehu](https://github.com/stevehu))
+- fixes \#2201 split apikey-config into a separate module to share with … [\#2202](https://github.com/networknt/light-4j/pull/2202) ([stevehu](https://github.com/stevehu))
+- [pre-commit.ci] pre-commit autoupdate [\#2200](https://github.com/networknt/light-4j/pull/2200) ([pre-commit-ci](https://github.com/apps/pre-commit-ci))
+- fixes \#2198 log the error response from downstream API in external se… [\#2199](https://github.com/networknt/light-4j/pull/2199) ([stevehu](https://github.com/stevehu))
+- fixes \#2196 split common code to metrics-config to share with light-l… [\#2197](https://github.com/networknt/light-4j/pull/2197) ([stevehu](https://github.com/stevehu))
+
+
+## [2.1.33](https://github.com/networknt/light-4j/tree/2.1.33) (2024-03-31)
+
+
+**Merged pull requests:**
+
+
+- fixes \#2194 remove the jboss-threads dependency from parent pom.xml [\#2195](https://github.com/networknt/light-4j/pull/2195) ([stevehu](https://github.com/stevehu))
+- fixes \#2192 Add a status code for the rate limit in status.yml [\#2193](https://github.com/networknt/light-4j/pull/2193) ([stevehu](https://github.com/stevehu))
+- fixes \#2190 fix the JwtHeaderClientIdKeyResolver to use request header [\#2191](https://github.com/networknt/light-4j/pull/2191) ([stevehu](https://github.com/stevehu))
+- fixes \#2187 move EncoderWrapper to sanitizer-config module [\#2188](https://github.com/networknt/light-4j/pull/2188) ([stevehu](https://github.com/stevehu))
+- fixes \#2185 split sanitizer-config module to share with light-aws-lambda [\#2186](https://github.com/networknt/light-4j/pull/2186) ([stevehu](https://github.com/stevehu))
+- fixes \#2183 split logger-config and logger-handler to share with ligh… [\#2184](https://github.com/networknt/light-4j/pull/2184) ([stevehu](https://github.com/stevehu))
+- fixes \#2181 fallback to cached config to start server for ConnectExec… [\#2182](https://github.com/networknt/light-4j/pull/2182) ([stevehu](https://github.com/stevehu))
+- fixes \#2179 DefaultConfigLoader handles lightEnv in one place in the … [\#2180](https://github.com/networknt/light-4j/pull/2180) ([stevehu](https://github.com/stevehu))
+- fixes \#2176 Add aws lambda error codes [\#2177](https://github.com/networknt/light-4j/pull/2177) ([stevehu](https://github.com/stevehu))
+- fixes \#2173 remove unused imports [\#2174](https://github.com/networknt/light-4j/pull/2174) ([stevehu](https://github.com/stevehu))
+- Add validation to matchPathToPattern method [\#2171](https://github.com/networknt/light-4j/pull/2171) ([syntheshad](https://github.com/syntheshad))
+- fixes \#2169 resolve the config reload registry issue [\#2170](https://github.com/networknt/light-4j/pull/2170) ([stevehu](https://github.com/stevehu))
+- fixes \#2167 remove the token from portal-registry.yml [\#2168](https://github.com/networknt/light-4j/pull/2168) ([stevehu](https://github.com/stevehu))
+- fixes \#2165 refactor limit-config to remove dependency for undertow [\#2166](https://github.com/networknt/light-4j/pull/2166) ([stevehu](https://github.com/stevehu))
+- fixes \#2163 split handler-config from handler module [\#2164](https://github.com/networknt/light-4j/pull/2164) ([stevehu](https://github.com/stevehu))
+- fixes \#2161 remove jaeger-tracer module as it is replaced by OpenTele… [\#2162](https://github.com/networknt/light-4j/pull/2162) ([stevehu](https://github.com/stevehu))
+
+
+## [2.1.32](https://github.com/networknt/light-4j/tree/2.1.32) (2024-02-27)
+
+
+**Merged pull requests:**
+
+
+- fixes \#2159 HandlerConfig supports additionalHandlers, additionalChai… [\#2160](https://github.com/networknt/light-4j/pull/2160) ([stevehu](https://github.com/stevehu))
+- fixes \#2157 stop server or use the backup to start the server on conf… [\#2158](https://github.com/networknt/light-4j/pull/2158) ([stevehu](https://github.com/stevehu))
+- fixes \#2154 we need to load both decryped yaml and undecryped yaml fr… [\#2156](https://github.com/networknt/light-4j/pull/2156) ([stevehu](https://github.com/stevehu))
+- fixes \#2153 return 415 error if config server not return yaml and jso… [\#2155](https://github.com/networknt/light-4j/pull/2155) ([stevehu](https://github.com/stevehu))
+- rollback to application/yaml [\#2152](https://github.com/networknt/light-4j/pull/2152) ([stevehu](https://github.com/stevehu))
+- fixes \#2149 change the content type to application/x-yaml for yaml [\#2150](https://github.com/networknt/light-4j/pull/2150) ([stevehu](https://github.com/stevehu))
+- fixes \#2147 update DefaultConfigLoader to support YAML response from … [\#2148](https://github.com/networknt/light-4j/pull/2148) ([stevehu](https://github.com/stevehu))
+- fixes \#2145 update ContentType to add application/yaml [\#2146](https://github.com/networknt/light-4j/pull/2146) ([stevehu](https://github.com/stevehu))
+- fixes \#2142 Update GenericDataSource to handle integer environment va… [\#2144](https://github.com/networknt/light-4j/pull/2144) ([stevehu](https://github.com/stevehu))
+- fixes \#2124 use the client.timeout for the config server timeout [\#2143](https://github.com/networknt/light-4j/pull/2143) ([stevehu](https://github.com/stevehu))
+- fixes \#2140 update mras, salesforce and external service config to su… [\#2141](https://github.com/networknt/light-4j/pull/2141) ([stevehu](https://github.com/stevehu))
+- fixes \#2138 Handle empty string when loading typed value in Config [\#2139](https://github.com/networknt/light-4j/pull/2139) ([stevehu](https://github.com/stevehu))
+- fixes \#2136 update pathPrefixAuth to support JSON string in ApiKeyConfig [\#2137](https://github.com/networknt/light-4j/pull/2137) ([stevehu](https://github.com/stevehu))
+- fixes \#2134 change the config server timeout to startup.yml and defau… [\#2135](https://github.com/networknt/light-4j/pull/2135) ([stevehu](https://github.com/stevehu))
+- fixes \#2132 support JSON string for serviceIdAuthServers for ClientCo… [\#2133](https://github.com/networknt/light-4j/pull/2133) ([stevehu](https://github.com/stevehu))
+- fixes \#2130 update ExternalServiceConfig to support JSON string for u… [\#2131](https://github.com/networknt/light-4j/pull/2131) ([stevehu](https://github.com/stevehu))
+- fixes \#2128 update RouterConfig to support stringified JSON values [\#2129](https://github.com/networknt/light-4j/pull/2129) ([stevehu](https://github.com/stevehu))
+- fixes \#2126 remove the values.yml from config module [\#2127](https://github.com/networknt/light-4j/pull/2127) ([stevehu](https://github.com/stevehu))
+- fixes \#2124 use the client.timeout for the config server timeout [\#2125](https://github.com/networknt/light-4j/pull/2125) ([stevehu](https://github.com/stevehu))
+- fixes \#2122 limit.yml does not support JSON string for address, clien… [\#2123](https://github.com/networknt/light-4j/pull/2123) ([stevehu](https://github.com/stevehu))
+- [pre-commit.ci] pre-commit autoupdate [\#2119](https://github.com/networknt/light-4j/pull/2119) ([pre-commit-ci](https://github.com/apps/pre-commit-ci))
+- fixes \#2120 add acceptHeader to support YAML properties from config s… [\#2121](https://github.com/networknt/light-4j/pull/2121) ([stevehu](https://github.com/stevehu))
+- fixes \#2117 skip quoteReplacement only for backslash and dollar compb… [\#2118](https://github.com/networknt/light-4j/pull/2118) ([stevehu](https://github.com/stevehu))
+- fixes \#2115 Add ServerInfoUtil to be shared with light-aws-lambda [\#2116](https://github.com/networknt/light-4j/pull/2116) ([stevehu](https://github.com/stevehu))
+- fixes \#2113 split the ServerInfoConfig to a info-config module [\#2114](https://github.com/networknt/light-4j/pull/2114) ([stevehu](https://github.com/stevehu))
+- fixes \#2111 split the HealthConfig to a health-config module [\#2112](https://github.com/networknt/light-4j/pull/2112) ([stevehu](https://github.com/stevehu))
+- fixes \#2109 update basic, apikey and simple web token security handle… [\#2110](https://github.com/networknt/light-4j/pull/2110) ([stevehu](https://github.com/stevehu))
+- fixes \#2107 update a cient test case that fails on a slow computer [\#2108](https://github.com/networknt/light-4j/pull/2108) ([stevehu](https://github.com/stevehu))
+- fixes \#2104 cache the undecryped and decrypted values.yml maps in Con… [\#2105](https://github.com/networknt/light-4j/pull/2105) ([stevehu](https://github.com/stevehu))
+- fixes \#2102 support decrypt or not for values.yml and env injection [\#2103](https://github.com/networknt/light-4j/pull/2103) ([stevehu](https://github.com/stevehu))
+- fixes \#2099 Update ModuleRegistry to add back isMaskConfigProperties [\#2100](https://github.com/networknt/light-4j/pull/2100) ([stevehu](https://github.com/stevehu))
+- fixes \#2097 need a new way to load config file without decryption for… [\#2098](https://github.com/networknt/light-4j/pull/2098) ([stevehu](https://github.com/stevehu))
+- fixes \#2095 use the environment from the startup.yml if light-env env… [\#2096](https://github.com/networknt/light-4j/pull/2096) ([stevehu](https://github.com/stevehu))
+- fixes \#2087 AuditHandler Not Writing Entries at the End of the Exchan… [\#2088](https://github.com/networknt/light-4j/pull/2088) ([stevehu](https://github.com/stevehu))
+- fixes \#2085 Add keysToNotSort in info.yml to skip the string array so… [\#2086](https://github.com/networknt/light-4j/pull/2086) ([stevehu](https://github.com/stevehu))
+- Audit Logging - Replace over putIfAbsent [\#2084](https://github.com/networknt/light-4j/pull/2084) ([KalevGonvick](https://github.com/KalevGonvick))
+- fixes \#2082 update HandleUtils and refactor ServiceDictHandler [\#2083](https://github.com/networknt/light-4j/pull/2083) ([stevehu](https://github.com/stevehu))
+- ExternalServiceHandler logging fix [\#2080](https://github.com/networknt/light-4j/pull/2080) ([KalevGonvick](https://github.com/KalevGonvick))
+
+
 ## [2.1.31](https://github.com/networknt/light-4j/tree/2.1.31) (2024-01-16)
 
 

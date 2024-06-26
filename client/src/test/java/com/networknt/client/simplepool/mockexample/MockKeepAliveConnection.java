@@ -20,6 +20,7 @@
 package com.networknt.client.simplepool.mockexample;
 
 import com.networknt.client.simplepool.SimpleConnection;
+
 import java.util.concurrent.ThreadLocalRandom;
 
 public class MockKeepAliveConnection implements SimpleConnection {

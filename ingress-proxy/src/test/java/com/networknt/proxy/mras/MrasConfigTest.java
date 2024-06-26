@@ -1,9 +1,13 @@
 package com.networknt.proxy.mras;
 
 import com.networknt.common.ContentType;
+import com.networknt.handler.config.UrlRewriteRule;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.util.List;
+import java.util.Map;
 
 public class MrasConfigTest {
     @Test
@@ -27,4 +31,19 @@ public class MrasConfigTest {
         String s = ContentType.APPLICATION_JSON.value();
         System.out.println("s = " + s);
     }
+
+    @Test
+    public void testPathPrefixAuths() {
+        MrasConfig config = MrasConfig.load();
+        Map<String, Object> pathPrefixAuthList = config.getPathPrefixAuth();
+        Assert.assertEquals(4, pathPrefixAuthList.size());
+    }
+
+    @Test
+    public void testUrlRewriteRules() {
+        MrasConfig config = MrasConfig.load();
+        List<UrlRewriteRule> urlRewriteRules = config.getUrlRewriteRules();
+        Assert.assertEquals(2, urlRewriteRules.size());
+    }
+
 }

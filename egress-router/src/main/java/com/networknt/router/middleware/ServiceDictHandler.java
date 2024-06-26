@@ -1,8 +1,10 @@
 package com.networknt.router.middleware;
 
+import com.networknt.config.Config;
+import com.networknt.handler.AuditAttachmentUtil;
 import com.networknt.handler.Handler;
+import com.networknt.handler.config.HandlerUtils;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
@@ -13,12 +15,9 @@ import io.undertow.util.HeaderValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * Find service Ids using a combination of path prefix and request method.
- * 
+ *
  * @author Daniel Zhao
  *
  */
@@ -54,31 +53,15 @@ public class ServiceDictHandler implements MiddlewareHandler {
             exchange.getRequestHeaders().put(HttpStringConstants.SERVICE_ID, serviceEntry[1]);
         }
 
-        Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
-        if(auditInfo == null) {
-            // AUDIT_INFO is created for light-gateway to populate the endpoint as the OpenAPI handlers might not be available.
-            auditInfo = new HashMap<>();
-            if(serviceEntry != null) {
-                if(logger.isTraceEnabled())  logger.trace("auditInfo is null and serviceEntry found and endpoint is set for = " + serviceEntry[0]);
-                auditInfo.put(Constants.ENDPOINT_STRING, serviceEntry[0]);
-            } else {
-                if(logger.isTraceEnabled())  logger.trace("auditInfo is null and serviceEntry not found and endpoint is set for = " + Constants.UNKOWN_STRING + "@" + exchange.getRequestMethod().toString().toLowerCase());
-                // at this moment, we don't have a way to reliably determine the endpoint.
-                auditInfo.put(Constants.ENDPOINT_STRING, Constants.UNKOWN_STRING + "@" + exchange.getRequestMethod().toString().toLowerCase());
-            }
-            exchange.putAttachment(AttachmentConstants.AUDIT_INFO, auditInfo);
+        if (serviceEntry != null) {
+            if (logger.isTraceEnabled())
+                logger.trace("serviceEntry found and endpoint is set to = '{}'", serviceEntry[0]);
+            AuditAttachmentUtil.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, serviceEntry[0]);
         } else {
-            if(!auditInfo.containsKey(Constants.ENDPOINT_STRING)) {
-                if(serviceEntry != null) {
-                    if(logger.isTraceEnabled())  logger.trace("auditInfo is not null and serviceEntry found and endpoint is set for = " + serviceEntry[0]);
-                    auditInfo.put(Constants.ENDPOINT_STRING, serviceEntry[0]);
-                } else {
-                    if(logger.isTraceEnabled())  logger.trace("auditInfo is not null and serviceEntry not found and endpoint is set for = " + Constants.UNKOWN_STRING + "@" + exchange.getRequestMethod().toString().toLowerCase());
-                    // at this moment, we don't have a way to reliably determine the endpoint.
-                    auditInfo.put(Constants.ENDPOINT_STRING, Constants.UNKOWN_STRING + "@" + exchange.getRequestMethod().toString().toLowerCase());
-                }
-            }
-            if(logger.isTraceEnabled()) logger.trace("auditInfo is not null and endpoint value is  = " + auditInfo.get(Constants.ENDPOINT_STRING));
+            if (logger.isTraceEnabled())
+                logger.trace("serviceEntry is null and endpoint is set to = '{}@{}'", Constants.UNKOWN_STRING, exchange.getRequestMethod().toString().toLowerCase());
+            // at this moment, we don't have a way to reliably determine the endpoint.
+            AuditAttachmentUtil.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, Constants.UNKOWN_STRING + "@" + exchange.getRequestMethod().toString().toLowerCase());
         }
     }
 
@@ -101,13 +84,13 @@ public class ServiceDictHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(ServiceDictConfig.CONFIG_NAME, ServiceDictHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ServiceDictConfig.CONFIG_NAME, ServiceDictHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ServiceDictConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(ServiceDictConfig.CONFIG_NAME, ServiceDictHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(ServiceDictConfig.CONFIG_NAME, ServiceDictHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ServiceDictConfig.CONFIG_NAME), null);
         if(logger.isInfoEnabled()) logger.info("ServiceDictHandler is reloaded.");
     }
 }

@@ -155,7 +155,7 @@ public class AuditHandler implements MiddlewareHandler {
                         for (String name : config.getAuditList()) {
                             Object object = auditInfo1.get(name);
                             if(object != null) {
-                                auditMap.putIfAbsent(name, object);
+                                auditMap.put(name, object);
                             }
                         }
                     }
@@ -362,13 +362,13 @@ public class AuditHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(AuditConfig.CONFIG_NAME, AuditHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(AuditConfig.CONFIG_NAME, AuditHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(AuditConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(AuditConfig.CONFIG_NAME, AuditHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(AuditConfig.CONFIG_NAME, AuditHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(AuditConfig.CONFIG_NAME), null);
         if(logger.isInfoEnabled()) logger.info("AuditHandler is reloaded.");
     }
 }

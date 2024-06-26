@@ -18,6 +18,7 @@ package com.networknt.server;
 
 import com.networknt.common.SecretConstants;
 import com.networknt.config.Config;
+import com.networknt.config.TlsUtil;
 import com.networknt.handler.Handler;
 import com.networknt.handler.HandlerProvider;
 import com.networknt.handler.MiddlewareHandler;
@@ -31,7 +32,6 @@ import com.networknt.switcher.SwitcherUtil;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.NetUtils;
-import com.networknt.config.TlsUtil;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
@@ -126,7 +126,7 @@ public class Server {
             masks.add("keyPass");
             masks.add("truststorePass");
             masks.add("bootstrapStorePass");
-            ModuleRegistry.registerModule(ServerConfig.CONFIG_NAME, Server.class.getName(), Config.getInstance().getJsonMapConfigNoCache(ServerConfig.CONFIG_NAME), masks);
+            ModuleRegistry.registerModule(ServerConfig.CONFIG_NAME, Server.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ServerConfig.CONFIG_NAME), masks);
 
             // start the server
             start();
@@ -191,7 +191,7 @@ public class Server {
                 System.out.println(errMessage);
                 logger.error(errMessage);
                 throw new RuntimeException(errMessage);
-            }          
+            }
             // init usedPort here before starting the loop.
             int capacity = serverConfig.maxPort - serverConfig.minPort + 1;
             usedPorts = new HashSet(capacity);

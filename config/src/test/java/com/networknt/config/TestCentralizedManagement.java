@@ -33,7 +33,7 @@ public class TestCentralizedManagement {
     public void testMap_mergeApplied_mutatesInPlaceCorrectly() {
         Map<String, Object> testMap = new HashMap<>();
         testMap.put("key", "${TEST.string}");
-        CentralizedManagement.mergeMap(testMap);
+        CentralizedManagement.mergeMap(true, testMap);
         Assert.assertEquals("test", testMap.get("key").toString());
     }
 
@@ -42,7 +42,7 @@ public class TestCentralizedManagement {
         Map<String, Object> testMap = new HashMap<>();
         testMap.put("key", "${TEST.somethingNotInValues}");
         try {
-            CentralizedManagement.mergeMap(testMap);
+            CentralizedManagement.mergeMap(true, testMap);
             fail();
         } catch (ConfigException expected) {
             // pass
@@ -53,7 +53,7 @@ public class TestCentralizedManagement {
     public void testMap_valueCastToInt() {
         Map<String, Object> testMap = new HashMap<>();
         testMap.put("key", "${TEST.int: 1}");
-        CentralizedManagement.mergeMap(testMap);
+        CentralizedManagement.mergeMap(true, testMap);
         Assert.assertTrue(testMap.get("key") instanceof Integer);
     }
 
@@ -61,7 +61,7 @@ public class TestCentralizedManagement {
     public void testMap_valueCastToDouble() {
         Map<String, Object> testMap = new HashMap<>();
         testMap.put("key", "${TEST.double: 1.1}");
-        CentralizedManagement.mergeMap(testMap);
+        CentralizedManagement.mergeMap(true, testMap);
         Assert.assertTrue(testMap.get("key") instanceof Double);
     }
 
@@ -69,7 +69,7 @@ public class TestCentralizedManagement {
     public void testMap_valueCastToBoolean() {
         Map<String, Object> testMap = new HashMap<>();
         testMap.put("key", "${TEST.boolean: true}");
-        CentralizedManagement.mergeMap(testMap);
+        CentralizedManagement.mergeMap(true, testMap);
         Assert.assertTrue(testMap.get("key") instanceof Boolean);
     }
 
@@ -77,7 +77,7 @@ public class TestCentralizedManagement {
     public void testMap_allowNullOverwrite() {
         Map<String, Object> testMap = new HashMap<>();
         testMap.put("key", "${TEST.null: value}");
-        CentralizedManagement.mergeMap(testMap);
+        CentralizedManagement.mergeMap(true, testMap);
         Assert.assertNull(testMap.get("key"));
     }
 
@@ -85,7 +85,7 @@ public class TestCentralizedManagement {
     public void testMap_allowEmptyStringOverwrite() {
         Map<String, Object> testMap = new HashMap<>();
         testMap.put("key", "${TEST.emptyString: value}");
-        CentralizedManagement.mergeMap(testMap);
+        CentralizedManagement.mergeMap(true, testMap);
         Assert.assertEquals("", testMap.get("key"));
     }
 
@@ -101,21 +101,21 @@ public class TestCentralizedManagement {
     public void testMap_key_notAllowEmptyStringOverwrite() {
         Map<String, Object> testMap = new HashMap<>();
         testMap.put("${TEST.emptyString: key}", "value");
-        CentralizedManagement.mergeMap(testMap);
+        CentralizedManagement.mergeMap(true, testMap);
     }
 
     @Test(expected = RuntimeException.class)
     public void testMap_key_notAllowNullOverwrite() {
         Map<String, Object> testMap = new HashMap<>();
         testMap.put("${TEST.null: key}", "value");
-        CentralizedManagement.mergeMap(testMap);
+        CentralizedManagement.mergeMap(true, testMap);
     }
 
     @Test
     public void testMap_key_mergeApplied_mutatesInPlaceCorrectly() {
         Map<String, Object> testMap = new HashMap<>();
         testMap.put("${TEST.string}", "value");
-        CentralizedManagement.mergeMap(testMap);
+        CentralizedManagement.mergeMap(true, testMap);
         Assert.assertEquals(testMap.get("test").toString(), "value");
     }
 
@@ -123,13 +123,13 @@ public class TestCentralizedManagement {
     public void testMap_key_mergeWhenFieldNotInValues_throwsException() {
         Map<String, Object> testMap = new HashMap<>();
         testMap.put("${TEST.somethingNotInValues}", "value");
-        CentralizedManagement.mergeMap(testMap);
+        CentralizedManagement.mergeMap(true, testMap);
     }
 
     @Test(expected = RuntimeException.class)
     public void testMap_key_keyMustBeString() {
         Map<String, Object> testMap = new HashMap<>();
         testMap.put("${TEST.double: 1.1}", "value");
-        CentralizedManagement.mergeMap(testMap);
+        CentralizedManagement.mergeMap(true, testMap);
     }
 }

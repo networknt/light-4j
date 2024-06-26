@@ -1,6 +1,5 @@
 package com.networknt.config;
 
-import com.networknt.config.TlsUtil;
 import org.junit.Assert;
 import org.junit.Test;
 

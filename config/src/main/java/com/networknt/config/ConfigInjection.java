@@ -56,29 +56,33 @@ public class ConfigInjection {
     private static final Map<String, Object> exclusionMap = Config.getInstance().getJsonMapConfig(SCALABLE_CONFIG);
 
     // Define the injection pattern which represents the injection points
-    private static Pattern pattern = Pattern.compile("\\$\\{(.*?)\\}");
+    private static final Pattern pattern = Pattern.compile("\\$\\{(.*?)\\}");
 
-    private static String[] trueArray = {"y", "Y", "yes", "Yes", "YES", "true", "True", "TRUE", "on", "On", "ON"};
-    private static String[] falseArray = {"n", "N", "no", "No", "NO", "false", "False", "FALSE", "off", "Off", "OFF"};
-    private static Decryptor decryptor = DecryptConstructor.getInstance().getDecryptor();
+    private static final String[] trueArray = {"y", "Y", "yes", "Yes", "YES", "true", "True", "TRUE", "on", "On", "ON"};
+    private static final String[] falseArray = {"n", "N", "no", "No", "NO", "false", "False", "FALSE", "off", "Off", "OFF"};
+    private static final Decryptor decryptor = DecryptConstructor.getInstance().getDecryptor();
+
+    public static Map<String, Object> decryptedValueMap = Config.getInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
+    public static Map<String, Object> undecryptedValueMap = Config.getNoneDecryptedInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
+
 
     // Method used to generate the values from environment variables or "values.yaml"
-    public static Object getInjectValue(String string) {
+    public static Object getInjectValue(String string, boolean decrypt) {
         Matcher m = pattern.matcher(string);
         StringBuffer sb = new StringBuffer();
         // Parse the content inside pattern "${}" when this pattern is found
         while (m.find()) {
             // Get parsing result
-            Object value = getValue(m.group(1));
-            // Return directly when the parsing result don't need to be casted to String
+            Object value = getValue(m.group(1), decrypt);
+            // Return directly when the parsing result don't need to be cast to String
             if (!(value instanceof String)) {
                 return value;
             }
             String valueStr = (String)value;
-            if(valueStr.contains("\\")) {
+            if(valueStr.contains("\\$")) {
                 m.appendReplacement(sb, (String)value);
             } else {
-                m.appendReplacement(sb, m.quoteReplacement((String)value));
+                m.appendReplacement(sb, Matcher.quoteReplacement((String)value));
             }
         }
         return m.appendTail(sb).toString();
@@ -99,7 +103,7 @@ public class ConfigInjection {
 
     static String convertEnvVars(String input){
         // check for any non-alphanumeric chars and convert to underscore
-        // convert to uppcase
+        // convert to upper case
         if (input == null) {
             return null;
         }
@@ -118,28 +122,39 @@ public class ConfigInjection {
 
 
     // Method used to parse the content inside pattern "${}"
-    private static Object getValue(String content) {
+    private static Object getValue(String content, boolean decrypt) {
         InjectionPattern injectionPattern = getInjectionPattern(content);
         Object value = null;
         if (injectionPattern != null) {
             // Flag to validate whether the environment or values.yml contains the corresponding field
-            Boolean containsField = false;
+            boolean containsField = false;
             // Use key of injectionPattern to get value from both environment variables and "values.yaml"
             String envValString = System.getenv(convertEnvVars(injectionPattern.getKey()));
-            Object envValue = decryptEnvValue(decryptor, envValString);
-            // change to no cache method to support config-reload.
-            Map<String, Object> valueMap = Config.getInstance().getDefaultJsonMapConfigNoCache(CENTRALIZED_MANAGEMENT);
-            Object fileValue = (valueMap != null) ? valueMap.get(injectionPattern.getKey()) : null;
+
+            Object envValue;
+            Object fileValue;
+            if(decrypt) {
+                envValue = decryptEnvValue(decryptor, envValString);
+                fileValue = (decryptedValueMap != null) ? decryptedValueMap.get(injectionPattern.getKey()) : null;
+                // Skip none validation to inject null or empty string directly when the corresponding field is presented in value.yml or environment
+                if ((decryptedValueMap != null && decryptedValueMap.containsKey(injectionPattern.getKey())) ||
+                        (System.getenv() != null && System.getenv().containsKey(injectionPattern.getKey()))) {
+                    containsField = true;
+                }
+            } else {
+                envValue = envValString;
+                fileValue = (undecryptedValueMap != null) ? undecryptedValueMap.get(injectionPattern.getKey()) : null;
+                // Skip none validation to inject null or empty string directly when the corresponding field is presented in value.yml or environment
+                if ((undecryptedValueMap != null && undecryptedValueMap.containsKey(injectionPattern.getKey())) ||
+                        (System.getenv() != null && System.getenv().containsKey(injectionPattern.getKey()))) {
+                    containsField = true;
+                }
+            }
             // Return different value from different sources based on injection order defined before
             if ((INJECTION_ORDER_CODE.equals("2") && envValue != null) || (INJECTION_ORDER_CODE.equals("1") && fileValue == null)) {
                 value = envValue;
             } else {
                 value = fileValue;
-            }
-            // Skip none validation to inject null or empty string directly when the corresponding field is presented in value.yml or environment
-            if ((valueMap != null && valueMap.containsKey(injectionPattern.getKey())) ||
-                    (System.getenv() != null && System.getenv().containsKey(injectionPattern.getKey()))) {
-                containsField = true;
             }
             // Return default value when no matched value found from environment variables and "values.yaml"
             if (value == null && !containsField) {
@@ -147,7 +162,7 @@ public class ConfigInjection {
                 // Throw exception when error text provided
                 if (value == null || value.equals("")) {
                     String error_text = injectionPattern.getErrorText();
-                    if (error_text != null && !error_text.equals("")) {
+                    if (error_text != null && !error_text.isEmpty()) {
                         throw new ConfigException(error_text);
                     }
                     // Throw exception when no parsing result found
@@ -162,7 +177,7 @@ public class ConfigInjection {
 
     // Get instance of InjectionPattern based on the contents inside pattern "${}"
     private static InjectionPattern getInjectionPattern(String contents) {
-        if (contents == null || contents.trim().equals("")) {
+        if (contents == null || contents.trim().isEmpty()) {
             return null;
         }
         InjectionPattern injectionPattern = new InjectionPattern();
@@ -170,7 +185,7 @@ public class ConfigInjection {
         // Retrieve key, default value and error text
         String[] array = contents.split(":", 2);
         array[0] = array[0].trim();
-        if ("".equals(array[0])) {
+        if (array[0].isEmpty()) {
             return null;
         }
         // Set key of the injectionPattern
@@ -234,7 +249,7 @@ public class ConfigInjection {
 
     // Method used to cast string into int, double or boolean
     private static Object typeCast(String str) {
-        if (str == null || str.equals("")) {
+        if (str == null || str.isEmpty()) {
             return null;
         }
         // Try to cast to boolean true

@@ -76,7 +76,7 @@ public class ApiKeyHandler implements MiddlewareHandler {
         if(!config.hashEnabled) {
             masks.add("apiKey");
         }
-        ModuleRegistry.registerModule(ApiKeyConfig.CONFIG_NAME, ApiKeyHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(ApiKeyConfig.CONFIG_NAME), masks);
+        ModuleRegistry.registerModule(ApiKeyConfig.CONFIG_NAME, ApiKeyHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ApiKeyConfig.CONFIG_NAME), masks);
     }
 
     @Override
@@ -86,7 +86,7 @@ public class ApiKeyHandler implements MiddlewareHandler {
         if(!config.hashEnabled) {
             masks.add("apiKey");
         }
-        ModuleRegistry.registerModule(ApiKeyConfig.CONFIG_NAME, ApiKeyHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(ApiKeyConfig.CONFIG_NAME), masks);
+        ModuleRegistry.registerModule(ApiKeyConfig.CONFIG_NAME, ApiKeyHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(ApiKeyConfig.CONFIG_NAME), masks);
         if(logger.isInfoEnabled()) logger.info("ApiKeyHandler is reloaded.");
     }
 

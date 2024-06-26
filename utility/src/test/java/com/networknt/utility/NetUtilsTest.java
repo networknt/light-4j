@@ -15,7 +15,7 @@
  */
 
 /**
- * 
+ *
  */
 package com.networknt.utility;
 
@@ -26,7 +26,7 @@ import java.net.*;
 
 /**
  * @author bozheng
- * 
+ *
  */
 public class NetUtilsTest {
 

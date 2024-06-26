@@ -1,0 +1,14 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+    -   id: check-added-large-files
+-   repo: https://github.com/networknt/pre-commit-hook-keyword
+    rev: f17c4de14fc24420f6768c19cad06ba03af06d86
+    hooks:
+    -   id: keywordscan
+        args: ["--keywords=c3VubGlmZQ==,Y2liYw==,c3VuIGxpZmU="]
+        types: ["text"]

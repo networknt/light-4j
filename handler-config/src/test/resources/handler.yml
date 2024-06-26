@@ -1,0 +1,37 @@
+---
+enabled: true
+
+# Configuration for the LightHttpHandler. The handler is the base class  for all middleware, server and health handlers
+# set the Status Object in the AUDIT_INFO, for auditing purposes
+# default, if not set:false
+auditOnError: true
+
+# set the StackTrace in the AUDIT_INFO, for auditing purposes
+# default, if not set:false
+auditStackTrace: true
+
+handlers:
+  - com.networknt.handler.sample.SampleHttpHandler1
+  - com.networknt.handler.sample.SampleHttpHandler2
+  - com.networknt.handler.sample.SampleHttpHandler3@third
+
+chains:
+  secondBeforeFirst:
+    - com.networknt.handler.sample.SampleHttpHandler2
+    - com.networknt.handler.sample.SampleHttpHandler1
+
+paths:
+  - path: '/test'
+    method: 'get'
+    exec:
+      - secondBeforeFirst
+      - third
+  - path: '/v2/health'
+    method: 'post'
+    exec:
+      - secondBeforeFirst
+      - third
+# If there is no matched path, then it goes here first. If this is not set, then an error
+# will be returned.
+defaultHandlers:
+  - third

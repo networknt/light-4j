@@ -1,11 +1,11 @@
 package com.networknt.server.model;
 
-import java.util.Objects;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 /**
- * 
+ *
  * POJO class for response body of shutdown endpoint.
  *
  *

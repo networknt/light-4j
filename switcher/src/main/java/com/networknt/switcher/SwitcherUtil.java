@@ -19,7 +19,7 @@ package com.networknt.switcher;
 
 /**
  * A static switcher utility. Normally it is used as global switcher.
- * 
+ *
  * @author zhanglei
  *
  */
@@ -32,7 +32,7 @@ public class SwitcherUtil {
 
     /**
      * Check if switcher is on or off
-     * 
+     *
      * @param switcherName switcher name
      * @return boolean true ：switcher is on and value is true, false：switcher is off and value is false
      */
@@ -42,7 +42,7 @@ public class SwitcherUtil {
 
     /**
      * Check if switcher is on or off. If it doesn't exist, set default value and return the default value
-     * 
+     *
      * @param switcherName switcher name
      * @param defaultValue default value
      * @return boolean If switcher exists, return the state, otherwise, set default value and return it.
@@ -53,7 +53,7 @@ public class SwitcherUtil {
 
     /**
      * Set switcher state
-     * 
+     *
      * @param switcherName switcher name
      * @param value value to be set
      */

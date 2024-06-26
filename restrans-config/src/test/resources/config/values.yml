@@ -1,0 +1,15 @@
+# server.yml
+server.serviceId: com.networknt.restrans-1.0.0
+
+# rule-loader.yml
+rule-Loader.ruleSource: config-folder
+rule-loader.endpointRules: {"/v1/pets@get":{"response-transform":[{"ruleId":"petstore-response-transformer"}]}}
+#   /v1/pets@get:
+#     response-transform:
+#       - ruleId: petstore-response-transformer
+
+# service.yml
+service.singletons: [{"com.networknt.server.StartupHookProvider":["com.networknt.rule.RuleLoaderStartupHook"]},{"com.networknt.handler.ResponseInterceptorHandler":["com.networknt.restrans.ResponseTransformerInterceptor"]}]
+
+# response-transformer.yml
+response-transformer.appliedPathPrefixes: ["/v1/notifications"]

@@ -39,7 +39,7 @@ public class ProxyHealthGetHandler implements LightHttpHandler {
 
     public ProxyHealthGetHandler() {
         if(logger.isTraceEnabled()) logger.trace("ProxyHealthGetHandler is constructed.");
-        ModuleRegistry.registerModule(HealthConfig.CONFIG_NAME, ProxyHealthGetHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(HealthConfig.CONFIG_NAME, ProxyHealthGetHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(HealthConfig.CONFIG_NAME), null);
     }
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {

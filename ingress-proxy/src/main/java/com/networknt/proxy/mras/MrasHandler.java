@@ -8,17 +8,18 @@ import com.networknt.client.ssl.TLSConfig;
 import com.networknt.config.Config;
 import com.networknt.config.JsonMapper;
 import com.networknt.config.TlsUtil;
+import com.networknt.handler.AuditAttachmentUtil;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.handler.config.UrlRewriteRule;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.common.ContentType;
-import com.networknt.metrics.MetricsConfig;
 import com.networknt.metrics.AbstractMetricsHandler;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;
 import com.networknt.status.Status;
+import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -78,20 +79,11 @@ public class MrasHandler implements MiddlewareHandler {
     private long accessTokenExpiration = 0;
     private long microsoftExpiration = 0;
 
-    private HttpClient client;
     private HttpClient clientMicrosoft;
 
     public MrasHandler() {
         config = MrasConfig.load();
-        if(config.isMetricsInjection()) {
-            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
-            // metrics handler, then an error message will be logged.
-            Map<String, HttpHandler> handlers = Handler.getHandlers();
-            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
-            if(metricsHandler == null) {
-                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
-            }
-        }
+        if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
         if(logger.isInfoEnabled()) logger.info("MrasHandler is loaded.");
     }
 
@@ -121,28 +113,20 @@ public class MrasHandler implements MiddlewareHandler {
         masks.add("trustStorePass");
         masks.add("password");
         // use a new no cache instance to avoid the default config to be overwritten.
-        ModuleRegistry.registerModule(MrasConfig.CONFIG_NAME, MrasHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(MrasConfig.CONFIG_NAME), masks);
+        ModuleRegistry.registerModule(MrasConfig.CONFIG_NAME, MrasHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(MrasConfig.CONFIG_NAME), masks);
     }
 
     @Override
     public void reload() {
         config.reload();
-        if(config.isMetricsInjection()) {
-            // get the metrics handler from the handler chain for metrics registration. If we cannot get the
-            // metrics handler, then an error message will be logged.
-            Map<String, HttpHandler> handlers = Handler.getHandlers();
-            metricsHandler = (AbstractMetricsHandler) handlers.get(MetricsConfig.CONFIG_NAME);
-            if(metricsHandler == null) {
-                logger.error("An instance of MetricsHandler is not configured in the handler.yml.");
-            }
-        }
+        if(config.isMetricsInjection()) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
         List<String> masks = new ArrayList<>();
         masks.add("keyStorePass");
         masks.add("keyPass");
         masks.add("trustStorePass");
         masks.add("password");
         // use a new no cache instance to avoid the default config to be overwritten.
-        ModuleRegistry.registerModule(MrasConfig.CONFIG_NAME, MrasHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(MrasConfig.CONFIG_NAME), masks);
+        ModuleRegistry.registerModule(MrasConfig.CONFIG_NAME, MrasHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(MrasConfig.CONFIG_NAME), masks);
         if(logger.isInfoEnabled()) logger.info("MrasHandler is reloaded.");
     }
 
@@ -190,6 +174,10 @@ public class MrasHandler implements MiddlewareHandler {
                             return;
                         }
                     }
+
+                    // Audit log the endpoint info
+                    AuditAttachmentUtil.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, endpoint);
+
                     invokeApi(exchange, (String)config.getAccessToken().get(config.SERVICE_HOST), requestPath, "Bearer " + accessToken, startTime, endpoint);
                     if(logger.isDebugEnabled()) logger.debug("MrasHandler.handleRequest ends.");
                     return;
@@ -298,31 +286,33 @@ public class MrasHandler implements MiddlewareHandler {
             setExchangeStatus(exchange, METHOD_NOT_ALLOWED, method, requestPath);
             return;
         }
-        if(client == null) {
-            try {
-                HttpClient.Builder clientBuilder = HttpClient.newBuilder()
-                        .followRedirects(HttpClient.Redirect.NORMAL)
-                        .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
-                        // we cannot use the Http2Client SSL Context as we need two-way TLS here.
-                        .sslContext(createSSLContext());
-                if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
-                if (config.isEnableHttp2()) {
-                    clientBuilder.version(HttpClient.Version.HTTP_2);
-                } else {
-                    clientBuilder.version(HttpClient.Version.HTTP_1_1);
-                }
-                // this a workaround to bypass the hostname verification in jdk11 http client.
-                Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
-                if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
-                    final Properties props = System.getProperties();
-                    props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
-                }
-                client = clientBuilder.build();
-            } catch (IOException e) {
-                logger.error("Cannot create HttpClient:", e);
-                setExchangeStatus(exchange, TLS_TRUSTSTORE_ERROR);
-                return;
+        HttpClient client;;
+        try {
+            HttpClient.Builder clientBuilder = HttpClient.newBuilder()
+                    .followRedirects(HttpClient.Redirect.NORMAL)
+                    .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
+                    // we cannot use the Http2Client SSL Context as we need two-way TLS here.
+                    .sslContext(createSSLContext());
+            if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
+            if (config.isEnableHttp2()) {
+                clientBuilder.version(HttpClient.Version.HTTP_2);
+            } else {
+                clientBuilder.version(HttpClient.Version.HTTP_1_1);
             }
+            // this a workaround to bypass the hostname verification in jdk11 http client.
+            Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+            final Properties props = System.getProperties();
+            if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
+                props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
+            }
+            props.setProperty("jdk.httpclient.keepalive.timeout", "10");
+            props.setProperty("jdk.httpclient.connectionPoolSize", "10");
+
+            client = clientBuilder.build();
+        } catch (IOException e) {
+            logger.error("Cannot create HttpClient:", e);
+            setExchangeStatus(exchange, TLS_TRUSTSTORE_ERROR);
+            return;
         }
         HttpResponse<byte[]> response  = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
         HttpHeaders responseHeaders = response.headers();
@@ -338,39 +328,44 @@ public class MrasHandler implements MiddlewareHandler {
             }
         }
         exchange.getResponseSender().send(ByteBuffer.wrap(responseBody));
-        if(config.isMetricsInjection() && metricsHandler != null) {
-            if(logger.isTraceEnabled()) logger.trace("inject metrics for " + config.getMetricsName());
-            metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
+        if(config.isMetricsInjection()) {
+            if(metricsHandler == null) metricsHandler = AbstractMetricsHandler.lookupMetricsHandler();
+            if(metricsHandler != null) {
+                if (logger.isTraceEnabled()) logger.trace("Inject metrics for {}", config.getMetricsName());
+                metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
+            }
         }
     }
 
     private Result<TokenResponse> getAccessToken() throws Exception {
         TokenResponse tokenResponse = null;
-        if(client == null) {
-            try {
-                HttpClient.Builder clientBuilder = HttpClient.newBuilder()
-                        .followRedirects(HttpClient.Redirect.NORMAL)
-                        .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
-                        // we cannot use the Http2Client SSL Context as we need two-way TLS here.
-                        .sslContext(createSSLContext());
-                if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
-                if (config.isEnableHttp2()) {
-                    clientBuilder.version(HttpClient.Version.HTTP_2);
-                } else {
-                    clientBuilder.version(HttpClient.Version.HTTP_1_1);
-                }
-                // this a workaround to bypass the hostname verification in jdk11 http client.
-                Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
-                if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
-                    final Properties props = System.getProperties();
-                    props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
-                }
-                client = clientBuilder.build();
-            } catch (IOException e) {
-                logger.error("Cannot create HttpClient:", e);
-                return Failure.of(new Status(TLS_TRUSTSTORE_ERROR));
+        HttpClient client;
+        try {
+            HttpClient.Builder clientBuilder = HttpClient.newBuilder()
+                    .followRedirects(HttpClient.Redirect.NORMAL)
+                    .connectTimeout(Duration.ofMillis(ClientConfig.get().getTimeout()))
+                    // we cannot use the Http2Client SSL Context as we need two-way TLS here.
+                    .sslContext(createSSLContext());
+            if(config.getProxyHost() != null) clientBuilder.proxy(ProxySelector.of(new InetSocketAddress(config.getProxyHost(), config.getProxyPort() == 0 ? 443 : config.getProxyPort())));
+            if (config.isEnableHttp2()) {
+                clientBuilder.version(HttpClient.Version.HTTP_2);
+            } else {
+                clientBuilder.version(HttpClient.Version.HTTP_1_1);
             }
+            // this a workaround to bypass the hostname verification in jdk11 http client.
+            Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+            final Properties props = System.getProperties();
+            if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
+                props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
+            }
+            props.setProperty("jdk.httpclient.keepalive.timeout", "10");
+            props.setProperty("jdk.httpclient.connectionPoolSize", "10");
+            client = clientBuilder.build();
+        } catch (IOException e) {
+            logger.error("Cannot create HttpClient:", e);
+            return Failure.of(new Status(TLS_TRUSTSTORE_ERROR));
         }
+
         try {
             String serverUrl = (String)config.getAccessToken().get(config.TOKEN_URL);
             if(serverUrl == null) {
@@ -434,10 +429,13 @@ public class MrasHandler implements MiddlewareHandler {
                 }
                 // this a workaround to bypass the hostname verification in jdk11 http client.
                 Map<String, Object> tlsMap = (Map<String, Object>)ClientConfig.get().getMappedConfig().get(Http2Client.TLS);
+                final Properties props = System.getProperties();
                 if(tlsMap != null && !Boolean.TRUE.equals(tlsMap.get(TLSConfig.VERIFY_HOSTNAME))) {
-                    final Properties props = System.getProperties();
                     props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
                 }
+                props.setProperty("jdk.httpclient.keepalive.timeout", "10");
+                props.setProperty("jdk.httpclient.connectionPoolSize", "10");
+
                 clientMicrosoft = clientBuilder.build();
             } catch (IOException e) {
                 logger.error("Cannot create HttpClient:", e);
@@ -566,5 +564,4 @@ public class MrasHandler implements MiddlewareHandler {
 
         return sslContext;
     }
-
 }

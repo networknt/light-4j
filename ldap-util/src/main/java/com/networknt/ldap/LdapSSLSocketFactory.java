@@ -1,6 +1,6 @@
 package com.networknt.ldap;
 
-import com.networknt.client.Http2Client;
+import com.networknt.http.client.HttpClientRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +18,7 @@ public class LdapSSLSocketFactory extends SSLSocketFactory {
 
     public LdapSSLSocketFactory() {
         try {
-            SSLContext ctx = Http2Client.createSSLContext();
+            SSLContext ctx = HttpClientRequest.createSSLContext();
             socketFactory = ctx.getSocketFactory();
         } catch ( Exception ex ){ throw new IllegalArgumentException(ex); }
     }

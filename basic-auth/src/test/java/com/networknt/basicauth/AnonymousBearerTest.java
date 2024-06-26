@@ -86,23 +86,6 @@ public class AnonymousBearerTest {
         return Handlers.routing().add(Methods.GET, "/v2/pet", exchange -> exchange.getResponseSender().send("OK"));
     }
 
-    private static String encodeCredentialsFullFormat(String username, String password, String separator) {
-        String cred;
-        if(password != null) {
-            cred = username + separator + password;
-        } else {
-            cred = username;
-        }
-        String encodedValue;
-        byte[] encodedBytes = Base64.encodeBase64(cred.getBytes(UTF_8));
-        encodedValue = new String(encodedBytes, UTF_8);
-        return encodedValue;
-    }
-
-    private static String encodeCredentials(String username, String password) {
-        return encodeCredentialsFullFormat(username, password, ":");
-    }
-
     @Test
     public void testWithAnonymousWrongPath() throws Exception {
         final Http2Client client = Http2Client.getInstance();

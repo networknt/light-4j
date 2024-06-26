@@ -571,6 +571,26 @@ ERR10085:
   code: ERR10085
   message: OPENAPI_OPERATION_MISSED
   description: OpenAPI operation is missed from the auditInfo.
+ERR10086:
+  statusCode: 400
+  code: ERR10086
+  message: FAILED_TO_INVOKE_LAMBDA
+  description: Failed to invoke lambda function %.
+ERR10087:
+  statusCode: 400
+  code: ERR10087
+  message: EXCHANGE_HAS_FAILED_STATE
+  description: Exchange has failed state %.
+ERR10088:
+  statusCode: 429
+  code: ERR10088
+  message: RATE_LIMIT_EXCEEDED
+  description: Rate limit exceeded.
+ERR10089:
+  statusCode: 400
+  code: ERR10089
+  message: FAILED_TO_INVOKE_SERVICE
+  description: Failed to invoke HTTP service with serviceId %.
 
 # 11000-11499 swagger-validator errors
 ERR11000:

@@ -47,7 +47,7 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
             pattern = Pattern.compile(config.getIssuerRegex());
         }
         serverConfig = ServerConfig.getInstance();
-        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, APMMetricsHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, APMMetricsHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(MetricsConfig.CONFIG_NAME), null);
         if(logger.isDebugEnabled()) logger.debug("APMMetricsHandler is constructed!");
     }
 
@@ -63,7 +63,7 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
             if (logger.isDebugEnabled()) {
                 logger.debug(commonTags.toString());
             }
-            
+
             try {
                 TimeSeriesDbSender sender =
                         new APMEPAgentSender(config.getServerProtocol(), config.getServerHost(), config.getServerPort(), config.getServerPath(), serverConfig.getServiceId(),  config.getProductName());
@@ -78,12 +78,12 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
                 logger.info("apmmetrics is enabled and reporter is started");
             } catch (MalformedURLException e) {
                 logger.error("apmmetrics has failed to initialize APMEPAgentSender", e);
-            }            
+            }
 
             // reset the flag so that this block will only be called once.
             firstTime = false;
         }
-        
+
         long startTime = Clock.defaultClock().getTick();
         exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
             Map<String, Object> auditInfo = exchange1.getAttachment(AttachmentConstants.AUDIT_INFO);
@@ -133,7 +133,7 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
             }
             nextListener.proceed();
         });
-        
+
         Handler.next(exchange, next);
 
 	}
@@ -157,13 +157,13 @@ public class APMMetricsHandler extends AbstractMetricsHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, APMMetricsHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(MetricsConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, APMMetricsHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(MetricsConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
         config.reload();
-        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, APMMetricsHandler.class.getName(), Config.getInstance().getJsonMapConfigNoCache(MetricsConfig.CONFIG_NAME), null);
+        ModuleRegistry.registerModule(MetricsConfig.CONFIG_NAME, APMMetricsHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(MetricsConfig.CONFIG_NAME), null);
         if(logger.isInfoEnabled()) logger.info("APMMetricsHandler is reloaded.");
     }
 }

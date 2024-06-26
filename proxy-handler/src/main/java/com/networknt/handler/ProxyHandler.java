@@ -166,7 +166,8 @@ public class ProxyHandler implements HttpHandler {
         if (pathPrefixMaxRequestTime != null) {
             for (Map.Entry<String, Integer> entry : pathPrefixMaxRequestTime.entrySet()) {
                 String key = entry.getKey();
-                if (StringUtils.matchPathToPattern(reqPath, key)) {
+                if(LOG.isTraceEnabled()) LOG.trace("Checking path prefix {} against request path {}", key, reqPath);
+                if (reqPath.startsWith(key)) {
                     maxRequestTime = entry.getValue();
                     timeout = System.currentTimeMillis() + maxRequestTime;
                     if (LOG.isTraceEnabled())
@@ -621,17 +622,19 @@ public class ProxyHandler implements HttpHandler {
 
             // handler the method rewrite here.
             var m = this.exchange.getRequestMethod();
-
-            if (this.methodRewriteRules != null && this.methodRewriteRules.size() > 0)
-                for (var rule : this.methodRewriteRules)
+            if(LOG.isTraceEnabled()) LOG.trace("original target {} and original method {}", target, m.toString());
+            if (this.methodRewriteRules != null && this.methodRewriteRules.size() > 0) {
+                if (LOG.isTraceEnabled()) LOG.trace("method rewrite rules size {}", this.methodRewriteRules.size());
+                for (var rule : this.methodRewriteRules) {
+                    if(LOG.isTraceEnabled()) LOG.trace("rule sourceMethod {} targetMethod {} requestPath {}", rule.getSourceMethod(), rule.getTargetMethod(), rule.getRequestPath());
                     if (StringUtils.matchPathToPattern(target, rule.getRequestPath()) && m.toString().equals(rule.getSourceMethod())) {
-
                         if (LOG.isDebugEnabled())
                             LOG.debug("Rewrite HTTP method from {} to {} with path {} and pathPattern {}", rule.getSourceMethod(), rule.getTargetMethod(), target, rule.getRequestPath());
-
                         m = new HttpString(rule.getTargetMethod());
                     }
-
+                }
+            }
+            if(LOG.isTraceEnabled()) LOG.trace("final method {}", m.toString());
             return m;
         }
 

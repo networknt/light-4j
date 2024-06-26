@@ -16,7 +16,6 @@
 
 package com.networknt.sanitizer;
 
-import com.networknt.body.BodyHandler;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
@@ -27,7 +26,6 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderMap;
 import io.undertow.util.HeaderValues;
-import io.undertow.util.HttpString;
 import org.owasp.encoder.EncoderWrapper;
 import org.owasp.encoder.Encoders;
 
@@ -137,13 +135,13 @@ public class SanitizerHandler implements MiddlewareHandler {
 
     @Override
     public void register() {
-        ModuleRegistry.registerModule(SanitizerConfig.CONFIG_NAME, SanitizerHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(SanitizerConfig.CONFIG_NAME, SanitizerHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(SanitizerConfig.CONFIG_NAME), null);
     }
 
     @Override
     public void reload() {
         config = SanitizerConfig.load();
-        ModuleRegistry.registerModule(SanitizerConfig.CONFIG_NAME, SanitizerHandler.class.getName(), config.getMappedConfig(), null);
+        ModuleRegistry.registerModule(SanitizerConfig.CONFIG_NAME, SanitizerHandler.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(SanitizerConfig.CONFIG_NAME), null);
     }
 
 }

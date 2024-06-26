@@ -18,20 +18,6 @@
 
 package com.networknt.client.ssl;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.ClosedChannelException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
-
-import javax.net.ssl.SSLEngine;
-
-import org.xnio.ChannelListener;
-import org.xnio.channels.StreamSourceChannel;
-import org.xnio.conduits.PushBackStreamSourceConduit;
-import org.xnio.ssl.SslConnection;
-
 import io.undertow.client.ALPNClientSelector;
 import io.undertow.client.ALPNClientSelector.ALPNProtocol;
 import io.undertow.client.ClientCallback;
@@ -41,25 +27,37 @@ import io.undertow.protocols.alpn.ALPNProvider;
 import io.undertow.protocols.ssl.SslConduit;
 import io.undertow.protocols.ssl.UndertowXnioSsl;
 import io.undertow.util.ImmediatePooled;
+import org.xnio.ChannelListener;
+import org.xnio.channels.StreamSourceChannel;
+import org.xnio.conduits.PushBackStreamSourceConduit;
+import org.xnio.ssl.SslConnection;
+
+import javax.net.ssl.SSLEngine;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Customized ALPNClientSelector for handling TLS handshake for HTTP2.
- * 
+ *
  * @author Daniel Zhao
  *
  */
 public class Light4jALPNClientSelector {
-	
+
 	/**
 	 * A connection is first created by org.xnio.nio.WorkerThread.openTcpStreamConnection(). Once the connection is established, it is passed to io.undertow.protocols.ssl.UndertowXnioSsl.StreamConnectionChannelListener.
 	 * StreamConnectionChannelListener creates an io.undertow.protocols.ssl.UndertowSslConnection instance and passes it to this method.
-	 * 
+	 *
 	 * This method uses the provided sslConnection to perform Application-Layer Protocol Negotiation (ALPN). More specifically, this method negotiates with the server side about which protocol should be used.
-	 *  - If the negotiation succeeds, the selected protocol is passed to the corresponding channel listeners defined in the 'details' argument. 
+	 *  - If the negotiation succeeds, the selected protocol is passed to the corresponding channel listeners defined in the 'details' argument.
 	 *    For example, if HttpClientProvider is used and http2 is selected in the negotiation result, Http2ClientConnection will be created.
 	 *  - If the negotiation fails (i.e., selectedProtocol is null), the fallback listener is used to continue the communication if possible or simply close the connection.
 	 *    For the example above, if http2 is not supported on the server side, HttpClientConnection will be created in the fallback listener.
-	 * 
+	 *
 	 * @param sslConnection - an UndertowSslConnection instance
 	 * @param fallback - the callback used if the ALPN negotiation fails or no APLN provider can be found
 	 * @param failedListener - the callback for handling failures happened in the negotiations
@@ -94,7 +92,7 @@ public class Light4jALPNClientSelector {
                     handshakeDone.set(true);
                 }
             });
-            
+
             sslConnection.getCloseSetter().set(new ChannelListener<SslConnection>() {
                 @Override
                 public void handleEvent(SslConnection channel) {
@@ -104,9 +102,9 @@ public class Light4jALPNClientSelector {
                     connClosed.set(true);
                 }
             });
-            
+
             sslConnection.startHandshake();
-            
+
             sslConnection.getSourceChannel().getReadSetter().set(new ChannelListener<StreamSourceChannel>() {
                 @Override
                 public void handleEvent(StreamSourceChannel channel) {
@@ -156,7 +154,7 @@ public class Light4jALPNClientSelector {
                         } else {// modification of ALPNClientSelector for JDK8. need to check handshake results.
                         	if (handshakeDone.get()) {
                                 sslConnection.getSourceChannel().suspendReads();
-                                details.getSelected().handleEvent(sslConnection);                        		
+                                details.getSelected().handleEvent(sslConnection);
                         	}else if (connClosed.get()) {
                         		failedListener.failed(new ClosedChannelException());
                         	}
@@ -171,5 +169,5 @@ public class Light4jALPNClientSelector {
             failedListener.failed(new IOException(e));
         }
 
-    }	
+    }
 }

@@ -16,10 +16,10 @@
 
 package com.networknt.handler;
 
+import com.networknt.common.ContentType;
 import com.networknt.config.Config;
 import com.networknt.handler.config.HandlerConfig;
 import com.networknt.httpstring.AttachmentConstants;
-import com.networknt.common.ContentType;
 import com.networknt.service.SingletonServiceFactory;
 import com.networknt.status.Status;
 import com.networknt.status.StatusWrapper;
@@ -27,14 +27,13 @@ import com.networknt.utility.Constants;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This is an extension of HttpHandler that provides a default method to handle
