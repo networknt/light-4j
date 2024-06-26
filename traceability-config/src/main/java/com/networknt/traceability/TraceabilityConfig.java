@@ -24,7 +24,10 @@ import java.util.Map;
  * Configuration class for traceability
  *
  * @author Steve Hu
+ *
+ * @deprecated (Merged traceability handler into correlation handler)
  */
+@Deprecated
 public class TraceabilityConfig {
     public static final String CONFIG_NAME = "traceability";
     private static final String ENABLED = "enabled";

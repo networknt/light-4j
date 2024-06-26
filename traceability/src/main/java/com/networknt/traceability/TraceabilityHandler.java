@@ -19,19 +19,12 @@ package com.networknt.traceability;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.httpstring.AttachmentConstants;
-import com.networknt.httpstring.HttpStringConstants;
-import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.HttpString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
-
-import java.util.HashMap;
 
 /**
  * This is a handler that checks if X-Traceability-Id exists in request header and put it into
@@ -44,10 +37,12 @@ import java.util.HashMap;
  * Dependencies: AuditHandler, Client
  *
  * @author Steve Hu
+ *
+ * @deprecated (Merged traceability handler into correlation handler)
  */
+@Deprecated
 public class TraceabilityHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(TraceabilityHandler.class);
-    private static final String TID = "tId";
 
     public static TraceabilityConfig config;
 
@@ -59,16 +54,9 @@ public class TraceabilityHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        if (logger.isDebugEnabled()) logger.trace("TraceabilityHandler.handleRequest starts.");
-        String tid = exchange.getRequestHeaders().getFirst(HttpStringConstants.TRACEABILITY_ID);
-        if(tid != null) {
-            exchange.getResponseHeaders().put(HttpStringConstants.TRACEABILITY_ID, tid);
-            this.addHandlerMDCContext(exchange, TID, tid);
-            MDC.put(TID, tid);
-        } else {
-            MDC.remove(TID);
-        }
-        if (logger.isDebugEnabled()) logger.trace("TraceabilityHandler.handleRequest ends.");
+        logger.trace("TraceabilityHandler.handleRequest starts.");
+        logger.warn("Traceability handler is now deprecated, and you can safely remove the handler from your configured handler chain. See correlation handler for more details.");
+        logger.trace("TraceabilityHandler.handleRequest ends.");
         Handler.next(exchange, next);
     }
 
