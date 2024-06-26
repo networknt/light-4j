@@ -29,6 +29,8 @@ public class CorrelationConfig {
     public static final String CONFIG_NAME = "correlation";
     private static final String ENABLED = "enabled";
     private static final String AUTOGEN_CORRELATION_ID = "autogenCorrelationID";
+    private static final String TRACEABILITY_MDC_FIELD = "traceabilityMdcField";
+    private static final String CORRELATION_MDC_FIELD = "correlationMdcField";
     private Map<String, Object> mappedConfig;
     private final Config config;
     boolean enabled;
@@ -108,6 +110,10 @@ public class CorrelationConfig {
             if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
             object = getMappedConfig().get(AUTOGEN_CORRELATION_ID);
             if(object != null) autogenCorrelationID = Config.loadBooleanValue(AUTOGEN_CORRELATION_ID, object);
+            object = getMappedConfig().get(TRACEABILITY_MDC_FIELD);
+            if(object != null) traceabilityMdcField = (String)object;
+            object = getMappedConfig().get(CORRELATION_MDC_FIELD);
+            if(object != null) correlationMdcField = (String)object;
         }
     }
 }
