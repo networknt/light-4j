@@ -225,7 +225,7 @@ public class JwtVerifierTest extends JwtVerifierJwkBase {
 
         System.out.println("jwtClaims = " + claims);
     }
-    
+
     @Test
     public void testRelaxedKeyValidation() throws Exception {
         String jwt = "eyJraWQiOiJ7XCJwcm92aWRlcl90eXBlXCI6XCJkYlwiLFwiYWxpYXNcIjpcImtleXRlc3RcIixcInR5cGVcIjpcImxvY2FsXCIsXCJ2ZXJzaW9uXCI6XCIxXCJ9IiwiYWxnIjoiUlMyNTYifQ" +
