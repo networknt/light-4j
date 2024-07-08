@@ -25,6 +25,8 @@ import org.slf4j.LoggerFactory;
 
 import java.security.KeyStore;
 import java.security.PrivateKey;
+import java.security.interfaces.RSAPrivateKey;
+import java.util.Map;
 
 /**
  * JWT token issuer helper utility that use by light-ouath2 token and code services to
@@ -36,6 +38,55 @@ public class JwtIssuer {
     private static final Logger logger = LoggerFactory.getLogger(JwtIssuer.class);
     private static final JwtConfig jwtConfig = JwtConfig.load();
 
+     /**
+     * A static method that generate JWT token from JWT claims object. This method is deprecated, and it
+     * is replaced by the method that takes kid and private key as parameters.
+     *
+     * @param claims JwtClaims object
+     * @return A string represents jwt token
+     * @throws JoseException JoseException
+     */
+     @Deprecated
+     public static String getJwt(JwtClaims claims) throws JoseException {
+        String jwt;
+        RSAPrivateKey privateKey = (RSAPrivateKey) getPrivateKey(
+                jwtConfig.getKey().getFilename(),jwtConfig.getKey().getPassword(), jwtConfig.getKey().getKeyName());
+
+        // A JWT is a JWS and/or a JWE with JSON claims as the payload.
+        // In this example it is a JWS nested inside a JWE
+        // So we first create a JsonWebSignature object.
+        JsonWebSignature jws = new JsonWebSignature();
+
+        // The payload of the JWS is JSON content of the JWT Claims
+        jws.setPayload(claims.toJson());
+
+        // The JWT is signed using the sender's private key
+        jws.setKey(privateKey);
+
+        // Get provider from security config file, it should be two digit
+        // And the provider id will set as prefix for keyid in the token header, for example: 05100
+        // if there is no provider id, we use "00" for the default value
+        String provider_id = "";
+        if (jwtConfig.getProviderId() != null) {
+            provider_id = jwtConfig.getProviderId();
+            if (provider_id.length() == 1) {
+                provider_id = "0" + provider_id;
+            } else if (provider_id.length() > 2) {
+                logger.error("provider_id defined in the security.yml file is invalid; the length should be 2");
+                provider_id = provider_id.substring(0, 2);
+            }
+        }
+        jws.setKeyIdHeaderValue(provider_id + jwtConfig.getKey().getKid());
+
+        // Set the signature algorithm on the JWT/JWS that will integrity protect the claims
+        jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.RSA_USING_SHA256);
+
+        // Sign the JWS and produce the compact serialization, which will be the inner JWT/JWS
+        // representation, which is a string consisting of three dot ('.') separated
+        // base64url-encoded parts in the form Header.Payload.Signature
+        jwt = jws.getCompactSerialization();
+        return jwt;
+    }
 
     /**
      * A static method that generate JWT token from JWT claims object and a given private key. This private key
