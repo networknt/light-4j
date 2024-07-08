@@ -417,4 +417,31 @@ public class JwtVerifierSingleJwkTest extends JwtVerifierJwkBase {
         System.out.println("jwtClaims = " + claims);
     }
 
+    /**
+     * This test needs light-oauth2 service to be up and running in order to test it
+     * to start the light-oauth2 please refer to https://networknt.github.io/light-oauth2/tutorials
+     */
+    @Test
+    @Ignore
+    public void testGetCertForToken() {
+        JwtVerifier jwtVerifier = new JwtVerifier(securityConfig);
+        X509Certificate certificate = jwtVerifier.getCertForToken("100");
+        System.out.println("certificate = " + certificate);
+        Assert.assertNotNull(certificate);
+    }
+
+    /**
+     * This test needs light-oauth2 service to be up and running in order to test it
+     * to start the light-oauth2 please refer to https://networknt.github.io/light-oauth2/tutorials
+     */
+    @Test
+    @Ignore
+    public void testGetCertForSign() {
+        JwtVerifier jwtVerifier = new JwtVerifier(securityConfig);
+        X509Certificate certificate = jwtVerifier.getCertForSign("100");
+        System.out.println("certificate = " + certificate);
+        Assert.assertNotNull(certificate);
+    }
+
+
 }

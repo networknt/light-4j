@@ -21,11 +21,13 @@ import com.networknt.client.ClientConfig;
 import com.networknt.client.oauth.OauthHelper;
 import com.networknt.client.oauth.SignKeyRequest;
 import com.networknt.client.oauth.TokenKeyRequest;
+import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 import com.networknt.config.JsonMapper;
 import com.networknt.exception.ClientException;
 import com.networknt.exception.ExpiredTokenException;
 import com.networknt.status.Status;
+import com.networknt.utility.FingerPrintUtil;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.JsonWebKeySet;
 import org.jose4j.jwt.JwtClaims;
@@ -37,16 +39,22 @@ import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
 import org.jose4j.keys.resolvers.VerificationKeyResolver;
 import org.jose4j.keys.resolvers.X509VerificationKeyResolver;
 import org.jose4j.lang.JoseException;
+import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 /**
  * This is a new class that is designed as non-static to replace the JwtHelper which is a static class. The reason
@@ -84,6 +92,7 @@ public class JwtVerifier extends TokenVerifier {
     static Map<String, X509Certificate> certMap;
     static String audience;  // this is the audience from the client.yml with single oauth provider.
     static Map<String, String> audienceMap; // this is the audience map from the client.yml with multiple oauth providers.
+    static List<String> fingerPrints;
 
     public JwtVerifier(SecurityConfig cfg) {
         config = cfg;
@@ -94,12 +103,72 @@ public class JwtVerifier extends TokenVerifier {
         // init getting JWK during the initialization. The other part is in the resolver for OAuth 2.0 provider to
         // rotate keys when the first token is received with the new kid.
         String keyResolver = config.getKeyResolver();
+
+        this.cacheCertificates();
+
         // if KeyResolver is jwk and bootstrap from jwk is true, load jwk during server startup.
         if(logger.isTraceEnabled())
             logger.trace("keyResolver = {} bootstrapFromKeyService = {}", keyResolver, bootstrapFromKeyService);
         if (JWT_KEY_RESOLVER_JWKS.equals(keyResolver) && bootstrapFromKeyService) {
             getJsonWebKeyMap();
         }
+    }
+
+
+    /**
+     * Caches cert.
+     */
+    private void cacheCertificates() {
+        // cache the certificates
+        certMap = new HashMap<>();
+        fingerPrints = new ArrayList<>();
+        if (config.getCertificate() != null) {
+            Map<String, Object> keyMap = config.getCertificate();
+            for (String kid : keyMap.keySet()) {
+                X509Certificate cert = null;
+                try {
+                    cert = readCertificate((String) keyMap.get(kid));
+                } catch (Exception e) {
+                    logger.error("Exception:", e);
+                }
+                certMap.put(kid, cert);
+                fingerPrints.add(FingerPrintUtil.getCertFingerPrint(cert));
+            }
+        }
+        logger.debug("Successfully cached Certificate");
+    }
+
+    /**
+     * Read certificate from a file and convert it into X509Certificate object
+     *
+     * @param filename certificate file name
+     * @return X509Certificate object
+     * @throws Exception Exception while reading certificate
+     */
+    public X509Certificate readCertificate(String filename)
+            throws Exception {
+        InputStream inStream = null;
+        X509Certificate cert = null;
+        try {
+            inStream = Config.getInstance().getInputStreamFromFile(filename);
+            if (inStream != null) {
+                CertificateFactory cf = CertificateFactory.getInstance("X.509");
+                cert = (X509Certificate) cf.generateCertificate(inStream);
+            } else {
+                logger.info("Certificate " + Encode.forJava(filename) + " not found.");
+            }
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+        } finally {
+            if (inStream != null) {
+                try {
+                    inStream.close();
+                } catch (IOException ioe) {
+                    logger.error("Exception: ", ioe);
+                }
+            }
+        }
+        return cert;
     }
 
     /**
@@ -716,4 +785,18 @@ public class JwtVerifier extends TokenVerifier {
         }
         return certificate;
     }
+
+    /**
+     * Get a list of certificate fingerprints for server info endpoint so that certification process in light-portal
+     * can detect if your service still use the default public key certificates provided by the light-4j framework.
+     * <p>
+     * The default public key certificates are for dev only and should be replaced on any other environment or
+     * set bootstrapFromKeyService: true if you are using light-oauth2 so that key can be dynamically loaded.
+     *
+     * @return List of certificate fingerprints
+     */
+    public List<String> getFingerPrints() {
+        return fingerPrints;
+    }
+
 }

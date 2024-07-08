@@ -16,9 +16,11 @@
 package com.networknt.security;
 
 import com.networknt.config.Config;
+import com.networknt.config.JsonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -29,6 +31,7 @@ import java.util.Map;
 public class JwtConfig {
     private static final Logger logger = LoggerFactory.getLogger(JwtConfig.class);
     public static final String CONFIG_NAME = "jwt";
+    public static final String KEY = "key";
     public static final String ISSUER = "issuer";
     public static final String AUDIENCE = "audience";
     public static final String VERSION = "version";
@@ -42,12 +45,14 @@ public class JwtConfig {
     String audience;
     String version;
     int expiredInMinutes;
+    Key key;
     String providerId;
 
     private JwtConfig(String configName) {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(configName);
         setConfigData();
+        setConfigMap();
     }
     public static JwtConfig load() {
         return new JwtConfig(CONFIG_NAME);
@@ -97,6 +102,14 @@ public class JwtConfig {
         this.expiredInMinutes = expiredInMinutes;
     }
 
+    public Key getKey() {
+        return key;
+    }
+
+    public void setKey(Key key) {
+        this.key = key;
+    }
+
     public String getProviderId() { return providerId; }
 
     public void setProviderId(String providerId) { this.providerId = providerId; }
@@ -123,4 +136,64 @@ public class JwtConfig {
         }
     }
 
+    private void setConfigMap() {
+        if(getMappedConfig() != null) {
+            Object object = getMappedConfig().get(KEY);
+            if(object != null) {
+                if(object instanceof Map) {
+                    key = Config.getInstance().getMapper().convertValue(object, Key.class);
+                } else if(object instanceof String) {
+                    try {
+                        key = Config.getInstance().getMapper().readValue((String)object, Key.class);
+                    } catch (Exception e) {
+                        logger.error("Exception:", e);
+                    }
+                } else {
+                    logger.error("key in jwt.yml is not a map or string");
+                }
+            }
+        }
+    }
+
+    public static class Key {
+        String kid;
+        String filename;
+        String password;
+        String keyName;
+
+        public Key() {
+        }
+
+        public String getKid() {
+            return kid;
+        }
+
+        public void setKid(String kid) {
+            this.kid = kid;
+        }
+
+        public String getFilename() {
+            return filename;
+        }
+
+        public void setFilename(String filename) {
+            this.filename = filename;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
+
+        public String getKeyName() {
+            return keyName;
+        }
+
+        public void setKeyName(String keyName) {
+            this.keyName = keyName;
+        }
+    }
 }
