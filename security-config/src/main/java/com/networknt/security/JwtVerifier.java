@@ -445,19 +445,19 @@ public class JwtVerifier extends TokenVerifier {
             if (JWT_KEY_RESOLVER_JWKS.equals(keyResolver)) {
                 // try jwk if kid cannot be found in the certificate map.
                 ClientConfig clientConfig = ClientConfig.get();
-                List<JsonWebKey> jwkList = null;
+                JsonWebKey jwk = null;
                 if(cacheManager != null) {
                     if(requestPathOrJwkServiceIds == null) {
                         // single oauth server, kid is the key for the jwk cache
-                        jwkList = (List<JsonWebKey>)cacheManager.get(JWK, kid);
+                        jwk = (JsonWebKey)cacheManager.get(JWK, kid);
                     } else if(requestPathOrJwkServiceIds instanceof String) {
                         String requestPath = (String)requestPathOrJwkServiceIds;
                         // a single request path is passed in.
                         String serviceId = getServiceIdByRequestPath(clientConfig, requestPath);
                         if(serviceId == null) {
-                            jwkList = (List<JsonWebKey>)cacheManager.get(JWK, kid);
+                            jwk = (JsonWebKey)cacheManager.get(JWK, kid);
                         } else {
-                            jwkList = (List<JsonWebKey>)cacheManager.get(JWK, serviceId + ":" + kid);
+                            jwk = (JsonWebKey)cacheManager.get(JWK, serviceId + ":" + kid);
                         }
                     } else if(requestPathOrJwkServiceIds instanceof List) {
                         List<String> serviceIds = (List)requestPathOrJwkServiceIds;
@@ -465,8 +465,8 @@ public class JwtVerifier extends TokenVerifier {
                             // more than one serviceIds are passed in from the UnifiedSecurityHandler. Just use the serviceId and kid
                             // combination to look up the jwkList. Once found, break the loop.
                             for(String serviceId: serviceIds) {
-                                jwkList = (List<JsonWebKey>)cacheManager.get(JWK, serviceId + ":" + kid);
-                                if(jwkList != null && jwkList.size() > 0) {
+                                jwk = (JsonWebKey)cacheManager.get(JWK, serviceId + ":" + kid);
+                                if(jwk != null) {
                                     break;
                                 }
                             }
@@ -474,27 +474,29 @@ public class JwtVerifier extends TokenVerifier {
                     }
                 }
 
-                if (jwkList == null) {
-                    jwkList = getJsonWebKeySetForToken(kid, requestPathOrJwkServiceIds);
-                    if (jwkList == null || jwkList.isEmpty()) {
+                if (jwk == null) {
+                    jwk = getJsonWebKeySetForToken(kid, requestPathOrJwkServiceIds);
+                    if (jwk == null) {
                         throw new RuntimeException("no JWK for kid: " + kid);
                     }
                     if(requestPathOrJwkServiceIds == null) {
                         // single jwk setup and kid is the key for the jwk cache.
-                        cacheJwkList(jwkList, null);
+                        cacheJwk(jwk, null);
                     } else if(requestPathOrJwkServiceIds instanceof String) {
                         // a single request path is passed in.
                         String serviceId = getServiceIdByRequestPath(clientConfig, (String)requestPathOrJwkServiceIds);
-                        cacheJwkList(jwkList, serviceId);
+                        cacheJwk(jwk, serviceId);
                     } else if(requestPathOrJwkServiceIds instanceof List) {
                         // called with a list of serviceIds from the UnifiedSecurityHandler.
                         for(String serviceId: (List<String>)requestPathOrJwkServiceIds) {
-                            cacheJwkList(jwkList, serviceId);
+                            cacheJwk(jwk, serviceId);
                         }
                     }
                 }
                 logger.debug("Got Json web key set from local cache");
-                return new JwksVerificationKeyResolver(jwkList);
+                List<JsonWebKey> jsonWebKeys = new ArrayList<>();
+                jsonWebKeys.add(jwk);
+                return new JwksVerificationKeyResolver(jsonWebKeys);
             } else {
                 logger.error("Both X509Certificate and JWK are not configured.");
                 return null;
@@ -502,16 +504,14 @@ public class JwtVerifier extends TokenVerifier {
         }
     }
 
-    private void cacheJwkList(List<JsonWebKey> jwkList, String serviceId) {
+    private void cacheJwk(JsonWebKey jwk, String serviceId) {
         if(cacheManager == null) return;
-        for (JsonWebKey jwk : jwkList) {
-            if(serviceId != null) {
-                if(logger.isTraceEnabled()) logger.trace("cache the jwkList with serviceId {} kid {} and key {}", serviceId, jwk.getKeyId(), serviceId + ":" + jwk.getKeyId());
-                cacheManager.put(JWK, serviceId + ":" + jwk.getKeyId(), jwkList);
-            } else {
-                if(logger.isTraceEnabled()) logger.trace("cache the jwkList with kid and only kid as key", jwk.getKeyId());
-                cacheManager.put(JWK, jwk.getKeyId(), jwkList);
-            }
+        if(serviceId != null) {
+            if(logger.isTraceEnabled()) logger.trace("cache the jwkList with serviceId {} kid {} and key {}", serviceId, jwk.getKeyId(), serviceId + ":" + jwk.getKeyId());
+            cacheManager.put(JWK, serviceId + ":" + jwk.getKeyId(), jwk);
+        } else {
+            if(logger.isTraceEnabled()) logger.trace("cache the jwkList with kid {} and only kid as key", jwk.getKeyId());
+            cacheManager.put(JWK, jwk.getKeyId(), jwk);
         }
     }
     private String getServiceIdByRequestPath(ClientConfig clientConfig, String requestPath) {
@@ -584,7 +584,7 @@ public class JwtVerifier extends TokenVerifier {
                         } else {
                             if(cacheManager != null) {
                                 for (JsonWebKey jwk : jwkList) {
-                                    cacheManager.put(JWK, serviceId + ":" + jwk.getKeyId(), jwkList);
+                                    cacheManager.put(JWK, serviceId + ":" + jwk.getKeyId(), jwk);
                                     if (logger.isDebugEnabled())
                                         logger.debug("Successfully cached JWK for serviceId {} kid {} with key {}", serviceId, jwk.getKeyId(), serviceId + ":" + jwk.getKeyId());
                                 }
@@ -625,7 +625,7 @@ public class JwtVerifier extends TokenVerifier {
                 }
                 if(cacheManager != null) {
                     for (JsonWebKey jwk : jwkList) {
-                        cacheManager.put(JWK, jwk.getKeyId(), jwkList);
+                        cacheManager.put(JWK, jwk.getKeyId(), jwk);
 
                         if (logger.isDebugEnabled())
                             logger.debug("Successfully cached JWK for kid {}", jwk.getKeyId());
@@ -653,7 +653,7 @@ public class JwtVerifier extends TokenVerifier {
      * @return {@link List} of {@link JsonWebKey}
      */
     @SuppressWarnings("unchecked")
-    private List<JsonWebKey> getJsonWebKeySetForToken(String kid, Object requestPathOrJwkServiceIds) {
+    private JsonWebKey getJsonWebKeySetForToken(String kid, Object requestPathOrJwkServiceIds) {
         // the jwk indicator will ensure that the kid is not concat to the uri for path parameter.
         // the kid is not needed to get JWK, but if requestPath is not null, it will be used to get the keyConfig
         if (logger.isTraceEnabled()) {
@@ -663,7 +663,7 @@ public class JwtVerifier extends TokenVerifier {
             }
         }
         ClientConfig clientConfig = ClientConfig.get();
-        List<JsonWebKey> jwks = null;
+        JsonWebKey jwk = null;
         Map<String, Object> config = null;
 
         if (requestPathOrJwkServiceIds != null && clientConfig.isMultipleAuthServers()) {
@@ -684,26 +684,25 @@ public class JwtVerifier extends TokenVerifier {
                     throw new ConfigException("serviceId cannot be identified in client.yml with the requestPath = " + requestPath);
                 }
                 config = getJwkConfig(clientConfig, serviceId);
-                jwks = retrieveJwk(kid, config);
+                jwk = retrieveJwk(kid, config);
             } else if (requestPathOrJwkServiceIds instanceof List) {
                 List<String> jwkServiceIds = (List<String>)requestPathOrJwkServiceIds;
-                jwks = new ArrayList<>();
                 for(String serviceId: jwkServiceIds) {
                     config = getJwkConfig(clientConfig, serviceId);
-                    jwks.addAll(retrieveJwk(kid, config));
+                    jwk = retrieveJwk(kid, config);
                 }
             } else {
                 throw new ConfigException("requestPathOrJwkServiceIds must be a string or a list of strings");
             }
         } else {
             // get the jwk from the key section in the client.yml token key.
-            jwks = retrieveJwk(kid, null);
+            jwk = retrieveJwk(kid, null);
         }
-        return jwks;
+        return jwk;
     }
 
 
-    private List<JsonWebKey> retrieveJwk(String kid, Map<String, Object> config) {
+    private JsonWebKey retrieveJwk(String kid, Map<String, Object> config) {
         // get the jwk with the kid and config map.
         if (logger.isTraceEnabled() && config != null)
             logger.trace("multiple oauth config based on path = " + JsonMapper.toJson(config));
@@ -719,7 +718,7 @@ public class JwtVerifier extends TokenVerifier {
             if (logger.isDebugEnabled())
                 logger.debug("Got Json Web Key {} from {} with path {}", key, keyRequest.getServerUrl(), keyRequest.getUri());
 
-            return new JsonWebKeySet(key).getJsonWebKeys();
+            return new JsonWebKeySet(key).findJsonWebKey(kid, null, null, null);
         } catch (JoseException ce) {
             if (logger.isErrorEnabled())
                 logger.error("Failed to get JWK. - {} - {}", new Status(GET_KEY_ERROR), ce.getMessage(), ce);

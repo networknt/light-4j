@@ -8,10 +8,7 @@ import io.undertow.util.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This is one of the adm handlers that is used to explore the cache. It has an optional query
@@ -26,6 +23,7 @@ import java.util.Map;
  */
 public class CacheExplorerHandler implements LightHttpHandler {
     public static final String CACHE_NAME = "name";
+    public static final String JWK = "jwk";
     public static final String OBJECT_NOT_FOUND = "ERR11637";
 
     private static final Logger logger = LoggerFactory.getLogger(CacheExplorerHandler.class);
@@ -42,7 +40,15 @@ public class CacheExplorerHandler implements LightHttpHandler {
         if(cacheManager != null) {
             Map<Object, Object> cacheMap = cacheManager.getCache(name);
             exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-            exchange.getResponseSender().send(JsonMapper.toJson(cacheMap));
+            if(name.equals(JWK)) {
+                Map<String, String> map = new HashMap<>();
+                cacheMap.forEach((k, v) -> {
+                    map.put((String)k, v.toString());
+                });
+                exchange.getResponseSender().send(JsonMapper.toJson(map));
+            } else {
+                exchange.getResponseSender().send(JsonMapper.toJson(cacheMap));
+            }
         } else {
             setExchangeStatus(exchange, OBJECT_NOT_FOUND, "cache", name);
         }
