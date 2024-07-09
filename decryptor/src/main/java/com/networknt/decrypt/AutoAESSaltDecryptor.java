@@ -28,12 +28,19 @@ public class AutoAESSaltDecryptor extends AESSaltDecryptor {
             // password is cached at the class level as a static variable. Once it is resolve, it won't be retrieved again.
             return password;
         } else {
+            // get from the -Dlight-4j-config-password Java command line option.
+            String passwordStr = System.getProperty(LIGHT_4J_CONFIG_PASSWORD);
+            if(passwordStr == null || passwordStr.isEmpty()) {
+                passwordStr = System.getProperty(LIGHT_4J_CONFIG_PASSWORD.toUpperCase());
+            }
             // The environment variable name can be in lower or upper case to be suitable for all operating systems.
-            String passwordStr = System.getenv(LIGHT_4J_CONFIG_PASSWORD);
-            if(passwordStr == null || passwordStr.trim().equals("")) {
+            if(passwordStr == null || passwordStr.isEmpty()) {
+                passwordStr = System.getenv(LIGHT_4J_CONFIG_PASSWORD);
+            }
+            if(passwordStr == null || passwordStr.isEmpty()) {
                 passwordStr = System.getenv(LIGHT_4J_CONFIG_PASSWORD.toUpperCase());
             }
-            if (passwordStr == null || passwordStr.trim().equals("")) {
+            if (passwordStr == null || passwordStr.isEmpty()) {
                 // we cannot get the password from the environment, check if we are in the JUnit tests. If it is we can use the default password "light"
                 // as all test cases are using it to encrypt secret in config files.
                 if(isJUnitTest()) {
