@@ -27,6 +27,7 @@ import com.networknt.config.JsonMapper;
 import com.networknt.exception.ClientException;
 import com.networknt.exception.ExpiredTokenException;
 import com.networknt.status.Status;
+import com.networknt.utility.Constants;
 import com.networknt.utility.FingerPrintUtil;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.JsonWebKeySet;
@@ -302,6 +303,48 @@ public class JwtVerifier extends TokenVerifier {
             }
         }
         return claims;
+    }
+
+    /**
+     * Check if the claim has scope for the jwt token.
+     *
+     * @param jwt - jwt token
+     * @return boolean true has scope, false no scope
+     */
+    public boolean isScopeInJwt(String jwt, String pathPrefix) throws InvalidJwtException {
+        JwtClaims claims;
+        String jwtJson = null;
+        if (Boolean.TRUE.equals(enableJwtCache) && cacheManager != null) {
+            if(pathPrefix != null) {
+                jwtJson = (String)cacheManager.get(JWT, pathPrefix + ":" + jwt);
+            } else {
+                jwtJson = (String)cacheManager.get(JWT, jwt);
+            }
+            if (jwtJson != null) {
+                try {
+                    claims = JwtClaims.parse(jwtJson);
+                } catch (InvalidJwtException e) {
+                    logger.error("MalformedClaimException:", e);
+                    throw new InvalidJwtException("MalformedClaimException", new ErrorCodeValidator.Error(ErrorCodes.MALFORMED_CLAIM, "Invalid JWT"), e, null);
+                }
+                // this claims object is signature verified already, check the scope
+                return claims.hasClaim(Constants.SCOPE_STRING) || claims.hasClaim(Constants.SCP_STRING);
+            }
+        }
+        // jwt is not in the cache yet.
+        JwtConsumer jwtConsumer = new JwtConsumerBuilder()
+                .setSkipAllValidators()
+                .setDisableRequireSignature()
+                .setSkipSignatureVerification()
+                .build();
+        try {
+            claims = jwtConsumer.processToClaims(jwt);
+            return claims.hasClaim(Constants.SCOPE_STRING) || claims.hasClaim(Constants.SCP_STRING);
+        } catch (InvalidJwtException e) {
+            logger.error("MalformedClaimException:", e);
+            throw new InvalidJwtException("MalformedClaimException", new ErrorCodeValidator.Error(ErrorCodes.MALFORMED_CLAIM, "Invalid JWT"), e, null);
+        }
+        // we don't put the claims into the cache as it is not validated. This method is only called in the UnifiedSecurityHandler for pre-flight check.
     }
 
     /**
