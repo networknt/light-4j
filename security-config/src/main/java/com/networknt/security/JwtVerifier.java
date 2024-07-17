@@ -78,6 +78,7 @@ public class JwtVerifier extends TokenVerifier {
     public static final String JWT = "jwt";
     public static final String JWK = "jwk";
     public static final String KID = "kid";
+    public static final String SIG = "sig";
     public static final String SECURITY_CONFIG = "security";
     private static final int CACHE_EXPIRED_IN_MINUTES = 15;
 
@@ -550,11 +551,11 @@ public class JwtVerifier extends TokenVerifier {
     private void cacheJwk(JsonWebKey jwk, String serviceId) {
         if(cacheManager == null) return;
         if(serviceId != null) {
-            if(logger.isTraceEnabled()) logger.trace("cache the jwkList with serviceId {} kid {} and key {}", serviceId, jwk.getKeyId(), serviceId + ":" + jwk.getKeyId());
             cacheManager.put(JWK, serviceId + ":" + jwk.getKeyId(), jwk);
+            if(logger.isTraceEnabled()) logger.trace("cache the jwk with serviceId {} kid {} and key {}", serviceId, jwk.getKeyId(), serviceId + ":" + jwk.getKeyId());
         } else {
-            if(logger.isTraceEnabled()) logger.trace("cache the jwkList with kid {} and only kid as key", jwk.getKeyId());
             cacheManager.put(JWK, jwk.getKeyId(), jwk);
+            if(logger.isTraceEnabled()) logger.trace("cache the jwk with kid {} and only kid as key", jwk.getKeyId());
         }
     }
     private String getServiceIdByRequestPath(ClientConfig clientConfig, String requestPath) {
@@ -669,7 +670,6 @@ public class JwtVerifier extends TokenVerifier {
                 if(cacheManager != null) {
                     for (JsonWebKey jwk : jwkList) {
                         cacheManager.put(JWK, jwk.getKeyId(), jwk);
-
                         if (logger.isDebugEnabled())
                             logger.debug("Successfully cached JWK for kid {}", jwk.getKeyId());
                     }
@@ -748,7 +748,7 @@ public class JwtVerifier extends TokenVerifier {
     private JsonWebKey retrieveJwk(String kid, Map<String, Object> config) {
         // get the jwk with the kid and config map.
         if (logger.isTraceEnabled() && config != null)
-            logger.trace("multiple oauth config based on path = " + JsonMapper.toJson(config));
+            logger.trace("multiple oauth config based on path = {}", JsonMapper.toJson(config));
         // config is not null if isMultipleAuthServers is true. If it is null, then the key section is used from the client.yml
         TokenKeyRequest keyRequest = new TokenKeyRequest(kid, true, config);
 
@@ -761,7 +761,7 @@ public class JwtVerifier extends TokenVerifier {
             if (logger.isDebugEnabled())
                 logger.debug("Got Json Web Key {} from {} with path {}", key, keyRequest.getServerUrl(), keyRequest.getUri());
 
-            return new JsonWebKeySet(key).findJsonWebKey(kid, null, null, null);
+            return new JsonWebKeySet(key).findJsonWebKey(kid, null, SIG, null);
         } catch (JoseException ce) {
             if (logger.isErrorEnabled())
                 logger.error("Failed to get JWK. - {} - {}", new Status(GET_KEY_ERROR), ce.getMessage(), ce);
