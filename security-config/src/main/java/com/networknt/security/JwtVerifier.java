@@ -760,8 +760,12 @@ public class JwtVerifier extends TokenVerifier {
 
             if (logger.isDebugEnabled())
                 logger.debug("Got Json Web Key {} from {} with path {}", key, keyRequest.getServerUrl(), keyRequest.getUri());
-
-            return new JsonWebKeySet(key).findJsonWebKey(kid, null, SIG, null);
+            JsonWebKeySet jsonWebKeySet = new JsonWebKeySet(key);
+            JsonWebKey jwk = jsonWebKeySet.findJsonWebKey(kid, null, SIG, null);
+            if (jwk == null) {
+                jwk = jsonWebKeySet.findJsonWebKey(kid, null, null, null);
+            }
+            return jwk;
         } catch (JoseException ce) {
             if (logger.isErrorEnabled())
                 logger.error("Failed to get JWK. - {} - {}", new Status(GET_KEY_ERROR), ce.getMessage(), ce);
