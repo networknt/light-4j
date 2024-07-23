@@ -621,7 +621,11 @@ public class JwtVerifier extends TokenVerifier {
                         String key = OauthHelper.getKey(keyRequest);
                         if (logger.isDebugEnabled())
                             logger.debug("Got Json Web Key = " + key);
-                        List<JsonWebKey> jwkList = new JsonWebKeySet(key).getJsonWebKeys();
+                        // find all use = sig keys
+                        List<JsonWebKey> jwkList = new JsonWebKeySet(key).findJsonWebKeys(null, null, SIG, null);
+                        if(jwkList == null || jwkList.isEmpty()) {
+                            jwkList = new JsonWebKeySet(key).getJsonWebKeys();
+                        }
                         if (jwkList == null || jwkList.isEmpty()) {
                             if (logger.isErrorEnabled())
                                 logger.error("Cannot get JWK from OAuth server.");
@@ -662,8 +666,11 @@ public class JwtVerifier extends TokenVerifier {
 
                 if (logger.isDebugEnabled())
                     logger.debug("Got Json Web Key = " + key);
-
-                List<JsonWebKey> jwkList = new JsonWebKeySet(key).getJsonWebKeys();
+                // find all use = sig keys
+                List<JsonWebKey> jwkList = new JsonWebKeySet(key).findJsonWebKeys(null, null, SIG, null);
+                if(jwkList == null || jwkList.isEmpty()) {
+                    jwkList = new JsonWebKeySet(key).getJsonWebKeys();
+                }
                 if (jwkList == null || jwkList.isEmpty()) {
                     throw new RuntimeException("cannot get JWK from OAuth server");
                 }
