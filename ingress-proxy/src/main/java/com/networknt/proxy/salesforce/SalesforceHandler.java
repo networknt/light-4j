@@ -64,8 +64,11 @@ import java.util.stream.Collectors;
  * For the token caching, we only cache the salesforce token. The jwt token we created only last 5 minutes, and it
  * is not cached.
  *
+ * This handler is replaced with the token-transformer plugin from yaml-rule-plugin project.
+ *
  * @author Steve Hu
  */
+@Deprecated
 public class SalesforceHandler implements MiddlewareHandler {
     private static final Logger logger = LoggerFactory.getLogger(SalesforceHandler.class);
     private static final String TLS_TRUSTSTORE_ERROR = "ERR10055";

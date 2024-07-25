@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+@Deprecated
 public class MrasConfig {
     private static final Logger logger = LoggerFactory.getLogger(MrasConfig.class);
     public static final String CONFIG_NAME = "mras";

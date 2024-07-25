@@ -58,8 +58,11 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * middleware handler. Like the safesforce, we will also invoke the API after the authentication is done in the
  * same context.
  *
+ * This handler is replaced with the token-transformer plugin from yaml-rule-plugin project.
+ *
  * @author Steve Hu
  */
+@Deprecated
 public class MrasHandler implements MiddlewareHandler {
     private static final Logger logger = LoggerFactory.getLogger(MrasHandler.class);
     private static final String TLS_TRUSTSTORE_ERROR = "ERR10055";
