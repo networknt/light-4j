@@ -114,7 +114,7 @@ public interface LightHttpHandler extends HttpHandler {
         status = statusWrapper == null ? status : statusWrapper.wrap(status, ex);
         ex.setStatusCode(status.getStatusCode());
         ex.getResponseHeaders().put(Headers.CONTENT_TYPE, ContentType.APPLICATION_JSON.value());
-        status.setDescription(status.getDescription().replaceAll("\\\\", "\\\\\\\\"));
+        status.setDescription(status.getDescription().replaceAll("\\\\", "\\\\\\\\").replaceAll("\"", "\\\\\""));
 
         var elements = Thread.currentThread().getStackTrace();
 
