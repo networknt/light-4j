@@ -735,7 +735,11 @@ ERR11107:
   code: ERR11107
   message: COMPRESSION_EXCEPTION
   description: Exception occurs during compression %s.
-
+ERR11108:
+  statusCode: 400
+  code: ERR11108
+  message: CONTENT_TYPE_NOT_SUPPORTED
+  description: Content-Type %s is not supported by for this operation.
 
 # 11200 - 11299 light hybrid validation errors
 ERR11200:
