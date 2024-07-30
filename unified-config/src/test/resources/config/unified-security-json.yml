@@ -1,0 +1,9 @@
+# unified-security.yml
+# indicate if this handler is enabled. By default, it will be enabled if it is injected into the
+# request/response chain in the handler.yml configuration.
+enabled: ${unified-security.enabled:true}
+# Anonymous prefixes configuration. A list of request path prefixes. The anonymous prefixes will be checked
+# first, and if any path is matched, all other security checks will be bypassed, and the request goes to
+# the next handler in the chain. You can use json array or string separated by comma or YAML format.
+anonymousPrefixes: /v1/pets,/v1/cats
+pathPrefixAuths: [{"prefix":"/salesforce","basic":true,"jwt":true,"apikey":true,"jwkServiceIds":"com.networknt.petstore-1.0.0, com.networknt.market-1.0.0"},{"prefix":"/blackrock","basic":true,"jwt":true,"jwkServiceIds":["com.networknt.petstore-1.0.0","com.networknt.market-1.0.0"]}]
