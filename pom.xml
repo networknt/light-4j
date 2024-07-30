@@ -194,6 +194,8 @@
         <module>caffeine-cache</module>
         <module>db-provider</module>
         <module>proxy-handler</module>
+        <module>unified-config</module>
+        <module>unified-security</module>
     </modules>
 
     <dependencyManagement>
@@ -588,6 +590,16 @@
             <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>proxy-handler</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>unified-config</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>unified-security</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <!-- External dependencies -->
