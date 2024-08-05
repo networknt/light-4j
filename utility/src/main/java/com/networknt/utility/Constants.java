@@ -51,6 +51,10 @@ public class Constants {
     public static final String SWAGGER_OPERATION_STRING = "swagger_operation";
     // OpenAPI 3.0 operation header name
     public static final String OPENAPI_OPERATION_STRING = "openapi_operation";
+    // Hybrid service schema
+    public static final String HYBRID_SERVICE_ID = "hybrid_service_id";
+    public static final String HYBRID_SERVICE_MAP = "hybrid_service_map";
+    public static final String HYBRID_SERVICE_DATA = "hybrid_service_data";
 
     public static final String SCOPE_TOKEN_STRING = "X-Scope-Token";
     public static final String CONSUL_TOKEN_STRING = "X-Consul-Token";

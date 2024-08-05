@@ -410,7 +410,7 @@ public class Handler {
      * constructor fields. To note: It could either implement HttpHandler, or
      * HandlerProvider.
      *
-     * @param handler
+     * @param handler handler string
      */
     private static void initStringDefinedHandler(String handler) {
 
