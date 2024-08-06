@@ -23,7 +23,6 @@ import java.util.*;
 
 public abstract class AbstractSwtVerifyHandler extends UndertowVerifyHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(AbstractSwtVerifyHandler.class);
-    static final String OPENAPI_SECURITY_CONFIG = "openapi-security";
     static final String STATUS_INVALID_AUTH_TOKEN = "ERR10000";
     static final String STATUS_AUTH_TOKEN_EXPIRED = "ERR10001";
     static final String STATUS_MISSING_AUTH_TOKEN = "ERR10002";
@@ -38,10 +37,8 @@ public abstract class AbstractSwtVerifyHandler extends UndertowVerifyHandler imp
 
     public static SwtVerifier swtVerifier;
 
-    static SecurityConfig config;
-    private volatile HttpHandler next;
-
-    String basePath;
+    public static SecurityConfig config;
+    public volatile HttpHandler next;
 
     @Override
     public HttpHandler getNext() {
@@ -316,16 +313,6 @@ public abstract class AbstractSwtVerifyHandler extends UndertowVerifyHandler imp
                 logger.trace("The replaced authorization from X-Scope-Token header = " + returnToken.substring(0, 10));
         }
         return returnToken;
-    }
-
-    public AbstractSwtVerifyHandler() {
-        // at this moment, we assume that the OpenApiHandler is fully loaded with a single spec or multiple specs.
-        // And the basePath is the correct one from the OpenApiHandler helper or helperMap if multiple is used.
-        config = SecurityConfig.load(OPENAPI_SECURITY_CONFIG);
-        swtVerifier = new SwtVerifier(config);
-        // in case that the specification doesn't exist, get the basePath from the handler.yml for endpoint lookup.
-        HandlerConfig handlerConfig = HandlerConfig.load();
-        this.basePath = handlerConfig == null ? "/" : handlerConfig.getBasePath();
     }
 
 }

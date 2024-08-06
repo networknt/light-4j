@@ -1,14 +1,11 @@
 package com.networknt.security;
 
-import com.networknt.config.Config;
 import com.networknt.exception.ExpiredTokenException;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.handler.config.HandlerConfig;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.utility.Constants;
-import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -25,7 +22,6 @@ import java.util.*;
 
 public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler implements MiddlewareHandler, IJwtVerifyHandler {
     static final Logger logger = LoggerFactory.getLogger(AbstractJwtVerifyHandler.class);
-    static final String OPENAPI_SECURITY_CONFIG = "openapi-security";
     static final String STATUS_INVALID_AUTH_TOKEN = "ERR10000";
     static final String STATUS_AUTH_TOKEN_EXPIRED = "ERR10001";
     static final String STATUS_MISSING_AUTH_TOKEN = "ERR10002";
@@ -36,24 +32,12 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
     static final String STATUS_INVALID_REQUEST_PATH = "ERR10007";
     static final String STATUS_METHOD_NOT_ALLOWED = "ERR10008";
 
-    static SecurityConfig config;
+    public static SecurityConfig config;
 
     // make this static variable public so that it can be accessed from the server-info module
     public static JwtVerifier jwtVerifier;
 
-    String basePath;
-
-    private volatile HttpHandler next;
-
-    public AbstractJwtVerifyHandler() {
-        // at this moment, we assume that the OpenApiHandler is fully loaded with a single spec or multiple specs.
-        // And the basePath is the correct one from the OpenApiHandler helper or helperMap if multiple is used.
-        config = SecurityConfig.load(OPENAPI_SECURITY_CONFIG);
-        jwtVerifier = new JwtVerifier(config);
-        // in case that the specification doesn't exist, get the basePath from the handler.yml for endpoint lookup.
-        HandlerConfig handlerConfig = HandlerConfig.load();
-        this.basePath = handlerConfig == null ? "/" : handlerConfig.getBasePath();
-    }
+    public volatile HttpHandler next;
 
     @Override
     @SuppressWarnings("unchecked")
