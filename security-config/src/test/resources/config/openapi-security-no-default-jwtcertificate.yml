@@ -4,23 +4,23 @@
 # loaded for backward compatibility.
 ---
 # Enable JWT verification flag.
-enableVerifyJwt: ${openapi-security.enableVerifyJwt:false}
+enableVerifyJwt: ${security.enableVerifyJwt:false}
 
 # Enable JWT scope verification. Only valid when enableVerifyJwt is true.
-enableVerifyScope: ${openapi-security.enableVerifyScope:true}
+enableVerifyScope: ${security.enableVerifyScope:true}
 
 # User for test only. should be always be false on official environment.
-enableMockJwt: ${openapi-security.enableMockJwt:false}
+enableMockJwt: ${security.enableMockJwt:false}
 
 # JWT signature public certificates. kid and certificate path mappings.
 jwt:
   clockSkewInSeconds: 60
 
 # Enable or disable JWT token logging
-logJwtToken: ${openapi-security.logJwtToken:true}
+logJwtToken: ${security.logJwtToken:true}
 
 # Enable or disable client_id, user_id and scope logging.
-logClientUserScope: ${openapi-security.logClientUserScope:false}
+logClientUserScope: ${security.logClientUserScope:false}
 
 # Enable JWT token cache to speed up verification. This will only verify expired time
 # and skip the signature verification as it takes more CPU power and a long time. If
@@ -28,17 +28,17 @@ logClientUserScope: ${openapi-security.logClientUserScope:false}
 # should be turned off. Otherwise, the cached jwt will only be removed after 15 minutes
 # and the cache can grow bigger if the number of requests is very high. This will cause
 # memory kill in a Kubernetes pod if the memory setting is limited.
-enableJwtCache: ${openapi-security.enableJwtCache:true}
+enableJwtCache: ${security.enableJwtCache:true}
 
 # If enableJwtCache is true, then an error message will be shown up in the log if the
 # cache size is bigger than the jwtCacheFullSize. This helps the developers to detect
 # cache problem if many distinct tokens flood the cache in a short period of time. If
 # you see JWT cache exceeds the size limit in logs, you need to turn off the enableJwtCache
 # or increase the cache full size to a bigger number from the default 100.
-jwtCacheFullSize: ${openapi-security.jwtCacheFullSize:100}
+jwtCacheFullSize: ${security.jwtCacheFullSize:100}
 
 # If you are using light-oauth2, then you don't need to have oauth subfolder for public
 # key certificate to verify JWT token, the key will be retrieved from key endpoint once
 # the first token is arrived. Default to false for dev environment without oauth2 server
 # or official environment that use other OAuth 2.0 providers.
-bootstrapFromKeyService: ${openapi-security.bootstrapFromKeyService:false}
+bootstrapFromKeyService: ${security.bootstrapFromKeyService:false}

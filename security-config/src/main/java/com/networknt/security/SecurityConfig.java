@@ -74,6 +74,9 @@ public class SecurityConfig {
 
     private Map<String, String> passThroughClaims;
 
+    private SecurityConfig() {
+        this(CONFIG_NAME);
+    }
 
     private SecurityConfig(String configName) {
         config = Config.getInstance();
@@ -84,10 +87,29 @@ public class SecurityConfig {
         setPassThroughClaims();
     }
 
+    public static SecurityConfig load() {
+        return new SecurityConfig();
+    }
+
+    /**
+     * This method is only used in the test case to load different configuration files. Please use load() instead.
+     * @param configName String
+     * @return SecurityConfig
+     */
+    @Deprecated
     public static SecurityConfig load(String configName) {
         return new SecurityConfig(configName);
     }
 
+    public void reload() {
+        mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
+        setCertificate();
+        setConfigData();
+        setSkipPathPrefixes();
+        setPassThroughClaims();
+    }
+
+    @Deprecated
     public void reload(String configName) {
         mappedConfig = config.getJsonMapConfigNoCache(configName);
         setCertificate();

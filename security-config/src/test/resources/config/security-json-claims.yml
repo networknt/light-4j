@@ -112,9 +112,9 @@ skipPathPrefixes: ${security.skipPathPrefixes:}
 # claim in the token and a header name that the downstream API is expecting. You can use
 # both JSON or YAML format.
 # YAML
-# openapi-security.passThroughClaims:
+# security.passThroughClaims:
 #   cid: client_id
 #   uid: user_id
 # JSON
-# openapi-security.passThroughClaims: {"cid":"client_id","uid":"user_id"}
+# security.passThroughClaims: {"cid":"client_id","uid":"user_id"}
 passThroughClaims: {"cid":"client_id","uid":"user_id"}
