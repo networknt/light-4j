@@ -7,6 +7,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -134,5 +135,46 @@ public class RateLimiterTest {
         String address = "192.168.1.102";
         return rateLimiterAddress.isAllowDirect(address, "/v1/address", RateLimiter.ADDRESS_TYPE);
     }
+
+    @Test
+    public void testByServerMemoryLeak() throws Exception {
+        List<RateLimitResponse> responseList = new ArrayList<>();
+        Callable<RateLimitResponse> task =this::callByServerAsyncRandom;
+        List<Callable<RateLimitResponse>> tasks = Collections.nCopies(12, task);
+
+        //change the thread number here to test multi-threads
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
+        List<Future<RateLimitResponse>> futures = executorService.invokeAll(tasks);
+        for (Future<RateLimitResponse> future : futures) {
+            responseList.add(future.get());
+        }
+
+        // Assert.assertEquals(responseList.size(), 12);
+        List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
+        Assert.assertEquals(rejects.size(), 2);
+        executorService.shutdown();
+    }
+
+    // Method to generate a random string of a given length
+    public static String generateRandomString(int length) {
+        // Characters to choose from
+        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        Random random = new Random();
+        StringBuilder sb = new StringBuilder(length);
+
+        // Loop to append random characters to the StringBuilder
+        for (int i = 0; i < length; i++) {
+            int randomIndex = random.nextInt(characters.length());
+            sb.append(characters.charAt(randomIndex));
+        }
+
+        return sb.toString();
+    }
+
+    public RateLimitResponse callByServerAsyncRandom() throws Exception {
+        LimitQuota limitQuota = limitConfig.getServer().get("/v1/" + generateRandomString(10));
+        return rateLimiter.isAllowByServer( "/v1/" + generateRandomString(10));
+    }
+
 
 }
