@@ -47,7 +47,7 @@ public class LimitHandler implements MiddlewareHandler {
 
     public LimitHandler() throws Exception{
         config = LimitConfig.load();
-        logger.info("RateLimit started with key type:" + config.getKey().name());
+        logger.info("RateLimit started with key type {}", config.getKey().name());
         rateLimiter = new RateLimiter(config);
     }
 
@@ -61,7 +61,7 @@ public class LimitHandler implements MiddlewareHandler {
     @Deprecated
     public LimitHandler(LimitConfig cfg) throws Exception{
         config = cfg;
-        logger.info("RateLimit started with key type:" + config.getKey().name());
+        logger.info("RateLimit started with key type {}", config.getKey().name());
         rateLimiter = new RateLimiter(cfg);
     }
 

@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  *  Rate limit logic for light-4j framework. The config will define in the limit.yml config file.
  *
- * By default Rate limit will handle on the server(service) level. But framework support client and address level limitation
+ * By default, Rate limit will handle on the server(service) level. But framework support client and address level limitation
  *
  * @author Gavin Chen
  */
@@ -25,10 +25,11 @@ public class RateLimiter {
     private static final String LIMIT_KEY_NOT_FOUND = "ERR10073";
     protected LimitConfig config;
 
-    private Map<String, Map<Long, AtomicLong>> serverTimeMap = new ConcurrentHashMap<>();
+    private final Map<String, Map<Long, AtomicLong>> serverTimeMap = new ConcurrentHashMap<>();
 
-    private Map<String, Map<TimeUnit, Map<Long, AtomicLong>>> directTimeMap = new ConcurrentHashMap<>();
+    private final Map<String, Map<TimeUnit, Map<Long, AtomicLong>>> directTimeMap = new ConcurrentHashMap<>();
     private static final Logger logger = LoggerFactory.getLogger(RateLimiter.class);
+    static final String UNKNOWN_PREFIX = "/unknown/prefix"; // this is the bucket for all other request path that is not defined in the config
     static final String ADDRESS_TYPE = "address";
     static final String CLIENT_TYPE = "client";
     static final String USER_TYPE = "user";
@@ -224,13 +225,7 @@ public class RateLimiter {
      */
     public RateLimitResponse isAllowByServer(String path) {
         long currentTimeWindow = Instant.now().getEpochSecond();
-        Map<Long, AtomicLong> timeMap = lookupServerTimeMap(path);
-        if(timeMap == null) {
-            timeMap = new ConcurrentHashMap<>();
-            synchronized(this) {
-                serverTimeMap.put(path, timeMap);
-            }
-        }
+        Map<Long, AtomicLong> timeMap = lookupServerTimeMap(path);  // defined and unknown one if not defined.
         LimitQuota limitQuota = config.getServer() != null ? lookupLimitQuota(path) : null;
         if(limitQuota == null) {
             limitQuota = this.config.getRateLimit().get(0);
@@ -264,7 +259,16 @@ public class RateLimiter {
             }
         }
         if(prefix == null) {
-            return null;
+            // the request path is not in the defined path prefix. Use the default path prefix UNKNOWN_PREFIX.
+            if(!serverTimeMap.containsKey(UNKNOWN_PREFIX)) {
+                Map<Long, AtomicLong> timeMap = new ConcurrentHashMap<>();
+                synchronized(this) {
+                    serverTimeMap.put(UNKNOWN_PREFIX, timeMap);
+                }
+                return timeMap;
+            } else {
+                return serverTimeMap.get(UNKNOWN_PREFIX);
+            }
         } else {
             return serverTimeMap.get(prefix);
         }
