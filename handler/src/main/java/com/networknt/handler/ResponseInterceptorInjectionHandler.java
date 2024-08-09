@@ -143,6 +143,11 @@ public class ResponseInterceptorInjectionHandler implements MiddlewareHandler {
     }
 
     private boolean requiresContentSinkConduit(final HttpServerExchange exchange) {
+        if(logger.isTraceEnabled()) {
+            logger.trace("requiresContentSinkConduit: requiredContent {}, pathPrefix {} and isNotCompressed {}", this.interceptorsRequireContent()
+                    , isAppliedBodyInjectionPathPrefix(exchange.getRequestPath())
+                    , !isCompressed(exchange));
+        }
         return this.interceptorsRequireContent()
                 && isAppliedBodyInjectionPathPrefix(exchange.getRequestPath())
                 && !isCompressed(exchange);
