@@ -143,7 +143,7 @@ public class RateLimiterTest {
         List<Callable<RateLimitResponse>> tasks = Collections.nCopies(12, task);
 
         //change the thread number here to test multi-threads
-        ExecutorService executorService = Executors.newFixedThreadPool(1);
+        ExecutorService executorService = Executors.newFixedThreadPool(4);
         List<Future<RateLimitResponse>> futures = executorService.invokeAll(tasks);
         for (Future<RateLimitResponse> future : futures) {
             responseList.add(future.get());
@@ -176,5 +176,70 @@ public class RateLimiterTest {
         return rateLimiter.isAllowByServer( "/v1/" + generateRandomString(10));
     }
 
+    @Test
+    public void testByAddressMemoryLeak() throws Exception{
+        List<RateLimitResponse> responseList = new ArrayList<>();
+        Callable<RateLimitResponse> task =this::callByAddressAsyncRandom;
+        List<Callable<RateLimitResponse>> tasks = Collections.nCopies(12, task);
+        ExecutorService executorService = Executors.newFixedThreadPool(4);
+        List<Future<RateLimitResponse>> futures = executorService.invokeAll(tasks);
+        for (Future<RateLimitResponse> future : futures) {
+            responseList.add(future.get());
+        }
+        List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
+        Assert.assertEquals(rejects.size(), 2);
+        executorService.shutdown();
+
+    }
+
+    public RateLimitResponse callByAddressAsyncRandom() throws Exception {
+        String address = "192.168.1.102";
+        return rateLimiterAddress.isAllowDirect(address, "/v1/" + generateRandomString(10), RateLimiter.ADDRESS_TYPE);
+    }
+
+
+    @Test
+    public void testByClientRandom() throws Exception{
+        List<RateLimitResponse> responseList = new ArrayList<>();
+        Callable<RateLimitResponse> task =this::callByClientAsyncRandom;
+        List<Callable<RateLimitResponse>> tasks = Collections.nCopies(12, task);
+        ExecutorService executorService = Executors.newFixedThreadPool(4);
+        List<Future<RateLimitResponse>> futures = executorService.invokeAll(tasks);
+        for (Future<RateLimitResponse> future : futures) {
+            responseList.add(future.get());
+        }
+        List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
+        Assert.assertEquals(rejects.size(), 2);
+        executorService.shutdown();
+
+    }
+
+    public RateLimitResponse callByClientAsyncRandom() throws Exception {
+        String clientId = "f7d42348-c647-4efb-a52d-4c5787421e75";
+        List<LimitQuota> rateLimit = limitConfig.getClient().directMaps.get(clientId);
+        return rateLimiterClient.isAllowDirect(clientId, "/v1/" + generateRandomString(10), RateLimiter.CLIENT_TYPE);
+    }
+
+    @Test
+    public void testByUserRandom() throws Exception{
+        List<RateLimitResponse> responseList = new ArrayList<>();
+        Callable<RateLimitResponse> task =this::callByUserAsyncRandom;
+        List<Callable<RateLimitResponse>> tasks = Collections.nCopies(12, task);
+        ExecutorService executorService = Executors.newFixedThreadPool(4);
+        List<Future<RateLimitResponse>> futures = executorService.invokeAll(tasks);
+        for (Future<RateLimitResponse> future : futures) {
+            responseList.add(future.get());
+        }
+        List<RateLimitResponse> rejects = responseList.stream().filter(r->!r.isAllow()).collect(Collectors.toList());
+        Assert.assertEquals(rejects.size(), 2);
+        executorService.shutdown();
+
+    }
+
+    public RateLimitResponse callByUserAsyncRandom() throws Exception {
+        String userId = "albert@lightapi.net";
+        List<LimitQuota> rateLimit = limitConfig.getUser().directMaps.get(userId);
+        return rateLimiterClient.isAllowDirect(userId, "/v1/" + generateRandomString(10), RateLimiter.USER_TYPE);
+    }
 
 }
