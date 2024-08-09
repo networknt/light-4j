@@ -152,13 +152,21 @@ public class RateLimiter {
             } else if (config.getAddress() != null && config.getAddress().directMaps.containsKey(directKey)) {
                 rateLimit = config.getAddress().directMaps.get(directKey);
             } else {
+                if(logger.isTraceEnabled()) logger.trace("both keyWithPath and directKey not found in the config, use the default rate limit");
                 rateLimit = config.rateLimit;
-                Map<TimeUnit, Map<Long, AtomicLong>> directMap = new ConcurrentHashMap<>();
-
-                this.config.getRateLimit().forEach(i->{
-                    directMap.put(i.getUnit(), new ConcurrentHashMap<>());
-                });
-                directTimeMap.put(mapKey, directMap);
+                // check if the map is already created
+                synchronized(this) {
+                    Map<TimeUnit, Map<Long, AtomicLong>> directMap = directTimeMap.get(mapKey);
+                    if (directMap == null) {
+                        if (logger.isTraceEnabled())
+                            logger.trace("directMap is null, create a new one for the key {}", mapKey);
+                        Map<TimeUnit, Map<Long, AtomicLong>> map = new ConcurrentHashMap<>();
+                        this.config.getRateLimit().forEach(i -> {
+                            map.put(i.getUnit(), new ConcurrentHashMap<>());
+                        });
+                        directTimeMap.put(mapKey, map);
+                    }
+                }
             }
         } else if(CLIENT_TYPE.equalsIgnoreCase(type)) {
             if (config.getClient() != null && config.getClient().directMaps.containsKey(keyWithPath)) {
@@ -168,12 +176,15 @@ public class RateLimiter {
                 rateLimit = config.getClient().directMaps.get(directKey);
             } else {
                 rateLimit = config.rateLimit;
-                Map<TimeUnit, Map<Long, AtomicLong>> directMap = new ConcurrentHashMap<>();
                 synchronized(this) {
-                    this.config.getRateLimit().forEach(i->{
-                        directMap.put(i.getUnit(), new ConcurrentHashMap<>());
-                    });
-                    directTimeMap.put(mapKey, directMap);
+                    Map<TimeUnit, Map<Long, AtomicLong>> directMap = directTimeMap.get(mapKey);
+                    if(directMap == null) {
+                        Map<TimeUnit, Map<Long, AtomicLong>> map = new ConcurrentHashMap<>();
+                        this.config.getRateLimit().forEach(i->{
+                            map.put(i.getUnit(), new ConcurrentHashMap<>());
+                        });
+                        directTimeMap.put(mapKey, map);
+                    }
                 }
             }
         } else {
@@ -184,12 +195,15 @@ public class RateLimiter {
                 rateLimit = config.getUser().directMaps.get(directKey);
             } else {
                 rateLimit = config.rateLimit;
-                Map<TimeUnit, Map<Long, AtomicLong>> directMap = new ConcurrentHashMap<>();
-                synchronized(this) {
-                    this.config.getRateLimit().forEach(i->{
-                        directMap.put(i.getUnit(), new ConcurrentHashMap<>());
-                    });
-                    directTimeMap.put(mapKey, directMap);
+                synchronized (this) {
+                    Map<TimeUnit, Map<Long, AtomicLong>> directMap = directTimeMap.get(mapKey);
+                    if(directMap == null) {
+                        Map<TimeUnit, Map<Long, AtomicLong>> map = new ConcurrentHashMap<>();
+                        this.config.getRateLimit().forEach(i->{
+                            map.put(i.getUnit(), new ConcurrentHashMap<>());
+                        });
+                        directTimeMap.put(mapKey, map);
+                    }
                 }
             }
         }
@@ -198,13 +212,16 @@ public class RateLimiter {
             for (LimitQuota limitQuota: rateLimit) {
                 Map<Long, AtomicLong> timeMap =  localTimeMap.get(limitQuota.getUnit());
                 if (timeMap.isEmpty()) {
+                    if(logger.isTraceEnabled()) logger.trace("timeMap is empty, put the first entry");
                     timeMap.put(currentTimeWindow, new AtomicLong(1L));
                     return new RateLimitResponse(true, null);
                 } else {
                     Long countInOverallTime = removeOldEntriesForUser(currentTimeWindow, timeMap, limitQuota.unit);
+                    if(logger.isTraceEnabled()) logger.trace("countInOverallTime: " + countInOverallTime + " limitQuota.value: " + limitQuota.value);
                     if (countInOverallTime < limitQuota.value) {
                         //Handle new time windows
                         Long newCount = timeMap.getOrDefault(currentTimeWindow, new AtomicLong(0)).longValue() + 1;
+                        if(logger.isTraceEnabled()) logger.trace("newCount: " + newCount);
                         timeMap.put(currentTimeWindow, new AtomicLong(newCount));
                         logger.debug("CurrentTimeWindow:" + currentTimeWindow +" Result:true "+ " Count:"+countInOverallTime);
                         return new RateLimitResponse(true, null);
@@ -223,28 +240,26 @@ public class RateLimiter {
      * @param path String
      * @return RateLimitResponse rate limit response
      */
-    public RateLimitResponse isAllowByServer(String path) {
+    public synchronized RateLimitResponse isAllowByServer(String path) {
         long currentTimeWindow = Instant.now().getEpochSecond();
         Map<Long, AtomicLong> timeMap = lookupServerTimeMap(path);  // defined and unknown one if not defined.
         LimitQuota limitQuota = config.getServer() != null ? lookupLimitQuota(path) : null;
         if(limitQuota == null) {
             limitQuota = this.config.getRateLimit().get(0);
         }
-        synchronized(this) {
-            if (timeMap.isEmpty()) {
-                timeMap.put(currentTimeWindow, new AtomicLong(1L));
+        if (timeMap.isEmpty()) {
+            timeMap.put(currentTimeWindow, new AtomicLong(1L));
+        } else {
+            Long countInOverallTime = removeOldEntriesForUser(currentTimeWindow, timeMap, limitQuota.unit);
+            if (countInOverallTime < limitQuota.value) {
+                //Handle new time windows
+                Long newCount = timeMap.getOrDefault(currentTimeWindow, new AtomicLong(0)).longValue() + 1;
+                timeMap.put(currentTimeWindow, new AtomicLong(newCount));
+                logger.debug("CurrentTimeWindow:" + currentTimeWindow +" Result:true "+ " Count:"+countInOverallTime);
+                return new RateLimitResponse(true, null);
             } else {
-                Long countInOverallTime = removeOldEntriesForUser(currentTimeWindow, timeMap, limitQuota.unit);
-                if (countInOverallTime < limitQuota.value) {
-                    //Handle new time windows
-                    Long newCount = timeMap.getOrDefault(currentTimeWindow, new AtomicLong(0)).longValue() + 1;
-                    timeMap.put(currentTimeWindow, new AtomicLong(newCount));
-                    logger.debug("CurrentTimeWindow:" + currentTimeWindow +" Result:true "+ " Count:"+countInOverallTime);
-                    return new RateLimitResponse(true, null);
-                } else {
-                    String reset = getRateLimitReset(currentTimeWindow, timeMap, limitQuota);
-                    return new RateLimitResponse(false, buildHeaders(countInOverallTime, limitQuota, reset));
-                }
+                String reset = getRateLimitReset(currentTimeWindow, timeMap, limitQuota);
+                return new RateLimitResponse(false, buildHeaders(countInOverallTime, limitQuota, reset));
             }
         }
         return new RateLimitResponse(true, null);
@@ -262,9 +277,7 @@ public class RateLimiter {
             // the request path is not in the defined path prefix. Use the default path prefix UNKNOWN_PREFIX.
             if(!serverTimeMap.containsKey(UNKNOWN_PREFIX)) {
                 Map<Long, AtomicLong> timeMap = new ConcurrentHashMap<>();
-                synchronized(this) {
-                    serverTimeMap.put(UNKNOWN_PREFIX, timeMap);
-                }
+                serverTimeMap.put(UNKNOWN_PREFIX, timeMap);
                 return timeMap;
             } else {
                 return serverTimeMap.get(UNKNOWN_PREFIX);
