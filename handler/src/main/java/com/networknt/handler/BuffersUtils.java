@@ -107,6 +107,10 @@ public class BuffersUtils {
         return new String(toByteArray(srcs), cs);
     }
 
+    public static String toString(final PooledByteBuffer[] srcs, String charsetName) throws IOException {
+        return new String(toByteArray(srcs), charsetName);
+    }
+
     public static String toString(final byte[] src, Charset cs) throws IOException {
         return new String(src, cs);
     }

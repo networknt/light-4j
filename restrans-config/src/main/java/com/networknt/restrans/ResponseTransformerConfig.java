@@ -17,12 +17,14 @@ public class ResponseTransformerConfig {
 
     private static final String ENABLED = "enabled";
     private static final String REQUIRED_CONTENT = "requiredContent";
+    private static final String DEFAULT_BODY_ENCODING = "defaultBodyEncoding";
     private static final String APPLIED_PATH_PREFIXES = "appliedPathPrefixes";
 
     private Map<String, Object> mappedConfig;
     private Config config;
     private boolean enabled;
     private boolean requiredContent;
+    private String defaultBodyEncoding;
     List<String> appliedPathPrefixes;
 
     private ResponseTransformerConfig() {
@@ -55,6 +57,7 @@ public class ResponseTransformerConfig {
         return enabled;
     }
     public boolean isRequiredContent() { return requiredContent; }
+    public String getDefaultBodyEncoding() { return defaultBodyEncoding; }
     public List<String> getAppliedPathPrefixes() {
         return appliedPathPrefixes;
     }
@@ -84,6 +87,8 @@ public class ResponseTransformerConfig {
                 throw new ConfigException("requiredContent must be a boolean value.");
             }
         }
+        object = mappedConfig.get(DEFAULT_BODY_ENCODING);
+        if (object != null) defaultBodyEncoding = (String) object;
     }
 
     private void setConfigList() {
