@@ -8,6 +8,7 @@ public class ResponseTransformerConfigTest {
     public void testConfigLoad() {
         ResponseTransformerConfig config = ResponseTransformerConfig.load();
         Assert.assertTrue(config.getMappedConfig().size() > 0);
+        Assert.assertEquals(config.getDefaultBodyEncoding(), "UTF-8");
     }
 
 }

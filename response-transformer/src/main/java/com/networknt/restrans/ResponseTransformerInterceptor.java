@@ -98,7 +98,7 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
         if (logger.isDebugEnabled()) logger.trace("ResponseTransformerInterceptor.handleRequest starts.");
         String requestPath = exchange.getRequestPath();
         if (config.getAppliedPathPrefixes() != null && config.getAppliedPathPrefixes().stream().anyMatch(requestPath::startsWith)) {
-            String responseBody = BuffersUtils.toString(getBuffer(exchange), StandardCharsets.UTF_8);
+            String responseBody = BuffersUtils.toString(getBuffer(exchange), config.getDefaultBodyEncoding());
             if (logger.isTraceEnabled())
                 logger.trace("original response body = " + responseBody);
 
