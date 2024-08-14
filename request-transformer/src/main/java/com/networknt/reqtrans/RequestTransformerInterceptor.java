@@ -104,7 +104,12 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
                 if(endpointRules == null) {
                     if(logger.isDebugEnabled())
                         logger.debug("endpointRules iS NULL");
-                } else { if(logger.isDebugEnabled()) logger.debug("endpointRules: " + endpointRules.get(REQUEST_TRANSFORM).size()); }
+                } else {
+                    // changes are there is no request transform rules for this endpoint.
+                    if(logger.isDebugEnabled() && endpointRules.get(REQUEST_TRANSFORM) != null) {
+                        logger.debug("endpointRules size {}", endpointRules.get(REQUEST_TRANSFORM).size());
+                    }
+                }
                 if(endpointRules != null) {
                     List<Map<String, Object>> requestTransformRules = endpointRules.get(REQUEST_TRANSFORM);
                     if(requestTransformRules != null) {
