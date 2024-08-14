@@ -58,7 +58,7 @@ public class BuffersUtils {
                 if (srcBuffer.remaining() > dst.remaining()) {
 
                     if (LOG.isErrorEnabled())
-                        LOG.error("Request content exceeeded {} bytes limit", MAX_CONTENT_SIZE);
+                        LOG.error("Request content exceeded {} bytes limit", MAX_CONTENT_SIZE);
 
                     throw new IOException("Request content exceeded " + MAX_CONTENT_SIZE + " bytes limit");
                 }

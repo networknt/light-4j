@@ -136,8 +136,9 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
                 if (logger.isDebugEnabled())
                     logger.debug("endpointRules iS NULL");
             } else {
-                if (logger.isDebugEnabled())
-                    logger.debug("endpointRules: " + endpointRules.get(RESPONSE_TRANSFORM).size());
+                // chances are there is not response transform rules for this endpoint.
+                if (logger.isDebugEnabled() && endpointRules.get(RESPONSE_TRANSFORM) != null)
+                    logger.debug("endpointRules {}", endpointRules.get(RESPONSE_TRANSFORM).size());
             }
 
             boolean finalResult = true;
