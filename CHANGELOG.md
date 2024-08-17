@@ -1,5 +1,35 @@
 # Change Log
 
+## [2.1.35](https://github.com/networknt/light-4j/tree/2.1.35) (2024-08-17)
+
+
+**Merged pull requests:**
+
+
+- fixes \#2317 update transformer interceptor to avoid NPEfor logging [\#2318](https://github.com/networknt/light-4j/pull/2318) ([stevehu](https://github.com/stevehu))
+- fixes \#2315 make the request response transformer body encoding confi… [\#2316](https://github.com/networknt/light-4j/pull/2316) ([stevehu](https://github.com/stevehu))
+- fixes \#2313 Adding trace logging for response interceptor injection h… [\#2314](https://github.com/networknt/light-4j/pull/2314) ([stevehu](https://github.com/stevehu))
+- fixes \#2311 resolve client, user, address rate limit without prefix d… [\#2312](https://github.com/networknt/light-4j/pull/2312) ([stevehu](https://github.com/stevehu))
+- fixes \#2308 resolve a memory leak issue in the rate-limit handler [\#2309](https://github.com/networknt/light-4j/pull/2309) ([stevehu](https://github.com/stevehu))
+- fixes \#2306 refactor security config to use only security.yml [\#2307](https://github.com/networknt/light-4j/pull/2307) ([stevehu](https://github.com/stevehu))
+- fixes \#2304 Add constants for light-hybrid-4j [\#2305](https://github.com/networknt/light-4j/pull/2305) ([stevehu](https://github.com/stevehu))
+- fixes \#2302 move the unified-config and unified-security from light-r… [\#2303](https://github.com/networknt/light-4j/pull/2303) ([stevehu](https://github.com/stevehu))
+- fixes \#2300 handler needs to escape the double quotes in the status d… [\#2301](https://github.com/networknt/light-4j/pull/2301) ([stevehu](https://github.com/stevehu))
+- Add unsupported content-type status code [\#2299](https://github.com/networknt/light-4j/pull/2299) ([david0](https://github.com/david0))
+- fixes \#2297 Deprecate MrasHandler and SalesforceHandler [\#2298](https://github.com/networknt/light-4j/pull/2298) ([stevehu](https://github.com/stevehu))
+- fixes \#2295 Need to filter the jwks with use=sig for getJsonWebKeyMap [\#2296](https://github.com/networknt/light-4j/pull/2296) ([stevehu](https://github.com/stevehu))
+- fixes \#2293 retrieve jwk will work with or without use sig in the res… [\#2294](https://github.com/networknt/light-4j/pull/2294) ([stevehu](https://github.com/stevehu))
+- fixes \#2291 only the use=sig jwk will return from the retrieveJwk [\#2292](https://github.com/networknt/light-4j/pull/2292) ([stevehu](https://github.com/stevehu))
+- fixes \#2289  Add a method to check if the jwt token has scopes in Jwt… [\#2290](https://github.com/networknt/light-4j/pull/2290) ([stevehu](https://github.com/stevehu))
+- fixes \#2287 -Dlight-4j-config-password is not working for AutoAESSalt… [\#2288](https://github.com/networknt/light-4j/pull/2288) ([stevehu](https://github.com/stevehu))
+- fixes \#2284 change the jwk cache object to single JsonWebKey [\#2285](https://github.com/networknt/light-4j/pull/2285) ([stevehu](https://github.com/stevehu))
+- fixes \#2282 update dependences for some modules that depending on htt… [\#2283](https://github.com/networknt/light-4j/pull/2283) ([stevehu](https://github.com/stevehu))
+- fixes \#2280 rollback the jwt issuer and verifier with local jks files [\#2281](https://github.com/networknt/light-4j/pull/2281) ([stevehu](https://github.com/stevehu))
+- fixes \#2277 move MapUtil to light-4j utility module [\#2278](https://github.com/networknt/light-4j/pull/2278) ([stevehu](https://github.com/stevehu))
+- Merged Traceability & Correlation Handler [\#2273](https://github.com/networknt/light-4j/pull/2273) ([KalevGonvick](https://github.com/KalevGonvick))
+- fixes \#2270 remove dependency of json-schema-validator [\#2271](https://github.com/networknt/light-4j/pull/2271) ([stevehu](https://github.com/stevehu))
+- fixes \#2267 return 413 response code if request body is too big [\#2268](https://github.com/networknt/light-4j/pull/2268) ([stevehu](https://github.com/stevehu))
+- fixes \#2265 SidecarPathPrefixServiceHandler never calls put attachment [\#2266](https://github.com/networknt/light-4j/pull/2266) ([stevehu](https://github.com/stevehu))
 ## [2.1.34](https://github.com/networknt/light-4j/tree/2.1.34) (2024-06-22)
 
 
