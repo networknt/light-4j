@@ -321,8 +321,11 @@ public class ConsulRegistry extends CommandFailbackRegistry {
              *      - services != null, and
              *      - services.size() == number of IPs registered for serviceName in Consul
              */
-            // if (services != null && !services.isEmpty() && response.getConsulIndex() > lastConsulIndexId)
-            if (response.getConsulIndex() > lastConsulIndexId)
+            //sanity check: make sure Consul index is greater than 0, otherwise set it to 1
+            long newConsulIndex = response.getConsulIndex() <= 0 ? 1 : response.getConsulIndex();
+            response.setConsulIndex(newConsulIndex);
+
+            if (response.getConsulIndex() > lastConsulIndexId || response.getConsulIndex() == 1)
             {
                 logger.info("Got updated urls from Consul: {} instances of service {} found", services.size(), serviceName);
 
