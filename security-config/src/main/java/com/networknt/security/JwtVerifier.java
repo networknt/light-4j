@@ -521,7 +521,7 @@ public class JwtVerifier extends TokenVerifier {
                 if (jwk == null) {
                     jwk = getJsonWebKeySetForToken(kid, requestPathOrJwkServiceIds);
                     if (jwk == null) {
-                        throw new RuntimeException("no JWK for kid: " + kid);
+                        throw new VerificationException("no JWK for kid: " + kid);
                     }
                     if(requestPathOrJwkServiceIds == null) {
                         // single jwk setup and kid is the key for the jwk cache.

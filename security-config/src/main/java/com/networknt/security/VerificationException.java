@@ -14,14 +14,19 @@
  * limitations under the License.
  */
 
-package com.networknt.security.outbound;
+package com.networknt.security;
 
 /**
- * Signed Message
+ * Verification Exception is a runtime exception that is thrown during
+ * message verification.
  *
  * @author Steve Hu
  */
-public interface SignedMessage {
-    String getEnvelope();
-    String getBody();
+public class VerificationException extends RuntimeException {
+    public VerificationException(String message, Throwable cause) {
+        super(message, cause);
+    }
+    public VerificationException(String message) {
+        super(message);
+    }
 }
