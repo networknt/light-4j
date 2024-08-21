@@ -24,7 +24,7 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
     static final Logger logger = LoggerFactory.getLogger(AbstractJwtVerifyHandler.class);
     static final String STATUS_INVALID_AUTH_TOKEN = "ERR10000";
     static final String STATUS_AUTH_TOKEN_EXPIRED = "ERR10001";
-    static final String STATUS_GENERIC_EXCEPTION = "ERR10014";
+    static final String TOKEN_VERIFICATION_EXCEPTION = "ERR10090";
     static final String STATUS_MISSING_AUTH_TOKEN = "ERR10002";
     static final String STATUS_INVALID_SCOPE_TOKEN = "ERR10003";
     static final String STATUS_SCOPE_TOKEN_EXPIRED = "ERR10004";
@@ -198,7 +198,7 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
                     if (logger.isDebugEnabled())
                         logger.debug("JwtVerifyHandler.handleRequest ends with an error.");
 
-                    setExchangeStatus(exchange, STATUS_GENERIC_EXCEPTION, e.getMessage());
+                    setExchangeStatus(exchange, TOKEN_VERIFICATION_EXCEPTION, e.getMessage());
                     exchange.endExchange();
                     return false;
                 }

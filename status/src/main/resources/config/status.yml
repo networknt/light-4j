@@ -591,6 +591,11 @@ ERR10089:
   code: ERR10089
   message: FAILED_TO_INVOKE_SERVICE
   description: Failed to invoke HTTP service with serviceId %.
+ERR10090:
+  statusCode: 400
+  code: ERR10090
+  message: TOKEN_VERIFICATION_EXCEPTION
+  description: Token verification exception %.
 
 # 11000-11499 swagger-validator errors
 ERR11000:
