@@ -5,6 +5,7 @@ import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.HttpStringConstants;
+import com.networknt.status.Status;
 import com.networknt.utility.Constants;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -55,13 +56,17 @@ public abstract class AbstractSimpleJwtVerifyHandler extends UndertowVerifyHandl
             return;
         }
         // only UnifiedSecurityHandler will have the jwkServiceIds as the third parameter.
-        if(handleJwt(exchange, null, reqPath, null)) {
+        Status status = handleJwt(exchange, null, reqPath, null);
+        if(status != null) {
+            setExchangeStatus(exchange, status);
+            exchange.endExchange();
+        } else {
             if(logger.isDebugEnabled()) logger.debug("SimpleJwtVerifyHandler.handleRequest ends.");
             Handler.next(exchange, next);
         }
     }
 
-    public boolean handleJwt(HttpServerExchange exchange, String pathPrefix, String reqPath, List<String> jwkServiceIds) throws Exception {
+    public Status handleJwt(HttpServerExchange exchange, String pathPrefix, String reqPath, List<String> jwkServiceIds) throws Exception {
         Map<String, Object> auditInfo = null;
         HeaderMap headerMap = exchange.getRequestHeaders();
         String authorization = headerMap.getFirst(Headers.AUTHORIZATION);
@@ -70,15 +75,13 @@ public abstract class AbstractSimpleJwtVerifyHandler extends UndertowVerifyHandl
             logger.trace("Authorization header = {}", authorization.substring(0, 10));
         // if an empty authorization header or a value length less than 6 ("Basic "), return an error
         if(authorization == null ) {
-            setExchangeStatus(exchange, STATUS_MISSING_AUTH_TOKEN);
-            exchange.endExchange();
-            if (logger.isDebugEnabled()) logger.debug("SimpleJwtVerifyHandler.handleRequest ends with an error.");
-            return false;
+            Status status = new Status(STATUS_MISSING_AUTH_TOKEN);
+            if (logger.isTraceEnabled()) logger.trace("SimpleJwtVerifyHandler.handleRequest ends with an error {}", status);
+            return status;
         } else if(authorization.trim().length() < 6) {
-            setExchangeStatus(exchange, STATUS_INVALID_AUTH_TOKEN);
-            exchange.endExchange();
-            if (logger.isDebugEnabled()) logger.debug("SimpleJwtVerifyHandler.handleRequest ends with an error.");
-            return false;
+            Status status = new Status(STATUS_INVALID_AUTH_TOKEN);
+            if (logger.isTraceEnabled()) logger.trace("SimpleJwtVerifyHandler.handleRequest ends with an error {}", status);
+            return status;
         } else {
             authorization = this.getScopeToken(authorization, headerMap);
 
@@ -123,9 +126,9 @@ public abstract class AbstractSimpleJwtVerifyHandler extends UndertowVerifyHandl
                     auditInfo.put(Constants.ISSUER_CLAIMS, issuer);
 
                     if (!config.isEnableH2c() && checkForH2CRequest(headerMap)) {
-                        setExchangeStatus(exchange, STATUS_METHOD_NOT_ALLOWED);
-                        if (logger.isDebugEnabled()) logger.debug("SimpleJwtVerifyHandler.handleRequest ends with an error.");
-                        return false;
+                        Status status = new Status(STATUS_METHOD_NOT_ALLOWED);
+                        if (logger.isTraceEnabled()) logger.trace("SimpleJwtVerifyHandler.handleRequest ends with an error {}", status);
+                        return status;
                     }
 
                     String callerId = headerMap.getFirst(HttpStringConstants.CALLER_ID);
@@ -149,45 +152,31 @@ public abstract class AbstractSimpleJwtVerifyHandler extends UndertowVerifyHandl
                     if (logger.isDebugEnabled())
                         logger.debug("SimpleJwtVerifyHandler.handleRequest ends.");
 
-                    return true;
+                    return null;
                 } catch (InvalidJwtException e) {
-
                     // only log it and unauthorized is returned.
                     logger.error("InvalidJwtException: ", e);
-
-                    if (logger.isDebugEnabled())
-                        logger.debug("SimpleJwtVerifyHandler.handleRequest ends with an error.");
-
-                    setExchangeStatus(exchange, STATUS_INVALID_AUTH_TOKEN);
-                    exchange.endExchange();
-                    return false;
+                    Status status = new Status(STATUS_INVALID_AUTH_TOKEN);
+                    if (logger.isTraceEnabled())
+                        logger.trace("SimpleJwtVerifyHandler.handleRequest ends with an error {}", status);
+                    return status;
                 } catch (ExpiredTokenException e) {
-
                     logger.error("ExpiredTokenException", e);
-
-                    if (logger.isDebugEnabled())
-                        logger.debug("SimpleJwtVerifyHandler.handleRequest ends with an error.");
-
-                    setExchangeStatus(exchange, STATUS_AUTH_TOKEN_EXPIRED);
-                    exchange.endExchange();
-                    return false;
+                    Status status = new Status(STATUS_AUTH_TOKEN_EXPIRED);
+                    if (logger.isTraceEnabled())
+                        logger.trace("SimpleJwtVerifyHandler.handleRequest ends with an error {}", status);
+                    return status;
                 } catch (VerificationException e) {
                     logger.error("VerificationException", e);
-                    if (logger.isDebugEnabled())
-                        logger.debug("SimpleJwtVerifyHandler.handleRequest ends with an error.");
-
-                    setExchangeStatus(exchange, TOKEN_VERIFICATION_EXCEPTION, e.getMessage());
-                    exchange.endExchange();
-                    return false;
+                    Status status = new Status(TOKEN_VERIFICATION_EXCEPTION, e.getMessage());
+                    if (logger.isTraceEnabled())
+                        logger.trace("SimpleJwtVerifyHandler.handleRequest ends with an error {}", status);
+                    return status;
                 }
             } else {
                 if (logger.isDebugEnabled())
                     logger.debug("SimpleJwtVerifyHandler.handleRequest ends with an error.");
-
-                setExchangeStatus(exchange, STATUS_MISSING_AUTH_TOKEN);
-                exchange.endExchange();
-                return false;
-            }
+                return new Status(STATUS_MISSING_AUTH_TOKEN);            }
         }
     }
     /**

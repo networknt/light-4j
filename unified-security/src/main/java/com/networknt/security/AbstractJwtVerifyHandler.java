@@ -5,6 +5,7 @@ import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.HttpStringConstants;
+import com.networknt.status.Status;
 import com.networknt.utility.Constants;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -59,13 +60,26 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
             return;
         }
         // only UnifiedSecurityHandler will have the jwkServiceIds as the third parameter.
-        if(handleJwt(exchange, null, reqPath, null)) {
+        Status status = handleJwt(exchange, null, reqPath, null);
+        if(status != null) {
+            setExchangeStatus(exchange, status);
+            exchange.endExchange();
+        } else {
             if(logger.isDebugEnabled()) logger.debug("JwtVerifyHandler.handleRequest ends.");
             Handler.next(exchange, next);
         }
     }
 
-    public boolean handleJwt(HttpServerExchange exchange, String pathPrefix, String reqPath, List<String> jwkServiceIds) throws Exception {
+    /**
+     * If jwt verification is correct, return true. Otherwise, return false with ended exchange.
+     * @param exchange HttpServerExchange
+     * @param pathPrefix path prefix
+     * @param reqPath request path
+     * @param jwkServiceIds jwk service id list
+     * @return status if there is an error. Otherwise, null to indicate no error.
+     * @throws Exception exception.
+     */
+    public Status handleJwt(HttpServerExchange exchange, String pathPrefix, String reqPath, List<String> jwkServiceIds) throws Exception {
         Map<String, Object> auditInfo = null;
         HeaderMap headerMap = exchange.getRequestHeaders();
         String authorization = headerMap.getFirst(Headers.AUTHORIZATION);
@@ -74,15 +88,13 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
             logger.trace("Authorization header = " + authorization.substring(0, 10));
         // if an empty authorization header or a value length less than 6 ("Basic "), return an error
         if(authorization == null ) {
-            setExchangeStatus(exchange, STATUS_MISSING_AUTH_TOKEN);
-            exchange.endExchange();
-            if (logger.isDebugEnabled()) logger.debug("JwtVerifyHandler.handleRequest ends with an error.");
-            return false;
+            Status status = new Status(STATUS_MISSING_AUTH_TOKEN);
+            if (logger.isTraceEnabled()) logger.trace("JwtVerifyHandler.handleRequest ends with an error {}", status);
+            return status;
         } else if(authorization.trim().length() < 6) {
-            setExchangeStatus(exchange, STATUS_INVALID_AUTH_TOKEN);
-            exchange.endExchange();
-            if (logger.isDebugEnabled()) logger.debug("JwtVerifyHandler.handleRequest ends with an error.");
-            return false;
+            Status status = new Status(STATUS_INVALID_AUTH_TOKEN);
+            if (logger.isTraceEnabled()) logger.trace("JwtVerifyHandler.handleRequest ends with an error {}", status);
+            return status;
         } else {
             authorization = this.getScopeToken(authorization, headerMap);
 
@@ -127,9 +139,9 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
                     auditInfo.put(Constants.ISSUER_CLAIMS, issuer);
 
                     if (!config.isEnableH2c() && checkForH2CRequest(headerMap)) {
-                        setExchangeStatus(exchange, STATUS_METHOD_NOT_ALLOWED);
-                        if (logger.isDebugEnabled()) logger.debug("JwtVerifyHandler.handleRequest ends with an error.");
-                        return false;
+                        Status status = new Status(STATUS_METHOD_NOT_ALLOWED);
+                        if (logger.isTraceEnabled()) logger.trace("JwtVerifyHandler.handleRequest ends with an error {}", status);
+                        return status;
                     }
 
                     String callerId = headerMap.getFirst(HttpStringConstants.CALLER_ID);
@@ -146,13 +158,15 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
                         String scopeJwt = JwtVerifier.getTokenFromAuthorization(scopeHeader);
                         List<String> secondaryScopes = new ArrayList<>();
 
-                        if(!this.hasValidSecondaryScopes(exchange, scopeJwt, secondaryScopes, ignoreExpiry, pathPrefix, reqPath, jwkServiceIds, auditInfo)) {
-                            if (logger.isDebugEnabled()) logger.debug("JwtVerifyHandler.handleRequest ends with an error.");
-                            return false;
+                        Status status = this.hasValidSecondaryScopes(exchange, scopeJwt, secondaryScopes, ignoreExpiry, pathPrefix, reqPath, jwkServiceIds, auditInfo);
+                        if(status != null) {
+                            if (logger.isTraceEnabled()) logger.trace("JwtVerifyHandler.handleRequest ends with an error {}", status);
+                            return status;
                         }
-                        if(!this.hasValidScope(exchange, scopeHeader, secondaryScopes, claims, getSpecScopes(exchange, auditInfo))) {
-                            if (logger.isDebugEnabled()) logger.debug("JwtVerifyHandler.handleRequest ends with an error.");
-                            return false;
+                        status = this.hasValidScope(exchange, scopeHeader, secondaryScopes, claims, getSpecScopes(exchange, auditInfo));
+                        if(status != null) {
+                            if (logger.isDebugEnabled()) logger.debug("JwtVerifyHandler.handleRequest ends with an error {}", status);
+                            return status;
                         }
                     }
                     // pass through claims through request headers after verification is done.
@@ -171,47 +185,36 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
                     if (logger.isDebugEnabled())
                         logger.debug("JwtVerifyHandler.handleRequest ends.");
 
-                    return true;
+                    return null;
                 } catch (InvalidJwtException e) {
-
                     // only log it and unauthorized is returned.
                     logger.error("InvalidJwtException: ", e);
-
-                    if (logger.isDebugEnabled())
-                        logger.debug("JwtVerifyHandler.handleRequest ends with an error.");
-
-                    setExchangeStatus(exchange, STATUS_INVALID_AUTH_TOKEN);
-                    exchange.endExchange();
-                    return false;
+                    Status status = new Status(STATUS_INVALID_AUTH_TOKEN);
+                    if (logger.isTraceEnabled())
+                        logger.trace("JwtVerifyHandler.handleRequest ends with an error {}", status);
+                    return status;
                 } catch (ExpiredTokenException e) {
-
                     logger.error("ExpiredTokenException", e);
-
-                    if (logger.isDebugEnabled())
-                        logger.debug("JwtVerifyHandler.handleRequest ends with an error.");
-
-                    setExchangeStatus(exchange, STATUS_AUTH_TOKEN_EXPIRED);
-                    exchange.endExchange();
-                    return false;
+                    Status status = new Status(STATUS_AUTH_TOKEN_EXPIRED);
+                    if (logger.isTraceEnabled())
+                        logger.trace("JwtVerifyHandler.handleRequest ends with an error {}", status);
+                    return status;
                 } catch (VerificationException e) {
                     logger.error("VerificationException", e);
-                    if (logger.isDebugEnabled())
-                        logger.debug("JwtVerifyHandler.handleRequest ends with an error.");
-
-                    setExchangeStatus(exchange, TOKEN_VERIFICATION_EXCEPTION, e.getMessage());
-                    exchange.endExchange();
-                    return false;
+                    Status status = new Status(TOKEN_VERIFICATION_EXCEPTION, e.getMessage());
+                    if (logger.isTraceEnabled())
+                        logger.trace("JwtVerifyHandler.handleRequest ends with an error {}", status);
+                    return status;
                 }
             } else {
-                if (logger.isDebugEnabled())
-                    logger.debug("JwtVerifyHandler.handleRequest ends with an error.");
-
-                setExchangeStatus(exchange, STATUS_MISSING_AUTH_TOKEN);
-                exchange.endExchange();
-                return false;
+                Status status = new Status(STATUS_MISSING_AUTH_TOKEN);
+                if (logger.isTraceEnabled())
+                    logger.trace("JwtVerifyHandler.handleRequest ends with an error {}", status);
+                return status;
             }
         }
     }
+
     /**
      * Get authToken from X-Scope-Token header.
      * This covers situations where there is a secondary auth token.
@@ -255,9 +258,9 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
      * @param reqPath - the request path as string
      * @param jwkServiceIds - a list of serviceIds for jwk loading
      * @param auditInfo - a map of audit info properties
-     * @return - return true if the secondary scopes are valid or if there are no secondary scopes.
+     * @return - a status if there is an error. or null if there is no error
      */
-    protected boolean hasValidSecondaryScopes(HttpServerExchange exchange, String scopeJwt, List<String> secondaryScopes, boolean ignoreExpiry, String pathPrefix, String reqPath, List<String> jwkServiceIds, Map<String, Object> auditInfo) {
+    protected Status hasValidSecondaryScopes(HttpServerExchange exchange, String scopeJwt, List<String> secondaryScopes, boolean ignoreExpiry, String pathPrefix, String reqPath, List<String> jwkServiceIds, Map<String, Object> auditInfo) {
         if (scopeJwt != null) {
             if (logger.isTraceEnabled())
                 logger.trace("start verifying scope token = " + scopeJwt.substring(0, 10));
@@ -286,22 +289,16 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
                 auditInfo.put(Constants.ACCESS_CLAIMS, scopeClaims);
             } catch (InvalidJwtException e) {
                 logger.error("InvalidJwtException", e);
-                setExchangeStatus(exchange, STATUS_INVALID_SCOPE_TOKEN);
-                exchange.endExchange();
-                return false;
+                return new Status(STATUS_INVALID_SCOPE_TOKEN);
             } catch (MalformedClaimException e) {
                 logger.error("MalformedClaimException", e);
-                setExchangeStatus(exchange, STATUS_INVALID_AUTH_TOKEN);
-                exchange.endExchange();
-                return false;
+                return new Status(STATUS_INVALID_AUTH_TOKEN);
             } catch (ExpiredTokenException e) {
                 logger.error("ExpiredTokenException", e);
-                setExchangeStatus(exchange, STATUS_SCOPE_TOKEN_EXPIRED);
-                exchange.endExchange();
-                return false;
+                return new Status(STATUS_SCOPE_TOKEN_EXPIRED);
             }
         }
-        return true;
+        return null;
     }
 
     /**
@@ -312,9 +309,9 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
      * @param secondaryScopes - list of secondary scopes (can be empty)
      * @param claims - claims found in jwt
      * @param specScopes collect of string scopes
-     * @return - return true if scope is valid for endpoint
+     * @return - null if there is no error. Or status if there is an error.
      */
-    protected boolean hasValidScope(HttpServerExchange exchange, String scopeHeader, List<String> secondaryScopes, JwtClaims claims, List<String> specScopes) {
+    protected Status hasValidScope(HttpServerExchange exchange, String scopeHeader, List<String> secondaryScopes, JwtClaims claims, List<String> specScopes) {
 
         // validate the scope against the scopes configured in the OpenAPI spec
         if (config.isEnableVerifyScope()) {
@@ -323,9 +320,7 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
             if (scopeHeader != null) {
                 if (logger.isTraceEnabled()) logger.trace("validate the scope with scope token");
                 if (secondaryScopes == null || !matchedScopes(secondaryScopes, specScopes)) {
-                    setExchangeStatus(exchange, STATUS_SCOPE_TOKEN_SCOPE_MISMATCH, secondaryScopes, specScopes);
-                    exchange.endExchange();
-                    return false;
+                    return new Status(STATUS_SCOPE_TOKEN_SCOPE_MISMATCH, secondaryScopes, specScopes);
                 }
             } else {
                 // no scope token, verify scope from auth token.
@@ -349,18 +344,14 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
                     }
                 } catch (MalformedClaimException e) {
                     logger.error("MalformedClaimException", e);
-                    setExchangeStatus(exchange, STATUS_INVALID_AUTH_TOKEN);
-                    exchange.endExchange();
-                    return false;
+                    return new Status(STATUS_INVALID_AUTH_TOKEN);
                 }
                 if (!matchedScopes(primaryScopes, specScopes)) {
-                    setExchangeStatus(exchange, STATUS_AUTH_TOKEN_SCOPE_MISMATCH, primaryScopes, specScopes);
-                    exchange.endExchange();
-                    return false;
+                    return new Status(STATUS_AUTH_TOKEN_SCOPE_MISMATCH, primaryScopes, specScopes);
                 }
             }
         }
-        return true;
+        return null;
     }
 
     protected boolean matchedScopes(List<String> jwtScopes, Collection<String> specScopes) {

@@ -161,12 +161,12 @@ public class UnifiedSecurityHandler implements MiddlewareHandler {
                                                         break;
                                                     }
                                                     // get the jwkServiceIds list.
-                                                    if (handler.handleJwt(exchange, pathPrefixAuth.getPrefix(), reqPath, pathPrefixAuth.getJwkServiceIds())) {
-                                                        // verification is passed, go to the next handler in the chain.
-                                                        break;
+                                                    Status status = handler.handleJwt(exchange, pathPrefixAuth.getPrefix(), reqPath, pathPrefixAuth.getJwkServiceIds());
+                                                    if(status != null) {
+                                                        return status;
                                                     } else {
-                                                        // verification is not passed and an error is returned. Don't call the next handler.
-                                                        return null;
+                                                        // call the next handler.
+                                                        break;
                                                     }
                                                 }
                                             } else {
@@ -182,12 +182,12 @@ public class UnifiedSecurityHandler implements MiddlewareHandler {
                                                         break;
                                                     }
                                                     // get the jwkServiceIds list.
-                                                    if (handler.handleJwt(exchange, pathPrefixAuth.getPrefix(), reqPath, pathPrefixAuth.getSjwkServiceIds())) {
+                                                    Status status = handler.handleJwt(exchange, pathPrefixAuth.getPrefix(), reqPath, pathPrefixAuth.getSjwkServiceIds());
+                                                    if(status != null) {
+                                                        return status;
+                                                    } else {
                                                         // verification is passed, go to the next handler in the chain.
                                                         break;
-                                                    } else {
-                                                        // verification is not passed and an error is returned. Don't call the next handler.
-                                                        return null;
                                                     }
                                                 }
                                             }
@@ -204,12 +204,12 @@ public class UnifiedSecurityHandler implements MiddlewareHandler {
                                                     break;
                                                 }
                                                 // get the jwkServiceIds list.
-                                                if (handler.handleJwt(exchange, pathPrefixAuth.getPrefix(), reqPath, pathPrefixAuth.getSjwkServiceIds())) {
+                                                Status status = handler.handleJwt(exchange, pathPrefixAuth.getPrefix(), reqPath, pathPrefixAuth.getSjwkServiceIds());
+                                                if(status != null) {
+                                                    return status;
+                                                } else {
                                                     // verification is passed, go to the next handler in the chain.
                                                     break;
-                                                } else {
-                                                    // verification is not passed and an error is returned. Don't call the next handler.
-                                                    return null;
                                                 }
                                             }
                                         }
@@ -226,35 +226,41 @@ public class UnifiedSecurityHandler implements MiddlewareHandler {
                                                 break;
                                             }
                                             // get the jwkServiceIds list.
-                                            if (handler.handleJwt(exchange, pathPrefixAuth.getPrefix(), reqPath, pathPrefixAuth.getJwkServiceIds())) {
-                                                // verification is passed, go to the next handler in the chain.
-                                                break;
+                                            Status status = handler.handleJwt(exchange, pathPrefixAuth.getPrefix(), reqPath, pathPrefixAuth.getJwkServiceIds());
+                                            if(status != null) {
+                                                return status;
                                             } else {
-                                                // verification is not passed and an error is returned. Don't call the next handler.
-                                                return null;
+                                                // call the next handler.
+                                                break;
                                             }
                                         }
                                     }
                                 } else {
-                                    // assume it is a swt token.
-                                    if(logger.isTraceEnabled()) logger.trace("Bearer token is swt.");
-                                    AbstractSwtVerifyHandler handler = (AbstractSwtVerifyHandler) handlers.get(SWT);
-                                    if (handler == null) {
-                                        logger.error("Cannot find SwtVerifyHandler with alias name swt.");
-                                        return new Status(HANDLER_NOT_FOUND, "com.networknt.openapi.SwtVerifyHandler@swt");
-                                    } else {
-                                        // if the handler is not enabled in the configuration, break here to call next handler.
-                                        if(!handler.isEnabled()) {
-                                            break;
-                                        }
-                                        // get the jwkServiceIds list.
-                                        if (handler.handleSwt(exchange, reqPath, pathPrefixAuth.getSwtServiceIds())) {
-                                            // verification is passed, go to the next handler in the chain.
-                                            break;
+                                    // cannot assume it is a swt token. need to check if swt is enabled for the path prefix.
+                                    if(pathPrefixAuth.isSwt()) {
+                                        if(logger.isTraceEnabled()) logger.trace("Bearer token is swt.");
+                                        AbstractSwtVerifyHandler handler = (AbstractSwtVerifyHandler) handlers.get(SWT);
+                                        if (handler == null) {
+                                            logger.error("Cannot find SwtVerifyHandler with alias name swt.");
+                                            return new Status(HANDLER_NOT_FOUND, "com.networknt.openapi.SwtVerifyHandler@swt");
                                         } else {
-                                            // verification is not passed and an error is returned. Don't call the next handler.
-                                            return null;
+                                            // if the handler is not enabled in the configuration, break here to call next handler.
+                                            if(!handler.isEnabled()) {
+                                                break;
+                                            }
+                                            // get the jwkServiceIds list.
+                                            Status status = handler.handleSwt(exchange, reqPath, pathPrefixAuth.getSwtServiceIds());
+                                            if(status != null) {
+                                                return status;
+                                            } else {
+                                                // verification is passed, go to the next handler in the chain.
+                                                break;
+                                            }
                                         }
+                                    } else {
+                                        // invalid jwt token.
+                                        logger.error("Invalid/Unsupported authorization header {}", authorization);
+                                        return new Status(INVALID_AUTHORIZATION_HEADER, authorization);
                                     }
                                 }
                             } else {

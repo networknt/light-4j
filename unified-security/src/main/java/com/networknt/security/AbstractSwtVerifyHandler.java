@@ -3,10 +3,10 @@ package com.networknt.security;
 import com.networknt.client.oauth.TokenInfo;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
-import com.networknt.handler.config.HandlerConfig;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.HttpStringConstants;
 import com.networknt.monad.Result;
+import com.networknt.status.Status;
 import com.networknt.utility.Constants;
 import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
@@ -74,14 +74,18 @@ public abstract class AbstractSwtVerifyHandler extends UndertowVerifyHandler imp
             return;
         }
         // only UnifiedSecurityHandler will have the jwkServiceIds as the third parameter.
-        if(handleSwt(exchange, reqPath, null)) {
+        Status status = handleSwt(exchange, reqPath, null);
+        if(status != null) {
+            setExchangeStatus(exchange, status);
+            exchange.endExchange();
+        } else {
             if(logger.isDebugEnabled()) logger.debug("SwtVerifyHandler.handleRequest ends.");
             Handler.next(exchange, next);
         }
     }
 
 
-    public boolean handleSwt(HttpServerExchange exchange, String reqPath, List<String> jwkServiceIds) throws Exception {
+    public Status handleSwt(HttpServerExchange exchange, String reqPath, List<String> jwkServiceIds) throws Exception {
         Map<String, Object> auditInfo = null;
         HeaderMap headerMap = exchange.getRequestHeaders();
         String authorization = headerMap.getFirst(Headers.AUTHORIZATION);
@@ -90,15 +94,13 @@ public abstract class AbstractSwtVerifyHandler extends UndertowVerifyHandler imp
             logger.trace("Authorization header = " + authorization.substring(0, 10));
         // if an empty authorization header or a value length less than 6 ("Basic "), return an error
         if(authorization == null ) {
-            setExchangeStatus(exchange, STATUS_MISSING_AUTH_TOKEN);
-            exchange.endExchange();
-            if (logger.isDebugEnabled()) logger.debug("SwtVerifyHandler.handleRequest ends with an error.");
-            return false;
+            Status status = new Status(STATUS_MISSING_AUTH_TOKEN);
+            if (logger.isTraceEnabled()) logger.trace("SwtVerifyHandler.handleRequest ends with an error {}", status);
+            return status;
         } else if(authorization.trim().length() < 6) {
-            setExchangeStatus(exchange, STATUS_INVALID_AUTH_TOKEN);
-            exchange.endExchange();
-            if (logger.isDebugEnabled()) logger.debug("SwtVerifyHandler.handleRequest ends with an error.");
-            return false;
+            Status status = new Status(STATUS_INVALID_AUTH_TOKEN);
+            if (logger.isTraceEnabled()) logger.trace("SwtVerifyHandler.handleRequest ends with an error {}", status);
+            return status;
         } else {
             authorization = this.getScopeToken(authorization, headerMap);
             String swt = SwtVerifier.getTokenFromAuthorization(authorization);
@@ -111,9 +113,8 @@ public abstract class AbstractSwtVerifyHandler extends UndertowVerifyHandler imp
                 Result<TokenInfo> tokenInfoResult = swtVerifier.verifySwt(swt, reqPath, jwkServiceIds, swtClientId, swtClientSecret);
                 if(tokenInfoResult.isFailure()) {
                     // return error status to the user.
-                    setExchangeStatus(exchange, tokenInfoResult.getError());
-                    if (logger.isDebugEnabled()) logger.debug("SwtVerifyHandler.handleRequest ends with an error.");
-                    return false;
+                    if (logger.isTraceEnabled()) logger.trace("SwtVerifyHandler.handleRequest ends with an error {}", tokenInfoResult.getError());
+                    return tokenInfoResult.getError();
                 }
                 TokenInfo tokenInfo = tokenInfoResult.getResult();
                 /* if no auditInfo has been set previously, we populate here */
@@ -127,9 +128,9 @@ public abstract class AbstractSwtVerifyHandler extends UndertowVerifyHandler imp
                 String issuer = tokenInfo.getIss();
                 auditInfo.put(Constants.ISSUER_CLAIMS, issuer);
                 if (!config.isEnableH2c() && checkForH2CRequest(headerMap)) {
-                    setExchangeStatus(exchange, STATUS_METHOD_NOT_ALLOWED);
-                    if (logger.isDebugEnabled()) logger.debug("SwtVerifyHandler.handleRequest ends with an error.");
-                    return false;
+                    Status status = new Status(STATUS_METHOD_NOT_ALLOWED);
+                    if (logger.isTraceEnabled()) logger.trace("SwtVerifyHandler.handleRequest ends with an error {}", status);
+                    return status;
                 }
 
                 String callerId = headerMap.getFirst(HttpStringConstants.CALLER_ID);
@@ -145,13 +146,10 @@ public abstract class AbstractSwtVerifyHandler extends UndertowVerifyHandler imp
                     String scopeHeader = headerMap.getFirst(HttpStringConstants.SCOPE_TOKEN);
                     String scopeSwt = SwtVerifier.getTokenFromAuthorization(scopeHeader);
                     List<String> secondaryScopes = new ArrayList<>();
-
-                    if(!this.hasValidSecondaryScopes(exchange, scopeSwt, secondaryScopes, reqPath, jwkServiceIds, auditInfo)) {
-                        return false;
-                    }
-                    if(!this.hasValidScope(exchange, scopeHeader, secondaryScopes, tokenInfo, getSpecScopes(exchange, auditInfo))) {
-                        return false;
-                    }
+                    Status status = this.hasValidSecondaryScopes(exchange, scopeSwt, secondaryScopes, reqPath, jwkServiceIds, auditInfo);
+                    if(status != null) return status;
+                    status = this.hasValidScope(exchange, scopeHeader, secondaryScopes, tokenInfo, getSpecScopes(exchange, auditInfo));
+                    if(status != null) return status;
                 }
                 // pass through claims through request headers after verification is done.
                 if(config.getPassThroughClaims() != null && config.getPassThroughClaims().size() > 0) {
@@ -171,13 +169,11 @@ public abstract class AbstractSwtVerifyHandler extends UndertowVerifyHandler imp
                 if (logger.isDebugEnabled())
                     logger.debug("SwtVerifyHandler.handleRequest ends.");
 
-                return true;
+                return null;
             } else {
                 if (logger.isDebugEnabled())
                     logger.debug("SwtVerifyHandler.handleRequest ends with an error.");
-                setExchangeStatus(exchange, STATUS_MISSING_AUTH_TOKEN);
-                exchange.endExchange();
-                return false;
+                return new Status(STATUS_MISSING_AUTH_TOKEN);
             }
         }
     }
@@ -190,9 +186,9 @@ public abstract class AbstractSwtVerifyHandler extends UndertowVerifyHandler imp
      * @param secondaryScopes - list of secondary scopes (can be empty)
      * @param tokenInfo - TokenInfo returned from the introspection
      * @param specScopes - a list of scopes
-     * @return - return true if scope is valid for endpoint
+     * @return - return null if scope is valid for endpoint, otherwise a status object to indicate the error.
      */
-    protected boolean hasValidScope(HttpServerExchange exchange, String scopeHeader, List<String> secondaryScopes, TokenInfo tokenInfo, List<String> specScopes) {
+    protected Status hasValidScope(HttpServerExchange exchange, String scopeHeader, List<String> secondaryScopes, TokenInfo tokenInfo, List<String> specScopes) {
         // validate the scope against the scopes configured in the OpenAPI spec
         if (config.isEnableVerifyScope()) {
 
@@ -200,9 +196,7 @@ public abstract class AbstractSwtVerifyHandler extends UndertowVerifyHandler imp
             if (scopeHeader != null) {
                 if (logger.isTraceEnabled()) logger.trace("validate the scope with scope token");
                 if (secondaryScopes == null || !matchedScopes(secondaryScopes, specScopes)) {
-                    setExchangeStatus(exchange, STATUS_SCOPE_TOKEN_SCOPE_MISMATCH, secondaryScopes, specScopes);
-                    exchange.endExchange();
-                    return false;
+                    return new Status(STATUS_SCOPE_TOKEN_SCOPE_MISMATCH, secondaryScopes, specScopes);
                 }
             } else {
                 // no scope token, verify scope from auth token.
@@ -214,13 +208,11 @@ public abstract class AbstractSwtVerifyHandler extends UndertowVerifyHandler imp
                 }
 
                 if (!matchedScopes(primaryScopes, specScopes)) {
-                    setExchangeStatus(exchange, STATUS_AUTH_TOKEN_SCOPE_MISMATCH, primaryScopes, specScopes);
-                    exchange.endExchange();
-                    return false;
+                    return new Status(STATUS_AUTH_TOKEN_SCOPE_MISMATCH, primaryScopes, specScopes);
                 }
             }
         }
-        return true;
+        return null;
     }
 
     protected boolean matchedScopes(List<String> tokenScopes, Collection<String> specScopes) {
@@ -249,9 +241,9 @@ public abstract class AbstractSwtVerifyHandler extends UndertowVerifyHandler imp
      * @param reqPath - the request path as string
      * @param jwkServiceIds - a list of serviceIds for jwk loading
      * @param auditInfo - a map of audit info properties
-     * @return - return true if the secondary scopes are valid or if there are no secondary scopes.
+     * @return - null if there is no error or status if there is an error.
      */
-    protected boolean hasValidSecondaryScopes(HttpServerExchange exchange, String scopeSwt, List<String> secondaryScopes, String reqPath, List<String> jwkServiceIds, Map<String, Object> auditInfo) {
+    protected Status hasValidSecondaryScopes(HttpServerExchange exchange, String scopeSwt, List<String> secondaryScopes, String reqPath, List<String> jwkServiceIds, Map<String, Object> auditInfo) {
         if (scopeSwt != null) {
             if (logger.isTraceEnabled())
                 logger.trace("start verifying scope token = " + scopeSwt.substring(0, 10));
@@ -262,9 +254,7 @@ public abstract class AbstractSwtVerifyHandler extends UndertowVerifyHandler imp
                 if(logger.isTraceEnabled()) logger.trace("header swtClientId = " + swtClientId + ", header swtClientSecret = " + StringUtils.maskHalfString(swtClientSecret));
                 Result<TokenInfo> scopeTokenInfo = swtVerifier.verifySwt(scopeSwt, reqPath, jwkServiceIds, swtClientId, swtClientSecret);
                 if(scopeTokenInfo.isFailure()) {
-                    setExchangeStatus(exchange, scopeTokenInfo.getError());
-                    exchange.endExchange();
-                    return false;
+                    return scopeTokenInfo.getError();
                 }
                 TokenInfo tokenInfo = scopeTokenInfo.getResult();
                 String scope = tokenInfo.getScope();
@@ -275,12 +265,10 @@ public abstract class AbstractSwtVerifyHandler extends UndertowVerifyHandler imp
             } catch (Exception e) {
                 // only the ClientException is possible here.
                 logger.error("Exception", e);
-                setExchangeStatus(exchange, STATUS_CLIENT_EXCEPTION, e.getMessage());
-                exchange.endExchange();
-                return false;
+                return new Status(STATUS_CLIENT_EXCEPTION, e.getMessage());
             }
         }
-        return true;
+        return null;
     }
 
     /**
