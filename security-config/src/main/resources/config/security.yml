@@ -15,8 +15,8 @@ enableVerifyJwt: ${security.enableVerifyJwt:true}
 # Enable the SWT verification flag. The SwtVerifierHandler will skip the SWT token verification
 # if this flag is false. It should only be set to false on the dev environment for testing
 # purposes. If you have some endpoints that want to skip the SWT verification, you can put the
-# request path prefix in skipPathPrefixes. By default, it is false as most users are using JWT.
-enableVerifySwt: ${security.enableVerifySwt:false}
+# request path prefix in skipPathPrefixes.
+enableVerifySwt: ${security.enableVerifySwt:true}
 
 # swt clientId header name. When light-gateway is used and the consumer app does not want to save
 # the client secret in the configuration file, it can be passed in the header.
