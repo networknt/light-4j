@@ -129,10 +129,12 @@ public class RequestInterceptorInjectionHandler implements MiddlewareHandler {
                 logger.error(e.getMessage(), e);
                 safeCloseBuffers(bufferedData, buffer);
                 setExchangeStatus(httpServerExchange, PAYLOAD_TOO_LARGE);
+                return;
             } catch (Exception | Error e) {
                 logger.error(e.getMessage(), e);
                 safeCloseBuffers(bufferedData, buffer);
                 setExchangeStatus(httpServerExchange, GENERIC_EXCEPTION, e.getMessage());
+                return;
             }
         } else {
             if(logger.isTraceEnabled()) logger.trace("No need to read body");
