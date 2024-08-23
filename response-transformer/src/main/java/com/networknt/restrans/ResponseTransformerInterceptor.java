@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
@@ -183,7 +184,9 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
                             if (responseBody != null) {
                                 // copy transformed buffer to the attachment
                                 var dest = exchange.getAttachment(AttachmentConstants.BUFFERED_RESPONSE_DATA_KEY);
-                                BuffersUtils.transfer(ByteBuffer.wrap(responseBody.getBytes()), dest, exchange);
+                                // here we convert back the response body to byte array. Need to find out the default charset.
+                                if(logger.isTraceEnabled()) logger.trace("Default Charset {}", Charset.defaultCharset());
+                                BuffersUtils.transfer(ByteBuffer.wrap(responseBody.getBytes(StandardCharsets.UTF_8)), dest, exchange);
                             }
                             break;
                     }
