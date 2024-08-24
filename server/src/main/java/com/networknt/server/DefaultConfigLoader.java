@@ -40,6 +40,7 @@ import java.io.InputStream;
 import java.net.ConnectException;
 import java.net.URI;
 import java.net.http.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -50,7 +51,6 @@ import java.time.Duration;
 import java.util.*;
 
 import static com.networknt.server.Server.STARTUP_CONFIG_NAME;
-
 
 /**
  * Default Config Loader to fetch and load configs from light config server
@@ -218,7 +218,7 @@ public class DefaultConfigLoader implements IConfigLoader{
             }
 
             filePath = Paths.get(targetConfigsDirectory + "/values.yml");
-            Files.write(filePath, new Yaml(options).dump(serviceConfigs).getBytes());
+            Files.write(filePath, new Yaml(options).dump(serviceConfigs).getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             logger.error("Exception while creating " + targetConfigsDirectory, e);
         }
@@ -259,7 +259,7 @@ public class DefaultConfigLoader implements IConfigLoader{
             Base64.Decoder decoder = Base64.getMimeDecoder();
             for (String fileName : serviceFiles.keySet()) {
                 filePath=Paths.get(targetConfigsDirectory+"/"+fileName);
-                byte[] ba = decoder.decode(serviceFiles.get(fileName).toString().getBytes());
+                byte[] ba = decoder.decode(serviceFiles.get(fileName).toString().getBytes(StandardCharsets.UTF_8));
                 Files.write(filePath, ba);
             }
         }  catch (IOException e) {

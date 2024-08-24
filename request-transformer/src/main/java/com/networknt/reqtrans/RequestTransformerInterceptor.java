@@ -16,7 +16,6 @@ import io.undertow.connector.PooledByteBuffer;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.protocol.http.HttpContinue;
-import io.undertow.util.HeaderMap;
 import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import org.slf4j.Logger;
@@ -209,7 +208,7 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
                                         break;
                                     case "requestBody":
                                         String s = (String)result.get("requestBody");
-                                        ByteBuffer overwriteData = ByteBuffer.wrap(s.getBytes());
+                                        ByteBuffer overwriteData = ByteBuffer.wrap(s.getBytes(StandardCharsets.UTF_8));
                                         PooledByteBuffer[] requestData = this.getBuffer(exchange);
                                         // Do the overwrite operation by copying our overwriteData to the source buffer pool.
                                         int pidx = 0;
