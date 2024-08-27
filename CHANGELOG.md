@@ -1,5 +1,16 @@
 # Change Log
 
+## [2.1.36](https://github.com/networknt/light-4j/tree/2.1.36) (2024-08-27)
+
+
+**Merged pull requests:**
+
+
+- fixes \#2330 update response tranformer interceptor to use explicit UT… [\#2331](https://github.com/networknt/light-4j/pull/2331) ([stevehu](https://github.com/stevehu))
+- fixes \#2328 refactor the security handlers to return status or null [\#2329](https://github.com/networknt/light-4j/pull/2329) ([stevehu](https://github.com/stevehu))
+- fixes \#2325 security-config/src/main/resources/config/security.yml [\#2326](https://github.com/networknt/light-4j/pull/2326) ([stevehu](https://github.com/stevehu))
+- fixes \#2323 Make status code 401 if the token kid cannot find jwk [\#2324](https://github.com/networknt/light-4j/pull/2324) ([stevehu](https://github.com/stevehu))
+- fixes \#2321 2.1.35 introduced a new issue in the jwt verification [\#2322](https://github.com/networknt/light-4j/pull/2322) ([stevehu](https://github.com/stevehu))
 ## [2.1.35](https://github.com/networknt/light-4j/tree/2.1.35) (2024-08-17)
 
 
