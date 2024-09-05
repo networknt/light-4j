@@ -52,6 +52,7 @@ public class ConfigInjection {
     private static final String SCALABLE_CONFIG = "config";
     private static final String EXCLUSION_CONFIG_FILE_LIST = "exclusionConfigFileList";
     private static final String ALLOW_DEFAULT_EMPTY = "allowDefaultValueEmpty";
+    private static final String CONVERT_ENV_VARS = "convertEnvVars";
 
     private static final Map<String, Object> exclusionMap = Config.getInstance().getJsonMapConfig(SCALABLE_CONFIG);
 
@@ -106,6 +107,10 @@ public class ConfigInjection {
         // convert to upper case
         if (input == null) {
             return null;
+        }
+        if (exclusionMap.get(CONVERT_ENV_VARS) != null && !(Boolean)exclusionMap.get(CONVERT_ENV_VARS)) {
+            // only if the flag is set to false, then don't convert.
+            return input;
         }
         return input.replaceAll("[^A-Za-z0-9]", "_").toUpperCase();
     }
