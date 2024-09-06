@@ -78,18 +78,18 @@ public class JwtVerifier {
     private static final String ENABLE_JWT_CACHE = "enableJwtCache";
     private static final String BOOTSTRAP_FROM_KEY_SERVICE = "bootstrapFromKeyService";
     private static final int CACHE_EXPIRED_IN_MINUTES = 15;
-
     public static final String JWT_KEY_RESOLVER = "keyResolver";
     public static final String JWT_KEY_RESOLVER_X509CERT = "X509Certificate";
     public static final String JWT_KEY_RESOLVER_JWKS = "JsonWebKeySet";
-
-
+    public static final String ENABLE_JWT_SIGNATURE_VALIDATION = "skipSignatureCheck";
+    public static final String IGNORE_EXPIRY ="ignoreExpiry";
     Map<String, Object> config;
     Map<String, Object> jwtConfig;
     int secondsOfAllowedClockSkew;
     Boolean enableJwtCache;
     Boolean bootstrapFromKeyService;
-
+    Boolean skipSignatureCheck;
+    Boolean ignoreExpiry;
     static Cache<String, JwtClaims> cache;
     static Map<String, X509Certificate> certMap;
     static Map<String, List<JsonWebKey>> jwksMap;
@@ -101,6 +101,8 @@ public class JwtVerifier {
         this.secondsOfAllowedClockSkew = (Integer)jwtConfig.get(JWT_CLOCK_SKEW_IN_SECONDS);
         this.bootstrapFromKeyService = (Boolean)config.get(BOOTSTRAP_FROM_KEY_SERVICE);
         this.enableJwtCache = (Boolean)config.get(ENABLE_JWT_CACHE);
+        this.skipSignatureCheck = config.get(ENABLE_JWT_SIGNATURE_VALIDATION) !=null ? (Boolean) config.get(ENABLE_JWT_SIGNATURE_VALIDATION) : false;
+        this.ignoreExpiry = config.get(IGNORE_EXPIRY) !=null ? (Boolean) config.get(IGNORE_EXPIRY) : false;
         if(Boolean.TRUE.equals(enableJwtCache)) {
             cache = Caffeine.newBuilder()
                     // assuming that the clock screw time is less than 5 minutes
@@ -206,6 +208,27 @@ public class JwtVerifier {
     }
 
     /**
+     * This method is to keep backward compatible for those call with ignoreExpiry.
+     *
+     * In most cases, we need to verify the expiry of the jwt token. The only time we need to ignore expiry
+     * verification is in SPA middleware handlers which need to verify csrf token in jwt against the csrf
+     * token in the request header to renew the expired token.
+     *
+     * @param jwt String of Json web token
+     * @param ignoreExpiry This value is ignored, it is coming from the security.yml file.
+     * @param isToken True if the jwt is an OAuth 2.0 access token
+     * @param getKeyResolver How to get VerificationKeyResolver
+     * @return JwtClaims object
+     * @throws InvalidJwtException InvalidJwtException
+     * @throws ExpiredTokenException ExpiredTokenException
+     */
+    @Deprecated
+    public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken, BiFunction<String, Boolean, VerificationKeyResolver> getKeyResolver)
+            throws InvalidJwtException, ExpiredTokenException {
+        return verifyJwt(jwt, isToken, getKeyResolver);
+    }
+
+    /**
      * Verify JWT token format and signature. If ignoreExpiry is true, skip expiry verification, otherwise
      * verify the expiry before signature verification.
      *
@@ -214,19 +237,18 @@ public class JwtVerifier {
      * token in the request header to renew the expired token.
      *
      * @param jwt String of Json web token
-     * @param ignoreExpiry If true, don't verify if the token is expired.
      * @param isToken True if the jwt is an OAuth 2.0 access token
      * @param getKeyResolver How to get VerificationKeyResolver
      * @return JwtClaims object
      * @throws InvalidJwtException InvalidJwtException
      * @throws ExpiredTokenException ExpiredTokenException
      */
-    public JwtClaims verifyJwt(String jwt, boolean ignoreExpiry, boolean isToken, BiFunction<String, Boolean, VerificationKeyResolver> getKeyResolver)
+    public JwtClaims verifyJwt(String jwt, boolean isToken, BiFunction<String, Boolean, VerificationKeyResolver> getKeyResolver)
             throws InvalidJwtException, ExpiredTokenException {
         JwtClaims claims;
 
         if(Boolean.TRUE.equals(enableJwtCache)) {
-            claims = cache.getIfPresent(jwt);
+             claims = cache.getIfPresent(jwt);
             if(claims != null) {
                 if(!ignoreExpiry) {
                     try {
@@ -274,12 +296,22 @@ public class JwtVerifier {
             }
         }
 
-        consumer = new JwtConsumerBuilder()
-                .setRequireExpirationTime()
-                .setAllowedClockSkewInSeconds(315360000) // use seconds of 10 years to skip expiration validation as we need skip it in some cases.
-                .setSkipDefaultAudienceValidation()
-                .setVerificationKeyResolver(getKeyResolver.apply(kid, isToken))
-                .build();
+        if(skipSignatureCheck){
+            consumer = new JwtConsumerBuilder()
+                    .setRequireExpirationTime()
+                    .setAllowedClockSkewInSeconds(315360000) // use seconds of 10 years to skip expiration validation as we need skip it in some cases.
+                    .setSkipDefaultAudienceValidation()
+                    .setDisableRequireSignature()
+                    .setSkipSignatureVerification()
+                    .build();
+        }else{
+            consumer = new JwtConsumerBuilder()
+                    .setRequireExpirationTime()
+                    .setAllowedClockSkewInSeconds(315360000) // use seconds of 10 years to skip expiration validation as we need skip it in some cases.
+                    .setSkipDefaultAudienceValidation()
+                    .setVerificationKeyResolver(getKeyResolver.apply(kid, isToken))
+                    .build();
+        }
 
         // Validate the JWT and process it to the Claims
         jwtContext = consumer.process(jwt);

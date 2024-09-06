@@ -96,9 +96,38 @@ public class JwtVerifierTest {
         }
         Assert.assertNotNull(claims);
         Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
+        try {
+            claims = jwtVerifier.verifyJwt(jwt, false, true);
+            Assert.assertNotNull(claims);
+            Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("jwtClaims = " + claims);
+    }
+
+    @Test
+    public void testVerifyJwt_ignoreExpiry_skipSignature_True() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"), "user");
+        String jwt = JwtIssuer.getJwt(claims);
+        claims = null;
+        Assert.assertNotNull(jwt);
+        JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
+        jwtVerifier.skipSignatureCheck = true;
+        jwtVerifier.ignoreExpiry = true;
+        try {
+            claims = jwtVerifier.verifyJwt(jwt, false, true);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Assert.assertNotNull(claims);
+        Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
 
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, true);
+            Assert.assertNotNull(claims);
+            Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -149,7 +178,69 @@ public class JwtVerifierTest {
         System.out.print("JWT = " + jwt);
 
         JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
-        JwtClaims claims = jwtVerifier.verifyJwt(jwt, true, true, (kId, isToken) -> {
+        jwtVerifier.ignoreExpiry = true;
+        JwtClaims claims = jwtVerifier.verifyJwt(jwt, true, (kId, isToken) -> {
+            try {
+                // use public key to create the the JsonWebKey
+                Key publicKey = ks.getCertificate(alias).getPublicKey();
+                PublicJsonWebKey jwk = PublicJsonWebKey.Factory.newPublicJwk(publicKey);
+                List<JsonWebKey> jwkList = Arrays.asList(jwk);
+                return new JwksVerificationKeyResolver(jwkList);
+            } catch (JoseException | KeyStoreException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        Assert.assertNotNull(claims);
+        Assert.assertEquals(iss, claims.getStringClaimValue("iss"));
+    }
+
+    @Test
+    public void testVerifyJwtByJsonWebKeys_ignoreExpiry_skipSignature_True() throws Exception {
+        Map<String, Object> secretConfig = Config.getInstance().getJsonMapConfig(JwtIssuer.SECRET_CONFIG);
+        JwtConfig jwtConfig = (JwtConfig) Config.getInstance().getJsonObjectConfig(JwtIssuer.JWT_CONFIG, JwtConfig.class);
+
+        String fileName = jwtConfig.getKey().getFilename();
+        String alias = jwtConfig.getKey().getKeyName();
+
+        KeyStore ks = loadKeystore(fileName, (String)secretConfig.get(JwtIssuer.JWT_PRIVATE_KEY_PASSWORD));
+        Key privateKey = ks.getKey(alias, ((String) secretConfig.get(JwtIssuer.JWT_PRIVATE_KEY_PASSWORD)).toCharArray());
+
+        JsonWebSignature jws = new JsonWebSignature();
+
+        String iss = "my.test.iss";
+        JwtClaims jwtClaims = JwtClaims.parse("{\n" +
+                "  \"sub\": \"5745ed4b-0158-45ff-89af-4ce99bc6f4de\",\n" +
+                "  \"iss\": \"" + iss  +"\",\n" +
+                "  \"subject_type\": \"client-id\",\n" +
+                "  \"exp\": 1557419531,\n" +
+                "  \"iat\": 1557419231,\n" +
+                "  \"scope\": [\n" +
+                "    \"my.test.scope.read\",\n" +
+                "    \"my.test.scope.write\",\n" +
+                "  ],\n" +
+                "  \"consumer_application_id\": \"389\",\n" +
+                "  \"request_transit\": \"63092\"\n" +
+                "}");
+
+        // The payload of the JWS is JSON content of the JWT Claims
+        jws.setPayload(jwtClaims.toJson());
+
+        // use private key to sign the JWT
+        jws.setKey(privateKey);
+
+        jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.RSA_USING_SHA256);
+
+        String jwt = jws.getCompactSerialization();
+
+        Assert.assertNotNull(jwt);
+
+        System.out.print("JWT = " + jwt);
+
+        JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
+        jwtVerifier.ignoreExpiry = true;
+        jwtVerifier.skipSignatureCheck = true;
+        JwtClaims claims = jwtVerifier.verifyJwt(jwt, true, (kId, isToken) -> {
             try {
                 // use public key to create the the JsonWebKey
                 Key publicKey = ks.getCertificate(alias).getPublicKey();
@@ -189,6 +280,36 @@ public class JwtVerifierTest {
 
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, true);
+            Assert.assertNotNull(claims);
+            Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("jwtClaims = " + claims);
+    }
+
+    @Test
+    public void testVerifyToken_ignoreExpiry_skipSignature_True() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"), "user");
+        String jwt = JwtIssuer.getJwt(claims);
+        claims = null;
+        Assert.assertNotNull(jwt);
+        JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
+        jwtVerifier.skipSignatureCheck = true;
+        jwtVerifier.ignoreExpiry = true;
+        try {
+            claims = jwtVerifier.verifyJwt(jwt, false, true);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Assert.assertNotNull(claims);
+        Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
+
+        try {
+            claims = jwtVerifier.verifyJwt(jwt, false, true);
+            Assert.assertNotNull(claims);
+            Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -213,6 +334,36 @@ public class JwtVerifierTest {
 
         try {
             claims = jwtVerifier.verifyJwt(jwt, false, false);
+            Assert.assertNotNull(claims);
+            Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("jwtClaims = " + claims);
+    }
+
+    @Test
+    public void testVerifySign_ignoreExpiry_skipSignature_True() throws Exception {
+        JwtClaims claims = ClaimsUtil.getTestClaims("steve", "EMPLOYEE", "f7d42348-c647-4efb-a52d-4c5787421e72", Arrays.asList("write:pets", "read:pets"), "user");
+        String jwt = JwtIssuer.getJwt(claims);
+        claims = null;
+        Assert.assertNotNull(jwt);
+        JwtVerifier jwtVerifier = new JwtVerifier(Config.getInstance().getJsonMapConfig(CONFIG_NAME));
+        jwtVerifier.skipSignatureCheck = true;
+        jwtVerifier.ignoreExpiry = true;
+        try {
+            claims = jwtVerifier.verifyJwt(jwt, false, false);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Assert.assertNotNull(claims);
+        Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
+
+        try {
+            claims = jwtVerifier.verifyJwt(jwt, false, false);
+            Assert.assertNotNull(claims);
+            Assert.assertEquals("steve", claims.getStringClaimValue(Constants.USER_ID_STRING));
         } catch (Exception e) {
             e.printStackTrace();
         }

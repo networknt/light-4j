@@ -39,3 +39,9 @@ enableJwtCache: true
 # the first token is arrived. Default to false for dev environment without oauth2 server
 # or official environment that use other OAuth 2.0 providers.
 bootstrapFromKeyService: false
+
+# Set to true to skip JWT signature validation during token verification. Only valid when enableVerifyJwt is true.
+skipSignatureCheck: false
+
+# Set to true to ignore JWT expiry date during token verification. Only valid when enableVerifyJwt is true.
+ignoreExpiry: false
