@@ -29,3 +29,9 @@ decryptorClass: com.networknt.decrypt.AutoAESSaltDecryptor
 # would be negative impact on the application security. The following config will ensure that
 # null will be used when the default value is empty without stopping the server during the start.
 allowDefaultValueEmpty: true
+
+# For some operating systems, environment variable can be only upper case, to make sure they can
+# match the key defined in each config files, we can convert the env vars to upper case to match.
+# The default value is true, and it will cover most operating systems (Linux and Windows). Change
+# this value to false if you have lower or mix case environment variable names.
+convertEnvVars: true
