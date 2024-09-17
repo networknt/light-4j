@@ -25,6 +25,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.networknt.utility.Constants.ERROR_MESSAGE;
+
 /**
  * This is a generic middleware handler to manipulate response based on rule-engine rules so that it can be much more
  * flexible than any other handlers like the header handler to manipulate the headers. The rules will be loaded from
@@ -54,6 +56,7 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
 
     private static final String STARTUP_HOOK_NOT_LOADED = "ERR11019";
     private static final String RESPONSE_TRANSFORM = "response-transform";
+    static final String GENERIC_EXCEPTION = "ERR10014";
 
     private final ResponseTransformerConfig config;
     private volatile HttpHandler next;
@@ -191,6 +194,11 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
                             break;
                     }
                 }
+            } else {
+                // The finalResult is false to indicate there is an error in the plugin action. Set the exchange to stop the chain.
+                String errorMessage = (String)result.get(ERROR_MESSAGE);
+                if(logger.isTraceEnabled()) logger.trace("Error message {} returns from the plugin", errorMessage);
+                setExchangeStatus(exchange, GENERIC_EXCEPTION, errorMessage);
             }
         }
         if (logger.isDebugEnabled()) logger.trace("ResponseTransformerInterceptor.handleRequest ends.");

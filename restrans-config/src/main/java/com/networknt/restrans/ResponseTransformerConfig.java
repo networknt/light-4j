@@ -21,7 +21,7 @@ public class ResponseTransformerConfig {
     private static final String APPLIED_PATH_PREFIXES = "appliedPathPrefixes";
 
     private Map<String, Object> mappedConfig;
-    private Config config;
+    private final Config config;
     private boolean enabled;
     private boolean requiredContent;
     private String defaultBodyEncoding;

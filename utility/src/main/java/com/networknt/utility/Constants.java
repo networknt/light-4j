@@ -131,4 +131,7 @@ public class Constants {
     // framework
     public static final String LIGHT_4J = "Light4j";
     public static final String SPRING_BOOT = "SpringBoot";
+
+    // plugin error message
+    public static final String ERROR_MESSAGE = "errorMessage";
 }
