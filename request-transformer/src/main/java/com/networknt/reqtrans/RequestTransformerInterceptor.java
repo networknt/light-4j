@@ -25,6 +25,8 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import static com.networknt.utility.Constants.ERROR_MESSAGE;
+
 /**
  * Transforms the request body of an active request being processed.
  * This is executed by RequestInterceptorExecutionHandler. Also, this class will be responsible for
@@ -36,6 +38,7 @@ import java.util.*;
 public class RequestTransformerInterceptor implements RequestInterceptor {
     static final Logger logger = LoggerFactory.getLogger(RequestTransformerInterceptor.class);
     static final String REQUEST_TRANSFORM = "request-transform";
+    static final String GENERIC_EXCEPTION = "ERR10014";
 
     private final RequestTransformerConfig config;
     private volatile HttpHandler next;
@@ -253,7 +256,7 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
                                     case "validationError":
                                         // If the rule engine returns any validationError entry, stop the chain and send the res.
                                         // this can be either XML or JSON or TEXT. Just make sure it matches the content type
-                                        String errorMessage = (String)result.get("errorMessage");
+                                        String errorMessage = (String)result.get(ERROR_MESSAGE);
                                         String contentType = (String)result.get("contentType");
                                         int statusCode = (Integer)result.get("statusCode");
                                         if(logger.isTraceEnabled()) logger.trace("Entry key validationError with errorMessage {} contentType {} statusCode {}");
@@ -263,6 +266,12 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
                                         break;
                                 }
                             }
+                        } else {
+                            // The plugin returns false, and it indicates an error has happened. We need to send this error
+                            // message to the caller and stop the chain immediately by setting the exchange status.
+                            String errorMessage = (String)result.get(ERROR_MESSAGE);
+                            if(logger.isTraceEnabled()) logger.trace("Error message {} returns from the plugin", errorMessage);
+                            setExchangeStatus(exchange, GENERIC_EXCEPTION, errorMessage);
                         }
                     }
                 }
