@@ -84,4 +84,16 @@ public class StringUtilsTest {
         pattern = "/gateway/dev/ph-l4j-files/file/05048267?version=1";
         Assert.assertFalse(StringUtils.matchPathToPattern("/gateway/dev/ph-l4j-files/file?version=1", pattern));
     }
+
+    @Test
+    public void testGetSecondPart() {
+        String result = StringUtils.getSecondPart("Hello World");
+        Assert.assertEquals("World", result);
+
+        result = StringUtils.getSecondPart("NoSpace");
+        Assert.assertNull(result);
+
+        result = StringUtils.getSecondPart("Multiple Words Here");
+        Assert.assertEquals("Words Here", result);
+    }
 }
