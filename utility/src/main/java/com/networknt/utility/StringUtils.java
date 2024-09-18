@@ -1515,4 +1515,23 @@ public class StringUtils {
         }
         return isMatch;
     }
+
+    /**
+     * Detect if a string has a space and get the second part after the space.
+     *
+     * @param input input string with a space separator or not
+     * @return the second part of the string after the space
+     */
+    public static String getSecondPart(String input) {
+        if (input == null || input.isEmpty()) {
+            return null;
+        }
+
+        int spaceIndex = input.indexOf(' ');
+        if (spaceIndex == -1 || spaceIndex == input.length() - 1) {
+            return null;
+        }
+
+        return input.substring(spaceIndex + 1);
+    }
 }

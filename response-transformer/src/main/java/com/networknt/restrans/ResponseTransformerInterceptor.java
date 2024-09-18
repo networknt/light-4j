@@ -11,6 +11,7 @@ import com.networknt.rule.RuleLoaderStartupHook;
 import com.networknt.utility.Constants;
 import com.networknt.utility.ModuleRegistry;
 import com.networknt.utility.ConfigUtils;
+import com.networknt.utility.StringUtils;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -24,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.networknt.utility.Constants.ERROR_MESSAGE;
 
@@ -101,104 +103,110 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if (logger.isDebugEnabled()) logger.trace("ResponseTransformerInterceptor.handleRequest starts.");
         String requestPath = exchange.getRequestPath();
-        if (config.getAppliedPathPrefixes() != null && config.getAppliedPathPrefixes().stream().anyMatch(requestPath::startsWith)) {
-            String responseBody = BuffersUtils.toString(getBuffer(exchange), config.getDefaultBodyEncoding());
-            if (logger.isTraceEnabled())
-                logger.trace("original response body = " + responseBody);
+        if (config.getAppliedPathPrefixes() != null) {
+            // check if the path prefix has the second part of encoding to overwrite the defaultBodyEncoding.
+            Optional<String> match = config.getAppliedPathPrefixes().stream().filter(requestPath::startsWith).findFirst();
+            if(match.isPresent()) {
+                String encoding = StringUtils.getSecondPart(match.get());
+                if(encoding != null && logger.isTraceEnabled()) logger.trace("Customized encoding {} found in the prefix {} for requestPath {}", encoding, match.get(), requestPath);
+                String responseBody = BuffersUtils.toString(getBuffer(exchange), encoding != null ? encoding : config.getDefaultBodyEncoding());
+                if (logger.isTraceEnabled())
+                    logger.trace("original response body = {}", responseBody);
 
-            // call the rule engine to transform the response body and response headers. The input contains all the request
-            // and response elements.
-            HttpString method = exchange.getRequestMethod();
-            Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
-            Map<String, Object> objMap = this.createExchangeInfoMap(exchange, method, responseBody, auditInfo);
-            // need to get the rule/rules to execute from the RuleLoaderStartupHook. First, get the endpoint.
-            String endpoint, serviceEntry = null;
-            if (auditInfo != null) {
-                if (logger.isDebugEnabled())
-                    logger.debug("auditInfo exists. Grab endpoint from it.");
-                endpoint = (String) auditInfo.get("endpoint");
-            } else {
-                if (logger.isDebugEnabled())
-                    logger.debug("auditInfo is NULL. Grab endpoint from exchange.");
-                endpoint = exchange.getRequestPath() + "@" + method.toString().toLowerCase();
-            }
-
-            // checked the RuleLoaderStartupHook to ensure it is loaded. If not, return an error to the caller.
-            if (RuleLoaderStartupHook.endpointRules == null) {
-                logger.error("RuleLoaderStartupHook endpointRules is null");
-            }
-
-            // Grab ServiceEntry from config
-            endpoint = ConfigUtils.toInternalKey(exchange.getRequestMethod().toString().toLowerCase(), exchange.getRequestURI());
-            if(logger.isDebugEnabled()) logger.debug("request endpoint: " + endpoint);
-            serviceEntry = ConfigUtils.findServiceEntry(exchange.getRequestMethod().toString().toLowerCase(), exchange.getRequestURI(), RuleLoaderStartupHook.endpointRules);
-            if(logger.isDebugEnabled()) logger.debug("request serviceEntry: " + serviceEntry);
-
-            // get the rules (maybe multiple) based on the endpoint.
-            Map<String, List> endpointRules = (Map<String, List>) RuleLoaderStartupHook.endpointRules.get(serviceEntry);
-            if (endpointRules == null) {
-                if (logger.isDebugEnabled())
-                    logger.debug("endpointRules iS NULL");
-            } else {
-                // chances are there is not response transform rules for this endpoint.
-                if (logger.isDebugEnabled() && endpointRules.get(RESPONSE_TRANSFORM) != null)
-                    logger.debug("endpointRules {}", endpointRules.get(RESPONSE_TRANSFORM).size());
-            }
-
-            boolean finalResult = true;
-            List<Map<String, Object>> responseTransformRules = endpointRules.get(RESPONSE_TRANSFORM);
-            Map<String, Object> result = null;
-            String ruleId = null;
-            // iterate the rules and execute them in sequence. Break only if one rule is successful.
-            for(Map<String, Object> ruleMap: responseTransformRules) {
-                ruleId = (String)ruleMap.get(Constants.RULE_ID);
-                result = RuleLoaderStartupHook.ruleEngine.executeRule(ruleId, objMap);
-                boolean res = (Boolean)result.get(RuleConstants.RESULT);
-                if(!res) {
-                    finalResult = false;
-                    break;
+                // call the rule engine to transform the response body and response headers. The input contains all the request
+                // and response elements.
+                HttpString method = exchange.getRequestMethod();
+                Map<String, Object> auditInfo = exchange.getAttachment(AttachmentConstants.AUDIT_INFO);
+                Map<String, Object> objMap = this.createExchangeInfoMap(exchange, method, responseBody, auditInfo);
+                // need to get the rule/rules to execute from the RuleLoaderStartupHook. First, get the endpoint.
+                String endpoint, serviceEntry = null;
+                if (auditInfo != null) {
+                    if (logger.isDebugEnabled())
+                        logger.debug("auditInfo exists. Grab endpoint from it.");
+                    endpoint = (String) auditInfo.get("endpoint");
+                } else {
+                    if (logger.isDebugEnabled())
+                        logger.debug("auditInfo is NULL. Grab endpoint from exchange.");
+                    endpoint = exchange.getRequestPath() + "@" + method.toString().toLowerCase();
                 }
-            }
-            if(finalResult) {
-                for (Map.Entry<String, Object> entry : result.entrySet()) {
 
-                    if (logger.isTraceEnabled())
-                        logger.trace("key = " + entry.getKey() + " value = " + entry.getValue());
+                // checked the RuleLoaderStartupHook to ensure it is loaded. If not, return an error to the caller.
+                if (RuleLoaderStartupHook.endpointRules == null) {
+                    logger.error("RuleLoaderStartupHook endpointRules is null");
+                }
 
-                    // you can only update the response headers and response body in the transformation.
-                    switch (entry.getKey()) {
-                        case RESPONSE_HEADERS:
-                            // if responseHeaders object is null, ignore it.
-                            Map<String, Object> responseHeaders = (Map) result.get(RESPONSE_HEADERS);
-                            if (responseHeaders != null) {
-                                // manipulate the response headers.
-                                List<String> removeList = (List) responseHeaders.get(REMOVE);
-                                if (removeList != null) {
-                                    removeList.forEach(s -> exchange.getResponseHeaders().remove(s));
-                                }
-                                Map<String, Object> updateMap = (Map) responseHeaders.get(UPDATE);
-                                if (updateMap != null) {
-                                    updateMap.forEach((k, v) -> exchange.getResponseHeaders().put(new HttpString(k), (String) v));
-                                }
-                            }
-                            break;
-                        case RESPONSE_BODY:
-                            responseBody = (String) result.get(RESPONSE_BODY);
-                            if (responseBody != null) {
-                                // copy transformed buffer to the attachment
-                                var dest = exchange.getAttachment(AttachmentConstants.BUFFERED_RESPONSE_DATA_KEY);
-                                // here we convert back the response body to byte array. Need to find out the default charset.
-                                if(logger.isTraceEnabled()) logger.trace("Default Charset {}", Charset.defaultCharset());
-                                BuffersUtils.transfer(ByteBuffer.wrap(responseBody.getBytes(StandardCharsets.UTF_8)), dest, exchange);
-                            }
-                            break;
+                // Grab ServiceEntry from config
+                endpoint = ConfigUtils.toInternalKey(exchange.getRequestMethod().toString().toLowerCase(), exchange.getRequestURI());
+                if(logger.isDebugEnabled()) logger.debug("request endpoint: " + endpoint);
+                serviceEntry = ConfigUtils.findServiceEntry(exchange.getRequestMethod().toString().toLowerCase(), exchange.getRequestURI(), RuleLoaderStartupHook.endpointRules);
+                if(logger.isDebugEnabled()) logger.debug("request serviceEntry: " + serviceEntry);
+
+                // get the rules (maybe multiple) based on the endpoint.
+                Map<String, List> endpointRules = (Map<String, List>) RuleLoaderStartupHook.endpointRules.get(serviceEntry);
+                if (endpointRules == null) {
+                    if (logger.isDebugEnabled())
+                        logger.debug("endpointRules iS NULL");
+                } else {
+                    // chances are there is not response transform rules for this endpoint.
+                    if (logger.isDebugEnabled() && endpointRules.get(RESPONSE_TRANSFORM) != null)
+                        logger.debug("endpointRules {}", endpointRules.get(RESPONSE_TRANSFORM).size());
+                }
+
+                boolean finalResult = true;
+                List<Map<String, Object>> responseTransformRules = endpointRules.get(RESPONSE_TRANSFORM);
+                Map<String, Object> result = null;
+                String ruleId = null;
+                // iterate the rules and execute them in sequence. Break only if one rule is successful.
+                for(Map<String, Object> ruleMap: responseTransformRules) {
+                    ruleId = (String)ruleMap.get(Constants.RULE_ID);
+                    result = RuleLoaderStartupHook.ruleEngine.executeRule(ruleId, objMap);
+                    boolean res = (Boolean)result.get(RuleConstants.RESULT);
+                    if(!res) {
+                        finalResult = false;
+                        break;
                     }
                 }
-            } else {
-                // The finalResult is false to indicate there is an error in the plugin action. Set the exchange to stop the chain.
-                String errorMessage = (String)result.get(ERROR_MESSAGE);
-                if(logger.isTraceEnabled()) logger.trace("Error message {} returns from the plugin", errorMessage);
-                setExchangeStatus(exchange, GENERIC_EXCEPTION, errorMessage);
+                if(finalResult) {
+                    for (Map.Entry<String, Object> entry : result.entrySet()) {
+
+                        if (logger.isTraceEnabled())
+                            logger.trace("key = " + entry.getKey() + " value = " + entry.getValue());
+
+                        // you can only update the response headers and response body in the transformation.
+                        switch (entry.getKey()) {
+                            case RESPONSE_HEADERS:
+                                // if responseHeaders object is null, ignore it.
+                                Map<String, Object> responseHeaders = (Map) result.get(RESPONSE_HEADERS);
+                                if (responseHeaders != null) {
+                                    // manipulate the response headers.
+                                    List<String> removeList = (List) responseHeaders.get(REMOVE);
+                                    if (removeList != null) {
+                                        removeList.forEach(s -> exchange.getResponseHeaders().remove(s));
+                                    }
+                                    Map<String, Object> updateMap = (Map) responseHeaders.get(UPDATE);
+                                    if (updateMap != null) {
+                                        updateMap.forEach((k, v) -> exchange.getResponseHeaders().put(new HttpString(k), (String) v));
+                                    }
+                                }
+                                break;
+                            case RESPONSE_BODY:
+                                responseBody = (String) result.get(RESPONSE_BODY);
+                                if (responseBody != null) {
+                                    // copy transformed buffer to the attachment
+                                    var dest = exchange.getAttachment(AttachmentConstants.BUFFERED_RESPONSE_DATA_KEY);
+                                    // here we convert back the response body to byte array. Need to find out the default charset.
+                                    if(logger.isTraceEnabled()) logger.trace("Default Charset {}", Charset.defaultCharset());
+                                    BuffersUtils.transfer(ByteBuffer.wrap(responseBody.getBytes(StandardCharsets.UTF_8)), dest, exchange);
+                                }
+                                break;
+                        }
+                    }
+                } else {
+                    // The finalResult is false to indicate there is an error in the plugin action. Set the exchange to stop the chain.
+                    String errorMessage = (String)result.get(ERROR_MESSAGE);
+                    if(logger.isTraceEnabled()) logger.trace("Error message {} returns from the plugin", errorMessage);
+                    setExchangeStatus(exchange, GENERIC_EXCEPTION, errorMessage);
+                }
             }
         }
         if (logger.isDebugEnabled()) logger.trace("ResponseTransformerInterceptor.handleRequest ends.");
