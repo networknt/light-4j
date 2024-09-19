@@ -22,9 +22,11 @@ import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
 import java.net.URI;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 
 public class ResponseTransformerInterceptorTest {
     static final Logger logger = LoggerFactory.getLogger(ResponseTransformerInterceptorTest.class);
@@ -144,4 +146,47 @@ public class ResponseTransformerInterceptorTest {
         }
     }
 
+
+    @Test
+    public void testMatch() {
+        List<String> list = new ArrayList<>();
+        list.add("/corp/mras/1.0.0");
+        list.add("/corp/lab/1.0");
+        list.add("/gateway/partyInfo/1.0 ISO-8859-1");
+        String requestPath = "/gateway/partyInfo/1.0/salesforce";
+
+        // Optional<String> match = list.stream().filter(requestPath::startsWith).findFirst();
+        Optional<String> match = findMatchingPrefix(requestPath, list);
+        Assert.assertTrue(match.isPresent());
+        Assert.assertEquals("/gateway/partyInfo/1.0 ISO-8859-1", match.get());
+
+
+    }
+
+    @Test
+    public void testStarts() {
+        String url = "https://www.example.com/path/to/resource";
+        List<String> prefixes = Arrays.asList(
+                "https://www.otherdomain.com",
+                "https://www.example.com",
+                "http://www.example.com"
+        );
+
+        Optional<String> matchingPrefix = findMatchingPrefix(url, prefixes);
+
+        if (matchingPrefix.isPresent()) {
+            System.out.println("Matching prefix found: " + matchingPrefix.get());
+        } else {
+            System.out.println("No matching prefix found");
+        }
+    }
+
+    Optional<String> findMatchingPrefix(String url, List<String> prefixes) {
+        return prefixes.stream()
+                .filter(prefix -> {
+                    String[] parts = prefix.split(" ", 2);
+                    return url.startsWith(parts[0]);
+                })
+                .findFirst();
+    }
 }
