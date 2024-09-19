@@ -155,30 +155,15 @@ public class ResponseTransformerInterceptorTest {
         list.add("/gateway/partyInfo/1.0 ISO-8859-1");
         String requestPath = "/gateway/partyInfo/1.0/salesforce";
 
-        // Optional<String> match = list.stream().filter(requestPath::startsWith).findFirst();
         Optional<String> match = findMatchingPrefix(requestPath, list);
         Assert.assertTrue(match.isPresent());
         Assert.assertEquals("/gateway/partyInfo/1.0 ISO-8859-1", match.get());
 
+        requestPath = "/corp/lab/1.0";
+        match = findMatchingPrefix(requestPath, list);
+        Assert.assertTrue(match.isPresent());
+        Assert.assertEquals("/corp/lab/1.0", match.get());
 
-    }
-
-    @Test
-    public void testStarts() {
-        String url = "https://www.example.com/path/to/resource";
-        List<String> prefixes = Arrays.asList(
-                "https://www.otherdomain.com",
-                "https://www.example.com",
-                "http://www.example.com"
-        );
-
-        Optional<String> matchingPrefix = findMatchingPrefix(url, prefixes);
-
-        if (matchingPrefix.isPresent()) {
-            System.out.println("Matching prefix found: " + matchingPrefix.get());
-        } else {
-            System.out.println("No matching prefix found");
-        }
     }
 
     Optional<String> findMatchingPrefix(String url, List<String> prefixes) {
