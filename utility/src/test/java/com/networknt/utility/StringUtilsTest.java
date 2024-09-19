@@ -95,5 +95,11 @@ public class StringUtilsTest {
 
         result = StringUtils.getSecondPart("Multiple Words Here");
         Assert.assertEquals("Words Here", result);
+
+        result = StringUtils.getSecondPart("Hello World ");
+        Assert.assertEquals("World ", result);
+
+        result = StringUtils.getSecondPart("Hello  World ");
+        Assert.assertEquals(" World ", result);
     }
 }
