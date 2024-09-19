@@ -740,6 +740,7 @@ public class JwtVerifier extends TokenVerifier {
                 for(String serviceId: jwkServiceIds) {
                     config = getJwkConfig(clientConfig, serviceId);
                     jwk = retrieveJwk(kid, config);
+                    if(jwk != null) break;
                 }
             } else {
                 throw new ConfigException("requestPathOrJwkServiceIds must be a string or a list of strings");
