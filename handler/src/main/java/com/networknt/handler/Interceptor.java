@@ -11,6 +11,7 @@ import io.undertow.util.Headers;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public interface Interceptor extends MiddlewareHandler {
 
@@ -90,5 +91,13 @@ public interface Interceptor extends MiddlewareHandler {
         }
     }
 
+    default Optional<String> findMatchingPrefix(String url, List<String> prefixes) {
+        return prefixes.stream()
+                .filter(prefix -> {
+                    String[] parts = prefix.split(" ", 2);
+                    return url.startsWith(parts[0]);
+                })
+                .findFirst();
+    }
 
 }
