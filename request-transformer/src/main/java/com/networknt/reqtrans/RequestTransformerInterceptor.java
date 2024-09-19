@@ -147,7 +147,7 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
                                     if (shouldAttachBody(exchange.getRequestHeaders())) {
                                         if(logger.isTraceEnabled()) logger.trace("shouldAttachBody is true");
                                         PooledByteBuffer[] requestData = this.getBuffer(exchange);
-                                        String s = BuffersUtils.toString(requestData, encoding != null ? encoding : config.getDefaultBodyEncoding());
+                                        String s = BuffersUtils.toString(requestData, encoding != null ? encoding.trim() : config.getDefaultBodyEncoding());
                                         // Transform the request body with the rule engine.
                                         if(logger.isDebugEnabled()) logger.debug("original request body = {}", s);
                                         objMap.put("requestBody", s);

@@ -109,7 +109,7 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
             if(match.isPresent()) {
                 String encoding = StringUtils.getSecondPart(match.get());
                 if(encoding != null && logger.isTraceEnabled()) logger.trace("Customized encoding {} found in the prefix {} for requestPath {}", encoding, match.get(), requestPath);
-                String responseBody = BuffersUtils.toString(getBuffer(exchange), encoding != null ? encoding : config.getDefaultBodyEncoding());
+                String responseBody = BuffersUtils.toString(getBuffer(exchange), encoding != null ? encoding.trim() : config.getDefaultBodyEncoding());
                 if (logger.isTraceEnabled())
                     logger.trace("original response body = {}", responseBody);
 
