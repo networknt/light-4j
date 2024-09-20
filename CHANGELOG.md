@@ -1,5 +1,17 @@
 # Change Log
 
+## [2.1.37](https://github.com/networknt/light-4j/tree/2.1.37) (2024-09-20)
+
+
+**Merged pull requests:**
+
+
+- fixes \#2345 Fix the transformer matching with encoding [\#2346](https://github.com/networknt/light-4j/pull/2346) ([stevehu](https://github.com/stevehu))
+- fixes \#2343 Trim the encoding for req res tranformer interceptors [\#2344](https://github.com/networknt/light-4j/pull/2344) ([stevehu](https://github.com/stevehu))
+- fixes \#2341 Dynamic loading jwk with kid is not working if multiple s… [\#2342](https://github.com/networknt/light-4j/pull/2342) ([stevehu](https://github.com/stevehu))
+- fixes \#2339 allow the req or res body encoding to be customized per p… [\#2340](https://github.com/networknt/light-4j/pull/2340) ([stevehu](https://github.com/stevehu))
+- fixes \#2337 update req/res transformer interceptor to handle the erro… [\#2338](https://github.com/networknt/light-4j/pull/2338) ([stevehu](https://github.com/stevehu))
+- fixes \#2334 make convertEnvVars configurable to work with lower case … [\#2335](https://github.com/networknt/light-4j/pull/2335) ([stevehu](https://github.com/stevehu))
 ## [2.1.36](https://github.com/networknt/light-4j/tree/2.1.36) (2024-08-27)
 
 
