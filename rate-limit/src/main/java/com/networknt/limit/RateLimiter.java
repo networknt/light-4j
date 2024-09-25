@@ -9,6 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -38,6 +41,7 @@ public class RateLimiter {
     private KeyResolver addressKeyResolver;
     private KeyResolver userIdKeyResolver;
 
+    static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH).withZone(ZoneId.of("GMT"));
 
     /**
      * Load config and initial model by Rate limit key.
@@ -224,10 +228,16 @@ public class RateLimiter {
                         if(logger.isTraceEnabled()) logger.trace("newCount: " + newCount);
                         timeMap.put(currentTimeWindow, new AtomicLong(newCount));
                         logger.debug("CurrentTimeWindow:" + currentTimeWindow +" Result:true "+ " Count:"+countInOverallTime);
-                        return new RateLimitResponse(true, null);
+                        if(config.isHeadersAlwaysSet()) {
+                            String reset = getRateLimitReset(currentTimeWindow, timeMap, limitQuota);
+                            return new RateLimitResponse(true, buildHeaders(countInOverallTime, limitQuota, reset, null));
+                        } else {
+                            return new RateLimitResponse(true, null);
+                        }
                     } else {
                         String reset = getRateLimitReset(currentTimeWindow, timeMap, limitQuota);
-                        return new RateLimitResponse(false, buildHeaders(countInOverallTime, limitQuota, reset));
+                        String retryAfter = getRetryAfter(currentTimeWindow, timeMap, limitQuota);
+                        return new RateLimitResponse(false, buildHeaders(countInOverallTime, limitQuota, reset, retryAfter));
                     }
                 }
             }
@@ -256,10 +266,16 @@ public class RateLimiter {
                 Long newCount = timeMap.getOrDefault(currentTimeWindow, new AtomicLong(0)).longValue() + 1;
                 timeMap.put(currentTimeWindow, new AtomicLong(newCount));
                 logger.debug("CurrentTimeWindow:" + currentTimeWindow +" Result:true "+ " Count:"+countInOverallTime);
-                return new RateLimitResponse(true, null);
+                if(config.isHeadersAlwaysSet()) {
+                    String reset = getRateLimitReset(currentTimeWindow, timeMap, limitQuota);
+                    return new RateLimitResponse(true, buildHeaders(countInOverallTime, limitQuota, reset, null));
+                } else {
+                    return new RateLimitResponse(true, null);
+                }
             } else {
                 String reset = getRateLimitReset(currentTimeWindow, timeMap, limitQuota);
-                return new RateLimitResponse(false, buildHeaders(countInOverallTime, limitQuota, reset));
+                String retryAfter = getRetryAfter(currentTimeWindow, timeMap, limitQuota);
+                return new RateLimitResponse(false, buildHeaders(countInOverallTime, limitQuota, reset, retryAfter));
             }
         }
         return new RateLimitResponse(true, null);
@@ -315,18 +331,32 @@ public class RateLimiter {
         return res;
     }
 
-    private Map<String, String> buildHeaders(Long countInOverallTime, LimitQuota limitQuota, String reset) {
+    public String getRetryAfter(Long currentTimeWindow, Map<Long, AtomicLong> timeMap,  LimitQuota limitQuota) {
+        String retryAfter = null;
+        if (TimeUnit.SECONDS.equals(limitQuota.unit)){
+            retryAfter = LocalDateTime.now().plusSeconds(1).format(formatter);
+        } else {
+            Optional<Long> firstKey = timeMap.keySet().stream().findFirst();
+            long reset = getWindow(limitQuota.unit) + firstKey.get() - currentTimeWindow;
+            retryAfter = LocalDateTime.now().plusSeconds(reset).format(formatter);
+        }
+        return retryAfter;
+    }
+
+    private Map<String, String> buildHeaders(Long countInOverallTime, LimitQuota limitQuota, String reset, String retryAfter) {
         Map<String, String> headers = new HashMap<>();
         headers.put(Constants.RATELIMIT_LIMIT, limitQuota.value + "/" + limitQuota.unit);
         headers.put(Constants.RATELIMIT_REMAINING, String.valueOf(limitQuota.value - countInOverallTime));
         if (reset!=null) {
             headers.put(Constants.RATELIMIT_RESET, reset);
         }
-
+        if (retryAfter != null) {
+            headers.put(Constants.RETRY_AFTER, retryAfter);
+        }
         return headers;
     }
 
-    private  long removeOldEntriesForUser( long currentTimeWindow, Map<Long, AtomicLong> timeWindowVSCountMap, TimeUnit unit)
+    private long removeOldEntriesForUser( long currentTimeWindow, Map<Long, AtomicLong> timeWindowVSCountMap, TimeUnit unit)
     {
         List <Long> oldEntriesToBeDeleted=new ArrayList<>();
         long overallCount=0L;

@@ -242,4 +242,9 @@ public class RateLimiterTest {
         return rateLimiterClient.isAllowDirect(userId, "/v1/" + generateRandomString(10), RateLimiter.USER_TYPE);
     }
 
+    @Test
+    public void testRetryAfter() {
+
+    }
+
 }

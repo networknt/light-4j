@@ -71,12 +71,20 @@ public class LimitHandler implements MiddlewareHandler {
         RateLimitResponse rateLimitResponse = rateLimiter.handleRequest(exchange, config.getKey());
         if (rateLimitResponse.allow) {
             if(logger.isDebugEnabled()) logger.debug("LimitHandler.handleRequest ends.");
+            // limit is not reached, return the limit, remaining and reset headers for client to manage the request flow.
+            if(rateLimitResponse.getHeaders() != null && rateLimitResponse.getHeaders().get(Constants.RATELIMIT_LIMIT) != null)
+                exchange.getResponseHeaders().add(new HttpString(Constants.RATELIMIT_LIMIT), rateLimitResponse.getHeaders().get(Constants.RATELIMIT_LIMIT));
+            if(rateLimitResponse.getHeaders() != null && rateLimitResponse.getHeaders().get(Constants.RATELIMIT_REMAINING) != null)
+                exchange.getResponseHeaders().add(new HttpString(Constants.RATELIMIT_REMAINING), rateLimitResponse.getHeaders().get(Constants.RATELIMIT_REMAINING));
+            if(rateLimitResponse.getHeaders() != null && rateLimitResponse.getHeaders().get(Constants.RATELIMIT_RESET) != null)
+                exchange.getResponseHeaders().add(new HttpString(Constants.RATELIMIT_RESET), rateLimitResponse.getHeaders().get(Constants.RATELIMIT_RESET));
             Handler.next(exchange, next);
         } else {
+            // limit is reached, return the Retry-After header.
             exchange.getResponseHeaders().add(new HttpString(Constants.RATELIMIT_LIMIT), rateLimitResponse.getHeaders().get(Constants.RATELIMIT_LIMIT));
             exchange.getResponseHeaders().add(new HttpString(Constants.RATELIMIT_REMAINING), rateLimitResponse.getHeaders().get(Constants.RATELIMIT_REMAINING));
             exchange.getResponseHeaders().add(new HttpString(Constants.RATELIMIT_RESET), rateLimitResponse.getHeaders().get(Constants.RATELIMIT_RESET));
-
+            exchange.getResponseHeaders().add(new HttpString(Constants.RETRY_AFTER), rateLimitResponse.getHeaders().get(Constants.RETRY_AFTER));
             exchange.getResponseHeaders().add(new HttpString("Content-Type"), "application/json");
             int statusCode = config.getErrorCode()==0 ? HttpStatus.TOO_MANY_REQUESTS.value():config.getErrorCode();
             exchange.setStatusCode(statusCode);
