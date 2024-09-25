@@ -124,6 +124,7 @@ public class Constants {
     public static final String RATELIMIT_LIMIT = "RateLimit-Limit";
     public static final String RATELIMIT_REMAINING = "RateLimit-Remaining";
     public static final String RATELIMIT_RESET = "RateLimit-Reset";
+    public static final String RETRY_AFTER = "Retry-After";
 
     // rule loader
     public static final String RULE_ID = "ruleId";

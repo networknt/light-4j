@@ -23,6 +23,10 @@ errorCode: ${limit.errorCode:429}
 # quota is not applicable.
 # 10 requests per second limit and 10000 requests per day quota.
 rateLimit: ${limit.rateLimit:10/s 10000/d}
+# By default, the rate limit headers are not set when limit is not reached. However, you can
+# overwrite the behavior with true to write the three rate limit headers for 200 response in
+# order for client to manage the flow of the requests.
+headersAlwaysSet: ${limit.headersAlwaysSet:false}
 # Key of the rate limit: server, address, client, user
 # server: The entire server has one rate limit key, and it means all users share the same.
 # address: The IP address is the key and each IP will have its rate limit configuration.

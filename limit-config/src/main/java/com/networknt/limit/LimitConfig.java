@@ -42,6 +42,7 @@ public class LimitConfig {
     private static final String USER_ID_KEY = "userIdKeyResolver";
     private static final String ADDRESS_KEY = "addressKeyResolver";
     private static final String RATE_LIMIT = "rateLimit";
+    private static final String HEADERS_ALWAYS_SET = "headersAlwaysSet";
     private static final String SERVER = "server";
     private static final String ADDRESS = "address";
     private static final String CLIENT = "client";
@@ -59,6 +60,7 @@ public class LimitConfig {
 
     LimitKey key;
     List<LimitQuota> rateLimit;
+    boolean headersAlwaysSet;
     Map<String, LimitQuota> server;
     RateLimitSet address;
     RateLimitSet client;
@@ -103,6 +105,14 @@ public class LimitConfig {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean isHeadersAlwaysSet() {
+        return headersAlwaysSet;
+    }
+
+    public void setHeadersAlwaysSet(boolean headersAlwaysSet) {
+        this.headersAlwaysSet = headersAlwaysSet;
     }
 
     public int getConcurrentRequest() {
@@ -220,6 +230,8 @@ public class LimitConfig {
 
         object = getMappedConfig().get(IS_ENABLED);
         if(object != null) enabled = Config.loadBooleanValue(IS_ENABLED, object);
+        object = getMappedConfig().get(HEADERS_ALWAYS_SET);
+        if(object != null) headersAlwaysSet = Config.loadBooleanValue(HEADERS_ALWAYS_SET, object);
         object = getMappedConfig().get(CLIENT_ID_KEY);
         if(object != null) setClientIdKeyResolver((String) object);
         object = getMappedConfig().get(ADDRESS_KEY);
