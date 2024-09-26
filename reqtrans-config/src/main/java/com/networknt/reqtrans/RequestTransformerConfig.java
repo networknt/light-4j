@@ -3,13 +3,11 @@ package com.networknt.reqtrans;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import com.networknt.config.JsonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This is a generic middleware handler to manipulate request based on rule-engine rules so that it can be much more
@@ -26,6 +24,7 @@ public class RequestTransformerConfig {
     private static final String REQUIRED_CONTENT = "requiredContent";
     private static final String DEFAULT_BODY_ENCODING = "defaultBodyEncoding";
     private static final String APPLIED_PATH_PREFIXES = "appliedPathPrefixes";
+    private static final String PATH_PREFIX_ENCODING = "pathPrefixEncoding";
 
     private Map<String, Object> mappedConfig;
     private final Config config;
@@ -33,6 +32,7 @@ public class RequestTransformerConfig {
     private boolean requiredContent;
     private String defaultBodyEncoding;
     List<String> appliedPathPrefixes;
+    Map<String, Object> pathPrefixEncoding;
 
     private RequestTransformerConfig() {
         this(CONFIG_NAME);
@@ -43,6 +43,7 @@ public class RequestTransformerConfig {
         mappedConfig = config.getJsonMapConfigNoCache(configName);
         setConfigData();
         setConfigList();
+        setConfigMap();
     }
 
     public static RequestTransformerConfig load() {
@@ -57,6 +58,7 @@ public class RequestTransformerConfig {
         mappedConfig = config.getJsonMapConfigNoCache(CONFIG_NAME);
         setConfigData();
         setConfigList();
+        setConfigMap();
     }
 
 
@@ -73,6 +75,8 @@ public class RequestTransformerConfig {
     public List<String> getAppliedPathPrefixes() {
         return appliedPathPrefixes;
     }
+
+    public Map<String, Object> getPathPrefixEncoding() { return pathPrefixEncoding; }
 
     public Map<String, Object> getMappedConfig() {
         return mappedConfig;
@@ -133,4 +137,37 @@ public class RequestTransformerConfig {
         }
     }
 
+    private void  setConfigMap() {
+        if(mappedConfig.get(PATH_PREFIX_ENCODING) != null) {
+            Object pathPrefixEncodingObj = mappedConfig.get(PATH_PREFIX_ENCODING);
+            if(pathPrefixEncodingObj != null) {
+                if(pathPrefixEncodingObj instanceof String) {
+                    String s = (String)pathPrefixEncodingObj;
+                    s = s.trim();
+                    if(logger.isTraceEnabled()) logger.trace("pathPrefixEncoding s = {}", s);
+                    if(s.startsWith("{")) {
+                        // json format
+                        try {
+                            pathPrefixEncoding = JsonMapper.string2Map(s);
+                        } catch (Exception e) {
+                            throw new ConfigException("could not parse the pathPrefixEncoding json with a map of string and object.");
+                        }
+                    } else {
+                        // comma separated
+                        pathPrefixEncoding = new HashMap<>();
+                        String[] pairs = s.split(",");
+                        for (int i = 0; i < pairs.length; i++) {
+                            String pair = pairs[i];
+                            String[] keyValue = pair.split(":");
+                            pathPrefixEncoding.put(keyValue[0], keyValue[1]);
+                        }
+                    }
+                } else if (pathPrefixEncodingObj instanceof Map) {
+                    pathPrefixEncoding = (Map)pathPrefixEncodingObj;
+                } else {
+                    throw new ConfigException("pathPrefixEncoding must be a string object map.");
+                }
+            }
+        }
+    }
 }

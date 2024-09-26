@@ -88,7 +88,7 @@ public class RequestTransformerInterceptor implements RequestInterceptor {
             // check if the path prefix has the second part of encoding to overwrite the defaultBodyEncoding.
             Optional<String> match = findMatchingPrefix(requestPath, config.getAppliedPathPrefixes());
             if(match.isPresent()) {
-                String encoding = StringUtils.getSecondPart(match.get());
+                String encoding = config.getPathPrefixEncoding() == null ?  null : (String)config.getPathPrefixEncoding().get(match.get());
                 if (encoding != null && logger.isTraceEnabled())
                     logger.trace("Customized encoding {} found in the prefix {} for requestPath {}", encoding, match.get(),requestPath);
 
