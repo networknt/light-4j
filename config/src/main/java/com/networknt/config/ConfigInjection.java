@@ -93,8 +93,7 @@ public class ConfigInjection {
     // Double check values and exclusions to ensure no dead loop
     public static boolean isExclusionConfigFile(String configName) {
         List<Object> exclusionConfigFileList = (exclusionMap == null) ? new ArrayList<>() : (List<Object>) exclusionMap.get(EXCLUSION_CONFIG_FILE_LIST);
-        return CENTRALIZED_MANAGEMENT.equals(configName)
-                || SCALABLE_CONFIG.equals(configName)
+        return SCALABLE_CONFIG.equals(configName)
                 || exclusionConfigFileList.contains(configName);
     }
 

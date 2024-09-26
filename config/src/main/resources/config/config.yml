@@ -13,7 +13,6 @@
 #----------------------------------------------------------------------------------------------------------------
 exclusionConfigFileList:
   - openapi
-  - values
 
 # The AutoAESSaltDecryptor is the most secure one we have implemented, and it can be used by
 # everyone with a master key set up as an environment variable on the deployment environment.
