@@ -152,12 +152,12 @@ public class ResponseTransformerInterceptorTest {
         List<String> list = new ArrayList<>();
         list.add("/corp/mras/1.0.0");
         list.add("/corp/lab/1.0");
-        list.add("/gateway/partyInfo/1.0 ISO-8859-1");
+        list.add("/gateway/partyInfo/1.0");
         String requestPath = "/gateway/partyInfo/1.0/salesforce";
 
         Optional<String> match = findMatchingPrefix(requestPath, list);
         Assert.assertTrue(match.isPresent());
-        Assert.assertEquals("/gateway/partyInfo/1.0 ISO-8859-1", match.get());
+        Assert.assertEquals("/gateway/partyInfo/1.0", match.get());
 
         requestPath = "/corp/lab/1.0";
         match = findMatchingPrefix(requestPath, list);
@@ -168,10 +168,8 @@ public class ResponseTransformerInterceptorTest {
 
     Optional<String> findMatchingPrefix(String url, List<String> prefixes) {
         return prefixes.stream()
-                .filter(prefix -> {
-                    String[] parts = prefix.split(" ", 2);
-                    return url.startsWith(parts[0]);
-                })
+                .filter(url::startsWith)
                 .findFirst();
     }
+
 }

@@ -93,10 +93,7 @@ public interface Interceptor extends MiddlewareHandler {
 
     default Optional<String> findMatchingPrefix(String url, List<String> prefixes) {
         return prefixes.stream()
-                .filter(prefix -> {
-                    String[] parts = prefix.split(" ", 2);
-                    return url.startsWith(parts[0]);
-                })
+                .filter(url::startsWith)
                 .findFirst();
     }
 
