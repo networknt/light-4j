@@ -9,9 +9,9 @@ import java.util.Map;
 public class Expect100ContinueConfig {
     public static final String CONFIG_NAME = "expect-100-continue";
     private static final String ENABLED = "enabled";
-    private static final String IGNORED_PATHS = "ignoredPaths";
+    private static final String IGNORED_PATH_PREFIXES = "ignoredPathPrefixes";
     private boolean enabled;
-    private List<String> ignoredPaths;
+    private List<String> ignoredPathPrefixes;
     private final Config config;
     private Map<String, Object> mappedConfig;
 
@@ -39,19 +39,19 @@ public class Expect100ContinueConfig {
         if (this.mappedConfig.containsKey(ENABLED))
             this.enabled = (Boolean)this.mappedConfig.get(ENABLED);
 
-        if (this.mappedConfig.containsKey(IGNORED_PATHS)) {
+        if (this.mappedConfig.containsKey(IGNORED_PATH_PREFIXES)) {
 
-            if (this.mappedConfig.get(IGNORED_PATHS) instanceof List)
-                this.ignoredPaths = (List)this.mappedConfig.get(IGNORED_PATHS);
+            if (this.mappedConfig.get(IGNORED_PATH_PREFIXES) instanceof List)
+                this.ignoredPathPrefixes = (List)this.mappedConfig.get(IGNORED_PATH_PREFIXES);
 
-            else if (this.mappedConfig.get(IGNORED_PATHS) instanceof String) {
+            else if (this.mappedConfig.get(IGNORED_PATH_PREFIXES) instanceof String) {
 
-                final var ignoredPathsString = ((String)this.mappedConfig.get(IGNORED_PATHS)).trim();
+                final var ignoredPathsString = ((String)this.mappedConfig.get(IGNORED_PATH_PREFIXES)).trim();
 
                 if (!ignoredPathsString.isEmpty()
                         && !ignoredPathsString.isBlank()
                         && ignoredPathsString.contains("["))
-                    this.ignoredPaths = List.of(ignoredPathsString
+                    this.ignoredPathPrefixes = List.of(ignoredPathsString
                             .trim()
                             .replace("[", "")
                             .replace("]", "")
@@ -66,7 +66,7 @@ public class Expect100ContinueConfig {
         return enabled;
     }
 
-    public List<String> getIgnoredPaths() {
-        return ignoredPaths;
+    public List<String> getIgnoredPathPrefixes() {
+        return ignoredPathPrefixes;
     }
 }

@@ -32,7 +32,7 @@ public class Expect100ContinueHandler implements MiddlewareHandler {
         if (HttpContinue.requiresContinueResponse(exchange)) {
 
             var shouldAttachRequestWrapper = true;
-            for (var path : CONFIG.getIgnoredPaths()) {
+            for (var path : CONFIG.getIgnoredPathPrefixes()) {
                 if (exchange.getRequestPath().startsWith(path)) {
 
                     shouldAttachRequestWrapper = false;
