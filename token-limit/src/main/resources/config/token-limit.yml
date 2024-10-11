@@ -1,0 +1,13 @@
+# indicate if the handler is enabled or not. By default, it is enabled.
+enabled: ${token-limit.enabled:true}
+# return an error if limit is reached. It should be the default behavior on dev/sit/stg. For production,
+# a warning message should be logged. Also, this handler can be disabled on production for performance.
+errorOnLimit: ${token-limit.errorOnLimit:true}
+# The max number of duplicated token requests. Once this number is passed, the limit is triggered. This
+# number is set based on the number of client instances as each instance might get its token if there
+# is no distributed cache. The duplicated tokens are calculated based on the local in memory cache per
+# light-gateway or oauth-kafka instance. Note: cache.yml needs to be configured.
+duplicateLimit: ${token-limit.duplicateLimit:2}
+# Different OAuth 2.0 providers have different token request path. To make sure that this handler only
+# applied to the token endpoint, we define the path template here to ensure request path is matched.
+tokenPathTemplate: ${token-limit.tokenPathTemplate:/oauth2/(?<instanceId>[^/]+)/v1/token}
