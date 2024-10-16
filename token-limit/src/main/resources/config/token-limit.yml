@@ -9,5 +9,9 @@ errorOnLimit: ${token-limit.errorOnLimit:true}
 # light-gateway or oauth-kafka instance. Note: cache.yml needs to be configured.
 duplicateLimit: ${token-limit.duplicateLimit:2}
 # Different OAuth 2.0 providers have different token request path. To make sure that this handler only
-# applied to the token endpoint, we define the path template here to ensure request path is matched.
-tokenPathTemplate: ${token-limit.tokenPathTemplate:/oauth2/(?<instanceId>[^/]+)/v1/token}
+# applied to the token endpoint, we define a list of path templates here to ensure request path is matched.
+# The following is an example with two different OAuth 2.0 providers in values.yml file.
+# token-limit.tokenPathTemplates:
+#   - /oauth2/(?<instanceId>[^/]+)/v1/token
+#   - /oauth2/(?<instanceId>[^/]+)/token
+tokenPathTemplates: ${token-limit.tokenPathTemplates:}

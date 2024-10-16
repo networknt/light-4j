@@ -12,10 +12,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * This handler should be used on the oauth-kafka or a dedicated light-gateway instance for all OAuth 2.0
@@ -36,13 +39,16 @@ public class TokenLimitHandler implements MiddlewareHandler {
 
     private volatile HttpHandler next;
     private final TokenLimitConfig config;
-    private final Pattern pattern;
+    private List<Pattern> patterns;
 
     CacheManager cacheManager = CacheManager.getInstance();
 
     public TokenLimitHandler() throws Exception{
         config = TokenLimitConfig.load();
-        pattern = Pattern.compile(config.tokenPathTemplate);
+        List<String> tokenPathTemplates = config.getTokenPathTemplates();
+        if(tokenPathTemplates != null && !tokenPathTemplates.isEmpty()) {
+            patterns = tokenPathTemplates.stream().map(Pattern::compile).collect(Collectors.toList());
+        }
         logger.info("TokenLimitHandler constructed.");
     }
 
@@ -56,7 +62,10 @@ public class TokenLimitHandler implements MiddlewareHandler {
     @Deprecated
     public TokenLimitHandler(TokenLimitConfig cfg) throws Exception{
         config = cfg;
-        pattern = Pattern.compile(config.tokenPathTemplate);
+        List<String> tokenPathTemplates = config.getTokenPathTemplates();
+        if(tokenPathTemplates != null && !tokenPathTemplates.isEmpty()) {
+            patterns = tokenPathTemplates.stream().map(Pattern::compile).collect(Collectors.toList());
+        }
         logger.info("TokenLimitHandler constructed.");
     }
 
@@ -101,10 +110,8 @@ public class TokenLimitHandler implements MiddlewareHandler {
 
         // first, we need to identify if the request path ends with /token. If not, call next handler.
         String requestPath = exchange.getRequestPath();
-        Matcher matcher = pattern.matcher(requestPath);
-        if(logger.isTraceEnabled()) logger.trace("matcher = {} and cacheManager = {}", matcher, cacheManager);
-        if(matcher.matches() && cacheManager != null) {
-            if(logger.isTraceEnabled()) logger.trace("request path {} matches with pattern {}", requestPath, config.getTokenPathTemplate());
+        if(matchPath(requestPath) && cacheManager != null) {
+            if(logger.isTraceEnabled()) logger.trace("request path {} matches with one of the {} patterns.", requestPath, config.getTokenPathTemplates().size());
             // this assumes that either BodyHandler(oauth-kafka) or RequestBodyInterceptor(light-gateway) is used in the chain.
             String requestBodyString = exchange.getAttachment(AttachmentConstants.REQUEST_BODY_STRING);
             if(logger.isTraceEnabled()) logger.trace("requestBodyString = {}", requestBodyString);
@@ -163,5 +170,17 @@ public class TokenLimitHandler implements MiddlewareHandler {
             }
         }
         return map;
+    }
+
+    public boolean matchPath(String path) {
+        // if there is no configured pattern, not matched.
+        if(patterns == null || patterns.isEmpty()) return false;
+        for (Pattern pattern : patterns) {
+            Matcher matcher = pattern.matcher(path);
+            if (matcher.matches()) {
+                return true;
+            }
+        }
+        return false;
     }
 }

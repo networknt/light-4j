@@ -10,4 +10,5 @@ errorOnLimit: ${token-limit.errorOnLimit:true}
 duplicateLimit: ${token-limit.duplicateLimit:2}
 # Different OAuth 2.0 providers have different token request path. To make sure that this handler only
 # applied to the token endpoint, we define the path template here to ensure request path is matched.
-tokenPathTemplate: ${token-limit.tokenPathTemplate:/oauth2/(?<instanceId>[^/]+)/v1/token}
+tokenPathTemplates:
+  - /oauth2/(?<instanceId>[^/]+)/v1/token

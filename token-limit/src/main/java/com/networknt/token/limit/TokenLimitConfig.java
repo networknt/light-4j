@@ -1,6 +1,8 @@
 package com.networknt.token.limit;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
+import com.networknt.config.ConfigException;
 import com.networknt.config.JsonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,12 +17,12 @@ public class TokenLimitConfig {
     private static final String ENABLED = "enabled";
     private static final String ERROR_ON_LIMIT = "errorOnLimit";
     private static final String DUPLICATE_LIMIT = "duplicateLimit";
-    private static final String TOKEN_PATH_TEMPLATE = "tokenPathTemplate";
+    private static final String TOKEN_PATH_TEMPLATES = "tokenPathTemplates";
 
     boolean enabled;
     boolean errorOnLimit;
     int duplicateLimit;
-    String tokenPathTemplate;
+    List<String> tokenPathTemplates;
 
     private Map<String, Object> mappedConfig;
     private final Config config;
@@ -38,6 +40,7 @@ public class TokenLimitConfig {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(configName);
         setConfigData();
+        setConfigList();
     }
 
     public static TokenLimitConfig load() {
@@ -77,12 +80,12 @@ public class TokenLimitConfig {
         this.duplicateLimit = duplicateLimit;
     }
 
-    public String getTokenPathTemplate() {
-        return tokenPathTemplate;
+    public List<String> getTokenPathTemplates() {
+        return tokenPathTemplates;
     }
 
-    public void setTokenPathTemplate(String tokenPathTemplate) {
-        this.tokenPathTemplate = tokenPathTemplate;
+    public void setTokenPathTemplates(List<String> tokenPathTemplates) {
+        this.tokenPathTemplates = tokenPathTemplates;
     }
 
     Map<String, Object> getMappedConfig() {
@@ -96,7 +99,33 @@ public class TokenLimitConfig {
         if(object != null) errorOnLimit = Config.loadBooleanValue(ERROR_ON_LIMIT, object);
         object = mappedConfig.get(DUPLICATE_LIMIT);
         if (object != null) duplicateLimit = Config.loadIntegerValue(DUPLICATE_LIMIT, object);
-        object = mappedConfig.get(TOKEN_PATH_TEMPLATE);
-        if (object != null) tokenPathTemplate = (String)object;
+    }
+
+    private void setConfigList() {
+        if (mappedConfig != null && mappedConfig.get(TOKEN_PATH_TEMPLATES) != null) {
+            Object object = mappedConfig.get(TOKEN_PATH_TEMPLATES);
+            tokenPathTemplates = new ArrayList<>();
+            if(object instanceof String) {
+                String s = (String)object;
+                s = s.trim();
+                if(logger.isTraceEnabled()) logger.trace("s = {}", s);
+                if(s.startsWith("[")) {
+                    // json format
+                    try {
+                        tokenPathTemplates = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
+                    } catch (Exception e) {
+                        throw new ConfigException("could not parse the tokenPathTemplates json with a list of strings.");
+                    }
+                } else {
+                    // comma separated
+                    tokenPathTemplates = Arrays.asList(s.split("\\s*,\\s*"));
+                }
+            } else if (object instanceof List) {
+                tokenPathTemplates = (List<String>) getMappedConfig().get(TOKEN_PATH_TEMPLATES);
+            } else {
+                throw new ConfigException("tokenPathTemplates must be a string or a list of strings.");
+            }
+        }
+
     }
 }
