@@ -2,6 +2,7 @@ package com.networknt.token.limit;
 
 import com.networknt.cache.CacheManager;
 import com.networknt.config.Config;
+import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.utility.ModuleRegistry;
@@ -154,6 +155,7 @@ public class TokenLimitHandler implements MiddlewareHandler {
                 }
             }
         }
+        Handler.next(exchange, next);
         if(logger.isDebugEnabled()) logger.debug("TokenLimitHandler.handleRequest ends.");
     }
 
