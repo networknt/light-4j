@@ -25,4 +25,15 @@ package com.networknt.registry;
 public interface Registry extends RegistryService, DiscoveryService {
 
     URL getUrl();
+
+    /**
+     * get the serviceKey based on serviceId and tag for discovery cache.
+     * @param serviceId service id
+     * @param tag service tag
+     * @return key that is combined serviceId and tag.
+     */
+    default String serviceKey(String serviceId, String tag) {
+        return tag == null ? serviceId : serviceId + "|" + tag;
+    }
+
 }

@@ -17,10 +17,9 @@
 package com.networknt.cluster;
 
 import com.networknt.balance.LoadBalance;
-import com.networknt.registry.Registry;
-import com.networknt.registry.URL;
-import com.networknt.registry.URLImpl;
+import com.networknt.registry.*;
 import com.networknt.service.SingletonServiceFactory;
+import com.networknt.utility.ConcurrentHashSet;
 import com.networknt.utility.Constants;
 import com.networknt.utility.StringUtils;
 import org.slf4j.Logger;
@@ -30,6 +29,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -44,6 +46,8 @@ public class LightCluster implements Cluster {
     private static Logger logger = LoggerFactory.getLogger(LightCluster.class);
     private static Registry registry = SingletonServiceFactory.getBean(Registry.class);
     private static LoadBalance loadBalance = SingletonServiceFactory.getBean(LoadBalance.class);
+    private static final Set<URL> subscribedSet = new ConcurrentHashSet<>();
+    private static final Map<String, List<URL>> serviceMap = new ConcurrentHashMap<>();
 
     public LightCluster() {
         if(logger.isInfoEnabled()) logger.info("A LightCluster instance is started");
@@ -95,17 +99,28 @@ public class LightCluster implements Cluster {
     }
 
     private List<URL> discovery(String protocol, String serviceId, String tag) {
-        if(logger.isDebugEnabled()) logger.debug("protocol = " + protocol + " serviceId = " + serviceId + " tag = " + tag);
-        URL subscribeUrl = URLImpl.valueOf(protocol + "://localhost/" + serviceId);
-        if(tag != null) {
-            subscribeUrl.addParameter(Constants.TAG_ENVIRONMENT, tag);
+        if(logger.isDebugEnabled()) logger.debug("Protocol = {} serviceId = {} tag = {}", protocol, serviceId, tag);
+        // lookup in serviceMap first. If not there, then subscribe and discover. The discover result is based on the environment, so
+        // the cache key is based on the tag as well.
+        String key = tag == null ? serviceId : serviceId + "|" + tag;
+        List<URL> urls = serviceMap.get(key);
+        if(logger.isDebugEnabled()) logger.debug("Cached key {} urls {}", key, urls);
+        if((urls == null) || (urls.isEmpty())) {
+            if(logger.isDebugEnabled()) logger.debug("urls is null or empty, subscribe and discover...");
+            URL subscribeUrl = URLImpl.valueOf(protocol + "://localhost/" + serviceId);
+            if(tag != null) {
+                subscribeUrl.addParameter(Constants.TAG_ENVIRONMENT, tag);
+            }
+            if(logger.isDebugEnabled()) logger.debug("subscribeUrl = {}", subscribeUrl);
+            // you only need to subscribe once.
+            if(!subscribedSet.contains(subscribeUrl)) {
+                registry.subscribe(subscribeUrl, new ClusterNotifyListener(serviceId, tag));
+                subscribedSet.add(subscribeUrl);
+            }
+            urls = registry.discover(subscribeUrl);
+            if(logger.isDebugEnabled()) logger.debug("discovered urls = {}", urls);
+            serviceMap.put(key, urls == null ? new ArrayList<>() : urls);
         }
-        if(logger.isDebugEnabled()) logger.debug("subscribeUrl = " + subscribeUrl);
-        // subscribe is async and the result won't come back immediately.
-        registry.subscribe(subscribeUrl, null);
-        // do a lookup for the quick response from either cache or registry service.
-        List<URL> urls = registry.discover(subscribeUrl);
-        if(logger.isDebugEnabled()) logger.debug("discovered urls = " + urls);
         return urls;
     }
 
@@ -117,5 +132,24 @@ public class LightCluster implements Cluster {
             logger.error("URISyntaxExcpetion", e);
         }
         return uri;
+    }
+
+    static class ClusterNotifyListener implements NotifyListener {
+        private final String serviceId;
+        private final String tag;
+        ClusterNotifyListener(String serviceId, String tag) {
+            this.serviceId = serviceId;
+            this.tag = tag;
+        }
+
+        @Override
+        public void notify(URL registryUrl, List<URL> urls) {
+            logger.debug("registryUrl is: {}", registryUrl);
+            logger.debug("notify service: {} tag: {} with updated urls: {}", serviceId, tag, urls.toString());
+            if(StringUtils.isNotBlank(serviceId)) {
+                String key = tag == null ? serviceId : serviceId + "|" + tag;
+                serviceMap.put(key, urls == null ? new ArrayList<>() : urls);
+            }
+        }
     }
 }
