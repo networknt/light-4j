@@ -596,6 +596,11 @@ ERR10090:
   code: ERR10090
   message: TOKEN_VERIFICATION_EXCEPTION
   description: Token verification exception %.
+ERR10091:
+  statusCode: 400
+  code: ERR10091
+  message: TOKEN_LIMIT_ERROR
+  description: Too many token requests. Please cache the jwt token on the client side.
 
 # 11000-11499 swagger-validator errors
 ERR11000:
