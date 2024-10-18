@@ -213,7 +213,7 @@ public class PortalRegistry extends AbstractRegistry {
     }
 
     private ConcurrentHashMap<String, List<URL>> convertLisMap2UR(String serviceId, String tag, String protocol, List<Map<String, Object>> services)  {
-        String key = tag == null ? serviceId : serviceId + "|" + tag;
+        String key = serviceKey(serviceId, tag);
         ConcurrentHashMap<String, List<URL>> serviceUrls = new ConcurrentHashMap<>();
         if (services != null && !services.isEmpty()) {
             for (Map<String, Object> service : services) {

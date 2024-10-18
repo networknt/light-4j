@@ -20,9 +20,11 @@ public class ConsulRecoveryManager {
     private boolean isRecoveryMode;
     private long recoveryAttempts = 0;
     private String serviceName;
+    private String tag;
 
-    public ConsulRecoveryManager(String serviceName) {
+    public ConsulRecoveryManager(String serviceName, String tag) {
         this.serviceName = serviceName;
+        this.tag = tag;
         startConsulThreadMonitor();
     }
 
@@ -55,7 +57,7 @@ public class ConsulRecoveryManager {
     public boolean newFailedAttempt() {
         isRecoveryMode = true;
         ++recoveryAttempts;
-        logger.error("Recovery mode: Fixing Consul Connection for service {} - attempt {}...", serviceName, recoveryAttempts);
+        logger.error("Recovery mode: Fixing Consul Connection for service {} tag {} - attempt {}...", serviceName, tag, recoveryAttempts);
         if(config.getMaxAttemptsBeforeShutdown() == -1) return true;
         return config.getMaxAttemptsBeforeShutdown() >= recoveryAttempts;
     }
@@ -71,12 +73,21 @@ public class ConsulRecoveryManager {
     }
 
     public void checkin() {
-        logger.debug("Service {} checking in", serviceName);
-        heartbeats.put(serviceName, System.currentTimeMillis());
+        logger.debug("Service {} tag {} checking in", serviceName, tag);
+        String key = tag == null ? serviceName : serviceName + "|" + tag;
+        heartbeats.put(key, System.currentTimeMillis());
     }
 
     public boolean isRecoveryMode() { return isRecoveryMode; }
     public long getRecoveryAttempts() { return recoveryAttempts; }
     public String getServiceName() { return serviceName; }
     public void setServiceName(String serviceName) { this.serviceName = serviceName; }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
+    }
 }
