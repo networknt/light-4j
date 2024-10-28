@@ -62,7 +62,6 @@ public class ExceptionHandler implements MiddlewareHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        if(logger.isDebugEnabled()) logger.debug("ExceptionHandler.handleRequest starts.");
         // dispatch here to make sure that all exceptions will be capture in this handler
         // otherwise, some of the exceptions will be captured in Connectors class in Undertow
         // As we've updated Server.java to redirect the logs to slf4j but still it make sense
@@ -72,11 +71,15 @@ public class ExceptionHandler implements MiddlewareHandler {
             return;
         }
 
+        // These two lines of code should be placed here to avoid the log being printed twice
+        // when switching from the IO thread to the worker thread.
+        String path = exchange.getRequestPath();
+        if(logger.isDebugEnabled()) logger.debug("ExceptionHandler starting - path: {}", path);
+
         try {
-            if(logger.isDebugEnabled()) logger.debug("ExceptionHandler.handleRequest ends.");
             Handler.next(exchange, next);
         } catch (Throwable e) {
-            logger.error("Exception:", e);
+            logger.error("ExceptionHandler error processing - path: {}", path, e);
             if(exchange.isResponseChannelAvailable()) {
                 //handle exceptions
                 if(e instanceof RuntimeException) {
@@ -113,6 +116,7 @@ public class ExceptionHandler implements MiddlewareHandler {
                 }
             }
         } finally {
+            if(logger.isDebugEnabled()) logger.debug("ExceptionHandler completed - path: {}", path);
             // at last, clean the MDC. Most likely, correlationId in side.
             //logger.debug("Clear MDC");
             MDC.clear();
