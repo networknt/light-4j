@@ -43,7 +43,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DirectRegistry extends AbstractRegistry {
     private final static Logger logger = LoggerFactory.getLogger(DirectRegistry.class);
     private final static String PARSE_DIRECT_URL_ERROR = "ERR10019";
-    private final static String GENERAL_TAG = "*";
     private ConcurrentHashMap<URL, Object> subscribeUrls = new ConcurrentHashMap();
     private static Map<String, List<URL>> directUrls = new HashMap();
     private static DirectRegistryConfig config;
@@ -67,7 +66,7 @@ public class DirectRegistry extends AbstractRegistry {
                             String s = buildUrl(directUrl, entry.getKey());
                             URL u = URLImpl.valueOf(s);
                             tag = u.getParameter(Constants.TAG_ENVIRONMENT);
-                            String key = tag == null ? entry.getKey() : entry.getKey() + "|" + tag;
+                            String key = serviceKey(entry.getKey(), tag);
                             List<URL> urls = directUrls.get(key);
                             if (urls != null) {
                                 urls.add(u);
@@ -82,7 +81,7 @@ public class DirectRegistry extends AbstractRegistry {
                         String s = buildUrl(entry.getValue(), entry.getKey());
                         URL u = URLImpl.valueOf(s);
                         tag = u.getParameter(Constants.TAG_ENVIRONMENT);
-                        String key = tag == null ? entry.getKey() : entry.getKey() + "|" + tag;
+                        String key = serviceKey(entry.getKey(), tag);
                         urls.add(u);
                         directUrls.put(key, urls);
                     }
@@ -139,8 +138,7 @@ public class DirectRegistry extends AbstractRegistry {
     private List<URL> createSubscribeUrl(URL subscribeUrl) {
         String serviceId = subscribeUrl.getPath();
         String tag = subscribeUrl.getParameter(Constants.TAG_ENVIRONMENT);
-        String key = tag == null ? serviceId : serviceId + "|" + tag;
-        return directUrls.get(key);
+        return directUrls.get(serviceKey(serviceId, tag));
     }
 
     @Override

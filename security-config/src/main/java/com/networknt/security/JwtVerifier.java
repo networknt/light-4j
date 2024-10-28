@@ -456,8 +456,8 @@ public class JwtVerifier extends TokenVerifier {
                     logger.info("Cached jwt token is expired!");
                     throw new ExpiredTokenException("Token is expired");
                 }
-            } catch (MalformedClaimException e) {
-                // This is cached token and it is impossible to have this exception
+            } catch (MalformedClaimException | NullPointerException e) {
+                // The NPE can happen if the token doesn't have exp claim.
                 logger.error("MalformedClaimException:", e);
                 throw new InvalidJwtException("MalformedClaimException", new ErrorCodeValidator.Error(ErrorCodes.MALFORMED_CLAIM, "Invalid ExpirationTime Format"), e, context);
             }

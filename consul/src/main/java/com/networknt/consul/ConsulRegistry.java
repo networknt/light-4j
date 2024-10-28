@@ -47,7 +47,7 @@ public class ConsulRegistry extends AbstractRegistry {
     private ConcurrentHashMap<String, List<URL>> serviceCache = new ConcurrentHashMap<String, List<URL>>();
     // keep all subscribe urls, so that it won't double subscribe.
     private static Set<URL> subscribedSet = new ConcurrentHashSet<>();
-    // record lookup service thread, ensure each serviceName start only one thread, <serviceName, lastConsulIndexId>
+    // record lookup service thread, ensure each serviceName start only one thread, <serviceName, tag, lastConsulIndexId>
     private ConcurrentHashMap<String, Long> lookupServices = new ConcurrentHashMap<String, Long>();
 
     // TODO: 2016/6/17 clientUrl support multiple listener
@@ -142,16 +142,17 @@ public class ConsulRegistry extends AbstractRegistry {
     protected List<URL> doDiscover(URL url) {
         String serviceName = url.getPath();
         String tag = url.getParameter(Constants.TAG_ENVIRONMENT);
+        String key = serviceKey(serviceName, tag);
         String protocol = url.getProtocol();
-        if(logger.isTraceEnabled()) logger.trace("protocol = " + protocol + " serviceName = " + serviceName + " tag = " + tag);
-        List<URL> urls = serviceCache.get(serviceName);
+        if(logger.isTraceEnabled()) logger.trace("protocol = {} serviceName = {} tag = {}", protocol, serviceName, tag);
+        List<URL> urls = serviceCache.get(key);
         if (urls == null || urls .isEmpty()) {
-            synchronized (serviceName.intern()) {
-                urls = serviceCache.get(serviceName);
+            synchronized (key.intern()) {
+                urls = serviceCache.get(key);
                 if (urls == null || urls.isEmpty()) {
-                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(protocol, serviceName, false);
-                    updateServiceCache(serviceName, serviceUrls, false);
-                    urls = serviceCache.get(serviceName);
+                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(protocol, serviceName, tag, false);
+                    updateServiceCache(key, serviceUrls, false);
+                    urls = serviceCache.get(key);
                 }
             }
         }
@@ -194,8 +195,8 @@ public class ConsulRegistry extends AbstractRegistry {
         }
     }
 
-    private ConcurrentHashMap<String, List<URL>> lookupServiceUpdate(String protocol, String serviceName) {
-        return lookupServiceUpdate(protocol, serviceName, true);
+    private ConcurrentHashMap<String, List<URL>> lookupServiceUpdate(String protocol, String serviceName, String tag) {
+        return lookupServiceUpdate(protocol, serviceName, tag,true);
     }
     /***
      *
@@ -228,7 +229,7 @@ public class ConsulRegistry extends AbstractRegistry {
      *
      */
 
-    private ConcurrentHashMap<String, List<URL>> lookupServiceUpdate(String protocol, String serviceName, boolean isBlockQuery) {
+    private ConcurrentHashMap<String, List<URL>> lookupServiceUpdate(String protocol, String serviceName, String tag, boolean isBlockQuery) {
         // get Consul index if blocking query
         Long lastConsulIndexId = 0L;
         if (isBlockQuery) {
@@ -237,7 +238,7 @@ public class ConsulRegistry extends AbstractRegistry {
         if(logger.isDebugEnabled()) logger.debug("serviceName = {} lastConsulIndexId = {}", serviceName, lastConsulIndexId);
 
         // response should be null iff there was an error connecting to Consul
-        ConsulResponse<List<ConsulService>> response = lookupConsulService(serviceName, lastConsulIndexId);
+        ConsulResponse<List<ConsulService>> response = lookupConsulService(serviceName, tag, lastConsulIndexId);
 
         if(logger.isTraceEnabled()) {
             try {
@@ -325,8 +326,8 @@ public class ConsulRegistry extends AbstractRegistry {
      * @param serviceName
      * @return ConsulResponse or null
      */
-    private ConsulResponse<List<ConsulService>> lookupConsulService(String serviceName, Long lastConsulIndexId) {
-        ConsulResponse<List<ConsulService>> response = client.lookupHealthService(serviceName, null, lastConsulIndexId, getConsulToken());
+    private ConsulResponse<List<ConsulService>> lookupConsulService(String serviceName, String tag, Long lastConsulIndexId) {
+        ConsulResponse<List<ConsulService>> response = client.lookupHealthService(serviceName, tag, lastConsulIndexId, getConsulToken());
         return response;
     }
 
@@ -348,14 +349,14 @@ public class ConsulRegistry extends AbstractRegistry {
      *     serviceUrls.get(serviceName) != null &&     // - indicates that Consul has reported that serviceName
      *     serviceUrls.get(serviceName).size() == 0    //   has no IPs registered
      *
-     * @param serviceName
+     * @param key is the combination of serviceName and tag
      * @param serviceUrls Leave cache as-is and do not notify if serviceUrls == null || serviceUrls.isEmpty()
      * @param needNotify
      */
-    private void updateServiceCache(String serviceName, ConcurrentHashMap<String, List<URL>> serviceUrls, boolean needNotify) {
+    private void updateServiceCache(String key, ConcurrentHashMap<String, List<URL>> serviceUrls, boolean needNotify) {
         if (serviceUrls != null && !serviceUrls.isEmpty()) {
-            List<URL> cachedUrls = serviceCache.get(serviceName);
-            List<URL> newUrls = serviceUrls.get(serviceName);
+            List<URL> cachedUrls = serviceCache.get(key);
+            List<URL> newUrls = serviceUrls.get(key);
             try {
                 if(logger.isTraceEnabled()) logger.trace("serviceUrls = {}", Config.getInstance().getMapper().writeValueAsString(serviceUrls));
             } catch(Exception e) {
@@ -365,12 +366,12 @@ public class ConsulRegistry extends AbstractRegistry {
             if (ConsulUtils.isSame(newUrls, cachedUrls)) {
                 change = false;
             } else {
-                serviceCache.put(serviceName, newUrls);
+                serviceCache.put(key, newUrls);
             }
 
             if (change && needNotify) {
-                notifyExecutor.execute(new NotifyService(serviceName, newUrls));
-                if(logger.isDebugEnabled()) logger.debug("light service notify-service: " + serviceName);
+                notifyExecutor.execute(new NotifyService(key, newUrls));
+                if(logger.isDebugEnabled()) logger.debug("light service notify-service: " + key);
                 StringBuilder sb = new StringBuilder();
                 for (URL url : newUrls) {
                     sb.append(url.getUri()).append(";");
@@ -383,15 +384,17 @@ public class ConsulRegistry extends AbstractRegistry {
     private class ServiceLookupThread extends Thread {
        private String protocol;
        private String serviceName;
+       private String tag;
 
         public ServiceLookupThread(String protocol, String serviceName) {
             this.protocol = protocol;
             this.serviceName = serviceName;
+            this.tag = tag;
         }
 
         @Override
         public void run() {
-            ConsulRecoveryManager consulRecovery = new ConsulRecoveryManager(serviceName);
+            ConsulRecoveryManager consulRecovery = new ConsulRecoveryManager(serviceName, tag);
 
             if(logger.isDebugEnabled()) logger.debug("Start Consul ServiceLookupThread thread - Lookup interval: {}ms, service {}", lookupInterval, serviceName);
             while (true) {
@@ -402,7 +405,7 @@ public class ConsulRegistry extends AbstractRegistry {
                     if(logger.isDebugEnabled()) logger.debug("Consul ServiceLookupThread Thread - SLEEP: Start to sleep {}ms for service {}", lookupInterval, serviceName);
                     sleep(lookupInterval);
                     if(logger.isDebugEnabled()) logger.debug("Consul ServiceLookupThread Thread - WAKE UP: Woke up from sleep for service {}", serviceName);
-                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(protocol, serviceName);
+                    ConcurrentHashMap<String, List<URL>> serviceUrls = lookupServiceUpdate(protocol, serviceName, tag);
 
                     // lookupServiceUpdate returns null iff Consul connection has failed - attempt to recover
                     if(serviceUrls == null)
@@ -419,7 +422,7 @@ public class ConsulRegistry extends AbstractRegistry {
 
                             long randomJitter = ThreadLocalRandom.current().nextLong(0, reconnectJitter);
                             Thread.sleep(reconnectInterval + randomJitter);
-                            serviceUrls = lookupServiceUpdate(protocol, serviceName);
+                            serviceUrls = lookupServiceUpdate(protocol, serviceName, tag);
                         }
                         consulRecovery.exitRecoveryMode();
                     }
