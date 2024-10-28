@@ -133,6 +133,12 @@ public class UnifiedSecurityHandler implements MiddlewareHandler {
                                 // in the case that a bearer token is used, there are three token types: jwt, sjwt and swt. we need to identify the type
                                 // and then call the right handler if the type is configured as true.
                                 Map<String, HttpHandler> handlers = Handler.getHandlers();
+                                // make sure the bearer token exists by checking the length.
+                                if(authorization.length() < 8) {
+                                    // it has only Bearer and space. return invalid bearer token error
+                                    logger.error("Invalid authorization header {}", authorization);
+                                    return new Status(INVALID_AUTHORIZATION_HEADER, authorization);
+                                }
                                 // remove the Bearer prefix to get the token.
                                 String token = authorization.substring(7);
                                 // first to identify the token type.
