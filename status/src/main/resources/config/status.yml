@@ -47,13 +47,13 @@ SUC10204:
   code: SUC10204
   message: NO_CONTENT
   severity: NA
-  description: The request is processed but no conent is returned
+  description: The request is processed but no content is returned
 SUC10205:
   statusCode: 205
   code: SUC10205
   message: RESET_CONTENT
   severity: NA
-  description: The request is processed but no conent is returned and document view needs to be reset
+  description: The request is processed but no content is returned and document view needs to be reset
 SUC10206:
   statusCode: 206
   code: SUC10206
@@ -545,7 +545,7 @@ ERR10080:
   statusCode: 400
   code: ERR10080
   message: TOKEN_INFO_ERROR
-  description: Token introspection error % with error description %.
+  description: Token introspection error %s with error description %s.
 ERR10081:
   statusCode: 400
   code: ERR10081
@@ -575,12 +575,12 @@ ERR10086:
   statusCode: 400
   code: ERR10086
   message: FAILED_TO_INVOKE_LAMBDA
-  description: Failed to invoke lambda function %.
+  description: Failed to invoke lambda function %s.
 ERR10087:
   statusCode: 400
   code: ERR10087
   message: EXCHANGE_HAS_FAILED_STATE
-  description: Exchange has failed state %.
+  description: Exchange has failed state %s.
 ERR10088:
   statusCode: 429
   code: ERR10088
@@ -590,12 +590,12 @@ ERR10089:
   statusCode: 400
   code: ERR10089
   message: FAILED_TO_INVOKE_SERVICE
-  description: Failed to invoke HTTP service with serviceId %.
+  description: Failed to invoke HTTP service with serviceId %s.
 ERR10090:
   statusCode: 400
   code: ERR10090
   message: TOKEN_VERIFICATION_EXCEPTION
-  description: Token verification exception %.
+  description: Token verification exception %s.
 ERR10091:
   statusCode: 400
   code: ERR10091
@@ -930,7 +930,7 @@ ERR11616:
   statusCode: 400
   code: ERR11616
   message: ERROR_VALIDATE_PASSWORD
-  description: Password validation error with excetion %s.
+  description: Password validation error with exception %s.
 ERR11617:
   statusCode: 400
   code: ERR11617
@@ -1075,7 +1075,7 @@ ERR12005:
   statusCode: 400
   code: ERR12005
   message: JSON_PROCESSING_EXCEPTION
-  description: Json Processing Excepiton %s.
+  description: Json Processing Exception %s.
 ERR12007:
   statusCode: 401
   code: ERR12007
