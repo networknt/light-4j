@@ -3,6 +3,7 @@ package com.networknt.handler;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -37,16 +38,19 @@ public class Expect100ContinueConfig {
     private void setConfigData() {
 
         if (this.mappedConfig.containsKey(ENABLED))
-            this.enabled = (Boolean)this.mappedConfig.get(ENABLED);
+            this.enabled = (Boolean) this.mappedConfig.get(ENABLED);
 
         if (this.mappedConfig.containsKey(IGNORED_PATH_PREFIXES)) {
 
-            if (this.mappedConfig.get(IGNORED_PATH_PREFIXES) instanceof List)
-                this.ignoredPathPrefixes = (List)this.mappedConfig.get(IGNORED_PATH_PREFIXES);
+            if (this.mappedConfig.get(IGNORED_PATH_PREFIXES) == null)
+                this.ignoredPathPrefixes = new ArrayList<>();
+
+            else if (this.mappedConfig.get(IGNORED_PATH_PREFIXES) instanceof List)
+                this.ignoredPathPrefixes = (List) this.mappedConfig.get(IGNORED_PATH_PREFIXES);
 
             else if (this.mappedConfig.get(IGNORED_PATH_PREFIXES) instanceof String) {
 
-                final var ignoredPathsString = ((String)this.mappedConfig.get(IGNORED_PATH_PREFIXES)).trim();
+                final var ignoredPathsString = ((String) this.mappedConfig.get(IGNORED_PATH_PREFIXES)).trim();
 
                 if (!ignoredPathsString.isEmpty()
                         && !ignoredPathsString.isBlank()
@@ -55,6 +59,7 @@ public class Expect100ContinueConfig {
                             .trim()
                             .replace("[", "")
                             .replace("]", "")
+                            .replace(" ", "")
                             .split(",")
                     );
 
