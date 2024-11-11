@@ -1307,6 +1307,11 @@ ERR12052:
   code: ERR12052
   message: AUTHORIZATION_CODE_NOT_FOUND
   description: Authorization code %s not found when getting an authorization code token
+ERR12053:
+  statusCode: 400
+  code: ERR12053
+  message: MISMATCH_HOST_ID
+  description: The request hostId %s does not match client hostId %s.
 
 # Tokenization service
 ERR12100:
