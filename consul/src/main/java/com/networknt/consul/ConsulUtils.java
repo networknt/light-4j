@@ -193,5 +193,4 @@ public class ConsulUtils {
         }
         return w;
     }
-
 }

@@ -16,17 +16,12 @@
 
 package com.networknt.consul;
 
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
 import com.networknt.consul.client.ConsulClient;
 import com.networknt.utility.ConcurrentHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.*;
 
 /**
  * consul heart beat manager. passing status service id is registered here，
@@ -34,7 +29,7 @@ import org.slf4j.LoggerFactory;
  * then the heart beat process is done.
  *
  * Switcher is used to enable heart beat or disable heart beat.
- * 
+ *
  * @author zhanglei
  *
  */
@@ -98,7 +93,7 @@ public class ConsulHeartbeatManager {
 	/**
 	 * check heart beat switcher status, if switcher is changed, then change lastHeartBeatSwitcherStatus
 	 * to the latest status.
-	 * 
+	 *
 	 * @param switcherStatus
 	 * @return
 	 */
@@ -131,7 +126,7 @@ public class ConsulHeartbeatManager {
 
 	/**
 	 * Add consul serviceId，added serviceId will set passing status to keep sending heart beat.
-	 * 
+	 *
 	 * @param serviceId service Id
 	 */
 	public void addHeartbeatServcieId(String serviceId) {
@@ -140,7 +135,7 @@ public class ConsulHeartbeatManager {
 
 	/**
 	 * remove serviceId，corresponding serviceId won't send heart beat
-	 * 
+	 *
 	 * @param serviceId service Id
 	 */
 	public void removeHeartbeatServiceId(String serviceId) {
