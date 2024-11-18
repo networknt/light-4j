@@ -8,6 +8,7 @@ singletons:
       port: 8500
       path: ''
       parameters:
+        # Consul blocking queries time should be set via the 'lookupInterval' parameter in consul.yml, instead of 'registrySessionTimeout' in service.yml
         registrySessionTimeout: '1000'
 - com.networknt.consul.client.ConsulClient:
 #  - com.networknt.consul.client.ConsulClientImpl
