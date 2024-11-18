@@ -167,7 +167,7 @@ public class ConsulRegistry extends AbstractRegistry {
      */
     private void startListenerThreadIfNewService(URL url) {
         String serviceName = url.getPath();
-
+        String tag = url.getParameter(Constants.TAG_ENVIRONMENT);
         // Do NOT start a listener thread if serviceName is blank
         if(StringUtils.isBlank(serviceName))
             return;
@@ -176,7 +176,7 @@ public class ConsulRegistry extends AbstractRegistry {
         if (!lookupServices.containsKey(serviceName)) {
             Long value = lookupServices.putIfAbsent(serviceName, 0L);
             if (value == null) {
-                ServiceLookupThread lookupThread = new ServiceLookupThread(protocol, serviceName);
+                ServiceLookupThread lookupThread = new ServiceLookupThread(protocol, serviceName, tag);
                 lookupThread.setDaemon(true);
                 lookupThread.start();
             }
@@ -386,7 +386,7 @@ public class ConsulRegistry extends AbstractRegistry {
        private String serviceName;
        private String tag;
 
-        public ServiceLookupThread(String protocol, String serviceName) {
+        public ServiceLookupThread(String protocol, String serviceName, String tag) {
             this.protocol = protocol;
             this.serviceName = serviceName;
             this.tag = tag;

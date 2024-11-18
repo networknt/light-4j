@@ -42,7 +42,8 @@ reconnectInterval: ${consul.reconnectInterval:2}
 # A random number of seconds in between 0 and reconnectJitter added to reconnectInterval (to avoid too many reconnect
 # requests at one time)
 reconnectJitter: ${consul.reconnectJitter:2}
-# Time in seconds between blocking queries with Consul
+# Time in seconds between blocking queries with Consul. Consul blocking queries time should be set via the
+# 'lookupInterval' parameter in consul.yml, instead of 'registrySessionTimeout' in service.yml
 lookupInterval: ${consul.lookupInterval:30}
 # Max number of failed Consul connection or request attempts before self-termination
 # -1 means an infinite # of attempts are allowed

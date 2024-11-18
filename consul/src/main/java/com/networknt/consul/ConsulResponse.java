@@ -60,5 +60,4 @@ public class ConsulResponse<T> {
 		this.consulLastContact = consulLastContact;
 	}
 
-
 }
