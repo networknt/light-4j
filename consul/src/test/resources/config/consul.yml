@@ -25,5 +25,6 @@ ttlCheck: true
 # respectively).
 wait: 600s
 # Time in seconds between blocking queries with Consul
-# Consul blocking queries time should be set via the 'lookupInterval' parameter in consul.yml, instead of 'registrySessionTimeout' in service.yml
+# Consul blocking queries time should be set via the 'lookupInterval' parameter in consul.yml, instead of 
+# 'registrySessionTimeout' in service.yml
 lookupInterval: 30

@@ -21,11 +21,11 @@ public class ConsulResponse<T> {
 	 * consul return result
 	 */
 	private T value;
-	
+
 	private Long consulIndex;
-	
+
 	private Boolean consulKnownLeader;
-	
+
 	private Long consulLastContact;
 
 	public T getValue() {
@@ -60,5 +60,4 @@ public class ConsulResponse<T> {
 		this.consulLastContact = consulLastContact;
 	}
 
-	
 }
