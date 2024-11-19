@@ -3,6 +3,8 @@ package com.networknt.handler;
 import com.networknt.config.Config;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
+import io.undertow.io.IoCallback;
+import io.undertow.io.Sender;
 import io.undertow.server.*;
 import io.undertow.server.protocol.http.HttpContinue;
 import io.undertow.util.Headers;
@@ -30,36 +32,48 @@ public class Expect100ContinueHandler implements MiddlewareHandler {
         LOG.trace("Expect100ContinueHandler starts.");
 
         if (HttpContinue.requiresContinueResponse(exchange)) {
+            LOG.debug("Expect header detected in request.");
+            final var shouldIgnore100Continue = this.shouldIgnore100Continue(exchange);
+            final var shouldRespondInPlace = this.shouldRespondInPlace(exchange);
 
-            var shouldAttachRequestWrapper = true;
-            for (var path : CONFIG.getIgnoredPathPrefixes()) {
-                if (exchange.getRequestPath().startsWith(path)) {
-
-                    shouldAttachRequestWrapper = false;
-                    break;
-                }
-            }
-
-            // If the request has an Expect header, add the request wrapper and response commit listener.
-            // If the path is ignored, remove the Expect header.
-            if (shouldAttachRequestWrapper) {
-
+            if (!shouldIgnore100Continue && !shouldRespondInPlace) {
                 LOG.debug("Expect header detected in request. Adding request wrapper and response commit listener.");
                 exchange.addRequestWrapper(CONTINUE_REQUEST_WRAPPER);
                 exchange.addResponseCommitListener(CONTINUE_RESPONSE_COMMIT_LISTENER);
 
-            } else {
+            } else if (shouldRespondInPlace) {
 
-                LOG.debug("Expect header detected in request, but path is ignored. Removing Expect header.");
+                    LOG.debug("Expect header detected in request, and path is configured to respond in place. Sending 100 Continue response.");
+                    HttpContinue.sendContinueResponse(exchange, new IoCallback() {
+                        @Override
+                        public void onComplete(final HttpServerExchange exchange, final Sender sender) {
+                            LOG.debug("In place 100 Continue response sent successfully. Removing Expect header before continuing.");
+                            exchange.getRequestHeaders().remove(Headers.EXPECT);
+                        }
+
+                        @Override
+                        public void onException(final HttpServerExchange exchange, final Sender sender, final IOException e) {
+                            LOG.error("Failed to send 100 Continue response.", e);
+                        }
+                    });
+
+            } else {
+                LOG.debug("Expect header detected in request, but path is ignored. Removing Expect header before continuing.");
                 exchange.getRequestHeaders().remove(Headers.EXPECT);
             }
-
-
 
         }
 
         LOG.trace("Expect100ContinueHandler ends.");
         Handler.next(exchange, this.next);
+    }
+
+    private boolean shouldRespondInPlace(final HttpServerExchange exchange) {
+        return CONFIG.getInPlacePathPrefixes().stream().anyMatch(exchange.getRequestPath()::startsWith);
+    }
+
+    private boolean shouldIgnore100Continue(final HttpServerExchange exchange) {
+        return CONFIG.getIgnoredPathPrefixes().stream().anyMatch(exchange.getRequestPath()::startsWith);
     }
 
     @Override

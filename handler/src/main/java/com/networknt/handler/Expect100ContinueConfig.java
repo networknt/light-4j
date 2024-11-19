@@ -11,8 +11,10 @@ public class Expect100ContinueConfig {
     public static final String CONFIG_NAME = "expect-100-continue";
     private static final String ENABLED = "enabled";
     private static final String IGNORED_PATH_PREFIXES = "ignoredPathPrefixes";
+    private static final String IN_PLACE_PATH_PREFIXES = "inPlacePathPrefixes";
     private boolean enabled;
     private List<String> ignoredPathPrefixes;
+    private List<String> inPlacePathPrefixes;
     private final Config config;
     private Map<String, Object> mappedConfig;
 
@@ -40,31 +42,38 @@ public class Expect100ContinueConfig {
         if (this.mappedConfig.containsKey(ENABLED))
             this.enabled = (Boolean) this.mappedConfig.get(ENABLED);
 
-        if (this.mappedConfig.containsKey(IGNORED_PATH_PREFIXES)) {
+        if (this.mappedConfig.containsKey(IN_PLACE_PATH_PREFIXES))
+            this.inPlacePathPrefixes = handleMultiTypeListConfigProperty(this.mappedConfig, IN_PLACE_PATH_PREFIXES);
 
-            if (this.mappedConfig.get(IGNORED_PATH_PREFIXES) == null)
-                this.ignoredPathPrefixes = new ArrayList<>();
+        if (this.mappedConfig.containsKey(IGNORED_PATH_PREFIXES))
+            this.ignoredPathPrefixes = handleMultiTypeListConfigProperty(this.mappedConfig, IGNORED_PATH_PREFIXES);
 
-            else if (this.mappedConfig.get(IGNORED_PATH_PREFIXES) instanceof List)
-                this.ignoredPathPrefixes = (List) this.mappedConfig.get(IGNORED_PATH_PREFIXES);
+    }
 
-            else if (this.mappedConfig.get(IGNORED_PATH_PREFIXES) instanceof String) {
+    private static List<String> handleMultiTypeListConfigProperty(final Map<String, Object> mappedConfig, final String propertyName) {
+        if (mappedConfig.get(propertyName) == null)
+            return new ArrayList<>();
 
-                final var ignoredPathsString = ((String) this.mappedConfig.get(IGNORED_PATH_PREFIXES)).trim();
+        else if (mappedConfig.get(propertyName) instanceof List)
+            return (List) mappedConfig.get(propertyName);
 
-                if (!ignoredPathsString.isEmpty()
-                        && !ignoredPathsString.isBlank()
-                        && ignoredPathsString.contains("["))
-                    this.ignoredPathPrefixes = List.of(ignoredPathsString
-                            .trim()
-                            .replace("[", "")
-                            .replace("]", "")
-                            .replace(" ", "")
-                            .split(",")
-                    );
+        else if (mappedConfig.get(propertyName) instanceof String) {
 
-            } else throw new ConfigException("'ignoredPaths' must be a list or a string");
+            final var ignoredPathsString = ((String) mappedConfig.get(propertyName)).trim();
+
+            if (!ignoredPathsString.isEmpty()
+                    && !ignoredPathsString.isBlank()
+                    && ignoredPathsString.contains("["))
+                return List.of(ignoredPathsString
+                        .trim()
+                        .replace("[", "")
+                        .replace("]", "")
+                        .replace(" ", "")
+                        .split(",")
+                );
         }
+
+        throw new ConfigException("'" + propertyName + "' must be a List<String>, a String, or empty.");
     }
 
     public boolean isEnabled() {
@@ -73,5 +82,9 @@ public class Expect100ContinueConfig {
 
     public List<String> getIgnoredPathPrefixes() {
         return ignoredPathPrefixes;
+    }
+
+    public List<String> getInPlacePathPrefixes() {
+        return inPlacePathPrefixes;
     }
 }
