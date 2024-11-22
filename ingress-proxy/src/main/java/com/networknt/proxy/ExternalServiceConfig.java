@@ -18,6 +18,7 @@ public class ExternalServiceConfig {
     private static final String PATH_HOST_MAPPINGS = "pathHostMappings";
     private static final String METRICS_INJECTION = "metricsInjection";
     private static final String METRICS_NAME = "metricsName";
+    private static final String MAX_CONNECTION_RETRIES = "maxConnectionRetries";
 
     boolean enabled;
     String proxyHost;
@@ -25,11 +26,12 @@ public class ExternalServiceConfig {
     boolean enableHttp2;
     boolean metricsInjection;
     String metricsName;
+    int maxConnectionRetries;
 
     List<String[]> pathHostMappings;
 
     List<UrlRewriteRule> urlRewriteRules;
-    private Config config;
+    private final Config config;
     private Map<String, Object> mappedConfig;
 
     public ExternalServiceConfig() {
@@ -86,6 +88,10 @@ public class ExternalServiceConfig {
         return proxyPort;
     }
 
+    public int getMaxConnectionRetries() { return maxConnectionRetries; }
+
+    public void setMaxConnectionRetries(int maxConnectionRetries) { this.maxConnectionRetries = maxConnectionRetries; }
+
     public void setProxyPort(int proxyPort) {
         this.proxyPort = proxyPort;
     }
@@ -108,6 +114,8 @@ public class ExternalServiceConfig {
         if (object != null) setProxyHost((String) object);
         object = mappedConfig.get(PROXY_PORT);
         if (object != null) proxyPort = Config.loadIntegerValue(PROXY_PORT, object);
+        object = mappedConfig.get(MAX_CONNECTION_RETRIES);
+        if (object != null) maxConnectionRetries = Config.loadIntegerValue(MAX_CONNECTION_RETRIES, object);
         object = mappedConfig.get(ENABLE_HTTP2);
         if (object != null) enableHttp2 = Config.loadBooleanValue(ENABLE_HTTP2, object);
         object = getMappedConfig().get(METRICS_INJECTION);

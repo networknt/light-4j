@@ -7,6 +7,8 @@ proxyHost: ${externalService.proxyHost:}
 proxyPort: ${externalService.proxyPort:}
 # If HTTP2 is used to connect to the external service.
 enableHttp2: ${externalService.enableHttp2:false}
+# Max Connection Retries
+maxConnectionRetries: ${externalService.maxConnectionRetries:3}
 # A list of request path to the service host mappings. Other requests will skip this handler. The value is
 # a string with two parts. The first part is the path and the second is the target host the request is
 # finally routed to.
