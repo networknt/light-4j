@@ -105,7 +105,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                             if(matcher.matches()) {
                                 matched = true;
                                 requestPath = matcher.replaceAll(rule.getReplace());
-                                if(logger.isTraceEnabled()) logger.trace("rewritten requestPath = " + requestPath);
+                                if(logger.isTraceEnabled()) logger.trace("rewritten requestPath = {}", requestPath);
                                 break;
                             }
                         }
@@ -171,8 +171,17 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         exchange.endExchange();
                         return;
                     }
+                    sendAsyncWithRetry(request, exchange, config.getMaxConnectionRetries(), 0, startTime, endpoint);
+                }
+            }
+        }
+        if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest ends.");
+        Handler.next(exchange, next);
+    }
 
-                    var response  = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
+    private void sendAsyncWithRetry(HttpRequest request, HttpServerExchange exchange, int maxRetries, int attempt, long startTime, String endpoint) {
+        client.sendAsync(request, HttpResponse.BodyHandlers.ofByteArray())
+                .thenAccept(response -> {
                     var responseHeaders = response.headers();
                     byte[] responseBody = response.body();
                     if(response.statusCode() >= 400) {
@@ -185,7 +194,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         // remove empty key in the response header start with a colon.
                         if (header.getKey() != null && !header.getKey().startsWith(":") && header.getValue().get(0) != null) {
                             for(String s : header.getValue()) {
-                                if(logger.isTraceEnabled()) logger.trace("Add response header key = " + header.getKey() + " value = " + s);
+                                if(logger.isTraceEnabled()) logger.trace("Add response header key = {} value = {}", header.getKey(), s);
                                 exchange.getResponseHeaders().add(new HttpString(header.getKey()), s);
                             }
                         }
@@ -201,12 +210,18 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                             metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
                         }
                     }
-                    return;
-                }
-            }
-        }
-        if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest ends.");
-        Handler.next(exchange, next);
+                })
+                .exceptionally(e -> {
+                    if (attempt < maxRetries) {
+                        logger.warn("Retrying request, attempt {}/{}", attempt + 1, maxRetries);
+                        sendAsyncWithRetry(request, exchange, maxRetries, attempt + 1, startTime, endpoint);
+                    } else {
+                        logger.error("Failed to send request asynchronously after {} attempts", maxRetries, e);
+                        setExchangeStatus(exchange, ESTABLISH_CONNECTION_ERROR);
+                        exchange.endExchange();
+                    }
+                    return null;
+                });
     }
 
     private void copyHeaders(HeaderMap headerMap, HttpRequest.Builder builder) {
