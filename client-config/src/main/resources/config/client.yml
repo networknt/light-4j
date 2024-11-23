@@ -222,3 +222,7 @@ request:
   # minimum quantity of connection in connection pool for each host. The corresponding connection number will shrink to minConnectionNumPerHost
   # by remove least recently used connections when the connection number of a host reach 0.75 * maxConnectionNumPerHost.
   minConnectionNumPerHost: ${client.minConnectionNumPerHost:250}
+  # Maximum request retry times for each request. If you don't want to retry, set it to 1. The default value is 3.
+  maxRequestRetry: ${client.maxRequestRetry:3}
+  # The delay time in milliseconds for each request retry. The default value is 1000.
+  requestRetryDelay: ${client.requestRetryDelay:1000}

@@ -39,11 +39,15 @@ public final class ClientConfig {
     public static final String CLIENT_SECRET = "client_secret";
     public static final String ENABLE_HTTP2 = "enableHttp2";
     public static final String TIMEOUT = "timeout";
+    public static final String MAX_REQUEST_RETRY = "maxRequestRetry";
+    public static final String REQUEST_RETRY_DELAY = "requestRetryDelay";
     public static final String TOKEN = "token";
     public static final int DEFAULT_BUFFER_SIZE = 24; // 24*1024 buffer size will be good for most of the app.
     public static final int DEFAULT_ERROR_THRESHOLD = 5;
     public static final int DEFAULT_TIMEOUT = 3000;
     public static final int DEFAULT_RESET_TIMEOUT = 600000;
+    public static final int DEFAULT_MAX_REQUEST_RETRY = 3;
+    public static final int DEFAULT_REQUEST_RETRY_DELAY = 1000;
     public static final boolean DEFAULT_INJECT_OPEN_TRACING = false;
     public static final boolean DEFAULT_INJECT_CALLER_ID = false;
     private static final String ERROR_THRESHOLD = "errorThreshold";
@@ -68,6 +72,8 @@ public final class ClientConfig {
     public static final String SIGN = "sign";
     private int resetTimeout = DEFAULT_RESET_TIMEOUT;
     private int timeout = DEFAULT_TIMEOUT;
+    private int maxRequestRetry = DEFAULT_MAX_REQUEST_RETRY;
+    private int requestRetryDelay = DEFAULT_REQUEST_RETRY_DELAY;
     private int errorThreshold = DEFAULT_ERROR_THRESHOLD;
     private boolean injectOpenTracing = DEFAULT_INJECT_OPEN_TRACING;
     private boolean injectCallerId = DEFAULT_INJECT_CALLER_ID;
@@ -174,6 +180,10 @@ public final class ClientConfig {
         if(object != null) timeout = Config.loadIntegerValue(TIMEOUT, object);
         object = requestConfig.get(RESET_TIMEOUT);
         if(object != null) resetTimeout = Config.loadIntegerValue(RESET_TIMEOUT, object);
+        object = requestConfig.get(MAX_REQUEST_RETRY);
+        if(object != null) maxRequestRetry = Config.loadIntegerValue(MAX_REQUEST_RETRY, object);
+        object = requestConfig.get(REQUEST_RETRY_DELAY);
+        if(object != null) requestRetryDelay = Config.loadIntegerValue(REQUEST_RETRY_DELAY, object);
         object = requestConfig.get(INJECT_OPEN_TRACING);
         if(object != null) injectOpenTracing = Config.loadBooleanValue(INJECT_OPEN_TRACING, object);
         object = requestConfig.get(INJECT_CALLER_ID);
@@ -250,6 +260,14 @@ public final class ClientConfig {
 
     public int getResetTimeout() {
         return resetTimeout;
+    }
+
+    public int getMaxRequestRetry() {
+        return maxRequestRetry;
+    }
+
+    public int getRequestRetryDelay() {
+        return requestRetryDelay;
     }
 
     public int getErrorThreshold() {
