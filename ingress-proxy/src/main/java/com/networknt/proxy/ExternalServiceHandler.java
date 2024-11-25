@@ -44,7 +44,6 @@ public class ExternalServiceHandler implements MiddlewareHandler {
     private static final Logger logger = LoggerFactory.getLogger(ExternalServiceHandler.class);
     private static final String ESTABLISH_CONNECTION_ERROR = "ERR10053";
     private static final String METHOD_NOT_ALLOWED  = "ERR10008";
-    private static final int MAX_CONNECTION_RETRIES = 3;
     private static AbstractMetricsHandler metricsHandler;
     private volatile HttpHandler next;
     private static ExternalServiceConfig config;
@@ -106,7 +105,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                             if(matcher.matches()) {
                                 matched = true;
                                 requestPath = matcher.replaceAll(rule.getReplace());
-                                if(logger.isTraceEnabled()) logger.trace("rewritten requestPath = {}", requestPath);
+                                if(logger.isTraceEnabled()) logger.trace("rewritten requestPath = " + requestPath);
                                 break;
                             }
                         }
@@ -136,19 +135,19 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                     if(method.equalsIgnoreCase("GET")) {
                         request = requestBuilder.GET().build();
 
-                    /* handle DELETE request. */
+                        /* handle DELETE request. */
                     } else if(method.equalsIgnoreCase("DELETE")) {
                         request = requestBuilder.DELETE().build();
 
-                    /* handle POST request that potentially has body data */
+                        /* handle POST request that potentially has body data */
                     } else if(method.equalsIgnoreCase("POST")) {
                         request = this.handleBufferedRequestBody(exchange, requestBuilder, "POST");
 
-                    /* handle PUT request that potentially has body data */
+                        /* handle PUT request that potentially has body data */
                     } else if(method.equalsIgnoreCase("PUT")) {
                         request = this.handleBufferedRequestBody(exchange, requestBuilder, "PUT");
 
-                    /* handle PATCH request that potentially has body data */
+                        /* handle PATCH request that potentially has body data */
                     } else if(method.equalsIgnoreCase("PATCH")) {
                         request = this.handleBufferedRequestBody(exchange, requestBuilder, "PATCH");
 
@@ -172,17 +171,22 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         exchange.endExchange();
                         return;
                     }
-                    sendAsyncWithRetry(request, exchange, MAX_CONNECTION_RETRIES, 0, startTime, endpoint);
-                }
-            }
-        }
-        if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest ends.");
-        Handler.next(exchange, next);
-    }
 
-    private void sendAsyncWithRetry(HttpRequest request, HttpServerExchange exchange, int maxRetries, int attempt, long startTime, String endpoint) {
-        client.sendAsync(request, HttpResponse.BodyHandlers.ofByteArray())
-                .thenAccept(response -> {
+                    int maxRetries = 3;
+                    int attempt = 0;
+                    HttpResponse<byte[]> response = null;
+                    while (attempt < maxRetries) {
+                        try {
+                            response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
+                            break; // Exit loop if request is successful
+                        } catch (IOException | InterruptedException e) {
+                            attempt++;
+                            if (attempt >= maxRetries) {
+                                throw e; // Rethrow the exception if max retries reached
+                            }
+                            logger.warn("Attempt {} failed, retrying...", attempt, e);
+                        }
+                    }
                     var responseHeaders = response.headers();
                     byte[] responseBody = response.body();
                     if(response.statusCode() >= 400) {
@@ -195,7 +199,7 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                         // remove empty key in the response header start with a colon.
                         if (header.getKey() != null && !header.getKey().startsWith(":") && header.getValue().get(0) != null) {
                             for(String s : header.getValue()) {
-                                if(logger.isTraceEnabled()) logger.trace("Add response header key = {} value = {}", header.getKey(), s);
+                                if(logger.isTraceEnabled()) logger.trace("Add response header key = " + header.getKey() + " value = " + s);
                                 exchange.getResponseHeaders().add(new HttpString(header.getKey()), s);
                             }
                         }
@@ -211,18 +215,12 @@ public class ExternalServiceHandler implements MiddlewareHandler {
                             metricsHandler.injectMetrics(exchange, startTime, config.getMetricsName(), endpoint);
                         }
                     }
-                })
-                .exceptionally(e -> {
-                    if (attempt < maxRetries) {
-                        logger.warn("Retrying request, attempt {}/{}", attempt + 1, maxRetries);
-                        sendAsyncWithRetry(request, exchange, maxRetries, attempt + 1, startTime, endpoint);
-                    } else {
-                        logger.error("Failed to send request asynchronously after {} attempts", maxRetries, e);
-                        setExchangeStatus(exchange, ESTABLISH_CONNECTION_ERROR);
-                        exchange.endExchange();
-                    }
-                    return null;
-                });
+                    return;
+                }
+            }
+        }
+        if(logger.isDebugEnabled()) logger.debug("ExternalServiceHandler.handleRequest ends.");
+        Handler.next(exchange, next);
     }
 
     private void copyHeaders(HeaderMap headerMap, HttpRequest.Builder builder) {
