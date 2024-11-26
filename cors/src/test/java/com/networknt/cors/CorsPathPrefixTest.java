@@ -1,24 +1,3 @@
-/*
- * Copyright (C) 2015 Red Hat, inc., and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- * MA 02110-1301  USA
- */
-
 package com.networknt.cors;
 
 import com.networknt.client.Http2Client;
@@ -48,11 +27,8 @@ import java.net.URI;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * Created by stevehu on 2017-02-17.
- */
-public class CorsHttpHandlerTest {
-    static final Logger logger = LoggerFactory.getLogger(CorsHttpHandlerTest.class);
+public class CorsPathPrefixTest {
+    static final Logger logger = LoggerFactory.getLogger(CorsPathPrefixTest.class);
 
     static Undertow server = null;
 
@@ -61,7 +37,7 @@ public class CorsHttpHandlerTest {
         if(server == null) {
             logger.info("starting server");
             HttpHandler handler = getTestHandler();
-            CorsHttpHandler corsHttpHandler = new CorsHttpHandler();
+            CorsHttpHandler corsHttpHandler = new CorsHttpHandler("path-prefix-cors");
             corsHttpHandler.setNext(handler);
             handler = corsHttpHandler;
             server = Undertow.builder()
@@ -87,10 +63,10 @@ public class CorsHttpHandlerTest {
 
     static RoutingHandler getTestHandler() {
         return Handlers.routing()
-                .add(Methods.GET, "/", exchange -> {
+                .add(Methods.GET, "/v1/pets", exchange -> {
                     exchange.getResponseSender().send("OK");
                 })
-                .add(Methods.POST, "/", exchange -> {
+                .add(Methods.POST, "/v1/market", exchange -> {
                     exchange.getResponseSender().send("OK");
                 });
     }
@@ -108,7 +84,7 @@ public class CorsHttpHandlerTest {
         }
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
-            ClientRequest request = new ClientRequest().setPath("/").setMethod(Methods.OPTIONS);
+            ClientRequest request = new ClientRequest().setPath("/v1/pets").setMethod(Methods.OPTIONS);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             request.getRequestHeaders().put(new HttpString("Origin"), "http://example.com");
             request.getRequestHeaders().put(new HttpString("Access-Control-Request-Method"), "POST");
@@ -144,7 +120,7 @@ public class CorsHttpHandlerTest {
         }
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
-            ClientRequest request = new ClientRequest().setPath("/").setMethod(Methods.OPTIONS);
+            ClientRequest request = new ClientRequest().setPath("/v1/market").setMethod(Methods.OPTIONS);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             request.getRequestHeaders().put(new HttpString("Origin"), "http://localhost");
             request.getRequestHeaders().put(new HttpString("Access-Control-Request-Method"), "POST");
@@ -180,9 +156,9 @@ public class CorsHttpHandlerTest {
         }
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
         try {
-            ClientRequest request = new ClientRequest().setPath("/").setMethod(Methods.OPTIONS);
+            ClientRequest request = new ClientRequest().setPath("/v1/market").setMethod(Methods.OPTIONS);
             request.getRequestHeaders().put(Headers.HOST, "localhost");
-            request.getRequestHeaders().put(new HttpString("Origin"), "https://www.xyz.com");
+            request.getRequestHeaders().put(new HttpString("Origin"), "https://def.com");
             request.getRequestHeaders().put(new HttpString("Access-Control-Request-Method"), "POST");
             request.getRequestHeaders().put(new HttpString("Access-Control-Request-Headers"), "X-Requested-With");
             connection.sendRequest(request, client.createClientCallback(reference, latch));
