@@ -1,0 +1,19 @@
+enabled: true
+
+pathPrefixAllowed:
+  /v1/pets:
+    allowedOrigins:
+      - https://abc.com
+      - https://www.xyz.com
+    allowedMethods:
+      - GET
+      - PUT
+      - POST
+      - DELETE
+  /v1/market:
+    allowedOrigins:
+      - https://def.com
+      - https://abc.com
+    allowedMethods:
+      - GET
+      - POST

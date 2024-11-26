@@ -32,6 +32,8 @@ import io.undertow.util.HeaderValues;
 import io.undertow.util.Headers;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import static com.networknt.cors.CorsHeaders.*;
 import static com.networknt.cors.CorsUtil.isPreflightedRequest;
@@ -46,8 +48,8 @@ import static io.undertow.server.handlers.ResponseCodeHandler.HANDLE_200;
 public class CorsHttpHandler implements MiddlewareHandler {
 
     public static CorsConfig config;
-    private static Collection<String> allowedOrigins;
-    private static Collection<String> allowedMethods;
+    private List<String> allowedOrigins;
+    private List<String> allowedMethods;
 
     private volatile HttpHandler next;
     /** Default max age **/
@@ -60,27 +62,53 @@ public class CorsHttpHandler implements MiddlewareHandler {
         if(logger.isInfoEnabled()) logger.info("CorsHttpHandler is loaded.");
     }
 
+    /**
+     * Please don't use this constructor. It is used by test case only to inject config object.
+     * @param configName config name
+     */
+    @Deprecated
+    public CorsHttpHandler(String configName) {
+        config = CorsConfig.load(configName);
+        allowedOrigins = config.getAllowedOrigins();
+        allowedMethods = config.getAllowedMethods();
+        if(logger.isInfoEnabled()) logger.info("CorsHttpHandler is loaded.");
+    }
+
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("CorsHttpHandler.handleRequest starts.");
         HeaderMap headers = exchange.getRequestHeaders();
         if (CorsUtil.isCoreRequest(headers)) {
+            // cors headers available in the request. Set the allowedOrigins and allowedMethods based on the
+            // path prefix if it is configured. Otherwise, use the global configuration set in the constructor.
+            if (config.getPathPrefixAllowed() != null) {
+                String requestPath = exchange.getRequestPath();
+                for(Map.Entry<String, Object> entry: config.getPathPrefixAllowed().entrySet()) {
+                    if (requestPath.startsWith(entry.getKey())) {
+                        Map endpointCorsMap = (Map) entry.getValue();
+                        allowedOrigins = (List<String>) endpointCorsMap.get(CorsConfig.ALLOWED_ORIGINS);
+                        allowedMethods = (List<String>) endpointCorsMap.get(CorsConfig.ALLOWED_METHODS);
+                        break;
+                    }
+                }
+            }
             if (isPreflightedRequest(exchange)) {
-                handlePreflightRequest(exchange);
+                // it is a preflight request.
+                handlePreflightRequest(exchange, allowedOrigins, allowedMethods);
                 return;
             }
-            setCorsResponseHeaders(exchange);
+            setCorsResponseHeaders(exchange, allowedOrigins, allowedMethods);
         }
         if(logger.isDebugEnabled()) logger.debug("CorsHttpHandler.handleRequest ends.");
         Handler.next(exchange, next);
     }
 
-    private void handlePreflightRequest(HttpServerExchange exchange) throws Exception {
-        setCorsResponseHeaders(exchange);
+    private void handlePreflightRequest(HttpServerExchange exchange, List<String> allowedOrigins, List<String> allowedMethods) throws Exception {
+        setCorsResponseHeaders(exchange, allowedOrigins, allowedMethods);
         HANDLE_200.handleRequest(exchange);
     }
 
-    private void setCorsResponseHeaders(HttpServerExchange exchange) throws Exception {
+    private void setCorsResponseHeaders(HttpServerExchange exchange, List<String> allowedOrigins, List<String> allowedMethods) throws Exception {
         HeaderMap headers = exchange.getRequestHeaders();
         if (headers.contains(Headers.ORIGIN)) {
             if(matchOrigin(exchange, allowedOrigins) != null) {

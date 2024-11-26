@@ -1,0 +1,33 @@
+# cors.yml
+cors.allowedOrigins:
+  - https://abc.com
+  - https://www.xyz.com
+  - https://def.com
+
+cors.allowedMethods:
+  - GET
+  - PUT
+  - POST
+  - DELETE
+  - PATCH
+
+cors.pathPrefixAllowed:
+  /v1/pets:
+    allowedOrigins:
+      - https://abc.com
+      - https://www.xyz.com
+    allowedMethods:
+      - GET
+      - PUT
+      - POST
+      - DELETE
+  /v1/market:
+    allowedOrigins:
+      - https://def.com
+      - https://abc.com
+    allowedMethods:
+      - GET
+      - POST
+
+# Another test that the yaml is converted to a json string. You need to comment out the above section to test this.
+# cors.pathPrefixAllowed: {"/v1/pets":{"allowedOrigins":["https://abc.com","https://www.xyz.com"],"allowedMethods":["GET","PUT","POST","DELETE"]},"/v1/market":{"allowedOrigins":["https://def.com","https://abc.com"],"allowedMethods":["GET","POST"]}}

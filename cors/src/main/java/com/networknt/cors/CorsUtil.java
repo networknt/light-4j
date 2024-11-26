@@ -130,6 +130,6 @@ public class CorsUtil {
     }
 
     public static boolean isPreflightedRequest(HttpServerExchange exchange) {
-        return Methods.OPTIONS.equals(exchange.getRequestMethod()) && isCoreRequest(exchange.getRequestHeaders());
+        return Methods.OPTIONS.equals(exchange.getRequestMethod());
     }
 }
