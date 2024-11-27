@@ -20,19 +20,8 @@
  */
 package com.networknt.cors;
 
-import io.undertow.server.HttpServerExchange;
-import io.undertow.server.handlers.ResponseCodeHandler;
-import io.undertow.util.HeaderMap;
-import io.undertow.util.Headers;
-import io.undertow.util.Methods;
-import io.undertow.util.NetworkUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Arrays;
-import java.util.Collection;
-
-import static com.networknt.cors.CorsHeaders.*;
 
 /**
  * Utility class for CORS handling.
@@ -41,54 +30,14 @@ import static com.networknt.cors.CorsHeaders.*;
 public class CorsUtil {
     private static final Logger logger = LoggerFactory.getLogger(CorsUtil.class);
 
-    public static boolean isCoreRequest(HeaderMap headers) {
-        return headers.contains(ORIGIN)
-                || headers.contains(ACCESS_CONTROL_REQUEST_HEADERS)
-                || headers.contains(ACCESS_CONTROL_REQUEST_METHOD);
-    }
-
-    /**
-     * Match the Origin header with the allowed origins.
-     * If it doesn't match then a 403 response code is set on the response and it returns null.
-     * @param exchange the current HttpExchange.
-     * @param allowedOrigins list of sanitized allowed origins.
-     * @return the first matching origin, null otherwise.
-     * @throws Exception the checked exception
-     */
-    public static String matchOrigin(HttpServerExchange exchange, Collection<String> allowedOrigins) throws Exception {
-        HeaderMap headers = exchange.getRequestHeaders();
-        String[] origins = headers.get(Headers.ORIGIN).toArray();
-        if(logger.isTraceEnabled()) logger.trace("origins from the request header = " + Arrays.toString(origins) + " allowedOrigins = " + allowedOrigins);
-        if (allowedOrigins != null && !allowedOrigins.isEmpty()) {
-            for (String allowedOrigin : allowedOrigins) {
-                for (String origin : origins) {
-                    if (allowedOrigin.equalsIgnoreCase(sanitizeDefaultPort(origin))) {
-                        return allowedOrigin;
-                    }
-                }
-            }
-        }
-        String allowedOrigin = defaultOrigin(exchange);
-        if(logger.isTraceEnabled()) logger.trace("allowedOrigin from the exchange = " + allowedOrigin);
-        for (String origin : origins) {
-            if (allowedOrigin.equalsIgnoreCase(sanitizeDefaultPort(origin))) {
-                return allowedOrigin;
-            }
-        }
-        logger.debug("Request rejected due to HOST/ORIGIN mis-match.");
-        ResponseCodeHandler.HANDLE_403.handleRequest(exchange);
-        return null;
-    }
-
     /**
      * Determine the default origin, to allow for local access.
-     * @param exchange the current HttpExchange.
+     * @param protocol, the protocol.
+     * @param host, the host.
+     * @param port, the port.
      * @return the default origin (aka current server).
      */
-    public static String defaultOrigin(HttpServerExchange exchange) {
-        String host = NetworkUtils.formatPossibleIpv6Address(exchange.getHostName());
-        String protocol = exchange.getRequestScheme();
-        int port = exchange.getHostPort();
+    public static String defaultOrigin(String protocol, String host, int port) {
         //This browser set header should not need IPv6 escaping
         StringBuilder allowedOrigin = new StringBuilder(256);
         allowedOrigin.append(protocol).append("://").append(host);
@@ -129,7 +78,4 @@ public class CorsUtil {
         return url;
     }
 
-    public static boolean isPreflightedRequest(HttpServerExchange exchange) {
-        return Methods.OPTIONS.equals(exchange.getRequestMethod());
-    }
 }

@@ -30,6 +30,7 @@ import io.undertow.client.ClientConnection;
 import io.undertow.client.ClientRequest;
 import io.undertow.client.ClientResponse;
 import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
 import io.undertow.server.RoutingHandler;
 import io.undertow.util.HeaderMap;
 import io.undertow.util.Headers;
@@ -45,8 +46,19 @@ import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.networknt.cors.CorsHeaders.*;
+import static com.networknt.cors.CorsHttpHandler.isCorsRequest;
+import static com.networknt.cors.CorsHttpHandler.matchOrigin;
+import static io.undertow.util.Headers.HOST;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.junit.Assert.assertThat;
 
 /**
  * Created by stevehu on 2017-02-17.
@@ -202,5 +214,53 @@ public class CorsHttpHandlerTest {
             Assert.assertNotNull(header);
         }
     }
+
+    /**
+     * Test of isCoreRequest method, of class CorsUtil.
+     */
+    @Test
+    public void testIsCorsRequest() {
+        HeaderMap headers = new HeaderMap();
+        assertThat(isCorsRequest(headers), is(false));
+        headers = new HeaderMap();
+        headers.add(new HttpString(ORIGIN), "");
+        assertThat(isCorsRequest(headers), is(true));
+        headers = new HeaderMap();
+        headers.add(new HttpString(ACCESS_CONTROL_REQUEST_HEADERS), "");
+        assertThat(isCorsRequest(headers), is(true));
+        headers = new HeaderMap();
+        headers.add(new HttpString(ACCESS_CONTROL_REQUEST_METHOD), "");
+        assertThat(isCorsRequest(headers), is(true));
+    }
+
+    /**
+     * Test of matchOrigin method, of class CorsUtil.
+     */
+    @Test
+    public void testMatchOrigin() throws Exception {
+        HeaderMap headerMap = new HeaderMap();
+        headerMap.add(HOST, "localhost:80");
+        headerMap.add(new HttpString(ORIGIN), "http://localhost");
+        HttpServerExchange exchange = new HttpServerExchange(null, headerMap, new HeaderMap(), 10);
+        exchange.setRequestScheme("http");
+        exchange.setRequestMethod(HttpString.EMPTY);
+        Collection<String> allowedOrigins = null;
+        assertThat(matchOrigin(exchange, allowedOrigins), is("http://localhost"));
+        allowedOrigins = Collections.singletonList("http://www.example.com:9990");
+        //Default origin
+        assertThat(matchOrigin(exchange, allowedOrigins), is("http://localhost"));
+        headerMap.clear();
+        headerMap.add(HOST, "localhost:80");
+        headerMap.add(new HttpString(ORIGIN), "http://www.example.com:9990");
+        assertThat(matchOrigin(exchange, allowedOrigins), is("http://www.example.com:9990"));
+        headerMap.clear();
+        headerMap.add(HOST, "localhost:80");
+        headerMap.add(new HttpString(ORIGIN), "http://www.example.com");
+        assertThat(matchOrigin(exchange, allowedOrigins), is(nullValue()));
+        headerMap.addAll(new HttpString(ORIGIN), Arrays.asList("http://localhost:7080", "http://www.example.com:9990", "http://localhost"));
+        allowedOrigins = Arrays.asList("http://localhost", "http://www.example.com:9990");
+        assertThat(matchOrigin(exchange, allowedOrigins), is("http://localhost"));
+    }
+
 
 }
