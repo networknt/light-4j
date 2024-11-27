@@ -40,7 +40,7 @@
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
-            <artifactId>exception</artifactId>
+            <artifactId>status</artifactId>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
