@@ -77,8 +77,6 @@ public class CorsHttpHandler implements MiddlewareHandler {
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("CorsHttpHandler.handleRequest starts.");
         HeaderMap headers = exchange.getRequestHeaders();
-        // how to convert the HeaderMap to a Map<String, Object>?
-
         if (isCorsRequest(headers)) {
             // cors headers available in the request. Set the allowedOrigins and allowedMethods based on the
             // path prefix if it is configured. Otherwise, use the global configuration set in the constructor.
