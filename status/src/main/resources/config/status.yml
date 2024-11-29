@@ -601,6 +601,12 @@ ERR10091:
   code: ERR10091
   message: TOKEN_LIMIT_ERROR
   description: Too many token requests. Please cache the jwt token on the client side.
+ERR10092:
+  statusCode: 403
+  code: ERR10092
+  message: CORS_PREFLIGHT_REQUEST_FAILED
+  description: CORS preflight request failed. Origin not allowed or method/headers unsupported..
+
 
 # 11000-11499 swagger-validator errors
 ERR11000:
