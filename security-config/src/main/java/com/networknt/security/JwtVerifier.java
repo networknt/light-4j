@@ -133,8 +133,10 @@ public class JwtVerifier extends TokenVerifier {
                 } catch (Exception e) {
                     logger.error("Exception:", e);
                 }
-                certMap.put(kid, cert);
-                fingerPrints.add(FingerPrintUtil.getCertFingerPrint(cert));
+                if(cert != null) {
+                    certMap.put(kid, cert);
+                    fingerPrints.add(FingerPrintUtil.getCertFingerPrint(cert));
+                }
             }
         }
         logger.debug("Successfully cached Certificate");
