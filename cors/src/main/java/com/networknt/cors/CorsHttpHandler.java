@@ -93,9 +93,11 @@ public class CorsHttpHandler implements MiddlewareHandler {
             }
             if (isPreflightedRequest(exchange)) {
                 // it is a preflight request.
+                if(logger.isTraceEnabled()) logger.trace("Preflight OPTIONS request detected.");
                 handlePreflightRequest(exchange, allowedOrigins, allowedMethods);
                 return;
             }
+            if(logger.isTraceEnabled()) logger.trace("Simple or actual request detected with cors headers.");
             setCorsResponseHeaders(exchange, allowedOrigins, allowedMethods);
         }
         if(logger.isDebugEnabled()) logger.debug("CorsHttpHandler.handleRequest ends.");
@@ -111,6 +113,7 @@ public class CorsHttpHandler implements MiddlewareHandler {
         HeaderMap headers = exchange.getRequestHeaders();
         if (headers.contains(Headers.ORIGIN)) {
             if(matchOrigin(exchange, allowedOrigins) != null) {
+                if(logger.isTraceEnabled()) logger.trace("Setting CORS headers for origin: {}",headers.get(Headers.ORIGIN));
                 exchange.getResponseHeaders().addAll(new HttpString(ACCESS_CONTROL_ALLOW_ORIGIN), headers.get(Headers.ORIGIN));
                 exchange.getResponseHeaders().add(Headers.VARY, Headers.ORIGIN_STRING);
             }
@@ -175,15 +178,17 @@ public class CorsHttpHandler implements MiddlewareHandler {
             for (String allowedOrigin : allowedOrigins) {
                 for (String origin : origins) {
                     if (allowedOrigin.equalsIgnoreCase(sanitizeDefaultPort(origin))) {
+                        if(logger.isTraceEnabled()) logger.trace("matchOrigin returns allowedOrigin = {}", allowedOrigin);
                         return allowedOrigin;
                     }
                 }
             }
         }
         String allowedOrigin = CorsUtil.defaultOrigin(exchange.getRequestScheme(), NetworkUtils.formatPossibleIpv6Address(exchange.getHostName()), exchange.getHostPort());
-        if(logger.isTraceEnabled()) logger.trace("allowedOrigin from the exchange = " + allowedOrigin);
+        if(logger.isTraceEnabled()) logger.trace("Default allowedOrigin from the exchange = {}", allowedOrigin);
         for (String origin : origins) {
             if (allowedOrigin.equalsIgnoreCase(sanitizeDefaultPort(origin))) {
+                if(logger.isTraceEnabled()) logger.trace("Default matchOrigin returns allowedOrigin = {}", allowedOrigin);
                 return allowedOrigin;
             }
         }
