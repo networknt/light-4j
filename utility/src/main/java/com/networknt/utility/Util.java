@@ -27,10 +27,7 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -165,4 +162,29 @@ public class Util {
         return buffer.toString();
     }
 
+    /**
+     * Parses a string of attributes into a Map. This is used to parse the att field from jwt token for fine-grained
+     * authorization supported by light-portal.
+     *
+     * @param attributesString The string of attributes in the format "key1^=^value1~key2^=^value2~..."
+     * @return A Map containing the attribute key-value pairs, or an empty Map if the input string is null or empty.
+     */
+    public static Map<String, String> parseAttributes(String attributesString) {
+        Map<String, String> attributeMap = new HashMap<>();
+
+        if (attributesString == null || attributesString.trim().isEmpty()) {
+            return attributeMap; // Return empty map for null or empty string
+        }
+
+        String[] pairs = attributesString.split("~");
+        for (String pair : pairs) {
+            String[] keyValue = pair.split("\\^=\\^", 2); // Split into key and value, limit to 2 splits
+            if (keyValue.length == 2) {
+                String key = keyValue[0];
+                String value = keyValue[1];
+                attributeMap.put(key, value);
+            }
+        }
+        return attributeMap;
+    }
 }

@@ -25,10 +25,26 @@ import java.util.Map;
 public class UtilTest {
     @Test
     public void testGetUUID() {
+        String id0 = Util.getUUID();
         String id1 = Util.getUUID();
         String id2 = Util.getUUID();
+        String id3 = Util.getUUID();
+        String id4 = Util.getUUID();
+        String id5 = Util.getUUID();
+        String id6 = Util.getUUID();
+        String id7 = Util.getUUID();
+        String id8 = Util.getUUID();
+        String id9 = Util.getUUID();
+        System.out.println("uuid = " + id0);
         System.out.println("uuid = " + id1);
         System.out.println("uuid = " + id2);
+        System.out.println("uuid = " + id3);
+        System.out.println("uuid = " + id4);
+        System.out.println("uuid = " + id5);
+        System.out.println("uuid = " + id6);
+        System.out.println("uuid = " + id7);
+        System.out.println("uuid = " + id8);
+        System.out.println("uuid = " + id9);
         Assert.assertNotEquals(id1, id2);
     }
 
@@ -48,6 +64,30 @@ public class UtilTest {
         String expect = "This is a test for abc and def";
 
         Assert.assertEquals(expect, Util.substituteVariables(text, variables));
+
+    }
+
+    @Test
+    public void testParseAttributes() {
+        String attributesString = "department^=^Engineering~location^=^New York City~project^=^Project Alpha";
+        Map<String, String> parsedAttributes = Util.parseAttributes(attributesString);
+        System.out.println("Parsed Attributes: " + parsedAttributes);
+        // Expected Output: Parsed Attributes: {location=New York City, project=Project Alpha, department=Engineering}
+
+        String attributesStringWithNoSpace = "department^=^Engineering~location^=^NewYorkCity";
+        Map<String, String> parsedAttributes2 = Util.parseAttributes(attributesStringWithNoSpace);
+        System.out.println("Parsed Attributes: " + parsedAttributes2);
+        // Expected Output: Parsed Attributes: {location=NewYorkCity, department=Engineering}
+
+        String emptyAttributesString = null;
+        Map<String, String> parsedAttributes3 = Util.parseAttributes(emptyAttributesString);
+        System.out.println("Parsed Attributes: " + parsedAttributes3);
+        // Expected Output: Parsed Attributes: {}
+
+        String attributesStringWithEmptyValue = "department^=^~location^=^New York City";
+        Map<String, String> parsedAttributes4 = Util.parseAttributes(attributesStringWithEmptyValue);
+        System.out.println("Parsed Attributes: " + parsedAttributes4);
+        // Expected Output: Parsed Attributes: {location=New York City, department=}
 
     }
 }
