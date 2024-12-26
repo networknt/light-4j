@@ -110,15 +110,15 @@ public abstract class AbstractSimpleJwtVerifyHandler extends UndertowVerifyHandl
 
                     String clientId = claims.getStringClaimValue(Constants.CLIENT_ID_STRING);
                     String userId = claims.getStringClaimValue(Constants.USER_ID_STRING);
-                    String issuer = claims.getStringClaimValue(Constants.ISS_STRING);
+                    String issuer = claims.getStringClaimValue(Constants.ISS);
                     // try to get the cid as some OAuth tokens name it as cid like Okta.
                     if (clientId == null)
-                        clientId = claims.getStringClaimValue(Constants.CID_STRING);
+                        clientId = claims.getStringClaimValue(Constants.CID);
 
 
                     // try to get the uid as some OAuth tokens name it as uid like Okta.
                     if (userId == null)
-                        userId = claims.getStringClaimValue(Constants.UID_STRING);
+                        userId = claims.getStringClaimValue(Constants.UID);
 
                     auditInfo.put(Constants.USER_ID_STRING, userId);
                     auditInfo.put(Constants.SUBJECT_CLAIMS, claims);
