@@ -48,17 +48,13 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
         if (logger.isDebugEnabled())
             logger.debug("JwtVerifyHandler.handleRequest starts.");
 
-        String reqPath = exchange.getRequestPath();
-
-        // if request path is in the skipPathPrefixes in the config, call the next handler directly to skip the security check.
-        if (config.getSkipPathPrefixes() != null && config.getSkipPathPrefixes().stream().anyMatch(reqPath::startsWith)) {
-            if(logger.isTraceEnabled())
-                logger.trace("Skip request path base on skipPathPrefixes for " + reqPath);
+        if(isSkipAuth(exchange)) {
+            if (logger.isDebugEnabled()) logger.debug("Skipped! JwtVerifyHandler.handleRequest ends.");
             Handler.next(exchange, next);
-            if (logger.isDebugEnabled())
-                logger.debug("JwtVerifyHandler.handleRequest ends.");
             return;
         }
+
+        String reqPath = exchange.getRequestPath();
         // only UnifiedSecurityHandler will have the jwkServiceIds as the third parameter.
         Status status = handleJwt(exchange, null, reqPath, null);
         if(status != null) {
@@ -238,6 +234,14 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
         return returnToken;
     }
 
+    /**
+     * If the jwt verification will be skipped or not.
+     *
+     * @param exchange - the current exchange
+     * @return - true to skip jwt verification
+     */
+    public abstract boolean isSkipAuth(HttpServerExchange exchange);
+
 
     /**
      * Gets the operation from the spec. If not defined or defined incorrectly, return null.
@@ -245,6 +249,7 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
      * @param exchange - the current exchange
      * @param auditInfo A map of audit info properties
      * @return - return A list of scopes from the spec
+     * @throws Exception - exception
      */
     public abstract List<String> getSpecScopes(HttpServerExchange exchange, Map<String, Object> auditInfo) throws Exception;
     /**
