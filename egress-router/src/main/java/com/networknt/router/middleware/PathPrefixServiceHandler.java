@@ -97,9 +97,9 @@ public class PathPrefixServiceHandler implements MiddlewareHandler {
             AuditAttachmentUtil.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, serviceEntry[0] + "@" + exchange.getRequestMethod().toString().toLowerCase());
         } else {
             if (logger.isTraceEnabled())
-                logger.trace("serviceEntry is null and endpoint is set to = '{}@{}'", Constants.UNKOWN_STRING, exchange.getRequestMethod().toString().toLowerCase());
+                logger.trace("serviceEntry is null and endpoint is set to = '{}@{}'", Constants.UNKNOWN, exchange.getRequestMethod().toString().toLowerCase());
             // at this moment, we don't have a way to reliably determine the endpoint.
-            AuditAttachmentUtil.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, Constants.UNKOWN_STRING + "@" + exchange.getRequestMethod().toString().toLowerCase());
+            AuditAttachmentUtil.populateAuditAttachmentField(exchange, Constants.ENDPOINT_STRING, Constants.UNKNOWN + "@" + exchange.getRequestMethod().toString().toLowerCase());
         }
     }
 
