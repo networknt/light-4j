@@ -1,5 +1,6 @@
 package com.networknt.rule;
 
+import com.networknt.rule.exception.RuleEngineException;
 import org.jose4j.jwt.JwtClaims;
 
 import java.util.Collection;
@@ -7,7 +8,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 public class FineGrainedAuthAction implements IAction {
-    public void performAction(Map<String, Object> objMap, Map<String, Object> resultMap, Collection<RuleActionValue> actionValues) {
+    public void performAction(String ruleId, String actionId, Map<String, Object> objMap, Map<String, Object> resultMap, Collection<RuleActionValue> actionValues) throws RuleEngineException {
         resultMap.put(RuleConstants.RESULT, false);
         // when this action is called, we either have a client credentials token or
         // an authorization code token with roles available.
@@ -69,5 +70,4 @@ public class FineGrainedAuthAction implements IAction {
 
         }
     }
-
 }
