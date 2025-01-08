@@ -50,12 +50,14 @@ public class Constants {
     public static final String ATT = "att";
     public static final String POS = "pos";
     public static final String GRP = "grp";
+    public static final String ROLE = "role";
     public static final String HOST = "host";
     public static final String EML = "eml";
     public static final String EMAIL = "email";
     public static final String GROUPS = "groups";
     public static final String POSITIONS = "positions";
     public static final String ATTRIBUTES = "attributes";
+    public static final String USERS = "users";
 
     // Swagger 2.0 operation header name
     public static final String SWAGGER_OPERATION_STRING = "swagger_operation";
@@ -77,6 +79,7 @@ public class Constants {
     public static final String STACK_TRACE = "StackTrace";
 
     // JWT claims for fine-grained authorization in business context.
+    public static final String AUDIT_INFO = "auditInfo";
     // The key for the subject token claims in auditInfo after security handler
     // This token is passed in from Authorization header
     public static final String SUBJECT_CLAIMS = "subject_claims";
