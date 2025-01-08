@@ -123,11 +123,8 @@ public class DefaultConfigLoader implements IConfigLoader{
                 logger.debug("light-env is not set in the environment; defaulting to the value in the startup config: " + lightEnv);
             }
         }
-        targetConfigsDirectory = getPropertyOrEnv(Config.LIGHT_4J_CONFIG_DIR);
-        if (targetConfigsDirectory == null) {
-            logger.warn("Warning! {} is not provided; defaulting to {}", Config.LIGHT_4J_CONFIG_DIR, DEFAULT_TARGET_CONFIGS_DIRECTORY);
-            targetConfigsDirectory = DEFAULT_TARGET_CONFIGS_DIRECTORY;
-        }
+        targetConfigsDirectory  = getTargetConfigsDirectory();
+
         configServerUri = getPropertyOrEnv(CONFIG_SERVER_URI);
         if (configServerUri != null) {
             logger.info("Loading configs from config server");
@@ -556,4 +553,14 @@ public class DefaultConfigLoader implements IConfigLoader{
         }
         return false;
     }
+
+    public static String getTargetConfigsDirectory() {
+        targetConfigsDirectory = getPropertyOrEnv(Config.LIGHT_4J_CONFIG_DIR);
+        if (targetConfigsDirectory == null) {
+            logger.warn("Warning! {} is not provided; defaulting to {}", Config.LIGHT_4J_CONFIG_DIR, DEFAULT_TARGET_CONFIGS_DIRECTORY);
+            targetConfigsDirectory = DEFAULT_TARGET_CONFIGS_DIRECTORY;
+        }
+        return targetConfigsDirectory;
+    }
+
 }

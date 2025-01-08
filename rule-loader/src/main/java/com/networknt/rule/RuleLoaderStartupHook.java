@@ -7,6 +7,8 @@ import com.networknt.config.JsonMapper;
 import com.networknt.monad.Failure;
 import com.networknt.monad.Result;
 import com.networknt.monad.Success;
+import com.networknt.server.DefaultConfigLoader;
+import com.networknt.server.Server;
 import com.networknt.server.ServerConfig;
 import com.networknt.server.StartupHookProvider;
 import com.networknt.status.Status;
@@ -20,12 +22,21 @@ import io.undertow.util.Methods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.OptionMap;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.networknt.server.Server.STARTUP_CONFIG_NAME;
 
 
 /**
@@ -59,45 +70,65 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
                 // load the rules for the service from the externalized config folder. The filename is rules.yml
                 String ruleString = Config.getInstance().getStringFromFile("rules.yml");
                 rules = RuleMapper.string2RuleMap(ruleString);
-                if(logger.isInfoEnabled()) logger.info("Load YAML rules from config folder with size = " + rules.size());
+                if(logger.isInfoEnabled())
+                    logger.info("Load YAML rules from config folder with size = {}", rules.size());
                 // load the endpoint rule mapping from the rule-loader.yml
                 endpointRules = config.getEndpointRules();
             } else {
                 // by default, load from light-portal
-                ServerConfig serverConfig = ServerConfig.getInstance();
-                Result<String> result = getServiceById(config.getPortalHost(), serverConfig.getServiceId());
+                Map<String, Object> startupConfig = Config.getInstance().getJsonMapConfig(Server.STARTUP_CONFIG_NAME);
+                String hostId = (String)startupConfig.get("hostId");
+                String apiId = (String)startupConfig.get("apiId");
+                String apiVersion = (String)startupConfig.get("apiVersion");
+                Result<String> result = getServiceRule(config.getPortalHost(), hostId, apiId, apiVersion);
                 if(result.isSuccess()) {
-                    String serviceString = result.getResult();
-                    if(logger.isDebugEnabled()) logger.debug("getServiceById result = " + serviceString);
-                    Map<String, Object> objectMap = JsonMapper.string2Map(serviceString);
-                    endpointRules = (Map<String, Object>)objectMap.get("endpointRules");
-                    // need to get the rule bodies here to create a map of ruleId to ruleBody.
-                    Iterator<Object> iterator = endpointRules.values().iterator();
-                    String ruleString = "\n";
-                    Set<String> ruleIdSet = new HashSet<>(); // use this set to ensure the same ruleId will only be concat once.
-                    while (iterator.hasNext()) {
-                        Map<String, List> value = (Map<String, List>)iterator.next();
-                        Iterator<List> iteratorList = value.values().iterator();
-                        while(iteratorList.hasNext()) {
-                            List<Map<String, String>> list = iteratorList.next();
-                            for(Map<String, String> map: list) {
-                                // in this map, we might have ruleId, roles, variables as keys. Here we only need to get the ruleId in order to load rule body.
-                                String ruleId = map.get("ruleId");
-                                if(!ruleIdSet.contains(ruleId)) {
-                                    if (logger.isDebugEnabled()) logger.debug("Load rule for ruleId = " + ruleId);
-                                    // get rule content for each id and concat them together.
-                                    String r = getRuleById(config.getPortalHost(), DEFAULT_HOST, ruleId).getResult();
-                                    Map<String, Object> ruleMap = JsonMapper.string2Map(r);
-                                    ruleString = ruleString + ruleMap.get("value") + "\n";
-                                    ruleIdSet.add(ruleId);
-                                }
+                    String serviceRuleString = result.getResult();
+                    if(logger.isDebugEnabled()) logger.debug("getServiceRule result = {}", serviceRuleString);
+                    Map<String, Object> objectMap = JsonMapper.string2Map(serviceRuleString);
+                    List<Map<String, Object>> ruleList = (List<Map<String, Object>>)objectMap.get("rules");
+                    // TODO move to config server for persistence in values.yml.
+                    endpointRules = convertRuleList(ruleList);
+                    if(logger.isTraceEnabled()) logger.trace("endpointRules = " + JsonMapper.toJson(endpointRules));
+                    // enrich the endpointRules to add permission for each endpoint.
+                    result = getServicePermission(config.getPortalHost(), hostId, apiId, apiVersion);
+                    if(result.isSuccess()) {
+                        String servicePermissionString = result.getResult();
+                        if(logger.isDebugEnabled()) logger.debug("getServicePermission result = {}", servicePermissionString);
+                        List<Map<String, Object>> permissions = JsonMapper.string2List(servicePermissionString);
+                        for(Map<String, Object> permission: permissions) {
+                            String endpoint = (String)permission.remove("endpoint");
+                            // get the endpointRule from the endpointRules map.
+                            Map<String, Object> endpointRule = (Map<String, Object>)endpointRules.get(endpoint);
+                            if(endpointRule != null) {
+                                endpointRule.put("permission", permission);
                             }
                         }
+                    } else {
+                        logger.error("Could not load permission for hostId {} apiId {} apiVersion {} error {}", hostId, apiId, apiVersion, result.getError());
                     }
-                    rules = RuleMapper.string2RuleMap(ruleString);
-                    if(logger.isInfoEnabled()) logger.info("Load YAML rules from light-portal with size = " + rules.size());
+                    Map<String, Object> ruleBodies = (Map<String, Object>)objectMap.get("ruleBodies");
+                    // save ruleMap into rules.yml in case the portal server is not available.
+                    String targetConfigsDirectory = DefaultConfigLoader.getTargetConfigsDirectory();
+                    try {
+                        Path filePath = Paths.get(targetConfigsDirectory);
+                        if (!Files.exists(filePath)) {
+                            Files.createDirectories(filePath);
+                            logger.info("target configs directory {} created", targetConfigsDirectory);
+                        }
+                        DumperOptions options = new DumperOptions();
+                        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);//to get yaml string without curly brackets and commas
+
+                        filePath = Paths.get(targetConfigsDirectory + "/rules.yml");
+                        String ruleString =  new Yaml(options).dump(ruleBodies);
+                        rules = RuleMapper.string2RuleMap(ruleString);
+                        Files.write(filePath, ruleString.getBytes(StandardCharsets.UTF_8));
+                    } catch (IOException e) {
+                        logger.error("Exception while creating " + targetConfigsDirectory, e);
+                    }
+                    if(logger.isInfoEnabled())
+                        logger.info("Load YAML rules from light-portal with size = {}", ruleBodies.size());
                 } else {
-                    logger.error("Could not load rule for serviceId = " + serverConfig.getServiceId() + " error = " + result.getError());
+                    logger.error("Could not load rule for hostId {} apiId {} apiVersion {} error {}", hostId, apiId, apiVersion, result.getError());
                 }
             }
             if(rules != null) {
@@ -115,14 +146,16 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
     public static void loadPluginClass() {
         // iterate the rules map to find the action classes.
         for(Rule rule: rules.values()) {
-            for(RuleAction action: rule.getActions()) {
-                String actionClass = action.getActionClassName();
-                loadActionClass(actionClass);
+            if(rule.getActions() != null) {
+                for (RuleAction action : rule.getActions()) {
+                    String actionClass = action.getActionClassName();
+                    loadActionClass(actionClass);
+                }
             }
         }
     }
     public static void loadActionClass(String actionClass) {
-        if(logger.isDebugEnabled()) logger.debug("load action class " + actionClass);
+        if(logger.isDebugEnabled()) logger.debug("load action class {}", actionClass);
         try {
             IAction ia = (IAction)Class.forName(actionClass).getDeclaredConstructor().newInstance();
             // this happens during the server startup, so the cache must be empty. No need to check.
@@ -132,8 +165,35 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
             throw new RuntimeException("Could not find rule action class " + actionClass, e);
         }
     }
-    public static Result<String> getServiceById(String url, String serviceId) {
-        final String s = String.format("{\"host\":\"lightapi.net\",\"service\":\"market\",\"action\":\"getServiceById\",\"version\":\"0.1.0\",\"data\":{\"serviceId\":\"%s\"}}", serviceId);
+
+    private Map<String, Object> convertRuleList(List<Map<String, Object>> ruleList) {
+        Map<String, Object> endpointRules = new HashMap<>();
+        for(Map<String, Object> rule: ruleList) {
+            String endpoint = (String)rule.get("endpoint");
+            // check if the endpoint is already in the map.
+            Map<String, Object> endpointRule = (Map<String, Object>)endpointRules.get(endpoint);
+            if(endpointRule == null) {
+                endpointRule = new HashMap<>();
+                endpointRules.put(endpoint, endpointRule);
+                List<String> ruleIds = new ArrayList<>();
+                ruleIds.add((String)rule.get("ruleId"));
+                endpointRule.put(rule.get("ruleType").toString(), ruleIds);
+            } else {
+                List<String> ruleIds = (List<String>)endpointRule.get(rule.get("ruleType").toString());
+                if(ruleIds == null) {
+                    ruleIds = new ArrayList<>();
+                    ruleIds.add((String)rule.get("ruleId"));
+                    endpointRule.put(rule.get("ruleType").toString(), ruleIds);
+                } else {
+                    ruleIds.add((String)rule.get("ruleId"));
+                }
+            }
+        }
+        return endpointRules;
+    }
+
+    public static Result<String> getServiceRule(String url, String hostId, String apiId, String apiVersion) {
+        final String s = String.format("{\"host\":\"lightapi.net\",\"service\":\"market\",\"action\":\"getServiceRule\",\"version\":\"0.1.0\",\"data\":{\"hostId\":\"%s\",\"apiId\":\"%s\",\"apiVersion\":\"%s\"}}", hostId, apiId, apiVersion);
         Result<String> result = null;
         ClientConnection conn = null;
         try {
@@ -162,19 +222,19 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
         return result;
     }
 
-
-    public static Result<String> getRuleById(String url, String host, String ruleId) {
-        final String s = String.format("{\"host\":\"lightapi.net\",\"service\":\"market\",\"action\":\"getRuleById\",\"version\":\"0.1.0\",\"data\":{\"host\":\"%s\",\"ruleId\":\"%s\"}}", host, ruleId);
+    public static Result<String> getServicePermission(String url, String hostId, String apiId, String apiVersion) {
+        final String s = String.format("{\"host\":\"lightapi.net\",\"service\":\"market\",\"action\":\"getServicePermission\",\"version\":\"0.1.0\",\"data\":{\"hostId\":\"%s\",\"apiId\":\"%s\",\"apiVersion\":\"%s\"}}", hostId, apiId, apiVersion);
         Result<String> result = null;
         ClientConnection conn = null;
         try {
-            conn = client.connect(new URI(url), Http2Client.WORKER, Http2Client.SSL, Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
+            conn = client.connect(new URI(url), Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, OptionMap.create(UndertowOptions.ENABLE_HTTP2, true)).get();
             // Create one CountDownLatch that will be reset in the callback function
             final CountDownLatch latch = new CountDownLatch(1);
             // Create an AtomicReference object to receive ClientResponse from callback function
             final AtomicReference<ClientResponse> reference = new AtomicReference<>();
             String message = "/portal/query?cmd=" + URLEncoder.encode(s, "UTF-8");
             final ClientRequest request = new ClientRequest().setMethod(Methods.GET).setPath(message);
+            request.getRequestHeaders().put(Headers.AUTHORIZATION, "Bearer " + config.getPortalToken());
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             conn.sendRequest(request, client.createClientCallback(reference, latch));
             latch.await();
@@ -191,4 +251,5 @@ public class RuleLoaderStartupHook implements StartupHookProvider {
         }
         return result;
     }
+
 }
