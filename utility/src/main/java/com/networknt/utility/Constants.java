@@ -55,9 +55,15 @@ public class Constants {
     public static final String EML = "eml";
     public static final String EMAIL = "email";
     public static final String GROUPS = "groups";
+    public static final String GROUP = "group";
     public static final String POSITIONS = "positions";
+    public static final String POSITION = "position";
     public static final String ATTRIBUTES = "attributes";
+    public static final String ATTRIBUTE = "attribute";
     public static final String USERS = "users";
+    public static final String USER = "user";
+    public static final String COL = "col";
+    public static final String ROW = "row";
 
     // Swagger 2.0 operation header name
     public static final String SWAGGER_OPERATION_STRING = "swagger_operation";
