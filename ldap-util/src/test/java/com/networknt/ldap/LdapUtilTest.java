@@ -5,7 +5,9 @@ import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Ignore
 public class LdapUtilTest {
+
     static final Logger logger = LoggerFactory.getLogger(LdapUtilTest.class);
     public static Oid SPNEGO;
 
@@ -15,8 +17,6 @@ public class LdapUtilTest {
         SPNEGO = new Oid("1.3.6.1.5.5.2");
     }
 
-
-	@Ignore
     @Test
     public void testAuthentication() throws Exception {
         String user = "jduke";
@@ -28,18 +28,21 @@ public class LdapUtilTest {
     @Test
     public void testAuthorization() throws Exception {
         String user = "jduke";
-        String expectedGroups = "cn=just-users,ou=users,dc=undertow,dc=io,cn=best-users,ou=users,dc=undertow,dc=io";
+        String expectedGroups =
+            "cn=just-users,ou=users,dc=undertow,dc=io,cn=best-users,ou=users,dc=undertow,dc=io";
 
-        Assert.assertEquals(expectedGroups, String.join(",", LdapUtil.authorize(user)));
+        Assert.assertEquals(
+            expectedGroups,
+            String.join(",", LdapUtil.authorize(user))
+        );
     }
 
-	@Test
+    @Test
     public void testAuth() throws Exception {
-		String user = "jduke";
+        String user = "jduke";
         String password = "theduke";
 
         // function returns null always
         Assert.assertEquals(null, LdapUtil.auth(user, password));
     }
-
 }
