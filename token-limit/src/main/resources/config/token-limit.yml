@@ -15,3 +15,9 @@ duplicateLimit: ${token-limit.duplicateLimit:2}
 #   - /oauth2/(?<instanceId>[^/]+)/v1/token
 #   - /oauth2/(?<instanceId>[^/]+)/token
 tokenPathTemplates: ${token-limit.tokenPathTemplates:}
+# List of ClientID that should be excluded from the token limit. This should only be used by legacy clients.
+# The client ID is case insensitive.
+# token-limit.tokenPathTemplates:
+#   - 5oa66u56irXiekTUF1d6
+#   - 6oa66u56irXiekABC1d4
+clientWhitelist: ${token-limit.clientWhitelist:}

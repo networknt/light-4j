@@ -109,7 +109,7 @@ public class TokenLimitHandler implements MiddlewareHandler {
         String clientIpAddress = sourceAddress.getAddress().getHostAddress();
         if(logger.isTraceEnabled()) logger.trace("client address {}", clientIpAddress);
 
-        // first, we need to identify if the request path ends with /token. If not, call next handler.
+        // firstly, we need to identify if the request path ends with /token. If not, call next handler.
         String requestPath = exchange.getRequestPath();
         if(matchPath(requestPath) && cacheManager != null) {
             if(logger.isTraceEnabled()) logger.trace("request path {} matches with one of the {} patterns.", requestPath, config.getTokenPathTemplates().size());
@@ -121,6 +121,16 @@ public class TokenLimitHandler implements MiddlewareHandler {
             Map<String, String> bodyMap = convertStringToHashMap(requestBodyString);
             String grantType = bodyMap.get(GRANT_TYPE);
             String clientId = bodyMap.get(CLIENT_ID);
+
+            // secondly, we need to identify if the ClientID is whitelisted or not. If it is, call next handler.
+            List<String> clientWhitelist = config.getClientWhitelist();
+            if(clientWhitelist.contains(clientId)) {
+                if(logger.isTraceEnabled()) logger.trace("client {} is in the whitelist, bypass the token limit.", clientId);
+                Handler.next(exchange, next);
+                return;
+            }
+
+            // construct the key based on grant_type and client_id or code.
             if(grantType.equals(CLIENT_CREDENTIALS)) {
                 key = clientId + ":" + sourceAddress;
                 if(logger.isTraceEnabled()) logger.trace("client credentials key = {}", key);
