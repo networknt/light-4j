@@ -137,16 +137,20 @@ public class ResponseFilterInterceptor implements ResponseInterceptor {
                         logger.debug("endpointRules iS NULL");
                     return;
                 } else {
-                    // chances are there is not response filter rules for this endpoint.
-                    if (logger.isDebugEnabled() && endpointRules.get(RESPONSE_FILTER) != null) {
-                        logger.debug("endpointRules size {}", endpointRules.get(RESPONSE_FILTER).size());
-                        return;
+                    // endpointRules is not null.
+                    if (logger.isTraceEnabled() && endpointRules.get(RESPONSE_FILTER) != null) {
+                        logger.trace("endpointRules size {}", endpointRules.get(RESPONSE_FILTER).size());
                     }
                 }
 
                 boolean finalResult = true;
                 List<String> responseRules = endpointRules.get(RESPONSE_FILTER);
-                if(logger.isTraceEnabled()) logger.trace("responseRules: {}", responseRules);
+                if(responseRules == null) {
+                    if(logger.isTraceEnabled()) logger.trace("response filter rules is null");
+                    return;
+                } else {
+                    if(logger.isTraceEnabled()) logger.trace("responseRules: {}", responseRules);
+                }
                 Map<String, Object> result = null;
                 for(String ruleId: responseRules) {
                     // copy the col and row objects to the objMap.
