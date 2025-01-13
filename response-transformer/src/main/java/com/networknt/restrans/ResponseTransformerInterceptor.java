@@ -22,9 +22,10 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static com.networknt.utility.Constants.ERROR_MESSAGE;
 
@@ -57,13 +58,14 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
 
     private static final String STARTUP_HOOK_NOT_LOADED = "ERR11019";
     private static final String RESPONSE_TRANSFORM = "res-tra";
-    private static final String RESPONSE_FILTER = "res-fil";
-    private static final String PERMISSION = "permission";
     static final String GENERIC_EXCEPTION = "ERR10014";
 
     private final ResponseTransformerConfig config;
     private volatile HttpHandler next;
 
+    /**
+     * ResponseTransformerInterceptor constructor.
+     */
     public ResponseTransformerInterceptor() {
         if (logger.isInfoEnabled()) logger.info("ResponseManipulatorHandler is loaded");
         config = ResponseTransformerConfig.load();
@@ -154,21 +156,12 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
                 }
 
                 boolean finalResult = true;
-                List<String> responseTransformRules = endpointRules.get(RESPONSE_TRANSFORM);
-                List<String> responseFilterRules = endpointRules.get(RESPONSE_FILTER);
-                List<String> responseRules = mergeLists(responseTransformRules, responseFilterRules);
-                if(logger.isTraceEnabled()) logger.trace("responseRules: {}", responseRules);
+                List<Map<String, Object>> responseTransformRules = endpointRules.get(RESPONSE_TRANSFORM);
                 Map<String, Object> result = null;
-                for(String ruleId: responseRules) {
-                    // copy the col and row objects to the objMap.
-                    if(logger.isTraceEnabled()) logger.trace("ruleId: {}", ruleId);
-                    Map<String, Object> permissionMap = (Map<String, Object>)endpointRules.get(PERMISSION);
-                    if(logger.isTraceEnabled()) logger.trace("permissionMap: {}", permissionMap);
-                    if(permissionMap != null) {
-                        objMap.put(Constants.COL, permissionMap.get(Constants.COL));
-                        objMap.put(Constants.ROW, permissionMap.get(Constants.ROW));
-                    }
-                    if(logger.isTraceEnabled()) logger.trace("objMap: {}", objMap);
+                String ruleId = null;
+                // iterate the rules and execute them in sequence. Break only if one rule is successful.
+                for(Map<String, Object> ruleMap: responseTransformRules) {
+                    ruleId = (String)ruleMap.get(Constants.RULE_ID);
                     result = RuleLoaderStartupHook.ruleEngine.executeRule(ruleId, objMap);
                     boolean res = (Boolean)result.get(RuleConstants.RESULT);
                     if(!res) {
@@ -222,18 +215,6 @@ public class ResponseTransformerInterceptor implements ResponseInterceptor {
         if (logger.isDebugEnabled()) logger.trace("ResponseTransformerInterceptor.handleRequest ends.");
     }
 
-    public static List<String> mergeLists(List<String> list1, List<String> list2) {
-
-        if (list1 == null && list2 == null) {
-            return new ArrayList<>(); // Return empty list if both are null
-        }
-
-
-        Stream<String> stream1 = (list1 != null) ? list1.stream() : Stream.empty();
-        Stream<String> stream2 = (list2 != null) ? list2.stream() : Stream.empty();
-
-        return Stream.concat(stream1, stream2).collect(Collectors.toList());
-    }
 
 
     private Map<String, Object> createExchangeInfoMap(HttpServerExchange exchange, HttpString method, String responseBody, Map<String, Object> auditInfo) {
