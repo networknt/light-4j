@@ -38,7 +38,7 @@ import static com.networknt.utility.Constants.ERROR_MESSAGE;
  */
 public class RequestTransformerInterceptor implements RequestInterceptor {
     static final Logger logger = LoggerFactory.getLogger(RequestTransformerInterceptor.class);
-    static final String REQUEST_TRANSFORM = "request-transform";
+    static final String REQUEST_TRANSFORM = "req-tra";
     static final String GENERIC_EXCEPTION = "ERR10014";
 
     private final RequestTransformerConfig config;
