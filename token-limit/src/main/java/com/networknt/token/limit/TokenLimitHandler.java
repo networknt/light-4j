@@ -31,6 +31,7 @@ public class TokenLimitHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(TokenLimitHandler.class);
     // the cacheName in the cache.yml
     static final String TOKEN_LIMIT = "token-limit";
+    static final String CLIENT_TOKEN = "client-token";
     static final String GRANT_TYPE = "grant_type";
     static final String CLIENT_CREDENTIALS = "client_credentials";
     static final String AUTHORIZATION_CODE = "authorization_code";
@@ -122,11 +123,21 @@ public class TokenLimitHandler implements MiddlewareHandler {
             String grantType = bodyMap.get(GRANT_TYPE);
             String clientId = bodyMap.get(CLIENT_ID);
 
-            // secondly, we need to identify if the ClientID is whitelisted or not. If it is, call next handler.
-            List<String> clientWhitelist = config.getClientWhitelist();
-            if(clientWhitelist.contains(clientId)) {
-                if(logger.isTraceEnabled()) logger.trace("client {} is in the whitelist, bypass the token limit.", clientId);
-                Handler.next(exchange, next);
+            // secondly, we need to identify if the ClientID is considered Legacy or not. If it is, bypass limit, cache and call next handler.
+            List<String> legacyClient = config.getLegacyClient();
+            if(legacyClient.contains(clientId)) {
+                if(logger.isTraceEnabled()) logger.trace("client {} is configured as Legacy, bypass the token limit.", clientId);
+                //  check if cache key exists in cache manager, if exists return cached token
+                key = clientId + ":" + bodyMap.get(CLIENT_SECRET) + ":" + bodyMap.get(SCOPE).replace(" ", "");
+                ByteArray cachedResponse = (ByteArray)cacheManager.get(CLIENT_TOKEN, key);
+                if (cachedResponse != null) {
+                    if(logger.isTraceEnabled()) logger.trace("legacy client cache key {} has token value, returning cached token.", key);
+                    exchange.getResponseSender().send(cachedResponse);
+                } else {
+                    if(logger.isTraceEnabled()) logger.trace("legacy client cache key {} has NO token cached, calling next handler.", key);
+                    exchange.putAttachment(AttachmentConstants.CLIENT_TOKEN_CACHE, true);
+                    Handler.next(exchange, next);
+                }
                 return;
             }
 

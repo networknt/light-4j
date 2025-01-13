@@ -18,13 +18,13 @@ public class TokenLimitConfig {
     private static final String ERROR_ON_LIMIT = "errorOnLimit";
     private static final String DUPLICATE_LIMIT = "duplicateLimit";
     private static final String TOKEN_PATH_TEMPLATES = "tokenPathTemplates";
-    private static final String CLIENT_WHITELIST = "clientWhitelist";
+    private static final String LEGACY_CLIENT = "legacyClient";
 
     boolean enabled;
     boolean errorOnLimit;
     int duplicateLimit;
     List<String> tokenPathTemplates;
-    List<String> clientWhitelist;
+    List<String> legacyClient;
 
     private Map<String, Object> mappedConfig;
     private final Config config;
@@ -43,7 +43,7 @@ public class TokenLimitConfig {
         mappedConfig = config.getJsonMapConfigNoCache(configName);
         setConfigData();
         setTokenPathTemplatesList();
-        setClientWhitelistList();
+        setLegacyClientList();
     }
 
     public static TokenLimitConfig load() {
@@ -91,12 +91,12 @@ public class TokenLimitConfig {
         this.tokenPathTemplates = tokenPathTemplates;
     }
 
-    public List<String> getClientWhitelist() {
-        return clientWhitelist;
+    public List<String> getLegacyClient() {
+        return legacyClient;
     }
 
-    public void setClientWhitelist(List<String> clientWhitelist) {
-        this.clientWhitelist = clientWhitelist;
+    public void setLegacyClient(List<String> legacyClient) {
+        this.legacyClient = legacyClient;
     }
 
     Map<String, Object> getMappedConfig() {
@@ -140,10 +140,10 @@ public class TokenLimitConfig {
 
     }
 
-    private void setClientWhitelistList() {
-        if (mappedConfig != null && mappedConfig.get(CLIENT_WHITELIST) != null) {
-            Object object = mappedConfig.get(CLIENT_WHITELIST);
-            clientWhitelist = new ArrayList<>();
+    private void setLegacyClientList() {
+        if (mappedConfig != null && mappedConfig.get(LEGACY_CLIENT) != null) {
+            Object object = mappedConfig.get(LEGACY_CLIENT);
+            legacyClient = new ArrayList<>();
             if(object instanceof String) {
                 String s = (String)object;
                 s = s.trim();
@@ -151,18 +151,18 @@ public class TokenLimitConfig {
                 if(s.startsWith("[")) {
                     // json format
                     try {
-                        clientWhitelist = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
+                        legacyClient = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
                     } catch (Exception e) {
-                        throw new ConfigException("could not parse the clientWhitelist json with a list of strings.");
+                        throw new ConfigException("could not parse the Legacy Client json with a list of strings.");
                     }
                 } else {
                     // comma separated
-                    clientWhitelist = Arrays.asList(s.split("\\s*,\\s*"));
+                    legacyClient = Arrays.asList(s.split("\\s*,\\s*"));
                 }
             } else if (object instanceof List) {
-                clientWhitelist = (List<String>) getMappedConfig().get(CLIENT_WHITELIST);
+                legacyClient = (List<String>) getMappedConfig().get(LEGACY_CLIENT);
             } else {
-                throw new ConfigException("clientWhitelist must be a string or a list of strings.");
+                throw new ConfigException("legacyClient must be a string or a list of strings.");
             }
         }
 
