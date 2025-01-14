@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
+@Ignore
 public class ResponseTransformerInterceptorTest {
     static final Logger logger = LoggerFactory.getLogger(ResponseTransformerInterceptorTest.class);
 

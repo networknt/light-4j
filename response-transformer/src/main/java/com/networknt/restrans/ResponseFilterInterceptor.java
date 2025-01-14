@@ -47,7 +47,6 @@ public class ResponseFilterInterceptor implements ResponseInterceptor {
     private static final String STATUS_CODE = "statusCode";
 
     private static final String STARTUP_HOOK_NOT_LOADED = "ERR11019";
-    private static final String RESPONSE_TRANSFORM = "res-tra";
     private static final String RESPONSE_FILTER = "res-fil";
     private static final String PERMISSION = "permission";
     static final String GENERIC_EXCEPTION = "ERR10014";
@@ -55,6 +54,9 @@ public class ResponseFilterInterceptor implements ResponseInterceptor {
     private static ResponseFilterConfig config;
     private volatile HttpHandler next;
 
+    /**
+     * ResponseFilterInterceptor constructor
+     */
     public ResponseFilterInterceptor() {
         if (logger.isInfoEnabled()) logger.info("ResponseFilterInterceptor is loaded");
         config = ResponseFilterConfig.load();
@@ -94,11 +96,22 @@ public class ResponseFilterInterceptor implements ResponseInterceptor {
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if (logger.isDebugEnabled()) logger.trace("ResponseFilterInterceptor.handleRequest starts.");
+        // check the status code. the filter will only be applied to successful request.
+        if(exchange.getStatusCode() >= 400) {
+            if(logger.isTraceEnabled()) logger.trace("Skip on error code {}.  ResponseFilterInterceptor.handleRequest ends.", exchange.getStatusCode());
+            return;
+        }
         String requestPath = exchange.getRequestPath();
         if (config.getAppliedPathPrefixes() != null) {
             // check if the path prefix has the second part of encoding to overwrite the defaultBodyEncoding.
             Optional<String> match = findMatchingPrefix(requestPath, config.getAppliedPathPrefixes());
             if(match.isPresent()) {
+                // first we need to make sure that the RuleLoaderStartupHook.endpointRules is not empty.
+                if(RuleLoaderStartupHook.endpointRules == null) {
+                    logger.error("RuleLoaderStartupHook.endpointRules is null. ResponseFilterInterceptor.handlerRequest ends.");
+                    // TODO should we replace the response body with an error message to indicate the endpointRules map is empty?
+                    return;
+                }
                 String responseBody = BuffersUtils.toString(getBuffer(exchange), StandardCharsets.UTF_8);
                 if (logger.isTraceEnabled())
                     logger.trace("original response body = {}", responseBody);
@@ -125,7 +138,7 @@ public class ResponseFilterInterceptor implements ResponseInterceptor {
                 }
 
                 // Grab ServiceEntry from config
-                endpoint = ConfigUtils.toInternalKey(exchange.getRequestMethod().toString().toLowerCase(), exchange.getRequestURI());
+                // endpoint = ConfigUtils.toInternalKey(exchange.getRequestMethod().toString().toLowerCase(), exchange.getRequestURI());
                 if(logger.isDebugEnabled()) logger.debug("request endpoint: {}", endpoint);
                 serviceEntry = ConfigUtils.findServiceEntry(exchange.getRequestMethod().toString().toLowerCase(), exchange.getRequestURI(), RuleLoaderStartupHook.endpointRules);
                 if(logger.isDebugEnabled()) logger.debug("request serviceEntry: {}", serviceEntry);
@@ -183,10 +196,9 @@ public class ResponseFilterInterceptor implements ResponseInterceptor {
                         BuffersUtils.transfer(ByteBuffer.wrap(responseBody.getBytes(StandardCharsets.UTF_8)), dest, exchange);
                     }
                 } else {
-                    // The finalResult is false to indicate there is an error in the plugin action. Set the exchange to stop the chain.
+                    // The finalResult is false to indicate that the rule condition is not met. Return the response as it is.
                     String errorMessage = (String)result.get(ERROR_MESSAGE);
                     if(logger.isTraceEnabled()) logger.trace("Error message {} returns from the plugin", errorMessage);
-                    setExchangeStatus(exchange, GENERIC_EXCEPTION, errorMessage);
                 }
             }
         }
