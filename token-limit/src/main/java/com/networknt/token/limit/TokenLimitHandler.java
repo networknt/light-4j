@@ -5,6 +5,7 @@ import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
+import com.networknt.httpstring.CacheTask;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -21,6 +22,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import java.nio.ByteBuffer;
+
 /**
  * This handler should be used on the oauth-kafka or a dedicated light-gateway instance for all OAuth 2.0
  * instances or providers.
@@ -36,6 +39,8 @@ public class TokenLimitHandler implements MiddlewareHandler {
     static final String CLIENT_CREDENTIALS = "client_credentials";
     static final String AUTHORIZATION_CODE = "authorization_code";
     static final String CLIENT_ID = "client_id";
+    static final String CLIENT_SECRET = "client_secret";
+    static final String SCOPE = "scope";    
     static final String CODE = "code";
     static final String TOKEN_LIMIT_ERROR = "ERR10091";
 
@@ -129,13 +134,13 @@ public class TokenLimitHandler implements MiddlewareHandler {
                 if(logger.isTraceEnabled()) logger.trace("client {} is configured as Legacy, bypass the token limit.", clientId);
                 //  check if cache key exists in cache manager, if exists return cached token
                 key = clientId + ":" + bodyMap.get(CLIENT_SECRET) + ":" + bodyMap.get(SCOPE).replace(" ", "");
-                ByteArray cachedResponse = (ByteArray)cacheManager.get(CLIENT_TOKEN, key);
+                ByteBuffer cachedResponse = (ByteBuffer)cacheManager.get(CLIENT_TOKEN, key);
                 if (cachedResponse != null) {
                     if(logger.isTraceEnabled()) logger.trace("legacy client cache key {} has token value, returning cached token.", key);
                     exchange.getResponseSender().send(cachedResponse);
                 } else {
                     if(logger.isTraceEnabled()) logger.trace("legacy client cache key {} has NO token cached, calling next handler.", key);
-                    exchange.putAttachment(AttachmentConstants.CLIENT_TOKEN_CACHE, true);
+                    exchange.putAttachment(AttachmentConstants.RESPONSE_CACHE, new CacheTask(CLIENT_TOKEN, key));
                     Handler.next(exchange, next);
                 }
                 return;
