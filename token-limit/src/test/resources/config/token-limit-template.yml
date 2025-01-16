@@ -12,3 +12,5 @@ duplicateLimit: ${token-limit.duplicateLimit:2}
 # applied to the token endpoint, we define the path template here to ensure request path is matched.
 tokenPathTemplates:
   - /oauth2/(?<instanceId>[^/]+)/v1/token
+legacyClient:
+  - legacyClient

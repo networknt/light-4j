@@ -1,0 +1,27 @@
+service.singletons:
+  - com.networknt.cache.CacheManager:
+    - com.networknt.cache.CaffeineCacheManager
+  - com.networknt.handler.RequestInterceptor:
+      - com.networknt.body.RequestBodyInterceptor
+
+request-injection.appliedBodyInjectionPathPrefixes:
+  - /
+
+body.cacheRequestBody: true
+
+token-limit.enabled: true
+token-limit.errorOnLimit: true
+token-limit.duplicateLimit: 2
+token-limit.tokenPathTemplates:
+  - /oauth2/(?<instanceId>[^/]+)/v1/token
+token-limit.legacyClient: 
+  - legacyClient
+
+# cache.yml
+cache.caches:
+  - cacheName: client-token
+    expiryInMinutes: 15
+    maxSize: 1000
+  - cacheName: token-limit
+    expiryInMinutes: 15
+    maxSize: 1000

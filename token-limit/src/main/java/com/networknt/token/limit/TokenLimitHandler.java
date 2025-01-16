@@ -5,6 +5,7 @@ import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
 import com.networknt.httpstring.AttachmentConstants;
+import com.networknt.httpstring.CacheTask;
 import com.networknt.utility.ModuleRegistry;
 import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
@@ -21,6 +22,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import java.nio.ByteBuffer;
+
 /**
  * This handler should be used on the oauth-kafka or a dedicated light-gateway instance for all OAuth 2.0
  * instances or providers.
@@ -31,10 +34,13 @@ public class TokenLimitHandler implements MiddlewareHandler {
     static final Logger logger = LoggerFactory.getLogger(TokenLimitHandler.class);
     // the cacheName in the cache.yml
     static final String TOKEN_LIMIT = "token-limit";
+    static final String CLIENT_TOKEN = "client-token";
     static final String GRANT_TYPE = "grant_type";
     static final String CLIENT_CREDENTIALS = "client_credentials";
     static final String AUTHORIZATION_CODE = "authorization_code";
     static final String CLIENT_ID = "client_id";
+    static final String CLIENT_SECRET = "client_secret";
+    static final String SCOPE = "scope";    
     static final String CODE = "code";
     static final String TOKEN_LIMIT_ERROR = "ERR10091";
 
@@ -109,7 +115,7 @@ public class TokenLimitHandler implements MiddlewareHandler {
         String clientIpAddress = sourceAddress.getAddress().getHostAddress();
         if(logger.isTraceEnabled()) logger.trace("client address {}", clientIpAddress);
 
-        // first, we need to identify if the request path ends with /token. If not, call next handler.
+        // firstly, we need to identify if the request path ends with /token. If not, call next handler.
         String requestPath = exchange.getRequestPath();
         if(matchPath(requestPath) && cacheManager != null) {
             if(logger.isTraceEnabled()) logger.trace("request path {} matches with one of the {} patterns.", requestPath, config.getTokenPathTemplates().size());
@@ -121,6 +127,26 @@ public class TokenLimitHandler implements MiddlewareHandler {
             Map<String, String> bodyMap = convertStringToHashMap(requestBodyString);
             String grantType = bodyMap.get(GRANT_TYPE);
             String clientId = bodyMap.get(CLIENT_ID);
+
+            // secondly, we need to identify if the ClientID is considered Legacy or not. If it is, bypass limit, cache and call next handler.
+            List<String> legacyClient = config.getLegacyClient();
+            if(legacyClient.contains(clientId)) {
+                if(logger.isTraceEnabled()) logger.trace("client {} is configured as Legacy, bypass the token limit.", clientId);
+                //  check if cache key exists in cache manager, if exists return cached token
+                key = clientId + ":" + bodyMap.get(CLIENT_SECRET) + ":" + bodyMap.get(SCOPE).replace(" ", "");
+                ByteBuffer cachedResponse = (ByteBuffer)cacheManager.get(CLIENT_TOKEN, key);
+                if (cachedResponse != null) {
+                    if(logger.isTraceEnabled()) logger.trace("legacy client cache key {} has token value, returning cached token.", key);
+                    exchange.getResponseSender().send(cachedResponse);
+                } else {
+                    if(logger.isTraceEnabled()) logger.trace("legacy client cache key {} has NO token cached, calling next handler.", key);
+                    exchange.putAttachment(AttachmentConstants.RESPONSE_CACHE, new CacheTask(CLIENT_TOKEN, key));
+                    Handler.next(exchange, next);
+                }
+                return;
+            }
+
+            // construct the key based on grant_type and client_id or code.
             if(grantType.equals(CLIENT_CREDENTIALS)) {
                 key = clientId + ":" + sourceAddress;
                 if(logger.isTraceEnabled()) logger.trace("client credentials key = {}", key);
@@ -159,7 +185,7 @@ public class TokenLimitHandler implements MiddlewareHandler {
         if(logger.isDebugEnabled()) logger.debug("TokenLimitHandler.handleRequest ends.");
     }
 
-    private Map<String, String> convertStringToHashMap(String input) {
+    public Map<String, String> convertStringToHashMap(String input) {
         Map<String, String> map = new HashMap<>();
 
         String[] pairs = input.split("&");
