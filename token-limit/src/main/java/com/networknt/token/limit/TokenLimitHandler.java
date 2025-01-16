@@ -185,7 +185,7 @@ public class TokenLimitHandler implements MiddlewareHandler {
         if(logger.isDebugEnabled()) logger.debug("TokenLimitHandler.handleRequest ends.");
     }
 
-    private Map<String, String> convertStringToHashMap(String input) {
+    public Map<String, String> convertStringToHashMap(String input) {
         Map<String, String> map = new HashMap<>();
 
         String[] pairs = input.split("&");
