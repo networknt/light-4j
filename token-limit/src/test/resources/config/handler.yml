@@ -1,0 +1,58 @@
+# Handler middleware chain configuration
+---
+enabled: true
+
+# Configuration for the LightHttpHandler. The handler is the base class  for all middleware, server and health handlers
+# set the Status Object in the AUDIT_INFO, for auditing purposes
+# default, if not set:false
+auditOnError: ${handler.auditOnError:false}
+
+# set the StackTrace in the AUDIT_INFO, for auditing purposes
+# default, if not set:false
+auditStackTrace: ${handler.auditStackTrace:false}
+
+# Base Path of the API endpoints
+basePath: ${handler.basePath:/}
+
+handlers:
+  # Light-framework cross-cutting concerns implemented in the microservice
+  - com.networknt.exception.ExceptionHandler@exception
+  - com.networknt.handler.RequestInterceptorInjectionHandler@requestInterceptor
+  - com.networknt.handler.ResponseInterceptorInjectionHandler@responseInterceptor
+  - com.networknt.token.limit.TokenLimitHandler@tokenLimit
+  - com.networknt.token.limit.TestHandler@test
+
+chains:
+  default:
+    - exception
+    - requestInterceptor
+    - responseInterceptor
+    - tokenLimit
+    - test
+
+
+paths:
+  - path: '/*'
+    method: 'GET'
+    exec:
+      - default
+  - path: '/*'
+    method: 'POST'
+    exec:
+      - default
+  - path: '/*'
+    method: 'PUT'
+    exec:
+      - default
+  - path: '/*'
+    method: 'DELETE'
+    exec:
+      - default
+  - path: '/*'
+    method: 'PATCH'
+    exec:
+      - default
+  - path: '/*'
+    method: 'OPTIONS'
+    exec:
+      - default

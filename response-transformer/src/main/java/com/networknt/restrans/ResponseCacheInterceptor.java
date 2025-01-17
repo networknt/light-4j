@@ -119,16 +119,19 @@ public class ResponseCacheInterceptor implements ResponseInterceptor {
                         logger.trace("original response body = {}", responseBody);
                     String name = cacheTask.getName();
                     String key = cacheTask.getKey();
-                    CacheManager cacheManager = CacheManager.getInstance();
-                    if(cacheManager == null) {
-                        logger.error("Could not get CacheManager instance");
-                    } else {
-                        Map<Object, Object> cache = cacheManager.getCache(name);
-                        if(cache == null) {
-                            logger.error("Cache {} is not configured in cache.yml", name);
+                    synchronized (this) {
+                        // the snakeyaml is not thread safe, and we need to synchronize the block as getInstance will read cache.yml config.
+                        CacheManager cacheManager = CacheManager.getInstance();
+                        if(cacheManager == null) {
+                            logger.error("Could not get CacheManager instance");
                         } else {
-                            if(logger.isTraceEnabled()) logger.trace("put key {} into cache {}", key, name);
-                            cacheManager.put(name, key, responseBody);
+                            Map<Object, Object> cache = cacheManager.getCache(name);
+                            if(cache == null) {
+                                logger.error("Cache {} is not configured in cache.yml", name);
+                            } else {
+                                if(logger.isTraceEnabled()) logger.trace("put key {} into cache {}", key, name);
+                                cacheManager.put(name, key, responseBody);
+                            }
                         }
                     }
                 }
