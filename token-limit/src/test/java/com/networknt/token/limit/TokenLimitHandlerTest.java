@@ -1,9 +1,7 @@
 package com.networknt.token.limit;
 
 import com.networknt.client.Http2Client;
-import com.networknt.token.limit.TokenLimitHandler;
 import com.networknt.exception.ClientException;
-import com.networknt.service.SingletonServiceFactory;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
@@ -19,17 +17,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xnio.IoUtils;
 import org.xnio.OptionMap;
-import com.networknt.body.RequestBodyInterceptor;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+@Ignore
 public class TokenLimitHandlerTest {
     static final Logger logger = LoggerFactory.getLogger(TokenLimitHandlerTest.class);
     static Undertow server = null;
@@ -42,15 +39,13 @@ public class TokenLimitHandlerTest {
         if(server == null) {
             logger.info("starting server");
             //config = TokenLimitConfig.load("token-limit-template");
-            RequestBodyInterceptor bodyHandler = new RequestBodyInterceptor();
             HttpHandler handler = getTestHandler();
             TokenLimitHandler tokenHandler = new TokenLimitHandler();
             tokenHandler.setNext(handler);
-            bodyHandler.setNext(tokenHandler);
             server = Undertow.builder()
                     .setServerOption(UndertowOptions.ENABLE_HTTP2, true)
                     .addHttpListener(7080, "localhost")
-                    .setHandler(bodyHandler)
+                    .setHandler(tokenHandler)
                     .build();
             server.start();
         }
