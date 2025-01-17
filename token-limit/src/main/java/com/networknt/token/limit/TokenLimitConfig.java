@@ -18,11 +18,13 @@ public class TokenLimitConfig {
     private static final String ERROR_ON_LIMIT = "errorOnLimit";
     private static final String DUPLICATE_LIMIT = "duplicateLimit";
     private static final String TOKEN_PATH_TEMPLATES = "tokenPathTemplates";
+    private static final String LEGACY_CLIENT = "legacyClient";
 
     boolean enabled;
     boolean errorOnLimit;
     int duplicateLimit;
     List<String> tokenPathTemplates;
+    List<String> legacyClient;
 
     private Map<String, Object> mappedConfig;
     private final Config config;
@@ -40,7 +42,8 @@ public class TokenLimitConfig {
         config = Config.getInstance();
         mappedConfig = config.getJsonMapConfigNoCache(configName);
         setConfigData();
-        setConfigList();
+        setTokenPathTemplatesList();
+        setLegacyClientList();
     }
 
     public static TokenLimitConfig load() {
@@ -88,6 +91,14 @@ public class TokenLimitConfig {
         this.tokenPathTemplates = tokenPathTemplates;
     }
 
+    public List<String> getLegacyClient() {
+        return legacyClient;
+    }
+
+    public void setLegacyClient(List<String> legacyClient) {
+        this.legacyClient = legacyClient;
+    }
+
     Map<String, Object> getMappedConfig() {
         return mappedConfig;
     }
@@ -101,7 +112,7 @@ public class TokenLimitConfig {
         if (object != null) duplicateLimit = Config.loadIntegerValue(DUPLICATE_LIMIT, object);
     }
 
-    private void setConfigList() {
+    private void setTokenPathTemplatesList() {
         if (mappedConfig != null && mappedConfig.get(TOKEN_PATH_TEMPLATES) != null) {
             Object object = mappedConfig.get(TOKEN_PATH_TEMPLATES);
             tokenPathTemplates = new ArrayList<>();
@@ -124,6 +135,34 @@ public class TokenLimitConfig {
                 tokenPathTemplates = (List<String>) getMappedConfig().get(TOKEN_PATH_TEMPLATES);
             } else {
                 throw new ConfigException("tokenPathTemplates must be a string or a list of strings.");
+            }
+        }
+
+    }
+
+    private void setLegacyClientList() {
+        if (mappedConfig != null && mappedConfig.get(LEGACY_CLIENT) != null) {
+            Object object = mappedConfig.get(LEGACY_CLIENT);
+            legacyClient = new ArrayList<>();
+            if(object instanceof String) {
+                String s = (String)object;
+                s = s.trim();
+                if(logger.isTraceEnabled()) logger.trace("s = {}", s);
+                if(s.startsWith("[")) {
+                    // json format
+                    try {
+                        legacyClient = Config.getInstance().getMapper().readValue(s, new TypeReference<List<String>>() {});
+                    } catch (Exception e) {
+                        throw new ConfigException("could not parse the Legacy Client json with a list of strings.");
+                    }
+                } else {
+                    // comma separated
+                    legacyClient = Arrays.asList(s.split("\\s*,\\s*"));
+                }
+            } else if (object instanceof List) {
+                legacyClient = (List<String>) getMappedConfig().get(LEGACY_CLIENT);
+            } else {
+                throw new ConfigException("legacyClient must be a string or a list of strings.");
             }
         }
 
