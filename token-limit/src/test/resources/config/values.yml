@@ -14,7 +14,7 @@ token-limit.errorOnLimit: true
 token-limit.duplicateLimit: 2
 token-limit.tokenPathTemplates:
   - /oauth2/(?<instanceId>[^/]+)/v1/token
-token-limit.legacyClient: 
+token-limit.legacyClient:
   - legacyClient
 
 # cache.yml

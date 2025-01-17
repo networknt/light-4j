@@ -40,7 +40,7 @@ public class TokenLimitHandler implements MiddlewareHandler {
     static final String AUTHORIZATION_CODE = "authorization_code";
     static final String CLIENT_ID = "client_id";
     static final String CLIENT_SECRET = "client_secret";
-    static final String SCOPE = "scope";    
+    static final String SCOPE = "scope";
     static final String CODE = "code";
     static final String TOKEN_LIMIT_ERROR = "ERR10091";
 

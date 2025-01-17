@@ -115,7 +115,7 @@ public class TokenLimitHandlerTest {
             throw new ClientException(e);
         }
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
-        
+
         try {
             ClientRequest request = new ClientRequest().setPath("/oauth2/1234123/v1/token").setMethod(Methods.POST);
             request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
