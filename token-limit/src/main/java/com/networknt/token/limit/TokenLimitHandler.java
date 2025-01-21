@@ -4,6 +4,7 @@ import com.networknt.cache.CacheManager;
 import com.networknt.config.Config;
 import com.networknt.handler.Handler;
 import com.networknt.handler.MiddlewareHandler;
+import com.networknt.http.ResponseEntity;
 import com.networknt.httpstring.AttachmentConstants;
 import com.networknt.httpstring.CacheTask;
 import com.networknt.utility.ModuleRegistry;
@@ -133,10 +134,12 @@ public class TokenLimitHandler implements MiddlewareHandler {
                 if(logger.isTraceEnabled()) logger.trace("client {} is configured as Legacy, bypass the token limit.", clientId);
                 //  check if cache key exists in cache manager, if exists return cached token
                 key = clientId + ":" + bodyMap.get(CLIENT_SECRET) + ":" + bodyMap.get(SCOPE).replace(" ", "");
-                String cachedResponse = (String)cacheManager.get(CLIENT_TOKEN, key);
-                if (cachedResponse != null) {
+                ResponseEntity<String> responseEntity = (ResponseEntity) cacheManager.get(CLIENT_TOKEN, key);
+                if (responseEntity != null) {
                     if(logger.isTraceEnabled()) logger.trace("legacy client cache key {} has token value, returning cached token.", key);
-                    exchange.getResponseSender().send(cachedResponse);
+                    exchange.getResponseHeaders().putAll(responseEntity.getHeaders());
+                    exchange.setStatusCode(responseEntity.getStatusCode().value());
+                    exchange.getResponseSender().send(responseEntity.getBody());
                 } else {
                     if(logger.isTraceEnabled()) logger.trace("legacy client cache key {} has NO token cached, calling next handler.", key);
                     exchange.putAttachment(AttachmentConstants.RESPONSE_CACHE, new CacheTask(CLIENT_TOKEN, key));
