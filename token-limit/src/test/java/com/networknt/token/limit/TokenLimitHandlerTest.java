@@ -77,7 +77,7 @@ public class TokenLimitHandlerTest {
         final CountDownLatch latch = new CountDownLatch(1);
         SimpleConnectionHolder.ConnectionToken connectionToken = null;
         final AtomicReference<ClientResponse> reference = new AtomicReference<>();
-        
+
         try {
             if(enableHttps) {
                 connectionToken = client.borrow(new URI(url), Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY);
