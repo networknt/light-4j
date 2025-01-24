@@ -49,6 +49,7 @@ public class CorsHttpHandler implements MiddlewareHandler {
     public static CorsConfig config;
     private List<String> allowedOrigins;
     private List<String> allowedMethods;
+    private boolean isNonPreflightReqAllowed = true;
 
     private volatile HttpHandler next;
     /** Default max age **/
@@ -77,6 +78,7 @@ public class CorsHttpHandler implements MiddlewareHandler {
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         if(logger.isDebugEnabled()) logger.debug("CorsHttpHandler.handleRequest starts.");
         HeaderMap headers = exchange.getRequestHeaders();
+        isNonPreflightReqAllowed = true;
         if (isCorsRequest(headers)) {
             // cors headers available in the request. Set the allowedOrigins and allowedMethods based on the
             // path prefix if it is configured. Otherwise, use the global configuration set in the constructor.
@@ -101,7 +103,8 @@ public class CorsHttpHandler implements MiddlewareHandler {
             setCorsResponseHeaders(exchange, allowedOrigins, allowedMethods);
         }
         if(logger.isDebugEnabled()) logger.debug("CorsHttpHandler.handleRequest ends.");
-        Handler.next(exchange, next);
+        if(isNonPreflightReqAllowed) Handler.next(exchange, next);
+        else return;
     }
 
     private void handlePreflightRequest(HttpServerExchange exchange, List<String> allowedOrigins, List<String> allowedMethods) throws Exception {
@@ -194,6 +197,7 @@ public class CorsHttpHandler implements MiddlewareHandler {
         }
         logger.debug("Request rejected due to HOST/ORIGIN mis-match.");
         ResponseCodeHandler.HANDLE_403.handleRequest(exchange);
+        isNonPreflightReqAllowed = false;
         return null;
     }
 
