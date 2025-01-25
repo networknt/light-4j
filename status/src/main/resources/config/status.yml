@@ -1313,6 +1313,11 @@ ERR12052:
   code: ERR12052
   message: AUTHORIZATION_CODE_NOT_FOUND
   description: Authorization code %s not found when getting an authorization code token
+ERR12053:
+  statusCode: 400
+  code: ERR12053
+  message: MISMATCH_PROVIDER_ID
+  description: provider_id %s does not match previous provider_id %s in token request.
 
 # Tokenization service
 ERR12100:
