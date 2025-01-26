@@ -273,21 +273,21 @@ public class CorsHttpHandlerTest {
         exchange.setRequestScheme("http");
         exchange.setRequestMethod(HttpString.EMPTY);
         Collection<String> allowedOrigins = null;
-        assertThat(matchOrigin(exchange, allowedOrigins), is("http://localhost"));
+        assertThat(matchOrigin(exchange, allowedOrigins, new CorsHttpHandler()), is("http://localhost"));
         allowedOrigins = Collections.singletonList("http://www.example.com:9990");
         //Default origin
-        assertThat(matchOrigin(exchange, allowedOrigins), is("http://localhost"));
+        assertThat(matchOrigin(exchange, allowedOrigins, new CorsHttpHandler()), is("http://localhost"));
         headerMap.clear();
         headerMap.add(HOST, "localhost:80");
         headerMap.add(new HttpString(ORIGIN), "http://www.example.com:9990");
-        assertThat(matchOrigin(exchange, allowedOrigins), is("http://www.example.com:9990"));
+        assertThat(matchOrigin(exchange, allowedOrigins, new CorsHttpHandler()), is("http://www.example.com:9990"));
         headerMap.clear();
         headerMap.add(HOST, "localhost:80");
         headerMap.add(new HttpString(ORIGIN), "http://www.example.com");
-        assertThat(matchOrigin(exchange, allowedOrigins), is(nullValue()));
+        assertThat(matchOrigin(exchange, allowedOrigins, new CorsHttpHandler()), is(nullValue()));
         headerMap.addAll(new HttpString(ORIGIN), Arrays.asList("http://localhost:7080", "http://www.example.com:9990", "http://localhost"));
         allowedOrigins = Arrays.asList("http://localhost", "http://www.example.com:9990");
-        assertThat(matchOrigin(exchange, allowedOrigins), is("http://localhost"));
+        assertThat(matchOrigin(exchange, allowedOrigins, new CorsHttpHandler()), is("http://localhost"));
     }
 
 

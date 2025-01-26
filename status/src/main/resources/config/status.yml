@@ -880,7 +880,7 @@ ERR11604:
 ERR11605:
   statusCode: 400
   code: ERR11605
-  message: SEND_MESSAGE_EXCEPITON
+  message: SEND_MESSAGE_EXCEPTION
   description: Send message exception caused by %s with user %s.
 ERR11606:
   statusCode: 400
@@ -1318,6 +1318,12 @@ ERR12053:
   code: ERR12053
   message: MISMATCH_PROVIDER_ID
   description: provider_id %s does not match previous provider_id %s in token request.
+
+ERR12054:
+  statusCode: 400
+  code: ERR12054
+  message: KEY_GENERATION_ERROR
+  description: Key generation error %s.
 
 # Tokenization service
 ERR12100:
