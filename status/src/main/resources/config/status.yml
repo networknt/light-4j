@@ -1047,6 +1047,16 @@ ERR11638:
   code: ERR11638
   message: FILESYSTEM_ERROR
   description: Error while access filesystem with file %s and error message %s.
+ERR11639:
+  statusCode: 400
+  code: ERR11639
+  message: PROVIDER_KEY_TYPE_MISSING
+  description: Provider key type is missing.
+ERR11640:
+  statusCode: 400
+  code: ERR11640
+  message: PROVIDER_KEY_TYPE_INVALID
+  description: Provider key type %s is invalid.
 
 
 # OAuth2 service error 12000-12099
