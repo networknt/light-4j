@@ -119,6 +119,8 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
 
                     String clientId = claims.getStringClaimValue(Constants.CLIENT_ID_STRING);
                     String userId = claims.getStringClaimValue(Constants.USER_ID_STRING);
+                    String email = claims.getStringClaimValue(Constants.EMAIL);
+                    String host = claims.getStringClaimValue(Constants.HOST);
                     String issuer = claims.getStringClaimValue(Constants.ISS);
                     // try to get the cid as some OAuth tokens name it as cid like Okta.
                     if (clientId == null)
@@ -133,6 +135,8 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
                     auditInfo.put(Constants.SUBJECT_CLAIMS, claims);
                     auditInfo.put(Constants.CLIENT_ID_STRING, clientId);
                     auditInfo.put(Constants.ISSUER_CLAIMS, issuer);
+                    if(email != null) auditInfo.put(Constants.EMAIL, email);
+                    if(host != null) auditInfo.put(Constants.HOST, host);
 
                     if (!config.isEnableH2c() && checkForH2CRequest(headerMap)) {
                         Status status = new Status(STATUS_METHOD_NOT_ALLOWED);
