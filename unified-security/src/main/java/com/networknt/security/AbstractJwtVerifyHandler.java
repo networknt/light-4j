@@ -119,7 +119,7 @@ public abstract class AbstractJwtVerifyHandler extends UndertowVerifyHandler imp
 
                     String clientId = claims.getStringClaimValue(Constants.CLIENT_ID_STRING);
                     String userId = claims.getStringClaimValue(Constants.USER_ID_STRING);
-                    String email = claims.getStringClaimValue(Constants.EMAIL);
+                    String email = claims.getStringClaimValue(Constants.EML);
                     String host = claims.getStringClaimValue(Constants.HOST);
                     String issuer = claims.getStringClaimValue(Constants.ISS);
                     // try to get the cid as some OAuth tokens name it as cid like Okta.
