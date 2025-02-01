@@ -880,7 +880,7 @@ ERR11604:
 ERR11605:
   statusCode: 400
   code: ERR11605
-  message: SEND_MESSAGE_EXCEPITON
+  message: SEND_MESSAGE_EXCEPTION
   description: Send message exception caused by %s with user %s.
 ERR11606:
   statusCode: 400
@@ -1047,6 +1047,16 @@ ERR11638:
   code: ERR11638
   message: FILESYSTEM_ERROR
   description: Error while access filesystem with file %s and error message %s.
+ERR11639:
+  statusCode: 400
+  code: ERR11639
+  message: PROVIDER_KEY_TYPE_MISSING
+  description: Provider key type is missing.
+ERR11640:
+  statusCode: 400
+  code: ERR11640
+  message: PROVIDER_KEY_TYPE_INVALID
+  description: Provider key type %s is invalid.
 
 
 # OAuth2 service error 12000-12099
@@ -1313,6 +1323,17 @@ ERR12052:
   code: ERR12052
   message: AUTHORIZATION_CODE_NOT_FOUND
   description: Authorization code %s not found when getting an authorization code token
+ERR12053:
+  statusCode: 400
+  code: ERR12053
+  message: MISMATCH_PROVIDER_ID
+  description: provider_id %s does not match previous provider_id %s in token request.
+
+ERR12054:
+  statusCode: 400
+  code: ERR12054
+  message: KEY_GENERATION_ERROR
+  description: Key generation error %s.
 
 # Tokenization service
 ERR12100:

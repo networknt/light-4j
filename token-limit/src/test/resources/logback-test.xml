@@ -42,7 +42,7 @@
         <appender-ref ref="stdout"/>
     </root>
 
-    <logger name="com.networknt" level="trace" additivity="false">
+    <logger name="com.networknt.token.limit" level="trace" additivity="false">
         <appender-ref ref="stdout"/>
         <appender-ref ref="log"/>
     </logger>
