@@ -68,6 +68,15 @@ public class DateUtil {
         }
     }
 
+    /**
+     * Parses the specified date string as an ISO 8601 date (yyyy-MM-dd'T'HH:mm:ss'Z') into milliseconds
+     * @param dateString The date string to parse.
+     * @return long The milliseconds since epoch.
+     */
+    public static long parseIso8601DateToMillis(String dateString) {
+        return parseIso8601Date(dateString).toEpochMilli();
+    }
+
     private static Instant parseInstant(String dateString, DateTimeFormatter formatter) {
         return formatter.withZone(ZoneOffset.UTC).parse(dateString, Instant::from);
     }
