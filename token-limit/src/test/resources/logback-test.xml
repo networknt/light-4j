@@ -44,6 +44,7 @@
 
     <logger name="com.networknt.token.limit" level="trace" additivity="false">
         <appender-ref ref="stdout"/>
+        <appender-ref ref="log"/>
     </logger>
 
 </configuration>
