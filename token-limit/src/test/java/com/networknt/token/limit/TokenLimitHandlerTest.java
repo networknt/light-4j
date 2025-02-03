@@ -45,6 +45,7 @@ public class TokenLimitHandlerTest {
     //private static TokenLimitConfig config;
     String legacyRequestBody = "grant_type=client_credentials&client_id=legacyClient&client_secret=secret&scope=scope";
     String nonLegacyRequestBody = "grant_type=client_credentials&client_id=NonlegacyClient&client_secret=secret&scope=scope";
+    String legacyRequestBodyWithAuthHeader = "grant_type=client_credentials&scope=scope";
 
     public String callLegacyClient() throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
@@ -63,6 +64,34 @@ public class TokenLimitHandlerTest {
             request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
             request.getRequestHeaders().put(Headers.HOST, "localhost");
             connection.sendRequest(request, client.createClientCallback(reference, latch, legacyRequestBody));
+            latch.await();
+        } catch (Exception e) {
+            logger.error("Exception: ", e);
+            throw new ClientException(e);
+        } finally {
+            client.restore(connectionToken);
+        }
+        return reference.get().getAttachment(Http2Client.RESPONSE_BODY) + ":" + reference.get().getResponseCode();
+    }
+
+    public String callLegacyClientWithAuthHeader() throws Exception {
+        final CountDownLatch latch = new CountDownLatch(1);
+        SimpleConnectionHolder.ConnectionToken connectionToken = null;
+        final AtomicReference<ClientResponse> reference = new AtomicReference<>();
+        try {
+            if(enableHttps) {
+                connectionToken = client.borrow(new URI(url), Http2Client.WORKER, client.getDefaultXnioSsl(), Http2Client.BUFFER_POOL, enableHttp2 ? OptionMap.create(UndertowOptions.ENABLE_HTTP2, true): OptionMap.EMPTY);
+            } else {
+                connectionToken = client.borrow(new URI(url), Http2Client.WORKER, Http2Client.BUFFER_POOL, OptionMap.EMPTY);
+            }
+            ClientConnection connection = (ClientConnection) connectionToken.getRawConnection();
+
+            ClientRequest request = new ClientRequest().setPath("/oauth2/1234123/v1/token").setMethod(Methods.POST);
+            request.getRequestHeaders().put(Headers.CONTENT_TYPE, "application/x-www-form-urlencoded");
+            request.getRequestHeaders().put(Headers.TRANSFER_ENCODING, "chunked");
+            request.getRequestHeaders().put(Headers.HOST, "localhost");
+            request.getRequestHeaders().put(Headers.AUTHORIZATION, "Basic Y2xpZW50SURBQkM6bXlwYXNzd29yZA==");
+            connection.sendRequest(request, client.createClientCallback(reference, latch, legacyRequestBodyWithAuthHeader));
             latch.await();
         } catch (Exception e) {
             logger.error("Exception: ", e);
