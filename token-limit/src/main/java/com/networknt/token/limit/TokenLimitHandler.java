@@ -166,12 +166,24 @@ public class TokenLimitHandler implements MiddlewareHandler {
                 return;
             }
 
+            // construct the key based on grant_type and client_id or code.
+            if(grantType.equals(CLIENT_CREDENTIALS)) {
+                key = clientId + ":" + clientIpAddress + ":" + scope;
+                if(logger.isTraceEnabled()) logger.trace("client credentials key = {}", key);
+            } else if(grantType.equals(AUTHORIZATION_CODE)) {
+                String code = bodyMap.get(CODE);
+                key = clientId  + ":" + code + ":" + clientIpAddress + ":" + scope;
+                if(logger.isTraceEnabled()) logger.trace("authorization code key = {}", key);
+            } else {
+                // other grant_type, ignore it.
+                if(logger.isTraceEnabled()) logger.trace("other grant type {}, ignore it", grantType);
+            }
+
             // secondly, we need to identify if the ClientID is considered Legacy or not. If it is, bypass limit, cache and call next handler.
             List<String> legacyClient = config.getLegacyClient();
             if(legacyClient.contains(clientId)) {
                 if(logger.isTraceEnabled()) logger.trace("client {} is configured as Legacy, bypass the token limit.", clientId);
                 //  check if cache key exists in cache manager, if exists return cached token
-                key = clientId + ":" + clientSecret + ":" + scope;
                 ResponseEntity<String> responseEntity = (ResponseEntity) cacheManager.get(CLIENT_TOKEN, key);
                 if (responseEntity != null) {
                     if(logger.isTraceEnabled()) logger.trace("legacy client cache key {} has token value, returning cached token.", key);
@@ -186,18 +198,6 @@ public class TokenLimitHandler implements MiddlewareHandler {
                 return;
             }
 
-            // construct the key based on grant_type and client_id or code.
-            if(grantType.equals(CLIENT_CREDENTIALS)) {
-                key = clientId + ":" + clientIpAddress;
-                if(logger.isTraceEnabled()) logger.trace("client credentials key = {}", key);
-            } else if(grantType.equals(AUTHORIZATION_CODE)) {
-                String code = bodyMap.get(CODE);
-                key = clientId  + ":" + code + ":" + clientIpAddress;
-                if(logger.isTraceEnabled()) logger.trace("authorization code key = {}", key);
-            } else {
-                // other grant_type, ignore it.
-                if(logger.isTraceEnabled()) logger.trace("other grant type {}, ignore it", grantType);
-            }
 
             if(key != null) {
                 // check if the key is in the cache manager.
