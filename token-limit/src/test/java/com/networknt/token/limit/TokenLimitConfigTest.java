@@ -1,5 +1,6 @@
 package com.networknt.token.limit;
 
+import com.networknt.cache.CacheManager;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,5 +27,13 @@ public class TokenLimitConfigTest {
         String regexPattern = urlPattern
                 .replaceAll("\\{([^{}]+)\\}", "(?<$1>[^/]+)");
         System.out.println("regexPattern = " + regexPattern);
+    }
+
+    @Test
+    public void testRegexReplace2() {
+        CacheManager cacheManager = CacheManager.getInstance();
+        System.out.println("cacheManager = " + cacheManager);
+        cacheManager = CacheManager.getInstance();
+        System.out.println("cacheManager = " + cacheManager);
     }
 }
