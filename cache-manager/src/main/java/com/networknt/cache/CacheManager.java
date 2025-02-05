@@ -9,33 +9,40 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 
-/**
- * CacheManager is a singleton class that is used to manage all the caches in the system. The underline implementation
- * can be anything as long as it implements the CacheManager interface. The default implementation is CaffeineCacheManager
- * Please note that the CacheManager doesn't have any reference to the underlying cache implementation.
- *
- * @author Steve Hu
- */
 public interface CacheManager {
     Logger logger = LoggerFactory.getLogger(CacheManager.class);
+
+    // Holder class for lazy initialization of the CacheManager instance and state
+    class Holder {
+        static volatile boolean initialized = false;
+        static volatile CacheManager instance = null;
+    }
+
     static CacheManager getInstance() {
-        CacheConfig config = CacheConfig.load();
-        ModuleRegistry.registerModule(CacheConfig.CONFIG_NAME, CacheManager.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CacheConfig.CONFIG_NAME), null);
-        List<CacheItem> caches = config.getCaches();
-        if(caches != null && !caches.isEmpty()) {
-            CacheManager cacheManager = SingletonServiceFactory.getBean(CacheManager.class);
-            if(cacheManager != null) {
-                for(CacheItem cacheItem: caches) {
-                    cacheManager.addCache(cacheItem.getCacheName(), cacheItem.getMaxSize(), cacheItem.getExpiryInMinutes());
+        if (!Holder.initialized) {
+            synchronized (Holder.class) {
+                if (!Holder.initialized) {
+                    CacheConfig config = CacheConfig.load();
+                    ModuleRegistry.registerModule(CacheConfig.CONFIG_NAME, CacheManager.class.getName(), Config.getNoneDecryptedInstance().getJsonMapConfigNoCache(CacheConfig.CONFIG_NAME), null);
+                    List<CacheItem> caches = config.getCaches();
+                    if (caches != null && !caches.isEmpty()) {
+                        CacheManager cacheManager = SingletonServiceFactory.getBean(CacheManager.class);
+                        if (cacheManager != null) {
+                            for (CacheItem cacheItem : caches) {
+                                cacheManager.addCache(cacheItem.getCacheName(), cacheItem.getMaxSize(), cacheItem.getExpiryInMinutes());
+                            }
+                            Holder.instance = cacheManager;
+                        } else {
+                            logger.error("CacheManager implementation is not found in the service.yml");
+                        }
+                    } else {
+                        logger.error("No cache is configured in cache.yml");
+                    }
+                    Holder.initialized = true;
                 }
-            } else {
-                logger.error("CacheManager implementation is not found in the service.yml");
             }
-            return cacheManager;
-        } else {
-            logger.error("No cache is configured in cache.yml");
-            return null;
         }
+        return Holder.instance;
     }
 
     void addCache(String cacheName, long maxSize, long expiryInMinutes);
