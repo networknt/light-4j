@@ -9,6 +9,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 
@@ -132,7 +133,7 @@ public class JsonSchemaGeneratorTest {
             "      \"contains\": false,\n" +
             "      \"externalized\": true,\n" +
             "      \"useSubObjectDefault\": false," +
-            "      \"defaultValue\": [],\n" +
+            "      \"defaultValue\": \"\",\n" +
             "      \"uniqueItems\": false,\n" +
             "      \"configFieldName\": \"pathPrefixAuths\",\n" +
             "      \"description\": \"\",\n" +
@@ -197,7 +198,7 @@ public class JsonSchemaGeneratorTest {
 
     @Test
     public void writeJsonSchemaToFile() throws IOException {
-        final var metadata = MAPPER.readValue(testMetadata2, new TypeReference<LinkedHashMap<String, Object>>() {});
+        final var metadata = MAPPER.readValue(testMetadata, new TypeReference<LinkedHashMap<String, Object>>() {});
         final var generator = new JsonSchemaGenerator("apikey-test");
         generator.writeSchemaToFile("src/test/resources/config",  metadata);
         final var file1 = new File("src/test/resources/config/apikey-test.json");
@@ -208,11 +209,11 @@ public class JsonSchemaGeneratorTest {
     @Test
     public void writeYamlSchemaToFile() throws IOException {
         final var metadata = MAPPER.readValue(testMetadata2, new TypeReference<LinkedHashMap<String, Object>>() {});
-        final var generator = new YamlGenerator("apikey-test");
+        final var generator = new YamlGenerator("audit-test");
         generator.writeSchemaToFile("src/test/resources/config",  metadata);
-        assertTrue(true);
-//        final var file1 = new File("src/test/resources/config/apikey-test.yaml");
-//        final var file2 = new File("src/test/resources/config/apikey-compare.yaml");
-//        assertTrue(Arrays.equals(Files.readAllBytes(file1.toPath()), Files.readAllBytes(file2.toPath())));
+        final var file1 = new File("src/test/resources/config/audit-test.yaml");
+        final var file2 = new File("src/test/resources/config/audit-compare.yaml");
+        assertTrue(Arrays.equals(Files.readAllBytes(file1.toPath()), Files.readAllBytes(file2.toPath())));
     }
+
 }

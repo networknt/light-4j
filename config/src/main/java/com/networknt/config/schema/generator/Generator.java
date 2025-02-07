@@ -23,6 +23,12 @@ public abstract class Generator {
         this.configKey = configKey;
     }
 
+    /**
+     * Gets the generator for the specified output format.
+     * @param format The output format to get the generator for.
+     * @param configKey The configuration key to use.
+     * @return The generator for the specified output format.
+     */
     public static Generator getGenerator(final OutputFormat format, final String configKey) {
         switch (format) {
             case JSON_SCHEMA:
@@ -36,11 +42,30 @@ public abstract class Generator {
         }
     }
 
+    /**
+     * Updates the property if the field is not the default value.
+     * @param field The field to update.
+     * @param property The property to update.
+     * @param key The key to update.
+     * @param defaultValue The default value.
+     * @param type The class type of the value.
+     * @param <T> The type of the value.
+     */
     protected <T> void updateIfNotDefault(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property, final String key, final Object defaultValue, final Class<T> type) {
         final var presentValue = this.getAsType(field.get(key), type);
-        if (presentValue != null && !Objects.equals(presentValue, defaultValue)) {
+        if (presentValue != null && !Objects.equals(presentValue, defaultValue))
             property.put(key, presentValue);
-        }
+
+    }
+
+    /**
+     * Common check to see if the current hashmap contains another hashmap at a specific field.
+     * @param map The map to check.
+     * @param field The field to check.
+     * @return True if the map contains the field and the field is a hashmap.
+     */
+    protected static boolean fieldIsHashMap(final LinkedHashMap<String, Object> map, final String field) {
+        return map.containsKey(field) && map.get(field) instanceof LinkedHashMap;
     }
 
     /**
@@ -134,37 +159,30 @@ public abstract class Generator {
         final var type = this.getAsType(field.get(MetadataParser.TYPE_KEY), String.class);
         switch (type) {
             case MetadataParser.ARRAY_TYPE:
-                LOG.trace("Parsing array field: {}", field);
                 this.parseArray(field, property);
                 break;
 
             case MetadataParser.BOOLEAN_TYPE:
-                LOG.trace("Parsing boolean field: {}", field);
                 this.parseBoolean(field, property);
                 break;
 
             case MetadataParser.INTEGER_TYPE:
-                LOG.trace("Parsing integer field: {}", field);
                 this.parseInteger(field, property);
                 break;
 
             case MetadataParser.NUMBER_TYPE:
-                LOG.trace("Parsing number field: {}", field);
                 this.parseNumber(field, property);
                 break;
 
             case MetadataParser.OBJECT_TYPE:
-                LOG.trace("Parsing object field: {}", field);
                 this.parseObject(field, property);
                 break;
 
             case MetadataParser.STRING_TYPE:
-                LOG.trace("Parsing string field: {}", field);
                 this.parseString(field, property);
                 break;
 
             case MetadataParser.NULL_TYPE:
-                LOG.trace("Parsing null field: {}", field);
                 this.parseNullField(field, property);
                 break;
 

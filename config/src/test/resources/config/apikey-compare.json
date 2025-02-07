@@ -9,26 +9,26 @@
         "type" : "object",
         "properties" : {
           "headerName" : {
-            "pattern" : "^[a-zA-Z0-9-_]*$",
-            "type" : "string"
+            "type" : "string",
+            "pattern" : "^[a-zA-Z0-9-_]*$"
           },
           "apiKey" : {
             "type" : "string"
           },
           "pathPrefix" : {
-            "pattern" : "^/.*",
-            "type" : "string"
+            "type" : "string",
+            "pattern" : "^/.*"
           }
         }
       }
     },
     "enabled" : {
-      "description" : "Enable or disable the api key filter.",
-      "type" : "boolean"
+      "type" : "boolean",
+      "description" : "Enable or disable the api key filter."
     },
     "hashEnabled" : {
-      "description" : "If API key hash is enabled. The API key will be hashed with PBKDF2WithHmacSHA1 before it is\nstored in the config file. It is more secure than put the encrypted key into the config file.\nThe default value is false. If you want to enable it, you need to use the following repo\nhttps://github.com/networknt/light-hash command line tool to hash the clear text key.",
-      "type" : "boolean"
+      "type" : "boolean",
+      "description" : "If API key hash is enabled. The API key will be hashed with PBKDF2WithHmacSHA1 before it is\nstored in the config file. It is more secure than put the encrypted key into the config file.\nThe default value is false. If you want to enable it, you need to use the following repo\nhttps://github.com/networknt/light-hash command line tool to hash the clear text key."
     }
   }
 }

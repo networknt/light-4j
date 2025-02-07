@@ -32,7 +32,7 @@ public enum Format {
     U32("u32"),
     U64("u64"),
     U128("u128"),
-    NONE("none");
+    NONE("NONE");
 
 
     private final String format;

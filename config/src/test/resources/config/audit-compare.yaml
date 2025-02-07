@@ -1,29 +1,29 @@
 #Output header elements. You can add more if you want. If multiple values, you can use a comma separated
 #string as default value in the template and values.yml. You can also use a list of strings in YAML format.
-headers: ${apikey-test.headers:["X-Correlation-Id", "X-Traceability-Id","caller_id"]}
+headers: ${audit-test.headers:}
 #Output audit elements. You can add more if you want. If multiple values, you can use a comma separated
 #string as default value in the template and values.yml. You can also use a list of strings in YAML format.
-audit: ${apikey-test.audit:["client_id", "user_id", "scope_client_id", "endpoint", "serviceId"]}
+audit: ${audit-test.audit:}
 #Output response status code.
-statusCode: ${apikey-test.statusCode:true}
+statusCode: ${audit-test.statusCode:true}
 #Output response time.
-responseTime: ${apikey-test.responseTime:true}
+responseTime: ${audit-test.responseTime:true}
 #when auditOnError is true:
 # - it will only log when status code >= 400
 #when auditOnError is false:
 # - it will log on every request
 #log level is controlled by logLevel
-auditOnError: ${apikey-test.auditOnError:false}
+auditOnError: ${audit-test.auditOnError:false}
 #Enable mask in the audit log
-mask: ${apikey-test.mask:true}
+mask: ${audit-test.mask:true}
 #the format for outputting the timestamp, if the format is not specified or invalid, will use a long value.
 #for some users that will process the audit log manually, you can use yyyy-MM-dd'T'HH:mm:ss.SSSZ as format.
-timestampFormat: ${apikey-test.timestampFormat:}
+timestampFormat: ${audit-test.timestampFormat:}
 #The limit of the request body to put into the audit entry if requestBody is in the list of audit. If the
 #request body is bigger than the max size, it will be truncated to the max size. The default value is 4096.
-requestBodyMaxSize: ${apikey-test.requestBodyMaxSize:4096}
+requestBodyMaxSize: ${audit-test.requestBodyMaxSize:4096}
 #The limit of the response body to put into the audit entry if responseBody is in the list of audit. If the
 #response body is bigger than the max size, it will be truncated to the max size. The default value is 4096.
-responseBodyMaxSize: ${apikey-test.responseBodyMaxSize:4096}
+responseBodyMaxSize: ${audit-test.responseBodyMaxSize:4096}
 #Enable Audit Logging
-enabled: ${apikey-test.enabled:true}
+enabled: ${audit-test.enabled:true}

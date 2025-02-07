@@ -69,12 +69,23 @@ public class MetadataParser {
         FIELD_PARSE_FUNCTIONS.put(ArrayField.class, (tuple) -> parseArrayMetadata((ArrayField) tuple._1(), tuple._2()));
     }
 
+    /**
+     * Parses the element for all config schema metadata.
+     * @param element - the root element to gather metadata on.
+     * @param processingEnvironment - the processing env.
+     * @return - hashmap containing all data from annotations.
+     */
     public LinkedHashMap<String, Object> parseMetadata(final Element element, final ProcessingEnvironment processingEnvironment) {
         final var rootMetadata = new LinkedHashMap<String, Object>();
         gatherObjectSchemaData(element, rootMetadata, processingEnvironment);
         return rootMetadata;
     }
 
+    /**
+     * Returns the type of the element as a string.
+     * @param element The element to get the type of.
+     * @return The type of the element as a string.
+     */
     private static String getTypeString(final Element element) {
         final var name = element.getSimpleName().toString();
         switch (name.toLowerCase()) {
@@ -88,6 +99,12 @@ public class MetadataParser {
         }
     }
 
+    /**
+     * Gathers schema data for an object element.
+     * @param currentRoot The current root element.
+     * @param rootMetadata The metadata to be populated.
+     * @param processingEnvironment The processing environment.
+     */
     private static void gatherObjectSchemaData(final Element currentRoot, final LinkedHashMap<String, Object> rootMetadata, final ProcessingEnvironment processingEnvironment) {
         LOG.trace("Gathering schema data for element: {}", currentRoot.getSimpleName());
         final var fields = currentRoot.getEnclosedElements();

@@ -32,7 +32,7 @@ public class JsonSchemaGenerator extends Generator {
 
         schemaMap.put(MetadataParser.TYPE_KEY, MetadataParser.OBJECT_TYPE);
 
-        if (metadata.get(MetadataParser.PROPERTIES_KEY) instanceof LinkedHashMap) {
+        if (Generator.fieldIsHashMap(metadata, MetadataParser.PROPERTIES_KEY)) {
             schemaMap.put("required", this.getRootSchemaRequiredFields((LinkedHashMap<String, Object>) metadata.get(MetadataParser.PROPERTIES_KEY)));
             schemaMap.put(MetadataParser.PROPERTIES_KEY, this.getRootSchemaProperties(metadata));
 

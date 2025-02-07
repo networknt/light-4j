@@ -8,6 +8,7 @@ import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.comments.CommentLine;
 import org.yaml.snakeyaml.comments.CommentType;
+import org.yaml.snakeyaml.error.Mark;
 import org.yaml.snakeyaml.events.CommentEvent;
 import org.yaml.snakeyaml.nodes.Node;
 import org.yaml.snakeyaml.representer.Representer;
@@ -15,7 +16,6 @@ import org.yaml.snakeyaml.representer.Representer;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * Generates Light4J style yaml configuration files.
@@ -45,7 +45,6 @@ public class YamlGenerator extends Generator {
 
         metadataProperties.forEach((key, value) -> {
             final var property = new LinkedHashMap<String, Object>();
-            LOG.trace("Parsing field: {}", key);
             if (!(value instanceof LinkedHashMap))
                 return;
             this.parseField((LinkedHashMap<String, Object>) value, property);
@@ -72,6 +71,14 @@ public class YamlGenerator extends Generator {
         }
     }
 
+    /**
+     * Builds the yaml property value for Light4J configurations.
+     * If externalized, the property value will be formatted as ${configFileName.configFieldName:defaultValue}
+     * The default value is only added if it was set in the Annotation.
+     *
+     * @param field The field to parse.
+     * @param property The property to add the field to.
+     */
     private void buildYamlProperty(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
         final var externalized = this.getAsType(field.get(MetadataParser.EXTERNALIZED_KEY), Boolean.class);
         final var isExternalized = externalized != null && externalized;
@@ -104,7 +111,7 @@ public class YamlGenerator extends Generator {
         final var useSubObjectDefault = this.getAsType(field.get(MetadataParser.USE_SUB_OBJECT_DEFAULT_KEY), Boolean.class);
         if (useSubObjectDefault != ConfigSchema.DEFAULT_BOOLEAN) {
 
-            if (field.get(MetadataParser.ITEMS_KEY) instanceof LinkedHashMap) {
+            if (Generator.fieldIsHashMap(field, MetadataParser.ITEMS_KEY)) {
 
                 // TODO - test this with items
                 final var props = (LinkedHashMap<String, Object>) field.get(MetadataParser.ITEMS_KEY);
@@ -143,7 +150,7 @@ public class YamlGenerator extends Generator {
         final var useSubObjectDefault = this.getAsType(field.get(MetadataParser.USE_SUB_OBJECT_DEFAULT_KEY), Boolean.class);
         if (useSubObjectDefault != ConfigSchema.DEFAULT_BOOLEAN) {
 
-            if (field.get(MetadataParser.PROPERTIES_KEY) instanceof LinkedHashMap) {
+            if (Generator.fieldIsHashMap(field, MetadataParser.PROPERTIES_KEY)) {
 
                 // TODO - test this with properties
                 final var props = (LinkedHashMap<String, Object>) field.get(MetadataParser.PROPERTIES_KEY);
@@ -189,40 +196,42 @@ public class YamlGenerator extends Generator {
                     Node node = super.representData(data);
                     final var start = node.getStartMark();
                     final var end = node.getEndMark();
-                    LOG.trace("Representing data: {}", data);
-                    if (this.innerMetadata.containsKey(MetadataParser.PROPERTIES_KEY) && this.innerMetadata.get(MetadataParser.PROPERTIES_KEY) instanceof LinkedHashMap) {
+
+                    if (Generator.fieldIsHashMap(innerMetadata, MetadataParser.PROPERTIES_KEY)) {
 
                         final var allProperties = (LinkedHashMap<String, Object>) this.innerMetadata.get(MetadataParser.PROPERTIES_KEY);
                         final var currentYamlField = (String) data;
-                        LOG.trace("Checking if field has comment: {}", currentYamlField);
-                        LOG.trace("{}", allProperties);
-                        if (allProperties.containsKey(currentYamlField) && allProperties.get(currentYamlField) instanceof LinkedHashMap) {
 
+                        if (Generator.fieldIsHashMap(allProperties, currentYamlField)) {
                             final var yamlFieldProp = (LinkedHashMap<String, Object>) allProperties.get(currentYamlField);
                             final var description = (String) yamlFieldProp.get(MetadataParser.DESCRIPTION_KEY);
 
                             LOG.trace("Adding comment to field: {}", currentYamlField);
-                            if (!description.isEmpty()) {
+                            if (!description.isEmpty())
+                                this.addCommentsToNode(start, end, description, node);
 
-                                final var commentLines = new ArrayList<CommentLine>();
-
-                                /* Add description comment line or multiple lines if the description contains multiple lines. */
-                                if (description.contains("\n")) {
-                                    final var lines = description.split("\n");
-
-                                    for (final var line : lines)
-                                        commentLines.add(new CommentLine(new CommentEvent(CommentType.BLOCK, line, start, end)));
-
-
-                                } else commentLines.add(new CommentLine(new CommentEvent(CommentType.BLOCK, description, start, end)));
-
-                                node.setBlockComments(commentLines);
-                            }
                         }
                     }
 
                     return node;
                 }
+
+                private void addCommentsToNode(final Mark start, final Mark end, final String description, final Node node) {
+                    final var commentLines = new ArrayList<CommentLine>();
+
+                    /* Add description comment line or multiple lines if the description contains multiple lines. */
+                    if (description.contains("\n")) {
+                        final var lines = description.split("\n");
+
+                        for (final var line : lines)
+                            commentLines.add(new CommentLine(new CommentEvent(CommentType.BLOCK, line, start, end)));
+
+
+                    } else commentLines.add(new CommentLine(new CommentEvent(CommentType.BLOCK, description, start, end)));
+
+                    node.setBlockComments(commentLines);
+                }
+
             });
         }
     }
