@@ -18,6 +18,7 @@ package com.networknt.audit;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.networknt.config.Config;
 import com.networknt.config.ConfigException;
+import com.networknt.config.schema.*;
 import com.networknt.utility.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,12 @@ import java.util.function.Consumer;
  * AuditConfig is singleton, and it is loaded from audit.yml in the config folder.
  * @author Steve Hu
  */
+@ConfigSchema(
+        configKey = "audit",
+        outputFormats = {
+        OutputFormat.JSON_SCHEMA,
+        OutputFormat.YAML
+})
 public class AuditConfig {
     private static final Logger logger = LoggerFactory.getLogger(AuditConfig.class);
 
@@ -50,19 +57,98 @@ public class AuditConfig {
 
     private  Map<String, Object> mappedConfig;
     public static final String CONFIG_NAME = "audit";
+
+    @ArrayField(
+            configFieldName = "headers",
+            description = "Output header elements. You can add more if you want. If multiple values, you can use a comma separated\n" +
+                          "string as default value in the template and values.yml. You can also use a list of strings in YAML format.",
+            externalized = true,
+            items = String.class,
+            defaultValue = "[\"X-Correlation-Id\", \"X-Traceability-Id\",\"caller_id\"]"
+    )
     private List<String> headerList;
+
+    @ArrayField(
+            configFieldName = "audit",
+            description = "Output audit elements. You can add more if you want. If multiple values, you can use a comma separated\n" +
+                          "string as default value in the template and values.yml. You can also use a list of strings in YAML format.",
+            externalized = true,
+            items = String.class,
+            defaultValue = "[\"client_id\", \"user_id\", \"scope_client_id\", \"endpoint\", \"serviceId\"]"
+    )
     private List<String> auditList;
 
     private final Config config;
     // A customized logger appender defined in default logback.xml
     private Consumer<String> auditFunc;
+
+    @BooleanField(
+            configFieldName = "statusCode",
+            description = "Output response status code.",
+            externalized = true,
+            defaultValue = true
+    )
     private boolean statusCode;
+
+    @BooleanField(
+            configFieldName = "responseTime",
+            description = "Output response time.",
+            externalized = true,
+            defaultValue = true
+    )
     private boolean responseTime;
+
+    @BooleanField(
+            configFieldName = "auditOnError",
+            description = "when auditOnError is true:\n" +
+                          " - it will only log when status code >= 400\n" +
+                          "when auditOnError is false:\n" +
+                          " - it will log on every request\n" +
+                          "log level is controlled by logLevel",
+            externalized = true
+    )
     private boolean auditOnError;
+
+    @BooleanField(
+            configFieldName = "mask",
+            description = "Enable mask in the audit log",
+            externalized = true,
+            defaultValue = true
+    )
     private boolean mask;
+
+    @StringField(
+            configFieldName = "timestampFormat",
+            description = "the format for outputting the timestamp, if the format is not specified or invalid, will use a long value.\n" +
+                          "for some users that will process the audit log manually, you can use yyyy-MM-dd'T'HH:mm:ss.SSSZ as format.",
+            externalized = true
+    )
     private String timestampFormat;
+
+    @IntegerField(
+            configFieldName = "requestBodyMaxSize",
+            description = "The limit of the request body to put into the audit entry if requestBody is in the list of audit. If the\n" +
+                          "request body is bigger than the max size, it will be truncated to the max size. The default value is 4096.",
+            externalized = true,
+            defaultValue = 4096
+    )
     private int requestBodyMaxSize;
+
+    @IntegerField(
+            configFieldName = "responseBodyMaxSize",
+            description = "The limit of the response body to put into the audit entry if responseBody is in the list of audit. If the\n" +
+                          "response body is bigger than the max size, it will be truncated to the max size. The default value is 4096.",
+            externalized = true,
+            defaultValue = 4096
+    )
     private int responseBodyMaxSize;
+
+    @BooleanField(
+            configFieldName = "enabled",
+            description = "Enable Audit Logging",
+            externalized = true,
+            defaultValue = true
+    )
     private boolean enabled;
 
     private AuditConfig() {

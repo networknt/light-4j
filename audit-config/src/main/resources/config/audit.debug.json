@@ -1,0 +1,107 @@
+{
+  "properties" : {
+    "headers" : {
+      "type" : "array",
+      "configFieldName" : "headers",
+      "description" : "Output header elements. You can add more if you want. If multiple values, you can use a comma separated\nstring as default value in the template and values.yml. You can also use a list of strings in YAML format.",
+      "externalized" : true,
+      "items" : {
+        "type" : "string"
+      },
+      "minItems" : 0,
+      "maxItems" : 2147483647,
+      "uniqueItems" : false,
+      "contains" : false,
+      "useSubObjectDefault" : false,
+      "defaultValueJsonString" : "[\"X-Correlation-Id\", \"X-Traceability-Id\",\"caller_id\"]"
+    },
+    "audit" : {
+      "type" : "array",
+      "configFieldName" : "audit",
+      "description" : "Output audit elements. You can add more if you want. If multiple values, you can use a comma separated\nstring as default value in the template and values.yml. You can also use a list of strings in YAML format.",
+      "externalized" : true,
+      "items" : {
+        "type" : "string"
+      },
+      "minItems" : 0,
+      "maxItems" : 2147483647,
+      "uniqueItems" : false,
+      "contains" : false,
+      "useSubObjectDefault" : false,
+      "defaultValueJsonString" : "[\"client_id\", \"user_id\", \"scope_client_id\", \"endpoint\", \"serviceId\"]"
+    },
+    "statusCode" : {
+      "type" : "boolean",
+      "configFieldName" : "statusCode",
+      "description" : "Output response status code.",
+      "externalized" : true,
+      "defaultValue" : true
+    },
+    "responseTime" : {
+      "type" : "boolean",
+      "configFieldName" : "responseTime",
+      "description" : "Output response time.",
+      "externalized" : true,
+      "defaultValue" : true
+    },
+    "auditOnError" : {
+      "type" : "boolean",
+      "configFieldName" : "auditOnError",
+      "description" : "when auditOnError is true:\n - it will only log when status code >= 400\nwhen auditOnError is false:\n - it will log on every request\nlog level is controlled by logLevel",
+      "externalized" : true,
+      "defaultValue" : false
+    },
+    "mask" : {
+      "type" : "boolean",
+      "configFieldName" : "mask",
+      "description" : "Enable mask in the audit log",
+      "externalized" : true,
+      "defaultValue" : true
+    },
+    "timestampFormat" : {
+      "type" : "string",
+      "configFieldName" : "timestampFormat",
+      "description" : "the format for outputting the timestamp, if the format is not specified or invalid, will use a long value.\nfor some users that will process the audit log manually, you can use yyyy-MM-dd'T'HH:mm:ss.SSSZ as format.",
+      "externalized" : true,
+      "defaultValue" : "",
+      "minLength" : 0,
+      "maxLength" : 2147483647,
+      "pattern" : "",
+      "format" : "NONE"
+    },
+    "requestBodyMaxSize" : {
+      "type" : "integer",
+      "configFieldName" : "requestBodyMaxSize",
+      "description" : "The limit of the request body to put into the audit entry if requestBody is in the list of audit. If the\nrequest body is bigger than the max size, it will be truncated to the max size. The default value is 4096.",
+      "externalized" : true,
+      "defaultValue" : 4096,
+      "minimum" : -2147483648,
+      "maximum" : 2147483647,
+      "exclusiveMin" : false,
+      "exclusiveMax" : false,
+      "multipleOf" : 0,
+      "format" : "INT32"
+    },
+    "responseBodyMaxSize" : {
+      "type" : "integer",
+      "configFieldName" : "responseBodyMaxSize",
+      "description" : "The limit of the response body to put into the audit entry if responseBody is in the list of audit. If the\nresponse body is bigger than the max size, it will be truncated to the max size. The default value is 4096.",
+      "externalized" : true,
+      "defaultValue" : 4096,
+      "minimum" : -2147483648,
+      "maximum" : 2147483647,
+      "exclusiveMin" : false,
+      "exclusiveMax" : false,
+      "multipleOf" : 0,
+      "format" : "INT32"
+    },
+    "enabled" : {
+      "type" : "boolean",
+      "configFieldName" : "enabled",
+      "description" : "Enable Audit Logging",
+      "externalized" : true,
+      "defaultValue" : true
+    }
+  },
+  "type" : "object"
+}
