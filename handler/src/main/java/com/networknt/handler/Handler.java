@@ -44,6 +44,7 @@ public class Handler {
 
     private static final AttachmentKey<Integer> CHAIN_SEQ = AttachmentKey.create(Integer.class);
     private static final AttachmentKey<String> CHAIN_ID = AttachmentKey.create(String.class);
+    private static final AttachmentKey<MetricAttachment> EXECUTION_METRIC = AttachmentKey.create(MetricAttachment.class);
     private static final Logger LOG = LoggerFactory.getLogger(Handler.class);
     // Accessed directly.
     public static HandlerConfig config = HandlerConfig.load();
@@ -182,7 +183,7 @@ public class Handler {
         // Flatten out the execution list from a mix of middleware chains and handlers.
         var handlers = getHandlersFromExecList(pathChain.getExec());
 
-        if (handlers.size() > 0) {
+        if (!handlers.isEmpty()) {
 
             // If a matcher already exists for the given type, at to that instead of
             // creating a new one.
@@ -204,8 +205,17 @@ public class Handler {
      * @param httpServerExchange The current requests server exchange.
      * @throws Exception Propagated exception in the handleRequest chain.
      */
-    public static void next(HttpServerExchange httpServerExchange) throws Exception {
-        var httpHandler = getNext(httpServerExchange);
+    public static void next(final HttpServerExchange httpServerExchange) throws Exception {
+        final var httpHandler = getNext(httpServerExchange);
+
+        if (config.isReportHandlerDuration() && httpHandler != null) {
+            final var metric = httpServerExchange.getAttachment(EXECUTION_METRIC);
+            if (metric.isRunning()) {
+                final var endResult = metric.end();
+                LOG.debug("Handler {} finished executing after {}ms.", endResult.first, endResult.second);
+            }
+            metric.start(httpHandler.toString());
+        }
 
         if (httpHandler != null)
             httpHandler.handleRequest(httpServerExchange);
@@ -314,6 +324,10 @@ public class Handler {
             var result = pathTemplateMatcher.match(ex.getRequestPath());
 
             if (result != null) {
+
+                if (config.isReportHandlerDuration()) {
+                    ex.putAttachment(EXECUTION_METRIC, new MetricAttachment());
+                }
 
                 // Found a match, configure and return true;
                 // Add path variables to query params.
@@ -530,5 +544,33 @@ public class Handler {
 
     public static Map<String, HttpHandler> getHandlers() {
         return handlers;
+    }
+
+
+    private static class MetricAttachment {
+        private long startTime;
+        private boolean running = false;
+        private String runningHandlerName;
+
+        public boolean isRunning() {
+            return this.running;
+        }
+
+        public void start(final String handler) {
+            if (this.running)
+                throw new IllegalStateException("Cannot start twice!");
+            this.runningHandlerName = handler;
+            this.startTime = System.currentTimeMillis();
+            this.running = true;
+        }
+
+        public Tuple<String, Long> end() {
+            if (!running)
+                throw new IllegalStateException("Cannot end twice!");
+
+            this.running = false;
+            return new Tuple<>(this.runningHandlerName, System.currentTimeMillis() - this.startTime);
+        }
+
     }
 }
