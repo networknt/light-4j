@@ -30,6 +30,7 @@ import io.undertow.util.HttpString;
 import io.undertow.websockets.WebSocketConnectionCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -44,7 +45,7 @@ public class Handler {
 
     private static final AttachmentKey<Integer> CHAIN_SEQ = AttachmentKey.create(Integer.class);
     private static final AttachmentKey<String> CHAIN_ID = AttachmentKey.create(String.class);
-    private static final AttachmentKey<MetricAttachment> EXECUTION_METRIC = AttachmentKey.create(MetricAttachment.class);
+    private static final AttachmentKey<ArrayList<StopWatch>> EXECUTION_METRIC = AttachmentKey.create(ArrayList.class);
     private static final Logger LOG = LoggerFactory.getLogger(Handler.class);
     // Accessed directly.
     public static HandlerConfig config = HandlerConfig.load();
@@ -208,13 +209,25 @@ public class Handler {
     public static void next(final HttpServerExchange httpServerExchange) throws Exception {
         final var httpHandler = getNext(httpServerExchange);
 
-        if (config.isReportHandlerDuration() && httpHandler != null) {
-            final var metric = httpServerExchange.getAttachment(EXECUTION_METRIC);
-            if (metric.isRunning()) {
-                final var endResult = metric.end();
-                LOG.debug("Handler {} finished executing after {}ms.", endResult.first, endResult.second);
-            }
-            metric.start(httpHandler.toString());
+        if (config.isEnabledHandlerMetrics()) {
+
+            final var metrics = httpServerExchange.getAttachment(EXECUTION_METRIC);
+
+            final String handlerName;
+            if (httpHandler != null)
+                handlerName = httpHandler.toString();
+
+            else if (lastHandler != null)
+                handlerName = lastHandler.toString();
+
+            else handlerName = "unknown";
+
+            if (!metrics.isEmpty())
+                metrics.get(metrics.size() - 1).stop();
+
+            final var nextHandlerWatch = new StopWatch(handlerName);
+            nextHandlerWatch.start();
+            metrics.add(nextHandlerWatch);
         }
 
         if (httpHandler != null)
@@ -222,6 +235,23 @@ public class Handler {
 
         else if (lastHandler != null)
             lastHandler.handleRequest(httpServerExchange);
+
+        if (config.isEnabledHandlerMetrics()) {
+            final var metrics = httpServerExchange.getAttachment(EXECUTION_METRIC);
+
+            if (!metrics.isEmpty()) {
+                final var metricDisplay = new StringBuilder();
+                metricDisplay.append('\n')
+                        .append("** Handler Metrics **").append('\n');
+                while (!metrics.isEmpty()) {
+                    final var metric = metrics.remove(metrics.size() - 1);
+                    metricDisplay.append("Handler: ").append(metric.getName()).append('\n');
+                    metricDisplay.append("Duration: ").append(metric.getDuration()).append('\n');
+                    metricDisplay.append("---").append('\n');
+                }
+                LOG.atLevel(Level.valueOf(config.getHandlerMetricsLogLevel())).log("{}", metricDisplay.toString());
+            }
+        }
     }
 
     /**
@@ -325,8 +355,8 @@ public class Handler {
 
             if (result != null) {
 
-                if (config.isReportHandlerDuration()) {
-                    ex.putAttachment(EXECUTION_METRIC, new MetricAttachment());
+                if (config.isEnabledHandlerMetrics()) {
+                    ex.putAttachment(EXECUTION_METRIC, new ArrayList<StopWatch>());
                 }
 
                 // Found a match, configure and return true;
@@ -547,29 +577,46 @@ public class Handler {
     }
 
 
-    private static class MetricAttachment {
+    private static class StopWatch {
         private long startTime;
+        private long endTime;
         private boolean running = false;
-        private String runningHandlerName;
+        private final String name;
+
+        public StopWatch(final String name) {
+            this.name = name;
+        }
 
         public boolean isRunning() {
             return this.running;
         }
 
-        public void start(final String handler) {
+        public void start() {
             if (this.running)
                 throw new IllegalStateException("Cannot start twice!");
-            this.runningHandlerName = handler;
+
             this.startTime = System.currentTimeMillis();
             this.running = true;
         }
 
-        public Tuple<String, Long> end() {
-            if (!running)
+        public void stop() {
+            if (!this.running)
                 throw new IllegalStateException("Cannot end twice!");
 
             this.running = false;
-            return new Tuple<>(this.runningHandlerName, System.currentTimeMillis() - this.startTime);
+
+            this.endTime = System.currentTimeMillis();
+        }
+
+        public String getName() {
+            return this.name;
+        }
+
+        public long getDuration() {
+            if (this.running)
+                throw new IllegalStateException("Watch must be stopped first.");
+
+            return this.endTime - this.startTime;
         }
 
     }

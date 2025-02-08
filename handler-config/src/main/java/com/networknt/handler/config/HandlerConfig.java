@@ -56,7 +56,8 @@ public class HandlerConfig {
     private List<String> defaultHandlers;
     private boolean auditOnError;
     private boolean auditStackTrace;
-    private boolean reportHandlerDuration;
+    private boolean enabledHandlerMetrics;
+    private String handlerMetricsLogLevel;
     private String basePath;
     private Map<String, Object> mappedConfig;
     private final Config config;
@@ -96,12 +97,20 @@ public class HandlerConfig {
         this.enabled = enabled;
     }
 
-    public boolean isReportHandlerDuration() {
-        return reportHandlerDuration;
+    public boolean isEnabledHandlerMetrics() {
+        return enabledHandlerMetrics;
     }
 
-    public void setReportHandlerDuration(boolean reportHandlerDuration) {
-        this.reportHandlerDuration = reportHandlerDuration;
+    public void setEnabledHandlerMetrics(boolean enabledHandlerMetrics) {
+        this.enabledHandlerMetrics = enabledHandlerMetrics;
+    }
+
+    public String getHandlerMetricsLogLevel() {
+        return handlerMetricsLogLevel;
+    }
+
+    public void setHandlerMetricsLogLevel(String handlerMetricsLogLevel) {
+        this.handlerMetricsLogLevel = handlerMetricsLogLevel;
     }
 
     public List<String> getHandlers() {
@@ -178,7 +187,7 @@ public class HandlerConfig {
             Object object = mappedConfig.get(ENABLED);
             if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
             object = mappedConfig.get(REPORT_HANDLER_DURATION);
-            if(object != null) reportHandlerDuration = Config.loadBooleanValue(REPORT_HANDLER_DURATION, object);
+            if(object != null) enabledHandlerMetrics = Config.loadBooleanValue(REPORT_HANDLER_DURATION, object);
             object = mappedConfig.get(AUDIT_ON_ERROR);
             if(object != null) auditOnError = Config.loadBooleanValue(AUDIT_ON_ERROR, object);
             object = mappedConfig.get(AUDIT_STACK_TRACE);
