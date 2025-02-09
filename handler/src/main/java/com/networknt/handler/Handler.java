@@ -45,7 +45,8 @@ public class Handler {
 
     private static final AttachmentKey<Integer> CHAIN_SEQ = AttachmentKey.create(Integer.class);
     private static final AttachmentKey<String> CHAIN_ID = AttachmentKey.create(String.class);
-    private static final AttachmentKey<ArrayList<StopWatch>> EXECUTION_METRIC = AttachmentKey.create(ArrayList.class);
+    private static final AttachmentKey<HandlerMetricsCollector> EXECUTION_METRIC = AttachmentKey.create(HandlerMetricsCollector.class);
+    private static final AttachmentKey<String> METRICS_REPORT = AttachmentKey.create(String.class);
     private static final Logger LOG = LoggerFactory.getLogger(Handler.class);
     // Accessed directly.
     public static HandlerConfig config = HandlerConfig.load();
@@ -160,7 +161,7 @@ public class Handler {
         } catch (Exception e) {
 
             if (LOG.isErrorEnabled())
-                LOG.error("Failed to inject handler.yml paths from: " + sourceChain);
+                LOG.error("Failed to inject handler.yml paths from: {}", sourceChain);
 
             if (e instanceof RuntimeException)
                 throw (RuntimeException) e;
@@ -222,12 +223,7 @@ public class Handler {
 
             else handlerName = "unknown";
 
-            if (!metrics.isEmpty())
-                metrics.get(metrics.size() - 1).stop();
-
-            final var nextHandlerWatch = new StopWatch(handlerName);
-            nextHandlerWatch.start();
-            metrics.add(nextHandlerWatch);
+            metrics.initNextHandlerMeasurement(handlerName);
         }
 
         if (httpHandler != null)
@@ -238,19 +234,8 @@ public class Handler {
 
         if (config.isEnabledHandlerMetrics()) {
             final var metrics = httpServerExchange.getAttachment(EXECUTION_METRIC);
-
-            if (!metrics.isEmpty()) {
-                final var metricDisplay = new StringBuilder();
-                metricDisplay.append('\n')
-                        .append("** Handler Metrics **").append('\n');
-                while (!metrics.isEmpty()) {
-                    final var metric = metrics.remove(metrics.size() - 1);
-                    metricDisplay.append("Handler: ").append(metric.getName()).append('\n');
-                    metricDisplay.append("Duration: ").append(metric.getDuration()).append('\n');
-                    metricDisplay.append("---").append('\n');
-                }
-                LOG.atLevel(Level.valueOf(config.getHandlerMetricsLogLevel())).log("{}", metricDisplay.toString());
-            }
+            final var report = metrics.finalizeHandlerMetrics();
+            httpServerExchange.putAttachment(METRICS_REPORT, report);
         }
     }
 
@@ -356,7 +341,7 @@ public class Handler {
             if (result != null) {
 
                 if (config.isEnabledHandlerMetrics()) {
-                    ex.putAttachment(EXECUTION_METRIC, new ArrayList<StopWatch>());
+                    ex.putAttachment(EXECUTION_METRIC, new HandlerMetricsCollector());
                 }
 
                 // Found a match, configure and return true;
@@ -576,6 +561,56 @@ public class Handler {
         return handlers;
     }
 
+    protected static class HandlerMetricsCollector {
+        private boolean completed = false;
+        private final ArrayList<StopWatch> metrics = new ArrayList<>();
+
+        public void initNextHandlerMeasurement(final String handlerName) {
+            this.stopPreviousHandler();
+            final var nextHandler = new StopWatch(handlerName);
+            nextHandler.start();
+            this.metrics.add(nextHandler);
+        }
+
+        private void stopPreviousHandler() {
+            if (!metrics.isEmpty()) {
+                final var previousHandler = this.metrics.get(metrics.size() - 1);
+                previousHandler.stop();
+            }
+        }
+
+        public String finalizeHandlerMetrics() {
+
+            if (this.completed)
+                throw new IllegalStateException("Metrics already finalized.");
+
+            this.completed = true;
+            this.stopPreviousHandler();
+            final var report = this.buildMetricsReport();
+            LOG.atLevel(Level.valueOf(config.getHandlerMetricsLogLevel())).log(report);
+            return report;
+        }
+
+        private String buildMetricsReport() {
+            final var metricsDisplay = new StringBuilder();
+            metricsDisplay.append("[");
+            for (int x = 1; !this.metrics.isEmpty(); x++) {
+                final var currentHandler = this.metrics.remove(0);
+
+                if (currentHandler.isRunning())
+                    throw new IllegalStateException("Handler metric stop watch is still running!");
+                metricsDisplay.append("{").append("\"num\": ").append(x).append(", ");
+                metricsDisplay.append("\"name\": ").append("\"").append(currentHandler.getName()).append("\", ");
+                metricsDisplay.append("\"duration\": ").append(currentHandler.getDuration()).append("}");
+
+                if (!this.metrics.isEmpty()) {
+                    metricsDisplay.append(", ");
+                }
+            }
+            metricsDisplay.append("]");
+            return metricsDisplay.toString();
+        }
+    }
 
     private static class StopWatch {
         private long startTime;

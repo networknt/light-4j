@@ -128,5 +128,18 @@ public class HandlerTest {
         Handler.setConfig("invalid-method");
     }
 
+    @Test
+    public void checkHandlerMetrics() throws InterruptedException {
+        Handler.config.setHandlerMetricsLogLevel("INFO");
+        Handler.HandlerMetricsCollector collector = new Handler.HandlerMetricsCollector();
+        collector.initNextHandlerMeasurement("handler1");
+        Thread.sleep(20);
+        collector.initNextHandlerMeasurement("handler2");
+        Thread.sleep(25);
+        final var report = collector.finalizeHandlerMetrics();
+        Assert.assertTrue(report.contains("handler1"));
+        Assert.assertTrue(report.contains("handler2"));
+    }
+
 
 }
