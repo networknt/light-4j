@@ -117,8 +117,8 @@ public class TokenLimitHandler implements MiddlewareHandler {
         String clientId = null;
         String clientSecret = null;
         String scope = null;
-        // get the client ip address with port removed as the port is dynamic.
-        String clientIpAddress = exchange.getSourceAddress().getAddress().getHostAddress();
+        // Check if x-forwarded-for exists, if not, get the client ip address from source address with port removed as the port is dynamic.
+        String clientIpAddress = exchange.getRequestHeaders().contains(Headers.X_FORWARDED_FOR) ? exchange.getRequestHeaders().getFirst(Headers.X_FORWARDED_FOR) : exchange.getSourceAddress().getAddress().getHostAddress();
         if(logger.isTraceEnabled()) logger.trace("client address {}", clientIpAddress);
 
         // firstly, we need to identify if the request path ends with /token. If not, call next handler.
