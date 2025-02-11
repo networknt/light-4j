@@ -126,6 +126,13 @@ public class MetadataParser {
     }
 
 
+    /**
+     * Gets the metadata for a field element.
+     * Depending on the element type, a different function is invoked to parse the info from the annotation.
+     * @param element The element to get the metadata from.
+     * @param processingEnvironment The processing environment to resolve MirrorTypes.
+     * @return A LinkedHashMap containing the metadata.
+     */
     private static Optional<LinkedHashMap<String, Object>> getObjectPropertyMetadata(final Element element, final ProcessingEnvironment processingEnvironment) {
 
         LOG.trace("Gathering object schema data for property: {}", element.getSimpleName());
@@ -170,6 +177,14 @@ public class MetadataParser {
         }
     }
 
+    /**
+     * Parses the 'ArrayField' annotation and returns a LinkedHashMap containing the metadata.
+     * Review the ArrayField interface to view all available fields.
+     *
+     * @param field The field of the config to parse.
+     * @param processingEnvironment The processing environment to resolve subtypes.
+     * @return A LinkedHashMap containing the metadata.
+     */
     private static LinkedHashMap<String, Object> parseArrayMetadata(final ArrayField field, final ProcessingEnvironment processingEnvironment) {
         Element itemElement;
         try {
@@ -197,6 +212,12 @@ public class MetadataParser {
         return metadata;
     }
 
+    /**
+     * Parses the 'IntegerField' annotation and returns a LinkedHashMap containing the metadata.
+     * Review the IntegerField interface to view all available fields.
+     * @param field The field of the config to parse.
+     * @return A LinkedHashMap containing the metadata.
+     */
     private static LinkedHashMap<String, Object> parseIntegerMetadata(final IntegerField field) {
         final var metadata = new LinkedHashMap<String, Object>();
         metadata.put(TYPE_KEY, INTEGER_TYPE);
@@ -213,6 +234,12 @@ public class MetadataParser {
         return metadata;
     }
 
+    /**
+     * Parses the 'NumberField' annotation and returns a LinkedHashMap containing the metadata.
+     * Review the NumberField interface to view all available fields.
+     * @param field The field of the config to parse.
+     * @return A LinkedHashMap containing the metadata.
+     */
     private static LinkedHashMap<String, Object> parseNumberMetadata(final NumberField field) {
         final var metadata = new LinkedHashMap<String, Object>();
         metadata.put(TYPE_KEY, NUMBER_TYPE);
@@ -229,6 +256,12 @@ public class MetadataParser {
         return metadata;
     }
 
+    /**
+     * Parses the 'StringField' annotation and returns a LinkedHashMap containing the metadata.
+     * Review the StringField interface to view all available fields.
+     * @param field The field of the config to parse.
+     * @return A LinkedHashMap containing the metadata.
+     */
     private static LinkedHashMap<String, Object> parseStringMetadata(final StringField field) {
         final var metadata = new LinkedHashMap<String, Object>();
         metadata.put(TYPE_KEY, STRING_TYPE);
@@ -243,6 +276,13 @@ public class MetadataParser {
         return metadata;
     }
 
+    /**
+     * Parses the 'ObjectField' annotation and returns a LinkedHashMap containing the metadata.
+     * Review the ObjectField interface to view all available fields.
+     * @param field The field of the config to parse.
+     * @param processingEnvironment The processing environment to resolve subtypes.
+     * @return A LinkedHashMap containing the metadata.
+     */
     private static LinkedHashMap<String, Object> parseObjectMetadata(final ObjectField field, final ProcessingEnvironment processingEnvironment) {
         Element refElement;
         try {
@@ -265,6 +305,12 @@ public class MetadataParser {
         return metadata;
     }
 
+    /**
+     * Parses the 'NullField' annotation and returns a LinkedHashMap containing the metadata.
+     * Review the NullField interface to view all available fields.
+     * @param field The field of the config to parse.
+     * @return A LinkedHashMap containing the metadata.
+     */
     private static LinkedHashMap<String, Object> parseNullMetadata(final NullField field) {
         final var metadata = new LinkedHashMap<String, Object>();
         metadata.put(TYPE_KEY, NULL_TYPE);
@@ -275,6 +321,12 @@ public class MetadataParser {
         return metadata;
     }
 
+    /**
+     * Parses the 'BooleanField' annotation and returns a LinkedHashMap containing the metadata.
+     * Review the BooleanField interface to view all available fields.
+     * @param field The field of the config to parse.
+     * @return A LinkedHashMap containing the metadata.
+     */
     private static LinkedHashMap<String, Object> parseBooleanMetadata(final BooleanField field) {
         final var metadata = new LinkedHashMap<String, Object>();
         metadata.put(TYPE_KEY, BOOLEAN_TYPE);
