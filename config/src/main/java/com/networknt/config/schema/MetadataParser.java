@@ -87,8 +87,8 @@ public class MetadataParser {
      * @return The type of the element as a string.
      */
     private static String getTypeString(final Element element) {
-        final var name = element.getSimpleName().toString();
-        switch (name.toLowerCase()) {
+        final var name = element.getSimpleName().toString().toLowerCase();
+        switch (name) {
             case BOOLEAN_TYPE:
             case INTEGER_TYPE:
             case NUMBER_TYPE:

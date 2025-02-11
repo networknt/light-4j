@@ -187,7 +187,7 @@ public abstract class Generator {
                 break;
 
             default:
-                throw new IllegalArgumentException("Unsupported type: " + type);
+                throw new IllegalArgumentException("Unsupported type: " + type + " - Metadata: " + field);
         }
     }
 
