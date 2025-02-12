@@ -1,5 +1,33 @@
 # Change Log
 
+## [2.2.0](https://github.com/networknt/light-4j/tree/2.2.0) (2025-02-11)
+
+
+**Merged pull requests:**
+
+
+- Sync [\#2455](https://github.com/networknt/light-4j/pull/2455) ([stevehu](https://github.com/stevehu))
+- fixes \#2450 update cache manager to make sure it only initialized once [\#2451](https://github.com/networknt/light-4j/pull/2451) ([stevehu](https://github.com/stevehu))
+- fixes \#2448 move the cache manager creation to the instance variable … [\#2449](https://github.com/networknt/light-4j/pull/2449) ([stevehu](https://github.com/stevehu))
+- fixes \#2446 refactor the key logic in the token-limit handler [\#2447](https://github.com/networknt/light-4j/pull/2447) ([stevehu](https://github.com/stevehu))
+- Sync [\#2445](https://github.com/networknt/light-4j/pull/2445) ([stevehu](https://github.com/stevehu))
+- sync to master PR [\#2444](https://github.com/networknt/light-4j/pull/2444) ([stevehu](https://github.com/stevehu))
+- fixes \#2442 Add date conversion in DateUtil [\#2443](https://github.com/networknt/light-4j/pull/2443) ([stevehu](https://github.com/stevehu))
+- fixes \#2440 update the email to eml to extract the email from the token [\#2441](https://github.com/networknt/light-4j/pull/2441) ([stevehu](https://github.com/stevehu))
+- fixes \#2438 add email and host into the auditInfo in jwt verifier [\#2439](https://github.com/networknt/light-4j/pull/2439) ([stevehu](https://github.com/stevehu))
+- including header for application/json responses [\#2435](https://github.com/networknt/light-4j/pull/2435) ([DiogoFKT](https://github.com/DiogoFKT))
+- Token limit cache implementation [\#2429](https://github.com/networknt/light-4j/pull/2429) ([stevehu](https://github.com/stevehu))
+- fixes \#2419 update rule loader and implement rule actions for FGA [\#2420](https://github.com/networknt/light-4j/pull/2420) ([stevehu](https://github.com/stevehu))
+- fixes \#2417 add eid entity id to the constants and shorten some const… [\#2418](https://github.com/networknt/light-4j/pull/2418) ([stevehu](https://github.com/stevehu))
+- fixes \#2415 add an abstract isSkipAuth abstract method [\#2416](https://github.com/networknt/light-4j/pull/2416) ([stevehu](https://github.com/stevehu))
+- fixes \#2413 update rule actions with new IAction interface [\#2414](https://github.com/networknt/light-4j/pull/2414) ([stevehu](https://github.com/stevehu))
+- fixes \#2411 add email and elm constants [\#2412](https://github.com/networknt/light-4j/pull/2412) ([stevehu](https://github.com/stevehu))
+- fixes \#2409 add several constants for token creation in oauth-kafka [\#2410](https://github.com/networknt/light-4j/pull/2410) ([stevehu](https://github.com/stevehu))
+- fixes \#2407 Add a method in Util to parse the attributes in jwt token [\#2408](https://github.com/networknt/light-4j/pull/2408) ([stevehu](https://github.com/stevehu))
+- fixes \#2004 update CorsHandler to add some trace statements [\#2405](https://github.com/networknt/light-4j/pull/2405) ([stevehu](https://github.com/stevehu))
+- fixes \#2402 Do not put the cert into the certMap and check the finger… [\#2403](https://github.com/networknt/light-4j/pull/2403) ([stevehu](https://github.com/stevehu))
+
+
 ## [2.1.37](https://github.com/networknt/light-4j/tree/2.1.37) (2024-09-20)
 
 
