@@ -206,7 +206,6 @@ public class YamlGenerator extends Generator {
                             final var yamlFieldProp = (LinkedHashMap<String, Object>) allProperties.get(currentYamlField);
                             final var description = (String) yamlFieldProp.get(MetadataParser.DESCRIPTION_KEY);
 
-                            LOG.trace("Adding comment to field: {}", currentYamlField);
                             if (!description.isEmpty())
                                 this.addCommentsToNode(start, end, description, node);
 

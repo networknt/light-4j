@@ -9,6 +9,12 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.TypeElement;
 import java.util.*;
 
+/**
+ * Annotation processor for config modules in Light4J.
+ * This processor is responsible for generating schema/configuration files based on properties defined in the POJO annotations.
+ *
+ * @author Kalev Gonvick
+ */
 @SupportedAnnotationTypes("com.networknt.config.schema.ConfigSchema")
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class ConfigAnnotationParser extends AbstractProcessor {

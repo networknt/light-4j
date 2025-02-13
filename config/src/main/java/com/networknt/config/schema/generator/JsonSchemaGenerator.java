@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.config.schema.ConfigSchema;
 import com.networknt.config.schema.Format;
 import com.networknt.config.schema.MetadataParser;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.io.File;
 import java.util.HashMap;
@@ -12,7 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.Objects;
 
 /**
- * Generates draft 07 JSON schema files.
+ * Generates draft 07 JSON schema files for Light4J config POJOs.
  *
  * @author Kalev Gonvick
  */
@@ -20,6 +22,7 @@ public class JsonSchemaGenerator extends Generator {
 
     private final static String JSON_DRAFT = "http://json-schema.org/draft-07/schema#";
     private final ObjectMapper objectWriter = new ObjectMapper();
+    private final Logger LOG = LoggerFactory.getLogger(JsonSchemaGenerator.class);
 
     public JsonSchemaGenerator(final String configKey) {
         super(configKey);
@@ -33,12 +36,13 @@ public class JsonSchemaGenerator extends Generator {
         schemaMap.put(MetadataParser.TYPE_KEY, MetadataParser.OBJECT_TYPE);
 
         if (Generator.fieldIsHashMap(metadata, MetadataParser.PROPERTIES_KEY)) {
-            schemaMap.put("required", this.getRootSchemaRequiredFields((LinkedHashMap<String, Object>) metadata.get(MetadataParser.PROPERTIES_KEY)));
+            schemaMap.put("required", ((LinkedHashMap<String, Object>) metadata.get(MetadataParser.PROPERTIES_KEY)).keySet().toArray());
             schemaMap.put(MetadataParser.PROPERTIES_KEY, this.getRootSchemaProperties(metadata));
 
         } else schemaMap.put("additionalProperties", true);
 
         try {
+            LOG.trace("Writing JSON schema {} to file: {}", this.configKey ,path + "/" + this.configKey + ".yaml");
             final var file = new File(path + "/" + configKey + ".json");
             this.objectWriter.writerWithDefaultPrettyPrinter().writeValue(file, schemaMap);
         } catch (Exception e) {
@@ -76,11 +80,10 @@ public class JsonSchemaGenerator extends Generator {
         if (presentValue != null && !Objects.equals(presentValue, ConfigSchema.DEFAULT_STRING))
             property.put("default", presentValue);
 
-
         this.updateIfNotDefault(field, property, MetadataParser.MIN_LENGTH_KEY, ConfigSchema.DEFAULT_INT, Integer.class);
         this.updateIfNotDefault(field, property, MetadataParser.MAX_LENGTH_KEY, ConfigSchema.DEFAULT_MAX_INT, Integer.class);
         this.updateIfNotDefault(field, property, MetadataParser.PATTERN_KEY, ConfigSchema.DEFAULT_STRING, String.class);
-        this.updateIfNotDefault(field, property, MetadataParser.FORMAT_KEY, Format.NONE.toString(), String.class);
+        this.updateIfNotDefault(field, property, MetadataParser.FORMAT_KEY, Format.none.toString(), String.class);
 
     }
 
@@ -99,7 +102,7 @@ public class JsonSchemaGenerator extends Generator {
         this.updateIfNotDefault(field, property, MetadataParser.EXCLUSIVE_MIN_KEY, ConfigSchema.DEFAULT_BOOLEAN, Boolean.class);
         this.updateIfNotDefault(field, property, MetadataParser.EXCLUSIVE_MAX_KEY, ConfigSchema.DEFAULT_BOOLEAN, Boolean.class);
         this.updateIfNotDefault(field, property, MetadataParser.MULTIPLE_OF_KEY, ConfigSchema.DEFAULT_INT, Integer.class);
-        this.updateIfNotDefault(field, property, MetadataParser.FORMAT_KEY, Format.INT32.toString(), String.class);
+        this.updateIfNotDefault(field, property, MetadataParser.FORMAT_KEY, Format.int32.toString(), String.class);
 
     }
 
@@ -128,8 +131,7 @@ public class JsonSchemaGenerator extends Generator {
         this.updateIfNotDefault(field, property, MetadataParser.EXCLUSIVE_MIN_KEY, ConfigSchema.DEFAULT_BOOLEAN, Boolean.class);
         this.updateIfNotDefault(field, property, MetadataParser.EXCLUSIVE_MAX_KEY, ConfigSchema.DEFAULT_BOOLEAN, Boolean.class);
         this.updateIfNotDefault(field, property, MetadataParser.MULTIPLE_OF_KEY, ConfigSchema.DEFAULT_INT, Integer.class);
-        this.updateIfNotDefault(field, property, MetadataParser.FORMAT_KEY, Format.FLOAT32.toString(), String.class);
-
+        this.updateIfNotDefault(field, property, MetadataParser.FORMAT_KEY, Format.float32.toString(), String.class);
     }
 
 
@@ -163,9 +165,9 @@ public class JsonSchemaGenerator extends Generator {
     protected void parseNullField(final LinkedHashMap<String, Object> field, final LinkedHashMap<String, Object> property) {
         property.put(MetadataParser.TYPE_KEY, MetadataParser.NULL_TYPE);
         final var presentValue = this.getAsType(field.get(MetadataParser.DEFAULT_VALUE_KEY), String.class);
-        if (presentValue != null && !Objects.equals(presentValue, ConfigSchema.DEFAULT_STRING)) {
+        if (presentValue != null && !Objects.equals(presentValue, ConfigSchema.DEFAULT_STRING))
             property.put("default", presentValue);
-        }
+
     }
 
     @Override
@@ -197,15 +199,5 @@ public class JsonSchemaGenerator extends Generator {
             else subObjectProperties.put(key, subProperty);
         });
         property.put(MetadataParser.PROPERTIES_KEY, subObjectProperties);
-    }
-
-    private String[] getRootSchemaRequiredFields(final LinkedHashMap<String, Object> metadata) {
-        final var fields = metadata.keySet().toArray();
-        final var required = new String[fields.length];
-
-        for (int index = 0; index < fields.length; index++)
-            required[index] = fields[index].toString();
-
-        return required;
     }
 }

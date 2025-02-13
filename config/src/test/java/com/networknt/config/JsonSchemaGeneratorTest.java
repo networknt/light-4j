@@ -86,7 +86,7 @@ public class JsonSchemaGeneratorTest {
             "      \"minLength\" : 0,\n" +
             "      \"maxLength\" : 2147483647,\n" +
             "      \"pattern\" : \"\",\n" +
-            "      \"format\" : \"NONE\"\n" +
+            "      \"format\" : \"none\"\n" +
             "    },\n" +
             "    \"requestBodyMaxSize\" : {\n" +
             "      \"type\" : \"integer\",\n" +
@@ -99,7 +99,7 @@ public class JsonSchemaGeneratorTest {
             "      \"exclusiveMin\" : false,\n" +
             "      \"exclusiveMax\" : false,\n" +
             "      \"multipleOf\" : 0,\n" +
-            "      \"format\" : \"INT32\"\n" +
+            "      \"format\" : \"int32\"\n" +
             "    },\n" +
             "    \"responseBodyMaxSize\" : {\n" +
             "      \"type\" : \"integer\",\n" +
@@ -112,7 +112,7 @@ public class JsonSchemaGeneratorTest {
             "      \"exclusiveMin\" : false,\n" +
             "      \"exclusiveMax\" : false,\n" +
             "      \"multipleOf\" : 0,\n" +
-            "      \"format\" : \"INT32\"\n" +
+            "      \"format\" : \"int32\"\n" +
             "    },\n" +
             "    \"enabled\" : {\n" +
             "      \"type\" : \"boolean\",\n" +
@@ -147,7 +147,7 @@ public class JsonSchemaGeneratorTest {
             "            \"minLength\": 0,\n" +
             "            \"configFieldName\": \"headerName\",\n" +
             "            \"pattern\": \"^[a-zA-Z0-9-_]*$\",\n" +
-            "            \"format\": \"NONE\",\n" +
+            "            \"format\": \"none\",\n" +
             "            \"description\": \"\",\n" +
             "            \"type\": \"string\",\n" +
             "            \"maxLength\": 2147483647\n" +
@@ -158,7 +158,7 @@ public class JsonSchemaGeneratorTest {
             "            \"minLength\": 0,\n" +
             "            \"configFieldName\": \"apiKey\",\n" +
             "            \"pattern\": \"\",\n" +
-            "            \"format\": \"NONE\",\n" +
+            "            \"format\": \"none\",\n" +
             "            \"description\": \"\",\n" +
             "            \"type\": \"string\",\n" +
             "            \"maxLength\": 2147483647\n" +
@@ -169,7 +169,7 @@ public class JsonSchemaGeneratorTest {
             "            \"minLength\": 0,\n" +
             "            \"configFieldName\": \"pathPrefix\",\n" +
             "            \"pattern\": \"^/.*\",\n" +
-            "            \"format\": \"NONE\",\n" +
+            "            \"format\": \"none\",\n" +
             "            \"description\": \"\",\n" +
             "            \"type\": \"string\",\n" +
             "            \"maxLength\": 2147483647\n" +

@@ -49,7 +49,7 @@ public @interface StringField {
     /**
      * The format of the field.
      */
-    Format format() default Format.NONE;
+    Format format() default Format.none;
 }
 
 
