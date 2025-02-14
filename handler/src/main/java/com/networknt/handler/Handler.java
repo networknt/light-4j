@@ -30,6 +30,7 @@ import io.undertow.util.HttpString;
 import io.undertow.websockets.WebSocketConnectionCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -44,6 +45,8 @@ public class Handler {
 
     private static final AttachmentKey<Integer> CHAIN_SEQ = AttachmentKey.create(Integer.class);
     private static final AttachmentKey<String> CHAIN_ID = AttachmentKey.create(String.class);
+    private static final AttachmentKey<HandlerMetricsCollector> EXECUTION_METRIC = AttachmentKey.create(HandlerMetricsCollector.class);
+    private static final AttachmentKey<String> METRICS_REPORT = AttachmentKey.create(String.class);
     private static final Logger LOG = LoggerFactory.getLogger(Handler.class);
     // Accessed directly.
     public static HandlerConfig config = HandlerConfig.load();
@@ -158,7 +161,7 @@ public class Handler {
         } catch (Exception e) {
 
             if (LOG.isErrorEnabled())
-                LOG.error("Failed to inject handler.yml paths from: " + sourceChain);
+                LOG.error("Failed to inject handler.yml paths from: {}", sourceChain);
 
             if (e instanceof RuntimeException)
                 throw (RuntimeException) e;
@@ -182,7 +185,7 @@ public class Handler {
         // Flatten out the execution list from a mix of middleware chains and handlers.
         var handlers = getHandlersFromExecList(pathChain.getExec());
 
-        if (handlers.size() > 0) {
+        if (!handlers.isEmpty()) {
 
             // If a matcher already exists for the given type, at to that instead of
             // creating a new one.
@@ -204,14 +207,36 @@ public class Handler {
      * @param httpServerExchange The current requests server exchange.
      * @throws Exception Propagated exception in the handleRequest chain.
      */
-    public static void next(HttpServerExchange httpServerExchange) throws Exception {
-        var httpHandler = getNext(httpServerExchange);
+    public static void next(final HttpServerExchange httpServerExchange) throws Exception {
+        final var httpHandler = getNext(httpServerExchange);
+
+        if (config.isEnabledHandlerMetrics()) {
+
+            final var metrics = httpServerExchange.getAttachment(EXECUTION_METRIC);
+
+            final String handlerName;
+            if (httpHandler != null)
+                handlerName = httpHandler.toString();
+
+            else if (lastHandler != null)
+                handlerName = lastHandler.toString();
+
+            else handlerName = "unknown";
+
+            metrics.initNextHandlerMeasurement(handlerName);
+        }
 
         if (httpHandler != null)
             httpHandler.handleRequest(httpServerExchange);
 
         else if (lastHandler != null)
             lastHandler.handleRequest(httpServerExchange);
+
+        if (config.isEnabledHandlerMetrics()) {
+            final var metrics = httpServerExchange.getAttachment(EXECUTION_METRIC);
+            final var report = metrics.finalizeHandlerMetrics();
+            httpServerExchange.putAttachment(METRICS_REPORT, report);
+        }
     }
 
     /**
@@ -314,6 +339,10 @@ public class Handler {
             var result = pathTemplateMatcher.match(ex.getRequestPath());
 
             if (result != null) {
+
+                if (config.isEnabledHandlerMetrics()) {
+                    ex.putAttachment(EXECUTION_METRIC, new HandlerMetricsCollector());
+                }
 
                 // Found a match, configure and return true;
                 // Add path variables to query params.
@@ -530,5 +559,100 @@ public class Handler {
 
     public static Map<String, HttpHandler> getHandlers() {
         return handlers;
+    }
+
+    protected static class HandlerMetricsCollector {
+        private boolean completed = false;
+        private final ArrayList<StopWatch> metrics = new ArrayList<>();
+
+        public void initNextHandlerMeasurement(final String handlerName) {
+            this.stopPreviousHandler();
+            final var nextHandler = new StopWatch(handlerName);
+            nextHandler.start();
+            this.metrics.add(nextHandler);
+        }
+
+        private void stopPreviousHandler() {
+            if (!metrics.isEmpty()) {
+                final var previousHandler = this.metrics.get(metrics.size() - 1);
+                previousHandler.stop();
+            }
+        }
+
+        public String finalizeHandlerMetrics() {
+
+            if (this.completed)
+                throw new IllegalStateException("Metrics already finalized.");
+
+            this.completed = true;
+            this.stopPreviousHandler();
+            final var report = this.buildMetricsReport();
+            LOG.atLevel(Level.valueOf(config.getHandlerMetricsLogLevel())).log(report);
+            return report;
+        }
+
+        private String buildMetricsReport() {
+            final var metricsDisplay = new StringBuilder();
+            metricsDisplay.append("[");
+            for (int x = 1; !this.metrics.isEmpty(); x++) {
+                final var currentHandler = this.metrics.remove(0);
+
+                if (currentHandler.isRunning())
+                    throw new IllegalStateException("Handler metric stop watch is still running!");
+                metricsDisplay.append("{").append("\"num\": ").append(x).append(", ");
+                metricsDisplay.append("\"name\": ").append("\"").append(currentHandler.getName()).append("\", ");
+                metricsDisplay.append("\"duration\": ").append(currentHandler.getDuration()).append("}");
+
+                if (!this.metrics.isEmpty()) {
+                    metricsDisplay.append(", ");
+                }
+            }
+            metricsDisplay.append("]");
+            return metricsDisplay.toString();
+        }
+    }
+
+    private static class StopWatch {
+        private long startTime;
+        private long endTime;
+        private boolean running = false;
+        private final String name;
+
+        public StopWatch(final String name) {
+            this.name = name;
+        }
+
+        public boolean isRunning() {
+            return this.running;
+        }
+
+        public void start() {
+            if (this.running)
+                throw new IllegalStateException("Cannot start twice!");
+
+            this.startTime = System.currentTimeMillis();
+            this.running = true;
+        }
+
+        public void stop() {
+            if (!this.running)
+                throw new IllegalStateException("Cannot end twice!");
+
+            this.running = false;
+
+            this.endTime = System.currentTimeMillis();
+        }
+
+        public String getName() {
+            return this.name;
+        }
+
+        public long getDuration() {
+            if (this.running)
+                throw new IllegalStateException("Watch must be stopped first.");
+
+            return this.endTime - this.startTime;
+        }
+
     }
 }

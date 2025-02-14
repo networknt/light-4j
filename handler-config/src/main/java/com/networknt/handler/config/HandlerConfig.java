@@ -42,6 +42,7 @@ public class HandlerConfig {
     private static final String AUDIT_ON_ERROR = "auditOnError";
     private static final String AUDIT_STACK_TRACE = "auditStackTrace";
     private static final String BASE_PATH = "basePath";
+    private static final String REPORT_HANDLER_DURATION = "reportHandlerDuration";
 
     private static final String PATH = "path";
     private static final String SOURCE = "source";
@@ -55,6 +56,8 @@ public class HandlerConfig {
     private List<String> defaultHandlers;
     private boolean auditOnError;
     private boolean auditStackTrace;
+    private boolean enabledHandlerMetrics;
+    private String handlerMetricsLogLevel;
     private String basePath;
     private Map<String, Object> mappedConfig;
     private final Config config;
@@ -92,6 +95,22 @@ public class HandlerConfig {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean isEnabledHandlerMetrics() {
+        return enabledHandlerMetrics;
+    }
+
+    public void setEnabledHandlerMetrics(boolean enabledHandlerMetrics) {
+        this.enabledHandlerMetrics = enabledHandlerMetrics;
+    }
+
+    public String getHandlerMetricsLogLevel() {
+        return handlerMetricsLogLevel;
+    }
+
+    public void setHandlerMetricsLogLevel(String handlerMetricsLogLevel) {
+        this.handlerMetricsLogLevel = handlerMetricsLogLevel;
     }
 
     public List<String> getHandlers() {
@@ -167,6 +186,8 @@ public class HandlerConfig {
         if(mappedConfig != null) {
             Object object = mappedConfig.get(ENABLED);
             if(object != null) enabled = Config.loadBooleanValue(ENABLED, object);
+            object = mappedConfig.get(REPORT_HANDLER_DURATION);
+            if(object != null) enabledHandlerMetrics = Config.loadBooleanValue(REPORT_HANDLER_DURATION, object);
             object = mappedConfig.get(AUDIT_ON_ERROR);
             if(object != null) auditOnError = Config.loadBooleanValue(AUDIT_ON_ERROR, object);
             object = mappedConfig.get(AUDIT_STACK_TRACE);
